@@ -1,0 +1,73 @@
+<html>
+    <head>
+        <title>Testing IndexedDB Shim</title>
+        <meta http-equiv="X-UA-Compatible" content="chrome=1">
+        <link rel="stylesheet" href="http://code.jquery.com/qunit/git/qunit.css" type="text/css" media="screen" />
+        <script type="text/javascript" src="http://code.jquery.com/qunit/git/qunit.js">
+        </script>
+        <script type="text/javascript" src = "queuedUnit.js">
+        </script>
+        <script type = "text/javascript">
+            function _(msg){
+            	console.log("[" + QUnit.config.current.testName + "]", msg, arguments.callee.caller.arguments);
+            }
+        </script>
+        <script type = "text/javascript" src= "sampleData.js">
+        </script>
+        <script type = "text/javascript" src= "src/build.js">
+        </script>
+        <script type = "text/javascript">
+            function startTests(){
+            	buildIndexedDB(function(){
+            		console.log("Starting Tests");
+            		deleteDB(function(){
+            			QUnitTests();
+            		});
+            	});
+            }
+            
+            function deleteDB(callback){
+            	var deleteReq = window.indexedDB.deleteDatabase(DB.NAME);
+            	deleteReq.onsuccess = function(){
+            		console.log("Database deleted");
+            		callback();
+            	};
+            	deleteReq.onerror = function(e){
+            		console.log("Could not delete database");
+            		callback();
+            	};
+            }
+            
+            function QUnitTests(){
+            	var dbVersion = 1;
+            	var tests = ["Database", "ObjectStore", "ObjectStoreCrud", "Cursor", "Index"];
+            	(function addTestSuite(i){
+            		if (i >= tests.length) {
+            			nextTest();
+            			return;
+            		}
+            		console.log("Adding test suite ", tests[i]);
+            		var x = document.createElement("script");
+            		x.src = "test/" + tests[i] + "Tests.js";
+            		x.type = "text/javascript";
+            		x.onload = function(){
+            			addTestSuite(i + 1);
+            		}
+            		document.body.appendChild(x);
+            	})(0);
+            }
+        </script>
+    </head>
+    <body onload ="startTests()">
+        <h1 id="qunit-header">IndexedDB Shim on WebSql</h1>
+        <h2 id="qunit-banner"></h2>
+        <div id="qunit-testrunner-toolbar">
+        </div>
+        <h2 id="qunit-userAgent"></h2>
+        <ol id="qunit-tests">
+        </ol>
+        <div id="qunit-fixture">
+            test markup, will be hidden
+        </div>
+    </body>
+</html>

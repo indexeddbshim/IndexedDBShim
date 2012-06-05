@@ -1,0 +1,24 @@
+<html>
+    <head>
+        <title></title>
+    </head>
+    <body>
+        <script type = "text/javascript" src= "sampleData.js">
+        </script>
+        <script type = "text/javascript" src= "src/build.js">
+        </script>
+        <script type = "text/javascript">
+            function _(msg){
+            	console.log(msg, arguments.callee.caller.arguments);
+            }
+            
+            //buildIndexedDB(start);
+            start();
+            
+            function start(){
+            	 var db = window.openDatabase("dbName", 1, "dbName", 1024);
+				 
+            }
+        </script>
+    </body>
+</html>
