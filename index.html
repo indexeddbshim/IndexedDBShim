@@ -2,22 +2,28 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <link href="/IndexedDB/style.css" type="text/css" rel="stylesheet"/>
+        <link href="/jquery-indexeddb/style.css" type="text/css" rel="stylesheet"/>
         <title>IndexedDB Polyfill</title>
     </head>
     <body>
         <div id = "content-wrap">
             <h1>IndexedDB Polyfill over WebSql</h1>
             <div id = "content">
+                <div id = "download">
+                    <a href = "indexeddb.shim.js" target="_blank" class = "punch">Download indexeddb.shim.js</a>
+                </div>
                 <div>
                     A polyfill to enable IndexedDB using WebSql.
+                    <br/>
+                    IndexedBD is not supported on <a href = "http://caniuse.com/#search=IndexedDB" target="_blank">all browsers</a>. 
+                    This IndexedDB polyfill exposes the IndexedDB API in unsupported browsers using WebSQL. This shim is basically an IndexedDB-WebSql adapter. 
                 </div>
                 <div>
                     <h2>Download</h2>
                     <div>
                         <a href = "indexeddb.shim.js" target = "_blank">Download the polyfill</a>
                     </div>
-                    <div style ="font-size:0.8em;line-height:1.2em; margin-top: 10px;">
+                    <div style ="margin-top: 10px;">
                         To keep the code manageable, the modules are in <a href = "https://github.com/axemclion/IndexedDBShim/tree/gh-pages/src">different files</a>. The link above is simply a concatenation of all these files. 
                         You can also concantenate them again with javascript and download that copy using <a href = "javascript:download()">this link</a>. 
                     </div>
@@ -25,17 +31,15 @@
                 <div>
                     <h2>Test Cases</h2>
                     <div>
-                        <a href ="test.html">Check out</a>
-                        how the polyfill performs on your non-IndexedDB supported browser like Opera or Safari. It also works on Chrome as Chrome also has WebSQL.
-                    </div>
-                    <div>
+                        <a href ="test.html">Run the test cases</a>
+                        to see how the polyfill performs on your non-IndexedDB supported browser like Opera or Safari. It also works on Chrome as Chrome also has WebSQL. 
                         This would run on devices like the iPad and the iPhone too !! 
                     </div>
                 </div>
                 <div>
                     <h2>Source Code</h2>
                     <div>
-                        Fork the repository on <a href = "https://github.com/axemclion/IndexedDBShim">github</a>.
+                        Fork the repository on <a href = "https://github.com/axemclion/IndexedDBShim">github</a>. The source code is GPL2 and BSD dual licensed.
                     </div>
                     <div>
                         The implementation is not 100% to the spec and some work still needs to be done. There are a couple of <a href = "https://github.com/axemclion/IndexedDBShim/issues">open issues</a>
@@ -51,9 +55,10 @@
         </script>
         <script type = "text/javascript">
             function download(){
+            	var w = window.open(null, "Download IndexedDB Shim", "menubar=false,toolbar=false,dependent=yes,height=500,width=500,centerscreen=yes,resizable=yes,scrollbars=yes,status=no");
+            	w.document.body.innerHTML = "Loading";
             	buildIndexedDB.concatScripts(function(script){
-            		var w = window.open("about:blank", "Download");
-            		w.document.write(script);
+            		w.document.body.innerHTML = ("<pre>" + script + "</pre>");
             	});
             }
         </script>
