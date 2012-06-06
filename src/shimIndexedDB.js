@@ -159,5 +159,5 @@
 		}
 	};
 	
-	window.indexedDB = idbModules["shimIndexedDB"];
+	window.shimIndexedDB = idbModules["shimIndexedDB"];
 })(idbModules);

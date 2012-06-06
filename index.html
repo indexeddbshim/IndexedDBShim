@@ -15,13 +15,11 @@
                 <div>
                     <h2>Download</h2>
                     <div>
-                        Working on creating a single download file from the <a href = "https://github.com/axemclion/IndexedDB/tree/gh-pages/polyfill/src">sources</a>
-                        now. 
+                        <a href = "indexeddb.shim.js" target = "_blank">Download the polyfill</a>
                     </div>
-                    <div>
-                        If you still want to try it out, include <a href = "https://github.com/axemclion/IndexedDB/blob/gh-pages/polyfill/src/build.js">this simple javascript </a>
-                        in your HTML file. 
-                        Remember to change the paths to absolute location. 
+                    <div style ="font-size:0.8em;line-height:1.2em; margin-top: 10px;">
+                        To keep the code manageable, the modules are in <a href = "https://github.com/axemclion/IndexedDBShim/tree/gh-pages/src">different files</a>. The link above is simply a concatenation of all these files. 
+                        You can also concantenate them again with javascript and download that copy using <a href = "javascript:download()">this link</a>. 
                     </div>
                 </div>
                 <div>
@@ -37,10 +35,10 @@
                 <div>
                     <h2>Source Code</h2>
                     <div>
-                        Fork the repository on <a href = "https://github.com/axemclion/IndexedDB/tree/gh-pages/polyfill">github</a>.
+                        Fork the repository on <a href = "https://github.com/axemclion/IndexedDBShim">github</a>.
                     </div>
                     <div>
-                        The implementation is not 100% to the spec and some work still needs to be done. There are a couple of <a href = "https://github.com/axemclion/IndexedDB/issues">open issues</a>
+                        The implementation is not 100% to the spec and some work still needs to be done. There are a couple of <a href = "https://github.com/axemclion/IndexedDBShim/issues">open issues</a>
                         to be fixed
                     </div>
                     <div>
@@ -49,5 +47,15 @@
                 </div>
             </div>
         </div>
+        <script type = "text/javascript" src= "build.js">
+        </script>
+        <script type = "text/javascript">
+            function download(){
+            	buildIndexedDB.concatScripts(function(script){
+            		var w = window.open("about:blank", "Download");
+            		w.document.write(script);
+            	});
+            }
+        </script>
     </body>
 </html>
