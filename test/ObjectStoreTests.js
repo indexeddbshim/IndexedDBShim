@@ -3,7 +3,8 @@ queuedAsyncTest("Creating an Object Store", function(){
 	var dbOpenRequest = window.indexedDB.open(DB.NAME, ++dbVersion);
 	dbOpenRequest.onsuccess = function(e){
 		ok(true, "Database Opened successfully");
-		_("Database opened successfully with version");
+		_("Database opened successfully with version " + dbOpenRequest.result.version);
+		dbOpenRequest.result.close();
 		nextTest();
 		start();
 	};
@@ -34,6 +35,13 @@ queuedAsyncTest("Creating an Object Store", function(){
 		start();
 		stop();
 	};
+	
+	dbOpenRequest.onblocked = function(){
+		ok(false, "Database open is now blocked");
+		_("Database open blocked");
+		start();
+		stop();
+	};
 });
 
 queuedAsyncTest("Deleting an Object Store", function(){
@@ -41,6 +49,7 @@ queuedAsyncTest("Deleting an Object Store", function(){
 	dbOpenRequest.onsuccess = function(e){
 		ok(true, "Database Opened successfully");
 		_("Database opened successfully with version");
+		dbOpenRequest.result.close();
 		start();
 		nextTest();
 	};
@@ -56,8 +65,19 @@ queuedAsyncTest("Deleting an Object Store", function(){
 		var db = dbOpenRequest.result;
 		var len = db.objectStoreNames.length;
 		db.deleteObjectStore(DB.OBJECT_STORE_5);
-		equal(db.objectStoreNames.indexOf(DB.OBJECT_STORE_5), -1, "Database does not contain Object Store 4");
+		for (var i = 0; i < db.objectStoreNames.length; i++) {
+			if (db.objectStoreNames[i] === DB.OBJECT_STORE_5) {
+				ok(fail, "Database should not not contain Object Store 5");
+			}
+		}
 		start();
 		stop();
 	};
+	
+	dbOpenRequest.onblocked = function(e){
+		ok(false, "Database open request blocked");
+		_("Database open blocked");
+		start();
+		stop();
+	}
 });

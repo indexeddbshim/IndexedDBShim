@@ -1,10 +1,12 @@
-var dbVersion = 0;
 queuedModule("Database");
 queuedAsyncTest("Opening a Database without version", function(){
 	var dbOpenRequest = window.indexedDB.open(DB.NAME);
 	dbOpenRequest.onsuccess = function(e){
 		ok(true, "Database Opened successfully");
-		_("Database opened successfully");
+		expect(2);
+		_("Database opened successfully with version " + dbOpenRequest.result.version + "-" + dbVersion);
+		dbVersion = dbOpenRequest.result.version || 0;
+		dbOpenRequest.result.close();
 		start();
 		nextTest();
 	};
@@ -15,7 +17,7 @@ queuedAsyncTest("Opening a Database without version", function(){
 		nextTest();
 	};
 	dbOpenRequest.onupgradeneeded = function(e){
-		ok(false, "Database upgrade should not be called");
+		ok(true, "Database upgrade should be called");
 		_("Database upgrade called");
 		start();
 		stop();
@@ -28,11 +30,12 @@ queuedAsyncTest("Opening a Database without version", function(){
 	};
 });
 
-queuedAsyncTest("Opening a database with a version", function(){
+queuedAsyncTest("Opening a database with a version " + dbVersion, function(){
 	var dbOpenRequest = window.indexedDB.open(DB.NAME, ++dbVersion);
 	dbOpenRequest.onsuccess = function(e){
 		ok(true, "Database Opened successfully");
 		_("Database opened successfully with version");
+		dbOpenRequest.result.close();
 		nextTest();
 		start();
 	};

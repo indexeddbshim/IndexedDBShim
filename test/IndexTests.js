@@ -4,6 +4,7 @@ queuedAsyncTest("Creating Indexes", function(){
 	dbOpenRequest.onsuccess = function(e){
 		ok(true, "Database Opened successfully");
 		_("Database opened successfully with version");
+		dbOpenRequest.result.close();
 		nextTest();
 		start();
 	};
@@ -28,6 +29,12 @@ queuedAsyncTest("Creating Indexes", function(){
 		start();
 		stop();
 	};
+	dbOpenRequest.onblocked = function(e){
+		_("Opening database blocked");
+		ok(false, "Opening database blocked");
+		start();
+		stop();
+	}
 });
 
 function openObjectStore(name, storeName, callback){

@@ -27,6 +27,7 @@ openObjectStore("Iterating over cursor", DB.OBJECT_STORE_1, function(objectStore
 			ok(true, "Iterating over cursor " + cursor.key + " for value " + JSON.stringify(cursor.value))
 			cursor["continue"]();
 		} else {
+			objectStore.transaction.db.close();
 			start();
 			nextTest();
 		}
@@ -38,7 +39,6 @@ openObjectStore("Iterating over cursor", DB.OBJECT_STORE_1, function(objectStore
 		nextTest();
 	}
 });
-
 openObjectStore("Updating using a cursor", DB.OBJECT_STORE_1, function(objectStore){
 	var cursorReq = objectStore.openCursor();
 	cursorReq.onsuccess = function(e){
@@ -63,6 +63,7 @@ openObjectStore("Updating using a cursor", DB.OBJECT_STORE_1, function(objectSto
 			}
 		} else {
 			_("Iterating over all objects completed");
+			objectStore.transaction.db.close();
 			start();
 			nextTest();
 		}
@@ -98,6 +99,7 @@ openObjectStore("Deleting using a cursor", DB.OBJECT_STORE_1, function(objectSto
 				cursor["continue"]();
 			}
 		} else {
+			objectStore.transaction.db.close();
 			_("Iterating over all objects completed");
 			start();
 			nextTest();

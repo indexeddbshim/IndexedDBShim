@@ -81,7 +81,7 @@
 					if (data.rows.length === 0) {
 						// Database with this name does not exist
 						tx.executeSql("INSERT INTO dbVersions VALUES (?,?)", [name, version || 1], function(){
-							openDB(1);
+							openDB(0);
 						}, dbCreateError);
 					} else {
 						openDB(data.rows.item(0).version);

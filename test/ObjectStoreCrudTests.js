@@ -15,6 +15,11 @@ function onObjectStoreOpen(name, storeName, callback){
 			start();
 			nextTest();
 		};
+		dbOpenRequest.onblocked = function(e){
+			ok(false, "Opening database blocked");
+			_("Opening database blocked");
+			start();
+		}
 	});
 }
 
@@ -27,6 +32,7 @@ onObjectStoreOpen("Adding data to Object Store", DB.OBJECT_STORE_1, function(obj
 	req.onsuccess = function(e){
 		_("Data added to object Store successfully " + key);
 		equal(key, req.result, "Data added to Object store");
+		objectStore.transaction.db.close();
 		start();
 		nextTest();
 	};
@@ -43,6 +49,7 @@ onObjectStoreOpen("Adding with keypath and autoInc, no key", DB.OBJECT_STORE_2, 
 	req.onsuccess = function(e){
 		_("Data added to object Store successfully " + req.result);
 		notEqual(null, req.result, "Data added to Object store");
+		objectStore.transaction.db.close();
 		start();
 		nextTest();
 	};
@@ -53,8 +60,6 @@ onObjectStoreOpen("Adding with keypath and autoInc, no key", DB.OBJECT_STORE_2, 
 		nextTest();
 	};
 });
-
-
 onObjectStoreOpen("Adding with keypath and autoInc, no key in path", DB.OBJECT_STORE_2, function(objectStore){
 	var data = sample.obj();
 	delete data["Int"]
@@ -63,6 +68,7 @@ onObjectStoreOpen("Adding with keypath and autoInc, no key in path", DB.OBJECT_S
 		_("Data added to object Store successfully " + req.result);
 		notEqual(null, req.result, "Data added to Object store");
 		start();
+		objectStore.transaction.db.close();
 		nextTest();
 	};
 	req.onerror = function(e){
@@ -72,7 +78,6 @@ onObjectStoreOpen("Adding with keypath and autoInc, no key in path", DB.OBJECT_S
 		nextTest();
 	};
 });
-
 onObjectStoreOpen("Adding with NO keypath and autoInc", DB.OBJECT_STORE_3, function(objectStore){
 	var key = sample.integer();
 	var req = objectStore.add(sample.obj(), key);
@@ -80,6 +85,7 @@ onObjectStoreOpen("Adding with NO keypath and autoInc", DB.OBJECT_STORE_3, funct
 		_("Data added to object Store successfully " + key);
 		equal(key, req.result, "Data added to Object store");
 		start();
+		objectStore.transaction.db.close();
 		nextTest();
 	};
 	req.onerror = function(e){
@@ -89,7 +95,6 @@ onObjectStoreOpen("Adding with NO keypath and autoInc", DB.OBJECT_STORE_3, funct
 		nextTest();
 	};
 });
-
 onObjectStoreOpen("Adding with NO keypath and autoInc - no key specified", DB.OBJECT_STORE_3, function(objectStore){
 	var key = sample.integer();
 	var req = objectStore.add(sample.obj());
@@ -97,6 +102,7 @@ onObjectStoreOpen("Adding with NO keypath and autoInc - no key specified", DB.OB
 		_("Data added to object Store successfully " + key);
 		ok(req.result, "Data added to Object store");
 		start();
+		objectStore.transaction.db.close();
 		nextTest();
 	};
 	req.onerror = function(e){
@@ -112,9 +118,10 @@ onObjectStoreOpen("Updating data in Object Store", DB.OBJECT_STORE_1, function(o
 	data["modified"] = true;
 	var req = objectStore.put(data, key);
 	req.onsuccess = function(){
-		_("Data added to object Store successfully");
+		_("Data added to object Store successfully " + req.result);
 		equal(key, req.result, "Data added to Object store");
 		start();
+		objectStore.transaction.db.close();
 		nextTest();
 	};
 	req.onerror = function(){
@@ -124,15 +131,16 @@ onObjectStoreOpen("Updating data in Object Store", DB.OBJECT_STORE_1, function(o
 		nextTest();
 	};
 });
-
 onObjectStoreOpen("Updating non-existant in Object Store", DB.OBJECT_STORE_1, function(objectStore){
-	var key = "UPDATED"
+	var key = "UPDATED";
 	var req = objectStore.put(sample.obj(), key);
 	req.onsuccess = function(){
-		_("Data added to object Store successfully");
+		_("Data added to object Store successfully " + req.result);
 		equal(key, req.result, "Data updated in Object store");
 		start();
+		objectStore.transaction.db.close();
 		nextTest();
+		
 	};
 	req.onerror = function(){
 		_("Could not add data to database");
@@ -141,13 +149,13 @@ onObjectStoreOpen("Updating non-existant in Object Store", DB.OBJECT_STORE_1, fu
 		nextTest();
 	};
 });
-
 onObjectStoreOpen("Getting data in Object Store", DB.OBJECT_STORE_1, function(objectStore){
 	var req = objectStore.get(key);
 	req.onsuccess = function(){
 		_("Data got from object store");
 		deepEqual(req.result, data, "Data fetched matches the data");
 		start();
+		objectStore.transaction.db.close();
 		nextTest();
 	};
 	req.onerror = function(){
@@ -157,13 +165,14 @@ onObjectStoreOpen("Getting data in Object Store", DB.OBJECT_STORE_1, function(ob
 		nextTest();
 	};
 });
-
 onObjectStoreOpen("Count in Object Store", DB.OBJECT_STORE_1, function(objectStore){
 	var req = objectStore.count();
 	req.onsuccess = function(e){
 		_("Data counted from object store");
-		equal(req.result, 1, "Total number of objects in database");
+		console.log(req.result);
+		equal(req.result, 2, "Total number of objects in database");
 		start();
+		objectStore.transaction.db.close();
 		nextTest();
 	};
 	req.onerror = function(){
@@ -173,13 +182,13 @@ onObjectStoreOpen("Count in Object Store", DB.OBJECT_STORE_1, function(objectSto
 		nextTest();
 	};
 });
-
 onObjectStoreOpen("Delete data in Object Store", DB.OBJECT_STORE_1, function(objectStore){
 	var req = objectStore["delete"](key);
 	req.onsuccess = function(e){
 		_("Data deleted from object store");
 		deepEqual(req.result, undefined, "Data deleted from Object Store");
 		start();
+		objectStore.transaction.db.close();
 		nextTest();
 	};
 	req.onerror = function(){
@@ -189,13 +198,12 @@ onObjectStoreOpen("Delete data in Object Store", DB.OBJECT_STORE_1, function(obj
 		nextTest();
 	};
 });
-
-
 onObjectStoreOpen("Clear data in Object Store", DB.OBJECT_STORE_1, function(objectStore){
 	var req = objectStore.clear();
 	req.onsuccess = function(e){
 		_("Data cleared from object store");
 		ok(true, "Data from Object Store");
+		objectStore.transaction.db.close();
 		start();
 		nextTest();
 	};
@@ -207,25 +215,45 @@ onObjectStoreOpen("Clear data in Object Store", DB.OBJECT_STORE_1, function(obje
 	};
 });
 
-onObjectStoreOpen("Lots of data Added to objectStore1", DB.OBJECT_STORE_1, function(objectStore){
-	counter = 0;
-	for (var i = 0; i < 15; i++) {
-		var req = objectStore.add(sample.obj(), i);
-		req.onsuccess = function(){
-			_(counter + ". Data added to store" + req.result);
-			ok(true, "Data added to store" + req.result);
-			if (++counter >= 15) {
-				start();
-				nextTest();
-			}
-		};
-		req.onerror = function(){
-			_(counter + ". Could not get add to database");
-			ok(false, "Could not add data");
-			if (++counter >= 10) {
-				start();
-				nextTest();
-			}
-		};
+
+queuedAsyncTest("Lots of data Added to objectStore1", function(){
+	var dbOpenRequest = window.indexedDB.open(DB.NAME);
+	dbOpenRequest.onsuccess = function(e){
+		_("Database opened successfully");
+		ok(true, "Database Opened successfully");
+		var db = dbOpenRequest.result;
+		var transaction = db.transaction([DB.OBJECT_STORE_1], IDBTransaction.READ_WRITE);
+		var objectStore = transaction.objectStore(DB.OBJECT_STORE_1);
+		var counter = 0, max = 15;
+		for (var i = 0; i < max; i++) {
+			var req = objectStore.add(sample.obj(), i);
+			req.onsuccess = function(){
+				ok(true, "Data added to store");
+				if (++counter >= max) {
+					db.close();
+					start();
+					nextTest();
+				}
+			};
+			req.onerror = function(){
+				ok(false, "Could not add data");
+				if (++counter >= 10) {
+					start();
+					nextTest();
+				}
+			};
+		}
+	};
+	dbOpenRequest.onerror = function(e){
+		ok(false, "Database NOT Opened successfully");
+		_("Database NOT opened successfully");
+		start();
+		nextTest();
+	};
+	dbOpenRequest.onblocked = function(e){
+		ok(false, "Opening database blocked");
+		_("Opening database blocked");
+		start();
 	}
 });
+

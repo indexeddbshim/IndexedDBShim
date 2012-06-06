@@ -259,13 +259,13 @@
 		});
 	};
 	
-	IDBObjectStore.prototype.count = function(){
+	IDBObjectStore.prototype.count = function(key){
 		var me = this;
 		return me.transaction.__addToTransactionQueue(function(tx, args, success, error){
 			me.__waitForReady(function(){
-				var sql = "SELECT * FROM " + me.name + ((key !== "undefined") ? " WHERE key = ?" : "");
+				var sql = "SELECT * FROM " + me.name + ((typeof key !== "undefined") ? " WHERE key = ?" : "");
 				var sqlValues = [];
-				key && sqlValues.push(idbModules.Key.encode(key))
+				(typeof key !== "undefined") && sqlValues.push(idbModules.Key.encode(key))
 				tx.executeSql(sql, sqlValues, function(tx, data){
 					success(data.rows.length);
 				}, function(tx, err){
