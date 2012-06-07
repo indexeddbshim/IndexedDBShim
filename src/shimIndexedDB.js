@@ -60,10 +60,11 @@
 								// DB Upgrade in progress 
 								sysdb.transaction(function(systx){
 									systx.executeSql("UPDATE dbVersions set version = ? where name = ?", [version, name], function(){
-										var e = idbModules.Event("success");
+										var e = idbModules.Event("upgradeneeded");
 										e.oldVersion = oldVersion, e.newVersion = version;
 										req.transaction = req.result.__versionTransaction = new idbModules.IDBTransaction([], 2, req.source);
 										idbModules.util.callback("onupgradeneeded", req, [e], function(){
+											var e = idbModules.Event("success");
 											idbModules.util.callback("onsuccess", req, [e]);
 										});
 									}, dbCreateError);

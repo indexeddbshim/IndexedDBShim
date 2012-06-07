@@ -45,7 +45,7 @@
 			console.log("Waiting for to be ready", key);
 			var me = this;
 			window.setTimeout(function(){
-				me.__waitForReady(callback);
+				me.__waitForReady(callback, key);
 			}, 100);
 		}
 	};
@@ -92,7 +92,7 @@
 		function getNextAutoIncKey(){
 			tx.executeSql("SELECT * FROM sqlite_sequence where name like ?", [me.name], function(tx, data){
 				if (data.rows.length !== 1) {
-					idbModules.util.throwDOMException(0, "Data Error - Could not get the auto increment value for key, no auto Inc value returned", data.rows);
+					callback(0);
 				} else {
 					callback(data.rows.item(0).seq);
 				}

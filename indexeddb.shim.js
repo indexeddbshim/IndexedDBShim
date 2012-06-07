@@ -476,7 +476,7 @@
 				console.log("Waiting for to be ready", key);
 				var me = this;
 				window.setTimeout(function(){
-					me.__waitForReady(callback);
+					me.__waitForReady(callback, key);
 				}, 100);
 			}
 		};
@@ -523,7 +523,7 @@
 			function getNextAutoIncKey(){
 				tx.executeSql("SELECT * FROM sqlite_sequence where name like ?", [me.name], function(tx, data){
 					if (data.rows.length !== 1) {
-						idbModules.util.throwDOMException(0, "Data Error - Could not get the auto increment value for key, no auto Inc value returned", data.rows);
+						callback(0);
 					} else {
 						callback(data.rows.item(0).seq);
 					}
@@ -747,8 +747,26 @@
 		 * @param {Object} mode
 		 * @param {Object} db
 		 */
+		var READ = 0;
+		var READ_WRITE = 1;
+		var VERSION_TRANSACTION = 2;
+		
 		var IDBTransaction = function(storeNames, mode, db){
-			this.mode = mode;
+			if (typeof mode === "number") {
+				this.mode = mode;
+				(mode !== 2) && console.warn("Mode should be a string, but was specified as ", mode);
+			} else if (typeof mode === "string") {
+				switch (mode) {
+					case "readonly":
+						this.mode = READ_WRITE;
+						break;
+					case "read":
+					default:
+						this.mode = READ;
+						break
+				}
+			}
+			
 			this.storeNames = typeof storeNames === "string" ? [storeNames] : storeNames;
 			for (var i = 0; i < this.storeNames.length; i++) {
 				if (db.objectStoreNames.indexOf(storeNames[i]) === -1) {
@@ -766,13 +784,16 @@
 		};
 		
 		IDBTransaction.prototype.__executeRequests = function(){
-			if (this.__running) {
+			if (this.__running && this.mode !== VERSION_TRANSACTION) {
+				console.warn("Looks like the request set is already running");
 				return;
 			}
 			this.__running = true;
 			var me = this;
 			window.setTimeout(function(){
-				!me.__active && idbModules.util.throwDOMException(0, "A request was placed against a transaction which is currently not active, or which is finished", me.__active);
+				if (me.mode !== 2 && !me.__active) {
+					idbModules.util.throwDOMException(0, "A request was placed against a transaction which is currently not active, or which is finished", me.__active);
+				}
 				// Start using the version transaction
 				me.db.__db.transaction(function(tx){
 					me.__tx = tx;
@@ -824,7 +845,9 @@
 		}
 		
 		IDBTransaction.prototype.__addToTransactionQueue = function(callback, args){
-			!this.__active && idbModules.util.throwDOMException(0, "A request was placed against a transaction which is currently not active, or which is finished.", this.__active);
+			if (!this.__active && this.mode !== VERSION_TRANSACTION) {
+				idbModules.util.throwDOMException(0, "A request was placed against a transaction which is currently not active, or which is finished.", this.__mode);
+			}
 			var request = new idbModules.IDBRequest();
 			request.source = this.db;
 			this.__requests.push({
@@ -933,7 +956,7 @@
 		};
 		
 		IDBDatabase.prototype.transaction = function(storeNames, mode){
-			var transaction = new idbModules.IDBTransaction(storeNames, mode, this);
+			var transaction = new idbModules.IDBTransaction(storeNames, mode || 1, this);
 			return transaction;
 		};
 		
@@ -1002,10 +1025,11 @@
 									// DB Upgrade in progress 
 									sysdb.transaction(function(systx){
 										systx.executeSql("UPDATE dbVersions set version = ? where name = ?", [version, name], function(){
-											var e = idbModules.Event("success");
+											var e = idbModules.Event("upgradeneeded");
 											e.oldVersion = oldVersion, e.newVersion = version;
 											req.transaction = req.result.__versionTransaction = new idbModules.IDBTransaction([], 2, req.source);
 											idbModules.util.callback("onupgradeneeded", req, [e], function(){
+												var e = idbModules.Event("success");
 												idbModules.util.callback("onsuccess", req, [e]);
 											});
 										}, dbCreateError);

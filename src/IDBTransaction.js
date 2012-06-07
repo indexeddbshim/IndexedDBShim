@@ -7,8 +7,26 @@
 	 * @param {Object} mode
 	 * @param {Object} db
 	 */
+	var READ = 0;
+	var READ_WRITE = 1;
+	var VERSION_TRANSACTION = 2;
+	
 	var IDBTransaction = function(storeNames, mode, db){
-		this.mode = mode;
+		if (typeof mode === "number") {
+			this.mode = mode;
+			(mode !== 2) && console.warn("Mode should be a string, but was specified as ", mode);
+		} else if (typeof mode === "string") {
+			switch (mode) {
+				case "readonly":
+					this.mode = READ_WRITE;
+					break;
+				case "readwrite":
+				default:
+					this.mode = READ;
+					break
+			}
+		}
+		
 		this.storeNames = typeof storeNames === "string" ? [storeNames] : storeNames;
 		for (var i = 0; i < this.storeNames.length; i++) {
 			if (db.objectStoreNames.indexOf(storeNames[i]) === -1) {
@@ -26,13 +44,16 @@
 	};
 	
 	IDBTransaction.prototype.__executeRequests = function(){
-		if (this.__running) {
+		if (this.__running && this.mode !== VERSION_TRANSACTION) {
+			console.warn("Looks like the request set is already running");
 			return;
 		}
 		this.__running = true;
 		var me = this;
 		window.setTimeout(function(){
-			!me.__active && idbModules.util.throwDOMException(0, "A request was placed against a transaction which is currently not active, or which is finished", me.__active);
+			if (me.mode !== 2 && !me.__active) {
+				idbModules.util.throwDOMException(0, "A request was placed against a transaction which is currently not active, or which is finished", me.__active);
+			}
 			// Start using the version transaction
 			me.db.__db.transaction(function(tx){
 				me.__tx = tx;
@@ -84,7 +105,9 @@
 	}
 	
 	IDBTransaction.prototype.__addToTransactionQueue = function(callback, args){
-		!this.__active && idbModules.util.throwDOMException(0, "A request was placed against a transaction which is currently not active, or which is finished.", this.__active);
+		if (!this.__active && this.mode !== VERSION_TRANSACTION) {
+			idbModules.util.throwDOMException(0, "A request was placed against a transaction which is currently not active, or which is finished.", this.__mode);
+		}
 		var request = new idbModules.IDBRequest();
 		request.source = this.db;
 		this.__requests.push({
