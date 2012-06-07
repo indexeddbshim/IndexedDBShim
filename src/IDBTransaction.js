@@ -45,7 +45,7 @@
 	
 	IDBTransaction.prototype.__executeRequests = function(){
 		if (this.__running && this.mode !== VERSION_TRANSACTION) {
-			console.warn("Looks like the request set is already running");
+			console.warn("Looks like the request set is already running", this.mode);
 			return;
 		}
 		this.__running = true;
