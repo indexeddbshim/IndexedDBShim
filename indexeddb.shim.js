@@ -1,4 +1,7 @@
 (function(){
+	if (typeof window.openDatabase === 'undefined') {
+		return;
+	}
 	var idbModules = {};
 	(function(idbModules){
 		/**
@@ -760,7 +763,7 @@
 					case "readonly":
 						this.mode = READ_WRITE;
 						break;
-					case "read":
+					case "readwrite":
 					default:
 						this.mode = READ;
 						break

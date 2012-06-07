@@ -19,7 +19,7 @@ var buildIndexedDB = (function(){
 			}(0));
 		},
 		concatScripts: function(callback){
-			var scripts = ["(function(){var idbModules = {};"];
+			var scripts = ["(function(){if (typeof window.openDatabase === 'undefined'){return;}var idbModules = {};"];
 			(function fetchScript(i){
 				var xmlhttp;
 				if (window.XMLHttpRequest) {
