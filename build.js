@@ -3,7 +3,7 @@
  * @param {Object} callback
  */
 var buildIndexedDB = (function(){
-	var moduleList = ["util", "Sca", "Key", "Event", "IDBRequest", "IDBKeyRange", "IDBCursor", "IDBIndex", "IDBObjectStore", "IDBTransaction", "IDBDatabase", "shimIndexedDB"];
+	var moduleList = ["Init","util", "Sca", "Key", "Event", "IDBRequest", "IDBKeyRange", "IDBCursor", "IDBIndex", "IDBObjectStore", "IDBTransaction", "IDBDatabase", "shimIndexedDB"];
 	return {
 		addScripts: function(callback){
 			window.idbModules = {};
@@ -16,10 +16,10 @@ var buildIndexedDB = (function(){
 					else callback();
 				}
 				document.head.appendChild(x);
-			}(0));
+			}(1));
 		},
 		concatScripts: function(callback){
-			var scripts = ["(function(){if (typeof window.openDatabase === 'undefined'){return;}var idbModules = {};"];
+			var scripts = ["(function(){"];
 			(function fetchScript(i){
 				var xmlhttp;
 				if (window.XMLHttpRequest) {

@@ -71,8 +71,8 @@
             		callback();
             	};
             	deleteReq.onerror = function(e){
-            		console.log("Could not delete database");
-            		//callback();
+            		alert("Could not delete database. Database may not exist");
+            		callback();
             	};
             }
             
