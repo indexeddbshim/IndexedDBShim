@@ -5,10 +5,11 @@
 	 * @param {Object} context
 	 * @param {Object} argArray
 	 */
-	function callback(fn, context, argArray, func){
+	function callback(fn, context, event, func){
 		//window.setTimeout(function(){
-			(typeof context[fn] === "function") && context[fn].apply(context, argArray);
-			(typeof func === "function") && func();
+		event.target = context;
+		(typeof context[fn] === "function") && context[fn].apply(context, [event]);
+		(typeof func === "function") && func();
 		//}, 1);
 	}
 	

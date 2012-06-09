@@ -9,7 +9,7 @@ var buildIndexedDB = (function(){
 			window.idbModules = {};
 			(function addScript(i){
 				var x = document.createElement("script");
-				x.src = "src/" + moduleList[i] + ".js";
+				x.src = "/IndexedDBShim/src/" + moduleList[i] + ".js";
 				x.type = "text/javascript"
 				x.onload = function(){
 					if (i < moduleList.length - 1) addScript(i + 1);
@@ -27,7 +27,7 @@ var buildIndexedDB = (function(){
 				} else {
 					xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");// code for IE6, IE5
 				}
-				xmlhttp.open("GET", "src/" + moduleList[i] + ".js" + "", true);
+				xmlhttp.open("GET", "/IndexedDBShim/src/" + moduleList[i] + ".js" + "", true);
 				xmlhttp.onreadystatechange = function(){
 					if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
 						scripts.push(xmlhttp.responseText);

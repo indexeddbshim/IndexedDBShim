@@ -2,8 +2,9 @@
  * An initialization file that checks for conditions, removes console.log and warn, etc
  */
 if (typeof window.openDatabase === 'undefined') {
-	return null;
+	return;
 }
+
 var idbModules = {};
 
 var console = {

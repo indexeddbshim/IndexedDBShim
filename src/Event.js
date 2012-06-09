@@ -1,10 +1,16 @@
 (function(idbModules, undefined){
-
+	// The event interface used for IndexedBD Actions.
 	var Event = function(type, debug){
-		var e = document.createEvent("Event");
-		e.initEvent(type, true, true);
-		e.debug = debug;
-		return e;
+		// Returning an object instead of an even as the event's target cannot be set to IndexedDB Objects
+		// We still need to have event.target.result as the result of the IDB request
+		return {
+			"type": type,
+			debug: debug,
+			bubbles: false,
+			cancelable: false,
+			eventPhase: 0,
+			timeStamp: new Date(),
+		};
 	}
 	
 	idbModules.Event = Event;

@@ -37,7 +37,7 @@
 				var e = idbModules.Event("error", arguments);
 				req.readyState = "done";
 				req.error = "DOMError";
-				idbModules.util.callback("onerror", req, [e]);
+				idbModules.util.callback("onerror", req, e);
 				calledDbCreateError = true
 			}
 			
@@ -63,14 +63,14 @@
 										var e = idbModules.Event("upgradeneeded");
 										e.oldVersion = oldVersion, e.newVersion = version;
 										req.transaction = req.result.__versionTransaction = new idbModules.IDBTransaction([], 2, req.source);
-										idbModules.util.callback("onupgradeneeded", req, [e], function(){
+										idbModules.util.callback("onupgradeneeded", req, e, function(){
 											var e = idbModules.Event("success");
-											idbModules.util.callback("onsuccess", req, [e]);
+											idbModules.util.callback("onsuccess", req, e);
 										});
 									}, dbCreateError);
 								}, dbCreateError);
 							} else {
-								idbModules.util.callback("onsuccess", req, [e]);
+								idbModules.util.callback("onsuccess", req, e);
 							}
 						}, dbCreateError);
 					}, dbCreateError);
@@ -105,7 +105,7 @@
 				var e = idbModules.Event("error");
 				e.message = msg;
 				e.debug = arguments;
-				idbModules.util.callback("onerror", req, [e]);
+				idbModules.util.callback("onerror", req, e);
 				calledDBError = true;
 			}
 			var version = null;
@@ -115,7 +115,7 @@
 						req.result = undefined;
 						var e = idbModules.Event("success");
 						e.newVersion = null, e.oldVersion = version;
-						idbModules.util.callback("onsuccess", req, [e]);
+						idbModules.util.callback("onsuccess", req, e);
 					}, dbError);
 				}, dbError);
 			}
@@ -161,4 +161,7 @@
 	};
 	
 	window.shimIndexedDB = idbModules["shimIndexedDB"];
+	window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB || window.shimIndexedDB;
+	window.IDBTransaction = window.IDBTransaction || window.mozIDBTransaction || window.webkitIDBTransaction || idbModules.IDBTransaction;
+	
 })(idbModules);

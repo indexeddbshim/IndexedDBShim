@@ -1,18 +1,33 @@
 (function(){
+	/**
+	 * An initialization file that checks for conditions, removes console.log and warn, etc
+	 */
 	if (typeof window.openDatabase === 'undefined') {
 		return;
 	}
+	
 	var idbModules = {};
-	(function(idbModules){
+	
+	var console = {
+		log: function(){
+		},
+		warn: function(){
+		},
+		error: function(){
+		},
+		debug: function(){
+		}
+	}(function(idbModules){
 		/**
 		 * A utility method to callback onsuccess, onerror, etc as soon as the calling function's context is over
 		 * @param {Object} fn
 		 * @param {Object} context
 		 * @param {Object} argArray
 		 */
-		function callback(fn, context, argArray, func){
+		function callback(fn, context, event, func){
 			//window.setTimeout(function(){
-			(typeof context[fn] === "function") && context[fn].apply(context, argArray);
+			event.target = context;
+			(typeof context[fn] === "function") && context[fn].apply(context, [event]);
 			(typeof func === "function") && func();
 			//}, 1);
 		}
@@ -99,12 +114,18 @@
 	}(idbModules));
 	
 	(function(idbModules, undefined){
-	
+		// The event interface used for IndexedBD Actions.
 		var Event = function(type, debug){
-			var e = document.createEvent("Event");
-			e.initEvent(type, true, true);
-			e.debug = debug;
-			return e;
+			// Returning an object instead of an even as the event's target cannot be set to IndexedDB Objects
+			// We still need to have event.target.result as the result of the IDB request
+			return {
+				"type": type,
+				debug: debug,
+				bubbles: false,
+				cancelable: false,
+				eventPhase: 0,
+				timeStamp: new Date(),
+			};
 		}
 		
 		idbModules.Event = Event;
@@ -809,7 +830,7 @@
 						q.req.result = result;
 						delete q.req.error;
 						var e = idbModules.Event("success");
-						idbModules.util.callback("onsuccess", q.req, [e]);
+						idbModules.util.callback("onsuccess", q.req, e);
 						i++;
 						executeRequest();
 					};
@@ -818,7 +839,7 @@
 						q.req.readyState = "done";
 						q.req.error = "DOMError";
 						var e = idbModules.Event("error", arguments);
-						idbModules.util.callback("onerror", q.req, [e]);
+						idbModules.util.callback("onerror", q.req, e);
 						i++;
 						executeRequest();
 					};
@@ -876,7 +897,7 @@
 		IDBTransaction.prototype.READ_WRITE = 1;
 		IDBTransaction.prototype.VERSION_CHANGE = 2;
 		
-		window.IDBTransaction = idbModules["IDBTransaction"] = IDBTransaction;
+		idbModules["IDBTransaction"] = IDBTransaction;
 	}(idbModules));
 	
 	(function(idbModules){
@@ -1005,7 +1026,7 @@
 					var e = idbModules.Event("error", arguments);
 					req.readyState = "done";
 					req.error = "DOMError";
-					idbModules.util.callback("onerror", req, [e]);
+					idbModules.util.callback("onerror", req, e);
 					calledDbCreateError = true
 				}
 				
@@ -1031,14 +1052,14 @@
 											var e = idbModules.Event("upgradeneeded");
 											e.oldVersion = oldVersion, e.newVersion = version;
 											req.transaction = req.result.__versionTransaction = new idbModules.IDBTransaction([], 2, req.source);
-											idbModules.util.callback("onupgradeneeded", req, [e], function(){
+											idbModules.util.callback("onupgradeneeded", req, e, function(){
 												var e = idbModules.Event("success");
-												idbModules.util.callback("onsuccess", req, [e]);
+												idbModules.util.callback("onsuccess", req, e);
 											});
 										}, dbCreateError);
 									}, dbCreateError);
 								} else {
-									idbModules.util.callback("onsuccess", req, [e]);
+									idbModules.util.callback("onsuccess", req, e);
 								}
 							}, dbCreateError);
 						}, dbCreateError);
@@ -1073,7 +1094,7 @@
 					var e = idbModules.Event("error");
 					e.message = msg;
 					e.debug = arguments;
-					idbModules.util.callback("onerror", req, [e]);
+					idbModules.util.callback("onerror", req, e);
 					calledDBError = true;
 				}
 				var version = null;
@@ -1083,7 +1104,7 @@
 							req.result = undefined;
 							var e = idbModules.Event("success");
 							e.newVersion = null, e.oldVersion = version;
-							idbModules.util.callback("onsuccess", req, [e]);
+							idbModules.util.callback("onsuccess", req, e);
 						}, dbError);
 					}, dbError);
 				}
@@ -1129,6 +1150,9 @@
 		};
 		
 		window.shimIndexedDB = idbModules["shimIndexedDB"];
+		window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB || window.shimIndexedDB;
+		window.IDBTransaction = window.IDBTransaction || window.mozIDBTransaction || window.webkitIDBTransaction || idbModules.IDBTransaction;
+		
 	})(idbModules);
 	
 }());

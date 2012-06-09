@@ -37,22 +37,21 @@
         </script>
         <script type = "text/javascript" src= "sampleData.js">
         </script>
-        <script type = "text/javascript" src= "build.js">
+        <script type = "text/javascript" src= "../build.js">
         </script>
         <script type = "text/javascript">
             function startTests(){
-            	if (typeof window.mozIndexedDB === "undefined") {
+            	if (typeof window.mozIndexedDB !== "undefined") {
+            		deleteDB(function(){
+            			QUnitTests();
+            		});
+            	} else {
             		buildIndexedDB.addScripts(function(){
             			window.indexedDB = window.shimIndexedDB;
-            			console.log("Starting Tests");
+            			console.log("Starting Tests with shimIndexedDB");
             			deleteDB(function(){
             				QUnitTests();
             			});
-            		});
-            	} else {
-            		window.indexedDB = window.mozIndexedDB;
-            		deleteDB(function(){
-            			QUnitTests();
             		});
             	}
             }
@@ -86,7 +85,7 @@
             		}
             		console.log("Adding test suite ", tests[i]);
             		var x = document.createElement("script");
-            		x.src = "test/" + tests[i] + "Tests.js";
+            		x.src = tests[i] + "Tests.js";
             		x.type = "text/javascript";
             		x.onload = function(){
             			addTestSuite(i + 1);
