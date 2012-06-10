@@ -6,16 +6,3 @@ if (typeof window.openDatabase === 'undefined') {
 }
 
 var idbModules = {};
-
-var console = {
-	log: function(){
-	},
-	warn: function(){
-	},
-	error: function(){
-	},
-	debug: function(){
-	}
-}
-
-

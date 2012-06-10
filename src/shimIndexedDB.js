@@ -20,7 +20,7 @@
 		idbModules.util.throwDOMException("Could not create table __sysdb__ to save DB versions");
 	});
 	
-	idbModules["shimIndexedDB"] = {
+	var shimIndexedDB = {
 		/**
 		 * The IndexedDB Method to create a new database and return the DB
 		 * @param {Object} name
@@ -160,8 +160,5 @@
 		}
 	};
 	
-	window.shimIndexedDB = idbModules["shimIndexedDB"];
-	window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB || window.shimIndexedDB;
-	window.IDBTransaction = window.IDBTransaction || window.mozIDBTransaction || window.webkitIDBTransaction || idbModules.IDBTransaction;
-	
+	idbModules["shimIndexedDB"] = shimIndexedDB;
 })(idbModules);

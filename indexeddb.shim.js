@@ -8,16 +8,7 @@
 	
 	var idbModules = {};
 	
-	var console = {
-		log: function(){
-		},
-		warn: function(){
-		},
-		error: function(){
-		},
-		debug: function(){
-		}
-	}(function(idbModules){
+	(function(idbModules){
 		/**
 		 * A utility method to callback onsuccess, onerror, etc as soon as the calling function's context is over
 		 * @param {Object} fn
@@ -793,7 +784,7 @@
 			
 			this.storeNames = typeof storeNames === "string" ? [storeNames] : storeNames;
 			for (var i = 0; i < this.storeNames.length; i++) {
-				if (db.objectStoreNames.indexOf(storeNames[i]) === -1) {
+				if (db.objectStoreNames.indexOf(this.storeNames[i]) === -1) {
 					idbModules.util.throwDOMException(0, "The operation failed because the requested database object could not be found. For example, an object store did not exist but was being opened.", storeNames);
 				}
 			}
@@ -1009,7 +1000,7 @@
 			idbModules.util.throwDOMException("Could not create table __sysdb__ to save DB versions");
 		});
 		
-		idbModules["shimIndexedDB"] = {
+		var shimIndexedDB = {
 			/**
 			 * The IndexedDB Method to create a new database and return the DB
 			 * @param {Object} name
@@ -1149,10 +1140,32 @@
 			}
 		};
 		
-		window.shimIndexedDB = idbModules["shimIndexedDB"];
-		window.indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB || window.shimIndexedDB;
-		window.IDBTransaction = window.IDBTransaction || window.mozIDBTransaction || window.webkitIDBTransaction || idbModules.IDBTransaction;
-		
+		idbModules["shimIndexedDB"] = shimIndexedDB;
 	})(idbModules);
+	
+	(function(window, idbModules){
+		window.shimIndexedDB = idbModules.shimIndexedDB;
+		
+		window.shimIndexedDB.__useShim = function(){
+			window.indexedDB = idbModules.shimIndexedDB;
+			window.IDBDatabase = idbModules.IDBDatabase;
+			window.IDBTransaction = idbModules.IDBTransaction;
+			window.IDBCursor = idbModules.IDBCursor;
+			window.IDBKeyRange = idbModules.IDBKeyRange;
+		}
+		
+		window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
+		
+		if (typeof window.indexedDB === "undefined") {
+			window.shimIndexedDB.__useShim();
+		} else {
+			window.IDBDatabase = window.IDBDatabase || window.webkitIDBDatabase;
+			window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction;
+			window.IDBCursor = window.IDBCursor || window.webkitIDBCursor;
+			window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange;
+		}
+		
+	}(window, idbModules));
+	
 	
 }());
