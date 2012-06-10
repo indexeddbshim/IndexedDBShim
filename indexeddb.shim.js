@@ -2,16 +2,15 @@
 	/**
 	 * An initialization file that checks for conditions, removes console.log and warn, etc
 	 */
-	if (typeof window.openDatabase === 'undefined') {
-		return;
-	}
-	
 	var idbModules = {};
 	
 	var logger = {};
 	logger.log = logger.error = logger.warn = logger.debug = function(){
 		//console.log.apply(console, arguments);
 	};
+	if (typeof window.openDatabase === 'undefined') {
+		return;
+	}
 	
 	(function(idbModules){
 		/**
@@ -45,7 +44,10 @@
 		
 		idbModules["util"] = {
 			"throwDOMException": throwDOMException,
-			"callback": callback
+			"callback": callback,
+			"quote": function(arg){
+				return "'" + arg + "'";
+			}
 		}
 	})(idbModules);
 	
@@ -213,7 +215,7 @@
 		
 		IDBCursor.prototype.__find = function(key, tx, success, error){
 			var me = this;
-			var sql = ["SELECT * FROM ", me.__idbObjectStore.name];
+			var sql = ["SELECT * FROM ", idbModules.util.quote(me.__idbObjectStore.name)];
 			var sqlValues = [];
 			sql.push("WHERE ", me.__keyColumnName, " NOT NULL");
 			if (me.__range && (me.__range.lower || me.__range.upper)) {
@@ -287,7 +289,7 @@
 			var me = this;
 			return this.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
 				me.__find(undefined, tx, function(key, value){
-					var sql = "UPDATE " + me.__idbObjectStore.name + " SET value = ? WHERE key = ?";
+					var sql = "UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " SET value = ? WHERE key = ?";
 					logger.log(sql, valueToUpdate, key);
 					tx.executeSql(sql, [idbModules.Sca.encode(valueToUpdate), idbModules.Key.encode(key)], function(tx, data){
 						if (data.rowsAffected === 1) {
@@ -308,7 +310,7 @@
 			var me = this;
 			return this.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
 				me.__find(undefined, tx, function(key, value){
-					var sql = "DELETE FROM  " + me.__idbObjectStore.name + " WHERE key = ?";
+					var sql = "DELETE FROM  " + idbModules.util.quote(me.__idbObjectStore.name) + " WHERE key = ?";
 					logger.log(sql, key);
 					tx.executeSql(sql, [idbModules.Key.encode(key)], function(tx, data){
 						if (data.rowsAffected === 1) {
@@ -369,13 +371,13 @@
 					logger.log(sql);
 					tx.executeSql(sql, [], function(tx, data){
 						// Once a column is created, put existing records into the index
-						tx.executeSql("SELECT * FROM " + me.__idbObjectStore.name, [], function(tx, data){
+						tx.executeSql("SELECT * FROM " + idbModules.util.quote(me.__idbObjectStore.name), [], function(tx, data){
 							(function initIndexForRow(i){
 								if (i < data.rows.length) {
 									try {
 										var value = idbModules.Sca.decode(data.rows.item(i).value);
 										var indexKey = eval("value['" + keyPath + "']");
-										tx.executeSql("UPDATE " + me.__idbObjectStore.name + " set " + columnName + " = ? where key = ?", [idbModules.Key.encode(indexKey), data.rows.item(i).key], function(tx, data){
+										tx.executeSql("UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " set " + columnName + " = ? where key = ?", [idbModules.Key.encode(indexKey), data.rows.item(i).key], function(tx, data){
 											initIndexForRow(i + 1);
 										}, error);
 									} catch (e) {
@@ -411,7 +413,7 @@
 		IDBIndex.prototype.__fetchIndexData = function(key, opType){
 			var me = this;
 			return me.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
-				var sql = ["SELECT * FROM ", me.__idbObjectStore.name, " WHERE", me.indexName, "NOT NULL"];
+				var sql = ["SELECT * FROM ", idbModules.util.quote(me.__idbObjectStore.name), " WHERE", me.indexName, "NOT NULL"];
 				var sqlValues = [];
 				if (typeof key !== "undefined") {
 					sql.push("AND", me.indexName, " = ?");
@@ -606,7 +608,7 @@
 					error(e);
 				}
 			}
-			var sqlStart = ["INSERT INTO ", this.name, "("];
+			var sqlStart = ["INSERT INTO ", idbModules.util.quote(this.name), "("];
 			var sqlEnd = [" VALUES ("];
 			var sqlValues = [];
 			for (key in paramMap) {
@@ -643,7 +645,7 @@
 			return me.transaction.__addToTransactionQueue(function(tx, args, success, error){
 				me.__deriveKey(tx, value, key, function(primaryKey){
 					// First try to delete if the record exists
-					var sql = "DELETE FROM " + me.name + " where key = ?";
+					var sql = "DELETE FROM " + idbModules.util.quote(me.name) + " where key = ?";
 					tx.executeSql(sql, [idbModules.Key.encode(primaryKey)], function(tx, data){
 						logger.log("Did the row with the", primaryKey, "exist? ", data.rowsAffected);
 						me.__insertData(tx, value, primaryKey, success, error);
@@ -661,7 +663,7 @@
 				me.__waitForReady(function(){
 					var primaryKey = idbModules.Key.encode(key);
 					logger.log("Fetching", me.name, primaryKey);
-					tx.executeSql("SELECT * FROM " + me.name + " where key = ?", [primaryKey], function(tx, data){
+					tx.executeSql("SELECT * FROM " + idbModules.util.quote(me.name) + " where key = ?", [primaryKey], function(tx, data){
 						logger.log("Fetched data", data.rows.item(0));
 						try {
 							success(idbModules.Sca.decode(data.rows.item(0).value));
@@ -684,7 +686,7 @@
 				me.__waitForReady(function(){
 					var primaryKey = idbModules.Key.encode(key);
 					logger.log("Fetching", me.name, primaryKey);
-					tx.executeSql("DELETE FROM " + me.name + " where key = ?", [primaryKey], function(tx, data){
+					tx.executeSql("DELETE FROM " + idbModules.util.quote(me.name) + " where key = ?", [primaryKey], function(tx, data){
 						logger.log("Deleted from database", data.rowsAffected);
 						success();
 					}, function(tx, err){
@@ -700,7 +702,7 @@
 				me.__waitForReady(function(){
 					var primaryKey = idbModules.Key.encode(key);
 					logger.log("Fetching", me.name, primaryKey);
-					tx.executeSql("DELETE FROM " + me.name, [], function(tx, data){
+					tx.executeSql("DELETE FROM " + idbModules.util.quote(me.name), [], function(tx, data){
 						logger.log("Cleared all records from database", data.rowsAffected);
 						success();
 					}, function(tx, err){
@@ -714,7 +716,7 @@
 			var me = this;
 			return me.transaction.__addToTransactionQueue(function(tx, args, success, error){
 				me.__waitForReady(function(){
-					var sql = "SELECT * FROM " + me.name + ((typeof key !== "undefined") ? " WHERE key = ?" : "");
+					var sql = "SELECT * FROM " + idbModules.util.quote(me.name) + ((typeof key !== "undefined") ? " WHERE key = ?" : "");
 					var sqlValues = [];
 					(typeof key !== "undefined") && sqlValues.push(idbModules.Key.encode(key))
 					tx.executeSql(sql, sqlValues, function(tx, data){
@@ -790,7 +792,7 @@
 			this.storeNames = typeof storeNames === "string" ? [storeNames] : storeNames;
 			for (var i = 0; i < this.storeNames.length; i++) {
 				if (db.objectStoreNames.indexOf(this.storeNames[i]) === -1) {
-					idbModules.util.throwDOMException(0, "The operation failed because the requested database object could not be found. For example, an object store did not exist but was being opened.", storeNames);
+					idbModules.util.throwDOMException(0, "The operation failed because the requested database object could not be found. For example, an object store did not exist but was being opened.", this.storeNames[i]);
 				}
 			}
 			this.__active = true;
@@ -961,7 +963,7 @@
 				me.__db.transaction(function(tx){
 					tx.executeSql("SELECT * FROM __sys__ where name = ?", [storeName], function(tx, data){
 						if (data.rows.length > 0) {
-							tx.executeSql("DROP TABLE " + storeName, [], function(){
+							tx.executeSql("DROP TABLE " + idbModules.util.quote(storeName), [], function(){
 								tx.executeSql("DELETE FROM __sys__ WHERE name = ?", [storeName], function(){
 								}, error);
 							}, error);
@@ -994,7 +996,7 @@
 			}, function(){
 				// dbVersions does not exist, so creating it
 				sysdb.transaction(function(tx){
-					tx.executeSql("CREATE TABLE IF NOT EXISTS 'dbVersions' (name VARCHAR(255), version INT);", [], function(){
+					tx.executeSql("CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);", [], function(){
 					}, function(){
 						idbModules.util.throwDOMException("Could not create table __sysdb__ to save DB versions");
 					});
@@ -1037,7 +1039,7 @@
 					}
 					
 					db.transaction(function(tx){
-						tx.executeSql("CREATE TABLE IF NOT EXISTS '__sys__' (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB)", [], function(){
+						tx.executeSql("CREATE TABLE IF NOT EXISTS __sys__ (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB)", [], function(){
 							tx.executeSql("SELECT * FROM __sys__", [], function(tx, data){
 								var e = idbModules.Event("success");
 								req.source = req.result = new idbModules.IDBDatabase(db, name, version, data);

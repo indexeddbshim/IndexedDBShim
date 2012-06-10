@@ -30,7 +30,7 @@
 		this.storeNames = typeof storeNames === "string" ? [storeNames] : storeNames;
 		for (var i = 0; i < this.storeNames.length; i++) {
 			if (db.objectStoreNames.indexOf(this.storeNames[i]) === -1) {
-				idbModules.util.throwDOMException(0, "The operation failed because the requested database object could not be found. For example, an object store did not exist but was being opened.", storeNames);
+				idbModules.util.throwDOMException(0, "The operation failed because the requested database object could not be found. For example, an object store did not exist but was being opened.", this.storeNames[i]);
 			}
 		}
 		this.__active = true;
