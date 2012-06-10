@@ -6,3 +6,8 @@ if (typeof window.openDatabase === 'undefined') {
 }
 
 var idbModules = {};
+
+var logger = {};
+logger.log = logger.error = logger.warn = logger.debug = function(){
+	console.log.apply(console, arguments);
+};

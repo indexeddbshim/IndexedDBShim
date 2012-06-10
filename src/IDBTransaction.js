@@ -14,7 +14,7 @@
 	var IDBTransaction = function(storeNames, mode, db){
 		if (typeof mode === "number") {
 			this.mode = mode;
-			(mode !== 2) && console.warn("Mode should be a string, but was specified as ", mode);
+			(mode !== 2) && logger.log("Mode should be a string, but was specified as ", mode);
 		} else if (typeof mode === "string") {
 			switch (mode) {
 				case "readonly":
@@ -45,7 +45,7 @@
 	
 	IDBTransaction.prototype.__executeRequests = function(){
 		if (this.__running && this.mode !== VERSION_TRANSACTION) {
-			console.warn("Looks like the request set is already running", this.mode);
+			logger.warn("Looks like the request set is already running", this.mode);
 			return;
 		}
 		this.__running = true;
@@ -92,14 +92,14 @@
 					executeRequest();
 				} catch (e) {
 					// TODO - Call transaction onerror
-					console.error("An exception occured in transaction", arguments);
+					logger.error("An exception occured in transaction", arguments);
 				}
 			}, function(){
 				// TODO - Call transaction onerror
-				console.error("An error in transaction", arguments);
+				logger.error("An error in transaction", arguments);
 			}, function(){
 				// TODO - Call transaction oncomplete 
-				console.log("Transaction completed", arguments);
+				logger.log("Transaction completed", arguments);
 			});
 		}, 1);
 	}

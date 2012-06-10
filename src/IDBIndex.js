@@ -36,7 +36,7 @@
 				// For this index, first create a column
 				me.__idbObjectStore.__storeProps.indexList = JSON.stringify(idxList);
 				var sql = ["ALTER TABLE", me.__idbObjectStore.name, "ADD", columnName, "BLOB"].join(" ");
-				console.log(sql);
+				logger.log(sql);
 				tx.executeSql(sql, [], function(tx, data){
 					// Once a column is created, put existing records into the index
 					tx.executeSql("SELECT * FROM " + me.__idbObjectStore.name, [], function(tx, data){
@@ -53,7 +53,7 @@
 									initIndexForRow(i + 1);
 								}
 							} else {
-								console.log("Updating the indexes in table", me.__idbObjectStore.__storeProps);
+								logger.log("Updating the indexes in table", me.__idbObjectStore.__storeProps);
 								tx.executeSql("UPDATE __sys__ set indexList = ? where name = ?", [me.__idbObjectStore.__storeProps.indexList, me.__idbObjectStore.name], function(){
 									me.__idbObjectStore.__setReadyState("createIndex", true);
 									success(me);
@@ -87,7 +87,7 @@
 				sql.push("AND", me.indexName, " = ?");
 				sqlValues.push(idbModules.Key.encode(key));
 			}
-			console.log("Trying to fetch data for Index", sql.join(" "), sqlValues);
+			logger.log("Trying to fetch data for Index", sql.join(" "), sqlValues);
 			tx.executeSql(sql.join(" "), sqlValues, function(tx, data){
 				var d;
 				if (typeof opType === "count") {

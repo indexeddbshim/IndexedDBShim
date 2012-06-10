@@ -20,7 +20,7 @@
 	 * @param {Object} error
 	 */
 	function throwDOMException(name, message, error){
-		console.log(name, message, error);
+		logger.log(name, message, error);
 		var e = new DOMException.constructor(0, message);
 		e.name = name;
 		e.message = message;

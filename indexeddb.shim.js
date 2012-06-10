@@ -8,6 +8,11 @@
 	
 	var idbModules = {};
 	
+	var logger = {};
+	logger.log = logger.error = logger.warn = logger.debug = function(){
+		//console.log.apply(log, arguments);
+	};
+	
 	(function(idbModules){
 		/**
 		 * A utility method to callback onsuccess, onerror, etc as soon as the calling function's context is over
@@ -30,7 +35,7 @@
 		 * @param {Object} error
 		 */
 		function throwDOMException(name, message, error){
-			console.log(name, message, error);
+			logger.log(name, message, error);
 			var e = new DOMException.constructor(0, message);
 			e.name = name;
 			e.message = message;
@@ -232,18 +237,18 @@
 			} else {
 				sql.push("LIMIT 1 OFFSET " + me.__offset);
 			}
-			console.log(sql.join(" "), sqlValues);
+			logger.log(sql.join(" "), sqlValues);
 			tx.executeSql(sql.join(" "), sqlValues, function(tx, data){
 				if (data.rows.length === 1) {
 					var key = idbModules.Key.decode(data.rows.item(0)[me.__keyColumnName]);
 					var val = me.__valueColumnName === "value" ? idbModules.Sca.decode(data.rows.item(0)[me.__valueColumnName]) : idbModules.Key.decode(data.rows.item(0)[me.__valueColumnName]);
 					success(key, val);
 				} else {
-					console.log("Reached end of cursors");
+					logger.log("Reached end of cursors");
 					success(undefined, undefined);
 				}
 			}, function(tx, data){
-				console.log("Could not execute Cursor.continue");
+				logger.log("Could not execute Cursor.continue");
 				error(data);
 			});
 		};
@@ -283,7 +288,7 @@
 			return this.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
 				me.__find(undefined, tx, function(key, value){
 					var sql = "UPDATE " + me.__idbObjectStore.name + " SET value = ? WHERE key = ?";
-					console.log(sql, valueToUpdate, key);
+					logger.log(sql, valueToUpdate, key);
 					tx.executeSql(sql, [idbModules.Sca.encode(valueToUpdate), idbModules.Key.encode(key)], function(tx, data){
 						if (data.rowsAffected === 1) {
 							success(key);
@@ -304,7 +309,7 @@
 			return this.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
 				me.__find(undefined, tx, function(key, value){
 					var sql = "DELETE FROM  " + me.__idbObjectStore.name + " WHERE key = ?";
-					console.log(sql, key);
+					logger.log(sql, key);
 					tx.executeSql(sql, [idbModules.Key.encode(key)], function(tx, data){
 						if (data.rowsAffected === 1) {
 							success(undefined);
@@ -361,7 +366,7 @@
 					// For this index, first create a column
 					me.__idbObjectStore.__storeProps.indexList = JSON.stringify(idxList);
 					var sql = ["ALTER TABLE", me.__idbObjectStore.name, "ADD", columnName, "BLOB"].join(" ");
-					console.log(sql);
+					logger.log(sql);
 					tx.executeSql(sql, [], function(tx, data){
 						// Once a column is created, put existing records into the index
 						tx.executeSql("SELECT * FROM " + me.__idbObjectStore.name, [], function(tx, data){
@@ -378,7 +383,7 @@
 										initIndexForRow(i + 1);
 									}
 								} else {
-									console.log("Updating the indexes in table", me.__idbObjectStore.__storeProps);
+									logger.log("Updating the indexes in table", me.__idbObjectStore.__storeProps);
 									tx.executeSql("UPDATE __sys__ set indexList = ? where name = ?", [me.__idbObjectStore.__storeProps.indexList, me.__idbObjectStore.name], function(){
 										me.__idbObjectStore.__setReadyState("createIndex", true);
 										success(me);
@@ -412,7 +417,7 @@
 					sql.push("AND", me.indexName, " = ?");
 					sqlValues.push(idbModules.Key.encode(key));
 				}
-				console.log("Trying to fetch data for Index", sql.join(" "), sqlValues);
+				logger.log("Trying to fetch data for Index", sql.join(" "), sqlValues);
 				tx.executeSql(sql.join(" "), sqlValues, function(tx, data){
 					var d;
 					if (typeof opType === "count") {
@@ -488,7 +493,7 @@
 			if (ready) {
 				callback();
 			} else {
-				console.log("Waiting for to be ready", key);
+				logger.log("Waiting for to be ready", key);
 				var me = this;
 				window.setTimeout(function(){
 					me.__waitForReady(callback, key);
@@ -504,7 +509,7 @@
 			var me = this;
 			this.__waitForReady(function(){
 				if (me.__storeProps) {
-					//console.log("Store properties - cached", me.__storeProps);
+					//logger.log("Store properties - cached", me.__storeProps);
 					callback(me.__storeProps);
 				} else {
 					tx.executeSql("SELECT * FROM __sys__ where name = ?", [me.name], function(tx, data){
@@ -517,7 +522,7 @@
 								"autoInc": data.rows.item(0).autoInc,
 								"keyPath": data.rows.item(0).keyPath
 							}
-							//console.log("Store properties", me.__storeProps);
+							//logger.log("Store properties", me.__storeProps);
 							callback(me.__storeProps);
 						}
 					}, function(){
@@ -616,7 +621,7 @@
 			
 			sql = sqlStart.join(" ") + sqlEnd.join(" ");
 			
-			console.log("SQL for adding", sql, sqlValues);
+			logger.log("SQL for adding", sql, sqlValues);
 			tx.executeSql(sql, sqlValues, function(tx, data){
 				success(primaryKey);
 			}, function(tx, err){
@@ -640,7 +645,7 @@
 					// First try to delete if the record exists
 					var sql = "DELETE FROM " + me.name + " where key = ?";
 					tx.executeSql(sql, [idbModules.Key.encode(primaryKey)], function(tx, data){
-						console.log("Did the row with the", primaryKey, "exist? ", data.rowsAffected);
+						logger.log("Did the row with the", primaryKey, "exist? ", data.rowsAffected);
 						me.__insertData(tx, value, primaryKey, success, error);
 					}, function(tx, err){
 						error(err);
@@ -655,13 +660,13 @@
 			return me.transaction.__addToTransactionQueue(function(tx, args, success, error){
 				me.__waitForReady(function(){
 					var primaryKey = idbModules.Key.encode(key);
-					console.log("Fetching", me.name, primaryKey);
+					logger.log("Fetching", me.name, primaryKey);
 					tx.executeSql("SELECT * FROM " + me.name + " where key = ?", [primaryKey], function(tx, data){
-						console.log("Fetched data", data.rows.item(0));
+						logger.log("Fetched data", data.rows.item(0));
 						try {
 							success(idbModules.Sca.decode(data.rows.item(0).value));
 						} catch (e) {
-							console.log(e)
+							logger.log(e)
 							// If no result is returned, or error occurs when parsing JSON
 							success(undefined);
 						}
@@ -678,9 +683,9 @@
 			return me.transaction.__addToTransactionQueue(function(tx, args, success, error){
 				me.__waitForReady(function(){
 					var primaryKey = idbModules.Key.encode(key);
-					console.log("Fetching", me.name, primaryKey);
+					logger.log("Fetching", me.name, primaryKey);
 					tx.executeSql("DELETE FROM " + me.name + " where key = ?", [primaryKey], function(tx, data){
-						console.log("Deleted from database", data.rowsAffected);
+						logger.log("Deleted from database", data.rowsAffected);
 						success();
 					}, function(tx, err){
 						error(err);
@@ -694,9 +699,9 @@
 			return me.transaction.__addToTransactionQueue(function(tx, args, success, error){
 				me.__waitForReady(function(){
 					var primaryKey = idbModules.Key.encode(key);
-					console.log("Fetching", me.name, primaryKey);
+					logger.log("Fetching", me.name, primaryKey);
 					tx.executeSql("DELETE FROM " + me.name, [], function(tx, data){
-						console.log("Cleared all records from database", data.rowsAffected);
+						logger.log("Cleared all records from database", data.rowsAffected);
 						success();
 					}, function(tx, err){
 						error(err);
@@ -769,7 +774,7 @@
 		var IDBTransaction = function(storeNames, mode, db){
 			if (typeof mode === "number") {
 				this.mode = mode;
-				(mode !== 2) && console.warn("Mode should be a string, but was specified as ", mode);
+				(mode !== 2) && logger.log("Mode should be a string, but was specified as ", mode);
 			} else if (typeof mode === "string") {
 				switch (mode) {
 					case "readonly":
@@ -800,7 +805,7 @@
 		
 		IDBTransaction.prototype.__executeRequests = function(){
 			if (this.__running && this.mode !== VERSION_TRANSACTION) {
-				console.warn("Looks like the request set is already running", this.mode);
+				logger.warn("Looks like the request set is already running", this.mode);
 				return;
 			}
 			this.__running = true;
@@ -847,14 +852,14 @@
 						executeRequest();
 					} catch (e) {
 						// TODO - Call transaction onerror
-						console.error("An exception occured in transaction", arguments);
+						logger.error("An exception occured in transaction", arguments);
 					}
 				}, function(){
 					// TODO - Call transaction onerror
-					console.error("An error in transaction", arguments);
+					logger.error("An error in transaction", arguments);
 				}, function(){
 					// TODO - Call transaction oncomplete 
-					console.log("Transaction completed", arguments);
+					logger.log("Transaction completed", arguments);
 				});
 			}, 1);
 		}
@@ -925,7 +930,7 @@
 				}
 				//key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
 				var sql = ["CREATE TABLE", storeName, "(key BLOB", createOptions.autoIncrement ? ", inc INTEGER PRIMARY KEY AUTOINCREMENT" : "PRIMARY KEY", ", value BLOB)"].join(" ");
-				console.log(sql);
+				logger.log(sql);
 				tx.executeSql(sql, [], function(tx, data){
 					tx.executeSql("INSERT INTO __sys__ VALUES (?,?,?,?)", [storeName, createOptions.keyPath, createOptions.autoIncrement ? true : false, "{}"], function(){
 						result.__setReadyState("createObjectStore", true);
