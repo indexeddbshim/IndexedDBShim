@@ -30,6 +30,9 @@
 	
 	idbModules["util"] = {
 		"throwDOMException": throwDOMException,
-		"callback": callback
+		"callback": callback,
+		"quote" : function(arg){
+			return "'" + arg + "'";
+		}
 	}
 })(idbModules);

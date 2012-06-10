@@ -31,7 +31,7 @@
 				idbModules.util.throwDOMException(0, "Invalid State error", me.transaction);
 			}
 			//key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
-			var sql = ["CREATE TABLE", storeName, "(key BLOB", createOptions.autoIncrement ? ", inc INTEGER PRIMARY KEY AUTOINCREMENT" : "PRIMARY KEY", ", value BLOB)"].join(" ");
+			var sql = ["CREATE TABLE", idbModules.util.quote(storeName), "(key BLOB", createOptions.autoIncrement ? ", inc INTEGER PRIMARY KEY AUTOINCREMENT" : "PRIMARY KEY", ", value BLOB)"].join(" ");
 			logger.log(sql);
 			tx.executeSql(sql, [], function(tx, data){
 				tx.executeSql("INSERT INTO __sys__ VALUES (?,?,?,?)", [storeName, createOptions.keyPath, createOptions.autoIncrement ? true : false, "{}"], function(){
@@ -63,7 +63,7 @@
 			me.__db.transaction(function(tx){
 				tx.executeSql("SELECT * FROM __sys__ where name = ?", [storeName], function(tx, data){
 					if (data.rows.length > 0) {
-						tx.executeSql("DROP TABLE " + storeName, [], function(){
+						tx.executeSql("DROP TABLE " + idbModules.util.quote(storeName), [], function(){
 							tx.executeSql("DELETE FROM __sys__ WHERE name = ?", [storeName], function(){
 							}, error);
 						}, error);

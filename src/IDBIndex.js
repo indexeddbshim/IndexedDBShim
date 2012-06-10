@@ -35,17 +35,17 @@
 				};
 				// For this index, first create a column
 				me.__idbObjectStore.__storeProps.indexList = JSON.stringify(idxList);
-				var sql = ["ALTER TABLE", me.__idbObjectStore.name, "ADD", columnName, "BLOB"].join(" ");
+				var sql = ["ALTER TABLE", idbModules.util.quote(me.__idbObjectStore.name), "ADD", columnName, "BLOB"].join(" ");
 				logger.log(sql);
 				tx.executeSql(sql, [], function(tx, data){
 					// Once a column is created, put existing records into the index
-					tx.executeSql("SELECT * FROM " + me.__idbObjectStore.name, [], function(tx, data){
+					tx.executeSql("SELECT * FROM " + idbModules.util.quote(me.__idbObjectStore.name), [], function(tx, data){
 						(function initIndexForRow(i){
 							if (i < data.rows.length) {
 								try {
 									var value = idbModules.Sca.decode(data.rows.item(i).value);
 									var indexKey = eval("value['" + keyPath + "']");
-									tx.executeSql("UPDATE " + me.__idbObjectStore.name + " set " + columnName + " = ? where key = ?", [idbModules.Key.encode(indexKey), data.rows.item(i).key], function(tx, data){
+									tx.executeSql("UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " set " + columnName + " = ? where key = ?", [idbModules.Key.encode(indexKey), data.rows.item(i).key], function(tx, data){
 										initIndexForRow(i + 1);
 									}, error);
 								} catch (e) {
@@ -81,7 +81,7 @@
 	IDBIndex.prototype.__fetchIndexData = function(key, opType){
 		var me = this;
 		return me.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
-			var sql = ["SELECT * FROM ", me.__idbObjectStore.name, " WHERE", me.indexName, "NOT NULL"];
+			var sql = ["SELECT * FROM ", idbModules.util.quote(me.__idbObjectStore.name), " WHERE", me.indexName, "NOT NULL"];
 			var sqlValues = [];
 			if (typeof key !== "undefined") {
 				sql.push("AND", me.indexName, " = ?");

@@ -10,7 +10,7 @@
 	
 	var logger = {};
 	logger.log = logger.error = logger.warn = logger.debug = function(){
-		//console.log.apply(log, arguments);
+		//console.log.apply(console, arguments);
 	};
 	
 	(function(idbModules){
@@ -365,7 +365,7 @@
 					};
 					// For this index, first create a column
 					me.__idbObjectStore.__storeProps.indexList = JSON.stringify(idxList);
-					var sql = ["ALTER TABLE", me.__idbObjectStore.name, "ADD", columnName, "BLOB"].join(" ");
+					var sql = ["ALTER TABLE", idbModules.util.quote(me.__idbObjectStore.name), "ADD", columnName, "BLOB"].join(" ");
 					logger.log(sql);
 					tx.executeSql(sql, [], function(tx, data){
 						// Once a column is created, put existing records into the index
@@ -929,7 +929,7 @@
 					idbModules.util.throwDOMException(0, "Invalid State error", me.transaction);
 				}
 				//key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
-				var sql = ["CREATE TABLE", storeName, "(key BLOB", createOptions.autoIncrement ? ", inc INTEGER PRIMARY KEY AUTOINCREMENT" : "PRIMARY KEY", ", value BLOB)"].join(" ");
+				var sql = ["CREATE TABLE", idbModules.util.quote(storeName), "(key BLOB", createOptions.autoIncrement ? ", inc INTEGER PRIMARY KEY AUTOINCREMENT" : "PRIMARY KEY", ", value BLOB)"].join(" ");
 				logger.log(sql);
 				tx.executeSql(sql, [], function(tx, data){
 					tx.executeSql("INSERT INTO __sys__ VALUES (?,?,?,?)", [storeName, createOptions.keyPath, createOptions.autoIncrement ? true : false, "{}"], function(){
@@ -994,7 +994,7 @@
 			}, function(){
 				// dbVersions does not exist, so creating it
 				sysdb.transaction(function(tx){
-					tx.executeSql("CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);", [], function(){
+					tx.executeSql("CREATE TABLE IF NOT EXISTS 'dbVersions' (name VARCHAR(255), version INT);", [], function(){
 					}, function(){
 						idbModules.util.throwDOMException("Could not create table __sysdb__ to save DB versions");
 					});
@@ -1037,7 +1037,7 @@
 					}
 					
 					db.transaction(function(tx){
-						tx.executeSql("CREATE TABLE IF NOT EXISTS __sys__ (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB)", [], function(){
+						tx.executeSql("CREATE TABLE IF NOT EXISTS '__sys__' (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB)", [], function(){
 							tx.executeSql("SELECT * FROM __sys__", [], function(tx, data){
 								var e = idbModules.Event("success");
 								req.source = req.result = new idbModules.IDBDatabase(db, name, version, data);

@@ -16,7 +16,7 @@ var buildIndexedDB = (function(){
 					else callback();
 				}
 				document.head.appendChild(x);
-			}(1));
+			}(0));
 		},
 		concatScripts: function(callback){
 			var scripts = ["(function(){"];

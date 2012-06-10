@@ -27,7 +27,7 @@
 	
 	IDBCursor.prototype.__find = function(key, tx, success, error){
 		var me = this;
-		var sql = ["SELECT * FROM ", me.__idbObjectStore.name];
+		var sql = ["SELECT * FROM ",idbModules.util.quote( me.__idbObjectStore.name)];
 		var sqlValues = [];
 		sql.push("WHERE ", me.__keyColumnName, " NOT NULL");
 		if (me.__range && (me.__range.lower || me.__range.upper)) {
@@ -101,7 +101,7 @@
 		var me = this;
 		return this.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
 			me.__find(undefined, tx, function(key, value){
-				var sql = "UPDATE " + me.__idbObjectStore.name + " SET value = ? WHERE key = ?";
+				var sql = "UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " SET value = ? WHERE key = ?";
 				logger.log(sql, valueToUpdate, key);
 				tx.executeSql(sql, [idbModules.Sca.encode(valueToUpdate), idbModules.Key.encode(key)], function(tx, data){
 					if (data.rowsAffected === 1) {
@@ -122,7 +122,7 @@
 		var me = this;
 		return this.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
 			me.__find(undefined, tx, function(key, value){
-				var sql = "DELETE FROM  " + me.__idbObjectStore.name + " WHERE key = ?";
+				var sql = "DELETE FROM  " + idbModules.util.quote(me.__idbObjectStore.name) + " WHERE key = ?";
 				logger.log(sql, key);
 				tx.executeSql(sql, [idbModules.Key.encode(key)], function(tx, data){
 					if (data.rowsAffected === 1) {

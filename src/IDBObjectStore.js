@@ -155,7 +155,7 @@
 				error(e);
 			}
 		}
-		var sqlStart = ["INSERT INTO ", this.name, "("];
+		var sqlStart = ["INSERT INTO ", idbModules.util.quote(this.name), "("];
 		var sqlEnd = [" VALUES ("];
 		var sqlValues = [];
 		for (key in paramMap) {
@@ -192,7 +192,7 @@
 		return me.transaction.__addToTransactionQueue(function(tx, args, success, error){
 			me.__deriveKey(tx, value, key, function(primaryKey){
 				// First try to delete if the record exists
-				var sql = "DELETE FROM " + me.name + " where key = ?";
+				var sql = "DELETE FROM " + idbModules.util.quote(me.name) + " where key = ?";
 				tx.executeSql(sql, [idbModules.Key.encode(primaryKey)], function(tx, data){
 					logger.log("Did the row with the", primaryKey, "exist? ", data.rowsAffected);
 					me.__insertData(tx, value, primaryKey, success, error);
@@ -210,7 +210,7 @@
 			me.__waitForReady(function(){
 				var primaryKey = idbModules.Key.encode(key);
 				logger.log("Fetching", me.name, primaryKey);
-				tx.executeSql("SELECT * FROM " + me.name + " where key = ?", [primaryKey], function(tx, data){
+				tx.executeSql("SELECT * FROM " + idbModules.util.quote(me.name) + " where key = ?", [primaryKey], function(tx, data){
 					logger.log("Fetched data", data.rows.item(0));
 					try {
 						success(idbModules.Sca.decode(data.rows.item(0).value));
@@ -233,7 +233,7 @@
 			me.__waitForReady(function(){
 				var primaryKey = idbModules.Key.encode(key);
 				logger.log("Fetching", me.name, primaryKey);
-				tx.executeSql("DELETE FROM " + me.name + " where key = ?", [primaryKey], function(tx, data){
+				tx.executeSql("DELETE FROM " + idbModules.util.quote(me.name) + " where key = ?", [primaryKey], function(tx, data){
 					logger.log("Deleted from database", data.rowsAffected);
 					success();
 				}, function(tx, err){
@@ -249,7 +249,7 @@
 			me.__waitForReady(function(){
 				var primaryKey = idbModules.Key.encode(key);
 				logger.log("Fetching", me.name, primaryKey);
-				tx.executeSql("DELETE FROM " + me.name, [], function(tx, data){
+				tx.executeSql("DELETE FROM " + idbModules.util.quote(me.name), [], function(tx, data){
 					logger.log("Cleared all records from database", data.rowsAffected);
 					success();
 				}, function(tx, err){
@@ -263,7 +263,7 @@
 		var me = this;
 		return me.transaction.__addToTransactionQueue(function(tx, args, success, error){
 			me.__waitForReady(function(){
-				var sql = "SELECT * FROM " + me.name + ((typeof key !== "undefined") ? " WHERE key = ?" : "");
+				var sql = "SELECT * FROM " + idbModules.util.quote(me.name) + ((typeof key !== "undefined") ? " WHERE key = ?" : "");
 				var sqlValues = [];
 				(typeof key !== "undefined") && sqlValues.push(idbModules.Key.encode(key))
 				tx.executeSql(sql, sqlValues, function(tx, data){
