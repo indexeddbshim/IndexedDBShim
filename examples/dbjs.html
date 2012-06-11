@@ -1,0 +1,94 @@
+<html>
+    <head>
+        <title>DB.JS on IndexedDB Shim</title>
+        <script type = "text/javascript" src = "/IndexedDBShim/indexeddb.shim.js">
+        </script>
+        <script type = "text/javascript">
+            var server;
+            window.shimIndexedDB && window.shimIndexedDB.__useShim();
+            function printResult(){
+            	write("Executed : ", arguments);
+            }
+        </script>
+        <script src = "https://raw.github.com/aaronpowell/db.js/master/src/db.js" type = "text/javascript">
+        </script>
+    </head>
+    <body>
+        <div class = "splash">
+            <h1><img src = "images/trialtool.png" style ="vertical-align:middle; height : 1.5em">PouchDB with IndexedDB Shim</h1>
+            <p>
+                <ul>
+                    <li>
+                        DB.JS DB - <a href = "http://aaronpowell.github.com/db.js/">http://aaronpowell.github.com/db.js/</a>
+                    </li>
+                    <li>
+                        IndexedDB Polyfill - <a href = "http://nparashuram.com/IndexedDBShim/">http://nparashuram.com/IndexedDBShim/</a>
+                    </li>
+                </ul>
+            </p>
+        </div>
+        <ul>
+            <li class="example-set" id = "pouchExamples">
+                <a class = "example-set-name" href = "#">DBJS Examples</a>
+                <ul>
+                    <li class = "example" id = "createDB">
+                        <a class = "example-name" href = "#">Create Database</a>
+                        <div class = "example-docs">
+                        </div>
+                        <script type="text/javascript">
+                            db.open({
+                            	server: 'my-app',
+                            	version: 1,
+                            	schema: {
+                            		people: {
+                            			key: {
+                            				keyPath: 'id',
+                            				autoIncrement: true
+                            			}
+                            		}
+                            	}
+                            }).done(function(s){
+                            	server = s;
+                            	write("Server Opened");
+                            	/* Code for ${db.open} */
+                            });
+                        </script>
+                    </li>
+                    <li class = "example" insertAt = "db.open" depends = "createDB">
+                        <a class = "example-name">Add Item</a>
+                        <div class = "example-docs">
+                        </div>
+                        <script type="text/javascript">
+                            server.people.add({
+                            	firstName: 'name',
+                            	num: parseInt(Math.random() * 10) % 2
+                            }).done(function(res){
+                            	write(res);
+                            });
+                        </script>
+                    </li>
+                    <li class = "example" insertAt = "db.open" depends = "createDB">
+                        <a class = "example-name">Remove Item</a>
+                        <div class = "example-docs">
+                        </div>
+                        <script type="text/javascript">
+                            server.people.remove(1).done(function(item){
+                            	write(item);
+                            });
+                        </script>
+                    </li>
+                    <li class = "example" insertAt = "db.open" depends = "createDB">
+                        <a class = "example-name">Query Item</a>
+                        <div class = "example-docs">
+                        </div>
+                        <script type="text/javascript">
+                            server.people.query('num', '1').execute().done(function(results){
+                            	write(results);
+                            });
+                        </script>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </body>
+</html>
