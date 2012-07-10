@@ -222,12 +222,12 @@
 				sql.push("AND");
 				if (me.__range.lower) {
 					sql.push("key " + (me.__range.lowerOpen ? "<=" : "<") + " ?");
-					sqlValues.push(me.__range.lower);
+					sqlValues.push(idbModules.Key.encode(me.__range.lower));
 				}
 				(me.__range.lower && me.__range.upper) && sql.push("AND");
 				if (me.__range.upper) {
 					sql.push("key " + (me.__range.upperOpen ? ">=" : ">") + " ?");
-					sqlValues.push(me.__range.upper);
+					sqlValues.push(idbModules.Key.encode(me.__range.upper));
 				}
 			}
 			sql.push(" ORDER BY ", me.__keyColumnName);
