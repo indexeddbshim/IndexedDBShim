@@ -2,38 +2,50 @@
 	/**
 	 * Encodes the keys and values based on their types. This is required to maintain collations
 	 */
+	var collations = ["", "number", "string", "boolean", "object", "undefined"];
+	var getGenericEncoder = function(){
+		return {
+			"encode": function(key){
+				return collations.indexOf(typeof key) + "-" + JSON.stringify(key);
+			},
+			"decode": function(key){
+				if (typeof key === "undefined") {
+					return undefined;
+				} else {
+					return JSON.parse(key.substring(2));
+				}
+			}
+		}
+	};
+	
+	var types = {
+		"number": getGenericEncoder("number"), // decoder will fail for NaN
+		"boolean": getGenericEncoder(),
+		"object": getGenericEncoder(),
+		"string": {
+			"encode": function(key){
+				return collations.indexOf("string") + "-" + key;
+			},
+			"decode": function(key){
+				return "" + key.substring(2);
+			}
+		},
+		"undefined": {
+			"encode": function(key){
+				return collations.indexOf("undefined") + "-undefined";
+			},
+			"decode": function(key){
+				return undefined;
+			}
+		}
+	}
 	var Key = (function(){
 		return {
 			encode: function(key){
-				// TODO The keys should be numbers, as they need to be compared
-				var prefix = "5";
-				switch (typeof key) {
-					case "number":
-						prefix = 1;
-						break;
-					case "string":
-						prefix = 2;
-						break;
-					case "boolean":
-						prefix = 3;
-						break;
-					case "object":
-						prefix = 4;
-						break;
-					case "undefined":
-						prefix = 5;
-						break;
-					default:
-						prefix = 6;
-						break;
-				}
-				return prefix + "-" + JSON.stringify(key);
+				return types[typeof key].encode(key);
 			},
 			decode: function(key){
-				if (typeof key === "undefined" || key === null) {
-					return key;
-				}
-				return JSON.parse(key.substring(2));
+				return types[collations[key.substring(0, 1)]].decode(key);
 			}
 		}
 	}());

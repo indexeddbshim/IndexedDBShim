@@ -27,18 +27,18 @@
 	
 	IDBCursor.prototype.__find = function(key, tx, success, error){
 		var me = this;
-		var sql = ["SELECT * FROM ",idbModules.util.quote( me.__idbObjectStore.name)];
+		var sql = ["SELECT * FROM ", idbModules.util.quote(me.__idbObjectStore.name)];
 		var sqlValues = [];
 		sql.push("WHERE ", me.__keyColumnName, " NOT NULL");
 		if (me.__range && (me.__range.lower || me.__range.upper)) {
 			sql.push("AND");
 			if (me.__range.lower) {
-				sql.push("key " + (me.__range.lowerOpen ? "<=" : "<") + " ?");
+				sql.push(me.__keyColumnName + (me.__range.lowerOpen ? " >=" : " >") + " ?");
 				sqlValues.push(idbModules.Key.encode(me.__range.lower));
 			}
 			(me.__range.lower && me.__range.upper) && sql.push("AND");
 			if (me.__range.upper) {
-				sql.push("key " + (me.__range.upperOpen ? ">=" : ">") + " ?");
+				sql.push(me.__keyColumnName + (me.__range.upperOpen ? " < " : " <= ") + " ?");
 				sqlValues.push(idbModules.Key.encode(me.__range.upper));
 			}
 		}

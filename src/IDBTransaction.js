@@ -91,15 +91,15 @@
 					};
 					executeRequest();
 				} catch (e) {
-					// TODO - Call transaction onerror
 					logger.error("An exception occured in transaction", arguments);
+					typeof me.onerror === "function" && me.onerror();
 				}
 			}, function(){
-				// TODO - Call transaction onerror
 				logger.error("An error in transaction", arguments);
+				typeof me.onerror === "function" && me.onerror();
 			}, function(){
-				// TODO - Call transaction oncomplete 
 				logger.log("Transaction completed", arguments);
+				typeof me.oncomplete === "function" && me.oncomplete();
 			});
 		}, 1);
 	}
