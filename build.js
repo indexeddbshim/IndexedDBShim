@@ -15,7 +15,7 @@ var buildIndexedDB = (function(){
 					if (i < moduleList.length - 1) addScript(i + 1);
 					else callback();
 				}
-				document.head.appendChild(x);
+				document.getElementsByTagName('head').appendChild(x);
 			}(0));
 		},
 		concatScripts: function(callback){
