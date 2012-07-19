@@ -5,5 +5,5 @@ var idbModules = {};
 
 var logger = {};
 logger.log = logger.error = logger.warn = logger.debug = function(){
-	console.log.apply(console, arguments);
+  console.log.apply(console, arguments);
 };

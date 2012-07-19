@@ -1,0 +1,4 @@
+.project
+.settings
+dist
+node_modules
