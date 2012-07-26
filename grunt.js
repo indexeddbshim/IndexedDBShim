@@ -5,7 +5,10 @@ module.exports = function(grunt) {
   grunt.initConfig({
     pkg: '<json:package.json>',
     meta: {
-      banner: '/*! <%= pkg.name %> */'
+      banner: '/*!\n' +
+              ' * IndexedDB Polyfill\n' +
+              ' *  - original by axemclion (https://github.com/axemclion/IndexedDBShim/)\n' +
+              ' */'
     },
     lint: {
       files: ['grunt.js', 'src/**/*.js', 'test/**/*.js']
@@ -61,6 +64,9 @@ module.exports = function(grunt) {
         browser: true//browser environment
       },
       globals: {
+        // Build defines.
+        DEBUG: true,
+
         // Shim.
         console: true,
         DOMException: true,
@@ -89,7 +95,9 @@ module.exports = function(grunt) {
         unescape: true
       }
     },
-    uglify: {}
+    uglify: {
+      mangle: { defines: { DEBUG: ['name', false] } }
+    }
   });
 
   // Default task.

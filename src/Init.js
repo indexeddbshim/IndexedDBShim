@@ -3,7 +3,13 @@
  */
 var idbModules = {};
 
-var logger = {};
-logger.log = logger.error = logger.warn = logger.debug = function(){
-  console.log.apply(console, arguments);
-};
+if('undefined' === typeof DEBUG) {
+  DEBUG = true;
+}
+
+if(DEBUG) {
+  var logger = {};
+  logger.log = logger.error = logger.warn = logger.debug = function(){
+    console.log.apply(console, arguments);
+  };
+}

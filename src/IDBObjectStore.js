@@ -42,7 +42,7 @@
     if (ready) {
       callback();
     } else {
-      logger.log("Waiting for to be ready", key);
+      DEBUG && logger.log("Waiting for to be ready", key);
       var me = this;
       window.setTimeout(function(){
         me.__waitForReady(callback, key);
@@ -58,7 +58,7 @@
     var me = this;
     this.__waitForReady(function(){
       if (me.__storeProps) {
-        //logger.log("Store properties - cached", me.__storeProps);
+        //DEBUG && logger.log("Store properties - cached", me.__storeProps);
         callback(me.__storeProps);
       } else {
         tx.executeSql("SELECT * FROM __sys__ where name = ?", [me.name], function(tx, data){
@@ -71,7 +71,7 @@
               "autoInc": data.rows.item(0).autoInc,
               "keyPath": data.rows.item(0).keyPath
             };
-            //logger.log("Store properties", me.__storeProps);
+            //DEBUG && logger.log("Store properties", me.__storeProps);
             callback(me.__storeProps);
           }
         }, function(){
@@ -172,7 +172,7 @@
     
     var sql = sqlStart.join(" ") + sqlEnd.join(" ");
     
-    logger.log("SQL for adding", sql, sqlValues);
+    DEBUG && logger.log("SQL for adding", sql, sqlValues);
     tx.executeSql(sql, sqlValues, function(tx, data){
       success(primaryKey);
     }, function(tx, err){
@@ -196,7 +196,7 @@
         // First try to delete if the record exists
         var sql = "DELETE FROM " + idbModules.util.quote(me.name) + " where key = ?";
         tx.executeSql(sql, [idbModules.Key.encode(primaryKey)], function(tx, data){
-          logger.log("Did the row with the", primaryKey, "exist? ", data.rowsAffected);
+          DEBUG && logger.log("Did the row with the", primaryKey, "exist? ", data.rowsAffected);
           me.__insertData(tx, value, primaryKey, success, error);
         }, function(tx, err){
           error(err);
@@ -211,9 +211,9 @@
     return me.transaction.__addToTransactionQueue(function(tx, args, success, error){
       me.__waitForReady(function(){
         var primaryKey = idbModules.Key.encode(key);
-        logger.log("Fetching", me.name, primaryKey);
+        DEBUG && logger.log("Fetching", me.name, primaryKey);
         tx.executeSql("SELECT * FROM " + idbModules.util.quote(me.name) + " where key = ?", [primaryKey], function(tx, data){
-          logger.log("Fetched data", data);
+          DEBUG && logger.log("Fetched data", data);
           try {
             // Opera can't deal with the try-catch here.
             if(0 === data.rows.length) {
@@ -222,7 +222,7 @@
 
             success(idbModules.Sca.decode(data.rows.item(0).value));
           } catch (e) {
-            logger.log(e);
+            DEBUG && logger.log(e);
             // If no result is returned, or error occurs when parsing JSON
             success(undefined);
           }
@@ -239,9 +239,9 @@
     return me.transaction.__addToTransactionQueue(function(tx, args, success, error){
       me.__waitForReady(function(){
         var primaryKey = idbModules.Key.encode(key);
-        logger.log("Fetching", me.name, primaryKey);
+        DEBUG && logger.log("Fetching", me.name, primaryKey);
         tx.executeSql("DELETE FROM " + idbModules.util.quote(me.name) + " where key = ?", [primaryKey], function(tx, data){
-          logger.log("Deleted from database", data.rowsAffected);
+          DEBUG && logger.log("Deleted from database", data.rowsAffected);
           success();
         }, function(tx, err){
           error(err);
@@ -255,9 +255,9 @@
     return me.transaction.__addToTransactionQueue(function(tx, args, success, error){
       me.__waitForReady(function(){
         var primaryKey = idbModules.Key.encode(undefined);
-        logger.log("Fetching", me.name, primaryKey);
+        DEBUG && logger.log("Fetching", me.name, primaryKey);
         tx.executeSql("DELETE FROM " + idbModules.util.quote(me.name), [], function(tx, data){
-          logger.log("Cleared all records from database", data.rowsAffected);
+          DEBUG && logger.log("Cleared all records from database", data.rowsAffected);
           success();
         }, function(tx, err){
           error(err);

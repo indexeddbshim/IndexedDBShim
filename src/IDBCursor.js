@@ -53,18 +53,18 @@
     } else {
       sql.push("LIMIT 1 OFFSET " + me.__offset);
     }
-    logger.log(sql.join(" "), sqlValues);
+    DEBUG && logger.log(sql.join(" "), sqlValues);
     tx.executeSql(sql.join(" "), sqlValues, function(tx, data){
       if (data.rows.length === 1) {
         var key = idbModules.Key.decode(data.rows.item(0)[me.__keyColumnName]);
         var val = me.__valueColumnName === "value" ? idbModules.Sca.decode(data.rows.item(0)[me.__valueColumnName]) : idbModules.Key.decode(data.rows.item(0)[me.__valueColumnName]);
         success(key, val);
       } else {
-        logger.log("Reached end of cursors");
+        DEBUG && logger.log("Reached end of cursors");
         success(undefined, undefined);
       }
     }, function(tx, data){
-      logger.log("Could not execute Cursor.continue");
+      DEBUG && logger.log("Could not execute Cursor.continue");
       error(data);
     });
   };
@@ -104,7 +104,7 @@
     return this.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
       me.__find(undefined, tx, function(key, value){
         var sql = "UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " SET value = ? WHERE key = ?";
-        logger.log(sql, valueToUpdate, key);
+        DEBUG && logger.log(sql, valueToUpdate, key);
         tx.executeSql(sql, [idbModules.Sca.encode(valueToUpdate), idbModules.Key.encode(key)], function(tx, data){
           if (data.rowsAffected === 1) {
             success(key);
@@ -125,7 +125,7 @@
     return this.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
       me.__find(undefined, tx, function(key, value){
         var sql = "DELETE FROM  " + idbModules.util.quote(me.__idbObjectStore.name) + " WHERE key = ?";
-        logger.log(sql, key);
+        DEBUG && logger.log(sql, key);
         tx.executeSql(sql, [idbModules.Key.encode(key)], function(tx, data){
           if (data.rowsAffected === 1) {
             success(undefined);

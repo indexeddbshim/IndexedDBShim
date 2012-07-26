@@ -32,7 +32,7 @@
       }
       //key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
       var sql = ["CREATE TABLE", idbModules.util.quote(storeName), "(key BLOB", createOptions.autoIncrement ? ", inc INTEGER PRIMARY KEY AUTOINCREMENT" : "PRIMARY KEY", ", value BLOB)"].join(" ");
-      logger.log(sql);
+      DEBUG && logger.log(sql);
       tx.executeSql(sql, [], function(tx, data){
         tx.executeSql("INSERT INTO __sys__ VALUES (?,?,?,?)", [storeName, createOptions.keyPath, createOptions.autoIncrement ? true : false, "{}"], function(){
           result.__setReadyState("createObjectStore", true);
