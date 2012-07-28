@@ -7,7 +7,7 @@
 	 */
 	var IDBDatabase = function(db, name, version, storeProperties){
 		this.__db = db, this.version = version, this.__storeProperties = storeProperties;
-		this.objectStoreNames = [];
+		this.objectStoreNames = new idbModules.util.StringList();
 		for (var i = 0; i < storeProperties.rows.length; i++) {
 			this.objectStoreNames.push(storeProperties.rows.item(i).name);
 		}
@@ -52,7 +52,7 @@
 			idbModules.util.throwDOMException(0, "Could not delete ObjectStore", arguments);
 		}
 		var me = this;
-		me.objectStoreNames.indexOf(storeName) === -1 && error("Object Store does not exist");
+		!me.objectStoreNames.contains(storeName) && error("Object Store does not exist");
 		me.objectStoreNames.splice(me.objectStoreNames.indexOf(storeName), 1);
 		
 		var transaction = me.__versionTransaction;

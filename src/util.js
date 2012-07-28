@@ -28,11 +28,43 @@
 		throw e;
 	}
 	
+	/**
+	 * Shim the DOMStringList object.
+	 * 
+	 */
+	var StringList = function() {
+	  this.length = 0;
+	  this._items = [];
+	};
+	StringList.prototype = {
+	  // Interface.
+	  contains: function(str) {
+	    return -1 !== this._items.indexOf(str);
+	  },
+	  item: function(key) {
+	    return this._items[key];
+	  },
+
+	  // Helpers. Should only be used internally.
+    indexOf: function(str) {
+      return this._items.indexOf(str);
+    },
+	  push: function(item) {
+	    this._items.push(item);
+	    this.length += 1;
+	  },
+	  splice: function(/*index, howmany, item1, ..., itemX*/) {
+	    this._items.splice.apply(this._items, arguments);
+	    this.length = this._items.length;
+	  }
+	};
+
 	idbModules["util"] = {
 		"throwDOMException": throwDOMException,
 		"callback": callback,
 		"quote" : function(arg){
 			return "'" + arg + "'";
-		}
+		},
+		"StringList": StringList
 	}
 })(idbModules);

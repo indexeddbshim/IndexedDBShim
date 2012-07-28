@@ -11,7 +11,7 @@
 		this.transaction = idbTransaction;
 		this.__ready = {};
 		this.__setReadyState("createObjectStore", typeof ready === "undefined" ? true : ready);
-		this.indexNames = [];
+		this.indexNames = new idbModules.util.StringList();
 	};
 	
 	/**
@@ -168,7 +168,7 @@
 		sqlEnd.push("?)")
 		sqlValues.push(idbModules.Sca.encode(value));
 		
-		sql = sqlStart.join(" ") + sqlEnd.join(" ");
+		var sql = sqlStart.join(" ") + sqlEnd.join(" ");
 		
 		logger.log("SQL for adding", sql, sqlValues);
 		tx.executeSql(sql, sqlValues, function(tx, data){
@@ -211,8 +211,13 @@
 				var primaryKey = idbModules.Key.encode(key);
 				logger.log("Fetching", me.name, primaryKey);
 				tx.executeSql("SELECT * FROM " + idbModules.util.quote(me.name) + " where key = ?", [primaryKey], function(tx, data){
-					logger.log("Fetched data", data.rows.item(0));
+					logger.log("Fetched data", data);
 					try {
+					  // Opera can't deal with the try-catch here.
+					  if(0 === data.rows.length) {
+					    return success();
+					  }
+
 						success(idbModules.Sca.decode(data.rows.item(0).value));
 					} catch (e) {
 						logger.log(e)
