@@ -28,6 +28,6 @@
         return new IDBKeyRange(lower, upper, lowerOpen, upperOpen);
     };
     
-    window.IDBKeyRange = idbModules.IDBKeyRange = IDBKeyRange;
+    idbModules.IDBKeyRange = IDBKeyRange;
     
 }(idbModules));

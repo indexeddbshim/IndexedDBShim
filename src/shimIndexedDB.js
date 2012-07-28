@@ -1,6 +1,8 @@
 (function(idbModules){
     var DEFAULT_DB_SIZE = 4 * 1024 * 1024;
-    
+    if (!window.openDatabase){
+		return;
+	}
     // The sysDB to keep track of version numbers for databases
     var sysdb = window.openDatabase("__sysdb__", 1, "System Database", DEFAULT_DB_SIZE);
     sysdb.transaction(function(tx){
