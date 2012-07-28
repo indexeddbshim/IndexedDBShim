@@ -8,7 +8,7 @@
 		window.IDBCursor = idbModules.IDBCursor;
 		window.IDBKeyRange = idbModules.IDBKeyRange;
 	}
-	
+	;
 	window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
 	
 	if (typeof window.indexedDB === "undefined") {

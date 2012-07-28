@@ -9,9 +9,9 @@
 			bubbles: false,
 			cancelable: false,
 			eventPhase: 0,
-			timeStamp: new Date(),
+			timeStamp: new Date()
 		};
-	}
+	};
 	
 	idbModules.Event = Event;
 }(idbModules));
