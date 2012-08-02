@@ -270,7 +270,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
             }
             (me.__range.lower && me.__range.upper) && sql.push("AND");
             if (me.__range.upper) {
-                sql.push(me.__keyColumnName + (me.__range.upperOpen ? " < " : " <= ") + " ?");
+                sql.push(me.__keyColumnName + (me.__range.upperOpen ? " <= " : " < ") + " ?");
                 sqlValues.push(idbModules.Key.encode(me.__range.upper));
             }
         }
