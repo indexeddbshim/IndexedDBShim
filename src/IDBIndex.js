@@ -35,7 +35,7 @@
                 };
                 // For this index, first create a column
                 me.__idbObjectStore.__storeProps.indexList = JSON.stringify(idxList);
-                var sql = ["ALTER TABLE", idbModules.util.quote(me.__idbObjectStore.name), "ADD", columnName, "BLOB"].join(" ");
+                var sql = ["ALTER TABLE", idbModules.util.quote(me.__idbObjectStore.name), "ADD", columnName, "TEXT"].join(" ");
                 logger.log(sql);
                 tx.executeSql(sql, [], function(tx, data){
                     var sql = ["CREATE INDEX", idbModules.util.quote(me.__idbObjectStore.name+'__'+columnName), "ON", idbModules.util.quote(me.__idbObjectStore.name), "(", columnName, ")"].join(" ");

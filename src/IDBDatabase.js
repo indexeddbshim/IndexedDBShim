@@ -33,7 +33,7 @@
                 idbModules.util.throwDOMException(0, "Invalid State error", me.transaction);
             }
             //key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
-            var sql = ["CREATE TABLE", idbModules.util.quote(storeName), "(key BLOB", createOptions.autoIncrement ? ", inc INTEGER PRIMARY KEY AUTOINCREMENT" : "PRIMARY KEY", ", value BLOB)"].join(" ");
+            var sql = ["CREATE TABLE", idbModules.util.quote(storeName), "(key TEXT", createOptions.autoIncrement ? ", inc INTEGER PRIMARY KEY AUTOINCREMENT" : "PRIMARY KEY", ", value BLOB)"].join(" ");
             logger.log(sql);
             tx.executeSql(sql, [], function(tx, data){
                 var sql = ["CREATE INDEX", idbModules.util.quote(storeName+'__key'), "ON", idbModules.util.quote(storeName), "(key)"].join(" ");
