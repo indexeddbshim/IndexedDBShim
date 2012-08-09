@@ -38,6 +38,9 @@
                 var sql = ["ALTER TABLE", idbModules.util.quote(me.__idbObjectStore.name), "ADD", columnName, "BLOB"].join(" ");
                 logger.log(sql);
                 tx.executeSql(sql, [], function(tx, data){
+                    var sql = ["CREATE INDEX", idbModules.util.quote(me.__idbObjectStore.name+'__'+columnName), "ON", idbModules.util.quote(me.__idbObjectStore.name), "(", columnName, ")"].join(" ");
+                    logger.log(sql);
+                    tx.executeSql(sql, [], function(tx, data){
                     // Once a column is created, put existing records into the index
                     tx.executeSql("SELECT * FROM " + idbModules.util.quote(me.__idbObjectStore.name), [], function(tx, data){
                         (function initIndexForRow(i){
@@ -62,6 +65,7 @@
                                 }, error);
                             }
                         }(0));
+                    }, error);
                     }, error);
                 }, error);
             }, "createObjectStore");
