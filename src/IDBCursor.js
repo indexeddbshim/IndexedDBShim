@@ -94,7 +94,7 @@
             me.__find(undefined, tx, function(key, value){
                 me.key = key;
                 me.value = value;
-                success(me, me.__req);
+                success(typeof me.key !== "undefined" ? me : undefined, me.__req);
             }, function(data){
                 error(data);
             });
