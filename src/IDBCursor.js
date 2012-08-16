@@ -92,7 +92,6 @@
         this.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
             me.__offset += count;
             me.__find(undefined, tx, function(key, value){
-                me.__offset++;
                 me.key = key;
                 me.value = value;
                 success(me, me.__req);
