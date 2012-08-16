@@ -23,6 +23,9 @@
         }
         // Setting this to -1 as continue will set it to 0 anyway
         this.__offset = -1;
+
+        this.__lastKeyContinued = undefined; // Used when continuing with a key
+
         this["continue"]();
     }
     
@@ -43,16 +46,16 @@
                 sqlValues.push(idbModules.Key.encode(me.__range.upper));
             }
         }
-        sql.push(" ORDER BY ", me.__keyColumnName);
         if (typeof key !== "undefined") {
-            sql.push((me.__range && (me.__range.lower || me.__range.upper)) ? "AND" : "WHERE");
-            sql.push("key = ?");
-            sqlValues.push(idbModules.Key.encode(key));
-            sql.push("LIMIT 1");
+            me.__lastKeyContinued = key;
+            me.__offset = 0;
         }
-        else {
-            sql.push("LIMIT 1 OFFSET " + me.__offset);
+        if (me.__lastKeyContinued !== undefined) {
+            sql.push("AND " + me.__keyColumnName + " >= ?");
+            sqlValues.push(idbModules.Key.encode(me.__lastKeyContinued));
         }
+        sql.push("ORDER BY ", me.__keyColumnName);
+        sql.push("LIMIT 1 OFFSET " + me.__offset);
         logger.log(sql.join(" "), sqlValues);
         tx.executeSql(sql.join(" "), sqlValues, function(tx, data){
             if (data.rows.length === 1) {
