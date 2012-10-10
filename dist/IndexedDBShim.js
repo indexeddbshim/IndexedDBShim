@@ -254,6 +254,9 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
         }
         // Setting this to -1 as continue will set it to 0 anyway
         this.__offset = -1;
+
+        this.__lastKeyContinued = undefined; // Used when continuing with a key
+
         this["continue"]();
     }
     
@@ -274,16 +277,16 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
                 sqlValues.push(idbModules.Key.encode(me.__range.upper));
             }
         }
-        sql.push(" ORDER BY ", me.__keyColumnName);
         if (typeof key !== "undefined") {
-            sql.push((me.__range && (me.__range.lower || me.__range.upper)) ? "AND" : "WHERE");
-            sql.push("key = ?");
-            sqlValues.push(idbModules.Key.encode(key));
-            sql.push("LIMIT 1");
+            me.__lastKeyContinued = key;
+            me.__offset = 0;
         }
-        else {
-            sql.push("LIMIT 1 OFFSET " + me.__offset);
+        if (me.__lastKeyContinued !== undefined) {
+            sql.push("AND " + me.__keyColumnName + " >= ?");
+            sqlValues.push(idbModules.Key.encode(me.__lastKeyContinued));
         }
+        sql.push("ORDER BY ", me.__keyColumnName);
+        sql.push("LIMIT 1 OFFSET " + me.__offset);
         logger.log(sql.join(" "), sqlValues);
         tx.executeSql(sql.join(" "), sqlValues, function(tx, data){
             if (data.rows.length === 1) {
@@ -323,10 +326,9 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
         this.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
             me.__offset += count;
             me.__find(undefined, tx, function(key, value){
-                me.__offset++;
                 me.key = key;
                 me.value = value;
-                success(me, me.__req);
+                success(typeof me.key !== "undefined" ? me : undefined, me.__req);
             }, function(data){
                 error(data);
             });
@@ -1069,9 +1071,9 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
 
 (function(idbModules){
     var DEFAULT_DB_SIZE = 4 * 1024 * 1024;
-    if (!window.openDatabase){
-		return;
-	}
+    if (!window.openDatabase) {
+        return;
+    }
     // The sysDB to keep track of version numbers for databases
     var sysdb = window.openDatabase("__sysdb__", 1, "System Database", DEFAULT_DB_SIZE);
     sysdb.transaction(function(tx){
@@ -1141,8 +1143,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
                                         });
                                     }, dbCreateError);
                                 }, dbCreateError);
-                            }
-                            else {
+                            } else {
                                 idbModules.util.callback("onsuccess", req, e);
                             }
                         }, dbCreateError);
@@ -1157,8 +1158,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
                         tx.executeSql("INSERT INTO dbVersions VALUES (?,?)", [name, version || 1], function(){
                             openDB(0);
                         }, dbCreateError);
-                    }
-                    else {
+                    } else {
                         openDB(data.rows.item(0).version);
                     }
                 }, dbCreateError);
@@ -1197,10 +1197,14 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
             sysdb.transaction(function(systx){
                 systx.executeSql("SELECT * FROM dbVersions where name = ?", [name], function(tx, data){
                     if (data.rows.length === 0) {
-                        dbError("Database does not exist");
+                        req.result = undefined;
+                        var e = idbModules.Event("success");
+                        e.newVersion = null;
+                        e.oldVersion = version;
+                        idbModules.util.callback("onsuccess", req, e);
                         return;
                     }
-                    var version = data.rows.item(0).version;
+                    version = data.rows.item(0).version;
                     var db = window.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
                     db.transaction(function(tx){
                         tx.executeSql("SELECT * FROM __sys__", [], function(tx, data){
@@ -1212,8 +1216,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
                                         // Finally, delete the record for this DB from sysdb
                                         deleteFromDbVersions();
                                     }, dbError);
-                                }
-                                else {
+                                } else {
                                     // Delete all tables in this database, maintained in the sys table
                                     tx.executeSql("DROP TABLE " + tables.item(i).name, [], function(){
                                         deleteTables(i + 1);
