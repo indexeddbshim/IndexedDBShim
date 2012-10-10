@@ -35,33 +35,37 @@
                 };
                 // For this index, first create a column
                 me.__idbObjectStore.__storeProps.indexList = JSON.stringify(idxList);
-                var sql = ["ALTER TABLE", idbModules.util.quote(me.__idbObjectStore.name), "ADD", columnName, "BLOB"].join(" ");
+                var sql = ["ALTER TABLE", idbModules.util.quote(me.__idbObjectStore.name), "ADD", columnName, "TEXT"].join(" ");
                 logger.log(sql);
                 tx.executeSql(sql, [], function(tx, data){
-                    // Once a column is created, put existing records into the index
-                    tx.executeSql("SELECT * FROM " + idbModules.util.quote(me.__idbObjectStore.name), [], function(tx, data){
-                        (function initIndexForRow(i){
-                            if (i < data.rows.length) {
-                                try {
-                                    var value = idbModules.Sca.decode(data.rows.item(i).value);
-                                    var indexKey = eval("value['" + keyPath + "']");
-                                    tx.executeSql("UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " set " + columnName + " = ? where key = ?", [idbModules.Key.encode(indexKey), data.rows.item(i).key], function(tx, data){
+                    var sql = ["CREATE INDEX", idbModules.util.quote(me.__idbObjectStore.name+'__'+columnName), "ON", idbModules.util.quote(me.__idbObjectStore.name), "(", columnName, ")"].join(" ");
+                    logger.log(sql);
+                    tx.executeSql(sql, [], function(tx, data){
+                        // Once a column is created, put existing records into the index
+                        tx.executeSql("SELECT * FROM " + idbModules.util.quote(me.__idbObjectStore.name), [], function(tx, data){
+                            (function initIndexForRow(i){
+                                if (i < data.rows.length) {
+                                    try {
+                                        var value = idbModules.Sca.decode(data.rows.item(i).value);
+                                        var indexKey = eval("value['" + keyPath + "']");
+                                        tx.executeSql("UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " set " + columnName + " = ? where key = ?", [idbModules.Key.encode(indexKey), data.rows.item(i).key], function(tx, data){
+                                            initIndexForRow(i + 1);
+                                        }, error);
+                                    }
+                                    catch (e) {
+                                        // Not a valid value to insert into index, so just continue
                                         initIndexForRow(i + 1);
-                                    }, error);
-                                } 
-                                catch (e) {
-                                    // Not a valid value to insert into index, so just continue
-                                    initIndexForRow(i + 1);
+                                    }
                                 }
-                            }
-                            else {
-                                logger.log("Updating the indexes in table", me.__idbObjectStore.__storeProps);
-                                tx.executeSql("UPDATE __sys__ set indexList = ? where name = ?", [me.__idbObjectStore.__storeProps.indexList, me.__idbObjectStore.name], function(){
-                                    me.__idbObjectStore.__setReadyState("createIndex", true);
-                                    success(me);
-                                }, error);
-                            }
-                        }(0));
+                                else {
+                                    logger.log("Updating the indexes in table", me.__idbObjectStore.__storeProps);
+                                    tx.executeSql("UPDATE __sys__ set indexList = ? where name = ?", [me.__idbObjectStore.__storeProps.indexList, me.__idbObjectStore.name], function(){
+                                        me.__idbObjectStore.__setReadyState("createIndex", true);
+                                        success(me);
+                                    }, error);
+                                }
+                            }(0));
+                        }, error);
                     }, error);
                 }, error);
             }, "createObjectStore");
