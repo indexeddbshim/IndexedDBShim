@@ -1,3 +1,4 @@
+console.log("Starting util");
 (function(idbModules){
     /**
      * A utility method to callback onsuccess, onerror, etc as soon as the calling function's context is over
@@ -20,7 +21,7 @@
      * @param {Object} error
      */
     function throwDOMException(name, message, error){
-        logger.log(name, message, error);
+        idbModules.DEBUG && console.log(name, message, error);
         var e = new DOMException.constructor(0, message);
         e.name = name;
         e.message = message;
@@ -68,3 +69,4 @@
         "StringList": StringList
     };
 }(idbModules));
+console.log("Here");

@@ -1,14 +1,7 @@
 /*! IndexedDBShim */
 
 var idbModules = {};
-
-var logger = {};
-logger.log = logger.error = logger.warn = logger.debug = function(){
-    if (typeof DEBUG !== "undefined") {
-        console.log.apply(console, arguments);
-    }
-};
-
+console.log("Starting util");
 (function(idbModules){
     /**
      * A utility method to callback onsuccess, onerror, etc as soon as the calling function's context is over
@@ -31,7 +24,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
      * @param {Object} error
      */
     function throwDOMException(name, message, error){
-        logger.log(name, message, error);
+        idbModules.DEBUG && console.log(name, message, error);
         var e = new DOMException.constructor(0, message);
         e.name = name;
         e.message = message;
@@ -79,6 +72,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
         "StringList": StringList
     };
 }(idbModules));
+console.log("Here");
 
 (function(idbModules){
     /**
@@ -97,7 +91,6 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
     }());
     idbModules.Sca = Sca;
 }(idbModules));
-
 (function(idbModules){
     /**
      * Encodes the keys and values based on their types. This is required to maintain collations
@@ -168,10 +161,8 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
 			timeStamp: new Date()
 		};
 	};
-	
 	idbModules.Event = Event;
 }(idbModules));
-
 (function(idbModules){
 
     /**
@@ -287,7 +278,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
         }
         sql.push("ORDER BY ", me.__keyColumnName);
         sql.push("LIMIT 1 OFFSET " + me.__offset);
-        logger.log(sql.join(" "), sqlValues);
+        idbModules.DEBUG && console.log(sql.join(" "), sqlValues);
         tx.executeSql(sql.join(" "), sqlValues, function(tx, data){
             if (data.rows.length === 1) {
                 var key = idbModules.Key.decode(data.rows.item(0)[me.__keyColumnName]);
@@ -295,11 +286,11 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
                 success(key, val);
             }
             else {
-                logger.log("Reached end of cursors");
+                idbModules.DEBUG && console.log("Reached end of cursors");
                 success(undefined, undefined);
             }
         }, function(tx, data){
-            logger.log("Could not execute Cursor.continue");
+            idbModules.DEBUG && console.log("Could not execute Cursor.continue");
             error(data);
         });
     };
@@ -340,7 +331,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
         return this.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
             me.__find(undefined, tx, function(key, value){
                 var sql = "UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " SET value = ? WHERE key = ?";
-                logger.log(sql, valueToUpdate, key);
+                idbModules.DEBUG && console.log(sql, valueToUpdate, key);
                 tx.executeSql(sql, [idbModules.Sca.encode(valueToUpdate), idbModules.Key.encode(key)], function(tx, data){
                     if (data.rowsAffected === 1) {
                         success(key);
@@ -362,7 +353,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
         return this.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
             me.__find(undefined, tx, function(key, value){
                 var sql = "DELETE FROM  " + idbModules.util.quote(me.__idbObjectStore.name) + " WHERE key = ?";
-                logger.log(sql, key);
+                idbModules.DEBUG && console.log(sql, key);
                 tx.executeSql(sql, [idbModules.Key.encode(key)], function(tx, data){
                     if (data.rowsAffected === 1) {
                         success(undefined);
@@ -420,7 +411,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
                 // For this index, first create a column
                 me.__idbObjectStore.__storeProps.indexList = JSON.stringify(idxList);
                 var sql = ["ALTER TABLE", idbModules.util.quote(me.__idbObjectStore.name), "ADD", columnName, "BLOB"].join(" ");
-                logger.log(sql);
+                idbModules.DEBUG && console.log(sql);
                 tx.executeSql(sql, [], function(tx, data){
                     // Once a column is created, put existing records into the index
                     tx.executeSql("SELECT * FROM " + idbModules.util.quote(me.__idbObjectStore.name), [], function(tx, data){
@@ -439,7 +430,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
                                 }
                             }
                             else {
-                                logger.log("Updating the indexes in table", me.__idbObjectStore.__storeProps);
+                                idbModules.DEBUG && console.log("Updating the indexes in table", me.__idbObjectStore.__storeProps);
                                 tx.executeSql("UPDATE __sys__ set indexList = ? where name = ?", [me.__idbObjectStore.__storeProps.indexList, me.__idbObjectStore.name], function(){
                                     me.__idbObjectStore.__setReadyState("createIndex", true);
                                     success(me);
@@ -473,7 +464,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
                 sql.push("AND", me.indexName, " = ?");
                 sqlValues.push(idbModules.Key.encode(key));
             }
-            logger.log("Trying to fetch data for Index", sql.join(" "), sqlValues);
+            idbModules.DEBUG && console.log("Trying to fetch data for Index", sql.join(" "), sqlValues);
             tx.executeSql(sql.join(" "), sqlValues, function(tx, data){
                 var d;
                 if (typeof opType === "count") {
@@ -556,7 +547,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
             callback();
         }
         else {
-            logger.log("Waiting for to be ready", key);
+            idbModules.DEBUG && console.log("Waiting for to be ready", key);
             var me = this;
             window.setTimeout(function(){
                 me.__waitForReady(callback, key);
@@ -572,7 +563,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
         var me = this;
         this.__waitForReady(function(){
             if (me.__storeProps) {
-                //logger.log("Store properties - cached", me.__storeProps);
+                idbModules.DEBUG && console.log("Store properties - cached", me.__storeProps);
                 callback(me.__storeProps);
             }
             else {
@@ -587,7 +578,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
                             "autoInc": data.rows.item(0).autoInc,
                             "keyPath": data.rows.item(0).keyPath
                         };
-                        //logger.log("Store properties", me.__storeProps);
+                        idbModules.DEBUG && console.log("Store properties", me.__storeProps);
                         callback(me.__storeProps);
                     }
                 }, function(){
@@ -696,7 +687,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
         
         var sql = sqlStart.join(" ") + sqlEnd.join(" ");
         
-        logger.log("SQL for adding", sql, sqlValues);
+        idbModules.DEBUG && console.log("SQL for adding", sql, sqlValues);
         tx.executeSql(sql, sqlValues, function(tx, data){
             success(primaryKey);
         }, function(tx, err){
@@ -720,7 +711,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
                 // First try to delete if the record exists
                 var sql = "DELETE FROM " + idbModules.util.quote(me.name) + " where key = ?";
                 tx.executeSql(sql, [idbModules.Key.encode(primaryKey)], function(tx, data){
-                    logger.log("Did the row with the", primaryKey, "exist? ", data.rowsAffected);
+                    idbModules.DEBUG && console.log("Did the row with the", primaryKey, "exist? ", data.rowsAffected);
                     me.__insertData(tx, value, primaryKey, success, error);
                 }, function(tx, err){
                     error(err);
@@ -735,9 +726,9 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
         return me.transaction.__addToTransactionQueue(function(tx, args, success, error){
             me.__waitForReady(function(){
                 var primaryKey = idbModules.Key.encode(key);
-                logger.log("Fetching", me.name, primaryKey);
+                idbModules.DEBUG && console.log("Fetching", me.name, primaryKey);
                 tx.executeSql("SELECT * FROM " + idbModules.util.quote(me.name) + " where key = ?", [primaryKey], function(tx, data){
-                    logger.log("Fetched data", data);
+                    idbModules.DEBUG && console.log("Fetched data", data);
                     try {
                         // Opera can't deal with the try-catch here.
                         if (0 === data.rows.length) {
@@ -747,7 +738,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
                         success(idbModules.Sca.decode(data.rows.item(0).value));
                     } 
                     catch (e) {
-                        logger.log(e);
+                        idbModules.DEBUG && console.log(e);
                         // If no result is returned, or error occurs when parsing JSON
                         success(undefined);
                     }
@@ -764,9 +755,9 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
         return me.transaction.__addToTransactionQueue(function(tx, args, success, error){
             me.__waitForReady(function(){
                 var primaryKey = idbModules.Key.encode(key);
-                logger.log("Fetching", me.name, primaryKey);
+                idbModules.DEBUG && console.log("Fetching", me.name, primaryKey);
                 tx.executeSql("DELETE FROM " + idbModules.util.quote(me.name) + " where key = ?", [primaryKey], function(tx, data){
-                    logger.log("Deleted from database", data.rowsAffected);
+                    idbModules.DEBUG && console.log("Deleted from database", data.rowsAffected);
                     success();
                 }, function(tx, err){
                     error(err);
@@ -780,7 +771,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
         return me.transaction.__addToTransactionQueue(function(tx, args, success, error){
             me.__waitForReady(function(){
                 tx.executeSql("DELETE FROM " + idbModules.util.quote(me.name), [], function(tx, data){
-                    logger.log("Cleared all records from database", data.rowsAffected);
+                    idbModules.DEBUG && console.log("Cleared all records from database", data.rowsAffected);
                     success();
                 }, function(tx, err){
                     error(err);
@@ -853,7 +844,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
     var IDBTransaction = function(storeNames, mode, db){
         if (typeof mode === "number") {
             this.mode = mode;
-            (mode !== 2) && logger.log("Mode should be a string, but was specified as ", mode);
+            (mode !== 2) && idbModules.DEBUG && console.log("Mode should be a string, but was specified as ", mode);
         }
         else 
             if (typeof mode === "string") {
@@ -888,7 +879,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
     
     IDBTransaction.prototype.__executeRequests = function(){
         if (this.__running && this.mode !== VERSION_TRANSACTION) {
-            logger.warn("Looks like the request set is already running", this.mode);
+            idbModules.DEBUG && console.log("Looks like the request set is already running", this.mode);
             return;
         }
         this.__running = true;
@@ -935,14 +926,14 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
                     executeRequest();
                 } 
                 catch (e) {
-                    logger.error("An exception occured in transaction", arguments);
+                    idbModules.DEBUG && console.log("An exception occured in transaction", arguments);
                     typeof me.onerror === "function" && me.onerror();
                 }
             }, function(){
-                logger.error("An error in transaction", arguments);
+                idbModules.DEBUG && console.log("An error in transaction", arguments);
                 typeof me.onerror === "function" && me.onerror();
             }, function(){
-                logger.log("Transaction completed", arguments);
+                idbModules.DEBUG && console.log("Transaction completed", arguments);
                 typeof me.oncomplete === "function" && me.oncomplete();
             });
         }, 1);
@@ -1016,7 +1007,7 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
             }
             //key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
             var sql = ["CREATE TABLE", idbModules.util.quote(storeName), "(key BLOB", createOptions.autoIncrement ? ", inc INTEGER PRIMARY KEY AUTOINCREMENT" : "PRIMARY KEY", ", value BLOB)"].join(" ");
-            logger.log(sql);
+            idbModules.DEBUG && console.log(sql);
             tx.executeSql(sql, [], function(tx, data){
                 tx.executeSql("INSERT INTO __sys__ VALUES (?,?,?,?)", [storeName, createOptions.keyPath, createOptions.autoIncrement ? true : false, "{}"], function(){
                     result.__setReadyState("createObjectStore", true);
@@ -1243,28 +1234,33 @@ logger.log = logger.error = logger.warn = logger.debug = function(){
 }(idbModules));
 
 (function(window, idbModules){
-	if (typeof window.openDatabase !== "undefined") {
-		window.shimIndexedDB = idbModules.shimIndexedDB;
-		window.shimIndexedDB &&
-		(window.shimIndexedDB.__useShim = function(){
-			window.indexedDB = idbModules.shimIndexedDB;
-			window.IDBDatabase = idbModules.IDBDatabase;
-			window.IDBTransaction = idbModules.IDBTransaction;
-			window.IDBCursor = idbModules.IDBCursor;
-			window.IDBKeyRange = idbModules.IDBKeyRange;
-		});
-	}
-	
-	window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
-	
-	if (typeof window.indexedDB === "undefined" && typeof window.openDatabase !== "undefined") {
-		window.shimIndexedDB.__useShim();
-	} else {
-		window.IDBDatabase = window.IDBDatabase || window.webkitIDBDatabase;
-		window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction;
-		window.IDBCursor = window.IDBCursor || window.webkitIDBCursor;
-		window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange;
-	}
-	
+    if (typeof window.openDatabase !== "undefined") {
+        window.shimIndexedDB = idbModules.shimIndexedDB;
+        if (window.shimIndexedDB) {
+            window.shimIndexedDB.__useShim = function(){
+                window.indexedDB = idbModules.shimIndexedDB;
+                window.IDBDatabase = idbModules.IDBDatabase;
+                window.IDBTransaction = idbModules.IDBTransaction;
+                window.IDBCursor = idbModules.IDBCursor;
+                window.IDBKeyRange = idbModules.IDBKeyRange;
+            };
+            window.shimIndexedDB.__debug = function(val){
+                idbModules.DEBUG = val;
+            };
+        }
+    }
+    
+    window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
+    
+    if (typeof window.indexedDB === "undefined" && typeof window.openDatabase !== "undefined") {
+        window.shimIndexedDB.__useShim();
+    }
+    else {
+        window.IDBDatabase = window.IDBDatabase || window.webkitIDBDatabase;
+        window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction;
+        window.IDBCursor = window.IDBCursor || window.webkitIDBCursor;
+        window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange;
+    }
+    
 }(window, idbModules));
 

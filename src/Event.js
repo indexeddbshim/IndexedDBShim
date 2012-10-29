@@ -12,6 +12,5 @@
 			timeStamp: new Date()
 		};
 	};
-	
 	idbModules.Event = Event;
 }(idbModules));

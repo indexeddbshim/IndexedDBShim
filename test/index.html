@@ -37,25 +37,21 @@
         </script>
         <script type = "text/javascript" src= "sampleData.js">
         </script>
-        <script type = "text/javascript" src= "../build.js">
+        <script type = "text/javascript" src= "../dist/IndexedDBShim.js">
         </script>
         <script type = "text/javascript">
             function startTests(){
                 if (typeof window.mozIndexedDB !== "undefined") {
                     window.indexedDB = window.mozIndexedDB;
-                    deleteDB(function(){
-                        QUnitTests();
-                    });
                 }
                 else {
-                    buildIndexedDB.addScripts(function(){
-                        window.indexedDB = window.shimIndexedDB;
-                        console.log("Starting Tests with shimIndexedDB");
-                        deleteDB(function(){
-                            QUnitTests();
-                        });
-                    });
+                    window.indexedDB = window.shimIndexedDB;
+					window.shimIndexedDB.__debug(true);
+                    console.log("Starting Tests with shimIndexedDB");
                 }
+                deleteDB(function(){
+                    QUnitTests();
+                });
             }
             
             function runWith(option){
