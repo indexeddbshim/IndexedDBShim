@@ -9,16 +9,26 @@ var DB = {
     INDEX1_ON_OBJECT_STORE_2: "Index1_ObjectStore2"
 };
 
-var sample = {
-    obj: function(){
-        return {
-            "String": "Sample " + new Date(),
-            "Int": this.integer(),
-            "Float": Math.random(),
-            "Boolean": true
-        };
-    },
-    integer: function(arg){
-        return parseInt(Math.random() * (arg || 100), 10);
-    }
-};
+var sample = (function(){
+    var generatedNumbers = {};
+    return {
+        obj: function(){
+            return {
+                "String": "Sample " + new Date(),
+                "Int": this.integer(),
+                "Float": Math.random(),
+                "Boolean": true
+            };
+        },
+        integer: function(arg){
+            // Ensuring a unique integer everytime, for the sake of indexe get
+            var r;
+            do {
+                r = parseInt(Math.random() * (arg || 100), 10);
+            }
+            while (generatedNumbers[r]);
+            generatedNumbers[r] = true;
+            return r;
+        }
+    };
+}());
