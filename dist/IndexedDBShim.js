@@ -1,5 +1,6 @@
-/*! IndexedDBShim */
-
+/**
+ * An initialization file that checks for conditions, removes console.log and warn, etc
+ */
 var idbModules = {};
 console.log("Starting util");
 (function(idbModules){
@@ -24,11 +25,11 @@ console.log("Starting util");
      * @param {Object} error
      */
     function throwDOMException(name, message, error){
-        idbModules.DEBUG && console.log(name, message, error);
         var e = new DOMException.constructor(0, message);
         e.name = name;
         e.message = message;
         e.stack = arguments.callee.caller;
+        idbModules.DEBUG && console.log(name, message, error, e);
         throw e;
     }
     
