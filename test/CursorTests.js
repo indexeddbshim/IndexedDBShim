@@ -47,7 +47,6 @@ openObjectStore("Updating using a cursor", DB.OBJECT_STORE_1, function(objectSto
         if (cursor) {
             if (cursor.value.Int % 3 === 0) {
                 cursor.value.cursorUpdate = true;
-                ok(true, "Trying to update cursor value " + cursor.key + ":" + JSON.stringify(cursor.value));
                 var updateReq = cursor.update(cursor.value);
                 updateReq.onsuccess = function(){
                     equal(cursor.key, updateReq.result, "Update value " + cursor.key);
@@ -86,7 +85,6 @@ openObjectStore("Deleting using a cursor", DB.OBJECT_STORE_1, function(objectSto
         var cursor = cursorReq.result;
         if (cursor) {
             if (cursor.value.Int % 5 === 0) {
-                ok(true, "Trying to delete cursor value " + cursor.key + ":" + JSON.stringify(cursor.value));
                 var updateReq = cursor["delete"]();
                 updateReq.onsuccess = function(){
                     equal(undefined, updateReq.result, "Deleted value " + cursor.key);

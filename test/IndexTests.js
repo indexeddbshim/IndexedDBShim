@@ -78,10 +78,11 @@ openObjectStore("Index Cursor", DB.OBJECT_STORE_1, function(objectStore){
     indexCursorReq.onsuccess = function(){
         var cursor = indexCursorReq.result;
         if (cursor) {
-            ok(true, "Iterating over cursor " + cursor.key + " for value " + JSON.stringify(cursor.value));
+            _("Iterating over cursor " + cursor.key + " for value " + JSON.stringify(cursor.value));
             cursor["continue"]();
         }
         else {
+            ok(true, "Cursor Iteration completed");
             start();
             nextTest();
         }
@@ -100,10 +101,11 @@ openObjectStore("Index Key Cursor", DB.OBJECT_STORE_1, function(objectStore){
     indexCursorReq.onsuccess = function(){
         var cursor = indexCursorReq.result;
         if (cursor) {
-            ok(true, "Iterating over cursor " + cursor.key + " for value " + JSON.stringify(cursor.value));
+            _("Iterating over cursor " + cursor.key + " for value " + JSON.stringify(cursor.value));
             cursor["continue"]();
         }
         else {
+            ok(true, "Cursor Iteration completed");
             start();
             nextTest();
         }
