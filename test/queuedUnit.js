@@ -20,12 +20,18 @@
         }
     }
     
+
+    asyncTest("Setting up qunit", function(){
+    	ok("Queued Unit setup complete");
+    });
+    
     /**
      * Use this method instead of asyncTest. Once the test is finished, call nextTest();
      * @param {Object} name
      * @param {Object} callback
      */
     function queuedAsyncTest(name){
+    	document.getElementById("qunit-testresult").childNodes[0] = "Running";
         if (filteredTests.length === 0 || filteredTests.indexOf(currentModule + ": " + name) !== -1) {
             testQueue.push({
                 "name": name,
@@ -48,7 +54,12 @@
      */
     var timer = null;
     var testCount = 1;
+    var initialized = false;
     function nextTest(){
+    	if (!initialized){
+    		initialized = true;
+    		start();
+    	}
         window.clearTimeout(timer);
         if (testQueue.length <= 0) {
             console.groupEnd();

@@ -1,3 +1,25 @@
 {
-  "name": "IndexedDBShim"
+    "name": "IndexedDBShim",
+    "preferGlobal": "true",
+    "version": "0.1.0",
+    "author": "Parashuram <code@nparashuram.com>",
+    "description": "A polyfill for IndexedDB using WebSql",
+    "scripts": {
+        "start": "grunt",
+        "test": "grunt test"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/axemclion/IndexedDBShim"
+    },
+    "keywords": ["indexedDB", "database", "polyfill", "websql"],
+    "devDependencies": {
+        "grunt": "*",
+        "grunt-jsmin-sourcemap": "*"
+    },
+    "bundleDependencies": [],
+    "license": "MIT",
+    "engines": {
+        "node": ">=0.6"
+    }
 }

@@ -1,4 +1,3 @@
-console.log("Starting util");
 (function(idbModules){
     /**
      * A utility method to callback onsuccess, onerror, etc as soon as the calling function's context is over
@@ -69,4 +68,3 @@ console.log("Starting util");
         "StringList": StringList
     };
 }(idbModules));
-console.log("Here");
