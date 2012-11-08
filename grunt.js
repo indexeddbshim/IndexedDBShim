@@ -14,9 +14,6 @@ module.exports = function(grunt) {
 		lint : {
 			files : [ 'grunt.js', 'src/**/*.js', 'test/**/*.js' ]
 		},
-		test : {
-			files : [ 'test/**/*.js' ]
-		},
 		concat : {
 			dist : {
 				src : srcFiles,
@@ -37,11 +34,11 @@ module.exports = function(grunt) {
 
 		server : {
 			base : '.',
-			port : 8000
+			port : 9999
 		},
 
 		qunit : {
-			all : [ 'http://localhost:8000/test/index.html' ]
+			all : [ 'http://localhost:9999/test/index.html' ]
 		},
 
 		jshint : {
@@ -96,7 +93,8 @@ module.exports = function(grunt) {
 
 	// Default task.
 	grunt.loadNpmTasks('grunt-jsmin-sourcemap');
-	grunt.registerTask('default', 'lint concat jsmin-sourcemap');
-	grunt.registerTask('test', 'server qunit');
-
+	grunt.registerTask('build', 'lint concat jsmin-sourcemap');
+	grunt.registerTask('test', 'build server qunit');
+	
+	grunt.registerTask('default', 'build');
 };
