@@ -1,12 +1,10 @@
-IndexedDB Polyfill
-==================
+IndexedDB Polyfill [![Build Status](https://secure.travis-ci.org/axemclion/IndexedDBShim.png)](https://travis-ci.org/axemclion/IndexedDBShim)
+================================
 
 A polyfill to enable IndexedDB using WebSql.
 
 IndexedBD is not supported on <a href = "http://caniuse.com/#search=IndexedDB" target="_blank">all browsers</a>. 
 This IndexedDB polyfill exposes the IndexedDB API in unsupported browsers using WebSQL. This shim is basically an IndexedDB-WebSql adapter.  
-
-[![Build Status](https://secure.travis-ci.org/axemclion/IndexedDBShim.png)](https://travis-ci.org/axemclion/IndexedDBShim)
 
 <a href = "http://nparashuram.com/IndexedDBShim">More details about the project at gh-pages</a>
 
@@ -23,8 +21,6 @@ To use the polyfill, simply add the following line to your HTML files
 
 If IndexedDB is not natively supported (and WebSQL is), the polyfill kicks in and makes a `window.IndexedDB` object available for you to use. 
 If you want to force the use of this polyfill (on Chrome where both IndexedDB and WebSql are supported), simply use `window.shimIndexedDB.__useShim()`. 
-
-_The branches master and gh-pages are mirror images of each other. Master is required for triggering Travis builds_
 
 Building
 ========

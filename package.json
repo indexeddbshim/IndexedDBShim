@@ -15,7 +15,8 @@
     "keywords": ["indexedDB", "database", "polyfill", "websql"],
     "devDependencies": {
         "grunt": "*",
-        "grunt-jsmin-sourcemap": "*"
+        "grunt-jsmin-sourcemap": "*",
+        "grunt-saucelabs-qunit": "*"
     },
     "bundleDependencies": [],
     "license": "MIT",

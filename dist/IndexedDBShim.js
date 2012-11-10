@@ -62,7 +62,6 @@ var idbModules = {};
             this.length = this._items.length;
         }
     };
-    
     idbModules.util = {
         "throwDOMException": throwDOMException,
         "callback": callback,
