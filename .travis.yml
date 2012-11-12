@@ -7,3 +7,4 @@ notifications:
 env:
     global:
       - secure: "XNNs3CbcdCX25VIaDrUxr3zP5JY+a4Rdgg+yYCg4AkWutzYO1pOD2yni0hSX\nEJRdtL6PWuZ7zGBF8oo2fi/hqfpUiH+Aak0XBf/F1kq9QWPsljuvxUOD+i3l\nJqo0NKJUCN2JTAbmVOzZvuj2GT+gcuC+m3WiLTLpcv0gOjYJ2Mk="
+      - secure: "DD2h0L8Lmo7knJ3z6SLgKSQZxNZjzsntLeAFBj8YYy217oUdV9NGn+UcmCVe\nTfmZljAdyXqLhTZfEXbhRKOd29ZNmZjpuFgPht3Oy448nDHgRyKLK2kue91e\nJD+MxZlgv5KaXeG3diwSwyD/SDTRauWJUWV0gdy2zZWAIx92VlA="

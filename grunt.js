@@ -81,6 +81,7 @@ module.exports = function(grunt){
 				IDBTransaction: true,
 				idbModules: true,
 				logger: true,
+				require: true,
 				
 				// Tests.
 				_: true,
@@ -111,12 +112,35 @@ module.exports = function(grunt){
 	grunt.loadNpmTasks('grunt-jsmin-sourcemap');
 	grunt.loadNpmTasks('grunt-saucelabs-qunit');
 	grunt.registerTask('build', 'lint concat jsmin-sourcemap');
-
+	
+	
+	grunt.registerTask("publish", function(){
+		var done = this.async();
+		var request = require("request");
+		request("https://api.travis-ci.org/repos/axe-sneakpeeq/sample/builds.json", function(err, res, body){
+			var commit = JSON.parse(body)[0];
+			var commitMessage = ["Commit from Travis Build #", commit.number, "\nBuild - https://travis-ci.org/axemclion/IndexedDBShim/builds/", commit.id, "\nBranch : ", commit.branch, ": ", commit.commit];
+			console.log("Got Travis Build details");
+			request({
+				url: "https://api.github.com/repos/axemclion/IndexedDBShim/merges?access_token=" + process.env.githubtoken,
+				method: "POST",
+				body: JSON.stringify({
+					"base": "gh-pages",
+					"head": "master",
+					"commit_message": commitMessage.join("")
+				})
+			}, function(err, response, body){
+				done(!err);
+			});
+		});
+	});
+	
 	var testJobs = ["build", "server", "qunit"];
 	if (saucekey !== null) {
 		testJobs.push("saucelabs-qunit");
 	}
+	testJobs.push("publish");
 	grunt.registerTask('test', testJobs.join(" "));
-
+	
 	grunt.registerTask('default', 'build');
 };

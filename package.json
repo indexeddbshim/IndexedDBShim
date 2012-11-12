@@ -16,7 +16,8 @@
     "devDependencies": {
         "grunt": "*",
         "grunt-jsmin-sourcemap": "*",
-        "grunt-saucelabs-qunit": "*"
+        "grunt-saucelabs-qunit": "*",
+		"request" : "*"
     },
     "bundleDependencies": [],
     "license": "MIT",
