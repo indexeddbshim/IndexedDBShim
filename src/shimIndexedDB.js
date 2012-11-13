@@ -19,7 +19,7 @@
         });
     }, function(){
         // sysdb Transaction failed
-        idbModules.util.throwDOMException("Could not create table __sysdb__ to save DB versions");
+       idbModules.DEBUG && console.log("Error in sysdb transaction - when selecting from dbVersions", arguments);
     });
     
     var shimIndexedDB = {

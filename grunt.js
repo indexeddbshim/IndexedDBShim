@@ -3,7 +3,7 @@ module.exports = function(grunt){
 	var srcFiles = ['src/Init.js', 'src/util.js', 'src/Sca.js', 'src/Key.js', 'src/Event.js', 'src/IDBRequest.js', 'src/IDBKeyRange.js', 'src/IDBCursor.js', 'src/IDBIndex.js', 'src/IDBObjectStore.js', 'src/IDBTransaction.js', 'src/IDBDatabase.js', 'src/shimIndexedDB.js', 'src/globalVars.js'];
 	// Project configuration.
 	var saucekey = null;
-	if (process.env.TRAVIS_PULL_REQUEST && process.env.TRAVIS_SECURE_ENV_VARS) {
+	if (typeof process.env.saucekey !== "undefined") {
 		saucekey = process.env.saucekey;
 	}
 	grunt.initConfig({
@@ -52,6 +52,8 @@ module.exports = function(grunt){
 					browserName: 'safari',
 					platform: 'Windows 2008',
 					version: '5'
+				}, {
+					browserName: 'opera'
 				}]
 			}
 		},
@@ -116,10 +118,11 @@ module.exports = function(grunt){
 	
 	grunt.registerTask("publish", function(){
 		var done = this.async();
+		console.log("Runnint publish action");
 		var request = require("request");
 		request("https://api.travis-ci.org/repos/axe-sneakpeeq/sample/builds.json", function(err, res, body){
 			var commit = JSON.parse(body)[0];
-			var commitMessage = ["Commit from Travis Build #", commit.number, "\nBuild - https://travis-ci.org/axemclion/IndexedDBShim/builds/", commit.id, "\nBranch : ", commit.branch, ": ", commit.commit];
+			var commitMessage = ["Commit from Travis Build #", commit.number, "\nBuild - https://travis-ci.org/axemclion/IndexedDBShim/builds/", commit.id, "\nBranch : ", commit.branch, "@ ", commit.commit];
 			console.log("Got Travis Build details");
 			request({
 				url: "https://api.github.com/repos/axemclion/IndexedDBShim/merges?access_token=" + process.env.githubtoken,
@@ -135,9 +138,13 @@ module.exports = function(grunt){
 		});
 	});
 	
-	var testJobs = ["build", "server", "qunit"];
+	var testJobs = ["build", "server"];
 	if (saucekey !== null) {
 		testJobs.push("saucelabs-qunit");
+	}
+	
+	if (process.env.CI && process.env.TRAVIS) {
+		testJobs.push("publish");
 	}
 	testJobs.push("publish");
 	grunt.registerTask('test', testJobs.join(" "));
