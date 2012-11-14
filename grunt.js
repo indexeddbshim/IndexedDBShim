@@ -120,7 +120,7 @@ module.exports = function(grunt){
 		var done = this.async();
 		console.log("Runnint publish action");
 		var request = require("request");
-		request("https://api.travis-ci.org/repos/axe-sneakpeeq/sample/builds.json", function(err, res, body){
+		request("https://api.travis-ci.org/repos/axemclion/IndexedDBShim/builds.json", function(err, res, body){
 			var commit = JSON.parse(body)[0];
 			var commitMessage = ["Commit from Travis Build #", commit.number, "\nBuild - https://travis-ci.org/axemclion/IndexedDBShim/builds/", commit.id, "\nBranch : ", commit.branch, "@ ", commit.commit];
 			console.log("Got Travis Build details");
@@ -133,6 +133,7 @@ module.exports = function(grunt){
 					"commit_message": commitMessage.join("")
 				})
 			}, function(err, response, body){
+				console.log(body);
 				done(!err);
 			});
 		});
