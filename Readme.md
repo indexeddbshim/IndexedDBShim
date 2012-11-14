@@ -1,5 +1,5 @@
-IndexedDB Polyfill
-==================
+IndexedDB Polyfill [![Build Status](https://secure.travis-ci.org/axemclion/IndexedDBShim.png)](https://travis-ci.org/axemclion/IndexedDBShim)
+================================
 
 A polyfill to enable IndexedDB using WebSql.
 

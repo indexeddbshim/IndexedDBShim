@@ -2,7 +2,6 @@
  * An initialization file that checks for conditions, removes console.log and warn, etc
  */
 var idbModules = {};
-console.log("Starting util");
 (function(idbModules){
     /**
      * A utility method to callback onsuccess, onerror, etc as soon as the calling function's context is over
@@ -63,7 +62,6 @@ console.log("Starting util");
             this.length = this._items.length;
         }
     };
-    
     idbModules.util = {
         "throwDOMException": throwDOMException,
         "callback": callback,
@@ -73,7 +71,6 @@ console.log("Starting util");
         "StringList": StringList
     };
 }(idbModules));
-console.log("Here");
 
 (function(idbModules){
     /**
@@ -1082,7 +1079,7 @@ console.log("Here");
         });
     }, function(){
         // sysdb Transaction failed
-        idbModules.util.throwDOMException("Could not create table __sysdb__ to save DB versions");
+       idbModules.DEBUG && console.log("Error in sysdb transaction - when selecting from dbVersions", arguments);
     });
     
     var shimIndexedDB = {
