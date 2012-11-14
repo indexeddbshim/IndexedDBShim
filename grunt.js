@@ -118,7 +118,7 @@ module.exports = function(grunt){
 	
 	grunt.registerTask("publish", function(){
 		var done = this.async();
-		console.log("Runnint publish action");
+		console.log("Running publish action");
 		var request = require("request");
 		request("https://api.travis-ci.org/repos/axemclion/IndexedDBShim/builds.json", function(err, res, body){
 			var commit = JSON.parse(body)[0];
