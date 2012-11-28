@@ -112,7 +112,7 @@ module.exports = function(grunt){
 	
 	// Default task.
 	grunt.loadNpmTasks('grunt-jsmin-sourcemap');
-	grunt.loadNpmTasks('grunt-saucelabs-qunit');
+	grunt.loadNpmTasks('grunt-saucelabs');
 	grunt.registerTask('build', 'lint concat jsmin-sourcemap');
 	
 	

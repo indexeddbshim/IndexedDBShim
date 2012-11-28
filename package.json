@@ -19,7 +19,7 @@
     "devDependencies": {
 		"grunt": "~0.3.12",
         "grunt-jsmin-sourcemap": ">=1.5.6",
-        "grunt-saucelabs-qunit": ">=1.0.0",
+        "grunt-saucelabs": ">=1.0.0",
 		"request" : "~2.12.0"
     },
     "bundleDependencies": [],
