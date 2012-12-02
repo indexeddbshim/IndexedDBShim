@@ -21,7 +21,7 @@
         // sysdb Transaction failed
        idbModules.DEBUG && console.log("Error in sysdb transaction - when selecting from dbVersions", arguments);
     });
-    
+
     var shimIndexedDB = {
         /**
          * The IndexedDB Method to create a new database and return the DB
@@ -31,7 +31,7 @@
         open: function(name, version){
             var req = new idbModules.IDBOpenRequest();
             var calledDbCreateError = false;
-            
+
             function dbCreateError(){
                 if (calledDbCreateError) {
                     return;
@@ -42,7 +42,7 @@
                 idbModules.util.callback("onerror", req, e);
                 calledDbCreateError = true;
             }
-            
+
             function openDB(oldVersion){
                 var db = window.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
                 req.readyState = "done";
@@ -52,14 +52,14 @@
                 if (version <= 0 || oldVersion > version) {
                     idbModules.util.throwDOMException(0, "An attempt was made to open a database using a lower version than the existing version.", version);
                 }
-                
+
                 db.transaction(function(tx){
                     tx.executeSql("CREATE TABLE IF NOT EXISTS __sys__ (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB)", [], function(){
                         tx.executeSql("SELECT * FROM __sys__", [], function(tx, data){
                             var e = idbModules.Event("success");
                             req.source = req.result = new idbModules.IDBDatabase(db, name, version, data);
                             if (oldVersion < version) {
-                                // DB Upgrade in progress 
+                                // DB Upgrade in progress
                                 sysdb.transaction(function(systx){
                                     systx.executeSql("UPDATE dbVersions set version = ? where name = ?", [version, name], function(){
                                         var e = idbModules.Event("upgradeneeded");
@@ -79,7 +79,7 @@
                     }, dbCreateError);
                 }, dbCreateError);
             }
-            
+
             sysdb.transaction(function(tx){
                 tx.executeSql("SELECT * FROM dbVersions where name = ?", [name], function(tx, data){
                     if (data.rows.length === 0) {
@@ -92,10 +92,10 @@
                     }
                 }, dbCreateError);
             }, dbCreateError);
-            
+
             return req;
         },
-        
+
         "deleteDatabase": function(name){
             var req = new idbModules.IDBOpenRequest();
             var calledDBError = false;
@@ -133,6 +133,7 @@
                         idbModules.util.callback("onsuccess", req, e);
                         return;
                     }
+
                     version = data.rows.item(0).version;
                     var db = window.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
                     db.transaction(function(tx){
@@ -147,7 +148,7 @@
                                     }, dbError);
                                 } else {
                                     // Delete all tables in this database, maintained in the sys table
-                                    tx.executeSql("DROP TABLE " + tables.item(i).name, [], function(){
+                                    tx.executeSql("DROP TABLE '" + tables.item(i).name + "';", [], function(){
                                         deleteTables(i + 1);
                                     }, function(){
                                         deleteTables(i + 1);
@@ -167,6 +168,6 @@
             return idbModules.Key.encode(key1) > idbModules.Key.encode(key2) ? 1 : key1 === key2 ? 0 : -1;
         }
     };
-    
+
     idbModules.shimIndexedDB = shimIndexedDB;
 }(idbModules));
