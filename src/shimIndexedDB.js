@@ -147,7 +147,7 @@
                                     }, dbError);
                                 } else {
                                     // Delete all tables in this database, maintained in the sys table
-                                    tx.executeSql("DROP TABLE " + tables.item(i).name, [], function(){
+                                    tx.executeSql("DROP TABLE " + idbModules.util.quote(tables.item(i).name), [], function(){
                                         deleteTables(i + 1);
                                     }, function(){
                                         deleteTables(i + 1);
