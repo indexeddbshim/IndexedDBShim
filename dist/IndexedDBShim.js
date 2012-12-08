@@ -1207,7 +1207,7 @@ var idbModules = {};
                                     }, dbError);
                                 } else {
                                     // Delete all tables in this database, maintained in the sys table
-                                    tx.executeSql("DROP TABLE " + tables.item(i).name, [], function(){
+                                    tx.executeSql("DROP TABLE " + idbModules.util.quote(tables.item(i).name), [], function(){
                                         deleteTables(i + 1);
                                     }, function(){
                                         deleteTables(i + 1);
@@ -1258,6 +1258,8 @@ var idbModules = {};
         window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction;
         window.IDBCursor = window.IDBCursor || window.webkitIDBCursor;
         window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange;
+        window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || "readonly";
+        window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
     }
     
 }(window, idbModules));
