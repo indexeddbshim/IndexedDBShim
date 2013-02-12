@@ -25,6 +25,9 @@
         window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction;
         window.IDBCursor = window.IDBCursor || window.webkitIDBCursor;
         window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange;
+        if(!window.IDBTransaction){
+            window.IDBTransaction = {};
+        }
         window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || "readonly";
         window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
     }

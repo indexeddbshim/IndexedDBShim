@@ -19,10 +19,10 @@
         else 
             if (typeof mode === "string") {
                 switch (mode) {
-                    case "readonly":
+                    case "readwrite":
                         this.mode = READ_WRITE;
                         break;
-                    case "readwrite":
+                    case "readonly":
                         this.mode = READ;
                         break;
                     default:
