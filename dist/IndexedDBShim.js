@@ -847,10 +847,10 @@ var idbModules = {};
         else 
             if (typeof mode === "string") {
                 switch (mode) {
-                    case "readonly":
+                    case "readwrite":
                         this.mode = READ_WRITE;
                         break;
-                    case "readwrite":
+                    case "readonly":
                         this.mode = READ;
                         break;
                     default:
@@ -1258,6 +1258,9 @@ var idbModules = {};
         window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction;
         window.IDBCursor = window.IDBCursor || window.webkitIDBCursor;
         window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange;
+        if(!window.IDBTransaction){
+            window.IDBTransaction = {};
+        }
         window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || "readonly";
         window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
     }

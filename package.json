@@ -1,30 +1,39 @@
 {
-    "name": "IndexedDBShim",
-    "version": "0.1.0",
-    "author": "Parashuram <code@nparashuram.com>",
-    "description": "A polyfill for IndexedDB using WebSql",
-    "scripts": {
-        "start": "grunt",
-        "test": "grunt test"
-    },
-    "repository": {
-        "type": "git",
-	    "url": "git://github.com/axemclion/IndexedDBShim.git"
-    },
-	"bugs": {
-    	"url": "https://github.com/axemclion/IndexedDBShim/issues"
-  	},
-	"main": "grunt.js",
-    "keywords": ["indexedDB", "database", "polyfill", "websql"],
-    "devDependencies": {
-		"grunt": "~0.3.12",
-        "grunt-jsmin-sourcemap": ">=1.5.6",
-        "grunt-saucelabs": ">=1.0.0",
-		"request" : "~2.12.0"
-    },
-    "bundleDependencies": [],
-    "license": "MIT",
-    "engines": {
-        "node": ">=0.6"
-    }
+  "name": "IndexedDBShim",
+  "version": "0.1.1",
+  "author": "Parashuram <code@nparashuram.com>",
+  "description": "A polyfill for IndexedDB using WebSql",
+  "scripts": {
+    "start": "grunt",
+    "test": "grunt test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/axemclion/IndexedDBShim.git"
+  },
+  "bugs": {
+    "url": "https://github.com/axemclion/IndexedDBShim/issues"
+  },
+  "main": "grunt.js",
+  "keywords": [
+    "indexedDB",
+    "database",
+    "polyfill",
+    "websql"
+  ],
+  "devDependencies": {
+    "request": "~2.12.0",
+    "grunt": "~0.4.0",
+    "grunt-contrib-concat": "~0.1.3",
+    "grunt-contrib-uglify": "~0.1.1",
+    "grunt-contrib-connect": "~0.1.2",
+    "grunt-saucelabs": "~3.0.0",
+    "grunt-contrib-jshint": "~0.1.1",
+    "grunt-jsmin-sourcemap": "~1.6.0"
+  },
+  "bundleDependencies": [],
+  "license": "MIT",
+  "engines": {
+    "node": ">=0.8"
+  }
 }
