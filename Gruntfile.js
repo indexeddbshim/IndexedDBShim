@@ -1,5 +1,5 @@
 /* global module:false */
-module.exports = function(grunt){
+module.exports = function(grunt) {
 	var srcFiles = ['src/Init.js', 'src/util.js', 'src/Sca.js', 'src/Key.js', 'src/Event.js', 'src/IDBRequest.js', 'src/IDBKeyRange.js', 'src/IDBCursor.js', 'src/IDBIndex.js', 'src/IDBObjectStore.js', 'src/IDBTransaction.js', 'src/IDBDatabase.js', 'src/shimIndexedDB.js', 'src/globalVars.js'];
 	// Project configuration.
 	var saucekey = null;
@@ -7,40 +7,40 @@ module.exports = function(grunt){
 		saucekey = process.env.saucekey;
 	}
 	grunt.initConfig({
-		pkg: '<json:package.json>',
-		meta: {
-			banner: '/*! <%= pkg.name %> */'
-		},
-		lint: {
+		jshint: {
 			files: ['grunt.js', 'src/**/*.js', 'test/**/*.js']
 		},
 		concat: {
 			dist: {
 				src: srcFiles,
-				dest: 'dist/<%= pkg.name %>.js'
+				dest: 'dist/IndexedDBShim.js'
+			}
+		},
+		uglify: {
+			all: {
+				src: srcFiles,
+				dest: 'dist/IndexedDBShim.min.js'
 			}
 		},
 		'jsmin-sourcemap': {
 			all: {
 				src: srcFiles,
-				dest: 'dist/<%= pkg.name %>.min.js',
+				dest: 'dist/IndexedDBShim.min.js',
 				srcRoot: '..'
 			}
 		},
-		watch: {
-			files: '<config:lint.files>',
-			tasks: 'lint test'
+		connect: {
+			server: {
+				options: {
+					base: '.',
+					port: 9999
+				}
+			}
 		},
-		
-		server: {
-			base: '.',
-			port: 9999
-		},
-		
 		qunit: {
 			all: ['http://localhost:9999/test/index.html']
 		},
-		
+
 		'saucelabs-qunit': {
 			all: {
 				username: 'indexeddbshim',
@@ -57,21 +57,21 @@ module.exports = function(grunt){
 				}]
 			}
 		},
-		
+
 		jshint: {
 			options: {
 				camelcase: true,
 				nonew: true,
-				curly: true,// require { }
-				eqeqeq: true,// === instead of ==
-				immed: true,// wrap IIFE in parentheses
-				latedef: true,// variable declared before usage
-				newcap: true,// capitalize class names
-				undef: true,// checks for undefined variables
+				curly: true, // require { }
+				eqeqeq: true, // === instead of ==
+				immed: true, // wrap IIFE in parentheses
+				latedef: true, // variable declared before usage
+				newcap: true, // capitalize class names
+				undef: true, // checks for undefined variables
 				regexp: true,
 				evil: true,
-				eqnull: true,// == allowed for undefined/null checking
-				expr: true,// allow foo && foo()
+				eqnull: true, // == allowed for undefined/null checking
+				expr: true, // allow foo && foo()
 				browser: true
 				// browser environment
 			},
@@ -84,7 +84,7 @@ module.exports = function(grunt){
 				idbModules: true,
 				logger: true,
 				require: true,
-				
+
 				// Tests.
 				_: true,
 				asyncTest: true,
@@ -106,21 +106,23 @@ module.exports = function(grunt){
 				unescape: true,
 				process: true
 			}
-		},
-		uglify: {}
+		}
 	});
-	
-	// Default task.
+
+	grunt.loadNpmTasks('grunt-contrib-jshint');
+	grunt.loadNpmTasks('grunt-contrib-uglify');
+	grunt.loadNpmTasks('grunt-contrib-connect');
+	grunt.loadNpmTasks('grunt-contrib-concat');
 	grunt.loadNpmTasks('grunt-jsmin-sourcemap');
 	grunt.loadNpmTasks('grunt-saucelabs');
-	grunt.registerTask('build', 'lint concat jsmin-sourcemap');
-	
-	
-	grunt.registerTask("publish", function(){
+	grunt.registerTask('build', ['jshint', 'concat', 'uglify']);
+
+
+	grunt.registerTask("publish", function() {
 		var done = this.async();
 		console.log("Running publish action");
 		var request = require("request");
-		request("https://api.travis-ci.org/repos/axemclion/IndexedDBShim/builds.json", function(err, res, body){
+		request("https://api.travis-ci.org/repos/axemclion/IndexedDBShim/builds.json", function(err, res, body) {
 			var commit = JSON.parse(body)[0];
 			var commitMessage = ["Commit from Travis Build #", commit.number, "\nBuild - https://travis-ci.org/axemclion/IndexedDBShim/builds/", commit.id, "\nBranch : ", commit.branch, "@ ", commit.commit];
 			console.log("Got Travis Build details");
@@ -132,23 +134,23 @@ module.exports = function(grunt){
 					"head": "master",
 					"commit_message": commitMessage.join("")
 				})
-			}, function(err, response, body){
+			}, function(err, response, body) {
 				console.log(body);
 				done(!err);
 			});
 		});
 	});
-	
-	var testJobs = ["build", "server"];
+
+	var testJobs = ["build", "connect"];
 	if (saucekey !== null) {
 		testJobs.push("saucelabs-qunit");
 	}
-	
+
 	if (process.env.CI && process.env.TRAVIS) {
 		testJobs.push("publish");
 	}
 	testJobs.push("publish");
-	grunt.registerTask('test', testJobs.join(" "));
-	
+	grunt.registerTask('test', testJobs);
+
 	grunt.registerTask('default', 'build');
 };
