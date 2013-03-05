@@ -35,6 +35,10 @@
     var StringList = function(){
         this.length = 0;
         this._items = [];
+        //All functions on the prototype have been made non-enumerable below.
+        if (Object.defineProperty)
+            for(var i in this)
+                Object.defineProperty(this, i, {enumerable:false});
     };
     StringList.prototype = {
         // Interface.
@@ -52,12 +56,22 @@
         push: function(item){
             this._items.push(item);
             this.length += 1;
+            for(var i = 0; i < this._items.length; i++)
+                this[i] = this._items[i];
         },
         splice: function(/*index, howmany, item1, ..., itemX*/){
             this._items.splice.apply(this._items, arguments);
             this.length = this._items.length;
+            for(var i in this)
+                if (i == String(parseInt(i)))
+                  delete this[i];
+            for(var i = 0; i < this._items.length; i++)
+              this[i] = this._items[i];
         }
     };
+    if (Object.defineProperty)
+        for(var i in StringList.prototype)
+            Object.defineProperty(StringList.prototype, i, {enumerable:false});
     idbModules.util = {
         "throwDOMException": throwDOMException,
         "callback": callback,
