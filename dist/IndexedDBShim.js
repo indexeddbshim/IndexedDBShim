@@ -161,6 +161,7 @@ var idbModules = {};
 	};
 	idbModules.Event = Event;
 }(idbModules));
+
 (function(idbModules){
 
     /**
@@ -257,12 +258,12 @@ var idbModules = {};
         if (me.__range && (me.__range.lower || me.__range.upper)) {
             sql.push("AND");
             if (me.__range.lower) {
-                sql.push(me.__keyColumnName + (me.__range.lowerOpen ? " >=" : " >") + " ?");
+                sql.push(me.__keyColumnName + (me.__range.lowerOpen ? " >" : " >= ") + " ?");
                 sqlValues.push(idbModules.Key.encode(me.__range.lower));
             }
             (me.__range.lower && me.__range.upper) && sql.push("AND");
             if (me.__range.upper) {
-                sql.push(me.__keyColumnName + (me.__range.upperOpen ? " <= " : " < ") + " ?");
+                sql.push(me.__keyColumnName + (me.__range.upperOpen ? " < " : " <= ") + " ?");
                 sqlValues.push(idbModules.Key.encode(me.__range.upper));
             }
         }
@@ -276,6 +277,7 @@ var idbModules = {};
         }
         sql.push("ORDER BY ", me.__keyColumnName);
         sql.push("LIMIT 1 OFFSET " + me.__offset);
+        debugger;
         idbModules.DEBUG && console.log(sql.join(" "), sqlValues);
         tx.executeSql(sql.join(" "), sqlValues, function(tx, data){
             if (data.rows.length === 1) {
@@ -375,14 +377,20 @@ var idbModules = {};
     /**
      * IDB Index
      * http://www.w3.org/TR/IndexedDB/#idl-def-IDBIndex
-     * @param {Object} indexName
-     * @param {Object} keyPath
-     * @param {Object} optionalParameters
-     * @param {Object} transaction
+     * @param {Object} name;
+     * @param {Object} objectStore;
      */
     function IDBIndex(indexName, idbObjectStore){
-        this.indexName = indexName;
-        this.__idbObjectStore = this.source = idbObjectStore;
+        this.indexName = this.name = indexName;
+        this.__idbObjectStore = this.objectStore = this.source = idbObjectStore;
+        
+        var indexList = idbObjectStore.__storeProps && idbObjectStore.__storeProps.indexList;
+        indexList && (indexList = JSON.parse(indexList));
+        
+        this.keyPath = ((indexList && indexList[indexName] && indexList[indexName].keyPath) || indexName);
+        ['multiEntry','unique'].forEach(function(prop){
+            this[prop] = !!indexList && !!indexList[indexName] && !!indexList[indexName].optionalParams && !!indexList[indexName].optionalParams[prop];
+        }, this);
     }
     
     IDBIndex.prototype.__createIndex = function(indexName, keyPath, optionalParameters){

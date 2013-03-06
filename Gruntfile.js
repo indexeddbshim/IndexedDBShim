@@ -7,9 +7,6 @@ module.exports = function(grunt) {
 		saucekey = process.env.saucekey;
 	}
 	grunt.initConfig({
-		jshint: {
-			files: ['grunt.js', 'src/**/*.js', 'test/**/*.js']
-		},
 		concat: {
 			dist: {
 				src: srcFiles,
@@ -45,7 +42,6 @@ module.exports = function(grunt) {
 			all: {
 				username: 'indexeddbshim',
 				key: saucekey,
-				testname: 'IndexedDBShim',
 				tags: ['master'],
 				urls: ['http://127.0.0.1:9999/test/index.html'],
 				browsers: [{
@@ -58,6 +54,9 @@ module.exports = function(grunt) {
 			}
 		},
 
+		jshint: {
+			files: ['grunt.js', 'src/**/*.js', 'test/**/*.js'],
+		},
 		jshint: {
 			options: {
 				camelcase: true,
@@ -106,6 +105,12 @@ module.exports = function(grunt) {
 				unescape: true,
 				process: true
 			}
+		},
+		watch: {
+			dev : {
+				files: ["src/*"],
+				tasks :["jshint", "concat", "jsmin-sourcemap"]
+			}
 		}
 	});
 
@@ -114,11 +119,12 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-connect');
 	grunt.loadNpmTasks('grunt-contrib-concat');
 	grunt.loadNpmTasks('grunt-jsmin-sourcemap');
+	grunt.loadNpmTasks('grunt-contrib-watch');
 	grunt.loadNpmTasks('grunt-saucelabs');
-	grunt.registerTask('build', ['jshint', 'concat', 'uglify']);
+	grunt.registerTask('build', ['jshint', 'concat', 'jsmin-sourcemap']);
 
 
-	grunt.registerTask("publish", function() {
+	grunt.registerTask("publish", "Publish to gh-pages", function() {
 		var done = this.async();
 		console.log("Running publish action");
 		var request = require("request");
@@ -153,4 +159,5 @@ module.exports = function(grunt) {
 	grunt.registerTask('test', testJobs);
 
 	grunt.registerTask('default', 'build');
+	grunt.registerTask('dev', ['build', 'connect', 'watch']);
 };
