@@ -4,7 +4,7 @@ function openObjectStore(name, storeName, callback){
         dbOpenRequest.onsuccess = function(e){
             _("Database opened successfully");
             var db = dbOpenRequest.result;
-            var transaction = db.transaction([DB.OBJECT_STORE_1, DB.OBJECT_STORE_2], IDBTransaction.READ_WRITE);
+            var transaction = db.transaction([DB.OBJECT_STORE_1, DB.OBJECT_STORE_2], "readwrite");
             var objectStore = transaction.objectStore(DB.OBJECT_STORE_1);
             callback(objectStore);
         };

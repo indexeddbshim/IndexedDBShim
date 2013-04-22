@@ -5,7 +5,7 @@ function onObjectStoreOpen(name, storeName, callback){
             _("Database opened successfully");
             ok(true, "Database Opened successfully");
             var db = dbOpenRequest.result;
-            var transaction = db.transaction([DB.OBJECT_STORE_1, DB.OBJECT_STORE_2, DB.OBJECT_STORE_3, DB.OBJECT_STORE_4], IDBTransaction.READ_WRITE);
+            var transaction = db.transaction([DB.OBJECT_STORE_1, DB.OBJECT_STORE_2, DB.OBJECT_STORE_3, DB.OBJECT_STORE_4], "readwrite");
             var objectStore = transaction.objectStore(storeName);
             callback(objectStore);
         };
@@ -222,7 +222,7 @@ queuedAsyncTest("Lots of data Added to objectStore1", function(){
         _("Database opened successfully");
         ok(true, "Database Opened successfully");
         var db = dbOpenRequest.result;
-        var transaction = db.transaction([DB.OBJECT_STORE_1], IDBTransaction.READ_WRITE);
+        var transaction = db.transaction([DB.OBJECT_STORE_1], "readwrite");
         var objectStore = transaction.objectStore(DB.OBJECT_STORE_1);
         var counter = 0, max = 15;
         var success = function(){
