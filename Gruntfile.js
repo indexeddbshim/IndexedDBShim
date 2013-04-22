@@ -7,23 +7,23 @@ module.exports = function(grunt) {
 		saucekey = process.env.saucekey;
 	}
 	grunt.initConfig({
+		pkg: grunt.file.readJSON('package.json'),
 		concat: {
 			dist: {
 				src: srcFiles,
-				dest: 'dist/IndexedDBShim.js'
+				dest: 'dist/<%= pkg.name%>.js'
 			}
 		},
 		uglify: {
+			options: {
+				banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
+				sourceMap: 'dist/<%=pkg.name%>.min.map',
+				sourceMapRoot: 'http://nparashuram.com/IndexedDBShim/',
+				sourceMappingURL: 'http://nparashuram.com/IndexedDBShim/dist/<%=pkg.name%>.min.map'
+			},
 			all: {
 				src: srcFiles,
-				dest: 'dist/IndexedDBShim.min.js'
-			}
-		},
-		'jsmin-sourcemap': {
-			all: {
-				src: srcFiles,
-				dest: 'dist/IndexedDBShim.min.js',
-				srcRoot: '..'
+				dest: 'dist/<%=pkg.name%>.min.js',
 			}
 		},
 		connect: {
@@ -49,81 +49,30 @@ module.exports = function(grunt) {
 					platform: 'Windows 2008',
 					version: '5'
 				}, {
-					browserName: 'opera'
+					browserName: 'opera',
+					version: '12'
 				}]
 			}
 		},
 
 		jshint: {
 			files: ['grunt.js', 'src/**/*.js', 'test/**/*.js'],
-		},
-		jshint: {
 			options: {
-				camelcase: true,
-				nonew: true,
-				curly: true, // require { }
-				eqeqeq: true, // === instead of ==
-				immed: true, // wrap IIFE in parentheses
-				latedef: true, // variable declared before usage
-				newcap: true, // capitalize class names
-				undef: true, // checks for undefined variables
-				regexp: true,
-				evil: true,
-				eqnull: true, // == allowed for undefined/null checking
-				expr: true, // allow foo && foo()
-				browser: true
-				// browser environment
-			},
-			globals: {
-				// Shim.
-				DEBUG: true,
-				console: true,
-				DOMException: true,
-				IDBTransaction: true,
-				idbModules: true,
-				logger: true,
-				require: true,
-
-				// Tests.
-				_: true,
-				asyncTest: true,
-				DB: true,
-				dbVersion: true,
-				deepEqual: true,
-				equal: true,
-				expect: true,
-				fail: true,
-				module: true,
-				nextTest: true,
-				notEqual: true,
-				ok: true,
-				sample: true,
-				start: true,
-				stop: true,
-				queuedAsyncTest: true,
-				queuedModule: true,
-				unescape: true,
-				process: true
+				jshintrc: '.jshintrc'
 			}
 		},
 		watch: {
-			dev : {
+			dev: {
 				files: ["src/*"],
-				tasks :["jshint", "concat", "jsmin-sourcemap"]
+				tasks: ["jshint", "concat"]
 			}
 		}
 	});
 
-	grunt.loadNpmTasks('grunt-contrib-jshint');
-	grunt.loadNpmTasks('grunt-contrib-uglify');
-	grunt.loadNpmTasks('grunt-contrib-connect');
-	grunt.loadNpmTasks('grunt-contrib-concat');
-	grunt.loadNpmTasks('grunt-jsmin-sourcemap');
-	grunt.loadNpmTasks('grunt-contrib-watch');
-	grunt.loadNpmTasks('grunt-saucelabs');
-	grunt.registerTask('build', ['jshint', 'concat', 'jsmin-sourcemap']);
-
-
+	for (var key in grunt.file.readJSON('package.json').devDependencies) {
+		if (key !== 'grunt' && key.indexOf('grunt') === 0) grunt.loadNpmTasks(key);
+	}
+	
 	grunt.registerTask("publish", "Publish to gh-pages", function() {
 		var done = this.async();
 		console.log("Running publish action");
@@ -147,6 +96,7 @@ module.exports = function(grunt) {
 		});
 	});
 
+	grunt.registerTask('build', ['jshint', 'concat', 'uglify']);
 	var testJobs = ["build", "connect"];
 	if (saucekey !== null) {
 		testJobs.push("saucelabs-qunit");
@@ -155,7 +105,6 @@ module.exports = function(grunt) {
 	if (process.env.CI && process.env.TRAVIS) {
 		testJobs.push("publish");
 	}
-	testJobs.push("publish");
 	grunt.registerTask('test', testJobs);
 
 	grunt.registerTask('default', 'build');

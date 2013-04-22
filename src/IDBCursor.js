@@ -56,7 +56,6 @@
         }
         sql.push("ORDER BY ", me.__keyColumnName);
         sql.push("LIMIT 1 OFFSET " + me.__offset);
-        debugger;
         idbModules.DEBUG && console.log(sql.join(" "), sqlValues);
         tx.executeSql(sql.join(" "), sqlValues, function(tx, data){
             if (data.rows.length === 1) {
