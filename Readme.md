@@ -1,7 +1,7 @@
 IndexedDB Polyfill [![Build Status](https://secure.travis-ci.org/axemclion/IndexedDBShim.png)](https://travis-ci.org/axemclion/IndexedDBShim)
 ================================
 
-A polyfill to enable IndexedDB using WebSql.
+A polyfill to enable IndexedDB using WebSql or sqLite3.
 
 IndexedBD is not supported on <a href = "http://caniuse.com/#search=IndexedDB" target="_blank">all browsers</a>. 
 This IndexedDB polyfill exposes the IndexedDB API in unsupported browsers using WebSQL. This shim is basically an IndexedDB-WebSql adapter.  
@@ -9,6 +9,8 @@ This IndexedDB polyfill exposes the IndexedDB API in unsupported browsers using 
 <a href = "http://nparashuram.com/IndexedDBShim">More details about the project at gh-pages</a>
 
 Using this polyfill, you can use a single offline storage API across browsers (Opera, Safari, Firefox, Chrome and IE10) and even mobile devices (Phonegap on iOS and Android).
+
+This polyfill also can used in Node.js environment with sqLite3.
 
 Using the polyfill
 ==================

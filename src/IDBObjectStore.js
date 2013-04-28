@@ -119,7 +119,7 @@
                     try {
                         var primaryKey = eval("value['" + props.keyPath + "']");
                         if (!primaryKey) {
-                            if (props.autoInc === "true") {
+                            if (props.autoInc) {
                                 getNextAutoIncKey();
                             }
                             else {
@@ -143,7 +143,7 @@
                     callback(key);
                 }
                 else {
-                    if (props.autoInc === "false") {
+                    if (!props.autoInc) {
                         idbModules.util.throwDOMException(0, "Data Error - The object store uses out-of-line keys and has no key generator and the key parameter was not provided. ", props);
                     }
                     else {

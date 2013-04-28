@@ -10,12 +10,10 @@
             // dbVersions already exists
         }, function(){
             // dbVersions does not exist, so creating it
-            sysdb.transaction(function(tx){
-                tx.executeSql("CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);", [], function(){
-                }, function(){
-                    idbModules.util.throwDOMException("Could not create table __sysdb__ to save DB versions");
-                });
-            });
+			tx.executeSql("CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);", [], function(){
+			}, function(){
+				idbModules.util.throwDOMException("Could not create table __sysdb__ to save DB versions");
+			});
         });
     }, function(){
         // sysdb Transaction failed
