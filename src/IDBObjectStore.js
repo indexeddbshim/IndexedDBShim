@@ -46,7 +46,7 @@
         else {
             idbModules.DEBUG && console.log("Waiting for to be ready", key);
             var me = this;
-            window.setTimeout(function(){
+            setTimeout(function(){
                 me.__waitForReady(callback, key);
             }, 100);
         }

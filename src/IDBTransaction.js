@@ -54,7 +54,7 @@
         }
         this.__running = true;
         var me = this;
-        window.setTimeout(function(){
+        setTimeout(function(){
             if (me.mode !== 2 && !me.__active) {
                 idbModules.util.throwDOMException(0, "A request was placed against a transaction which is currently not active, or which is finished", me.__active);
             }
