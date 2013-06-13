@@ -40,18 +40,20 @@ module.exports = function(grunt) {
 
 		'saucelabs-qunit': {
 			all: {
-				username: 'indexeddbshim',
-				key: saucekey,
-				tags: ['master'],
-				urls: ['http://127.0.0.1:9999/test/index.html'],
-				browsers: [{
-					browserName: 'safari',
-					platform: 'Windows 2008',
-					version: '5'
-				}, {
-					browserName: 'opera',
-					version: '12'
-				}]
+				options : {
+					username: 'indexeddb',
+					key: saucekey,
+					tags: ['master'],
+					urls: ['http://127.0.0.1:9999/test/index.html'],
+					browsers: [{
+						browserName: 'safari',
+						platform: 'Windows 2008',
+						version: '5'
+					}, {
+						browserName: 'opera',
+						version: '12'
+					}]
+				}
 			}
 		},
 

@@ -32,7 +32,7 @@
         </script>
         <script type = "text/javascript">
             function _(msg){
-                console.log("[" + QUnit.config.current.testName + "]", msg, arguments.callee.caller.arguments);
+                console.log("[" + QUnit.config.current.testName + "]", msg, arguments.callee.caller ?  arguments.callee.caller.arguments : " -- ");
             }
         </script>
         <script type = "text/javascript" src= "sampleData.js">
