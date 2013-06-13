@@ -1,4 +1,3 @@
-'use strict';
 (function(idbModules){
     /**
      * Encodes the keys and values based on their types. This is required to maintain collations

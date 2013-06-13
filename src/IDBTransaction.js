@@ -1,4 +1,3 @@
-'use strict';
 (function(idbModules){
 
     /**
@@ -84,16 +83,16 @@
                     i++;
                     executeRequest();
                 }
-                function executeRequest(){
-                    if (i >= me.__requests.length) {
-                        me.__active = false; // All requests in the transaction is done
-                        me.__requests = [];
-                        return;
-                    }
-                    q = me.__requests[i];
-                    q.op(tx, q.args, success, error);
-                }
                 try {
+                    function executeRequest(){
+                        if (i >= me.__requests.length) {
+                            me.__active = false; // All requests in the transaction is done
+                            me.__requests = [];
+                            return;
+                        }
+                        q = me.__requests[i];
+                        q.op(tx, q.args, success, error);
+                    }
                     executeRequest();
                 } 
                 catch (e) {

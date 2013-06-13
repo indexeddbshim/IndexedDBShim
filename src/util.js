@@ -1,4 +1,3 @@
-'use strict';
 (function(idbModules) {
     /**
      * A utility method to callback onsuccess, onerror, etc as soon as the calling function's context is over
@@ -26,10 +25,8 @@
         var e = new DOMException.constructor(0, message);
         e.name = name;
         e.message = message;
-        if (idbModules.DEBUG) {
-            console.log(name, message, error, e);
-            console.trace && console.trace();
-        }
+        e.stack = arguments.callee.caller;
+        idbModules.DEBUG && console.log(name, message, error, e);
         throw e;
     }
 

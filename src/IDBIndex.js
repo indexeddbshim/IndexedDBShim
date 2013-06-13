@@ -1,4 +1,3 @@
-'use strict';
 (function(idbModules, undefined){
     /**
      * IDB Index
