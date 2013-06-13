@@ -1,7 +1,11 @@
+/*jshint globalstrict: true*/
+'use strict';
 /**
  * An initialization file that checks for conditions, removes console.log and warn, etc
  */
 var idbModules = {};
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules) {
     /**
      * A utility method to callback onsuccess, onerror, etc as soon as the calling function's context is over
@@ -29,8 +33,10 @@ var idbModules = {};
         var e = new DOMException.constructor(0, message);
         e.name = name;
         e.message = message;
-        e.stack = arguments.callee.caller;
-        idbModules.DEBUG && console.log(name, message, error, e);
+        if (idbModules.DEBUG) {
+            console.log(name, message, error, e);
+            console.trace && console.trace();
+        }
         throw e;
     }
 
@@ -101,6 +107,8 @@ var idbModules = {};
         "StringList": StringList
     };
 }(idbModules));
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules){
     /**
      * A dummy implementation of the Structured Cloning Algorithm
@@ -118,6 +126,8 @@ var idbModules = {};
     }());
     idbModules.Sca = Sca;
 }(idbModules));
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules){
     /**
      * Encodes the keys and values based on their types. This is required to maintain collations
@@ -174,6 +184,8 @@ var idbModules = {};
     idbModules.Key = Key;
 }(idbModules));
 
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules, undefined){
 	// The event interface used for IndexedBD Actions.
 	var Event = function(type, debug){
@@ -191,6 +203,8 @@ var idbModules = {};
 	idbModules.Event = Event;
 }(idbModules));
 
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules){
 
     /**
@@ -214,6 +228,8 @@ var idbModules = {};
     
 }(idbModules));
 
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules, undefined){
     /**
      * The IndexedDB KeyRange object
@@ -248,6 +264,8 @@ var idbModules = {};
     
 }(idbModules));
 
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules, undefined){
     /**
      * The IndexedDB Cursor Object
@@ -401,6 +419,8 @@ var idbModules = {};
     idbModules.IDBCursor = IDBCursor;
 }(idbModules));
 
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules, undefined){
     /**
      * IDB Index
@@ -535,6 +555,8 @@ var idbModules = {};
     idbModules.IDBIndex = IDBIndex;
 }(idbModules));
 
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules){
 
     /**
@@ -862,6 +884,8 @@ var idbModules = {};
     idbModules.IDBObjectStore = IDBObjectStore;
 }(idbModules));
 
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules){
 
     /**
@@ -947,16 +971,16 @@ var idbModules = {};
                     i++;
                     executeRequest();
                 }
-                try {
-                    function executeRequest(){
-                        if (i >= me.__requests.length) {
-                            me.__active = false; // All requests in the transaction is done
-                            me.__requests = [];
-                            return;
-                        }
-                        q = me.__requests[i];
-                        q.op(tx, q.args, success, error);
+                function executeRequest(){
+                    if (i >= me.__requests.length) {
+                        me.__active = false; // All requests in the transaction is done
+                        me.__requests = [];
+                        return;
                     }
+                    q = me.__requests[i];
+                    q.op(tx, q.args, success, error);
+                }
+                try {
                     executeRequest();
                 } 
                 catch (e) {
@@ -1005,6 +1029,8 @@ var idbModules = {};
     idbModules.IDBTransaction = IDBTransaction;
 }(idbModules));
 
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules){
 
     /**
@@ -1094,6 +1120,8 @@ var idbModules = {};
     idbModules.IDBDatabase = IDBDatabase;
 }(idbModules));
 
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules){
     var DEFAULT_DB_SIZE = 4 * 1024 * 1024;
     if (!window.openDatabase) {
@@ -1267,6 +1295,8 @@ var idbModules = {};
     idbModules.shimIndexedDB = shimIndexedDB;
 }(idbModules));
 
+/*jshint globalstrict: true*/
+'use strict';
 (function(window, idbModules){
     if (typeof window.openDatabase !== "undefined") {
         window.shimIndexedDB = idbModules.shimIndexedDB;
