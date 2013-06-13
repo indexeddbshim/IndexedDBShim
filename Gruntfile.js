@@ -40,18 +40,21 @@ module.exports = function(grunt) {
 
 		'saucelabs-qunit': {
 			all: {
-				username: 'indexeddbshim',
-				key: saucekey,
-				tags: ['master'],
-				urls: ['http://127.0.0.1:9999/test/index.html'],
-				browsers: [{
-					browserName: 'safari',
-					platform: 'Windows 2008',
-					version: '5'
-				}, {
-					browserName: 'opera',
-					version: '12'
-				}]
+				options: {
+					username: 'indexeddbshim',
+					key: saucekey,
+					tags: ['master'],
+					urls: ['http://127.0.0.1:9999/test/index.html'],
+					browsers: [{
+							browserName: 'safari',
+							platform: 'Windows 2008',
+							version: '5'
+						}, {
+							browserName: 'opera',
+							version: '12'
+						}
+					]
+				}
 			}
 		},
 
@@ -72,7 +75,7 @@ module.exports = function(grunt) {
 	for (var key in grunt.file.readJSON('package.json').devDependencies) {
 		if (key !== 'grunt' && key.indexOf('grunt') === 0) grunt.loadNpmTasks(key);
 	}
-	
+
 	grunt.registerTask("publish", "Publish to gh-pages", function() {
 		var done = this.async();
 		console.log("Running publish action");
@@ -84,6 +87,9 @@ module.exports = function(grunt) {
 			request({
 				url: "https://api.github.com/repos/axemclion/IndexedDBShim/merges?access_token=" + process.env.githubtoken,
 				method: "POST",
+				headers: {
+					'User-Agent': 'Travis'
+				},
 				body: JSON.stringify({
 					"base": "gh-pages",
 					"head": "master",
