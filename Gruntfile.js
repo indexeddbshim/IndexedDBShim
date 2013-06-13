@@ -41,7 +41,7 @@ module.exports = function(grunt) {
 		'saucelabs-qunit': {
 			all: {
 				options : {
-					username: 'indexeddb',
+					username: 'indexeddbshim',
 					key: saucekey,
 					tags: ['master'],
 					urls: ['http://127.0.0.1:9999/test/index.html'],
