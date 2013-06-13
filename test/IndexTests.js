@@ -1,3 +1,4 @@
+'use strict';
 queuedModule("Indexes");
 queuedAsyncTest("Creating Indexes", function(){
     var dbOpenRequest = window.indexedDB.open(DB.NAME, ++dbVersion);

@@ -1,3 +1,4 @@
+'use strict';
 queuedModule("Database");
 queuedAsyncTest("Opening a Database without version", function(){
 	var dbOpenRequest = window.indexedDB.open(DB.NAME);

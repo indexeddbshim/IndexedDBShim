@@ -1,3 +1,4 @@
+'use strict';
 (function(idbModules){
     var DEFAULT_DB_SIZE = 4 * 1024 * 1024;
     if (!window.openDatabase) {

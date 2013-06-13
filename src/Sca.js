@@ -1,3 +1,4 @@
+'use strict';
 (function(idbModules){
     /**
      * A dummy implementation of the Structured Cloning Algorithm

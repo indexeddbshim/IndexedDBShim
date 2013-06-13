@@ -1,3 +1,4 @@
+'use strict';
 (function(window, idbModules){
     if (typeof window.openDatabase !== "undefined") {
         window.shimIndexedDB = idbModules.shimIndexedDB;

@@ -1,3 +1,4 @@
+'use strict';
 /**
  * Ideally unit tests should be independent, but there are some cases where you
  * really want those tests to be executed one after the other Here is some code
