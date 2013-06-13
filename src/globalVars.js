@@ -1,3 +1,4 @@
+/*jshint globalstrict: true*/
 'use strict';
 (function(window, idbModules){
     if (typeof window.openDatabase !== "undefined") {

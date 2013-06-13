@@ -12,7 +12,6 @@
 	"eqnull": true,
 	"expr": true,
 	"browser": true,
-    "globalstrict": true,
 
 	"predef": [
 

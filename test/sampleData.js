@@ -1,4 +1,3 @@
-'use strict';
 var DB = {
     NAME: "dbName",
     OBJECT_STORE_1: "objectStore1",

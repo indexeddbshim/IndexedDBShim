@@ -1,3 +1,4 @@
+/*jshint globalstrict: true*/
 'use strict';
 (function(idbModules, undefined){
 	// The event interface used for IndexedBD Actions.

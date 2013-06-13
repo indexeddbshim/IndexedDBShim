@@ -1,4 +1,3 @@
-'use strict';
 function onObjectStoreOpen(name, storeName, callback){
     queuedAsyncTest(name, function(){
         var dbOpenRequest = window.indexedDB.open(DB.NAME);

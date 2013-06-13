@@ -1,4 +1,3 @@
-'use strict';
 queuedModule("Object Store");
 queuedAsyncTest("Creating an Object Store", function(){
     var dbOpenRequest = window.indexedDB.open(DB.NAME, ++dbVersion);
