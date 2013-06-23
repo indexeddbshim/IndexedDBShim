@@ -3,7 +3,7 @@ module.exports = function(grunt) {
 	var srcFiles = ['src/Init.js', 'src/util.js', 'src/Sca.js', 'src/Key.js', 'src/Event.js', 'src/IDBRequest.js', 'src/IDBKeyRange.js', 'src/IDBCursor.js', 'src/IDBIndex.js', 'src/IDBObjectStore.js', 'src/IDBTransaction.js', 'src/IDBDatabase.js', 'src/shimIndexedDB.js', 'src/globalVars.js'];
 	var saucekey = null;
 	if (typeof process.env.saucekey !== "undefined") {
-		saucekey = process.env.saucekey;
+		saucekey = process.env.SAUCE_ACCESS_KEY;
 	}
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
