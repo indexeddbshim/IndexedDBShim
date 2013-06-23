@@ -1,4 +1,4 @@
-repo="https://axemclion-travis:$GITHUB_PASSWORD@github.com/$TRAVIS_REPO_SLUG.git"
+repo="https://${GH_TOKEN}@github.com/$TRAVIS_REPO_SLUG.git"
 
 # If this is a pull request, we dont want to continue
 if [ "$TRAVIS_PULL_REQUEST" != "false" ] ; then
