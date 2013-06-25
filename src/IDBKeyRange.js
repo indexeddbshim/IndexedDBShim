@@ -1,3 +1,5 @@
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules, undefined){
     /**
      * The IndexedDB KeyRange object
