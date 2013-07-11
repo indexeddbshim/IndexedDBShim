@@ -16,6 +16,7 @@
 	"predef": [
 
 		"DEBUG",
+		"File",
 		"console",
 		"DOMException",
 		"IDBTransaction",
