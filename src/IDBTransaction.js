@@ -115,8 +115,18 @@
         if (!this.__active && this.mode !== VERSION_TRANSACTION) {
             idbModules.util.throwDOMException(0, "A request was placed against a transaction which is currently not active, or which is finished.", this.__mode);
         }
+        var request = this.__createRequest();
+        this.__pushToQueue(request, callback, args);       
+        return request;
+    };
+    
+    IDBTransaction.prototype.__createRequest = function(){
         var request = new idbModules.IDBRequest();
         request.source = this.db;
+        return request;
+    };
+    
+    IDBTransaction.prototype.__pushToQueue = function(request, callback, args) {
         this.__requests.push({
             "op": callback,
             "args": args,
@@ -124,7 +134,6 @@
         });
         // Start the queue for executing the requests
         this.__executeRequests();
-        return request;
     };
     
     IDBTransaction.prototype.objectStore = function(objectStoreName){
