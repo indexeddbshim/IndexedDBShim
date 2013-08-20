@@ -1,3 +1,5 @@
+/*jshint globalstrict: true*/
+'use strict';
 (function(window, idbModules){
     if (typeof window.openDatabase !== "undefined") {
         window.shimIndexedDB = idbModules.shimIndexedDB;
@@ -15,18 +17,33 @@
         }
     }
     
-    window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
-    
-    if (typeof window.indexedDB === "undefined" && typeof window.openDatabase !== "undefined") {
-        window.shimIndexedDB.__useShim();
+    var canNotSetWindowIndexedDBButExists = false;
+    try {
+        window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
+    } finally {
+        canNotSetWindowIndexedDBButExists = typeof window.indexedDB === "object";
     }
-    else {
-        window.IDBDatabase = window.IDBDatabase || window.webkitIDBDatabase;
-        window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction;
-        window.IDBCursor = window.IDBCursor || window.webkitIDBCursor;
-        window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange;
-        window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || "readonly";
-        window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
+    if (canNotSetWindowIndexedDBButExists) {
+        
+        if (typeof window.indexedDB === "undefined" && typeof window.openDatabase !== "undefined") {
+            window.shimIndexedDB.__useShim();
+        } else {
+            window.IDBDatabase = window.IDBDatabase || window.webkitIDBDatabase;
+            window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction;
+            window.IDBCursor = window.IDBCursor || window.webkitIDBCursor;
+            window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange;
+            if (!window.IDBTransaction) {
+                window.IDBTransaction = {};
+            }
+            window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || "readonly";
+            window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
+        }
+        
+    } else {
+        (function() {
+            var error = new TypeError("Can not instanciate IndexedDBShim, because window.indexedDB is readonly.");
+            throw error;
+        })();
     }
     
 }(window, idbModules));
