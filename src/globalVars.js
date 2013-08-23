@@ -17,14 +17,11 @@
         }
     }
     
-    var canNotSetWindowIndexedDBButExists = false;
     try {
         window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
-    } finally {
-        canNotSetWindowIndexedDBButExists = typeof window.indexedDB === "object";
-    }
-    if (canNotSetWindowIndexedDBButExists) {
-        
+    } finally {}
+    
+    if (typeof window.indexedDB === "object" || (typeof window.indexedDB === "undefined" && typeof window.openDatabase !== "undefined")) {
         if (typeof window.indexedDB === "undefined" && typeof window.openDatabase !== "undefined") {
             window.shimIndexedDB.__useShim();
         } else {
