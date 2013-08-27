@@ -100,7 +100,7 @@
             idbModules.DEBUG && console.log("Trying to fetch data for Index", sql.join(" "), sqlValues);
             tx.executeSql(sql.join(" "), sqlValues, function(tx, data){
                 var d;
-                if (typeof opType === "count") {
+                if (opType === "count") {
                     d = data.rows.length;
                 }
                 else 
