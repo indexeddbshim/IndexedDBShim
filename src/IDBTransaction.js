@@ -1,3 +1,5 @@
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules){
 
     /**
@@ -83,16 +85,16 @@
                     i++;
                     executeRequest();
                 }
-                try {
-                    function executeRequest(){
-                        if (i >= me.__requests.length) {
-                            me.__active = false; // All requests in the transaction is done
-                            me.__requests = [];
-                            return;
-                        }
-                        q = me.__requests[i];
-                        q.op(tx, q.args, success, error);
+                function executeRequest(){
+                    if (i >= me.__requests.length) {
+                        me.__active = false; // All requests in the transaction is done
+                        me.__requests = [];
+                        return;
                     }
+                    q = me.__requests[i];
+                    q.op(tx, q.args, success, error);
+                }
+                try {
                     executeRequest();
                 } 
                 catch (e) {
@@ -113,8 +115,18 @@
         if (!this.__active && this.mode !== VERSION_TRANSACTION) {
             idbModules.util.throwDOMException(0, "A request was placed against a transaction which is currently not active, or which is finished.", this.__mode);
         }
+        var request = this.__createRequest();
+        this.__pushToQueue(request, callback, args);       
+        return request;
+    };
+    
+    IDBTransaction.prototype.__createRequest = function(){
         var request = new idbModules.IDBRequest();
         request.source = this.db;
+        return request;
+    };
+    
+    IDBTransaction.prototype.__pushToQueue = function(request, callback, args) {
         this.__requests.push({
             "op": callback,
             "args": args,
@@ -122,7 +134,6 @@
         });
         // Start the queue for executing the requests
         this.__executeRequests();
-        return request;
     };
     
     IDBTransaction.prototype.objectStore = function(objectStoreName){

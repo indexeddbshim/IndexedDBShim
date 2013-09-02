@@ -1,7 +1,11 @@
+/*jshint globalstrict: true*/
+'use strict';
 /**
  * An initialization file that checks for conditions, removes console.log and warn, etc
  */
 var idbModules = {};
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules) {
     /**
      * A utility method to callback onsuccess, onerror, etc as soon as the calling function's context is over
@@ -29,8 +33,10 @@ var idbModules = {};
         var e = new DOMException.constructor(0, message);
         e.name = name;
         e.message = message;
-        e.stack = arguments.callee.caller;
-        idbModules.DEBUG && console.log(name, message, error, e);
+        if (idbModules.DEBUG) {
+            console.log(name, message, error, e);
+            console.trace && console.trace();
+        }
         throw e;
     }
 
@@ -101,23 +107,342 @@ var idbModules = {};
         "StringList": StringList
     };
 }(idbModules));
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules){
     /**
-     * A dummy implementation of the Structured Cloning Algorithm
-     * This just converts to a JSON string
+     * Implementation of the Structured Cloning Algorithm.  Supports the
+     * following object types:
+     * - Blob
+     * - Boolean
+     * - Date object
+     * - File object (deserialized as Blob object).
+     * - Number object
+     * - RegExp object
+     * - String object
+     * This is accomplished by doing the following:
+     * 1) Using the cycle/decycle functions from:
+     *    https://github.com/douglascrockford/JSON-js/blob/master/cycle.js
+     * 2) Serializing/deserializing objects to/from string that don't work with
+     *    JSON.stringify and JSON.parse by using object specific logic (eg use 
+     *    the FileReader API to convert a Blob or File object to a data URL.   
+     * 3) JSON.stringify and JSON.parse do the final conversion to/from string.
      */
     var Sca = (function(){
         return {
-            "encode": function(val){
-                return JSON.stringify(val);
+            decycle: function(object, callback) {
+                //From: https://github.com/douglascrockford/JSON-js/blob/master/cycle.js
+                // Contains additional logic to convert the following object types to string
+                // so that they can properly be encoded using JSON.stringify:
+                //  *Boolean
+                //  *Date
+                //  *File
+                //  *Blob
+                //  *Number
+                //  *Regex
+                // Make a deep copy of an object or array, assuring that there is at most
+                // one instance of each object or array in the resulting structure. The
+                // duplicate references (which might be forming cycles) are replaced with
+                // an object of the form
+                //      {$ref: PATH}
+                // where the PATH is a JSONPath string that locates the first occurance.
+                // So,
+                //      var a = [];
+                //      a[0] = a;
+                //      return JSON.stringify(JSON.decycle(a));
+                // produces the string '[{"$ref":"$"}]'.
+
+                // JSONPath is used to locate the unique object. $ indicates the top level of
+                // the object or array. [NUMBER] or [STRING] indicates a child member or
+                // property.
+
+                var objects = [],   // Keep a reference to each unique object or array
+                paths = [],     // Keep the path to each unique object or array
+                queuedObjects = [],
+                returnCallback = callback;
+
+                /**
+                 * Check the queue to see if all objects have been processed.
+                 * if they have, call the callback with the converted object.
+                 */
+                function checkForCompletion() {
+                    if (queuedObjects.length === 0) {
+                        returnCallback(derezObj);
+                    }    
+                }
+
+                /**
+                 * Convert a blob to a data URL.
+                 * @param {Blob} blob to convert.
+                 * @param {String} path of blob in object being encoded.
+                 */
+                function readBlobAsDataURL(blob, path) {
+                    var reader = new FileReader();
+                    reader.onloadend = function(loadedEvent) {
+                        var dataURL = loadedEvent.target.result;
+                        var blobtype = 'blob'; 
+                        if (blob instanceof File) {
+                            //blobtype = 'file';
+                        }
+                        updateEncodedBlob(dataURL, path, blobtype);
+                    };
+                    reader.readAsDataURL(blob);
+                }
+                
+                /**
+                 * Async handler to update a blob object to a data URL for encoding.
+                 * @param {String} dataURL
+                 * @param {String} path
+                 * @param {String} blobtype - file if the blob is a file; blob otherwise
+                 */
+                function updateEncodedBlob(dataURL, path, blobtype) {
+                    var encoded = queuedObjects.indexOf(path);
+                    path = path.replace('$','derezObj');
+                    eval(path+'.$enc="'+dataURL+'"');
+                    eval(path+'.$type="'+blobtype+'"');
+                    queuedObjects.splice(encoded, 1);
+                    checkForCompletion();
+                }
+
+                function derez(value, path) {
+
+                    // The derez recurses through the object, producing the deep copy.
+
+                    var i,          // The loop counter
+                    name,       // Property name
+                    nu;         // The new object or array
+
+                    // typeof null === 'object', so go on if this value is really an object but not
+                    // one of the weird builtin objects.
+
+                    if (typeof value === 'object' && value !== null &&
+                        !(value instanceof Boolean) &&
+                        !(value instanceof Date)    &&
+                        !(value instanceof Number)  &&
+                        !(value instanceof RegExp)  &&
+                        !(value instanceof Blob)  &&
+                        !(value instanceof String)) {
+
+                        // If the value is an object or array, look to see if we have already
+                        // encountered it. If so, return a $ref/path object. This is a hard way,
+                        // linear search that will get slower as the number of unique objects grows.
+
+                        for (i = 0; i < objects.length; i += 1) {
+                            if (objects[i] === value) {
+                                return {$ref: paths[i]};
+                            }
+                        }
+
+                        // Otherwise, accumulate the unique value and its path.
+
+                        objects.push(value);
+                        paths.push(path);
+
+                        // If it is an array, replicate the array.
+
+                        if (Object.prototype.toString.apply(value) === '[object Array]') {
+                            nu = [];
+                            for (i = 0; i < value.length; i += 1) {
+                                nu[i] = derez(value[i], path + '[' + i + ']');
+                            }
+                        } else {
+                            // If it is an object, replicate the object.
+                            nu = {};
+                            for (name in value) {
+                                if (Object.prototype.hasOwnProperty.call(value, name)) {
+                                    nu[name] = derez(value[name],
+                                     path + '[' + JSON.stringify(name) + ']');
+                                }
+                            }
+                        }
+
+                        return nu;
+                    } else if (value instanceof Blob) {
+                        //Queue blob for conversion
+                        queuedObjects.push(path);
+                        readBlobAsDataURL(value, path);
+                    } else if (value instanceof Boolean) {
+                        value = {
+                            '$type': 'bool',
+                            '$enc': value.toString()
+                        };
+                    } else if (value instanceof Date) {
+                        value = {
+                            '$type': 'date',
+                            '$enc': value.getTime()
+                        };
+                    } else if (value instanceof Number) {
+                        value = {
+                            '$type': 'num',
+                            '$enc': value.toString()
+                        };
+                    } else if (value instanceof RegExp) {
+                        value = {
+                            '$type': 'regex',
+                            '$enc': value.toString()
+                        }; 
+                    }
+                    return value;
+                }
+                var derezObj = derez(object, '$');
+                checkForCompletion();
             },
+                
+            retrocycle: function retrocycle($) {
+                //From: https://github.com/douglascrockford/JSON-js/blob/master/cycle.js
+                // Contains additional logic to convert strings to the following object types 
+                // so that they can properly be decoded:
+                //  *Boolean
+                //  *Date
+                //  *File
+                //  *Blob
+                //  *Number
+                //  *Regex
+                // Restore an object that was reduced by decycle. Members whose values are
+                // objects of the form
+                //      {$ref: PATH}
+                // are replaced with references to the value found by the PATH. This will
+                // restore cycles. The object will be mutated.
+
+                // The eval function is used to locate the values described by a PATH. The
+                // root object is kept in a $ variable. A regular expression is used to
+                // assure that the PATH is extremely well formed. The regexp contains nested
+                // * quantifiers. That has been known to have extremely bad performance
+                // problems on some browsers for very long strings. A PATH is expected to be
+                // reasonably short. A PATH is allowed to belong to a very restricted subset of
+                // Goessner's JSONPath.
+
+                // So,
+                //      var s = '[{"$ref":"$"}]';
+                //      return JSON.retrocycle(JSON.parse(s));
+                // produces an array containing a single element which is the array itself.
+
+                var px = /^\$(?:\[(?:\d+|\"(?:[^\\\"\u0000-\u001f]|\\([\\\"\/bfnrt]|u[0-9a-zA-Z]{4}))*\")\])*$/;
+                
+                /**
+                 * Converts the specified data URL to a Blob object
+                 * @param {String} dataURL to convert to a Blob
+                 * @returns {Blob} the converted Blob object
+                 */
+                function dataURLToBlob(dataURL) {
+                    var BASE64_MARKER = ';base64,',
+                        contentType,
+                        parts,
+                        raw;
+                    if (dataURL.indexOf(BASE64_MARKER) === -1) {
+                        parts = dataURL.split(',');
+                        contentType = parts[0].split(':')[1];
+                        raw = parts[1];
+
+                        return new Blob([raw], {type: contentType});
+                    }
+
+                    parts = dataURL.split(BASE64_MARKER);
+                    contentType = parts[0].split(':')[1];
+                    raw = window.atob(parts[1]);
+                    var rawLength = raw.length;
+                    var uInt8Array = new Uint8Array(rawLength);
+
+                    for (var i = 0; i < rawLength; ++i) {
+                        uInt8Array[i] = raw.charCodeAt(i);
+                    }
+                    return new Blob([uInt8Array.buffer], {type: contentType});
+                }
+                
+                function rez(value) {
+                    // The rez function walks recursively through the object looking for $ref
+                    // properties. When it finds one that has a value that is a path, then it
+                    // replaces the $ref object with a reference to the value that is found by
+                    // the path.
+
+                    var i, item, name, path;
+
+                    if (value && typeof value === 'object') {
+                        if (Object.prototype.toString.apply(value) === '[object Array]') {
+                            for (i = 0; i < value.length; i += 1) {
+                                item = value[i];
+                                if (item && typeof item === 'object') {
+                                    path = item.$ref;
+                                    if (typeof path === 'string' && px.test(path)) {
+                                        value[i] = eval(path);
+                                    } else {
+                                        value[i] = rez(item);
+                                    }
+                                }
+                            }
+                        } else {
+                            if (value.$type !== undefined) {
+                                switch(value.$type) {
+                                    case 'blob':
+                                    case 'file': 
+                                        value = dataURLToBlob(value.$enc);
+                                        break;
+                                    case 'bool':
+                                        value = Boolean(value.$enc === 'true');
+                                        break;
+                                    case 'date':
+                                        value = new Date(value.$enc);
+                                        break;
+                                    case 'num':
+                                        value = Number(value.$enc);
+                                        break;
+                                    case 'regex':
+                                        value = eval(value.$enc);
+                                        break;
+                                }
+                            } else {
+                                for (name in value) {
+                                    if (typeof value[name] === 'object') {
+                                        item = value[name];
+                                        if (item) {
+                                            path = item.$ref;
+                                            if (typeof path === 'string' && px.test(path)) {
+                                                value[name] = eval(path);
+                                            } else {
+                                                value[name] = rez(item);
+                                            }
+                                        }
+                                    }   
+                                }
+                            }
+                        }
+                    }
+                    return value;
+                }
+                rez($);
+                return $;
+
+            },
+
+            /**
+             * Encode the specified object as a string.  Because of the asynchronus
+             * conversion of Blob/File to string, the encode function requires
+             * a callback
+             * @param {Object} val the value to convert.
+             * @param {function} callback the function to call once conversion is
+             * complete.  The callback gets called with the converted value.
+             */
+            "encode": function(val, callback){
+                function finishEncode(val) {
+                    callback(JSON.stringify(val));
+                }
+                this.decycle(val, finishEncode);                        
+            },
+                    
+            /**
+             * Deserialize the specified string to an object
+             * @param {String} val the serialized string
+             * @returns {Object} the deserialized object
+             */
             "decode": function(val){
-                return JSON.parse(val);
+                return this.retrocycle(JSON.parse(val));
             }
         };
     }());
     idbModules.Sca = Sca;
 }(idbModules));
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules){
     /**
      * Encodes the keys and values based on their types. This is required to maintain collations
@@ -174,6 +499,8 @@ var idbModules = {};
     idbModules.Key = Key;
 }(idbModules));
 
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules, undefined){
 	// The event interface used for IndexedBD Actions.
 	var Event = function(type, debug){
@@ -191,6 +518,8 @@ var idbModules = {};
 	idbModules.Event = Event;
 }(idbModules));
 
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules){
 
     /**
@@ -214,6 +543,8 @@ var idbModules = {};
     
 }(idbModules));
 
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules, undefined){
     /**
      * The IndexedDB KeyRange object
@@ -231,7 +562,7 @@ var idbModules = {};
     };
     
     IDBKeyRange.only = function(value){
-        return new IDBKeyRange(value, value, true, true);
+        return new IDBKeyRange(value, value, false, false);
     };
     
     IDBKeyRange.lowerBound = function(value, open){
@@ -248,6 +579,8 @@ var idbModules = {};
     
 }(idbModules));
 
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules, undefined){
     /**
      * The IndexedDB Cursor Object
@@ -355,25 +688,29 @@ var idbModules = {};
     };
     
     IDBCursor.prototype.update = function(valueToUpdate){
-        var me = this;
-        return this.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
-            me.__find(undefined, tx, function(key, value){
-                var sql = "UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " SET value = ? WHERE key = ?";
-                idbModules.DEBUG && console.log(sql, valueToUpdate, key);
-                tx.executeSql(sql, [idbModules.Sca.encode(valueToUpdate), idbModules.Key.encode(key)], function(tx, data){
-                    if (data.rowsAffected === 1) {
-                        success(key);
-                    }
-                    else {
-                        error("No rowns with key found" + key);
-                    }
-                }, function(tx, data){
+        var me = this,
+            request = this.__idbObjectStore.transaction.__createRequest(function(){}); //Stub request
+        idbModules.Sca.encode(valueToUpdate, function(encoded) {
+            this.__idbObjectStore.__pushToQueue(request, function(tx, args, success, error){
+                me.__find(undefined, tx, function(key, value){
+                    var sql = "UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " SET value = ? WHERE key = ?";
+                    idbModules.DEBUG && console.log(sql, encoded, key);
+                    tx.executeSql(sql, [idbModules.Sca.encode(encoded), idbModules.Key.encode(key)], function(tx, data){
+                        if (data.rowsAffected === 1) {
+                            success(key);
+                        }
+                        else {
+                            error("No rowns with key found" + key);
+                        }
+                    }, function(tx, data){
+                        error(data);
+                    });
+                }, function(data){
                     error(data);
                 });
-            }, function(data){
-                error(data);
             });
         });
+        return request;
     };
     
     IDBCursor.prototype["delete"] = function(){
@@ -401,6 +738,8 @@ var idbModules = {};
     idbModules.IDBCursor = IDBCursor;
 }(idbModules));
 
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules, undefined){
     /**
      * IDB Index
@@ -535,6 +874,8 @@ var idbModules = {};
     idbModules.IDBIndex = IDBIndex;
 }(idbModules));
 
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules){
 
     /**
@@ -717,7 +1058,7 @@ var idbModules = {};
         // removing the trailing comma
         sqlStart.push("value )");
         sqlEnd.push("?)");
-        sqlValues.push(idbModules.Sca.encode(value));
+        sqlValues.push(value);
         
         var sql = sqlStart.join(" ") + sqlEnd.join(" ");
         
@@ -730,28 +1071,36 @@ var idbModules = {};
     };
     
     IDBObjectStore.prototype.add = function(value, key){
-        var me = this;
-        return me.transaction.__addToTransactionQueue(function(tx, args, success, error){
-            me.__deriveKey(tx, value, key, function(primaryKey){
-                me.__insertData(tx, value, primaryKey, success, error);
-            });
-        });
-    };
-    
-    IDBObjectStore.prototype.put = function(value, key){
-        var me = this;
-        return me.transaction.__addToTransactionQueue(function(tx, args, success, error){
-            me.__deriveKey(tx, value, key, function(primaryKey){
-                // First try to delete if the record exists
-                var sql = "DELETE FROM " + idbModules.util.quote(me.name) + " where key = ?";
-                tx.executeSql(sql, [idbModules.Key.encode(primaryKey)], function(tx, data){
-                    idbModules.DEBUG && console.log("Did the row with the", primaryKey, "exist? ", data.rowsAffected);
-                    me.__insertData(tx, value, primaryKey, success, error);
-                }, function(tx, err){
-                    error(err);
+        var me = this,
+            request = me.transaction.__createRequest(function(){}); //Stub request
+        idbModules.Sca.encode(value, function(encoded) {
+            me.transaction.__pushToQueue(request, function(tx, args, success, error){
+                me.__deriveKey(tx, value, key, function(primaryKey){
+                    me.__insertData(tx, encoded, primaryKey, success, error);
                 });
             });
         });
+        return request;
+    };
+    
+    IDBObjectStore.prototype.put = function(value, key){
+        var me = this,
+            request = me.transaction.__createRequest(function(){}); //Stub request
+        idbModules.Sca.encode(value, function(encoded) {
+            me.transaction.__pushToQueue(request, function(tx, args, success, error){
+                me.__deriveKey(tx, value, key, function(primaryKey){
+                    // First try to delete if the record exists
+                    var sql = "DELETE FROM " + idbModules.util.quote(me.name) + " where key = ?";
+                    tx.executeSql(sql, [idbModules.Key.encode(primaryKey)], function(tx, data){
+                        idbModules.DEBUG && console.log("Did the row with the", primaryKey, "exist? ", data.rowsAffected);
+                        me.__insertData(tx, encoded, primaryKey, success, error);
+                    }, function(tx, err){
+                        error(err);
+                    });
+                });
+            });
+        });
+        return request;
     };
     
     IDBObjectStore.prototype.get = function(key){
@@ -862,6 +1211,8 @@ var idbModules = {};
     idbModules.IDBObjectStore = IDBObjectStore;
 }(idbModules));
 
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules){
 
     /**
@@ -947,16 +1298,16 @@ var idbModules = {};
                     i++;
                     executeRequest();
                 }
-                try {
-                    function executeRequest(){
-                        if (i >= me.__requests.length) {
-                            me.__active = false; // All requests in the transaction is done
-                            me.__requests = [];
-                            return;
-                        }
-                        q = me.__requests[i];
-                        q.op(tx, q.args, success, error);
+                function executeRequest(){
+                    if (i >= me.__requests.length) {
+                        me.__active = false; // All requests in the transaction is done
+                        me.__requests = [];
+                        return;
                     }
+                    q = me.__requests[i];
+                    q.op(tx, q.args, success, error);
+                }
+                try {
                     executeRequest();
                 } 
                 catch (e) {
@@ -977,8 +1328,18 @@ var idbModules = {};
         if (!this.__active && this.mode !== VERSION_TRANSACTION) {
             idbModules.util.throwDOMException(0, "A request was placed against a transaction which is currently not active, or which is finished.", this.__mode);
         }
+        var request = this.__createRequest();
+        this.__pushToQueue(request, callback, args);       
+        return request;
+    };
+    
+    IDBTransaction.prototype.__createRequest = function(){
         var request = new idbModules.IDBRequest();
         request.source = this.db;
+        return request;
+    };
+    
+    IDBTransaction.prototype.__pushToQueue = function(request, callback, args) {
         this.__requests.push({
             "op": callback,
             "args": args,
@@ -986,7 +1347,6 @@ var idbModules = {};
         });
         // Start the queue for executing the requests
         this.__executeRequests();
-        return request;
     };
     
     IDBTransaction.prototype.objectStore = function(objectStoreName){
@@ -1005,6 +1365,8 @@ var idbModules = {};
     idbModules.IDBTransaction = IDBTransaction;
 }(idbModules));
 
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules){
 
     /**
@@ -1094,6 +1456,8 @@ var idbModules = {};
     idbModules.IDBDatabase = IDBDatabase;
 }(idbModules));
 
+/*jshint globalstrict: true*/
+'use strict';
 (function(idbModules){
     var DEFAULT_DB_SIZE = 4 * 1024 * 1024;
     if (!window.openDatabase) {
@@ -1267,6 +1631,8 @@ var idbModules = {};
     idbModules.shimIndexedDB = shimIndexedDB;
 }(idbModules));
 
+/*jshint globalstrict: true*/
+'use strict';
 (function(window, idbModules){
     if (typeof window.openDatabase !== "undefined") {
         window.shimIndexedDB = idbModules.shimIndexedDB;
