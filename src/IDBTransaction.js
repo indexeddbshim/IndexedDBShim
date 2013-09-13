@@ -123,6 +123,7 @@
     IDBTransaction.prototype.__createRequest = function(){
         var request = new idbModules.IDBRequest();
         request.source = this.db;
+        request.transaction = this;
         return request;
     };
     
