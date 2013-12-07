@@ -840,7 +840,7 @@ var idbModules = {};
             idbModules.DEBUG && console.log("Trying to fetch data for Index", sql.join(" "), sqlValues);
             tx.executeSql(sql.join(" "), sqlValues, function(tx, data){
                 var d;
-                if (typeof opType === "count") {
+                if (opType === "count") {
                     d = data.rows.length;
                 }
                 else 
@@ -1336,6 +1336,7 @@ var idbModules = {};
     IDBTransaction.prototype.__createRequest = function(){
         var request = new idbModules.IDBRequest();
         request.source = this.db;
+        request.transaction = this;
         return request;
     };
     
@@ -1466,20 +1467,10 @@ var idbModules = {};
     // The sysDB to keep track of version numbers for databases
     var sysdb = window.openDatabase("__sysdb__", 1, "System Database", DEFAULT_DB_SIZE);
     sysdb.transaction(function(tx){
-        tx.executeSql("SELECT * FROM dbVersions", [], function(t, data){
-            // dbVersions already exists
+        tx.executeSql("CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);", [], function(){
         }, function(){
-            // dbVersions does not exist, so creating it
-            sysdb.transaction(function(tx){
-                tx.executeSql("CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);", [], function(){
-                }, function(){
-                    idbModules.util.throwDOMException("Could not create table __sysdb__ to save DB versions");
-                });
-            });
+            idbModules.util.throwDOMException("Could not create table __sysdb__ to save DB versions");
         });
-    }, function(){
-        // sysdb Transaction failed
-       idbModules.DEBUG && console.log("Error in sysdb transaction - when selecting from dbVersions", arguments);
     });
     
     var shimIndexedDB = {
@@ -1650,7 +1641,12 @@ var idbModules = {};
         }
     }
     
-    window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
+    /*
+    prevent error in Firefox
+    */
+    if(!('indexedDB' in window)) {
+        window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
+    }
     
     if (typeof window.indexedDB === "undefined" && typeof window.openDatabase !== "undefined") {
         window.shimIndexedDB.__useShim();
