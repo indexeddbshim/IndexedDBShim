@@ -264,7 +264,6 @@
         var sql = ["DELETE FROM " + idbModules.util.quote(me.name)],
             sqlValues = [];
         if (key instanceof idbModules.IDBKeyRange) {
-            console.log("Delete using keyrange");
             sql.push("where");
             if (key.lower) {
                 sql.push("key" + (key.lowerOpen ? " >" : " >= ") + " ?");
