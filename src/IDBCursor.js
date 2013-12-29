@@ -38,7 +38,7 @@
         sql.push("WHERE ", me.__keyColumnName, " NOT NULL");
         if (me.__range && (me.__range.lower !== undefined || me.__range.upper !== undefined)) {
             sql.push("AND");
-            if (me.__range.lower == me.__range.upper && me.__range.lower !== undefined) {
+            if (me.__range.lower === me.__range.upper && me.__range.lower !== undefined) {
                 sql.push(me.__keyColumnName + " = ?");
                 sqlValues.push(idbModules.Key.encode(me.__range.lower));
             } else {
