@@ -94,7 +94,15 @@
             var sql = ["SELECT * FROM ", idbModules.util.quote(me.__idbObjectStore.name), " WHERE", me.indexName, "NOT NULL"];
             var sqlValues = [];
 
-            if (typeof key !== "undefined" && (key.lower !== undefined || key.upper !== undefined)) {
+            // Regular key
+            if (typeof key === "number" || typeof key === "string") {
+
+                sql.push("AND", me.indexName, " = ?");
+ -              sqlValues.push(idbModules.Key.encode(key));
+
+            // IDBKeyRange
+            } else if (typeof key === "object" && key.length === undefined && (key.lower !== undefined || key.upper !== undefined)) {
+
                 sql.push("AND");
 
                 if (key.lower === key.upper && key.lower !== undefined) {

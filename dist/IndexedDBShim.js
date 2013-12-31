@@ -698,11 +698,11 @@ var idbModules = {};
         var me = this,
             request = this.__idbObjectStore.transaction.__createRequest(function(){}); //Stub request
         idbModules.Sca.encode(valueToUpdate, function(encoded) {
-            this.__idbObjectStore.__pushToQueue(request, function(tx, args, success, error){
+            me.__idbObjectStore.transaction.__pushToQueue(request, function(tx, args, success, error){
                 me.__find(undefined, tx, function(key, value){
                     var sql = "UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " SET value = ? WHERE key = ?";
                     idbModules.DEBUG && console.log(sql, encoded, key);
-                    tx.executeSql(sql, [idbModules.Sca.encode(encoded), idbModules.Key.encode(key)], function(tx, data){
+                    tx.executeSql(sql, [encoded, idbModules.Key.encode(key)], function(tx, data){
                         if (data.rowsAffected === 1) {
                             success(key);
                         }
@@ -841,7 +841,15 @@ var idbModules = {};
             var sql = ["SELECT * FROM ", idbModules.util.quote(me.__idbObjectStore.name), " WHERE", me.indexName, "NOT NULL"];
             var sqlValues = [];
 
-            if (typeof key !== "undefined" && (key.lower !== undefined || key.upper !== undefined)) {
+            // Regular key
+            if (typeof key === "number" || typeof key === "string") {
+
+                sql.push("AND", me.indexName, " = ?");
+ -              sqlValues.push(idbModules.Key.encode(key));
+
+            // IDBKeyRange
+            } else if (typeof key === "object" && key.length === undefined && (key.lower !== undefined || key.upper !== undefined)) {
+
                 sql.push("AND");
 
                 if (key.lower === key.upper && key.lower !== undefined) {
@@ -1064,7 +1072,7 @@ var idbModules = {};
         var indexes = JSON.parse(this.__storeProps.indexList);
         for (var key in indexes) {
             try {
-                paramMap[indexes[key].columnName] = idbModules.Key.encode(eval("value['" + indexes[key].keyPath + "']"));
+                paramMap[indexes[key].columnName] = idbModules.Key.encode(eval('(' + value + ').' + indexes[key].keyPath));
             } 
             catch (e) {
                 error(e);
