@@ -721,6 +721,8 @@ var idbModules = {};
                 idbModules.DEBUG && console.log(sql, key);
                 tx.executeSql(sql, [idbModules.Key.encode(key)], function(tx, data){
                     if (data.rowsAffected === 1) {
+                        // lower the offset or we will miss a row
+                        me.__offset--;
                         success(undefined);
                     }
                     else {
