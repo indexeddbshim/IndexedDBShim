@@ -19,6 +19,7 @@
 		"File",
 		"console",
 		"DOMException",
+		"IDBKeyRange",
 		"IDBTransaction",
 		"idbModules",
 		"logger",
