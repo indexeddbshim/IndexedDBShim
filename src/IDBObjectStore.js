@@ -157,7 +157,7 @@
         });
     };
     
-    IDBObjectStore.prototype.__insertData = function(tx, value, primaryKey, success, error){
+    IDBObjectStore.prototype.__insertData = function(tx, encoded, value, primaryKey, success, error){
         var paramMap = {};
         if (typeof primaryKey !== "undefined") {
             paramMap.key = idbModules.Key.encode(primaryKey);
@@ -182,7 +182,7 @@
         // removing the trailing comma
         sqlStart.push("value )");
         sqlEnd.push("?)");
-        sqlValues.push(value);
+        sqlValues.push(encoded);
         
         var sql = sqlStart.join(" ") + sqlEnd.join(" ");
         
@@ -200,7 +200,7 @@
         idbModules.Sca.encode(value, function(encoded) {
             me.transaction.__pushToQueue(request, function(tx, args, success, error){
                 me.__deriveKey(tx, value, key, function(primaryKey){
-                    me.__insertData(tx, encoded, primaryKey, success, error);
+                    me.__insertData(tx, encoded, value, primaryKey, success, error);
                 });
             });
         });
@@ -217,7 +217,7 @@
                     var sql = "DELETE FROM " + idbModules.util.quote(me.name) + " where key = ?";
                     tx.executeSql(sql, [idbModules.Key.encode(primaryKey)], function(tx, data){
                         idbModules.DEBUG && console.log("Did the row with the", primaryKey, "exist? ", data.rowsAffected);
-                        me.__insertData(tx, encoded, primaryKey, success, error);
+                        me.__insertData(tx, encoded, value, primaryKey, success, error);
                     }, function(tx, err){
                         error(err);
                     });
