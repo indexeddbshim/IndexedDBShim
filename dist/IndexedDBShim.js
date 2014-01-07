@@ -691,16 +691,16 @@ var idbModules = {};
         var me = this,
             request = this.__idbObjectStore.transaction.__createRequest(function(){}); //Stub request
         idbModules.Sca.encode(valueToUpdate, function(encoded) {
-            this.__idbObjectStore.__pushToQueue(request, function(tx, args, success, error){
+            me.__idbObjectStore.transaction.__pushToQueue(request, function(tx, args, success, error){
                 me.__find(undefined, tx, function(key, value){
                     var sql = "UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " SET value = ? WHERE key = ?";
                     idbModules.DEBUG && console.log(sql, encoded, key);
-                    tx.executeSql(sql, [idbModules.Sca.encode(encoded), idbModules.Key.encode(key)], function(tx, data){
+                    tx.executeSql(sql, [encoded, idbModules.Key.encode(key)], function(tx, data){
                         if (data.rowsAffected === 1) {
                             success(key);
                         }
                         else {
-                            error("No rowns with key found" + key);
+                            error("No rows with key found" + key);
                         }
                     }, function(tx, data){
                         error(data);
@@ -724,7 +724,7 @@ var idbModules = {};
                         success(undefined);
                     }
                     else {
-                        error("No rowns with key found" + key);
+                        error("No rows with key found" + key);
                     }
                 }, function(tx, data){
                     error(data);
