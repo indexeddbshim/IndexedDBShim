@@ -30,7 +30,7 @@ var idbModules = {};
      */
 
     function throwDOMException(name, message, error) {
-        var e = new DOMException.constructor(0, message);
+        var e = new DOMException.prototype.constructor(0, message);
         e.name = name;
         e.message = message;
         if (idbModules.DEBUG) {
