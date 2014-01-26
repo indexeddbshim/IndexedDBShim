@@ -21,13 +21,16 @@ queuedModule("Cursor");
 
 openObjectStore("Iterating over cursor", DB.OBJECT_STORE_1, function(objectStore){
     var cursorReq = objectStore.openCursor();
+    var count = 0;
     cursorReq.onsuccess = function(e){
         var cursor = cursorReq.result;
         if (cursor) {
+            count ++;
             ok(true, "Iterating over cursor " + cursor.key + " for value " + JSON.stringify(cursor.value));
             cursor["continue"]();
         }
         else {
+            equal(count, 15);
             objectStore.transaction.db.close();
             start();
             nextTest();
