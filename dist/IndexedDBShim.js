@@ -643,8 +643,9 @@ var idbModules = {};
         tx.executeSql(sql.join(" "), sqlValues, function(tx, data){
             if (data.rows.length === 1) {
                 var key = idbModules.Key.decode(data.rows.item(0)[me.__keyColumnName]);
+                var primaryKey = idbModules.Key.decode(data.rows.item(0).key);
                 var val = me.__valueColumnName === "value" ? idbModules.Sca.decode(data.rows.item(0)[me.__valueColumnName]) : idbModules.Key.decode(data.rows.item(0)[me.__valueColumnName]);
-                success(key, val);
+                success(key, val, primaryKey);
             }
             else {
                 idbModules.DEBUG && console.log("Reached end of cursors");
@@ -660,9 +661,10 @@ var idbModules = {};
         var me = this;
         this.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
             me.__offset++;
-            me.__find(key, tx, function(key, val){
+            me.__find(key, tx, function(key, val, primaryKey){
                 me.key = key;
                 me.value = val;
+                me.primaryKey = primaryKey;
                 success(typeof me.key !== "undefined" ? me : undefined, me.__req);
             }, function(data){
                 error(data);
