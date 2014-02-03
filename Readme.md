@@ -12,12 +12,7 @@ Using this polyfill, you can use a single offline storage API across browsers (O
 
 Using the polyfill
 ==================
-To use the polyfill, simply add the following line to your HTML files:
-
-```
-<script type = "text/javascript" src = "http://axemclion.github.com/IndexedDBShim/dist/IndexedDBShim.min.js"></script>
-
-```
+To use the polyfill, simply download [the concatenated, minified product](https://raw.github.com/axemclion/IndexedDBShim/master/dist/IndexedDBShim.min.js) from the `dist` directory and include it in your HTML document.
 
 If IndexedDB is not natively supported (and WebSQL is), the polyfill kicks in and makes a `window.IndexedDB` object available for you to use.
 If you want to force the use of this polyfill (on Chrome where both IndexedDB and WebSql are supported), simply use `window.shimIndexedDB.__useShim()`.
