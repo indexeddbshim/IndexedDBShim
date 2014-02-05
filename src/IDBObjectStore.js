@@ -257,13 +257,34 @@
     };
     
     IDBObjectStore.prototype["delete"] = function(key){
-        // TODO key should also support key ranges
+        if (typeof key === "undefined") {
+            idbModules.util.throwDOMException(0, "Data Error - key is not optional", arguments);
+        }
         var me = this;
+        var sql = ["DELETE FROM " + idbModules.util.quote(me.name)],
+            sqlValues = [];
+        if (key instanceof idbModules.IDBKeyRange) {
+            sql.push("where");
+            if (key.lower) {
+                sql.push("key" + (key.lowerOpen ? " >" : " >= ") + " ?");
+                sqlValues.push(idbModules.Key.encode(key.lower));
+            }
+            if (key.lower && key.upper) {
+                sql.push("AND");
+            }
+            if (key.upper) {
+                sql.push("key" + (key.upperOpen ? " < " : " <= ") + " ?");
+                sqlValues.push(idbModules.Key.encode(key.upper));
+            }
+        } else {
+            sql.push("where key = ?");
+            sqlValues.push(idbModules.Key.encode(key));
+        }
+
         return me.transaction.__addToTransactionQueue(function(tx, args, success, error){
             me.__waitForReady(function(){
-                var primaryKey = idbModules.Key.encode(key);
-                idbModules.DEBUG && console.log("Fetching", me.name, primaryKey);
-                tx.executeSql("DELETE FROM " + idbModules.util.quote(me.name) + " where key = ?", [primaryKey], function(tx, data){
+                idbModules.DEBUG && console.log("Fetching", me.name, key);
+                tx.executeSql(sql.join(" "), sqlValues, function(tx, data){
                     idbModules.DEBUG && console.log("Deleted from database", data.rowsAffected);
                     success();
                 }, function(tx, err){

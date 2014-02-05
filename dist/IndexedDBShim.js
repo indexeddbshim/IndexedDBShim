@@ -840,7 +840,7 @@ var idbModules = {};
             idbModules.DEBUG && console.log("Trying to fetch data for Index", sql.join(" "), sqlValues);
             tx.executeSql(sql.join(" "), sqlValues, function(tx, data){
                 var d;
-                if (typeof opType === "count") {
+                if (opType === "count") {
                     d = data.rows.length;
                 }
                 else 
@@ -1336,6 +1336,7 @@ var idbModules = {};
     IDBTransaction.prototype.__createRequest = function(){
         var request = new idbModules.IDBRequest();
         request.source = this.db;
+        request.transaction = this;
         return request;
     };
     
@@ -1650,7 +1651,12 @@ var idbModules = {};
         }
     }
     
-    window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
+    /*
+    prevent error in Firefox
+    */
+    if(!('indexedDB' in window)) {
+        window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
+    }
     
     if (typeof window.indexedDB === "undefined" && typeof window.openDatabase !== "undefined") {
         window.shimIndexedDB.__useShim();
