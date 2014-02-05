@@ -93,10 +93,34 @@
         return me.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
             var sql = ["SELECT * FROM ", idbModules.util.quote(me.__idbObjectStore.name), " WHERE", me.indexName, "NOT NULL"];
             var sqlValues = [];
-            if (typeof key !== "undefined") {
+
+            // Regular key
+            if (typeof key === "number" || typeof key === "string") {
+
                 sql.push("AND", me.indexName, " = ?");
-                sqlValues.push(idbModules.Key.encode(key));
+ -              sqlValues.push(idbModules.Key.encode(key));
+
+            // IDBKeyRange
+            } else if (typeof key === "object" && key.length === undefined && (key.lower !== undefined || key.upper !== undefined)) {
+
+                sql.push("AND");
+
+                if (key.lower === key.upper && key.lower !== undefined) {
+                    sql.push(me.indexName + " = ?");
+                    sqlValues.push(idbModules.Key.encode(key.lower));
+                } else {
+                    if (key.lower !== undefined) {
+                        sql.push(me.indexName + (key.lowerOpen ? " >" : " >= ") + " ?");
+                        sqlValues.push(idbModules.Key.encode(key.lower));
+                    }
+                    (key.lower !== undefined && key.upper !== undefined) && sql.push("AND");
+                    if (key.upper !== undefined) {
+                        sql.push(me.indexName + (key.upperOpen ? " < " : " <= ") + " ?");
+                        sqlValues.push(idbModules.Key.encode(key.upper));
+                    }
+                }
             }
+
             idbModules.DEBUG && console.log("Trying to fetch data for Index", sql.join(" "), sqlValues);
             tx.executeSql(sql.join(" "), sqlValues, function(tx, data){
                 var d;

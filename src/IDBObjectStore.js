@@ -165,7 +165,7 @@
         var indexes = JSON.parse(this.__storeProps.indexList);
         for (var key in indexes) {
             try {
-                paramMap[indexes[key].columnName] = idbModules.Key.encode(eval("value['" + indexes[key].keyPath + "']"));
+                paramMap[indexes[key].columnName] = idbModules.Key.encode(eval('(' + value + ').' + indexes[key].keyPath));
             } 
             catch (e) {
                 error(e);

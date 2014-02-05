@@ -36,16 +36,21 @@
         var sql = ["SELECT * FROM ", idbModules.util.quote(me.__idbObjectStore.name)];
         var sqlValues = [];
         sql.push("WHERE ", me.__keyColumnName, " NOT NULL");
-        if (me.__range && (me.__range.lower || me.__range.upper)) {
+        if (me.__range && (me.__range.lower !== undefined || me.__range.upper !== undefined)) {
             sql.push("AND");
-            if (me.__range.lower) {
-                sql.push(me.__keyColumnName + (me.__range.lowerOpen ? " >" : " >= ") + " ?");
+            if (me.__range.lower === me.__range.upper && me.__range.lower !== undefined) {
+                sql.push(me.__keyColumnName + " = ?");
                 sqlValues.push(idbModules.Key.encode(me.__range.lower));
-            }
-            (me.__range.lower && me.__range.upper) && sql.push("AND");
-            if (me.__range.upper) {
-                sql.push(me.__keyColumnName + (me.__range.upperOpen ? " < " : " <= ") + " ?");
-                sqlValues.push(idbModules.Key.encode(me.__range.upper));
+            } else {
+                if (me.__range.lower !== undefined) {
+                    sql.push(me.__keyColumnName + (me.__range.lowerOpen ? " >" : " >= ") + " ?");
+                    sqlValues.push(idbModules.Key.encode(me.__range.lower));
+                }
+                (me.__range.lower !== undefined && me.__range.upper !== undefined) && sql.push("AND");
+                if (me.__range.upper !== undefined) {
+                    sql.push(me.__keyColumnName + (me.__range.upperOpen ? " < " : " <= ") + " ?");
+                    sqlValues.push(idbModules.Key.encode(me.__range.upper));
+                }
             }
         }
         if (typeof key !== "undefined") {
@@ -62,8 +67,9 @@
         tx.executeSql(sql.join(" "), sqlValues, function(tx, data){
             if (data.rows.length === 1) {
                 var key = idbModules.Key.decode(data.rows.item(0)[me.__keyColumnName]);
+                var primaryKey = idbModules.Key.decode(data.rows.item(0).key);
                 var val = me.__valueColumnName === "value" ? idbModules.Sca.decode(data.rows.item(0)[me.__valueColumnName]) : idbModules.Key.decode(data.rows.item(0)[me.__valueColumnName]);
-                success(key, val);
+                success(key, val, primaryKey);
             }
             else {
                 idbModules.DEBUG && console.log("Reached end of cursors");
@@ -79,9 +85,10 @@
         var me = this;
         this.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
             me.__offset++;
-            me.__find(key, tx, function(key, val){
+            me.__find(key, tx, function(key, val, primaryKey){
                 me.key = key;
                 me.value = val;
+                me.primaryKey = primaryKey;
                 success(typeof me.key !== "undefined" ? me : undefined, me.__req);
             }, function(data){
                 error(data);
@@ -110,11 +117,11 @@
         var me = this,
             request = this.__idbObjectStore.transaction.__createRequest(function(){}); //Stub request
         idbModules.Sca.encode(valueToUpdate, function(encoded) {
-            this.__idbObjectStore.__pushToQueue(request, function(tx, args, success, error){
+            me.__idbObjectStore.transaction.__pushToQueue(request, function(tx, args, success, error){
                 me.__find(undefined, tx, function(key, value){
                     var sql = "UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " SET value = ? WHERE key = ?";
                     idbModules.DEBUG && console.log(sql, encoded, key);
-                    tx.executeSql(sql, [idbModules.Sca.encode(encoded), idbModules.Key.encode(key)], function(tx, data){
+                    tx.executeSql(sql, [encoded, idbModules.Key.encode(key)], function(tx, data){
                         if (data.rowsAffected === 1) {
                             success(key);
                         }
