@@ -30,7 +30,7 @@ var idbModules = {};
      */
 
     function throwDOMException(name, message, error) {
-        var e = new DOMException.constructor(0, message);
+        var e = new DOMException.prototype.constructor(0, message);
         e.name = name;
         e.message = message;
         if (idbModules.DEBUG) {
@@ -691,16 +691,16 @@ var idbModules = {};
         var me = this,
             request = this.__idbObjectStore.transaction.__createRequest(function(){}); //Stub request
         idbModules.Sca.encode(valueToUpdate, function(encoded) {
-            this.__idbObjectStore.__pushToQueue(request, function(tx, args, success, error){
+            me.__idbObjectStore.transaction.__pushToQueue(request, function(tx, args, success, error){
                 me.__find(undefined, tx, function(key, value){
                     var sql = "UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " SET value = ? WHERE key = ?";
                     idbModules.DEBUG && console.log(sql, encoded, key);
-                    tx.executeSql(sql, [idbModules.Sca.encode(encoded), idbModules.Key.encode(key)], function(tx, data){
+                    tx.executeSql(sql, [encoded, idbModules.Key.encode(key)], function(tx, data){
                         if (data.rowsAffected === 1) {
                             success(key);
                         }
                         else {
-                            error("No rowns with key found" + key);
+                            error("No rows with key found" + key);
                         }
                     }, function(tx, data){
                         error(data);
@@ -721,10 +721,12 @@ var idbModules = {};
                 idbModules.DEBUG && console.log(sql, key);
                 tx.executeSql(sql, [idbModules.Key.encode(key)], function(tx, data){
                     if (data.rowsAffected === 1) {
+                        // lower the offset or we will miss a row
+                        me.__offset--;
                         success(undefined);
                     }
                     else {
-                        error("No rowns with key found" + key);
+                        error("No rows with key found" + key);
                     }
                 }, function(tx, data){
                     error(data);
@@ -840,7 +842,7 @@ var idbModules = {};
             idbModules.DEBUG && console.log("Trying to fetch data for Index", sql.join(" "), sqlValues);
             tx.executeSql(sql.join(" "), sqlValues, function(tx, data){
                 var d;
-                if (typeof opType === "count") {
+                if (opType === "count") {
                     d = data.rows.length;
                 }
                 else 
@@ -1033,7 +1035,7 @@ var idbModules = {};
         });
     };
     
-    IDBObjectStore.prototype.__insertData = function(tx, value, primaryKey, success, error){
+    IDBObjectStore.prototype.__insertData = function(tx, encoded, value, primaryKey, success, error){
         var paramMap = {};
         if (typeof primaryKey !== "undefined") {
             paramMap.key = idbModules.Key.encode(primaryKey);
@@ -1058,7 +1060,7 @@ var idbModules = {};
         // removing the trailing comma
         sqlStart.push("value )");
         sqlEnd.push("?)");
-        sqlValues.push(value);
+        sqlValues.push(encoded);
         
         var sql = sqlStart.join(" ") + sqlEnd.join(" ");
         
@@ -1076,7 +1078,7 @@ var idbModules = {};
         idbModules.Sca.encode(value, function(encoded) {
             me.transaction.__pushToQueue(request, function(tx, args, success, error){
                 me.__deriveKey(tx, value, key, function(primaryKey){
-                    me.__insertData(tx, encoded, primaryKey, success, error);
+                    me.__insertData(tx, encoded, value, primaryKey, success, error);
                 });
             });
         });
@@ -1093,7 +1095,7 @@ var idbModules = {};
                     var sql = "DELETE FROM " + idbModules.util.quote(me.name) + " where key = ?";
                     tx.executeSql(sql, [idbModules.Key.encode(primaryKey)], function(tx, data){
                         idbModules.DEBUG && console.log("Did the row with the", primaryKey, "exist? ", data.rowsAffected);
-                        me.__insertData(tx, encoded, primaryKey, success, error);
+                        me.__insertData(tx, encoded, value, primaryKey, success, error);
                     }, function(tx, err){
                         error(err);
                     });
@@ -1336,6 +1338,7 @@ var idbModules = {};
     IDBTransaction.prototype.__createRequest = function(){
         var request = new idbModules.IDBRequest();
         request.source = this.db;
+        request.transaction = this;
         return request;
     };
     
@@ -1650,7 +1653,12 @@ var idbModules = {};
         }
     }
     
-    window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
+    /*
+    prevent error in Firefox
+    */
+    if(!('indexedDB' in window)) {
+        window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
+    }
     
     if (typeof window.indexedDB === "undefined" && typeof window.openDatabase !== "undefined") {
         window.shimIndexedDB.__useShim();

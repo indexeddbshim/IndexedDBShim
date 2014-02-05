@@ -34,7 +34,11 @@ module.exports = function(grunt) {
 			}
 		},
 		qunit: {
-			all: ['http://localhost:9999/test/index.html']
+			all: {
+				options: {
+					urls: ['http://localhost:9999/test/index.html']
+				}
+			}
 		},
 
 		'saucelabs-qunit': {
@@ -79,6 +83,8 @@ module.exports = function(grunt) {
 	var testJobs = ["build", "connect"];
 	if (saucekey !== null) {
 		testJobs.push("saucelabs-qunit");
+	} else {
+		testJobs.push("qunit");
 	}
 
 	grunt.registerTask('test', testJobs);
