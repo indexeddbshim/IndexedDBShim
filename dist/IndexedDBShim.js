@@ -49,9 +49,6 @@ var idbModules = {};
         this._items = [];
         //Internal functions on the prototype have been made non-enumerable below.
         /**
-         * In some older browsers this function simply hide the property
-         * from the object and the plugin crashes sooner or later.
-         * 
          * if (Object.defineProperty) {
          *     Object.defineProperty(this, '_items', {
          *         enumerable: false
@@ -93,9 +90,6 @@ var idbModules = {};
         }
     };
     /**
-    * In some older browsers this function simply hide the property
-    * from the object and the plugin crashes sooner or later.
-    * 
     * if (Object.defineProperty) {
     *     for (var i in {
     *         'indexOf': false,
