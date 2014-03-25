@@ -152,3 +152,46 @@ openObjectStore("Index Get Key", DB.OBJECT_STORE_1, function(objectStore){
         nextTest();
     };
 });
+
+openObjectStore("Index update Cursor", DB.OBJECT_STORE_1, function(objectStore){
+    var index = objectStore.index("IntIndex");
+    var indexCursorReq = index.openCursor(IDBKeyRange.only(value.Int));
+    indexCursorReq.onsuccess = function(){
+        var cursor = indexCursorReq.result;
+        if (cursor) {
+            var cursorValue = cursor.value;
+            cursorValue.updated = true;
+            var updateReq = cursor.update(cursorValue);
+            updateReq.onerror = function() {
+                ok(false, "Cursor update failed");
+                start();
+                nextTest();
+            };
+            updateReq.onsuccess = function() {
+                ok(true, "Cursor update succeeded");
+                var checkReq = index.openCursor(IDBKeyRange.only(value.Int));
+                checkReq.onsuccess = function() {
+                    deepEqual(checkReq.result.value, cursorValue, "Update check succeeded");
+                    start();
+                    nextTest();
+                };
+                checkReq.onerror = function() {
+                    ok(false, "cursor check failed");
+                    start();
+                    nextTest();
+                };
+            };
+        }
+        else {
+            ok(false, "Cursor expected");
+            start();
+            nextTest();
+        }
+    };
+    indexCursorReq.onerror = function(){
+        _("Error on cursor request");
+        ok(false, "Could not continue opening cursor");
+        start();
+        nextTest();
+    };
+});

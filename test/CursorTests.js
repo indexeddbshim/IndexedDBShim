@@ -81,9 +81,12 @@ openObjectStore("Updating using a cursor", DB.OBJECT_STORE_1, function(objectSto
 
 openObjectStore("Deleting using a cursor", DB.OBJECT_STORE_1, function(objectStore){
     var cursorReq = objectStore.openCursor();
+    var totalRows  = 15;
+    var cursorIteration = 0;
     cursorReq.onsuccess = function(e){
         var cursor = cursorReq.result;
         if (cursor) {
+            cursorIteration++;
             if (cursor.value.Int % 5 === 0) {
                 var updateReq = cursor["delete"]();
                 updateReq.onsuccess = function(){
@@ -103,6 +106,7 @@ openObjectStore("Deleting using a cursor", DB.OBJECT_STORE_1, function(objectSto
         }
         else {
             objectStore.transaction.db.close();
+            equal(cursorIteration, totalRows, "All cursors iterated");
             _("Iterating over all objects completed");
             start();
             nextTest();

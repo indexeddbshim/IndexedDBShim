@@ -17,7 +17,12 @@
         }
     }
     
-    window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
+    /*
+    prevent error in Firefox
+    */
+    if(!('indexedDB' in window)) {
+        window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
+    }
     
     if (typeof window.indexedDB === "undefined" && typeof window.openDatabase !== "undefined") {
         window.shimIndexedDB.__useShim();
