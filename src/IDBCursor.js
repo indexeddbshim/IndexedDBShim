@@ -88,7 +88,8 @@
     IDBCursor.prototype.__decode = function (rowItem, callback) {
         var key = idbModules.Key.decode(rowItem[this.__keyColumnName]);
         var val = this.__valueDecoder.decode(rowItem[this.__valueColumnName]);
-        callback(key, val);
+        var primaryKey = idbModules.Key.decode(rowItem.key);
+        callback(key, val, primaryKey);
     };
 
     IDBCursor.prototype["continue"] = function (key) {
@@ -99,9 +100,10 @@
 
             me.__offset++;
 
-            var successCallback = function(key, val) {
+            var successCallback = function(key, val, primaryKey) {
                 me.key = key;
                 me.value = val;
+                me.primaryKey = primaryKey;
                 success(typeof me.key !== "undefined" ? me : undefined, me.__req);
             };
 
@@ -139,10 +141,10 @@
                 request = this.__idbObjectStore.transaction.__createRequest(function(){}); //Stub request
         idbModules.Sca.encode(valueToUpdate, function(encoded) {
             me.__idbObjectStore.transaction.__pushToQueue(request, function(tx, args, success, error){
-                me.__find(undefined, tx, function(key, value){
+                me.__find(undefined, tx, function(key, value, primaryKey){
                     var sql = "UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " SET value = ? WHERE key = ?";
-                    idbModules.DEBUG && console.log(sql, encoded, key);
-                    tx.executeSql(sql, [encoded, idbModules.Key.encode(key)], function(tx, data){
+                    idbModules.DEBUG && console.log(sql, encoded, key, primaryKey);
+                    tx.executeSql(sql, [encoded, idbModules.Key.encode(primaryKey)], function(tx, data){
                         if (data.rowsAffected === 1) {
                             success(key);
                         }
@@ -161,10 +163,10 @@
     IDBCursor.prototype["delete"] = function(){
         var me = this;
         return this.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
-            me.__find(undefined, tx, function(key, value){
+            me.__find(undefined, tx, function(key, value, primaryKey){
                 var sql = "DELETE FROM  " + idbModules.util.quote(me.__idbObjectStore.name) + " WHERE key = ?";
-                idbModules.DEBUG && console.log(sql, key);
-                tx.executeSql(sql, [idbModules.Key.encode(key)], function(tx, data){
+                idbModules.DEBUG && console.log(sql, key, primaryKey);
+                tx.executeSql(sql, [idbModules.Key.encode(primaryKey)], function(tx, data){
                     if (data.rowsAffected === 1) {
                         // lower the offset or we will miss a row
                         me.__offset--;
