@@ -22,7 +22,7 @@ Building
 To build `IndexedDBShim.min.js`
 
 1. Ensure that you have node and grunt.
-2. Run `npm install grunt-jsmin-sourcemap` to get the latest version of sourcemap generator.
+2. Run `npm install grunt-jsmin-sourcemap grunt-contrib-concat grunt-contrib-uglify grunt-contrib-connect grunt-contrib-qunit grunt-saucelabs grunt-contrib-jshint grunt-contrib-watch`.
 3. Run `grunt` (or `grunt.cmd` on windows) on your command line
 4. The output files will be generated in the `dist` directory.
 
