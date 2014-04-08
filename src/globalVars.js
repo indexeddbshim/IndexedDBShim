@@ -10,6 +10,12 @@
                 window.IDBTransaction = idbModules.IDBTransaction;
                 window.IDBCursor = idbModules.IDBCursor;
                 window.IDBKeyRange = idbModules.IDBKeyRange;
+                // On some browsers the assignment fails, overwrite with the defineProperty method
+                if (window.indexedDB !== idbModules.shimIndexedDB && Object.defineProperty) {
+                    Object.defineProperty(window, 'indexedDB', {
+                        value: idbModules.shimIndexedDB
+                    });
+                }
             };
             window.shimIndexedDB.__debug = function(val){
                 idbModules.DEBUG = val;
