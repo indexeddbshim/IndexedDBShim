@@ -142,8 +142,12 @@
     };
     
     IDBTransaction.prototype.abort = function(){
-        !this.__active && idbModules.util.throwDOMException(0, "A request was placed against a transaction which is currently not active, or which is finished", this.__active);
-        
+        if (this.__active) {
+            var e = idbModules.Event("abort");
+            idbModules.util.callback("onabort", this, e);
+        } else {
+            idbModules.util.throwDOMException(0, "A request was placed against a transaction which is currently not active, or which is finished", this.__active);
+        }
     };
     
     IDBTransaction.prototype.READ_ONLY = 0;
