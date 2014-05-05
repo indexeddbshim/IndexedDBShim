@@ -30,7 +30,18 @@
         window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
     }
     
-    if (typeof window.indexedDB === "undefined" && typeof window.openDatabase !== "undefined") {
+    /*
+    detect browsers with known IndexedDb issues (e.g. Android pre-4.4)
+    */
+    var poorIndexedDbSupport = false;
+    if (navigator.userAgent.match(/Android 2/) || navigator.userAgent.match(/Android 3/) || navigator.userAgent.match(/Android 4\.[0-3]/)) {
+        /* Chrome is an exception. It supports IndexedDb */
+        if (!navigator.userAgent.match(/Chrome/)) {
+            poorIndexedDbSupport = true;
+        }
+    }
+
+    if ((typeof window.indexedDB === "undefined" || poorIndexedDbSupport) && typeof window.openDatabase !== "undefined") {
         window.shimIndexedDB.__useShim();
     }
     else {
