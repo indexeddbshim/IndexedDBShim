@@ -1,5 +1,4 @@
 {
-	"camelcase": true,
 	"nonew": true,
 	"curly": true,
 	"eqeqeq": true,
@@ -14,7 +13,6 @@
 	"browser": true,
 
 	"predef": [
-
 		"DEBUG",
 		"File",
 		"console",
@@ -24,7 +22,6 @@
 		"idbModules",
 		"logger",
 		"require",
-
 		"_",
 		"asyncTest",
 		"DB",

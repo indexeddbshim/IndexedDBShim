@@ -11,7 +11,11 @@
     function callback(fn, context, event, func) {
         //window.setTimeout(function(){
         event.target = context;
-        (typeof context[fn] === "function") && context[fn].apply(context, [event]);
+        if (context && context.dispatchEvent){
+            context.dispatchEvent(event);
+        } else {
+            (typeof context[fn] === "function") && context[fn].apply(context, [event]);
+        }
         (typeof func === "function") && func();
         //}, 1);
     }

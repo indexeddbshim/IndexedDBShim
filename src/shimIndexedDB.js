@@ -1,7 +1,9 @@
 /*jshint globalstrict: true*/
 'use strict';
 (function(idbModules){
-    var DEFAULT_DB_SIZE = 4 * 1024 * 1024;
+    // Too big size for mobile browsers (tested on android 4.0.3)
+    // var DEFAULT_DB_SIZE = 4 * 1024 * 1024;
+    var DEFAULT_DB_SIZE = 5 * 1024;
     if (!window.openDatabase) {
         return;
     }

@@ -36,9 +36,9 @@
         recordsToLoad = recordsToLoad || 1;
 
         var me = this;
-        var sql = ["SELECT * FROM ", idbModules.util.quote(me.__idbObjectStore.name)];
+        var sql = ["SELECT * FROM " + idbModules.util.quote(me.__idbObjectStore.name)];
         var sqlValues = [];
-        sql.push("WHERE ", me.__keyColumnName, " NOT NULL");
+        sql.push("WHERE " + idbModules.util.quote(me.__keyColumnName) + " NOT NULL");
         if (me.__range && (me.__range.lower || me.__range.upper)) {
             sql.push("AND");
             if (me.__range.lower) {
@@ -56,10 +56,10 @@
             me.__offset = 0;
         }
         if (me.__lastKeyContinued !== undefined) {
-            sql.push("AND " + me.__keyColumnName + " >= ?");
+            sql.push("AND " + idbModules.util.quote(me.__keyColumnName) + " >= ?");
             sqlValues.push(idbModules.Key.encode(me.__lastKeyContinued));
         }
-        sql.push("ORDER BY ", me.__keyColumnName);
+        sql.push("ORDER BY " + idbModules.util.quote(me.__keyColumnName));
         sql.push("LIMIT " + recordsToLoad + " OFFSET " + me.__offset);
         idbModules.DEBUG && console.log(sql.join(" "), sqlValues);
 
