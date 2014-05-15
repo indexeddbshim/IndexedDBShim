@@ -48,11 +48,13 @@ var idbModules = {};
         this.length = 0;
         this._items = [];
         //Internal functions on the prototype have been made non-enumerable below.
-        if (Object.defineProperty) {
-            Object.defineProperty(this, '_items', {
-                enumerable: false
-            });
-        }
+        /**
+         * if (Object.defineProperty) {
+         *     Object.defineProperty(this, '_items', {
+         *         enumerable: false
+         *     });
+         * }
+         */
     };
     StringList.prototype = {
         // Interface.
@@ -87,17 +89,19 @@ var idbModules = {};
             }
         }
     };
-    if (Object.defineProperty) {
-        for (var i in {
-            'indexOf': false,
-            'push': false,
-            'splice': false
-        }) {
-            Object.defineProperty(StringList.prototype, i, {
-                enumerable: false
-            });
-        }
-    }
+    /**
+    * if (Object.defineProperty) {
+    *     for (var i in {
+    *         'indexOf': false,
+    *         'push': false,
+    *         'splice': false
+    *     }) {
+    *         Object.defineProperty(StringList.prototype, i, {
+    *             enumerable: false
+    *         });
+    *     }
+    * }
+    */
     idbModules.util = {
         "throwDOMException": throwDOMException,
         "callback": callback,
