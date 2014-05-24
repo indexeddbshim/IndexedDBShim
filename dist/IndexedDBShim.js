@@ -1719,8 +1719,10 @@ var cleanInterface = false;
         if(!window.IDBTransaction){
             window.IDBTransaction = {};
         }
-        window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || "readonly";
-        window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
+        try {
+            window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || "readonly";
+            window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
+        } catch (e) {}
     }
     
 }(window, idbModules));
