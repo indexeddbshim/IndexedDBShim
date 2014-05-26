@@ -15,6 +15,7 @@
 
 	"predef": [
 
+		"cleanInterface",
 		"DEBUG",
 		"File",
 		"console",
