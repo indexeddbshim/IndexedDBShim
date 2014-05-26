@@ -10,13 +10,14 @@ var cleanInterface = false;
     var testObject = {test: true};
     //Test whether Object.defineProperty really works.
     if (Object.defineProperty) {
-      try {
-        Object.defineProperty(testObject, 'test',{enumerable:false});
-        if (testObject.test)
-          cleanInterface = true
-      } catch (e) {
+        try {
+            Object.defineProperty(testObject, 'test', { enumerable: false });
+            if (testObject.test) {
+                cleanInterface = true;
+            }
+        } catch (e) {
         //Object.defineProperty does not work as intended.
-      }
+        }
     }
 })();
 
@@ -1708,7 +1709,18 @@ var cleanInterface = false;
         window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
     }
     
-    if (typeof window.indexedDB === "undefined" && typeof window.openDatabase !== "undefined") {
+    /*
+    detect browsers with known IndexedDb issues (e.g. Android pre-4.4)
+    */
+    var poorIndexedDbSupport = false;
+    if (navigator.userAgent.match(/Android 2/) || navigator.userAgent.match(/Android 3/) || navigator.userAgent.match(/Android 4\.[0-3]/)) {
+        /* Chrome is an exception. It supports IndexedDb */
+        if (!navigator.userAgent.match(/Chrome/)) {
+            poorIndexedDbSupport = true;
+        }
+    }
+
+    if ((typeof window.indexedDB === "undefined" || poorIndexedDbSupport) && typeof window.openDatabase !== "undefined") {
         window.shimIndexedDB.__useShim();
     }
     else {
@@ -1719,9 +1731,10 @@ var cleanInterface = false;
         if(!window.IDBTransaction){
             window.IDBTransaction = {};
         }
+        /* Some browsers (e.g. Chrome 18 on Android) support IndexedDb but do not allow writing of these properties */
         try {
-            window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || "readonly";
-            window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
+        window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || "readonly";
+        window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
         } catch (e) {}
     }
     

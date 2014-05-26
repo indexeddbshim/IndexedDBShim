@@ -54,8 +54,8 @@
         }
         /* Some browsers (e.g. Chrome 18 on Android) support IndexedDb but do not allow writing of these properties */
         try {
-        window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || "readonly";
-        window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
+            window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || "readonly";
+            window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
         } catch (e) {}
     }
     
