@@ -14,7 +14,7 @@ Using the polyfill
 ==================
 To use the polyfill, simply download [the concatenated, minified product](https://raw.github.com/axemclion/IndexedDBShim/master/dist/IndexedDBShim.min.js) from the `dist` directory and include it in your HTML document.
 
-If IndexedDB is not natively supported (and WebSQL is), the polyfill kicks in and makes a `window.IndexedDB` object available for you to use.
+If IndexedDB is not natively supported (and WebSQL is), the polyfill kicks in and makes a `window.indexedDB` object available for you to use.
 If you want to force the use of this polyfill (on Chrome where both IndexedDB and WebSql are supported), simply use `window.shimIndexedDB.__useShim()`.
 
 Building
