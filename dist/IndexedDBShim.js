@@ -591,6 +591,9 @@ var idbModules = {};
      * @param {Object} cursorRequest
      */
     function IDBCursor(range, direction, idbObjectStore, cursorRequest, keyColumnName, valueColumnName){
+        if (range && !(range instanceof idbModules.IDBKeyRange)) {
+            range = new idbModules.IDBKeyRange(range, range, false, false);
+        }
         this.__range = range;
         this.source = this.__idbObjectStore = idbObjectStore;
         this.__req = cursorRequest;
