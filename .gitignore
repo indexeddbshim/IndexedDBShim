@@ -4,3 +4,6 @@ node_modules
 .tmp_*
 .DS_Store
 sauce_connect.log
+/nbproject/private/
+nbproject/project.properties
+nbproject/project.xml
