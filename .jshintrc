@@ -15,10 +15,12 @@
 
 	"predef": [
 
+		"cleanInterface",
 		"DEBUG",
 		"File",
 		"console",
 		"DOMException",
+		"IDBKeyRange",
 		"IDBTransaction",
 		"idbModules",
 		"logger",

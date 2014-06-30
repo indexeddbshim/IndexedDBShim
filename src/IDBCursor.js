@@ -13,13 +13,14 @@
         this.__range = range;
         this.source = this.__idbObjectStore = idbObjectStore;
         this.__req = cursorRequest;
-        
+
         this.key = undefined;
         this.direction = direction;
-        
+
         this.__keyColumnName = keyColumnName;
         this.__valueColumnName = valueColumnName;
-        
+        this.__valueDecoder = valueColumnName === "value" ? idbModules.Sca : idbModules.Key;
+
         if (!this.source.transaction.__active) {
             idbModules.util.throwDOMException("TransactionInactiveError - The transaction this IDBObjectStore belongs to is not active.");
         }
@@ -30,8 +31,10 @@
 
         this["continue"]();
     }
-    
-    IDBCursor.prototype.__find = function(key, tx, success, error){
+
+    IDBCursor.prototype.__find = function (key, tx, success, error, recordsToLoad) {
+        recordsToLoad = recordsToLoad || 1;
+
         var me = this;
         var sql = ["SELECT * FROM ", idbModules.util.quote(me.__idbObjectStore.name)];
         var sqlValues = [];
@@ -57,38 +60,67 @@
             sqlValues.push(idbModules.Key.encode(me.__lastKeyContinued));
         }
         sql.push("ORDER BY ", me.__keyColumnName);
-        sql.push("LIMIT 1 OFFSET " + me.__offset);
+        sql.push("LIMIT " + recordsToLoad + " OFFSET " + me.__offset);
         idbModules.DEBUG && console.log(sql.join(" "), sqlValues);
-        tx.executeSql(sql.join(" "), sqlValues, function(tx, data){
-            if (data.rows.length === 1) {
-                var key = idbModules.Key.decode(data.rows.item(0)[me.__keyColumnName]);
-                var val = me.__valueColumnName === "value" ? idbModules.Sca.decode(data.rows.item(0)[me.__valueColumnName]) : idbModules.Key.decode(data.rows.item(0)[me.__valueColumnName]);
-                success(key, val);
+
+        me.__prefetchedData = null;
+        tx.executeSql(sql.join(" "), sqlValues, function (tx, data) {
+
+            if (data.rows.length > 1) {
+                me.__prefetchedData = data.rows;
+                me.__prefetchedIndex = 0;
+                idbModules.DEBUG && console.log("Preloaded " + me.__prefetchedData.length + " records for cursor");
+                me.__decode(data.rows.item(0), success);
+            }
+            else if (data.rows.length === 1) {
+                me.__decode(data.rows.item(0), success);
             }
             else {
                 idbModules.DEBUG && console.log("Reached end of cursors");
                 success(undefined, undefined);
             }
-        }, function(tx, data){
+        }, function (tx, data) {
             idbModules.DEBUG && console.log("Could not execute Cursor.continue");
             error(data);
         });
     };
-    
-    IDBCursor.prototype["continue"] = function(key){
+
+    IDBCursor.prototype.__decode = function (rowItem, callback) {
+        var key = idbModules.Key.decode(rowItem[this.__keyColumnName]);
+        var val = this.__valueDecoder.decode(rowItem[this.__valueColumnName]);
+        var primaryKey = idbModules.Key.decode(rowItem.key);
+        callback(key, val, primaryKey);
+    };
+
+    IDBCursor.prototype["continue"] = function (key) {
+        var recordsToPreloadOnContinue = idbModules.cursorPreloadPackSize || 100;
         var me = this;
-        this.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
+
+        this.__idbObjectStore.transaction.__addToTransactionQueue(function (tx, args, success, error) {
+
             me.__offset++;
-            me.__find(key, tx, function(key, val){
+
+            var successCallback = function(key, val, primaryKey) {
                 me.key = key;
                 me.value = val;
+                me.primaryKey = primaryKey;
                 success(typeof me.key !== "undefined" ? me : undefined, me.__req);
-            }, function(data){
-                error(data);
-            });
+            };
+
+            if (me.__prefetchedData) {
+                // We have pre-loaded data for the cursor
+                me.__prefetchedIndex++;
+                if (me.__prefetchedIndex < me.__prefetchedData.length) {
+                    me.__decode(me.__prefetchedData.item(me.__prefetchedIndex), successCallback);
+                    return;
+                }
+            }
+            // No pre-fetched data, do query
+            me.__find(key, tx, successCallback, error, recordsToPreloadOnContinue);
+
         });
     };
-    
+
     IDBCursor.prototype.advance = function(count){
         if (count <= 0) {
             idbModules.util.throwDOMException("Type Error - Count is invalid - 0 or negative", count);
@@ -100,59 +132,55 @@
                 me.key = key;
                 me.value = value;
                 success(typeof me.key !== "undefined" ? me : undefined, me.__req);
-            }, function(data){
-                error(data);
-            });
+            }, error);
         });
     };
-    
+
     IDBCursor.prototype.update = function(valueToUpdate){
         var me = this,
-            request = this.__idbObjectStore.transaction.__createRequest(function(){}); //Stub request
+                request = this.__idbObjectStore.transaction.__createRequest(function(){}); //Stub request
         idbModules.Sca.encode(valueToUpdate, function(encoded) {
-            this.__idbObjectStore.__pushToQueue(request, function(tx, args, success, error){
-                me.__find(undefined, tx, function(key, value){
+            me.__idbObjectStore.transaction.__pushToQueue(request, function(tx, args, success, error){
+                me.__find(undefined, tx, function(key, value, primaryKey){
                     var sql = "UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " SET value = ? WHERE key = ?";
-                    idbModules.DEBUG && console.log(sql, encoded, key);
-                    tx.executeSql(sql, [idbModules.Sca.encode(encoded), idbModules.Key.encode(key)], function(tx, data){
+                    idbModules.DEBUG && console.log(sql, encoded, key, primaryKey);
+                    tx.executeSql(sql, [encoded, idbModules.Key.encode(primaryKey)], function(tx, data){
                         if (data.rowsAffected === 1) {
                             success(key);
                         }
                         else {
-                            error("No rowns with key found" + key);
+                            error("No rows with key found" + key);
                         }
                     }, function(tx, data){
                         error(data);
                     });
-                }, function(data){
-                    error(data);
-                });
+                }, error);
             });
         });
         return request;
     };
-    
+
     IDBCursor.prototype["delete"] = function(){
         var me = this;
         return this.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
-            me.__find(undefined, tx, function(key, value){
+            me.__find(undefined, tx, function(key, value, primaryKey){
                 var sql = "DELETE FROM  " + idbModules.util.quote(me.__idbObjectStore.name) + " WHERE key = ?";
-                idbModules.DEBUG && console.log(sql, key);
-                tx.executeSql(sql, [idbModules.Key.encode(key)], function(tx, data){
+                idbModules.DEBUG && console.log(sql, key, primaryKey);
+                tx.executeSql(sql, [idbModules.Key.encode(primaryKey)], function(tx, data){
                     if (data.rowsAffected === 1) {
+                        // lower the offset or we will miss a row
+                        me.__offset--;
                         success(undefined);
                     }
                     else {
-                        error("No rowns with key found" + key);
+                        error("No rows with key found" + key);
                     }
                 }, function(tx, data){
                     error(data);
                 });
-            }, function(data){
-                error(data);
-            });
+            }, error);
         });
     };
-    
+
     idbModules.IDBCursor = IDBCursor;
 }(idbModules));

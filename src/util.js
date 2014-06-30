@@ -24,7 +24,7 @@
      */
 
     function throwDOMException(name, message, error) {
-        var e = new DOMException.constructor(0, message);
+        var e = new DOMException.prototype.constructor(0, message);
         e.name = name;
         e.message = message;
         if (idbModules.DEBUG) {
@@ -42,7 +42,7 @@
         this.length = 0;
         this._items = [];
         //Internal functions on the prototype have been made non-enumerable below.
-        if (Object.defineProperty) {
+        if (cleanInterface) {
             Object.defineProperty(this, '_items', {
                 enumerable: false
             });
@@ -81,7 +81,7 @@
             }
         }
     };
-    if (Object.defineProperty) {
+    if (cleanInterface) {
         for (var i in {
             'indexOf': false,
             'push': false,
