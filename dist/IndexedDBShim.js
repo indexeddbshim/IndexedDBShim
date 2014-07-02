@@ -743,6 +743,7 @@ var cleanInterface = false;
                     var sql = "UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " SET value = ? WHERE key = ?";
                     idbModules.DEBUG && console.log(sql, encoded, key, primaryKey);
                     tx.executeSql(sql, [encoded, idbModules.Key.encode(primaryKey)], function(tx, data){
+                        me.__prefetchedData = null;
                         if (data.rowsAffected === 1) {
                             success(key);
                         }
@@ -765,6 +766,7 @@ var cleanInterface = false;
                 var sql = "DELETE FROM  " + idbModules.util.quote(me.__idbObjectStore.name) + " WHERE key = ?";
                 idbModules.DEBUG && console.log(sql, key, primaryKey);
                 tx.executeSql(sql, [idbModules.Key.encode(primaryKey)], function(tx, data){
+                    me.__prefetchedData = null;
                     if (data.rowsAffected === 1) {
                         // lower the offset or we will miss a row
                         me.__offset--;
@@ -1041,7 +1043,7 @@ var cleanInterface = false;
                 if (value) {
                     try {
                         var primaryKey = eval("value['" + props.keyPath + "']");
-                        if (!primaryKey) {
+                        if (primaryKey === undefined) {
                             if (props.autoInc === "true") {
                                 getNextAutoIncKey();
                             }
@@ -1733,8 +1735,8 @@ var cleanInterface = false;
         }
         /* Some browsers (e.g. Chrome 18 on Android) support IndexedDb but do not allow writing of these properties */
         try {
-        window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || "readonly";
-        window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
+            window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || "readonly";
+            window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
         } catch (e) {}
     }
     
