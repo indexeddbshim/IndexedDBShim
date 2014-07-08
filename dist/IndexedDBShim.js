@@ -521,7 +521,7 @@ var cleanInterface = false;
 (function(idbModules, undefined){
 	// The event interface used for IndexedBD Actions.
 	var Event = function(type, debug){
-		// Returning an object instead of an even as the event's target cannot be set to IndexedDB Objects
+		// Returning an object instead of an event as the event's target cannot be set to IndexedDB Objects
 		// We still need to have event.target.result as the result of the IDB request
 		return {
 			"type": type,
@@ -608,6 +608,9 @@ var cleanInterface = false;
      * @param {Object} cursorRequest
      */
     function IDBCursor(range, direction, idbObjectStore, cursorRequest, keyColumnName, valueColumnName){
+        if (range && !(range instanceof idbModules.IDBKeyRange)) {
+            range = new idbModules.IDBKeyRange(range, range, false, false);
+        }
         this.__range = range;
         this.source = this.__idbObjectStore = idbObjectStore;
         this.__req = cursorRequest;
