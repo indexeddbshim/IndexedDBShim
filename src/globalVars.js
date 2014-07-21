@@ -35,8 +35,12 @@
         if(!window.IDBTransaction){
             window.IDBTransaction = {};
         }
-        window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || "readonly";
-        window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
+        if(!('READ_ONLY' in window.IDBTransaction)) {
+            window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || "readonly";
+        }
+        if(!('READ_ONLY' in window.IDBTransaction)) {
+            window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
+        }
     }
     
 }(window, idbModules));
