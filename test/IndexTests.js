@@ -211,8 +211,6 @@ queuedAsyncTest("Creating Many Indexes in many object stores doesn't cause race 
         ok(true, "Database Opened successfully");
         _("Database opened successfully with version");
         dbOpenRequest.result.close();
-        nextTest();
-        start();
     };
     dbOpenRequest.onerror = function(e){
         ok(false, "Database NOT Opened successfully");
@@ -223,7 +221,8 @@ queuedAsyncTest("Creating Many Indexes in many object stores doesn't cause race 
     dbOpenRequest.onupgradeneeded = function(e){
         ok(true, "Database Upgraded successfully");
         _("Database upgrade called");
-        var db = dbOpenRequest.result;
+        var db = dbOpenRequest.result,
+            stores = [];
 
         function createIndex(objectStore, index) {
             return objectStore.createIndex(index.name, index.key, index.options);
@@ -231,6 +230,8 @@ queuedAsyncTest("Creating Many Indexes in many object stores doesn't cause race 
 
         for (var i = 0; i < 10; i += 1) {
             var objectStore = db.createObjectStore(DB.OBJECT_STORE_1 + '_' + i);
+
+            stores.push(objectStore);
 
             var j, len, index;
             for (j = 0, len = indexes.length; j < len; j += 1) {
@@ -241,6 +242,22 @@ queuedAsyncTest("Creating Many Indexes in many object stores doesn't cause race 
             equal(objectStore.indexNames.length, indexes.length, "Indexes on object store successfully created");
             _(objectStore.indexNames);
         }
+
+        function waitForStoresReady(stores) {
+            if (stores.length === 0) {
+                nextTest();
+                start();
+            } else {
+                console.info('waiting for stores to be ready', stores);
+                stores[0].__waitForReady(function () {
+                    setTimeout(function () {
+                        waitForStoresReady(stores.slice(1));
+                    }, 1000);
+                });
+            }
+        }
+
+        waitForStoresReady(stores);
 
         start();
         stop();

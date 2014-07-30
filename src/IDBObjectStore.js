@@ -46,7 +46,7 @@
             callback();
         }
         else {
-            idbModules.DEBUG && console.log("Waiting for to be ready", key);
+            idbModules.DEBUG && console.log("Waiting for to be ready", this.__ready);
             var me = this;
             window.setTimeout(function(){
                 me.__waitForReady(callback, key, excludeKey);
@@ -323,7 +323,7 @@
         var result = new idbModules.IDBIndex(indexName, me);
         me.__waitForReady(function(){
             result.__createIndex(indexName, keyPath, optionalParameters);
-        }, undefined, indexName);
+        }, 'createObjectStore');
         me.indexNames.push(indexName);
         return result;
     };
