@@ -47,7 +47,7 @@
                 else {
                     window.indexedDB = window.shimIndexedDB;
                     window.shimIndexedDB.__useShim();
-					window.shimIndexedDB.__debug(true);
+                    window.shimIndexedDB.__debug(true);
                     console.log("Starting Tests with shimIndexedDB");
                 }
                 deleteDB(function(){
