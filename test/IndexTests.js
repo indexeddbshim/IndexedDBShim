@@ -229,7 +229,6 @@ queuedAsyncTest("Creating Many Indexes in many object stores doesn't cause race 
             return objectStore.createIndex(index.name, index.key, index.options);
         }
 
-        try {
         for (var i = 0; i < 10; i += 1) {
             var objectStore = db.createObjectStore(DB.OBJECT_STORE_1 + '_' + i);
 
@@ -245,11 +244,6 @@ queuedAsyncTest("Creating Many Indexes in many object stores doesn't cause race 
 
         start();
         stop();
-        } catch (err) {
-            console.log(err);
-            console.trace();
-            throw err;
-        }
     };
     dbOpenRequest.onblocked = function(e){
         _("Opening database blocked");
