@@ -195,3 +195,66 @@ openObjectStore("Index update Cursor", DB.OBJECT_STORE_1, function(objectStore){
         nextTest();
     };
 });
+
+queuedAsyncTest("Creating Many Indexes in many object stores doesn't cause race condition", function(){
+    var dbOpenRequest = window.indexedDB.open(DB.NAME, ++dbVersion),
+        i,
+        indexes = [
+            {name: "IntIndex", key: "Int", options: {
+                "unique": false,
+                "multiEntry": false
+            }},
+            {name: "StringIndex", key: "String"}
+        ];
+
+    dbOpenRequest.onsuccess = function(e){
+        ok(true, "Database Opened successfully");
+        _("Database opened successfully with version");
+        dbOpenRequest.result.close();
+        nextTest();
+        start();
+    };
+    dbOpenRequest.onerror = function(e){
+        ok(false, "Database NOT Opened successfully");
+        _("Database NOT opened successfully");
+        nextTest();
+        start();
+    };
+    dbOpenRequest.onupgradeneeded = function(e){
+        ok(true, "Database Upgraded successfully");
+        _("Database upgrade called");
+        var db = dbOpenRequest.result;
+
+        function createIndex(objectStore, index) {
+            return objectStore.createIndex(index.name, index.key, index.options);
+        }
+
+        try {
+        for (var i = 0; i < 10; i += 1) {
+            var objectStore = db.createObjectStore(DB.OBJECT_STORE_1 + '_' + i);
+
+            var j, len, index;
+            for (j = 0, len = indexes.length; j < len; j += 1) {
+                index = indexes[j];
+                createIndex(objectStore, index);
+            }
+
+            equal(objectStore.indexNames.length, indexes.length, "Indexes on object store successfully created");
+            _(objectStore.indexNames);
+        }
+
+        start();
+        stop();
+        } catch (err) {
+            console.log(err);
+            console.trace();
+            throw err;
+        }
+    };
+    dbOpenRequest.onblocked = function(e){
+        _("Opening database blocked");
+        ok(false, "Opening database blocked");
+        start();
+        stop();
+    };
+});
