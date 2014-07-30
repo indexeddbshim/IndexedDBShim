@@ -47,7 +47,13 @@ var cleanInterface = false;
      */
 
     function throwDOMException(name, message, error) {
-        var e = new DOMException.prototype.constructor(0, message);
+        var e;
+        try {
+            e = new DOMException.prototype.constructor(0, message);
+        } catch (_error) {
+            e = new Error(message);
+        }
+
         e.name = name;
         e.message = message;
         if (idbModules.DEBUG) {
@@ -124,6 +130,7 @@ var cleanInterface = false;
         "StringList": StringList
     };
 }(idbModules));
+
 /*jshint globalstrict: true*/
 'use strict';
 (function(idbModules){
@@ -521,7 +528,7 @@ var cleanInterface = false;
 (function(idbModules, undefined){
 	// The event interface used for IndexedBD Actions.
 	var Event = function(type, debug){
-		// Returning an object instead of an even as the event's target cannot be set to IndexedDB Objects
+		// Returning an object instead of an event as the event's target cannot be set to IndexedDB Objects
 		// We still need to have event.target.result as the result of the IDB request
 		return {
 			"type": type,
