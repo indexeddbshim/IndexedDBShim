@@ -317,7 +317,7 @@
     IDBObjectStore.prototype.createIndex = function(indexName, keyPath, optionalParameters){
         var me = this;
         optionalParameters = optionalParameters || {};
-        me.__setReadyState("createIndex", false);
+        me.__setReadyState(indexName, false);
         var result = new idbModules.IDBIndex(indexName, me);
         me.__waitForReady(function(){
             result.__createIndex(indexName, keyPath, optionalParameters);
