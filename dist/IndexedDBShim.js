@@ -521,7 +521,7 @@ var cleanInterface = false;
 (function(idbModules, undefined){
 	// The event interface used for IndexedBD Actions.
 	var Event = function(type, debug){
-		// Returning an object instead of an even as the event's target cannot be set to IndexedDB Objects
+		// Returning an object instead of an event as the event's target cannot be set to IndexedDB Objects
 		// We still need to have event.target.result as the result of the IDB request
 		return {
 			"type": type,
@@ -855,14 +855,14 @@ var cleanInterface = false;
                             else {
                                 idbModules.DEBUG && console.log("Updating the indexes in table", me.__idbObjectStore.__storeProps);
                                 tx.executeSql("UPDATE __sys__ set indexList = ? where name = ?", [me.__idbObjectStore.__storeProps.indexList, me.__idbObjectStore.name], function(){
-                                    me.__idbObjectStore.__setReadyState("createIndex", true);
+                                    me.__idbObjectStore.__setReadyState(indexName, true);
                                     success(me);
                                 }, error);
                             }
                         }(0));
                     }, error);
                 }, error);
-            }, "createObjectStore");
+            });
         });
     };
     
@@ -984,33 +984,31 @@ var cleanInterface = false;
      * Gets (and optionally caches) the properties like keyPath, autoincrement, etc for this objectStore
      * @param {Object} callback
      */
-    IDBObjectStore.prototype.__getStoreProps = function(tx, callback, waitOnProperty){
+    IDBObjectStore.prototype.__getStoreProps = function(tx, callback){
         var me = this;
-        this.__waitForReady(function(){
-            if (me.__storeProps) {
-                idbModules.DEBUG && console.log("Store properties - cached", me.__storeProps);
-                callback(me.__storeProps);
-            }
-            else {
-                tx.executeSql("SELECT * FROM __sys__ where name = ?", [me.name], function(tx, data){
-                    if (data.rows.length !== 1) {
-                        callback();
-                    }
-                    else {
-                        me.__storeProps = {
-                            "name": data.rows.item(0).name,
-                            "indexList": data.rows.item(0).indexList,
-                            "autoInc": data.rows.item(0).autoInc,
-                            "keyPath": data.rows.item(0).keyPath
-                        };
-                        idbModules.DEBUG && console.log("Store properties", me.__storeProps);
-                        callback(me.__storeProps);
-                    }
-                }, function(){
+        if (me.__storeProps) {
+            idbModules.DEBUG && console.log("Store properties - cached", me.__storeProps);
+            callback(me.__storeProps);
+        }
+        else {
+            tx.executeSql("SELECT * FROM __sys__ where name = ?", [me.name], function(tx, data){
+                if (data.rows.length !== 1) {
                     callback();
-                });
-            }
-        }, waitOnProperty);
+                }
+                else {
+                    me.__storeProps = {
+                        "name": data.rows.item(0).name,
+                        "indexList": data.rows.item(0).indexList,
+                        "autoInc": data.rows.item(0).autoInc,
+                        "keyPath": data.rows.item(0).keyPath
+                    };
+                    idbModules.DEBUG && console.log("Store properties", me.__storeProps);
+                    callback(me.__storeProps);
+                }
+            }, function(){
+                callback();
+            });
+        }
     };
     
     /**
@@ -1123,10 +1121,12 @@ var cleanInterface = false;
     IDBObjectStore.prototype.add = function(value, key){
         var me = this,
             request = me.transaction.__createRequest(function(){}); //Stub request
-        idbModules.Sca.encode(value, function(encoded) {
-            me.transaction.__pushToQueue(request, function(tx, args, success, error){
-                me.__deriveKey(tx, value, key, function(primaryKey){
-                    me.__insertData(tx, encoded, value, primaryKey, success, error);
+        me.__waitForReady(function () {
+            idbModules.Sca.encode(value, function(encoded) {
+                me.transaction.__pushToQueue(request, function(tx, args, success, error){
+                    me.__deriveKey(tx, value, key, function(primaryKey){
+                        me.__insertData(tx, encoded, value, primaryKey, success, error);
+                    });
                 });
             });
         });
@@ -1136,16 +1136,18 @@ var cleanInterface = false;
     IDBObjectStore.prototype.put = function(value, key){
         var me = this,
             request = me.transaction.__createRequest(function(){}); //Stub request
-        idbModules.Sca.encode(value, function(encoded) {
-            me.transaction.__pushToQueue(request, function(tx, args, success, error){
-                me.__deriveKey(tx, value, key, function(primaryKey){
-                    // First try to delete if the record exists
-                    var sql = "DELETE FROM " + idbModules.util.quote(me.name) + " where key = ?";
-                    tx.executeSql(sql, [idbModules.Key.encode(primaryKey)], function(tx, data){
-                        idbModules.DEBUG && console.log("Did the row with the", primaryKey, "exist? ", data.rowsAffected);
-                        me.__insertData(tx, encoded, value, primaryKey, success, error);
-                    }, function(tx, err){
-                        error(err);
+        me.__waitForReady(function () {
+            idbModules.Sca.encode(value, function(encoded) {
+                me.transaction.__pushToQueue(request, function(tx, args, success, error){
+                    me.__deriveKey(tx, value, key, function(primaryKey){
+                        // First try to delete if the record exists
+                        var sql = "DELETE FROM " + idbModules.util.quote(me.name) + " where key = ?";
+                        tx.executeSql(sql, [idbModules.Key.encode(primaryKey)], function(tx, data){
+                            idbModules.DEBUG && console.log("Did the row with the", primaryKey, "exist? ", data.rowsAffected);
+                            me.__insertData(tx, encoded, value, primaryKey, success, error);
+                        }, function(tx, err){
+                            error(err);
+                        });
                     });
                 });
             });
@@ -1243,7 +1245,7 @@ var cleanInterface = false;
     IDBObjectStore.prototype.createIndex = function(indexName, keyPath, optionalParameters){
         var me = this;
         optionalParameters = optionalParameters || {};
-        me.__setReadyState("createIndex", false);
+        me.__setReadyState(indexName, false);
         var result = new idbModules.IDBIndex(indexName, me);
         me.__waitForReady(function(){
             result.__createIndex(indexName, keyPath, optionalParameters);
