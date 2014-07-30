@@ -29,14 +29,14 @@
      * Called by all operations on the object store, waits till the store is ready, and then performs the operation
      * @param {Object} callback
      */
-    IDBObjectStore.prototype.__waitForReady = function(callback, key, excludeKey){
+    IDBObjectStore.prototype.__waitForReady = function(callback, key){
         var ready = true;
         if (typeof key !== "undefined") {
             ready = (typeof this.__ready[key] === "undefined") ? true : this.__ready[key];
         }
         else {
             for (var x in this.__ready) {
-                if (excludeKey !== x && !this.__ready[x]) {
+                if (!this.__ready[x]) {
                     ready = false;
                 }
             }
@@ -46,10 +46,10 @@
             callback();
         }
         else {
-            idbModules.DEBUG && console.log("Waiting for to be ready", this.__ready);
+            idbModules.DEBUG && console.log("Waiting for to be ready", key, this.__ready);
             var me = this;
             window.setTimeout(function(){
-                me.__waitForReady(callback, key, excludeKey);
+                me.__waitForReady(callback, key);
             }, 100);
         }
     };
