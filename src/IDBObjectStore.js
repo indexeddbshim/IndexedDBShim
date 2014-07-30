@@ -29,14 +29,14 @@
      * Called by all operations on the object store, waits till the store is ready, and then performs the operation
      * @param {Object} callback
      */
-    IDBObjectStore.prototype.__waitForReady = function(callback, key){
+    IDBObjectStore.prototype.__waitForReady = function(callback, key, excludeKey){
         var ready = true;
         if (typeof key !== "undefined") {
             ready = (typeof this.__ready[key] === "undefined") ? true : this.__ready[key];
         }
         else {
             for (var x in this.__ready) {
-                if (!this.__ready[x]) {
+                if (excludeKey !== x && !this.__ready[x]) {
                     ready = false;
                 }
             }
@@ -49,7 +49,7 @@
             idbModules.DEBUG && console.log("Waiting for to be ready", key);
             var me = this;
             window.setTimeout(function(){
-                me.__waitForReady(callback, key);
+                me.__waitForReady(callback, key, excludeKey);
             }, 100);
         }
     };
@@ -58,33 +58,31 @@
      * Gets (and optionally caches) the properties like keyPath, autoincrement, etc for this objectStore
      * @param {Object} callback
      */
-    IDBObjectStore.prototype.__getStoreProps = function(tx, callback, waitOnProperty){
+    IDBObjectStore.prototype.__getStoreProps = function(tx, callback){
         var me = this;
-        this.__waitForReady(function(){
-            if (me.__storeProps) {
-                idbModules.DEBUG && console.log("Store properties - cached", me.__storeProps);
-                callback(me.__storeProps);
-            }
-            else {
-                tx.executeSql("SELECT * FROM __sys__ where name = ?", [me.name], function(tx, data){
-                    if (data.rows.length !== 1) {
-                        callback();
-                    }
-                    else {
-                        me.__storeProps = {
-                            "name": data.rows.item(0).name,
-                            "indexList": data.rows.item(0).indexList,
-                            "autoInc": data.rows.item(0).autoInc,
-                            "keyPath": data.rows.item(0).keyPath
-                        };
-                        idbModules.DEBUG && console.log("Store properties", me.__storeProps);
-                        callback(me.__storeProps);
-                    }
-                }, function(){
+        if (me.__storeProps) {
+            idbModules.DEBUG && console.log("Store properties - cached", me.__storeProps);
+            callback(me.__storeProps);
+        }
+        else {
+            tx.executeSql("SELECT * FROM __sys__ where name = ?", [me.name], function(tx, data){
+                if (data.rows.length !== 1) {
                     callback();
-                });
-            }
-        }, waitOnProperty);
+                }
+                else {
+                    me.__storeProps = {
+                        "name": data.rows.item(0).name,
+                        "indexList": data.rows.item(0).indexList,
+                        "autoInc": data.rows.item(0).autoInc,
+                        "keyPath": data.rows.item(0).keyPath
+                    };
+                    idbModules.DEBUG && console.log("Store properties", me.__storeProps);
+                    callback(me.__storeProps);
+                }
+            }, function(){
+                callback();
+            });
+        }
     };
     
     /**
@@ -317,11 +315,11 @@
     IDBObjectStore.prototype.createIndex = function(indexName, keyPath, optionalParameters){
         var me = this;
         optionalParameters = optionalParameters || {};
-        me.__setReadyState("createIndex", false);
+        me.__setReadyState(indexName, false);
         var result = new idbModules.IDBIndex(indexName, me);
         me.__waitForReady(function(){
             result.__createIndex(indexName, keyPath, optionalParameters);
-        }, "createObjectStore");
+        }, undefined, indexName);
         me.indexNames.push(indexName);
         return result;
     };

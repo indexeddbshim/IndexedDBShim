@@ -65,14 +65,14 @@
                             else {
                                 idbModules.DEBUG && console.log("Updating the indexes in table", me.__idbObjectStore.__storeProps);
                                 tx.executeSql("UPDATE __sys__ set indexList = ? where name = ?", [me.__idbObjectStore.__storeProps.indexList, me.__idbObjectStore.name], function(){
-                                    me.__idbObjectStore.__setReadyState("createIndex", true);
+                                    me.__idbObjectStore.__setReadyState(indexName, true);
                                     success(me);
                                 }, error);
                             }
                         }(0));
                     }, error);
                 }, error);
-            }, "createObjectStore");
+            });
         });
     };
     
