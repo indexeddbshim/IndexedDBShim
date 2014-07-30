@@ -124,6 +124,7 @@ var cleanInterface = false;
         "StringList": StringList
     };
 }(idbModules));
+
 /*jshint globalstrict: true*/
 'use strict';
 (function(idbModules){
@@ -1512,7 +1513,9 @@ var cleanInterface = false;
 /*jshint globalstrict: true*/
 'use strict';
 (function(idbModules){
-    var DEFAULT_DB_SIZE = 4 * 1024 * 1024;
+    var DEFAULT_DB_SIZE = 4 * 1024 * 1024,
+        upgradeNeededCalls = {};
+
     if (!window.openDatabase) {
         return;
     }
@@ -1571,7 +1574,15 @@ var cleanInterface = false;
                         tx.executeSql("SELECT * FROM __sys__", [], function(tx, data){
                             var e = idbModules.Event("success");
                             req.source = req.result = new idbModules.IDBDatabase(db, name, version, data);
-                            if (oldVersion < version) {
+                            if (oldVersion < version &&
+                                !(upgradeNeededCalls[name] &&
+                                  upgradeNeededCalls[name][version])) {
+                                if (!upgradeNeededCalls[name]) {
+                                    upgradeNeededCalls[name] = {};
+                                }
+
+                                upgradeNeededCalls[name][version] = true;
+
                                 // DB Upgrade in progress 
                                 sysdb.transaction(function(systx){
                                     systx.executeSql("UPDATE dbVersions set version = ? where name = ?", [version, name], function(){
