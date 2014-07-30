@@ -72,7 +72,7 @@
                         }(0));
                     }, error);
                 }, error);
-            }, "createObjectStore");
+            });
         });
     };
     
