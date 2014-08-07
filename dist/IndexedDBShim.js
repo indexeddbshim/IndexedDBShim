@@ -521,7 +521,7 @@ var cleanInterface = false;
 (function(idbModules, undefined){
 	// The event interface used for IndexedBD Actions.
 	var Event = function(type, debug){
-		// Returning an object instead of an even as the event's target cannot be set to IndexedDB Objects
+		// Returning an object instead of an event as the event's target cannot be set to IndexedDB Objects
 		// We still need to have event.target.result as the result of the IDB request
 		return {
 			"type": type,
@@ -1517,20 +1517,9 @@ var cleanInterface = false;
     // The sysDB to keep track of version numbers for databases
     var sysdb = window.openDatabase("__sysdb__", 1, "System Database", DEFAULT_DB_SIZE);
     sysdb.transaction(function(tx){
-        tx.executeSql("SELECT * FROM dbVersions", [], function(t, data){
-            // dbVersions already exists
-        }, function(){
-            // dbVersions does not exist, so creating it
-            sysdb.transaction(function(tx){
-                tx.executeSql("CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);", [], function(){
-                }, function(){
-                    idbModules.util.throwDOMException("Could not create table __sysdb__ to save DB versions");
-                });
-            });
-        });
-    }, function(){
-        // sysdb Transaction failed
-       idbModules.DEBUG && console.log("Error in sysdb transaction - when selecting from dbVersions", arguments);
+        tx.executeSql("CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);", []);
+    }, function() {
+       idbModules.DEBUG && console.log("Error in sysdb transaction - when creating dbVersions", arguments);
     });
     
     var shimIndexedDB = {
