@@ -1,7 +1,7 @@
 /*jshint globalstrict: true*/
 'use strict';
 (function(idbModules, undefined){
-	// The event interface used for IndexedBD Actions.
+	// The event interface used for IndexedDB Actions.
 	var Event = function(type, debug){
 		// Returning an object instead of an event as the event's target cannot be set to IndexedDB Objects
 		// We still need to have event.target.result as the result of the IDB request
