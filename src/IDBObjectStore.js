@@ -120,7 +120,7 @@
                 if (value) {
                     try {
                         var primaryKey = eval("value['" + props.keyPath + "']");
-                        if (!primaryKey) {
+                        if (primaryKey === undefined) {
                             if (props.autoInc === "true") {
                                 getNextAutoIncKey();
                             }

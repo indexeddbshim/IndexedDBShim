@@ -519,9 +519,9 @@ var cleanInterface = false;
 /*jshint globalstrict: true*/
 'use strict';
 (function(idbModules, undefined){
-	// The event interface used for IndexedBD Actions.
+	// The event interface used for IndexedDB Actions.
 	var Event = function(type, debug){
-		// Returning an object instead of an even as the event's target cannot be set to IndexedDB Objects
+		// Returning an object instead of an event as the event's target cannot be set to IndexedDB Objects
 		// We still need to have event.target.result as the result of the IDB request
 		return {
 			"type": type,
@@ -746,6 +746,7 @@ var cleanInterface = false;
                     var sql = "UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " SET value = ? WHERE key = ?";
                     idbModules.DEBUG && console.log(sql, encoded, key, primaryKey);
                     tx.executeSql(sql, [encoded, idbModules.Key.encode(primaryKey)], function(tx, data){
+                        me.__prefetchedData = null;
                         if (data.rowsAffected === 1) {
                             success(key);
                         }
@@ -768,6 +769,7 @@ var cleanInterface = false;
                 var sql = "DELETE FROM  " + idbModules.util.quote(me.__idbObjectStore.name) + " WHERE key = ?";
                 idbModules.DEBUG && console.log(sql, key, primaryKey);
                 tx.executeSql(sql, [idbModules.Key.encode(primaryKey)], function(tx, data){
+                    me.__prefetchedData = null;
                     if (data.rowsAffected === 1) {
                         // lower the offset or we will miss a row
                         me.__offset--;
@@ -1044,7 +1046,7 @@ var cleanInterface = false;
                 if (value) {
                     try {
                         var primaryKey = eval("value['" + props.keyPath + "']");
-                        if (!primaryKey) {
+                        if (primaryKey === undefined) {
                             if (props.autoInc === "true") {
                                 getNextAutoIncKey();
                             }
@@ -1515,20 +1517,9 @@ var cleanInterface = false;
     // The sysDB to keep track of version numbers for databases
     var sysdb = window.openDatabase("__sysdb__", 1, "System Database", DEFAULT_DB_SIZE);
     sysdb.transaction(function(tx){
-        tx.executeSql("SELECT * FROM dbVersions", [], function(t, data){
-            // dbVersions already exists
-        }, function(){
-            // dbVersions does not exist, so creating it
-            sysdb.transaction(function(tx){
-                tx.executeSql("CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);", [], function(){
-                }, function(){
-                    idbModules.util.throwDOMException("Could not create table __sysdb__ to save DB versions");
-                });
-            });
-        });
-    }, function(){
-        // sysdb Transaction failed
-       idbModules.DEBUG && console.log("Error in sysdb transaction - when selecting from dbVersions", arguments);
+        tx.executeSql("CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);", []);
+    }, function() {
+       idbModules.DEBUG && console.log("Error in sysdb transaction - when creating dbVersions", arguments);
     });
     
     var shimIndexedDB = {
@@ -1736,8 +1727,8 @@ var cleanInterface = false;
         }
         /* Some browsers (e.g. Chrome 18 on Android) support IndexedDb but do not allow writing of these properties */
         try {
-        window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || "readonly";
-        window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
+            window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || "readonly";
+            window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
         } catch (e) {}
     }
     
