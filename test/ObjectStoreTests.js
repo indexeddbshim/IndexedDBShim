@@ -59,15 +59,16 @@ queuedAsyncTest("Examine Object Store properties", function(){
             var props = propertiesRequest.result;
             var pass = true;
             pass &= props.hasOwnProperty("name");
-            pass &= props["name"] == DB.OBJECT_STORE_2;
+            pass &= props.name === DB.OBJECT_STORE_2;
             
             pass &= props.hasOwnProperty("autoIncrement");
-            pass &= props["autoIncrement"] == true;
+            pass &= props.autoIncrement === true;
             
             pass &= props.hasOwnProperty("indexNames");
+            props.indexNames.length === 0;
             
             pass &= props.hasOwnProperty("keyPath");
-            pass &= props["keyPath"] == "Int";
+            pass &= props.keyPath === "Int";
             ok(pass, "Found expected properties");
         };
         
