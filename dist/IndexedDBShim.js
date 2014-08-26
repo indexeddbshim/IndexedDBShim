@@ -942,6 +942,21 @@ var cleanInterface = false;
         this.indexNames = new idbModules.util.StringList();
     };
     
+    /*
+     * @returns {IDBRequest} with properties as result object
+     */
+    IDBObjectStore.prototype.getStoreProperties = function () {
+        // Spec states that the user can expect access to IDBObjectStore attributes keyPath, indexNames etc.
+        // This is a stopgap method that allows an interested user to access the properties manually.
+        var me = this;
+        var request = me.transaction.__addToTransactionQueue(function (tx, args, success, error) {
+            me.__getStoreProps(tx, function (properties) {
+                success(properties);
+            });
+        });
+        return request;
+    };
+    
     /**
      * Need this flag as createObjectStore is synchronous. So, we simply return when create ObjectStore is called
      * but do the processing in the background. All other operations should wait till ready is set
@@ -997,10 +1012,22 @@ var cleanInterface = false;
                         callback();
                     }
                     else {
+                        var idxList = JSON.parse(data.rows.item(0).indexList);
+                        var indexNames = new idbModules.util.StringList();
+                        // todo: sort according to offical algorithm (from the spec):
+                        // The list MUST be sorted in ascending order using the algorithm 
+                        // defined by step 4 of section 11.8.5, The Abstract Relational Comparison 
+                        // Algorithm of the ECMAScript Language Specification
+                        // https://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#bib-ECMA-262
+                        for (var indexName in idxList) {
+                            indexNames.push(indexName);
+                        }
                         me.__storeProps = {
                             "name": data.rows.item(0).name,
                             "indexList": data.rows.item(0).indexList,
+                            "indexNames": indexNames,
                             "autoInc": data.rows.item(0).autoInc,
+                            "autoIncrement": data.rows.item(0).autoInc === "true",
                             "keyPath": data.rows.item(0).keyPath
                         };
                         idbModules.DEBUG && console.log("Store properties", me.__storeProps);
