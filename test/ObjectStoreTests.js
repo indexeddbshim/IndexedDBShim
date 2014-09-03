@@ -44,6 +44,63 @@ queuedAsyncTest("Creating an Object Store", function(){
     };
 });
 
+queuedAsyncTest("Examine Object Store properties", function(){
+    var dbOpenRequest = window.indexedDB.open(DB.NAME, dbVersion);
+    dbOpenRequest.onsuccess = function(e){
+        ok(true, "Database Opened successfully");
+        _("Database opened successfully with version " + dbOpenRequest.result.version);
+        
+        var db = dbOpenRequest.result;
+        var transaction = db.transaction([DB.OBJECT_STORE_2]);
+        var objectStore = transaction.objectStore(DB.OBJECT_STORE_2);
+        
+        var propertiesRequest = objectStore.getStoreProperties();
+        propertiesRequest.onsuccess = function(event) {
+            var props = propertiesRequest.result;
+            var pass = true;
+            pass &= props.hasOwnProperty("name");
+            pass &= props.name === DB.OBJECT_STORE_2;
+            
+            pass &= props.hasOwnProperty("autoIncrement");
+            pass &= props.autoIncrement === true;
+            
+            pass &= props.hasOwnProperty("indexNames");
+            props.indexNames.length === 0;
+            
+            pass &= props.hasOwnProperty("keyPath");
+            pass &= props.keyPath === "Int";
+            ok(pass, "Found expected properties");
+        };
+        
+        propertiesRequest.onerror = function(event) {
+            ok(false, "Error trying to get store properties");
+        };
+        
+        db.close();
+        nextTest();
+        start();
+    };
+    dbOpenRequest.onerror = function(e){
+        ok(false, "Database NOT Opened successfully");
+        _("Database NOT opened successfully");
+        nextTest();
+        start();
+    };
+    dbOpenRequest.onupgradeneeded = function(e){
+        ok(false, "current database was expected");
+        _("current database was expected");
+        start();
+        stop();
+    };
+    
+    dbOpenRequest.onblocked = function(){
+        ok(false, "Database open is now blocked");
+        _("Database open blocked");
+        start();
+        stop();
+    };
+});
+
 queuedAsyncTest("Deleting an Object Store", function(){
     var dbOpenRequest = window.indexedDB.open(DB.NAME, ++dbVersion);
     dbOpenRequest.onsuccess = function(e){

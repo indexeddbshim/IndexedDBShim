@@ -42,14 +42,14 @@
         var sql = ["SELECT * FROM ", idbModules.util.quote(me.__idbObjectStore.name)];
         var sqlValues = [];
         sql.push("WHERE ", me.__keyColumnName, " NOT NULL");
-        if (me.__range && (me.__range.lower || me.__range.upper)) {
+        if (me.__range && (me.__range.lower !== undefined || me.__range.upper !== undefined )) {
             sql.push("AND");
-            if (me.__range.lower) {
+            if (me.__range.lower !== undefined) {
                 sql.push(me.__keyColumnName + (me.__range.lowerOpen ? " >" : " >= ") + " ?");
                 sqlValues.push(idbModules.Key.encode(me.__range.lower));
             }
-            (me.__range.lower && me.__range.upper) && sql.push("AND");
-            if (me.__range.upper) {
+            (me.__range.lower !== undefined && me.__range.upper !== undefined) && sql.push("AND");
+            if (me.__range.upper !== undefined) {
                 sql.push(me.__keyColumnName + (me.__range.upperOpen ? " < " : " <= ") + " ?");
                 sqlValues.push(idbModules.Key.encode(me.__range.upper));
             }
