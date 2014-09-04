@@ -947,6 +947,15 @@ var cleanInterface = false;
         this.__ready = {};
         this.__setReadyState("createObjectStore", typeof ready === "undefined" ? true : ready);
         this.indexNames = new idbModules.util.StringList();
+        var dbProps = idbTransaction.db.__storeProperties;
+        if (dbProps[name] && dbProps[name].indexList) {
+            var indexes = dbProps[name].indexList;
+            for (var indexName in indexes) {
+                if(indexes.hasOwnProperty(indexName)) {
+                    this.indexNames.push(indexName);
+                }
+            }
+        }
     };
     
     /**
@@ -1258,6 +1267,13 @@ var cleanInterface = false;
             result.__createIndex(indexName, keyPath, optionalParameters);
         }, "createObjectStore");
         me.indexNames.push(indexName);
+
+        // Also update the db indexList, because after reopening the store, we still want to know this indexName
+        var storeProps = me.transaction.db.__storeProperties[me.name];
+        storeProps.indexList[indexName] = {
+            keyPath: keyPath,
+            optionalParams: optionalParameters
+        };
         return result;
     };
     
@@ -1437,10 +1453,19 @@ var cleanInterface = false;
     var IDBDatabase = function(db, name, version, storeProperties){
         this.__db = db;
         this.version = version;
-        this.__storeProperties = storeProperties;
         this.objectStoreNames = new idbModules.util.StringList();
         for (var i = 0; i < storeProperties.rows.length; i++) {
             this.objectStoreNames.push(storeProperties.rows.item(i).name);
+        }
+        // Convert store properties to an object because we need to modify the object when a db is upgraded and new
+        // stores/indexes are being created
+        this.__storeProperties = {};
+        for (i = 0; i < storeProperties.rows.length; i++) {
+            var row = storeProperties.rows.item(i);
+            var objectStoreProps = this.__storeProperties[row.name] = {};
+            objectStoreProps.keyPath = row.keypath;
+            objectStoreProps.autoInc = row.autoInc === "true";
+            objectStoreProps.indexList = JSON.parse(row.indexList);
         }
         this.name = name;
         this.onabort = this.onerror = this.onversionchange = null;

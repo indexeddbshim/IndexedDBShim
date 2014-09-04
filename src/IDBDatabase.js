@@ -10,10 +10,19 @@
     var IDBDatabase = function(db, name, version, storeProperties){
         this.__db = db;
         this.version = version;
-        this.__storeProperties = storeProperties;
         this.objectStoreNames = new idbModules.util.StringList();
         for (var i = 0; i < storeProperties.rows.length; i++) {
             this.objectStoreNames.push(storeProperties.rows.item(i).name);
+        }
+        // Convert store properties to an object because we need to modify the object when a db is upgraded and new
+        // stores/indexes are being created
+        this.__storeProperties = {};
+        for (i = 0; i < storeProperties.rows.length; i++) {
+            var row = storeProperties.rows.item(i);
+            var objectStoreProps = this.__storeProperties[row.name] = {};
+            objectStoreProps.keyPath = row.keypath;
+            objectStoreProps.autoInc = row.autoInc === "true";
+            objectStoreProps.indexList = JSON.parse(row.indexList);
         }
         this.name = name;
         this.onabort = this.onerror = this.onversionchange = null;
