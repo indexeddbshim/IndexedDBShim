@@ -1515,6 +1515,11 @@ var cleanInterface = false;
         // The IndexedDB Specification needs us to return an Object Store immediatly, but WebSQL does not create and return the store immediatly
         // Hence, this can technically be unusable, and we hack around it, by setting the ready value to false
         me.objectStoreNames.push(storeName);
+        // Also store this for the first run
+        var storeProps = me.__storeProperties[storeName] = {};
+        storeProps.keyPath = createOptions.keyPath;
+        storeProps.autoInc = !!createOptions.autoIncrement;
+        storeProps.indexList = {};
         return result;
     };
     
