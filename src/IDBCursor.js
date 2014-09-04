@@ -145,9 +145,24 @@
         idbModules.Sca.encode(valueToUpdate, function(encoded) {
             me.__idbObjectStore.transaction.__pushToQueue(request, function(tx, args, success, error){
                 me.__find(undefined, tx, function(key, value, primaryKey){
-                    var sql = "UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " SET value = ? WHERE key = ?";
+                    var store = me.__idbObjectStore,
+                        storeProperties = me.__idbObjectStore.transaction.db.__storeProperties;
+                    var params = [encoded];
+                    var sql = "UPDATE " + idbModules.util.quote(store.name) + " SET value = ?";
+                    var indexList = storeProperties[store.name] && storeProperties[store.name].indexList;
+                    // Also correct the indexes in the table
+                    if (indexList) {
+                        for (var index in indexList) {
+                            var indexProps = indexList[index];
+                            sql += ", " + index + " = ?";
+                            params.push(idbModules.Key.encode(valueToUpdate[indexProps.keyPath]));
+                        }
+                    }
+                    sql += " WHERE key = ?";
+                    params.push(idbModules.Key.encode(primaryKey));
+
                     idbModules.DEBUG && console.log(sql, encoded, key, primaryKey);
-                    tx.executeSql(sql, [encoded, idbModules.Key.encode(primaryKey)], function(tx, data){
+                    tx.executeSql(sql, params, function(tx, data){
                         me.__prefetchedData = null;
                         if (data.rowsAffected === 1) {
                             success(key);

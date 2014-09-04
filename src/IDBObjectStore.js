@@ -14,6 +14,15 @@
         this.__ready = {};
         this.__setReadyState("createObjectStore", typeof ready === "undefined" ? true : ready);
         this.indexNames = new idbModules.util.StringList();
+        var dbProps = idbTransaction.db.__storeProperties;
+        if (dbProps[name] && dbProps[name].indexList) {
+            var indexes = dbProps[name].indexList;
+            for (var indexName in indexes) {
+                if(indexes.hasOwnProperty(indexName)) {
+                    this.indexNames.push(indexName);
+                }
+            }
+        }
     };
     
     /**
@@ -323,6 +332,13 @@
             result.__createIndex(indexName, keyPath, optionalParameters);
         }, "createObjectStore");
         me.indexNames.push(indexName);
+
+        // Also update the db indexList, because after reopening the store, we still want to know this indexName
+        var storeProps = me.transaction.db.__storeProperties[me.name];
+        storeProps.indexList[indexName] = {
+            keyPath: keyPath,
+            optionalParams: optionalParameters
+        };
         return result;
     };
     
