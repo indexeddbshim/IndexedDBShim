@@ -10,10 +10,10 @@
     function IDBIndex(indexName, idbObjectStore){
         this.indexName = this.name = indexName;
         this.__idbObjectStore = this.objectStore = this.source = idbObjectStore;
-        
-        var indexList = idbObjectStore.__storeProps && idbObjectStore.__storeProps.indexList;
-        indexList && (indexList = JSON.parse(indexList));
-        
+
+        var storeProps = idbObjectStore.transaction.db.__storeProperties[idbObjectStore.name];
+        var indexList = storeProps && storeProps.indexList;
+
         this.keyPath = ((indexList && indexList[indexName] && indexList[indexName].keyPath) || indexName);
         ['multiEntry','unique'].forEach(function(prop){
             this[prop] = !!indexList && !!indexList[indexName] && !!indexList[indexName].optionalParams && !!indexList[indexName].optionalParams[prop];
