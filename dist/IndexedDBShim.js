@@ -47,7 +47,13 @@ var cleanInterface = false;
      */
 
     function throwDOMException(name, message, error) {
-        var e = new DOMException.prototype.constructor(0, message);
+        var e;
+        try {
+            e = new DOMException.prototype.constructor(0, message);
+        } catch (_error) {
+            e = new Error(message);
+        }
+
         e.name = name;
         e.message = message;
         if (idbModules.DEBUG) {
@@ -124,6 +130,7 @@ var cleanInterface = false;
         "StringList": StringList
     };
 }(idbModules));
+
 /*jshint globalstrict: true*/
 'use strict';
 (function(idbModules){
