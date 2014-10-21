@@ -667,7 +667,11 @@ var cleanInterface = false;
             sql.push("AND " + me.__keyColumnName + " >= ?");
             sqlValues.push(idbModules.Key.encode(me.__lastKeyContinued));
         }
-        sql.push("ORDER BY ", me.__keyColumnName);
+
+        // Determine the ORDER BY direction based on the cursor.
+        var direction = me.direction === 'prev' || me.direction === 'prevunique' ? 'DESC' : 'ASC';
+
+        sql.push("ORDER BY ", me.__keyColumnName, " " + direction);
         sql.push("LIMIT " + recordsToLoad + " OFFSET " + me.__offset);
         idbModules.DEBUG && console.log(sql.join(" "), sqlValues);
 
