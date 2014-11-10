@@ -52,7 +52,15 @@
                             if (i < data.rows.length) {
                                 try {
                                     var value = idbModules.Sca.decode(data.rows.item(i).value);
-                                    var indexKey = eval("value['" + keyPath + "']");
+                                    var indexKey;
+                                    if(Object.prototype.toString.apply(keyPath) === '[object Array]') {
+                                        indexKey = [];
+                                        for (var j = 0; j < keyPath.length; j++) {
+                                            indexKey.push(eval("value['" + keyPath[j] + "']"));
+                                        }
+                                    } else {
+                                        indexKey = eval("value['" + keyPath + "']");
+                                    }
                                     tx.executeSql("UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " set " + columnName + " = ? where key = ?", [idbModules.Key.encode(indexKey), data.rows.item(i).key], function(tx, data){
                                         initIndexForRow(i + 1);
                                     }, error);
