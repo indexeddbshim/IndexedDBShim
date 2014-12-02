@@ -97,7 +97,7 @@
     };
     
     /**
-     * From the store properties and object, extracts the value for the key in hte object Store
+     * From the store properties and object, extracts the value for the key in the object Store
      * If the table has auto increment, get the next in sequence
      * @param {Object} props
      * @param {Object} value
@@ -206,10 +206,19 @@
     IDBObjectStore.prototype.add = function(value, key){
         var me = this,
             request = me.transaction.__createRequest(function(){}); //Stub request
-        idbModules.Sca.encode(value, function(encoded) {
-            me.transaction.__pushToQueue(request, function(tx, args, success, error){
-                me.__deriveKey(tx, value, key, function(primaryKey){
-                    me.__insertData(tx, encoded, value, primaryKey, success, error);
+
+        me.transaction.__pushToQueue(request, function(tx, args, success, error){
+            me.__deriveKey(tx, value, key, function(primaryKey){
+                me.__getStoreProps(tx, function(props) {
+
+                    if(props.autoInc === 'true' && props.keyPath && !value.hasOwnProperty(props.keyPath)) {
+                        idbModules.DEBUG && console.log("Adding autoincremented keypath to the object");
+                        value[props.keyPath] = primaryKey;
+                    }
+
+                    idbModules.Sca.encode(value, function(encoded) {
+                        me.__insertData(tx, encoded, value, primaryKey, success, error);
+                    });
                 });
             });
         });
