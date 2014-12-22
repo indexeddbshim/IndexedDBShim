@@ -14,7 +14,7 @@
   "bugs": {
     "url": "https://github.com/axemclion/IndexedDBShim/issues"
   },
-  "main": "grunt.js",
+  "main": "dist/IndexedDBShim.js",
   "keywords": [
     "indexedDB",
     "database",
