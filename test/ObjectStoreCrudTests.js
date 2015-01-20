@@ -78,6 +78,22 @@ onObjectStoreOpen("Adding with keypath and autoInc, no key in path", DB.OBJECT_S
         nextTest();
     };
 });
+onObjectStoreOpen("Adding autoIncremented keypath to the object", DB.OBJECT_STORE_2, function(objectStore){
+  var req = objectStore.get(1);
+  req.onsuccess = function(){
+    _("Found the object");
+    equal(req.result.Int, 1, "Object has an Int value");
+    start();
+    objectStore.transaction.db.close();
+    nextTest();
+  };
+  req.onerror = function(e){
+    _("Could not get the object from the database");
+    ok(false, "Could not get data");
+    start();
+    nextTest();
+  };
+});
 onObjectStoreOpen("Adding with NO keypath and autoInc", DB.OBJECT_STORE_3, function(objectStore){
     var key = sample.integer();
     var req = objectStore.add(sample.obj(), key);
