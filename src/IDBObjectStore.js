@@ -107,7 +107,7 @@
         function getNextAutoIncKey(){
             tx.executeSql("SELECT * FROM sqlite_sequence where name like ?", [me.name], function(tx, data){
                 if (data.rows.length !== 1) {
-                    callback(0);
+                    callback(1);
                 }
                 else {
                     callback(data.rows.item(0).seq);
