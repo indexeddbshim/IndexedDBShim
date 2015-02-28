@@ -584,23 +584,23 @@ var cleanInterface = false;
         this.lowerOpen = lowerOpen;
         this.upperOpen = upperOpen;
     };
-    
+
     IDBKeyRange.only = function(value){
         return new IDBKeyRange(value, value, false, false);
     };
-    
+
     IDBKeyRange.lowerBound = function(value, open){
         return new IDBKeyRange(value, undefined, open, undefined);
     };
-    IDBKeyRange.upperBound = function(value){
+    IDBKeyRange.upperBound = function(value, open){
         return new IDBKeyRange(undefined, value, undefined, open);
     };
     IDBKeyRange.bound = function(lower, upper, lowerOpen, upperOpen){
         return new IDBKeyRange(lower, upper, lowerOpen, upperOpen);
     };
-    
+
     idbModules.IDBKeyRange = IDBKeyRange;
-    
+
 }(idbModules));
 
 /*jshint globalstrict: true*/
