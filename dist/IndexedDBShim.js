@@ -1572,11 +1572,6 @@ var cleanInterface = false;
     }
     // The sysDB to keep track of version numbers for databases
     var sysdb = window.openDatabase("__sysdb__", 1, "System Database", DEFAULT_DB_SIZE);
-    sysdb.transaction(function(tx){
-        tx.executeSql("CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);", []);
-    }, function() {
-       idbModules.DEBUG && console.log("Error in sysdb transaction - when creating dbVersions", arguments);
-    });
     
     var shimIndexedDB = {
         /**
@@ -1587,6 +1582,14 @@ var cleanInterface = false;
         open: function(name, version){
             var req = new idbModules.IDBOpenRequest();
             var calledDbCreateError = false;
+
+            sysdb.transaction(function(tx){
+                tx.executeSql("CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);", [], function(){
+                    updateVersions(); 
+                });
+            }, function() {
+               idbModules.DEBUG && console.log("Error in sysdb transaction - when creating dbVersions", arguments);
+            });
             
             function dbCreateError(){
                 if (calledDbCreateError) {
@@ -1635,19 +1638,21 @@ var cleanInterface = false;
                     }, dbCreateError);
                 }, dbCreateError);
             }
-            
-            sysdb.transaction(function(tx){
-                tx.executeSql("SELECT * FROM dbVersions where name = ?", [name], function(tx, data){
-                    if (data.rows.length === 0) {
-                        // Database with this name does not exist
-                        tx.executeSql("INSERT INTO dbVersions VALUES (?,?)", [name, version || 1], function(){
-                            openDB(0);
-                        }, dbCreateError);
-                    } else {
-                        openDB(data.rows.item(0).version);
-                    }
+
+            function updateVersions() {
+                sysdb.transaction(function(tx){
+                    tx.executeSql("SELECT * FROM dbVersions where name = ?", [name], function(tx, data){
+                        if (data.rows.length === 0) {
+                            // Database with this name does not exist
+                            tx.executeSql("INSERT INTO dbVersions VALUES (?,?)", [name, version || 1], function(){
+                                openDB(0);
+                            }, dbCreateError);
+                        } else {
+                            openDB(data.rows.item(0).version);
+                        }
+                    }, dbCreateError);
                 }, dbCreateError);
-            }, dbCreateError);
+            }
             
             return req;
         },
