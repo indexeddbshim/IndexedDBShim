@@ -99,11 +99,11 @@
                 } 
                 catch (e) {
                     idbModules.DEBUG && console.log("An exception occured in transaction", arguments);
-                    typeof me.onerror === "function" && me.onerror();
+                    typeof me.onerror === "function" && me.onerror("An exception occured in transaction");
                 }
             }, function(){
                 idbModules.DEBUG && console.log("An error in transaction", arguments);
-                typeof me.onerror === "function" && me.onerror();
+                typeof me.onerror === "function" && me.onerror("An error occured in transaction");
             }, function(){
                 idbModules.DEBUG && console.log("Transaction completed", arguments);
                 typeof me.oncomplete === "function" && me.oncomplete();
