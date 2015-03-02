@@ -104,19 +104,17 @@
      * @param {Object} key
      */
     IDBObjectStore.prototype.__deriveKey = function(tx, value, key, callback){
-        function getNextAutoIncKey(){
+        function getNextAutoIncKey(props){
             tx.executeSql("SELECT * FROM sqlite_sequence where name like ?", [me.name], function(tx, data){
-                if (data.rows.length !== 1) {
-                    callback(0);
-                }
-                else {
-                    callback(data.rows.item(0).seq);
-                }
+                var keyValue = data.rows.length !== 1 ? 0 : data.rows.item(0).seq;
+                if(props)
+                    value[props.keyPath] = keyValue;
+                callback(keyValue);
             }, function(tx, error){
                 idbModules.util.throwDOMException(0, "Data Error - Could not get the auto increment value for key", error);
             });
         }
-        
+
         var me = this;
         me.__getStoreProps(tx, function(props){
             if (!props) {
@@ -131,7 +129,7 @@
                         var primaryKey = eval("value['" + props.keyPath + "']");
                         if (primaryKey === undefined) {
                             if (props.autoInc === "true") {
-                                getNextAutoIncKey();
+                                getNextAutoIncKey(props);
                             }
                             else {
                                 idbModules.util.throwDOMException(0, "Data Error - Could not eval key from keyPath");
@@ -140,7 +138,7 @@
                         else {
                             callback(primaryKey);
                         }
-                    } 
+                    }
                     catch (e) {
                         idbModules.util.throwDOMException(0, "Data Error - Could not eval key from keyPath", e);
                     }
@@ -202,26 +200,26 @@
             error(err);
         });
     };
-    
+
     IDBObjectStore.prototype.add = function(value, key){
         var me = this,
             request = me.transaction.__createRequest(function(){}); //Stub request
-        idbModules.Sca.encode(value, function(encoded) {
-            me.transaction.__pushToQueue(request, function(tx, args, success, error){
-                me.__deriveKey(tx, value, key, function(primaryKey){
+        me.transaction.__pushToQueue(request, function(tx, args, success, error){
+            me.__deriveKey(tx, value, key, function(primaryKey){
+                idbModules.Sca.encode(value, function(encoded) {
                     me.__insertData(tx, encoded, value, primaryKey, success, error);
                 });
             });
         });
         return request;
     };
-    
+
     IDBObjectStore.prototype.put = function(value, key){
         var me = this,
             request = me.transaction.__createRequest(function(){}); //Stub request
-        idbModules.Sca.encode(value, function(encoded) {
-            me.transaction.__pushToQueue(request, function(tx, args, success, error){
-                me.__deriveKey(tx, value, key, function(primaryKey){
+        me.transaction.__pushToQueue(request, function(tx, args, success, error){
+            me.__deriveKey(tx, value, key, function(primaryKey){
+                idbModules.Sca.encode(value, function(encoded) {
                     // First try to delete if the record exists
                     var sql = "DELETE FROM " + idbModules.util.quote(me.name) + " where key = ?";
                     tx.executeSql(sql, [idbModules.Key.encode(primaryKey)], function(tx, data){
