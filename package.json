@@ -22,16 +22,17 @@
     "websql"
   ],
   "devDependencies": {
-    "grunt": "~0.4.0",
-    "grunt-contrib-concat": "~0.1.3",
-    "grunt-contrib-uglify": "~0.1.1",
-    "grunt-contrib-connect": "~0.1.2",
-    "grunt-contrib-qunit": "0.3.0",
+    "grunt": "^0.4.5",
+    "grunt-cli": "^0.1.13",
+    "grunt-contrib-concat": "^0.5.0",
+    "grunt-contrib-connect": "^0.9.0",
+    "grunt-contrib-jshint": "~0.11.0",
+    "grunt-contrib-qunit": "^0.5.2",
+    "grunt-contrib-uglify": "^0.8.0",
+    "grunt-contrib-watch": "^0.6.1",
     "grunt-saucelabs": "~4.0.0",
-    "grunt-contrib-jshint": "~0.1.1",
-    "grunt-contrib-watch": "~0.3.1",
-    "matchdep": "~0.1.2",
-    "request": "~2.16.6"
+    "matchdep": "^0.3.0",
+    "request": "^2.51.0"
   },
   "bundleDependencies": [],
   "license": "Apache 2.0",

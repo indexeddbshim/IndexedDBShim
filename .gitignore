@@ -1,6 +1,8 @@
 .project
 .settings
+.idea
 node_modules
 .tmp_*
 .DS_Store
 sauce_connect.log
+npm-debug.log

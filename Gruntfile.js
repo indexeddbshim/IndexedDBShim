@@ -62,11 +62,12 @@ module.exports = function(grunt) {
 		},
 
 		jshint: {
-			files: ['grunt.js', 'src/**/*.js', 'test/**/*.js'],
+			files: ['src/**/*.js'],
 			options: {
 				jshintrc: '.jshintrc'
 			}
 		},
+
 		watch: {
 			dev: {
 				files: ["src/*"],
