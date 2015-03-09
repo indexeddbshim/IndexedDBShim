@@ -1729,22 +1729,39 @@ var cleanInterface = false;                 // jshint ignore:line
 /*jshint globalstrict: true*/
 'use strict';
 (function(window, idbModules){
+    function shim(name, value) {
+        try {
+            // Try setting the property. This will fail if the property is read-only.
+            window[name] = value;
+        }
+        catch (e) {}
+
+        if (window[name] !== value && Object.defineProperty) {
+            // Setting a read-only property failed, so try re-defining the property
+            try {
+                Object.defineProperty(window, name, {
+                    value: value
+                });
+            }
+            catch (e) {}
+
+            if (window[name] !== value) {
+                window.console && console.warn && console.warn('Unable to shim ' + name);
+            }
+        }
+    }
+
     if (typeof window.openDatabase !== "undefined") {
-        window.shimIndexedDB = idbModules.shimIndexedDB;
+        shim('shimIndexedDB', idbModules.shimIndexedDB);
         if (window.shimIndexedDB) {
             window.shimIndexedDB.__useShim = function(){
-                window.indexedDB = idbModules.shimIndexedDB;
-                window.IDBDatabase = idbModules.IDBDatabase;
-                window.IDBTransaction = idbModules.IDBTransaction;
-                window.IDBCursor = idbModules.IDBCursor;
-                window.IDBKeyRange = idbModules.IDBKeyRange;
-                // On some browsers the assignment fails, overwrite with the defineProperty method
-                if (window.indexedDB !== idbModules.shimIndexedDB && Object.defineProperty) {
-                    Object.defineProperty(window, 'indexedDB', {
-                        value: idbModules.shimIndexedDB
-                    });
-                }
+                shim('indexedDB', idbModules.shimIndexedDB);
+                shim('IDBDatabase', idbModules.IDBDatabase);
+                shim('IDBTransaction', idbModules.IDBTransaction);
+                shim('IDBCursor', idbModules.IDBCursor);
+                shim('IDBKeyRange', idbModules.IDBKeyRange);
             };
+
             window.shimIndexedDB.__debug = function(val){
                 idbModules.DEBUG = val;
             };
@@ -1769,7 +1786,7 @@ var cleanInterface = false;                 // jshint ignore:line
         }
     }
 
-    if ((typeof window.indexedDB === "undefined" || poorIndexedDbSupport) && typeof window.openDatabase !== "undefined") {
+    if ((typeof window.indexedDB === "undefined" || !window.indexedDB || poorIndexedDbSupport) && typeof window.openDatabase !== "undefined") {
         window.shimIndexedDB.__useShim();
     }
     else {
