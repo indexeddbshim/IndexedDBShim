@@ -207,7 +207,7 @@
         
         idbModules.DEBUG && console.log("SQL for adding", sql, sqlValues);
         tx.executeSql(sql, sqlValues, function(tx, data){
-			// Check if entry was actually inserted
+            // Check if entry was actually inserted
             if(data.rowsAffected) {
                 success(primaryKey);
             } else {
