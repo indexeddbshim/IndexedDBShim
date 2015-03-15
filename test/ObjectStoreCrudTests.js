@@ -113,6 +113,44 @@ onObjectStoreOpen("Adding with NO keypath and autoInc - no key specified", DB.OB
     };
 });
 
+onObjectStoreOpen("Trying to add existing ID throws error", DB.OBJECT_STORE_3, function(objectStore){
+    var key = sample.integer();
+    var data = sample.obj();
+
+    var req = objectStore.add(data, key);
+    req.onsuccess = function(e){
+        _("Data added to object Store successfully " + key);
+        equal(key, req.result, "Data added to Object store");
+        //objectStore.transaction.db.close();
+
+        // Try adding it again, should throw an error
+        var req2 = objectStore.add(data, key);
+        req2.onsuccess = function(e){
+            _("Data was added again, no error was thrown " + key);
+            ok(false, "Data was added again, no error was thrown");
+            objectStore.transaction.db.close();
+
+            start();
+            nextTest();
+        };
+        req2.onerror = function(e){
+            _(e);
+            _("Could not re-add, error was thrown");
+            ok(true, "Could not re-add, error was thrown");
+
+            start();
+            nextTest();
+        };
+    };
+    req.onerror = function(e){
+        _("Could not add data to database");
+        ok(false, "Could not add Data to ObjectStore3");
+        start();
+        nextTest();
+    };
+});
+
+
 onObjectStoreOpen("Updating data in Object Store", DB.OBJECT_STORE_1, function(objectStore){
     data = sample.obj();
     data.modified = true;
