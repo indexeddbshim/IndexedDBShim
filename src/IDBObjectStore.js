@@ -190,29 +190,29 @@
             sqlValues.push(paramMap[key]);
         }
 
-		// removing the trailing comma
-		sqlStart.push("value )");
-		sqlEnd.push("?");
-		sqlValues.push(encoded);
+        // removing the trailing comma
+        sqlStart.push("value )");
+        sqlEnd.push("?");
+        sqlValues.push(encoded);
 
-		// only insert if it does not exists
-		var sqlWhere = [" WHERE NOT EXISTS (SELECT 1 FROM "+idbModules.util.quote(this.name) + " WHERE "];
-		for (key in paramMap) {
-			sqlWhere.push(key + " = ? AND ");
-			sqlValues.push(paramMap[key]);
-		}
-		sqlWhere.push("0=0)");
+        // only insert if it does not exists
+        var sqlWhere = [" WHERE NOT EXISTS (SELECT 1 FROM "+idbModules.util.quote(this.name) + " WHERE "];
+        for (key in paramMap) {
+            sqlWhere.push(key + " = ? AND ");
+            sqlValues.push(paramMap[key]);
+        }
+        sqlWhere.push("0=0)");
         
         var sql = sqlStart.join(" ") + sqlEnd.join(" ") + sqlWhere.join(" ");
         
         idbModules.DEBUG && console.log("SQL for adding", sql, sqlValues);
         tx.executeSql(sql, sqlValues, function(tx, data){
 			// Check if entry was actually inserted
-			if(data.rowsAffected) {
-				success(primaryKey);
-			} else {
-				error("Could not add entry: Entry already existed.");
-			}
+            if(data.rowsAffected) {
+                success(primaryKey);
+            } else {
+                error("Could not add entry: Entry already existed.");
+            }
         }, function(tx, err){
             error(err);
         });
