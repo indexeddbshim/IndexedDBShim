@@ -1,5 +1,6 @@
 src
 test
+tests
 examples
 Gruntfile.js
 travis.sh
