@@ -3,7 +3,7 @@
 /**
  * An initialization file that checks for conditions, removes console.log and warn, etc
  */
-var idbModules = {};                        // jshint ignore:line
+var idbModules = {util: {}};                // jshint ignore:line
 var cleanInterface = false;                 // jshint ignore:line
 (function () {
     var testObject = {test: true};

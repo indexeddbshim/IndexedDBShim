@@ -50,6 +50,7 @@
         if (util.currentTest === undefined) {
             // This is the first test, so do one-time initialization
             initializeShim();
+            mocha.checkLeaks();
         }
 
         // Track the current test
@@ -69,7 +70,7 @@
     afterEach(function(done) {
         // Delete all databases that were created during this test
         util.asyncForEach(util.currentTest.databases, done, function(dbName) {
-            return indexedDB.deleteDatabase(dbName);
+            return env.indexedDB.deleteDatabase(dbName);
         });
     });
 

@@ -25,8 +25,8 @@
         var transaction = me.__idbObjectStore.transaction;
         transaction.__addToTransactionQueue(function(tx, args, success, failure){
             me.__idbObjectStore.__getStoreProps(tx, function(){
-                function error(){
-                    idbModules.util.throwDOMException(0, "Could not create new index", arguments);
+                function error(tx, err){
+                    idbModules.util.throwDOMException(0, "Could not create new index", err);
                 }
                 if (transaction.mode !== 2) {
                     idbModules.util.throwDOMException(0, "Invalid State error, not a version transaction", me.transaction);

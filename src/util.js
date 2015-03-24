@@ -31,14 +31,24 @@
             e = new Error(message);
         }
 
-        e.name = name;
+        e.name = name || 'DOMException';
         e.message = message;
         if (idbModules.DEBUG) {
-            console.log(name, message, error, e);
+            if (error && error.message) {
+                error = error.message;
+            }
+
+            console.log(name + ': ' + message + '. ' + (error || ''));
             console.trace && console.trace();
         }
         throw e;
     }
+
+    /**
+     * DOMError class
+     * @constructor
+     */
+    function DOMError() {}
 
     /**
      * Shim the DOMStringList object.
@@ -74,7 +84,7 @@
                 this[i] = this._items[i];
             }
         },
-        splice: function( /*index, howmany, item1, ..., itemX*/ ) {
+        splice: function(/*index, howmany, item1, ..., itemX*/) {
             this._items.splice.apply(this._items, arguments);
             this.length = this._items.length;
             for (var i in this) {
@@ -98,12 +108,13 @@
             });
         }
     }
-    idbModules.util = {
-        "throwDOMException": throwDOMException,
-        "callback": callback,
-        "quote": function(arg) {
-            return "'" + arg + "'";
-        },
-        "StringList": StringList
+
+    idbModules.DOMError = DOMError;
+    idbModules.util.throwDOMException = throwDOMException;
+    idbModules.util.callback = callback;
+    idbModules.util.StringList = StringList;
+    idbModules.util.quote = function(arg) {
+        return "'" + arg + "'";
     };
+
 }(idbModules));

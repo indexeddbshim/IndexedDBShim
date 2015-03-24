@@ -6,19 +6,20 @@
      * The IDBRequest Object that is returns for all async calls
      * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#request-api
      */
-    var IDBRequest = function(){
+    function IDBRequest(){
         this.onsuccess = this.onerror = this.result = this.error = this.source = this.transaction = null;
         this.readyState = "pending";
-    };
+    }
+
     /**
-     * The IDBOpen Request called when a database is opened
+     * The IDBOpenDBRequest called when a database is opened
      */
-    var IDBOpenRequest = function(){
+    function IDBOpenDBRequest(){
         this.onblocked = this.onupgradeneeded = null;
-    };
-    IDBOpenRequest.prototype = IDBRequest;
+    }
+    IDBOpenDBRequest.prototype = IDBRequest;
     
     idbModules.IDBRequest = IDBRequest;
-    idbModules.IDBOpenRequest = IDBOpenRequest;
+    idbModules.IDBOpenDBRequest = IDBOpenDBRequest;
     
 }(idbModules));

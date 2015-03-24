@@ -28,10 +28,17 @@
         if (window.shimIndexedDB) {
             window.shimIndexedDB.__useShim = function(){
                 shim('indexedDB', idbModules.shimIndexedDB);
+                shim('IDBFactory', idbModules.IDBFactory);
                 shim('IDBDatabase', idbModules.IDBDatabase);
+                shim('IDBObjectStore', idbModules.IDBObjectStore);
+                shim('IDBIndex', idbModules.IDBIndex);
                 shim('IDBTransaction', idbModules.IDBTransaction);
                 shim('IDBCursor', idbModules.IDBCursor);
                 shim('IDBKeyRange', idbModules.IDBKeyRange);
+                shim('IDBRequest', idbModules.IDBRequest);
+                shim('IDBOpenDBRequest', idbModules.IDBOpenDBRequest);
+                shim('IDBVersionChangeEvent', idbModules.IDBVersionChangeEvent);
+                shim('DOMError', idbModules.DOMError);
             };
 
             window.shimIndexedDB.__debug = function(val){

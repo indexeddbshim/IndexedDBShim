@@ -102,7 +102,7 @@
             util.currentTest.databases.push(dbName);
 
             // Just in case the database already exists, delete it
-            var request = indexedDB.deleteDatabase(dbName);
+            var request = env.indexedDB.deleteDatabase(dbName);
             request.onsuccess = function() {
                 done(null, dbName);
             };

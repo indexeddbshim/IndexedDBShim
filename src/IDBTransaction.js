@@ -13,7 +13,7 @@
     var READ_WRITE = 1;
     var VERSION_TRANSACTION = 2;
     
-    var IDBTransaction = function(storeNames, mode, db){
+    function IDBTransaction(storeNames, mode, db){
         if (typeof mode === "number") {
             this.mode = mode;
             (mode !== 2) && idbModules.DEBUG && console.log("Mode should be a string, but was specified as ", mode);
@@ -47,7 +47,7 @@
         this.error = null;
         this.onabort = this.onerror = this.oncomplete = null;
         var me = this;
-    };
+    }
     
     IDBTransaction.prototype.__executeRequests = function(){
         if (this.__running && this.mode !== VERSION_TRANSACTION) {
@@ -71,7 +71,7 @@
                     q.req.readyState = "done";
                     q.req.result = result;
                     delete q.req.error;
-                    var e = idbModules.Event("success");
+                    var e = idbModules.util.createEvent("success");
                     idbModules.util.callback("onsuccess", q.req, e);
                     i++;
                     executeRequest();
@@ -80,7 +80,7 @@
                 function error(errorVal){
                     q.req.readyState = "done";
                     q.req.error = "DOMError";
-                    var e = idbModules.Event("error", arguments);
+                    var e = idbModules.util.createEvent("error", arguments);
                     idbModules.util.callback("onerror", q.req, e);
                     i++;
                     executeRequest();

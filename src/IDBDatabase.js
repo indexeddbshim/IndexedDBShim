@@ -7,7 +7,7 @@
      * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
      * @param {Object} db
      */
-    var IDBDatabase = function(db, name, version, storeProperties){
+    function IDBDatabase(db, name, version, storeProperties){
         this.__db = db;
         this.version = version;
         this.objectStoreNames = new idbModules.util.StringList();
@@ -26,7 +26,7 @@
         }
         this.name = name;
         this.onabort = this.onerror = this.onversionchange = null;
-    };
+    }
     
     IDBDatabase.prototype.createObjectStore = function(storeName, createOptions){
         var me = this;
@@ -36,8 +36,8 @@
         
         var transaction = me.__versionTransaction;
         transaction.__addToTransactionQueue(function(tx, args, success, failure){
-            function error(){
-                idbModules.util.throwDOMException(0, "Could not create new object store", arguments);
+            function error(tx, err){
+                idbModules.util.throwDOMException(0, "Could not create object store \"" + storeName + "\"", err);
             }
             
             if (!me.__versionTransaction) {
@@ -66,8 +66,8 @@
     };
     
     IDBDatabase.prototype.deleteObjectStore = function(storeName){
-        var error = function(){
-            idbModules.util.throwDOMException(0, "Could not delete ObjectStore", arguments);
+        var error = function(tx, err){
+            idbModules.util.throwDOMException(0, "Could not delete ObjectStore", err);
         };
         var me = this;
         !me.objectStoreNames.contains(storeName) && error("Object Store does not exist");
