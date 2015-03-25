@@ -9,29 +9,14 @@
      * @param {Object} mode
      * @param {Object} db
      */
-    var READ = 0;
-    var READ_WRITE = 1;
-    var VERSION_TRANSACTION = 2;
-    
     function IDBTransaction(storeNames, mode, db){
         if (typeof mode === "number") {
-            this.mode = mode;
-            (mode !== 2) && idbModules.DEBUG && console.log("Mode should be a string, but was specified as ", mode);
+            this.mode = mode === 1 ? IDBTransaction.prototype.READ_WRITE : IDBTransaction.prototype.READ_ONLY;
+            idbModules.DEBUG && console.log("Mode should be a string, but was specified as ", mode);
         }
-        else 
-            if (typeof mode === "string") {
-                switch (mode) {
-                    case "readwrite":
-                        this.mode = READ_WRITE;
-                        break;
-                    case "readonly":
-                        this.mode = READ;
-                        break;
-                    default:
-                        this.mode = READ;
-                        break;
-                }
-            }
+        else {
+            this.mode = mode || IDBTransaction.prototype.READ_ONLY;
+        }
         
         this.storeNames = typeof storeNames === "string" ? [storeNames] : storeNames;
         for (var i = 0; i < this.storeNames.length; i++) {
@@ -50,7 +35,7 @@
     }
     
     IDBTransaction.prototype.__executeRequests = function(){
-        if (this.__running && this.mode !== VERSION_TRANSACTION) {
+        if (this.__running) { // && this.mode !== IDBTransaction.VERSION_CHANGE) {
             idbModules.DEBUG && console.log("Looks like the request set is already running", this.mode);
             return;
         }
@@ -99,20 +84,24 @@
                 } 
                 catch (e) {
                     idbModules.DEBUG && console.log("An exception occured in transaction", arguments);
-                    typeof me.onerror === "function" && me.onerror();
+                    var evt = idbModules.util.createEvent("onerror");
+                    idbModules.util.callback("onerror", me, evt);
                 }
             }, function(){
                 idbModules.DEBUG && console.log("An error in transaction", arguments);
-                typeof me.onerror === "function" && me.onerror();
+                var evt = idbModules.util.createEvent("onerror");
+                idbModules.util.callback("onerror", me, evt);
             }, function(){
                 idbModules.DEBUG && console.log("Transaction completed", arguments);
-                typeof me.oncomplete === "function" && me.oncomplete();
+                var evt = idbModules.util.createEvent("oncomplete");
+                idbModules.util.callback("oncomplete", me, evt);
+                idbModules.util.callback("__oncomplete", me, evt);
             });
         }, 1);
     };
     
     IDBTransaction.prototype.__addToTransactionQueue = function(callback, args){
-        if (!this.__active && this.mode !== VERSION_TRANSACTION) {
+        if (!this.__active) { // && this.mode !== IDBTransaction.VERSION_CHANGE) {
             idbModules.util.throwDOMException(0, "A request was placed against a transaction which is currently not active, or which is finished.", this.__mode);
         }
         var request = this.__createRequest();
@@ -146,9 +135,9 @@
         
     };
     
-    IDBTransaction.prototype.READ_ONLY = 0;
-    IDBTransaction.prototype.READ_WRITE = 1;
-    IDBTransaction.prototype.VERSION_CHANGE = 2;
+    IDBTransaction.READ_ONLY = "readonly";
+    IDBTransaction.READ_WRITE = "readwrite";
+    IDBTransaction.VERSION_CHANGE = "versionchange";
     
     idbModules.IDBTransaction = IDBTransaction;
 }(idbModules));

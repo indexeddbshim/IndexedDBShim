@@ -96,7 +96,7 @@
     };
     
     IDBDatabase.prototype.transaction = function(storeNames, mode){
-        var transaction = new idbModules.IDBTransaction(storeNames, mode || 1, this);
+        var transaction = new idbModules.IDBTransaction(storeNames, mode || idbModules.IDBTransaction.READ_ONLY, this);
         return transaction;
     };
     

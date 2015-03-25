@@ -29,12 +29,10 @@ var cleanInterface = false;                 // jshint ignore:line
      * @param {Object} context
      * @param {Object} argArray
      */
-
-    function callback(fn, context, event, func) {
+    function callback(fn, context, event) {
         //window.setTimeout(function(){
         event.target = context;
         (typeof context[fn] === "function") && context[fn].apply(context, [event]);
-        (typeof func === "function") && func();
         //}, 1);
     }
 
@@ -44,7 +42,6 @@ var cleanInterface = false;                 // jshint ignore:line
      * @param {Object} message
      * @param {Object} error
      */
-
     function throwDOMException(name, message, error) {
         var e;
         try {
@@ -896,7 +893,7 @@ var cleanInterface = false;                 // jshint ignore:line
                 function error(tx, err){
                     idbModules.util.throwDOMException(0, "Could not create new index", err);
                 }
-                if (transaction.mode !== 2) {
+                if (transaction.mode !== idbModules.IDBTransaction.VERSION_CHANGE) {
                     idbModules.util.throwDOMException(0, "Invalid State error, not a version transaction", me.transaction);
                 }
                 var idxList = JSON.parse(me.__idbObjectStore.__storeProps.indexList);
@@ -1366,29 +1363,14 @@ var cleanInterface = false;                 // jshint ignore:line
      * @param {Object} mode
      * @param {Object} db
      */
-    var READ = 0;
-    var READ_WRITE = 1;
-    var VERSION_TRANSACTION = 2;
-    
     function IDBTransaction(storeNames, mode, db){
         if (typeof mode === "number") {
-            this.mode = mode;
-            (mode !== 2) && idbModules.DEBUG && console.log("Mode should be a string, but was specified as ", mode);
+            this.mode = mode === 1 ? IDBTransaction.prototype.READ_WRITE : IDBTransaction.prototype.READ_ONLY;
+            idbModules.DEBUG && console.log("Mode should be a string, but was specified as ", mode);
         }
-        else 
-            if (typeof mode === "string") {
-                switch (mode) {
-                    case "readwrite":
-                        this.mode = READ_WRITE;
-                        break;
-                    case "readonly":
-                        this.mode = READ;
-                        break;
-                    default:
-                        this.mode = READ;
-                        break;
-                }
-            }
+        else {
+            this.mode = mode || IDBTransaction.prototype.READ_ONLY;
+        }
         
         this.storeNames = typeof storeNames === "string" ? [storeNames] : storeNames;
         for (var i = 0; i < this.storeNames.length; i++) {
@@ -1407,7 +1389,7 @@ var cleanInterface = false;                 // jshint ignore:line
     }
     
     IDBTransaction.prototype.__executeRequests = function(){
-        if (this.__running && this.mode !== VERSION_TRANSACTION) {
+        if (this.__running) { // && this.mode !== IDBTransaction.VERSION_CHANGE) {
             idbModules.DEBUG && console.log("Looks like the request set is already running", this.mode);
             return;
         }
@@ -1456,20 +1438,24 @@ var cleanInterface = false;                 // jshint ignore:line
                 } 
                 catch (e) {
                     idbModules.DEBUG && console.log("An exception occured in transaction", arguments);
-                    typeof me.onerror === "function" && me.onerror();
+                    var evt = idbModules.util.createEvent("onerror");
+                    idbModules.util.callback("onerror", me, evt);
                 }
             }, function(){
                 idbModules.DEBUG && console.log("An error in transaction", arguments);
-                typeof me.onerror === "function" && me.onerror();
+                var evt = idbModules.util.createEvent("onerror");
+                idbModules.util.callback("onerror", me, evt);
             }, function(){
                 idbModules.DEBUG && console.log("Transaction completed", arguments);
-                typeof me.oncomplete === "function" && me.oncomplete();
+                var evt = idbModules.util.createEvent("oncomplete");
+                idbModules.util.callback("oncomplete", me, evt);
+                idbModules.util.callback("__oncomplete", me, evt);
             });
         }, 1);
     };
     
     IDBTransaction.prototype.__addToTransactionQueue = function(callback, args){
-        if (!this.__active && this.mode !== VERSION_TRANSACTION) {
+        if (!this.__active) { // && this.mode !== IDBTransaction.VERSION_CHANGE) {
             idbModules.util.throwDOMException(0, "A request was placed against a transaction which is currently not active, or which is finished.", this.__mode);
         }
         var request = this.__createRequest();
@@ -1503,9 +1489,9 @@ var cleanInterface = false;                 // jshint ignore:line
         
     };
     
-    IDBTransaction.prototype.READ_ONLY = 0;
-    IDBTransaction.prototype.READ_WRITE = 1;
-    IDBTransaction.prototype.VERSION_CHANGE = 2;
+    IDBTransaction.READ_ONLY = "readonly";
+    IDBTransaction.READ_WRITE = "readwrite";
+    IDBTransaction.VERSION_CHANGE = "versionchange";
     
     idbModules.IDBTransaction = IDBTransaction;
 }(idbModules));
@@ -1608,7 +1594,7 @@ var cleanInterface = false;                 // jshint ignore:line
     };
     
     IDBDatabase.prototype.transaction = function(storeNames, mode){
-        var transaction = new idbModules.IDBTransaction(storeNames, mode || 1, this);
+        var transaction = new idbModules.IDBTransaction(storeNames, mode || idbModules.IDBTransaction.READ_ONLY, this);
         return transaction;
     };
     
@@ -1679,11 +1665,14 @@ var cleanInterface = false;                 // jshint ignore:line
                                     var e = idbModules.util.createEvent("upgradeneeded");
                                     e.oldVersion = oldVersion;
                                     e.newVersion = version;
-                                    req.transaction = req.result.__versionTransaction = new idbModules.IDBTransaction([], 2, req.source);
-                                    idbModules.util.callback("onupgradeneeded", req, e, function() {
+                                    req.transaction = req.result.__versionTransaction = new idbModules.IDBTransaction([], idbModules.IDBTransaction.VERSION_CHANGE, req.source);
+                                    req.transaction.__addToTransactionQueue(function() {
+                                        idbModules.util.callback("onupgradeneeded", req, e);
+                                    });
+                                    req.transaction.__oncomplete = function() {
                                         var e = idbModules.util.createEvent("success");
                                         idbModules.util.callback("onsuccess", req, e);
-                                    });
+                                    };
                                 }, dbCreateError);
                             }, dbCreateError);
                         } else {

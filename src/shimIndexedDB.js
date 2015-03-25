@@ -62,11 +62,14 @@
                                     var e = idbModules.util.createEvent("upgradeneeded");
                                     e.oldVersion = oldVersion;
                                     e.newVersion = version;
-                                    req.transaction = req.result.__versionTransaction = new idbModules.IDBTransaction([], 2, req.source);
-                                    idbModules.util.callback("onupgradeneeded", req, e, function() {
+                                    req.transaction = req.result.__versionTransaction = new idbModules.IDBTransaction([], idbModules.IDBTransaction.VERSION_CHANGE, req.source);
+                                    req.transaction.__addToTransactionQueue(function() {
+                                        idbModules.util.callback("onupgradeneeded", req, e);
+                                    });
+                                    req.transaction.__oncomplete = function() {
                                         var e = idbModules.util.createEvent("success");
                                         idbModules.util.callback("onsuccess", req, e);
-                                    });
+                                    };
                                 }, dbCreateError);
                             }, dbCreateError);
                         } else {

@@ -38,6 +38,16 @@ describe('IndexedDB API', function() {
         expect(IDBTransaction).to.satisfy(isAClass);
     });
 
+    it('should expose IDBTransaction mode constants', function() {
+        expect(IDBTransaction.READ_ONLY).to.equal('readonly');
+        expect(IDBTransaction.READ_WRITE).to.equal('readwrite');
+
+        if (!env.browser.isChrome && !env.browser.isSafari && !env.browser.isFirefox) {
+            // Only IE exposes this constant
+            expect(IDBTransaction.VERSION_CHANGE).to.equal('versionchange');
+        }
+    });
+
     it('should expose IDBCursor', function() {
         expect(IDBCursor).to.satisfy(isAClass);
     });

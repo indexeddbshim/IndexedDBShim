@@ -7,12 +7,10 @@
      * @param {Object} context
      * @param {Object} argArray
      */
-
-    function callback(fn, context, event, func) {
+    function callback(fn, context, event) {
         //window.setTimeout(function(){
         event.target = context;
         (typeof context[fn] === "function") && context[fn].apply(context, [event]);
-        (typeof func === "function") && func();
         //}, 1);
     }
 
@@ -22,7 +20,6 @@
      * @param {Object} message
      * @param {Object} error
      */
-
     function throwDOMException(name, message, error) {
         var e;
         try {

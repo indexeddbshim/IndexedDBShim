@@ -28,7 +28,7 @@
                 function error(tx, err){
                     idbModules.util.throwDOMException(0, "Could not create new index", err);
                 }
-                if (transaction.mode !== 2) {
+                if (transaction.mode !== idbModules.IDBTransaction.VERSION_CHANGE) {
                     idbModules.util.throwDOMException(0, "Invalid State error, not a version transaction", me.transaction);
                 }
                 var idxList = JSON.parse(me.__idbObjectStore.__storeProps.indexList);
