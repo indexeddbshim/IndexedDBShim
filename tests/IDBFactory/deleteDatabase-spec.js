@@ -1,7 +1,10 @@
 describe('IDBFactory.deleteDatabase', function() {
     'use strict';
 
-    var indexedDB = env.indexedDB;
+    var indexedDB;
+    beforeEach(function() {
+        indexedDB = env.indexedDB;
+    });
 
     it('should return an IDBOpenDBRequest', function(done) {
         util.createDatabase('inline', function(err, db) {
@@ -30,7 +33,6 @@ describe('IDBFactory.deleteDatabase', function() {
             var del = indexedDB.deleteDatabase(db.name);
 
             del.onsuccess = function(event) {
-                expect(event).to.be.an.instanceOf(Event);
                 if (!env.browser.isIE && !env.browser.isSafari) {
                     expect(event).to.be.an.instanceOf(IDBVersionChangeEvent);
                 }
@@ -89,20 +91,53 @@ describe('IDBFactory.deleteDatabase', function() {
 
     it('should fire the onblocked event if the database is open', function(done) {
         util.createDatabase('inline', function(err, db) {
+            var alreadyDone = false;
             var del = indexedDB.deleteDatabase(db.name);
             del.onerror = sinon.spy();
-            del.onsuccess = sinon.spy();
 
-            del.onblocked = function(event) {
+            // It will either be blocked, or it will delete successfully
+            del.onsuccess = del.onblocked = function(event) {
                 sinon.assert.notCalled(del.onerror);
-                sinon.assert.notCalled(del.onsuccess);
 
                 expect(event.target).to.equal(del);
 
-                db.close();
-                done();
+                if (!alreadyDone) {
+                    alreadyDone = true;
+                    db.close();
+                    done();
+                }
             };
         });
+    });
+
+    it('should allow all of these parameter types', function(done) {
+        var deletingCounter = 0, deletedCounter = 0;
+
+        deleteDatabase(undefined);
+        deleteDatabase('');
+        deleteDatabase(42);
+        deleteDatabase(-0.331);
+        deleteDatabase([]);
+        deleteDatabase(['a', 'b', 'c']);
+        deleteDatabase(new Date());
+        deleteDatabase({foo: 'bar'});
+
+        if (!env.browser.isIE) {
+            deleteDatabase(null);
+        }
+
+        function deleteDatabase(name) {
+            deletingCounter++;
+            var del = indexedDB.deleteDatabase(name);
+            del.onerror = sinon.spy();
+            del.onsuccess = function() {
+                sinon.assert.notCalled(del.onerror);
+
+                if (++deletedCounter === deletingCounter) {
+                    done();
+                }
+            };
+        }
     });
 
     it('should throw an error if called without params', function() {

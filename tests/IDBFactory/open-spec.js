@@ -1,7 +1,10 @@
 describe('IDBFactory.open', function() {
     'use strict';
 
-    var indexedDB = env.indexedDB;
+    var indexedDB;
+    beforeEach(function() {
+        indexedDB = env.indexedDB;
+    });
 
     describe('success tests', function() {
         it('should return an IDBOpenDBRequest', function(done) {

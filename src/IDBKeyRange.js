@@ -9,12 +9,12 @@
      * @param {Object} lowerOpen
      * @param {Object} upperOpen
      */
-    var IDBKeyRange = function(lower, upper, lowerOpen, upperOpen){
+    function IDBKeyRange(lower, upper, lowerOpen, upperOpen){
         this.lower = lower;
         this.upper = upper;
         this.lowerOpen = lowerOpen;
         this.upperOpen = upperOpen;
-    };
+    }
 
     IDBKeyRange.only = function(value){
         return new IDBKeyRange(value, value, false, false);

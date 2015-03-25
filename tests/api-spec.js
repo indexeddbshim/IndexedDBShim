@@ -1,7 +1,11 @@
 describe('IndexedDB API', function() {
     'use strict';
 
-    var indexedDB = env.indexedDB;
+    var indexedDB;
+    beforeEach(function() {
+        indexedDB = env.indexedDB;
+    });
+    
 
     // Determines whether the given thing is a class
     function isAClass(thing) {
