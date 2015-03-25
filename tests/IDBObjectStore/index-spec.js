@@ -7,7 +7,7 @@ describe('IDBObjectStore.index', function() {
             tx.onerror = done;
 
             var store = tx.objectStore('inline');
-            var index = store.index('inline-index') ;
+            var index = store.index('inline-index');
             expect(index).to.be.an.instanceOf(IDBIndex);
 
             tx.oncomplete = function() {
@@ -23,7 +23,7 @@ describe('IDBObjectStore.index', function() {
             tx.onerror = done;
 
             var store = tx.objectStore('inline');
-            var index = store.index('inline-index') ;
+            var index = store.index('inline-index');
             expect(index.objectStore).to.equal(store);
 
             tx.oncomplete = function() {
@@ -69,8 +69,13 @@ describe('IDBObjectStore.index', function() {
                 err = e;
             }
 
-            expect(err).to.be.an.instanceOf(DOMException);
+            expect(err).to.be.an('object');
             expect(err.name).to.equal('NotFoundError');
+
+            if (!env.browser.isIE) {
+                // IE's DOMException doesn't inherit from Error
+                expect(err).to.be.an.instanceOf(Error);
+            }
 
             tx.oncomplete = function() {
                 db.close();

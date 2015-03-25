@@ -27,7 +27,6 @@ describe('IDBObjectStore.clear', function() {
             clear.onerror = done;
 
             clear.onsuccess = sinon.spy(function(event) {
-                expect(event).to.be.an.instanceOf(Event);
                 expect(event.target).to.equal(clear);
             });
 
@@ -182,8 +181,13 @@ describe('IDBObjectStore.clear', function() {
                 err = e;
             }
 
-            expect(err).to.be.an.instanceOf(DOMException);
+            expect(err).to.be.an('object');
             expect(err.name).to.equal('ReadOnlyError');
+
+            if (!env.browser.isIE) {
+                // IE's DOMException doesn't inherit from Error
+                expect(err).to.be.an.instanceOf(Error);
+            }
 
             db.close();
             done();
@@ -203,8 +207,13 @@ describe('IDBObjectStore.clear', function() {
                     err = e;
                 }
 
-                expect(err).to.be.an.instanceOf(DOMException);
+                expect(err).to.be.an('object');
                 expect(err.name).to.equal('TransactionInactiveError');
+
+                if (!env.browser.isIE) {
+                    // IE's DOMException doesn't inherit from Error
+                    expect(err).to.be.an.instanceOf(Error);
+                }
 
                 db.close();
                 done();

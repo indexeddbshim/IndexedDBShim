@@ -26,14 +26,14 @@
         transaction.__addToTransactionQueue(function createIndex(tx, args, success, failure){
             me.__idbObjectStore.__getStoreProps(tx, function(){
                 function error(tx, err){
-                    idbModules.util.throwDOMException(0, "Could not create new index", err);
+                    throw idbModules.util.createDOMException(0, "Could not create new index", err);
                 }
                 if (transaction.mode !== idbModules.IDBTransaction.VERSION_CHANGE) {
-                    idbModules.util.throwDOMException(0, "Invalid State error, not a version transaction", me.transaction);
+                    throw idbModules.util.createDOMException(0, "Invalid State error, not a version transaction", me.transaction);
                 }
                 var idxList = JSON.parse(me.__idbObjectStore.__storeProps.indexList);
                 if (typeof idxList[indexName] !== "undefined") {
-                    idbModules.util.throwDOMException(0, "Index already exists on store", idxList);
+                    throw idbModules.util.createDOMException(0, "Index already exists on store", idxList);
                 }
                 var columnName = indexName;
                 idxList[indexName] = {

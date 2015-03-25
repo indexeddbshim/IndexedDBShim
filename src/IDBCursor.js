@@ -25,7 +25,7 @@
         this.__valueDecoder = valueColumnName === "value" ? idbModules.Sca : idbModules.Key;
 
         if (!this.source.transaction.__active) {
-            idbModules.util.throwDOMException("TransactionInactiveError", "The transaction this IDBObjectStore belongs to is not active.");
+            throw idbModules.util.createDOMException("TransactionInactiveError", "The transaction this IDBObjectStore belongs to is not active.");
         }
         // Setting this to -1 as continue will set it to 0 anyway
         this.__offset = -1;
@@ -130,7 +130,7 @@
 
     IDBCursor.prototype.advance = function(count){
         if (count <= 0) {
-            idbModules.util.throwDOMException("Type Error", "Count is invalid - 0 or negative", count);
+            throw idbModules.util.createDOMException("Type Error", "Count is invalid - 0 or negative", count);
         }
         var me = this;
         this.__idbObjectStore.transaction.__addToTransactionQueue(function cursorAdvance(tx, args, success, error){

@@ -15,39 +15,6 @@
     }
 
     /**
-     * Throws a new DOM Exception,
-     * @param {Object} name
-     * @param {Object} message
-     * @param {Object} error
-     */
-    function throwDOMException(name, message, error) {
-        var e;
-        try {
-            e = new DOMException.prototype.constructor(0, message);
-        } catch (_error) {
-            e = new Error(message);
-        }
-
-        e.name = name || 'DOMException';
-        e.message = message;
-        if (idbModules.DEBUG) {
-            if (error && error.message) {
-                error = error.message;
-            }
-
-            console.log(name + ': ' + message + '. ' + (error || ''));
-            console.trace && console.trace();
-        }
-        throw e;
-    }
-
-    /**
-     * DOMError class
-     * @constructor
-     */
-    function DOMError() {}
-
-    /**
      * Shim the DOMStringList object.
      *
      */
@@ -106,8 +73,6 @@
         }
     }
 
-    idbModules.DOMError = DOMError;
-    idbModules.util.throwDOMException = throwDOMException;
     idbModules.util.callback = callback;
     idbModules.util.StringList = StringList;
     idbModules.util.quote = function(arg) {

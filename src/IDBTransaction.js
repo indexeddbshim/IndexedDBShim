@@ -21,7 +21,7 @@
         this.storeNames = typeof storeNames === "string" ? [storeNames] : storeNames;
         for (var i = 0; i < this.storeNames.length; i++) {
             if (!db.objectStoreNames.contains(this.storeNames[i])) {
-                idbModules.util.throwDOMException(0, "The operation failed because the requested database object could not be found. For example, an object store did not exist but was being opened.", this.storeNames[i]);
+                throw idbModules.util.createDOMException(0, "The operation failed because the requested database object could not be found. For example, an object store did not exist but was being opened.", this.storeNames[i]);
             }
         }
         this.__active = true;
@@ -42,7 +42,7 @@
         var me = this;
 
         if (!me.__active) {
-            idbModules.util.throwDOMException(0, "A request was placed against a transaction which is currently not active, or which is finished", me.__active);
+            throw idbModules.util.createDOMException(0, "A request was placed against a transaction which is currently not active, or which is finished", me.__active);
         }
 
         me.db.__db.transaction(function executeRequests(tx) {

@@ -37,11 +37,11 @@
         var transaction = me.__versionTransaction;
         transaction.__addToTransactionQueue(function createObjectStore(tx, args, success, failure){
             function error(tx, err){
-                idbModules.util.throwDOMException(0, "Could not create object store \"" + storeName + "\"", err);
+                throw idbModules.util.createDOMException(0, "Could not create object store \"" + storeName + "\"", err);
             }
             
             if (!me.__versionTransaction) {
-                idbModules.util.throwDOMException(0, "Invalid State error", me.transaction);
+                throw idbModules.util.createDOMException(0, "Invalid State error", me.transaction);
             }
             //key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
             var sql = ["CREATE TABLE", idbModules.util.quote(storeName), "(key BLOB", createOptions.autoIncrement ? ", inc INTEGER PRIMARY KEY AUTOINCREMENT" : "PRIMARY KEY", ", value BLOB)"].join(" ");
@@ -54,7 +54,7 @@
             }, error);
         });
         
-        // The IndexedDB Specification needs us to return an Object Store immediatly, but WebSQL does not create and return the store immediatly
+        // The IndexedDB Specification needs us to return an Object Store immediately, but WebSQL does not create and return the store immediately
         // Hence, this can technically be unusable, and we hack around it, by setting the ready value to false
         me.objectStoreNames.push(storeName);
         // Also store this for the first run
@@ -67,7 +67,7 @@
     
     IDBDatabase.prototype.deleteObjectStore = function(storeName){
         var error = function(tx, err){
-            idbModules.util.throwDOMException(0, "Could not delete ObjectStore", err);
+            throw idbModules.util.createDOMException(0, "Could not delete ObjectStore", err);
         };
         var me = this;
         !me.objectStoreNames.contains(storeName) && error("Object Store does not exist");
@@ -76,7 +76,7 @@
         var transaction = me.__versionTransaction;
         transaction.__addToTransactionQueue(function deleteObjectStore(tx, args, success, failure){
             if (!me.__versionTransaction) {
-                idbModules.util.throwDOMException(0, "Invalid State error", me.transaction);
+                throw idbModules.util.createDOMException(0, "Invalid State error", me.transaction);
             }
             me.__db.transaction(function(tx){
                 tx.executeSql("SELECT * FROM __sys__ where name = ?", [storeName], function(tx, data){

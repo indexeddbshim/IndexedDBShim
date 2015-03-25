@@ -55,8 +55,13 @@ describe('IDBTransaction.objectStore', function() {
                 err = e;
             }
 
-            expect(err).to.be.an.instanceOf(DOMException);
+                expect(err).to.be.an('object');
             expect(err.name).to.equal('NotFoundError');
+
+                if (!env.browser.isIE) {
+                    // IE's DOMException doesn't inherit from Error
+                    expect(err).to.be.an.instanceOf(Error);
+                }
 
             db.close();
             done();
@@ -75,8 +80,11 @@ describe('IDBTransaction.objectStore', function() {
                     err = e;
                 }
 
-                expect(err).to.be.an.instanceOf(DOMException);
+                expect(err).to.be.an('object');
+
                 if (!env.browser.isIE) {
+                    // IE's DOMException doesn't inherit from Error
+                    expect(err).to.be.an.instanceOf(Error);
                     expect(err.name).to.equal('InvalidStateError');
                 }
 

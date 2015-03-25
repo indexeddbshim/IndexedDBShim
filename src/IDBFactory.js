@@ -29,15 +29,26 @@
         var req = new idbModules.IDBOpenDBRequest();
         var calledDbCreateError = false;
 
-        function dbCreateError() {
+        if (arguments.length === 0) {
+            throw new TypeError('Database name is required');
+        }
+        else if (arguments.length === 2) {
+            version = parseFloat(version);
+            if (isNaN(version) || !isFinite(version) || version <= 0) {
+                throw new TypeError('Invalid database version: ' + version);
+            }
+        }
+        name = name + ''; // cast to a string
+
+        function dbCreateError(err) {
             if (calledDbCreateError) {
                 return;
             }
-            var e = idbModules.util.createEvent("error", arguments);
-            req.readyState = "done";
-            req.error = "DOMError";
-            idbModules.util.callback("onerror", req, e);
             calledDbCreateError = true;
+            var evt = idbModules.util.createEvent("error", arguments);
+            req.readyState = "done";
+            req.error = err || "DOMError";
+            idbModules.util.callback("onerror", req, evt);
         }
 
         function openDB(oldVersion) {
@@ -47,7 +58,9 @@
                 version = oldVersion || 1;
             }
             if (version <= 0 || oldVersion > version) {
-                idbModules.util.throwDOMException(0, "An attempt was made to open a database using a lower version than the existing version.", version);
+                var err = idbModules.util.createDOMError("VersionError", "An attempt was made to open a database using a lower version than the existing version.", version);
+                dbCreateError(err);
+                return;
             }
 
             db.transaction(function(tx) {
@@ -68,6 +81,7 @@
                                         success();
                                     });
                                     req.transaction.__oncomplete = function() {
+                                        req.transaction = null;
                                         var e = idbModules.util.createEvent("success");
                                         idbModules.util.callback("onsuccess", req, e);
                                     };

@@ -30,7 +30,6 @@ describe('IDBIndex.getKey', function() {
             key.onerror = sinon.spy();
 
             key.onsuccess = sinon.spy(function(event){
-                expect(event).to.be.an.instanceOf(Event);
                 expect(event.target).to.equal(key);
             });
 
@@ -529,8 +528,13 @@ describe('IDBIndex.getKey', function() {
                     err = e;
                 }
 
-                expect(err).to.be.an.instanceOf(DOMException);
+                expect(err).to.be.an('object');
                 expect(err.name).to.equal('DataError');
+
+                if (!env.browser.isIE) {
+                    // IE's DOMException doesn't inherit from Error
+                    expect(err).to.be.an.instanceOf(Error);
+                }
             }
 
             db.close();
@@ -673,8 +677,13 @@ describe('IDBIndex.getKey', function() {
                     err = e;
                 }
 
-                expect(err).to.be.an.instanceOf(DOMException);
+                expect(err).to.be.an('object');
                 expect(err.name).to.equal('TransactionInactiveError');
+
+                if (!env.browser.isIE) {
+                    // IE's DOMException doesn't inherit from Error
+                    expect(err).to.be.an.instanceOf(Error);
+                }
 
                 db.close();
                 done();

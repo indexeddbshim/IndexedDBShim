@@ -136,18 +136,18 @@
                     callback(data.rows.item(0).seq);
                 }
             }, function(tx, error){
-                idbModules.util.throwDOMException(0, "Data Error", "Could not get the auto increment value for key", error);
+                throw idbModules.util.createDOMException(0, "Data Error", "Could not get the auto increment value for key", error);
             });
         }
         
         var me = this;
         me.__getStoreProps(tx, function(props){
             if (!props) {
-                idbModules.util.throwDOMException(0, "Data Error", "Could not locate defination for this table", props);
+                throw idbModules.util.createDOMException(0, "Data Error", "Could not locate defination for this table", props);
             }
             if (props.keyPath) {
                 if (typeof key !== "undefined") {
-                    idbModules.util.throwDOMException(0, "Data Error", "The object store uses in-line keys and the key parameter was provided", props);
+                    throw idbModules.util.createDOMException(0, "Data Error", "The object store uses in-line keys and the key parameter was provided", props);
                 }
                 if (value) {
                     try {
@@ -157,7 +157,7 @@
                                 getNextAutoIncKey();
                             }
                             else {
-                                idbModules.util.throwDOMException(0, "Data Error", "Could not eval key from keyPath");
+                                throw idbModules.util.createDOMException(0, "Data Error", "Could not eval key from keyPath");
                             }
                         }
                         else {
@@ -165,11 +165,11 @@
                         }
                     } 
                     catch (e) {
-                        idbModules.util.throwDOMException(0, "Data Error", "Could not eval key from keyPath", e);
+                        throw idbModules.util.createDOMException(0, "Data Error", "Could not eval key from keyPath", e);
                     }
                 }
                 else {
-                    idbModules.util.throwDOMException(0, "Data Error", "KeyPath was specified, but value was not");
+                    throw idbModules.util.createDOMException(0, "Data Error", "KeyPath was specified, but value was not");
                 }
             }
             else {
@@ -178,7 +178,7 @@
                 }
                 else {
                     if (props.autoInc === "false") {
-                        idbModules.util.throwDOMException(0, "Data Error", "The object store uses out-of-line keys and has no key generator and the key parameter was not provided. ", props);
+                        throw idbModules.util.createDOMException(0, "Data Error", "The object store uses out-of-line keys and has no key generator and the key parameter was not provided. ", props);
                     }
                     else {
                         // Looks like this has autoInc, so lets get the next in sequence and return that.
