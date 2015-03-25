@@ -27,8 +27,7 @@ describe('IDBObjectStore.delete', function() {
             var del = store.delete('foo');
             del.onerror = sinon.spy();
 
-            del.onsuccess = sinon.spy(function(event){
-                expect(event).to.be.an.instanceOf(Event);
+            del.onsuccess = sinon.spy(function(event) {
                 expect(event.target).to.equal(del);
             });
 
@@ -560,7 +559,7 @@ describe('IDBObjectStore.delete', function() {
             tx.oncomplete = function() {
                 // Make sure all the deletes completed
                 expect(deletedCounter).to.equal(deletingCounter);
-                
+
                 db.close();
                 done();
             };
@@ -593,8 +592,13 @@ describe('IDBObjectStore.delete', function() {
                     err = e;
                 }
 
-                expect(err).to.be.an.instanceOf(DOMException);
+                expect(err).to.be.an('object');
                 expect(err.name).to.equal('DataError');
+
+                if (!env.browser.isIE) {
+                    // IE's DOMException doesn't inherit from Error
+                    expect(err).to.be.an.instanceOf(Error);
+                }
             }
 
             db.close();
@@ -650,8 +654,13 @@ describe('IDBObjectStore.delete', function() {
                 err = e;
             }
 
-            expect(err).to.be.an.instanceOf(DOMException);
+            expect(err).to.be.an('object');
             expect(err.name).to.equal('ReadOnlyError');
+
+            if (!env.browser.isIE) {
+                // IE's DOMException doesn't inherit from Error
+                expect(err).to.be.an.instanceOf(Error);
+            }
 
             db.close();
             done();
@@ -671,8 +680,13 @@ describe('IDBObjectStore.delete', function() {
                     err = e;
                 }
 
-                expect(err).to.be.an.instanceOf(DOMException);
+                expect(err).to.be.an('object');
                 expect(err.name).to.equal('TransactionInactiveError');
+
+                if (!env.browser.isIE) {
+                    // IE's DOMException doesn't inherit from Error
+                    expect(err).to.be.an.instanceOf(Error);
+                }
 
                 db.close();
                 done();

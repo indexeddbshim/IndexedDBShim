@@ -28,7 +28,6 @@ describe('IDBDatabase.transaction', function() {
                 tx.onerror = done;
 
                 tx.oncomplete = function(event) {
-                    expect(event).to.be.an.instanceOf(Event);
                     expect(event.target).to.equal(tx);
 
                     db.close();
@@ -78,7 +77,13 @@ describe('IDBDatabase.transaction', function() {
                 catch (e) {
                     err = e;
                 }
-                expect(err).to.be.an.instanceOf(DOMException);
+
+                expect(err).to.be.an('object');
+
+                if (!env.browser.isIE) {
+                    // IE's DOMException doesn't inherit from Error
+                    expect(err).to.be.an.instanceOf(Error);
+                }
 
                 db.close();
                 done();
@@ -97,8 +102,13 @@ describe('IDBDatabase.transaction', function() {
                     err = e;
                 }
 
-                expect(err).to.be.an.instanceOf(DOMException);
+                expect(err).to.be.an('object');
                 expect(err.name).to.equal('ReadOnlyError');
+
+                if (!env.browser.isIE) {
+                    // IE's DOMException doesn't inherit from Error
+                    expect(err).to.be.an.instanceOf(Error);
+                }
 
                 db.close();
                 done();
@@ -117,8 +127,13 @@ describe('IDBDatabase.transaction', function() {
                     err = e;
                 }
 
-                expect(err).to.be.an.instanceOf(DOMException);
+                expect(err).to.be.an('object');
                 expect(err.name).to.equal('ReadOnlyError');
+
+                if (!env.browser.isIE) {
+                    // IE's DOMException doesn't inherit from Error
+                    expect(err).to.be.an.instanceOf(Error);
+                }
 
                 db.close();
                 done();
@@ -168,9 +183,16 @@ describe('IDBDatabase.transaction', function() {
                     err = e;
                 }
 
-                expect(err).to.be.an.instanceOf(DOMException);
+                expect(err).to.be.an('object');
+
                 if (!env.browser.isSafari) {
-                    expect(err.name).to.equal('InvalidAccessError');    // Safari throws "NotFoundError"
+                    // Safari throws "NotFoundError"
+                    expect(err.name).to.equal('InvalidAccessError');
+                }
+
+                if (!env.browser.isIE) {
+                    // IE's DOMException doesn't inherit from Error
+                    expect(err).to.be.an.instanceOf(Error);
                 }
 
                 db.close();
@@ -187,8 +209,13 @@ describe('IDBDatabase.transaction', function() {
                     err = e;
                 }
 
-                expect(err).to.be.an.instanceOf(DOMException);
+                expect(err).to.be.an('object');
                 expect(err.name).to.equal('NotFoundError');
+
+                if (!env.browser.isIE) {
+                    // IE's DOMException doesn't inherit from Error
+                    expect(err).to.be.an.instanceOf(Error);
+                }
 
                 db.close();
                 done();
@@ -204,8 +231,13 @@ describe('IDBDatabase.transaction', function() {
                     err = e;
                 }
 
-                expect(err).to.be.an.instanceOf(DOMException);
+                expect(err).to.be.an('object');
                 expect(err.name).to.equal('NotFoundError');
+
+                if (!env.browser.isIE) {
+                    // IE's DOMException doesn't inherit from Error
+                    expect(err).to.be.an.instanceOf(Error);
+                }
 
                 db.close();
                 done();
@@ -243,8 +275,13 @@ describe('IDBDatabase.transaction', function() {
                     err = e;
                 }
 
-                expect(err).to.be.an.instanceOf(DOMException);
+                expect(err).to.be.an('object');
                 expect(err.name).to.equal('InvalidStateError');
+
+                if (!env.browser.isIE) {
+                    // IE's DOMException doesn't inherit from Error
+                    expect(err).to.be.an.instanceOf(Error);
+                }
 
                 db.close();
                 done();

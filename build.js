@@ -3,7 +3,7 @@
  * @param {Object} callback
  */
 var buildIndexedDB = (function(){
-	var moduleList = ["Init", "util", "Sca", "Key", "Event", "IDBRequest", "IDBKeyRange", "IDBCursor", "IDBIndex", "IDBObjectStore", "IDBTransaction", "IDBDatabase", "shimIndexedDB", "globalVars"];
+	var moduleList = ["Init", "util", "Sca", "Key", "Event", "DOMException", "IDBRequest", "IDBKeyRange", "IDBCursor", "IDBIndex", "IDBObjectStore", "IDBTransaction", "IDBDatabase", "IDBFactory", "globalVars"];
 	return {
 		addScripts: function(callback){
 			window.idbModules = {};

@@ -12,6 +12,7 @@
         this.name = name;
         this.transaction = idbTransaction;
         this.__ready = {};
+        this.__waiting = {};
         this.__setReadyState("createObjectStore", typeof ready === "undefined" ? true : ready);
         this.indexNames = new idbModules.util.StringList();
         var dbProps = idbTransaction.db.__storeProperties;
@@ -32,34 +33,56 @@
      */
     IDBObjectStore.prototype.__setReadyState = function(key, val){
         this.__ready[key] = val;
+        this.__runIfReady();
+    };
+
+    IDBObjectStore.prototype.__isReady = function(key) {
+        if (key === "ALL") {
+            for (var x in this.__ready) {
+                if (!this.__ready[x]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        else {
+            return (typeof this.__ready[key] === "undefined") ? true : this.__ready[key];
+        }
     };
     
     /**
      * Called by all operations on the object store, waits till the store is ready, and then performs the operation
      * @param {Object} callback
      */
-    IDBObjectStore.prototype.__waitForReady = function(callback, key){
-        var ready = true;
-        if (typeof key !== "undefined") {
-            ready = (typeof this.__ready[key] === "undefined") ? true : this.__ready[key];
-        }
-        else {
-            for (var x in this.__ready) {
-                if (!this.__ready[x]) {
-                    ready = false;
-                }
-            }
-        }
-        
-        if (ready) {
+    IDBObjectStore.prototype.__waitForReady = function(callback, key) {
+        key = key || "ALL";
+        if (this.__isReady(key)) {
             callback();
         }
         else {
-            idbModules.DEBUG && console.log("Waiting for to be ready", key);
-            var me = this;
-            window.setTimeout(function(){
-                me.__waitForReady(callback, key);
-            }, 100);
+            this.__waiting[key] = this.__waiting[key] || [];
+            this.__waiting[key].push(callback);
+        }
+    };
+        
+    /**
+     * Performs waiting operations if the object store is ready.
+     */
+    IDBObjectStore.prototype.__runIfReady = function() {
+        for (var key in this.__waiting) {
+            if (this.__isReady(key)) {
+                var waiting = this.__waiting[key];
+                if (waiting && waiting.length > 0) {
+                    idbModules.DEBUG && console.log(key + " is ready. Running callbacks.");
+                    while (waiting.length > 0) {
+                        var callback = waiting.shift();
+                        callback();
+                    }
+                }
+            }
+            else {
+                idbModules.DEBUG && console.log("Waiting for " + key + " to be ready");
+            }
         }
     };
     
@@ -107,24 +130,24 @@
         function getNextAutoIncKey(){
             tx.executeSql("SELECT * FROM sqlite_sequence where name like ?", [me.name], function(tx, data){
                 if (data.rows.length !== 1) {
-                    callback(0);
+                    callback(1);
                 }
                 else {
                     callback(data.rows.item(0).seq);
                 }
             }, function(tx, error){
-                idbModules.util.throwDOMException(0, "Data Error", "Could not get the auto increment value for key", error);
+                throw idbModules.util.createDOMException(0, "Data Error", "Could not get the auto increment value for key", error);
             });
         }
         
         var me = this;
         me.__getStoreProps(tx, function(props){
             if (!props) {
-                idbModules.util.throwDOMException(0, "Data Error", "Could not locate defination for this table", props);
+                throw idbModules.util.createDOMException(0, "Data Error", "Could not locate defination for this table", props);
             }
             if (props.keyPath) {
                 if (typeof key !== "undefined") {
-                    idbModules.util.throwDOMException(0, "Data Error", "The object store uses in-line keys and the key parameter was provided", props);
+                    throw idbModules.util.createDOMException(0, "Data Error", "The object store uses in-line keys and the key parameter was provided", props);
                 }
                 if (value) {
                     try {
@@ -134,7 +157,7 @@
                                 getNextAutoIncKey();
                             }
                             else {
-                                idbModules.util.throwDOMException(0, "Data Error", "Could not eval key from keyPath");
+                                throw idbModules.util.createDOMException(0, "Data Error", "Could not eval key from keyPath");
                             }
                         }
                         else {
@@ -142,11 +165,11 @@
                         }
                     } 
                     catch (e) {
-                        idbModules.util.throwDOMException(0, "Data Error", "Could not eval key from keyPath", e);
+                        throw idbModules.util.createDOMException(0, "Data Error", "Could not eval key from keyPath", e);
                     }
                 }
                 else {
-                    idbModules.util.throwDOMException(0, "Data Error", "KeyPath was specified, but value was not");
+                    throw idbModules.util.createDOMException(0, "Data Error", "KeyPath was specified, but value was not");
                 }
             }
             else {
@@ -155,7 +178,7 @@
                 }
                 else {
                     if (props.autoInc === "false") {
-                        idbModules.util.throwDOMException(0, "Data Error", "The object store uses out-of-line keys and has no key generator and the key parameter was not provided. ", props);
+                        throw idbModules.util.createDOMException(0, "Data Error", "The object store uses out-of-line keys and has no key generator and the key parameter was not provided. ", props);
                     }
                     else {
                         // Looks like this has autoInc, so lets get the next in sequence and return that.
@@ -207,7 +230,7 @@
         var me = this,
             request = me.transaction.__createRequest(function(){}); //Stub request
         idbModules.Sca.encode(value, function(encoded) {
-            me.transaction.__pushToQueue(request, function(tx, args, success, error){
+            me.transaction.__pushToQueue(request, function objectStoreAdd(tx, args, success, error){
                 me.__deriveKey(tx, value, key, function(primaryKey){
                     me.__insertData(tx, encoded, value, primaryKey, success, error);
                 });
@@ -220,7 +243,7 @@
         var me = this,
             request = me.transaction.__createRequest(function(){}); //Stub request
         idbModules.Sca.encode(value, function(encoded) {
-            me.transaction.__pushToQueue(request, function(tx, args, success, error){
+            me.transaction.__pushToQueue(request, function objectStorePut(tx, args, success, error){
                 me.__deriveKey(tx, value, key, function(primaryKey){
                     // First try to delete if the record exists
                     var sql = "DELETE FROM " + idbModules.util.quote(me.name) + " where key = ?";
@@ -239,7 +262,7 @@
     IDBObjectStore.prototype.get = function(key){
         // TODO Key should also be a key range
         var me = this;
-        return me.transaction.__addToTransactionQueue(function(tx, args, success, error){
+        return me.transaction.__addToTransactionQueue(function objectStoreGet(tx, args, success, error){
             me.__waitForReady(function(){
                 var primaryKey = idbModules.Key.encode(key);
                 idbModules.DEBUG && console.log("Fetching", me.name, primaryKey);
@@ -268,7 +291,7 @@
     IDBObjectStore.prototype["delete"] = function(key){
         // TODO key should also support key ranges
         var me = this;
-        return me.transaction.__addToTransactionQueue(function(tx, args, success, error){
+        return me.transaction.__addToTransactionQueue(function objectStoreDelete(tx, args, success, error){
             me.__waitForReady(function(){
                 var primaryKey = idbModules.Key.encode(key);
                 idbModules.DEBUG && console.log("Fetching", me.name, primaryKey);
@@ -284,7 +307,7 @@
     
     IDBObjectStore.prototype.clear = function(){
         var me = this;
-        return me.transaction.__addToTransactionQueue(function(tx, args, success, error){
+        return me.transaction.__addToTransactionQueue(function objectStoreClear(tx, args, success, error){
             me.__waitForReady(function(){
                 tx.executeSql("DELETE FROM " + idbModules.util.quote(me.name), [], function(tx, data){
                     idbModules.DEBUG && console.log("Cleared all records from database", data.rowsAffected);
@@ -298,7 +321,7 @@
     
     IDBObjectStore.prototype.count = function(key){
         var me = this;
-        return me.transaction.__addToTransactionQueue(function(tx, args, success, error){
+        return me.transaction.__addToTransactionQueue(function objectStoreCount(tx, args, success, error){
             me.__waitForReady(function(){
                 var sql = "SELECT * FROM " + idbModules.util.quote(me.name) + ((typeof key !== "undefined") ? " WHERE key = ?" : "");
                 var sqlValues = [];
@@ -328,9 +351,7 @@
         optionalParameters = optionalParameters || {};
         me.__setReadyState("createIndex", false);
         var result = new idbModules.IDBIndex(indexName, me);
-        me.__waitForReady(function(){
-            result.__createIndex(indexName, keyPath, optionalParameters);
-        }, "createObjectStore");
+        result.__createIndex(indexName, keyPath, optionalParameters);
         me.indexNames.push(indexName);
 
         // Also update the db indexList, because after reopening the store, we still want to know this indexName

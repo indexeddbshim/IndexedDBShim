@@ -30,21 +30,21 @@
         this.timeStamp = new Date().valueOf();
     }
 
-    var useNative = false;
+    var useNativeEvent = false;
     try {
         // Test whether we can use the browser's native Event class
-        var test = createNativeEvent('test', true);
-        var target = {test: 'test'};
+        var test = createNativeEvent('test type', 'test debug');
+        var target = {test: 'test target'};
         test.target = target;
 
-        if (test.type === 'test' && test.debug === true && test.target === target) {
+        if (test instanceof Event && test.type === 'test type' && test.debug === 'test debug' && test.target === target) {
             // Native events work as expected
-            useNative = true;
+            useNativeEvent = true;
         }
     }
     catch (e) {}
 
-    if (useNative) {
+    if (useNativeEvent) {
         idbModules.Event = Event;
         idbModules.IDBVersionChangeEvent = Event;
         idbModules.util.createEvent = createNativeEvent;

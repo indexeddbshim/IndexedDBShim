@@ -70,7 +70,6 @@ describe('IDBFactory.open', function() {
                 open.onerror = open.onblocked = done;
 
                 open.onsuccess = function(event) {
-                    expect(event).to.be.an.instanceOf(Event);
                     expect(event.target).to.equal(open);
                     open.result.close();
                     done();
@@ -272,51 +271,37 @@ describe('IDBFactory.open', function() {
             expect(err.name).to.equal('TypeError');
         });
 
-        it('should throw an error if called with negative version number', function() {
-            var err;
-            try {
-                indexedDB.open('foo', -1);
-            }
-            catch (e) {
-                err = e;
+        it('should not allow these version numbers', function() {
+            tryToOpen('');
+            tryToOpen('foobar');
+            tryToOpen(0);
+            tryToOpen(-3);
+            tryToOpen(Infinity);
+            tryToOpen(-Infinity);
+
+            if (!env.browser.isFirefox) {
+                tryToOpen(undefined);
+                tryToOpen(null);
+                tryToOpen({foo: 'bar'});
+                tryToOpen([]);
+                tryToOpen(['a', 'b', 'c']);
             }
 
-            expect(err).to.be.ok;
-            if (!env.browser.isIE) {
-                expect(err).to.be.an.instanceOf(TypeError);     // IE throws a DOMException
-                expect(err.name).to.equal('TypeError');         // IE throws "InvalidAccessError"
-            }
-        });
+            function tryToOpen(version) {
+                var err = null;
 
-        it('should throw an error if called with a zero version number', function() {
-            var err;
-            try {
-                indexedDB.open('foo', 0);
-            }
-            catch (e) {
-                err = e;
-            }
+                try {
+                    indexedDB.open('test', version);
+                }
+                catch (e) {
+                    err = e;
+                }
 
-            expect(err).to.be.ok;
-            if (!env.browser.isIE) {
-                expect(err).to.be.an.instanceOf(TypeError);     // IE throws a DOMException
-                expect(err.name).to.equal('TypeError');         // IE throws "InvalidAccessError"
-            }
-        });
-
-        it('should throw an error if called with a non-numeric version number', function() {
-            var err;
-            try {
-                indexedDB.open('foo', 'bar');
-            }
-            catch (e) {
-                err = e;
-            }
-
-            expect(err).to.be.ok;
-            if (!env.browser.isIE) {
-                expect(err).to.be.an.instanceOf(TypeError);     // IE throws a DOMException
-                expect(err.name).to.equal('TypeError');         // IE throws "InvalidAccessError"
+                expect(err).to.be.ok;
+                if (!env.browser.isIE) {
+                    expect(err).to.be.an.instanceOf(TypeError); // IE throws a DOMException
+                    expect(err.name).to.equal('TypeError');
+                }
             }
         });
     });
