@@ -63,8 +63,9 @@
                                     e.oldVersion = oldVersion;
                                     e.newVersion = version;
                                     req.transaction = req.result.__versionTransaction = new idbModules.IDBTransaction([], idbModules.IDBTransaction.VERSION_CHANGE, req.source);
-                                    req.transaction.__addToTransactionQueue(function() {
+                                    req.transaction.__addToTransactionQueue(function onupgradeneeded(tx, args, success) {
                                         idbModules.util.callback("onupgradeneeded", req, e);
+                                        success();
                                     });
                                     req.transaction.__oncomplete = function() {
                                         var e = idbModules.util.createEvent("success");

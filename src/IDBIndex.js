@@ -23,7 +23,7 @@
     IDBIndex.prototype.__createIndex = function(indexName, keyPath, optionalParameters){
         var me = this;
         var transaction = me.__idbObjectStore.transaction;
-        transaction.__addToTransactionQueue(function(tx, args, success, failure){
+        transaction.__addToTransactionQueue(function createIndex(tx, args, success, failure){
             me.__idbObjectStore.__getStoreProps(tx, function(){
                 function error(tx, err){
                     idbModules.util.throwDOMException(0, "Could not create new index", err);
@@ -90,7 +90,7 @@
     
     IDBIndex.prototype.__fetchIndexData = function(key, opType){
         var me = this;
-        return me.__idbObjectStore.transaction.__addToTransactionQueue(function(tx, args, success, error){
+        return me.__idbObjectStore.transaction.__addToTransactionQueue(function fetchIndexData(tx, args, success, error){
             var sql = ["SELECT * FROM ", idbModules.util.quote(me.__idbObjectStore.name), " WHERE", me.indexName, "NOT NULL"];
             var sqlValues = [];
             if (typeof key !== "undefined") {

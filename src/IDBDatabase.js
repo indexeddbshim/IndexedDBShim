@@ -35,7 +35,7 @@
         var result = new idbModules.IDBObjectStore(storeName, me.__versionTransaction, false);
         
         var transaction = me.__versionTransaction;
-        transaction.__addToTransactionQueue(function(tx, args, success, failure){
+        transaction.__addToTransactionQueue(function createObjectStore(tx, args, success, failure){
             function error(tx, err){
                 idbModules.util.throwDOMException(0, "Could not create object store \"" + storeName + "\"", err);
             }
@@ -74,7 +74,7 @@
         me.objectStoreNames.splice(me.objectStoreNames.indexOf(storeName), 1);
         
         var transaction = me.__versionTransaction;
-        transaction.__addToTransactionQueue(function(tx, args, success, failure){
+        transaction.__addToTransactionQueue(function deleteObjectStore(tx, args, success, failure){
             if (!me.__versionTransaction) {
                 idbModules.util.throwDOMException(0, "Invalid State error", me.transaction);
             }
@@ -83,6 +83,7 @@
                     if (data.rows.length > 0) {
                         tx.executeSql("DROP TABLE " + idbModules.util.quote(storeName), [], function(){
                             tx.executeSql("DELETE FROM __sys__ WHERE name = ?", [storeName], function(){
+                                success();
                             }, error);
                         }, error);
                     }
