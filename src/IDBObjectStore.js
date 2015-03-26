@@ -107,7 +107,7 @@
                             "name": data.rows.item(0).name,
                             "indexList": data.rows.item(0).indexList,
                             "autoInc": data.rows.item(0).autoInc,
-                            "keyPath": data.rows.item(0).keyPath
+                            "keyPath": idbModules.Key.decode(data.rows.item(0).keyPath)
                         };
                         idbModules.DEBUG && console.log("Store properties", me.__storeProps);
                         callback(me.__storeProps);
@@ -151,7 +151,15 @@
                 }
                 if (value) {
                     try {
-                        var primaryKey = eval("value['" + props.keyPath + "']");
+                        var primaryKey;
+                        if(Object.prototype.toString.apply(props.keyPath) === '[object Array]') {
+                            primaryKey = [];
+                            for (var i = 0; i < props.keyPath.length; i++) {
+                                primaryKey.push(eval("value['" + props.keyPath[i] + "']"));
+                            }
+                        } else {
+                            primaryKey = eval("value['" + props.keyPath + "']");
+                        }
                         if (primaryKey === undefined) {
                             if (props.autoInc === "true") {
                                 getNextAutoIncKey();
@@ -197,7 +205,16 @@
         var indexes = JSON.parse(this.__storeProps.indexList);
         for (var key in indexes) {
             try {
-                paramMap[indexes[key].columnName] = idbModules.Key.encode(eval("value['" + indexes[key].keyPath + "']"));
+                var indexVal;
+                if(Object.prototype.toString.apply(indexes[key].keyPath) === '[object Array]') {
+                    indexVal = [];
+                    for (var i = 0; i < indexes[key].keyPath.length; i++) {
+                        indexVal.push(eval("value['" + indexes[key].keyPath[i] + "']"));
+                    }
+                } else {
+                    indexVal = eval("value['" + indexes[key].keyPath + "']");
+                }
+                paramMap[indexes[key].columnName] = idbModules.Key.encode(indexVal);
             } 
             catch (e) {
                 error(e);
