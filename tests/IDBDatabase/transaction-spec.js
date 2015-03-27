@@ -28,6 +28,7 @@ describe('IDBDatabase.transaction', function() {
                 tx.onerror = done;
 
                 tx.oncomplete = function(event) {
+                    expect(event).to.be.an.instanceOf(env.Event);
                     expect(event.target).to.equal(tx);
 
                     db.close();
@@ -37,20 +38,9 @@ describe('IDBDatabase.transaction', function() {
         });
 
         it('should open a single object store', function(done) {
-            util.createDatabase('inline', 'inline-generated', 'out-of-line', function(err, db) {
-                // Transaction only includes one of the three stores
+            util.createDatabase('inline-generated', function(err, db) {
                 var tx = db.transaction('inline-generated');
                 expect(tx.objectStore('inline-generated')).to.be.an.instanceOf(IDBObjectStore);
-
-                // These two stores aren't part of the transaction
-                expect(tryToOpen('inline')).to.throw();
-                expect(tryToOpen('out-of-line')).to.throw();
-
-                function tryToOpen(store) {
-                    return function() {
-                        expect(tx.objectStore(store)).to.be.an.instanceOf(IDBObjectStore);
-                    };
-                }
 
                 db.close();
                 done();
@@ -64,26 +54,10 @@ describe('IDBDatabase.transaction', function() {
                 return done();
             }
 
-            util.createDatabase('inline', 'inline-generated', 'out-of-line', function(err, db) {
-                // Transaction only includes two of the three stores
+            util.createDatabase('inline', 'out-of-line', function(err, db) {
                 var tx = db.transaction(['inline', 'out-of-line']);
                 expect(tx.objectStore('inline')).to.be.an.instanceOf(IDBObjectStore);
                 expect(tx.objectStore('out-of-line')).to.be.an.instanceOf(IDBObjectStore);
-
-                // This store isn't part of the transaction
-                try {
-                    tx.objectStore('inline-generated');
-                }
-                catch (e) {
-                    err = e;
-                }
-
-                expect(err).to.be.an('object');
-
-                if (!env.browser.isIE) {
-                    // IE's DOMException doesn't inherit from Error
-                    expect(err).to.be.an.instanceOf(Error);
-                }
 
                 db.close();
                 done();
@@ -102,13 +76,8 @@ describe('IDBDatabase.transaction', function() {
                     err = e;
                 }
 
-                expect(err).to.be.an('object');
+                expect(err).to.be.an.instanceOf(env.DOMException);
                 expect(err.name).to.equal('ReadOnlyError');
-
-                if (!env.browser.isIE) {
-                    // IE's DOMException doesn't inherit from Error
-                    expect(err).to.be.an.instanceOf(Error);
-                }
 
                 db.close();
                 done();
@@ -127,13 +96,8 @@ describe('IDBDatabase.transaction', function() {
                     err = e;
                 }
 
-                expect(err).to.be.an('object');
+                expect(err).to.be.an.instanceOf(env.DOMException);
                 expect(err.name).to.equal('ReadOnlyError');
-
-                if (!env.browser.isIE) {
-                    // IE's DOMException doesn't inherit from Error
-                    expect(err).to.be.an.instanceOf(Error);
-                }
 
                 db.close();
                 done();
@@ -183,16 +147,11 @@ describe('IDBDatabase.transaction', function() {
                     err = e;
                 }
 
-                expect(err).to.be.an('object');
+                expect(err).to.be.an.instanceOf(env.DOMException);
 
                 if (!env.browser.isSafari) {
                     // Safari throws "NotFoundError"
                     expect(err.name).to.equal('InvalidAccessError');
-                }
-
-                if (!env.browser.isIE) {
-                    // IE's DOMException doesn't inherit from Error
-                    expect(err).to.be.an.instanceOf(Error);
                 }
 
                 db.close();
@@ -209,13 +168,8 @@ describe('IDBDatabase.transaction', function() {
                     err = e;
                 }
 
-                expect(err).to.be.an('object');
+                expect(err).to.be.an.instanceOf(env.DOMException);
                 expect(err.name).to.equal('NotFoundError');
-
-                if (!env.browser.isIE) {
-                    // IE's DOMException doesn't inherit from Error
-                    expect(err).to.be.an.instanceOf(Error);
-                }
 
                 db.close();
                 done();
@@ -231,13 +185,8 @@ describe('IDBDatabase.transaction', function() {
                     err = e;
                 }
 
-                expect(err).to.be.an('object');
+                expect(err).to.be.an.instanceOf(env.DOMException);
                 expect(err.name).to.equal('NotFoundError');
-
-                if (!env.browser.isIE) {
-                    // IE's DOMException doesn't inherit from Error
-                    expect(err).to.be.an.instanceOf(Error);
-                }
 
                 db.close();
                 done();
@@ -253,10 +202,30 @@ describe('IDBDatabase.transaction', function() {
                     err = e;
                 }
 
-                expect(err).to.be.ok;
+                expect(err).to.be.an('object');
                 if (!env.browser.isIE) {
                     expect(err).to.be.an.instanceOf(TypeError);     // IE throws a DOMException
                     expect(err.name).to.equal('TypeError');         // IE throws "InvalidAccessError"
+                }
+
+                db.close();
+                done();
+            });
+        });
+
+        it('should throw an error if an illegal mode is specified', function(done) {
+            util.createDatabase('inline', function(err, db) {
+                try {
+                    db.transaction('inline', 'versionchange');      // <--- illegal
+                }
+                catch (e) {
+                    err = e;
+                }
+
+                expect(err).to.be.an('object');
+                if (!env.browser.isIE && !env.browser.isFirefox) {
+                    expect(err).to.be.an.instanceOf(TypeError);     // IE & Firefox throw a DOMException
+                    expect(err.name).to.equal('TypeError');         // IE & Firefox throw "InvalidAccessError"
                 }
 
                 db.close();
@@ -275,13 +244,8 @@ describe('IDBDatabase.transaction', function() {
                     err = e;
                 }
 
-                expect(err).to.be.an('object');
+                expect(err).to.be.an.instanceOf(env.DOMException);
                 expect(err.name).to.equal('InvalidStateError');
-
-                if (!env.browser.isIE) {
-                    // IE's DOMException doesn't inherit from Error
-                    expect(err).to.be.an.instanceOf(Error);
-                }
 
                 db.close();
                 done();

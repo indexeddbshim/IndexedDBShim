@@ -70,6 +70,7 @@
     }
     catch (e) {}
 
+    idbModules.util.logError = logError;
     if (useNativeDOMException) {
         idbModules.DOMException = DOMException;
         idbModules.util.createDOMException = function(name, message, error) {

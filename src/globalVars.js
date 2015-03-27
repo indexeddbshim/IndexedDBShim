@@ -38,7 +38,6 @@
                 shim('IDBRequest', idbModules.IDBRequest);
                 shim('IDBOpenDBRequest', idbModules.IDBOpenDBRequest);
                 shim('IDBVersionChangeEvent', idbModules.IDBVersionChangeEvent);
-                shim('DOMError', idbModules.DOMError);
             };
 
             window.shimIndexedDB.__debug = function(val){

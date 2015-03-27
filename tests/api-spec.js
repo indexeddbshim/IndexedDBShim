@@ -1,12 +1,6 @@
 describe('IndexedDB API', function() {
     'use strict';
 
-    var indexedDB;
-    beforeEach(function() {
-        indexedDB = env.indexedDB;
-    });
-    
-
     // Determines whether the given thing is a class
     function isAClass(thing) {
         return (typeof(thing) === 'function' ||
@@ -14,8 +8,8 @@ describe('IndexedDB API', function() {
     }
 
     it('should expose indexedDB', function() {
-        expect(indexedDB).to.be.an('object');
-        expect(indexedDB).to.be.an.instanceOf(IDBFactory);
+        expect(env.indexedDB).to.be.an('object');
+        expect(env.indexedDB).to.be.an.instanceOf(IDBFactory);
     });
 
     it('should expose IDBFactory', function() {
@@ -66,16 +60,5 @@ describe('IndexedDB API', function() {
 
     it('should expose IDBVersionChangeEvent', function() {
         expect(IDBVersionChangeEvent).to.satisfy(isAClass);
-    });
-
-    it('should expose DOMException', function() {
-        expect(DOMException).to.satisfy(isAClass);
-    });
-
-    it('should expose DOMError', function() {
-        // DOMError is private in Safari
-        if (!env.browser.isSafari) {
-            expect(DOMError).to.satisfy(isAClass);
-        }
     });
 });

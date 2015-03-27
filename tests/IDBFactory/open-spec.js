@@ -70,6 +70,7 @@ describe('IDBFactory.open', function() {
                 open.onerror = open.onblocked = done;
 
                 open.onsuccess = function(event) {
+                    expect(event).to.be.an.instanceOf(env.Event);
                     expect(event.target).to.equal(open);
                     open.result.close();
                     done();
@@ -249,7 +250,7 @@ describe('IDBFactory.open', function() {
                         sinon.assert.notCalled(open.onblocked);
 
                         if (!env.browser.isSafari) {
-                            expect(open.error).to.be.an.instanceOf(DOMError);   // Safari's DOMError is private
+                            expect(open.error).to.be.an.instanceOf(env.DOMError);   // Safari's DOMError is private
                         }
                         expect(open.error.name).to.equal('VersionError');
                         done();
@@ -297,7 +298,7 @@ describe('IDBFactory.open', function() {
                     err = e;
                 }
 
-                expect(err).to.be.ok;
+                expect(err).to.be.an('object');
                 if (!env.browser.isIE) {
                     expect(err).to.be.an.instanceOf(TypeError); // IE throws a DOMException
                     expect(err.name).to.equal('TypeError');

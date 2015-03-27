@@ -47,6 +47,7 @@ describe('IDBFactory.deleteDatabase', function() {
             var del = indexedDB.deleteDatabase(db.name);
 
             del.onsuccess = function(event) {
+                expect(event).to.be.an.instanceOf(env.Event);
                 expect(event.target).to.equal(del);
                 done();
             };
@@ -99,6 +100,7 @@ describe('IDBFactory.deleteDatabase', function() {
             del.onsuccess = del.onblocked = function(event) {
                 sinon.assert.notCalled(del.onerror);
 
+                expect(event).to.be.an.instanceOf(env.Event);
                 expect(event.target).to.equal(del);
 
                 if (!alreadyDone) {

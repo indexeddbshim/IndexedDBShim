@@ -4,7 +4,9 @@ describe('IDBIndex.count', function() {
     it('should return an IDBRequest', function(done) {
         util.createDatabase('inline', 'inline-index', function(err, db) {
             var tx = db.transaction('inline', 'readwrite');
-            tx.onerror = done;
+            tx.onerror = function(event) {
+                done(event.target.error);
+            };
 
             var store = tx.objectStore('inline');
             var storeCount = store.count();
@@ -50,12 +52,14 @@ describe('IDBIndex.count', function() {
             var storeCount = store.count();
             storeCount.onerror = sinon.spy();
             storeCount.onsuccess = sinon.spy(function(event) {
+                expect(event).to.be.an.instanceOf(env.Event);
                 expect(event.target).to.equal(storeCount);
             });
 
             var indexCount = store.index('inline-index') .count();
             indexCount.onerror = sinon.spy();
             indexCount.onsuccess = sinon.spy(function(event) {
+                expect(event).to.be.an.instanceOf(env.Event);
                 expect(event.target).to.equal(indexCount);
             });
 
@@ -340,13 +344,8 @@ describe('IDBIndex.count', function() {
                         err = e;
                     }
 
-                    expect(err).to.be.an('object');
+                    expect(err).to.be.an.instanceOf(env.DOMException);
                     expect(err.name).to.equal('TransactionInactiveError');
-
-                    if (!env.browser.isIE) {
-                        // IE's DOMException doesn't inherit from Error
-                        expect(err).to.be.an.instanceOf(Error);
-                    }
                 }
 
                 db.close();

@@ -11,6 +11,16 @@
         /** Does the browser natively support IndexedDB? */
         nativeIndexedDB: window.indexedDB || false,
 
+        /** Browser info */
+        browser: {
+            name: browser.name,
+            version: browser.version,   // numeric
+            isChrome: browser.name === 'Chrome',
+            isIE: browser.name === 'MSIE',
+            isFirefox: browser.name === 'Firefox',
+            isSafari: browser.name === 'Safari'
+        },
+
         /**
          * The IndexedDB instance that is currently being used.
          * This may be the native instance, or the shim.
@@ -20,15 +30,13 @@
          */
         indexedDB: window.indexedDB,
 
-        /** Browser info */
-        browser: {
-            name: browser.name,
-            version: browser.version,   // numeric
-            isChrome: browser.name === 'Chrome',
-            isIE: browser.name === 'MSIE',
-            isFirefox: browser.name === 'Firefox',
-            isSafari: browser.name === 'Safari'
-        }
+        /**
+         * IndexedDBShim can't always use these native classes, because some browsers don't allow us to instantiate them.
+         * It's also not safe to shim these classes on the global scope, because it could break other stuff.
+         */
+        Event: window.Event,
+        DOMException: window.DOMException,
+        DOMError: window.DOMError
     };
 
     // Setup Mocha and Chai
@@ -103,6 +111,11 @@
             // Run all unit tests against the IndexedDBShim
             env.indexedDB = shimIndexedDB;
             shimIndexedDB.__debug(true);
+
+            // Use the shimmed classes
+            env.Event = shimIndexedDB.Event;
+            env.DOMException = shimIndexedDB.DOMException;
+            env.DOMError = shimIndexedDB.DOMError;
 
             if (env.nativeIndexedDB) {
                 // Allow users to switch back to the native IndexedDB

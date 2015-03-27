@@ -32,6 +32,7 @@
                 save1.onerror = done;
 
                 save1.onsuccess = sinon.spy(function(event) {
+                    expect(event).to.be.an.instanceOf(env.Event);
                     expect(event.target).to.equal(save1);
                 });
 
@@ -96,13 +97,8 @@
                     err = e;
                 }
 
-                expect(err).to.be.an('object');
+                expect(err).to.be.an.instanceOf(env.DOMException);
                 expect(err.name).to.equal('ReadOnlyError');
-
-                if (!env.browser.isIE) {
-                    // IE's DOMException doesn't inherit from Error
-                    expect(err).to.be.an.instanceOf(Error);
-                }
 
                 db.close();
                 done();
@@ -122,13 +118,8 @@
                         err = e;
                     }
 
-                    expect(err).to.be.an('object');
+                    expect(err).to.be.an.instanceOf(env.DOMException);
                     expect(err.name).to.equal('TransactionInactiveError');
-
-                    if (!env.browser.isIE) {
-                        // IE's DOMException doesn't inherit from Error
-                        expect(err).to.be.an.instanceOf(Error);
-                    }
 
                     db.close();
                     done();
@@ -321,13 +312,8 @@
                             err = e;
                         }
 
-                        expect(err).to.be.an('object');
+                        expect(err).to.be.an.instanceOf(env.DOMException);
                         expect(err.name).to.equal('DataError');
-
-                        if (!env.browser.isIE) {
-                            // IE's DOMException doesn't inherit from Error
-                            expect(err).to.be.an.instanceOf(Error);
-                        }
                     }
 
                     db.close();
@@ -424,13 +410,8 @@
                         err = e;
                     }
 
-                    expect(err).to.be.an('object');
+                    expect(err).to.be.an.instanceOf(env.DOMException);
                     expect(err.name).to.equal('DataError');
-
-                    if (!env.browser.isIE) {
-                        // IE's DOMException doesn't inherit from Error
-                        expect(err).to.be.an.instanceOf(Error);
-                    }
 
                     db.close();
                     done();
@@ -623,13 +604,8 @@
                             err = e;
                         }
 
-                        expect(err).to.be.an('object');
+                        expect(err).to.be.an.instanceOf(env.DOMException);
                         expect(err.name).to.equal('DataError');
-
-                        if (!env.browser.isIE) {
-                            // IE's DOMException doesn't inherit from Error
-                            expect(err).to.be.an.instanceOf(Error);
-                        }
                     }
 
                     db.close();
@@ -733,13 +709,8 @@
                             err = e;
                         }
 
-                        expect(err).to.be.an('object');
+                        expect(err).to.be.an.instanceOf(env.DOMException);
                         expect(err.name).to.equal('DataError');
-
-                        if (!env.browser.isIE) {
-                            // IE's DOMException doesn't inherit from Error
-                            expect(err).to.be.an.instanceOf(Error);
-                        }
                     }
 
                     db.close();
@@ -761,13 +732,8 @@
                         err = e;
                     }
 
-                    expect(err).to.be.an('object');
+                    expect(err).to.be.an.instanceOf(env.DOMException);
                     expect(err.name).to.equal('DataError');
-
-                    if (!env.browser.isIE) {
-                        // IE's DOMException doesn't inherit from Error
-                        expect(err).to.be.an.instanceOf(Error);
-                    }
 
                     db.close();
                     done();
@@ -1031,13 +997,8 @@
                             err = e;
                         }
 
-                        expect(err).to.be.an('object');
+                        expect(err).to.be.an.instanceOf(env.DOMException);
                         expect(err.name).to.equal('DataError');
-
-                        if (!env.browser.isIE) {
-                            // IE's DOMException doesn't inherit from Error
-                            expect(err).to.be.an.instanceOf(Error);
-                        }
                     }
 
                     db.close();
@@ -1064,13 +1025,8 @@
                         err = e;
                     }
 
-                    expect(err).to.be.an('object');
+                    expect(err).to.be.an.instanceOf(env.DOMException);
                     expect(err.name).to.equal('DataError');
-
-                    if (!env.browser.isIE) {
-                        // IE's DOMException doesn't inherit from Error
-                        expect(err).to.be.an.instanceOf(Error);
-                    }
 
                     db.close();
                     done();

@@ -50,7 +50,7 @@ describe('IDBObjectStore.add', function() {
                 sinon.assert.called(tx.onerror);
 
                 if (!env.browser.isSafari) {
-                    expect(add2.error).to.be.an.instanceOf(DOMError);   // Safari's DOMError is private
+                    expect(add2.error).to.be.an.instanceOf(env.DOMError);   // Safari's DOMError is private
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
 
@@ -94,7 +94,7 @@ describe('IDBObjectStore.add', function() {
                 sinon.assert.called(tx.onerror);
 
                 if (!env.browser.isSafari) {
-                    expect(add2.error).to.be.an.instanceOf(DOMError);   // Safari's DOMError is private
+                    expect(add2.error).to.be.an.instanceOf(env.DOMError);   // Safari's DOMError is private
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
 
@@ -138,7 +138,7 @@ describe('IDBObjectStore.add', function() {
                 sinon.assert.called(tx.onerror);
 
                 if (!env.browser.isSafari) {
-                    expect(add2.error).to.be.an.instanceOf(DOMError);   // Safari's DOMError is private
+                    expect(add2.error).to.be.an.instanceOf(env.DOMError);   // Safari's DOMError is private
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
 
@@ -182,7 +182,7 @@ describe('IDBObjectStore.add', function() {
                 sinon.assert.called(tx.onerror);
 
                 if (!env.browser.isSafari) {
-                    expect(add2.error).to.be.an.instanceOf(DOMError);   // Safari's DOMError is private
+                    expect(add2.error).to.be.an.instanceOf(env.DOMError);   // Safari's DOMError is private
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
 
@@ -226,7 +226,7 @@ describe('IDBObjectStore.add', function() {
                 sinon.assert.called(tx.onerror);
 
                 if (!env.browser.isSafari) {
-                    expect(add2.error).to.be.an.instanceOf(DOMError);   // Safari's DOMError is private
+                    expect(add2.error).to.be.an.instanceOf(env.DOMError);   // Safari's DOMError is private
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
 
@@ -270,7 +270,7 @@ describe('IDBObjectStore.add', function() {
                 sinon.assert.called(tx.onerror);
 
                 if (!env.browser.isSafari) {
-                    expect(add2.error).to.be.an.instanceOf(DOMError);   // Safari's DOMError is private
+                    expect(add2.error).to.be.an.instanceOf(env.DOMError);   // Safari's DOMError is private
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
 
@@ -320,7 +320,7 @@ describe('IDBObjectStore.add', function() {
                 sinon.assert.called(tx.onerror);
 
                 if (!env.browser.isSafari) {
-                    expect(add2.error).to.be.an.instanceOf(DOMError);   // Safari's DOMError is private
+                    expect(add2.error).to.be.an.instanceOf(env.DOMError);   // Safari's DOMError is private
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
 
@@ -370,7 +370,7 @@ describe('IDBObjectStore.add', function() {
                 sinon.assert.called(tx.onerror);
 
                 if (!env.browser.isSafari) {
-                    expect(add2.error).to.be.an.instanceOf(DOMError);   // Safari's DOMError is private
+                    expect(add2.error).to.be.an.instanceOf(env.DOMError);   // Safari's DOMError is private
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
 
@@ -420,7 +420,7 @@ describe('IDBObjectStore.add', function() {
                 sinon.assert.called(tx.onerror);
 
                 if (!env.browser.isSafari) {
-                    expect(add2.error).to.be.an.instanceOf(DOMError);   // Safari's DOMError is private
+                    expect(add2.error).to.be.an.instanceOf(env.DOMError);   // Safari's DOMError is private
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
 

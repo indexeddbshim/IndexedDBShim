@@ -35,10 +35,12 @@ describe('IDBIndex.get', function() {
             indexGet.onerror = sinon.spy();
 
             storeGet.onsuccess = sinon.spy(function(event) {
+                expect(event).to.be.an.instanceOf(env.Event);
                 expect(event.target).to.equal(storeGet);
             });
 
             indexGet.onsuccess = sinon.spy(function(event) {
+                expect(event).to.be.an.instanceOf(env.Event);
                 expect(event.target).to.equal(indexGet);
             });
 
@@ -644,13 +646,8 @@ describe('IDBIndex.get', function() {
                         err = e;
                     }
 
-                    expect(err).to.be.an('object');
+                    expect(err).to.be.an.instanceOf(env.DOMException);
                     expect(err.name).to.equal('DataError');
-
-                    if (!env.browser.isIE) {
-                        // IE's DOMException doesn't inherit from Error
-                        expect(err).to.be.an.instanceOf(Error);
-                    }
                 }
             }
 
@@ -838,17 +835,11 @@ describe('IDBIndex.get', function() {
                     indexErr = e;
                 }
 
-                expect(storeErr).to.be.an('object');
+                expect(storeErr).to.be.an.instanceOf(env.DOMException);
                 expect(storeErr.name).to.equal('TransactionInactiveError');
 
-                expect(indexErr).to.be.an('object');
+                expect(indexErr).to.be.an.instanceOf(env.DOMException);
                 expect(indexErr.name).to.equal('TransactionInactiveError');
-
-                if (!env.browser.isIE) {
-                    // IE's DOMException doesn't inherit from Error
-                    expect(storeErr).to.be.an.instanceOf(Error);
-                    expect(indexErr).to.be.an.instanceOf(Error);
-                }
 
                 db.close();
                 done();

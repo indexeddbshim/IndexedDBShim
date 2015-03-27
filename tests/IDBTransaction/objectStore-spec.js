@@ -55,18 +55,71 @@ describe('IDBTransaction.objectStore', function() {
                 err = e;
             }
 
-                expect(err).to.be.an('object');
+            expect(err).to.be.an.instanceOf(env.DOMException);
             expect(err.name).to.equal('NotFoundError');
-
-                if (!env.browser.isIE) {
-                    // IE's DOMException doesn't inherit from Error
-                    expect(err).to.be.an.instanceOf(Error);
-                }
 
             db.close();
             done();
         });
     });
+
+    it('should throw an error if the object store is not in the transaction', function(done) {
+        util.createDatabase('inline', 'inline-generated', 'out-of-line', function(err, db) {
+            // Transaction only includes one of the three stores
+            var tx = db.transaction('inline-generated');
+            expect(tx.objectStore('inline-generated')).to.be.an.instanceOf(IDBObjectStore);
+
+            // These two stores aren't part of the transaction
+            tryToOpen('inline');
+            tryToOpen('out-of-line');
+
+            function tryToOpen(store) {
+                var err = null;
+                try {
+                    tx.objectStore(store);
+                }
+                catch (e) {
+                    err = e;
+                }
+
+                expect(err).to.be.an.instanceOf(env.DOMException);
+                expect(err.name).to.equal('NotFoundError');
+            }
+
+            db.close();
+            done();
+        });
+    });
+
+    it('should throw an error if the object store is not in the multi-store transaction', function(done) {
+        if (env.browser.isSafari) {
+            // BUG: Safari does not support opening multiple object stores
+            console.error('Skipping test: ' + this.test.title);
+            return done();
+        }
+
+        util.createDatabase('inline', 'inline-generated', 'out-of-line', function(err, db) {
+            // Transaction only includes two of the three stores
+            var tx = db.transaction(['inline', 'out-of-line']);
+            expect(tx.objectStore('inline')).to.be.an.instanceOf(IDBObjectStore);
+            expect(tx.objectStore('out-of-line')).to.be.an.instanceOf(IDBObjectStore);
+
+            // This store isn't part of the transaction
+            try {
+                tx.objectStore('inline-generated');
+            }
+            catch (e) {
+                err = e;
+            }
+
+            expect(err).to.be.an.instanceOf(env.DOMException);
+            expect(err.name).to.equal('NotFoundError');
+
+            db.close();
+            done();
+        });
+    });
+
 
     it('should throw an error if the transaction is closed', function(done) {
         util.createDatabase('out-of-line-generated', function(err, db) {
@@ -80,12 +133,9 @@ describe('IDBTransaction.objectStore', function() {
                     err = e;
                 }
 
-                expect(err).to.be.an('object');
-
+                expect(err).to.be.an.instanceOf(env.DOMException);
                 if (!env.browser.isIE) {
-                    // IE's DOMException doesn't inherit from Error
-                    expect(err).to.be.an.instanceOf(Error);
-                    expect(err.name).to.equal('InvalidStateError');
+                    expect(err.name).to.equal('InvalidStateError');     // IE is "TransactionInactiveError"
                 }
 
                 db.close();

@@ -69,13 +69,8 @@ describe('IDBObjectStore.index', function() {
                 err = e;
             }
 
-            expect(err).to.be.an('object');
+            expect(err).to.be.an.instanceOf(env.DOMException);
             expect(err.name).to.equal('NotFoundError');
-
-            if (!env.browser.isIE) {
-                // IE's DOMException doesn't inherit from Error
-                expect(err).to.be.an.instanceOf(Error);
-            }
 
             tx.oncomplete = function() {
                 db.close();
