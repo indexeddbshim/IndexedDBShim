@@ -127,6 +127,8 @@
      * @param {Object} key
      */
     IDBObjectStore.prototype.__deriveKey = function(tx, value, key, callback){
+        var me = this;
+
         function getNextAutoIncKey(){
             tx.executeSql("SELECT * FROM sqlite_sequence where name like ?", [me.name], function(tx, data){
                 if (data.rows.length !== 1) {
@@ -136,18 +138,17 @@
                     callback(data.rows.item(0).seq);
                 }
             }, function(tx, error){
-                throw idbModules.util.createDOMException(0, "Data Error", "Could not get the auto increment value for key", error);
+                me.transaction.__error(idbModules.util.createDOMException("Data Error", "Could not get the auto increment value for key", error));
             });
         }
-        
-        var me = this;
+
         me.__getStoreProps(tx, function(props){
             if (!props) {
-                throw idbModules.util.createDOMException(0, "Data Error", "Could not locate defination for this table", props);
+                me.transaction.__error(idbModules.util.createDOMException("Data Error", "Could not locate defination for this table", props));
             }
             if (props.keyPath) {
                 if (typeof key !== "undefined") {
-                    throw idbModules.util.createDOMException(0, "Data Error", "The object store uses in-line keys and the key parameter was provided", props);
+                    me.transaction.__error(idbModules.util.createDOMException("Data Error", "The object store uses in-line keys and the key parameter was provided", props));
                 }
                 if (value) {
                     try {
@@ -157,7 +158,7 @@
                                 getNextAutoIncKey();
                             }
                             else {
-                                throw idbModules.util.createDOMException(0, "Data Error", "Could not eval key from keyPath");
+                                me.transaction.__error(idbModules.util.createDOMException("Data Error", "Could not eval key from keyPath"));
                             }
                         }
                         else {
@@ -165,11 +166,11 @@
                         }
                     } 
                     catch (e) {
-                        throw idbModules.util.createDOMException(0, "Data Error", "Could not eval key from keyPath", e);
+                        me.transaction.__error(idbModules.util.createDOMException("Data Error", "Could not eval key from keyPath", e));
                     }
                 }
                 else {
-                    throw idbModules.util.createDOMException(0, "Data Error", "KeyPath was specified, but value was not");
+                    me.transaction.__error(idbModules.util.createDOMException("Data Error", "KeyPath was specified, but value was not"));
                 }
             }
             else {
@@ -178,7 +179,7 @@
                 }
                 else {
                     if (props.autoInc === "false") {
-                        throw idbModules.util.createDOMException(0, "Data Error", "The object store uses out-of-line keys and has no key generator and the key parameter was not provided. ", props);
+                        me.transaction.__error(idbModules.util.createDOMException("Data Error", "The object store uses out-of-line keys and has no key generator and the key parameter was not provided. ", props));
                     }
                     else {
                         // Looks like this has autoInc, so lets get the next in sequence and return that.
@@ -207,7 +208,7 @@
         var sqlEnd = [" VALUES ("];
         var sqlValues = [];
         for (key in paramMap) {
-            sqlStart.push(key + ",");
+            sqlStart.push(idbModules.util.quote(key) + ",");
             sqlEnd.push("?,");
             sqlValues.push(paramMap[key]);
         }
@@ -227,8 +228,9 @@
     };
     
     IDBObjectStore.prototype.add = function(value, key){
-        var me = this,
-            request = me.transaction.__createRequest(function(){}); //Stub request
+        var me = this;
+        me.transaction.__assertWritable();
+        var request = me.transaction.__createRequest(function(){}); //Stub request
         idbModules.Sca.encode(value, function(encoded) {
             me.transaction.__pushToQueue(request, function objectStoreAdd(tx, args, success, error){
                 me.__deriveKey(tx, value, key, function(primaryKey){
@@ -240,8 +242,9 @@
     };
     
     IDBObjectStore.prototype.put = function(value, key){
-        var me = this,
-            request = me.transaction.__createRequest(function(){}); //Stub request
+        var me = this;
+        me.transaction.__assertWritable();
+        var request = me.transaction.__createRequest(function(){}); //Stub request
         idbModules.Sca.encode(value, function(encoded) {
             me.transaction.__pushToQueue(request, function objectStorePut(tx, args, success, error){
                 me.__deriveKey(tx, value, key, function(primaryKey){
@@ -289,8 +292,9 @@
     };
     
     IDBObjectStore.prototype["delete"] = function(key){
-        // TODO key should also support key ranges
         var me = this;
+        me.transaction.__assertWritable();
+        // TODO key should also support key ranges
         return me.transaction.__addToTransactionQueue(function objectStoreDelete(tx, args, success, error){
             me.__waitForReady(function(){
                 var primaryKey = idbModules.Key.encode(key);
@@ -307,6 +311,7 @@
     
     IDBObjectStore.prototype.clear = function(){
         var me = this;
+        me.transaction.__assertWritable();
         return me.transaction.__addToTransactionQueue(function objectStoreClear(tx, args, success, error){
             me.__waitForReady(function(){
                 tx.executeSql("DELETE FROM " + idbModules.util.quote(me.name), [], function(tx, data){
@@ -348,6 +353,7 @@
     
     IDBObjectStore.prototype.createIndex = function(indexName, keyPath, optionalParameters){
         var me = this;
+        me.transaction.__assertVersionChange();
         optionalParameters = optionalParameters || {};
         me.__setReadyState("createIndex", false);
         var result = new idbModules.IDBIndex(indexName, me);
@@ -364,6 +370,7 @@
     };
     
     IDBObjectStore.prototype.deleteIndex = function(indexName){
+        this.transaction.__assertVersionChange();
         var result = new idbModules.IDBIndex(indexName, this, false);
         result.__deleteIndex(indexName);
         return result;

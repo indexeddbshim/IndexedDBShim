@@ -9,6 +9,7 @@
      */
     function IDBDatabase(db, name, version, storeProperties){
         this.__db = db;
+        this.__closed = false;
         this.version = version;
         this.objectStoreNames = new idbModules.util.StringList();
         for (var i = 0; i < storeProperties.rows.length; i++) {
@@ -35,14 +36,12 @@
         var result = new idbModules.IDBObjectStore(storeName, me.__versionTransaction, false);
         
         var transaction = me.__versionTransaction;
+        idbModules.IDBTransaction.__assertVersionChange(transaction);
         transaction.__addToTransactionQueue(function createObjectStore(tx, args, success, failure){
             function error(tx, err){
                 throw idbModules.util.createDOMException(0, "Could not create object store \"" + storeName + "\"", err);
             }
-            
-            if (!me.__versionTransaction) {
-                throw idbModules.util.createDOMException(0, "Invalid State error", me.transaction);
-            }
+
             //key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
             var sql = ["CREATE TABLE", idbModules.util.quote(storeName), "(key BLOB", createOptions.autoIncrement ? ", inc INTEGER PRIMARY KEY AUTOINCREMENT" : "PRIMARY KEY", ", value BLOB)"].join(" ");
             idbModules.DEBUG && console.log(sql);
@@ -70,14 +69,12 @@
             throw idbModules.util.createDOMException(0, "Could not delete ObjectStore", err);
         };
         var me = this;
-        !me.objectStoreNames.contains(storeName) && error("Object Store does not exist");
+        !me.objectStoreNames.contains(storeName) && error(null, "Object Store does not exist");
         me.objectStoreNames.splice(me.objectStoreNames.indexOf(storeName), 1);
         
         var transaction = me.__versionTransaction;
+        idbModules.IDBTransaction.__assertVersionChange(transaction);
         transaction.__addToTransactionQueue(function deleteObjectStore(tx, args, success, failure){
-            if (!me.__versionTransaction) {
-                throw idbModules.util.createDOMException(0, "Invalid State error", me.transaction);
-            }
             me.__db.transaction(function(tx){
                 tx.executeSql("SELECT * FROM __sys__ where name = ?", [storeName], function(tx, data){
                     if (data.rows.length > 0) {
@@ -93,11 +90,37 @@
     };
     
     IDBDatabase.prototype.close = function(){
-        // Don't do anything coz the database automatically closes
+        this.__closed = true;
     };
     
     IDBDatabase.prototype.transaction = function(storeNames, mode){
-        var transaction = new idbModules.IDBTransaction(storeNames, mode || idbModules.IDBTransaction.READ_ONLY, this);
+        if (this.__closed) {
+            throw idbModules.util.createDOMException("InvalidStateError", "An attempt was made to start a new transaction on a database connection that is not open");
+        }
+
+        if (typeof mode === "number") {
+            mode = mode === 1 ? IDBTransaction.READ_WRITE : IDBTransaction.READ_ONLY;
+            idbModules.DEBUG && console.log("Mode should be a string, but was specified as ", mode);
+        }
+        else {
+            mode = mode || IDBTransaction.READ_ONLY;
+        }
+
+        if (mode !== IDBTransaction.READ_ONLY && mode !== IDBTransaction.READ_WRITE) {
+            throw new TypeError("Invalid transaction mode: " + mode);
+        }
+
+        storeNames = typeof storeNames === "string" ? [storeNames] : storeNames;
+        if (storeNames.length === 0) {
+            throw idbModules.util.createDOMException("InvalidAccessError", "No object store names were specified");
+        }
+        for (var i = 0; i < storeNames.length; i++) {
+            if (!this.objectStoreNames.contains(storeNames[i])) {
+                throw idbModules.util.createDOMException("NotFoundError", "The \"" + storeNames[i] + "\" object store does not exist");
+            }
+        }
+
+        var transaction = new idbModules.IDBTransaction(storeNames, mode, this);
         return transaction;
     };
     

@@ -98,7 +98,7 @@ var cleanInterface = false;                 // jshint ignore:line
     idbModules.util.callback = callback;
     idbModules.util.StringList = StringList;
     idbModules.util.quote = function(arg) {
-        return "'" + arg + "'";
+        return "\"" + arg + "\"";
     };
 
 }(idbModules));
@@ -627,6 +627,7 @@ var cleanInterface = false;                 // jshint ignore:line
     }
     catch (e) {}
 
+    idbModules.util.logError = logError;
     if (useNativeDOMException) {
         idbModules.DOMException = DOMException;
         idbModules.util.createDOMException = function(name, message, error) {
@@ -867,8 +868,9 @@ var cleanInterface = false;                 // jshint ignore:line
     };
 
     IDBCursor.prototype.update = function(valueToUpdate){
-        var me = this,
-                request = this.__idbObjectStore.transaction.__createRequest(function(){}); //Stub request
+        var me = this;
+        me.__idbObjectStore.transaction.__assertWritable();
+        var request = this.__idbObjectStore.transaction.__createRequest(function(){}); //Stub request
         idbModules.Sca.encode(valueToUpdate, function(encoded) {
             me.__idbObjectStore.transaction.__pushToQueue(request, function cursorUpdate(tx, args, success, error){
                 me.__find(undefined, tx, function(key, value, primaryKey){
@@ -908,6 +910,7 @@ var cleanInterface = false;                 // jshint ignore:line
 
     IDBCursor.prototype["delete"] = function(){
         var me = this;
+        me.__idbObjectStore.transaction.__assertWritable();
         return this.__idbObjectStore.transaction.__addToTransactionQueue(function cursorDelete(tx, args, success, error){
             me.__find(undefined, tx, function(key, value, primaryKey){
                 var sql = "DELETE FROM  " + idbModules.util.quote(me.__idbObjectStore.name) + " WHERE key = ?";
@@ -960,14 +963,12 @@ var cleanInterface = false;                 // jshint ignore:line
         transaction.__addToTransactionQueue(function createIndex(tx, args, success, failure){
             me.__idbObjectStore.__getStoreProps(tx, function(){
                 function error(tx, err){
-                    throw idbModules.util.createDOMException(0, "Could not create new index", err);
+                    transaction.__error(idbModules.util.createDOMException(0, "Could not create index \"" + indexName + "\"", err));
                 }
-                if (transaction.mode !== idbModules.IDBTransaction.VERSION_CHANGE) {
-                    throw idbModules.util.createDOMException(0, "Invalid State error, not a version transaction", me.transaction);
-                }
+
                 var idxList = JSON.parse(me.__idbObjectStore.__storeProps.indexList);
                 if (typeof idxList[indexName] !== "undefined") {
-                    throw idbModules.util.createDOMException(0, "Index already exists on store", idxList);
+                    transaction.__error(idbModules.util.createDOMException(0, "Index \"" + indexName + "\" already exists on store \"" + me.__idbObjectStore.name + "\"", idxList));
                 }
                 var columnName = indexName;
                 idxList[indexName] = {
@@ -977,7 +978,7 @@ var cleanInterface = false;                 // jshint ignore:line
                 };
                 // For this index, first create a column
                 me.__idbObjectStore.__storeProps.indexList = JSON.stringify(idxList);
-                var sql = ["ALTER TABLE", idbModules.util.quote(me.__idbObjectStore.name), "ADD", columnName, "BLOB"].join(" ");
+                var sql = ["ALTER TABLE", idbModules.util.quote(me.__idbObjectStore.name), "ADD", idbModules.util.quote(columnName), "BLOB"].join(" ");
                 idbModules.DEBUG && console.log(sql);
                 tx.executeSql(sql, [], function(tx, data){
                     // Once a column is created, put existing records into the index
@@ -987,7 +988,7 @@ var cleanInterface = false;                 // jshint ignore:line
                                 try {
                                     var value = idbModules.Sca.decode(data.rows.item(i).value);
                                     var indexKey = eval("value['" + keyPath + "']");
-                                    tx.executeSql("UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " set " + columnName + " = ? where key = ?", [idbModules.Key.encode(indexKey), data.rows.item(i).key], function(tx, data){
+                                    tx.executeSql("UPDATE " + idbModules.util.quote(me.__idbObjectStore.name) + " set " + idbModules.util.quote(columnName) + " = ? where key = ?", [idbModules.Key.encode(indexKey), data.rows.item(i).key], function(tx, data){
                                         initIndexForRow(i + 1);
                                     }, error);
                                 } 
@@ -1025,10 +1026,10 @@ var cleanInterface = false;                 // jshint ignore:line
     IDBIndex.prototype.__fetchIndexData = function(key, opType){
         var me = this;
         return me.__idbObjectStore.transaction.__addToTransactionQueue(function fetchIndexData(tx, args, success, error){
-            var sql = ["SELECT * FROM ", idbModules.util.quote(me.__idbObjectStore.name), " WHERE", me.indexName, "NOT NULL"];
+            var sql = ["SELECT * FROM ", idbModules.util.quote(me.__idbObjectStore.name), " WHERE", idbModules.util.quote(me.indexName), "NOT NULL"];
             var sqlValues = [];
             if (typeof key !== "undefined") {
-                sql.push("AND", me.indexName, " = ?");
+                sql.push("AND", idbModules.util.quote(me.indexName), " = ?");
                 sqlValues.push(idbModules.Key.encode(key));
             }
             idbModules.DEBUG && console.log("Trying to fetch data for Index", sql.join(" "), sqlValues);
@@ -1197,6 +1198,8 @@ var cleanInterface = false;                 // jshint ignore:line
      * @param {Object} key
      */
     IDBObjectStore.prototype.__deriveKey = function(tx, value, key, callback){
+        var me = this;
+
         function getNextAutoIncKey(){
             tx.executeSql("SELECT * FROM sqlite_sequence where name like ?", [me.name], function(tx, data){
                 if (data.rows.length !== 1) {
@@ -1206,18 +1209,17 @@ var cleanInterface = false;                 // jshint ignore:line
                     callback(data.rows.item(0).seq);
                 }
             }, function(tx, error){
-                throw idbModules.util.createDOMException(0, "Data Error", "Could not get the auto increment value for key", error);
+                me.transaction.__error(idbModules.util.createDOMException("Data Error", "Could not get the auto increment value for key", error));
             });
         }
-        
-        var me = this;
+
         me.__getStoreProps(tx, function(props){
             if (!props) {
-                throw idbModules.util.createDOMException(0, "Data Error", "Could not locate defination for this table", props);
+                me.transaction.__error(idbModules.util.createDOMException("Data Error", "Could not locate defination for this table", props));
             }
             if (props.keyPath) {
                 if (typeof key !== "undefined") {
-                    throw idbModules.util.createDOMException(0, "Data Error", "The object store uses in-line keys and the key parameter was provided", props);
+                    me.transaction.__error(idbModules.util.createDOMException("Data Error", "The object store uses in-line keys and the key parameter was provided", props));
                 }
                 if (value) {
                     try {
@@ -1227,7 +1229,7 @@ var cleanInterface = false;                 // jshint ignore:line
                                 getNextAutoIncKey();
                             }
                             else {
-                                throw idbModules.util.createDOMException(0, "Data Error", "Could not eval key from keyPath");
+                                me.transaction.__error(idbModules.util.createDOMException("Data Error", "Could not eval key from keyPath"));
                             }
                         }
                         else {
@@ -1235,11 +1237,11 @@ var cleanInterface = false;                 // jshint ignore:line
                         }
                     } 
                     catch (e) {
-                        throw idbModules.util.createDOMException(0, "Data Error", "Could not eval key from keyPath", e);
+                        me.transaction.__error(idbModules.util.createDOMException("Data Error", "Could not eval key from keyPath", e));
                     }
                 }
                 else {
-                    throw idbModules.util.createDOMException(0, "Data Error", "KeyPath was specified, but value was not");
+                    me.transaction.__error(idbModules.util.createDOMException("Data Error", "KeyPath was specified, but value was not"));
                 }
             }
             else {
@@ -1248,7 +1250,7 @@ var cleanInterface = false;                 // jshint ignore:line
                 }
                 else {
                     if (props.autoInc === "false") {
-                        throw idbModules.util.createDOMException(0, "Data Error", "The object store uses out-of-line keys and has no key generator and the key parameter was not provided. ", props);
+                        me.transaction.__error(idbModules.util.createDOMException("Data Error", "The object store uses out-of-line keys and has no key generator and the key parameter was not provided. ", props));
                     }
                     else {
                         // Looks like this has autoInc, so lets get the next in sequence and return that.
@@ -1277,7 +1279,7 @@ var cleanInterface = false;                 // jshint ignore:line
         var sqlEnd = [" VALUES ("];
         var sqlValues = [];
         for (key in paramMap) {
-            sqlStart.push(key + ",");
+            sqlStart.push(idbModules.util.quote(key) + ",");
             sqlEnd.push("?,");
             sqlValues.push(paramMap[key]);
         }
@@ -1297,8 +1299,9 @@ var cleanInterface = false;                 // jshint ignore:line
     };
     
     IDBObjectStore.prototype.add = function(value, key){
-        var me = this,
-            request = me.transaction.__createRequest(function(){}); //Stub request
+        var me = this;
+        me.transaction.__assertWritable();
+        var request = me.transaction.__createRequest(function(){}); //Stub request
         idbModules.Sca.encode(value, function(encoded) {
             me.transaction.__pushToQueue(request, function objectStoreAdd(tx, args, success, error){
                 me.__deriveKey(tx, value, key, function(primaryKey){
@@ -1310,8 +1313,9 @@ var cleanInterface = false;                 // jshint ignore:line
     };
     
     IDBObjectStore.prototype.put = function(value, key){
-        var me = this,
-            request = me.transaction.__createRequest(function(){}); //Stub request
+        var me = this;
+        me.transaction.__assertWritable();
+        var request = me.transaction.__createRequest(function(){}); //Stub request
         idbModules.Sca.encode(value, function(encoded) {
             me.transaction.__pushToQueue(request, function objectStorePut(tx, args, success, error){
                 me.__deriveKey(tx, value, key, function(primaryKey){
@@ -1359,8 +1363,9 @@ var cleanInterface = false;                 // jshint ignore:line
     };
     
     IDBObjectStore.prototype["delete"] = function(key){
-        // TODO key should also support key ranges
         var me = this;
+        me.transaction.__assertWritable();
+        // TODO key should also support key ranges
         return me.transaction.__addToTransactionQueue(function objectStoreDelete(tx, args, success, error){
             me.__waitForReady(function(){
                 var primaryKey = idbModules.Key.encode(key);
@@ -1377,6 +1382,7 @@ var cleanInterface = false;                 // jshint ignore:line
     
     IDBObjectStore.prototype.clear = function(){
         var me = this;
+        me.transaction.__assertWritable();
         return me.transaction.__addToTransactionQueue(function objectStoreClear(tx, args, success, error){
             me.__waitForReady(function(){
                 tx.executeSql("DELETE FROM " + idbModules.util.quote(me.name), [], function(tx, data){
@@ -1418,6 +1424,7 @@ var cleanInterface = false;                 // jshint ignore:line
     
     IDBObjectStore.prototype.createIndex = function(indexName, keyPath, optionalParameters){
         var me = this;
+        me.transaction.__assertVersionChange();
         optionalParameters = optionalParameters || {};
         me.__setReadyState("createIndex", false);
         var result = new idbModules.IDBIndex(indexName, me);
@@ -1434,6 +1441,7 @@ var cleanInterface = false;                 // jshint ignore:line
     };
     
     IDBObjectStore.prototype.deleteIndex = function(indexName){
+        this.transaction.__assertVersionChange();
         var result = new idbModules.IDBIndex(indexName, this, false);
         result.__deleteIndex(indexName);
         return result;
@@ -1444,7 +1452,7 @@ var cleanInterface = false;                 // jshint ignore:line
 
 /*jshint globalstrict: true*/
 'use strict';
-(function(idbModules){
+(function(idbModules) {
 
     /**
      * The IndexedDB Transaction
@@ -1453,30 +1461,22 @@ var cleanInterface = false;                 // jshint ignore:line
      * @param {Object} mode
      * @param {Object} db
      */
-    function IDBTransaction(storeNames, mode, db){
-        if (typeof mode === "number") {
-            this.mode = mode === 1 ? IDBTransaction.prototype.READ_WRITE : IDBTransaction.prototype.READ_ONLY;
-            idbModules.DEBUG && console.log("Mode should be a string, but was specified as ", mode);
-        }
-        else {
-            this.mode = mode || IDBTransaction.prototype.READ_ONLY;
-        }
-        
-        this.storeNames = typeof storeNames === "string" ? [storeNames] : storeNames;
-        for (var i = 0; i < this.storeNames.length; i++) {
-            if (!db.objectStoreNames.contains(this.storeNames[i])) {
-                throw idbModules.util.createDOMException(0, "The operation failed because the requested database object could not be found. For example, an object store did not exist but was being opened.", this.storeNames[i]);
-            }
-        }
+    function IDBTransaction(storeNames, mode, db) {
         this.__active = true;
         this.__running = false;
         this.__requests = [];
+        this.storeNames = storeNames;
+        this.mode = mode;
         this.db = db;
         this.error = null;
         this.onabort = this.onerror = this.oncomplete = null;
+
+        // Kick off the transaction as soon as all synchronous code is done.
+        var me = this;
+        setTimeout(function() { me.__executeRequests(); }, 0);
     }
-    
-    IDBTransaction.prototype.__executeRequests = function(){
+
+    IDBTransaction.prototype.__executeRequests = function() {
         if (this.__running) {
             idbModules.DEBUG && console.log("Looks like the request set is already running", this.mode);
             return;
@@ -1485,110 +1485,133 @@ var cleanInterface = false;                 // jshint ignore:line
         this.__running = true;
         var me = this;
 
-        if (!me.__active) {
-            throw idbModules.util.createDOMException(0, "A request was placed against a transaction which is currently not active, or which is finished", me.__active);
-        }
-
         me.db.__db.transaction(function executeRequests(tx) {
-            me.__tx = tx;
-            var q = null, i = 0;
+                me.__tx = tx;
+                var q = null, i = 0;
 
-            function success(result, req) {
-                if (req) {
-                    q.req = req;// Need to do this in case of cursors
-                }
-                q.req.readyState = "done";
-                q.req.result = result;
-                delete q.req.error;
-                var e = idbModules.util.createEvent("success");
-                idbModules.util.callback("onsuccess", q.req, e);
-                i++;
-                executeRequest();
-            }
-
-            function error(errorVal) {
-                q.req.readyState = "done";
-                q.req.error = "DOMError";
-                var e = idbModules.util.createEvent("error", arguments);
-                idbModules.util.callback("onerror", q.req, e);
-                i++;
-                executeRequest();
-            }
-
-            function executeRequest() {
-                var evt;
-                try {
-                    if (i >= me.__requests.length) {
-                        me.__active = false; // All requests in the transaction are done
-                        me.__requests = [];
-
-                        // Fire the "oncomplete" events
-                        idbModules.DEBUG && console.log("Transaction completed", arguments);
-                        evt = idbModules.util.createEvent("complete");
-                        idbModules.util.callback("oncomplete", me, evt);
-                        idbModules.util.callback("__oncomplete", me, evt);
-                        return;
+                function success(result, req) {
+                    if (req) {
+                        q.req = req;// Need to do this in case of cursors
                     }
+                    q.req.readyState = "done";
+                    q.req.result = result;
+                    delete q.req.error;
+                    var e = idbModules.util.createEvent("success");
+                    idbModules.util.callback("onsuccess", q.req, e);
+                    i++;
+                    executeRequest();
+                }
 
-                    q = me.__requests[i];
-                    q.op(tx, q.args, success, error);
+                function error(tx, err) {
+                    if (arguments.length === 1) {
+                        err = tx;
+                    }
+                    q.req.readyState = "done";
+                    q.req.error = err || "DOMError";
+                    var e = idbModules.util.createEvent("error", err);
+                    idbModules.util.callback("onerror", q.req, e);
+                    me.__error(err);
                 }
-                catch (e) {
-                    idbModules.DEBUG && console.log("An exception occurred in transaction", arguments);
-                    me.error = e;
-                    me.abort();
-                    evt = idbModules.util.createEvent("error");
-                    idbModules.util.callback("onerror", me, evt);
+
+                function executeRequest() {
+                    try {
+                        if (i >= me.__requests.length) {
+                            me.__active = false; // All requests in the transaction are done
+                            me.__requests = [];
+
+                            // Fire the "oncomplete" events asynchronously, so errors don't bubble
+                            setTimeout(finished, 0);
+                        }
+                        else {
+                            q = me.__requests[i];
+                            q.op(tx, q.args, success, error);
+                        }
+                    }
+                    catch (e) {
+                        me.__error(e);
+                    }
                 }
+
+                executeRequest();
+            },
+
+            function onError(e) {
+                me.__error(e);
             }
+        );
 
-            executeRequest();
-        },
-
-        function onError(e){
-            idbModules.DEBUG && console.log("An error in transaction", arguments);
-            me.error = e;
-            me.abort();
-            var evt = idbModules.util.createEvent("error");
-            idbModules.util.callback("onerror", me, evt);
-        });
+        function finished() {
+            idbModules.DEBUG && console.log("Transaction completed");
+            var evt = idbModules.util.createEvent("complete");
+            idbModules.util.callback("oncomplete", me, evt);
+            idbModules.util.callback("__oncomplete", me, evt);
+        }
     };
-    
-    IDBTransaction.prototype.__addToTransactionQueue = function(callback, args){
+
+    IDBTransaction.prototype.__addToTransactionQueue = function(callback, args) {
         var request = this.__createRequest();
-        this.__pushToQueue(request, callback, args);       
+        this.__pushToQueue(request, callback, args);
         return request;
     };
-    
-    IDBTransaction.prototype.__createRequest = function(){
+
+    IDBTransaction.prototype.__createRequest = function() {
         var request = new idbModules.IDBRequest();
         request.source = this.db;
         request.transaction = this;
         return request;
     };
-    
+
     IDBTransaction.prototype.__pushToQueue = function(request, callback, args) {
+        this.__assertActive();
         this.__requests.push({
             "op": callback,
             "args": args,
             "req": request
         });
-        // Start the queue for executing the requests
-        this.__executeRequests();
     };
-    
-    IDBTransaction.prototype.objectStore = function(objectStoreName){
+
+    IDBTransaction.prototype.__assertActive = function() {
+        if (!this.__active) {
+            throw idbModules.util.createDOMException("TransactionInactiveError", "A request was placed against a transaction which is currently not active, or which is finished");
+        }
+    };
+
+    IDBTransaction.prototype.__assertWritable = function() {
+        if (this.mode === IDBTransaction.READ_ONLY) {
+            throw idbModules.util.createDOMException("ReadOnlyError", "The transaction is read only");
+        }
+    };
+
+    IDBTransaction.prototype.__assertVersionChange = function() {
+        IDBTransaction.__assertVersionChange(this);
+    };
+
+    IDBTransaction.__assertVersionChange = function(tx) {
+        if (!tx || tx.mode !== IDBTransaction.VERSION_CHANGE) {
+            throw idbModules.util.createDOMException("InvalidStateError", "Not a version transaction");
+        }
+    };
+
+    IDBTransaction.prototype.__error = function(err) {
+        idbModules.util.logError("Error", "An error occurred in a transaction", err);
+        this.error = err;
+        this.abort();
+        var evt = idbModules.util.createEvent("error");
+        idbModules.util.callback("onerror", this, evt);
+    };
+
+    IDBTransaction.prototype.objectStore = function(objectStoreName) {
         return new idbModules.IDBObjectStore(objectStoreName, this);
     };
-    
-    IDBTransaction.prototype.abort = function(){
+
+    IDBTransaction.prototype.abort = function() {
         this.__active = false;
     };
-    
+
     IDBTransaction.READ_ONLY = "readonly";
     IDBTransaction.READ_WRITE = "readwrite";
     IDBTransaction.VERSION_CHANGE = "versionchange";
-    
+
     idbModules.IDBTransaction = IDBTransaction;
 }(idbModules));
 
@@ -1603,6 +1626,7 @@ var cleanInterface = false;                 // jshint ignore:line
      */
     function IDBDatabase(db, name, version, storeProperties){
         this.__db = db;
+        this.__closed = false;
         this.version = version;
         this.objectStoreNames = new idbModules.util.StringList();
         for (var i = 0; i < storeProperties.rows.length; i++) {
@@ -1629,14 +1653,12 @@ var cleanInterface = false;                 // jshint ignore:line
         var result = new idbModules.IDBObjectStore(storeName, me.__versionTransaction, false);
         
         var transaction = me.__versionTransaction;
+        idbModules.IDBTransaction.__assertVersionChange(transaction);
         transaction.__addToTransactionQueue(function createObjectStore(tx, args, success, failure){
             function error(tx, err){
                 throw idbModules.util.createDOMException(0, "Could not create object store \"" + storeName + "\"", err);
             }
-            
-            if (!me.__versionTransaction) {
-                throw idbModules.util.createDOMException(0, "Invalid State error", me.transaction);
-            }
+
             //key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
             var sql = ["CREATE TABLE", idbModules.util.quote(storeName), "(key BLOB", createOptions.autoIncrement ? ", inc INTEGER PRIMARY KEY AUTOINCREMENT" : "PRIMARY KEY", ", value BLOB)"].join(" ");
             idbModules.DEBUG && console.log(sql);
@@ -1664,14 +1686,12 @@ var cleanInterface = false;                 // jshint ignore:line
             throw idbModules.util.createDOMException(0, "Could not delete ObjectStore", err);
         };
         var me = this;
-        !me.objectStoreNames.contains(storeName) && error("Object Store does not exist");
+        !me.objectStoreNames.contains(storeName) && error(null, "Object Store does not exist");
         me.objectStoreNames.splice(me.objectStoreNames.indexOf(storeName), 1);
         
         var transaction = me.__versionTransaction;
+        idbModules.IDBTransaction.__assertVersionChange(transaction);
         transaction.__addToTransactionQueue(function deleteObjectStore(tx, args, success, failure){
-            if (!me.__versionTransaction) {
-                throw idbModules.util.createDOMException(0, "Invalid State error", me.transaction);
-            }
             me.__db.transaction(function(tx){
                 tx.executeSql("SELECT * FROM __sys__ where name = ?", [storeName], function(tx, data){
                     if (data.rows.length > 0) {
@@ -1687,11 +1707,37 @@ var cleanInterface = false;                 // jshint ignore:line
     };
     
     IDBDatabase.prototype.close = function(){
-        // Don't do anything coz the database automatically closes
+        this.__closed = true;
     };
     
     IDBDatabase.prototype.transaction = function(storeNames, mode){
-        var transaction = new idbModules.IDBTransaction(storeNames, mode || idbModules.IDBTransaction.READ_ONLY, this);
+        if (this.__closed) {
+            throw idbModules.util.createDOMException("InvalidStateError", "An attempt was made to start a new transaction on a database connection that is not open");
+        }
+
+        if (typeof mode === "number") {
+            mode = mode === 1 ? IDBTransaction.READ_WRITE : IDBTransaction.READ_ONLY;
+            idbModules.DEBUG && console.log("Mode should be a string, but was specified as ", mode);
+        }
+        else {
+            mode = mode || IDBTransaction.READ_ONLY;
+        }
+
+        if (mode !== IDBTransaction.READ_ONLY && mode !== IDBTransaction.READ_WRITE) {
+            throw new TypeError("Invalid transaction mode: " + mode);
+        }
+
+        storeNames = typeof storeNames === "string" ? [storeNames] : storeNames;
+        if (storeNames.length === 0) {
+            throw idbModules.util.createDOMException("InvalidAccessError", "No object store names were specified");
+        }
+        for (var i = 0; i < storeNames.length; i++) {
+            if (!this.objectStoreNames.contains(storeNames[i])) {
+                throw idbModules.util.createDOMException("NotFoundError", "The \"" + storeNames[i] + "\" object store does not exist");
+            }
+        }
+
+        var transaction = new idbModules.IDBTransaction(storeNames, mode, this);
         return transaction;
     };
     
@@ -1718,7 +1764,12 @@ var cleanInterface = false;                 // jshint ignore:line
      * https://w3c.github.io/IndexedDB/#idl-def-IDBFactory
      * @constructor
      */
-    function IDBFactory() {}
+    function IDBFactory() {
+        // It's not safe to shim these on the global scope, because it could break other stuff.
+        this.Event = idbModules.Event;
+        this.DOMException = idbModules.DOMException;
+        this.DOMError = idbModules.DOMError;
+    }
 
     /**
      * The IndexedDB Method to create a new database and return the DB
@@ -1936,7 +1987,6 @@ var cleanInterface = false;                 // jshint ignore:line
                 shim('IDBRequest', idbModules.IDBRequest);
                 shim('IDBOpenDBRequest', idbModules.IDBOpenDBRequest);
                 shim('IDBVersionChangeEvent', idbModules.IDBVersionChangeEvent);
-                shim('DOMError', idbModules.DOMError);
             };
 
             window.shimIndexedDB.__debug = function(val){

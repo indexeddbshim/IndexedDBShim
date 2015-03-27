@@ -76,7 +76,7 @@
     idbModules.util.callback = callback;
     idbModules.util.StringList = StringList;
     idbModules.util.quote = function(arg) {
-        return "'" + arg + "'";
+        return "\"" + arg + "\"";
     };
 
 }(idbModules));

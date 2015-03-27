@@ -144,8 +144,9 @@
     };
 
     IDBCursor.prototype.update = function(valueToUpdate){
-        var me = this,
-                request = this.__idbObjectStore.transaction.__createRequest(function(){}); //Stub request
+        var me = this;
+        me.__idbObjectStore.transaction.__assertWritable();
+        var request = this.__idbObjectStore.transaction.__createRequest(function(){}); //Stub request
         idbModules.Sca.encode(valueToUpdate, function(encoded) {
             me.__idbObjectStore.transaction.__pushToQueue(request, function cursorUpdate(tx, args, success, error){
                 me.__find(undefined, tx, function(key, value, primaryKey){
@@ -185,6 +186,7 @@
 
     IDBCursor.prototype["delete"] = function(){
         var me = this;
+        me.__idbObjectStore.transaction.__assertWritable();
         return this.__idbObjectStore.transaction.__addToTransactionQueue(function cursorDelete(tx, args, success, error){
             me.__find(undefined, tx, function(key, value, primaryKey){
                 var sql = "DELETE FROM  " + idbModules.util.quote(me.__idbObjectStore.name) + " WHERE key = ?";
