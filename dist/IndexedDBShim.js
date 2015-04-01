@@ -1174,11 +1174,13 @@ var cleanInterface = false;                 // jshint ignore:line
                         callback();
                     }
                     else {
+                        // SQLite returns 0 and 1 for bit columns where WebSQL returns stringified booleans.
+                        var row = data.rows.item(0);
                         me.__storeProps = {
-                            "name": data.rows.item(0).name,
-                            "indexList": data.rows.item(0).indexList,
-                            "autoInc": data.rows.item(0).autoInc,
-                            "keyPath": data.rows.item(0).keyPath
+                            "name": row.name,
+                            "indexList": row.indexList,
+                            "autoInc": (typeof row.autoInc === "number" ? (row.autoInc === 1 ? "true" : "false" ) : row.autoInc),
+                            "keyPath": row.keyPath
                         };
                         idbModules.DEBUG && console.log("Store properties", me.__storeProps);
                         callback(me.__storeProps);
