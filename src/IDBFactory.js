@@ -193,7 +193,7 @@
     };
 
     IDBFactory.prototype.cmp = function(key1, key2) {
-        return idbModules.Key.encode(key1) > idbModules.Key.encode(key2) ? 1 : key1 === key2 ? 0 : -1;
+        return idbModules.Key.encodeKey(key1) > idbModules.Key.encodeKey(key2) ? 1 : key1 === key2 ? 0 : -1;
     };
 
 

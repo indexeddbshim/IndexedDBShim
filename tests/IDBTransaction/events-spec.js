@@ -74,9 +74,11 @@ describe('IDBTransaction events', function() {
         util.createDatabase('inline', function(err, db) {
             var tx = db.transaction('inline', 'readwrite');
             tx.onerror = sinon.spy();
+            tx.onabort = sinon.spy();
 
             tx.oncomplete = sinon.spy(function() {
                 sinon.assert.notCalled(tx.onerror);
+                sinon.assert.notCalled(tx.onabort);
                 throw new Error('Test Error');
             });
 
@@ -84,6 +86,35 @@ describe('IDBTransaction events', function() {
             window.onerror = function() {
                 sinon.assert.calledOnce(tx.oncomplete);
                 sinon.assert.notCalled(tx.onerror);
+                sinon.assert.notCalled(tx.onabort);
+
+                window.onerror = onerror;
+                db.close();
+                done();
+                return true;
+            };
+        });
+    });
+
+    it('should not fire the onerror event if an error occurs during onabort', function(done) {
+        util.createDatabase('inline', function(err, db) {
+            var tx = db.transaction('inline', 'readwrite');
+            tx.onerror = sinon.spy();
+            tx.oncomplete = sinon.spy();
+
+            tx.onabort = sinon.spy(function() {
+                sinon.assert.notCalled(tx.onerror);
+                sinon.assert.notCalled(tx.oncomplete);
+                throw new Error('Test Error');
+            });
+
+            tx.abort();
+
+            var onerror = window.onerror;
+            window.onerror = function() {
+                sinon.assert.calledOnce(tx.onabort);
+                sinon.assert.notCalled(tx.onerror);
+                sinon.assert.notCalled(tx.oncomplete);
 
                 window.onerror = onerror;
                 db.close();

@@ -127,6 +127,26 @@
             });
         });
 
+        it('should throw an error if called without params', function(done) {
+            util.createDatabase('out-of-line-generated', function(err, db) {
+                var tx = db.transaction('out-of-line-generated', 'readwrite');
+                var store = tx.objectStore('out-of-line-generated');
+
+                try {
+                    store[save]();
+                }
+                catch (e) {
+                    err = e;
+                }
+
+                expect(err).to.be.an.instanceOf(TypeError);
+                expect(err.name).to.equal('TypeError');
+
+                db.close();
+                done();
+            });
+        });
+
         describe('out-of-line keys', function() {
             it('should save data with an out-of-line key', function(done) {
                 util.createDatabase('out-of-line', function(err, db) {

@@ -47,48 +47,66 @@
                     var e = idbModules.util.createEvent("success");
                     idbModules.util.callback("onsuccess", q.req, e);
                     i++;
-                    executeRequest();
+                    executeNextRequest();
                 }
 
                 function error(tx, err) {
                     if (arguments.length === 1) {
                         err = tx;
                     }
-                    q.req.readyState = "done";
-                    q.req.error = err || "DOMError";
-                    var e = idbModules.util.createEvent("error", err);
-                    idbModules.util.callback("onerror", q.req, e);
-                    me.__error(err);
+
+                    try {
+                        // Fire an error event for the current IDBRequest
+                        q.req.readyState = "done";
+                        q.req.error = err || "DOMError";
+                        var e = idbModules.util.createEvent("error", err);
+                        idbModules.util.callback("onerror", q.req, e);
+                    }
+                    finally {
+                        // Fire an error event for the transaction
+                        transactionError(err);
+                    }
                 }
 
-                function executeRequest() {
-                    try {
-                        if (i >= me.__requests.length) {
-                            me.__active = false; // All requests in the transaction are done
-                            me.__requests = [];
-
-                            // Fire the "oncomplete" events asynchronously, so errors don't bubble
-                            setTimeout(finished, 0);
+                function executeNextRequest() {
+                    if (i >= me.__requests.length) {
+                        // All requests in the transaction are done
+                        me.__requests = [];
+                        if (me.__active) {
+                            me.__active = false;
+                            transactionFinished();
                         }
-                        else {
+                    }
+                    else {
+                        try {
                             q = me.__requests[i];
                             q.op(tx, q.args, success, error);
                         }
-                    }
-                    catch (e) {
-                        me.__error(e);
+                        catch (e) {
+                            error(e);
+                        }
                     }
                 }
 
-                executeRequest();
+                executeNextRequest();
             },
 
-            function onError(e) {
-                me.__error(e);
-            }
+            transactionError
         );
 
-        function finished() {
+        function transactionError(err) {
+            try {
+                idbModules.util.logError("Error", "An error occurred in a transaction", err);
+                me.error = err;
+                var evt = idbModules.util.createEvent("error");
+                idbModules.util.callback("onerror", me, evt);
+            }
+            finally {
+                me.abort();
+            }
+        }
+
+        function transactionFinished() {
             idbModules.DEBUG && console.log("Transaction completed");
             var evt = idbModules.util.createEvent("complete");
             idbModules.util.callback("oncomplete", me, evt);
@@ -140,20 +158,20 @@
         }
     };
 
-    IDBTransaction.prototype.__error = function(err) {
-        idbModules.util.logError("Error", "An error occurred in a transaction", err);
-        this.error = err;
-        this.abort();
-        var evt = idbModules.util.createEvent("error");
-        idbModules.util.callback("onerror", this, evt);
-    };
-
     IDBTransaction.prototype.objectStore = function(objectStoreName) {
         return new idbModules.IDBObjectStore(objectStoreName, this);
     };
 
     IDBTransaction.prototype.abort = function() {
-        this.__active = false;
+        var me = this;
+        idbModules.DEBUG && console.log("The transaction was aborted", me);
+        me.__active = false;
+        var evt = idbModules.util.createEvent("abort");
+
+        // Fire the "onabort" event asynchronously, so errors don't bubble
+        setTimeout(function() {
+            idbModules.util.callback("onabort", me, evt);
+        }, 0);
     };
 
     IDBTransaction.READ_ONLY = "readonly";
