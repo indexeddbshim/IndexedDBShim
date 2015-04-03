@@ -215,14 +215,16 @@
 
                 util.createDatabase('out-of-line-generated', function(err, db) {
                     var tx = db.transaction('out-of-line-generated', 'readwrite');
-                    tx.onerror = done;
+                    tx.onerror = function(event) {
+                        done(tx.error || event);
+                    };
 
                     var store = tx.objectStore('out-of-line-generated');
-                    var save1 = store[save]({foo: 'bar'});         // <-- generated key
-                    var save2 = store[save]({biz: 'baz'}, 'abc');  // <-- specified key
-                    var save3 = store[save]({bat: 'bar'});         // <-- generated key
-                    var save4 = store[save]({bar: 'foo'}, 99);     // <-- specified key
-                    var save5 = store[save]({baz: 'biz'});         // <-- generated key
+                    var save1 = store[save]({foo: 'bar'});          // <-- generated key
+                    var save2 = store[save]({biz: 'baz'}, 'abc');   // <-- specified key
+                    var save3 = store[save]({bat: 'bar'});          // <-- generated key
+                    var save4 = store[save]({bar: 'foo'}, 99);      // <-- specified key
+                    var save5 = store[save]({baz: 'biz'});          // <-- generated key
 
                     var allData;
                     util.getAll(store, function(err, data) {
@@ -230,18 +232,18 @@
                     });
 
                     tx.oncomplete = function() {
-                        expect(save1.result).to.equal(1);
-                        expect(save2.result).to.equal('abc');
-                        expect(save3.result).to.equal(2);
-                        expect(save4.result).to.equal(99);
-                        expect(save5.result).to.equal(100);
+                        expect(save1.result).to.equal(1);       // Generated keys should always start at 1
+                        expect(save2.result).to.equal('abc');   // This key was explicitly specified
+                        expect(save3.result).to.be.above(1);    // Depending on the implementation, it might be 2 or 3
+                        expect(save4.result).to.equal(99);      // This key was explicitly specified
+                        expect(save5.result).to.be.above(2);    // Depending on the implementation, it might be 3, 5, or 100
 
                         expect(allData).to.have.same.deep.members([
-                            {key: 'abc', value: {biz: 'baz'}},
-                            {key: 2, value: {bat: 'bar'}},
-                            {key: 99, value: {bar: 'foo'}},
                             {key: 1, value: {foo: 'bar'}},
-                            {key: 100, value: {baz: 'biz'}}
+                            {key: 'abc', value: {biz: 'baz'}},
+                            {key: save3.result, value: {bat: 'bar'}},
+                            {key: 99, value: {bar: 'foo'}},
+                            {key: save5.result, value: {baz: 'biz'}}
                         ]);
 
                         db.close();
@@ -261,6 +263,8 @@
                     saveKey(0);                             // zero
                     saveKey(-99999);                        // negative number
                     saveKey(3.12345);                       // float
+                    saveKey(Infinity);                      // infinity
+                    saveKey(-Infinity);                     // negative infinity
                     saveKey(new Date(2000, 1, 2));          // Date
 
                     if (!env.browser.isIE) {
@@ -308,6 +312,7 @@
                     tx.onerror = done;
 
                     tryToSaveKey(undefined);                // undefined
+                    tryToSaveKey(NaN);                      // NaN
                     tryToSaveKey(true);                     // boolean
                     tryToSaveKey(false);                    // boolean
                     tryToSaveKey({});                       // empty object
@@ -320,6 +325,7 @@
 
                     if (!env.browser.isIE) {
                         tryToSaveKey(null);                 // null
+                        tryToSaveKey(/^regex$/);            // RegExp
                     }
 
                     function tryToSaveKey(key) {
@@ -356,16 +362,21 @@
                     saveData(0);                            // zero
                     saveData(-99999);                       // negative number
                     saveData(3.12345);                      // float
+                    saveData(Infinity);                     // infinity
+                    saveData(-Infinity);                    // negative infinity
+                    saveData(NaN);                          // NaN
                     saveData({});                           // empty object
                     saveData({foo: 'bar'});                 // object
                     saveData(new Date(2000, 1, 2));         // Date
                     saveData(new util.Person('John', 30));  // Class
+                    saveData(/^regex$/);                    // RegExp
                     saveData([]);                           // empty array
                     saveData(['a', '', 'b']);               // array of strings
                     saveData([1, 2.345, -678]);             // array of numbers
                     saveData([new Date(2005, 6, 7)]);       // array of Dates
                     saveData([1, undefined, 2]);            // array with undefined
                     saveData([1, null, 2]);                 // array with null
+                    saveData([1, NaN, 3]);                  // array with NaN
                     saveData([true, false]);                // array of booleans
                     saveData([{foo: 'bar'}, {}]);           // array of objects
 
@@ -553,6 +564,8 @@
                     saveKey(0);                             // zero
                     saveKey(-99999);                        // negative number
                     saveKey(3.12345);                       // float
+                    saveKey(Infinity);                      // infinity
+                    saveKey(-Infinity);                     // negative infinity
                     saveKey(new Date(2000, 1, 2));          // Date
 
                     if (!env.browser.isIE) {
@@ -600,11 +613,13 @@
                     tx.onerror = done;
 
                     tryToSaveKey(undefined);                // undefined
+                    tryToSaveKey(NaN);                      // NaN
                     tryToSaveKey(true);                     // boolean
                     tryToSaveKey(false);                    // boolean
                     tryToSaveKey({});                       // empty object
                     tryToSaveKey({foo: 'bar'});             // object
                     tryToSaveKey(new util.Person('John'));  // Class
+                    tryToSaveKey(/^regex$/);                // RegExp
                     tryToSaveKey([1, undefined, 2]);        // array with undefined
                     tryToSaveKey([1, null, 2]);             // array with null
                     tryToSaveKey([true, false]);            // array of booleans
@@ -654,6 +669,7 @@
 
                     if (!env.browser.isFirefox) {
                         saveData(new Date(2000, 1, 2));     // Date
+                        saveData(/^regex$/);                // RegExp
                     }
 
                     function saveData(data) {
@@ -714,6 +730,9 @@
                     tryToSaveData(0);                   // zero
                     tryToSaveData(-99999);              // negative number
                     tryToSaveData(3.12345);             // float
+                    tryToSaveData(Infinity);            // infinity
+                    tryToSaveData(-Infinity);           // negative infinity
+                    tryToSaveData(NaN);                 // NaN
 
                     if (!env.browser.isIE) {
                         tryToSaveData(null);            // null
@@ -944,6 +963,8 @@
                     saveKey(0);                             // zero
                     saveKey(-99999);                        // negative number
                     saveKey(3.12345);                       // float
+                    saveKey(Infinity);                      // infinity
+                    saveKey(-Infinity);                     // negative infinity
                     saveKey(new Date(2000, 1, 2));          // Date
                     saveKey([]);                            // empty array
                     saveKey(['a', '', 'b']);                // array of strings
@@ -994,10 +1015,12 @@
                     tx.onerror = done;
 
                     tryToSaveKey(undefined);                // undefined
+                    tryToSaveKey(NaN);                      // NaN
                     tryToSaveKey(true);                     // boolean
                     tryToSaveKey(false);                    // boolean
                     tryToSaveKey({});                       // empty object
                     tryToSaveKey({foo: 'bar'});             // object
+                    tryToSaveKey(/^regex$/);                // RegExp
                     tryToSaveKey([1, undefined, 2]);        // array with undefined
                     tryToSaveKey([1, null, 2]);             // array with null
                     tryToSaveKey([true, false]);            // array of booleans

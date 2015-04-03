@@ -176,9 +176,9 @@ var cleanInterface = false;                 // jshint ignore:line
                     var reader = new FileReader();
                     reader.onloadend = function(loadedEvent) {
                         var dataURL = loadedEvent.target.result;
-                        var blobtype = 'blob'; 
+                        var blobtype = 'Blob';
                         if (blob instanceof File) {
-                            //blobtype = 'file';
+                            //blobtype = 'File';
                         }
                         updateEncodedBlob(dataURL, path, blobtype);
                     };
@@ -259,24 +259,33 @@ var cleanInterface = false;                 // jshint ignore:line
                         readBlobAsDataURL(value, path);
                     } else if (value instanceof Boolean) {
                         value = {
-                            '$type': 'bool',
+                            '$type': 'Boolean',
                             '$enc': value.toString()
                         };
                     } else if (value instanceof Date) {
                         value = {
-                            '$type': 'date',
+                            '$type': 'Date',
                             '$enc': value.getTime()
                         };
                     } else if (value instanceof Number) {
                         value = {
-                            '$type': 'num',
+                            '$type': 'Number',
                             '$enc': value.toString()
                         };
                     } else if (value instanceof RegExp) {
                         value = {
-                            '$type': 'regex',
+                            '$type': 'RegExp',
                             '$enc': value.toString()
-                        }; 
+                        };
+                    } else if (typeof value === 'number') {
+                        value = {
+                            '$type': 'number',
+                            '$enc': value + ''  // handles NaN, Infinity, Negative Infinity
+                        };
+                    } else if (value === undefined) {
+                        value = {
+                            '$type': 'undefined'
+                        };
                     }
                     return value;
                 }
@@ -369,21 +378,27 @@ var cleanInterface = false;                 // jshint ignore:line
                         } else {
                             if (value.$type !== undefined) {
                                 switch(value.$type) {
-                                    case 'blob':
-                                    case 'file': 
+                                    case 'Blob':
+                                    case 'File':
                                         value = dataURLToBlob(value.$enc);
                                         break;
-                                    case 'bool':
+                                    case 'Boolean':
                                         value = Boolean(value.$enc === 'true');
                                         break;
-                                    case 'date':
+                                    case 'Date':
                                         value = new Date(value.$enc);
                                         break;
-                                    case 'num':
+                                    case 'Number':
                                         value = Number(value.$enc);
                                         break;
-                                    case 'regex':
+                                    case 'RegExp':
                                         value = eval(value.$enc);
+                                        break;
+                                    case 'number':
+                                        value = parseFloat(value.$enc);
+                                        break;
+                                    case 'undefined':
+                                        value = undefined;
                                         break;
                                 }
                             } else {
@@ -405,8 +420,7 @@ var cleanInterface = false;                 // jshint ignore:line
                     }
                     return value;
                 }
-                rez($);
-                return $;
+                return rez($);
 
             },
 
@@ -437,6 +451,7 @@ var cleanInterface = false;                 // jshint ignore:line
     }());
     idbModules.Sca = Sca;
 }(idbModules));
+
 /*jshint globalstrict: true*/
 'use strict';
 (function(idbModules){
@@ -461,9 +476,16 @@ var cleanInterface = false;                 // jshint ignore:line
     };
     
     var types = {
-        "number": getGenericEncoder("number"), // decoder will fail for NaN
         "boolean": getGenericEncoder(),
         "object": getGenericEncoder(),
+        "number": {
+            "encode": function(key){
+                return collations.indexOf("number") + "-" + key;
+            },
+            "decode": function(key){
+                return parseFloat(key.substring(2));
+            }
+        },
         "string": {
             "encode": function(key){
                 return collations.indexOf("string") + "-" + key;
@@ -487,8 +509,10 @@ var cleanInterface = false;                 // jshint ignore:line
      */
     function validateKey(key) {
         var type = typeof key;
-        if (type === "string" || type === "number" || key instanceof Date) {
-            return true;
+        if (type === "string" ||
+            (type === "number" && !isNaN(key)) ||
+            key instanceof Date) {
+             // valid
         }
         else if (key instanceof Array) {
             for (var i = 0; i < key.length; i++) {
@@ -535,6 +559,7 @@ var cleanInterface = false;                 // jshint ignore:line
         decode: function(key) {
             return types[collations[key.substring(0, 1)]].decode(key);
         },
+        validateKey: validateKey,
         getKeyPath: getKeyPath,
         setKeyPath: setKeyPath
     };
@@ -1151,9 +1176,12 @@ var cleanInterface = false;                 // jshint ignore:line
      * @param {Object} name
      * @param {Object} transaction
      */
-    function IDBObjectStore(name, idbTransaction, ready) {
+    function IDBObjectStore(name, idbTransaction, ready, createOptions) {
+        createOptions = createOptions || {};
         this.name = name;
         this.transaction = idbTransaction;
+        this.keyPath = createOptions.keyPath || null;
+        this.autoIncrement = !!createOptions.autoIncrement;
         this.__ready = {};
         this.__waiting = {};
         this.__setReadyState("createObjectStore", typeof ready === "undefined" ? true : ready);
@@ -1254,6 +1282,8 @@ var cleanInterface = false;                 // jshint ignore:line
                             "autoInc": (typeof row.autoInc === "number" ? (row.autoInc === 1 ? "true" : "false" ) : row.autoInc),
                             "keyPath": row.keyPath
                         };
+                        me.keyPath = me.__storeProps.keyPath;
+                        me.autoIncrement = me.__storeProps.autoInc;
                         idbModules.DEBUG && console.log("Store properties", me.__storeProps);
                         callback(me.__storeProps);
                     }
@@ -1370,19 +1400,30 @@ var cleanInterface = false;                 // jshint ignore:line
 
         idbModules.DEBUG && console.log("SQL for adding", sql, sqlValues);
         tx.executeSql(sql, sqlValues, function(tx, data) {
-            success(primaryKey);
+            idbModules.Sca.encode(primaryKey, function(primaryKey) {
+                primaryKey = idbModules.Sca.decode(primaryKey);
+                success(primaryKey);
+            });
         }, function(tx, err) {
             error(idbModules.util.createDOMError("ConstraintError", err.message, err));
         });
     };
 
-    IDBObjectStore.prototype.add = function(value, key) {
-        var me = this;
-
-        if (arguments.length === 0) {
+    IDBObjectStore.prototype.__validateInsertArgs = function(args) {
+        if (args.length === 0) {
             throw new TypeError("No value was specified");
         }
+        if (args.length > 1) {
+            idbModules.Key.validateKey(args[1]);
+        }
+        if (args.length < 2 && !this.keyPath && !this.autoIncrement) {
+            throw idbModules.util.createDOMException("DataError", "The object store uses out-of-line keys and has no key generator and the key parameter was not provided.");
+        }
+    };
 
+    IDBObjectStore.prototype.add = function(value, key) {
+        var me = this;
+        me.__validateInsertArgs(arguments);
         me.transaction.__assertWritable();
         var request = me.transaction.__createRequest(function() {}); //Stub request
         me.transaction.__pushToQueue(request, function objectStoreAdd(tx, args, success, error) {
@@ -1397,11 +1438,7 @@ var cleanInterface = false;                 // jshint ignore:line
 
     IDBObjectStore.prototype.put = function(value, key) {
         var me = this;
-
-        if (arguments.length === 0) {
-            throw new TypeError("No value was specified");
-        }
-
+        me.__validateInsertArgs(arguments);
         me.transaction.__assertWritable();
         var request = me.transaction.__createRequest(function() {}); //Stub request
         me.transaction.__pushToQueue(request, function objectStorePut(tx, args, success, error) {
@@ -1435,19 +1472,20 @@ var cleanInterface = false;                 // jshint ignore:line
                 idbModules.DEBUG && console.log("Fetching", me.name, primaryKey);
                 tx.executeSql("SELECT * FROM " + idbModules.util.quote(me.name) + " where key = ?", [primaryKey], function(tx, data) {
                     idbModules.DEBUG && console.log("Fetched data", data);
+                    var value;
                     try {
                         // Opera can't deal with the try-catch here.
                         if (0 === data.rows.length) {
                             return success();
                         }
 
-                        success(idbModules.Sca.decode(data.rows.item(0).value));
+                        value = idbModules.Sca.decode(data.rows.item(0).value);
                     }
                     catch (e) {
-                        idbModules.DEBUG && console.log(e);
                         // If no result is returned, or error occurs when parsing JSON
-                        success(undefined);
+                        idbModules.DEBUG && console.log(e);
                     }
+                    success(value);
                 }, function(tx, err) {
                     error(err);
                 });
@@ -1587,7 +1625,7 @@ var cleanInterface = false;                 // jshint ignore:line
         this.__active = true;
         this.__running = false;
         this.__requests = [];
-        this.storeNames = storeNames;
+        this.__storeNames = storeNames instanceof Array ? storeNames : [storeNames];
         this.mode = mode;
         this.db = db;
         this.error = null;
@@ -1733,6 +1771,16 @@ var cleanInterface = false;                 // jshint ignore:line
     };
 
     IDBTransaction.prototype.objectStore = function(objectStoreName) {
+        if (arguments.length === 0) {
+            throw new TypeError("No object store name was specified");
+        }
+        if (this.__storeNames.indexOf(objectStoreName) === -1) {
+            throw idbModules.util.createDOMException("NotFoundError", objectStoreName + " is not participating in this transaction");
+        }
+        if (!this.__active) {
+            throw idbModules.util.createDOMException("InvalidStateError", "A request was placed against a transaction which is currently not active, or which is finished");
+        }
+
         return new idbModules.IDBObjectStore(objectStoreName, this);
     };
 
@@ -1768,8 +1816,12 @@ var cleanInterface = false;                 // jshint ignore:line
         this.__db = db;
         this.__closed = false;
         this.version = version;
+
         this.objectStoreNames = new idbModules.util.StringList();
+        this.__objectStores = [];
         for (var i = 0; i < storeProperties.rows.length; i++) {
+//            var store = new idbModules.IDBObjectStore(storeProperties.rows.item(i));
+//            this.__objectStores.push(store);
             this.objectStoreNames.push(storeProperties.rows.item(i).name);
         }
         // Convert store properties to an object because we need to modify the object when a db is upgraded and new
@@ -1790,7 +1842,7 @@ var cleanInterface = false;                 // jshint ignore:line
         var me = this;
         createOptions = createOptions || {};
         createOptions.keyPath = createOptions.keyPath || null;
-        var result = new idbModules.IDBObjectStore(storeName, me.__versionTransaction, false);
+        var result = new idbModules.IDBObjectStore(storeName, me.__versionTransaction, false, createOptions);
         
         var transaction = me.__versionTransaction;
         idbModules.IDBTransaction.__assertVersionChange(transaction);

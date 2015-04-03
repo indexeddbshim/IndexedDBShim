@@ -119,10 +119,14 @@ describe('IDBFactory.deleteDatabase', function() {
         deleteDatabase('');
         deleteDatabase(42);
         deleteDatabase(-0.331);
+        deleteDatabase(Infinity);
+        deleteDatabase(-Infinity);
+        deleteDatabase(NaN);
         deleteDatabase([]);
         deleteDatabase(['a', 'b', 'c']);
         deleteDatabase(new Date());
         deleteDatabase({foo: 'bar'});
+        deleteDatabase(/^regex$/);
 
         if (!env.browser.isIE) {
             deleteDatabase(null);

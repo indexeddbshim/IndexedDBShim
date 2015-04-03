@@ -22,9 +22,16 @@
     };
     
     var types = {
-        "number": getGenericEncoder("number"), // decoder will fail for NaN
         "boolean": getGenericEncoder(),
         "object": getGenericEncoder(),
+        "number": {
+            "encode": function(key){
+                return collations.indexOf("number") + "-" + key;
+            },
+            "decode": function(key){
+                return parseFloat(key.substring(2));
+            }
+        },
         "string": {
             "encode": function(key){
                 return collations.indexOf("string") + "-" + key;
@@ -48,8 +55,10 @@
      */
     function validateKey(key) {
         var type = typeof key;
-        if (type === "string" || type === "number" || key instanceof Date) {
-            return true;
+        if (type === "string" ||
+            (type === "number" && !isNaN(key)) ||
+            key instanceof Date) {
+             // valid
         }
         else if (key instanceof Array) {
             for (var i = 0; i < key.length; i++) {
@@ -96,6 +105,7 @@
         decode: function(key) {
             return types[collations[key.substring(0, 1)]].decode(key);
         },
+        validateKey: validateKey,
         getKeyPath: getKeyPath,
         setKeyPath: setKeyPath
     };

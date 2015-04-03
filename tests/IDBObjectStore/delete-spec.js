@@ -539,6 +539,8 @@ describe('IDBObjectStore.delete', function() {
             deleteKey(0);                             // zero
             deleteKey(-99999);                        // negative number
             deleteKey(3.12345);                       // float
+            deleteKey(Infinity);                      // infinity
+            deleteKey(-Infinity);                     // negative infinity
             deleteKey(new Date(2000, 1, 2));          // Date
 
             if (!env.browser.isIE) {
@@ -573,6 +575,7 @@ describe('IDBObjectStore.delete', function() {
             var store = tx.objectStore('out-of-line-generated');
 
             tryToDelete(undefined);                // undefined
+            tryToDelete(NaN);                      // NaN
             tryToDelete(true);                     // boolean
             tryToDelete(false);                    // boolean
             tryToDelete({});                       // empty object
@@ -582,6 +585,10 @@ describe('IDBObjectStore.delete', function() {
             tryToDelete([1, null, 2]);             // array with null
             tryToDelete([true, false]);            // array of booleans
             tryToDelete([{foo: 'bar'}]);           // array of objects
+
+            if (!env.browser.isIE) {
+                tryToDelete(/^regex$/);            // RegExp
+            }
 
             function tryToDelete(key) {
                 var err = null;

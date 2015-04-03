@@ -11,8 +11,12 @@
         this.__db = db;
         this.__closed = false;
         this.version = version;
+
         this.objectStoreNames = new idbModules.util.StringList();
+        this.__objectStores = [];
         for (var i = 0; i < storeProperties.rows.length; i++) {
+//            var store = new idbModules.IDBObjectStore(storeProperties.rows.item(i));
+//            this.__objectStores.push(store);
             this.objectStoreNames.push(storeProperties.rows.item(i).name);
         }
         // Convert store properties to an object because we need to modify the object when a db is upgraded and new
@@ -33,7 +37,7 @@
         var me = this;
         createOptions = createOptions || {};
         createOptions.keyPath = createOptions.keyPath || null;
-        var result = new idbModules.IDBObjectStore(storeName, me.__versionTransaction, false);
+        var result = new idbModules.IDBObjectStore(storeName, me.__versionTransaction, false, createOptions);
         
         var transaction = me.__versionTransaction;
         idbModules.IDBTransaction.__assertVersionChange(transaction);

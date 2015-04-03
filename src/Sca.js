@@ -71,9 +71,9 @@
                     var reader = new FileReader();
                     reader.onloadend = function(loadedEvent) {
                         var dataURL = loadedEvent.target.result;
-                        var blobtype = 'blob'; 
+                        var blobtype = 'Blob';
                         if (blob instanceof File) {
-                            //blobtype = 'file';
+                            //blobtype = 'File';
                         }
                         updateEncodedBlob(dataURL, path, blobtype);
                     };
@@ -154,24 +154,33 @@
                         readBlobAsDataURL(value, path);
                     } else if (value instanceof Boolean) {
                         value = {
-                            '$type': 'bool',
+                            '$type': 'Boolean',
                             '$enc': value.toString()
                         };
                     } else if (value instanceof Date) {
                         value = {
-                            '$type': 'date',
+                            '$type': 'Date',
                             '$enc': value.getTime()
                         };
                     } else if (value instanceof Number) {
                         value = {
-                            '$type': 'num',
+                            '$type': 'Number',
                             '$enc': value.toString()
                         };
                     } else if (value instanceof RegExp) {
                         value = {
-                            '$type': 'regex',
+                            '$type': 'RegExp',
                             '$enc': value.toString()
-                        }; 
+                        };
+                    } else if (typeof value === 'number') {
+                        value = {
+                            '$type': 'number',
+                            '$enc': value + ''  // handles NaN, Infinity, Negative Infinity
+                        };
+                    } else if (value === undefined) {
+                        value = {
+                            '$type': 'undefined'
+                        };
                     }
                     return value;
                 }
@@ -264,21 +273,27 @@
                         } else {
                             if (value.$type !== undefined) {
                                 switch(value.$type) {
-                                    case 'blob':
-                                    case 'file': 
+                                    case 'Blob':
+                                    case 'File':
                                         value = dataURLToBlob(value.$enc);
                                         break;
-                                    case 'bool':
+                                    case 'Boolean':
                                         value = Boolean(value.$enc === 'true');
                                         break;
-                                    case 'date':
+                                    case 'Date':
                                         value = new Date(value.$enc);
                                         break;
-                                    case 'num':
+                                    case 'Number':
                                         value = Number(value.$enc);
                                         break;
-                                    case 'regex':
+                                    case 'RegExp':
                                         value = eval(value.$enc);
+                                        break;
+                                    case 'number':
+                                        value = parseFloat(value.$enc);
+                                        break;
+                                    case 'undefined':
+                                        value = undefined;
                                         break;
                                 }
                             } else {
@@ -300,8 +315,7 @@
                     }
                     return value;
                 }
-                rez($);
-                return $;
+                return rez($);
 
             },
 

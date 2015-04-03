@@ -13,7 +13,7 @@
         this.__active = true;
         this.__running = false;
         this.__requests = [];
-        this.storeNames = storeNames;
+        this.__storeNames = storeNames instanceof Array ? storeNames : [storeNames];
         this.mode = mode;
         this.db = db;
         this.error = null;
@@ -159,6 +159,16 @@
     };
 
     IDBTransaction.prototype.objectStore = function(objectStoreName) {
+        if (arguments.length === 0) {
+            throw new TypeError("No object store name was specified");
+        }
+        if (this.__storeNames.indexOf(objectStoreName) === -1) {
+            throw idbModules.util.createDOMException("NotFoundError", objectStoreName + " is not participating in this transaction");
+        }
+        if (!this.__active) {
+            throw idbModules.util.createDOMException("InvalidStateError", "A request was placed against a transaction which is currently not active, or which is finished");
+        }
+
         return new idbModules.IDBObjectStore(objectStoreName, this);
     };
 

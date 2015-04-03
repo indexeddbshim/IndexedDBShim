@@ -154,14 +154,25 @@ describe('IDBFactory.open', function() {
             });
         });
 
-        it('should upgrade an existing database (by one version)', function(done) {
+        it('should upgrade an existing database by one version', function(done) {
             util.generateDatabaseName(function(err, name) {
                 createVersion1();
 
                 function createVersion1() {
                     var open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
+
+                    open.onupgradeneeded = sinon.spy(function(event) {
+                        var db = event.target.result;
+                        expect(db.version).to.equal(1);
+                        expect(event.newVersion).to.equal(1);
+                        if (!env.browser.isSafari) {
+                            expect(event.oldVersion).to.equal(0);
+                        }
+                    });
+
                     open.onsuccess = function() {
+                        sinon.assert.calledOnce(open.onupgradeneeded);
                         expect(open.result.version).to.equal(1);
                         open.result.close();
                         setTimeout(createVersion2, 50);
@@ -188,14 +199,88 @@ describe('IDBFactory.open', function() {
             });
         });
 
-        it('should upgrade an existing database (by multiple versions)', function(done) {
+        it('should upgrade an existing database by multiple versions', function(done) {
             util.generateDatabaseName(function(err, name) {
                 createVersion1();
 
                 function createVersion1() {
                     var open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
+
+                    open.onupgradeneeded = sinon.spy(function(event) {
+                        var db = event.target.result;
+                        expect(db.version).to.equal(1);
+                        expect(event.newVersion).to.equal(1);
+                        if (!env.browser.isSafari) {
+                            expect(event.oldVersion).to.equal(0);
+                        }
+                    });
+
                     open.onsuccess = function() {
+                        sinon.assert.calledOnce(open.onupgradeneeded);
+                        expect(open.result.version).to.equal(1);
+                        open.result.close();
+                        setTimeout(createVersion2, 50);
+                    };
+                }
+
+                function createVersion2() {
+                    var open = indexedDB.open(name, 2);
+                    open.onerror = open.onblocked = done;
+
+                    open.onupgradeneeded = sinon.spy(function(event) {
+                        var db = event.target.result;
+                        expect(db.version).to.equal(2);
+                        expect(event.oldVersion).to.equal(1);
+                        expect(event.newVersion).to.equal(2);
+                    });
+
+                    open.onsuccess = function() {
+                        sinon.assert.calledOnce(open.onupgradeneeded);
+                        open.result.close();
+                        setTimeout(createVersion3, 50);
+                    };
+                }
+
+                function createVersion3() {
+                    var open = indexedDB.open(name, 3);
+                    open.onerror = open.onblocked = done;
+
+                    open.onupgradeneeded = sinon.spy(function(event) {
+                        var db = event.target.result;
+                        expect(db.version).to.equal(3);
+                        expect(event.oldVersion).to.equal(2);
+                        expect(event.newVersion).to.equal(3);
+                    });
+
+                    open.onsuccess = function() {
+                        sinon.assert.calledOnce(open.onupgradeneeded);
+                        open.result.close();
+                        done();
+                    };
+                }
+            });
+        });
+
+        it('should upgrade an existing database by multiple versions at once', function(done) {
+            util.generateDatabaseName(function(err, name) {
+                createVersion1();
+
+                function createVersion1() {
+                    var open = indexedDB.open(name, 1);
+                    open.onerror = open.onblocked = done;
+
+                    open.onupgradeneeded = sinon.spy(function(event) {
+                        var db = event.target.result;
+                        expect(db.version).to.equal(1);
+                        expect(event.newVersion).to.equal(1);
+                        if (!env.browser.isSafari) {
+                            expect(event.oldVersion).to.equal(0);
+                        }
+                    });
+
+                    open.onsuccess = function() {
+                        sinon.assert.calledOnce(open.onupgradeneeded);
                         expect(open.result.version).to.equal(1);
                         open.result.close();
                         setTimeout(createVersion5, 50);
@@ -279,6 +364,8 @@ describe('IDBFactory.open', function() {
             tryToOpen(-3);
             tryToOpen(Infinity);
             tryToOpen(-Infinity);
+            tryToOpen(NaN);
+            tryToOpen(/^regex$/);
 
             if (!env.browser.isFirefox) {
                 tryToOpen(undefined);

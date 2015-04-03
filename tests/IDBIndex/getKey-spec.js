@@ -474,6 +474,8 @@ describe('IDBIndex.getKey', function() {
             getKey(0);                             // zero
             getKey(-99999);                        // negative number
             getKey(3.12345);                       // float
+            getKey(Infinity);                      // infinity
+            getKey(-Infinity);                     // negative infinity
             getKey(new Date(2000, 1, 2));          // Date
 
             if (!env.browser.isIE) {
@@ -509,6 +511,7 @@ describe('IDBIndex.getKey', function() {
             var index = store.index('inline-index') ;
 
             tryToGet(undefined);                // undefined
+            tryToGet(NaN);                      // NaN
             tryToGet(true);                     // boolean
             tryToGet(false);                    // boolean
             tryToGet({});                       // empty object
@@ -518,6 +521,10 @@ describe('IDBIndex.getKey', function() {
             tryToGet([1, null, 2]);             // array with null
             tryToGet([true, false]);            // array of booleans
             tryToGet([{foo: 'bar'}]);           // array of objects
+
+            if (!env.browser.isIE) {
+                tryToGet(/^regex$/);            // RegExp
+            }
 
             function tryToGet(key) {
                 var err = null;

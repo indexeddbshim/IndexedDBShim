@@ -8,9 +8,12 @@
      * @param {Object} name
      * @param {Object} transaction
      */
-    function IDBObjectStore(name, idbTransaction, ready) {
+    function IDBObjectStore(name, idbTransaction, ready, createOptions) {
+        createOptions = createOptions || {};
         this.name = name;
         this.transaction = idbTransaction;
+        this.keyPath = createOptions.keyPath || null;
+        this.autoIncrement = !!createOptions.autoIncrement;
         this.__ready = {};
         this.__waiting = {};
         this.__setReadyState("createObjectStore", typeof ready === "undefined" ? true : ready);
@@ -111,6 +114,8 @@
                             "autoInc": (typeof row.autoInc === "number" ? (row.autoInc === 1 ? "true" : "false" ) : row.autoInc),
                             "keyPath": row.keyPath
                         };
+                        me.keyPath = me.__storeProps.keyPath;
+                        me.autoIncrement = me.__storeProps.autoInc;
                         idbModules.DEBUG && console.log("Store properties", me.__storeProps);
                         callback(me.__storeProps);
                     }
@@ -227,19 +232,30 @@
 
         idbModules.DEBUG && console.log("SQL for adding", sql, sqlValues);
         tx.executeSql(sql, sqlValues, function(tx, data) {
-            success(primaryKey);
+            idbModules.Sca.encode(primaryKey, function(primaryKey) {
+                primaryKey = idbModules.Sca.decode(primaryKey);
+                success(primaryKey);
+            });
         }, function(tx, err) {
             error(idbModules.util.createDOMError("ConstraintError", err.message, err));
         });
     };
 
-    IDBObjectStore.prototype.add = function(value, key) {
-        var me = this;
-
-        if (arguments.length === 0) {
+    IDBObjectStore.prototype.__validateInsertArgs = function(args) {
+        if (args.length === 0) {
             throw new TypeError("No value was specified");
         }
+        if (args.length > 1) {
+            idbModules.Key.validateKey(args[1]);
+        }
+        if (args.length < 2 && !this.keyPath && !this.autoIncrement) {
+            throw idbModules.util.createDOMException("DataError", "The object store uses out-of-line keys and has no key generator and the key parameter was not provided.");
+        }
+    };
 
+    IDBObjectStore.prototype.add = function(value, key) {
+        var me = this;
+        me.__validateInsertArgs(arguments);
         me.transaction.__assertWritable();
         var request = me.transaction.__createRequest(function() {}); //Stub request
         me.transaction.__pushToQueue(request, function objectStoreAdd(tx, args, success, error) {
@@ -254,11 +270,7 @@
 
     IDBObjectStore.prototype.put = function(value, key) {
         var me = this;
-
-        if (arguments.length === 0) {
-            throw new TypeError("No value was specified");
-        }
-
+        me.__validateInsertArgs(arguments);
         me.transaction.__assertWritable();
         var request = me.transaction.__createRequest(function() {}); //Stub request
         me.transaction.__pushToQueue(request, function objectStorePut(tx, args, success, error) {
@@ -292,19 +304,20 @@
                 idbModules.DEBUG && console.log("Fetching", me.name, primaryKey);
                 tx.executeSql("SELECT * FROM " + idbModules.util.quote(me.name) + " where key = ?", [primaryKey], function(tx, data) {
                     idbModules.DEBUG && console.log("Fetched data", data);
+                    var value;
                     try {
                         // Opera can't deal with the try-catch here.
                         if (0 === data.rows.length) {
                             return success();
                         }
 
-                        success(idbModules.Sca.decode(data.rows.item(0).value));
+                        value = idbModules.Sca.decode(data.rows.item(0).value);
                     }
                     catch (e) {
-                        idbModules.DEBUG && console.log(e);
                         // If no result is returned, or error occurs when parsing JSON
-                        success(undefined);
+                        idbModules.DEBUG && console.log(e);
                     }
+                    success(value);
                 }, function(tx, err) {
                     error(err);
                 });
