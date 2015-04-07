@@ -1,6 +1,11 @@
 describe('IDBDatabase.createObjectStore', function() {
     'use strict';
 
+    var indexedDB;
+    beforeEach(function() {
+        indexedDB = env.indexedDB;
+    });
+
     describe('success tests', function() {
         it('should create an object store with an out-of-line key', function(done) {
             util.generateDatabaseName(function(err, name) {
@@ -110,7 +115,7 @@ describe('IDBDatabase.createObjectStore', function() {
             });
         });
 
-        it.only('should create new tables in an existing database', function(done) {
+        it('should create new tables in an existing database', function(done) {
             if (env.browser.isSafari) {
                 // BUG: For some reason, Safari aborts the 2nd transaction (without any error)
                 console.error('Skipping test: ' + this.test.title);
@@ -210,7 +215,7 @@ describe('IDBDatabase.createObjectStore', function() {
                         err = e;
                     }
 
-                    expect(err).to.be.an.instanceOf(DOMException);
+                    expect(err).to.be.an.instanceOf(env.DOMException);
                     expect(err.name).to.equal('ConstraintError');
                 });
 
@@ -255,7 +260,7 @@ describe('IDBDatabase.createObjectStore', function() {
                             err = e;
                         }
 
-                        expect(err).to.be.an.instanceOf(DOMException);
+                        expect(err).to.be.an.instanceOf(env.DOMException);
                         expect(err.name).to.equal('ConstraintError');
                     });
 

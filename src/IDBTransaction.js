@@ -5,15 +5,16 @@
     /**
      * The IndexedDB Transaction
      * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBTransaction
-     * @param {Object} storeNames
-     * @param {Object} mode
-     * @param {Object} db
+     * @param {IDBDatabase} db
+     * @param {string[]} storeNames
+     * @param {string} mode
+     * @constructor
      */
-    function IDBTransaction(storeNames, mode, db) {
+    function IDBTransaction(db, storeNames, mode) {
         this.__active = true;
         this.__running = false;
         this.__requests = [];
-        this.__storeNames = storeNames instanceof Array ? storeNames : [storeNames];
+        this.__storeNames = storeNames;
         this.mode = mode;
         this.db = db;
         this.error = null;
@@ -114,12 +115,12 @@
         }
     };
 
-    IDBTransaction.prototype.__addToTransactionQueue = function(callback, args) {
-        var request = this.__createRequest();
-        this.__pushToQueue(request, callback, args);
-        return request;
-    };
-
+    /**
+     * Creates a new IDBRequest for the transaction.
+     * NOTE: The transaction is not queued util you call {@link IDBTransaction#__pushToQueue}
+     * @returns {IDBRequest}
+     * @protected
+     */
     IDBTransaction.prototype.__createRequest = function() {
         var request = new idbModules.IDBRequest();
         request.source = this.db;
@@ -127,6 +128,26 @@
         return request;
     };
 
+    /**
+     * Adds a callback function to the transaction queue
+     * @param {function} callback
+     * @param {*} args
+     * @returns {IDBRequest}
+     * @protected
+     */
+    IDBTransaction.prototype.__addToTransactionQueue = function(callback, args) {
+        var request = this.__createRequest();
+        this.__pushToQueue(request, callback, args);
+        return request;
+    };
+
+    /**
+     * Adds an IDBRequest to the transaction queue
+     * @param {IDBRequest} request
+     * @param {function} callback
+     * @param {*} args
+     * @protected
+     */
     IDBTransaction.prototype.__pushToQueue = function(request, callback, args) {
         this.__assertActive();
         this.__requests.push({
@@ -158,18 +179,28 @@
         }
     };
 
+    /**
+     * Returns the specified object store.
+     * @param {string} objectStoreName
+     * @returns {IDBObjectStore}
+     */
     IDBTransaction.prototype.objectStore = function(objectStoreName) {
         if (arguments.length === 0) {
             throw new TypeError("No object store name was specified");
         }
-        if (this.__storeNames.indexOf(objectStoreName) === -1) {
-            throw idbModules.util.createDOMException("NotFoundError", objectStoreName + " is not participating in this transaction");
-        }
         if (!this.__active) {
             throw idbModules.util.createDOMException("InvalidStateError", "A request was placed against a transaction which is currently not active, or which is finished");
         }
+        if (this.__storeNames.indexOf(objectStoreName) === -1 && this.mode !== IDBTransaction.VERSION_CHANGE) {
+            throw idbModules.util.createDOMException("NotFoundError", objectStoreName + " is not participating in this transaction");
+        }
+        var store = this.db.__objectStores[objectStoreName];
+        if (!store) {
+            throw idbModules.util.createDOMException("NotFoundError", objectStoreName + " does not exist in " + this.db.name);
+        }
 
-        return new idbModules.IDBObjectStore(objectStoreName, this);
+        store.transaction = this;
+        return store;
     };
 
     IDBTransaction.prototype.abort = function() {

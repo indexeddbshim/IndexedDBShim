@@ -12,7 +12,9 @@ describe('IDBDatabase.close', function() {
     it('should wait for a transaction to complete first', function(done) {
         util.createDatabase('out-of-line-generated', function(err, db) {
             var tx = db.transaction('out-of-line-generated', 'readwrite');
-            tx.onerror = done;
+            tx.onerror = function(event) {
+                done(event.target.error);
+            };
 
             db.close();
 

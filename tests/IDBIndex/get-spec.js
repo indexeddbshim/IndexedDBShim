@@ -423,7 +423,9 @@ describe('IDBIndex.get', function() {
             var tx = db.transaction('inline-generated', 'readwrite');
             var store = tx.objectStore('inline-generated');
             var index = store.index('inline-index');
-            tx.onerror = done;
+            tx.onerror = function(event) {
+                done(event.target.error);
+            };
 
             store.add({name: 'one'});
             store.add({name: 'two'});

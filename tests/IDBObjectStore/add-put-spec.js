@@ -533,18 +533,18 @@
                     });
 
                     tx.oncomplete = function() {
-                        expect(save1.result).to.equal(1);
-                        expect(save2.result).to.equal('abc');
-                        expect(save3.result).to.equal(2);
-                        expect(save4.result).to.equal(99);
-                        expect(save5.result).to.equal(100);
+                        expect(save1.result).to.equal(1);       // Generated keys should always start at 1
+                        expect(save2.result).to.equal('abc');   // This key was explicitly specified
+                        expect(save3.result).to.be.above(1);    // Depending on the implementation, it might be 2 or 3
+                        expect(save4.result).to.equal(99);      // This key was explicitly specified
+                        expect(save5.result).to.be.above(2);    // Depending on the implementation, it might be 3, 5, or 100
 
                         expect(allData).to.have.same.deep.members([
-                            {key: 'abc', value: {id: 'abc', biz: 'baz'}},
-                            {key: 2, value: {id: 2, bat: 'bar'}},
-                            {key: 99, value: {id: 99, bar: 'foo'}},
                             {key: 1, value: {id: 1, foo: 'bar'}},
-                            {key: 100, value: {id: 100, baz: 'biz'}}
+                            {key: 'abc', value: {id: 'abc', biz: 'baz'}},
+                            {key: save3.result, value: {id: save3.result, bat: 'bar'}},
+                            {key: 99, value: {id: 99, bar: 'foo'}},
+                            {key: save5.result, value: {id: save5.result, baz: 'biz'}}
                         ]);
 
                         db.close();

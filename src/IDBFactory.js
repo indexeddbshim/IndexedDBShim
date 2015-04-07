@@ -27,8 +27,8 @@
 
     /**
      * The IndexedDB Method to create a new database and return the DB
-     * @param {Object} name
-     * @param {Object} version
+     * @param {string} name
+     * @param {number} version
      */
     IDBFactory.prototype.open = function(name, version) {
         var req = new idbModules.IDBOpenDBRequest();
@@ -80,7 +80,7 @@
                                     var e = idbModules.util.createEvent("upgradeneeded");
                                     e.oldVersion = oldVersion;
                                     e.newVersion = version;
-                                    req.transaction = req.result.__versionTransaction = new idbModules.IDBTransaction([], idbModules.IDBTransaction.VERSION_CHANGE, req.source);
+                                    req.transaction = req.result.__versionTransaction = new idbModules.IDBTransaction(req.source, [], idbModules.IDBTransaction.VERSION_CHANGE);
                                     req.transaction.__addToTransactionQueue(function onupgradeneeded(tx, args, success) {
                                         idbModules.util.callback("onupgradeneeded", req, e);
                                         success();
@@ -116,6 +116,11 @@
         return req;
     };
 
+    /**
+     * Deletes a database
+     * @param {string} name
+     * @returns {IDBOpenDBRequest}
+     */
     IDBFactory.prototype.deleteDatabase = function(name) {
         var req = new idbModules.IDBOpenDBRequest();
         var calledDBError = false;
@@ -192,6 +197,12 @@
         return req;
     };
 
+    /**
+     * Compares two keys
+     * @param key1
+     * @param key2
+     * @returns {number}
+     */
     IDBFactory.prototype.cmp = function(key1, key2) {
         return idbModules.Key.encodeKey(key1) > idbModules.Key.encodeKey(key2) ? 1 : key1 === key2 ? 0 : -1;
     };

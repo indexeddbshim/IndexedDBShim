@@ -98,7 +98,9 @@ describe('IDBIndex.count', function() {
     it('should return one if there is one record', function(done) {
         util.createDatabase('out-of-line', 'inline-index', function(err, db) {
             var tx = db.transaction('out-of-line', 'readwrite');
-            tx.onerror = done;
+            tx.onerror = function(evt) {
+                done(evt.target.error);
+            };
 
             var store = tx.objectStore('out-of-line');
             store.add({id: 'a'}, 12345);

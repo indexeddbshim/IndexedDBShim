@@ -4,19 +4,19 @@
     /**
      * The IndexedDB Cursor Object
      * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBCursor
-     * @param {Object} range
-     * @param {Object} direction
-     * @param {Object} idbObjectStore
-     * @param {Object} cursorRequest
+     * @param {IDBKeyRange} range
+     * @param {string} direction
+     * @param {IDBObjectStore} store
+     * @param {IDBRequest} cursorRequest
      */
-    function IDBCursor(range, direction, idbObjectStore, cursorRequest, keyColumnName, valueColumnName){
+    function IDBCursor(range, direction, store, cursorRequest, keyColumnName, valueColumnName){
         if (range && !(range instanceof idbModules.IDBKeyRange)) {
             range = new idbModules.IDBKeyRange(range, range, false, false);
         }
         this.__range = range;
-        this.source = this.__idbObjectStore = idbObjectStore;
         this.__req = cursorRequest;
 
+        this.source = store;
         this.key = undefined;
         this.direction = direction;
 
@@ -39,7 +39,7 @@
         recordsToLoad = recordsToLoad || 1;
 
         var me = this;
-        var sql = ["SELECT * FROM ", idbModules.util.quote(me.__idbObjectStore.name)];
+        var sql = ["SELECT * FROM ", idbModules.util.quote(me.source.name)];
         var sqlValues = [];
         sql.push("WHERE ", me.__keyColumnName, " NOT NULL");
         if (me.__range && (me.__range.lower !== undefined || me.__range.upper !== undefined )) {
@@ -103,7 +103,7 @@
         var recordsToPreloadOnContinue = idbModules.cursorPreloadPackSize || 100;
         var me = this;
 
-        this.__idbObjectStore.transaction.__addToTransactionQueue(function cursorContinue(tx, args, success, error) {
+        this.source.transaction.__addToTransactionQueue(function cursorContinue(tx, args, success, error) {
 
             me.__offset++;
 
@@ -133,7 +133,7 @@
             throw idbModules.util.createDOMException("Type Error", "Count is invalid - 0 or negative", count);
         }
         var me = this;
-        this.__idbObjectStore.transaction.__addToTransactionQueue(function cursorAdvance(tx, args, success, error){
+        this.source.transaction.__addToTransactionQueue(function cursorAdvance(tx, args, success, error){
             me.__offset += count;
             me.__find(undefined, tx, function(key, value){
                 me.key = key;
@@ -145,24 +145,22 @@
 
     IDBCursor.prototype.update = function(valueToUpdate){
         var me = this;
-        me.__idbObjectStore.transaction.__assertWritable();
-        var request = this.__idbObjectStore.transaction.__createRequest(function(){}); //Stub request
+        me.source.transaction.__assertWritable();
+        var request = this.source.transaction.__createRequest();
         idbModules.Sca.encode(valueToUpdate, function(encoded) {
-            me.__idbObjectStore.transaction.__pushToQueue(request, function cursorUpdate(tx, args, success, error){
+            me.source.transaction.__pushToQueue(request, function cursorUpdate(tx, args, success, error){
                 me.__find(undefined, tx, function(key, value, primaryKey){
-                    var store = me.__idbObjectStore,
-                        storeProperties = me.__idbObjectStore.transaction.db.__storeProperties;
+                    var store = me.source;
                     var params = [encoded];
                     var sql = "UPDATE " + idbModules.util.quote(store.name) + " SET value = ?";
-                    var indexList = storeProperties[store.name] && storeProperties[store.name].indexList;
+
                     // Also correct the indexes in the table
-                    if (indexList) {
-                        for (var index in indexList) {
-                            var indexProps = indexList[index];
-                            sql += ", " + index + " = ?";
-                            params.push(idbModules.Key.encode(valueToUpdate[indexProps.keyPath]));
-                        }
+                    for (var i = 0; i < store.indexNames.length; i++) {
+                        var index = store.__indexes[store.indexNames[i]];
+                        sql += ", " + index.name + " = ?";
+                        params.push(idbModules.Key.encode(idbModules.Key.getKeyPath(valueToUpdate, index.keyPath)));
                     }
+
                     sql += " WHERE key = ?";
                     params.push(idbModules.Key.encode(primaryKey));
 
@@ -186,10 +184,10 @@
 
     IDBCursor.prototype["delete"] = function(){
         var me = this;
-        me.__idbObjectStore.transaction.__assertWritable();
-        return this.__idbObjectStore.transaction.__addToTransactionQueue(function cursorDelete(tx, args, success, error){
+        me.source.transaction.__assertWritable();
+        return this.source.transaction.__addToTransactionQueue(function cursorDelete(tx, args, success, error){
             me.__find(undefined, tx, function(key, value, primaryKey){
-                var sql = "DELETE FROM  " + idbModules.util.quote(me.__idbObjectStore.name) + " WHERE key = ?";
+                var sql = "DELETE FROM  " + idbModules.util.quote(me.source.name) + " WHERE key = ?";
                 idbModules.DEBUG && console.log(sql, key, primaryKey);
                 tx.executeSql(sql, [idbModules.Key.encode(primaryKey)], function(tx, data){
                     me.__prefetchedData = null;
