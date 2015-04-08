@@ -28,6 +28,19 @@
     }
 
     /**
+     * Clones an IDBObjectStore instance for a different IDBTransaction instance.
+     * @param {IDBObjectStore} store
+     * @param {IDBTransaction} transaction
+     * @protected
+     */
+    IDBObjectStore.__clone = function(store, transaction) {
+        var newStore = new IDBObjectStore({name: store.name, keyPath: store.keyPath, autoInc: store.autoIncrement, indexList: {}}, transaction);
+        newStore.__indexes = store.__indexes;
+        newStore.indexNames = store.indexNames;
+        return newStore;
+    };
+
+    /**
      * Creates a new object store in the database.
      * @param {IDBDatabase} db
      * @param {IDBObjectStore} store
@@ -374,7 +387,8 @@
         if (!index) {
             throw idbModules.util.createDOMException("NotFoundError", "Index \"" + indexName + "\" does not exist on " + this.name);
         }
-        return index;
+
+        return idbModules.IDBIndex.__clone(index, this);
     };
 
     /**

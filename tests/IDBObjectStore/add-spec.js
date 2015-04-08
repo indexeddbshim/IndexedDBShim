@@ -60,6 +60,47 @@ describe('IDBObjectStore.add', function() {
         });
     });
 
+    it('should throw an error if an out-of-line key conflict occurs in simultaneous transactions', function(done) {
+        util.createDatabase('out-of-line', function(err, db) {
+            var tx1 = db.transaction('out-of-line', 'readwrite');
+            var tx2 = db.transaction('out-of-line', 'readwrite');
+            var tx3 = db.transaction('out-of-line', 'readwrite');
+
+            var store1 = tx1.objectStore('out-of-line');
+            var store2 = tx2.objectStore('out-of-line');
+            var store3 = tx3.objectStore('out-of-line');
+
+            var save1 = store1.add({foo: 'one'}, 1);
+            var save2 = store2.add({foo: 'two'}, 1);
+            var save3 = store3.add({foo: 'three'}, 1);
+
+            tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy();
+            tx1.onerror = tx2.onerror = tx3.onerror = sinon.spy();
+
+            tx1.onabort = tx2.onabort = tx3.onabort = sinon.spy(function() {
+                if (tx1.oncomplete.calledOnce && tx1.onerror.calledTwice) {
+                    expect(save1.result).to.equal(1);
+                    expect(save2.result).not.to.be.ok;
+                    expect(save3.result).not.to.be.ok;
+
+                    expect(save2.error.name).to.equal('ConstraintError');
+                    expect(save3.error.name).to.equal('ConstraintError');
+
+                    if (!env.browser.isSafari) {
+                        expect(save2.result).to.be.undefined;   // Safari uses null
+                        expect(save3.result).to.be.undefined;   // Safari uses null
+
+                        expect(save2.error).to.be.an.instanceOf(env.DOMError);     // Safari's DOMError is private
+                        expect(save3.error).to.be.an.instanceOf(env.DOMError);     // Safari's DOMError is private
+                    }
+
+                    db.close();
+                    done();
+                }
+            });
+        });
+    });
+
     it('should throw an error if a generated out-of-line key already exists', function(done) {
         util.createDatabase('out-of-line-generated', function(err, db) {
             var tx = db.transaction('out-of-line-generated', 'readwrite');
@@ -145,6 +186,47 @@ describe('IDBObjectStore.add', function() {
                 db.close();
                 done();
             };
+        });
+    });
+
+    it('should throw an error if an inline key conflict occurs in simultaneous transactions', function(done) {
+        util.createDatabase('inline', function(err, db) {
+            var tx1 = db.transaction('inline', 'readwrite');
+            var tx2 = db.transaction('inline', 'readwrite');
+            var tx3 = db.transaction('inline', 'readwrite');
+
+            var store1 = tx1.objectStore('inline');
+            var store2 = tx2.objectStore('inline');
+            var store3 = tx3.objectStore('inline');
+
+            var save1 = store1.add({id: 1});
+            var save2 = store2.add({id: 1});
+            var save3 = store3.add({id: 1});
+
+            tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy();
+            tx1.onerror = tx2.onerror = tx3.onerror = sinon.spy();
+
+            tx1.onabort = tx2.onabort = tx3.onabort = sinon.spy(function() {
+                if (tx1.oncomplete.calledOnce && tx1.onerror.calledTwice) {
+                    expect(save1.result).to.equal(1);
+                    expect(save2.result).not.to.be.ok;
+                    expect(save3.result).not.to.be.ok;
+
+                    expect(save2.error.name).to.equal('ConstraintError');
+                    expect(save3.error.name).to.equal('ConstraintError');
+
+                    if (!env.browser.isSafari) {
+                        expect(save2.result).to.be.undefined;   // Safari uses null
+                        expect(save3.result).to.be.undefined;   // Safari uses null
+
+                        expect(save2.error).to.be.an.instanceOf(env.DOMError);     // Safari's DOMError is private
+                        expect(save3.error).to.be.an.instanceOf(env.DOMError);     // Safari's DOMError is private
+                    }
+
+                    db.close();
+                    done();
+                }
+            });
         });
     });
 

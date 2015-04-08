@@ -1,6 +1,7 @@
 /*jshint globalstrict: true*/
 'use strict';
 (function(idbModules) {
+    var uniqueID = 0;
 
     /**
      * The IndexedDB Transaction
@@ -11,6 +12,7 @@
      * @constructor
      */
     function IDBTransaction(db, storeNames, mode) {
+        this.__id = ++uniqueID; // for debugging simultaneous transactions
         this.__active = true;
         this.__running = false;
         this.__requests = [];
@@ -60,6 +62,7 @@
                         // Fire an error event for the current IDBRequest
                         q.req.readyState = "done";
                         q.req.error = err || "DOMError";
+                        q.req.result = undefined;
                         var e = idbModules.util.createEvent("error", err);
                         idbModules.util.callback("onerror", q.req, e);
                     }
@@ -199,8 +202,7 @@
             throw idbModules.util.createDOMException("NotFoundError", objectStoreName + " does not exist in " + this.db.name);
         }
 
-        store.transaction = this;
-        return store;
+        return idbModules.IDBObjectStore.__clone(store, this);
     };
 
     IDBTransaction.prototype.abort = function() {

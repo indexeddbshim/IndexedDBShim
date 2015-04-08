@@ -448,6 +448,82 @@
                     done();
                 });
             });
+
+            it('should save out-of-line keys in multiple simultaneous transactions', function(done) {
+                util.createDatabase('out-of-line', function(err, db) {
+                    var tx1 = db.transaction('out-of-line', 'readwrite');
+                    var tx2 = db.transaction('out-of-line', 'readwrite');
+                    var tx3 = db.transaction('out-of-line', 'readwrite');
+
+                    var store1 = tx1.objectStore('out-of-line');
+                    var store2 = tx2.objectStore('out-of-line');
+                    var store3 = tx3.objectStore('out-of-line');
+
+                    var save1 = store1[save]({foo: 'one'}, 1);
+                    var save2 = store2[save]({foo: 'two'}, 2);
+                    var save3 = store3[save]({foo: 'three'}, 3);
+
+                    var allData;
+                    util.getAll(store3, function(err, data) {
+                        allData = data;
+                    });
+
+                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function() {
+                        if (tx1.oncomplete.calledThrice) {
+                            expect(save1.result).to.equal(1);
+                            expect(save2.result).to.equal(2);
+                            expect(save3.result).to.equal(3);
+
+                            expect(allData).to.have.same.deep.members([
+                                {key: 1, value: {foo: 'one'}},
+                                {key: 2, value: {foo: 'two'}},
+                                {key: 3, value: {foo: 'three'}}
+                            ]);
+
+                            db.close();
+                            done();
+                        }
+                    });
+                });
+            });
+
+            it('should save generated out-of-line keys in multiple simultaneous transactions', function(done) {
+                util.createDatabase('out-of-line-generated', function(err, db) {
+                    var tx1 = db.transaction('out-of-line-generated', 'readwrite');
+                    var tx2 = db.transaction('out-of-line-generated', 'readwrite');
+                    var tx3 = db.transaction('out-of-line-generated', 'readwrite');
+
+                    var store1 = tx1.objectStore('out-of-line-generated');
+                    var store2 = tx2.objectStore('out-of-line-generated');
+                    var store3 = tx3.objectStore('out-of-line-generated');
+
+                    var save1 = store1[save]({foo: 'one'});
+                    var save2 = store2[save]({foo: 'two'});
+                    var save3 = store3[save]({foo: 'three'});
+
+                    var allData;
+                    util.getAll(store3, function(err, data) {
+                        allData = data;
+                    });
+
+                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function() {
+                        if (tx1.oncomplete.calledThrice) {
+                            expect(save1.result).to.equal(1);
+                            expect(save2.result).to.equal(2);
+                            expect(save3.result).to.equal(3);
+
+                            expect(allData).to.have.same.deep.members([
+                                {key: 1, value: {foo: 'one'}},
+                                {key: 2, value: {foo: 'two'}},
+                                {key: 3, value: {foo: 'three'}}
+                            ]);
+
+                            db.close();
+                            done();
+                        }
+                    });
+                });
+            });
         });
 
         describe('inline keys', function() {
@@ -778,6 +854,82 @@
                     done();
                 });
             });
+
+            it('should save inline keys in multiple simultaneous transactions', function(done) {
+                util.createDatabase('inline', function(err, db) {
+                    var tx1 = db.transaction('inline', 'readwrite');
+                    var tx2 = db.transaction('inline', 'readwrite');
+                    var tx3 = db.transaction('inline', 'readwrite');
+
+                    var store1 = tx1.objectStore('inline');
+                    var store2 = tx2.objectStore('inline');
+                    var store3 = tx3.objectStore('inline');
+
+                    var save1 = store1[save]({id: 'one'});
+                    var save2 = store2[save]({id: 'two'});
+                    var save3 = store3[save]({id: 'three'});
+
+                    var allData;
+                    util.getAll(store3, function(err, data) {
+                        allData = data;
+                    });
+
+                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function() {
+                        if (tx1.oncomplete.calledThrice) {
+                            expect(save1.result).to.equal('one');
+                            expect(save2.result).to.equal('two');
+                            expect(save3.result).to.equal('three');
+
+                            expect(allData).to.have.same.deep.members([
+                                {key: 'one', value: {id: 'one'}},
+                                {key: 'two', value: {id: 'two'}},
+                                {key: 'three', value: {id: 'three'}}
+                            ]);
+
+                            db.close();
+                            done();
+                        }
+                    });
+                });
+            });
+
+            it('should save generated inline keys in multiple simultaneous transactions', function(done) {
+                util.createDatabase('inline-generated', function(err, db) {
+                    var tx1 = db.transaction('inline-generated', 'readwrite');
+                    var tx2 = db.transaction('inline-generated', 'readwrite');
+                    var tx3 = db.transaction('inline-generated', 'readwrite');
+
+                    var store1 = tx1.objectStore('inline-generated');
+                    var store2 = tx2.objectStore('inline-generated');
+                    var store3 = tx3.objectStore('inline-generated');
+
+                    var save1 = store1[save]({foo: 'one'});
+                    var save2 = store2[save]({foo: 'two'});
+                    var save3 = store3[save]({foo: 'three'});
+
+                    var allData;
+                    util.getAll(store3, function(err, data) {
+                        allData = data;
+                    });
+
+                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function() {
+                        if (tx1.oncomplete.calledThrice) {
+                            expect(save1.result).to.equal(1);
+                            expect(save2.result).to.equal(2);
+                            expect(save3.result).to.equal(3);
+
+                            expect(allData).to.have.same.deep.members([
+                                {key: 1, value: {id: 1, foo: 'one'}},
+                                {key: 2, value: {id: 2, foo: 'two'}},
+                                {key: 3, value: {id: 3, foo: 'three'}}
+                            ]);
+
+                            db.close();
+                            done();
+                        }
+                    });
+                });
+            });
         });
 
         describe('dotted keys', function() {
@@ -836,6 +988,82 @@
                         db.close();
                         done();
                     };
+                });
+            });
+
+            it('should save dotted keys in multiple simultaneous transactions', function(done) {
+                util.createDatabase('dotted', function(err, db) {
+                    var tx1 = db.transaction('dotted', 'readwrite');
+                    var tx2 = db.transaction('dotted', 'readwrite');
+                    var tx3 = db.transaction('dotted', 'readwrite');
+
+                    var store1 = tx1.objectStore('dotted');
+                    var store2 = tx2.objectStore('dotted');
+                    var store3 = tx3.objectStore('dotted');
+
+                    var save1 = store1[save]({name: {first: 'John'}});
+                    var save2 = store2[save]({name: {first: 'Sarah'}});
+                    var save3 = store3[save]({name: {first: 'Bob'}});
+
+                    var allData;
+                    util.getAll(store3, function(err, data) {
+                        allData = data;
+                    });
+
+                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function() {
+                        if (tx1.oncomplete.calledThrice) {
+                            expect(save1.result).to.equal('John');
+                            expect(save2.result).to.equal('Sarah');
+                            expect(save3.result).to.equal('Bob');
+
+                            expect(allData).to.have.same.deep.members([
+                                {key: 'John', value: {name: {first: 'John'}}},
+                                {key: 'Sarah', value: {name: {first: 'Sarah'}}},
+                                {key: 'Bob', value: {name: {first: 'Bob'}}}
+                            ]);
+
+                            db.close();
+                            done();
+                        }
+                    });
+                });
+            });
+
+            it('should save generated dotted keys in multiple simultaneous transactions', function(done) {
+                util.createDatabase('dotted-generated', function(err, db) {
+                    var tx1 = db.transaction('dotted-generated', 'readwrite');
+                    var tx2 = db.transaction('dotted-generated', 'readwrite');
+                    var tx3 = db.transaction('dotted-generated', 'readwrite');
+
+                    var store1 = tx1.objectStore('dotted-generated');
+                    var store2 = tx2.objectStore('dotted-generated');
+                    var store3 = tx3.objectStore('dotted-generated');
+
+                    var save1 = store1[save]({foo: 'one'});
+                    var save2 = store2[save]({foo: 'two'});
+                    var save3 = store3[save]({foo: 'three'});
+
+                    var allData;
+                    util.getAll(store3, function(err, data) {
+                        allData = data;
+                    });
+
+                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function() {
+                        if (tx1.oncomplete.calledThrice) {
+                            expect(save1.result).to.equal(1);
+                            expect(save2.result).to.equal(2);
+                            expect(save3.result).to.equal(3);
+
+                            expect(allData).to.have.same.deep.members([
+                                {key: 1, value: {name: {first: 1}, foo: 'one'}},
+                                {key: 2, value: {name: {first: 2}, foo: 'two'}},
+                                {key: 3, value: {name: {first: 3}, foo: 'three'}}
+                            ]);
+
+                            db.close();
+                            done();
+                        }
+                    });
                 });
             });
         });
@@ -1073,6 +1301,94 @@
 
                     db.close();
                     done();
+                });
+            });
+
+            it('should save compound inline keys in multiple simultaneous transactions', function(done) {
+                if (env.browser.isIE) {
+                    // BUG: IE does not support compound keys at all
+                    console.error('Skipping test: ' + this.test.title);
+                    return done();
+                }
+
+                util.createDatabase('inline-compound', function(err, db) {
+                    var tx1 = db.transaction('inline-compound', 'readwrite');
+                    var tx2 = db.transaction('inline-compound', 'readwrite');
+                    var tx3 = db.transaction('inline-compound', 'readwrite');
+
+                    var store1 = tx1.objectStore('inline-compound');
+                    var store2 = tx2.objectStore('inline-compound');
+                    var store3 = tx3.objectStore('inline-compound');
+
+                    var save1 = store1[save]({id: 1, name: 'John'});
+                    var save2 = store2[save]({id: 2, name: 'Sarah'});
+                    var save3 = store3[save]({id: 3, name: 'Bob'});
+
+                    var allData;
+                    util.getAll(store3, function(err, data) {
+                        allData = data;
+                    });
+
+                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function() {
+                        if (tx1.oncomplete.calledThrice) {
+                            expect(save1.result).to.deep.equal([1, 'John']);
+                            expect(save2.result).to.deep.equal([2, 'Sarah']);
+                            expect(save3.result).to.deep.equal([3, 'Bob']);
+
+                            expect(allData).to.have.same.deep.members([
+                                {key: [1, 'John'], value: {id: 1, name: 'John'}},
+                                {key: [2, 'Sarah'], value: {id: 2, name: 'Sarah'}},
+                                {key: [3, 'Bob'], value: {id: 3, name: 'Bob'}}
+                            ]);
+
+                            db.close();
+                            done();
+                        }
+                    });
+                });
+            });
+
+            it('should save compound out-of-line keys in multiple simultaneous transactions', function(done) {
+                if (env.browser.isIE) {
+                    // BUG: IE does not support compound keys at all
+                    console.error('Skipping test: ' + this.test.title);
+                    return done();
+                }
+
+                util.createDatabase('out-of-line', function(err, db) {
+                    var tx1 = db.transaction('out-of-line', 'readwrite');
+                    var tx2 = db.transaction('out-of-line', 'readwrite');
+                    var tx3 = db.transaction('out-of-line', 'readwrite');
+
+                    var store1 = tx1.objectStore('out-of-line');
+                    var store2 = tx2.objectStore('out-of-line');
+                    var store3 = tx3.objectStore('out-of-line');
+
+                    var save1 = store1[save]({foo: 'one'}, [1, 'b', 3]);
+                    var save2 = store2[save]({foo: 'two'}, [2, 'b', 3]);
+                    var save3 = store3[save]({foo: 'three'}, [3, 'b', 3]);
+
+                    var allData;
+                    util.getAll(store3, function(err, data) {
+                        allData = data;
+                    });
+
+                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function() {
+                        if (tx1.oncomplete.calledThrice) {
+                            expect(save1.result).to.deep.equal([1,'b',3]);
+                            expect(save2.result).to.deep.equal([2,'b',3]);
+                            expect(save3.result).to.deep.equal([3,'b',3]);
+
+                            expect(allData).to.have.same.deep.members([
+                                {key: [1,'b',3], value: {foo: 'one'}},
+                                {key: [2,'b',3], value: {foo: 'two'}},
+                                {key: [3,'b',3], value: {foo: 'three'}}
+                            ]);
+
+                            db.close();
+                            done();
+                        }
+                    });
                 });
             });
         });

@@ -17,6 +17,16 @@
     }
 
     /**
+     * Clones an IDBIndex instance for a different IDBObjectStore instance.
+     * @param {IDBIndex} index
+     * @param {IDBObjectStore} store
+     * @protected
+     */
+    IDBIndex.__clone = function(index, store) {
+        return new IDBIndex(store, {columnName: index.name, keyPath: index.keyPath, optionalParams: {multiEntry: index.multiEntry, unique: index.unique}});
+    };
+
+    /**
      * Creates a new index on an object store.
      * @param {IDBObjectStore} store
      * @param {IDBIndex} index

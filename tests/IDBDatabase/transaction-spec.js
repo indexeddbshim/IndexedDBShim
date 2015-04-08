@@ -118,6 +118,29 @@ describe('IDBDatabase.transaction', function() {
                 };
             });
         });
+
+        it('should allow simultaneous transaction', function(done) {
+            util.createDatabase('out-of-line-generated', function(err, db) {
+                var tx1 = db.transaction('out-of-line-generated', 'readwrite');
+                var tx2 = db.transaction('out-of-line-generated', 'readwrite');
+                var tx3 = db.transaction('out-of-line-generated', 'readwrite');
+
+                var store1 = tx1.objectStore('out-of-line-generated');
+                var store2 = tx2.objectStore('out-of-line-generated');
+                var store3 = tx3.objectStore('out-of-line-generated');
+
+                expect(store1.transaction).to.equal(tx1);
+                expect(store2.transaction).to.equal(tx2);
+                expect(store3.transaction).to.equal(tx3);
+
+                tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function() {
+                    if (tx1.oncomplete.calledThrice) {
+                        db.close();
+                        done();
+                    }
+                });
+            });
+        });
     });
 
     describe('failure tests', function() {
