@@ -52,10 +52,7 @@
                 failure(idbModules.util.createDOMException(0, "Could not create index \"" + index.name + "\"", err));
             }
 
-            // For this index, first create a column
-            var sql = ["ALTER TABLE", idbModules.util.quote(store.name), "ADD", idbModules.util.quote(index.name), "BLOB"].join(" ");
-            idbModules.DEBUG && console.log(sql);
-            tx.executeSql(sql, [], function(tx, data) {
+            function applyIndex(tx) {
                 // Once a column is created, put existing records into the index
                 tx.executeSql("SELECT * FROM " + idbModules.util.quote(store.name), [], function(tx, data) {
                     idbModules.DEBUG && console.log("Adding existing " + store.name + " records to the " + index.name + " index");
@@ -105,7 +102,12 @@
                         }, error);
                     }
                 }, error);
-            }, error);
+            }
+
+            // For this index, first create a column then update existing data
+            var sql = ["ALTER TABLE", idbModules.util.quote(store.name), "ADD", idbModules.util.quote(index.name), "BLOB"].join(" ");
+            idbModules.DEBUG && console.log(sql);
+            tx.executeSql(sql, [], applyIndex, error);
         });
     };
 
