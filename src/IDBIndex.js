@@ -14,6 +14,7 @@
         this.keyPath = indexProperties.keyPath;
         this.multiEntry = indexProperties.optionalParams && indexProperties.optionalParams.multiEntry;
         this.unique = indexProperties.optionalParams && indexProperties.optionalParams.unique;
+        this.__deleted = !!indexProperties.__deleted;
     }
 
     /**
@@ -41,8 +42,11 @@
      * @protected
      */
     IDBIndex.__createIndex = function(store, index) {
+        var columnExists = !!store.__indexes[index.name] && store.__indexes[index.name].__deleted;
+
         // Add the index to the IDBObjectStore
         store.__indexes[index.name] = index;
+        store.__indexes[index.name].__deleted = false;
         store.indexNames.push(index.name);
 
         // Create the index in WebSQL
@@ -82,10 +86,15 @@
                 }, error);
             }
 
-            // For this index, first create a column then update existing data
-            var sql = ["ALTER TABLE", idbModules.util.quote(store.name), "ADD", idbModules.util.quote(index.name), "BLOB"].join(" ");
-            idbModules.DEBUG && console.log(sql);
-            tx.executeSql(sql, [], applyIndex, error);
+            if (columnExists) {
+                // For a previously existing index, just update existing data
+                applyIndex(tx);
+            } else {
+                // For a new index, first create a column then update existing data
+                var sql = ["ALTER TABLE", idbModules.util.quote(store.name), "ADD", idbModules.util.quote(index.name), "BLOB"].join(" ");
+                idbModules.DEBUG && console.log(sql);
+                tx.executeSql(sql, [], applyIndex, error);
+            }
         });
     };
 
@@ -97,7 +106,7 @@
      */
     IDBIndex.__deleteIndex = function(store, index) {
         // Remove the index from the IDBObjectStore
-        store.__indexes[index.name] = undefined;
+        store.__indexes[index.name].__deleted = true;
         store.indexNames.splice(store.indexNames.indexOf(index.name), 1);
 
         // TODO: Remove the index from WebSQL

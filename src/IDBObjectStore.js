@@ -22,7 +22,9 @@
             if (indexList.hasOwnProperty(indexName)) {
                 var index = new idbModules.IDBIndex(this, indexList[indexName]);
                 this.__indexes[index.name] = index;
-                this.indexNames.push(index.name);
+                if (!index.__deleted) {
+                    this.indexNames.push(index.name);
+                }
             }
         }
     }
@@ -414,7 +416,7 @@
         if (arguments.length === 1) {
             throw new TypeError("No key path was specified");
         }
-        if (this.__indexes[indexName]) {
+        if (this.__indexes[indexName] && !this.__indexes[indexName].__deleted) {
             throw idbModules.util.createDOMException("ConstraintError", "Index \"" + indexName + "\" already exists on " + this.name);
         }
         this.transaction.__assertVersionChange();
