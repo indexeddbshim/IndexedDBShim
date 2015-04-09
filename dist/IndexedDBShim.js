@@ -1225,7 +1225,7 @@ var cleanInterface = false;                 // jshint ignore:line
     function IDBObjectStore(storeProperties, transaction) {
         this.name = storeProperties.name;
         this.keyPath = storeProperties.keyPath || null;
-        this.autoIncrement = !!storeProperties.autoInc;
+        this.autoIncrement = typeof storeProperties.autoInc === "string" ? storeProperties.autoInc === "true" : !!storeProperties.autoInc;
         this.transaction = transaction;
 
         this.__indexes = {};
