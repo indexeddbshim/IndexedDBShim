@@ -525,15 +525,30 @@ var cleanInterface = false;                 // jshint ignore:line
     }
 
     /**
-     * Returns the inline key value
+     * Safely evaluates a primitive key value
      */
-    function getKeyPath(value, keyPath) {
+    function evalKeyPath(value, keyPath) {
         try {
             return eval("value." + keyPath);
         }
         catch (e) {
             return undefined;
         }
+    }
+
+    /**
+     * Returns the inline key value
+     */
+    function getKeyPath(value, keyPath) {
+      if (keyPath instanceof Array) {
+        var arrayValue = [];
+        for (var i = 0; i < keyPath.length; i++) {
+            arrayValue.push(evalKeyPath(value, keyPath[i]));
+        }
+        return arrayValue;
+      } else {
+        return evalKeyPath(value, keyPath);
+      }
     }
 
     /**
