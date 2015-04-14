@@ -16,13 +16,13 @@ module.exports = function(grunt) {
 		uglify: {
 			options: {
 				banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
-				sourceMap: 'dist/<%=pkg.name%>.min.map',
+				sourceMap: 'dist/<%=pkg.name%>.min.js.map',
 				sourceMapRoot: 'http://nparashuram.com/IndexedDBShim/',
-				sourceMappingURL: 'http://nparashuram.com/IndexedDBShim/dist/<%=pkg.name%>.min.map'
+				sourceMappingURL: 'http://nparashuram.com/IndexedDBShim/dist/<%=pkg.name%>.min.js.map'
 			},
 			all: {
 				src: srcFiles,
-				dest: 'dist/<%=pkg.name%>.min.js',
+				dest: 'dist/<%=pkg.name%>.min.js'
 			}
 		},
 		connect: {
