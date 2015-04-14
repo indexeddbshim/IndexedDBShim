@@ -25,12 +25,13 @@
                 // Open the database
                 var open = env.indexedDB.open(dbName, 1);
 
-                open.onerror = open.onblocked = function() {
-                    done(open.error);
+                open.onerror = open.onblocked = function(event) {
+                    done(event.target.error);
                 };
 
                 // Add the specified schema items
                 open.onupgradeneeded = function() {
+                    open.transaction.onerror = open.onerror;
                     schema.forEach(function(schemaItem) {
                         createSchemaItem(open.transaction, schemaItem);
                     });
@@ -63,7 +64,7 @@
                     var cursor = open.result;
                     if (cursor) {
                         var key = cursor.key;
-                        if (env.browser.isSafari && key instanceof Array) {
+                        if (env.isNative && env.browser.isSafari && key instanceof Array) {
                             // BUG: Safari has a bug with compound-key cursors
                             key.splice(0, safariKeyOffset);
                             safariKeyOffset += key.length;
@@ -242,12 +243,6 @@
                 break;
             case 'compound-index-unique':
                 createIndex(schemaItem, ['id', 'name.first', 'name.last'], {unique: true});
-                break;
-            case 'compound-index-multi':
-                createIndex(schemaItem, ['id', 'name.first', 'name.last'], {multiEntry: true});
-                break;
-            case 'compound-index-unique-multi':
-                createIndex(schemaItem, ['id', 'name.first', 'name.last'], {unique: true, multiEntry: true});
                 break;
             default:
                 throw new Error(schemaItem + ' is not one of the pre-defined schema items');

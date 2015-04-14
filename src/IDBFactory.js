@@ -131,14 +131,17 @@
         }
         name = name + ''; // cast to a string
 
-        function dbError(msg) {
+        function dbError(tx, err) {
             if (calledDBError) {
                 return;
             }
+            if (arguments.length === 1) {
+                err = tx;
+            }
+
             req.readyState = "done";
-            req.error = "DOMError";
+            req.error = err || "DOMError";
             var e = idbModules.util.createEvent("error");
-            e.message = msg;
             e.debug = arguments;
             idbModules.util.callback("onerror", req, e);
             calledDBError = true;
@@ -204,7 +207,39 @@
      * @returns {number}
      */
     IDBFactory.prototype.cmp = function(key1, key2) {
-        return idbModules.Key.encodeKey(key1) > idbModules.Key.encodeKey(key2) ? 1 : key1 === key2 ? 0 : -1;
+        if (arguments.length < 2) {
+            throw new TypeError("You must provide two keys to be compared");
+        }
+
+        idbModules.Key.validate(key1);
+        idbModules.Key.validate(key2);
+        var encodedKey1 = idbModules.Key.encode(key1);
+        var encodedKey2 = idbModules.Key.encode(key2);
+        var result = encodedKey1 > encodedKey2 ? 1 : encodedKey1 === encodedKey2 ? 0 : -1;
+        
+        if (idbModules.DEBUG) {
+            // verify that the keys encoded correctly
+            var decodedKey1 = idbModules.Key.decode(encodedKey1);
+            var decodedKey2 = idbModules.Key.decode(encodedKey2);
+            if (typeof key1 === "object") {
+                key1 = JSON.stringify(key1);
+                decodedKey1 = JSON.stringify(decodedKey1);
+            }
+            if (typeof key2 === "object") {
+                key2 = JSON.stringify(key2);
+                decodedKey2 = JSON.stringify(decodedKey2);
+            }
+
+            // encoding/decoding mismatches are usually due to a loss of floating-point precision
+            if (decodedKey1 !== key1) {
+                console.warn(key1 + ' was incorrectly encoded as ' + decodedKey1);
+            }
+            if (decodedKey2 !== key2) {
+                console.warn(key2 + ' was incorrectly encoded as ' + decodedKey2);
+            }
+        }
+        
+        return result;
     };
 
 

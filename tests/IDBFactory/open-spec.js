@@ -119,7 +119,7 @@ describe('IDBFactory.open', function() {
 
                     expect(db.version).to.equal(1);
                     expect(event.newVersion).to.equal(1);
-                    if (!env.browser.isSafari) {
+                    if (env.isShimmed || !env.browser.isSafari) {
                         expect(event.oldVersion).to.equal(0);   // BUG: Safari equals Number.MAX_VALUE
                     }
                 });
@@ -140,7 +140,7 @@ describe('IDBFactory.open', function() {
                 open.onupgradeneeded = sinon.spy(function(event) {
                     var db = event.target.result;
                     expect(db.version).to.equal(1);
-                    if (!env.browser.isSafari) {
+                    if (env.isShimmed || !env.browser.isSafari) {
                         expect(event.newVersion).to.equal(1);   // BUG: Safari equals null
                         expect(event.oldVersion).to.equal(0);   // BUG: Safari equals Number.MAX_VALUE
                     }
@@ -166,7 +166,7 @@ describe('IDBFactory.open', function() {
                         var db = event.target.result;
                         expect(db.version).to.equal(1);
                         expect(event.newVersion).to.equal(1);
-                        if (!env.browser.isSafari) {
+                        if (env.isShimmed || !env.browser.isSafari) {
                             expect(event.oldVersion).to.equal(0);
                         }
                     });
@@ -211,7 +211,7 @@ describe('IDBFactory.open', function() {
                         var db = event.target.result;
                         expect(db.version).to.equal(1);
                         expect(event.newVersion).to.equal(1);
-                        if (!env.browser.isSafari) {
+                        if (env.isShimmed || !env.browser.isSafari) {
                             expect(event.oldVersion).to.equal(0);
                         }
                     });
@@ -274,7 +274,7 @@ describe('IDBFactory.open', function() {
                         var db = event.target.result;
                         expect(db.version).to.equal(1);
                         expect(event.newVersion).to.equal(1);
-                        if (!env.browser.isSafari) {
+                        if (env.isShimmed || !env.browser.isSafari) {
                             expect(event.oldVersion).to.equal(0);
                         }
                     });
@@ -334,7 +334,7 @@ describe('IDBFactory.open', function() {
                         sinon.assert.notCalled(open.onsuccess);
                         sinon.assert.notCalled(open.onblocked);
 
-                        if (!env.browser.isSafari) {
+                        if (env.isShimmed || !env.browser.isSafari) {
                             expect(open.error).to.be.an.instanceOf(env.DOMError);   // Safari's DOMError is private
                         }
                         expect(open.error.name).to.equal('VersionError');
@@ -367,7 +367,7 @@ describe('IDBFactory.open', function() {
             tryToOpen(NaN);
             tryToOpen(/^regex$/);
 
-            if (!env.browser.isFirefox) {
+            if (env.isShimmed || !env.browser.isFirefox) {
                 tryToOpen(undefined);
                 tryToOpen(null);
                 tryToOpen({foo: 'bar'});
@@ -386,7 +386,7 @@ describe('IDBFactory.open', function() {
                 }
 
                 expect(err).to.be.an('object');
-                if (!env.browser.isIE) {
+                if (env.isShimmed || !env.browser.isIE) {
                     expect(err).to.be.an.instanceOf(TypeError); // IE throws a DOMException
                     expect(err.name).to.equal('TypeError');
                 }

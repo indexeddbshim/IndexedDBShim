@@ -46,11 +46,13 @@
             sql.push("AND");
             if (me.__range.lower !== undefined) {
                 sql.push(me.__keyColumnName + (me.__range.lowerOpen ? " >" : " >= ") + " ?");
+                idbModules.Key.validate(me.__range.lower);
                 sqlValues.push(idbModules.Key.encode(me.__range.lower));
             }
             (me.__range.lower !== undefined && me.__range.upper !== undefined) && sql.push("AND");
             if (me.__range.upper !== undefined) {
                 sql.push(me.__keyColumnName + (me.__range.upperOpen ? " < " : " <= ") + " ?");
+                idbModules.Key.validate(me.__range.upper);
                 sqlValues.push(idbModules.Key.encode(me.__range.upper));
             }
         }
@@ -60,6 +62,7 @@
         }
         if (me.__lastKeyContinued !== undefined) {
             sql.push("AND " + me.__keyColumnName + " >= ?");
+            idbModules.Key.validate(me.__lastKeyContinued);
             sqlValues.push(idbModules.Key.encode(me.__lastKeyContinued));
         }
 
@@ -153,12 +156,14 @@
                     var store = me.source;
                     var params = [encoded];
                     var sql = "UPDATE " + idbModules.util.quote(store.name) + " SET value = ?";
+                    idbModules.Key.validate(primaryKey);
 
                     // Also correct the indexes in the table
                     for (var i = 0; i < store.indexNames.length; i++) {
                         var index = store.__indexes[store.indexNames[i]];
+                        var indexKey = idbModules.Key.getValue(valueToUpdate, index.keyPath);
                         sql += ", " + index.name + " = ?";
-                        params.push(idbModules.Key.encode(idbModules.Key.getKeyPath(valueToUpdate, index.keyPath)));
+                        params.push(idbModules.Key.encode(indexKey, index.multiEntry));
                     }
 
                     sql += " WHERE key = ?";
@@ -189,6 +194,7 @@
             me.__find(undefined, tx, function(key, value, primaryKey){
                 var sql = "DELETE FROM  " + idbModules.util.quote(me.source.name) + " WHERE key = ?";
                 idbModules.DEBUG && console.log(sql, key, primaryKey);
+                idbModules.Key.validate(primaryKey);
                 tx.executeSql(sql, [idbModules.Key.encode(primaryKey)], function(tx, data){
                     me.__prefetchedData = null;
                     if (data.rowsAffected === 1) {

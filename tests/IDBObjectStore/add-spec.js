@@ -5,7 +5,7 @@ describe('IDBObjectStore.add', function() {
     beforeEach(function() {
         onerror = window.onerror;
 
-        if (env.browser.isFirefox) {
+        if (env.isNative && env.browser.isFirefox) {
             // Firefox throws a global error when a transaction fails.
             // Catch the error and stop it from propagating
             window.onerror = function() { return true; };
@@ -18,6 +18,11 @@ describe('IDBObjectStore.add', function() {
     });
 
     it('should throw an error if an out-of-line key already exists', function(done) {
+        if (env.browser.isIE && env.browser.isMobile) {
+            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
+            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
+        }
+
         util.createDatabase('out-of-line', function(err, db) {
             window.onerror = function() {
                 return true;
@@ -49,7 +54,7 @@ describe('IDBObjectStore.add', function() {
                 sinon.assert.notCalled(tx.oncomplete);
                 sinon.assert.called(tx.onerror);
 
-                if (!env.browser.isSafari) {
+                if (env.isShimmed || !env.browser.isSafari) {
                     expect(add2.error).to.be.an.instanceOf(env.DOMError);   // Safari's DOMError is private
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
@@ -61,6 +66,11 @@ describe('IDBObjectStore.add', function() {
     });
 
     it('should throw an error if an out-of-line key conflict occurs in simultaneous transactions', function(done) {
+        if (env.browser.isIE && env.browser.isMobile) {
+            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
+            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
+        }
+
         util.createDatabase('out-of-line', function(err, db) {
             var tx1 = db.transaction('out-of-line', 'readwrite');
             var tx2 = db.transaction('out-of-line', 'readwrite');
@@ -78,7 +88,7 @@ describe('IDBObjectStore.add', function() {
             tx1.onerror = tx2.onerror = tx3.onerror = sinon.spy();
 
             tx1.onabort = tx2.onabort = tx3.onabort = sinon.spy(function() {
-                if (tx1.oncomplete.calledOnce && tx1.onerror.calledTwice) {
+                if (tx1.oncomplete.calledOnce && tx1.onerror.calledTwice && tx1.onabort.calledTwice) {
                     expect(save1.result).to.equal(1);
                     expect(save2.result).not.to.be.ok;
                     expect(save3.result).not.to.be.ok;
@@ -86,7 +96,7 @@ describe('IDBObjectStore.add', function() {
                     expect(save2.error.name).to.equal('ConstraintError');
                     expect(save3.error.name).to.equal('ConstraintError');
 
-                    if (!env.browser.isSafari) {
+                    if (env.isShimmed || !env.browser.isSafari) {
                         expect(save2.result).to.be.undefined;   // Safari uses null
                         expect(save3.result).to.be.undefined;   // Safari uses null
 
@@ -102,6 +112,11 @@ describe('IDBObjectStore.add', function() {
     });
 
     it('should throw an error if a generated out-of-line key already exists', function(done) {
+        if (env.browser.isIE && env.browser.isMobile) {
+            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
+            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
+        }
+
         util.createDatabase('out-of-line-generated', function(err, db) {
             var tx = db.transaction('out-of-line-generated', 'readwrite');
             tx.oncomplete = sinon.spy();
@@ -134,7 +149,7 @@ describe('IDBObjectStore.add', function() {
                 sinon.assert.notCalled(tx.oncomplete);
                 sinon.assert.called(tx.onerror);
 
-                if (!env.browser.isSafari) {
+                if (env.isShimmed || !env.browser.isSafari) {
                     expect(add2.error).to.be.an.instanceOf(env.DOMError);   // Safari's DOMError is private
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
@@ -146,6 +161,11 @@ describe('IDBObjectStore.add', function() {
     });
 
     it('should throw an error if an inline key already exists', function(done) {
+        if (env.browser.isIE && env.browser.isMobile) {
+            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
+            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
+        }
+
         util.createDatabase('inline', function(err, db) {
             var tx = db.transaction('inline', 'readwrite');
             tx.oncomplete = sinon.spy();
@@ -178,7 +198,7 @@ describe('IDBObjectStore.add', function() {
                 sinon.assert.notCalled(tx.oncomplete);
                 sinon.assert.called(tx.onerror);
 
-                if (!env.browser.isSafari) {
+                if (env.isShimmed || !env.browser.isSafari) {
                     expect(add2.error).to.be.an.instanceOf(env.DOMError);   // Safari's DOMError is private
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
@@ -190,6 +210,11 @@ describe('IDBObjectStore.add', function() {
     });
 
     it('should throw an error if an inline key conflict occurs in simultaneous transactions', function(done) {
+        if (env.browser.isIE && env.browser.isMobile) {
+            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
+            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
+        }
+
         util.createDatabase('inline', function(err, db) {
             var tx1 = db.transaction('inline', 'readwrite');
             var tx2 = db.transaction('inline', 'readwrite');
@@ -207,7 +232,7 @@ describe('IDBObjectStore.add', function() {
             tx1.onerror = tx2.onerror = tx3.onerror = sinon.spy();
 
             tx1.onabort = tx2.onabort = tx3.onabort = sinon.spy(function() {
-                if (tx1.oncomplete.calledOnce && tx1.onerror.calledTwice) {
+                if (tx1.oncomplete.calledOnce && tx1.onerror.calledTwice && tx1.onabort.calledTwice) {
                     expect(save1.result).to.equal(1);
                     expect(save2.result).not.to.be.ok;
                     expect(save3.result).not.to.be.ok;
@@ -215,7 +240,7 @@ describe('IDBObjectStore.add', function() {
                     expect(save2.error.name).to.equal('ConstraintError');
                     expect(save3.error.name).to.equal('ConstraintError');
 
-                    if (!env.browser.isSafari) {
+                    if (env.isShimmed || !env.browser.isSafari) {
                         expect(save2.result).to.be.undefined;   // Safari uses null
                         expect(save3.result).to.be.undefined;   // Safari uses null
 
@@ -231,6 +256,11 @@ describe('IDBObjectStore.add', function() {
     });
 
     it('should throw an error if a generated inline key already exists', function(done) {
+        if (env.browser.isIE && env.browser.isMobile) {
+            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
+            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
+        }
+
         util.createDatabase('inline-generated', function(err, db) {
             var tx = db.transaction('inline-generated', 'readwrite');
             tx.oncomplete = sinon.spy();
@@ -263,7 +293,7 @@ describe('IDBObjectStore.add', function() {
                 sinon.assert.notCalled(tx.oncomplete);
                 sinon.assert.called(tx.onerror);
 
-                if (!env.browser.isSafari) {
+                if (env.isShimmed || !env.browser.isSafari) {
                     expect(add2.error).to.be.an.instanceOf(env.DOMError);   // Safari's DOMError is private
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
@@ -275,6 +305,11 @@ describe('IDBObjectStore.add', function() {
     });
 
     it('should throw an error if a dotted key already exists', function(done) {
+        if (env.browser.isIE && env.browser.isMobile) {
+            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
+            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
+        }
+
         util.createDatabase('dotted', function(err, db) {
             var tx = db.transaction('dotted', 'readwrite');
             tx.oncomplete = sinon.spy();
@@ -307,7 +342,7 @@ describe('IDBObjectStore.add', function() {
                 sinon.assert.notCalled(tx.oncomplete);
                 sinon.assert.called(tx.onerror);
 
-                if (!env.browser.isSafari) {
+                if (env.isShimmed || !env.browser.isSafari) {
                     expect(add2.error).to.be.an.instanceOf(env.DOMError);   // Safari's DOMError is private
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
@@ -319,6 +354,11 @@ describe('IDBObjectStore.add', function() {
     });
 
     it('should throw an error if a generated dotted key already exists', function(done) {
+        if (env.browser.isIE && env.browser.isMobile) {
+            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
+            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
+        }
+
         util.createDatabase('dotted-generated', function(err, db) {
             var tx = db.transaction('dotted-generated', 'readwrite');
             tx.oncomplete = sinon.spy();
@@ -351,7 +391,7 @@ describe('IDBObjectStore.add', function() {
                 sinon.assert.notCalled(tx.oncomplete);
                 sinon.assert.called(tx.onerror);
 
-                if (!env.browser.isSafari) {
+                if (env.isShimmed || !env.browser.isSafari) {
                     expect(add2.error).to.be.an.instanceOf(env.DOMError);   // Safari's DOMError is private
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
@@ -363,10 +403,14 @@ describe('IDBObjectStore.add', function() {
     });
 
     it('should throw an error if a compound out-of-line key already exists', function(done) {
-        if (env.browser.isIE) {
-            // BUG: IE does not support compound keys at all
+        if (env.isNative && env.browser.isIE) {
+            // BUG: IE's native IndexedDB does not support compound keys at all
             console.error('Skipping test: ' + this.test.title);
             return done();
+        }
+        if (env.browser.isIE && env.browser.isMobile) {
+            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
+            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
         }
 
         util.createDatabase('out-of-line-compound', function(err, db) {
@@ -401,7 +445,7 @@ describe('IDBObjectStore.add', function() {
                 sinon.assert.notCalled(tx.oncomplete);
                 sinon.assert.called(tx.onerror);
 
-                if (!env.browser.isSafari) {
+                if (env.isShimmed || !env.browser.isSafari) {
                     expect(add2.error).to.be.an.instanceOf(env.DOMError);   // Safari's DOMError is private
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
@@ -413,10 +457,14 @@ describe('IDBObjectStore.add', function() {
     });
 
     it('should throw an error if a compound key already exists', function(done) {
-        if (env.browser.isIE) {
-            // BUG: IE does not support compound keys at all
+        if (env.isNative && env.browser.isIE) {
+            // BUG: IE's native IndexedDB does not support compound keys at all
             console.error('Skipping test: ' + this.test.title);
             return done();
+        }
+        if (env.browser.isIE && env.browser.isMobile) {
+            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
+            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
         }
 
         util.createDatabase('inline-compound', function(err, db) {
@@ -451,7 +499,7 @@ describe('IDBObjectStore.add', function() {
                 sinon.assert.notCalled(tx.oncomplete);
                 sinon.assert.called(tx.onerror);
 
-                if (!env.browser.isSafari) {
+                if (env.isShimmed || !env.browser.isSafari) {
                     expect(add2.error).to.be.an.instanceOf(env.DOMError);   // Safari's DOMError is private
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
@@ -463,10 +511,14 @@ describe('IDBObjectStore.add', function() {
     });
 
     it('should throw an error if a dotted compound key already exists', function(done) {
-        if (env.browser.isIE) {
-            // BUG: IE does not support compound keys at all
+        if (env.isNative && env.browser.isIE) {
+            // BUG: IE's native IndexedDB does not support compound keys at all
             console.error('Skipping test: ' + this.test.title);
             return done();
+        }
+        if (env.browser.isIE && env.browser.isMobile) {
+            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
+            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
         }
 
         util.createDatabase('dotted-compound', function(err, db) {
@@ -501,7 +553,7 @@ describe('IDBObjectStore.add', function() {
                 sinon.assert.notCalled(tx.oncomplete);
                 sinon.assert.called(tx.onerror);
 
-                if (!env.browser.isSafari) {
+                if (env.isShimmed || !env.browser.isSafari) {
                     expect(add2.error).to.be.an.instanceOf(env.DOMError);   // Safari's DOMError is private
                 }
                 expect(add2.error.name).to.equal('ConstraintError');

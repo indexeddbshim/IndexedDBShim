@@ -33,8 +33,8 @@ describe('IDBFactory.deleteDatabase', function() {
             var del = indexedDB.deleteDatabase(db.name);
 
             del.onsuccess = function(event) {
-                if (!env.browser.isIE && !env.browser.isSafari) {
-                    expect(event).to.be.an.instanceOf(IDBVersionChangeEvent);
+                if (env.isShimmed || (!env.browser.isIE && !env.browser.isSafari)) {
+                    expect(event).to.be.an.instanceOf(IDBVersionChangeEvent);   // IE and Safari use a normal event
                 }
                 done();
             };
@@ -128,7 +128,7 @@ describe('IDBFactory.deleteDatabase', function() {
         deleteDatabase({foo: 'bar'});
         deleteDatabase(/^regex$/);
 
-        if (!env.browser.isIE) {
+        if (env.isShimmed || !env.browser.isIE) {
             deleteDatabase(null);
         }
 

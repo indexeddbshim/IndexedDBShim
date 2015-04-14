@@ -26,7 +26,7 @@
     /**
      * Creates a new object store.
      * @param {string} storeName
-     * @param {object} createOptions
+     * @param {object} [createOptions]
      * @returns {IDBObjectStore}
      */
     IDBDatabase.prototype.createObjectStore = function(storeName, createOptions){
@@ -42,9 +42,9 @@
         /** @name IDBObjectStoreProperties **/
         var storeProperties = {
             name: storeName,
-            keyPath: createOptions.keyPath || null,
-            autoInc: !!createOptions.autoIncrement,
-            indexList: {}
+            keyPath: JSON.stringify(createOptions.keyPath || null),
+            autoInc: JSON.stringify(createOptions.autoIncrement),
+            indexList: "{}"
         };
         var store = new idbModules.IDBObjectStore(storeProperties, this.__versionTransaction);
         idbModules.IDBObjectStore.__createObjectStore(this, store);

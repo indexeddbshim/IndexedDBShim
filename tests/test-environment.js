@@ -15,6 +15,7 @@
         browser: {
             name: browser.name,
             version: browser.version,   // numeric
+            isMobile: browser.isMobile,
             isChrome: browser.name === 'Chrome',
             isIE: browser.name === 'MSIE',
             isFirefox: browser.name === 'Firefox',
@@ -29,6 +30,18 @@
          * See https://github.com/axemclion/IndexedDBShim/issues/167
          */
         indexedDB: window.indexedDB,
+
+        /**
+         * Is the IndexedDBShim in effect?
+         * This can be true even if the browser natively supports IndexedDB.
+         */
+        isShimmed: false,
+
+        /**
+         * Is the native IndexedDB in effect?
+         * (this is the opposite of isShimmed)
+         */
+        isNative: true,
 
         /**
          * IndexedDBShim can't always use these native classes, because some browsers don't allow us to instantiate them.
@@ -88,25 +101,19 @@
      */
     function initializeShim() {
         var useShim = location.search.indexOf('useShim=true') > 0;
-        var isShimmed = false;
 
         // Should we use the shim instead of the native IndexedDB?
         if (useShim && env.nativeWebSql) {
             window.shimIndexedDB.__useShim();
-            isShimmed = true;
+            env.isShimmed = true;
         }
         else if (window.indexedDB === window.shimIndexedDB ||
             window.indexedDB === null) {    // <--- Safari on iOS
-            isShimmed = true;
+            env.isShimmed = true;
         }
 
-        if (isShimmed) {
-            // Disable browser-specific checks in unit tests,
-            // since the shim should behave the same in all browsers
-            env.browser.isChrome = false;
-            env.browser.isIE = false;
-            env.browser.isFirefox = false;
-            env.browser.isSafari = false;
+        if (env.isShimmed) {
+            env.isNative = false;
 
             // Run all unit tests against the IndexedDBShim
             env.indexedDB = shimIndexedDB;
@@ -138,7 +145,7 @@
      */
     function getBrowserInfo() {
         var userAgent = navigator.userAgent;
-        var browser = {name: '', version: 0};
+        var browser = {name: '', version: 0, isMobile: false};
         var offset;
 
         if ((offset = userAgent.indexOf('Chrome')) !== -1) {
@@ -150,9 +157,11 @@
         } else if ((offset = userAgent.indexOf('MSIE')) !== -1) {
             browser.name = 'MSIE';
             browser.version = userAgent.substring(offset + 5);
+            browser.isMobile = userAgent.indexOf('Windows Phone') !== -1;
         } else if (userAgent.indexOf('Trident') !== -1) {
             browser.name = 'MSIE';
             browser.version = '11';
+            browser.isMobile = userAgent.indexOf('Windows Phone') !== -1;
         } else if ((offset = userAgent.indexOf('Safari')) !== -1) {
             browser.name = 'Safari';
 

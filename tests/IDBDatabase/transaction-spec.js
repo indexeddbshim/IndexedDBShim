@@ -48,8 +48,8 @@ describe('IDBDatabase.transaction', function() {
         });
 
         it('should open multiple object stores', function(done) {
-            if (env.browser.isSafari) {
-                // BUG: Safari does not support opening multiple object stores
+            if (env.isNative && env.browser.isSafari) {
+                // BUG: Safari's native IndexedDB does not support opening multiple object stores
                 console.error('Skipping test: ' + this.test.title);
                 return done();
             }
@@ -172,9 +172,8 @@ describe('IDBDatabase.transaction', function() {
 
                 expect(err).to.be.an.instanceOf(env.DOMException);
 
-                if (!env.browser.isSafari) {
-                    // Safari throws "NotFoundError"
-                    expect(err.name).to.equal('InvalidAccessError');
+                if (env.isShimmed || !env.browser.isSafari) {
+                    expect(err.name).to.equal('InvalidAccessError'); // Safari throws "NotFoundError"
                 }
 
                 db.close();
@@ -226,7 +225,7 @@ describe('IDBDatabase.transaction', function() {
                 }
 
                 expect(err).to.be.an('object');
-                if (!env.browser.isIE) {
+                if (env.isShimmed || !env.browser.isIE) {
                     expect(err).to.be.an.instanceOf(TypeError);     // IE throws a DOMException
                     expect(err.name).to.equal('TypeError');         // IE throws "InvalidAccessError"
                 }
@@ -246,7 +245,7 @@ describe('IDBDatabase.transaction', function() {
                 }
 
                 expect(err).to.be.an('object');
-                if (!env.browser.isIE && !env.browser.isFirefox) {
+                if (env.isShimmed || (!env.browser.isIE && !env.browser.isFirefox)) {
                     expect(err).to.be.an.instanceOf(TypeError);     // IE & Firefox throw a DOMException
                     expect(err.name).to.equal('TypeError');         // IE & Firefox throw "InvalidAccessError"
                 }

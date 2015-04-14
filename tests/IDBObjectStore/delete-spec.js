@@ -240,8 +240,8 @@ describe('IDBObjectStore.delete', function() {
     });
 
     it('should delete data using compound out-of-line keys', function(done) {
-        if (env.browser.isIE) {
-            // BUG: IE does not support compound keys at all
+        if (env.isNative && env.browser.isIE) {
+            // BUG: IE's native IndexedDB does not support compound keys at all
             console.error('Skipping test: ' + this.test.title);
             return done();
         }
@@ -348,8 +348,8 @@ describe('IDBObjectStore.delete', function() {
     });
 
     it('should delete data using compound inline keys', function(done) {
-        if (env.browser.isIE) {
-            // BUG: IE does not support compound keys at all
+        if (env.isNative && env.browser.isIE) {
+            // BUG: IE's native IndexedDB does not support compound keys at all
             console.error('Skipping test: ' + this.test.title);
             return done();
         }
@@ -456,8 +456,8 @@ describe('IDBObjectStore.delete', function() {
     });
 
     it('should delete data using compound dotted keys', function(done) {
-        if (env.browser.isIE) {
-            // BUG: IE does not support compound keys at all
+        if (env.isNative && env.browser.isIE) {
+            // BUG: IE's native IndexedDB does not support compound keys at all
             console.error('Skipping test: ' + this.test.title);
             return done();
         }
@@ -543,7 +543,7 @@ describe('IDBObjectStore.delete', function() {
             deleteKey(-Infinity);                     // negative infinity
             deleteKey(new Date(2000, 1, 2));          // Date
 
-            if (!env.browser.isIE) {
+            if (env.isShimmed || !env.browser.isIE) {
                 deleteKey([]);                        // empty array
                 deleteKey(['a', '', 'b']);            // array of strings
                 deleteKey([1, 2.345, -678]);          // array of numbers
@@ -586,7 +586,7 @@ describe('IDBObjectStore.delete', function() {
             tryToDelete([true, false]);            // array of booleans
             tryToDelete([{foo: 'bar'}]);           // array of objects
 
-            if (!env.browser.isIE) {
+            if (env.isShimmed || !env.browser.isIE) {
                 tryToDelete(/^regex$/);            // RegExp
             }
 
@@ -610,8 +610,8 @@ describe('IDBObjectStore.delete', function() {
     });
 
     it('should not throw an error if called an incomplete compound key', function(done) {
-        if (env.browser.isIE) {
-            // BUG: IE does not support compound keys at all
+        if (env.isNative && env.browser.isIE) {
+            // BUG: IE's native IndexedDB does not support compound keys at all
             console.error('Skipping test: ' + this.test.title);
             return done();
         }

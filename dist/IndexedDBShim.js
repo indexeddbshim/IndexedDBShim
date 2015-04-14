@@ -454,82 +454,186 @@ var cleanInterface = false;                 // jshint ignore:line
 
 /*jshint globalstrict: true*/
 'use strict';
-(function(idbModules){
+(function(idbModules) {
     /**
-     * Encodes the keys and values based on their types. This is required to maintain collations
+     * Encodes the keys based on their types. This is required to maintain collations
      */
-    var collations = ["", "number", "string", "boolean", "object", "undefined"];
-    var getGenericEncoder = function(){
-        return {
-            "encode": function(key){
-                return collations.indexOf(typeof key) + "-" + JSON.stringify(key);
+    var collations = ["undefined", "number", "date", "string", "array"];
+    var types = {
+        // Undefined is not a valid key type.  It's only used when there is no key.
+        undefined: {
+            encode: function(key) {
+                return collations.indexOf("undefined") + "-";
             },
-            "decode": function(key){
-                if (typeof key === "undefined") {
-                    return undefined;
+            decode: function(key) {
+                return undefined;
+            }
+        },
+
+        // Dates are encoded as ISO 8601 strings, in UTC time zone
+        date: {
+            encode: function(key) {
+                return collations.indexOf("date") + "-" + key.toJSON();
+            },
+            decode: function(key) {
+                return new Date(key.substring(2));
+            }
+        },
+
+        // Numbers are encoded as base-36 strings between 200 and 400 characters
+        // 1 character = sign (always)
+        // 1 character = decimal point (optional)
+        // 199 characters on each side of decimal point (Number.MAX_VALUE is 199 digits in base-36)
+        number: {
+            encode: function(key) {
+                var sign, whole, fraction;
+                sign = key < 0 ? '0' : 'z';                                     // 0 = negative, z = positive
+                whole = new Array(200).join(sign);                              // Infinity
+                fraction = '';
+
+                if (isFinite(key)) {
+                    var encoded = Math.abs(key).toString(36);                   // base-36 encode
+                    encoded = encoded.split('.');                               // split whole from fraction
+                    whole = flipBase36(sign, encoded[0]);                       // if negative, flip each whole digit
+                    var padding = new Array(200 - whole.length);                // pad the whole to 199 digits
+                    padding = padding.join(sign === '0' ? 'z' : '0');           // pad with z for negative, 0 for positive
+                    whole = padding + whole;                                    // pad-left
+                    if (encoded.length > 1) {
+                        fraction = '.' + flipBase36(sign, encoded[1] || '');    // if negative, flip each fractional digit
+                    }
+                }
+
+                return collations.indexOf("number") + "-" + sign + whole + fraction;
+            },
+            decode: function(key) {
+                var sign = key.substr(2, 1);                                    // 0 = negative, z = positive
+                var whole = flipBase36(sign, key.substr(3, 199));               // flip each whole digit if negative
+                var fraction = flipBase36(sign, key.substr(203));               // flip each fractional digit if negative
+                sign = sign === '0' ? -1 : 1;                                   // sign multiplier
+                whole = parseInt(whole, 36);                                    // base-36 decode
+                if (fraction) {
+                    var digits = fraction.length;
+                    fraction = parseInt(fraction, 36);                          // base-36 decode
+                    return sign * (whole + (fraction / Math.pow(36, digits)));  // add the fraction to the whole
                 }
                 else {
-                    return JSON.parse(key.substring(2));
+                    return sign * whole;
                 }
             }
-        };
-    };
-    
-    var types = {
-        "boolean": getGenericEncoder(),
-        "object": getGenericEncoder(),
-        "number": {
-            "encode": function(key){
-                return collations.indexOf("number") + "-" + key;
-            },
-            "decode": function(key){
-                return parseFloat(key.substring(2));
-            }
         },
-        "string": {
-            "encode": function(key){
+
+        // Strings are encoded as JSON strings (with quotes and unicode characters escaped).
+        //
+        // IF the strings are in an array, then some extra encoding is done to make sorting work correctly:
+        // Since we can't force all strings to be the same length, we need to ensure that characters line-up properly
+        // for sorting, while also accounting for the extra characters that are added when the array itself is encoded as JSON.
+        // To do this, each character of the string is prepended with a dash ("-"), and a space is added to the end of the string.
+        // This effectively doubles the size of every string, but it ensures that when two arrays of strings are compared,
+        // the indexes of each string's characters line up with each other.
+        string: {
+            encode: function(key, inArray) {
+                if (inArray) {
+                    // prepend each character with a dash, and append a space to the end
+                    key = key.replace(/(.)/g, '-$1') + ' ';
+                }
                 return collations.indexOf("string") + "-" + key;
             },
-            "decode": function(key){
-                return "" + key.substring(2);
+            decode: function(key, inArray) {
+                key = key.substring(2);
+                if (inArray) {
+                    // remove the space at the end, and the dash before each character
+                    key = key.substr(0, key.length - 1).replace(/-(.)/g, '$1');
+                }
+                return key;
             }
         },
-        "undefined": {
-            "encode": function(key){
-                return collations.indexOf("undefined") + "-undefined";
+
+        // Arrays are encoded as JSON strings.
+        // An extra, value is added to each array during encoding to make empty arrays sort correctly.
+        array: {
+            encode: function(key) {
+                var encoded = [];
+                for (var i = 0; i < key.length; i++) {
+                    var item = key[i];
+                    var encodedItem = idbModules.Key.encode(item, true);        // encode the array item
+                    encoded[i] = encodedItem;
+                }
+                encoded.push(collations.indexOf("undefined") + "-");            // append an extra item, so empty arrays sort correctly
+                return collations.indexOf("array") + "-" + JSON.stringify(encoded);
             },
-            "decode": function(key){
-                return undefined;
+            decode: function(key) {
+                var decoded = JSON.parse(key.substring(2));
+                decoded.pop();                                                  // remove the extra item
+                for (var i = 0; i < decoded.length; i++) {
+                    var item = decoded[i];
+                    var decodedItem = idbModules.Key.decode(item, true);        // decode the item
+                    decoded[i] = decodedItem;
+                }
+                return decoded;
             }
         }
     };
 
     /**
+     * Flips each digit of a base-36 encoded number, if negative
+     * @param {string} sign - 0 = negative, z = positive
+     * @param {string} encoded
+     */
+    function flipBase36(sign, encoded) {
+        if (sign === '0') {
+            var flipped = '';
+            for (var i = 0; i < encoded.length; i++) {
+                flipped += (35 - parseInt(encoded[i], 36)).toString(36);
+            }
+            return flipped;
+        }
+        return encoded;
+    }
+
+    /**
+     * Returns the string "number", "date", "string", or "array".
+     */
+    function getType(key) {
+        if (key instanceof Date) {
+            return "date";
+        }
+        if (key instanceof Array) {
+            return "array";
+        }
+        return typeof key;
+    }
+
+    /**
      * Keys must be strings, numbers, Dates, or Arrays
      */
-    function validateKey(key) {
-        var type = typeof key;
-        if (type === "string" ||
-            (type === "number" && !isNaN(key)) ||
-            key instanceof Date) {
-             // valid
-        }
-        else if (key instanceof Array) {
+    function validate(key) {
+        var type = getType(key);
+        if (type === "array") {
             for (var i = 0; i < key.length; i++) {
-                validateKey(key[i]);
+                validate(key[i]);
             }
         }
-        else {
+        else if (!types[type] || (type !== "string" && isNaN(key))) {
             throw idbModules.util.createDOMException("DataError", "Not a valid key");
         }
     }
 
     /**
-     * Returns the inline key value
+     * Returns the value of an inline key
+     * @param {object} source
+     * @param {string|array} keyPath
      */
-    function getKeyPath(value, keyPath) {
+    function getValue(source, keyPath) {
         try {
-            return eval("value." + keyPath);
+            if (keyPath instanceof Array) {
+                var arrayValue = [];
+                for (var i = 0; i < keyPath.length; i++) {
+                    arrayValue.push(eval("source." + keyPath[i]));
+                }
+                return arrayValue;
+            } else {
+                return eval("source." + keyPath);
+            }
         }
         catch (e) {
             return undefined;
@@ -538,30 +642,47 @@ var cleanInterface = false;                 // jshint ignore:line
 
     /**
      * Sets the inline key value
+     * @param {object} source
+     * @param {string} keyPath
+     * @param {*} value
      */
-    function setKeyPath(value, keyPath, key) {
+    function setValue(source, keyPath, value) {
         var props = keyPath.split('.');
         for (var i = 0; i < props.length - 1; i++) {
             var prop = props[i];
-            value = value[prop] = value[prop] || {};
+            source = source[prop] = source[prop] || {};
         }
-        value[props[props.length - 1]] = key;
+        source[props[props.length - 1]] = value;
+    }
+
+    /**
+     * Determines whether an index entry matches a multi-entry key value.
+     * @param {string} encodedEntry     The entry value (already encoded)
+     * @param {string} encodedKey       The full index key (already encoded)
+     * @returns {boolean}
+     */
+    function isMultiEntryMatch(encodedEntry, encodedKey) {
+        var keyType = collations[encodedKey.substring(0, 1)];
+
+        if (keyType === "array") {
+            return encodedKey.indexOf(encodedEntry) > 1;
+        }
+        else {
+            return encodedKey === encodedEntry;
+        }
     }
 
     idbModules.Key = {
-        encode: function(key) {
-            return types[typeof key].encode(key);
+        encode: function(key, inArray) {
+            return types[getType(key)].encode(key, inArray);
         },
-        encodeKey: function(key) {
-            validateKey(key);
-            return types[typeof key].encode(key);
+        decode: function(key, inArray) {
+            return types[collations[key.substring(0, 1)]].decode(key, inArray);
         },
-        decode: function(key) {
-            return types[collations[key.substring(0, 1)]].decode(key);
-        },
-        validateKey: validateKey,
-        getKeyPath: getKeyPath,
-        setKeyPath: setKeyPath
+        validate: validate,
+        getValue: getValue,
+        setValue: setValue,
+        isMultiEntryMatch: isMultiEntryMatch
     };
 }(idbModules));
 
@@ -840,11 +961,13 @@ var cleanInterface = false;                 // jshint ignore:line
             sql.push("AND");
             if (me.__range.lower !== undefined) {
                 sql.push(me.__keyColumnName + (me.__range.lowerOpen ? " >" : " >= ") + " ?");
+                idbModules.Key.validate(me.__range.lower);
                 sqlValues.push(idbModules.Key.encode(me.__range.lower));
             }
             (me.__range.lower !== undefined && me.__range.upper !== undefined) && sql.push("AND");
             if (me.__range.upper !== undefined) {
                 sql.push(me.__keyColumnName + (me.__range.upperOpen ? " < " : " <= ") + " ?");
+                idbModules.Key.validate(me.__range.upper);
                 sqlValues.push(idbModules.Key.encode(me.__range.upper));
             }
         }
@@ -854,6 +977,7 @@ var cleanInterface = false;                 // jshint ignore:line
         }
         if (me.__lastKeyContinued !== undefined) {
             sql.push("AND " + me.__keyColumnName + " >= ?");
+            idbModules.Key.validate(me.__lastKeyContinued);
             sqlValues.push(idbModules.Key.encode(me.__lastKeyContinued));
         }
 
@@ -947,12 +1071,14 @@ var cleanInterface = false;                 // jshint ignore:line
                     var store = me.source;
                     var params = [encoded];
                     var sql = "UPDATE " + idbModules.util.quote(store.name) + " SET value = ?";
+                    idbModules.Key.validate(primaryKey);
 
                     // Also correct the indexes in the table
                     for (var i = 0; i < store.indexNames.length; i++) {
                         var index = store.__indexes[store.indexNames[i]];
+                        var indexKey = idbModules.Key.getValue(valueToUpdate, index.keyPath);
                         sql += ", " + index.name + " = ?";
-                        params.push(idbModules.Key.encode(idbModules.Key.getKeyPath(valueToUpdate, index.keyPath)));
+                        params.push(idbModules.Key.encode(indexKey, index.multiEntry));
                     }
 
                     sql += " WHERE key = ?";
@@ -983,6 +1109,7 @@ var cleanInterface = false;                 // jshint ignore:line
             me.__find(undefined, tx, function(key, value, primaryKey){
                 var sql = "DELETE FROM  " + idbModules.util.quote(me.source.name) + " WHERE key = ?";
                 idbModules.DEBUG && console.log(sql, key, primaryKey);
+                idbModules.Key.validate(primaryKey);
                 tx.executeSql(sql, [idbModules.Key.encode(primaryKey)], function(tx, data){
                     me.__prefetchedData = null;
                     if (data.rowsAffected === 1) {
@@ -1028,7 +1155,14 @@ var cleanInterface = false;                 // jshint ignore:line
      * @protected
      */
     IDBIndex.__clone = function(index, store) {
-        return new IDBIndex(store, {columnName: index.name, keyPath: index.keyPath, optionalParams: {multiEntry: index.multiEntry, unique: index.unique}});
+        return new IDBIndex(store, {
+            columnName: index.name,
+            keyPath: index.keyPath,
+            optionalParams: {
+                multiEntry: index.multiEntry,
+                unique: index.unique
+            }
+        });
     };
 
     /**
@@ -1064,8 +1198,10 @@ var cleanInterface = false;                 // jshint ignore:line
                         if (i < data.rows.length) {
                             try {
                                 var value = idbModules.Sca.decode(data.rows.item(i).value);
-                                var indexKey = idbModules.Key.getKeyPath(value, index.keyPath);
-                                tx.executeSql("UPDATE " + idbModules.util.quote(store.name) + " set " + idbModules.util.quote(index.name) + " = ? where key = ?", [idbModules.Key.encode(indexKey), data.rows.item(i).key], function(tx, data) {
+                                var indexKey = idbModules.Key.getValue(value, index.keyPath);
+                                indexKey = idbModules.Key.encode(indexKey, index.multiEntry);
+
+                                tx.executeSql("UPDATE " + idbModules.util.quote(store.name) + " set " + idbModules.util.quote(index.name) + " = ? where key = ?", [indexKey, data.rows.item(i).key], function(tx, data) {
                                     initIndexForRow(i + 1);
                                 }, error);
                             }
@@ -1128,16 +1264,16 @@ var cleanInterface = false;                 // jshint ignore:line
      */
     IDBIndex.prototype.__fetchIndexData = function(key, opType) {
         var me = this;
-        var hasKey;
+        var hasKey, encodedKey;
 
         // key is optional
         if (arguments.length === 1) {
             opType = key;
-            key = undefined;
             hasKey = false;
         }
         else {
-            key = idbModules.Key.encodeKey(key);
+            idbModules.Key.validate(key);
+            encodedKey = idbModules.Key.encode(key, me.multiEntry);
             hasKey = true;
         }
 
@@ -1145,25 +1281,49 @@ var cleanInterface = false;                 // jshint ignore:line
             var sql = ["SELECT * FROM ", idbModules.util.quote(me.objectStore.name), " WHERE", idbModules.util.quote(me.name), "NOT NULL"];
             var sqlValues = [];
             if (hasKey) {
-                sql.push("AND", idbModules.util.quote(me.name), " = ?");
-                sqlValues.push(key);
+                if (me.multiEntry) {
+                    sql.push("AND", idbModules.util.quote(me.name), " LIKE ?");
+                    sqlValues.push("%" + encodedKey + "%");
+                }
+                else {
+                    sql.push("AND", idbModules.util.quote(me.name), " = ?");
+                    sqlValues.push(encodedKey);
+                }
             }
             idbModules.DEBUG && console.log("Trying to fetch data for Index", sql.join(" "), sqlValues);
             tx.executeSql(sql.join(" "), sqlValues, function(tx, data) {
-                var d;
-                if (opType === "count") {
-                    d = data.rows.length;
+                var recordCount = 0, record = null;
+                if (me.multiEntry) {
+                    for (var i = 0; i < data.rows.length; i++) {
+                        var row = data.rows.item(i);
+                        var rowKey = idbModules.Key.decode(row[me.name]);
+                        if (hasKey && idbModules.Key.isMultiEntryMatch(encodedKey, row[me.name])) {
+                            recordCount++;
+                            record = record || row;
+                        }
+                        else if (!hasKey && rowKey !== undefined) {
+                            recordCount = recordCount + (rowKey instanceof Array ? rowKey.length : 1);
+                            record = record || row;
+                        }
+                    }
                 }
-                else if (data.rows.length === 0) {
-                    d = undefined;
+                else {
+                    recordCount = data.rows.length;
+                    record = recordCount && data.rows.item(0);
+                }
+
+                if (opType === "count") {
+                    success(recordCount);
+                }
+                else if (recordCount === 0) {
+                    success(undefined);
                 }
                 else if (opType === "key") {
-                    d = idbModules.Key.decode(data.rows.item(0).key);
+                    success(idbModules.Key.decode(record.key));
                 }
                 else { // when opType is value
-                    d = idbModules.Sca.decode(data.rows.item(0).value);
+                    success(idbModules.Sca.decode(record.value));
                 }
-                success(d);
             }, error);
         });
     };
@@ -1234,13 +1394,13 @@ var cleanInterface = false;                 // jshint ignore:line
      */
     function IDBObjectStore(storeProperties, transaction) {
         this.name = storeProperties.name;
-        this.keyPath = storeProperties.keyPath || null;
-        this.autoIncrement = typeof storeProperties.autoInc === "string" ? storeProperties.autoInc === "true" : !!storeProperties.autoInc;
+        this.keyPath = JSON.parse(storeProperties.keyPath);
+        this.autoIncrement = storeProperties.autoInc === "true";
         this.transaction = transaction;
 
         this.__indexes = {};
         this.indexNames = new idbModules.util.StringList();
-        var indexList = typeof storeProperties.indexList === "object" ? storeProperties.indexList : JSON.parse(storeProperties.indexList);
+        var indexList = JSON.parse(storeProperties.indexList);
         for (var indexName in indexList) {
             if (indexList.hasOwnProperty(indexName)) {
                 var index = new idbModules.IDBIndex(this, indexList[indexName]);
@@ -1257,7 +1417,12 @@ var cleanInterface = false;                 // jshint ignore:line
      * @protected
      */
     IDBObjectStore.__clone = function(store, transaction) {
-        var newStore = new IDBObjectStore({name: store.name, keyPath: store.keyPath, autoInc: store.autoIncrement, indexList: {}}, transaction);
+        var newStore = new IDBObjectStore({
+            name: store.name,
+            keyPath: JSON.stringify(store.keyPath),
+            autoInc: JSON.stringify(store.autoIncrement),
+            indexList: "{}"
+        }, transaction);
         newStore.__indexes = store.__indexes;
         newStore.indexNames = store.indexNames;
         return newStore;
@@ -1286,7 +1451,7 @@ var cleanInterface = false;                 // jshint ignore:line
             var sql = ["CREATE TABLE", idbModules.util.quote(store.name), "(key BLOB", store.autoIncrement ? "UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT" : "PRIMARY KEY", ", value BLOB)"].join(" ");
             idbModules.DEBUG && console.log(sql);
             tx.executeSql(sql, [], function(tx, data) {
-                tx.executeSql("INSERT INTO __sys__ VALUES (?,?,?,?)", [store.name, store.keyPath, store.autoIncrement, "{}"], function() {
+                tx.executeSql("INSERT INTO __sys__ VALUES (?,?,?,?)", [store.name, JSON.stringify(store.keyPath), store.autoIncrement, "{}"], function() {
                     success(store);
                 }, error);
             }, error);
@@ -1338,7 +1503,7 @@ var cleanInterface = false;                 // jshint ignore:line
                 throw idbModules.util.createDOMException("DataError", "The object store uses in-line keys and the key parameter was provided", this);
             }
             else if (value && typeof value === "object") {
-                key = idbModules.Key.getKeyPath(value, this.keyPath);
+                key = idbModules.Key.getValue(value, this.keyPath);
                 if (key === undefined) {
                     if (this.autoIncrement) {
                         // A key will be generated
@@ -1365,7 +1530,7 @@ var cleanInterface = false;                 // jshint ignore:line
             }
         }
 
-        idbModules.Key.validateKey(key);
+        idbModules.Key.validate(key);
     };
 
     /**
@@ -1394,12 +1559,12 @@ var cleanInterface = false;                 // jshint ignore:line
         }
 
         if (me.keyPath) {
-            var primaryKey = idbModules.Key.getKeyPath(value, me.keyPath);
+            var primaryKey = idbModules.Key.getValue(value, me.keyPath);
             if (primaryKey === undefined && me.autoIncrement) {
                 getNextAutoIncKey(function(primaryKey) {
                     try {
                         // Update the value with the new key
-                        idbModules.Key.setKeyPath(value, me.keyPath, primaryKey);
+                        idbModules.Key.setValue(value, me.keyPath, primaryKey);
                         success(primaryKey);
                     }
                     catch (e) {
@@ -1426,11 +1591,12 @@ var cleanInterface = false;                 // jshint ignore:line
         try {
             var paramMap = {};
             if (typeof primaryKey !== "undefined") {
-                paramMap.key = idbModules.Key.encodeKey(primaryKey);
+                idbModules.Key.validate(primaryKey);
+                paramMap.key = idbModules.Key.encode(primaryKey);
             }
             for (var i = 0; i < this.indexNames.length; i++) {
                 var index = this.__indexes[this.indexNames[i]];
-                paramMap[index.name] = idbModules.Key.encode(idbModules.Key.getKeyPath(value, index.keyPath));
+                paramMap[index.name] = idbModules.Key.encode(idbModules.Key.getValue(value, index.keyPath), index.multiEntry);
             }
             var sqlStart = ["INSERT INTO ", idbModules.util.quote(this.name), "("];
             var sqlEnd = [" VALUES ("];
@@ -1494,6 +1660,7 @@ var cleanInterface = false;                 // jshint ignore:line
             me.__deriveKey(tx, value, key, function(primaryKey) {
                 idbModules.Sca.encode(value, function(encoded) {
                     // First try to delete if the record exists
+                    idbModules.Key.validate(primaryKey);
                     var sql = "DELETE FROM " + idbModules.util.quote(me.name) + " where key = ?";
                     tx.executeSql(sql, [idbModules.Key.encode(primaryKey)], function(tx, data) {
                         idbModules.DEBUG && console.log("Did the row with the", primaryKey, "exist? ", data.rowsAffected);
@@ -1515,7 +1682,8 @@ var cleanInterface = false;                 // jshint ignore:line
             throw new TypeError("No key was specified");
         }
 
-        var primaryKey = idbModules.Key.encodeKey(key);
+        idbModules.Key.validate(key);
+        var primaryKey = idbModules.Key.encode(key);
         return me.transaction.__addToTransactionQueue(function objectStoreGet(tx, args, success, error) {
             idbModules.DEBUG && console.log("Fetching", me.name, primaryKey);
             tx.executeSql("SELECT * FROM " + idbModules.util.quote(me.name) + " where key = ?", [primaryKey], function(tx, data) {
@@ -1548,7 +1716,8 @@ var cleanInterface = false;                 // jshint ignore:line
         }
 
         me.transaction.__assertWritable();
-        var primaryKey = idbModules.Key.encodeKey(key);
+        idbModules.Key.validate(key);
+        var primaryKey = idbModules.Key.encode(key);
         // TODO key should also support key ranges
         return me.transaction.__addToTransactionQueue(function objectStoreDelete(tx, args, success, error) {
             idbModules.DEBUG && console.log("Fetching", me.name, primaryKey);
@@ -1581,13 +1750,13 @@ var cleanInterface = false;                 // jshint ignore:line
         // key is optional
         if (arguments.length > 0) {
             hasKey = true;
-            key = idbModules.Key.encodeKey(key);
+            idbModules.Key.validate(key);
         }
 
         return me.transaction.__addToTransactionQueue(function objectStoreCount(tx, args, success, error) {
             var sql = "SELECT * FROM " + idbModules.util.quote(me.name) + (hasKey ? " WHERE key = ?" : "");
             var sqlValues = [];
-            hasKey && sqlValues.push(key);
+            hasKey && sqlValues.push(idbModules.Key.encode(key));
             tx.executeSql(sql, sqlValues, function(tx, data) {
                 success(data.rows.length);
             }, function(tx, err) {
@@ -1765,6 +1934,12 @@ var cleanInterface = false;                 // jshint ignore:line
         );
 
         function transactionError(err) {
+            if (!me.__active) {
+                // The transaction has already completed, so we can't call "onerror" or "onabort".
+                // So throw the error instead.
+                throw err;
+            }
+
             try {
                 idbModules.util.logError("Error", "An error occurred in a transaction", err);
                 me.error = err;
@@ -1918,7 +2093,7 @@ var cleanInterface = false;                 // jshint ignore:line
     /**
      * Creates a new object store.
      * @param {string} storeName
-     * @param {object} createOptions
+     * @param {object} [createOptions]
      * @returns {IDBObjectStore}
      */
     IDBDatabase.prototype.createObjectStore = function(storeName, createOptions){
@@ -1934,9 +2109,9 @@ var cleanInterface = false;                 // jshint ignore:line
         /** @name IDBObjectStoreProperties **/
         var storeProperties = {
             name: storeName,
-            keyPath: createOptions.keyPath || null,
-            autoInc: !!createOptions.autoIncrement,
-            indexList: {}
+            keyPath: JSON.stringify(createOptions.keyPath || null),
+            autoInc: JSON.stringify(createOptions.autoIncrement),
+            indexList: "{}"
         };
         var store = new idbModules.IDBObjectStore(storeProperties, this.__versionTransaction);
         idbModules.IDBObjectStore.__createObjectStore(this, store);
@@ -2137,14 +2312,17 @@ var cleanInterface = false;                 // jshint ignore:line
         }
         name = name + ''; // cast to a string
 
-        function dbError(msg) {
+        function dbError(tx, err) {
             if (calledDBError) {
                 return;
             }
+            if (arguments.length === 1) {
+                err = tx;
+            }
+
             req.readyState = "done";
-            req.error = "DOMError";
+            req.error = err || "DOMError";
             var e = idbModules.util.createEvent("error");
-            e.message = msg;
             e.debug = arguments;
             idbModules.util.callback("onerror", req, e);
             calledDBError = true;
@@ -2210,7 +2388,39 @@ var cleanInterface = false;                 // jshint ignore:line
      * @returns {number}
      */
     IDBFactory.prototype.cmp = function(key1, key2) {
-        return idbModules.Key.encodeKey(key1) > idbModules.Key.encodeKey(key2) ? 1 : key1 === key2 ? 0 : -1;
+        if (arguments.length < 2) {
+            throw new TypeError("You must provide two keys to be compared");
+        }
+
+        idbModules.Key.validate(key1);
+        idbModules.Key.validate(key2);
+        var encodedKey1 = idbModules.Key.encode(key1);
+        var encodedKey2 = idbModules.Key.encode(key2);
+        var result = encodedKey1 > encodedKey2 ? 1 : encodedKey1 === encodedKey2 ? 0 : -1;
+        
+        if (idbModules.DEBUG) {
+            // verify that the keys encoded correctly
+            var decodedKey1 = idbModules.Key.decode(encodedKey1);
+            var decodedKey2 = idbModules.Key.decode(encodedKey2);
+            if (typeof key1 === "object") {
+                key1 = JSON.stringify(key1);
+                decodedKey1 = JSON.stringify(decodedKey1);
+            }
+            if (typeof key2 === "object") {
+                key2 = JSON.stringify(key2);
+                decodedKey2 = JSON.stringify(decodedKey2);
+            }
+
+            // encoding/decoding mismatches are usually due to a loss of floating-point precision
+            if (decodedKey1 !== key1) {
+                console.warn(key1 + ' was incorrectly encoded as ' + decodedKey1);
+            }
+            if (decodedKey2 !== key2) {
+                console.warn(key2 + ' was incorrectly encoded as ' + decodedKey2);
+            }
+        }
+        
+        return result;
     };
 
 

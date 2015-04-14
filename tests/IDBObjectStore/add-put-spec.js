@@ -207,8 +207,8 @@
             });
 
             it('should allow generated out-of-line keys to be specified', function(done) {
-                if (env.browser.isSafari) {
-                    // BUG: Safari resets the key generator whenever key is specified, causing key conflicts
+                if (env.isNative && env.browser.isSafari) {
+                    // BUG: Safari's native IndexedDB resets the key generator whenever key is specified, causing key conflicts
                     console.error('Skipping test: ' + this.test.title);
                     return done();
                 }
@@ -267,7 +267,7 @@
                     saveKey(-Infinity);                     // negative infinity
                     saveKey(new Date(2000, 1, 2));          // Date
 
-                    if (!env.browser.isIE) {
+                    if (env.isShimmed || !env.browser.isIE) {
                         saveKey([]);                        // empty array
                         saveKey(['a', '', 'b']);            // array of strings
                         saveKey([1, 2.345, -678]);          // array of numbers
@@ -323,7 +323,7 @@
                     tryToSaveKey([true, false]);            // array of booleans
                     tryToSaveKey([{foo: 'bar'}]);           // array of objects
 
-                    if (!env.browser.isIE) {
+                    if (env.isShimmed || !env.browser.isIE) {
                         tryToSaveKey(null);                 // null
                         tryToSaveKey(/^regex$/);            // RegExp
                     }
@@ -380,7 +380,7 @@
                     saveData([true, false]);                // array of booleans
                     saveData([{foo: 'bar'}, {}]);           // array of objects
 
-                    if (!env.browser.isIE) {
+                    if (env.isShimmed || !env.browser.isIE) {
                         saveData(null);                     // null
                     }
 
@@ -586,8 +586,8 @@
             });
 
             it('should allow generated inline keys to be specified', function(done) {
-                if (env.browser.isSafari) {
-                    // BUG: Safari resets the key generator whenever key is specified, causing key conflicts
+                if (env.isNative && env.browser.isSafari) {
+                    // BUG: Safari's native IndexedDB resets the key generator whenever key is specified, causing key conflicts
                     console.error('Skipping test: ' + this.test.title);
                     return done();
                 }
@@ -644,7 +644,7 @@
                     saveKey(-Infinity);                     // negative infinity
                     saveKey(new Date(2000, 1, 2));          // Date
 
-                    if (!env.browser.isIE) {
+                    if (env.isShimmed || !env.browser.isIE) {
                         saveKey([]);                        // empty array
                         saveKey(['a', '', 'b']);            // array of strings
                         saveKey([1, 2.345, -678]);          // array of numbers
@@ -701,7 +701,7 @@
                     tryToSaveKey([true, false]);            // array of booleans
                     tryToSaveKey([{foo: 'bar'}]);           // array of objects
 
-                    if (!env.browser.isIE) {
+                    if (env.isShimmed || !env.browser.isIE) {
                         tryToSaveKey(null);                 // null
                     }
 
@@ -743,7 +743,7 @@
                     saveData([true, false]);                // array of booleans
                     saveData([{foo: 'bar'}, {}]);           // array of objects
 
-                    if (!env.browser.isFirefox) {
+                    if (env.isShimmed || !env.browser.isFirefox) {
                         saveData(new Date(2000, 1, 2));     // Date
                         saveData(/^regex$/);                // RegExp
                     }
@@ -810,7 +810,7 @@
                     tryToSaveData(-Infinity);           // negative infinity
                     tryToSaveData(NaN);                 // NaN
 
-                    if (!env.browser.isIE) {
+                    if (env.isShimmed || !env.browser.isIE) {
                         tryToSaveData(null);            // null
                     }
 
@@ -1070,8 +1070,8 @@
 
         describe('compound keys', function() {
             it('should save data with a compound out-of-line key', function(done) {
-                if (env.browser.isIE) {
-                    // BUG: IE does not support compound keys at all
+                if (env.isNative && env.browser.isIE) {
+                    // BUG: IE's native IndexedDB does not support compound keys at all
                     console.error('Skipping test: ' + this.test.title);
                     return done();
                 }
@@ -1105,8 +1105,8 @@
             });
 
             it('should save data with a compound inline key', function(done) {
-                if (env.browser.isIE) {
-                    // BUG: IE does not support compound keys at all
+                if (env.isNative && env.browser.isIE) {
+                    // BUG: IE's native IndexedDB does not support compound keys at all
                     console.error('Skipping test: ' + this.test.title);
                     return done();
                 }
@@ -1140,8 +1140,8 @@
             });
 
             it('should save data with a compound dotted key', function(done) {
-                if (env.browser.isIE) {
-                    // BUG: IE does not support compound keys at all
+                if (env.isNative && env.browser.isIE) {
+                    // BUG: IE's native IndexedDB does not support compound keys at all
                     console.error('Skipping test: ' + this.test.title);
                     return done();
                 }
@@ -1175,8 +1175,8 @@
             });
 
             it('should allow these keys', function(done) {
-                if (env.browser.isIE) {
-                    // BUG: IE does not support compound keys at all
+                if (env.isNative && env.browser.isIE) {
+                    // BUG: IE's native IndexedDB does not support compound keys at all
                     console.error('Skipping test: ' + this.test.title);
                     return done();
                 }
@@ -1231,8 +1231,8 @@
             });
 
             it('should not allow these keys', function(done) {
-                if (env.browser.isIE) {
-                    // BUG: IE does not support compound keys at all
+                if (env.isNative && env.browser.isIE) {
+                    // BUG: IE's native IndexedDB does not support compound keys at all
                     console.error('Skipping test: ' + this.test.title);
                     return done();
                 }
@@ -1254,7 +1254,7 @@
                     tryToSaveKey([true, false]);            // array of booleans
                     tryToSaveKey([{foo: 'bar'}]);           // array of objects
 
-                    if (!env.browser.isIE) {
+                    if (env.isShimmed || !env.browser.isIE) {
                         tryToSaveKey(null);                 // null
                     }
 
@@ -1278,8 +1278,8 @@
             });
 
             it('should throw an error if the key is incomplete', function(done) {
-                if (env.browser.isIE) {
-                    // BUG: IE does not support compound keys at all
+                if (env.isNative && env.browser.isIE) {
+                    // BUG: IE's native IndexedDB does not support compound keys at all
                     console.error('Skipping test: ' + this.test.title);
                     return done();
                 }
@@ -1305,8 +1305,8 @@
             });
 
             it('should save compound inline keys in multiple simultaneous transactions', function(done) {
-                if (env.browser.isIE) {
-                    // BUG: IE does not support compound keys at all
+                if (env.isNative && env.browser.isIE) {
+                    // BUG: IE's native IndexedDB does not support compound keys at all
                     console.error('Skipping test: ' + this.test.title);
                     return done();
                 }
@@ -1349,8 +1349,8 @@
             });
 
             it('should save compound out-of-line keys in multiple simultaneous transactions', function(done) {
-                if (env.browser.isIE) {
-                    // BUG: IE does not support compound keys at all
+                if (env.isNative && env.browser.isIE) {
+                    // BUG: IE's native IndexedDB does not support compound keys at all
                     console.error('Skipping test: ' + this.test.title);
                     return done();
                 }

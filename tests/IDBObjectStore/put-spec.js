@@ -164,8 +164,8 @@ describe('IDBObjectStore.put', function() {
     });
 
     it('should update an existing record with a compound out-of-line key', function(done) {
-        if (env.browser.isIE) {
-            // BUG: IE does not support compound keys at all
+        if (env.isNative && env.browser.isIE) {
+            // BUG: IE's native IndexedDB does not support compound keys at all
             console.error('Skipping test: ' + this.test.title);
             return done();
         }
@@ -197,8 +197,8 @@ describe('IDBObjectStore.put', function() {
     });
 
     it('should update an existing record with a compound key', function(done) {
-        if (env.browser.isIE) {
-            // BUG: IE does not support compound keys at all
+        if (env.isNative && env.browser.isIE) {
+            // BUG: IE's native IndexedDB does not support compound keys at all
             console.error('Skipping test: ' + this.test.title);
             return done();
         }
@@ -230,8 +230,8 @@ describe('IDBObjectStore.put', function() {
     });
 
     it('should update an existing record with a dotted compound key', function(done) {
-        if (env.browser.isIE) {
-            // BUG: IE does not support compound keys at all
+        if (env.isNative && env.browser.isIE) {
+            // BUG: IE's native IndexedDB does not support compound keys at all
             console.error('Skipping test: ' + this.test.title);
             return done();
         }

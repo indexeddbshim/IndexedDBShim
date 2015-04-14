@@ -189,8 +189,8 @@ describe('IDBIndex.count', function() {
     });
 
     it('should return different values for multi-entry indexes', function(done) {
-        if (env.browser.isIE) {
-            // BUG: IE does not support multi-entry indexes
+        if (env.isNative && env.browser.isIE) {
+            // BUG: IE's native IndexedDB does not support multi-entry indexes
             console.error('Skipping test: ' + this.test.title);
             return done();
         }
@@ -264,8 +264,8 @@ describe('IDBIndex.count', function() {
     });
 
     it('should return different values for unique, multi-entry indexes', function(done) {
-        if (env.browser.isIE) {
-            // BUG: IE does not support multi-entry indexes
+        if (env.isNative && env.browser.isIE) {
+            // BUG: IE's native IndexedDB does not support multi-entry indexes
             console.error('Skipping test: ' + this.test.title);
             return done();
         }

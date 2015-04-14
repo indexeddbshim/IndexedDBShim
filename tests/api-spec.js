@@ -36,7 +36,7 @@ describe('IndexedDB API', function() {
         expect(IDBTransaction.READ_ONLY).to.equal('readonly');
         expect(IDBTransaction.READ_WRITE).to.equal('readwrite');
 
-        if (!env.browser.isChrome && !env.browser.isSafari && !env.browser.isFirefox) {
+        if (env.isShimmed || env.browser.isIE) {
             // Only IE exposes this constant
             expect(IDBTransaction.VERSION_CHANGE).to.equal('versionchange');
         }

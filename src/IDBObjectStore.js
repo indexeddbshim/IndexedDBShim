@@ -11,13 +11,13 @@
      */
     function IDBObjectStore(storeProperties, transaction) {
         this.name = storeProperties.name;
-        this.keyPath = storeProperties.keyPath || null;
-        this.autoIncrement = typeof storeProperties.autoInc === "string" ? storeProperties.autoInc === "true" : !!storeProperties.autoInc;
+        this.keyPath = JSON.parse(storeProperties.keyPath);
+        this.autoIncrement = storeProperties.autoInc === "true";
         this.transaction = transaction;
 
         this.__indexes = {};
         this.indexNames = new idbModules.util.StringList();
-        var indexList = typeof storeProperties.indexList === "object" ? storeProperties.indexList : JSON.parse(storeProperties.indexList);
+        var indexList = JSON.parse(storeProperties.indexList);
         for (var indexName in indexList) {
             if (indexList.hasOwnProperty(indexName)) {
                 var index = new idbModules.IDBIndex(this, indexList[indexName]);
@@ -34,7 +34,12 @@
      * @protected
      */
     IDBObjectStore.__clone = function(store, transaction) {
-        var newStore = new IDBObjectStore({name: store.name, keyPath: store.keyPath, autoInc: store.autoIncrement, indexList: {}}, transaction);
+        var newStore = new IDBObjectStore({
+            name: store.name,
+            keyPath: JSON.stringify(store.keyPath),
+            autoInc: JSON.stringify(store.autoIncrement),
+            indexList: "{}"
+        }, transaction);
         newStore.__indexes = store.__indexes;
         newStore.indexNames = store.indexNames;
         return newStore;
@@ -63,7 +68,7 @@
             var sql = ["CREATE TABLE", idbModules.util.quote(store.name), "(key BLOB", store.autoIncrement ? "UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT" : "PRIMARY KEY", ", value BLOB)"].join(" ");
             idbModules.DEBUG && console.log(sql);
             tx.executeSql(sql, [], function(tx, data) {
-                tx.executeSql("INSERT INTO __sys__ VALUES (?,?,?,?)", [store.name, store.keyPath, store.autoIncrement, "{}"], function() {
+                tx.executeSql("INSERT INTO __sys__ VALUES (?,?,?,?)", [store.name, JSON.stringify(store.keyPath), store.autoIncrement, "{}"], function() {
                     success(store);
                 }, error);
             }, error);
@@ -115,7 +120,7 @@
                 throw idbModules.util.createDOMException("DataError", "The object store uses in-line keys and the key parameter was provided", this);
             }
             else if (value && typeof value === "object") {
-                key = idbModules.Key.getKeyPath(value, this.keyPath);
+                key = idbModules.Key.getValue(value, this.keyPath);
                 if (key === undefined) {
                     if (this.autoIncrement) {
                         // A key will be generated
@@ -142,7 +147,7 @@
             }
         }
 
-        idbModules.Key.validateKey(key);
+        idbModules.Key.validate(key);
     };
 
     /**
@@ -171,12 +176,12 @@
         }
 
         if (me.keyPath) {
-            var primaryKey = idbModules.Key.getKeyPath(value, me.keyPath);
+            var primaryKey = idbModules.Key.getValue(value, me.keyPath);
             if (primaryKey === undefined && me.autoIncrement) {
                 getNextAutoIncKey(function(primaryKey) {
                     try {
                         // Update the value with the new key
-                        idbModules.Key.setKeyPath(value, me.keyPath, primaryKey);
+                        idbModules.Key.setValue(value, me.keyPath, primaryKey);
                         success(primaryKey);
                     }
                     catch (e) {
@@ -203,11 +208,12 @@
         try {
             var paramMap = {};
             if (typeof primaryKey !== "undefined") {
-                paramMap.key = idbModules.Key.encodeKey(primaryKey);
+                idbModules.Key.validate(primaryKey);
+                paramMap.key = idbModules.Key.encode(primaryKey);
             }
             for (var i = 0; i < this.indexNames.length; i++) {
                 var index = this.__indexes[this.indexNames[i]];
-                paramMap[index.name] = idbModules.Key.encode(idbModules.Key.getKeyPath(value, index.keyPath));
+                paramMap[index.name] = idbModules.Key.encode(idbModules.Key.getValue(value, index.keyPath), index.multiEntry);
             }
             var sqlStart = ["INSERT INTO ", idbModules.util.quote(this.name), "("];
             var sqlEnd = [" VALUES ("];
@@ -271,6 +277,7 @@
             me.__deriveKey(tx, value, key, function(primaryKey) {
                 idbModules.Sca.encode(value, function(encoded) {
                     // First try to delete if the record exists
+                    idbModules.Key.validate(primaryKey);
                     var sql = "DELETE FROM " + idbModules.util.quote(me.name) + " where key = ?";
                     tx.executeSql(sql, [idbModules.Key.encode(primaryKey)], function(tx, data) {
                         idbModules.DEBUG && console.log("Did the row with the", primaryKey, "exist? ", data.rowsAffected);
@@ -292,7 +299,8 @@
             throw new TypeError("No key was specified");
         }
 
-        var primaryKey = idbModules.Key.encodeKey(key);
+        idbModules.Key.validate(key);
+        var primaryKey = idbModules.Key.encode(key);
         return me.transaction.__addToTransactionQueue(function objectStoreGet(tx, args, success, error) {
             idbModules.DEBUG && console.log("Fetching", me.name, primaryKey);
             tx.executeSql("SELECT * FROM " + idbModules.util.quote(me.name) + " where key = ?", [primaryKey], function(tx, data) {
@@ -325,7 +333,8 @@
         }
 
         me.transaction.__assertWritable();
-        var primaryKey = idbModules.Key.encodeKey(key);
+        idbModules.Key.validate(key);
+        var primaryKey = idbModules.Key.encode(key);
         // TODO key should also support key ranges
         return me.transaction.__addToTransactionQueue(function objectStoreDelete(tx, args, success, error) {
             idbModules.DEBUG && console.log("Fetching", me.name, primaryKey);
@@ -358,13 +367,13 @@
         // key is optional
         if (arguments.length > 0) {
             hasKey = true;
-            key = idbModules.Key.encodeKey(key);
+            idbModules.Key.validate(key);
         }
 
         return me.transaction.__addToTransactionQueue(function objectStoreCount(tx, args, success, error) {
             var sql = "SELECT * FROM " + idbModules.util.quote(me.name) + (hasKey ? " WHERE key = ?" : "");
             var sqlValues = [];
-            hasKey && sqlValues.push(key);
+            hasKey && sqlValues.push(idbModules.Key.encode(key));
             tx.executeSql(sql, sqlValues, function(tx, data) {
                 success(data.rows.length);
             }, function(tx, err) {

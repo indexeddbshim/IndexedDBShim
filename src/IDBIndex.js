@@ -23,7 +23,14 @@
      * @protected
      */
     IDBIndex.__clone = function(index, store) {
-        return new IDBIndex(store, {columnName: index.name, keyPath: index.keyPath, optionalParams: {multiEntry: index.multiEntry, unique: index.unique}});
+        return new IDBIndex(store, {
+            columnName: index.name,
+            keyPath: index.keyPath,
+            optionalParams: {
+                multiEntry: index.multiEntry,
+                unique: index.unique
+            }
+        });
     };
 
     /**
@@ -59,8 +66,10 @@
                         if (i < data.rows.length) {
                             try {
                                 var value = idbModules.Sca.decode(data.rows.item(i).value);
-                                var indexKey = idbModules.Key.getKeyPath(value, index.keyPath);
-                                tx.executeSql("UPDATE " + idbModules.util.quote(store.name) + " set " + idbModules.util.quote(index.name) + " = ? where key = ?", [idbModules.Key.encode(indexKey), data.rows.item(i).key], function(tx, data) {
+                                var indexKey = idbModules.Key.getValue(value, index.keyPath);
+                                indexKey = idbModules.Key.encode(indexKey, index.multiEntry);
+
+                                tx.executeSql("UPDATE " + idbModules.util.quote(store.name) + " set " + idbModules.util.quote(index.name) + " = ? where key = ?", [indexKey, data.rows.item(i).key], function(tx, data) {
                                     initIndexForRow(i + 1);
                                 }, error);
                             }
@@ -123,16 +132,16 @@
      */
     IDBIndex.prototype.__fetchIndexData = function(key, opType) {
         var me = this;
-        var hasKey;
+        var hasKey, encodedKey;
 
         // key is optional
         if (arguments.length === 1) {
             opType = key;
-            key = undefined;
             hasKey = false;
         }
         else {
-            key = idbModules.Key.encodeKey(key);
+            idbModules.Key.validate(key);
+            encodedKey = idbModules.Key.encode(key, me.multiEntry);
             hasKey = true;
         }
 
@@ -140,25 +149,49 @@
             var sql = ["SELECT * FROM ", idbModules.util.quote(me.objectStore.name), " WHERE", idbModules.util.quote(me.name), "NOT NULL"];
             var sqlValues = [];
             if (hasKey) {
-                sql.push("AND", idbModules.util.quote(me.name), " = ?");
-                sqlValues.push(key);
+                if (me.multiEntry) {
+                    sql.push("AND", idbModules.util.quote(me.name), " LIKE ?");
+                    sqlValues.push("%" + encodedKey + "%");
+                }
+                else {
+                    sql.push("AND", idbModules.util.quote(me.name), " = ?");
+                    sqlValues.push(encodedKey);
+                }
             }
             idbModules.DEBUG && console.log("Trying to fetch data for Index", sql.join(" "), sqlValues);
             tx.executeSql(sql.join(" "), sqlValues, function(tx, data) {
-                var d;
-                if (opType === "count") {
-                    d = data.rows.length;
+                var recordCount = 0, record = null;
+                if (me.multiEntry) {
+                    for (var i = 0; i < data.rows.length; i++) {
+                        var row = data.rows.item(i);
+                        var rowKey = idbModules.Key.decode(row[me.name]);
+                        if (hasKey && idbModules.Key.isMultiEntryMatch(encodedKey, row[me.name])) {
+                            recordCount++;
+                            record = record || row;
+                        }
+                        else if (!hasKey && rowKey !== undefined) {
+                            recordCount = recordCount + (rowKey instanceof Array ? rowKey.length : 1);
+                            record = record || row;
+                        }
+                    }
                 }
-                else if (data.rows.length === 0) {
-                    d = undefined;
+                else {
+                    recordCount = data.rows.length;
+                    record = recordCount && data.rows.item(0);
+                }
+
+                if (opType === "count") {
+                    success(recordCount);
+                }
+                else if (recordCount === 0) {
+                    success(undefined);
                 }
                 else if (opType === "key") {
-                    d = idbModules.Key.decode(data.rows.item(0).key);
+                    success(idbModules.Key.decode(record.key));
                 }
                 else { // when opType is value
-                    d = idbModules.Sca.decode(data.rows.item(0).value);
+                    success(idbModules.Sca.decode(record.value));
                 }
-                success(d);
             }, error);
         });
     };

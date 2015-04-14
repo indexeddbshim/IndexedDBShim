@@ -99,6 +99,12 @@
         );
 
         function transactionError(err) {
+            if (!me.__active) {
+                // The transaction has already completed, so we can't call "onerror" or "onabort".
+                // So throw the error instead.
+                throw err;
+            }
+
             try {
                 idbModules.util.logError("Error", "An error occurred in a transaction", err);
                 me.error = err;
