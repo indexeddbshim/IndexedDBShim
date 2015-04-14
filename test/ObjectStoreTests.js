@@ -52,6 +52,7 @@ queuedAsyncTest("Reopening an Object Store", function(){
         var transaction = db.transaction([DB.OBJECT_STORE_1], "readonly");
         var objectStore = transaction.objectStore(DB.OBJECT_STORE_1);
         equal(objectStore.autoIncrement, false, "AutoIncrement defaults to false");
+        dbOpenRequest.result.close();
         start();
         nextTest();
     };
