@@ -12,8 +12,10 @@
     function IDBObjectStore(storeProperties, transaction) {
         this.name = storeProperties.name;
         this.keyPath = JSON.parse(storeProperties.keyPath);
-        this.autoIncrement = storeProperties.autoInc === "true";
         this.transaction = transaction;
+
+        // autoInc is numeric (0/1) on WinPhone
+        this.autoIncrement = typeof storeProperties.autoInc === "string" ? storeProperties.autoInc === "true" : !!storeProperties.autoInc;
 
         this.__indexes = {};
         this.indexNames = new idbModules.util.StringList();

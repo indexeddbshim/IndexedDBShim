@@ -1,4 +1,4 @@
-describe('IDBDatabase.createObjectStore', function() {
+describe('IDBObjectStore.createIndex', function() {
     'use strict';
 
     var indexedDB;
@@ -7,7 +7,7 @@ describe('IDBDatabase.createObjectStore', function() {
     });
 
     describe('success tests', function() {
-        it('should create an object store with an out-of-line key', function(done) {
+        it('should create an index with default properties', function(done) {
             util.generateDatabaseName(function(err, name) {
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
@@ -15,14 +15,15 @@ describe('IDBDatabase.createObjectStore', function() {
                 open.onupgradeneeded = sinon.spy(function(event) {
                     var db = event.target.result;
                     var store = db.createObjectStore('My Store');
+                    var index = store.createIndex('My Index', 'foo.bar.baz');
 
-                    expect(store).to.be.an.instanceOf(IDBObjectStore);
-                    expect(store.transaction).to.be.an.instanceOf(IDBTransaction).and.equal(open.transaction);
-                    expect(store.name).to.equal('My Store');
-                    expect(store.keyPath).to.be.null;
-                    expect(store.indexNames).to.have.lengthOf(0);
+                    expect(index).to.be.an.instanceOf(IDBIndex);
+                    expect(index.objectStore).to.be.an.instanceOf(IDBObjectStore).and.equal(store);
+                    expect(index.name).to.equal('My Index');
+                    expect(index.keyPath).to.equal('foo.bar.baz');
+                    expect(index.unique).to.be.false;
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(store.autoIncrement).to.be.false;    // IE doesn't have this property
+                        expect(index.multiEntry).to.be.false;    // IE doesn't have this property
                     }
                 });
 
@@ -34,22 +35,23 @@ describe('IDBDatabase.createObjectStore', function() {
             });
         });
 
-        it('should create an object store with a generated out-of-line key', function(done) {
+        it('should create a unique index', function(done) {
             util.generateDatabaseName(function(err, name) {
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function(event) {
                     var db = event.target.result;
-                    var store = db.createObjectStore('My Store', {autoIncrement: true});
+                    var store = db.createObjectStore('My Store');
+                    var index = store.createIndex('My Index', 'foo.bar.baz', {unique: true});
 
-                    expect(store).to.be.an.instanceOf(IDBObjectStore);
-                    expect(store.transaction).to.be.an.instanceOf(IDBTransaction).and.equal(open.transaction);
-                    expect(store.name).to.equal('My Store');
-                    expect(store.keyPath).to.be.null;
-                    expect(store.indexNames).to.have.lengthOf(0);
+                    expect(index).to.be.an.instanceOf(IDBIndex);
+                    expect(index.objectStore).to.be.an.instanceOf(IDBObjectStore).and.equal(store);
+                    expect(index.name).to.equal('My Index');
+                    expect(index.keyPath).to.equal('foo.bar.baz');
+                    expect(index.unique).to.be.true;
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(store.autoIncrement).to.be.true;    // IE doesn't have this property
+                        expect(index.multiEntry).to.be.false;    // IE doesn't have this property
                     }
                 });
 
@@ -61,22 +63,23 @@ describe('IDBDatabase.createObjectStore', function() {
             });
         });
 
-        it('should create an object store with an inline key', function(done) {
+        it('should create a multi-entry index', function(done) {
             util.generateDatabaseName(function(err, name) {
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function(event) {
                     var db = event.target.result;
-                    var store = db.createObjectStore('My Store', {keyPath: 'foo.bar.baz'});
+                    var store = db.createObjectStore('My Store');
+                    var index = store.createIndex('My Index', 'foo.bar.baz', {multiEntry: true});
 
-                    expect(store).to.be.an.instanceOf(IDBObjectStore);
-                    expect(store.transaction).to.be.an.instanceOf(IDBTransaction).and.equal(open.transaction);
-                    expect(store.name).to.equal('My Store');
-                    expect(store.keyPath).to.equal('foo.bar.baz');
-                    expect(store.indexNames).to.have.lengthOf(0);
+                    expect(index).to.be.an.instanceOf(IDBIndex);
+                    expect(index.objectStore).to.be.an.instanceOf(IDBObjectStore).and.equal(store);
+                    expect(index.name).to.equal('My Index');
+                    expect(index.keyPath).to.equal('foo.bar.baz');
+                    expect(index.unique).to.be.false;
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(store.autoIncrement).to.be.false;    // IE doesn't have this property
+                        expect(index.multiEntry).to.be.true;    // IE doesn't have this property
                     }
                 });
 
@@ -88,22 +91,23 @@ describe('IDBDatabase.createObjectStore', function() {
             });
         });
 
-        it('should create an object store with a generated inline key', function(done) {
+        it('should create a unique, multi-entry index', function(done) {
             util.generateDatabaseName(function(err, name) {
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function(event) {
                     var db = event.target.result;
-                    var store = db.createObjectStore('My Store', {keyPath: 'foo.bar.baz', autoIncrement: true});
+                    var store = db.createObjectStore('My Store');
+                    var index = store.createIndex('My Index', 'foo.bar.baz', {unique: true, multiEntry: true});
 
-                    expect(store).to.be.an.instanceOf(IDBObjectStore);
-                    expect(store.transaction).to.be.an.instanceOf(IDBTransaction).and.equal(open.transaction);
-                    expect(store.name).to.equal('My Store');
-                    expect(store.keyPath).to.equal('foo.bar.baz');
-                    expect(store.indexNames).to.have.lengthOf(0);
+                    expect(index).to.be.an.instanceOf(IDBIndex);
+                    expect(index.objectStore).to.be.an.instanceOf(IDBObjectStore).and.equal(store);
+                    expect(index.name).to.equal('My Index');
+                    expect(index.keyPath).to.equal('foo.bar.baz');
+                    expect(index.unique).to.be.true;
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(store.autoIncrement).to.be.true;    // IE doesn't have this property
+                        expect(index.multiEntry).to.be.true;    // IE doesn't have this property
                     }
                 });
 
@@ -115,13 +119,7 @@ describe('IDBDatabase.createObjectStore', function() {
             });
         });
 
-        it('should create new tables in an existing database', function(done) {
-            if (env.isNative && env.browser.isSafari) {
-                // BUG: Safari's native IndexedDB aborts the 2nd transaction (without any error)
-                console.error('Skipping test: ' + this.test.title);
-                return done();
-            }
-
+        it('should create new indexes in an existing database', function(done) {
             util.generateDatabaseName(function(err, name) {
                 createVersion1();
 
@@ -131,11 +129,12 @@ describe('IDBDatabase.createObjectStore', function() {
 
                     open.onupgradeneeded = sinon.spy(function(event) {
                         var db = event.target.result;
-                        db.createObjectStore('My Store 1');
-                        db.createObjectStore('My Store 2', {keyPath: 'foo', autoIncrement: false});
+                        var store = db.createObjectStore('My Store');
+                        store.createIndex('My Index 1', 'foo');
+                        store.createIndex('My Index 2', 'foo');
 
-                        expect(Array.prototype.slice.call(db.objectStoreNames))
-                            .to.have.same.members(['My Store 1', 'My Store 2']);
+                        expect(Array.prototype.slice.call(store.indexNames))
+                            .to.have.same.members(['My Index 1', 'My Index 2']);
                     });
 
                     open.onsuccess = function() {
@@ -149,16 +148,16 @@ describe('IDBDatabase.createObjectStore', function() {
                     open.onerror = open.onblocked = done;
 
                     open.onupgradeneeded = sinon.spy(function(event) {
-                        var db = event.target.result;
+                        var store = open.transaction.objectStore('My Store');
 
-                        expect(Array.prototype.slice.call(db.objectStoreNames))
-                            .to.have.same.members(['My Store 1', 'My Store 2']);
+                        expect(Array.prototype.slice.call(store.indexNames))
+                            .to.have.same.members(['My Index 1', 'My Index 2']);
 
-                        db.createObjectStore('My Store 3');
-                        db.createObjectStore('My Store 4');
+                        store.createIndex('My Index 3', 'bar');
+                        store.createIndex('My Index 4', 'bar');
 
-                        expect(Array.prototype.slice.call(db.objectStoreNames))
-                            .to.have.same.members(['My Store 1', 'My Store 2', 'My Store 3', 'My Store 4']);
+                        expect(Array.prototype.slice.call(store.indexNames))
+                            .to.have.same.members(['My Index 1', 'My Index 2', 'My Index 3', 'My Index 4']);
                     });
 
                     open.onsuccess = function() {
@@ -171,16 +170,10 @@ describe('IDBDatabase.createObjectStore', function() {
         });
 
         it('should persist the schema across database sessions', function(done) {
-            if (env.isNative && env.browser.isSafari) {
-                // BUG: Safari's native IndexedDB does not support opening multiple object stores
-                console.error('Skipping test: ' + this.test.title);
-                return done();
-            }
-
             // Create a database schema, then close the database
             util.createDatabase(
-                'out-of-line', 'out-of-line-generated', 'inline', 'inline-generated', 'inline-compound',
-                'dotted', 'dotted-generated', 'dotted-compound', 'inline-index', 'unique-multi-entry-index',
+                'out-of-line', 'inline-index', 'unique-index', 'multi-entry-index',
+                'unique-multi-entry-index', 'dotted-index', 'compound-index', 'compound-index-unique',
                 function(err, db) {
                     if (err) return done(err);
                     db.close();
@@ -198,30 +191,29 @@ describe('IDBDatabase.createObjectStore', function() {
                 open.onsuccess = function() {
                     var db = open.result;
                     var tx = db.transaction(db.objectStoreNames);
+                    var store = tx.objectStore('out-of-line');
                     tx.onerror = tx.onabort = function(event) {
                         done(event.target.error);
                     };
 
-                    // Verify that all of the object stores exist
-                    var storeNames = Array.prototype.slice.call(db.objectStoreNames);
-                    var indexNames = ['inline-index', 'unique-multi-entry-index'];
-                    expect(storeNames).to.have.same.members([
-                        'out-of-line', 'out-of-line-generated', 'inline', 'inline-generated',
-                        'inline-compound', 'dotted', 'dotted-generated', 'dotted-compound'
+                    // Verify that all of the indexes exist
+                    var indexes = Array.prototype.slice.call(store.indexNames);
+                    expect(indexes).to.have.same.members([
+                        'inline-index', 'unique-index', 'multi-entry-index', 'unique-multi-entry-index',
+                        'dotted-index', 'compound-index', 'compound-index-unique'
                     ]);
 
-                    // Verify the properties of each object store
-                    verifySchema(tx.objectStore('out-of-line'), {name: 'out-of-line', keyPath: null, autoIncrement: false, indexNames: indexNames});
-                    verifySchema(tx.objectStore('out-of-line-generated'), {name: 'out-of-line-generated', keyPath: null, autoIncrement: true, indexNames: indexNames});
-                    verifySchema(tx.objectStore('inline'), {name: 'inline', keyPath: 'id', autoIncrement: false, indexNames: indexNames});
-                    verifySchema(tx.objectStore('inline-generated'), {name: 'inline-generated', keyPath: 'id', autoIncrement: true, indexNames: indexNames});
-                    verifySchema(tx.objectStore('dotted'), {name: 'dotted', keyPath: 'name.first', autoIncrement: false, indexNames: indexNames});
-                    verifySchema(tx.objectStore('dotted-generated'), {name: 'dotted-generated', keyPath: 'name.first', autoIncrement: true, indexNames: indexNames});
+                    // Verify the properties of each index
+                    verifySchema(store.index('inline-index'), {name: 'inline-index', objectStore: store, keyPath: 'id', multiEntry: false, unique: false});
+                    verifySchema(store.index('unique-index'), {name: 'unique-index', objectStore: store, keyPath: 'id', multiEntry: false, unique: true});
+                    verifySchema(store.index('multi-entry-index'), {name: 'multi-entry-index', objectStore: store, keyPath: 'id', multiEntry: true, unique: false});
+                    verifySchema(store.index('unique-multi-entry-index'), {name: 'unique-multi-entry-index', objectStore: store, keyPath: 'id', multiEntry: true, unique: true});
+                    verifySchema(store.index('dotted-index'), {name: 'dotted-index', objectStore: store, keyPath: 'name.first', multiEntry: false, unique: false});
 
                     if (env.isShimmed || !env.browser.isIE) {
-                        // IE doesn't support compound keys
-                        verifySchema(tx.objectStore('inline-compound'), {name: 'inline-compound', keyPath: ['id','name'], autoIncrement: false, indexNames: indexNames});
-                        verifySchema(tx.objectStore('dotted-compound'), {name: 'dotted-compound', keyPath: ['id','name.first','name.last'], autoIncrement: false, indexNames: indexNames});
+                        // IE doesn't support compound indexes
+                        verifySchema(store.index('compound-index'), {name: 'compound-index', objectStore: store, keyPath: ['id', 'name.first', 'name.last'], multiEntry: false, unique: false});
+                        verifySchema(store.index('compound-index-unique'), {name: 'compound-index-unique', objectStore: store, keyPath: ['id', 'name.first', 'name.last'], multiEntry: false, unique: true});
                     }
 
                     tx.oncomplete = function() {
@@ -236,8 +228,8 @@ describe('IDBDatabase.createObjectStore', function() {
                     var objValue = obj[prop];
                     var schemaValue = schema[prop];
 
-                    if (env.isNative && env.browser.isIE && prop === 'autoIncrement') {
-                        // IE's native IndexedDB does not have the autoIncrement property
+                    if (env.isNative && env.browser.isIE && prop === 'multiEntry') {
+                        // IE's native IndexedDB does not have the multiEntry property
                         schemaValue = undefined;
                     }
 
@@ -259,9 +251,10 @@ describe('IDBDatabase.createObjectStore', function() {
 
                 open.onupgradeneeded = sinon.spy(function(event) {
                     var db = event.target.result;
+                    var store = db.createObjectStore('My Store');
 
                     try {
-                        db.createObjectStore();
+                        store.createIndex();
                     }
                     catch (e) {
                         err = e;
@@ -279,17 +272,46 @@ describe('IDBDatabase.createObjectStore', function() {
             });
         });
 
-        it('should throw an error if the store was already created in the same transaction', function(done) {
+        it('should throw an error if called without a keyPath', function(done) {
             util.generateDatabaseName(function(err, name) {
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function(event) {
                     var db = event.target.result;
-                    db.createObjectStore('My Store');
+                    var store = db.createObjectStore('My Store');
 
                     try {
-                        db.createObjectStore('My Store');
+                        store.createIndex('My Index');
+                    }
+                    catch (e) {
+                        err = e;
+                    }
+
+                    expect(err).to.be.an.instanceOf(TypeError);
+                    expect(err.name).to.equal('TypeError');
+                });
+
+                open.onsuccess = function() {
+                    sinon.assert.calledOnce(open.onupgradeneeded);
+                    open.result.close();
+                    done();
+                };
+            });
+        });
+
+        it('should throw an error if the index was already created in the same transaction', function(done) {
+            util.generateDatabaseName(function(err, name) {
+                var open = indexedDB.open(name, 1);
+                open.onerror = open.onblocked = done;
+
+                open.onupgradeneeded = sinon.spy(function(event) {
+                    var db = event.target.result;
+                    var store = db.createObjectStore('My Store');
+                    store.createIndex('My Index', 'foo');
+
+                    try {
+                        store.createIndex('My Index', 'bar');
                     }
                     catch (e) {
                         err = e;
@@ -307,7 +329,7 @@ describe('IDBDatabase.createObjectStore', function() {
             });
         });
 
-        it('should throw an error if the store was already created in a previous transaction', function(done) {
+        it('should throw an error if the index was already created in a previous transaction', function(done) {
             util.generateDatabaseName(function(err, name) {
                 createVersion1();
 
@@ -317,7 +339,8 @@ describe('IDBDatabase.createObjectStore', function() {
 
                     open.onupgradeneeded = sinon.spy(function(event) {
                         var db = event.target.result;
-                        db.createObjectStore('My Store');
+                        var store = db.createObjectStore('My Store');
+                        store.createIndex('My Index', 'foo');
                     });
 
                     open.onsuccess = function() {
@@ -331,10 +354,10 @@ describe('IDBDatabase.createObjectStore', function() {
                     open.onerror = open.onblocked = done;
 
                     open.onupgradeneeded = sinon.spy(function(event) {
-                        var db = event.target.result;
+                        var store = open.transaction.objectStore('My Store');
 
                         try {
-                            db.createObjectStore('My Store');
+                            store.createIndex('My Index', 'bar');
                         }
                         catch (e) {
                             err = e;

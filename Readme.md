@@ -6,7 +6,7 @@ IndexedDB Polyfill
 [![Dependencies](https://img.shields.io/david/dev/axemclion/indexeddbshim.svg)](https://david-dm.org/axemclion/indexeddbshim)
 [![npm](http://img.shields.io/npm/v/indexeddbshim.svg)](https://www.npmjs.com/package/indexeddbshim)
 [![Bower](http://img.shields.io/bower/v/IndexedDBShim.svg)](http://bower.io/search/?q=IndexedDBShim)
-[![License](https://img.shields.io/npm/l/indexeddbshim.svg)](LICENSE)
+[![License](https://img.shields.io/npm/l/indexeddbshim.svg)](LICENSE-APACHE)
 
 |[Live Demo!](http://nparashuram.com/IndexedDBShim/tests/index.html?useShim=true)
 |------------------------------------------------------------
@@ -137,7 +137,7 @@ By creating a variable named `indexedDB`, all the code within that closure will 
 ````
 
 #### Windows Phone
-IndexedDB on Windows Phone requires the [Cordova WebSql plug-in](http://plugins.cordova.io/#/package/com.msopentech.websql), which has some [known bugs](https://code.google.com/p/csharp-sqlite/issues/list).  Specifically, because the WebSql plug-in is synchronous instead of asynchronous, the performance can be very poor.  It can also cause stack-overflow errors when performing many operations in a single transaction.  The only workaround for now is to limit yourself to two or three operations per transaction.
+IndexedDB on Windows Phone requires the [Cordova WebSql plug-in](http://plugins.cordova.io/#/package/com.msopentech.websql), which has some [known bugs](https://code.google.com/p/csharp-sqlite/issues/list).  Specifically, because the WebSql plug-in is synchronous instead of asynchronous, the performance can be very poor.  It can also cause stack-overflow errors when performing many operations in a single transaction.  The only workaround for now is to limit yourself to no more than 10 operations per transaction.
 
 
 Building
