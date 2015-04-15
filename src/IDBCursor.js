@@ -39,22 +39,29 @@
         recordsToLoad = recordsToLoad || 1;
 
         var me = this;
+        var multiEntry = me.source.indexNames.contains(me.__keyColumnName) && me.source.index(me.__keyColumnName).multiEntry;
         var quotedKeyColumnName = idbModules.util.quote(me.__keyColumnName);
         var sql = ["SELECT * FROM", idbModules.util.quote(me.source.name)];
         var sqlValues = [];
+
         sql.push("WHERE", quotedKeyColumnName, "NOT NULL");
         if (me.__range && (me.__range.lower !== undefined || me.__range.upper !== undefined )) {
             sql.push("AND");
-            if (me.__range.lower !== undefined) {
-                sql.push(quotedKeyColumnName, (me.__range.lowerOpen ? ">" : ">="), "?");
-                idbModules.Key.validate(me.__range.lower);
-                sqlValues.push(idbModules.Key.encode(me.__range.lower));
-            }
-            (me.__range.lower !== undefined && me.__range.upper !== undefined) && sql.push("AND");
-            if (me.__range.upper !== undefined) {
-                sql.push(quotedKeyColumnName, (me.__range.upperOpen ? "<" : "<="), "?");
-                idbModules.Key.validate(me.__range.upper);
-                sqlValues.push(idbModules.Key.encode(me.__range.upper));
+            if (multiEntry && me.__range.lower !== undefined) {
+                sql.push(quotedKeyColumnName, "LIKE ? ESCAPE", idbModules.util.quote("\\"));
+                sqlValues.push(idbModules.util.quoteWildcard(idbModules.Key.encode(me.__range.lower, true)));
+            } else {
+                if (me.__range.lower !== undefined) {
+                    sql.push(quotedKeyColumnName, (me.__range.lowerOpen ? ">" : ">="), "?");
+                    idbModules.Key.validate(me.__range.lower);
+                    sqlValues.push(idbModules.Key.encode(me.__range.lower));
+                }
+                (me.__range.lower !== undefined && me.__range.upper !== undefined) && sql.push("AND");
+                if (me.__range.upper !== undefined) {
+                    sql.push(quotedKeyColumnName, (me.__range.upperOpen ? "<" : "<="), "?");
+                    idbModules.Key.validate(me.__range.upper);
+                    sqlValues.push(idbModules.Key.encode(me.__range.upper));
+                }
             }
         }
         if (typeof key !== "undefined") {
