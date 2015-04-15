@@ -1,6 +1,6 @@
 {
   "name": "indexeddbshim",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Parashuram <code@nparashuram.com>",
   "description": "A polyfill for IndexedDB using WebSql",
   "scripts": {
@@ -38,7 +38,7 @@
     "sinon": "^1.13.0"
   },
   "bundleDependencies": [],
-  "license": "Apache 2.0",
+  "license": "Apache-2.0",
   "engines": {
     "node": ">=0.10"
   }

@@ -1,6 +1,9 @@
-src
-test
-tests
-examples
-Gruntfile.js
-travis.sh
+/src
+/test
+/tests
+/examples
+/.*
+/bower.json
+/index.html
+/Gruntfile.js
+/travis.sh
