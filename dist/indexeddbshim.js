@@ -100,6 +100,15 @@ var cleanInterface = false;                 // jshint ignore:line
     idbModules.util.quote = function(arg) {
         return "\"" + arg + "\"";
     };
+    idbModules.util.trim = function(arg) {
+        return arg && arg.replace(/^\s+|\s+$/g, "");
+    };
+    idbModules.util.sqlEscape = function(arg) {
+        return arg && arg.replace(/([%_"])/g, "\\$1");
+    };
+    idbModules.util.quoteWildcard = function(arg) {
+        return "%\\\"" + this.sqlEscape(this.trim(arg)) + "%";
+    };
 
 }(idbModules));
 
@@ -954,21 +963,29 @@ var cleanInterface = false;                 // jshint ignore:line
         recordsToLoad = recordsToLoad || 1;
 
         var me = this;
-        var sql = ["SELECT * FROM ", idbModules.util.quote(me.source.name)];
+        var multiEntry = me.source.indexNames.contains(me.__keyColumnName) && me.source.index(me.__keyColumnName).multiEntry;
+        var quotedKeyColumnName = idbModules.util.quote(me.__keyColumnName);
+        var sql = ["SELECT * FROM", idbModules.util.quote(me.source.name)];
         var sqlValues = [];
-        sql.push("WHERE ", me.__keyColumnName, " NOT NULL");
+
+        sql.push("WHERE", quotedKeyColumnName, "NOT NULL");
         if (me.__range && (me.__range.lower !== undefined || me.__range.upper !== undefined )) {
             sql.push("AND");
-            if (me.__range.lower !== undefined) {
-                sql.push(me.__keyColumnName + (me.__range.lowerOpen ? " >" : " >= ") + " ?");
-                idbModules.Key.validate(me.__range.lower);
-                sqlValues.push(idbModules.Key.encode(me.__range.lower));
-            }
-            (me.__range.lower !== undefined && me.__range.upper !== undefined) && sql.push("AND");
-            if (me.__range.upper !== undefined) {
-                sql.push(me.__keyColumnName + (me.__range.upperOpen ? " < " : " <= ") + " ?");
-                idbModules.Key.validate(me.__range.upper);
-                sqlValues.push(idbModules.Key.encode(me.__range.upper));
+            if (multiEntry && me.__range.lower !== undefined) {
+                sql.push(quotedKeyColumnName, "LIKE ? ESCAPE", idbModules.util.quote("\\"));
+                sqlValues.push(idbModules.util.quoteWildcard(idbModules.Key.encode(me.__range.lower, true)));
+            } else {
+                if (me.__range.lower !== undefined) {
+                    sql.push(quotedKeyColumnName, (me.__range.lowerOpen ? ">" : ">="), "?");
+                    idbModules.Key.validate(me.__range.lower);
+                    sqlValues.push(idbModules.Key.encode(me.__range.lower));
+                }
+                (me.__range.lower !== undefined && me.__range.upper !== undefined) && sql.push("AND");
+                if (me.__range.upper !== undefined) {
+                    sql.push(quotedKeyColumnName, (me.__range.upperOpen ? "<" : "<="), "?");
+                    idbModules.Key.validate(me.__range.upper);
+                    sqlValues.push(idbModules.Key.encode(me.__range.upper));
+                }
             }
         }
         if (typeof key !== "undefined") {
@@ -976,7 +993,7 @@ var cleanInterface = false;                 // jshint ignore:line
             me.__offset = 0;
         }
         if (me.__lastKeyContinued !== undefined) {
-            sql.push("AND " + me.__keyColumnName + " >= ?");
+            sql.push("AND", quotedKeyColumnName, ">= ?");
             idbModules.Key.validate(me.__lastKeyContinued);
             sqlValues.push(idbModules.Key.encode(me.__lastKeyContinued));
         }
@@ -984,8 +1001,8 @@ var cleanInterface = false;                 // jshint ignore:line
         // Determine the ORDER BY direction based on the cursor.
         var direction = me.direction === 'prev' || me.direction === 'prevunique' ? 'DESC' : 'ASC';
 
-        sql.push("ORDER BY ", me.__keyColumnName, " " + direction);
-        sql.push("LIMIT " + recordsToLoad + " OFFSET " + me.__offset);
+        sql.push("ORDER BY", quotedKeyColumnName, direction);
+        sql.push("LIMIT", recordsToLoad, "OFFSET", me.__offset);
         idbModules.DEBUG && console.log(sql.join(" "), sqlValues);
 
         me.__prefetchedData = null;
@@ -1278,15 +1295,15 @@ var cleanInterface = false;                 // jshint ignore:line
         }
 
         return me.objectStore.transaction.__addToTransactionQueue(function fetchIndexData(tx, args, success, error) {
-            var sql = ["SELECT * FROM ", idbModules.util.quote(me.objectStore.name), " WHERE", idbModules.util.quote(me.name), "NOT NULL"];
+            var sql = ["SELECT * FROM", idbModules.util.quote(me.objectStore.name), "WHERE", idbModules.util.quote(me.name), "NOT NULL"];
             var sqlValues = [];
             if (hasKey) {
                 if (me.multiEntry) {
-                    sql.push("AND", idbModules.util.quote(me.name), " LIKE ?");
+                    sql.push("AND", idbModules.util.quote(me.name), "LIKE ?");
                     sqlValues.push("%" + encodedKey + "%");
                 }
                 else {
-                    sql.push("AND", idbModules.util.quote(me.name), " = ?");
+                    sql.push("AND", idbModules.util.quote(me.name), "= ?");
                     sqlValues.push(encodedKey);
                 }
             }
