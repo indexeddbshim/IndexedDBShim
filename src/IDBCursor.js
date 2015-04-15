@@ -39,19 +39,19 @@
         recordsToLoad = recordsToLoad || 1;
 
         var me = this;
-        var sql = ["SELECT * FROM ", idbModules.util.quote(me.source.name)];
+        var sql = ["SELECT * FROM", idbModules.util.quote(me.source.name)];
         var sqlValues = [];
-        sql.push("WHERE ", me.__keyColumnName, " NOT NULL");
+        sql.push("WHERE", me.__keyColumnName, "NOT NULL");
         if (me.__range && (me.__range.lower !== undefined || me.__range.upper !== undefined )) {
             sql.push("AND");
             if (me.__range.lower !== undefined) {
-                sql.push(me.__keyColumnName + (me.__range.lowerOpen ? " >" : " >= ") + " ?");
+                sql.push(me.__keyColumnName, (me.__range.lowerOpen ? ">" : ">="), "?");
                 idbModules.Key.validate(me.__range.lower);
                 sqlValues.push(idbModules.Key.encode(me.__range.lower));
             }
             (me.__range.lower !== undefined && me.__range.upper !== undefined) && sql.push("AND");
             if (me.__range.upper !== undefined) {
-                sql.push(me.__keyColumnName + (me.__range.upperOpen ? " < " : " <= ") + " ?");
+                sql.push(me.__keyColumnName, (me.__range.upperOpen ? "<" : "<="), "?");
                 idbModules.Key.validate(me.__range.upper);
                 sqlValues.push(idbModules.Key.encode(me.__range.upper));
             }
@@ -61,7 +61,7 @@
             me.__offset = 0;
         }
         if (me.__lastKeyContinued !== undefined) {
-            sql.push("AND " + me.__keyColumnName + " >= ?");
+            sql.push("AND", me.__keyColumnName, ">= ?");
             idbModules.Key.validate(me.__lastKeyContinued);
             sqlValues.push(idbModules.Key.encode(me.__lastKeyContinued));
         }
@@ -69,8 +69,8 @@
         // Determine the ORDER BY direction based on the cursor.
         var direction = me.direction === 'prev' || me.direction === 'prevunique' ? 'DESC' : 'ASC';
 
-        sql.push("ORDER BY ", me.__keyColumnName, " " + direction);
-        sql.push("LIMIT " + recordsToLoad + " OFFSET " + me.__offset);
+        sql.push("ORDER BY", me.__keyColumnName, direction);
+        sql.push("LIMIT", recordsToLoad, "OFFSET", me.__offset);
         idbModules.DEBUG && console.log(sql.join(" "), sqlValues);
 
         me.__prefetchedData = null;
@@ -155,22 +155,22 @@
                 me.__find(undefined, tx, function(key, value, primaryKey){
                     var store = me.source;
                     var params = [encoded];
-                    var sql = "UPDATE " + idbModules.util.quote(store.name) + " SET value = ?";
+                    var sql = ["UPDATE", idbModules.util.quote(store.name), "SET value = ?"];
                     idbModules.Key.validate(primaryKey);
 
                     // Also correct the indexes in the table
                     for (var i = 0; i < store.indexNames.length; i++) {
                         var index = store.__indexes[store.indexNames[i]];
                         var indexKey = idbModules.Key.getValue(valueToUpdate, index.keyPath);
-                        sql += ", " + index.name + " = ?";
+                        sql.push(",", index.name, "= ?");
                         params.push(idbModules.Key.encode(indexKey, index.multiEntry));
                     }
 
-                    sql += " WHERE key = ?";
+                    sql.push("WHERE key = ?");
                     params.push(idbModules.Key.encode(primaryKey));
 
-                    idbModules.DEBUG && console.log(sql, encoded, key, primaryKey);
-                    tx.executeSql(sql, params, function(tx, data){
+                    idbModules.DEBUG && console.log(sql.join(" "), encoded, key, primaryKey);
+                    tx.executeSql(sql.join(" "), params, function(tx, data){
                         me.__prefetchedData = null;
                         if (data.rowsAffected === 1) {
                             success(key);
