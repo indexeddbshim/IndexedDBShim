@@ -14,6 +14,7 @@
         this.keyPath = indexProperties.keyPath;
         this.multiEntry = indexProperties.optionalParams && indexProperties.optionalParams.multiEntry;
         this.unique = indexProperties.optionalParams && indexProperties.optionalParams.unique;
+        this.__deleted = !!indexProperties.__deleted;
     }
 
     /**
@@ -41,8 +42,11 @@
      * @protected
      */
     IDBIndex.__createIndex = function(store, index) {
+        var columnExists = !!store.__indexes[index.name] && store.__indexes[index.name].__deleted;
+
         // Add the index to the IDBObjectStore
         store.__indexes[index.name] = index;
+        store.__indexes[index.name].__deleted = false;
         store.indexNames.push(index.name);
 
         // Create the index in WebSQL
@@ -52,10 +56,7 @@
                 failure(idbModules.util.createDOMException(0, "Could not create index \"" + index.name + "\"", err));
             }
 
-            // For this index, first create a column
-            var sql = ["ALTER TABLE", idbModules.util.quote(store.name), "ADD", idbModules.util.quote(index.name), "BLOB"].join(" ");
-            idbModules.DEBUG && console.log(sql);
-            tx.executeSql(sql, [], function(tx, data) {
+            function applyIndex(tx) {
                 // Once a column is created, put existing records into the index
                 tx.executeSql("SELECT * FROM " + idbModules.util.quote(store.name), [], function(tx, data) {
                     idbModules.DEBUG && console.log("Adding existing " + store.name + " records to the " + index.name + " index");
@@ -79,33 +80,21 @@
                             }
                         }
                         else {
-                            updateObjectStoreSchema();
+                            updateObjectStoreSchema(tx, store, success, failure);
                         }
-                    }
-
-                    // Updates the "indexList" column for the object store
-                    function updateObjectStoreSchema() {
-                        var indexList = {};
-                        for (var i = 0; i < store.indexNames.length; i++) {
-                            var idx = store.__indexes[store.indexNames[i]];
-                            /** @type {IDBIndexProperties} **/
-                            indexList[idx.name] = {
-                                columnName: idx.name,
-                                keyPath: idx.keyPath,
-                                optionalParams: {
-                                    unique: idx.unique,
-                                    multiEntry: idx.multiEntry
-                                }
-                            };
-                        }
-
-                        idbModules.DEBUG && console.log("Updating the index list for " + store.name, indexList);
-                        tx.executeSql("UPDATE __sys__ set indexList = ? where name = ?", [JSON.stringify(indexList), store.name], function() {
-                            success(index);
-                        }, error);
                     }
                 }, error);
-            }, error);
+            }
+
+            if (columnExists) {
+                // For a previously existing index, just update existing data
+                applyIndex(tx);
+            } else {
+                // For a new index, first create a column then update existing data
+                var sql = ["ALTER TABLE", idbModules.util.quote(store.name), "ADD", idbModules.util.quote(index.name), "BLOB"].join(" ");
+                idbModules.DEBUG && console.log(sql);
+                tx.executeSql(sql, [], applyIndex, error);
+            }
         });
     };
 
@@ -117,11 +106,37 @@
      */
     IDBIndex.__deleteIndex = function(store, index) {
         // Remove the index from the IDBObjectStore
-        store.__indexes[index.name] = undefined;
+        store.__indexes[index.name].__deleted = true;
         store.indexNames.splice(store.indexNames.indexOf(index.name), 1);
 
         // TODO: Remove the index from WebSQL
     };
+
+    /**
+     * Updates index list for the given store
+     * @param {IDBObjectStore} store
+     */
+    function updateObjectStoreSchema(tx, store, success, failure) {
+        var indexList = {};
+        for (var i = 0; i < store.indexNames.length; i++) {
+            var idx = store.__indexes[store.indexNames[i]];
+            /** @type {IDBIndexProperties} **/
+            indexList[idx.name] = {
+                columnName: idx.name,
+                keyPath: idx.keyPath,
+                optionalParams: {
+                    unique: idx.unique,
+                    multiEntry: idx.multiEntry
+                },
+                deleted: !!idx.deleted
+            };
+        }
+
+        idbModules.DEBUG && console.log("Updating the index list for " + store.name, indexList);
+        tx.executeSql("UPDATE __sys__ set indexList = ? where name = ?", [JSON.stringify(indexList), store.name], function() {
+            success(store);
+        }, failure);
+    }
 
     /**
      * Retrieves index data for the given key
