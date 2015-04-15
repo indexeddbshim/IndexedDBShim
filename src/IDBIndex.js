@@ -146,15 +146,15 @@
         }
 
         return me.objectStore.transaction.__addToTransactionQueue(function fetchIndexData(tx, args, success, error) {
-            var sql = ["SELECT * FROM ", idbModules.util.quote(me.objectStore.name), " WHERE", idbModules.util.quote(me.name), "NOT NULL"];
+            var sql = ["SELECT * FROM", idbModules.util.quote(me.objectStore.name), "WHERE", idbModules.util.quote(me.name), "NOT NULL"];
             var sqlValues = [];
             if (hasKey) {
                 if (me.multiEntry) {
-                    sql.push("AND", idbModules.util.quote(me.name), " LIKE ?");
+                    sql.push("AND", idbModules.util.quote(me.name), "LIKE ?");
                     sqlValues.push("%" + encodedKey + "%");
                 }
                 else {
-                    sql.push("AND", idbModules.util.quote(me.name), " = ?");
+                    sql.push("AND", idbModules.util.quote(me.name), "= ?");
                     sqlValues.push(encodedKey);
                 }
             }
