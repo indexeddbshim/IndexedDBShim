@@ -87,12 +87,16 @@
                     if (cursor) {
                         var key = cursor.key;
                         var primaryKey = cursor.primaryKey;
-                        if (env.isNative && env.browser.isSafari && key instanceof Array) {
+                        if (env.isNative && env.browser.isSafari) {
                             // BUG: Safari has a bug with compound-key cursors
-                            primaryKey.splice(0, safariPrimaryKeyOffset);
-                            key.splice(0, safariKeyOffset);
-                            safariPrimaryKeyOffset += key.length;
-                            safariKeyOffset += key.length;
+                            if (primaryKey instanceof Array) {
+                                primaryKey.splice(0, safariPrimaryKeyOffset);
+                                safariPrimaryKeyOffset += primaryKey.length;
+                            }
+                            if (key instanceof Array) {
+                                key.splice(0, safariKeyOffset);
+                                safariKeyOffset += key.length;
+                            }
                         }
 
                         data.push({

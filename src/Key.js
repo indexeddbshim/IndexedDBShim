@@ -220,9 +220,15 @@
 
     idbModules.Key = {
         encode: function(key, inArray) {
+            if (key === undefined) {
+                return null;
+            }
             return types[getType(key)].encode(key, inArray);
         },
         decode: function(key, inArray) {
+            if (typeof key !== "string") {
+                return undefined;
+            }
             return types[collations[key.substring(0, 1)]].decode(key, inArray);
         },
         validate: validate,

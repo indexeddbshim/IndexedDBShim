@@ -450,8 +450,16 @@ describe('IDBIndex.openCursor', function() {
 
         function query(source, keyRange, direction, expected) {
             queries++;
-            expected = expected || direction;
-            direction = typeof direction === 'string' ? direction : 'next';
+            if (arguments.length === 2) {
+                expected = keyRange;
+                keyRange = undefined;
+                direction = 'next';
+            }
+            else if (arguments.length === 3) {
+                expected = direction;
+                direction = 'next';
+            }
+
             util.query(source, keyRange, direction, function(err, data) {
                 if (data.length !== expected.length) {
                     throw new Error('Expected ' + expected.length + ' results, but got ' + data.length + '\n' + JSON.stringify(data, null, 2));
@@ -750,6 +758,77 @@ describe('IDBIndex.openCursor', function() {
                     {primaryKey: [1,2,3], key: [1,2,3], value: {id: 1, name: {first: 2, last: 3}}},
                     {primaryKey: [new Date(2001, 1, 1),new Date(2002, 2, 2),new Date(2003, 3, 3)], key: [new Date(2001, 1, 1),new Date(2002, 2, 2),new Date(2003, 3, 3)], value: {id: new Date(2001, 1, 1), name: {first: new Date(2002, 2, 2), last: new Date(2003, 3, 3)}}},
                     {primaryKey: [new Date(2001, 1, 1),new Date(2003, 3, 3),new Date(2002, 2, 2)], key: [new Date(2001, 1, 1),new Date(2003, 3, 3),new Date(2002, 2, 2)], value: {id: new Date(2001, 1, 1), name: {first: new Date(2003, 3, 3), last: new Date(2002, 2, 2)}}}
+                ]);
+            });
+        });
+
+        it('should query indexes other than the primary key', function(done) {
+            if (env.isNative && env.browser.isIE) {
+                // BUG: IE's native IndexedDB does not support compound keys at all
+                console.error('Skipping test: ' + this.test.title);
+                return done();
+            }
+
+            // NOTE: The object store's keyPath is "id".  The index's keyPath is ["id","name.first","name.last"]
+            util.createDatabase('inline', 'compound-index', function(err, db) {
+                var tx = db.transaction('inline', 'readwrite');
+                var store = tx.objectStore('inline');
+                var index = store.index('compound-index');
+                tx.onerror = function(event) {
+                    done(event.target.error);
+                };
+                tx.oncomplete = function() {
+                    expect(queries).to.equal(queriesCompleted);
+                    db.close();
+                    done();
+                };
+
+                store.add({id: ''});
+                store.add({id:  0});
+                store.add({id: '1', name: {first: '2', last: '3'}});
+                store.add({id: '-1', name: {first: '-2', last: '-3'}});
+                store.add({id: 1, name: {first: 2, last: 3}});
+                store.add({id: -1, name: {first: -2, last: -3}});
+
+                // Object Store queries
+                query(store, IDBKeyRange.bound([-Infinity], [Infinity]), []);
+                query(store, IDBKeyRange.bound(-Infinity, Infinity), [
+                    {primaryKey: -1, key: -1, value: {id: -1, name: {first: -2, last: -3}}},
+                    {primaryKey: 0, key: 0, value: {id: 0}},
+                    {primaryKey: 1, key: 1, value: {id: 1, name: {first: 2, last: 3}}}
+                ]);
+                query(store, IDBKeyRange.upperBound(''), [
+                    {primaryKey: -1, key: -1, value: {id: -1, name: {first: -2, last: -3}}},
+                    {primaryKey: 0, key: 0, value: {id: 0}},
+                    {primaryKey: 1, key: 1, value: {id: 1, name: {first: 2, last: 3}}},
+                    {primaryKey: '', key: '', value: {id: ''}}
+                ]);
+                query(store, IDBKeyRange.bound(' ', 'Z'), 'nextunique', [
+                    {primaryKey: '-1', key: '-1', value: {id: '-1', name: {first: '-2', last: '-3'}}},
+                    {primaryKey: '1', key: '1', value: {id: '1', name: {first: '2', last: '3'}}}
+                ]);
+
+                // Index queries
+                query(index, IDBKeyRange.bound(' ', 'Z'), []);
+                query(index, IDBKeyRange.lowerBound(['']), [
+                    {primaryKey: '-1', key: ['-1','-2','-3'], value: {id: '-1', name: {first: '-2', last: '-3'}}},
+                    {primaryKey: '1', key: ['1','2','3'], value: {id: '1', name: {first: '2', last: '3'}}}
+                ]);
+                query(index, IDBKeyRange.lowerBound([]), 'prev', [
+                    {primaryKey: '1', key: ['1','2','3'], value: {id: '1', name: {first: '2', last: '3'}}},
+                    {primaryKey: '-1', key: ['-1','-2','-3'], value: {id: '-1', name: {first: '-2', last: '-3'}}},
+                    {primaryKey: 1, key: [1,2,3], value: {id: 1, name: {first: 2, last: 3}}},
+                    {primaryKey: -1, key: [-1,-2,-3], value: {id: -1, name: {first: -2, last: -3}}}
+                ]);
+                query(index, [
+                    {primaryKey: -1, key: [-1,-2,-3], value: {id: -1, name: {first: -2, last: -3}}},
+                    {primaryKey: 1, key: [1,2,3], value: {id: 1, name: {first: 2, last: 3}}},
+                    {primaryKey: '-1', key: ['-1','-2','-3'], value: {id: '-1', name: {first: '-2', last: '-3'}}},
+                    {primaryKey: '1', key: ['1','2','3'], value: {id: '1', name: {first: '2', last: '3'}}}
+                ]);
+                query(index, IDBKeyRange.upperBound([new Date(1900, 1, 1)]), [
+                    {primaryKey: -1, key: [-1,-2,-3], value: {id: -1, name: {first: -2, last: -3}}},
+                    {primaryKey: 1, key: [1,2,3], value: {id: 1, name: {first: 2, last: 3}}}
                 ]);
             });
         });
