@@ -52,11 +52,33 @@
          * @param   {function}                  done    `function(err, data)`
          */
         getAll: function(store, done) {
+            util.query(store, done);
+        },
+
+
+        /**
+         * Queries data in the given object store or index.
+         *
+         * @param   {IDBObjectStore|IDBIndex}   store       The object store or index
+         * @param   {IDBKeyRange}               [keyRange]  The key or key range to query
+         * @param   {string}                    [direction] The direction of the cursor
+         * @param   {function}                  done        `function(err, data)`
+         */
+        query: function(store, keyRange, direction, done) {
+            if (arguments.length === 2) {
+                done = keyRange;
+                keyRange = undefined;
+                direction = 'next';
+            }
+            else if (arguments.length === 3) {
+                done = direction;
+                direction = 'next';
+            }
             var data = [];
-            var safariKeyOffset = 0;
+            var safariPrimaryKeyOffset = 0, safariKeyOffset = 0;
 
             try {
-                var open = store.openCursor();
+                var open = keyRange === undefined ? store.openCursor() : store.openCursor(keyRange, direction);
                 open.onerror = function() {
                     done(open.error, data);
                 };
@@ -64,13 +86,17 @@
                     var cursor = open.result;
                     if (cursor) {
                         var key = cursor.key;
+                        var primaryKey = cursor.primaryKey;
                         if (env.isNative && env.browser.isSafari && key instanceof Array) {
                             // BUG: Safari has a bug with compound-key cursors
+                            primaryKey.splice(0, safariPrimaryKeyOffset);
                             key.splice(0, safariKeyOffset);
+                            safariPrimaryKeyOffset += key.length;
                             safariKeyOffset += key.length;
                         }
 
                         data.push({
+                            primaryKey: primaryKey,
                             key: key,
                             value: cursor.value
                         });

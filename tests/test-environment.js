@@ -120,9 +120,9 @@
             shimIndexedDB.__debug(true);
 
             // Use the shimmed classes
-            env.Event = idbModules.Event;
-            env.DOMException = idbModules.DOMException;
-            env.DOMError = idbModules.DOMError;
+            env.Event = shimIndexedDB.modules.Event;
+            env.DOMException = shimIndexedDB.modules.DOMException;
+            env.DOMError = shimIndexedDB.modules.DOMError;
 
             if (env.nativeIndexedDB) {
                 // Allow users to switch back to the native IndexedDB

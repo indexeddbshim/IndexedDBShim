@@ -10,10 +10,19 @@
      * @param {Object} upperOpen
      */
     function IDBKeyRange(lower, upper, lowerOpen, upperOpen){
+        if (lower !== undefined) {
+            idbModules.Key.validate(lower);
+            this.__lower = idbModules.Key.encode(lower);
+        }
+        if (upper !== undefined) {
+            idbModules.Key.validate(upper);
+            this.__upper = idbModules.Key.encode(upper);
+        }
+
         this.lower = lower;
         this.upper = upper;
-        this.lowerOpen = lowerOpen;
-        this.upperOpen = upperOpen;
+        this.lowerOpen = !!lowerOpen;
+        this.upperOpen = !!upperOpen;
     }
 
     IDBKeyRange.only = function(value){

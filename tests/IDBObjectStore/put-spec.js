@@ -19,7 +19,7 @@ describe('IDBObjectStore.put', function() {
                 // The table should only contain one record
                 expect(allData).to.have.lengthOf(1);
                 expect(allData[0]).to.deep.equal({
-                    key: 12345, value: {foo: 'bar'}
+                    primaryKey: 12345, key: 12345, value: {foo: 'bar'}
                 });
 
                 db.close();
@@ -46,7 +46,7 @@ describe('IDBObjectStore.put', function() {
                 // The table should only contain one record
                 expect(allData).to.have.lengthOf(1);
                 expect(allData[0]).to.deep.equal({
-                    key: 1, value: {foo: 'bar'}
+                    primaryKey: 1, key: 1, value: {foo: 'bar'}
                 });
 
                 db.close();
@@ -73,7 +73,7 @@ describe('IDBObjectStore.put', function() {
                 // The table should only contain one record
                 expect(allData).to.have.lengthOf(1);
                 expect(allData[0]).to.deep.equal({
-                    key: 12345, value: {id: 12345, biz: 'baz'}
+                    primaryKey: 12345, key: 12345, value: {id: 12345, biz: 'baz'}
                 });
 
                 db.close();
@@ -100,7 +100,7 @@ describe('IDBObjectStore.put', function() {
                 // The table should only contain one record
                 expect(allData).to.have.lengthOf(1);
                 expect(allData[0]).to.deep.equal({
-                    key: 1, value: {id: 1, biz: 'baz'}
+                    primaryKey: 1, key: 1, value: {id: 1, biz: 'baz'}
                 });
 
                 db.close();
@@ -127,7 +127,7 @@ describe('IDBObjectStore.put', function() {
                 // The table should only contain one record
                 expect(allData).to.have.lengthOf(1);
                 expect(allData[0]).to.deep.equal({
-                    key: 'John', value: {name: {first: 'John', last: 'Smith'}, age: 42}
+                    primaryKey: 'John', key: 'John', value: {name: {first: 'John', last: 'Smith'}, age: 42}
                 });
 
                 db.close();
@@ -154,7 +154,7 @@ describe('IDBObjectStore.put', function() {
                 // The table should only contain one record
                 expect(allData).to.have.lengthOf(1);
                 expect(allData[0]).to.deep.equal({
-                    key: 1, value: {name: {first: 1, last: 'Smith'}, age: 42}
+                    primaryKey: 1, key: 1, value: {name: {first: 1, last: 'Smith'}, age: 42}
                 });
 
                 db.close();
@@ -187,7 +187,7 @@ describe('IDBObjectStore.put', function() {
                 // The table should only contain one record
                 expect(allData).to.have.lengthOf(1);
                 expect(allData[0]).to.deep.equal({
-                    key: [1, 'two', new Date(2003, 4, 5)], value: {foo: 'bar'}
+                    primaryKey: [1, 'two', new Date(2003, 4, 5)], key: [1, 'two', new Date(2003, 4, 5)], value: {foo: 'bar'}
                 });
 
                 db.close();
@@ -220,7 +220,7 @@ describe('IDBObjectStore.put', function() {
                 // The table should only contain one record
                 expect(allData).to.have.lengthOf(1);
                 expect(allData[0]).to.deep.equal({
-                    key: [12345, 'John Doe'], value: {id: 12345, name: 'John Doe', age: 42}
+                    primaryKey: [12345, 'John Doe'], key: [12345, 'John Doe'], value: {id: 12345, name: 'John Doe', age: 42}
                 });
 
                 db.close();
@@ -253,7 +253,7 @@ describe('IDBObjectStore.put', function() {
                 // The table should only contain one record
                 expect(allData).to.have.lengthOf(1);
                 expect(allData[0]).to.deep.equal({
-                    key: [12345, 'John', 'Doe'], value: {id: 12345, name: {first: 'John', last: 'Doe'}, age: 42}
+                    primaryKey: [12345, 'John', 'Doe'], key: [12345, 'John', 'Doe'], value: {id: 12345, name: {first: 'John', last: 'Doe'}, age: 42}
                 });
 
                 db.close();

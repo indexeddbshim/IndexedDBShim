@@ -65,18 +65,18 @@
                     expect(allData).to.have.lengthOf(2);
 
                     // The data should have been cloned
-                    expect(allData).not.to.contain(john);
-                    expect(allData).not.to.contain(bob);
+                    expect(allData[0].value).not.to.equal(john);
+                    expect(allData[1].value).not.to.equal(bob);
 
                     // The data should have been saved as plain objects, not Person classes
-                    expect(allData[0]).not.to.be.an.instanceOf(util.Person);
-                    expect(allData[1]).not.to.be.an.instanceOf(util.Person);
+                    expect(allData[0].value).not.to.be.an.instanceOf(util.Person);
+                    expect(allData[1].value).not.to.be.an.instanceOf(util.Person);
 
                     // Only the instance properties should have been saved, not prototype properties
                     // The `dob` property should still be a Date class
                     expect(allData).to.have.same.deep.members([
-                        {key: 1, value: {name: 'John Doe'}},
-                        {key: 2, value: {name: 'Bob Smith', dob: new Date(2000, 5, 20), age: 30, isMarried: true}}
+                        {primaryKey: 1, key: 1, value: {name: 'John Doe'}},
+                        {primaryKey: 2, key: 2, value: {name: 'Bob Smith', dob: new Date(2000, 5, 20), age: 30, isMarried: true}}
                     ]);
 
                     db.close();
@@ -167,8 +167,8 @@
                         expect(save2.result).to.equal(45678);
 
                         expect(allData).to.have.same.deep.members([
-                            {key: 12345, value: {foo: 'bar'}},
-                            {key: 45678, value: {biz: 'baz'}}
+                            {primaryKey: 12345, key: 12345, value: {foo: 'bar'}},
+                            {primaryKey: 45678, key: 45678, value: {biz: 'baz'}}
                         ]);
 
                         db.close();
@@ -196,8 +196,8 @@
                         expect(save2.result).to.equal(2);
 
                         expect(allData).to.have.same.deep.members([
-                            {key: 1, value: {foo: 'bar'}},
-                            {key: 2, value: {biz: 'baz'}}
+                            {primaryKey: 1, key: 1, value: {foo: 'bar'}},
+                            {primaryKey: 2, key: 2, value: {biz: 'baz'}}
                         ]);
 
                         db.close();
@@ -239,11 +239,11 @@
                         expect(save5.result).to.be.above(2);    // Depending on the implementation, it might be 3, 5, or 100
 
                         expect(allData).to.have.same.deep.members([
-                            {key: 1, value: {foo: 'bar'}},
-                            {key: 'abc', value: {biz: 'baz'}},
-                            {key: save3.result, value: {bat: 'bar'}},
-                            {key: 99, value: {bar: 'foo'}},
-                            {key: save5.result, value: {baz: 'biz'}}
+                            {primaryKey: 1, key: 1, value: {foo: 'bar'}},
+                            {primaryKey: 'abc', key: 'abc', value: {biz: 'baz'}},
+                            {primaryKey: save3.result, key: save3.result, value: {bat: 'bar'}},
+                            {primaryKey: 99, key: 99, value: {bar: 'foo'}},
+                            {primaryKey: save5.result, key: save5.result, value: {baz: 'biz'}}
                         ]);
 
                         db.close();
@@ -475,9 +475,9 @@
                             expect(save3.result).to.equal(3);
 
                             expect(allData).to.have.same.deep.members([
-                                {key: 1, value: {foo: 'one'}},
-                                {key: 2, value: {foo: 'two'}},
-                                {key: 3, value: {foo: 'three'}}
+                                {primaryKey: 1, key: 1, value: {foo: 'one'}},
+                                {primaryKey: 2, key: 2, value: {foo: 'two'}},
+                                {primaryKey: 3, key: 3, value: {foo: 'three'}}
                             ]);
 
                             db.close();
@@ -513,9 +513,9 @@
                             expect(save3.result).to.equal(3);
 
                             expect(allData).to.have.same.deep.members([
-                                {key: 1, value: {foo: 'one'}},
-                                {key: 2, value: {foo: 'two'}},
-                                {key: 3, value: {foo: 'three'}}
+                                {primaryKey: 1, key: 1, value: {foo: 'one'}},
+                                {primaryKey: 2, key: 2, value: {foo: 'two'}},
+                                {primaryKey: 3, key: 3, value: {foo: 'three'}}
                             ]);
 
                             db.close();
@@ -546,8 +546,8 @@
                         expect(save2.result).to.deep.equal(45678);
 
                         expect(allData).to.have.same.deep.members([
-                            {key: 12345, value: {id: 12345}},
-                            {key: 45678, value: {id: 45678}}
+                            {primaryKey: 12345, key: 12345, value: {id: 12345}},
+                            {primaryKey: 45678, key: 45678, value: {id: 45678}}
                         ]);
 
                         db.close();
@@ -575,8 +575,8 @@
                         expect(save2.result).to.deep.equal(2);
 
                         expect(allData).to.have.same.deep.members([
-                            {key: 1, value: {id: 1, foo: 'bar'}},
-                            {key: 2, value: {id: 2, biz: 'baz'}}
+                            {primaryKey: 1, key: 1, value: {id: 1, foo: 'bar'}},
+                            {primaryKey: 2, key: 2, value: {id: 2, biz: 'baz'}}
                         ]);
 
                         db.close();
@@ -616,11 +616,11 @@
                         expect(save5.result).to.be.above(2);    // Depending on the implementation, it might be 3, 5, or 100
 
                         expect(allData).to.have.same.deep.members([
-                            {key: 1, value: {id: 1, foo: 'bar'}},
-                            {key: 'abc', value: {id: 'abc', biz: 'baz'}},
-                            {key: save3.result, value: {id: save3.result, bat: 'bar'}},
-                            {key: 99, value: {id: 99, bar: 'foo'}},
-                            {key: save5.result, value: {id: save5.result, baz: 'biz'}}
+                            {primaryKey: 1, key: 1, value: {id: 1, foo: 'bar'}},
+                            {primaryKey: 'abc', key: 'abc', value: {id: 'abc', biz: 'baz'}},
+                            {primaryKey: save3.result, key: save3.result, value: {id: save3.result, bat: 'bar'}},
+                            {primaryKey: 99, key: 99, value: {id: 99, bar: 'foo'}},
+                            {primaryKey: save5.result, key: save5.result, value: {id: save5.result, baz: 'biz'}}
                         ]);
 
                         db.close();
@@ -881,9 +881,9 @@
                             expect(save3.result).to.equal('three');
 
                             expect(allData).to.have.same.deep.members([
-                                {key: 'one', value: {id: 'one'}},
-                                {key: 'two', value: {id: 'two'}},
-                                {key: 'three', value: {id: 'three'}}
+                                {primaryKey: 'one', key: 'one', value: {id: 'one'}},
+                                {primaryKey: 'two', key: 'two', value: {id: 'two'}},
+                                {primaryKey: 'three', key: 'three', value: {id: 'three'}}
                             ]);
 
                             db.close();
@@ -919,9 +919,9 @@
                             expect(save3.result).to.equal(3);
 
                             expect(allData).to.have.same.deep.members([
-                                {key: 1, value: {id: 1, foo: 'one'}},
-                                {key: 2, value: {id: 2, foo: 'two'}},
-                                {key: 3, value: {id: 3, foo: 'three'}}
+                                {primaryKey: 1, key: 1, value: {id: 1, foo: 'one'}},
+                                {primaryKey: 2, key: 2, value: {id: 2, foo: 'two'}},
+                                {primaryKey: 3, key: 3, value: {id: 3, foo: 'three'}}
                             ]);
 
                             db.close();
@@ -952,8 +952,8 @@
                         expect(save2.result).to.deep.equal('Bob');
 
                         expect(allData).to.have.same.deep.members([
-                            {key: 'John', value: {name: {first: 'John', last: 'Doe'}}},
-                            {key: 'Bob', value: {name: {first: 'Bob', last: 'Smith'}}}
+                            {primaryKey: 'John', key: 'John', value: {name: {first: 'John', last: 'Doe'}}},
+                            {primaryKey: 'Bob', key: 'Bob', value: {name: {first: 'Bob', last: 'Smith'}}}
                         ]);
 
                         db.close();
@@ -981,8 +981,8 @@
                         expect(save2.result).to.deep.equal(2);
 
                         expect(allData).to.have.same.deep.members([
-                            {key: 1, value: {name: {first: 1}, lastName: 'Doe'}},
-                            {key: 2, value: {name: {first: 2}, lastName: 'Smith'}}
+                            {primaryKey: 1, key: 1, value: {name: {first: 1}, lastName: 'Doe'}},
+                            {primaryKey: 2, key: 2, value: {name: {first: 2}, lastName: 'Smith'}}
                         ]);
 
                         db.close();
@@ -1017,9 +1017,9 @@
                             expect(save3.result).to.equal('Bob');
 
                             expect(allData).to.have.same.deep.members([
-                                {key: 'John', value: {name: {first: 'John'}}},
-                                {key: 'Sarah', value: {name: {first: 'Sarah'}}},
-                                {key: 'Bob', value: {name: {first: 'Bob'}}}
+                                {primaryKey: 'John', key: 'John', value: {name: {first: 'John'}}},
+                                {primaryKey: 'Sarah', key: 'Sarah', value: {name: {first: 'Sarah'}}},
+                                {primaryKey: 'Bob', key: 'Bob', value: {name: {first: 'Bob'}}}
                             ]);
 
                             db.close();
@@ -1055,9 +1055,9 @@
                             expect(save3.result).to.equal(3);
 
                             expect(allData).to.have.same.deep.members([
-                                {key: 1, value: {name: {first: 1}, foo: 'one'}},
-                                {key: 2, value: {name: {first: 2}, foo: 'two'}},
-                                {key: 3, value: {name: {first: 3}, foo: 'three'}}
+                                {primaryKey: 1, key: 1, value: {name: {first: 1}, foo: 'one'}},
+                                {primaryKey: 2, key: 2, value: {name: {first: 2}, foo: 'two'}},
+                                {primaryKey: 3, key: 3, value: {name: {first: 3}, foo: 'three'}}
                             ]);
 
                             db.close();
@@ -1094,8 +1094,8 @@
                         expect(save2.result).to.deep.equal(['a', 'b', 3]);
 
                         expect(allData).to.have.same.deep.members([
-                            {key: [1, 2, 'c'], value: {foo: 'bar'}},
-                            {key: ['a', 'b', 3], value: {biz: 'baz'}}
+                            {primaryKey: [1, 2, 'c'], key: [1, 2, 'c'], value: {foo: 'bar'}},
+                            {primaryKey: ['a', 'b', 3], key: ['a', 'b', 3], value: {biz: 'baz'}}
                         ]);
 
                         db.close();
@@ -1129,8 +1129,8 @@
                         expect(save2.result).to.deep.equal([12345, 'Bob Smith']);
 
                         expect(allData).to.have.same.deep.members([
-                            {key: [12345, 'John Doe'], value: {id: 12345, name: 'John Doe'}},
-                            {key: [12345, 'Bob Smith'], value: {id: 12345, name: 'Bob Smith'}}
+                            {primaryKey: [12345, 'John Doe'], key: [12345, 'John Doe'], value: {id: 12345, name: 'John Doe'}},
+                            {primaryKey: [12345, 'Bob Smith'], key: [12345, 'Bob Smith'], value: {id: 12345, name: 'Bob Smith'}}
                         ]);
 
                         db.close();
@@ -1164,8 +1164,8 @@
                         expect(save2.result).to.deep.equal([12345, 'Bob', 'Smith']);
 
                         expect(allData).to.have.same.deep.members([
-                            {key: [12345, 'John', 'Doe'], value: {id: 12345, name: {first: 'John', last: 'Doe'}}},
-                            {key: [12345, 'Bob', 'Smith'], value: {id: 12345, name: {first: 'Bob', last: 'Smith'}}}
+                            {primaryKey: [12345, 'John', 'Doe'], key: [12345, 'John', 'Doe'], value: {id: 12345, name: {first: 'John', last: 'Doe'}}},
+                            {primaryKey: [12345, 'Bob', 'Smith'], key: [12345, 'Bob', 'Smith'], value: {id: 12345, name: {first: 'Bob', last: 'Smith'}}}
                         ]);
 
                         db.close();
@@ -1336,9 +1336,9 @@
                             expect(save3.result).to.deep.equal([3, 'Bob']);
 
                             expect(allData).to.have.same.deep.members([
-                                {key: [1, 'John'], value: {id: 1, name: 'John'}},
-                                {key: [2, 'Sarah'], value: {id: 2, name: 'Sarah'}},
-                                {key: [3, 'Bob'], value: {id: 3, name: 'Bob'}}
+                                {primaryKey: [1, 'John'], key: [1, 'John'], value: {id: 1, name: 'John'}},
+                                {primaryKey: [2, 'Sarah'], key: [2, 'Sarah'], value: {id: 2, name: 'Sarah'}},
+                                {primaryKey: [3, 'Bob'], key: [3, 'Bob'], value: {id: 3, name: 'Bob'}}
                             ]);
 
                             db.close();
@@ -1380,9 +1380,9 @@
                             expect(save3.result).to.deep.equal([3,'b',3]);
 
                             expect(allData).to.have.same.deep.members([
-                                {key: [1,'b',3], value: {foo: 'one'}},
-                                {key: [2,'b',3], value: {foo: 'two'}},
-                                {key: [3,'b',3], value: {foo: 'three'}}
+                                {primaryKey: [1,'b',3], key: [1,'b',3], value: {foo: 'one'}},
+                                {primaryKey: [2,'b',3], key: [2,'b',3], value: {foo: 'two'}},
+                                {primaryKey: [3,'b',3], key: [3,'b',3], value: {foo: 'three'}}
                             ]);
 
                             db.close();

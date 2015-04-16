@@ -102,7 +102,7 @@ describe('IDBObjectStore.delete', function() {
 
             tx.oncomplete = function() {
                 expect(allData).to.have.same.deep.members([
-                    {key: 1, value: {id: 1}}
+                    {primaryKey: 1, key: 1, value: {id: 1}}
                 ]);
 
                 db.close();
@@ -189,11 +189,11 @@ describe('IDBObjectStore.delete', function() {
             function checkResults() {
                 // Make sure all 5 records existed before the delete
                 expect(allData).to.have.same.deep.members([
-                    {key: 1, value: {id: 1}},
-                    {key: 2, value: {id: 2}},
-                    {key: 3, value: {id: 3}},
-                    {key: 4, value: {id: 4}},
-                    {key: 5, value: {id: 5}}
+                    {primaryKey: 1, key: 1, value: {id: 1}},
+                    {primaryKey: 2, key: 2, value: {id: 2}},
+                    {primaryKey: 3, key: 3, value: {id: 3}},
+                    {primaryKey: 4, key: 4, value: {id: 4}},
+                    {primaryKey: 5, key: 5, value: {id: 5}}
                 ]);
 
                 // Make sure all data was deleted
@@ -229,8 +229,8 @@ describe('IDBObjectStore.delete', function() {
 
             tx.oncomplete = function() {
                 expect(allData).to.have.same.deep.members([
-                    {key: 222, value: 'two'},
-                    {key: 44, value: 'four'}
+                    {primaryKey: 222, key: 222, value: 'two'},
+                    {primaryKey: 44, key: 44, value: 'four'}
                 ]);
 
                 db.close();
@@ -269,8 +269,8 @@ describe('IDBObjectStore.delete', function() {
 
             tx.oncomplete = function() {
                 expect(allData).to.have.same.deep.members([
-                    {key: [3, 3], value: 'three'},
-                    {key: [4, '4'], value: 'four'}
+                    {primaryKey: [3, 3], key: [3, 3], value: 'three'},
+                    {primaryKey: [4, '4'], key: [4, '4'], value: 'four'}
                 ]);
 
                 db.close();
@@ -303,8 +303,8 @@ describe('IDBObjectStore.delete', function() {
 
             tx.oncomplete = function() {
                 expect(allData).to.have.same.deep.members([
-                    {key: 1, value: 'one'},
-                    {key: 3, value: 'three'}
+                    {primaryKey: 1, key: 1, value: 'one'},
+                    {primaryKey: 3, key: 3, value: 'three'}
                 ]);
 
                 db.close();
@@ -337,8 +337,8 @@ describe('IDBObjectStore.delete', function() {
 
             tx.oncomplete = function() {
                 expect(allData).to.have.same.deep.members([
-                    {key: 'one', value: {id: 'one'}},
-                    {key: 'three', value: {id: 'three'}}
+                    {primaryKey: 'one', key: 'one', value: {id: 'one'}},
+                    {primaryKey: 'three', key: 'three', value: {id: 'three'}}
                 ]);
 
                 db.close();
@@ -377,8 +377,8 @@ describe('IDBObjectStore.delete', function() {
 
             tx.oncomplete = function() {
                 expect(allData).to.have.same.deep.members([
-                    {key: [2, 'two'], value: {id: 2, name: 'two'}},
-                    {key: [4, 'four'], value: {id: 4, name: 'four'}}
+                    {primaryKey: [2, 'two'], key: [2, 'two'], value: {id: 2, name: 'two'}},
+                    {primaryKey: [4, 'four'], key: [4, 'four'], value: {id: 4, name: 'four'}}
                 ]);
 
                 db.close();
@@ -411,8 +411,8 @@ describe('IDBObjectStore.delete', function() {
 
             tx.oncomplete = function() {
                 expect(allData).to.have.same.deep.members([
-                    {key: 2, value: {id: 2, name: 'two'}},
-                    {key: 4, value: {id: 4, name: 'four'}}
+                    {primaryKey: 2, key: 2, value: {id: 2, name: 'two'}},
+                    {primaryKey: 4, key: 4, value: {id: 4, name: 'four'}}
                 ]);
 
                 db.close();
@@ -445,8 +445,8 @@ describe('IDBObjectStore.delete', function() {
 
             tx.oncomplete = function() {
                 expect(allData).to.have.same.deep.members([
-                    {key: 'one', value: {name: {first: 'one'}}},
-                    {key: 'four', value: {name: {first: 'four'}}}
+                    {primaryKey: 'one', key: 'one', value: {name: {first: 'one'}}},
+                    {primaryKey: 'four', key: 'four', value: {name: {first: 'four'}}}
                 ]);
 
                 db.close();
@@ -485,8 +485,8 @@ describe('IDBObjectStore.delete', function() {
 
             tx.oncomplete = function() {
                 expect(allData).to.have.same.deep.members([
-                    {key: [1, 'one', 'abc'], value: {id: 1, name: {first: 'one', last: 'abc'}}},
-                    {key: [1, 'four', 'abc'], value: {id: 1, name: {first: 'four', last: 'abc'}}}
+                    {primaryKey: [1, 'one', 'abc'], key: [1, 'one', 'abc'], value: {id: 1, name: {first: 'one', last: 'abc'}}},
+                    {primaryKey: [1, 'four', 'abc'], key: [1, 'four', 'abc'], value: {id: 1, name: {first: 'four', last: 'abc'}}}
                 ]);
 
                 db.close();
@@ -519,8 +519,8 @@ describe('IDBObjectStore.delete', function() {
 
             tx.oncomplete = function() {
                 expect(allData).to.have.same.deep.members([
-                    {key: 2, value: {name: {first: 2, last: 'abc'}}},
-                    {key: 3, value: {name: {first: 3, last: 'abc'}}}
+                    {primaryKey: 2, key: 2, value: {name: {first: 2, last: 'abc'}}},
+                    {primaryKey: 3, key: 3, value: {name: {first: 3, last: 'abc'}}}
                 ]);
 
                 db.close();
@@ -636,7 +636,7 @@ describe('IDBObjectStore.delete', function() {
 
                 // Make sure the record still exists
                 expect(allData).to.have.same.deep.members([
-                    {key: [12345, 'John Doe'], value: {id: 12345, name: 'John Doe'}}
+                    {primaryKey: [12345, 'John Doe'], key: [12345, 'John Doe'], value: {id: 12345, name: 'John Doe'}}
                 ]);
 
                 db.close();

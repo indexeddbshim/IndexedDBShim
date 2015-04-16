@@ -18,7 +18,9 @@
      * https://w3c.github.io/IndexedDB/#idl-def-IDBFactory
      * @constructor
      */
-    function IDBFactory() {}
+    function IDBFactory() {
+        this.modules = idbModules;
+    }
 
     /**
      * The IndexedDB Method to create a new database and return the DB

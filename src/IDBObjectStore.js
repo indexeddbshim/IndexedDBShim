@@ -384,9 +384,7 @@
     };
 
     IDBObjectStore.prototype.openCursor = function(range, direction) {
-        var cursorRequest = new idbModules.IDBRequest();
-        var cursor = new idbModules.IDBCursor(range, direction, this, cursorRequest, "key", "value");
-        return cursorRequest;
+        return new idbModules.IDBCursor(range, direction, this, this, "key", "value").__req;
     };
 
     IDBObjectStore.prototype.index = function(indexName) {

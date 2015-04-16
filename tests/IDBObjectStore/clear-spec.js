@@ -87,11 +87,11 @@ describe('IDBObjectStore.clear', function() {
             tx.oncomplete = function() {
                 // Make sure all 5 records existed before the clear
                 expect(allData).to.have.same.deep.members([
-                    {key: 1, value: {id: 1}},
-                    {key: 2, value: {id: 2}},
-                    {key: 3, value: {id: 3}},
-                    {key: 4, value: {id: 4}},
-                    {key: 5, value: {id: 5}}
+                    {primaryKey: 1, key: 1, value: {id: 1}},
+                    {primaryKey: 2, key: 2, value: {id: 2}},
+                    {primaryKey: 3, key: 3, value: {id: 3}},
+                    {primaryKey: 4, key: 4, value: {id: 4}},
+                    {primaryKey: 5, key: 5, value: {id: 5}}
                 ]);
 
                 // Make sure all data was cleared
@@ -153,11 +153,11 @@ describe('IDBObjectStore.clear', function() {
             function checkResults() {
                 // Make sure all 5 records existed before the clear
                 expect(allData).to.have.same.deep.members([
-                    {key: 1, value: {id: 1}},
-                    {key: 2, value: {id: 2}},
-                    {key: 3, value: {id: 3}},
-                    {key: 4, value: {id: 4}},
-                    {key: 5, value: {id: 5}}
+                    {primaryKey: 1, key: 1, value: {id: 1}},
+                    {primaryKey: 2, key: 2, value: {id: 2}},
+                    {primaryKey: 3, key: 3, value: {id: 3}},
+                    {primaryKey: 4, key: 4, value: {id: 4}},
+                    {primaryKey: 5, key: 5, value: {id: 5}}
                 ]);
 
                 // Make sure all data was cleared

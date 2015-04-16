@@ -232,9 +232,7 @@
      * @returns {IDBRequest}
      */
     IDBIndex.prototype.openCursor = function(range, direction) {
-        var cursorRequest = new idbModules.IDBRequest();
-        var cursor = new idbModules.IDBCursor(range, direction, this.objectStore, cursorRequest, this.name, "value");
-        return cursorRequest;
+        return new idbModules.IDBCursor(range, direction, this.objectStore, this, this.name, "value").__req;
     };
 
     /**
@@ -244,9 +242,7 @@
      * @returns {IDBRequest}
      */
     IDBIndex.prototype.openKeyCursor = function(range, direction) {
-        var cursorRequest = new idbModules.IDBRequest();
-        var cursor = new idbModules.IDBCursor(range, direction, this.objectStore, cursorRequest, this.name, "key");
-        return cursorRequest;
+        return new idbModules.IDBCursor(range, direction, this.objectStore, this, this.name, "key").__req;
     };
 
     IDBIndex.prototype.get = function(key) {

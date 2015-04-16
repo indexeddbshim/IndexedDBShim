@@ -131,11 +131,6 @@ describe('IDBObjectStore.add', function() {
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
-            var allData;
-            util.getAll(store, function(err, data) {
-                allData = data;
-            });
-
             tx.onabort = function() {
                 // The first add should succeed
                 sinon.assert.calledOnce(add1.onsuccess);
@@ -179,11 +174,6 @@ describe('IDBObjectStore.add', function() {
             var add2 = store.add({id: 12345, biz: 'baz'});
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
-
-            var allData;
-            util.getAll(store, function(err, data) {
-                allData = data;
-            });
 
             tx.onabort = function() {
                 // The first add should succeed
@@ -275,11 +265,6 @@ describe('IDBObjectStore.add', function() {
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
-            var allData;
-            util.getAll(store, function(err, data) {
-                allData = data;
-            });
-
             tx.onabort = function() {
                 // The first add should succeed
                 sinon.assert.calledOnce(add1.onsuccess);
@@ -324,11 +309,6 @@ describe('IDBObjectStore.add', function() {
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
-            var allData;
-            util.getAll(store, function(err, data) {
-                allData = data;
-            });
-
             tx.onabort = function() {
                 // The first add should succeed
                 sinon.assert.calledOnce(add1.onsuccess);
@@ -372,11 +352,6 @@ describe('IDBObjectStore.add', function() {
             var add2 = store.add({name: {first: 1, last: 'Smith'}, age: 42});
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
-
-            var allData;
-            util.getAll(store, function(err, data) {
-                allData = data;
-            });
 
             tx.onabort = function() {
                 // The first add should succeed
@@ -427,11 +402,6 @@ describe('IDBObjectStore.add', function() {
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
-            var allData;
-            util.getAll(store, function(err, data) {
-                allData = data;
-            });
-
             tx.onabort = function() {
                 // The first add should succeed
                 sinon.assert.calledOnce(add1.onsuccess);
@@ -481,11 +451,6 @@ describe('IDBObjectStore.add', function() {
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
-            var allData;
-            util.getAll(store, function(err, data) {
-                allData = data;
-            });
-
             tx.onabort = function() {
                 // The first add should succeed
                 sinon.assert.calledOnce(add1.onsuccess);
@@ -534,11 +499,6 @@ describe('IDBObjectStore.add', function() {
             var add2 = store.add({id: 12345, name: {first: 'John', last: 'Doe'}, age: 42});
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
-
-            var allData;
-            util.getAll(store, function(err, data) {
-                allData = data;
-            });
 
             tx.onabort = function() {
                 // The first add should succeed
