@@ -1,6 +1,6 @@
-/*jshint globalstrict: true*/
-'use strict';
 (function(window, idbModules){
+    'use strict';
+
     function shim(name, value) {
         try {
             // Try setting the property. This will fail if the property is read-only.

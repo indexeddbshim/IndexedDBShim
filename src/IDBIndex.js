@@ -1,6 +1,6 @@
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules, undefined) {
+    'use strict';
+
     /**
      * IDB Index
      * http://www.w3.org/TR/IndexedDB/#idl-def-IDBIndex

@@ -1,6 +1,6 @@
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules, undefined){
+    'use strict';
+
     /**
      * The IndexedDB KeyRange object
      * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#dfn-key-range

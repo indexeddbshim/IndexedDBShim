@@ -1,6 +1,6 @@
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules, undefined){
+    'use strict';
+
     /**
      * The IndexedDB Cursor Object
      * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBCursor

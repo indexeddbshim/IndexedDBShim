@@ -1,6 +1,6 @@
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules) {
+    'use strict';
+
     /**
      * Encodes the keys based on their types. This is required to maintain collations
      */

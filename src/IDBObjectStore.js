@@ -1,6 +1,5 @@
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules) {
+    'use strict';
 
     /**
      * IndexedDB Object Store

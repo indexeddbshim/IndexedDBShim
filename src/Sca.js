@@ -1,6 +1,6 @@
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules){
+    'use strict';
+
     /**
      * Implementation of the Structured Cloning Algorithm.  Supports the
      * following object types:

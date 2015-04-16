@@ -11,7 +11,7 @@ IndexedDB Polyfill
 
 Features
 --------------------------
-* Adds IndexedDB support to any web browser that [supports WebSql](http://caniuse.com/#search=websql) or the [Cordova WebSql plug-in](http://plugins.cordova.io/#/package/com.msopentech.websql)
+* Adds IndexedDB support to any web browser that [supports WebSql](http://caniuse.com/#search=websql) or the [Cordova plug-in](http://plugins.cordova.io/#/package/com.msopentech.websql)
 * Does nothing if the browser already [natively supports IndexedDB](http://caniuse.com/#search=indexeddb)
 * Can _optionally_ override native IndexedDB on browsers with [buggy implementations](http://www.raymondcamden.com/2014/9/25/IndexedDB-on-iOS-8--Broken-Bad)
 * Works on __desktop__ and __mobile__.  Even on __Cordova__ and __PhoneGap__!

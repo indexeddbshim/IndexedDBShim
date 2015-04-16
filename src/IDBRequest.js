@@ -1,6 +1,5 @@
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules){
+    'use strict';
 
     /**
      * The IDBRequest Object that is returns for all async calls

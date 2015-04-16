@@ -1,6 +1,6 @@
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules) {
+    'use strict';
+
     /**
      * Creates a native DOMException, for browsers that support it
      * @returns {DOMException}

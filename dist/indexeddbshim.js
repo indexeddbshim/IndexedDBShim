@@ -1,18 +1,19 @@
-/*jshint globalstrict: true*/
-'use strict';
-/**
- * An initialization file that checks for conditions, removes console.log and warn, etc
- */
-var idbModules = {util: {}};                // jshint ignore:line
-var cleanInterface = false;                 // jshint ignore:line
+var idbModules = {  // jshint ignore:line
+    util: {
+        cleanInterface: false
+    }
+};
+
 (function () {
+    'use strict';
+
     var testObject = {test: true};
     //Test whether Object.defineProperty really works.
     if (Object.defineProperty) {
         try {
             Object.defineProperty(testObject, 'test', { enumerable: false });
             if (testObject.test) {
-                cleanInterface = true;      // jshint ignore:line
+                idbModules.util.cleanInterface = true;      // jshint ignore:line
             }
         } catch (e) {
         //Object.defineProperty does not work as intended.
@@ -20,9 +21,9 @@ var cleanInterface = false;                 // jshint ignore:line
     }
 })();
 
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules) {
+    'use strict';
+
     /**
      * A utility method to callback onsuccess, onerror, etc as soon as the calling function's context is over
      * @param {Object} fn
@@ -44,7 +45,7 @@ var cleanInterface = false;                 // jshint ignore:line
         this.length = 0;
         this._items = [];
         //Internal functions on the prototype have been made non-enumerable below.
-        if (cleanInterface) {
+        if (idbModules.util.cleanInterface) {
             Object.defineProperty(this, '_items', {
                 enumerable: false
             });
@@ -83,7 +84,7 @@ var cleanInterface = false;                 // jshint ignore:line
             }
         }
     };
-    if (cleanInterface) {
+    if (idbModules.util.cleanInterface) {
         for (var i in {
             'indexOf': false,
             'push': false,
@@ -103,9 +104,9 @@ var cleanInterface = false;                 // jshint ignore:line
 
 }(idbModules));
 
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules){
+    'use strict';
+
     /**
      * Implementation of the Structured Cloning Algorithm.  Supports the
      * following object types:
@@ -452,9 +453,9 @@ var cleanInterface = false;                 // jshint ignore:line
     idbModules.Sca = Sca;
 }(idbModules));
 
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules) {
+    'use strict';
+
     /**
      * Encodes the keys based on their types. This is required to maintain collations
      */
@@ -686,9 +687,9 @@ var cleanInterface = false;                 // jshint ignore:line
     };
 }(idbModules));
 
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules) {
+    'use strict';
+
     /**
      * Creates a native Event object, for browsers that support it
      * @returns {Event}
@@ -746,9 +747,9 @@ var cleanInterface = false;                 // jshint ignore:line
     }
 }(idbModules));
 
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules) {
+    'use strict';
+
     /**
      * Creates a native DOMException, for browsers that support it
      * @returns {DOMException}
@@ -850,9 +851,8 @@ var cleanInterface = false;                 // jshint ignore:line
     }
 }(idbModules));
 
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules){
+    'use strict';
 
     /**
      * The IDBRequest Object that is returns for all async calls
@@ -877,9 +877,9 @@ var cleanInterface = false;                 // jshint ignore:line
     
 }(idbModules));
 
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules, undefined){
+    'use strict';
+
     /**
      * The IndexedDB KeyRange object
      * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#dfn-key-range
@@ -913,9 +913,9 @@ var cleanInterface = false;                 // jshint ignore:line
 
 }(idbModules));
 
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules, undefined){
+    'use strict';
+
     /**
      * The IndexedDB Cursor Object
      * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBCursor
@@ -1130,9 +1130,9 @@ var cleanInterface = false;                 // jshint ignore:line
     idbModules.IDBCursor = IDBCursor;
 }(idbModules));
 
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules, undefined) {
+    'use strict';
+
     /**
      * IDB Index
      * http://www.w3.org/TR/IndexedDB/#idl-def-IDBIndex
@@ -1410,9 +1410,8 @@ var cleanInterface = false;                 // jshint ignore:line
     idbModules.IDBIndex = IDBIndex;
 }(idbModules));
 
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules) {
+    'use strict';
 
     /**
      * IndexedDB Object Store
@@ -1864,9 +1863,9 @@ var cleanInterface = false;                 // jshint ignore:line
     idbModules.IDBObjectStore = IDBObjectStore;
 }(idbModules));
 
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules) {
+    'use strict';
+
     var uniqueID = 0;
 
     /**
@@ -2096,9 +2095,8 @@ var cleanInterface = false;                 // jshint ignore:line
     idbModules.IDBTransaction = IDBTransaction;
 }(idbModules));
 
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules){
+    'use strict';
 
     /**
      * IDB Database Object
@@ -2210,9 +2208,9 @@ var cleanInterface = false;                 // jshint ignore:line
     idbModules.IDBDatabase = IDBDatabase;
 }(idbModules));
 
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules) {
+    'use strict';
+
     var DEFAULT_DB_SIZE = 4 * 1024 * 1024;
     if (!window.openDatabase) {
         return;
@@ -2230,12 +2228,7 @@ var cleanInterface = false;                 // jshint ignore:line
      * https://w3c.github.io/IndexedDB/#idl-def-IDBFactory
      * @constructor
      */
-    function IDBFactory() {
-        // It's not safe to shim these on the global scope, because it could break other stuff.
-        this.Event = idbModules.Event;
-        this.DOMException = idbModules.DOMException;
-        this.DOMError = idbModules.DOMError;
-    }
+    function IDBFactory() {}
 
     /**
      * The IndexedDB Method to create a new database and return the DB
@@ -2459,9 +2452,9 @@ var cleanInterface = false;                 // jshint ignore:line
     idbModules.IDBFactory = IDBFactory;
 }(idbModules));
 
-/*jshint globalstrict: true*/
-'use strict';
 (function(window, idbModules){
+    'use strict';
+
     function shim(name, value) {
         try {
             // Try setting the property. This will fail if the property is read-only.

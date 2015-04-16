@@ -1,6 +1,6 @@
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules) {
+    'use strict';
+
     /**
      * A utility method to callback onsuccess, onerror, etc as soon as the calling function's context is over
      * @param {Object} fn
@@ -22,7 +22,7 @@
         this.length = 0;
         this._items = [];
         //Internal functions on the prototype have been made non-enumerable below.
-        if (cleanInterface) {
+        if (idbModules.util.cleanInterface) {
             Object.defineProperty(this, '_items', {
                 enumerable: false
             });
@@ -61,7 +61,7 @@
             }
         }
     };
-    if (cleanInterface) {
+    if (idbModules.util.cleanInterface) {
         for (var i in {
             'indexOf': false,
             'push': false,

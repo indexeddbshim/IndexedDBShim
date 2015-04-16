@@ -1,6 +1,6 @@
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules) {
+    'use strict';
+
     var DEFAULT_DB_SIZE = 4 * 1024 * 1024;
     if (!window.openDatabase) {
         return;
@@ -18,12 +18,7 @@
      * https://w3c.github.io/IndexedDB/#idl-def-IDBFactory
      * @constructor
      */
-    function IDBFactory() {
-        // It's not safe to shim these on the global scope, because it could break other stuff.
-        this.Event = idbModules.Event;
-        this.DOMException = idbModules.DOMException;
-        this.DOMError = idbModules.DOMError;
-    }
+    function IDBFactory() {}
 
     /**
      * The IndexedDB Method to create a new database and return the DB

@@ -1,6 +1,6 @@
-/*jshint globalstrict: true*/
-'use strict';
 (function(idbModules) {
+    'use strict';
+
     /**
      * Creates a native Event object, for browsers that support it
      * @returns {Event}
