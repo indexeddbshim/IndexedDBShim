@@ -156,8 +156,11 @@ describe('IDBObjectStore.createIndex', function() {
                         store.createIndex('My Index 3', 'bar');
                         store.createIndex('My Index 4', 'bar');
 
-                        expect(Array.prototype.slice.call(store.indexNames))
-                            .to.have.same.members(['My Index 1', 'My Index 2', 'My Index 3', 'My Index 4']);
+                        if (env.isShimmed || !env.browser.isSafari) {
+                            // Safari's native IndexedDB doesn't update the "indexNames" property correctly
+                            expect(Array.prototype.slice.call(store.indexNames))
+                                .to.have.same.members(['My Index 1', 'My Index 2', 'My Index 3', 'My Index 4']);
+                        }
                     });
 
                     open.onsuccess = function() {
@@ -190,7 +193,7 @@ describe('IDBObjectStore.createIndex', function() {
 
                 open.onsuccess = function() {
                     var db = open.result;
-                    var tx = db.transaction(db.objectStoreNames);
+                    var tx = db.transaction('out-of-line');
                     var store = tx.objectStore('out-of-line');
                     tx.onerror = tx.onabort = function(event) {
                         done(event.target.error);

@@ -8,9 +8,6 @@ IndexedDB Polyfill
 [![Bower](http://img.shields.io/bower/v/IndexedDBShim.svg)](http://bower.io/search/?q=IndexedDBShim)
 [![License](https://img.shields.io/npm/l/indexeddbshim.svg)](LICENSE-APACHE)
 
-|[Live Demo!](http://nparashuram.com/IndexedDBShim/tests/index.html?useShim=true)
-|------------------------------------------------------------
-
 
 Features
 --------------------------

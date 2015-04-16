@@ -98,16 +98,14 @@
                 failure(idbModules.util.createDOMException(0, "Could not delete ObjectStore", err));
             }
 
-            db.__db.transaction(function(tx) {
-                tx.executeSql("SELECT * FROM __sys__ where name = ?", [store.name], function(tx, data) {
-                    if (data.rows.length > 0) {
-                        tx.executeSql("DROP TABLE " + idbModules.util.quote(store.name), [], function() {
-                            tx.executeSql("DELETE FROM __sys__ WHERE name = ?", [store.name], function() {
-                                success();
-                            }, error);
+            tx.executeSql("SELECT * FROM __sys__ where name = ?", [store.name], function(tx, data) {
+                if (data.rows.length > 0) {
+                    tx.executeSql("DROP TABLE " + idbModules.util.quote(store.name), [], function() {
+                        tx.executeSql("DELETE FROM __sys__ WHERE name = ?", [store.name], function() {
+                            success();
                         }, error);
-                    }
-                });
+                    }, error);
+                }
             });
         });
     };

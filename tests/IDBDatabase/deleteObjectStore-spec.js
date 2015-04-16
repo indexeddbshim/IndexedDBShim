@@ -103,6 +103,40 @@ describe('IDBDatabase.deleteObjectStore', function() {
             });
         });
 
+        it('should be able to re-create an object store that was deleted', function(done) {
+            util.generateDatabaseName(function(err, name) {
+                var open = indexedDB.open(name, 1);
+                open.onerror = open.onblocked = done;
+
+                open.onupgradeneeded = sinon.spy(function() {
+                    var db = open.result;
+                    var tx = open.transaction;
+
+                    db.createObjectStore('My Store', {keyPath: 'foo'});
+                    var store1 = tx.objectStore('My Store');
+                    expect(store1.keyPath).to.equal('foo');
+                    if (env.isShimmed || !env.browser.isIE) {
+                        expect(store1.autoIncrement).to.be.false;   // IE doesn't have this property
+                    }
+
+                    db.deleteObjectStore('My Store');
+                    db.createObjectStore('My Store', {keyPath: 'bar', autoIncrement: true});
+                    var store2 = tx.objectStore('My Store');
+                    expect(store2).not.to.equal(store1);
+                    expect(store2.keyPath).to.equal('bar');
+                    if (env.isShimmed || !env.browser.isIE) {
+                        expect(store1.autoIncrement).to.be.false;   // IE doesn't have this property
+                    }
+                });
+
+                open.onsuccess = function() {
+                    sinon.assert.calledOnce(open.onupgradeneeded);
+                    open.result.close();
+                    done();
+                };
+            });
+        });
+
         it('should persist the schema across database sessions', function(done) {
             if (env.isNative && env.browser.isSafari) {
                 // BUG: Safari's native IndexedDB does not support opening multiple object stores

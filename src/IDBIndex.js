@@ -46,7 +46,6 @@
 
         // Add the index to the IDBObjectStore
         store.__indexes[index.name] = index;
-        store.__indexes[index.name].__deleted = false;
         store.indexNames.push(index.name);
 
         // Create the index in WebSQL
@@ -57,40 +56,43 @@
             }
 
             function applyIndex(tx) {
-                // Once a column is created, put existing records into the index
-                tx.executeSql("SELECT * FROM " + idbModules.util.quote(store.name), [], function(tx, data) {
-                    idbModules.DEBUG && console.log("Adding existing " + store.name + " records to the " + index.name + " index");
-                    initIndexForRow(0);
+                // Update the object store's index list
+                IDBIndex.__updateIndexList(store, tx, function() {
+                    // Add index entries for all existing records
+                    tx.executeSql("SELECT * FROM " + idbModules.util.quote(store.name), [], function(tx, data) {
+                        idbModules.DEBUG && console.log("Adding existing " + store.name + " records to the " + index.name + " index");
+                        addIndexEntry(0);
 
-                    // Adds an existing record to the new index
-                    function initIndexForRow(i) {
-                        if (i < data.rows.length) {
-                            try {
-                                var value = idbModules.Sca.decode(data.rows.item(i).value);
-                                var indexKey = idbModules.Key.getValue(value, index.keyPath);
-                                indexKey = idbModules.Key.encode(indexKey, index.multiEntry);
+                        function addIndexEntry(i) {
+                            if (i < data.rows.length) {
+                                try {
+                                    var value = idbModules.Sca.decode(data.rows.item(i).value);
+                                    var indexKey = idbModules.Key.getValue(value, index.keyPath);
+                                    indexKey = idbModules.Key.encode(indexKey, index.multiEntry);
 
-                                tx.executeSql("UPDATE " + idbModules.util.quote(store.name) + " set " + idbModules.util.quote(index.name) + " = ? where key = ?", [indexKey, data.rows.item(i).key], function(tx, data) {
-                                    initIndexForRow(i + 1);
-                                }, error);
+                                    tx.executeSql("UPDATE " + idbModules.util.quote(store.name) + " set " + idbModules.util.quote(index.name) + " = ? where key = ?", [indexKey, data.rows.item(i).key], function(tx, data) {
+                                        addIndexEntry(i + 1);
+                                    }, error);
+                                }
+                                catch (e) {
+                                    // Not a valid value to insert into index, so just continue
+                                    addIndexEntry(i + 1);
+                                }
                             }
-                            catch (e) {
-                                // Not a valid value to insert into index, so just continue
-                                initIndexForRow(i + 1);
+                            else {
+                                success(store);
                             }
                         }
-                        else {
-                            updateObjectStoreSchema(tx, store, success, failure);
-                        }
-                    }
+                    }, error);
                 }, error);
             }
 
             if (columnExists) {
-                // For a previously existing index, just update existing data
+                // For a previously existing index, just update the index entries in the existing column
                 applyIndex(tx);
-            } else {
-                // For a new index, first create a column then update existing data
+            }
+            else {
+                // For a new index, add a new column to the object store, then apply the index
                 var sql = ["ALTER TABLE", idbModules.util.quote(store.name), "ADD", idbModules.util.quote(index.name), "BLOB"].join(" ");
                 idbModules.DEBUG && console.log(sql);
                 tx.executeSql(sql, [], applyIndex, error);
@@ -109,14 +111,26 @@
         store.__indexes[index.name].__deleted = true;
         store.indexNames.splice(store.indexNames.indexOf(index.name), 1);
 
-        // TODO: Remove the index from WebSQL
+        // Remove the index in WebSQL
+        var transaction = store.transaction;
+        transaction.__addToTransactionQueue(function createIndex(tx, args, success, failure) {
+            function error(tx, err) {
+                failure(idbModules.util.createDOMException(0, "Could not delete index \"" + index.name + "\"", err));
+            }
+
+            // Update the object store's index list
+            IDBIndex.__updateIndexList(store, tx, success, error);
+        });
     };
 
     /**
-     * Updates index list for the given store
+     * Updates index list for the given object store.
      * @param {IDBObjectStore} store
+     * @param {object} tx
+     * @param {function} success
+     * @param {function} failure
      */
-    function updateObjectStoreSchema(tx, store, success, failure) {
+    IDBIndex.__updateIndexList = function(store, tx, success, failure) {
         var indexList = {};
         for (var i = 0; i < store.indexNames.length; i++) {
             var idx = store.__indexes[store.indexNames[i]];
@@ -136,7 +150,7 @@
         tx.executeSql("UPDATE __sys__ set indexList = ? where name = ?", [JSON.stringify(indexList), store.name], function() {
             success(store);
         }, failure);
-    }
+    };
 
     /**
      * Retrieves index data for the given key

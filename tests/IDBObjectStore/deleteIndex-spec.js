@@ -1,4 +1,4 @@
-describe.only('IDBObjectStore.deleteIndex', function() {
+describe('IDBObjectStore.deleteIndex', function() {
     'use strict';
 
     var indexedDB;
@@ -104,6 +104,42 @@ describe.only('IDBObjectStore.deleteIndex', function() {
                         done();
                     };
                 }
+            });
+        });
+
+        it('should be able to re-create an index that was deleted', function(done) {
+            util.generateDatabaseName(function(err, name) {
+                var open = indexedDB.open(name, 1);
+                open.onerror = open.onblocked = done;
+
+                open.onupgradeneeded = sinon.spy(function() {
+                    var db = open.result;
+                    var store = db.createObjectStore('My Store');
+
+                    store.createIndex('My Index', 'foo');
+                    var index1 = store.index('My Index');
+                    expect(index1.keyPath).to.equal('foo');
+                    expect(index1.unique).to.be.false;
+                    if (env.isShimmed || !env.browser.isIE) {
+                        expect(index1.multiEntry).to.be.false;   // IE doesn't have this property
+                    }
+
+                    store.deleteIndex('My Index');
+                    store.createIndex('My Index', 'bar', {unique: true, multiEntry: true});
+                    var index2 = store.index('My Index');
+                    expect(index2).not.to.equal(index1);
+                    expect(index2.keyPath).to.equal('bar');
+                    expect(index2.unique).to.be.true;
+                    if (env.isShimmed || !env.browser.isIE) {
+                        expect(index2.multiEntry).to.be.true;   // IE doesn't have this property
+                    }
+                });
+
+                open.onsuccess = function() {
+                    sinon.assert.calledOnce(open.onupgradeneeded);
+                    open.result.close();
+                    done();
+                };
             });
         });
 
