@@ -413,9 +413,13 @@
         if (arguments.length === 1) {
             throw new TypeError("No key path was specified");
         }
+        if (keyPath instanceof Array && optionalParameters && optionalParameters.multiEntry) {
+            throw idbModules.util.createDOMException("InvalidAccessError", "The keyPath argument was an array and the multiEntry option is true.");
+        }
         if (this.__indexes[indexName] && !this.__indexes[indexName].__deleted) {
             throw idbModules.util.createDOMException("ConstraintError", "Index \"" + indexName + "\" already exists on " + this.name);
         }
+
         this.transaction.__assertVersionChange();
 
         optionalParameters = optionalParameters || {};
