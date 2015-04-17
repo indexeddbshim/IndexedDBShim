@@ -33,6 +33,11 @@
         this.__offset = -1; // Setting this to -1 as continue will set it to 0 anyway
         this.__lastKeyContinued = undefined; // Used when continuing with a key
 
+        if (range !== undefined) {
+            range.__lower = range.lower !== undefined && idbModules.Key.encode(range.lower, this.__multiEntryIndex);
+            range.__upper = range.upper !== undefined && idbModules.Key.encode(range.upper, this.__multiEntryIndex);
+        }
+
         this["continue"]();
     }
 
