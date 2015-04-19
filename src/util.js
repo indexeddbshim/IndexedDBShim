@@ -78,5 +78,8 @@
     idbModules.util.quote = function(arg) {
         return "\"" + arg + "\"";
     };
+    idbModules.util.escapeSqlWildcards = function(arg) {
+        return arg && arg.replace(/([%_])/g, "\\$1");
+    };
 
 }(idbModules));
