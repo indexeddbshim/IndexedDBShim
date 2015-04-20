@@ -9,9 +9,7 @@
      **/
     function createSysDB(success, failure) {
         function sysDbCreateError(tx, err) {
-            if (arguments.length === 1) {
-                err = tx;
-            }
+            err = idbModules.util.findError(arguments);
             idbModules.DEBUG && console.log("Error in sysdb transaction - when creating dbVersions", err);
             failure(err);
         }
@@ -60,9 +58,7 @@
             if (calledDbCreateError) {
                 return;
             }
-            if (arguments.length === 1) {
-                err = tx;
-            }
+            err = idbModules.util.findError(arguments);
             calledDbCreateError = true;
             var evt = idbModules.util.createEvent("error", arguments);
             req.readyState = "done";
@@ -151,10 +147,7 @@
             if (calledDBError) {
                 return;
             }
-            if (arguments.length === 1) {
-                err = tx;
-            }
-
+            err = idbModules.util.findError(arguments);
             req.readyState = "done";
             req.error = err || "DOMError";
             var e = idbModules.util.createEvent("error");
@@ -194,7 +187,7 @@
                             (function deleteTables(i) {
                                 if (i >= tables.length) {
                                     // If all tables are deleted, delete the housekeeping tables
-                                    tx.executeSql("DROP TABLE __sys__", [], function() {
+                                    tx.executeSql("DROP TABLE IF EXISTS __sys__", [], function() {
                                         // Finally, delete the record for this DB from sysdb
                                         deleteFromDbVersions();
                                     }, dbError);
@@ -211,8 +204,8 @@
                             // __sysdb table does not exist, but that does not mean delete did not happen
                             deleteFromDbVersions();
                         });
-                    }, dbError);
-                });
+                    });
+                }, dbError);
             }, dbError);
         }, dbError);
 

@@ -54,10 +54,7 @@
                 }
 
                 function error(tx, err) {
-                    if (arguments.length === 1) {
-                        err = tx;
-                    }
-
+                    err = idbModules.util.findError(arguments);
                     try {
                         // Fire an error event for the current IDBRequest
                         q.req.readyState = "done";

@@ -24,7 +24,6 @@
         return e;
     }
 
-    
     /**
      * Creates a generic Error object
      * @returns {Error}
@@ -35,19 +34,50 @@
         e.message = message;
         return e;
     }
-    
-    function logError(name, message, error) {
+
+    /**
+     * Logs detailed error information to the console.
+     * @param {string} name
+     * @param {string} message
+     * @param {string|Error|null} error
+     */
+    idbModules.util.logError = function(name, message, error) {
         if (idbModules.DEBUG) {
             if (error && error.message) {
                 error = error.message;
             }
-            
+
             var method = typeof(console.error) === 'function' ? 'error' : 'log';
             console[method](name + ': ' + message + '. ' + (error || ''));
             console.trace && console.trace();
         }
-    }
-    
+    };
+
+    /**
+     * Finds the error argument.  This is useful because some WebSQL callbacks
+     * pass the error as the first argument, and some pass it as the second argument.
+     * @param {array} args
+     * @returns {Error|DOMException|undefined}
+     */
+    idbModules.util.findError = function(args) {
+        var err;
+        if (args) {
+            if (args.length === 1) {
+                return args[0];
+            }
+            for (var i = 0; i < args.length; i++) {
+                var arg = args[i];
+                if (arg instanceof Error || arg instanceof DOMException) {
+                    return arg;
+                }
+                else if (arg && typeof arg.message === "string") {
+                    err = arg;
+                }
+            }
+        }
+        return err;
+    };
+
     var test, useNativeDOMException = false, useNativeDOMError = false;
 
     // Test whether we can use the browser's native DOMException class
@@ -59,7 +89,7 @@
         }
     }
     catch (e) {}
-    
+
     // Test whether we can use the browser's native DOMError class
     try {
         test = createNativeDOMError('test name', 'test message');
@@ -70,18 +100,17 @@
     }
     catch (e) {}
 
-    idbModules.util.logError = logError;
     if (useNativeDOMException) {
         idbModules.DOMException = DOMException;
         idbModules.util.createDOMException = function(name, message, error) {
-            logError(name, message, error);
+            idbModules.util.logError(name, message, error);
             return createNativeDOMException(name, message);
         };
     }
     else {
         idbModules.DOMException = Error;
         idbModules.util.createDOMException = function(name, message, error) {
-            logError(name, message, error);
+            idbModules.util.logError(name, message, error);
             return createError(name, message);
         };
     }
@@ -89,14 +118,14 @@
     if (useNativeDOMError) {
         idbModules.DOMError = DOMError;
         idbModules.util.createDOMError = function(name, message, error) {
-            logError(name, message, error);
+            idbModules.util.logError(name, message, error);
             return createNativeDOMError(name, message);
         };
     }
     else {
         idbModules.DOMError = Error;
         idbModules.util.createDOMError = function(name, message, error) {
-            logError(name, message, error);
+            idbModules.util.logError(name, message, error);
             return createError(name, message);
         };
     }

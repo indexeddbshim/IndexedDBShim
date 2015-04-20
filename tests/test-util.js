@@ -26,6 +26,7 @@
                 var open = env.indexedDB.open(dbName, 1);
 
                 open.onerror = open.onblocked = function(event) {
+                    console.error(event.target.error.message);
                     done(event.target.error);
                 };
 
@@ -138,6 +139,7 @@
                 done(null, dbName);
             };
             request.onerror = request.onblocked = function() {
+                console.error(request.error.message);
                 done(request.error, dbName);
             };
         },
