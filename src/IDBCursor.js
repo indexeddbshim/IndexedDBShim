@@ -33,6 +33,7 @@
         this.__offset = -1; // Setting this to -1 as continue will set it to 0 anyway
         this.__lastKeyContinued = undefined; // Used when continuing with a key
         this.__multiEntryIndex = source instanceof idbModules.IDBIndex ? source.multiEntry : false;
+        this.__previousMultiEntryMatches = [];
 
         if (range !== undefined) {
             range.__lower = range.lower !== undefined && idbModules.Key.encode(range.lower, this.__multiEntryIndex);
@@ -92,6 +93,34 @@
                 me.__prefetchedData = data.rows;
                 me.__prefetchedIndex = 0;
                 idbModules.DEBUG && console.log("Preloaded " + me.__prefetchedData.length + " records for cursor");
+            }
+
+            if (me.__multiEntryIndex && data.rows.length > 1) {
+                for (var i = 0; i < data.rows.length; i++) {
+                    var rowItem = data.rows.item(i);
+                    var matches = idbModules.Key.findMultiEntryMatches(idbModules.Key.decode(rowItem[me.__keyColumnName], true), me.__range);
+                    if (me.direction.indexOf("prev") === 0) {
+                        matches.reverse();
+                    } else {
+                        matches.sort();
+                    }
+                    for (var j = 0; j < matches.length; j++) {
+                        var match = matches[j];
+                        if (me.direction.indexOf("unique") > -1) {
+                            if (!me.__previousMultiEntryMatches[match]) {
+                                me.__decode(rowItem, success, match);
+                            }
+                        } else if (!me.__previousMultiEntryMatches[match] || me.__previousMultiEntryMatches[match].indexOf(rowItem.key) === -1) {
+                            if (me.__range.lower === me.__range.upper) {
+                                me.__decode(rowItem, success, match);
+                            } else {
+                                me.__decode(rowItem, success, match);
+                            }
+                        }
+                    }
+                }
+                success(undefined, undefined, undefined);
+            } else if (data.rows.length > 1) {
                 me.__decode(data.rows.item(0), success);
             }
             else if (data.rows.length === 1) {
@@ -121,10 +150,16 @@
         };
     };
 
-    IDBCursor.prototype.__decode = function (rowItem, callback) {
-        var key = idbModules.Key.decode(rowItem[this.__keyColumnName], this.__multiEntryIndex);
+    IDBCursor.prototype.__decode = function (rowItem, callback, multiEntryMatch) {
+        var key = multiEntryMatch || idbModules.Key.decode(rowItem[this.__keyColumnName], this.__multiEntryIndex);
         var val = this.__valueDecoder.decode(rowItem[this.__valueColumnName]);
         var primaryKey = idbModules.Key.decode(rowItem.key);
+
+        if (!this.__previousMultiEntryMatches[multiEntryMatch]) {
+            this.__previousMultiEntryMatches[multiEntryMatch] = [];
+        }
+        this.__previousMultiEntryMatches[multiEntryMatch].push(rowItem.key);
+
         callback(key, val, primaryKey);
     };
 
@@ -137,10 +172,40 @@
 
             if (me.__prefetchedData) {
                 // We have pre-loaded data for the cursor
-                me.__prefetchedIndex++;
-                if (me.__prefetchedIndex < me.__prefetchedData.length) {
-                    me.__decode(me.__prefetchedData.item(me.__prefetchedIndex), me.__onsuccess(success));
+
+                if (me.__multiEntryIndex) {
+                    while (me.__prefetchedIndex < me.__prefetchedData.length) {
+                        var rowItem = me.__prefetchedData.item(me.__prefetchedIndex);
+                        var keyEntry = idbModules.Key.decode(rowItem[me.__keyColumnName], true);
+                        var matches = idbModules.Key.findMultiEntryMatches(keyEntry, me.__range);
+                        if (me.direction.indexOf("prev") === 0) {
+                            matches.reverse();
+                        } else {
+                            matches.sort();
+                        }
+                        for (var i = 0; i < matches.length; i++) {
+                            var match = matches[i];
+                            if (me.direction.indexOf("unique") > -1) {
+                                if (!me.__previousMultiEntryMatches[match]) {
+                                    me.__decode(rowItem, success, match);
+                                }
+                            } else if (!me.__previousMultiEntryMatches[match] || me.__previousMultiEntryMatches[match].indexOf(rowItem.key) === -1) {
+                                if (me.__range.lower === me.__range.upper) {
+                                    me.__decode(rowItem, me.__onsuccess(success), match);
+                                } else {
+                                    me.__decode(rowItem, me.__onsuccess(success), match);
+                                }
+                            }
+                        }
+                        me.__prefetchedIndex++;
+                    }
                     return;
+                } else {
+                    me.__prefetchedIndex++;
+                    if (me.__prefetchedIndex < me.__prefetchedData.length) {
+                        me.__decode(me.__prefetchedData.item(me.__prefetchedIndex), me.__onsuccess(success));
+                        return;
+                    }
                 }
             }
 
