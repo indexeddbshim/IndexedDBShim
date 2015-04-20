@@ -218,6 +218,60 @@
         }
     }
 
+    function findMultiEntryMatches(keyEntry, range) {
+        var matches = [];
+
+        if (keyEntry instanceof Array) {
+            for (var i = 0; i < keyEntry.length; i++) {
+                var key = keyEntry[i];
+
+                if (key instanceof Array) {
+                    if (range.lower === range.upper) {
+                        continue;
+                    }
+                    if (key.length === 1) {
+                        key = key[0];
+                    } else {
+                        var nested = findMultiEntryMatches(key, range);
+                        if (nested.length > 0) {
+                            // matches = matches.concat(nested);
+                            matches.push(key);
+                        }
+                        // key = key[0];
+                        continue;
+                    }
+                }
+
+                if (range.lower === range.upper) {
+                    if (range.lower === key) {
+                        matches.push(key);
+                    }
+                } else {
+                    if (range.lower !== undefined) {
+                        if (range.lowerOpen && key > range.lower) {
+                            matches.push(key);
+                        }
+                        if (!range.lowerOpen && key >= range.lower) {
+                            matches.push(key);
+                        }
+                    }
+                    if (range.upper !== undefined) {
+                        if (range.upperOpen && key < range.upper) {
+                            matches.push(key);
+                        }
+                        if (!range.upperOpen && key <= range.upper) {
+                            matches.push(key);
+                        }
+                    }
+                }
+            }
+        } else {
+            // return decoded entry since we wouldn't get here unless it was a match already
+            matches.push(keyEntry);
+        }
+        return matches;
+    }
+
     idbModules.Key = {
         encode: function(key, inArray) {
             if (key === undefined) {
@@ -234,6 +288,7 @@
         validate: validate,
         getValue: getValue,
         setValue: setValue,
-        isMultiEntryMatch: isMultiEntryMatch
+        isMultiEntryMatch: isMultiEntryMatch,
+        findMultiEntryMatches: findMultiEntryMatches
     };
 }(idbModules));

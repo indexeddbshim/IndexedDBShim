@@ -179,8 +179,8 @@
             var sqlValues = [];
             if (hasKey) {
                 if (me.multiEntry) {
-                    sql.push("AND", idbModules.util.quote(me.name), "LIKE ?");
-                    sqlValues.push("%" + encodedKey + "%");
+                    sql.push("AND", idbModules.util.quote(me.name), "LIKE ? ESCAPE", idbModules.util.quote("\\"));
+                    sqlValues.push("%" + idbModules.util.escapeSqlWildcards(encodedKey) + "%");
                 }
                 else {
                     sql.push("AND", idbModules.util.quote(me.name), "= ?");
