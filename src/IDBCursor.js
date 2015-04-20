@@ -35,6 +35,7 @@
         this.__multiEntryIndex = source instanceof IDBIndex ? source.multiEntry : false;
 
         if (range !== undefined) {
+            // Encode the key range and cache the encoded values, so we don't have to re-encode them over and over
             range.__lower = range.lower !== undefined && idbModules.Key.encode(range.lower, this.__multiEntryIndex);
             range.__upper = range.upper !== undefined && idbModules.Key.encode(range.upper, this.__multiEntryIndex);
         }

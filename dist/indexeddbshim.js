@@ -963,6 +963,7 @@ var idbModules = {  // jshint ignore:line
         this.__multiEntryIndex = source instanceof IDBIndex ? source.multiEntry : false;
 
         if (range !== undefined) {
+            // Encode the key range and cache the encoded values, so we don't have to re-encode them over and over
             range.__lower = range.lower !== undefined && idbModules.Key.encode(range.lower, this.__multiEntryIndex);
             range.__upper = range.upper !== undefined && idbModules.Key.encode(range.upper, this.__multiEntryIndex);
         }
@@ -2232,16 +2233,30 @@ var idbModules = {  // jshint ignore:line
     'use strict';
 
     var DEFAULT_DB_SIZE = 4 * 1024 * 1024;
-    if (!window.openDatabase) {
-        return;
+    var sysdb;
+
+    /**
+     * Craetes the sysDB to keep track of version numbers for databases
+     **/
+    function createSysDB(success, failure) {
+        function sysDbCreateError(tx, err) {
+            if (arguments.length === 1) {
+                err = tx;
+            }
+            idbModules.DEBUG && console.log("Error in sysdb transaction - when creating dbVersions", err);
+            failure(err);
+        }
+
+        if (sysdb) {
+            success();
+        }
+        else {
+            sysdb = window.openDatabase("__sysdb__", 1, "System Database", DEFAULT_DB_SIZE);
+            sysdb.transaction(function(tx) {
+                tx.executeSql("CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);", [], success, sysDbCreateError);
+            }, sysDbCreateError);
+        }
     }
-    // The sysDB to keep track of version numbers for databases
-    var sysdb = window.openDatabase("__sysdb__", 1, "System Database", DEFAULT_DB_SIZE);
-    sysdb.transaction(function(tx) {
-        tx.executeSql("CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);", []);
-    }, function() {
-        idbModules.DEBUG && console.log("Error in sysdb transaction - when creating dbVersions", arguments);
-    });
 
     /**
      * IDBFactory Class
@@ -2272,9 +2287,12 @@ var idbModules = {  // jshint ignore:line
         }
         name = name + ''; // cast to a string
 
-        function dbCreateError(err) {
+        function dbCreateError(tx, err) {
             if (calledDbCreateError) {
                 return;
+            }
+            if (arguments.length === 1) {
+                err = tx;
             }
             calledDbCreateError = true;
             var evt = idbModules.util.createEvent("error", arguments);
@@ -2327,16 +2345,18 @@ var idbModules = {  // jshint ignore:line
             }, dbCreateError);
         }
 
-        sysdb.transaction(function(tx) {
-            tx.executeSql("SELECT * FROM dbVersions where name = ?", [name], function(tx, data) {
-                if (data.rows.length === 0) {
-                    // Database with this name does not exist
-                    tx.executeSql("INSERT INTO dbVersions VALUES (?,?)", [name, version || 1], function() {
-                        openDB(0);
-                    }, dbCreateError);
-                } else {
-                    openDB(data.rows.item(0).version);
-                }
+        createSysDB(function() {
+            sysdb.transaction(function(tx) {
+                tx.executeSql("SELECT * FROM dbVersions where name = ?", [name], function(tx, data) {
+                    if (data.rows.length === 0) {
+                        // Database with this name does not exist
+                        tx.executeSql("INSERT INTO dbVersions VALUES (?,?)", [name, version || 1], function() {
+                            openDB(0);
+                        }, dbCreateError);
+                    } else {
+                        openDB(data.rows.item(0).version);
+                    }
+                }, dbCreateError);
             }, dbCreateError);
         }, dbCreateError);
 
@@ -2386,44 +2406,47 @@ var idbModules = {  // jshint ignore:line
             }, dbError);
         }
 
-        sysdb.transaction(function(systx) {
-            systx.executeSql("SELECT * FROM dbVersions where name = ?", [name], function(tx, data) {
-                if (data.rows.length === 0) {
-                    req.result = undefined;
-                    var e = idbModules.util.createEvent("success");
-                    e.newVersion = null;
-                    e.oldVersion = version;
-                    idbModules.util.callback("onsuccess", req, e);
-                    return;
-                }
-                version = data.rows.item(0).version;
-                var db = window.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
-                db.transaction(function(tx) {
-                    tx.executeSql("SELECT * FROM __sys__", [], function(tx, data) {
-                        var tables = data.rows;
-                        (function deleteTables(i) {
-                            if (i >= tables.length) {
-                                // If all tables are deleted, delete the housekeeping tables
-                                tx.executeSql("DROP TABLE __sys__", [], function() {
-                                    // Finally, delete the record for this DB from sysdb
-                                    deleteFromDbVersions();
-                                }, dbError);
-                            } else {
-                                // Delete all tables in this database, maintained in the sys table
-                                tx.executeSql("DROP TABLE " + idbModules.util.quote(tables.item(i).name), [], function() {
-                                    deleteTables(i + 1);
-                                }, function() {
-                                    deleteTables(i + 1);
-                                });
-                            }
-                        }(0));
-                    }, function(e) {
-                        // __sysdb table does not exist, but that does not mean delete did not happen
-                        deleteFromDbVersions();
-                    });
-                }, dbError);
-            });
+        createSysDB(function() {
+            sysdb.transaction(function(systx) {
+                systx.executeSql("SELECT * FROM dbVersions where name = ?", [name], function(tx, data) {
+                    if (data.rows.length === 0) {
+                        req.result = undefined;
+                        var e = idbModules.util.createEvent("success");
+                        e.newVersion = null;
+                        e.oldVersion = version;
+                        idbModules.util.callback("onsuccess", req, e);
+                        return;
+                    }
+                    version = data.rows.item(0).version;
+                    var db = window.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
+                    db.transaction(function(tx) {
+                        tx.executeSql("SELECT * FROM __sys__", [], function(tx, data) {
+                            var tables = data.rows;
+                            (function deleteTables(i) {
+                                if (i >= tables.length) {
+                                    // If all tables are deleted, delete the housekeeping tables
+                                    tx.executeSql("DROP TABLE __sys__", [], function() {
+                                        // Finally, delete the record for this DB from sysdb
+                                        deleteFromDbVersions();
+                                    }, dbError);
+                                } else {
+                                    // Delete all tables in this database, maintained in the sys table
+                                    tx.executeSql("DROP TABLE " + idbModules.util.quote(tables.item(i).name), [], function() {
+                                        deleteTables(i + 1);
+                                    }, function() {
+                                        deleteTables(i + 1);
+                                    });
+                                }
+                            }(0));
+                        }, function(e) {
+                            // __sysdb table does not exist, but that does not mean delete did not happen
+                            deleteFromDbVersions();
+                        });
+                    }, dbError);
+                });
+            }, dbError);
         }, dbError);
+
         return req;
     };
 
