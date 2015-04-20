@@ -54,27 +54,39 @@ describe('IDBTransaction events', function() {
     it('should fire the onerror event if an asynchronous error occurs', function(done) {
         util.createDatabase('inline', function(err, db) {
             var tx = db.transaction('inline', 'readwrite');
-            tx.oncomplete = sinon.spy();
 
             var store = tx.objectStore('inline');
             store.add({id: 1});
             var add = store.add({id: 1});                       // <-- This causes an asynchronous error (duplicate id)
             add.onerror = sinon.spy();
+            add.onsuccess = sinon.spy();
 
             tx.onerror = function() {
                 sinon.assert.calledOnce(add.onerror);
+                sinon.assert.notCalled(add.onsuccess);
                 sinon.assert.notCalled(tx.oncomplete);          // <-- transaction.oncomplete never fires
                 db.close();
                 done();
             };
+
+            tx.oncomplete = sinon.spy(function () {
+                if (add.onsuccess.called) {
+                    db.close();
+                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                }
+            });
         });
     });
 
     it('should not fire the onerror event if an error occurs during oncomplete', function(done) {
-        util.createDatabase('inline', function(err, db) {
+        util.createDatabase('inline', function (err, db) {
             var tx = db.transaction('inline', 'readwrite');
-            tx.onerror = sinon.spy();
             tx.onabort = sinon.spy();
+
+            tx.onerror = sinon.spy(function() {
+                db.close();
+                done(new Error('The onerror event fired when it should not have'));
+            });
 
             tx.oncomplete = sinon.spy(function() {
                 sinon.assert.notCalled(tx.onerror);
@@ -93,6 +105,12 @@ describe('IDBTransaction events', function() {
                 done();
                 return true;
             };
+
+            window.addEventListener('cordovacallbackerror', function handler() {
+                window.removeEventListener('cordovacallbackerror', handler);
+                db.close();
+                done(new Error('The WebSQL plugin suppressed an error event. (window.onerror should have fired)'));
+            });
         });
     });
 

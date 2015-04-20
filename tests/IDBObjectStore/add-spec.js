@@ -24,7 +24,6 @@ describe('IDBObjectStore.add', function() {
             };
 
             var tx = db.transaction('out-of-line', 'readwrite');
-            tx.oncomplete = sinon.spy();
             tx.onerror = sinon.spy();
 
             var store = tx.objectStore('out-of-line');
@@ -57,6 +56,13 @@ describe('IDBObjectStore.add', function() {
                 db.close();
                 done();
             };
+
+            tx.oncomplete = sinon.spy(function () {
+                if (add2.onsuccess.called) {
+                    db.close();
+                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                }
+            });
         });
     });
 
@@ -74,7 +80,6 @@ describe('IDBObjectStore.add', function() {
             var save2 = store2.add({foo: 'two'}, 1);
             var save3 = store3.add({foo: 'three'}, 1);
 
-            tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy();
             tx1.onerror = tx2.onerror = tx3.onerror = sinon.spy();
 
             tx1.onabort = tx2.onabort = tx3.onabort = sinon.spy(function() {
@@ -98,13 +103,19 @@ describe('IDBObjectStore.add', function() {
                     done();
                 }
             });
+
+            tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
+                if (save1.result && save2.result && save3.result) {
+                    db.close();
+                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                }
+            });
         });
     });
 
     it('should throw an error if a generated out-of-line key already exists', function(done) {
         util.createDatabase('out-of-line-generated', function(err, db) {
             var tx = db.transaction('out-of-line-generated', 'readwrite');
-            tx.oncomplete = sinon.spy();
             tx.onerror = sinon.spy();
 
             var store = tx.objectStore('out-of-line-generated');
@@ -137,13 +148,19 @@ describe('IDBObjectStore.add', function() {
                 db.close();
                 done();
             };
+
+            tx.oncomplete = sinon.spy(function () {
+                if (add2.onsuccess.called) {
+                    db.close();
+                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                }
+            });
         });
     });
 
     it('should throw an error if an inline key already exists', function(done) {
         util.createDatabase('inline', function(err, db) {
             var tx = db.transaction('inline', 'readwrite');
-            tx.oncomplete = sinon.spy();
             tx.onerror = sinon.spy();
 
             var store = tx.objectStore('inline');
@@ -176,6 +193,13 @@ describe('IDBObjectStore.add', function() {
                 db.close();
                 done();
             };
+
+            tx.oncomplete = sinon.spy(function () {
+                if (add2.onsuccess.called) {
+                    db.close();
+                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                }
+            });
         });
     });
 
@@ -193,7 +217,6 @@ describe('IDBObjectStore.add', function() {
             var save2 = store2.add({id: 1});
             var save3 = store3.add({id: 1});
 
-            tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy();
             tx1.onerror = tx2.onerror = tx3.onerror = sinon.spy();
 
             tx1.onabort = tx2.onabort = tx3.onabort = sinon.spy(function() {
@@ -217,13 +240,19 @@ describe('IDBObjectStore.add', function() {
                     done();
                 }
             });
+
+            tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
+                if (save1.result && save2.result && save3.result) {
+                    db.close();
+                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                }
+            });
         });
     });
 
     it('should throw an error if a generated inline key already exists', function(done) {
         util.createDatabase('inline-generated', function(err, db) {
             var tx = db.transaction('inline-generated', 'readwrite');
-            tx.oncomplete = sinon.spy();
             tx.onerror = sinon.spy();
 
             var store = tx.objectStore('inline-generated');
@@ -256,13 +285,19 @@ describe('IDBObjectStore.add', function() {
                 db.close();
                 done();
             };
+
+            tx.oncomplete = sinon.spy(function () {
+                if (add2.onsuccess.called) {
+                    db.close();
+                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                }
+            });
         });
     });
 
     it('should throw an error if a dotted key already exists', function(done) {
         util.createDatabase('dotted', function(err, db) {
             var tx = db.transaction('dotted', 'readwrite');
-            tx.oncomplete = sinon.spy();
             tx.onerror = sinon.spy();
 
             var store = tx.objectStore('dotted');
@@ -295,13 +330,19 @@ describe('IDBObjectStore.add', function() {
                 db.close();
                 done();
             };
+
+            tx.oncomplete = sinon.spy(function () {
+                if (add2.onsuccess.called) {
+                    db.close();
+                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                }
+            });
         });
     });
 
     it('should throw an error if a generated dotted key already exists', function(done) {
         util.createDatabase('dotted-generated', function(err, db) {
             var tx = db.transaction('dotted-generated', 'readwrite');
-            tx.oncomplete = sinon.spy();
             tx.onerror = sinon.spy();
 
             var store = tx.objectStore('dotted-generated');
@@ -334,6 +375,13 @@ describe('IDBObjectStore.add', function() {
                 db.close();
                 done();
             };
+
+            tx.oncomplete = sinon.spy(function () {
+                if (add2.onsuccess.called) {
+                    db.close();
+                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                }
+            });
         });
     });
 
@@ -346,7 +394,6 @@ describe('IDBObjectStore.add', function() {
 
         util.createDatabase('out-of-line-compound', function(err, db) {
             var tx = db.transaction('out-of-line-compound', 'readwrite');
-            tx.oncomplete = sinon.spy();
             tx.onerror = sinon.spy();
 
             var store = tx.objectStore('out-of-line-compound');
@@ -379,6 +426,13 @@ describe('IDBObjectStore.add', function() {
                 db.close();
                 done();
             };
+
+            tx.oncomplete = sinon.spy(function () {
+                if (add2.onsuccess.called) {
+                    db.close();
+                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                }
+            });
         });
     });
 
@@ -391,7 +445,6 @@ describe('IDBObjectStore.add', function() {
 
         util.createDatabase('inline-compound', function(err, db) {
             var tx = db.transaction('inline-compound', 'readwrite');
-            tx.oncomplete = sinon.spy();
             tx.onerror = sinon.spy();
 
             var store = tx.objectStore('inline-compound');
@@ -424,6 +477,13 @@ describe('IDBObjectStore.add', function() {
                 db.close();
                 done();
             };
+
+            tx.oncomplete = sinon.spy(function () {
+                if (add2.onsuccess.called) {
+                    db.close();
+                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                }
+            });
         });
     });
 
@@ -436,7 +496,6 @@ describe('IDBObjectStore.add', function() {
 
         util.createDatabase('dotted-compound', function(err, db) {
             var tx = db.transaction('dotted-compound', 'readwrite');
-            tx.oncomplete = sinon.spy();
             tx.onerror = sinon.spy();
 
             var store = tx.objectStore('dotted-compound');
@@ -469,6 +528,13 @@ describe('IDBObjectStore.add', function() {
                 db.close();
                 done();
             };
+
+            tx.oncomplete = sinon.spy(function () {
+                if (add2.onsuccess.called) {
+                    db.close();
+                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                }
+            });
         });
     });
 });
