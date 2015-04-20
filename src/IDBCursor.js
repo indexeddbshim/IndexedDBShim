@@ -32,6 +32,12 @@
         this.__valueDecoder = valueColumnName === "value" ? idbModules.Sca : idbModules.Key;
         this.__offset = -1; // Setting this to -1 as continue will set it to 0 anyway
         this.__lastKeyContinued = undefined; // Used when continuing with a key
+        this.__multiEntryIndex = source instanceof IDBIndex ? source.multiEntry : false;
+
+        if (range !== undefined) {
+            range.__lower = range.lower !== undefined && idbModules.Key.encode(range.lower, this.__multiEntryIndex);
+            range.__upper = range.upper !== undefined && idbModules.Key.encode(range.upper, this.__multiEntryIndex);
+        }
 
         this["continue"]();
     }
@@ -111,7 +117,7 @@
     };
 
     IDBCursor.prototype.__decode = function (rowItem, callback) {
-        var key = idbModules.Key.decode(rowItem[this.__keyColumnName]);
+        var key = idbModules.Key.decode(rowItem[this.__keyColumnName], this.__multiEntryIndex);
         var val = this.__valueDecoder.decode(rowItem[this.__valueColumnName]);
         var primaryKey = idbModules.Key.decode(rowItem.key);
         callback(key, val, primaryKey);

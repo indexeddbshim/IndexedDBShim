@@ -303,6 +303,34 @@ describe('IDBObjectStore.createIndex', function() {
             });
         });
 
+        it('should throw an error if called with an array keyPath with multiEntry true', function(done) {
+            util.generateDatabaseName(function(err, name) {
+                var open = indexedDB.open(name, 1);
+                open.onerror = open.onblocked = done;
+
+                open.onupgradeneeded = sinon.spy(function(event) {
+                    var db = event.target.result;
+                    var store = db.createObjectStore('My Store');
+
+                    try {
+                        store.createIndex('My Index', ['id', 'Name'], { multiEntry: true });
+                    }
+                    catch (e) {
+                        err = e;
+                    }
+
+                    expect(err).to.be.an.instanceOf(env.DOMException);
+                    expect(err.name).to.equal('InvalidAccessError');
+                });
+
+                open.onsuccess = function() {
+                    sinon.assert.calledOnce(open.onupgradeneeded);
+                    open.result.close();
+                    done();
+                };
+            });
+        });
+
         it('should throw an error if the index was already created in the same transaction', function(done) {
             util.generateDatabaseName(function(err, name) {
                 var open = indexedDB.open(name, 1);

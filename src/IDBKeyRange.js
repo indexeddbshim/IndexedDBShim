@@ -12,11 +12,9 @@
     function IDBKeyRange(lower, upper, lowerOpen, upperOpen){
         if (lower !== undefined) {
             idbModules.Key.validate(lower);
-            this.__lower = idbModules.Key.encode(lower);
         }
         if (upper !== undefined) {
             idbModules.Key.validate(upper);
-            this.__upper = idbModules.Key.encode(upper);
         }
 
         this.lower = lower;
