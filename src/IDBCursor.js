@@ -52,14 +52,19 @@
         sql.push("WHERE", quotedKeyColumnName, "NOT NULL");
         if (me.__range && (me.__range.lower !== undefined || me.__range.upper !== undefined )) {
             sql.push("AND");
-            if (me.__range.lower !== undefined) {
-                sql.push(quotedKeyColumnName, (me.__range.lowerOpen ? ">" : ">="), "?");
-                sqlValues.push(me.__range.__lower);
-            }
-            (me.__range.lower !== undefined && me.__range.upper !== undefined) && sql.push("AND");
-            if (me.__range.upper !== undefined) {
-                sql.push(quotedKeyColumnName, (me.__range.upperOpen ? "<" : "<="), "?");
-                sqlValues.push(me.__range.__upper);
+            if (me.__multiEntryIndex && me.__range.lower === me.__range.upper) {
+                sql.push(quotedKeyColumnName, "LIKE ? ESCAPE", idbModules.util.quote("\\"));
+                sqlValues.push("%" + idbModules.util.escapeSqlWildcards(me.__range.__lower) + "%");
+            } else {
+                if (me.__range.lower !== undefined) {
+                    sql.push(quotedKeyColumnName, (me.__range.lowerOpen ? ">" : ">="), "?");
+                    sqlValues.push(me.__range.__lower);
+                }
+                (me.__range.lower !== undefined && me.__range.upper !== undefined) && sql.push("AND");
+                if (me.__range.upper !== undefined) {
+                    sql.push(quotedKeyColumnName, (me.__range.upperOpen ? "<" : "<="), "?");
+                    sqlValues.push(me.__range.__upper);
+                }
             }
         }
         if (typeof key !== "undefined") {
@@ -75,7 +80,7 @@
         // Determine the ORDER BY direction based on the cursor.
         var direction = me.direction === 'prev' || me.direction === 'prevunique' ? 'DESC' : 'ASC';
 
-        sql.push("ORDER BY", quotedKeyColumnName, direction);
+        sql.push("ORDER BY", me.__multiEntryIndex ? "key" : quotedKeyColumnName, direction);
         sql.push("LIMIT", recordsToLoad, "OFFSET", me.__offset);
         sql = sql.join(" ");
         idbModules.DEBUG && console.log(sql, sqlValues);
