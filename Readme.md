@@ -11,10 +11,11 @@ IndexedDB Polyfill
 
 Features
 --------------------------
-* Adds IndexedDB support to any web browser that [supports WebSql](http://caniuse.com/#search=websql) or the [Cordova plug-in](http://plugins.cordova.io/#/package/com.msopentech.websql)
+* Adds full IndexedDB support to any web browser that [supports WebSql](http://caniuse.com/#search=websql)
 * Does nothing if the browser already [natively supports IndexedDB](http://caniuse.com/#search=indexeddb)
 * Can _optionally_ override native IndexedDB on browsers with [buggy implementations](http://www.raymondcamden.com/2014/9/25/IndexedDB-on-iOS-8--Broken-Bad)
-* Works on __desktop__ and __mobile__.  Even on __Cordova__ and __PhoneGap__!
+* Works on __desktop__ and __mobile__ devices.
+* Works on __Cordova__ and __PhoneGap__ via the [IndexedDB plug-in](http://plugins.cordova.io/#/package/com.msopentech.websql)
 * This shim is basically an IndexedDB-to-WebSql adapter
 * More details about the project at [gh-pages](http://nparashuram.com/IndexedDBShim)
 
@@ -134,7 +135,7 @@ By creating a variable named `indexedDB`, all the code within that closure will 
 ````
 
 #### Windows Phone
-IndexedDB on Windows Phone requires the [Cordova WebSql plug-in](http://plugins.cordova.io/#/package/com.msopentech.websql), which has some [known bugs](https://code.google.com/p/csharp-sqlite/issues/list).  Specifically, because the WebSql plug-in is synchronous instead of asynchronous, the performance can be very poor.  It can also cause stack-overflow errors when performing many operations in a single transaction.  The only workaround for now is to limit yourself to no more than 10 operations per transaction.
+IndexedDBShim works on Windows Phone via a Cordova/PhoneGap plug-in.  There are two plugins available: [cordova-plugin-indexedDB](https://github.com/MSOpenTech/cordova-plugin-indexedDB) and [cordova-plugin-indexeddb-async](https://github.com/ABB-Austin/cordova-plugin-indexeddb-async).  Both plug-ins rely on a WebSQL-to-SQLite adapter, but there are differences in their implementations.  Try them both and see which one works best for your app.
 
 
 Building

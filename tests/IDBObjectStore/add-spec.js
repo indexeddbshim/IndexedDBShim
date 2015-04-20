@@ -18,11 +18,6 @@ describe('IDBObjectStore.add', function() {
     });
 
     it('should throw an error if an out-of-line key already exists', function(done) {
-        if (env.browser.isIE && env.browser.isMobile) {
-            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
-            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
-        }
-
         util.createDatabase('out-of-line', function(err, db) {
             window.onerror = function() {
                 return true;
@@ -66,11 +61,6 @@ describe('IDBObjectStore.add', function() {
     });
 
     it('should throw an error if an out-of-line key conflict occurs in simultaneous transactions', function(done) {
-        if (env.browser.isIE && env.browser.isMobile) {
-            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
-            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
-        }
-
         util.createDatabase('out-of-line', function(err, db) {
             var tx1 = db.transaction('out-of-line', 'readwrite');
             var tx2 = db.transaction('out-of-line', 'readwrite');
@@ -112,11 +102,6 @@ describe('IDBObjectStore.add', function() {
     });
 
     it('should throw an error if a generated out-of-line key already exists', function(done) {
-        if (env.browser.isIE && env.browser.isMobile) {
-            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
-            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
-        }
-
         util.createDatabase('out-of-line-generated', function(err, db) {
             var tx = db.transaction('out-of-line-generated', 'readwrite');
             tx.oncomplete = sinon.spy();
@@ -156,11 +141,6 @@ describe('IDBObjectStore.add', function() {
     });
 
     it('should throw an error if an inline key already exists', function(done) {
-        if (env.browser.isIE && env.browser.isMobile) {
-            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
-            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
-        }
-
         util.createDatabase('inline', function(err, db) {
             var tx = db.transaction('inline', 'readwrite');
             tx.oncomplete = sinon.spy();
@@ -200,11 +180,6 @@ describe('IDBObjectStore.add', function() {
     });
 
     it('should throw an error if an inline key conflict occurs in simultaneous transactions', function(done) {
-        if (env.browser.isIE && env.browser.isMobile) {
-            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
-            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
-        }
-
         util.createDatabase('inline', function(err, db) {
             var tx1 = db.transaction('inline', 'readwrite');
             var tx2 = db.transaction('inline', 'readwrite');
@@ -246,11 +221,6 @@ describe('IDBObjectStore.add', function() {
     });
 
     it('should throw an error if a generated inline key already exists', function(done) {
-        if (env.browser.isIE && env.browser.isMobile) {
-            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
-            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
-        }
-
         util.createDatabase('inline-generated', function(err, db) {
             var tx = db.transaction('inline-generated', 'readwrite');
             tx.oncomplete = sinon.spy();
@@ -290,11 +260,6 @@ describe('IDBObjectStore.add', function() {
     });
 
     it('should throw an error if a dotted key already exists', function(done) {
-        if (env.browser.isIE && env.browser.isMobile) {
-            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
-            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
-        }
-
         util.createDatabase('dotted', function(err, db) {
             var tx = db.transaction('dotted', 'readwrite');
             tx.oncomplete = sinon.spy();
@@ -334,11 +299,6 @@ describe('IDBObjectStore.add', function() {
     });
 
     it('should throw an error if a generated dotted key already exists', function(done) {
-        if (env.browser.isIE && env.browser.isMobile) {
-            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
-            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
-        }
-
         util.createDatabase('dotted-generated', function(err, db) {
             var tx = db.transaction('dotted-generated', 'readwrite');
             tx.oncomplete = sinon.spy();
@@ -382,10 +342,6 @@ describe('IDBObjectStore.add', function() {
             // BUG: IE's native IndexedDB does not support compound keys at all
             console.error('Skipping test: ' + this.test.title);
             return done();
-        }
-        if (env.browser.isIE && env.browser.isMobile) {
-            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
-            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
         }
 
         util.createDatabase('out-of-line-compound', function(err, db) {
@@ -432,10 +388,6 @@ describe('IDBObjectStore.add', function() {
             console.error('Skipping test: ' + this.test.title);
             return done();
         }
-        if (env.browser.isIE && env.browser.isMobile) {
-            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
-            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
-        }
 
         util.createDatabase('inline-compound', function(err, db) {
             var tx = db.transaction('inline-compound', 'readwrite');
@@ -480,10 +432,6 @@ describe('IDBObjectStore.add', function() {
             // BUG: IE's native IndexedDB does not support compound keys at all
             console.error('Skipping test: ' + this.test.title);
             return done();
-        }
-        if (env.browser.isIE && env.browser.isMobile) {
-            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
-            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
         }
 
         util.createDatabase('dotted-compound', function(err, db) {

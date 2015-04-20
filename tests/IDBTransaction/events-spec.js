@@ -52,11 +52,6 @@ describe('IDBTransaction events', function() {
     });
 
     it('should fire the onerror event if an asynchronous error occurs', function(done) {
-        if (env.browser.isIE && env.browser.isMobile) {
-            // BUG: The WebSql plug-in suppresses constraint violation errors (see https://code.google.com/p/csharp-sqlite/issues/detail?id=130)
-            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
-        }
-
         util.createDatabase('inline', function(err, db) {
             var tx = db.transaction('inline', 'readwrite');
             tx.oncomplete = sinon.spy();

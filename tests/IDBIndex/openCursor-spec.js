@@ -239,11 +239,6 @@ describe('IDBIndex.openCursor', function() {
     });
 
     it('should get hundreds of records', function(done) {
-        if (env.browser.isIE && env.browser.isMobile) {
-            // BUG: The WebSql plug-in on Windows Phone is synchronous, which causes a stack-overflow error
-            return done(new Error('This test fails on Windows Phone due to a bug in the WebSql plug-in'));
-        }
-
         this.timeout(5000);
         this.slow(5000);
 
