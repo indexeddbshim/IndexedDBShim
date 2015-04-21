@@ -16,7 +16,8 @@ Features
 --------------------------
 * Adds full IndexedDB support to any web browser that [supports WebSql](http://caniuse.com/#search=websql)
 * Does nothing if the browser already [natively supports IndexedDB](http://caniuse.com/#search=indexeddb)
-* Can _optionally_ replace native IndexedDB on browsers with [buggy implementations](http://www.raymondcamden.com/2014/9/25/IndexedDB-on-iOS-8--Broken-Bad)
+* Can _optionally replace_ native IndexedDB on browsers with [buggy implementations](http://www.raymondcamden.com/2014/9/25/IndexedDB-on-iOS-8--Broken-Bad)
+* Can _optionally enhance_ native IndexedDB on browsers that are [missing certain features](http://codepen.io/cemerick/pen/Itymi)
 * Works on __desktop__ and __mobile__ devices.
 * Works on __Cordova__ and __PhoneGap__ via the [IndexedDB plug-in](http://plugins.cordova.io/#/package/com.msopentech.websql)
 * This shim is basically an IndexedDB-to-WebSql adapter
@@ -90,17 +91,19 @@ open.onsuccess = function() {
 ````
 
 
-Overriding Native IndexedDB
+Fixing Problems in Native IndexedDB
 --------------------------
-Even if a browser natively supports IndexedDB, you may still want to use this shim instead.  Some native IndexedDB implemenatations are [very buggy](http://www.raymondcamden.com/2014/9/25/IndexedDB-on-iOS-8--Broken-Bad).  Others are [missing certain features](http://codepen.io/cemerick/pen/Itymi).  
+Even if a browser natively supports IndexedDB, you may still want to use this shim.  Some native IndexedDB implemenatations are [very buggy](http://www.raymondcamden.com/2014/9/25/IndexedDB-on-iOS-8--Broken-Bad).  Others are [missing certain features](http://codepen.io/cemerick/pen/Itymi).  There are also many minor inconsistencies between different browser implementations of IndexedDB, such as how errors are handled, how transaction timing works, how records are sorted, how cursors behave, etc.  Using this shim will ensure consistent behavior across all browsers.
 
-There are also many minor inconsistencies between different browser implementations of IndexedDB, such as how errors are handled, how transaction timing works, how records are sorted, how cursors behave, etc.  Using this shim will ensure consistent behavior across all browsers.
-
-To force IndexedDBShim to replace the browser's native IndexedDB, add this line to your script:
+To force IndexedDBShim to shim the browser's native IndexedDB, add this line to your script:
 
 ````javascript
 window.shimIndexedDB.__useShim()
 ````
+
+On browsers that support WebSQL, this line will _completely replace_ the native IndexedDB implementation with the IndexedDBShim-to-WebSQL implementation.
+
+On browsers that _don't_ support WebSQL, but _do_ support IndexedDB, this line will patch many known problems and add missing features.  For example, on Internet Explorer, this will add support for compound keys.
 
 
 Debugging

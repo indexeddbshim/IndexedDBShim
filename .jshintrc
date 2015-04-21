@@ -26,6 +26,7 @@
 		"IDBIndex",
 		"IDBTransaction",
 		"IDBCursor",
+		"IDBCursorWithValue",
 		"IDBKeyRange",
 		"IDBRequest",
 		"IDBOpenDBRequest",

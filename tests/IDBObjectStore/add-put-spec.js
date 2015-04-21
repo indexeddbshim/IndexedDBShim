@@ -333,7 +333,10 @@
                             err = e;
                         }
 
-                        expect(err).to.be.an.instanceOf(env.DOMException);
+                        if (!env.isPolyfilled) {
+                            expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
+                        }
+                        expect(err).to.be.ok;
                         expect(err.name).to.equal('DataError');
                     }
 
@@ -709,7 +712,10 @@
                             err = e;
                         }
 
-                        expect(err).to.be.an.instanceOf(env.DOMException);
+                        if (!env.isPolyfilled) {
+                            expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
+                        }
+                        expect(err).to.be.ok;
                         expect(err.name).to.equal('DataError');
                     }
 
@@ -1245,7 +1251,10 @@
                             err = e;
                         }
 
-                        expect(err).to.be.an.instanceOf(env.DOMException);
+                        if (!env.isPolyfilled) {
+                            expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
+                        }
+                        expect(err).to.be.ok;
                         expect(err.name).to.equal('DataError');
                     }
 
@@ -1268,7 +1277,10 @@
                         err = e;
                     }
 
-                    expect(err).to.be.an.instanceOf(env.DOMException);
+                    if (!env.isPolyfilled) {
+                        expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
+                    }
+                    expect(err).to.be.ok;
                     expect(err.name).to.equal('DataError');
 
                     db.close();

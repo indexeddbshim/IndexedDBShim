@@ -430,7 +430,10 @@ describe('IDBIndex.openCursor', function() {
                         err = e;
                     }
 
-                    expect(err).to.be.an.instanceOf(env.DOMException);
+                    if (!env.isPolyfilled) {
+                        expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
+                    }
+                    expect(err).to.be.ok;
                     expect(err.name).to.equal('DataError');
                 }
             }
@@ -747,7 +750,7 @@ describe('IDBIndex.openCursor', function() {
             });
         });
 
-        util.skipIf(env.isNative && env.browser.isIE, 'should query indexes other than the primary key', function(done) {
+        util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should query indexes other than the primary key', function(done) {
             // BUG: IE's native IndexedDB does not support compound keys at all
 
             // NOTE: The object store's keyPath is "id".  The index's keyPath is ["id","name.first","name.last"]
@@ -765,7 +768,7 @@ describe('IDBIndex.openCursor', function() {
                 };
 
                 store.add({id: ''});
-                store.add({id:  0});
+                store.add({id: 0});
                 store.add({id: '1', name: {first: '2', last: '3'}});
                 store.add({id: '-1', name: {first: '-2', last: '-3'}});
                 store.add({id: 1, name: {first: 2, last: 3}});

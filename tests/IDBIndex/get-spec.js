@@ -644,7 +644,10 @@ describe('IDBIndex.get', function() {
                         err = e;
                     }
 
-                    expect(err).to.be.an.instanceOf(env.DOMException);
+                    if (!env.isPolyfilled) {
+                        expect(err).to.be.an.instanceOf(env.DOMException);      // The polyfill throws a normal error
+                    }
+                    expect(err).to.be.ok;
                     expect(err.name).to.equal('DataError');
                 }
             }
@@ -654,7 +657,7 @@ describe('IDBIndex.get', function() {
         });
     });
 
-    util.skipIf(env.isNative && env.browser.isIE,'should get multi-entry indexes', function(done) {
+    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled),'should get multi-entry indexes', function(done) {
         // BUG: IE's native IndexedDB does not support multi-entry indexes
         util.createDatabase('inline', 'multi-entry-index', function(err, db) {
             var tx = db.transaction('inline', 'readwrite');
@@ -715,7 +718,7 @@ describe('IDBIndex.get', function() {
         });
     });
 
-    util.skipIf(env.isNative && env.browser.isIE,'should get unique, multi-entry indexes', function(done) {
+    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled),'should get unique, multi-entry indexes', function(done) {
         // BUG: IE's native IndexedDB does not support multi-entry indexes
         util.createDatabase('inline', 'unique-multi-entry-index', function(err, db) {
             var tx = db.transaction('inline', 'readwrite');

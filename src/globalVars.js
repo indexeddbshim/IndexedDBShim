@@ -23,10 +23,11 @@
         }
     }
 
-    if (typeof window.openDatabase !== "undefined") {
-        shim('shimIndexedDB', idbModules.shimIndexedDB);
-        if (window.shimIndexedDB) {
-            window.shimIndexedDB.__useShim = function(){
+    shim('shimIndexedDB', idbModules.shimIndexedDB);
+    if (window.shimIndexedDB) {
+        window.shimIndexedDB.__useShim = function(){
+            if (typeof window.openDatabase !== "undefined") {
+                // Polyfill ALL of IndexedDB, using WebSQL
                 shim('indexedDB', idbModules.shimIndexedDB);
                 shim('IDBFactory', idbModules.IDBFactory);
                 shim('IDBDatabase', idbModules.IDBDatabase);
@@ -38,24 +39,24 @@
                 shim('IDBRequest', idbModules.IDBRequest);
                 shim('IDBOpenDBRequest', idbModules.IDBOpenDBRequest);
                 shim('IDBVersionChangeEvent', idbModules.IDBVersionChangeEvent);
-            };
+            }
+            else if (typeof window.indexedDB === "object") {
+                // Polyfill the missing IndexedDB features
+                idbModules.polyfill();
+            }
+        };
 
-            window.shimIndexedDB.__debug = function(val){
-                idbModules.DEBUG = val;
-            };
-        }
+        window.shimIndexedDB.__debug = function(val){
+            idbModules.DEBUG = val;
+        };
     }
     
-    /*
-    prevent error in Firefox
-    */
+    // Workaround to prevent an error in Firefox
     if(!('indexedDB' in window)) {
         window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
     }
     
-    /*
-    detect browsers with known IndexedDb issues (e.g. Android pre-4.4)
-    */
+    // Detect browsers with known IndexedDb issues (e.g. Android pre-4.4)
     var poorIndexedDbSupport = false;
     if (navigator.userAgent.match(/Android 2/) || navigator.userAgent.match(/Android 3/) || navigator.userAgent.match(/Android 4\.[0-3]/)) {
         /* Chrome is an exception. It supports IndexedDb */

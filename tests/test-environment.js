@@ -49,6 +49,11 @@
         isShimmed: false,
 
         /**
+         * Are we using the polyfill (not the full shim, but a polyfilled version of the native IndexedDB)
+         */
+        isPolyfilled: false,
+
+        /**
          * IndexedDBShim can't always use these native classes, because some browsers don't allow us to instantiate them.
          * It's also not safe to shim these classes on the global scope, because it could break other stuff.
          */
@@ -85,31 +90,37 @@
 
         // Should we use the shim instead of the native IndexedDB?
         var useShim = location.search.indexOf('useShim=true') > 0;
-        if ((useShim && env.webSql) || !window.indexedDB || window.indexedDB === window.shimIndexedDB) {
-            env.isNative = false;
-            env.isShimmed = true;
-            env.indexedDB = window.shimIndexedDB;
-
+        if (useShim || !window.indexedDB || window.indexedDB === window.shimIndexedDB) {
             // Replace the browser's native IndexedDB with the shim
-            window.shimIndexedDB.__useShim();
-            window.shimIndexedDB.__debug(true);
+            shimIndexedDB.__useShim();
+            shimIndexedDB.__debug(true);
+            env.isNative = false;
+            if (IDBFactory === shimIndexedDB.modules.IDBFactory) {
+                env.indexedDB = shimIndexedDB;
+                env.isShimmed = true;
+            }
+            else {
+                env.isPolyfilled = true;
+            }
 
-            // Use the shimmed Error & Event classes instead of the native ones
-            env.Event = window.shimIndexedDB.modules.Event;
-            env.DOMException = window.shimIndexedDB.modules.DOMException;
-            env.DOMError = window.shimIndexedDB.modules.DOMError;
+            if (env.isShimmed) {
+                // Use the shimmed Error & Event classes instead of the native ones
+                env.Event = shimIndexedDB.modules.Event;
+                env.DOMException = shimIndexedDB.modules.DOMException;
+                env.DOMError = shimIndexedDB.modules.DOMError;
+            }
 
             if (env.nativeIndexedDB) {
                 // Allow users to switch back to the native IndexedDB
                 getElementById("use-native").style.display = 'inline-block';
             }
         }
-        else if (env.webSql) {
+        else {
             // Allow users to switch to use the shim instead of the native IndexedDB
             getElementById("use-shim").style.display = 'inline-block';
         }
 
-        if (env.browser.isIE || (env.browser.isSafari && env.browser.version > 6 && env.isShimmed && !window.device)) {
+        if ((env.browser.isIE && !env.browser.isMobile) || (env.browser.isSafari && env.browser.version > 6 && env.isShimmed && !window.device)) {
             // These browsers choke when trying to run all the tests, so show a warning message
             getElementById("choke-warning").className = 'problem-child';
         }

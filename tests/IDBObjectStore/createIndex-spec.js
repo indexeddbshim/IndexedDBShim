@@ -303,7 +303,7 @@ describe('IDBObjectStore.createIndex', function() {
             });
         });
 
-        util.skipIf(env.isNative && env.browser.isIE, 'should throw an error if called with an array keyPath with multiEntry true', function(done) {
+        util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should throw an error if called with an array keyPath with multiEntry true', function(done) {
             // BUG: IE's native IndexedDB does not support multi-entry indexes
             util.generateDatabaseName(function(err, name) {
                 var open = indexedDB.open(name, 1);
