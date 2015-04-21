@@ -239,13 +239,8 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    it('should delete data using compound out-of-line keys', function(done) {
-        if (env.isNative && env.browser.isIE) {
-            // BUG: IE's native IndexedDB does not support compound keys at all
-            console.error('Skipping test: ' + this.test.title);
-            return done();
-        }
-
+    util.skipIf(env.isNative && env.browser.isIE, 'should delete data using compound out-of-line keys', function(done) {
+        // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('out-of-line-compound', function(err, db) {
             var tx = db.transaction('out-of-line-compound', 'readwrite');
             var store = tx.objectStore('out-of-line-compound');
@@ -347,13 +342,8 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    it('should delete data using compound inline keys', function(done) {
-        if (env.isNative && env.browser.isIE) {
-            // BUG: IE's native IndexedDB does not support compound keys at all
-            console.error('Skipping test: ' + this.test.title);
-            return done();
-        }
-
+    util.skipIf(env.isNative && env.browser.isIE, 'should delete data using compound inline keys', function(done) {
+        // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('inline-compound', function(err, db) {
             var tx = db.transaction('inline-compound', 'readwrite');
             var store = tx.objectStore('inline-compound');
@@ -455,13 +445,8 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    it('should delete data using compound dotted keys', function(done) {
-        if (env.isNative && env.browser.isIE) {
-            // BUG: IE's native IndexedDB does not support compound keys at all
-            console.error('Skipping test: ' + this.test.title);
-            return done();
-        }
-
+    util.skipIf(env.isNative && env.browser.isIE, 'should delete data using compound dotted keys', function(done) {
+        // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('dotted-compound', function(err, db) {
             var tx = db.transaction('dotted-compound', 'readwrite');
             var store = tx.objectStore('dotted-compound');
@@ -609,13 +594,8 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    it('should not throw an error if called an incomplete compound key', function(done) {
-        if (env.isNative && env.browser.isIE) {
-            // BUG: IE's native IndexedDB does not support compound keys at all
-            console.error('Skipping test: ' + this.test.title);
-            return done();
-        }
-
+    util.skipIf(env.isNative && env.browser.isIE, 'should not throw an error if called an incomplete compound key', function(done) {
+        // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('inline-compound', function(err, db) {
             var tx = db.transaction('inline-compound', 'readwrite');
             var store = tx.objectStore('inline-compound');

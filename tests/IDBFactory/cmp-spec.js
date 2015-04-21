@@ -188,13 +188,8 @@ describe('IDBFactory.cmp', function() {
     });
 
     describe('compound keys', function() {
-        it('should compare numeric arrays', function() {
-            if (env.isNative && env.browser.isIE) {
-                // BUG: IE's native IndexedDB does not support compound keys at all
-                console.error('Skipping test: ' + this.test.title);
-                return;
-            }
-
+        util.skipIf(env.isNative && env.browser.isIE, 'should compare numeric arrays', function() {
+            // BUG: IE's native IndexedDB does not support compound keys at all
             compare([], [0]);
             compare([0], [1]);
             compare([-1], [0]);
@@ -213,13 +208,8 @@ describe('IDBFactory.cmp', function() {
             equal([1,2,3,4,5], [1,2,3,4,5]);
         });
 
-        it('should compare string arrays', function() {
-            if (env.isNative && env.browser.isIE) {
-                // BUG: IE's native IndexedDB does not support compound keys at all
-                console.error('Skipping test: ' + this.test.title);
-                return;
-            }
-
+        util.skipIf(env.isNative && env.browser.isIE, 'should compare string arrays', function() {
+            // BUG: IE's native IndexedDB does not support compound keys at all
             compare([], ['']);
             compare([''], [' ']);
             compare([''], ['0']);
@@ -235,13 +225,8 @@ describe('IDBFactory.cmp', function() {
             equal(['a','b','c'], ['a','b','c']);
         });
 
-        it('should compare nested arrays', function() {
-            if (env.isNative && env.browser.isIE) {
-                // BUG: IE's native IndexedDB does not support compound keys at all
-                console.error('Skipping test: ' + this.test.title);
-                return;
-            }
-
+        util.skipIf(env.isNative && env.browser.isIE, 'should compare nested arrays', function() {
+            // BUG: IE's native IndexedDB does not support compound keys at all
             compare([], [[]]);
             compare([[]], [[],[]]);
             compare([[[]]], [[[[]]]]);
@@ -291,7 +276,10 @@ describe('IDBFactory.cmp', function() {
                     err = e;
                 }
 
-                expect(err).to.be.an.instanceOf(env.DOMException);
+                if (env.isShimmed || !env.browser.isIE) {
+                    expect(err).to.be.an.instanceOf(env.DOMException);
+                }
+                expect(err).to.be.ok;
                 expect(err.name).to.equal('DataError');
             }
         });

@@ -5,10 +5,12 @@ describe('IDBObjectStore.add', function() {
     beforeEach(function() {
         onerror = window.onerror;
 
-        if (env.isNative && env.browser.isFirefox) {
+        if (env.browser.isFirefox) {
             // Firefox throws a global error when a transaction fails.
             // Catch the error and stop it from propagating
-            window.onerror = function() { return true; };
+            window.onerror = function() {
+                return true;
+            };
         }
     });
 
@@ -80,6 +82,7 @@ describe('IDBObjectStore.add', function() {
             var save2 = store2.add({foo: 'two'}, 1);
             var save3 = store3.add({foo: 'three'}, 1);
 
+            save1.onsuccess = save2.onsuccess = save3.onsuccess = sinon.spy();
             tx1.onerror = tx2.onerror = tx3.onerror = sinon.spy();
 
             tx1.onabort = tx2.onabort = tx3.onabort = sinon.spy(function() {
@@ -105,7 +108,7 @@ describe('IDBObjectStore.add', function() {
             });
 
             tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
-                if (save1.result && save2.result && save3.result) {
+                if (save1.calledThrice) {
                     db.close();
                     done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
                 }
@@ -217,6 +220,7 @@ describe('IDBObjectStore.add', function() {
             var save2 = store2.add({id: 1});
             var save3 = store3.add({id: 1});
 
+            save1.onsuccess = save2.onsuccess = save3.onsuccess = sinon.spy();
             tx1.onerror = tx2.onerror = tx3.onerror = sinon.spy();
 
             tx1.onabort = tx2.onabort = tx3.onabort = sinon.spy(function() {
@@ -242,7 +246,7 @@ describe('IDBObjectStore.add', function() {
             });
 
             tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
-                if (save1.result && save2.result && save3.result) {
+                if (save1.calledThrice) {
                     db.close();
                     done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
                 }
@@ -385,13 +389,8 @@ describe('IDBObjectStore.add', function() {
         });
     });
 
-    it('should throw an error if a compound out-of-line key already exists', function(done) {
-        if (env.isNative && env.browser.isIE) {
-            // BUG: IE's native IndexedDB does not support compound keys at all
-            console.error('Skipping test: ' + this.test.title);
-            return done();
-        }
-
+    util.skipIf(env.isNative && env.browser.isIE, 'should throw an error if a compound out-of-line key already exists', function(done) {
+        // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('out-of-line-compound', function(err, db) {
             var tx = db.transaction('out-of-line-compound', 'readwrite');
             tx.onerror = sinon.spy();
@@ -436,13 +435,8 @@ describe('IDBObjectStore.add', function() {
         });
     });
 
-    it('should throw an error if a compound key already exists', function(done) {
-        if (env.isNative && env.browser.isIE) {
-            // BUG: IE's native IndexedDB does not support compound keys at all
-            console.error('Skipping test: ' + this.test.title);
-            return done();
-        }
-
+    util.skipIf(env.isNative && env.browser.isIE, 'should throw an error if a compound key already exists', function(done) {
+        // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('inline-compound', function(err, db) {
             var tx = db.transaction('inline-compound', 'readwrite');
             tx.onerror = sinon.spy();
@@ -487,13 +481,8 @@ describe('IDBObjectStore.add', function() {
         });
     });
 
-    it('should throw an error if a dotted compound key already exists', function(done) {
-        if (env.isNative && env.browser.isIE) {
-            // BUG: IE's native IndexedDB does not support compound keys at all
-            console.error('Skipping test: ' + this.test.title);
-            return done();
-        }
-
+    util.skipIf(env.isNative && env.browser.isIE, 'should throw an error if a dotted compound key already exists', function(done) {
+        // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('dotted-compound', function(err, db) {
             var tx = db.transaction('dotted-compound', 'readwrite');
             tx.onerror = sinon.spy();

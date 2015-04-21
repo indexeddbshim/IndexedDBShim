@@ -231,7 +231,7 @@ describe('IDBObjectStore.createIndex', function() {
                     var objValue = obj[prop];
                     var schemaValue = schema[prop];
 
-                    if (env.isNative && env.browser.isIE && prop === 'multiEntry') {
+                    if (!env.isShimmed && env.browser.isIE && prop === 'multiEntry') {
                         // IE's native IndexedDB does not have the multiEntry property
                         schemaValue = undefined;
                     }
@@ -303,7 +303,8 @@ describe('IDBObjectStore.createIndex', function() {
             });
         });
 
-        it('should throw an error if called with an array keyPath with multiEntry true', function(done) {
+        util.skipIf(env.isNative && env.browser.isIE, 'should throw an error if called with an array keyPath with multiEntry true', function(done) {
+            // BUG: IE's native IndexedDB does not support multi-entry indexes
             util.generateDatabaseName(function(err, name) {
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
@@ -319,7 +320,10 @@ describe('IDBObjectStore.createIndex', function() {
                         err = e;
                     }
 
-                    expect(err).to.be.an.instanceOf(env.DOMException);
+                    if (env.isShimmed || !env.browser.isIE) {
+                        expect(err).to.be.an.instanceOf(env.DOMException);  // The IE polyfill throws a normal Error
+                    }
+                    expect(err).to.be.ok;
                     expect(err.name).to.equal('InvalidAccessError');
                 });
 

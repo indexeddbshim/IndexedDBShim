@@ -163,13 +163,8 @@ describe('IDBObjectStore.put', function() {
         });
     });
 
-    it('should update an existing record with a compound out-of-line key', function(done) {
-        if (env.isNative && env.browser.isIE) {
-            // BUG: IE's native IndexedDB does not support compound keys at all
-            console.error('Skipping test: ' + this.test.title);
-            return done();
-        }
-
+    util.skipIf(env.isNative && env.browser.isIE, 'should update an existing record with a compound out-of-line key', function(done) {
+        // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('out-of-line-compound', function(err, db) {
             var tx = db.transaction('out-of-line-compound', 'readwrite');
             tx.onerror = done;
@@ -196,13 +191,8 @@ describe('IDBObjectStore.put', function() {
         });
     });
 
-    it('should update an existing record with a compound key', function(done) {
-        if (env.isNative && env.browser.isIE) {
-            // BUG: IE's native IndexedDB does not support compound keys at all
-            console.error('Skipping test: ' + this.test.title);
-            return done();
-        }
-
+    util.skipIf(env.isNative && env.browser.isIE, 'should update an existing record with a compound key', function(done) {
+        // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('inline-compound', function(err, db) {
             var tx = db.transaction('inline-compound', 'readwrite');
             tx.onerror = done;
@@ -229,13 +219,8 @@ describe('IDBObjectStore.put', function() {
         });
     });
 
-    it('should update an existing record with a dotted compound key', function(done) {
-        if (env.isNative && env.browser.isIE) {
-            // BUG: IE's native IndexedDB does not support compound keys at all
-            console.error('Skipping test: ' + this.test.title);
-            return done();
-        }
-
+    util.skipIf(env.isNative && env.browser.isIE, 'should update an existing record with a dotted compound key', function(done) {
+        // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('dotted-compound', function(err, db) {
             var tx = db.transaction('dotted-compound', 'readwrite');
             tx.onerror = done;

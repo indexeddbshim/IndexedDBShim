@@ -1,138 +1,91 @@
 <!DOCTYPE html>
 <html>
-    <head lang="en">
-        <meta charset="UTF-8">
-        <meta name="msapplication-tap-highlight" content="no" />
-        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+  <head lang="en">
+    <meta charset="UTF-8">
+    <meta name="msapplication-tap-highlight" content="no"/>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi"/>
+    <title>Testing IndexedDB Shim</title>
 
-        <link rel="stylesheet" href="lib/mocha.css"/>
-        <style>
-            #supports, #options {
-                font-size: 12px;
-                color: #888;
-                z-index: 1;
-            }
+    <link rel="stylesheet" href="lib/mocha.css"/>
+    <link rel="stylesheet" href="styles.css"/>
+  </head>
+  <body>
+    <div id="mocha">
+      <ul id="supports">
+        <li id="supports-websql" class="test">WebSql</li>
+        <li id="supports-indexeddb" class="test">IndexedDB</li>
+        <li id="supports-mozindexeddb" class="test">mozIndexedDB</li>
+        <li id="supports-webkitindexeddb" class="test">webkitIndexedDB</li>
+        <li id="supports-msindexeddb" class="test">msIndexedDB</li>
+      </ul>
+      <div id="options">
+        <a id="use-native" href="?useShim=false">Switch to Native IndexedDB</a>
+        <a id="use-shim" href="?useShim=true">Switch to IndexedDBShim</a>
+      </div>
+      <div id="choke-warning">
+        <h1>Warning!</h1>
+        <ul>
+          <li class="test fail">
+            <h2>
+              This browser has trouble running the <strong>hundreds</strong> of tests on this page.
+              If you get test failures, then try running each test suite separately, by clicking the test suite's title.
+            </h2>
+          </li>
+        </ul>
+      </div>
+    </div>
 
-            #supports {
-                margin-right: 15px !important;
-                text-align: right;
-            }
+    <!-- Test Environment -->
+    <script src="lib/mocha.js"></script>
+    <script src="lib/chai.js"></script>
+    <script src="lib/sinon.js"></script>
+    <script src="test-environment.js"></script>
+    <script src="test-utils.js"></script>
 
-            #supports li.test {
-                display: inline-block;
-            }
+    <!-- IndexedDBShim -->
+    <script src="../dist/indexeddbshim.min.js"></script>
+    <!--<script src="../src/Init.js"></script>-->
+    <!--<script src="../src/util.js"></script>-->
+    <!--<script src="../src/Sca.js"></script>-->
+    <!--<script src="../src/Key.js"></script>-->
+    <!--<script src="../src/Event.js"></script>-->
+    <!--<script src="../src/DOMException.js"></script>-->
+    <!--<script src="../src/IDBRequest.js"></script>-->
+    <!--<script src="../src/IDBKeyRange.js"></script>-->
+    <!--<script src="../src/IDBCursor.js"></script>-->
+    <!--<script src="../src/IDBIndex.js"></script>-->
+    <!--<script src="../src/IDBObjectStore.js"></script>-->
+    <!--<script src="../src/IDBTransaction.js"></script>-->
+    <!--<script src="../src/IDBDatabase.js"></script>-->
+    <!--<script src="../src/IDBFactory.js"></script>-->
+    <!--<script src="../src/globalVars.js"></script>-->
 
-            #supports li.test:not(.pass):not(.fail) {
-                display: none;
-                visibility: hidden;
-            }
+    <!-- Unit Tests -->
+    <script src="api-spec.js"></script>
+    <script src="IDBFactory/cmp-spec.js"></script>
+    <script src="IDBFactory/deleteDatabase-spec.js"></script>
+    <script src="IDBFactory/open-spec.js"></script>
+    <script src="IDBDatabase/close-spec.js"></script>
+    <script src="IDBDatabase/createObjectStore-spec.js"></script>
+    <script src="IDBDatabase/deleteObjectStore-spec.js"></script>
+    <script src="IDBDatabase/transaction-spec.js"></script>
+    <script src="IDBIndex/count-spec.js"></script>
+    <script src="IDBIndex/get-spec.js"></script>
+    <script src="IDBIndex/getKey-spec.js"></script>
+    <script src="IDBIndex/openCursor-spec.js"></script>
+    <script src="IDBObjectStore/add-spec.js"></script>
+    <script src="IDBObjectStore/put-spec.js"></script>
+    <script src="IDBObjectStore/add-put-spec.js"></script>
+    <script src="IDBObjectStore/clear-spec.js"></script>
+    <script src="IDBObjectStore/createIndex-spec.js"></script>
+    <script src="IDBObjectStore/deleteIndex-spec.js"></script>
+    <script src="IDBObjectStore/delete-spec.js"></script>
+    <script src="IDBObjectStore/index-spec.js"></script>
+    <script src="IDBTransaction/objectStore-spec.js"></script>
+    <script src="IDBTransaction/events-spec.js"></script>
 
-            #options {
-                margin: 1em;
-                text-align: center;
-            }
-            #options a {
-                display: none;
-                padding: .5em 3em;
-                border-radius: 8px;
-                border: 1px solid #888;
-                background-color: #fff;
-                color: #888;
-                text-decoration: none;
-                text-align: center;
-            }
-            #options a:hover,#options a:focus,#options a:active {
-                background-color: #ccc;
-                color: white;
-            }
-
-            @media (min-width: 480px) {
-                #supports {
-                    position: fixed;
-                    top: 26px;
-                    left: 10px;
-                    right: 275px;
-                    text-align: left
-                }
-            }
-            @media (min-width: 850px) {
-                #options {
-                    position: fixed;
-                    top: 10px;
-                    left: 0;
-                    right: 0;
-                }
-            }
-        </style>
-
-        <title>Testing IndexedDB Shim</title>
-    </head>
-    <body>
-        <div id="mocha">
-            <ul id="supports">
-                <li id="supports-websql" class="test">WebSql</li>
-                <li id="supports-indexeddb" class="test">IndexedDB</li>
-                <li id="supports-mozindexeddb" class="test">mozIndexedDB</li>
-                <li id="supports-webkitindexeddb" class="test">webkitIndexedDB</li>
-                <li id="supports-msindexeddb" class="test">msIndexedDB</li>
-            </ul>
-            <div id="options">
-                <a id="use-native" href="?useShim=false">Switch to Native IndexedDB</a>
-                <a id="use-shim" href="?useShim=true">Switch to IndexedDBShim</a>
-            </div>
-        </div>
-
-        <!-- Test Environment -->
-        <script src="lib/mocha.js"></script>
-        <script src="lib/chai.js"></script>
-        <script src="lib/sinon.js"></script>
-        <script src="test-util.js"></script>
-        <script src="test-environment.js"></script>
-
-        <!-- IndexedDBShim -->
-        <!--<script src="../dist/indexeddbshim.min.js"></script>-->
-        <script src="../src/Init.js"></script>
-        <script src="../src/util.js"></script>
-        <script src="../src/Sca.js"></script>
-        <script src="../src/Key.js"></script>
-        <script src="../src/Event.js"></script>
-        <script src="../src/DOMException.js"></script>
-        <script src="../src/IDBRequest.js"></script>
-        <script src="../src/IDBKeyRange.js"></script>
-        <script src="../src/IDBCursor.js"></script>
-        <script src="../src/IDBIndex.js"></script>
-        <script src="../src/IDBObjectStore.js"></script>
-        <script src="../src/IDBTransaction.js"></script>
-        <script src="../src/IDBDatabase.js"></script>
-        <script src="../src/IDBFactory.js"></script>
-        <script src="../src/globalVars.js"></script>
-
-        <!-- Unit Tests -->
-        <script src="api-spec.js"></script>
-        <script src="IDBFactory/cmp-spec.js"></script>
-        <script src="IDBFactory/deleteDatabase-spec.js"></script>
-        <script src="IDBFactory/open-spec.js"></script>
-        <script src="IDBDatabase/close-spec.js"></script>
-        <script src="IDBDatabase/createObjectStore-spec.js"></script>
-        <script src="IDBDatabase/deleteObjectStore-spec.js"></script>
-        <script src="IDBDatabase/transaction-spec.js"></script>
-        <script src="IDBIndex/count-spec.js"></script>
-        <script src="IDBIndex/get-spec.js"></script>
-        <script src="IDBIndex/getKey-spec.js"></script>
-        <script src="IDBIndex/openCursor-spec.js"></script>
-        <script src="IDBObjectStore/add-spec.js"></script>
-        <script src="IDBObjectStore/put-spec.js"></script>
-        <script src="IDBObjectStore/add-put-spec.js"></script>
-        <script src="IDBObjectStore/clear-spec.js"></script>
-        <script src="IDBObjectStore/createIndex-spec.js"></script>
-        <script src="IDBObjectStore/deleteIndex-spec.js"></script>
-        <script src="IDBObjectStore/delete-spec.js"></script>
-        <script src="IDBObjectStore/index-spec.js"></script>
-        <script src="IDBTransaction/objectStore-spec.js"></script>
-        <script src="IDBTransaction/events-spec.js"></script>
-
-        <script>
-            mocha.run();
-        </script>
-    </body>
+    <script>
+      mocha.run();
+    </script>
+  </body>
 </html>

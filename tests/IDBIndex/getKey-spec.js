@@ -203,13 +203,8 @@ describe('IDBIndex.getKey', function() {
         });
     });
 
-    it('should get data using compound out-of-line keys', function(done) {
-        if (env.isNative && env.browser.isIE) {
-            // BUG: IE's native IndexedDB does not support compound keys at all
-            console.error('Skipping test: ' + this.test.title);
-            return done();
-        }
-
+    util.skipIf(env.isNative && env.browser.isIE, 'should get data using compound out-of-line keys', function(done) {
+        // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('out-of-line-compound', 'inline-index', function(err, db) {
             var tx = db.transaction('out-of-line-compound', 'readwrite');
             var store = tx.objectStore('out-of-line-compound');
@@ -305,13 +300,8 @@ describe('IDBIndex.getKey', function() {
         });
     });
 
-    it('should get data using compound inline keys', function(done) {
-        if (env.isNative && env.browser.isIE) {
-            // BUG: IE's native IndexedDB does not support compound keys at all
-            console.error('Skipping test: ' + this.test.title);
-            return done();
-        }
-
+    util.skipIf(env.isNative && env.browser.isIE, 'should get data using compound inline keys', function(done) {
+        // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('inline-compound', 'inline-index', function(err, db) {
             var tx = db.transaction('inline-compound', 'readwrite');
             var store = tx.objectStore('inline-compound');
@@ -398,13 +388,8 @@ describe('IDBIndex.getKey', function() {
         });
     });
 
-    it('should get data using compound dotted keys', function(done) {
-        if (env.isNative && env.browser.isIE) {
-            // BUG: IE's native IndexedDB does not support compound keys at all
-            console.error('Skipping test: ' + this.test.title);
-            return done();
-        }
-
+    util.skipIf(env.isNative && env.browser.isIE, 'should get data using compound dotted keys', function(done) {
+        // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('dotted-compound', 'compound-index', function(err, db) {
             var tx = db.transaction('dotted-compound', 'readwrite');
             var store = tx.objectStore('dotted-compound');
@@ -545,13 +530,8 @@ describe('IDBIndex.getKey', function() {
         });
     });
 
-    it('should get multi-entry indexes', function(done) {
-        if (env.isNative && env.browser.isIE) {
-            // BUG: IE's native IndexedDB does not support multi-entry indexes
-            console.error('Skipping test: ' + this.test.title);
-            return done();
-        }
-
+    util.skipIf(env.isNative && env.browser.isIE,'should get multi-entry indexes', function(done) {
+        // BUG: IE's native IndexedDB does not support multi-entry indexes
         util.createDatabase('inline', 'multi-entry-index', function(err, db) {
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
@@ -589,13 +569,8 @@ describe('IDBIndex.getKey', function() {
         });
     });
 
-    it('should get unique, multi-entry indexes', function(done) {
-        if (env.isNative && env.browser.isIE) {
-            // BUG: IE's native IndexedDB does not support multi-entry indexes
-            console.error('Skipping test: ' + this.test.title);
-            return done();
-        }
-
+    util.skipIf(env.isNative && env.browser.isIE,'should get unique, multi-entry indexes', function(done) {
+        // BUG: IE's native IndexedDB does not support multi-entry indexes
         util.createDatabase('inline', 'unique-multi-entry-index', function(err, db) {
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
@@ -633,13 +608,8 @@ describe('IDBIndex.getKey', function() {
         });
     });
 
-    it('should not throw an error if called an incomplete compound key', function(done) {
-        if (env.isNative && env.browser.isIE) {
-            // BUG: IE's native IndexedDB does not support compound keys at all
-            console.error('Skipping test: ' + this.test.title);
-            return done();
-        }
-
+    util.skipIf(env.isNative && env.browser.isIE, 'should not throw an error if called an incomplete compound key', function(done) {
+        // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('inline-compound', 'compound-index', function(err, db) {
             var tx = db.transaction('inline-compound', 'readwrite');
             var store = tx.objectStore('inline-compound');

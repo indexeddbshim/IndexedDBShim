@@ -115,13 +115,8 @@ describe('IDBDatabase.createObjectStore', function() {
             });
         });
 
-        it('should create new tables in an existing database', function(done) {
-            if (env.isNative && env.browser.isSafari) {
-                // BUG: Safari's native IndexedDB aborts the 2nd transaction (without any error)
-                console.error('Skipping test: ' + this.test.title);
-                return done();
-            }
-
+        util.skipIf(env.isNative && env.browser.isSafari, 'should create new tables in an existing database', function(done) {
+            // BUG: Safari's native IndexedDB aborts the 2nd transaction (without any error)
             util.generateDatabaseName(function(err, name) {
                 createVersion1();
 
@@ -170,17 +165,13 @@ describe('IDBDatabase.createObjectStore', function() {
             });
         });
 
-        it('should persist the schema across database sessions', function(done) {
-            if (env.isNative && env.browser.isSafari) {
-                // BUG: Safari's native IndexedDB does not support opening multiple object stores
-                console.error('Skipping test: ' + this.test.title);
-                return done();
-            }
+        util.skipIf(env.isNative && env.browser.isSafari, 'should persist the schema across database sessions', function(done) {
+            // BUG: Safari's native IndexedDB does not support opening multiple object stores
 
             // Create a database schema, then close the database
             util.createDatabase(
                 'out-of-line', 'out-of-line-generated', 'inline', 'inline-generated', 'inline-compound',
-                'dotted', 'dotted-generated', 'dotted-compound', 'inline-index', 'unique-multi-entry-index',
+                'dotted', 'dotted-generated', 'dotted-compound', 'inline-index', 'unique-index',
                 function(err, db) {
                     if (err) return done(err);
                     db.close();
@@ -204,7 +195,7 @@ describe('IDBDatabase.createObjectStore', function() {
 
                     // Verify that all of the object stores exist
                     var storeNames = Array.prototype.slice.call(db.objectStoreNames);
-                    var indexNames = ['inline-index', 'unique-multi-entry-index'];
+                    var indexNames = ['inline-index', 'unique-index'];
                     expect(storeNames).to.have.same.members([
                         'out-of-line', 'out-of-line-generated', 'inline', 'inline-generated',
                         'inline-compound', 'dotted', 'dotted-generated', 'dotted-compound'
@@ -236,7 +227,7 @@ describe('IDBDatabase.createObjectStore', function() {
                     var objValue = obj[prop];
                     var schemaValue = schema[prop];
 
-                    if (env.isNative && env.browser.isIE && prop === 'autoIncrement') {
+                    if (!env.isShimmed && env.browser.isIE && prop === 'autoIncrement') {
                         // IE's native IndexedDB does not have the autoIncrement property
                         schemaValue = undefined;
                     }

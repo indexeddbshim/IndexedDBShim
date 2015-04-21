@@ -218,7 +218,7 @@ describe('IDBObjectStore.deleteIndex', function() {
                     var objValue = obj[prop];
                     var schemaValue = schema[prop];
 
-                    if (env.isNative && env.browser.isIE && prop === 'multiEntry') {
+                    if (!env.isShimmed && env.browser.isIE && prop === 'multiEntry') {
                         // IE's native IndexedDB does not have the multiEntry property
                         schemaValue = undefined;
                     }

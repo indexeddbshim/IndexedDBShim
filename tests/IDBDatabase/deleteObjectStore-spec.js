@@ -137,12 +137,8 @@ describe('IDBDatabase.deleteObjectStore', function() {
             });
         });
 
-        it('should persist the schema across database sessions', function(done) {
-            if (env.isNative && env.browser.isSafari) {
-                // BUG: Safari's native IndexedDB does not support opening multiple object stores
-                console.error('Skipping test: ' + this.test.title);
-                return done();
-            }
+        util.skipIf(env.isNative && env.browser.isSafari, 'should persist the schema across database sessions', function(done) {
+            // BUG: Safari's native IndexedDB does not support opening multiple object stores
 
             // Create a database schema, then close the database
             util.createDatabase(
@@ -217,7 +213,7 @@ describe('IDBDatabase.deleteObjectStore', function() {
                     var objValue = obj[prop];
                     var schemaValue = schema[prop];
 
-                    if (env.isNative && env.browser.isIE && prop === 'autoIncrement') {
+                    if (!env.isShimmed && env.browser.isIE && prop === 'autoIncrement') {
                         // IE's native IndexedDB does not have the autoIncrement property
                         schemaValue = undefined;
                     }

@@ -1,47 +1,52 @@
 (function() {
     'use strict';
 
-    var browser = getBrowserInfo();
+    // Setup Mocha and Chai
+    mocha.setup('bdd');
+    mocha.globals(['indexedDB']);
+    window.expect = chai.expect;
+    var describe = window.describe;
 
-    /** Environment info */
+    /** Environment Info **/
     var env = window.env = {
-        /** Does the browser natively support WebSql? */
-        nativeWebSql: !!window.openDatabase || false,
-
-        /** Does the browser natively support IndexedDB? */
-        nativeIndexedDB: window.indexedDB || false,
-
-        /** Browser info */
-        browser: {
-            name: browser.name,
-            version: browser.version,   // numeric
-            isMobile: browser.isMobile,
-            isChrome: browser.name === 'Chrome',
-            isIE: browser.name === 'MSIE',
-            isFirefox: browser.name === 'Firefox',
-            isSafari: browser.name === 'Safari'
-        },
+        /**
+         * Browser info
+         * @type {browserInfo}
+         */
+        browser: getBrowserInfo(),
 
         /**
-         * The IndexedDB instance that is currently being used.
-         * This may be the native instance, or the shim.
-         *
+         * Does the browser natively support IndexedDB?
+         */
+        nativeIndexedDB: !!window.indexedDB,
+
+        /**
+         * Does the browser natively support WebSql?
+         */
+        nativeWebSql: !!window.openDatabase,
+
+        /**
+         * The IndexedDB instance that is being used (may be native, or the shim).
          * HACK: We can't use window.indexedDB directly in our tests, because of Safari on iOS.
          * See https://github.com/axemclion/IndexedDBShim/issues/167
          */
         indexedDB: window.indexedDB,
 
         /**
-         * Is the IndexedDBShim in effect?
-         * This can be true even if the browser natively supports IndexedDB.
+         * The WebSQL instance that is being used (may be native, or a shim).
          */
-        isShimmed: false,
+        webSql: window.openDatabase,
 
         /**
-         * Is the native IndexedDB in effect?
-         * (this is the opposite of isShimmed)
+         * Are we using the native IndexedDB implementation?
          */
         isNative: true,
+
+        /**
+         * Are we using the IndexedDBShim implementation?
+         * NOTE: This can be true even if the browser natively supports IndexedDB.
+         */
+        isShimmed: false,
 
         /**
          * IndexedDBShim can't always use these native classes, because some browsers don't allow us to instantiate them.
@@ -52,137 +57,126 @@
         DOMError: window.DOMError
     };
 
-    // Setup Mocha and Chai
-    mocha.setup('bdd');
-    mocha.globals(['indexedDB']);
-    window.expect = chai.expect;
-
-    // Browser feature detection
-    getElementById("supports-websql").className += env.nativeWebSql ? ' pass' : ' fail';
-    getElementById("supports-indexeddb").className += env.nativeIndexedDB ? ' pass' : ' fail';
-    getElementById("supports-mozindexeddb").className += window.mozIndexedDB ? ' pass' : '';
-    getElementById("supports-webkitindexeddb").className += window.webkitIndexedDB ? ' pass' : '';
-    getElementById("supports-msindexeddb").className += window.msIndexedDB ? ' pass' : '';
 
     /**
-     * This function runs before every test
+     * Intercept the first call to Mocha's `describe` function, and use it to initialize the test environment.
      */
-    beforeEach(function() {
-        if (util.currentTest === undefined) {
-            // This is the first test, so do one-time initialization
-            initializeShim();
-            mocha.checkLeaks();
-        }
-
-        // Track the current test
-        util.currentTest = this.currentTest;
-
-        // A list of databases created during this test
-        util.currentTest.databases = [];
-
-        // Increase the slowness threshold
-        util.currentTest.slow(300);
-    });
+    window.describe = function(name, testSuite) {
+        initTestEnvironment();
+        mocha.checkLeaks();
+        window.describe = describe;
+        describe.apply(window, arguments);
+    };
 
 
     /**
-     * This function runs after every test
+     * Initializes the test environment, applying the shim if necessary.
      */
-    afterEach(function(done) {
-        // Delete all databases that were created during this test
-        util.asyncForEach(util.currentTest.databases, done, function(dbName) {
-            return env.indexedDB.deleteDatabase(dbName);
-        });
-    });
+    function initTestEnvironment() {
+        // Show which features the browser natively supports
+        getElementById("supports-websql").className += env.nativeWebSql ? ' pass' : ' fail';
+        getElementById("supports-indexeddb").className += env.nativeIndexedDB ? ' pass' : ' fail';
+        getElementById("supports-mozindexeddb").className += window.mozIndexedDB ? ' pass' : '';
+        getElementById("supports-webkitindexeddb").className += window.webkitIndexedDB ? ' pass' : '';
+        getElementById("supports-msindexeddb").className += window.msIndexedDB ? ' pass' : '';
 
-
-    /**
-     * Performs one-time initialization before any tests run.
-     */
-    function initializeShim() {
-        var useShim = location.search.indexOf('useShim=true') > 0;
+        // Has a WebSQL shim been loaded?
+        env.webSql = window.openDatabase;
 
         // Should we use the shim instead of the native IndexedDB?
-        if (useShim && env.nativeWebSql) {
-            window.shimIndexedDB.__useShim();
-            env.isShimmed = true;
-        }
-        else if (window.indexedDB === window.shimIndexedDB ||
-            window.indexedDB === null) {    // <--- Safari on iOS
-            env.isShimmed = true;
-        }
-
-        if (env.isShimmed) {
+        var useShim = location.search.indexOf('useShim=true') > 0;
+        if ((useShim && env.webSql) || !window.indexedDB || window.indexedDB === window.shimIndexedDB) {
             env.isNative = false;
+            env.isShimmed = true;
+            env.indexedDB = window.shimIndexedDB;
 
-            // Run all unit tests against the IndexedDBShim
-            env.indexedDB = shimIndexedDB;
-            shimIndexedDB.__debug(true);
+            // Replace the browser's native IndexedDB with the shim
+            window.shimIndexedDB.__useShim();
+            window.shimIndexedDB.__debug(true);
 
-            // Use the shimmed classes
-            env.Event = shimIndexedDB.modules.Event;
-            env.DOMException = shimIndexedDB.modules.DOMException;
-            env.DOMError = shimIndexedDB.modules.DOMError;
+            // Use the shimmed Error & Event classes instead of the native ones
+            env.Event = window.shimIndexedDB.modules.Event;
+            env.DOMException = window.shimIndexedDB.modules.DOMException;
+            env.DOMError = window.shimIndexedDB.modules.DOMError;
 
             if (env.nativeIndexedDB) {
                 // Allow users to switch back to the native IndexedDB
                 getElementById("use-native").style.display = 'inline-block';
             }
         }
-        else if (env.nativeWebSql) {
-            // Run all unit tests against the native IndexedDB
-            env.indexedDB = env.nativeIndexedDB;
-
+        else if (env.webSql) {
             // Allow users to switch to use the shim instead of the native IndexedDB
             getElementById("use-shim").style.display = 'inline-block';
+        }
+
+        if (env.browser.isIE || (env.browser.isSafari && env.browser.version > 6 && env.isShimmed && !window.device)) {
+            // These browsers choke when trying to run all the tests, so show a warning message
+            getElementById("choke-warning").className = 'problem-child';
         }
     }
 
 
     /**
      * Returns browser name and version
-     * @returns {{name: string, version: number}}
+     * @returns {browserInfo}
      */
     function getBrowserInfo() {
         var userAgent = navigator.userAgent;
-        var browser = {name: '', version: 0, isMobile: false};
         var offset;
 
-        if ((offset = userAgent.indexOf('Chrome')) !== -1) {
-            browser.name = 'Chrome';
-            browser.version = userAgent.substring(offset + 7);
-        } else if ((offset = userAgent.indexOf('Firefox')) !== -1) {
-            browser.name = 'Firefox';
-            browser.version = userAgent.substring(offset + 8);
-        } else if ((offset = userAgent.indexOf('MSIE')) !== -1) {
-            browser.name = 'MSIE';
-            browser.version = userAgent.substring(offset + 5);
-            browser.isMobile = userAgent.indexOf('Windows Phone') !== -1;
-        } else if (userAgent.indexOf('Trident') !== -1) {
-            browser.name = 'MSIE';
-            browser.version = '11';
-            browser.isMobile = userAgent.indexOf('Windows Phone') !== -1;
-        } else if ((offset = userAgent.indexOf('Safari')) !== -1) {
-            browser.name = 'Safari';
+        /** @name browserInfo **/
+        var browserInfo = {
+            name: '',
+            version: 0,
+            isMobile: false,
+            isChrome: false,
+            isIE: false,
+            isFirefox: false,
+            isSafari: false
+        };
 
+        if ((offset = userAgent.indexOf('Chrome')) !== -1) {
+            browserInfo.name = 'Chrome';
+            browserInfo.version = userAgent.substring(offset + 7);
+            browserInfo.isChrome = true;
+        } else if ((offset = userAgent.indexOf('Firefox')) !== -1) {
+            browserInfo.name = 'Firefox';
+            browserInfo.version = userAgent.substring(offset + 8);
+            browserInfo.isFirefox = true;
+        } else if ((offset = userAgent.indexOf('MSIE')) !== -1) {
+            browserInfo.name = 'MSIE';
+            browserInfo.version = userAgent.substring(offset + 5);
+            browserInfo.isIE = true;
+            browserInfo.isMobile = userAgent.indexOf('Windows Phone') !== -1;
+        } else if (userAgent.indexOf('Trident') !== -1) {
+            browserInfo.name = 'MSIE';
+            browserInfo.version = '11';
+            browserInfo.isIE = true;
+            browserInfo.isMobile = userAgent.indexOf('Windows Phone') !== -1;
+        } else if ((offset = userAgent.indexOf('Safari')) !== -1) {
+            browserInfo.name = 'Safari';
+            browserInfo.isSafari = true;
+            browserInfo.isMobile = userAgent.indexOf('Mobile Safari') !== -1;
             if ((offset = userAgent.indexOf('Version')) !== -1) {
-                browser.version = userAgent.substring(offset + 8);
+                browserInfo.version = userAgent.substring(offset + 8);
             }
             else {
-                browser.version = userAgent.substring(offset + 7);
+                browserInfo.version = userAgent.substring(offset + 7);
             }
         } else if ((offset = userAgent.indexOf('AppleWebKit')) !== -1) {
-            browser.name = 'Safari';
-            browser.version = userAgent.substring(offset + 12);
+            browserInfo.name = 'Safari';
+            browserInfo.version = userAgent.substring(offset + 12);
+            browserInfo.isSafari = true;
+            browserInfo.isMobile = userAgent.indexOf('Mobile Safari') !== -1;
         }
 
-        if ((offset = browser.version.indexOf(';')) !== -1 || (offset = browser.version.indexOf(' ')) !== -1) {
-            browser.version = browser.version.substring(0, offset);
+        if ((offset = browserInfo.version.indexOf(';')) !== -1 || (offset = browserInfo.version.indexOf(' ')) !== -1) {
+            browserInfo.version = browserInfo.version.substring(0, offset);
         }
 
-        browser.version = parseFloat(browser.version);
+        browserInfo.version = parseFloat(browserInfo.version);
 
-        return browser;
+        return browserInfo;
     }
 
 

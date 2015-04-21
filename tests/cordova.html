@@ -1,136 +1,89 @@
 <!DOCTYPE html>
 <html>
-    <head lang="en">
-        <meta charset="UTF-8">
-        <meta name="msapplication-tap-highlight" content="no" />
-        <meta name="viewport" content="user-scalable=no, initial-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+  <head lang="en">
+    <meta charset="UTF-8">
+    <meta name="msapplication-tap-highlight" content="no"/>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi"/>
+    <title>Testing IndexedDB Shim</title>
 
-        <link rel="stylesheet" href="lib/mocha.css"/>
-        <style>
-            #supports, #options {
-                font-size: 12px;
-                color: #888;
-                z-index: 1;
-            }
+    <link rel="stylesheet" href="lib/mocha.css"/>
+    <link rel="stylesheet" href="styles.css"/>
+  </head>
+  <body>
+    <div id="mocha">
+      <ul id="supports">
+        <li id="supports-websql" class="test">WebSql</li>
+        <li id="supports-indexeddb" class="test">IndexedDB</li>
+        <li id="supports-mozindexeddb" class="test">mozIndexedDB</li>
+        <li id="supports-webkitindexeddb" class="test">webkitIndexedDB</li>
+        <li id="supports-msindexeddb" class="test">msIndexedDB</li>
+      </ul>
+      <div id="options">
+        <a id="use-native" href="?useShim=false">Switch to Native IndexedDB</a>
+        <a id="use-shim" href="?useShim=true">Switch to IndexedDBShim</a>
+      </div>
+      <div id="choke-warning">
+        <h1>Warning!</h1>
+        <ul>
+          <li class="test fail">
+            <h2>
+              This browser has trouble running the <strong>hundreds</strong> of tests on this page.
+              If you get test failures, then try running each test suite separately, by clicking the test suite's title.
+            </h2>
+          </li>
+        </ul>
+      </div>
+    </div>
 
-            #supports {
-                margin-right: 15px !important;
-                text-align: right;
-            }
+    <!-- Test Environment -->
+    <script src="lib/mocha.js"></script>
+    <script src="lib/chai.js"></script>
+    <script src="lib/sinon.js"></script>
+    <script src="test-environment.js"></script>
+    <script src="test-utils.js"></script>
 
-            #supports li.test {
-                display: inline-block;
-            }
+    <script type="text/javascript" src="cordova.js"></script>
+    <script type="text/javascript">
+      document.addEventListener('deviceready', onDeviceReady, false);
 
-            #supports li.test:not(.pass):not(.fail) {
-                display: none;
-                visibility: hidden;
-            }
+      function onDeviceReady() {
+        addScript('api-spec.js');
+        addScript('IDBFactory/cmp-spec.js');
+        addScript('IDBFactory/deleteDatabase-spec.js');
+        addScript('IDBFactory/open-spec.js');
+        addScript('IDBDatabase/close-spec.js');
+        addScript('IDBDatabase/createObjectStore-spec.js');
+        addScript('IDBDatabase/deleteObjectStore-spec.js');
+        addScript('IDBDatabase/transaction-spec.js');
+        addScript('IDBIndex/count-spec.js');
+        addScript('IDBIndex/get-spec.js');
+        addScript('IDBIndex/getKey-spec.js');
+        addScript('IDBIndex/openCursor-spec.js');
+        addScript('IDBObjectStore/add-spec.js');
+        addScript('IDBObjectStore/put-spec.js');
+        addScript('IDBObjectStore/add-put-spec.js');
+        addScript('IDBObjectStore/clear-spec.js');
+        addScript('IDBObjectStore/createIndex-spec.js');
+        addScript('IDBObjectStore/deleteIndex-spec.js');
+        addScript('IDBObjectStore/delete-spec.js');
+        addScript('IDBObjectStore/index-spec.js');
+        addScript('IDBTransaction/objectStore-spec.js');
+        addScript('IDBTransaction/events-spec.js');
 
-            #options {
-                margin: 1em;
-                text-align: center;
-            }
-            #options a {
-                display: none;
-                padding: .5em 3em;
-                border-radius: 8px;
-                border: 1px solid #888;
-                background-color: #fff;
-                color: #888;
-                text-decoration: none;
-                text-align: center;
-            }
-            #options a:hover,#options a:focus,#options a:active {
-                background-color: #ccc;
-                color: white;
-            }
+        setTimeout(runTests, 2000);
+      }
 
-            @media (min-width: 480px) {
-                #supports {
-                    position: fixed;
-                    top: 26px;
-                    left: 10px;
-                    right: 275px;
-                    text-align: left
-                }
-            }
-            @media (min-width: 850px) {
-                #options {
-                    position: fixed;
-                    top: 10px;
-                    left: 0;
-                    right: 0;
-                }
-            }
-        </style>
+      function runTests() {
+        mocha.checkLeaks();
+        mocha.run();
+      }
 
-        <title>Testing IndexedDB Shim</title>
-    </head>
-    <body>
-        <div id="mocha">
-            <ul id="supports">
-                <li id="supports-websql" class="test">WebSql</li>
-                <li id="supports-indexeddb" class="test">IndexedDB</li>
-                <li id="supports-mozindexeddb" class="test">mozIndexedDB</li>
-                <li id="supports-webkitindexeddb" class="test">webkitIndexedDB</li>
-                <li id="supports-msindexeddb" class="test">msIndexedDB</li>
-            </ul>
-            <div id="options">
-                <a id="use-native" href="?useShim=false">Switch to Native IndexedDB</a>
-                <a id="use-shim" href="?useShim=true">Switch to IndexedDBShim</a>
-            </div>
-        </div>
-
-        <!-- Test Environment -->
-        <script src="lib/mocha.js"></script>
-        <script src="lib/chai.js"></script>
-        <script src="lib/sinon.js"></script>
-        <script src="test-util.js"></script>
-        <script src="test-environment.js"></script>
-
-        <script type="text/javascript" src="cordova.js"></script>
-        <script type="text/javascript">
-            document.addEventListener('deviceready', onDeviceReady, false);
-
-            function onDeviceReady() {
-                addScript('api-spec.js');
-                addScript('IDBFactory/cmp-spec.js');
-                addScript('IDBFactory/deleteDatabase-spec.js');
-                addScript('IDBFactory/open-spec.js');
-                addScript('IDBDatabase/close-spec.js');
-                addScript('IDBDatabase/createObjectStore-spec.js');
-                addScript('IDBDatabase/deleteObjectStore-spec.js');
-                addScript('IDBDatabase/transaction-spec.js');
-                addScript('IDBIndex/count-spec.js');
-                addScript('IDBIndex/get-spec.js');
-                addScript('IDBIndex/getKey-spec.js');
-                addScript('IDBIndex/openCursor-spec.js');
-                addScript('IDBObjectStore/add-spec.js');
-                addScript('IDBObjectStore/put-spec.js');
-                addScript('IDBObjectStore/add-put-spec.js');
-                addScript('IDBObjectStore/clear-spec.js');
-                addScript('IDBObjectStore/createIndex-spec.js');
-                addScript('IDBObjectStore/deleteIndex-spec.js');
-                addScript('IDBObjectStore/delete-spec.js');
-                addScript('IDBObjectStore/index-spec.js');
-                addScript('IDBTransaction/objectStore-spec.js');
-                addScript('IDBTransaction/events-spec.js');
-
-                setTimeout(runTests, 2000);
-            }
-
-            function runTests() {
-                mocha.checkLeaks();
-                mocha.run();
-            }
-
-            function addScript(url) {
-                var scriptElem = document.createElement('script');
-                scriptElem.type = 'text/javascript';
-                scriptElem.src = url;
-                document.head.appendChild(scriptElem);
-            }
-        </script>
-    </body>
+      function addScript(url) {
+        var scriptElem = document.createElement('script');
+        scriptElem.type = 'text/javascript';
+        scriptElem.src = url;
+        document.head.appendChild(scriptElem);
+      }
+    </script>
+  </body>
 </html>

@@ -188,13 +188,8 @@ describe('IDBIndex.count', function() {
         });
     });
 
-    it('should return different values for multi-entry indexes', function(done) {
-        if (env.isNative && env.browser.isIE) {
-            // BUG: IE's native IndexedDB does not support multi-entry indexes
-            console.error('Skipping test: ' + this.test.title);
-            return done();
-        }
-
+    util.skipIf(env.isNative && env.browser.isIE,'should return different values for multi-entry indexes', function(done) {
+        // BUG: IE's native IndexedDB does not support multi-entry indexes
         util.createDatabase('inline', 'multi-entry-index', function(err, db) {
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
@@ -263,13 +258,8 @@ describe('IDBIndex.count', function() {
         });
     });
 
-    it('should return different values for unique, multi-entry indexes', function(done) {
-        if (env.isNative && env.browser.isIE) {
-            // BUG: IE's native IndexedDB does not support multi-entry indexes
-            console.error('Skipping test: ' + this.test.title);
-            return done();
-        }
-
+    util.skipIf(env.isNative && env.browser.isIE,'should return different values for unique, multi-entry indexes', function(done) {
+        // BUG: IE's native IndexedDB does not support multi-entry indexes
         util.createDatabase('inline', 'unique-multi-entry-index', function(err, db) {
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');

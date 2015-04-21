@@ -4,11 +4,53 @@
     var databaseNamePrefix = 'IndexedDBShim_Test_Database_';
     var dbNameCounter = 0;
 
+    /**
+     * This function runs before every test.
+     */
+    beforeEach(function() {
+        // Track the current test
+        util.currentTest = this.currentTest;
+
+        // A list of databases created during this test
+        util.currentTest.databases = [];
+
+        // Increase the slowness threshold
+        util.currentTest.slow(300);
+    });
+
+
+    /**
+     * This function runs after every test
+     */
+    afterEach(function(done) {
+        // Delete all databases that were created during this test
+        util.asyncForEach(util.currentTest.databases, done, function(dbName) {
+            return env.indexedDB.deleteDatabase(dbName);
+        });
+    });
+
+
     var util = window.util = {
         /**
          * A custom class, used to test the IndexedDB structured cloning algorithm
          */
         Person: Person,
+
+
+        /**
+         * Skips the given test if the given condition is true.
+         * @param {boolean} condition
+         * @param {string} title
+         * @param {function} test
+         */
+        skipIf: function(condition, title, test) {
+            if (condition) {
+                it.skip(title, test);
+            }
+            else {
+                it(title, test);
+            }
+        },
 
 
         /**
@@ -26,8 +68,14 @@
                 var open = env.indexedDB.open(dbName, 1);
 
                 open.onerror = open.onblocked = function(event) {
-                    console.error(event.target.error.message);
-                    done(event.target.error);
+                    var err;
+                    try {
+                        err = event.target.error;
+                        console.error(err.message);
+                    }
+                    finally {
+                        done(err || 'Unknown Error');
+                    }
                 };
 
                 // Add the specified schema items
@@ -139,8 +187,14 @@
                 done(null, dbName);
             };
             request.onerror = request.onblocked = function() {
-                console.error(request.error.message);
-                done(request.error, dbName);
+                    var err;
+                    try {
+                        err = request.error;
+                        console.error(err.message);
+                    }
+                    finally {
+                        done(err || 'Unknown Error');
+                    }
             };
         },
 

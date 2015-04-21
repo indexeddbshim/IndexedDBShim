@@ -1,0 +1,81 @@
+#supports, #options {
+    font-size: 12px;
+    color: #888;
+    z-index: 1;
+}
+
+#supports {
+    margin-right: 15px !important;
+    text-align: right;
+}
+
+#supports li.test {
+    display: inline-block;
+}
+
+#supports li.test:not(.pass):not(.fail) {
+    display: none;
+    visibility: hidden;
+}
+
+#options {
+    margin: 1em;
+    text-align: center;
+}
+
+#options a {
+    display: none;
+    padding: .5em 3em;
+    border-radius: 8px;
+    border: 1px solid #888;
+    background-color: #fff;
+    color: #888;
+    text-decoration: none;
+    text-align: center;
+}
+
+#options a:hover, #options a:focus, #options a:active {
+    background-color: #ccc;
+    color: white;
+}
+
+#choke-warning {
+    color: red;
+    margin: 0 15px;
+    text-align: justify;
+    display: none;
+}
+
+#choke-warning.problem-child {
+    display: block;
+}
+
+#mocha .pending h2:before {
+    content: 'Not supported in this browser';
+    display: inline-block;
+    float: right;
+    background-color: #0b97c4;
+    color: white;
+    border-radius: 10px;
+    padding: 0 6px;
+    margin-bottom: 1px;
+}
+
+@media (min-width: 480px) {
+    #supports {
+        position: fixed;
+        top: 26px;
+        left: 10px;
+        right: 275px;
+        text-align: left
+    }
+}
+
+@media (min-width: 850px) {
+    #options {
+        position: fixed;
+        top: 10px;
+        left: 0;
+        right: 0;
+    }
+}
