@@ -1293,7 +1293,7 @@ var idbModules = {  // jshint ignore:line
         this.__valueDecoder = valueColumnName === "value" ? idbModules.Sca : idbModules.Key;
         this.__offset = -1; // Setting this to -1 as continue will set it to 0 anyway
         this.__lastKeyContinued = undefined; // Used when continuing with a key
-        this.__multiEntryIndex = source instanceof IDBIndex ? source.multiEntry : false;
+        this.__multiEntryIndex = source instanceof idbModules.IDBIndex ? source.multiEntry : false;
 
         if (range !== undefined) {
             // Encode the key range and cache the encoded values, so we don't have to re-encode them over and over
