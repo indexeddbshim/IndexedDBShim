@@ -1007,6 +1007,64 @@ var idbModules = {  // jshint ignore:line
         }
     }
 
+    function isKeyInRange(key, range) {
+        var lowerMatch = range.lower === undefined;
+        var upperMatch = range.upper === undefined;
+
+        if (range.lower !== undefined) {
+            if (range.lowerOpen && key > range.lower) {
+                lowerMatch = true;
+            }
+            if (!range.lowerOpen && key >= range.lower) {
+                lowerMatch = true;
+            }
+        }
+        if (range.upper !== undefined) {
+            if (range.upperOpen && key < range.upper) {
+                upperMatch = true;
+            }
+            if (!range.upperOpen && key <= range.upper) {
+                upperMatch = true;
+            }
+        }
+
+        return lowerMatch && upperMatch;
+    }
+
+    function findMultiEntryMatches(keyEntry, range) {
+        var matches = [];
+
+        if (keyEntry instanceof Array) {
+            for (var i = 0; i < keyEntry.length; i++) {
+                var key = keyEntry[i];
+
+                if (key instanceof Array) {
+                    if (range.lower === range.upper) {
+                        continue;
+                    }
+                    if (key.length === 1) {
+                        key = key[0];
+                    } else {
+                        var nested = findMultiEntryMatches(key, range);
+                        if (nested.length > 0) {
+                            matches.push(key);
+                        }
+                        continue;
+                    }
+                }
+
+                if (isKeyInRange(key, range)) {
+                    matches.push(key);
+                }
+            }
+        } else {
+            if (isKeyInRange(keyEntry, range)) {
+                matches.push(keyEntry);
+            }
+        }
+        return matches;
+    }
+
     idbModules.Key = {
         encode: function(key, inArray) {
             if (key === undefined) {
@@ -1023,7 +1081,8 @@ var idbModules = {  // jshint ignore:line
         validate: validate,
         getValue: getValue,
         setValue: setValue,
-        isMultiEntryMatch: isMultiEntryMatch
+        isMultiEntryMatch: isMultiEntryMatch,
+        findMultiEntryMatches: findMultiEntryMatches
     };
 }(idbModules));
 
@@ -1324,6 +1383,7 @@ var idbModules = {  // jshint ignore:line
         this.__offset = -1; // Setting this to -1 as continue will set it to 0 anyway
         this.__lastKeyContinued = undefined; // Used when continuing with a key
         this.__multiEntryIndex = source instanceof idbModules.IDBIndex ? source.multiEntry : false;
+        this.__unique = this.direction.indexOf("unique") !== -1;
 
         if (range !== undefined) {
             // Encode the key range and cache the encoded values, so we don't have to re-encode them over and over
@@ -1334,7 +1394,16 @@ var idbModules = {  // jshint ignore:line
         this["continue"]();
     }
 
-    IDBCursor.prototype.__find = function (key, tx, success, error, recordsToLoad) {
+    IDBCursor.prototype.__find = function (/* key, tx, success, error, recordsToLoad */) {
+        var args = Array.prototype.slice.call(arguments);
+        if (this.__multiEntryIndex) {
+            this.__findMultiEntry.apply(this, args);
+        } else {
+            this.__findBasic.apply(this, args);
+        }
+    };
+
+    IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLoad) {
         recordsToLoad = recordsToLoad || 1;
 
         var me = this;
@@ -1394,6 +1463,114 @@ var idbModules = {  // jshint ignore:line
         });
     };
 
+    IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error, recordsToLoad) {
+        recordsToLoad = recordsToLoad || 1;
+
+        if (this.__multiEntryOffset && this.__multiEntryOffset < recordsToLoad) {
+            idbModules.DEBUG && console.log("Reached end of cursors");
+            success(undefined, undefined, undefined);
+            return;
+        }
+
+        var me = this;
+        var quotedKeyColumnName = idbModules.util.quote(me.__keyColumnName);
+        var sql = ["SELECT * FROM", idbModules.util.quote(me.__store.name)];
+        var sqlValues = [];
+        sql.push("WHERE", quotedKeyColumnName, "NOT NULL");
+        if (me.__range && (me.__range.lower !== undefined && me.__range.upper !== undefined)) {
+            if (me.__range.upper.indexOf(me.__range.lower) === 0) {
+                sql.push("AND", quotedKeyColumnName, "LIKE ?");
+                sqlValues.push("%" + me.__range.__lower.slice(0, -1) + "%");
+            }
+        }
+        if (typeof key !== "undefined") {
+            me.__lastKeyContinued = key;
+            me.__offset = 0;
+        }
+        if (me.__lastKeyContinued !== undefined) {
+            sql.push("AND", quotedKeyColumnName, ">= ?");
+            idbModules.Key.validate(me.__lastKeyContinued);
+            sqlValues.push(idbModules.Key.encode(me.__lastKeyContinued));
+        }
+
+        // Determine the ORDER BY direction based on the cursor.
+        var direction = me.direction === 'prev' || me.direction === 'prevunique' ? 'DESC' : 'ASC';
+
+        sql.push("ORDER BY key", direction);
+        sql.push("LIMIT", recordsToLoad, "OFFSET", me.__multiEntryOffset || 0);
+        sql = sql.join(" ");
+        idbModules.DEBUG && console.log(sql, sqlValues);
+
+        me.__prefetchedData = null;
+        me.__prefetchedIndex = 0;
+        tx.executeSql(sql, sqlValues, function (tx, data) {
+            me.__multiEntryOffset = data.rows.length;
+
+            if (data.rows.length > 0) {
+                var rows = [];
+
+                for (var i = 0; i < data.rows.length; i++) {
+                    var rowItem = data.rows.item(i);
+                    var matches = idbModules.Key.findMultiEntryMatches(idbModules.Key.decode(rowItem[me.__keyColumnName], true), me.__range);
+
+                    for (var j = 0; j < matches.length; j++) {
+                        var matchingKey = matches[j];
+                        var clone = {
+                            matchingKey: idbModules.Key.encode(matchingKey, true),
+                            key: rowItem.key
+                        };
+                        clone[me.__keyColumnName] = rowItem[me.__keyColumnName];
+                        clone[me.__valueColumnName] = rowItem[me.__valueColumnName];
+                        rows.push(clone);
+                    }
+                }
+
+                var reverse = me.direction.indexOf("prev") === 0;
+                rows.sort(function (a, b) {
+                    if (a.matchingKey.replace('[','z') < b.matchingKey.replace('[','z')) {
+                        return reverse ? 1 : -1;
+                    }
+                    if (a.matchingKey.replace('[','z') > b.matchingKey.replace('[','z')) {
+                        return reverse ? -1 : 1;
+                    }
+                    if (a.key < b.key) {
+                        return me.direction === "prev" ? 1 : -1;
+                    }
+                    if (a.key > b.key) {
+                        return me.direction === "prev" ? -1 : 1;
+                    }
+                    return 0;
+                });
+
+                if (rows.length > 1) {
+                    me.__prefetchedData = {
+                        data: rows,
+                        length: rows.length,
+                        item: function (index) {
+                            return this.data[index];
+                        }
+                    };
+                    me.__prefetchedIndex = 0;
+
+                    idbModules.DEBUG && console.log("Preloaded " + me.__prefetchedData.length + " records for cursor");
+                    me.__decode(rows[0], success);
+                } else if (rows.length === 1) {
+                    me.__decode(rows[0], success);
+                } else {
+                    idbModules.DEBUG && console.log("Reached end of cursors");
+                    success(undefined, undefined, undefined);
+                }
+            }
+            else {
+                idbModules.DEBUG && console.log("Reached end of cursors");
+                success(undefined, undefined, undefined);
+            }
+        }, function (tx, err) {
+            idbModules.DEBUG && console.log("Could not execute Cursor.continue", sql, sqlValues);
+            error(err);
+        });
+    };
+
     /**
      * Creates an "onsuccess" callback
      * @private
@@ -1409,7 +1586,17 @@ var idbModules = {  // jshint ignore:line
     };
 
     IDBCursor.prototype.__decode = function (rowItem, callback) {
-        var key = idbModules.Key.decode(rowItem[this.__keyColumnName], this.__multiEntryIndex);
+        if (this.__multiEntryIndex && this.__unique) {
+            if (!this.__matchedKeys) {
+                this.__matchedKeys = {};
+            }
+            if (this.__matchedKeys[rowItem.matchingKey]) {
+                callback(undefined, undefined, undefined);
+                return;
+            }
+            this.__matchedKeys[rowItem.matchingKey] = true;
+        }
+        var key = idbModules.Key.decode(this.__multiEntryIndex ? rowItem.matchingKey : rowItem[this.__keyColumnName], this.__multiEntryIndex);
         var val = this.__valueDecoder.decode(rowItem[this.__valueColumnName]);
         var primaryKey = idbModules.Key.decode(rowItem.key);
         callback(key, val, primaryKey);
