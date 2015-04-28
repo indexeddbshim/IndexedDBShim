@@ -750,7 +750,7 @@ describe('IDBIndex.openCursor', function() {
             });
         });
 
-        util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should query indexes other than the primary key', function(done) {
+        util.skipIf(env.isNative && env.browser.isIE, 'should query indexes other than the primary key', function(done) {
             // BUG: IE's native IndexedDB does not support compound keys at all
 
             // NOTE: The object store's keyPath is "id".  The index's keyPath is ["id","name.first","name.last"]
@@ -781,16 +781,19 @@ describe('IDBIndex.openCursor', function() {
                     {primaryKey: 0, key: 0, value: {id: 0}},
                     {primaryKey: 1, key: 1, value: {id: 1, name: {first: 2, last: 3}}}
                 ]);
-                query(store, IDBKeyRange.upperBound(''), [
-                    {primaryKey: -1, key: -1, value: {id: -1, name: {first: -2, last: -3}}},
-                    {primaryKey: 0, key: 0, value: {id: 0}},
-                    {primaryKey: 1, key: 1, value: {id: 1, name: {first: 2, last: 3}}},
-                    {primaryKey: '', key: '', value: {id: ''}}
-                ]);
                 query(store, IDBKeyRange.bound(' ', 'Z'), 'nextunique', [
                     {primaryKey: '-1', key: '-1', value: {id: '-1', name: {first: '-2', last: '-3'}}},
                     {primaryKey: '1', key: '1', value: {id: '1', name: {first: '2', last: '3'}}}
                 ]);
+                if (env.isShimmed || !env.browser.isIE) {
+                    // IE sorts empty strings ahead of numbers
+                    query(store, IDBKeyRange.upperBound(''), [
+                        {primaryKey: -1, key: -1, value: {id: -1, name: {first: -2, last: -3}}},
+                        {primaryKey: 0, key: 0, value: {id: 0}},
+                        {primaryKey: 1, key: 1, value: {id: 1, name: {first: 2, last: 3}}},
+                        {primaryKey: '', key: '', value: {id: ''}}
+                    ]);
+                }
 
                 // Index queries
                 query(index, IDBKeyRange.bound(' ', 'Z'), []);

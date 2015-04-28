@@ -65,25 +65,43 @@
         };
 
         IDBObjectStore.prototype.add = function(value, key) {
-            var args = Array.prototype.slice.call(arguments);
-            if (key instanceof Array) {
-                args[1] = encodeCompoundKey(key);
-            }
-            else if (typeof value === 'object' && isCompoundKey(this.keyPath)) {
-                setInlineCompoundKey(value, this.keyPath);
-            }
-            return add.apply(this, args);
+            return this.__insertData(add, arguments);
         };
 
         IDBObjectStore.prototype.put = function(value, key) {
-            var args = Array.prototype.slice.call(arguments);
+            return this.__insertData(put, arguments);
+        };
+
+        IDBObjectStore.prototype.__insertData = function(method, args) {
+            args = Array.prototype.slice.call(args);
+            var value = args[0];
+            var key = args[1];
+
+            // out-of-line key
             if (key instanceof Array) {
                 args[1] = encodeCompoundKey(key);
             }
-            else if (typeof value === 'object' && isCompoundKey(this.keyPath)) {
-                setInlineCompoundKey(value, this.keyPath);
+
+            if (typeof value === 'object') {
+                // inline key
+                if (isCompoundKey(this.keyPath)) {
+                    setInlineCompoundKey(value, this.keyPath);
+                }
+
+                // inline indexes
+                for (var i = 0; i < this.indexNames.length; i++) {
+                    var index = this.index(this.indexNames[i]);
+                    if (isCompoundKey(index.keyPath)) {
+                        try {
+                            setInlineCompoundKey(value, index.keyPath);
+                        }
+                        catch (e) {
+                            // The value doesn't have a valid key for this index.
+                        }
+                    }
+                }
             }
-            return put.apply(this, args);
+            return method.apply(this, args);
         };
 
         IDBIndex.prototype.get = function(key) {
@@ -239,12 +257,12 @@
         }
 
         // Encode the array as a single property
-        // ["name$$first", "name$$last"] => "__$$compoundKeys.name$$first$_$name$$last"
+        // ["name$$first", "name$$last"] => "__$$compoundKey.name$$first$_$name$$last"
         return compoundKeysPropertyName + '.' + keyPath.join(keySeparator);
     }
 
     function decodeCompoundKeyPath(keyPath) {
-        // Remove the "__$$compoundKeys." prefix
+        // Remove the "__$$compoundKey." prefix
         keyPath = keyPath.substr(compoundKeysPropertyName.length + 1);
 
         // Split the properties into an array
@@ -286,12 +304,12 @@
         idbModules.Key.validate(key);
         key = idbModules.Key.encode(key);
 
-        // Prepend the "__$$compoundKeys." prefix
+        // Prepend the "__$$compoundKey." prefix
         return compoundKeysPropertyName + '.' + key;
     }
 
     function decodeCompoundKey(key) {
-        // Remove the "__$$compoundKeys." prefix
+        // Remove the "__$$compoundKey." prefix
         key = key.substr(compoundKeysPropertyName.length + 1);
 
         // Decode the key
