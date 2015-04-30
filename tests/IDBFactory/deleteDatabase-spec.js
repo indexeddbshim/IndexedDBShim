@@ -117,6 +117,7 @@ describe('IDBFactory.deleteDatabase', function() {
 
         deleteDatabase(undefined);
         deleteDatabase('');
+        deleteDatabase(util.sampleData.veryLongString);
         deleteDatabase(42);
         deleteDatabase(-0.331);
         deleteDatabase(Infinity);

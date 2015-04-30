@@ -359,6 +359,7 @@ describe('IDBFactory.open', function() {
 
         it('should not allow these version numbers', function() {
             tryToOpen('');
+            tryToOpen(util.sampleData.veryLongString);
             tryToOpen('foobar');
             tryToOpen(0);
             tryToOpen(-3);

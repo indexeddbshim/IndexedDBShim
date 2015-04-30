@@ -456,6 +456,7 @@ describe('IDBIndex.getKey', function() {
             var gettingCounter = 0, gottenCounter = 0;
 
             getKey('');                            // empty string
+            getKey(util.sampleData.veryLongString);// very long string
             getKey(0);                             // zero
             getKey(-99999);                        // negative number
             getKey(3.12345);                       // float
@@ -495,20 +496,20 @@ describe('IDBIndex.getKey', function() {
             var store = tx.objectStore('out-of-line-generated');
             var index = store.index('inline-index') ;
 
-            tryToGet(undefined);                // undefined
-            tryToGet(NaN);                      // NaN
-            tryToGet(true);                     // boolean
-            tryToGet(false);                    // boolean
-            tryToGet({});                       // empty object
-            tryToGet({foo: 'bar'});             // object
-            tryToGet(new util.Person('John'));  // Class
-            tryToGet([1, undefined, 2]);        // array with undefined
-            tryToGet([1, null, 2]);             // array with null
-            tryToGet([true, false]);            // array of booleans
-            tryToGet([{foo: 'bar'}]);           // array of objects
+            tryToGet(undefined);                            // undefined
+            tryToGet(NaN);                                  // NaN
+            tryToGet(true);                                 // boolean
+            tryToGet(false);                                // boolean
+            tryToGet({});                                   // empty object
+            tryToGet({foo: 'bar'});                         // object
+            tryToGet(new util.sampleData.Person('John'));   // Class
+            tryToGet([1, undefined, 2]);                    // array with undefined
+            tryToGet([1, null, 2]);                         // array with null
+            tryToGet([true, false]);                        // array of booleans
+            tryToGet([{foo: 'bar'}]);                       // array of objects
 
             if (env.isShimmed || !env.browser.isIE) {
-                tryToGet(/^regex$/);            // RegExp
+                tryToGet(/^regex$/);                        // RegExp
             }
 
             function tryToGet(key) {

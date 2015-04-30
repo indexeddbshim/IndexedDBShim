@@ -356,6 +356,7 @@ describe('IDBIndex.openCursor', function() {
             var gettingCounter = 0, gottenCounter = 0;
 
             getKey('');                            // empty string
+            getKey(util.sampleData.veryLongString);// very long string
             getKey(0);                             // zero
             getKey(-99999);                        // negative number
             getKey(3.12345);                       // float
@@ -400,19 +401,19 @@ describe('IDBIndex.openCursor', function() {
             var store = tx.objectStore('out-of-line-generated');
             var index = store.index('inline-index');
 
-            tryToGet(NaN);                      // NaN
-            tryToGet(true);                     // boolean
-            tryToGet(false);                    // boolean
-            tryToGet({});                       // empty object
-            tryToGet({foo: 'bar'});             // object
-            tryToGet(new util.Person('John'));  // Class
-            tryToGet([1, undefined, 2]);        // array with undefined
-            tryToGet([1, null, 2]);             // array with null
-            tryToGet([true, false]);            // array of booleans
-            tryToGet([{foo: 'bar'}]);           // array of objects
+            tryToGet(NaN);                                  // NaN
+            tryToGet(true);                                 // boolean
+            tryToGet(false);                                // boolean
+            tryToGet({});                                   // empty object
+            tryToGet({foo: 'bar'});                         // object
+            tryToGet(new util.sampleData.Person('John'));   // Class
+            tryToGet([1, undefined, 2]);                    // array with undefined
+            tryToGet([1, null, 2]);                         // array with null
+            tryToGet([true, false]);                        // array of booleans
+            tryToGet([{foo: 'bar'}]);                       // array of objects
 
             if (env.isShimmed || !env.browser.isIE) {
-                tryToGet(/^regex$/);            // RegExp
+                tryToGet(/^regex$/);                        // RegExp
             }
 
             function tryToGet(key, IDBObj) {
@@ -577,7 +578,7 @@ describe('IDBIndex.openCursor', function() {
                 store.add('two', ['1', '2', '3']);
                 store.add('three', [0, 1]);
                 store.add('four', ['4', 5, 6]);
-                store.add('five', [-3, -2, -1, 0, 1, 2, 3, 4, 5, 6]);
+                store.add('five', [-3, -2, -1, 0]);
                 store.add('six', [1, '2', new Date(2000, 0, 1)]);
                 store.add('seven', [new Date(1990, 5, 24), 2, '3']);
 

@@ -521,6 +521,7 @@ describe('IDBObjectStore.delete', function() {
             var deletingCounter = 0, deletedCounter = 0;
 
             deleteKey('');                            // empty string
+            deleteKey(util.sampleData.veryLongString);// very long string
             deleteKey(0);                             // zero
             deleteKey(-99999);                        // negative number
             deleteKey(3.12345);                       // float
@@ -559,20 +560,20 @@ describe('IDBObjectStore.delete', function() {
             var tx = db.transaction('out-of-line-generated', 'readwrite');
             var store = tx.objectStore('out-of-line-generated');
 
-            tryToDelete(undefined);                // undefined
-            tryToDelete(NaN);                      // NaN
-            tryToDelete(true);                     // boolean
-            tryToDelete(false);                    // boolean
-            tryToDelete({});                       // empty object
-            tryToDelete({foo: 'bar'});             // object
-            tryToDelete(new util.Person('John'));  // Class
-            tryToDelete([1, undefined, 2]);        // array with undefined
-            tryToDelete([1, null, 2]);             // array with null
-            tryToDelete([true, false]);            // array of booleans
-            tryToDelete([{foo: 'bar'}]);           // array of objects
+            tryToDelete(undefined);                             // undefined
+            tryToDelete(NaN);                                   // NaN
+            tryToDelete(true);                                  // boolean
+            tryToDelete(false);                                 // boolean
+            tryToDelete({});                                    // empty object
+            tryToDelete({foo: 'bar'});                          // object
+            tryToDelete(new util.sampleData.Person('John'));    // Class
+            tryToDelete([1, undefined, 2]);                     // array with undefined
+            tryToDelete([1, null, 2]);                          // array with null
+            tryToDelete([true, false]);                         // array of booleans
+            tryToDelete([{foo: 'bar'}]);                        // array of objects
 
             if (env.isShimmed || !env.browser.isIE) {
-                tryToDelete(/^regex$/);            // RegExp
+                tryToDelete(/^regex$/);                         // RegExp
             }
 
             function tryToDelete(key) {

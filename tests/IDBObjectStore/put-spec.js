@@ -246,4 +246,167 @@ describe('IDBObjectStore.put', function() {
             };
         });
     });
+
+    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should distinguish between very-long string keys (10,000+ characters)', function(done) {
+        // BUG: IE's IndexedDB truncates string keys at 889 characters
+        util.createDatabase('out-of-line', function(err, db) {
+            var tx = db.transaction('out-of-line', 'readwrite');
+            tx.onerror = done;
+
+            var store = tx.objectStore('out-of-line');
+
+            var key1 = util.sampleData.veryLongString + 'a';
+            expect(key1).to.have.lengthOf(10001);
+            store.put({foo: 'bar'}, key1);
+
+            var key2 = util.sampleData.veryLongString + 'b';
+            expect(key1).to.have.lengthOf(10001);
+            store.put({foo: 'bar'}, key2);
+
+            var allData;
+            util.getAll(store, function(err, data) {
+                allData = data;
+            });
+
+            tx.oncomplete = function() {
+                // The table should contain two records
+                expect(allData).to.have.lengthOf(2);
+                expect(allData).to.deep.equal([
+                    {primaryKey: key1, key: key1, value: {foo: 'bar'}},
+                    {primaryKey: key2, key: key2, value: {foo: 'bar'}}
+                ]);
+
+                db.close();
+                done();
+            };
+        });
+    });
+
+    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should distinguish between very-long string keys (890+ characters)', function(done) {
+        // BUG: IE's IndexedDB truncates string keys at 889 characters
+        util.createDatabase('out-of-line', function(err, db) {
+            var tx = db.transaction('out-of-line', 'readwrite');
+            tx.onerror = done;
+
+            var store = tx.objectStore('out-of-line');
+
+            var key1 = util.sampleData.veryLongString.substr(0, 889) + 'a';
+            expect(key1).to.have.lengthOf(890);
+            store.put({foo: 'bar'}, key1);
+
+            var key2 = util.sampleData.veryLongString.substr(0, 889) + 'b';
+            expect(key1).to.have.lengthOf(890);
+            store.put({foo: 'bar'}, key2);
+
+            var allData;
+            util.getAll(store, function(err, data) {
+                allData = data;
+            });
+
+            tx.oncomplete = function() {
+                // The table should contain two records
+                expect(allData).to.have.lengthOf(2);
+                expect(allData).to.deep.equal([
+                    {primaryKey: key1, key: key1, value: {foo: 'bar'}},
+                    {primaryKey: key2, key: key2, value: {foo: 'bar'}}
+                ]);
+
+                db.close();
+                done();
+            };
+        });
+    });
+
+    it('should distinguish between very-long string keys (889 characters)', function(done) {
+        // BUG: IE's IndexedDB truncates string keys at 889 characters
+        util.createDatabase('out-of-line', function(err, db) {
+            var tx = db.transaction('out-of-line', 'readwrite');
+            tx.onerror = done;
+
+            var store = tx.objectStore('out-of-line');
+
+            var key1 = util.sampleData.veryLongString.substr(0, 888) + 'a';
+            expect(key1).to.have.lengthOf(889);
+            store.put({foo: 'bar'}, key1);
+
+            var key2 = util.sampleData.veryLongString.substr(0, 888) + 'b';
+            expect(key1).to.have.lengthOf(889);
+            store.put({foo: 'bar'}, key2);
+
+            var allData;
+            util.getAll(store, function(err, data) {
+                allData = data;
+            });
+
+            tx.oncomplete = function() {
+                // The table should contain two records
+                expect(allData).to.have.lengthOf(2);
+                expect(allData).to.deep.equal([
+                    {primaryKey: key1, key: key1, value: {foo: 'bar'}},
+                    {primaryKey: key2, key: key2, value: {foo: 'bar'}}
+                ]);
+
+                db.close();
+                done();
+            };
+        });
+    });
+
+    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should distinguish between very-long compound keys (890+ characters)', function(done) {
+        // BUG: IE's IndexedDB truncates string keys at 889 characters
+        util.createDatabase('out-of-line', function(err, db) {
+            var tx = db.transaction('out-of-line', 'readwrite');
+            tx.onerror = done;
+
+            var store = tx.objectStore('out-of-line');
+            store.put({foo: 'bar'}, [1, 2, 3, 4, 5]);   // idbModules.Key encodes this as an 1049-character string
+            store.put({foo: 'bar'}, [1, 2, 3, 4, 6]);   // idbModules.Key encodes this as an 1049-character string
+
+            var allData;
+            util.getAll(store, function(err, data) {
+                allData = data;
+            });
+
+            tx.oncomplete = function() {
+                // The table should contain two records
+                expect(allData).to.have.lengthOf(2);
+                expect(allData).to.deep.equal([
+                    {primaryKey: [1, 2, 3, 4, 5], key: [1, 2, 3, 4, 5], value: {foo: 'bar'}},
+                    {primaryKey: [1, 2, 3, 4, 6], key: [1, 2, 3, 4, 6], value: {foo: 'bar'}}
+                ]);
+
+                db.close();
+                done();
+            };
+        });
+    });
+
+    util.skipIf(env.browser.isIE && env.isNative, 'should distinguish between compound keys under 890 total characters', function(done) {
+        // BUG: IE's IndexedDB truncates string keys at 889 characters
+        util.createDatabase('out-of-line', function(err, db) {
+            var tx = db.transaction('out-of-line', 'readwrite');
+            tx.onerror = done;
+
+            var store = tx.objectStore('out-of-line');
+            store.put({foo: 'bar'}, [1, 2, 3, 4]);   // idbModules.Key encodes this as an 844-character string
+            store.put({foo: 'bar'}, [1, 2, 3, 5]);   // idbModules.Key encodes this as an 844-character string
+
+            var allData;
+            util.getAll(store, function(err, data) {
+                allData = data;
+            });
+
+            tx.oncomplete = function() {
+                // The table should contain two records
+                expect(allData).to.have.lengthOf(2);
+                expect(allData).to.deep.equal([
+                    {primaryKey: [1, 2, 3, 4], key: [1, 2, 3, 4], value: {foo: 'bar'}},
+                    {primaryKey: [1, 2, 3, 5], key: [1, 2, 3, 5], value: {foo: 'bar'}}
+                ]);
+
+                db.close();
+                done();
+            };
+        });
+    });
 });

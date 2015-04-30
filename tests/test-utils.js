@@ -31,10 +31,17 @@
 
 
     var util = window.util = {
-        /**
-         * A custom class, used to test the IndexedDB structured cloning algorithm
-         */
-        Person: Person,
+        sampleData: {
+            /**
+             * A custom class, used to test the IndexedDB structured cloning algorithm
+             */
+            Person: Person,
+
+            /**
+             * A very long string :)
+             */
+            veryLongString: new Array(1001).join('1234567890')  // 10,000 characters
+        },
 
 
         /**

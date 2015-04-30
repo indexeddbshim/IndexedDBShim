@@ -119,6 +119,7 @@ describe('IDBFactory.cmp', function() {
             compare('Zxyz', 'aXYZ');
             compare('123aBc', 'aBc123');
             compare('~!@#$%^&*()_+`-={ }|[]\\:"\';<>?,./a', '~!@#$%^&*()_+`-={ }|[]\\:"\';<>?,./b');
+            compare('', util.sampleData.veryLongString);
 
             equal('');
             equal(' ');
@@ -132,6 +133,7 @@ describe('IDBFactory.cmp', function() {
             equal('hello, world');
             equal('123aBc');
             equal('~!@#$%^&*()_+`-={}|[]\\:"\';<>?,./');
+            equal(util.sampleData.veryLongString);
         });
 
         it('should compare two dates', function() {
@@ -198,14 +200,18 @@ describe('IDBFactory.cmp', function() {
             compare([0], [0,0]);
             compare([0,0], [1]);
             compare([-1], [0,0]);
-            compare([1,2,3,4,5], [1,2,3,4,5,0]);
-            compare([1,1,1,1,0], [1,1,1,1,1]);
 
             equal([]);
             equal([], []);
             equal([0], [0]);
-            equal([0,0,0,0,0], [0,0,0,0,0]);
-            equal([1,2,3,4,5], [1,2,3,4,5]);
+
+            if (!env.browser.isIE) {
+                // BUG: IE truncates string keys at 889 characters.
+                compare([1, 2, 3, 4, 5], [1, 2, 3, 4, 5, 0]);
+                compare([1, 1, 1, 1, 0], [1, 1, 1, 1, 1]);
+                equal([0, 0, 0, 0, 0], [0, 0, 0, 0, 0]);
+                equal([1, 2, 3, 4, 5], [1, 2, 3, 4, 5]);
+            }
         });
 
         util.skipIf(env.isNative && env.browser.isIE, 'should compare string arrays', function() {
@@ -223,6 +229,12 @@ describe('IDBFactory.cmp', function() {
             equal([''], ['']);
             equal([' '], [' ']);
             equal(['a','b','c'], ['a','b','c']);
+
+            if (!env.browser.isIE) {
+                // BUG: IE truncates string keys at 889 characters.
+                compare([util.sampleData.veryLongString, 'a'], [util.sampleData.veryLongString, 'b']);
+                equal([util.sampleData.veryLongString, util.sampleData.veryLongString], [util.sampleData.veryLongString, util.sampleData.veryLongString]);
+            }
         });
 
         util.skipIf(env.isNative && env.browser.isIE, 'should compare nested arrays', function() {
@@ -230,9 +242,9 @@ describe('IDBFactory.cmp', function() {
             compare([], [[]]);
             compare([[]], [[],[]]);
             compare([[[]]], [[[[]]]]);
-            compare([0,[1],[2,[3]]], [1]);
-            compare([0,[1],[2,[3]]], [1,[0],[0,[0]]]);
-            compare([1,[2],[3,[4]]], [1,[2],[3,[4],[]]]);
+            compare([1,[2,[3]]], [[0],[0,[0]]]);
+            compare([0, [2, [3]]], [1]);
+            compare([[2],[3,[4]]], [[2],[3,[4],[]]]);
             compare([[],[[],[1]]], [[],[[0],[]]]);
 
             equal([[[[]]]]);
@@ -244,27 +256,27 @@ describe('IDBFactory.cmp', function() {
 
     describe('failure tests', function() {
         it('should not allow these keys', function() {
-            tryToCompare(undefined);                        // undefined
-            tryToCompare(NaN);                              // NaN
-            tryToCompare(true);                             // boolean
-            tryToCompare(false);                            // boolean
-            tryToCompare({});                               // empty object
-            tryToCompare({foo: 'bar'});                     // object
-            tryToCompare(new util.Person('John'));          // Class
-            tryToCompare([1, undefined, 2]);                // array with undefined
-            tryToCompare([1, null, 2]);                     // array with null
-            tryToCompare([true, false]);                    // array of booleans
-            tryToCompare([{foo: 'bar'}]);                   // array of objects
-            tryToCompare(new Boolean(true));                // jshint ignore:line
-            tryToCompare(new Object());                     // jshint ignore:line
+            tryToCompare(undefined);                            // undefined
+            tryToCompare(NaN);                                  // NaN
+            tryToCompare(true);                                 // boolean
+            tryToCompare(false);                                // boolean
+            tryToCompare({});                                   // empty object
+            tryToCompare({foo: 'bar'});                         // object
+            tryToCompare(new util.sampleData.Person('John'));   // Class
+            tryToCompare([1, undefined, 2]);                    // array with undefined
+            tryToCompare([1, null, 2]);                         // array with null
+            tryToCompare([true, false]);                        // array of booleans
+            tryToCompare([{foo: 'bar'}]);                       // array of objects
+            tryToCompare(new Boolean(true));                    // jshint ignore:line
+            tryToCompare(new Object());                         // jshint ignore:line
 
             if (env.isShimmed || !env.browser.isIE) {
-                tryToCompare(null);                         // null
-                tryToCompare(new Number(12345));            // jshint ignore:line
-                tryToCompare(new String('hello world'));    // jshint ignore:line
-                tryToCompare(new Date(''));                 // invalid date
-                tryToCompare(new RegExp("asdf"));           // RegExp object
-                tryToCompare(/asdf/);                       // RegExp literal
+                tryToCompare(null);                             // null
+                tryToCompare(new Number(12345));                // jshint ignore:line
+                tryToCompare(new String('hello world'));        // jshint ignore:line
+                tryToCompare(new Date(''));                     // invalid date
+                tryToCompare(new RegExp("asdf"));               // RegExp object
+                tryToCompare(/asdf/);                           // RegExp literal
             }
 
             function tryToCompare(x) {

@@ -213,8 +213,8 @@
         });
 
         Object.defineProperty(IDBCursor.prototype, 'primaryKey', {
-            enumerable: requestResult.enumerable,
-            configurable: requestResult.configurable,
+            enumerable: cursorPrimaryKey.enumerable,
+            configurable: cursorPrimaryKey.configurable,
             get: function() {
                 var result = cursorPrimaryKey.get.call(this);
                 return removeInlineCompoundKey(result);
@@ -222,8 +222,8 @@
         });
 
         Object.defineProperty(IDBCursor.prototype, 'key', {
-            enumerable: requestResult.enumerable,
-            configurable: requestResult.configurable,
+            enumerable: cursorKey.enumerable,
+            configurable: cursorKey.configurable,
             get: function() {
                 var result = cursorKey.get.call(this);
                 return removeInlineCompoundKey(result);
@@ -231,8 +231,8 @@
         });
 
         Object.defineProperty(IDBCursorWithValue.prototype, 'value', {
-            enumerable: requestResult.enumerable,
-            configurable: requestResult.configurable,
+            enumerable: cursorValue.enumerable,
+            configurable: cursorValue.configurable,
             get: function() {
                 var result = cursorValue.get.call(this);
                 return removeInlineCompoundKey(result);
@@ -305,16 +305,28 @@
         key = idbModules.Key.encode(key);
 
         // Prepend the "__$$compoundKey." prefix
-        return compoundKeysPropertyName + '.' + key;
+        key = compoundKeysPropertyName + '.' + key;
+
+        validateKeyLength(key);
+        return key;
     }
 
     function decodeCompoundKey(key) {
+        validateKeyLength(key);
+
         // Remove the "__$$compoundKey." prefix
         key = key.substr(compoundKeysPropertyName.length + 1);
 
         // Decode the key
         key = idbModules.Key.decode(key);
         return key;
+    }
+
+    function validateKeyLength(key) {
+        // BUG: Internet Explorer truncates string keys at 889 characters
+        if (key.length > 889) {
+            throw idbModules.util.createDOMException("DataError", "The encoded key is " + key.length + " characters long, but IE only allows 889 characters. Consider replacing numeric keys with strings to reduce the encoded length.");
+        }
     }
 
     idbModules.polyfill = polyfill;
