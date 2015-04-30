@@ -24,7 +24,7 @@ Features
 * More details about the project at [gh-pages](http://nparashuram.com/IndexedDBShim)
 
 
-Installation and Use
+Installation
 --------------------------
 You can download the [development](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/dist/indexeddbshim.js) or [production (minified)](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/dist/indexeddbshim.min.js) script, or install it using [NPM](https://docs.npmjs.com/getting-started/what-is-npm) or [Bower](http://bower.io/).
 
@@ -47,48 +47,7 @@ Add the script to your page
 <script src="dist/indexeddbshim.min.js"></script>
 ````
 
-If the browser already natively supports IndexedDB, then the script won't do anything.  Otherwise, it'll add the [IndexedDB API](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) to the browser.   Either way, you can use IndexedDB just like normal.
-
-````javascript
-// Open (or create) the database
-var open = indexedDB.open("MyDatabase", 1);
-
-// Create the schema
-open.onupgradeneeded = function() {
-    var db = open.result;
-    var store = db.createObjectStore("MyObjectStore", {keyPath: "id"});
-    var index = store.createIndex("NameIndex", ["name.last", "name.first"]);
-};
-
-open.onsuccess = function() {
-    // Start a new transaction
-    var db = open.result;
-    var tx = db.transaction("MyObjectStore", "readwrite");
-    var store = tx.objectStore("MyObjectStore");
-    var index = store.index("NameIndex");
-
-    // Add some data
-    store.put({id: 12345, name: {first: "John", last: "Doe"}, age: 42});
-    store.put({id: 67890, name: {first: "Bob", last: "Smith"}, age: 35});
-    
-    // Query the data
-    var getJohn = store.get(12345);
-    var getBob = index.get(["Smith", "Bob"]);
-
-    getJohn.onsuccess = function() {
-        console.log(getJohn.result.name.first);  // => "John"
-    };
-
-    getBob.onsuccess = function() {
-        console.log(getBob.result.name.first);   // => "Bob"
-    };
-
-    // Close the db when the transaction is done
-    tx.oncomplete = function() {
-        db.close();
-    };
-}
-````
+If the browser already natively supports IndexedDB, then the script won't do anything.  Otherwise, it'll add the [IndexedDB API](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) to the browser.   Either way, you can use IndexedDB just like normal. [Here's an example](https://gist.github.com/BigstickCarpet/a0d6389a5d0e3a24814b)
 
 
 Fixing Problems in Native IndexedDB
