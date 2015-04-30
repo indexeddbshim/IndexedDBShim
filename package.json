@@ -1,6 +1,6 @@
 {
   "name": "indexeddbshim",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "author": "Parashuram <code@nparashuram.com>",
   "description": "A polyfill for IndexedDB using WebSql",
   "scripts": {
