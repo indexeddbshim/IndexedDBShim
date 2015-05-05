@@ -821,7 +821,7 @@ describe('IDBIndex.openCursor', function() {
             });
         });
 
-        util.skipIf(env.isShimmed || env.browser.isIE,'should query multi-entry indexes', function(done) {
+        util.skipIf(env.browser.isIE,'should query multi-entry indexes', function(done) {
             // BUG: IE's native IndexedDB does not support multi-entry indexes
             util.createDatabase('inline', 'multi-entry-index', function(err, db) {
                 var tx = db.transaction('inline', 'readwrite');
