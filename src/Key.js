@@ -351,6 +351,64 @@
         }
     }
 
+    function isKeyInRange(key, range) {
+        var lowerMatch = range.lower === undefined;
+        var upperMatch = range.upper === undefined;
+
+        if (range.lower !== undefined) {
+            if (range.lowerOpen && key > range.lower) {
+                lowerMatch = true;
+            }
+            if (!range.lowerOpen && key >= range.lower) {
+                lowerMatch = true;
+            }
+        }
+        if (range.upper !== undefined) {
+            if (range.upperOpen && key < range.upper) {
+                upperMatch = true;
+            }
+            if (!range.upperOpen && key <= range.upper) {
+                upperMatch = true;
+            }
+        }
+
+        return lowerMatch && upperMatch;
+    }
+
+    function findMultiEntryMatches(keyEntry, range) {
+        var matches = [];
+
+        if (keyEntry instanceof Array) {
+            for (var i = 0; i < keyEntry.length; i++) {
+                var key = keyEntry[i];
+
+                if (key instanceof Array) {
+                    if (range.lower === range.upper) {
+                        continue;
+                    }
+                    if (key.length === 1) {
+                        key = key[0];
+                    } else {
+                        var nested = findMultiEntryMatches(key, range);
+                        if (nested.length > 0) {
+                            matches.push(key);
+                        }
+                        continue;
+                    }
+                }
+
+                if (isKeyInRange(key, range)) {
+                    matches.push(key);
+                }
+            }
+        } else {
+            if (isKeyInRange(keyEntry, range)) {
+                matches.push(keyEntry);
+            }
+        }
+        return matches;
+    }
+
     idbModules.Key = {
         encode: function(key, inArray) {
             if (key === undefined) {
@@ -367,6 +425,7 @@
         validate: validate,
         getValue: getValue,
         setValue: setValue,
-        isMultiEntryMatch: isMultiEntryMatch
+        isMultiEntryMatch: isMultiEntryMatch,
+        findMultiEntryMatches: findMultiEntryMatches
     };
 }(idbModules));
