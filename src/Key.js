@@ -56,7 +56,7 @@
                 // Get the index of the decimal.
                 var decimalIndex = key32.indexOf(".");
                 // Remove the decimal.
-                key32 = !~decimalIndex ? key32.replace(".", "") : key32;
+                key32 = (decimalIndex !== -1) ? key32.replace(".", "") : key32;
                 // Get the index of the first significant digit.
                 var significantDigitIndex = key32.search(/[^0]/);
                 // Truncate leading zeros.
@@ -65,7 +65,7 @@
                 
                 // Finite cases:
                 if (isFinite(key)) {
-                    // Negative case:
+                    // Negative cases:
                     if (key < 0) {
                         // Negative exponent case:
                         if (key > -1) {
@@ -77,12 +77,12 @@
                         else {
                             sign = signValues.indexOf("bigNegative");
                             exponent = flipBase32(padBase32Exponent(
-                                ~decimalIndex ? key32.length : decimalIndex
+                                (decimalIndex !== -1) ? decimalIndex : key32.length
                             ));
                             mantissa = flipBase32(padBase32Mantissa(key32));
                         }
                     }
-                    // Non-negative case:
+                    // Non-negative cases:
                     else {
                         // Negative exponent case:
                         if (key < 1) {
@@ -94,8 +94,8 @@
                         else {
                             sign = signValues.indexOf("bigPositive");
                             exponent = padBase32Exponent(
-                                ~decimalIndex ? key32.length : decimalIndex
-                            );
+                                (decimalIndex !== -1) ? decimalIndex : key32.length
+                            ); 
                             mantissa = padBase32Mantissa(key32);
                         }
                     }
@@ -117,7 +117,7 @@
                 var exponent = key.substr(3, 2);
                 var mantissa = key.substr(5, 11);
                 
-                switch (signValues(sign)) {
+                switch (signValues[sign]) {
                     case "negativeInfinity":
                         return -Infinity;
                     case "positiveInfinity":
@@ -199,8 +199,8 @@
      * @return {string}
      */
     function padBase32Exponent(n) {
-        n = (n - 1).toString(32);
-        return n.length === 1 ? "0" + n : n;
+        n = n.toString(32);
+        return (n.length === 1) ? "0" + n : n;
     }
     
     /**
@@ -217,7 +217,7 @@
      * @param {string} encoded
      */
     function flipBase32(encoded) {
-        var flipped = '';
+        var flipped = "";
         for (var i = 0; i < encoded.length; i++) {
             flipped += (31 - parseInt(encoded[i], 32)).toString(32);
         }
@@ -226,25 +226,35 @@
     
     /**
      * Base-32 power function.
+     * RESEARCH: This function does not precisely decode floats because it performs
+     * floating point arithmetic to recover values. But can the original values be
+     * recovered exactly?
+     * Someone may have already figured out a good way to store JavaScript floats as
+     * binary strings and convert back. Barring a better method, however, one route
+     * may be to generate decimal strings that `parseFloat` decodes predictably. 
      * @param {string}
      * @param {string}
      * @return {number}
      */
     function pow32(mantissa, exponent) {
-        var expansion;
+        var whole, fraction, expansion;
         exponent = parseInt(exponent, 32);
         if (exponent < 0) {
-            expansion = "0." + zeros(-exponent - 1) + mantissa;
+            return parseInt(mantissa, 32) * Math.pow(32, exponent - 10);
         }
         else {
             if (exponent < 11) {
-                expansion = mantissa.slice(0, exponent) + "." + mantissa.slice(exponent);
+                whole = mantissa.slice(0, exponent);
+                whole = parseInt(whole, 32);
+                fraction = mantissa.slice(exponent);
+                fraction = parseInt(fraction, 32) * Math.pow(32, exponent - 11);
+                return whole + fraction;
             }
             else {
                 expansion = mantissa + zeros(exponent - 11);
+                return parseInt(expansion, 32);
             }
         }
-        return parseInt(expansion, 32);
     }
     
     /**
