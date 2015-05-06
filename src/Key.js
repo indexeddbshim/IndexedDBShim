@@ -1,22 +1,10 @@
 (function(idbModules) {
-    "use strict";
+    'use strict';
 
     /**
      * Encodes the keys based on their types. This is required to maintain collations
      */
     var collations = ["undefined", "number", "date", "string", "array"];
-    
-    /**
-     * The sign values for numbers, ordered from least to greatest.
-     *  - "negativeInfinity": Sorts below all other values.
-     *  - "bigNegative": Negative values less than or equal to negative one.
-     *  - "smallNegative": Negative values between negative one and zero, noninclusive.
-     *  - "smallPositive": Positive values between zero and one, including zero but not one.
-     *  - "largePositive": Positive values greater than or equal to one.
-     *  - "positiveInfinity": Sorts above all other values.
-     */
-    var signValues = ["negativeInfinity", "bigNegative", "smallNegative", "smallPositive", "bigPositive", "positiveInfinity"];
-    
     var types = {
         // Undefined is not a valid key type.  It's only used when there is no key.
         undefined: {
@@ -28,7 +16,7 @@
             }
         },
 
-        // Dates are encoded as ISO 8601 strings, in UTC time zone.
+        // Dates are encoded as ISO 8601 strings, in UTC time zone
         date: {
             encode: function(key) {
                 return collations.indexOf("date") + "-" + key.toJSON();
@@ -38,105 +26,44 @@
             }
         },
 
-        // Numbers are represented in a lexically sortable base-32 sign-exponent-mantissa
-        // notation.
-        //
-        // sign: takes a value between zero and five, inclusive. Represents infinite cases
-        //     and the signs of both the exponent and the fractional part of the number.
-        // exponent: paded to two base-32 digits, represented by the 32's compliment in the
-        //     "smallPositive" and "bigNegative" cases to ensure proper lexical sorting.
-        // mantissa: also called the fractional part. Normed 11-digit base-32 representation.
-        //     Represented by the 32's compliment in the "smallNegative" and "bigNegative"
-        //     cases to ensure proper lexical sorting.
+        // Numbers are encoded as base-36 strings between 200 and 400 characters
+        // 1 character = sign (always)
+        // 1 character = decimal point (optional)
+        // 199 characters on each side of decimal point (Number.MAX_VALUE is 199 digits in base-36)
         number: {
-            // The encode step checks for six numeric cases and generates 14-digit encoded
-            // sign-exponent-mantissa strings.
             encode: function(key) {
-                var key32 = Math.abs(key).toString(32);
-                // Get the index of the decimal.
-                var decimalIndex = key32.indexOf(".");
-                // Remove the decimal.
-                key32 = (decimalIndex !== -1) ? key32.replace(".", "") : key32;
-                // Get the index of the first significant digit.
-                var significantDigitIndex = key32.search(/[^0]/);
-                // Truncate leading zeros.
-                key32 = key32.slice(significantDigitIndex);
-                var sign, exponent = zeros(2), mantissa = zeros(11);
-                
-                // Finite cases:
+                var sign, whole, fraction;
+                sign = key < 0 ? '0' : 'z';                                     // 0 = negative, z = positive
+                whole = new Array(200).join(sign);                              // Infinity
+                fraction = '';
+
                 if (isFinite(key)) {
-                    // Negative cases:
-                    if (key < 0) {
-                        // Negative exponent case:
-                        if (key > -1) {
-                            sign = signValues.indexOf("smallNegative");
-                            exponent = padBase32Exponent(significantDigitIndex);
-                            mantissa = flipBase32(padBase32Mantissa(key32));
-                        }
-                        // Non-negative exponent case:
-                        else {
-                            sign = signValues.indexOf("bigNegative");
-                            exponent = flipBase32(padBase32Exponent(
-                                (decimalIndex !== -1) ? decimalIndex : key32.length
-                            ));
-                            mantissa = flipBase32(padBase32Mantissa(key32));
-                        }
+                    var encoded = Math.abs(key).toString(36);                   // base-36 encode
+                    encoded = encoded.split('.');                               // split whole from fraction
+                    whole = flipBase36(sign, encoded[0]);                       // if negative, flip each whole digit
+                    var padding = new Array(200 - whole.length);                // pad the whole to 199 digits
+                    padding = padding.join(sign === '0' ? 'z' : '0');           // pad with z for negative, 0 for positive
+                    whole = padding + whole;                                    // pad-left
+                    if (encoded.length > 1) {
+                        fraction = '.' + flipBase36(sign, encoded[1] || '');    // if negative, flip each fractional digit
                     }
-                    // Non-negative cases:
-                    else {
-                        // Negative exponent case:
-                        if (key < 1) {
-                            sign = signValues.indexOf("smallPositive");
-                            exponent = flipBase32(padBase32Exponent(significantDigitIndex));
-                            mantissa = padBase32Mantissa(key32);
-                        }
-                        // Non-negative exponent case:
-                        else {
-                            sign = signValues.indexOf("bigPositive");
-                            exponent = padBase32Exponent(
-                                (decimalIndex !== -1) ? decimalIndex : key32.length
-                            ); 
-                            mantissa = padBase32Mantissa(key32);
-                        }
-                    }
-                }
-                // Infinite cases:
-                else {
-                    sign = signValues.indexOf(
-                        key > 0 ? "positiveInfinity" : "negativeInfinity"
-                    );
                 }
 
-                return collations.indexOf("number") + "-" + sign + exponent + mantissa;
+                return collations.indexOf("number") + "-" + sign + whole + fraction;
             },
-            // The decode step must interpret the sign, reflip values encoded as the 32's complements,
-            // apply signs to the exponent and mantissa, do the base-32 power operation, and return
-            // the original JavaScript number values.
             decode: function(key) {
-                var sign = +key.substr(2, 1);
-                var exponent = key.substr(3, 2);
-                var mantissa = key.substr(5, 11);
-                
-                switch (signValues[sign]) {
-                    case "negativeInfinity":
-                        return -Infinity;
-                    case "positiveInfinity":
-                        return Infinity;
-                    case "bigPositive":
-                        return pow32(mantissa, exponent);
-                    case "smallPositive":
-                        exponent = negate(flipBase32(exponent));
-                        return pow32(mantissa, exponent);
-                    case "smallNegative":
-                        exponent = negate(exponent);
-                        mantissa = flipBase32(mantissa);
-                        return -pow32(mantissa, exponent);
-                    case "bigNegative":
-                        exponent = flipBase32(exponent);
-                        mantissa = flipBase32(mantissa);
-                        return -pow32(mantissa, exponent);
-                    default:
-                        throw new Error("Invalid number.");
+                var sign = key.substr(2, 1);                                    // 0 = negative, z = positive
+                var whole = flipBase36(sign, key.substr(3, 199));               // flip each whole digit if negative
+                var fraction = flipBase36(sign, key.substr(203));               // flip each fractional digit if negative
+                sign = sign === '0' ? -1 : 1;                                   // sign multiplier
+                whole = parseInt(whole, 36);                                    // base-36 decode
+                if (fraction) {
+                    var digits = fraction.length;
+                    fraction = parseInt(fraction, 36);                          // base-36 decode
+                    return sign * (whole + (fraction / Math.pow(36, digits)));  // add the fraction to the whole
+                }
+                else {
+                    return sign * whole;
                 }
             }
         },
@@ -194,89 +121,19 @@
     };
 
     /**
-     * Return a padded base-32 exponent value.
-     * @param {number}
-     * @return {string}
-     */
-    function padBase32Exponent(n) {
-        n = n.toString(32);
-        return (n.length === 1) ? "0" + n : n;
-    }
-    
-    /**
-     * Return a padded base-32 mantissa.
-     * @param {string}
-     * @return {string}
-     */
-    function padBase32Mantissa(s) {
-        return (s + zeros(11)).slice(0, 11);
-    }
-
-    /**
-     * Flips each digit of a base-32 encoded string.
+     * Flips each digit of a base-36 encoded number, if negative
+     * @param {string} sign - 0 = negative, z = positive
      * @param {string} encoded
      */
-    function flipBase32(encoded) {
-        var flipped = "";
-        for (var i = 0; i < encoded.length; i++) {
-            flipped += (31 - parseInt(encoded[i], 32)).toString(32);
-        }
-        return flipped;
-    }
-    
-    /**
-     * Base-32 power function.
-     * RESEARCH: This function does not precisely decode floats because it performs
-     * floating point arithmetic to recover values. But can the original values be
-     * recovered exactly?
-     * Someone may have already figured out a good way to store JavaScript floats as
-     * binary strings and convert back. Barring a better method, however, one route
-     * may be to generate decimal strings that `parseFloat` decodes predictably. 
-     * @param {string}
-     * @param {string}
-     * @return {number}
-     */
-    function pow32(mantissa, exponent) {
-        var whole, fraction, expansion;
-        exponent = parseInt(exponent, 32);
-        if (exponent < 0) {
-            return parseInt(mantissa, 32) * Math.pow(32, exponent - 10);
-        }
-        else {
-            if (exponent < 11) {
-                whole = mantissa.slice(0, exponent);
-                whole = parseInt(whole, 32);
-                fraction = mantissa.slice(exponent);
-                fraction = parseInt(fraction, 32) * Math.pow(32, exponent - 11);
-                return whole + fraction;
+    function flipBase36(sign, encoded) {
+        if (sign === '0') {
+            var flipped = '';
+            for (var i = 0; i < encoded.length; i++) {
+                flipped += (35 - parseInt(encoded[i], 36)).toString(36);
             }
-            else {
-                expansion = mantissa + zeros(exponent - 11);
-                return parseInt(expansion, 32);
-            }
+            return flipped;
         }
-    }
-    
-    /**
-     * Returns a string of n zeros.
-     * @param {number}
-     * @return {string}
-     */
-    function zeros(n) {
-        var result = "";
-        while (n--) {
-            result = result + "0";
-        }
-        return result;
-    }
-    
-    /**
-     * Negates numeric strings.
-     * @param {string}
-     * @return {string}
-     */
-    function negate(s) {
-        return "-" + s;
+        return encoded;
     }
 
     /**
