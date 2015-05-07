@@ -239,8 +239,8 @@ describe('IDBIndex.openCursor', function() {
     });
 
     it('should get hundreds of records', function(done) {
-        this.timeout(5000);
-        this.slow(5000);
+        this.timeout(10000);
+        this.slow(10000);
 
         util.createDatabase('inline', 'inline-index', function(err, db) {
             var tx = db.transaction('inline', 'readwrite');

@@ -359,8 +359,9 @@ describe('IDBObjectStore.put', function() {
             tx.onerror = done;
 
             var store = tx.objectStore('out-of-line');
-            store.put({foo: 'bar'}, [1, 2, 3, 4, 5]);   // idbModules.Key encodes this as an 1049-character string
-            store.put({foo: 'bar'}, [1, 2, 3, 4, 6]);   // idbModules.Key encodes this as an 1049-character string
+            var veryLongString = util.sampleData.veryLongString.substr(0, 400);
+            store.put({foo: 'bar'}, [veryLongString, 1, 2, 3, 4, 5]);   // idbModules.Key encodes this as an 925-character string
+            store.put({foo: 'bar'}, [veryLongString, 1, 2, 3, 4, 6]);   // idbModules.Key encodes this as an 925-character string
 
             var allData;
             util.getAll(store, function(err, data) {
