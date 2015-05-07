@@ -372,8 +372,8 @@ describe('IDBObjectStore.put', function() {
                 // The table should contain two records
                 expect(allData).to.have.lengthOf(2);
                 expect(allData).to.deep.equal([
-                    {primaryKey: [1, 2, 3, 4, 5], key: [1, 2, 3, 4, 5], value: {foo: 'bar'}},
-                    {primaryKey: [1, 2, 3, 4, 6], key: [1, 2, 3, 4, 6], value: {foo: 'bar'}}
+                    {primaryKey: [veryLongString, 1, 2, 3, 4, 5], key: [veryLongString, 1, 2, 3, 4, 5], value: {foo: 'bar'}},
+                    {primaryKey: [veryLongString, 1, 2, 3, 4, 6], key: [veryLongString, 1, 2, 3, 4, 6], value: {foo: 'bar'}}
                 ]);
 
                 db.close();
