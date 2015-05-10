@@ -238,6 +238,13 @@
                 return removeInlineCompoundKey(result);
             }
         });
+
+        try {
+            if (!IDBTransaction.VERSION_CHANGE) {
+                IDBTransaction.VERSION_CHANGE = 'versionchange';
+            }
+        }
+        catch (e) {}
     }
 
     var compoundKeysPropertyName = '__$$compoundKey';
