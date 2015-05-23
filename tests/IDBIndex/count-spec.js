@@ -141,6 +141,31 @@ describe('IDBIndex.count', function() {
         });
     });
 
+    it('should return the count for multiple records filtered by range', function(done) {
+        util.createDatabase('out-of-line', 'inline-index', function(err, db) {
+            var tx = db.transaction('out-of-line', 'readwrite');
+            tx.onerror = done;
+
+            var store = tx.objectStore('out-of-line');
+            store.add({id: 'a'}, 111);
+            store.add({id: 'b'}, 2222);
+            store.add({id: 'c'}, 33);
+
+            var storeCount = store.count();
+
+            var range = IDBKeyRange.bound('a', 'b', false, false);
+            var filteredIndexCount = store.index('inline-index').count(range);
+
+            tx.oncomplete = function() {
+                expect(storeCount.result).to.equal(3);
+                expect(filteredIndexCount.result).to.equal(2);
+
+                db.close();
+                done();
+            };
+        });
+    });
+
     it('should return different values as records are added/removed', function(done) {
         util.createDatabase('inline', 'inline-index', function(err, db) {
             var tx = db.transaction('inline', 'readwrite');
