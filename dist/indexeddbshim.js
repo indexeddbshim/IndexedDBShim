@@ -1569,20 +1569,9 @@ var idbModules = {  // jshint ignore:line
         var me = this;
         var quotedKeyColumnName = idbModules.util.quote(me.__keyColumnName);
         var sql = ["SELECT * FROM", idbModules.util.quote(me.__store.name)];
-        var sqlValues = [];
         sql.push("WHERE", quotedKeyColumnName, "NOT NULL");
-        if (me.__range && (me.__range.lower !== undefined || me.__range.upper !== undefined )) {
-            sql.push("AND");
-            if (me.__range.lower !== undefined) {
-                sql.push(quotedKeyColumnName, (me.__range.lowerOpen ? ">" : ">="), "?");
-                sqlValues.push(me.__range.__lower);
-            }
-            (me.__range.lower !== undefined && me.__range.upper !== undefined) && sql.push("AND");
-            if (me.__range.upper !== undefined) {
-                sql.push(quotedKeyColumnName, (me.__range.upperOpen ? "<" : "<="), "?");
-                sqlValues.push(me.__range.__upper);
-            }
-        }
+        var sqlValues = [];
+        applyRange(me.__range, quotedKeyColumnName, sql, sqlValues);
         if (typeof key !== "undefined") {
             me.__lastKeyContinued = key;
             me.__offset = 0;
@@ -1619,6 +1608,31 @@ var idbModules = {  // jshint ignore:line
             }
         }, function (tx, err) {
             idbModules.DEBUG && console.log("Could not execute Cursor.continue", sql, sqlValues);
+            error(err);
+        });
+    };
+
+    IDBCursor.prototype.__count = function (tx, success, error) {
+        var me = this;
+        var quotedKeyColumnName = idbModules.util.quote(me.__keyColumnName);
+        var sql = ["SELECT COUNT(*) FROM", idbModules.util.quote(me.__store.name)];
+        sql.push("WHERE", quotedKeyColumnName, "NOT NULL");
+        var sqlValues = [];
+        applyRange(me.__range, quotedKeyColumnName, sql, sqlValues);
+        sql = sql.join(" ");
+        idbModules.DEBUG && console.log(sql, sqlValues);
+
+        tx.executeSql(sql, sqlValues, function (tx, data) {
+            if (data.rows.length > 0) {
+                var count = data.rows.item(0)['COUNT(*)'];
+                success(count);
+            }
+            else {
+                idbModules.DEBUG && console.log("Reached end of cursors");
+                success(0);
+            }
+        }, function (tx, err) {
+            idbModules.DEBUG && console.log("Could not execute Cursor.__count", sql, sqlValues);
             error(err);
         });
     };
@@ -1859,6 +1873,21 @@ var idbModules = {  // jshint ignore:line
             }, error);
         });
     };
+
+    function applyRange(range, quotedKeyColumnName, sql, sqlValues) {
+        if (range && (range.lower !== undefined || range.upper !== undefined )) {
+            sql.push("AND");
+            if (range.lower !== undefined) {
+                sql.push(quotedKeyColumnName, (range.lowerOpen ? ">" : ">="), "?");
+                sqlValues.push(range.__lower);
+            }
+            (range.lower !== undefined && range.upper !== undefined) && sql.push("AND");
+            if (range.upper !== undefined) {
+                sql.push(quotedKeyColumnName, (range.upperOpen ? "<" : "<="), "?");
+                sqlValues.push(range.__upper);
+            }
+        }
+    }
 
     idbModules.IDBCursor = IDBCursor;
 }(idbModules));
@@ -2132,7 +2161,15 @@ var idbModules = {  // jshint ignore:line
             return this.__fetchIndexData("count");
         }
         else {
-            return this.__fetchIndexData(key, "count");
+            if (key instanceof idbModules.IDBKeyRange) {
+                var me = this;
+                return this.objectStore.transaction.__addToTransactionQueue(function fetchIndexData(tx, args, success, error) {
+                    var cursor = new idbModules.IDBCursor(key, "next", me.objectStore, me, me.name, "key");
+                    cursor.__count(tx, success, error);
+                });
+            } else {
+                return this.__fetchIndexData(key, "count");
+            }
         }
     };
 

@@ -267,7 +267,15 @@
             return this.__fetchIndexData("count");
         }
         else {
-            return this.__fetchIndexData(key, "count");
+            if (key instanceof idbModules.IDBKeyRange) {
+                var me = this;
+                return this.objectStore.transaction.__addToTransactionQueue(function fetchIndexData(tx, args, success, error) {
+                    var cursor = new idbModules.IDBCursor(key, "next", me.objectStore, me, me.name, "key");
+                    cursor.__count(tx, success, error);
+                });
+            } else {
+                return this.__fetchIndexData(key, "count");
+            }
         }
     };
 
