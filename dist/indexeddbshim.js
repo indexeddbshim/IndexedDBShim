@@ -1623,16 +1623,15 @@ var idbModules = {  // jshint ignore:line
         });
     };
 
-    IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error, recordsToLoad) {
-        recordsToLoad = recordsToLoad || 1;
+    IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
+        var me = this;
 
-        if (this.__multiEntryOffset && this.__multiEntryOffset < recordsToLoad) {
-            idbModules.DEBUG && console.log("Reached end of cursors");
+        if (me.__prefetchedData && me.__prefetchedData.length === me.__prefetchedIndex) {
+            idbModules.DEBUG && console.log("Reached end of multiEntry cursor");
             success(undefined, undefined, undefined);
             return;
         }
 
-        var me = this;
         var quotedKeyColumnName = idbModules.util.quote(me.__keyColumnName);
         var sql = ["SELECT * FROM", idbModules.util.quote(me.__store.name)];
         var sqlValues = [];
@@ -1657,7 +1656,6 @@ var idbModules = {  // jshint ignore:line
         var direction = me.direction === 'prev' || me.direction === 'prevunique' ? 'DESC' : 'ASC';
 
         sql.push("ORDER BY key", direction);
-        sql.push("LIMIT", recordsToLoad, "OFFSET", me.__multiEntryOffset || 0);
         sql = sql.join(" ");
         idbModules.DEBUG && console.log(sql, sqlValues);
 
@@ -1702,27 +1700,28 @@ var idbModules = {  // jshint ignore:line
                     return 0;
                 });
 
-                if (rows.length > 1) {
-                    me.__prefetchedData = {
-                        data: rows,
-                        length: rows.length,
-                        item: function (index) {
-                            return this.data[index];
-                        }
-                    };
-                    me.__prefetchedIndex = 0;
+                me.__prefetchedData = {
+                    data: rows,
+                    length: rows.length,
+                    item: function (index) {
+                        return this.data[index];
+                    }
+                };
+                me.__prefetchedIndex = 0;
 
-                    idbModules.DEBUG && console.log("Preloaded " + me.__prefetchedData.length + " records for cursor");
+                if (rows.length > 1) {
+                    idbModules.DEBUG && console.log("Preloaded " + me.__prefetchedData.length + " records for multiEntry cursor");
                     me.__decode(rows[0], success);
                 } else if (rows.length === 1) {
+                    idbModules.DEBUG && console.log("Reached end of multiEntry cursor");
                     me.__decode(rows[0], success);
                 } else {
-                    idbModules.DEBUG && console.log("Reached end of cursors");
+                    idbModules.DEBUG && console.log("Reached end of multiEntry cursor");
                     success(undefined, undefined, undefined);
                 }
             }
             else {
-                idbModules.DEBUG && console.log("Reached end of cursors");
+                idbModules.DEBUG && console.log("Reached end of multiEntry cursor");
                 success(undefined, undefined, undefined);
             }
         }, function (tx, err) {
