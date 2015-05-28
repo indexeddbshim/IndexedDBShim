@@ -159,7 +159,8 @@
 
                 for (var i = 0; i < data.rows.length; i++) {
                     var rowItem = data.rows.item(i);
-                    var matches = idbModules.Key.findMultiEntryMatches(idbModules.Key.decode(rowItem[me.__keyColumnName], true), me.__range);
+                    var rowKey = idbModules.Key.decode(rowItem[me.__keyColumnName], true);
+                    var matches = idbModules.Key.findMultiEntryMatches(rowKey, me.__range);
 
                     for (var j = 0; j < matches.length; j++) {
                         var matchingKey = matches[j];
@@ -230,7 +231,8 @@
             me.key = key === undefined ? null : key;
             me.value = value === undefined ? null : value;
             me.primaryKey = primaryKey === undefined ? null : primaryKey;
-            success(key === undefined ? null : me, me.__req);
+            var result = key === undefined ? null : me;
+            success(result, me.__req);
         };
     };
 

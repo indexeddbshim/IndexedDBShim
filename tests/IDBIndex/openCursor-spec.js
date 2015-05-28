@@ -238,6 +238,48 @@ describe('IDBIndex.openCursor', function() {
         });
     });
 
+    it('should allow multiple simultaneous cursors', function(done) {
+        util.createDatabase('inline', function(err, db) {
+            var tx = db.transaction('inline', 'readwrite');
+            var store = tx.objectStore('inline');
+            tx.onerror = function(event) {
+                done(event.target.error.message);
+            };
+
+            store.add({id: 1});
+            store.add({id: 2});
+            store.add({id: 3});
+            store.add({id: 4});
+            store.add({id: 5});
+
+            var cursor1 = store.openCursor(IDBKeyRange.lowerBound(0), 'next');
+            var cursor2 = store.openCursor(IDBKeyRange.lowerBound(0), 'prev');
+
+            var counter1 = 1, counter2 = 5;
+
+            cursor1.onsuccess = sinon.spy(function(event) {
+                if (cursor1.result) {
+                    expect(cursor1.result.key).to.equal(counter1++);
+                    cursor1.result.continue();
+                }
+            });
+
+            cursor2.onsuccess = sinon.spy(function(event) {
+                if (cursor2.result) {
+                    expect(cursor2.result.key).to.equal(counter2--);
+                    cursor2.result.continue();
+                }
+            });
+
+            tx.oncomplete = function() {
+                sinon.assert.callCount(cursor1.onsuccess, 6);
+                sinon.assert.callCount(cursor2.onsuccess, 6);
+                db.close();
+                done();
+            };
+        });
+    });
+
     it('should get hundreds of records', function(done) {
         this.timeout(10000);
         this.slow(10000);
@@ -246,7 +288,9 @@ describe('IDBIndex.openCursor', function() {
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
             var index = store.index('inline-index');
-            tx.onerror = done;
+            tx.onerror = function(event) {
+                done(event.target.error.message);
+            };
 
             for (var i = 1; i < 500; i++) {
                 store.add({id: i});
@@ -460,18 +504,21 @@ describe('IDBIndex.openCursor', function() {
             }
 
             util.query(source, keyRange, direction, function(err, data) {
-                if (data.length !== expected.length) {
-                    throw new Error('Expected ' + expected.length + ' results, but got ' + data.length + '\n' + JSON.stringify(data, null, 2));
+                var expectedLength = typeof(expected) === 'number' ? expected : expected.length;
+                if (data.length !== expectedLength) {
+                    throw new Error('Expected ' + expectedLength + ' results, but got ' + data.length + '\n' + JSON.stringify(data.slice(0, 10), null, 2));
                 }
-                for (var i = 0; i < data.length; i++) {
-                    ['primaryKey', 'key', 'value'].forEach(function(prop) {
-                        try {
-                            expect(data[i][prop]).to.deep.equal(expected[i][prop]);
-                        }
-                        catch (e) {
-                            throw new Error('The ' + prop + ' of result #' + (i + 1) + ' (of ' + data.length + ') does not match.\n' + JSON.stringify(data[i], null, 2));
-                        }
-                    });
+                if (expected instanceof Array) {
+                    for (var i = 0; i < data.length; i++) {
+                        ['primaryKey', 'key', 'value'].forEach(function(prop) {
+                            try {
+                                expect(data[i][prop]).to.deep.equal(expected[i][prop]);
+                            }
+                            catch (e) {
+                                throw new Error('The ' + prop + ' of result #' + (i + 1) + ' (of ' + data.length + ') does not match.\n' + JSON.stringify(data[i], null, 2));
+                            }
+                        });
+                    }
                 }
                 queriesCompleted++;
             });
@@ -887,6 +934,48 @@ describe('IDBIndex.openCursor', function() {
                         {primaryKey: ['a','b','c'], key: 'b', value: {id: ['a','b','c']}}
                     ]);
                 }
+            });
+        });
+
+        util.skipIf(env.browser.isIE,'should query multi-entry indexes with hundreds of records', function(done) {
+            // BUG: IE's native IndexedDB does not support multi-entry indexes
+            this.timeout(40000);
+            this.slow(10000);
+
+            util.createDatabase('inline', 'multi-entry-index', function(err, db) {
+                var tx = db.transaction('inline', 'readwrite');
+                var store = tx.objectStore('inline');
+                var index = store.index('multi-entry-index');
+                tx.onerror = function(event) {
+                    done(event.target.error.message);
+                };
+                tx.oncomplete = function() {
+                    expect(queries).to.equal(queriesCompleted);
+                    db.close();
+                    done();
+                };
+
+                for (var i = 0; i < 500; i++) {
+                    store.add({id: ['a', 'b', i]});
+                    store.add({id: ['a', 'c', i]});
+                }
+
+                // Object Store queries
+                query(store, 'a', 0);
+                query(store, ['b'], 0);
+                query(store, ['a', 'b', 450], 1);
+                query(store, IDBKeyRange.lowerBound(['a']), 1000);
+                query(store, IDBKeyRange.upperBound(['a', 'c', 400]), 901);
+                query(store, IDBKeyRange.bound(['a', 'b', 200], ['a', 'c'], true, true), 299);
+
+                // Index queries
+                query(index, IDBKeyRange.only('a'), 1000);
+                query(index, IDBKeyRange.bound('a', 'c'), 2000);
+                query(index, IDBKeyRange.lowerBound(['a']), 0);
+                query(index, IDBKeyRange.lowerBound('b', true), 500);
+                query(index, IDBKeyRange.lowerBound('c', true), 0);
+                query(index, IDBKeyRange.upperBound(250, true), 500);
+                query(index, IDBKeyRange.upperBound(250, false), 502);
             });
         });
     });

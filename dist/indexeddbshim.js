@@ -801,7 +801,7 @@ var idbModules = {  // jshint ignore:line
      * Encodes the keys based on their types. This is required to maintain collations
      */
     var collations = ["undefined", "number", "date", "string", "array"];
-    
+
     /**
      * The sign values for numbers, ordered from least to greatest.
      *  - "negativeInfinity": Sorts below all other values.
@@ -812,7 +812,7 @@ var idbModules = {  // jshint ignore:line
      *  - "positiveInfinity": Sorts above all other values.
      */
     var signValues = ["negativeInfinity", "bigNegative", "smallNegative", "smallPositive", "bigPositive", "positiveInfinity"];
-    
+
     var types = {
         // Undefined is not a valid key type.  It's only used when there is no key.
         undefined: {
@@ -858,7 +858,7 @@ var idbModules = {  // jshint ignore:line
                 // Truncate leading zeros.
                 key32 = key32.slice(significantDigitIndex);
                 var sign, exponent = zeros(2), mantissa = zeros(11);
-                
+
                 // Finite cases:
                 if (isFinite(key)) {
                     // Negative cases:
@@ -891,7 +891,7 @@ var idbModules = {  // jshint ignore:line
                             sign = signValues.indexOf("bigPositive");
                             exponent = padBase32Exponent(
                                 (decimalIndex !== -1) ? decimalIndex : key32.length
-                            ); 
+                            );
                             mantissa = padBase32Mantissa(key32);
                         }
                     }
@@ -912,7 +912,7 @@ var idbModules = {  // jshint ignore:line
                 var sign = +key.substr(2, 1);
                 var exponent = key.substr(3, 2);
                 var mantissa = key.substr(5, 11);
-                
+
                 switch (signValues[sign]) {
                     case "negativeInfinity":
                         return -Infinity;
@@ -998,7 +998,7 @@ var idbModules = {  // jshint ignore:line
         n = n.toString(32);
         return (n.length === 1) ? "0" + n : n;
     }
-    
+
     /**
      * Return a padded base-32 mantissa.
      * @param {string}
@@ -1019,7 +1019,7 @@ var idbModules = {  // jshint ignore:line
         }
         return flipped;
     }
-    
+
     /**
      * Base-32 power function.
      * RESEARCH: This function does not precisely decode floats because it performs
@@ -1027,7 +1027,7 @@ var idbModules = {  // jshint ignore:line
      * recovered exactly?
      * Someone may have already figured out a good way to store JavaScript floats as
      * binary strings and convert back. Barring a better method, however, one route
-     * may be to generate decimal strings that `parseFloat` decodes predictably. 
+     * may be to generate decimal strings that `parseFloat` decodes predictably.
      * @param {string}
      * @param {string}
      * @return {number}
@@ -1054,15 +1054,15 @@ var idbModules = {  // jshint ignore:line
             }
         }
     }
-    
+
     /**
-     * 
+     *
      */
     function roundToPrecision(num, precision) {
         precision = precision || 16;
         return parseFloat(num.toPrecision(precision));
     }
-    
+
     /**
      * Returns a string of n zeros.
      * @param {number}
@@ -1075,7 +1075,7 @@ var idbModules = {  // jshint ignore:line
         }
         return result;
     }
-    
+
     /**
      * Negates numeric strings.
      * @param {string}
@@ -1170,20 +1170,21 @@ var idbModules = {  // jshint ignore:line
     function isKeyInRange(key, range) {
         var lowerMatch = range.lower === undefined;
         var upperMatch = range.upper === undefined;
+        var encodedKey = idbModules.Key.encode(key, true);
 
         if (range.lower !== undefined) {
-            if (range.lowerOpen && key > range.lower) {
+            if (range.lowerOpen && encodedKey > range.__lower) {
                 lowerMatch = true;
             }
-            if (!range.lowerOpen && key >= range.lower) {
+            if (!range.lowerOpen && encodedKey >= range.__lower) {
                 lowerMatch = true;
             }
         }
         if (range.upper !== undefined) {
-            if (range.upperOpen && key < range.upper) {
+            if (range.upperOpen && encodedKey < range.__upper) {
                 upperMatch = true;
             }
-            if (!range.upperOpen && key <= range.upper) {
+            if (!range.upperOpen && encodedKey <= range.__upper) {
                 upperMatch = true;
             }
         }
@@ -1669,7 +1670,8 @@ var idbModules = {  // jshint ignore:line
 
                 for (var i = 0; i < data.rows.length; i++) {
                     var rowItem = data.rows.item(i);
-                    var matches = idbModules.Key.findMultiEntryMatches(idbModules.Key.decode(rowItem[me.__keyColumnName], true), me.__range);
+                    var rowKey = idbModules.Key.decode(rowItem[me.__keyColumnName], true);
+                    var matches = idbModules.Key.findMultiEntryMatches(rowKey, me.__range);
 
                     for (var j = 0; j < matches.length; j++) {
                         var matchingKey = matches[j];
@@ -1740,7 +1742,8 @@ var idbModules = {  // jshint ignore:line
             me.key = key === undefined ? null : key;
             me.value = value === undefined ? null : value;
             me.primaryKey = primaryKey === undefined ? null : primaryKey;
-            success(key === undefined ? null : me, me.__req);
+            var result = key === undefined ? null : me;
+            success(result, me.__req);
         };
     };
 

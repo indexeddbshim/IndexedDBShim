@@ -5,7 +5,7 @@
      * Encodes the keys based on their types. This is required to maintain collations
      */
     var collations = ["undefined", "number", "date", "string", "array"];
-    
+
     /**
      * The sign values for numbers, ordered from least to greatest.
      *  - "negativeInfinity": Sorts below all other values.
@@ -16,7 +16,7 @@
      *  - "positiveInfinity": Sorts above all other values.
      */
     var signValues = ["negativeInfinity", "bigNegative", "smallNegative", "smallPositive", "bigPositive", "positiveInfinity"];
-    
+
     var types = {
         // Undefined is not a valid key type.  It's only used when there is no key.
         undefined: {
@@ -62,7 +62,7 @@
                 // Truncate leading zeros.
                 key32 = key32.slice(significantDigitIndex);
                 var sign, exponent = zeros(2), mantissa = zeros(11);
-                
+
                 // Finite cases:
                 if (isFinite(key)) {
                     // Negative cases:
@@ -95,7 +95,7 @@
                             sign = signValues.indexOf("bigPositive");
                             exponent = padBase32Exponent(
                                 (decimalIndex !== -1) ? decimalIndex : key32.length
-                            ); 
+                            );
                             mantissa = padBase32Mantissa(key32);
                         }
                     }
@@ -116,7 +116,7 @@
                 var sign = +key.substr(2, 1);
                 var exponent = key.substr(3, 2);
                 var mantissa = key.substr(5, 11);
-                
+
                 switch (signValues[sign]) {
                     case "negativeInfinity":
                         return -Infinity;
@@ -202,7 +202,7 @@
         n = n.toString(32);
         return (n.length === 1) ? "0" + n : n;
     }
-    
+
     /**
      * Return a padded base-32 mantissa.
      * @param {string}
@@ -223,7 +223,7 @@
         }
         return flipped;
     }
-    
+
     /**
      * Base-32 power function.
      * RESEARCH: This function does not precisely decode floats because it performs
@@ -231,7 +231,7 @@
      * recovered exactly?
      * Someone may have already figured out a good way to store JavaScript floats as
      * binary strings and convert back. Barring a better method, however, one route
-     * may be to generate decimal strings that `parseFloat` decodes predictably. 
+     * may be to generate decimal strings that `parseFloat` decodes predictably.
      * @param {string}
      * @param {string}
      * @return {number}
@@ -258,15 +258,15 @@
             }
         }
     }
-    
+
     /**
-     * 
+     *
      */
     function roundToPrecision(num, precision) {
         precision = precision || 16;
         return parseFloat(num.toPrecision(precision));
     }
-    
+
     /**
      * Returns a string of n zeros.
      * @param {number}
@@ -279,7 +279,7 @@
         }
         return result;
     }
-    
+
     /**
      * Negates numeric strings.
      * @param {string}
@@ -374,20 +374,21 @@
     function isKeyInRange(key, range) {
         var lowerMatch = range.lower === undefined;
         var upperMatch = range.upper === undefined;
+        var encodedKey = idbModules.Key.encode(key, true);
 
         if (range.lower !== undefined) {
-            if (range.lowerOpen && key > range.lower) {
+            if (range.lowerOpen && encodedKey > range.__lower) {
                 lowerMatch = true;
             }
-            if (!range.lowerOpen && key >= range.lower) {
+            if (!range.lowerOpen && encodedKey >= range.__lower) {
                 lowerMatch = true;
             }
         }
         if (range.upper !== undefined) {
-            if (range.upperOpen && key < range.upper) {
+            if (range.upperOpen && encodedKey < range.__upper) {
                 upperMatch = true;
             }
-            if (!range.upperOpen && key <= range.upper) {
+            if (!range.upperOpen && encodedKey <= range.__upper) {
                 upperMatch = true;
             }
         }
