@@ -1523,6 +1523,10 @@ var idbModules = {  // jshint ignore:line
      * @param {string} valueColumnName
      */
     function IDBCursor(range, direction, store, source, keyColumnName, valueColumnName){
+        // Calling openCursor on an index or objectstore with null is allowed but we treat it as undefined internally
+        if (range === null) {
+            range = undefined;
+        }
         if (range !== undefined && !(range instanceof idbModules.IDBKeyRange)) {
             range = new idbModules.IDBKeyRange(range, range, false, false);
         }
