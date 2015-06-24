@@ -407,6 +407,7 @@ describe('IDBIndex.openCursor', function() {
             getKey(Infinity);                      // infinity
             getKey(-Infinity);                     // negative infinity
             getKey(new Date(2000, 1, 2));          // Date
+            getKey(null);                          // null
 
             if (env.isShimmed || !env.browser.isIE) {
                 getKey([]);                        // empty array
