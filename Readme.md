@@ -49,6 +49,38 @@ Add the script to your page
 
 If the browser already natively supports IndexedDB, then the script won't do anything.  Otherwise, it'll add the [IndexedDB API](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) to the browser.   Either way, you can use IndexedDB just like normal. [Here's an example](https://gist.github.com/BigstickCarpet/a0d6389a5d0e3a24814b)
 
+Quickstart
+----------
+
+For the most common use cases, you can get an IndexedDB API instance that will work across all browsers using the function below. It will always return a Web SQL shim for browsers with bad IndexedDB implementations (Safari and IE) or else will return the native IndexedDB instance if available or else fall back to the Web SQL shim. See sections below for more details.
+
+
+```js
+function getIndexedDB() {
+
+    var isSafari = navigator.userAgent.indexOf('Safari') != -1 &&
+        navigator.userAgent.indexOf('Chrome') == -1 &&
+        navigator.userAgent.indexOf('Android') == -1;
+
+    var isIE = !!window.msIndexedDB;
+
+    var forceShim = isSafari || isIE;
+
+    if (forceShim) {
+        window.shimIndexedDB.__useShim();
+    }
+
+    if (isSafari) {
+        // can't replace window.indexedDB in Safari so always use shimIndexedDB
+        return window.shimIndexedDB;
+    } else {
+        // Try use window.indexedDB for other browsers as it might be a patched up version (for IE for example)
+        return window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB || window.shimIndexedDB;
+    }
+}
+```
+
+
 
 Fixing Problems in Native IndexedDB
 --------------------------
