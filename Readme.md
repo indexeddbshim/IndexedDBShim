@@ -47,7 +47,7 @@ Add the script to your page
 <script src="dist/indexeddbshim.min.js"></script>
 ````
 
-If the browser already natively supports IndexedDB, then the script won't do anything.  Otherwise, it'll add the [IndexedDB API](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) to the browser.   Either way, you can use IndexedDB just like normal. [Here's an example](https://gist.github.com/BigstickCarpet/a0d6389a5d0e3a24814b)
+If the browser already natively supports IndexedDB, then the script won't do anything.  Otherwise, it'll add the [IndexedDB API](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) to the browser.
 
 Quickstart
 ----------
