@@ -49,11 +49,12 @@ Add the script to your page
 
 If the browser already natively supports IndexedDB, then the script won't do anything.  Otherwise, it'll add the [IndexedDB API](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) to the browser.
 
-Quickstart
-----------
+Common Usage Scenario
+---------------------
 
-For the most common use cases, you can get an IndexedDB API instance that will work across all browsers using the function below. It will always return a Web SQL shim for browsers with bad IndexedDB implementations (Safari and IE) or else will return the native IndexedDB instance if available or else fall back to the Web SQL shim. See sections below for more details.
+Shown below is one common use case where both Safari and IE's bad IndexedDB implementations are shimmed over, with the code falling back to either a native IndexedDB implementation or a Web SQL shim otherwise.
 
+Note: Depending on your app's requirements, you may want to adjust this logic. For example, you may be OK with IE's implementation if you aren't using compound keys or you may want to _always_ use the shim to avoid inconsistencies between the native implementations. See the sections below for more details.
 
 ```js
 function getIndexedDB() {
@@ -79,8 +80,6 @@ function getIndexedDB() {
     }
 }
 ```
-
-
 
 Fixing Problems in Native IndexedDB
 --------------------------
