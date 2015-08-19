@@ -22,7 +22,7 @@ module.exports = function(grunt) {
 			options: {
 				banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
 				sourceMap: 'dist/<%=pkg.name%>.min.js.map',
-				sourceMapRoot: 'http://nparashuram.com/IndexedDBShim/',
+				sourceMapRoot: 'http://nparashuram.com/IndexedDBShim/dist/',
 				sourceMappingURL: 'http://nparashuram.com/IndexedDBShim/dist/<%=pkg.name%>.min.js.map'
 			},
 			all: {
