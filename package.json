@@ -5,8 +5,7 @@
   "description": "A polyfill for IndexedDB using WebSql",
   "scripts": {
     "start": "grunt",
-    "test": "grunt test",
-    "version": "grunt && git add -A dist"
+    "test": "grunt test"
   },
   "repository": {
     "type": "git",
