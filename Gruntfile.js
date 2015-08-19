@@ -9,7 +9,6 @@ module.exports = function(grunt) {
 		saucekey = process.env.SAUCE_ACCESS_KEY;
 	}
 	var pkg = require('./package.json');
-    bumpVersion(pkg);
 	grunt.initConfig({
 		pkg: pkg,
 		concat: {
@@ -98,13 +97,3 @@ module.exports = function(grunt) {
 	grunt.registerTask('default', 'build');
 	grunt.registerTask('dev', ['build', 'connect', 'watch']);
 };
-
-/**
- * Bumps the revision number of the node package object, so the the banner in indexeddbshim.min.js
- * will match the next upcoming revision of the package.
- */
-function bumpVersion(pkg) {
-    var version = pkg.version.split('.');
-    version[2] = parseInt(version[2]) + 1;
-    pkg.version = version.join('.');
-}

@@ -6,7 +6,7 @@
   "scripts": {
     "start": "grunt",
     "test": "grunt test",
-    "postversion": "grunt"
+    "version": "grunt && git add -A dist"
   },
   "repository": {
     "type": "git",
