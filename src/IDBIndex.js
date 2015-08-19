@@ -263,8 +263,11 @@
 
     IDBIndex.prototype.count = function(key) {
         // key is optional
-        if (arguments.length === 0) {
+        if (key === undefined) {
             return this.__fetchIndexData("count");
+        }
+        else if (key instanceof idbModules.IDBKeyRange) {
+            return new idbModules.IDBCursor(key, "next", this.objectStore, this, this.name, "value", true).__req;
         }
         else {
             return this.__fetchIndexData(key, "count");

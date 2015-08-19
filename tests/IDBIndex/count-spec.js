@@ -10,7 +10,7 @@ describe('IDBIndex.count', function() {
 
             var store = tx.objectStore('inline');
             var storeCount = store.count();
-            var indexCount = store.index('inline-index') .count();
+            var indexCount = store.index('inline-index').count();
 
             expect(storeCount).to.be.an.instanceOf(IDBRequest);
             expect(indexCount).to.be.an.instanceOf(IDBRequest);
@@ -29,7 +29,7 @@ describe('IDBIndex.count', function() {
 
             var store = tx.objectStore('inline');
             var storeCount = store.count();
-            var indexCount = store.index('inline-index') .count();
+            var indexCount = store.index('inline-index').count();
 
             expect(storeCount.transaction).to.equal(tx);
             expect(indexCount.transaction).to.equal(tx);
@@ -56,7 +56,7 @@ describe('IDBIndex.count', function() {
                 expect(event.target).to.equal(storeCount);
             });
 
-            var indexCount = store.index('inline-index') .count();
+            var indexCount = store.index('inline-index').count();
             indexCount.onerror = sinon.spy();
             indexCount.onsuccess = sinon.spy(function(event) {
                 expect(event).to.be.an.instanceOf(env.Event);
@@ -83,7 +83,7 @@ describe('IDBIndex.count', function() {
 
             var store = tx.objectStore('out-of-line');
             var storeCount = store.count();
-            var indexCount = store.index('inline-index') .count();
+            var indexCount = store.index('inline-index').count();
 
             tx.oncomplete = function() {
                 expect(storeCount.result).to.equal(0);
@@ -106,7 +106,7 @@ describe('IDBIndex.count', function() {
             store.add({id: 'a'}, 12345);
 
             var storeCount = store.count();
-            var indexCount = store.index('inline-index') .count();
+            var indexCount = store.index('inline-index').count();
 
             tx.oncomplete = function() {
                 expect(storeCount.result).to.equal(1);
@@ -129,7 +129,7 @@ describe('IDBIndex.count', function() {
             store.add({id: 'c'}, 33);
 
             var storeCount = store.count();
-            var indexCount = store.index('inline-index') .count();
+            var indexCount = store.index('inline-index').count();
 
             tx.oncomplete = function() {
                 expect(storeCount.result).to.equal(3);
@@ -141,7 +141,62 @@ describe('IDBIndex.count', function() {
         });
     });
 
-    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled),'should return the count for multi-entry indexes', function(done) {
+    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should return the count of all records if key is undefined', function(done) {
+        // BUG: IE throws an error if the key is undefined
+        util.createDatabase('inline', 'inline-index', function(err, db) {
+            var tx = db.transaction('inline', 'readwrite');
+            tx.onerror = done;
+
+            var store = tx.objectStore('inline');
+            store.add({id: 'a'});
+            store.add({id: 'b'});
+            store.add({id: 'c'});
+
+            var storeCount = store.count(undefined);
+            var indexCount = store.index('inline-index').count(undefined);
+
+            tx.oncomplete = function() {
+                expect(storeCount.result).to.equal(3);
+                expect(indexCount.result).to.equal(3);
+
+                db.close();
+                done();
+            };
+        });
+    });
+
+    it('should return the count for multiple records filtered by range', function(done) {
+        util.createDatabase('inline', 'inline-index', function(err, db) {
+            var tx = db.transaction('inline', 'readwrite');
+            tx.onerror = done;
+
+            var store = tx.objectStore('inline');
+            var index = store.index('inline-index');
+
+            store.add({id: 'a'});
+            store.add({id: 'b'});
+            store.add({id: 'c'});
+
+            var storeCount = store.count();
+            var indexCount = index.count();
+
+            var range = IDBKeyRange.bound('a', 'b', false, false);
+            var filteredStoreCount = store.count(range);
+            var filteredIndexCount = index.count(range);
+
+            tx.oncomplete = function() {
+                expect(storeCount.result).to.equal(3);
+                expect(indexCount.result).to.equal(3);
+                expect(filteredStoreCount.result).to.equal(2);
+                expect(filteredIndexCount.result).to.equal(2);
+
+                db.close();
+                done();
+            };
+        });
+    });
+
+    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should return the count for multi-entry indexes', function(done) {
         // BUG: IE's native IndexedDB does not support multi-entry indexes
         this.timeout(10000);
         this.slow(10000);
@@ -198,7 +253,7 @@ describe('IDBIndex.count', function() {
         });
     });
 
-    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled),'should return the count for unique, multi-entry indexes', function(done) {
+    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should return the count for unique, multi-entry indexes', function(done) {
         // BUG: IE's native IndexedDB does not support multi-entry indexes
         this.timeout(10000);
         this.slow(10000);
@@ -255,11 +310,43 @@ describe('IDBIndex.count', function() {
         });
     });
 
+    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should return the count for unique, multi-entry indexes, filtered by range', function(done) {
+        // BUG: IE's native IndexedDB does not support multi-entry indexes
+        util.createDatabase('inline', 'unique-multi-entry-index', function(err, db) {
+            var tx = db.transaction('inline', 'readwrite');
+            var store = tx.objectStore('inline');
+            var index = store.index('unique-multi-entry-index');
+            tx.onerror = function(event) {
+                done(event.target.error.message);
+            };
+
+            store.add({id: ['a'], value: 1});
+            store.add({id: ['b', 'c'], value: 2});
+            store.add({id: ['d', 'e'], value: 3});
+
+            var storeCount = store.count();
+            var indexCount = index.count();
+
+            var filteredStoreCount = store.count(IDBKeyRange.bound(['a'], ['c']));
+            var filteredIndexCount = index.count(IDBKeyRange.bound('b', 'd'));
+
+            tx.oncomplete = function() {
+                expect(storeCount.result).to.equal(3);
+                expect(indexCount.result).to.equal(5);
+                expect(filteredStoreCount.result).to.equal(2);
+                expect(filteredIndexCount.result).to.equal(3);
+
+                db.close();
+                done();
+            };
+        });
+    });
+
     it('should return different values as records are added/removed', function(done) {
         util.createDatabase('inline', 'inline-index', function(err, db) {
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
-            var index = store.index('inline-index') ;
+            var index = store.index('inline-index');
             tx.onerror = done;
 
             var storeCount1 = store.count();
@@ -302,7 +389,7 @@ describe('IDBIndex.count', function() {
         });
     });
 
-    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled),'should return different values as records are added/removed from multi-entry indexes', function(done) {
+    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should return different values as records are added/removed from multi-entry indexes', function(done) {
         // BUG: IE's native IndexedDB does not support multi-entry indexes
         util.createDatabase('inline', 'multi-entry-index', function(err, db) {
             var tx = db.transaction('inline', 'readwrite');
@@ -343,7 +430,6 @@ describe('IDBIndex.count', function() {
             var storeCount7 = store.count();
             var indexCount7 = index.count();
 
-
             tx.oncomplete = function() {
                 expect(storeCount1.result).to.equal(0);
                 expect(storeCount2.result).to.equal(1);
@@ -367,7 +453,7 @@ describe('IDBIndex.count', function() {
         });
     });
 
-    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled),'should return different values as records are added/removed from unique, multi-entry indexes', function(done) {
+    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should return different values as records are added/removed from unique, multi-entry indexes', function(done) {
         // BUG: IE's native IndexedDB does not support multi-entry indexes
         util.createDatabase('inline', 'unique-multi-entry-index', function(err, db) {
             var tx = db.transaction('inline', 'readwrite');
@@ -403,7 +489,6 @@ describe('IDBIndex.count', function() {
             var storeCount6 = store.count();
             var indexCount6 = index.count();
 
-
             tx.oncomplete = function() {
                 expect(storeCount1.result).to.equal(0);
                 expect(storeCount2.result).to.equal(1);
@@ -429,7 +514,7 @@ describe('IDBIndex.count', function() {
         util.createDatabase('inline', 'inline-index', function(err, db) {
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
-            var index = store.index('inline-index') ;
+            var index = store.index('inline-index');
 
             setTimeout(function() {
                 tryToCount(store);

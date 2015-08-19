@@ -112,7 +112,9 @@ var idbModules = {  // jshint ignore:line
      * This is used for browsers that DON'T support WebSQL but DO support IndexedDB
      */
     function polyfill() {
-        if (navigator.userAgent.match(/MSIE/) || navigator.userAgent.match(/Trident/)) {
+        if (navigator.userAgent.match(/MSIE/) ||
+            navigator.userAgent.match(/Trident/) ||
+            navigator.userAgent.match(/Edge/)) {
             // Internet Explorer's native IndexedDB does not support compound keys
             compoundKeyPolyfill();
         }
@@ -1521,8 +1523,9 @@ var idbModules = {  // jshint ignore:line
      * @param {IDBObjectStore|IDBIndex} source
      * @param {string} keyColumnName
      * @param {string} valueColumnName
+     * @param {boolean} count
      */
-    function IDBCursor(range, direction, store, source, keyColumnName, valueColumnName){
+    function IDBCursor(range, direction, store, source, keyColumnName, valueColumnName, count){
         // Calling openCursor on an index or objectstore with null is allowed but we treat it as undefined internally
         if (range === null) {
             range = undefined;
@@ -1545,6 +1548,7 @@ var idbModules = {  // jshint ignore:line
         this.__keyColumnName = keyColumnName;
         this.__valueColumnName = valueColumnName;
         this.__valueDecoder = valueColumnName === "value" ? idbModules.Sca : idbModules.Key;
+        this.__count = count;
         this.__offset = -1; // Setting this to -1 as continue will set it to 0 anyway
         this.__lastKeyContinued = undefined; // Used when continuing with a key
         this.__multiEntryIndex = source instanceof idbModules.IDBIndex ? source.multiEntry : false;
@@ -1601,15 +1605,20 @@ var idbModules = {  // jshint ignore:line
         // Determine the ORDER BY direction based on the cursor.
         var direction = me.direction === 'prev' || me.direction === 'prevunique' ? 'DESC' : 'ASC';
 
-        sql.push("ORDER BY", quotedKeyColumnName, direction);
-        sql.push("LIMIT", recordsToLoad, "OFFSET", me.__offset);
+        if (!me.__count) {
+            sql.push("ORDER BY", quotedKeyColumnName, direction);
+            sql.push("LIMIT", recordsToLoad, "OFFSET", me.__offset);
+        }
         sql = sql.join(" ");
         idbModules.DEBUG && console.log(sql, sqlValues);
 
         me.__prefetchedData = null;
         me.__prefetchedIndex = 0;
         tx.executeSql(sql, sqlValues, function (tx, data) {
-            if (data.rows.length > 1) {
+            if (me.__count) {
+                success(undefined, data.rows.length, undefined);
+            }
+            else if (data.rows.length > 1) {
                 me.__prefetchedData = data.rows;
                 me.__prefetchedIndex = 0;
                 idbModules.DEBUG && console.log("Preloaded " + me.__prefetchedData.length + " records for cursor");
@@ -1660,7 +1669,9 @@ var idbModules = {  // jshint ignore:line
         // Determine the ORDER BY direction based on the cursor.
         var direction = me.direction === 'prev' || me.direction === 'prevunique' ? 'DESC' : 'ASC';
 
-        sql.push("ORDER BY key", direction);
+        if (!me.__count) {
+            sql.push("ORDER BY key", direction);
+        }
         sql = sql.join(" ");
         idbModules.DEBUG && console.log(sql, sqlValues);
 
@@ -1715,7 +1726,10 @@ var idbModules = {  // jshint ignore:line
                 };
                 me.__prefetchedIndex = 0;
 
-                if (rows.length > 1) {
+                if (me.__count) {
+                    success(undefined, rows.length, undefined);
+                }
+                else if (rows.length > 1) {
                     idbModules.DEBUG && console.log("Preloaded " + me.__prefetchedData.length + " records for multiEntry cursor");
                     me.__decode(rows[0], success);
                 } else if (rows.length === 1) {
@@ -1743,11 +1757,16 @@ var idbModules = {  // jshint ignore:line
     IDBCursor.prototype.__onsuccess = function(success) {
         var me = this;
         return function(key, value, primaryKey) {
-            me.key = key === undefined ? null : key;
-            me.value = value === undefined ? null : value;
-            me.primaryKey = primaryKey === undefined ? null : primaryKey;
-            var result = key === undefined ? null : me;
-            success(result, me.__req);
+            if (me.__count) {
+                success(value, me.__req);
+            }
+            else {
+                me.key = key === undefined ? null : key;
+                me.value = value === undefined ? null : value;
+                me.primaryKey = primaryKey === undefined ? null : primaryKey;
+                var result = key === undefined ? null : me;
+                success(result, me.__req);
+            }
         };
     };
 
@@ -2134,8 +2153,11 @@ var idbModules = {  // jshint ignore:line
 
     IDBIndex.prototype.count = function(key) {
         // key is optional
-        if (arguments.length === 0) {
+        if (key === undefined) {
             return this.__fetchIndexData("count");
+        }
+        else if (key instanceof idbModules.IDBKeyRange) {
+            return new idbModules.IDBCursor(key, "next", this.objectStore, this, this.name, "value", true).__req;
         }
         else {
             return this.__fetchIndexData(key, "count");
@@ -2509,25 +2531,30 @@ var idbModules = {  // jshint ignore:line
     };
 
     IDBObjectStore.prototype.count = function(key) {
-        var me = this;
-        var hasKey = false;
-
-        // key is optional
-        if (arguments.length > 0) {
-            hasKey = true;
-            idbModules.Key.validate(key);
+        if (key instanceof idbModules.IDBKeyRange) {
+            return new idbModules.IDBCursor(key, "next", this, this, "key", "value", true).__req;
         }
+        else {
+            var me = this;
+            var hasKey = false;
 
-        return me.transaction.__addToTransactionQueue(function objectStoreCount(tx, args, success, error) {
-            var sql = "SELECT * FROM " + idbModules.util.quote(me.name) + (hasKey ? " WHERE key = ?" : "");
-            var sqlValues = [];
-            hasKey && sqlValues.push(idbModules.Key.encode(key));
-            tx.executeSql(sql, sqlValues, function(tx, data) {
-                success(data.rows.length);
-            }, function(tx, err) {
-                error(err);
+            // key is optional
+            if (key !== undefined) {
+                hasKey = true;
+                idbModules.Key.validate(key);
+            }
+
+            return me.transaction.__addToTransactionQueue(function objectStoreCount(tx, args, success, error) {
+                var sql = "SELECT * FROM " + idbModules.util.quote(me.name) + (hasKey ? " WHERE key = ?" : "");
+                var sqlValues = [];
+                hasKey && sqlValues.push(idbModules.Key.encode(key));
+                tx.executeSql(sql, sqlValues, function(tx, data) {
+                    success(data.rows.length);
+                }, function(tx, err) {
+                    error(err);
+                });
             });
-        });
+        }
     };
 
     IDBObjectStore.prototype.openCursor = function(range, direction) {

@@ -362,25 +362,30 @@
     };
 
     IDBObjectStore.prototype.count = function(key) {
-        var me = this;
-        var hasKey = false;
-
-        // key is optional
-        if (arguments.length > 0) {
-            hasKey = true;
-            idbModules.Key.validate(key);
+        if (key instanceof idbModules.IDBKeyRange) {
+            return new idbModules.IDBCursor(key, "next", this, this, "key", "value", true).__req;
         }
+        else {
+            var me = this;
+            var hasKey = false;
 
-        return me.transaction.__addToTransactionQueue(function objectStoreCount(tx, args, success, error) {
-            var sql = "SELECT * FROM " + idbModules.util.quote(me.name) + (hasKey ? " WHERE key = ?" : "");
-            var sqlValues = [];
-            hasKey && sqlValues.push(idbModules.Key.encode(key));
-            tx.executeSql(sql, sqlValues, function(tx, data) {
-                success(data.rows.length);
-            }, function(tx, err) {
-                error(err);
+            // key is optional
+            if (key !== undefined) {
+                hasKey = true;
+                idbModules.Key.validate(key);
+            }
+
+            return me.transaction.__addToTransactionQueue(function objectStoreCount(tx, args, success, error) {
+                var sql = "SELECT * FROM " + idbModules.util.quote(me.name) + (hasKey ? " WHERE key = ?" : "");
+                var sqlValues = [];
+                hasKey && sqlValues.push(idbModules.Key.encode(key));
+                tx.executeSql(sql, sqlValues, function(tx, data) {
+                    success(data.rows.length);
+                }, function(tx, err) {
+                    error(err);
+                });
             });
-        });
+        }
     };
 
     IDBObjectStore.prototype.openCursor = function(range, direction) {

@@ -10,8 +10,9 @@
      * @param {IDBObjectStore|IDBIndex} source
      * @param {string} keyColumnName
      * @param {string} valueColumnName
+     * @param {boolean} count
      */
-    function IDBCursor(range, direction, store, source, keyColumnName, valueColumnName){
+    function IDBCursor(range, direction, store, source, keyColumnName, valueColumnName, count){
         // Calling openCursor on an index or objectstore with null is allowed but we treat it as undefined internally
         if (range === null) {
             range = undefined;
@@ -34,6 +35,7 @@
         this.__keyColumnName = keyColumnName;
         this.__valueColumnName = valueColumnName;
         this.__valueDecoder = valueColumnName === "value" ? idbModules.Sca : idbModules.Key;
+        this.__count = count;
         this.__offset = -1; // Setting this to -1 as continue will set it to 0 anyway
         this.__lastKeyContinued = undefined; // Used when continuing with a key
         this.__multiEntryIndex = source instanceof idbModules.IDBIndex ? source.multiEntry : false;
@@ -90,15 +92,20 @@
         // Determine the ORDER BY direction based on the cursor.
         var direction = me.direction === 'prev' || me.direction === 'prevunique' ? 'DESC' : 'ASC';
 
-        sql.push("ORDER BY", quotedKeyColumnName, direction);
-        sql.push("LIMIT", recordsToLoad, "OFFSET", me.__offset);
+        if (!me.__count) {
+            sql.push("ORDER BY", quotedKeyColumnName, direction);
+            sql.push("LIMIT", recordsToLoad, "OFFSET", me.__offset);
+        }
         sql = sql.join(" ");
         idbModules.DEBUG && console.log(sql, sqlValues);
 
         me.__prefetchedData = null;
         me.__prefetchedIndex = 0;
         tx.executeSql(sql, sqlValues, function (tx, data) {
-            if (data.rows.length > 1) {
+            if (me.__count) {
+                success(undefined, data.rows.length, undefined);
+            }
+            else if (data.rows.length > 1) {
                 me.__prefetchedData = data.rows;
                 me.__prefetchedIndex = 0;
                 idbModules.DEBUG && console.log("Preloaded " + me.__prefetchedData.length + " records for cursor");
@@ -149,7 +156,9 @@
         // Determine the ORDER BY direction based on the cursor.
         var direction = me.direction === 'prev' || me.direction === 'prevunique' ? 'DESC' : 'ASC';
 
-        sql.push("ORDER BY key", direction);
+        if (!me.__count) {
+            sql.push("ORDER BY key", direction);
+        }
         sql = sql.join(" ");
         idbModules.DEBUG && console.log(sql, sqlValues);
 
@@ -204,7 +213,10 @@
                 };
                 me.__prefetchedIndex = 0;
 
-                if (rows.length > 1) {
+                if (me.__count) {
+                    success(undefined, rows.length, undefined);
+                }
+                else if (rows.length > 1) {
                     idbModules.DEBUG && console.log("Preloaded " + me.__prefetchedData.length + " records for multiEntry cursor");
                     me.__decode(rows[0], success);
                 } else if (rows.length === 1) {
@@ -232,11 +244,16 @@
     IDBCursor.prototype.__onsuccess = function(success) {
         var me = this;
         return function(key, value, primaryKey) {
-            me.key = key === undefined ? null : key;
-            me.value = value === undefined ? null : value;
-            me.primaryKey = primaryKey === undefined ? null : primaryKey;
-            var result = key === undefined ? null : me;
-            success(result, me.__req);
+            if (me.__count) {
+                success(value, me.__req);
+            }
+            else {
+                me.key = key === undefined ? null : key;
+                me.value = value === undefined ? null : value;
+                me.primaryKey = primaryKey === undefined ? null : primaryKey;
+                var result = key === undefined ? null : me;
+                success(result, me.__req);
+            }
         };
     };
 
