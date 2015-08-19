@@ -146,7 +146,12 @@
             isSafari: false
         };
 
-        if ((offset = userAgent.indexOf('Chrome')) !== -1) {
+        if ((offset = userAgent.indexOf('Edge')) !== -1) {
+            browserInfo.name = 'MSIE';
+            browserInfo.version = userAgent.substring(offset + 5);
+            browserInfo.isIE = true;
+            browserInfo.isMobile = userAgent.indexOf('Windows Phone') !== -1;
+        } else if ((offset = userAgent.indexOf('Chrome')) !== -1) {
             browserInfo.name = 'Chrome';
             browserInfo.version = userAgent.substring(offset + 7);
             browserInfo.isChrome = true;

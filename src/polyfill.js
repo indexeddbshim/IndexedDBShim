@@ -6,7 +6,9 @@
      * This is used for browsers that DON'T support WebSQL but DO support IndexedDB
      */
     function polyfill() {
-        if (navigator.userAgent.match(/MSIE/) || navigator.userAgent.match(/Trident/)) {
+        if (navigator.userAgent.match(/MSIE/) ||
+            navigator.userAgent.match(/Trident/) ||
+            navigator.userAgent.match(/Edge/)) {
             // Internet Explorer's native IndexedDB does not support compound keys
             compoundKeyPolyfill();
         }
