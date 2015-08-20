@@ -30,13 +30,16 @@ describe('IDBTransaction events', function() {
 
     it('should fire the oncomplete event if a synchronous error occurs', function(done) {
         util.createDatabase('inline', function(err, db) {
-            var tx = db.transaction('inline', 'readonly');  // <-- read-only
+            var tx = db.transaction('inline', 'readonly');      // <-- read-only
+
+            db.onerror = sinon.spy();
             tx.onerror = sinon.spy();
+            sinon.stub(window, 'onerror').returns(true);
 
             var store = tx.objectStore('inline');
             var errored = false;
             try {
-                store.add({id: 1});                         // <-- This causes a synchronous error
+                store.add({id: 1});                             // <-- This causes a synchronous error
             }
             catch (e) {
                 errored = true;
@@ -44,10 +47,24 @@ describe('IDBTransaction events', function() {
 
             tx.oncomplete = function() {
                 expect(errored).to.be.true;
-                sinon.assert.notCalled(tx.onerror);         // <-- transaction.onerror never fires
-                db.close();
-                done();
+                sinon.assert.notCalled(db.onerror);             // <-- database.onerror NEVER fires
+                sinon.assert.notCalled(tx.onerror);             // <-- transaction.onerror NEVER fires
+                sinon.assert.notCalled(window.onerror);         // <-- window.onerror NEVER fires
             };
+
+            setTimeout(function() {
+                try {
+                    expect(errored).to.be.true;
+                    sinon.assert.notCalled(db.onerror);         // <-- database.onerror NEVER fires
+                    sinon.assert.notCalled(tx.onerror);         // <-- transaction.onerror NEVER fires
+                    sinon.assert.notCalled(window.onerror);     // <-- window.onerror NEVER fires
+                    db.close();
+                    done();
+                }
+                finally {
+                    window.onerror.restore();
+                }
+            }, 100);
         });
     });
 
@@ -57,88 +74,155 @@ describe('IDBTransaction events', function() {
 
             var store = tx.objectStore('inline');
             store.add({id: 1});
-            var add = store.add({id: 1});                       // <-- This causes an asynchronous error (duplicate id)
-            add.onerror = sinon.spy();
+            var add = store.add({id: 1});                   // <-- This causes an asynchronous error (duplicate id)
+
+            // IDBRequest events
             add.onsuccess = sinon.spy();
-
-            tx.onerror = function() {
-                sinon.assert.calledOnce(add.onerror);
-                sinon.assert.notCalled(add.onsuccess);
-                sinon.assert.notCalled(tx.oncomplete);          // <-- transaction.oncomplete never fires
-                db.close();
-                done();
-            };
-
-            tx.oncomplete = sinon.spy(function () {
-                if (add.onsuccess.called) {
-                    db.close();
-                    done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
-                }
+            add.onerror = sinon.spy(function() {
+                sinon.assert.notCalled(add.onsuccess);      // <-- request.onsuccess NEVER fires
+                sinon.assert.notCalled(tx.oncomplete);      // <-- transaction.oncomplete NEVER fires
+                sinon.assert.notCalled(tx.onerror);         // <-- transaction.onerror HAS NOT fired YET
+                sinon.assert.notCalled(db.onerror);         // <-- database.onerror HAS NOT fired YET
+                sinon.assert.notCalled(window.onerror);     // <-- window.onerror HAS NOT fired YET
             });
+
+            // IDBTransaction events
+            tx.onerror = sinon.spy(function() {
+                sinon.assert.notCalled(add.onsuccess);      // <-- request.onsuccess NEVER fires
+                sinon.assert.notCalled(tx.oncomplete);      // <-- transaction.oncomplete NEVER fires
+                sinon.assert.calledOnce(add.onerror);       // <-- request.onerror HAS fired
+                sinon.assert.notCalled(db.onerror);         // <-- database.onerror HAS NOT fired YET
+                sinon.assert.notCalled(window.onerror);     // <-- window.onerror HAS NOT fired YET
+            });
+            tx.oncomplete = sinon.spy(function() {
+                db.close();
+                done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+            });
+
+            // IDBDatabase events
+            db.onerror = sinon.spy(function() {
+                sinon.assert.notCalled(add.onsuccess);      // <-- request.onsuccess NEVER fires
+                sinon.assert.notCalled(tx.oncomplete);      // <-- transaction.oncomplete NEVER fires
+                sinon.assert.calledOnce(add.onerror);       // <-- request.onerror HAS fired
+                sinon.assert.calledOnce(tx.onerror);        // <-- transaction.onerror HAS fired
+                sinon.assert.notCalled(window.onerror);     // <-- window.onerror HAS NOT fired YET
+            });
+
+            // Window events
+            sinon.stub(window, 'onerror').returns(true);
+
+            setTimeout(function() {
+                try {
+                    sinon.assert.notCalled(add.onsuccess);      // <-- request.onsuccess NEVER fires
+                    sinon.assert.notCalled(tx.oncomplete);      // <-- transaction.oncomplete NEVER fires
+                    sinon.assert.calledOnce(add.onerror);       // <-- request.onerror HAS fired
+                    sinon.assert.calledOnce(tx.onerror);        // <-- transaction.onerror HAS fired
+                    sinon.assert.calledOnce(db.onerror);        // <-- database.onerror HAS fired
+
+                    if (!env.browser.isFirefox) {
+                        // Firefox fires window.onerror.  No other browser does.
+                        sinon.assert.notCalled(window.onerror);
+                    }
+
+                    db.close();
+                    done();
+                }
+                finally {
+                    window.onerror.restore();
+                }
+            }, 100);
         });
     });
 
     it('should not fire the onerror event if an error occurs during oncomplete', function(done) {
-        util.createDatabase('inline', function (err, db) {
+        util.createDatabase('inline', function(err, db) {
             var tx = db.transaction('inline', 'readwrite');
             tx.onabort = sinon.spy();
 
-            tx.onerror = sinon.spy(function() {
+            db.onerror = tx.onerror = sinon.spy(function() {
                 db.close();
                 done(new Error('The onerror event fired when it should not have'));
             });
 
             tx.oncomplete = sinon.spy(function() {
-                sinon.assert.notCalled(tx.onerror);
-                sinon.assert.notCalled(tx.onabort);
+                sinon.assert.notCalled(db.onerror);             // <-- database.onerror NEVER fires
+                sinon.assert.notCalled(tx.onerror);             // <-- transaction.onerror NEVER fires
+                sinon.assert.notCalled(tx.onabort);             // <-- transaction.abort NEVER fires
+                sinon.assert.notCalled(window.onerror);         // <-- window.onerror HAS NOT fired YET
                 throw new Error('Test Error');
             });
 
-            var onerror = window.onerror;
-            window.onerror = function() {
-                sinon.assert.calledOnce(tx.oncomplete);
-                sinon.assert.notCalled(tx.onerror);
-                sinon.assert.notCalled(tx.onabort);
-
-                window.onerror = onerror;
-                db.close();
-                done();
+            sinon.stub(window, 'onerror', function() {
+                sinon.assert.calledOnce(tx.oncomplete);         // <-- transaction.oncomplete HAS fired
+                sinon.assert.notCalled(db.onerror);             // <-- database.onerror NEVER fires
+                sinon.assert.notCalled(tx.onerror);             // <-- transaction.onerror NEVER fires
+                sinon.assert.notCalled(tx.onabort);             // <-- transaction.abort NEVER fires
                 return true;
-            };
+            });
 
             window.addEventListener('cordovacallbackerror', function handler() {
                 window.removeEventListener('cordovacallbackerror', handler);
                 db.close();
                 done(new Error('The WebSQL plugin suppressed an error event. (window.onerror should have fired)'));
             });
+
+            setTimeout(function() {
+                try {
+                    sinon.assert.calledOnce(tx.oncomplete);     // <-- transaction.oncomplete HAS fired
+                    sinon.assert.calledOnce(window.onerror);    // <-- window.onerror HAS fired
+                    sinon.assert.notCalled(db.onerror);         // <-- database.onerror NEVER fires
+                    sinon.assert.notCalled(tx.onerror);         // <-- transaction.onerror NEVER fires
+                    sinon.assert.notCalled(tx.onabort);         // <-- transaction.abort NEVER fires
+                    db.close();
+                    done();
+                }
+                finally {
+                    window.onerror.restore();
+                }
+            }, 100);
         });
     });
 
     it('should not fire the onerror event if an error occurs during onabort', function(done) {
         util.createDatabase('inline', function(err, db) {
             var tx = db.transaction('inline', 'readwrite');
+
+            db.onerror = sinon.spy();
             tx.onerror = sinon.spy();
             tx.oncomplete = sinon.spy();
 
             tx.onabort = sinon.spy(function() {
-                sinon.assert.notCalled(tx.onerror);
-                sinon.assert.notCalled(tx.oncomplete);
+                sinon.assert.notCalled(db.onerror);             // <-- database.onerror NEVER fires
+                sinon.assert.notCalled(tx.onerror);             // <-- transaction.onerror NEVER fires
+                sinon.assert.notCalled(tx.oncomplete);          // <-- transaction.oncomplete NEVER fires
+                sinon.assert.notCalled(window.onerror);         // <-- window.onerror HAS NOT fired YET
                 throw new Error('Test Error');
+            });
+
+            sinon.stub(window, 'onerror', function() {
+                sinon.assert.calledOnce(tx.onabort);            // <-- transaction.onabort HAS fired
+                sinon.assert.notCalled(db.onerror);             // <-- database.onerror NEVER fires
+                sinon.assert.notCalled(tx.onerror);             // <-- transaction.onerror NEVER fires
+                sinon.assert.notCalled(tx.oncomplete);          // <-- transaction.oncomplete NEVER fires
+                return true;
             });
 
             tx.abort();
 
-            var onerror = window.onerror;
-            window.onerror = function() {
-                sinon.assert.calledOnce(tx.onabort);
-                sinon.assert.notCalled(tx.onerror);
-                sinon.assert.notCalled(tx.oncomplete);
-
-                window.onerror = onerror;
-                db.close();
-                done();
-                return true;
-            };
+            setTimeout(function() {
+                try {
+                    sinon.assert.calledOnce(tx.onabort);        // <-- transaction.onabort HAS fired
+                    sinon.assert.calledOnce(window.onerror);    // <-- window.onerror HAS fired
+                    sinon.assert.notCalled(db.onerror);         // <-- database.onerror NEVER fires
+                    sinon.assert.notCalled(tx.onerror);         // <-- transaction.onerror NEVER fires
+                    sinon.assert.notCalled(tx.oncomplete);      // <-- transaction.oncomplete NEVER fires
+                    db.close();
+                    done();
+                }
+                finally {
+                    window.onerror.restore();
+                }
+            }, 100);
         });
     });
 });

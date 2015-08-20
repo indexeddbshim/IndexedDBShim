@@ -15,6 +15,7 @@
         this.__id = ++uniqueID; // for debugging simultaneous transactions
         this.__active = true;
         this.__running = false;
+        this.__errored = false;
         this.__requests = [];
         this.__storeNames = storeNames;
         this.mode = mode;
@@ -92,10 +93,21 @@
                 executeNextRequest();
             },
 
-            transactionError
+            function webSqlError(err) {
+                transactionError(err);
+            }
         );
 
         function transactionError(err) {
+            idbModules.util.logError("Error", "An error occurred in a transaction", err);
+
+            if (me.__errored) {
+                // We've already called "onerror", "onabort", or thrown, so don't do it again.
+                return;
+            }
+
+            me.__errored = true;
+
             if (!me.__active) {
                 // The transaction has already completed, so we can't call "onerror" or "onabort".
                 // So throw the error instead.
@@ -103,10 +115,10 @@
             }
 
             try {
-                idbModules.util.logError("Error", "An error occurred in a transaction", err);
                 me.error = err;
                 var evt = idbModules.util.createEvent("error");
                 idbModules.util.callback("onerror", me, evt);
+                idbModules.util.callback("onerror", me.db, evt);
             }
             finally {
                 me.abort();
@@ -116,8 +128,17 @@
         function transactionFinished() {
             idbModules.DEBUG && console.log("Transaction completed");
             var evt = idbModules.util.createEvent("complete");
-            idbModules.util.callback("oncomplete", me, evt);
-            idbModules.util.callback("__oncomplete", me, evt);
+            try {
+                idbModules.util.callback("oncomplete", me, evt);
+                idbModules.util.callback("__oncomplete", me, evt);
+            }
+            catch (e) {
+                // An error occurred in the "oncomplete" handler.
+                // It's too late to call "onerror" or "onabort". Throw a global error instead.
+                // (this may seem odd/bad, but it's how all native IndexedDB implementations work)
+                me.__errored = true;
+                throw e;
+            }
         }
     };
 
