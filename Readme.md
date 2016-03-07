@@ -16,7 +16,7 @@ Features
 --------------------------
 * Adds full IndexedDB support to any web browser that [supports WebSql](http://caniuse.com/#search=websql)
 * Does nothing if the browser already [natively supports IndexedDB](http://caniuse.com/#search=indexeddb)
-* Can _optionally replace_ native IndexedDB on browsers with [buggy implementations](http://www.raymondcamden.com/2014/9/25/IndexedDB-on-iOS-8--Broken-Bad)
+* Can _optionally replace_ native IndexedDB on browsers with [buggy implementations](http://www.raymondcamden.com/2014/09/25/IndexedDB-on-iOS-8-Broken-Bad/)
 * Can _optionally enhance_ native IndexedDB on browsers that are [missing certain features](http://codepen.io/cemerick/pen/Itymi)
 * Works on __desktop__ and __mobile__ devices.
 * Works on __Cordova__ and __PhoneGap__ via the [IndexedDB plug-in](http://plugins.cordova.io/#/package/com.msopentech.websql)
