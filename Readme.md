@@ -47,8 +47,39 @@ Add the script to your page
 <script src="dist/indexeddbshim.min.js"></script>
 ````
 
-If the browser already natively supports IndexedDB, then the script won't do anything.  Otherwise, it'll add the [IndexedDB API](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) to the browser.   Either way, you can use IndexedDB just like normal. [Here's an example](https://gist.github.com/BigstickCarpet/a0d6389a5d0e3a24814b)
+If the browser already natively supports IndexedDB, then the script won't do anything.  Otherwise, it'll add the [IndexedDB API](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) to the browser.
 
+Common Usage Scenario
+---------------------
+
+Shown below is one common use case where both Safari and IE's bad IndexedDB implementations are shimmed over, with the code falling back to either a native IndexedDB implementation or a Web SQL shim otherwise.
+
+Note: Depending on your app's requirements, you may want to adjust this logic. For example, you may be OK with IE's implementation if you aren't using compound keys or you may want to _always_ use the shim to avoid inconsistencies between the native implementations. See the sections below for more details.
+
+```js
+function getIndexedDB() {
+
+    var isSafari = navigator.userAgent.indexOf('Safari') != -1 &&
+        navigator.userAgent.indexOf('Chrome') == -1 &&
+        navigator.userAgent.indexOf('Android') == -1;
+
+    var isIE = !!window.msIndexedDB;
+
+    var forceShim = isSafari || isIE;
+
+    if (forceShim) {
+        window.shimIndexedDB.__useShim();
+    }
+
+    if (isSafari) {
+        // can't replace window.indexedDB in Safari so always use shimIndexedDB
+        return window.shimIndexedDB;
+    } else {
+        // Try use window.indexedDB for other browsers as it might be a patched up version (for IE for example)
+        return window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB || window.shimIndexedDB;
+    }
+}
+```
 
 Fixing Problems in Native IndexedDB
 --------------------------
