@@ -4,7 +4,7 @@
     /**
      * Encodes the keys based on their types. This is required to maintain collations
      */
-    var collations = ["undefined", "number", "date", "string", "array"];
+    var collations = ["undefined", "number", "date", "string", "array", "object"];
 
     /**
      * The sign values for numbers, ordered from least to greatest.
@@ -164,6 +164,16 @@
                     key = key.substr(0, key.length - 1).replace(/-(.)/g, '$1');
                 }
                 return key;
+            }
+        },
+
+        // Objects are encoded as JSON strings.
+        object: {
+            encode: function(key) {
+                return collations.indexOf("array") + "-" + JSON.stringify(key);
+            },
+            decode: function(key) {
+                return JSON.parse(key.substring(2));
             }
         },
 
