@@ -968,7 +968,7 @@ var idbModules = {  // jshint ignore:line
         // Objects are encoded as JSON strings.
         object: {
             encode: function(key) {
-                return collations.indexOf("array") + "-" + JSON.stringify(key);
+                return collations.indexOf("object") + "-" + JSON.stringify(key);
             },
             decode: function(key) {
                 return JSON.parse(key.substring(2));
