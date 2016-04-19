@@ -2962,14 +2962,14 @@ var idbModules = {  // jshint ignore:line
         }
 
         if (typeof mode === "number") {
-            mode = mode === 1 ? IDBTransaction.READ_WRITE : IDBTransaction.READ_ONLY;
+            mode = mode === 1 ? idbModules.IDBTransaction.READ_WRITE : idbModules.IDBTransaction.READ_ONLY;
             idbModules.DEBUG && console.log("Mode should be a string, but was specified as ", mode);
         }
         else {
-            mode = mode || IDBTransaction.READ_ONLY;
+            mode = mode || idbModules.IDBTransaction.READ_ONLY;
         }
 
-        if (mode !== IDBTransaction.READ_ONLY && mode !== IDBTransaction.READ_WRITE) {
+        if (mode !== idbModules.IDBTransaction.READ_ONLY && mode !== idbModules.IDBTransaction.READ_WRITE) {
             throw new TypeError("Invalid transaction mode: " + mode);
         }
 
