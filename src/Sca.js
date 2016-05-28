@@ -1,3 +1,4 @@
+/*eslint-disable no-eval*/
 (function(idbModules){
     'use strict';
 
@@ -15,8 +16,8 @@
      * 1) Using the cycle/decycle functions from:
      *    https://github.com/douglascrockford/JSON-js/blob/master/cycle.js
      * 2) Serializing/deserializing objects to/from string that don't work with
-     *    JSON.stringify and JSON.parse by using object specific logic (eg use 
-     *    the FileReader API to convert a Blob or File object to a data URL.   
+     *    JSON.stringify and JSON.parse by using object specific logic (eg use
+     *    the FileReader API to convert a Blob or File object to a data URL.
      * 3) JSON.stringify and JSON.parse do the final conversion to/from string.
      */
     var Sca = (function(){
@@ -47,7 +48,8 @@
                 // the object or array. [NUMBER] or [STRING] indicates a child member or
                 // property.
 
-                var objects = [],   // Keep a reference to each unique object or array
+                var derezObj,
+                objects = [],   // Keep a reference to each unique object or array
                 paths = [],     // Keep the path to each unique object or array
                 queuedObjects = [],
                 returnCallback = callback;
@@ -59,7 +61,7 @@
                 function checkForCompletion() {
                     if (queuedObjects.length === 0) {
                         returnCallback(derezObj);
-                    }    
+                    }
                 }
 
                 /**
@@ -79,7 +81,7 @@
                     };
                     reader.readAsDataURL(blob);
                 }
-                
+
                 /**
                  * Async handler to update a blob object to a data URL for encoding.
                  * @param {String} dataURL
@@ -184,13 +186,13 @@
                     }
                     return value;
                 }
-                var derezObj = derez(object, '$');
+                derezObj = derez(object, '$');
                 checkForCompletion();
             },
-                
+
             retrocycle: function retrocycle($) {
                 //From: https://github.com/douglascrockford/JSON-js/blob/master/cycle.js
-                // Contains additional logic to convert strings to the following object types 
+                // Contains additional logic to convert strings to the following object types
                 // so that they can properly be decoded:
                 //  *Boolean
                 //  *Date
@@ -218,7 +220,7 @@
                 // produces an array containing a single element which is the array itself.
 
                 var px = /^\$(?:\[(?:\d+|\"(?:[^\\\"\u0000-\u001f]|\\([\\\"\/bfnrt]|u[0-9a-zA-Z]{4}))*\")\])*$/;
-                
+
                 /**
                  * Converts the specified data URL to a Blob object
                  * @param {String} dataURL to convert to a Blob
@@ -248,7 +250,7 @@
                     }
                     return new Blob([uInt8Array.buffer], {type: contentType});
                 }
-                
+
                 function rez(value) {
                     // The rez function walks recursively through the object looking for $ref
                     // properties. When it finds one that has a value that is a path, then it
@@ -308,7 +310,7 @@
                                                 value[name] = rez(item);
                                             }
                                         }
-                                    }   
+                                    }
                                 }
                             }
                         }
@@ -331,9 +333,9 @@
                 function finishEncode(val) {
                     callback(JSON.stringify(val));
                 }
-                this.decycle(val, finishEncode);                        
+                this.decycle(val, finishEncode);
             },
-                    
+
             /**
              * Deserialize the specified string to an object
              * @param {String} val the serialized string

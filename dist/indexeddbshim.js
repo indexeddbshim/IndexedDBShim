@@ -1,4 +1,4 @@
-var idbModules = {  // jshint ignore:line
+var idbModules = {
     util: {
         cleanInterface: false
     }
@@ -13,7 +13,7 @@ var idbModules = {  // jshint ignore:line
         try {
             Object.defineProperty(testObject, 'test', { enumerable: false });
             if (testObject.test) {
-                idbModules.util.cleanInterface = true;      // jshint ignore:line
+                idbModules.util.cleanInterface = true;
             }
         } catch (e) {
         //Object.defineProperty does not work as intended.
@@ -447,6 +447,7 @@ var idbModules = {  // jshint ignore:line
     idbModules.polyfill = polyfill;
 })(idbModules);
 
+/*eslint-disable no-eval*/
 (function(idbModules){
     'use strict';
 
@@ -464,8 +465,8 @@ var idbModules = {  // jshint ignore:line
      * 1) Using the cycle/decycle functions from:
      *    https://github.com/douglascrockford/JSON-js/blob/master/cycle.js
      * 2) Serializing/deserializing objects to/from string that don't work with
-     *    JSON.stringify and JSON.parse by using object specific logic (eg use 
-     *    the FileReader API to convert a Blob or File object to a data URL.   
+     *    JSON.stringify and JSON.parse by using object specific logic (eg use
+     *    the FileReader API to convert a Blob or File object to a data URL.
      * 3) JSON.stringify and JSON.parse do the final conversion to/from string.
      */
     var Sca = (function(){
@@ -496,7 +497,8 @@ var idbModules = {  // jshint ignore:line
                 // the object or array. [NUMBER] or [STRING] indicates a child member or
                 // property.
 
-                var objects = [],   // Keep a reference to each unique object or array
+                var derezObj,
+                objects = [],   // Keep a reference to each unique object or array
                 paths = [],     // Keep the path to each unique object or array
                 queuedObjects = [],
                 returnCallback = callback;
@@ -508,7 +510,7 @@ var idbModules = {  // jshint ignore:line
                 function checkForCompletion() {
                     if (queuedObjects.length === 0) {
                         returnCallback(derezObj);
-                    }    
+                    }
                 }
 
                 /**
@@ -528,7 +530,7 @@ var idbModules = {  // jshint ignore:line
                     };
                     reader.readAsDataURL(blob);
                 }
-                
+
                 /**
                  * Async handler to update a blob object to a data URL for encoding.
                  * @param {String} dataURL
@@ -633,13 +635,13 @@ var idbModules = {  // jshint ignore:line
                     }
                     return value;
                 }
-                var derezObj = derez(object, '$');
+                derezObj = derez(object, '$');
                 checkForCompletion();
             },
-                
+
             retrocycle: function retrocycle($) {
                 //From: https://github.com/douglascrockford/JSON-js/blob/master/cycle.js
-                // Contains additional logic to convert strings to the following object types 
+                // Contains additional logic to convert strings to the following object types
                 // so that they can properly be decoded:
                 //  *Boolean
                 //  *Date
@@ -667,7 +669,7 @@ var idbModules = {  // jshint ignore:line
                 // produces an array containing a single element which is the array itself.
 
                 var px = /^\$(?:\[(?:\d+|\"(?:[^\\\"\u0000-\u001f]|\\([\\\"\/bfnrt]|u[0-9a-zA-Z]{4}))*\")\])*$/;
-                
+
                 /**
                  * Converts the specified data URL to a Blob object
                  * @param {String} dataURL to convert to a Blob
@@ -697,7 +699,7 @@ var idbModules = {  // jshint ignore:line
                     }
                     return new Blob([uInt8Array.buffer], {type: contentType});
                 }
-                
+
                 function rez(value) {
                     // The rez function walks recursively through the object looking for $ref
                     // properties. When it finds one that has a value that is a path, then it
@@ -757,7 +759,7 @@ var idbModules = {  // jshint ignore:line
                                                 value[name] = rez(item);
                                             }
                                         }
-                                    }   
+                                    }
                                 }
                             }
                         }
@@ -780,9 +782,9 @@ var idbModules = {  // jshint ignore:line
                 function finishEncode(val) {
                     callback(JSON.stringify(val));
                 }
-                this.decycle(val, finishEncode);                        
+                this.decycle(val, finishEncode);
             },
-                    
+
             /**
              * Deserialize the specified string to an object
              * @param {String} val the serialized string
@@ -796,6 +798,7 @@ var idbModules = {  // jshint ignore:line
     idbModules.Sca = Sca;
 }(idbModules));
 
+/*eslint-disable no-eval*/
 (function(idbModules) {
     "use strict";
 
@@ -1462,10 +1465,10 @@ var idbModules = {  // jshint ignore:line
     }
     IDBOpenDBRequest.prototype = new IDBRequest();
     IDBOpenDBRequest.prototype.constructor = IDBOpenDBRequest;
-    
+
     idbModules.IDBRequest = IDBRequest;
     idbModules.IDBOpenDBRequest = IDBOpenDBRequest;
-    
+
 }(idbModules));
 
 (function(idbModules, undefined){
@@ -2986,7 +2989,7 @@ var idbModules = {  // jshint ignore:line
         var transaction = new idbModules.IDBTransaction(this, storeNames, mode);
         return transaction;
     };
-    
+
     idbModules.IDBDatabase = IDBDatabase;
 }(idbModules));
 
@@ -3220,7 +3223,7 @@ var idbModules = {  // jshint ignore:line
         var encodedKey1 = idbModules.Key.encode(key1);
         var encodedKey2 = idbModules.Key.encode(key2);
         var result = encodedKey1 > encodedKey2 ? 1 : encodedKey1 === encodedKey2 ? 0 : -1;
-        
+
         if (idbModules.DEBUG) {
             // verify that the keys encoded correctly
             var decodedKey1 = idbModules.Key.decode(encodedKey1);
@@ -3242,7 +3245,7 @@ var idbModules = {  // jshint ignore:line
                 console.warn(key2 + ' was incorrectly encoded as ' + decodedKey2);
             }
         }
-        
+
         return result;
     };
 
@@ -3303,12 +3306,12 @@ var idbModules = {  // jshint ignore:line
             idbModules.DEBUG = val;
         };
     }
-    
+
     // Workaround to prevent an error in Firefox
     if(!('indexedDB' in window)) {
         window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
     }
-    
+
     // Detect browsers with known IndexedDb issues (e.g. Android pre-4.4)
     var poorIndexedDbSupport = false;
     if (navigator.userAgent.match(/Android 2/) || navigator.userAgent.match(/Android 3/) || navigator.userAgent.match(/Android 4\.[0-3]/)) {
@@ -3335,6 +3338,5 @@ var idbModules = {  // jshint ignore:line
             window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
         } catch (e) {}
     }
-    
-}(window, idbModules));
 
+}(window, idbModules));

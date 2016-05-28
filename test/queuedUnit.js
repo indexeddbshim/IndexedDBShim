@@ -2,7 +2,7 @@
  * Ideally unit tests should be independent, but there are some cases where you
  * really want those tests to be executed one after the other Here is some code
  * that does exactly that - a wrapper on top of QUnit.
- * 
+ *
  * Usage Instead of asyncTest, call queuedAsyncTest (same params) Instead of
  * module(), call queuedModule After a test is over and the next test has to
  * run, call nextTest()

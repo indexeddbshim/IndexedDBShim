@@ -1,4 +1,4 @@
-var idbModules = {  // jshint ignore:line
+var idbModules = {
     util: {
         cleanInterface: false
     }
@@ -13,7 +13,7 @@ var idbModules = {  // jshint ignore:line
         try {
             Object.defineProperty(testObject, 'test', { enumerable: false });
             if (testObject.test) {
-                idbModules.util.cleanInterface = true;      // jshint ignore:line
+                idbModules.util.cleanInterface = true;
             }
         } catch (e) {
         //Object.defineProperty does not work as intended.

@@ -12,8 +12,8 @@ var buildIndexedDB = (function(){
 				x.src = "/IndexedDBShim/src/" + moduleList[i] + ".js";
 				x.type = "text/javascript"
 				x.onload = function(){
-					if (i < moduleList.length - 1) addScript(i + 1);
-					else callback();
+					if (i < moduleList.length - 1) {addScript(i + 1);}
+					else {callback();}
 				}
 				document.getElementsByTagName('head')[0].appendChild(x);
 			}(0));
@@ -29,7 +29,7 @@ var buildIndexedDB = (function(){
 				}
 				xmlhttp.open("GET", "/IndexedDBShim/src/" + moduleList[i] + ".js" + "", true);
 				xmlhttp.onreadystatechange = function(){
-					if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+					if (xmlhttp.readyState === 4 && xmlhttp.status === 200) {
 						scripts.push(xmlhttp.responseText);
 						if (i >= moduleList.length - 1) {
 							callback(scripts.join("\n"));
@@ -43,4 +43,3 @@ var buildIndexedDB = (function(){
 		}
 	}
 })();
-

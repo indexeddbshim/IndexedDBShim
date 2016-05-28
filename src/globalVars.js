@@ -50,12 +50,12 @@
             idbModules.DEBUG = val;
         };
     }
-    
+
     // Workaround to prevent an error in Firefox
     if(!('indexedDB' in window)) {
         window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
     }
-    
+
     // Detect browsers with known IndexedDb issues (e.g. Android pre-4.4)
     var poorIndexedDbSupport = false;
     if (navigator.userAgent.match(/Android 2/) || navigator.userAgent.match(/Android 3/) || navigator.userAgent.match(/Android 4\.[0-3]/)) {
@@ -82,6 +82,5 @@
             window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
         } catch (e) {}
     }
-    
-}(window, idbModules));
 
+}(window, idbModules));
