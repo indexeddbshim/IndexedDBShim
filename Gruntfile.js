@@ -2,13 +2,18 @@
 "use strict";
 
 module.exports = function(grunt) {
-	var srcFiles = ['src/Init.js', 'src/util.js', 'src/polyfill.js', 'src/Sca.js', 'src/Key.js', 'src/Event.js', 'src/DOMException.js', 'src/IDBRequest.js', 'src/IDBKeyRange.js', 'src/IDBCursor.js', 'src/IDBIndex.js', 'src/IDBObjectStore.js', 'src/IDBTransaction.js', 'src/IDBDatabase.js', 'src/IDBFactory.js', 'src/globalVars.js'];
+	var srcFiles = [
+		'Init.js', 'util.js', 'polyfill.js', 'Sca.js', 'Key.js', 'Event.js',
+		'DOMException.js', 'IDBRequest.js', 'IDBKeyRange.js', 'IDBCursor.js',
+		'IDBIndex.js', 'IDBObjectStore.js', 'IDBTransaction.js', 'IDBDatabase.js',
+		'IDBFactory.js', 'globalVars.js'
+	].map(function (srcFile) {return 'src/' + srcFile;});
 	var saucekey = null;
 	if (typeof process.env.saucekey !== "undefined") {
 		saucekey = process.env.SAUCE_ACCESS_KEY;
 	}
 	var pkg = require('./package.json');
-    bumpVersion(pkg);
+	bumpVersion(pkg);
 	grunt.initConfig({
 		pkg: pkg,
 		concat: {
@@ -17,15 +22,34 @@ module.exports = function(grunt) {
 				dest: 'dist/<%= pkg.name%>.js'
 			}
 		},
+		babel: {
+			options: {
+				sourceMap: true
+			},
+			dist: {
+				files: {
+					'dist/<%= pkg.name%>.js': 'dist/<%= pkg.name%>.js',
+					'dist/<%= pkg.name%>-node.js': 'src/<%= pkg.name%>-node.js'
+				}
+			}
+		},
+		browserify: {
+			dist: {
+				files: {
+					'dist/<%= pkg.name%>.js': 'dist/<%= pkg.name%>.js',
+					'dist/<%= pkg.name%>-node.js': 'dist/<%= pkg.name%>-node.js'
+				}
+			}
+		},
 		uglify: {
 			options: {
 				banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
-				sourceMap: 'dist/<%=pkg.name%>.min.js.map',
-				sourceMapRoot: 'http://nparashuram.com/IndexedDBShim/dist/',
-				sourceMappingURL: 'http://nparashuram.com/IndexedDBShim/dist/<%=pkg.name%>.min.js.map'
+				sourceMap: true,
+				sourceMapName: 'dist/<%=pkg.name%>.min.js.map',
+				sourceMapRoot: 'http://nparashuram.com/IndexedDBShim/dist/'
 			},
 			all: {
-				src: srcFiles,
+				src: 'dist/<%= pkg.name%>.js',
 				dest: 'dist/<%=pkg.name%>.min.js'
 			}
 		},
@@ -75,7 +99,7 @@ module.exports = function(grunt) {
 		watch: {
 			dev: {
 				files: ["src/*"],
-				tasks: ["eslint", "concat"]
+				tasks: ["eslint", "concat", "babel", "browserify"]
 			}
 		}
 	});
@@ -84,7 +108,7 @@ module.exports = function(grunt) {
 		if (key !== 'grunt' && key.indexOf('grunt') === 0) {grunt.loadNpmTasks(key);}
 	}
 
-	grunt.registerTask('build', ['eslint', 'concat', 'uglify']);
+	grunt.registerTask('build', ['eslint', 'concat', 'babel', 'browserify', 'uglify']);
 	var testJobs = ["build", "connect"];
 	if (saucekey !== null) {
 		testJobs.push("saucelabs-qunit");
@@ -103,7 +127,7 @@ module.exports = function(grunt) {
  * will match the next upcoming revision of the package.
  */
 function bumpVersion(pkg) {
-    var version = pkg.version.split('.');
-    version[2] = parseInt(version[2]) + 1;
-    pkg.version = version.join('.');
+	var version = pkg.version.split('.');
+	version[2] = parseInt(version[2]) + 1;
+	pkg.version = version.join('.');
 }

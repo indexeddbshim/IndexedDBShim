@@ -1,3 +1,5 @@
+import EventTarget from 'eventtarget';
+
 (function(idbModules) {
     'use strict';
 
@@ -240,6 +242,8 @@
             idbModules.util.callback("onabort", me, evt);
         }, 0);
     };
+
+    Object.assign(IDBTransaction.prototype, EventTarget.prototype);
 
     IDBTransaction.READ_ONLY = "readonly";
     IDBTransaction.READ_WRITE = "readwrite";

@@ -1,0 +1,1 @@
+{"version":3,"sources":["../src/indexeddbshim-node.js"],"names":[],"mappings":";;AAAA;;;;AACA","file":"indexeddbshim-node.js","sourcesContent":["import nodeWebsql from 'websql';\r\nimport shimIndexedDB from './indexeddbshim.min.js';\r\n"]}

@@ -1,9 +1,11 @@
+<!DOCTYPE html>
 <html>
     <head>
-        <title>Testing IndexedDB Shim</title>
+        <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="chrome=1">
-        <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-1.12.0.css" type="text/css" media="screen" />
-        <style type="text/css">
+        <title>Testing IndexedDB Shim</title>
+        <link rel="stylesheet" href="https://code.jquery.com/qunit/qunit-1.23.1.css" type="text/css" media="screen" />
+        <style>
             .runOption, .browser {
                 font-family: "Helvetica Neue Light", "HelveticaNeue-Light", "Helvetica Neue", Calibri, Helvetica, Arial, sans-serif;
                 padding: 10px;
@@ -26,20 +28,16 @@
                 margin: 0 10px;
             }
         </style>
-        <script type="text/javascript" src="http://code.jquery.com/qunit/qunit-1.12.0.js">
-        </script>
-        <script type="text/javascript" src = "queuedUnit.js">
-        </script>
-        <script type = "text/javascript">
+        <script src="https://code.jquery.com/qunit/qunit-1.23.1.js"></script>
+        <script src="queuedUnit.js"></script>
+        <script>
             function _(msg){
                 console.log("[" + QUnit.config.current.testName + "]", msg, arguments.callee.caller ?  arguments.callee.caller.arguments : " -- ");
             }
         </script>
-        <script type = "text/javascript" src= "sampleData.js">
-        </script>
-        <script type = "text/javascript" src= "../dist/indexeddbshim.min.js">
-        </script>
-        <script type = "text/javascript">
+        <script src="sampleData.js"></script>
+        <script src="../dist/indexeddbshim.js"></script>
+        <script>
             function startTests(){
                 if (typeof window.mozIndexedDB !== "undefined") {
                     window.indexedDB = window.mozIndexedDB;
@@ -96,28 +94,25 @@
     </head>
     <body onload ="startTests()">
         <h1 id="qunit-header">IndexedDB Shim on WebSql</h1>
-        <div class = "browser" id = "browser">
-        </div>
-        <div class = "runOption">
+        <div class="browser" id="browser"></div>
+        <div class="runOption">
             <ul>
-                <li id = "shimRunOption">
-                    <a href = "javascript:runWith('shim')">IndexedDB Shim</a>
+                <li id="shimRunOption">
+                    <a href="javascript:runWith('shim')">IndexedDB Shim</a>
                 </li>
-                <li id = "nativeRunOption">
-                    <a href = "javascript:runWith('shim')">Browser's IndexedDB implementation</a>
+                <li id="nativeRunOption">
+                    <a href="javascript:runWith('shim')">Browser's IndexedDB implementation</a>
                 </li>
             </ul>
         </div>
         <h2 id="qunit-banner"></h2>
-        <div id="qunit-testrunner-toolbar">
-        </div>
+        <div id="qunit-testrunner-toolbar"></div>
         <h2 id="qunit-userAgent"></h2>
-        <ol id="qunit-tests">
-        </ol>
+        <ol id="qunit-tests"></ol>
         <div id="qunit-fixture">
             test markup, will be hidden
         </div>
-        <script type = "text/javascript">
+        <script>
             (function(){
                 var browser = document.getElementById("browser");
                 var support = [];
@@ -144,7 +139,7 @@
                 browser.innerHTML = "Storage technologies supported [" + support.join(", ") + "]"
             })();
         </script>
-        <script type="text/javascript">
+        <script>
             var _gaq = _gaq || [];
             _gaq.push(['_setAccount', 'UA-617499-9']);
             _gaq.push(['_setDomainName', 'none']);

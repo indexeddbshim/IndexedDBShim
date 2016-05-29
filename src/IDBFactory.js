@@ -1,3 +1,6 @@
+/*global nodeWebsql */
+var openDatabase = typeof nodeWebsql === 'undefined' ? window.openDatabase : nodeWebsql;
+
 (function(idbModules) {
     'use strict';
 
@@ -18,7 +21,7 @@
             success();
         }
         else {
-            sysdb = window.openDatabase("__sysdb__", 1, "System Database", DEFAULT_DB_SIZE);
+            sysdb = openDatabase("__sysdb__", 1, "System Database", DEFAULT_DB_SIZE);
             sysdb.transaction(function(tx) {
                 tx.executeSql("CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);", [], success, sysDbCreateError);
             }, sysDbCreateError);
@@ -67,7 +70,7 @@
         }
 
         function openDB(oldVersion) {
-            var db = window.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
+            var db = openDatabase(name, 1, name, DEFAULT_DB_SIZE);
             req.readyState = "done";
             if (typeof version === "undefined") {
                 version = oldVersion || 1;
@@ -180,7 +183,7 @@
                         return;
                     }
                     version = data.rows.item(0).version;
-                    var db = window.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
+                    var db = openDatabase(name, 1, name, DEFAULT_DB_SIZE);
                     db.transaction(function(tx) {
                         tx.executeSql("SELECT * FROM __sys__", [], function(tx, data) {
                             var tables = data.rows;

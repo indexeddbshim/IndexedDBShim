@@ -45,7 +45,7 @@ function openObjectStore(name, storeName, callback){
             var db = dbOpenRequest.result;
             var transaction = db.transaction([DB.OBJECT_STORE_1, DB.OBJECT_STORE_2], "readwrite");
             var objectStore = transaction.objectStore(DB.OBJECT_STORE_1);
-            callback(objectStore);
+            callback(objectStore, db);
         };
         dbOpenRequest.onerror = function(e){
             ok(false, "Database NOT Opened successfully");
@@ -56,27 +56,30 @@ function openObjectStore(name, storeName, callback){
     });
 }
 
-openObjectStore("Check index exists after reopening database", DB.OBJECT_STORE_1, function(objectStore){
+openObjectStore("Check index exists after reopening database", DB.OBJECT_STORE_1, function(objectStore, db){
     equal(objectStore.indexNames.length, 2, "2 Indexes on still exist");
     _(objectStore.indexNames);
+    db.close();
     start();
     nextTest();
 });
 
-openObjectStore("Check index keyPath exists after reopening database", DB.OBJECT_STORE_1, function(objectStore){
+openObjectStore("Check index keyPath exists after reopening database", DB.OBJECT_STORE_1, function(objectStore, db){
     var index = objectStore.index("Int Index");
     equal(index.keyPath, "Int", "keyPath on index still exists");
+    db.close();
     start();
     nextTest();
 });
 
 var key = sample.integer();
 var value = sample.obj();
-openObjectStore("Adding data after index is created", DB.OBJECT_STORE_1, function(objectStore){
+openObjectStore("Adding data after index is created", DB.OBJECT_STORE_1, function(objectStore, db){
     var addReq = objectStore.add(value, key);
     addReq.onsuccess = function(e){
         equal(key, addReq.result, "Data successfully added");
         _("Added to datastore with index " + key);
+        db.close();
         start();
         nextTest();
     };
@@ -86,7 +89,7 @@ openObjectStore("Adding data after index is created", DB.OBJECT_STORE_1, functio
         nextTest();
     };
 });
-openObjectStore("Index Cursor", DB.OBJECT_STORE_1, function(objectStore){
+openObjectStore("Index Cursor", DB.OBJECT_STORE_1, function(objectStore, db){
     var index = objectStore.index("Int Index");
     var indexCursorReq = index.openCursor();
     indexCursorReq.onsuccess = function(){
@@ -97,6 +100,7 @@ openObjectStore("Index Cursor", DB.OBJECT_STORE_1, function(objectStore){
         }
         else {
             ok(true, "Cursor Iteration completed");
+            db.close();
             start();
             nextTest();
         }
@@ -109,7 +113,7 @@ openObjectStore("Index Cursor", DB.OBJECT_STORE_1, function(objectStore){
     };
 });
 
-openObjectStore("Index Key Cursor", DB.OBJECT_STORE_1, function(objectStore){
+openObjectStore("Index Key Cursor", DB.OBJECT_STORE_1, function(objectStore, db){
     var index = objectStore.index("Int Index");
     var indexCursorReq = index.openKeyCursor();
     indexCursorReq.onsuccess = function(){
@@ -120,6 +124,7 @@ openObjectStore("Index Key Cursor", DB.OBJECT_STORE_1, function(objectStore){
         }
         else {
             ok(true, "Cursor Iteration completed");
+            db.close();
             start();
             nextTest();
         }
@@ -132,12 +137,13 @@ openObjectStore("Index Key Cursor", DB.OBJECT_STORE_1, function(objectStore){
     };
 });
 
-openObjectStore("Index Get", DB.OBJECT_STORE_1, function(objectStore){
+openObjectStore("Index Get", DB.OBJECT_STORE_1, function(objectStore, db){
     var index = objectStore.index("Int Index");
     var req = index.get(value.Int);
     req.onsuccess = function(){
         deepEqual(req.result, value, "Got object from Index Get");
         console.log("Got ", req.result, value);
+        db.close();
         start();
         nextTest();
     };
@@ -150,12 +156,13 @@ openObjectStore("Index Get", DB.OBJECT_STORE_1, function(objectStore){
 });
 
 
-openObjectStore("Index Get Key", DB.OBJECT_STORE_1, function(objectStore){
+openObjectStore("Index Get Key", DB.OBJECT_STORE_1, function(objectStore, db){
     var index = objectStore.index("Int Index");
     var req = index.getKey(value.Int);
     req.onsuccess = function(){
         equal(req.result, key, "Got key from Index Get");
         console.log("Got ", req.result, value);
+        db.close();
         start();
         nextTest();
     };
@@ -167,7 +174,7 @@ openObjectStore("Index Get Key", DB.OBJECT_STORE_1, function(objectStore){
     };
 });
 
-openObjectStore("Index update Cursor", DB.OBJECT_STORE_1, function(objectStore){
+openObjectStore("Index update Cursor", DB.OBJECT_STORE_1, function(objectStore, db){
     var index = objectStore.index("Int Index");
     var indexCursorReq = index.openCursor(IDBKeyRange.only(value.Int));
     indexCursorReq.onsuccess = function(){
@@ -186,6 +193,7 @@ openObjectStore("Index update Cursor", DB.OBJECT_STORE_1, function(objectStore){
                 var checkReq = index.openCursor(IDBKeyRange.only(value.Int));
                 checkReq.onsuccess = function() {
                     deepEqual(checkReq.result.value, cursorValue, "Update check succeeded");
+                    db.close();
                     start();
                     nextTest();
                 };

@@ -1,5 +1,14 @@
+// To-do: Move other modules toward using ES6 modules as well
+var win = typeof window === 'undefined' ? {} : window;
+export default win;
+
 (function(window, idbModules){
     'use strict';
+
+    if (!window) { // Mostly ignore Node here
+        idbModules.indexedDB = idbModules.shimIndexedDB;
+        return;
+    }
 
     function shim(name, value) {
         try {
@@ -82,5 +91,4 @@
             window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
         } catch (e) {}
     }
-
-}(window, idbModules));
+}(win, idbModules));

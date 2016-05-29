@@ -131,7 +131,7 @@ onObjectStoreOpen("Updating data in Object Store", DB.OBJECT_STORE_1, function(o
         nextTest();
     };
 });
-onObjectStoreOpen("Updating non-existant in Object Store", DB.OBJECT_STORE_1, function(objectStore){
+onObjectStoreOpen("Updating non-existent in Object Store", DB.OBJECT_STORE_1, function(objectStore){
     var key = "UPDATED";
     var req = objectStore.put(sample.obj(), key);
     req.onsuccess = function(){

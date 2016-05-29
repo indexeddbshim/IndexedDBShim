@@ -10,11 +10,11 @@ var buildIndexedDB = (function(){
 			(function addScript(i){
 				var x = document.createElement("script");
 				x.src = "/IndexedDBShim/src/" + moduleList[i] + ".js";
-				x.type = "text/javascript"
+				x.type = "text/javascript";
 				x.onload = function(){
 					if (i < moduleList.length - 1) {addScript(i + 1);}
 					else {callback();}
-				}
+				};
 				document.getElementsByTagName('head')[0].appendChild(x);
 			}(0));
 		},
@@ -37,9 +37,9 @@ var buildIndexedDB = (function(){
 							fetchScript(i + 1);
 						}
 					}
-				}
+				};
 				xmlhttp.send();
 			})(0);
 		}
-	}
+	};
 })();

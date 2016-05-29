@@ -1,4 +1,6 @@
 /*eslint-disable no-eval*/
+import atob from 'atob';
+
 (function(idbModules){
     'use strict';
 
@@ -241,7 +243,7 @@
 
                     parts = dataURL.split(BASE64_MARKER);
                     contentType = parts[0].split(':')[1];
-                    raw = window.atob(parts[1]);
+                    raw = atob(parts[1]);
                     var rawLength = raw.length;
                     var uInt8Array = new Uint8Array(rawLength);
 
