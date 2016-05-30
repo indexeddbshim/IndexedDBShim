@@ -2,55 +2,53 @@
 "use strict";
 
 module.exports = function(grunt) {
-	var srcFiles = [
-		'Init.js', 'util.js', 'polyfill.js', 'Sca.js', 'Key.js', 'Event.js',
-		'DOMException.js', 'IDBRequest.js', 'IDBKeyRange.js', 'IDBCursor.js',
-		'IDBIndex.js', 'IDBObjectStore.js', 'IDBTransaction.js', 'IDBDatabase.js',
-		'IDBFactory.js', 'globalVars.js'
-	].map(function (srcFile) {return 'src/' + srcFile;});
-	var saucekey = null;
+	let saucekey = null;
 	if (typeof process.env.saucekey !== "undefined") {
 		saucekey = process.env.SAUCE_ACCESS_KEY;
 	}
-	var pkg = require('./package.json');
+	const pkg = require('./package.json');
 	bumpVersion(pkg);
 	grunt.initConfig({
 		pkg: pkg,
-		concat: {
-			dist: {
-				src: srcFiles,
-				dest: 'dist/<%= pkg.name%>.js'
-			}
-		},
-		babel: {
-			options: {
-				sourceMap: true
-			},
-			dist: {
-				files: {
-					'dist/<%= pkg.name%>.js': 'dist/<%= pkg.name%>.js',
-					'dist/<%= pkg.name%>-node.js': 'src/<%= pkg.name%>-node.js'
-				}
-			}
-		},
 		browserify: {
 			dist: {
+				options: {
+					transform: [['babelify', {sourceMaps: true}]]
+				},
 				files: {
-					'dist/<%= pkg.name%>.js': 'dist/<%= pkg.name%>.js',
-					'dist/<%= pkg.name%>-node.js': 'dist/<%= pkg.name%>-node.js'
+					'dist/<%= pkg.name%>.js': 'src/globalVars.js'
+				}
+			},
+			node: {
+				options: {
+					transform: [['babelify', {sourceMaps: true}]]
+				},
+				files: {
+					'dist/<%= pkg.name%>-node.js': 'src/node.js'
 				}
 			}
 		},
+		clean: ['src/<%= pkg.name%>.js', 'src/<%= pkg.name%>-node.js'],
 		uglify: {
-			options: {
-				banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
-				sourceMap: true,
-				sourceMapName: 'dist/<%=pkg.name%>.min.js.map',
-				sourceMapRoot: 'http://nparashuram.com/IndexedDBShim/dist/'
-			},
-			all: {
+			browser: {
+				options: {
+					banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
+					sourceMap: true,
+					sourceMapName: 'dist/<%=pkg.name%>.min.js.map',
+					sourceMapRoot: 'http://nparashuram.com/IndexedDBShim/dist/'
+				},
 				src: 'dist/<%= pkg.name%>.js',
 				dest: 'dist/<%=pkg.name%>.min.js'
+			},
+			node: {
+				options: {
+					banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
+					sourceMap: true,
+					sourceMapName: 'dist/<%=pkg.name%>-node.min.js.map',
+					sourceMapRoot: 'http://nparashuram.com/IndexedDBShim/dist/'
+				},
+				src: 'dist/<%= pkg.name%>-node.js',
+				dest: 'dist/<%=pkg.name%>-node.min.js'
 			}
 		},
 		connect: {
@@ -90,7 +88,7 @@ module.exports = function(grunt) {
 		},
 
 		eslint: {
-			files: ['src/**/*.js', 'Gruntfile.js', 'build.js'],
+			files: ['src/**/*.js', 'Gruntfile.js'],
 			options: {
 				configFile: ".eslintrc"
 			}
@@ -99,17 +97,17 @@ module.exports = function(grunt) {
 		watch: {
 			dev: {
 				files: ["src/*"],
-				tasks: ["eslint", "concat", "babel", "browserify"]
+				tasks: ["eslint", "browserify", "clean", "uglify"]
 			}
 		}
 	});
 
-	for (var key in grunt.file.readJSON('package.json').devDependencies) {
+	for (const key in grunt.file.readJSON('package.json').devDependencies) {
 		if (key !== 'grunt' && key.indexOf('grunt') === 0) {grunt.loadNpmTasks(key);}
 	}
 
-	grunt.registerTask('build', ['eslint', 'concat', 'babel', 'browserify', 'uglify']);
-	var testJobs = ["build", "connect"];
+	grunt.registerTask('build', ['clean', 'eslint', 'browserify', 'clean', 'uglify']);
+	const testJobs = ["build", "connect"];
 	if (saucekey !== null) {
 		testJobs.push("saucelabs-qunit");
 	} else {
@@ -119,7 +117,7 @@ module.exports = function(grunt) {
 	grunt.registerTask('test', testJobs);
 
 	grunt.registerTask('default', 'build');
-	grunt.registerTask('dev', ['build', 'connect', 'watch']);
+	grunt.registerTask('dev', ['clean', 'build', 'connect', 'watch']);
 };
 
 /**
@@ -127,7 +125,7 @@ module.exports = function(grunt) {
  * will match the next upcoming revision of the package.
  */
 function bumpVersion(pkg) {
-	var version = pkg.version.split('.');
+	const version = pkg.version.split('.');
 	version[2] = parseInt(version[2]) + 1;
 	pkg.version = version.join('.');
 }

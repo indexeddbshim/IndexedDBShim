@@ -1,14 +1,18 @@
-// To-do: Move other modules toward using ES6 modules as well
-var win = typeof window === 'undefined' ? {} : window;
-export default win;
+/*global GLOBAL*/
+import {shimIDBVersionChangeEvent} from './Event.js';
+import shimIDBKeyRange from './IDBKeyRange.js';
+import {shimIDBCursor, shimIDBCursorWithValue} from './IDBCursor.js';
+import shimIDBObjectStore from './IDBObjectStore.js';
+import shimIDBIndex from './IDBIndex.js';
+import shimIDBTransaction from './IDBTransaction.js';
+import shimIDBDatabase from './IDBDatabase.js';
+import {shimIDBRequest, shimIDBOpenDBRequest} from './IDBRequest.js';
+import {shimIDBFactory, shimIndexedDB} from './IDBFactory.js';
+import polyfill from './polyfill.js';
 
-(function(window, idbModules){
+(function () {
     'use strict';
-
-    if (!window) { // Mostly ignore Node here
-        idbModules.indexedDB = idbModules.shimIndexedDB;
-        return;
-    }
+    const global = typeof window !== 'undefined' ? window : GLOBAL; // DEBUG, cursorPreloadPackSize=100
 
     function shim(name, value) {
         try {
@@ -32,31 +36,31 @@ export default win;
         }
     }
 
-    shim('shimIndexedDB', idbModules.shimIndexedDB);
+    shim('shimIndexedDB', shimIndexedDB);
     if (window.shimIndexedDB) {
         window.shimIndexedDB.__useShim = function(){
             if (typeof window.openDatabase !== "undefined") {
                 // Polyfill ALL of IndexedDB, using WebSQL
-                shim('indexedDB', idbModules.shimIndexedDB);
-                shim('IDBFactory', idbModules.IDBFactory);
-                shim('IDBDatabase', idbModules.IDBDatabase);
-                shim('IDBObjectStore', idbModules.IDBObjectStore);
-                shim('IDBIndex', idbModules.IDBIndex);
-                shim('IDBTransaction', idbModules.IDBTransaction);
-                shim('IDBCursor', idbModules.IDBCursor);
-                shim('IDBKeyRange', idbModules.IDBKeyRange);
-                shim('IDBRequest', idbModules.IDBRequest);
-                shim('IDBOpenDBRequest', idbModules.IDBOpenDBRequest);
-                shim('IDBVersionChangeEvent', idbModules.IDBVersionChangeEvent);
+                shim('indexedDB', shimIndexedDB);
+                shim('IDBFactory', shimIDBFactory);
+                shim('IDBDatabase', shimIDBDatabase);
+                shim('IDBObjectStore', shimIDBObjectStore);
+                shim('IDBIndex', shimIDBIndex);
+                shim('IDBTransaction', shimIDBTransaction);
+                shim('IDBCursor', shimIDBCursor);
+                shim('IDBKeyRange', shimIDBKeyRange);
+                shim('IDBRequest', shimIDBRequest);
+                shim('IDBOpenDBRequest', shimIDBOpenDBRequest);
+                shim('IDBVersionChangeEvent', shimIDBVersionChangeEvent);
             }
             else if (typeof window.indexedDB === "object") {
-                // Polyfill the missing IndexedDB features
-                idbModules.polyfill();
+                // Polyfill the missing IndexedDB features (no need for IDBEnvironment (window containing indexedDB itself))
+                polyfill(shimIDBCursor, shimIDBCursorWithValue, shimIDBDatabase, shimIDBFactory, shimIDBIndex, shimIDBKeyRange, shimIDBObjectStore, shimIDBRequest, shimIDBTransaction);
             }
         };
 
         window.shimIndexedDB.__debug = function(val){
-            idbModules.DEBUG = val;
+            global.DEBUG = val;
         };
     }
 
@@ -66,7 +70,7 @@ export default win;
     }
 
     // Detect browsers with known IndexedDb issues (e.g. Android pre-4.4)
-    var poorIndexedDbSupport = false;
+    let poorIndexedDbSupport = false;
     if (navigator.userAgent.match(/Android 2/) || navigator.userAgent.match(/Android 3/) || navigator.userAgent.match(/Android 4\.[0-3]/)) {
         /* Chrome is an exception. It supports IndexedDb */
         if (!navigator.userAgent.match(/Chrome/)) {
@@ -91,4 +95,4 @@ export default win;
             window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
         } catch (e) {}
     }
-}(win, idbModules));
+}());
