@@ -1,7 +1,7 @@
 let cleanInterface = false;
 
 const testObject = {test: true};
-//Test whether Object.defineProperty really works.
+// Test whether Object.defineProperty really works.
 if (Object.defineProperty) {
     try {
         Object.defineProperty(testObject, 'test', { enumerable: false });
@@ -9,7 +9,7 @@ if (Object.defineProperty) {
             cleanInterface = true;
         }
     } catch (e) {
-    //Object.defineProperty does not work as intended.
+    // Object.defineProperty does not work as intended.
     }
 }
 
@@ -19,21 +19,21 @@ if (Object.defineProperty) {
  * @param {Object} context
  * @param {Object} argArray
  */
-function callback(fn, context, event) {
-    //window.setTimeout(function(){
+function callback (fn, context, event) {
+    // window.setTimeout(function(){
     event.target = context;
-    (typeof context[fn] === "function") && context[fn].apply(context, [event]);
-    //}, 1);
+    (typeof context[fn] === 'function') && context[fn](event);
+    // }, 1);
 }
 
 /**
  * Shim the DOMStringList object.
  *
  */
-const StringList = function() {
+const StringList = function () {
     this.length = 0;
     this._items = [];
-    //Internal functions on the prototype have been made non-enumerable below.
+    // Internal functions on the prototype have been made non-enumerable below.
     if (cleanInterface) {
         Object.defineProperty(this, '_items', {
             enumerable: false
@@ -42,25 +42,25 @@ const StringList = function() {
 };
 StringList.prototype = {
     // Interface.
-    contains: function(str) {
+    contains: function (str) {
         return -1 !== this._items.indexOf(str);
     },
-    item: function(key) {
+    item: function (key) {
         return this._items[key];
     },
 
     // Helpers. Should only be used internally.
-    indexOf: function(str) {
+    indexOf: function (str) {
         return this._items.indexOf(str);
     },
-    push: function(item) {
+    push: function (item) {
         this._items.push(item);
         this.length += 1;
         for (let i = 0; i < this._items.length; i++) {
             this[i] = this._items[i];
         }
     },
-    splice: function(/*index, howmany, item1, ..., itemX*/) {
+    splice: function (/* index, howmany, item1, ..., itemX*/) {
         this._items.splice.apply(this._items, arguments);
         this.length = this._items.length;
         for (const i in this) {
@@ -86,7 +86,7 @@ if (cleanInterface) {
 }
 
 function quote (arg) {
-    return "\"" + arg + "\"";
+    return '"' + arg + '"';
 }
 
 const util = {callback, StringList, quote};

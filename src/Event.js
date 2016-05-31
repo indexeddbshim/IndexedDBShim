@@ -2,7 +2,7 @@
  * Creates a native Event object, for browsers that support it
  * @returns {Event}
  */
-function createNativeEvent(type, debug) {
+function createNativeEvent (type, debug) {
     const event = new Event(type);
     event.debug = debug;
 
@@ -18,7 +18,7 @@ function createNativeEvent(type, debug) {
  * A shim Event class, for browsers that don't allow us to create native Event objects.
  * @constructor
  */
-function ShimEvent(type, debug) {
+function ShimEvent (type, debug) {
     this.type = type;
     this.debug = debug;
     this.bubbles = false;
@@ -38,20 +38,19 @@ try {
         // Native events work as expected
         useNativeEvent = true;
     }
-}
-catch (e) {}
+} catch (e) {}
 
-let createEvent, IDBVersionChangeEvent;
+let expEvent, createEvent, IDBVersionChangeEvent;
 if (useNativeEvent) {
+    expEvent = Event;
     IDBVersionChangeEvent = Event;
     createEvent = createNativeEvent;
-}
-else {
-    Event = ShimEvent;
+} else {
+    expEvent = ShimEvent;
     IDBVersionChangeEvent = ShimEvent;
-    createEvent = function(type, debug) {
+    createEvent = function (type, debug) {
         return new ShimEvent(type, debug);
     };
 }
 
-export {Event, IDBVersionChangeEvent, createEvent}; // Event not currently in use
+export {expEvent as Event, IDBVersionChangeEvent, createEvent}; // Event not currently in use

@@ -20,7 +20,7 @@ import atob from 'atob';
  * 3) JSON.stringify and JSON.parse do the final conversion to/from string.
  */
 function decycle (object, callback) {
-    //From: https://github.com/douglascrockford/JSON-js/blob/master/cycle.js
+    // From: https://github.com/douglascrockford/JSON-js/blob/master/cycle.js
     // Contains additional logic to convert the following object types to string
     // so that they can properly be encoded using JSON.stringify:
     //  *Boolean
@@ -55,7 +55,7 @@ function decycle (object, callback) {
      * Check the queue to see if all objects have been processed.
      * if they have, call the callback with the converted object.
      */
-    function checkForCompletion() {
+    function checkForCompletion () {
         if (queuedObjects.length === 0) {
             returnCallback(derezObj);
         }
@@ -66,13 +66,13 @@ function decycle (object, callback) {
      * @param {Blob} blob to convert.
      * @param {String} path of blob in object being encoded.
      */
-    function readBlobAsDataURL(blob, path) {
+    function readBlobAsDataURL (blob, path) {
         const reader = new FileReader();
-        reader.onloadend = function(loadedEvent) {
+        reader.onloadend = function (loadedEvent) {
             const dataURL = loadedEvent.target.result;
             const blobtype = 'Blob';
             if (blob instanceof File) {
-                //blobtype = 'File';
+                // blobtype = 'File';
             }
             updateEncodedBlob(dataURL, path, blobtype);
         };
@@ -85,34 +85,32 @@ function decycle (object, callback) {
      * @param {String} path
      * @param {String} blobtype - file if the blob is a file; blob otherwise
      */
-    function updateEncodedBlob(dataURL, path, blobtype) {
+    function updateEncodedBlob (dataURL, path, blobtype) {
         const encoded = queuedObjects.indexOf(path);
-        path = path.replace('$','derezObj');
-        eval(path+'.$enc="'+dataURL+'"');
-        eval(path+'.$type="'+blobtype+'"');
+        path = path.replace('$', 'derezObj');
+        eval(path + '.$enc="' + dataURL + '"');
+        eval(path + '.$type="' + blobtype + '"');
         queuedObjects.splice(encoded, 1);
         checkForCompletion();
     }
 
-    function derez(value, path) {
-
+    function derez (value, path) {
         // The derez recurses through the object, producing the deep copy.
 
         let i,          // The loop counter
-        name,       // Property name
-        nu;         // The new object or array
+            name,       // Property name
+            nu;         // The new object or array
 
         // typeof null === 'object', so go on if this value is really an object but not
         // one of the weird builtin objects.
 
         if (typeof value === 'object' && value !== null &&
             !(value instanceof Boolean) &&
-            !(value instanceof Date)    &&
-            !(value instanceof Number)  &&
-            !(value instanceof RegExp)  &&
-            !(value instanceof Blob)  &&
+            !(value instanceof Date) &&
+            !(value instanceof Number) &&
+            !(value instanceof RegExp) &&
+            !(value instanceof Blob) &&
             !(value instanceof String)) {
-
             // If the value is an object or array, look to see if we have already
             // encountered it. If so, return a $ref/path object. This is a hard way,
             // linear search that will get slower as the number of unique objects grows.
@@ -148,7 +146,7 @@ function decycle (object, callback) {
 
             return nu;
         } else if (value instanceof Blob) {
-            //Queue blob for conversion
+            // Queue blob for conversion
             queuedObjects.push(path);
             readBlobAsDataURL(value, path);
         } else if (value instanceof Boolean) {
@@ -187,8 +185,8 @@ function decycle (object, callback) {
     checkForCompletion();
 }
 
-function retrocycle($) {
-    //From: https://github.com/douglascrockford/JSON-js/blob/master/cycle.js
+function retrocycle ($) {
+    // From: https://github.com/douglascrockford/JSON-js/blob/master/cycle.js
     // Contains additional logic to convert strings to the following object types
     // so that they can properly be decoded:
     //  *Boolean
@@ -216,14 +214,14 @@ function retrocycle($) {
     //      return JSON.retrocycle(JSON.parse(s));
     // produces an array containing a single element which is the array itself.
 
-    const px = /^\$(?:\[(?:\d+|\"(?:[^\\\"\u0000-\u001f]|\\([\\\"\/bfnrt]|u[0-9a-zA-Z]{4}))*\")\])*$/;
+    const px = /^\$(?:\[(?:\d+|"(?:[^\\"\u0000-\u001f]|\\([\\"\/bfnrt]|u[0-9a-zA-Z]{4}))*")\])*$/;
 
     /**
      * Converts the specified data URL to a Blob object
      * @param {String} dataURL to convert to a Blob
      * @returns {Blob} the converted Blob object
      */
-    function dataURLToBlob(dataURL) {
+    function dataURLToBlob (dataURL) {
         const BASE64_MARKER = ';base64,';
         let contentType,
             parts,
@@ -248,7 +246,7 @@ function retrocycle($) {
         return new Blob([uInt8Array.buffer], {type: contentType});
     }
 
-    function rez(value) {
+    function rez (value) {
         // The rez function walks recursively through the object looking for $ref
         // properties. When it finds one that has a value that is a path, then it
         // replaces the $ref object with a reference to the value that is found by
@@ -271,29 +269,29 @@ function retrocycle($) {
                 }
             } else {
                 if (value.$type !== undefined) {
-                    switch(value.$type) {
-                        case 'Blob':
-                        case 'File':
-                            value = dataURLToBlob(value.$enc);
-                            break;
-                        case 'Boolean':
-                            value = Boolean(value.$enc === 'true');
-                            break;
-                        case 'Date':
-                            value = new Date(value.$enc);
-                            break;
-                        case 'Number':
-                            value = Number(value.$enc);
-                            break;
-                        case 'RegExp':
-                            value = eval(value.$enc);
-                            break;
-                        case 'number':
-                            value = parseFloat(value.$enc);
-                            break;
-                        case 'undefined':
-                            value = undefined;
-                            break;
+                    switch (value.$type) {
+                    case 'Blob':
+                    case 'File':
+                        value = dataURLToBlob(value.$enc);
+                        break;
+                    case 'Boolean':
+                        value = Boolean(value.$enc === 'true');
+                        break;
+                    case 'Date':
+                        value = new Date(value.$enc);
+                        break;
+                    case 'Number':
+                        value = Number(value.$enc);
+                        break;
+                    case 'RegExp':
+                        value = eval(value.$enc);
+                        break;
+                    case 'number':
+                        value = parseFloat(value.$enc);
+                        break;
+                    case 'undefined':
+                        value = undefined;
+                        break;
                     }
                 } else {
                     for (name in value) {
@@ -326,7 +324,7 @@ function retrocycle($) {
  * complete.  The callback gets called with the converted value.
  */
 function encode (val, callback) {
-    function finishEncode(val) {
+    function finishEncode (val) {
         callback(JSON.stringify(val));
     }
     decycle(val, finishEncode);

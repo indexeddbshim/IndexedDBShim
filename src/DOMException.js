@@ -5,7 +5,7 @@ const global = typeof window !== 'undefined' ? window : GLOBAL;
  * Creates a native DOMException, for browsers that support it
  * @returns {DOMException}
  */
-function createNativeDOMException(name, message) {
+function createNativeDOMException (name, message) {
     const e = new DOMException.prototype.constructor(0, message);
     e.name = name || 'DOMException';
     e.message = message;
@@ -16,7 +16,7 @@ function createNativeDOMException(name, message) {
  * Creates a native DOMError, for browsers that support it
  * @returns {DOMError}
  */
-function createNativeDOMError(name, message) {
+function createNativeDOMError (name, message) {
     name = name || 'DOMError';
     const e = new DOMError(name, message);
     e.name === name || (e.name = name);
@@ -28,7 +28,7 @@ function createNativeDOMError(name, message) {
  * Creates a generic Error object
  * @returns {Error}
  */
-function createError(name, message) {
+function createError (name, message) {
     const e = new Error(message);
     e.name = name || 'DOMException';
     e.message = message;
@@ -41,13 +41,13 @@ function createError(name, message) {
  * @param {string} message
  * @param {string|Error|null} error
  */
-function logError(name, message, error) {
+function logError (name, message, error) {
     if (global.DEBUG) {
         if (error && error.message) {
             error = error.message;
         }
 
-        const method = typeof(console.error) === 'function' ? 'error' : 'log';
+        const method = typeof (console.error) === 'function' ? 'error' : 'log';
         console[method](name + ': ' + message + '. ' + (error || ''));
         console.trace && console.trace();
     }
@@ -59,7 +59,7 @@ function logError(name, message, error) {
  * @param {array} args
  * @returns {Error|DOMException|undefined}
  */
-function findError(args) {
+function findError (args) {
     let err;
     if (args) {
         if (args.length === 1) {
@@ -69,8 +69,7 @@ function findError(args) {
             const arg = args[i];
             if (arg instanceof Error || arg instanceof DOMException) {
                 return arg;
-            }
-            else if (arg && typeof arg.message === "string") {
+            } else if (arg && typeof arg.message === 'string') {
                 err = arg;
             }
         }
@@ -87,8 +86,7 @@ try {
         // Native DOMException works as expected
         useNativeDOMException = true;
     }
-}
-catch (e) {}
+} catch (e) {}
 
 // Test whether we can use the browser's native DOMError class
 try {
@@ -97,37 +95,36 @@ try {
         // Native DOMError works as expected
         useNativeDOMError = true;
     }
-}
-catch (e) {}
+} catch (e) {}
 
-let createDOMException;
+let createDOMException, shimDOMException;
 if (useNativeDOMException) {
-    createDOMException = function(name, message, error) {
+    shimDOMException = DOMException;
+    createDOMException = function (name, message, error) {
         logError(name, message, error);
         return createNativeDOMException(name, message);
     };
-}
-else {
-    DOMException = Error;
-    createDOMException = function(name, message, error) {
+} else {
+    shimDOMException = Error;
+    createDOMException = function (name, message, error) {
         logError(name, message, error);
         return createError(name, message);
     };
 }
 
-let createDOMError;
+let createDOMError, shimDOMError;
 if (useNativeDOMError) {
-    createDOMError = function(name, message, error) {
+    shimDOMError = DOMError;
+    createDOMError = function (name, message, error) {
         logError(name, message, error);
         return createNativeDOMError(name, message);
     };
-}
-else {
-    DOMError = Error;
-    createDOMError = function(name, message, error) {
+} else {
+    shimDOMError = Error;
+    createDOMError = function (name, message, error) {
         logError(name, message, error);
         return createError(name, message);
     };
 }
 
-export {logError, findError, DOMError, DOMException, createDOMException, createDOMError};
+export {logError, findError, shimDOMError as DOMError, shimDOMException as DOMException, createDOMException, createDOMError};

@@ -11,7 +11,7 @@ import IDBTransaction from './IDBTransaction.js';
  * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
  * @constructor
  */
-function IDBDatabase(db, name, version, storeProperties){
+function IDBDatabase (db, name, version, storeProperties) {
     this.__db = db;
     this.__closed = false;
     this.version = version;
@@ -33,12 +33,12 @@ function IDBDatabase(db, name, version, storeProperties){
  * @param {object} [createOptions]
  * @returns {IDBObjectStore}
  */
-IDBDatabase.prototype.createObjectStore = function(storeName, createOptions){
+IDBDatabase.prototype.createObjectStore = function (storeName, createOptions) {
     if (arguments.length === 0) {
-        throw new TypeError("No object store name was specified");
+        throw new TypeError('No object store name was specified');
     }
     if (this.__objectStores[storeName]) {
-        throw createDOMException("ConstraintError", "Object store \"" + storeName + "\" already exists in " + this.name);
+        throw createDOMException('ConstraintError', 'Object store "' + storeName + '" already exists in ' + this.name);
     }
     this.__versionTransaction.__assertVersionChange();
 
@@ -48,7 +48,7 @@ IDBDatabase.prototype.createObjectStore = function(storeName, createOptions){
         name: storeName,
         keyPath: JSON.stringify(createOptions.keyPath || null),
         autoInc: JSON.stringify(createOptions.autoIncrement),
-        indexList: "{}"
+        indexList: '{}'
     };
     const store = new IDBObjectStore(storeProperties, this.__versionTransaction);
     IDBObjectStore.__createObjectStore(this, store);
@@ -59,20 +59,20 @@ IDBDatabase.prototype.createObjectStore = function(storeName, createOptions){
  * Deletes an object store.
  * @param {string} storeName
  */
-IDBDatabase.prototype.deleteObjectStore = function(storeName){
+IDBDatabase.prototype.deleteObjectStore = function (storeName) {
     if (arguments.length === 0) {
-        throw new TypeError("No object store name was specified");
+        throw new TypeError('No object store name was specified');
     }
     const store = this.__objectStores[storeName];
     if (!store) {
-        throw createDOMException("NotFoundError", "Object store \"" + storeName + "\" does not exist in " + this.name);
+        throw createDOMException('NotFoundError', 'Object store "' + storeName + '" does not exist in ' + this.name);
     }
     this.__versionTransaction.__assertVersionChange();
 
     IDBObjectStore.__deleteObjectStore(this, store);
 };
 
-IDBDatabase.prototype.close = function(){
+IDBDatabase.prototype.close = function () {
     this.__closed = true;
 };
 
@@ -82,30 +82,29 @@ IDBDatabase.prototype.close = function(){
  * @param {string} mode
  * @returns {IDBTransaction}
  */
-IDBDatabase.prototype.transaction = function(storeNames, mode){
+IDBDatabase.prototype.transaction = function (storeNames, mode) {
     if (this.__closed) {
-        throw createDOMException("InvalidStateError", "An attempt was made to start a new transaction on a database connection that is not open");
+        throw createDOMException('InvalidStateError', 'An attempt was made to start a new transaction on a database connection that is not open');
     }
 
-    if (typeof mode === "number") {
+    if (typeof mode === 'number') {
         mode = mode === 1 ? IDBTransaction.READ_WRITE : IDBTransaction.READ_ONLY;
-        global.DEBUG && console.log("Mode should be a string, but was specified as ", mode);
-    }
-    else {
+        global.DEBUG && console.log('Mode should be a string, but was specified as ', mode);
+    } else {
         mode = mode || IDBTransaction.READ_ONLY;
     }
 
     if (mode !== IDBTransaction.READ_ONLY && mode !== IDBTransaction.READ_WRITE) {
-        throw new TypeError("Invalid transaction mode: " + mode);
+        throw new TypeError('Invalid transaction mode: ' + mode);
     }
 
-    storeNames = typeof storeNames === "string" ? [storeNames] : storeNames;
+    storeNames = typeof storeNames === 'string' ? [storeNames] : storeNames;
     if (storeNames.length === 0) {
-        throw createDOMException("InvalidAccessError", "No object store names were specified");
+        throw createDOMException('InvalidAccessError', 'No object store names were specified');
     }
     for (let i = 0; i < storeNames.length; i++) {
         if (!this.objectStoreNames.contains(storeNames[i])) {
-            throw createDOMException("NotFoundError", "The \"" + storeNames[i] + "\" object store does not exist");
+            throw createDOMException('NotFoundError', 'The "' + storeNames[i] + '" object store does not exist');
         }
     }
 

@@ -1,4 +1,4 @@
-/*global nodeWebsql, GLOBAL*/
+/*global GLOBAL*/
 const global = typeof window !== 'undefined' ? window : GLOBAL;
 const openDatabase = typeof global.nodeWebsql === 'undefined' ? window.openDatabase : global.nodeWebsql;
 
@@ -16,20 +16,19 @@ let sysdb;
 /**
  * Craetes the sysDB to keep track of version numbers for databases
  **/
-function createSysDB(success, failure) {
-    function sysDbCreateError(tx, err) {
+function createSysDB (success, failure) {
+    function sysDbCreateError (tx, err) {
         err = findError(arguments);
-        global.DEBUG && console.log("Error in sysdb transaction - when creating dbVersions", err);
+        global.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
         failure(err);
     }
 
     if (sysdb) {
         success();
-    }
-    else {
-        sysdb = openDatabase("__sysdb__", 1, "System Database", DEFAULT_DB_SIZE);
-        sysdb.transaction(function(tx) {
-            tx.executeSql("CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);", [], success, sysDbCreateError);
+    } else {
+        sysdb = openDatabase('__sysdb__', 1, 'System Database', DEFAULT_DB_SIZE);
+        sysdb.transaction(function (tx) {
+            tx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);', [], success, sysDbCreateError);
         }, sysDbCreateError);
     }
 }
@@ -39,7 +38,7 @@ function createSysDB(success, failure) {
  * https://w3c.github.io/IndexedDB/#idl-def-IDBFactory
  * @constructor
  */
-function IDBFactory() {
+function IDBFactory () {
 }
 
 /**
@@ -47,14 +46,13 @@ function IDBFactory() {
  * @param {string} name
  * @param {number} version
  */
-IDBFactory.prototype.open = function(name, version) {
+IDBFactory.prototype.open = function (name, version) {
     const req = new IDBOpenDBRequest();
     let calledDbCreateError = false;
 
     if (arguments.length === 0) {
         throw new TypeError('Database name is required');
-    }
-    else if (arguments.length === 2) {
+    } else if (arguments.length === 2) {
         version = parseFloat(version);
         if (isNaN(version) || !isFinite(version) || version <= 0) {
             throw new TypeError('Invalid database version: ' + version);
@@ -62,68 +60,68 @@ IDBFactory.prototype.open = function(name, version) {
     }
     name = name + ''; // cast to a string
 
-    function dbCreateError(tx, err) {
+    function dbCreateError (tx, err) {
         if (calledDbCreateError) {
             return;
         }
         err = findError(arguments);
         calledDbCreateError = true;
-        const evt = createEvent("error", arguments);
-        req.readyState = "done";
+        const evt = createEvent('error', arguments);
+        req.readyState = 'done';
         req.error = err || DOMError;
-        util.callback("onerror", req, evt);
+        util.callback('onerror', req, evt);
     }
 
-    function openDB(oldVersion) {
+    function openDB (oldVersion) {
         const db = openDatabase(name, 1, name, DEFAULT_DB_SIZE);
-        req.readyState = "done";
-        if (typeof version === "undefined") {
+        req.readyState = 'done';
+        if (typeof version === 'undefined') {
             version = oldVersion || 1;
         }
         if (version <= 0 || oldVersion > version) {
-            const err = createDOMError("VersionError", "An attempt was made to open a database using a lower version than the existing version.", version);
+            const err = createDOMError('VersionError', 'An attempt was made to open a database using a lower version than the existing version.', version);
             dbCreateError(err);
             return;
         }
 
-        db.transaction(function(tx) {
-            tx.executeSql("CREATE TABLE IF NOT EXISTS __sys__ (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB)", [], function() {
-                tx.executeSql("SELECT * FROM __sys__", [], function(tx, data) {
-                    const e = createEvent("success");
+        db.transaction(function (tx) {
+            tx.executeSql('CREATE TABLE IF NOT EXISTS __sys__ (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB)', [], function () {
+                tx.executeSql('SELECT * FROM __sys__', [], function (tx, data) {
+                    const e = createEvent('success');
                     req.source = req.result = new IDBDatabase(db, name, version, data);
                     if (oldVersion < version) {
                         // DB Upgrade in progress
-                        sysdb.transaction(function(systx) {
-                            systx.executeSql("UPDATE dbVersions set version = ? where name = ?", [version, name], function() {
-                                const e = createEvent("upgradeneeded");
+                        sysdb.transaction(function (systx) {
+                            systx.executeSql('UPDATE dbVersions set version = ? where name = ?', [version, name], function () {
+                                const e = createEvent('upgradeneeded');
                                 e.oldVersion = oldVersion;
                                 e.newVersion = version;
                                 req.transaction = req.result.__versionTransaction = new IDBTransaction(req.source, [], IDBTransaction.VERSION_CHANGE);
-                                req.transaction.__addToTransactionQueue(function onupgradeneeded(tx, args, success) {
-                                    util.callback("onupgradeneeded", req, e);
+                                req.transaction.__addToTransactionQueue(function onupgradeneeded (tx, args, success) {
+                                    util.callback('onupgradeneeded', req, e);
                                     success();
                                 });
-                                req.transaction.__oncomplete = function() {
+                                req.transaction.__oncomplete = function () {
                                     req.transaction = null;
-                                    const e = createEvent("success");
-                                    util.callback("onsuccess", req, e);
+                                    const e = createEvent('success');
+                                    util.callback('onsuccess', req, e);
                                 };
                             }, dbCreateError);
                         }, dbCreateError);
                     } else {
-                        util.callback("onsuccess", req, e);
+                        util.callback('onsuccess', req, e);
                     }
                 }, dbCreateError);
             }, dbCreateError);
         }, dbCreateError);
     }
 
-    createSysDB(function() {
-        sysdb.transaction(function(tx) {
-            tx.executeSql("SELECT * FROM dbVersions where name = ?", [name], function(tx, data) {
+    createSysDB(function () {
+        sysdb.transaction(function (tx) {
+            tx.executeSql('SELECT * FROM dbVersions where name = ?', [name], function (tx, data) {
                 if (data.rows.length === 0) {
                     // Database with this name does not exist
-                    tx.executeSql("INSERT INTO dbVersions VALUES (?,?)", [name, version || 1], function() {
+                    tx.executeSql('INSERT INTO dbVersions VALUES (?,?)', [name, version || 1], function () {
                         openDB(0);
                     }, dbCreateError);
                 } else {
@@ -141,7 +139,7 @@ IDBFactory.prototype.open = function(name, version) {
  * @param {string} name
  * @returns {IDBOpenDBRequest}
  */
-IDBFactory.prototype.deleteDatabase = function(name) {
+IDBFactory.prototype.deleteDatabase = function (name) {
     const req = new IDBOpenDBRequest();
     let calledDBError = false;
     let version = null;
@@ -151,64 +149,64 @@ IDBFactory.prototype.deleteDatabase = function(name) {
     }
     name = name + ''; // cast to a string
 
-    function dbError(tx, err) {
+    function dbError (tx, err) {
         if (calledDBError) {
             return;
         }
         err = findError(arguments);
-        req.readyState = "done";
+        req.readyState = 'done';
         req.error = err || DOMError;
-        const e = createEvent("error");
+        const e = createEvent('error');
         e.debug = arguments;
-        util.callback("onerror", req, e);
+        util.callback('onerror', req, e);
         calledDBError = true;
     }
 
-    function deleteFromDbVersions() {
-        sysdb.transaction(function(systx) {
-            systx.executeSql("DELETE FROM dbVersions where name = ? ", [name], function() {
+    function deleteFromDbVersions () {
+        sysdb.transaction(function (systx) {
+            systx.executeSql('DELETE FROM dbVersions where name = ? ', [name], function () {
                 req.result = undefined;
-                const e = createEvent("success");
+                const e = createEvent('success');
                 e.newVersion = null;
                 e.oldVersion = version;
-                util.callback("onsuccess", req, e);
+                util.callback('onsuccess', req, e);
             }, dbError);
         }, dbError);
     }
 
-    createSysDB(function() {
-        sysdb.transaction(function(systx) {
-            systx.executeSql("SELECT * FROM dbVersions where name = ?", [name], function(tx, data) {
+    createSysDB(function () {
+        sysdb.transaction(function (systx) {
+            systx.executeSql('SELECT * FROM dbVersions where name = ?', [name], function (tx, data) {
                 if (data.rows.length === 0) {
                     req.result = undefined;
-                    const e = createEvent("success");
+                    const e = createEvent('success');
                     e.newVersion = null;
                     e.oldVersion = version;
-                    util.callback("onsuccess", req, e);
+                    util.callback('onsuccess', req, e);
                     return;
                 }
                 version = data.rows.item(0).version;
                 const db = openDatabase(name, 1, name, DEFAULT_DB_SIZE);
-                db.transaction(function(tx) {
-                    tx.executeSql("SELECT * FROM __sys__", [], function(tx, data) {
+                db.transaction(function (tx) {
+                    tx.executeSql('SELECT * FROM __sys__', [], function (tx, data) {
                         const tables = data.rows;
-                        (function deleteTables(i) {
+                        (function deleteTables (i) {
                             if (i >= tables.length) {
                                 // If all tables are deleted, delete the housekeeping tables
-                                tx.executeSql("DROP TABLE IF EXISTS __sys__", [], function() {
+                                tx.executeSql('DROP TABLE IF EXISTS __sys__', [], function () {
                                     // Finally, delete the record for this DB from sysdb
                                     deleteFromDbVersions();
                                 }, dbError);
                             } else {
                                 // Delete all tables in this database, maintained in the sys table
-                                tx.executeSql("DROP TABLE " + util.quote(tables.item(i).name), [], function() {
+                                tx.executeSql('DROP TABLE ' + util.quote(tables.item(i).name), [], function () {
                                     deleteTables(i + 1);
-                                }, function() {
+                                }, function () {
                                     deleteTables(i + 1);
                                 });
                             }
                         }(0));
-                    }, function(e) {
+                    }, function (e) {
                         // __sysdb table does not exist, but that does not mean delete did not happen
                         deleteFromDbVersions();
                     });
@@ -226,9 +224,9 @@ IDBFactory.prototype.deleteDatabase = function(name) {
  * @param key2
  * @returns {number}
  */
-IDBFactory.prototype.cmp = function(key1, key2) {
+IDBFactory.prototype.cmp = function (key1, key2) {
     if (arguments.length < 2) {
-        throw new TypeError("You must provide two keys to be compared");
+        throw new TypeError('You must provide two keys to be compared');
     }
 
     Key.validate(key1);
@@ -241,11 +239,11 @@ IDBFactory.prototype.cmp = function(key1, key2) {
         // verify that the keys encoded correctly
         let decodedKey1 = Key.decode(encodedKey1);
         let decodedKey2 = Key.decode(encodedKey2);
-        if (typeof key1 === "object") {
+        if (typeof key1 === 'object') {
             key1 = JSON.stringify(key1);
             decodedKey1 = JSON.stringify(decodedKey1);
         }
-        if (typeof key2 === "object") {
+        if (typeof key2 === 'object') {
             key2 = JSON.stringify(key2);
             decodedKey2 = JSON.stringify(decodedKey2);
         }

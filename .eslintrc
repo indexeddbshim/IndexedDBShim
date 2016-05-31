@@ -1,4 +1,5 @@
 {
+  "extends": "standard",
   "env": {
     "browser": true
   },
@@ -63,11 +64,14 @@
     "sinon": false
   },
   "rules": {
-    "semi": 2,
+    "semi": [2, "always"],
+    "yoda": 0,
+    "indent": ["error", 4],
     "camelcase": 2,
     "no-new": 2,
     "no-const-assign": 2,
     "no-var": 2,
+    "one-var": 0,
     "prefer-const": 2,
     "curly": 2,
     "eqeqeq": 2,

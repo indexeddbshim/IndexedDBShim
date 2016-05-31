@@ -18,7 +18,7 @@ let uniqueID = 0;
  * @param {string} mode
  * @constructor
  */
-function IDBTransaction(db, storeNames, mode) {
+function IDBTransaction (db, storeNames, mode) {
     this.__id = ++uniqueID; // for debugging simultaneous transactions
     this.__active = true;
     this.__running = false;
@@ -32,52 +32,52 @@ function IDBTransaction(db, storeNames, mode) {
 
     // Kick off the transaction as soon as all synchronous code is done.
     const me = this;
-    setTimeout(function() { me.__executeRequests(); }, 0);
+    setTimeout(function () { me.__executeRequests(); }, 0);
 }
 
-IDBTransaction.prototype.__executeRequests = function() {
+IDBTransaction.prototype.__executeRequests = function () {
     if (this.__running) {
-        global.DEBUG && console.log("Looks like the request set is already running", this.mode);
+        global.DEBUG && console.log('Looks like the request set is already running', this.mode);
         return;
     }
 
     this.__running = true;
     const me = this;
 
-    me.db.__db.transaction(function executeRequests(tx) {
+    me.db.__db.transaction(
+        function executeRequests (tx) {
             me.__tx = tx;
             let q = null, i = 0;
 
-            function success(result, req) {
+            function success (result, req) {
                 if (req) {
                     q.req = req;// Need to do this in case of cursors
                 }
-                q.req.readyState = "done";
+                q.req.readyState = 'done';
                 q.req.result = result;
                 delete q.req.error;
-                const e = createEvent("success");
-                util.callback("onsuccess", q.req, e);
+                const e = createEvent('success');
+                util.callback('onsuccess', q.req, e);
                 i++;
                 executeNextRequest();
             }
 
-            function error(tx, err) {
+            function error (tx, err) {
                 err = findError(arguments);
                 try {
                     // Fire an error event for the current IDBRequest
-                    q.req.readyState = "done";
+                    q.req.readyState = 'done';
                     q.req.error = err || DOMError;
                     q.req.result = undefined;
-                    const e = createEvent("error", err);
-                    util.callback("onerror", q.req, e);
-                }
-                finally {
+                    const e = createEvent('error', err);
+                    util.callback('onerror', q.req, e);
+                } finally {
                     // Fire an error event for the transaction
                     transactionError(err);
                 }
             }
 
-            function executeNextRequest() {
+            function executeNextRequest () {
                 if (i >= me.__requests.length) {
                     // All requests in the transaction are done
                     me.__requests = [];
@@ -85,13 +85,11 @@ IDBTransaction.prototype.__executeRequests = function() {
                         me.__active = false;
                         transactionFinished();
                     }
-                }
-                else {
+                } else {
                     try {
                         q = me.__requests[i];
                         q.op(tx, q.args, success, error);
-                    }
-                    catch (e) {
+                    } catch (e) {
                         error(e);
                     }
                 }
@@ -100,13 +98,13 @@ IDBTransaction.prototype.__executeRequests = function() {
             executeNextRequest();
         },
 
-        function webSqlError(err) {
+        function webSqlError (err) {
             transactionError(err);
         }
     );
 
-    function transactionError(err) {
-        logError("Error", "An error occurred in a transaction", err);
+    function transactionError (err) {
+        logError('Error', 'An error occurred in a transaction', err);
 
         if (me.__errored) {
             // We've already called "onerror", "onabort", or thrown, so don't do it again.
@@ -123,23 +121,21 @@ IDBTransaction.prototype.__executeRequests = function() {
 
         try {
             me.error = err;
-            const evt = createEvent("error");
-            util.callback("onerror", me, evt);
-            util.callback("onerror", me.db, evt);
-        }
-        finally {
+            const evt = createEvent('error');
+            util.callback('onerror', me, evt);
+            util.callback('onerror', me.db, evt);
+        } finally {
             me.abort();
         }
     }
 
-    function transactionFinished() {
-        global.DEBUG && console.log("Transaction completed");
-        const evt = createEvent("complete");
+    function transactionFinished () {
+        global.DEBUG && console.log('Transaction completed');
+        const evt = createEvent('complete');
         try {
-            util.callback("oncomplete", me, evt);
-            util.callback("__oncomplete", me, evt);
-        }
-        catch (e) {
+            util.callback('oncomplete', me, evt);
+            util.callback('__oncomplete', me, evt);
+        } catch (e) {
             // An error occurred in the "oncomplete" handler.
             // It's too late to call "onerror" or "onabort". Throw a global error instead.
             // (this may seem odd/bad, but it's how all native IndexedDB implementations work)
@@ -155,7 +151,7 @@ IDBTransaction.prototype.__executeRequests = function() {
  * @returns {IDBRequest}
  * @protected
  */
-IDBTransaction.prototype.__createRequest = function() {
+IDBTransaction.prototype.__createRequest = function () {
     const request = new IDBRequest();
     request.source = this.db;
     request.transaction = this;
@@ -169,7 +165,7 @@ IDBTransaction.prototype.__createRequest = function() {
  * @returns {IDBRequest}
  * @protected
  */
-IDBTransaction.prototype.__addToTransactionQueue = function(callback, args) {
+IDBTransaction.prototype.__addToTransactionQueue = function (callback, args) {
     const request = this.__createRequest();
     this.__pushToQueue(request, callback, args);
     return request;
@@ -182,34 +178,34 @@ IDBTransaction.prototype.__addToTransactionQueue = function(callback, args) {
  * @param {*} args
  * @protected
  */
-IDBTransaction.prototype.__pushToQueue = function(request, callback, args) {
+IDBTransaction.prototype.__pushToQueue = function (request, callback, args) {
     this.__assertActive();
     this.__requests.push({
-        "op": callback,
-        "args": args,
-        "req": request
+        'op': callback,
+        'args': args,
+        'req': request
     });
 };
 
-IDBTransaction.prototype.__assertActive = function() {
+IDBTransaction.prototype.__assertActive = function () {
     if (!this.__active) {
-        throw createDOMException("TransactionInactiveError", "A request was placed against a transaction which is currently not active, or which is finished");
+        throw createDOMException('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
 };
 
-IDBTransaction.prototype.__assertWritable = function() {
+IDBTransaction.prototype.__assertWritable = function () {
     if (this.mode === IDBTransaction.READ_ONLY) {
-        throw createDOMException("ReadOnlyError", "The transaction is read only");
+        throw createDOMException('ReadOnlyError', 'The transaction is read only');
     }
 };
 
-IDBTransaction.prototype.__assertVersionChange = function() {
+IDBTransaction.prototype.__assertVersionChange = function () {
     IDBTransaction.__assertVersionChange(this);
 };
 
-IDBTransaction.__assertVersionChange = function(tx) {
+IDBTransaction.__assertVersionChange = function (tx) {
     if (!tx || tx.mode !== IDBTransaction.VERSION_CHANGE) {
-        throw createDOMException("InvalidStateError", "Not a version transaction");
+        throw createDOMException('InvalidStateError', 'Not a version transaction');
     }
 };
 
@@ -218,40 +214,40 @@ IDBTransaction.__assertVersionChange = function(tx) {
  * @param {string} objectStoreName
  * @returns {IDBObjectStore}
  */
-IDBTransaction.prototype.objectStore = function(objectStoreName) {
+IDBTransaction.prototype.objectStore = function (objectStoreName) {
     if (arguments.length === 0) {
-        throw new TypeError("No object store name was specified");
+        throw new TypeError('No object store name was specified');
     }
     if (!this.__active) {
-        throw createDOMException("InvalidStateError", "A request was placed against a transaction which is currently not active, or which is finished");
+        throw createDOMException('InvalidStateError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
     if (this.__storeNames.indexOf(objectStoreName) === -1 && this.mode !== IDBTransaction.VERSION_CHANGE) {
-        throw createDOMException("NotFoundError", objectStoreName + " is not participating in this transaction");
+        throw createDOMException('NotFoundError', objectStoreName + ' is not participating in this transaction');
     }
     const store = this.db.__objectStores[objectStoreName];
     if (!store) {
-        throw createDOMException("NotFoundError", objectStoreName + " does not exist in " + this.db.name);
+        throw createDOMException('NotFoundError', objectStoreName + ' does not exist in ' + this.db.name);
     }
 
     return IDBObjectStore.__clone(store, this);
 };
 
-IDBTransaction.prototype.abort = function() {
+IDBTransaction.prototype.abort = function () {
     const me = this;
-    global.DEBUG && console.log("The transaction was aborted", me);
+    global.DEBUG && console.log('The transaction was aborted', me);
     me.__active = false;
-    const evt = createEvent("abort");
+    const evt = createEvent('abort');
 
     // Fire the "onabort" event asynchronously, so errors don't bubble
-    setTimeout(function() {
-        util.callback("onabort", me, evt);
+    setTimeout(function () {
+        util.callback('onabort', me, evt);
     }, 0);
 };
 
 Object.assign(IDBTransaction.prototype, EventTarget.prototype);
 
-IDBTransaction.READ_ONLY = "readonly";
-IDBTransaction.READ_WRITE = "readwrite";
-IDBTransaction.VERSION_CHANGE = "versionchange";
+IDBTransaction.READ_ONLY = 'readonly';
+IDBTransaction.READ_WRITE = 'readwrite';
+IDBTransaction.VERSION_CHANGE = 'versionchange';
 
 export default IDBTransaction;

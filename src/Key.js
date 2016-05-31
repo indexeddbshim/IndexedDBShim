@@ -6,7 +6,7 @@ let Key = {};
 /**
  * Encodes the keys based on their types. This is required to maintain collations
  */
-const collations = ["undefined", "number", "date", "string", "array"];
+const collations = ['undefined', 'number', 'date', 'string', 'array'];
 
 /**
  * The sign values for numbers, ordered from least to greatest.
@@ -17,25 +17,25 @@ const collations = ["undefined", "number", "date", "string", "array"];
  *  - "largePositive": Positive values greater than or equal to one.
  *  - "positiveInfinity": Sorts above all other values.
  */
-const signValues = ["negativeInfinity", "bigNegative", "smallNegative", "smallPositive", "bigPositive", "positiveInfinity"];
+const signValues = ['negativeInfinity', 'bigNegative', 'smallNegative', 'smallPositive', 'bigPositive', 'positiveInfinity'];
 
 const types = {
     // Undefined is not a valid key type.  It's only used when there is no key.
     undefined: {
-        encode: function(key) {
-            return collations.indexOf("undefined") + "-";
+        encode: function (key) {
+            return collations.indexOf('undefined') + '-';
         },
-        decode: function(key) {
+        decode: function (key) {
             return undefined;
         }
     },
 
     // Dates are encoded as ISO 8601 strings, in UTC time zone.
     date: {
-        encode: function(key) {
-            return collations.indexOf("date") + "-" + key.toJSON();
+        encode: function (key) {
+            return collations.indexOf('date') + '-' + key.toJSON();
         },
-        decode: function(key) {
+        decode: function (key) {
             return new Date(key.substring(2));
         }
     },
@@ -53,12 +53,12 @@ const types = {
     number: {
         // The encode step checks for six numeric cases and generates 14-digit encoded
         // sign-exponent-mantissa strings.
-        encode: function(key) {
+        encode: function (key) {
             let key32 = Math.abs(key).toString(32);
             // Get the index of the decimal.
-            const decimalIndex = key32.indexOf(".");
+            const decimalIndex = key32.indexOf('.');
             // Remove the decimal.
-            key32 = (decimalIndex !== -1) ? key32.replace(".", "") : key32;
+            key32 = (decimalIndex !== -1) ? key32.replace('.', '') : key32;
             // Get the index of the first significant digit.
             const significantDigitIndex = key32.search(/[^0]/);
             // Truncate leading zeros.
@@ -71,74 +71,70 @@ const types = {
                 if (key < 0) {
                     // Negative exponent case:
                     if (key > -1) {
-                        sign = signValues.indexOf("smallNegative");
+                        sign = signValues.indexOf('smallNegative');
                         exponent = padBase32Exponent(significantDigitIndex);
                         mantissa = flipBase32(padBase32Mantissa(key32));
-                    }
                     // Non-negative exponent case:
-                    else {
-                        sign = signValues.indexOf("bigNegative");
+                    } else {
+                        sign = signValues.indexOf('bigNegative');
                         exponent = flipBase32(padBase32Exponent(
                             (decimalIndex !== -1) ? decimalIndex : key32.length
                         ));
                         mantissa = flipBase32(padBase32Mantissa(key32));
                     }
-                }
                 // Non-negative cases:
-                else {
+                } else {
                     // Negative exponent case:
                     if (key < 1) {
-                        sign = signValues.indexOf("smallPositive");
+                        sign = signValues.indexOf('smallPositive');
                         exponent = flipBase32(padBase32Exponent(significantDigitIndex));
                         mantissa = padBase32Mantissa(key32);
-                    }
                     // Non-negative exponent case:
-                    else {
-                        sign = signValues.indexOf("bigPositive");
+                    } else {
+                        sign = signValues.indexOf('bigPositive');
                         exponent = padBase32Exponent(
                             (decimalIndex !== -1) ? decimalIndex : key32.length
                         );
                         mantissa = padBase32Mantissa(key32);
                     }
                 }
-            }
             // Infinite cases:
-            else {
+            } else {
                 sign = signValues.indexOf(
-                    key > 0 ? "positiveInfinity" : "negativeInfinity"
+                    key > 0 ? 'positiveInfinity' : 'negativeInfinity'
                 );
             }
 
-            return collations.indexOf("number") + "-" + sign + exponent + mantissa;
+            return collations.indexOf('number') + '-' + sign + exponent + mantissa;
         },
         // The decode step must interpret the sign, reflip values encoded as the 32's complements,
         // apply signs to the exponent and mantissa, do the base-32 power operation, and return
         // the original JavaScript number values.
-        decode: function(key) {
+        decode: function (key) {
             const sign = +key.substr(2, 1);
             let exponent = key.substr(3, 2);
             let mantissa = key.substr(5, 11);
 
             switch (signValues[sign]) {
-                case "negativeInfinity":
-                    return -Infinity;
-                case "positiveInfinity":
-                    return Infinity;
-                case "bigPositive":
-                    return pow32(mantissa, exponent);
-                case "smallPositive":
-                    exponent = negate(flipBase32(exponent));
-                    return pow32(mantissa, exponent);
-                case "smallNegative":
-                    exponent = negate(exponent);
-                    mantissa = flipBase32(mantissa);
-                    return -pow32(mantissa, exponent);
-                case "bigNegative":
-                    exponent = flipBase32(exponent);
-                    mantissa = flipBase32(mantissa);
-                    return -pow32(mantissa, exponent);
-                default:
-                    throw new Error("Invalid number.");
+            case 'negativeInfinity':
+                return -Infinity;
+            case 'positiveInfinity':
+                return Infinity;
+            case 'bigPositive':
+                return pow32(mantissa, exponent);
+            case 'smallPositive':
+                exponent = negate(flipBase32(exponent));
+                return pow32(mantissa, exponent);
+            case 'smallNegative':
+                exponent = negate(exponent);
+                mantissa = flipBase32(mantissa);
+                return -pow32(mantissa, exponent);
+            case 'bigNegative':
+                exponent = flipBase32(exponent);
+                mantissa = flipBase32(mantissa);
+                return -pow32(mantissa, exponent);
+            default:
+                throw new Error('Invalid number.');
             }
         }
     },
@@ -152,14 +148,14 @@ const types = {
     // This effectively doubles the size of every string, but it ensures that when two arrays of strings are compared,
     // the indexes of each string's characters line up with each other.
     string: {
-        encode: function(key, inArray) {
+        encode: function (key, inArray) {
             if (inArray) {
                 // prepend each character with a dash, and append a space to the end
                 key = key.replace(/(.)/g, '-$1') + ' ';
             }
-            return collations.indexOf("string") + "-" + key;
+            return collations.indexOf('string') + '-' + key;
         },
-        decode: function(key, inArray) {
+        decode: function (key, inArray) {
             key = key.substring(2);
             if (inArray) {
                 // remove the space at the end, and the dash before each character
@@ -172,17 +168,17 @@ const types = {
     // Arrays are encoded as JSON strings.
     // An extra, value is added to each array during encoding to make empty arrays sort correctly.
     array: {
-        encode: function(key) {
+        encode: function (key) {
             const encoded = [];
             for (let i = 0; i < key.length; i++) {
                 const item = key[i];
                 const encodedItem = encode(item, true);        // encode the array item
                 encoded[i] = encodedItem;
             }
-            encoded.push(collations.indexOf("undefined") + "-");            // append an extra item, so empty arrays sort correctly
-            return collations.indexOf("array") + "-" + JSON.stringify(encoded);
+            encoded.push(collations.indexOf('undefined') + '-');            // append an extra item, so empty arrays sort correctly
+            return collations.indexOf('array') + '-' + JSON.stringify(encoded);
         },
-        decode: function(key) {
+        decode: function (key) {
             const decoded = JSON.parse(key.substring(2));
             decoded.pop();                                                  // remove the extra item
             for (let i = 0; i < decoded.length; i++) {
@@ -200,9 +196,9 @@ const types = {
  * @param {number}
  * @return {string}
  */
-function padBase32Exponent(n) {
+function padBase32Exponent (n) {
     n = n.toString(32);
-    return (n.length === 1) ? "0" + n : n;
+    return (n.length === 1) ? '0' + n : n;
 }
 
 /**
@@ -210,7 +206,7 @@ function padBase32Exponent(n) {
  * @param {string}
  * @return {string}
  */
-function padBase32Mantissa(s) {
+function padBase32Mantissa (s) {
     return (s + zeros(11)).slice(0, 11);
 }
 
@@ -218,8 +214,8 @@ function padBase32Mantissa(s) {
  * Flips each digit of a base-32 encoded string.
  * @param {string} encoded
  */
-function flipBase32(encoded) {
-    let flipped = "";
+function flipBase32 (encoded) {
+    let flipped = '';
     for (let i = 0; i < encoded.length; i++) {
         flipped += (31 - parseInt(encoded[i], 32)).toString(32);
     }
@@ -238,22 +234,20 @@ function flipBase32(encoded) {
  * @param {string}
  * @return {number}
  */
-function pow32(mantissa, exponent) {
+function pow32 (mantissa, exponent) {
     exponent = parseInt(exponent, 32);
     if (exponent < 0) {
         return roundToPrecision(
             parseInt(mantissa, 32) * Math.pow(32, exponent - 10)
         );
-    }
-    else {
+    } else {
         if (exponent < 11) {
             let whole = mantissa.slice(0, exponent);
             whole = parseInt(whole, 32);
             let fraction = mantissa.slice(exponent);
             fraction = parseInt(fraction, 32) * Math.pow(32, exponent - 11);
             return roundToPrecision(whole + fraction);
-        }
-        else {
+        } else {
             const expansion = mantissa + zeros(exponent - 11);
             return parseInt(expansion, 32);
         }
@@ -263,7 +257,7 @@ function pow32(mantissa, exponent) {
 /**
  *
  */
-function roundToPrecision(num, precision) {
+function roundToPrecision (num, precision) {
     precision = precision || 16;
     return parseFloat(num.toPrecision(precision));
 }
@@ -273,10 +267,10 @@ function roundToPrecision(num, precision) {
  * @param {number}
  * @return {string}
  */
-function zeros(n) {
-    let result = "";
+function zeros (n) {
+    let result = '';
     while (n--) {
-        result = result + "0";
+        result = result + '0';
     }
     return result;
 }
@@ -286,19 +280,19 @@ function zeros(n) {
  * @param {string}
  * @return {string}
  */
-function negate(s) {
-    return "-" + s;
+function negate (s) {
+    return '-' + s;
 }
 
 /**
  * Returns the string "number", "date", "string", or "array".
  */
-function getType(key) {
+function getType (key) {
     if (key instanceof Date) {
-        return "date";
+        return 'date';
     }
     if (key instanceof Array) {
-        return "array";
+        return 'array';
     }
     return typeof key;
 }
@@ -306,15 +300,14 @@ function getType(key) {
 /**
  * Keys must be strings, numbers, Dates, or Arrays
  */
-function validate(key) {
+function validate (key) {
     const type = getType(key);
-    if (type === "array") {
+    if (type === 'array') {
         for (let i = 0; i < key.length; i++) {
             validate(key[i]);
         }
-    }
-    else if (!types[type] || (type !== "string" && isNaN(key))) {
-        throw createDOMException("DataError", "Not a valid key");
+    } else if (!types[type] || (type !== 'string' && isNaN(key))) {
+        throw createDOMException('DataError', 'Not a valid key');
     }
 }
 
@@ -323,19 +316,18 @@ function validate(key) {
  * @param {object} source
  * @param {string|array} keyPath
  */
-function getValue(source, keyPath) {
+function getValue (source, keyPath) {
     try {
         if (keyPath instanceof Array) {
             const arrayValue = [];
             for (let i = 0; i < keyPath.length; i++) {
-                arrayValue.push(eval("source." + keyPath[i]));
+                arrayValue.push(eval('source.' + keyPath[i]));
             }
             return arrayValue;
         } else {
-            return eval("source." + keyPath);
+            return eval('source.' + keyPath);
         }
-    }
-    catch (e) {
+    } catch (e) {
         return undefined;
     }
 }
@@ -346,7 +338,7 @@ function getValue(source, keyPath) {
  * @param {string} keyPath
  * @param {*} value
  */
-function setValue(source, keyPath, value) {
+function setValue (source, keyPath, value) {
     const props = keyPath.split('.');
     for (let i = 0; i < props.length - 1; i++) {
         const prop = props[i];
@@ -361,18 +353,17 @@ function setValue(source, keyPath, value) {
  * @param {string} encodedKey       The full index key (already encoded)
  * @returns {boolean}
  */
-function isMultiEntryMatch(encodedEntry, encodedKey) {
+function isMultiEntryMatch (encodedEntry, encodedKey) {
     const keyType = collations[encodedKey.substring(0, 1)];
 
-    if (keyType === "array") {
+    if (keyType === 'array') {
         return encodedKey.indexOf(encodedEntry) > 1;
-    }
-    else {
+    } else {
         return encodedKey === encodedEntry;
     }
 }
 
-function isKeyInRange(key, range) {
+function isKeyInRange (key, range) {
     let lowerMatch = range.lower === undefined;
     let upperMatch = range.upper === undefined;
     const encodedKey = encode(key, true);
@@ -397,7 +388,7 @@ function isKeyInRange(key, range) {
     return lowerMatch && upperMatch;
 }
 
-function findMultiEntryMatches(keyEntry, range) {
+function findMultiEntryMatches (keyEntry, range) {
     const matches = [];
 
     if (keyEntry instanceof Array) {
@@ -438,7 +429,7 @@ function encode (key, inArray) {
     return types[getType(key)].encode(key, inArray);
 }
 function decode (key, inArray) {
-    if (typeof key !== "string") {
+    if (typeof key !== 'string') {
         return undefined;
     }
     return types[collations[key.substring(0, 1)]].decode(key, inArray);

@@ -8,7 +8,7 @@ import Key from './Key.js';
  * @param {Object} lowerOpen
  * @param {Object} upperOpen
  */
-function IDBKeyRange(lower, upper, lowerOpen, upperOpen){
+function IDBKeyRange (lower, upper, lowerOpen, upperOpen) {
     if (lower !== undefined) {
         Key.validate(lower);
     }
@@ -22,17 +22,17 @@ function IDBKeyRange(lower, upper, lowerOpen, upperOpen){
     this.upperOpen = !!upperOpen;
 }
 
-IDBKeyRange.only = function(value){
+IDBKeyRange.only = function (value) {
     return new IDBKeyRange(value, value, false, false);
 };
 
-IDBKeyRange.lowerBound = function(value, open){
+IDBKeyRange.lowerBound = function (value, open) {
     return new IDBKeyRange(value, undefined, open, undefined);
 };
-IDBKeyRange.upperBound = function(value, open){
+IDBKeyRange.upperBound = function (value, open) {
     return new IDBKeyRange(undefined, value, undefined, open);
 };
-IDBKeyRange.bound = function(lower, upper, lowerOpen, upperOpen){
+IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
     return new IDBKeyRange(lower, upper, lowerOpen, upperOpen);
 };
 

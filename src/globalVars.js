@@ -1,4 +1,5 @@
 /*global GLOBAL*/
+import 'babel-polyfill'; // Object.assign in EventTarget, etc.
 import {shimIDBVersionChangeEvent} from './Event.js';
 import shimIDBKeyRange from './IDBKeyRange.js';
 import {shimIDBCursor, shimIDBCursorWithValue} from './IDBCursor.js';
@@ -14,12 +15,11 @@ import polyfill from './polyfill.js';
     'use strict';
     const global = typeof window !== 'undefined' ? window : GLOBAL; // DEBUG, cursorPreloadPackSize=100
 
-    function shim(name, value) {
+    function shim (name, value) {
         try {
             // Try setting the property. This will fail if the property is read-only.
             window[name] = value;
-        }
-        catch (e) {}
+        } catch (e) {}
 
         if (window[name] !== value && Object.defineProperty) {
             // Setting a read-only property failed, so try re-defining the property
@@ -27,8 +27,7 @@ import polyfill from './polyfill.js';
                 Object.defineProperty(window, name, {
                     value: value
                 });
-            }
-            catch (e) {}
+            } catch (e) {}
 
             if (window[name] !== value) {
                 window.console && console.warn && console.warn('Unable to shim ' + name);
@@ -38,8 +37,8 @@ import polyfill from './polyfill.js';
 
     shim('shimIndexedDB', shimIndexedDB);
     if (window.shimIndexedDB) {
-        window.shimIndexedDB.__useShim = function(){
-            if (typeof window.openDatabase !== "undefined") {
+        window.shimIndexedDB.__useShim = function () {
+            if (typeof window.openDatabase !== 'undefined') {
                 // Polyfill ALL of IndexedDB, using WebSQL
                 shim('indexedDB', shimIndexedDB);
                 shim('IDBFactory', shimIDBFactory);
@@ -52,20 +51,19 @@ import polyfill from './polyfill.js';
                 shim('IDBRequest', shimIDBRequest);
                 shim('IDBOpenDBRequest', shimIDBOpenDBRequest);
                 shim('IDBVersionChangeEvent', shimIDBVersionChangeEvent);
-            }
-            else if (typeof window.indexedDB === "object") {
+            } else if (typeof window.indexedDB === 'object') {
                 // Polyfill the missing IndexedDB features (no need for IDBEnvironment (window containing indexedDB itself))
                 polyfill(shimIDBCursor, shimIDBCursorWithValue, shimIDBDatabase, shimIDBFactory, shimIDBIndex, shimIDBKeyRange, shimIDBObjectStore, shimIDBRequest, shimIDBTransaction);
             }
         };
 
-        window.shimIndexedDB.__debug = function(val){
+        window.shimIndexedDB.__debug = function (val) {
             global.DEBUG = val;
         };
     }
 
     // Workaround to prevent an error in Firefox
-    if(!('indexedDB' in window)) {
+    if (!('indexedDB' in window)) {
         window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
     }
 
@@ -78,21 +76,20 @@ import polyfill from './polyfill.js';
         }
     }
 
-    if ((typeof window.indexedDB === "undefined" || !window.indexedDB || poorIndexedDbSupport) && typeof window.openDatabase !== "undefined") {
+    if ((typeof window.indexedDB === 'undefined' || !window.indexedDB || poorIndexedDbSupport) && typeof window.openDatabase !== 'undefined') {
         window.shimIndexedDB.__useShim();
-    }
-    else {
+    } else {
         window.IDBDatabase = window.IDBDatabase || window.webkitIDBDatabase;
         window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction;
         window.IDBCursor = window.IDBCursor || window.webkitIDBCursor;
         window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange;
-        if(!window.IDBTransaction){
+        if (!window.IDBTransaction) {
             window.IDBTransaction = {};
         }
         /* Some browsers (e.g. Chrome 18 on Android) support IndexedDb but do not allow writing of these properties */
         try {
-            window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || "readonly";
-            window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || "readwrite";
+            window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || 'readonly';
+            window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || 'readwrite';
         } catch (e) {}
     }
 }());
