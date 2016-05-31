@@ -84,6 +84,7 @@ openObjectStore("Adding data after index is created", DB.OBJECT_STORE_1, functio
         nextTest();
     };
     addReq.onerror = function(){
+        db.close();
         ok(false, "Could not add data");
         start();
         nextTest();
@@ -107,6 +108,7 @@ openObjectStore("Index Cursor", DB.OBJECT_STORE_1, function(objectStore, db){
     };
     indexCursorReq.onerror = function(){
         _("Error on cursor request");
+        db.close();
         ok(false, "Could not continue opening cursor");
         start();
         nextTest();
@@ -131,6 +133,7 @@ openObjectStore("Index Key Cursor", DB.OBJECT_STORE_1, function(objectStore, db)
     };
     indexCursorReq.onerror = function(){
         _("Error on cursor request");
+        db.close();
         ok(false, "Could not continue opening cursor");
         start();
         nextTest();
@@ -149,6 +152,7 @@ openObjectStore("Index Get", DB.OBJECT_STORE_1, function(objectStore, db){
     };
     req.onerror = function(){
         _("Error on cursor request");
+        db.close();
         ok(false, "Could not continue opening cursor");
         start();
         nextTest();
@@ -168,6 +172,7 @@ openObjectStore("Index Get Key", DB.OBJECT_STORE_1, function(objectStore, db){
     };
     req.onerror = function(){
         _("Error on cursor request");
+        db.close();
         ok(false, "Could not continue opening cursor");
         start();
         nextTest();
@@ -176,7 +181,22 @@ openObjectStore("Index Get Key", DB.OBJECT_STORE_1, function(objectStore, db){
 
 openObjectStore("Index update Cursor", DB.OBJECT_STORE_1, function(objectStore, db){
     var index = objectStore.index("Int Index");
-    var indexCursorReq = index.openCursor(IDBKeyRange.only(value.Int));
+    var kr = IDBKeyRange.only(value.Int);
+    var indexCursorReq;
+    try {
+        indexCursorReq = index.openCursor(kr);
+    } catch (err) {
+        if (err.name === 'DataError') { // PhantomJS 2.2.1 having issue here
+            // as mistakenly confusing supplied key range here with supplying
+            // key to put/add (when in-line keys are used)
+            db.close();
+            ok(false, "Cursor update failed; possibly PhantomJS 2.2.1 bug");
+            start();
+            nextTest();
+            return;
+        }
+        throw err;
+    }
     indexCursorReq.onsuccess = function(){
         var cursor = indexCursorReq.result;
         if (cursor) {
@@ -184,6 +204,7 @@ openObjectStore("Index update Cursor", DB.OBJECT_STORE_1, function(objectStore, 
             cursorValue.updated = true;
             var updateReq = cursor.update(cursorValue);
             updateReq.onerror = function() {
+                db.close();
                 ok(false, "Cursor update failed");
                 start();
                 nextTest();
@@ -198,6 +219,7 @@ openObjectStore("Index update Cursor", DB.OBJECT_STORE_1, function(objectStore, 
                     nextTest();
                 };
                 checkReq.onerror = function() {
+                    db.close();
                     ok(false, "cursor check failed");
                     start();
                     nextTest();
@@ -205,6 +227,7 @@ openObjectStore("Index update Cursor", DB.OBJECT_STORE_1, function(objectStore, 
             };
         }
         else {
+            db.close();
             ok(false, "Cursor expected");
             start();
             nextTest();
@@ -212,6 +235,7 @@ openObjectStore("Index update Cursor", DB.OBJECT_STORE_1, function(objectStore, 
     };
     indexCursorReq.onerror = function(){
         _("Error on cursor request");
+        db.close();
         ok(false, "Could not continue opening cursor");
         start();
         nextTest();

@@ -11961,15 +11961,21 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
         try {
             // Try setting the property. This will fail if the property is read-only.
             window[name] = value;
-        } catch (e) {}
-
+        } catch (e) {
+            console.log(e);
+        }
         if (window[name] !== value && Object.defineProperty) {
             // Setting a read-only property failed, so try re-defining the property
             try {
                 Object.defineProperty(window, name, {
                     value: value
                 });
-            } catch (e) {}
+            } catch (e) {
+                // With `indexedDB`, PhantomJS 2.2.1 fails here and below but
+                //  not above, while Chrome is reverse (and Firefox doesn't
+                //  get here since no WebSQL to use for shimming)
+                console.log('failed defineProperty');
+            }
 
             if (window[name] !== value) {
                 window.console && console.warn && console.warn('Unable to shim ' + name);
