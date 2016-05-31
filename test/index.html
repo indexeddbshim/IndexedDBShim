@@ -5,90 +5,29 @@
         <meta http-equiv="X-UA-Compatible" content="chrome=1">
         <title>Testing IndexedDB Shim</title>
         <link rel="stylesheet" href="https://code.jquery.com/qunit/qunit-1.23.1.css" type="text/css" media="screen" />
-        <style>
-            .runOption, .browser {
-                font-family: "Helvetica Neue Light", "HelveticaNeue-Light", "Helvetica Neue", Calibri, Helvetica, Arial, sans-serif;
-                padding: 10px;
-                float: left;
-            }
+        <link rel="stylesheet" href="index.css" type="text/css" media="screen" />
 
-            .runOption {
-                display: none;
-                float: right;
-            }
-
-            .runOption ul {
-                display: inline;
-                list-style: none;
-            }
-
-            .runOption ul li {
-                list-style: none;
-                float: left;
-                margin: 0 10px;
-            }
-        </style>
         <script src="https://code.jquery.com/qunit/qunit-1.23.1.js"></script>
         <script src="queuedUnit.js"></script>
-        <script>
-            function _(msg){
-                console.log("[" + QUnit.config.current.testName + "]", msg, arguments.callee.caller ?  arguments.callee.caller.arguments : " -- ");
-            }
-        </script>
-        <script src="sampleData.js"></script>
-        <script src="../dist/indexeddbshim.js"></script>
-        <script>
-            function startTests(){
-                if (typeof window.mozIndexedDB !== "undefined") {
-                    window.indexedDB = window.mozIndexedDB;
-                }
-                else {
-                    window.indexedDB = window.shimIndexedDB;
-                    window.shimIndexedDB.__useShim();
-					window.shimIndexedDB.__debug(true);
-                    console.log("Starting Tests with shimIndexedDB");
-                }
-                deleteDB(function(){
-                    QUnitTests();
-                });
-            }
 
-            function runWith(option){
+        <script src="../dist/indexeddbshim.js"></script>
+
+        <script src="sampleData.js"></script>
+        <script src="startTests.js"></script>
+        <script>
+            function runWith () {
+                document.getElementById('qunit-tests').innerHTML = '';
+
                 window.indexedDB = window.webkitIndexedDB || window.mozIndexedDB;
-                document.getElementById("qunit-tests").innerHTML = "";
                 startTests();
             }
-
-            var dbVersion = 0;
-            function deleteDB(callback){
-                var deleteReq = window.indexedDB.deleteDatabase(DB.NAME);
-                deleteReq.onsuccess = function(){
-                    console.log("Database deleted");
-                    callback();
+            function addTest (i) {
+                var x = document.createElement('script');
+                x.src = testFiles[i];
+                x.onload = function () {
+                    addTestSuite(i + 1);
                 };
-                deleteReq.onerror = function(e){
-                    alert("Could not delete database. Database may not exist");
-                    callback();
-                };
-            }
-
-            function QUnitTests(){
-                var dbVersion = 1;
-                var tests = ["Database", "ObjectStore", "ObjectStoreCrud", "Cursor", "Index"];
-                (function addTestSuite(i){
-                    if (i >= tests.length) {
-                        nextTest();
-                        return;
-                    }
-                    console.log("Adding test suite ", tests[i]);
-                    var x = document.createElement("script");
-                    x.src = tests[i] + "Tests.js";
-                    x.type = "text/javascript";
-                    x.onload = function(){
-                        addTestSuite(i + 1);
-                    }
-                    document.body.appendChild(x);
-                })(0);
+                document.body.appendChild(x);
             }
         </script>
     </head>
@@ -98,10 +37,10 @@
         <div class="runOption">
             <ul>
                 <li id="shimRunOption">
-                    <a href="javascript:runWith('shim')">IndexedDB Shim</a>
+                    <a href="javascript:runWith()">IndexedDB Shim</a>
                 </li>
                 <li id="nativeRunOption">
-                    <a href="javascript:runWith('shim')">Browser's IndexedDB implementation</a>
+                    <a href="javascript:runWith()">Browser's IndexedDB implementation</a>
                 </li>
             </ul>
         </div>
@@ -114,29 +53,29 @@
         </div>
         <script>
             (function(){
-                var browser = document.getElementById("browser");
+                var browser = document.getElementById('browser');
                 var support = [];
                 var runOption = [];
                 if (window.openDatabase) {
-                    support.push("WebSql");
-                    document.getElementById("shimRunOption").style.display = "block";
+                    support.push('WebSql');
+                    document.getElementById('shimRunOption').style.display = 'block';
                 }
                 if (window.mozIndexedDB) {
-                    support.push("mozIndexedDB");
-                    runOption.push("Native IndexedDB");
-                    document.getElementById("nativeRunOption").style.display = "block";
+                    support.push('mozIndexedDB');
+                    runOption.push('Native IndexedDB');
+                    document.getElementById('nativeRunOption').style.display = 'block';
                 }
                 if (window.webkitIndexedDB) {
-                    support.push("webkitIndexedDB");
-                    runOption.push("Native IndexedDB");
-                    document.getElementById("nativeRunOption").style.display = "block";
+                    support.push('webkitIndexedDB');
+                    runOption.push('Native IndexedDB');
+                    document.getElementById('nativeRunOption').style.display = 'block';
                 }
                 if (window.msIndexedDB) {
-                    support.push("msIndexedDB");
-                    runOption.push("Native IndexedDB");
-                    document.getElementById("nativeRunOption").style.display = "block";
+                    support.push('msIndexedDB');
+                    runOption.push('Native IndexedDB');
+                    document.getElementById('nativeRunOption').style.display = 'block';
                 }
-                browser.innerHTML = "Storage technologies supported [" + support.join(", ") + "]"
+                browser.innerHTML = 'Storage technologies supported [' + support.join(', ') + ']';
             })();
         </script>
         <script>
