@@ -1,8 +1,6 @@
-/*global QUnit, testFiles, addTestSuite */
+/*global QUnit, testFiles, addTestSuite, startTests */
 
 const shimAll = require('../dist/indexeddbshim-node');
-console.log(shimAll);
-GLOBAL.window = GLOBAL;
 shimAll(GLOBAL.window);
 
 QUnit.module('group a');
@@ -15,6 +13,9 @@ QUnit.test('a basic test example 2', function (assert) {
 
 function addTest (i) { // eslint-disable-line no-unused-vars
     console.log('i:' + i);
-    require(testFiles[i]);
+    require('./' + testFiles[i]);
     addTestSuite(i + 1);
 }
+GLOBAL.addTest = addTest;
+
+startTests();

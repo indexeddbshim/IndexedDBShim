@@ -44,7 +44,7 @@ function shimAll (idb) {
     shim('shimIndexedDB', shimIndexedDB);
     if (IDB.shimIndexedDB) {
         IDB.shimIndexedDB.__useShim = function () {
-            if (typeof CFG.openDatabase !== 'undefined') {
+            if (typeof CFG.win.openDatabase !== 'undefined') {
                 // Polyfill ALL of IndexedDB, using WebSQL
                 shim('indexedDB', shimIndexedDB);
                 shim('IDBFactory', shimIDBFactory);
@@ -75,14 +75,16 @@ function shimAll (idb) {
 
     // Detect browsers with known IndexedDb issues (e.g. Android pre-4.4)
     let poorIndexedDbSupport = false;
-    if (navigator.userAgent.match(/Android 2/) || navigator.userAgent.match(/Android 3/) || navigator.userAgent.match(/Android 4\.[0-3]/)) {
+    if (typeof navigator !== 'undefined' && (
+        navigator.userAgent.match(/Android 2/) || navigator.userAgent.match(/Android 3/) || navigator.userAgent.match(/Android 4\.[0-3]/))
+    ) {
         /* Chrome is an exception. It supports IndexedDb */
         if (!navigator.userAgent.match(/Chrome/)) {
             poorIndexedDbSupport = true;
         }
     }
 
-    if ((typeof IDB.indexedDB === 'undefined' || !IDB.indexedDB || poorIndexedDbSupport) && typeof CFG.openDatabase !== 'undefined') {
+    if ((typeof IDB.indexedDB === 'undefined' || !IDB.indexedDB || poorIndexedDbSupport) && typeof CFG.win.openDatabase !== 'undefined') {
         IDB.shimIndexedDB.__useShim();
     } else {
         IDB.IDBDatabase = IDB.IDBDatabase || IDB.webkitIDBDatabase;

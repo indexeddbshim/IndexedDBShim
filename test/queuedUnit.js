@@ -1,3 +1,4 @@
+/*global QUnit*/
 /* eslint-disable no-var */
 /**
  * Ideally unit tests should be independent, but there are some cases where you
@@ -32,6 +33,8 @@
     * nextTest();
     */
     function queuedAsyncTest (name) {
+        console.log('qat');
+
         if (filteredTests.length === 0 || filteredTests.indexOf(currentModule + ': ' + name) !== -1) {
             testQueue.push({
                 'name': name,
@@ -45,6 +48,8 @@
     * Use this in place of module(blah)
     */
     function queuedModule (module) {
+        console.log('qm');
+
         currentModule = module;
     }
 
@@ -56,20 +61,25 @@
     var testCount = 1;
     var initialized = false;
     function nextTest () {
+        console.log('nt' + initialized);
+
         if (!initialized) {
             initialized = true;
-            start();
+            if (typeof global === 'undefined') start();
         }
         clearTimeout(timer);
         if (testQueue.length <= 0) {
-            console.groupEnd();
+            if (console.groupEnd) console.groupEnd();
             console.log('All tests completed');
             return;
         }
         var current = testQueue.splice(0, 1)[0];
-        console.groupEnd();
-        console.groupCollapsed('=========', testCount++, current.module, ':', current.name, '============');
-        module(current.module);
+        if (console.groupEnd) console.groupEnd();
+        if (console.groupCollapsed) console.groupCollapsed('=========', testCount++, current.module, ':', current.name, '============');
+        else console.log('=========', testCount++, current.module, ':', current.name, '============');
+        if (typeof module === 'function') module(current.module);
+        else QUnit.module(current.module);
+
         // Expected asserts specified or not
         if (current.args.length === 2) {
             asyncTest(current.name, current.args[1]);

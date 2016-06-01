@@ -33,3 +33,8 @@ var sample = (function () { // eslint-disable-line no-unused-vars
         }
     };
 }());
+
+if (typeof global !== 'undefined') {
+    global.DB = DB;
+    global.sample = sample;
+}

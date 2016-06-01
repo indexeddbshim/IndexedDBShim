@@ -46,3 +46,10 @@ function startTests () { // eslint-disable-line no-unused-vars
         QUnitTests();
     });
 }
+
+if (typeof global !== 'undefined') {
+    global.startTests = startTests;
+    global.testFiles = testFiles;
+    global.dbVersion = dbVersion;
+    global.addTestSuite = addTestSuite;
+}

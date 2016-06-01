@@ -1,4 +1,4 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.dummyPlaceholder = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
 module.exports = argsArray;
@@ -17173,6 +17173,7 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
 };
 
 exports.default = IDBDatabase;
+module.exports = exports['default'];
 
 },{"./DOMException.js":356,"./IDBObjectStore.js":363,"./IDBTransaction.js":365,"./cfg.js":368,"./util.js":372}],360:[function(require,module,exports){
 'use strict';
@@ -17228,7 +17229,7 @@ function createSysDB(success, failure) {
     if (sysdb) {
         success();
     } else {
-        sysdb = _cfg2.default.openDatabase('__sysdb__', 1, 'System Database', DEFAULT_DB_SIZE);
+        sysdb = _cfg2.default.win.openDatabase('__sysdb__', 1, 'System Database', DEFAULT_DB_SIZE);
         sysdb.transaction(function (tx) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);', [], success, sysDbCreateError);
         }, sysDbCreateError);
@@ -17274,7 +17275,7 @@ IDBFactory.prototype.open = function (name, version) {
     }
 
     function openDB(oldVersion) {
-        var db = _cfg2.default.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
+        var db = _cfg2.default.win.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
         req.readyState = 'done';
         if (typeof version === 'undefined') {
             version = oldVersion || 1;
@@ -17387,7 +17388,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                     return;
                 }
                 version = data.rows.item(0).version;
-                var db = _cfg2.default.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
+                var db = _cfg2.default.win.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
                 db.transaction(function (tx) {
                     tx.executeSql('SELECT * FROM __sys__', [], function (tx, data) {
                         var tables = data.rows;
@@ -17763,6 +17764,7 @@ IDBIndex.prototype.count = function (key) {
 };
 
 exports.default = IDBIndex;
+module.exports = exports['default'];
 
 },{"./DOMException.js":356,"./IDBCursor.js":358,"./IDBKeyRange.js":362,"./Key.js":366,"./Sca.js":367,"./cfg.js":368,"./util.js":372}],362:[function(require,module,exports){
 'use strict';
@@ -17814,6 +17816,7 @@ IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
 };
 
 exports.default = IDBKeyRange;
+module.exports = exports['default'];
 
 },{"./Key.js":366}],363:[function(require,module,exports){
 'use strict';
@@ -18307,6 +18310,7 @@ IDBObjectStore.prototype.deleteIndex = function (indexName) {
 };
 
 exports.default = IDBObjectStore;
+module.exports = exports['default'];
 
 },{"./DOMException.js":356,"./IDBCursor.js":358,"./IDBIndex.js":361,"./IDBKeyRange.js":362,"./IDBTransaction.js":365,"./Key.js":366,"./Sca.js":367,"./cfg.js":368,"./util.js":372}],364:[function(require,module,exports){
 'use strict';
@@ -18608,6 +18612,7 @@ IDBTransaction.READ_WRITE = 'readwrite';
 IDBTransaction.VERSION_CHANGE = 'versionchange';
 
 exports.default = IDBTransaction;
+module.exports = exports['default'];
 
 },{"./DOMException.js":356,"./Event.js":357,"./IDBObjectStore.js":363,"./IDBRequest.js":364,"./cfg.js":368,"./util.js":372,"eventtarget":299}],366:[function(require,module,exports){
 'use strict';
@@ -19431,7 +19436,9 @@ var CFG = {};
 
 ['DEBUG', // boolean
 'cursorPreloadPackSize', // 100
-'openDatabase', // (Method (if any) for WebSQL)
+'win', // (window on which there may be an `openDatabase` method (if any)
+//  for WebSQL; the browser throws if attempting to call
+//  `openDatabase` without the window)
 'IDB' // Namespace for IndexedDB objects
 ].forEach(function (prop) {
     Object.defineProperty(CFG, prop, {
@@ -19445,6 +19452,7 @@ var CFG = {};
 });
 
 exports.default = CFG;
+module.exports = exports['default'];
 
 },{}],369:[function(require,module,exports){
 'use strict';
@@ -19529,7 +19537,7 @@ function shimAll(idb) {
     shim('shimIndexedDB', _IDBFactory.shimIndexedDB);
     if (IDB.shimIndexedDB) {
         IDB.shimIndexedDB.__useShim = function () {
-            if (typeof _cfg2.default.openDatabase !== 'undefined') {
+            if (typeof _cfg2.default.win.openDatabase !== 'undefined') {
                 // Polyfill ALL of IndexedDB, using WebSQL
                 shim('indexedDB', _IDBFactory.shimIndexedDB);
                 shim('IDBFactory', _IDBFactory.shimIDBFactory);
@@ -19560,14 +19568,14 @@ function shimAll(idb) {
 
     // Detect browsers with known IndexedDb issues (e.g. Android pre-4.4)
     var poorIndexedDbSupport = false;
-    if (navigator.userAgent.match(/Android 2/) || navigator.userAgent.match(/Android 3/) || navigator.userAgent.match(/Android 4\.[0-3]/)) {
+    if (typeof navigator !== 'undefined' && (navigator.userAgent.match(/Android 2/) || navigator.userAgent.match(/Android 3/) || navigator.userAgent.match(/Android 4\.[0-3]/))) {
         /* Chrome is an exception. It supports IndexedDb */
         if (!navigator.userAgent.match(/Chrome/)) {
             poorIndexedDbSupport = true;
         }
     }
 
-    if ((typeof IDB.indexedDB === 'undefined' || !IDB.indexedDB || poorIndexedDbSupport) && typeof _cfg2.default.openDatabase !== 'undefined') {
+    if ((typeof IDB.indexedDB === 'undefined' || !IDB.indexedDB || poorIndexedDbSupport) && typeof _cfg2.default.win.openDatabase !== 'undefined') {
         IDB.shimIndexedDB.__useShim();
     } else {
         IDB.IDBDatabase = IDB.IDBDatabase || IDB.webkitIDBDatabase;
@@ -19583,6 +19591,7 @@ function shimAll(idb) {
 }
 
 exports.default = shimAll;
+module.exports = exports['default'];
 
 },{"./Event.js":357,"./IDBCursor.js":358,"./IDBDatabase.js":359,"./IDBFactory.js":360,"./IDBIndex.js":361,"./IDBKeyRange.js":362,"./IDBObjectStore.js":363,"./IDBRequest.js":364,"./IDBTransaction.js":365,"./cfg.js":368,"./polyfill.js":371,"babel-polyfill":3}],370:[function(require,module,exports){
 'use strict';
@@ -19605,11 +19614,12 @@ var _cfg2 = _interopRequireDefault(_cfg);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-_cfg2.default.openDatabase = _websql2.default; /*globals GLOBAL*/
+_cfg2.default.win = { openDatabase: _websql2.default }; /*globals GLOBAL*/
 
 _cfg2.default.IDB = GLOBAL;
 
 exports.default = _globalVars2.default;
+module.exports = exports['default'];
 
 },{"./cfg.js":368,"./globalVars.js":369,"websql":350}],371:[function(require,module,exports){
 'use strict';
@@ -19963,6 +19973,7 @@ function validateKeyLength(key) {
 }
 
 exports.default = polyfill;
+module.exports = exports['default'];
 
 },{"./DOMException.js":356,"./Key.js":366}],372:[function(require,module,exports){
 'use strict';
@@ -20068,4 +20079,5 @@ exports.StringList = StringList;
 exports.quote = quote;
 exports.default = util;
 
-},{}]},{},[370]);
+},{}]},{},[370])(370)
+});

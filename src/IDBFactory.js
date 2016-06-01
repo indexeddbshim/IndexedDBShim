@@ -23,7 +23,7 @@ function createSysDB (success, failure) {
     if (sysdb) {
         success();
     } else {
-        sysdb = CFG.openDatabase('__sysdb__', 1, 'System Database', DEFAULT_DB_SIZE);
+        sysdb = CFG.win.openDatabase('__sysdb__', 1, 'System Database', DEFAULT_DB_SIZE);
         sysdb.transaction(function (tx) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);', [], success, sysDbCreateError);
         }, sysDbCreateError);
@@ -70,7 +70,7 @@ IDBFactory.prototype.open = function (name, version) {
     }
 
     function openDB (oldVersion) {
-        const db = CFG.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
+        const db = CFG.win.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
         req.readyState = 'done';
         if (typeof version === 'undefined') {
             version = oldVersion || 1;
@@ -183,7 +183,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                     return;
                 }
                 version = data.rows.item(0).version;
-                const db = CFG.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
+                const db = CFG.win.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
                 db.transaction(function (tx) {
                     tx.executeSql('SELECT * FROM __sys__', [], function (tx, data) {
                         const tables = data.rows;

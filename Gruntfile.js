@@ -11,7 +11,7 @@ module.exports = function (grunt) {
     grunt.initConfig({
         pkg: pkg,
         browserify: {
-            dist: {
+            browser: {
                 options: {
                     transform: [['babelify', {sourceMaps: true}]]
                 },
@@ -21,8 +21,10 @@ module.exports = function (grunt) {
             },
             node: {
                 options: {
+                    transform: [['babelify', {sourceMaps: true}]],
                     // Avoid `window` checking
                     browserifyOptions: {
+                        standalone: 'dummyPlaceholder',
                         // https://github.com/substack/node-browserify/issues/1277#issuecomment-115198436
                         builtins: false,
                         commondir: false,
@@ -32,8 +34,7 @@ module.exports = function (grunt) {
                                 return;
                             }
                         }
-                    },
-                    transform: [['babelify', {sourceMaps: true}]]
+                    }
                 },
                 files: {
                     'dist/<%= pkg.name%>-node.js': 'src/node.js'
@@ -79,7 +80,9 @@ module.exports = function (grunt) {
         },
         'node-qunit': {
             all: {
-                deps: ['./test/nodeTest.js', './dist/<%= pkg.name%>-node.js', './test/queuedUnit.js', './test/sampleData.js', './test/startTests.js'],
+                deps: ['./test/node-init.js', './test/queuedUnit.js', './test/sampleData.js', './test/startTests.js'],
+                code: './dist/<%= pkg.name%>-node.js',
+                tests: './test/nodeTest.js',
                 callback: function (err, res) { // var doneCb = this.async();
                     if (err) console.log(err);
                     else console.log(res);
@@ -125,7 +128,7 @@ module.exports = function (grunt) {
         if (key !== 'grunt' && key.indexOf('grunt') === 0) { grunt.loadNpmTasks(key); }
     }
 
-    grunt.registerTask('build', ['eslint', 'browserify', 'uglify']);
+    grunt.registerTask('build', ['eslint', 'browserify']); // , 'uglify']);
     const testJobs = ['build', 'connect'];
     grunt.registerTask('node', testJobs.concat('node-qunit'));
 

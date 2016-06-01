@@ -9672,6 +9672,7 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
 };
 
 exports.default = IDBDatabase;
+module.exports = exports['default'];
 
 },{"./DOMException.js":305,"./IDBObjectStore.js":312,"./IDBTransaction.js":314,"./cfg.js":318,"./util.js":321}],309:[function(require,module,exports){
 'use strict';
@@ -9727,7 +9728,7 @@ function createSysDB(success, failure) {
     if (sysdb) {
         success();
     } else {
-        sysdb = _cfg2.default.openDatabase('__sysdb__', 1, 'System Database', DEFAULT_DB_SIZE);
+        sysdb = _cfg2.default.win.openDatabase('__sysdb__', 1, 'System Database', DEFAULT_DB_SIZE);
         sysdb.transaction(function (tx) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);', [], success, sysDbCreateError);
         }, sysDbCreateError);
@@ -9773,7 +9774,7 @@ IDBFactory.prototype.open = function (name, version) {
     }
 
     function openDB(oldVersion) {
-        var db = _cfg2.default.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
+        var db = _cfg2.default.win.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
         req.readyState = 'done';
         if (typeof version === 'undefined') {
             version = oldVersion || 1;
@@ -9886,7 +9887,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                     return;
                 }
                 version = data.rows.item(0).version;
-                var db = _cfg2.default.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
+                var db = _cfg2.default.win.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
                 db.transaction(function (tx) {
                     tx.executeSql('SELECT * FROM __sys__', [], function (tx, data) {
                         var tables = data.rows;
@@ -10262,6 +10263,7 @@ IDBIndex.prototype.count = function (key) {
 };
 
 exports.default = IDBIndex;
+module.exports = exports['default'];
 
 },{"./DOMException.js":305,"./IDBCursor.js":307,"./IDBKeyRange.js":311,"./Key.js":315,"./Sca.js":316,"./cfg.js":318,"./util.js":321}],311:[function(require,module,exports){
 'use strict';
@@ -10313,6 +10315,7 @@ IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
 };
 
 exports.default = IDBKeyRange;
+module.exports = exports['default'];
 
 },{"./Key.js":315}],312:[function(require,module,exports){
 'use strict';
@@ -10806,6 +10809,7 @@ IDBObjectStore.prototype.deleteIndex = function (indexName) {
 };
 
 exports.default = IDBObjectStore;
+module.exports = exports['default'];
 
 },{"./DOMException.js":305,"./IDBCursor.js":307,"./IDBIndex.js":310,"./IDBKeyRange.js":311,"./IDBTransaction.js":314,"./Key.js":315,"./Sca.js":316,"./cfg.js":318,"./util.js":321}],313:[function(require,module,exports){
 'use strict';
@@ -11107,6 +11111,7 @@ IDBTransaction.READ_WRITE = 'readwrite';
 IDBTransaction.VERSION_CHANGE = 'versionchange';
 
 exports.default = IDBTransaction;
+module.exports = exports['default'];
 
 },{"./DOMException.js":305,"./Event.js":306,"./IDBObjectStore.js":312,"./IDBRequest.js":313,"./cfg.js":318,"./util.js":321,"eventtarget":300}],315:[function(require,module,exports){
 'use strict';
@@ -11932,7 +11937,7 @@ var _cfg2 = _interopRequireDefault(_cfg);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-_cfg2.default.openDatabase = window.openDatabase;
+_cfg2.default.win = window;
 
 (0, _globalVars2.default)();
 
@@ -11947,7 +11952,9 @@ var CFG = {};
 
 ['DEBUG', // boolean
 'cursorPreloadPackSize', // 100
-'openDatabase', // (Method (if any) for WebSQL)
+'win', // (window on which there may be an `openDatabase` method (if any)
+//  for WebSQL; the browser throws if attempting to call
+//  `openDatabase` without the window)
 'IDB' // Namespace for IndexedDB objects
 ].forEach(function (prop) {
     Object.defineProperty(CFG, prop, {
@@ -11961,6 +11968,7 @@ var CFG = {};
 });
 
 exports.default = CFG;
+module.exports = exports['default'];
 
 },{}],319:[function(require,module,exports){
 'use strict';
@@ -12045,7 +12053,7 @@ function shimAll(idb) {
     shim('shimIndexedDB', _IDBFactory.shimIndexedDB);
     if (IDB.shimIndexedDB) {
         IDB.shimIndexedDB.__useShim = function () {
-            if (typeof _cfg2.default.openDatabase !== 'undefined') {
+            if (typeof _cfg2.default.win.openDatabase !== 'undefined') {
                 // Polyfill ALL of IndexedDB, using WebSQL
                 shim('indexedDB', _IDBFactory.shimIndexedDB);
                 shim('IDBFactory', _IDBFactory.shimIDBFactory);
@@ -12076,14 +12084,14 @@ function shimAll(idb) {
 
     // Detect browsers with known IndexedDb issues (e.g. Android pre-4.4)
     var poorIndexedDbSupport = false;
-    if (navigator.userAgent.match(/Android 2/) || navigator.userAgent.match(/Android 3/) || navigator.userAgent.match(/Android 4\.[0-3]/)) {
+    if (typeof navigator !== 'undefined' && (navigator.userAgent.match(/Android 2/) || navigator.userAgent.match(/Android 3/) || navigator.userAgent.match(/Android 4\.[0-3]/))) {
         /* Chrome is an exception. It supports IndexedDb */
         if (!navigator.userAgent.match(/Chrome/)) {
             poorIndexedDbSupport = true;
         }
     }
 
-    if ((typeof IDB.indexedDB === 'undefined' || !IDB.indexedDB || poorIndexedDbSupport) && typeof _cfg2.default.openDatabase !== 'undefined') {
+    if ((typeof IDB.indexedDB === 'undefined' || !IDB.indexedDB || poorIndexedDbSupport) && typeof _cfg2.default.win.openDatabase !== 'undefined') {
         IDB.shimIndexedDB.__useShim();
     } else {
         IDB.IDBDatabase = IDB.IDBDatabase || IDB.webkitIDBDatabase;
@@ -12099,6 +12107,7 @@ function shimAll(idb) {
 }
 
 exports.default = shimAll;
+module.exports = exports['default'];
 
 },{"./Event.js":306,"./IDBCursor.js":307,"./IDBDatabase.js":308,"./IDBFactory.js":309,"./IDBIndex.js":310,"./IDBKeyRange.js":311,"./IDBObjectStore.js":312,"./IDBRequest.js":313,"./IDBTransaction.js":314,"./cfg.js":318,"./polyfill.js":320,"babel-polyfill":2}],320:[function(require,module,exports){
 'use strict';
@@ -12452,6 +12461,7 @@ function validateKeyLength(key) {
 }
 
 exports.default = polyfill;
+module.exports = exports['default'];
 
 },{"./DOMException.js":305,"./Key.js":315}],321:[function(require,module,exports){
 'use strict';
