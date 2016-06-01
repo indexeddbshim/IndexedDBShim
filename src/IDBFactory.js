@@ -5,6 +5,7 @@ import util from './util.js';
 import Key from './Key.js';
 import IDBTransaction from './IDBTransaction.js';
 import IDBDatabase from './IDBDatabase.js';
+import CFG from './cfg.js';
 
 const DEFAULT_DB_SIZE = 4 * 1024 * 1024;
 let sysdb;
@@ -15,14 +16,14 @@ let sysdb;
 function createSysDB (success, failure) {
     function sysDbCreateError (tx, err) {
         err = findError(arguments);
-        window.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
+        CFG.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
         failure(err);
     }
 
     if (sysdb) {
         success();
     } else {
-        sysdb = openDatabase('__sysdb__', 1, 'System Database', DEFAULT_DB_SIZE);
+        sysdb = CFG.openDatabase('__sysdb__', 1, 'System Database', DEFAULT_DB_SIZE);
         sysdb.transaction(function (tx) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);', [], success, sysDbCreateError);
         }, sysDbCreateError);
@@ -69,7 +70,7 @@ IDBFactory.prototype.open = function (name, version) {
     }
 
     function openDB (oldVersion) {
-        const db = openDatabase(name, 1, name, DEFAULT_DB_SIZE);
+        const db = CFG.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
         req.readyState = 'done';
         if (typeof version === 'undefined') {
             version = oldVersion || 1;
@@ -182,7 +183,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                     return;
                 }
                 version = data.rows.item(0).version;
-                const db = openDatabase(name, 1, name, DEFAULT_DB_SIZE);
+                const db = CFG.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
                 db.transaction(function (tx) {
                     tx.executeSql('SELECT * FROM __sys__', [], function (tx, data) {
                         const tables = data.rows;
@@ -231,7 +232,7 @@ IDBFactory.prototype.cmp = function (key1, key2) {
     const encodedKey2 = Key.encode(key2);
     const result = encodedKey1 > encodedKey2 ? 1 : encodedKey1 === encodedKey2 ? 0 : -1;
 
-    if (window.DEBUG) {
+    if (CFG.DEBUG) {
         // verify that the keys encoded correctly
         let decodedKey1 = Key.decode(encodedKey1);
         let decodedKey2 = Key.decode(encodedKey2);

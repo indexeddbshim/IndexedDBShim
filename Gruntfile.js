@@ -21,11 +21,12 @@ module.exports = function (grunt) {
             },
             node: {
                 options: {
+                    // Avoid `window` checking
                     browserifyOptions: {
                         // https://github.com/substack/node-browserify/issues/1277#issuecomment-115198436
                         builtins: false,
                         commondir: false,
-                        browserField: false,
+                        browserField: false, // Avoid `browser` entry in package.json
                         insertGlobalVars: {
                             process: function () {
                                 return;
@@ -78,8 +79,7 @@ module.exports = function (grunt) {
         },
         'node-qunit': {
             all: {
-                deps: ['./dist/<%= pkg.name%>-node.js', './test/queuedUnit.js', './test/sampleData.js', './test/startTests.js'],
-                tests: './test/nodeTest.js',
+                deps: ['./test/nodeTest.js', './dist/<%= pkg.name%>-node.js', './test/queuedUnit.js', './test/sampleData.js', './test/startTests.js'],
                 callback: function (err, res) { // var doneCb = this.async();
                     if (err) console.log(err);
                     else console.log(res);

@@ -1,4 +1,10 @@
 /*global QUnit, testFiles, addTestSuite */
+
+const shimAll = require('../dist/indexeddbshim-node');
+console.log(shimAll);
+GLOBAL.window = GLOBAL;
+shimAll(GLOBAL.window);
+
 QUnit.module('group a');
 QUnit.test('a basic test example', function (assert) {
     assert.ok(true, 'this test is fine');

@@ -20,7 +20,7 @@ if (Object.defineProperty) {
  * @param {Object} argArray
  */
 function callback (fn, context, event) {
-    // window.setTimeout(function(){
+    // setTimeout(function(){
     event.target = context;
     (typeof context[fn] === 'function') && context[fn](event);
     // }, 1);

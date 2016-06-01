@@ -9,20 +9,21 @@ import shimIDBDatabase from './IDBDatabase.js';
 import {shimIDBRequest, shimIDBOpenDBRequest} from './IDBRequest.js';
 import {shimIDBFactory, shimIndexedDB} from './IDBFactory.js';
 import polyfill from './polyfill.js';
+import CFG from './cfg.js';
 
-// Globals: window.DEBUG, window.cursorPreloadPackSize=100
+let IDB;
 
 function shim (name, value) {
     try {
         // Try setting the property. This will fail if the property is read-only.
-        window[name] = value;
+        IDB[name] = value;
     } catch (e) {
         console.log(e);
     }
-    if (window[name] !== value && Object.defineProperty) {
+    if (IDB[name] !== value && Object.defineProperty) {
         // Setting a read-only property failed, so try re-defining the property
         try {
-            Object.defineProperty(window, name, {
+            Object.defineProperty(IDB, name, {
                 value: value
             });
         } catch (e) {
@@ -32,17 +33,18 @@ function shim (name, value) {
             console.log('failed defineProperty');
         }
 
-        if (window[name] !== value) {
-            window.console && console.warn && console.warn('Unable to shim ' + name);
+        if (IDB[name] !== value) {
+            typeof console !== 'undefined' && console.warn && console.warn('Unable to shim ' + name);
         }
     }
 }
 
-function shimAll () {
+function shimAll (idb) {
+    IDB = idb || window;
     shim('shimIndexedDB', shimIndexedDB);
-    if (window.shimIndexedDB) {
-        window.shimIndexedDB.__useShim = function () {
-            if (typeof window.openDatabase !== 'undefined') {
+    if (IDB.shimIndexedDB) {
+        IDB.shimIndexedDB.__useShim = function () {
+            if (typeof CFG.openDatabase !== 'undefined') {
                 // Polyfill ALL of IndexedDB, using WebSQL
                 shim('indexedDB', shimIndexedDB);
                 shim('IDBFactory', shimIDBFactory);
@@ -55,20 +57,20 @@ function shimAll () {
                 shim('IDBRequest', shimIDBRequest);
                 shim('IDBOpenDBRequest', shimIDBOpenDBRequest);
                 shim('IDBVersionChangeEvent', shimIDBVersionChangeEvent);
-            } else if (typeof window.indexedDB === 'object') {
-                // Polyfill the missing IndexedDB features (no need for IDBEnvironment (window containing indexedDB itself))
+            } else if (typeof IDB.indexedDB === 'object') {
+                // Polyfill the missing IndexedDB features (no need for IDBEnvironment, the window containing indexedDB itself))
                 polyfill(shimIDBCursor, shimIDBCursorWithValue, shimIDBDatabase, shimIDBFactory, shimIDBIndex, shimIDBKeyRange, shimIDBObjectStore, shimIDBRequest, shimIDBTransaction);
             }
         };
 
-        window.shimIndexedDB.__debug = function (val) {
-            window.DEBUG = val;
+        IDB.shimIndexedDB.__debug = function (val) {
+            CFG.DEBUG = val;
         };
     }
 
     // Workaround to prevent an error in Firefox
-    if (!('indexedDB' in window)) {
-        window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.oIndexedDB || window.msIndexedDB;
+    if (!('indexedDB' in IDB)) {
+        IDB.indexedDB = IDB.indexedDB || IDB.webkitIndexedDB || IDB.mozIndexedDB || IDB.oIndexedDB || IDB.msIndexedDB;
     }
 
     // Detect browsers with known IndexedDb issues (e.g. Android pre-4.4)
@@ -80,17 +82,17 @@ function shimAll () {
         }
     }
 
-    if ((typeof window.indexedDB === 'undefined' || !window.indexedDB || poorIndexedDbSupport) && typeof window.openDatabase !== 'undefined') {
-        window.shimIndexedDB.__useShim();
+    if ((typeof IDB.indexedDB === 'undefined' || !IDB.indexedDB || poorIndexedDbSupport) && typeof CFG.openDatabase !== 'undefined') {
+        IDB.shimIndexedDB.__useShim();
     } else {
-        window.IDBDatabase = window.IDBDatabase || window.webkitIDBDatabase;
-        window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || {};
-        window.IDBCursor = window.IDBCursor || window.webkitIDBCursor;
-        window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange;
+        IDB.IDBDatabase = IDB.IDBDatabase || IDB.webkitIDBDatabase;
+        IDB.IDBTransaction = IDB.IDBTransaction || IDB.webkitIDBTransaction || {};
+        IDB.IDBCursor = IDB.IDBCursor || IDB.webkitIDBCursor;
+        IDB.IDBKeyRange = IDB.IDBKeyRange || IDB.webkitIDBKeyRange;
         /* Some browsers (e.g. Chrome 18 on Android) support IndexedDb but do not allow writing of these properties */
         try {
-            window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || 'readonly';
-            window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || 'readwrite';
+            IDB.IDBTransaction.READ_ONLY = IDB.IDBTransaction.READ_ONLY || 'readonly';
+            IDB.IDBTransaction.READ_WRITE = IDB.IDBTransaction.READ_WRITE || 'readwrite';
         } catch (e) {}
     }
 }

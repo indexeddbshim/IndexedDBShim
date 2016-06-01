@@ -4,6 +4,7 @@ import {logError, findError, DOMError, createDOMException} from './DOMException.
 import {IDBRequest} from './IDBRequest.js';
 import util from './util.js';
 import IDBObjectStore from './IDBObjectStore.js';
+import CFG from './cfg.js';
 
 let uniqueID = 0;
 
@@ -34,7 +35,7 @@ function IDBTransaction (db, storeNames, mode) {
 
 IDBTransaction.prototype.__executeRequests = function () {
     if (this.__running) {
-        window.DEBUG && console.log('Looks like the request set is already running', this.mode);
+        CFG.DEBUG && console.log('Looks like the request set is already running', this.mode);
         return;
     }
 
@@ -127,7 +128,7 @@ IDBTransaction.prototype.__executeRequests = function () {
     }
 
     function transactionFinished () {
-        window.DEBUG && console.log('Transaction completed');
+        CFG.DEBUG && console.log('Transaction completed');
         const evt = createEvent('complete');
         try {
             util.callback('oncomplete', me, evt);
@@ -231,7 +232,7 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
 
 IDBTransaction.prototype.abort = function () {
     const me = this;
-    window.DEBUG && console.log('The transaction was aborted', me);
+    CFG.DEBUG && console.log('The transaction was aborted', me);
     me.__active = false;
     const evt = createEvent('abort');
 

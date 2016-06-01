@@ -4,6 +4,7 @@ import Key from './Key.js';
 import IDBKeyRange from './IDBKeyRange.js';
 import {IDBCursor} from './IDBCursor.js';
 import Sca from './Sca.js';
+import CFG from './cfg.js';
 
 /**
  * IDB Index
@@ -64,7 +65,7 @@ IDBIndex.__createIndex = function (store, index) {
             IDBIndex.__updateIndexList(store, tx, function () {
                 // Add index entries for all existing records
                 tx.executeSql('SELECT * FROM ' + util.quote(store.name), [], function (tx, data) {
-                    window.DEBUG && console.log('Adding existing ' + store.name + ' records to the ' + index.name + ' index');
+                    CFG.DEBUG && console.log('Adding existing ' + store.name + ' records to the ' + index.name + ' index');
                     addIndexEntry(0);
 
                     function addIndexEntry (i) {
@@ -95,7 +96,7 @@ IDBIndex.__createIndex = function (store, index) {
         } else {
             // For a new index, add a new column to the object store, then apply the index
             const sql = ['ALTER TABLE', util.quote(store.name), 'ADD', util.quote(index.name), 'BLOB'].join(' ');
-            window.DEBUG && console.log(sql);
+            CFG.DEBUG && console.log(sql);
             tx.executeSql(sql, [], applyIndex, error);
         }
     });
@@ -147,7 +148,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
         };
     }
 
-    window.DEBUG && console.log('Updating the index list for ' + store.name, indexList);
+    CFG.DEBUG && console.log('Updating the index list for ' + store.name, indexList);
     tx.executeSql('UPDATE __sys__ set indexList = ? where name = ?', [JSON.stringify(indexList), store.name], function () {
         success(store);
     }, failure);
@@ -186,7 +187,7 @@ IDBIndex.prototype.__fetchIndexData = function (key, opType) {
                 sqlValues.push(encodedKey);
             }
         }
-        window.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
+        CFG.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
         tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
             let recordCount = 0, record = null;
             if (me.multiEntry) {

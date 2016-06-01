@@ -2,6 +2,7 @@ import {createDOMException} from './DOMException.js';
 import util from './util.js';
 import IDBObjectStore from './IDBObjectStore.js';
 import IDBTransaction from './IDBTransaction.js';
+import CFG from './cfg.js';
 
 /**
  * IDB Database Object
@@ -86,7 +87,7 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
 
     if (typeof mode === 'number') {
         mode = mode === 1 ? IDBTransaction.READ_WRITE : IDBTransaction.READ_ONLY;
-        window.DEBUG && console.log('Mode should be a string, but was specified as ', mode);
+        CFG.DEBUG && console.log('Mode should be a string, but was specified as ', mode);
     } else {
         mode = mode || IDBTransaction.READ_ONLY;
     }

@@ -1,3 +1,5 @@
+import CFG from './cfg.js';
+
 /**
  * Creates a native DOMException, for browsers that support it
  * @returns {DOMException}
@@ -39,7 +41,7 @@ function createError (name, message) {
  * @param {string|Error|null} error
  */
 function logError (name, message, error) {
-    if (window.DEBUG) {
+    if (CFG.DEBUG) {
         if (error && error.message) {
             error = error.message;
         }
