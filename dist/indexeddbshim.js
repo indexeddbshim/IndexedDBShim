@@ -8918,9 +8918,6 @@ process.umask = function() { return 0; };
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-/*global GLOBAL*/
-var global = typeof window !== 'undefined' ? window : GLOBAL;
-
 /**
  * Creates a native DOMException, for browsers that support it
  * @returns {DOMException}
@@ -8962,7 +8959,7 @@ function createError(name, message) {
  * @param {string|Error|null} error
  */
 function logError(name, message, error) {
-    if (global.DEBUG) {
+    if (window.DEBUG) {
         if (error && error.message) {
             error = error.message;
         }
@@ -9159,9 +9156,6 @@ var _IDBIndex2 = _interopRequireDefault(_IDBIndex);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-/*global GLOBAL*/
-var global = typeof window !== 'undefined' ? window : GLOBAL;
-
 /**
  * The IndexedDB Cursor Object
  * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBCursor
@@ -9258,7 +9252,7 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
         sql.push('LIMIT', recordsToLoad, 'OFFSET', me.__offset);
     }
     sql = sql.join(' ');
-    global.DEBUG && console.log(sql, sqlValues);
+    window.DEBUG && console.log(sql, sqlValues);
 
     me.__prefetchedData = null;
     me.__prefetchedIndex = 0;
@@ -9268,16 +9262,16 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
         } else if (data.rows.length > 1) {
             me.__prefetchedData = data.rows;
             me.__prefetchedIndex = 0;
-            global.DEBUG && console.log('Preloaded ' + me.__prefetchedData.length + ' records for cursor');
+            window.DEBUG && console.log('Preloaded ' + me.__prefetchedData.length + ' records for cursor');
             me.__decode(data.rows.item(0), success);
         } else if (data.rows.length === 1) {
             me.__decode(data.rows.item(0), success);
         } else {
-            global.DEBUG && console.log('Reached end of cursors');
+            window.DEBUG && console.log('Reached end of cursors');
             success(undefined, undefined, undefined);
         }
     }, function (tx, err) {
-        global.DEBUG && console.log('Could not execute Cursor.continue', sql, sqlValues);
+        window.DEBUG && console.log('Could not execute Cursor.continue', sql, sqlValues);
         error(err);
     });
 };
@@ -9286,7 +9280,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
     var me = this;
 
     if (me.__prefetchedData && me.__prefetchedData.length === me.__prefetchedIndex) {
-        global.DEBUG && console.log('Reached end of multiEntry cursor');
+        window.DEBUG && console.log('Reached end of multiEntry cursor');
         success(undefined, undefined, undefined);
         return;
     }
@@ -9318,7 +9312,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
         sql.push('ORDER BY key', direction);
     }
     sql = sql.join(' ');
-    global.DEBUG && console.log(sql, sqlValues);
+    window.DEBUG && console.log(sql, sqlValues);
 
     me.__prefetchedData = null;
     me.__prefetchedIndex = 0;
@@ -9375,22 +9369,22 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
                 if (me.__count) {
                     success(undefined, rows.length, undefined);
                 } else if (rows.length > 1) {
-                    global.DEBUG && console.log('Preloaded ' + me.__prefetchedData.length + ' records for multiEntry cursor');
+                    window.DEBUG && console.log('Preloaded ' + me.__prefetchedData.length + ' records for multiEntry cursor');
                     me.__decode(rows[0], success);
                 } else if (rows.length === 1) {
-                    global.DEBUG && console.log('Reached end of multiEntry cursor');
+                    window.DEBUG && console.log('Reached end of multiEntry cursor');
                     me.__decode(rows[0], success);
                 } else {
-                    global.DEBUG && console.log('Reached end of multiEntry cursor');
+                    window.DEBUG && console.log('Reached end of multiEntry cursor');
                     success(undefined, undefined, undefined);
                 }
             })();
         } else {
-            global.DEBUG && console.log('Reached end of multiEntry cursor');
+            window.DEBUG && console.log('Reached end of multiEntry cursor');
             success(undefined, undefined, undefined);
         }
     }, function (tx, err) {
-        global.DEBUG && console.log('Could not execute Cursor.continue', sql, sqlValues);
+        window.DEBUG && console.log('Could not execute Cursor.continue', sql, sqlValues);
         error(err);
     });
 };
@@ -9432,7 +9426,7 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
 };
 
 IDBCursor.prototype['continue'] = function (key) {
-    var recordsToPreloadOnContinue = global.cursorPreloadPackSize || 100;
+    var recordsToPreloadOnContinue = window.cursorPreloadPackSize || 100;
     var me = this;
 
     this.__store.transaction.__pushToQueue(me.__req, function cursorContinue(tx, args, success, error) {
@@ -9485,7 +9479,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
                 sql.push('WHERE key = ?');
                 params.push(_Key2.default.encode(primaryKey));
 
-                global.DEBUG && console.log(sql.join(' '), encoded, key, primaryKey);
+                window.DEBUG && console.log(sql.join(' '), encoded, key, primaryKey);
                 tx.executeSql(sql.join(' '), params, function (tx, data) {
                     me.__prefetchedData = null;
                     me.__prefetchedIndex = 0;
@@ -9508,7 +9502,7 @@ IDBCursor.prototype['delete'] = function () {
     return this.__store.transaction.__addToTransactionQueue(function cursorDelete(tx, args, success, error) {
         me.__find(undefined, tx, function (key, value, primaryKey) {
             var sql = 'DELETE FROM  ' + _util2.default.quote(me.__store.name) + ' WHERE key = ?';
-            global.DEBUG && console.log(sql, key, primaryKey);
+            window.DEBUG && console.log(sql, key, primaryKey);
             _Key2.default.validate(primaryKey);
             tx.executeSql(sql, [_Key2.default.encode(primaryKey)], function (tx, data) {
                 me.__prefetchedData = null;
@@ -9532,7 +9526,7 @@ var IDBCursorWithValue = {};
 exports.IDBCursor = IDBCursor;
 exports.IDBCursorWithValue = IDBCursorWithValue;
 
-},{"./DOMException.js":305,"./IDBIndex.js":310,"./IDBKeyRange.js":311,"./IDBRequest.js":313,"./Key.js":315,"./Sca.js":316,"./util.js":319}],308:[function(require,module,exports){
+},{"./DOMException.js":305,"./IDBIndex.js":310,"./IDBKeyRange.js":311,"./IDBRequest.js":313,"./Key.js":315,"./Sca.js":316,"./util.js":320}],308:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9554,9 +9548,6 @@ var _IDBTransaction = require('./IDBTransaction.js');
 var _IDBTransaction2 = _interopRequireDefault(_IDBTransaction);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-/*global GLOBAL*/
-var global = typeof window !== 'undefined' ? window : GLOBAL;
 
 /**
  * IDB Database Object
@@ -9641,7 +9632,7 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
 
     if (typeof mode === 'number') {
         mode = mode === 1 ? _IDBTransaction2.default.READ_WRITE : _IDBTransaction2.default.READ_ONLY;
-        global.DEBUG && console.log('Mode should be a string, but was specified as ', mode);
+        window.DEBUG && console.log('Mode should be a string, but was specified as ', mode);
     } else {
         mode = mode || _IDBTransaction2.default.READ_ONLY;
     }
@@ -9666,7 +9657,7 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
 
 exports.default = IDBDatabase;
 
-},{"./DOMException.js":305,"./IDBObjectStore.js":312,"./IDBTransaction.js":314,"./util.js":319}],309:[function(require,module,exports){
+},{"./DOMException.js":305,"./IDBObjectStore.js":312,"./IDBTransaction.js":314,"./util.js":320}],309:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9700,10 +9691,6 @@ var _IDBDatabase2 = _interopRequireDefault(_IDBDatabase);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-/*global GLOBAL*/
-var global = typeof window !== 'undefined' ? window : GLOBAL;
-var openDatabase = typeof global.nodeWebsql === 'undefined' ? window.openDatabase : global.nodeWebsql;
-
 var DEFAULT_DB_SIZE = 4 * 1024 * 1024;
 var sysdb = void 0;
 
@@ -9713,7 +9700,7 @@ var sysdb = void 0;
 function createSysDB(success, failure) {
     function sysDbCreateError(tx, err) {
         err = (0, _DOMException.findError)(arguments);
-        global.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
+        window.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
         failure(err);
     }
 
@@ -9928,7 +9915,7 @@ IDBFactory.prototype.cmp = function (key1, key2) {
     var encodedKey2 = _Key2.default.encode(key2);
     var result = encodedKey1 > encodedKey2 ? 1 : encodedKey1 === encodedKey2 ? 0 : -1;
 
-    if (global.DEBUG) {
+    if (window.DEBUG) {
         // verify that the keys encoded correctly
         var decodedKey1 = _Key2.default.decode(encodedKey1);
         var decodedKey2 = _Key2.default.decode(encodedKey2);
@@ -9957,7 +9944,7 @@ var shimIndexedDB = new IDBFactory();
 exports.IDBFactory = IDBFactory;
 exports.shimIndexedDB = shimIndexedDB;
 
-},{"./DOMException.js":305,"./Event.js":306,"./IDBDatabase.js":308,"./IDBRequest.js":313,"./IDBTransaction.js":314,"./Key.js":315,"./util.js":319}],310:[function(require,module,exports){
+},{"./DOMException.js":305,"./Event.js":306,"./IDBDatabase.js":308,"./IDBRequest.js":313,"./IDBTransaction.js":314,"./Key.js":315,"./util.js":320}],310:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9985,9 +9972,6 @@ var _Sca = require('./Sca.js');
 var _Sca2 = _interopRequireDefault(_Sca);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-/*global GLOBAL*/
-var global = typeof window !== 'undefined' ? window : GLOBAL;
 
 /**
  * IDB Index
@@ -10048,7 +10032,7 @@ IDBIndex.__createIndex = function (store, index) {
             IDBIndex.__updateIndexList(store, tx, function () {
                 // Add index entries for all existing records
                 tx.executeSql('SELECT * FROM ' + _util2.default.quote(store.name), [], function (tx, data) {
-                    global.DEBUG && console.log('Adding existing ' + store.name + ' records to the ' + index.name + ' index');
+                    window.DEBUG && console.log('Adding existing ' + store.name + ' records to the ' + index.name + ' index');
                     addIndexEntry(0);
 
                     function addIndexEntry(i) {
@@ -10079,7 +10063,7 @@ IDBIndex.__createIndex = function (store, index) {
         } else {
             // For a new index, add a new column to the object store, then apply the index
             var sql = ['ALTER TABLE', _util2.default.quote(store.name), 'ADD', _util2.default.quote(index.name), 'BLOB'].join(' ');
-            global.DEBUG && console.log(sql);
+            window.DEBUG && console.log(sql);
             tx.executeSql(sql, [], applyIndex, error);
         }
     });
@@ -10131,7 +10115,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
         };
     }
 
-    global.DEBUG && console.log('Updating the index list for ' + store.name, indexList);
+    window.DEBUG && console.log('Updating the index list for ' + store.name, indexList);
     tx.executeSql('UPDATE __sys__ set indexList = ? where name = ?', [JSON.stringify(indexList), store.name], function () {
         success(store);
     }, failure);
@@ -10171,7 +10155,7 @@ IDBIndex.prototype.__fetchIndexData = function (key, opType) {
                 sqlValues.push(encodedKey);
             }
         }
-        global.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
+        window.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
         tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
             var recordCount = 0,
                 record = null;
@@ -10255,7 +10239,7 @@ IDBIndex.prototype.count = function (key) {
 
 exports.default = IDBIndex;
 
-},{"./DOMException.js":305,"./IDBCursor.js":307,"./IDBKeyRange.js":311,"./Key.js":315,"./Sca.js":316,"./util.js":319}],311:[function(require,module,exports){
+},{"./DOMException.js":305,"./IDBCursor.js":307,"./IDBKeyRange.js":311,"./Key.js":315,"./Sca.js":316,"./util.js":320}],311:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10345,9 +10329,6 @@ var _Sca2 = _interopRequireDefault(_Sca);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-/*global GLOBAL*/
-var global = typeof window !== 'undefined' ? window : GLOBAL;
-
 /**
  * IndexedDB Object Store
  * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBObjectStore
@@ -10416,7 +10397,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
 
         // key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
         var sql = ['CREATE TABLE', _util2.default.quote(store.name), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
-        global.DEBUG && console.log(sql);
+        window.DEBUG && console.log(sql);
         tx.executeSql(sql, [], function (tx, data) {
             tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?)', [store.name, JSON.stringify(store.keyPath), store.autoIncrement, '{}'], function () {
                 success(store);
@@ -10567,7 +10548,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
 
         var sql = sqlStart.join(' ') + sqlEnd.join(' ');
 
-        global.DEBUG && console.log('SQL for adding', sql, sqlValues);
+        window.DEBUG && console.log('SQL for adding', sql, sqlValues);
         tx.executeSql(sql, sqlValues, function (tx, data) {
             _Sca2.default.encode(primaryKey, function (primaryKey) {
                 primaryKey = _Sca2.default.decode(primaryKey);
@@ -10616,7 +10597,7 @@ IDBObjectStore.prototype.put = function (value, key) {
                 _Key2.default.validate(primaryKey);
                 var sql = 'DELETE FROM ' + _util2.default.quote(me.name) + ' where key = ?';
                 tx.executeSql(sql, [_Key2.default.encode(primaryKey)], function (tx, data) {
-                    global.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
+                    window.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
                     me.__insertData(tx, encoded, value, primaryKey, success, error);
                 }, function (tx, err) {
                     error(err);
@@ -10638,9 +10619,9 @@ IDBObjectStore.prototype.get = function (key) {
     _Key2.default.validate(key);
     var primaryKey = _Key2.default.encode(key);
     return me.transaction.__addToTransactionQueue(function objectStoreGet(tx, args, success, error) {
-        global.DEBUG && console.log('Fetching', me.name, primaryKey);
+        window.DEBUG && console.log('Fetching', me.name, primaryKey);
         tx.executeSql('SELECT * FROM ' + _util2.default.quote(me.name) + ' where key = ?', [primaryKey], function (tx, data) {
-            global.DEBUG && console.log('Fetched data', data);
+            window.DEBUG && console.log('Fetched data', data);
             var value = void 0;
             try {
                 // Opera can't deal with the try-catch here.
@@ -10651,7 +10632,7 @@ IDBObjectStore.prototype.get = function (key) {
                 value = _Sca2.default.decode(data.rows.item(0).value);
             } catch (e) {
                 // If no result is returned, or error occurs when parsing JSON
-                global.DEBUG && console.log(e);
+                window.DEBUG && console.log(e);
             }
             success(value);
         }, function (tx, err) {
@@ -10672,9 +10653,9 @@ IDBObjectStore.prototype['delete'] = function (key) {
     var primaryKey = _Key2.default.encode(key);
     // TODO key should also support key ranges
     return me.transaction.__addToTransactionQueue(function objectStoreDelete(tx, args, success, error) {
-        global.DEBUG && console.log('Fetching', me.name, primaryKey);
+        window.DEBUG && console.log('Fetching', me.name, primaryKey);
         tx.executeSql('DELETE FROM ' + _util2.default.quote(me.name) + ' where key = ?', [primaryKey], function (tx, data) {
-            global.DEBUG && console.log('Deleted from database', data.rowsAffected);
+            window.DEBUG && console.log('Deleted from database', data.rowsAffected);
             success();
         }, function (tx, err) {
             error(err);
@@ -10687,7 +10668,7 @@ IDBObjectStore.prototype.clear = function () {
     me.transaction.__assertWritable();
     return me.transaction.__addToTransactionQueue(function objectStoreClear(tx, args, success, error) {
         tx.executeSql('DELETE FROM ' + _util2.default.quote(me.name), [], function (tx, data) {
-            global.DEBUG && console.log('Cleared all records from database', data.rowsAffected);
+            window.DEBUG && console.log('Cleared all records from database', data.rowsAffected);
             success();
         }, function (tx, err) {
             error(err);
@@ -10798,7 +10779,7 @@ IDBObjectStore.prototype.deleteIndex = function (indexName) {
 
 exports.default = IDBObjectStore;
 
-},{"./DOMException.js":305,"./IDBCursor.js":307,"./IDBIndex.js":310,"./IDBKeyRange.js":311,"./IDBTransaction.js":314,"./Key.js":315,"./Sca.js":316,"./util.js":319}],313:[function(require,module,exports){
+},{"./DOMException.js":305,"./IDBCursor.js":307,"./IDBIndex.js":310,"./IDBKeyRange.js":311,"./IDBTransaction.js":314,"./Key.js":315,"./Sca.js":316,"./util.js":320}],313:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10852,9 +10833,6 @@ var _IDBObjectStore2 = _interopRequireDefault(_IDBObjectStore);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-/*global GLOBAL*/
-var global = typeof window !== 'undefined' ? window : GLOBAL;
-
 var uniqueID = 0;
 
 /**
@@ -10886,7 +10864,7 @@ function IDBTransaction(db, storeNames, mode) {
 
 IDBTransaction.prototype.__executeRequests = function () {
     if (this.__running) {
-        global.DEBUG && console.log('Looks like the request set is already running', this.mode);
+        window.DEBUG && console.log('Looks like the request set is already running', this.mode);
         return;
     }
 
@@ -10976,7 +10954,7 @@ IDBTransaction.prototype.__executeRequests = function () {
     }
 
     function transactionFinished() {
-        global.DEBUG && console.log('Transaction completed');
+        window.DEBUG && console.log('Transaction completed');
         var evt = (0, _Event.createEvent)('complete');
         try {
             _util2.default.callback('oncomplete', me, evt);
@@ -11080,7 +11058,7 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
 
 IDBTransaction.prototype.abort = function () {
     var me = this;
-    global.DEBUG && console.log('The transaction was aborted', me);
+    window.DEBUG && console.log('The transaction was aborted', me);
     me.__active = false;
     var evt = (0, _Event.createEvent)('abort');
 
@@ -11098,7 +11076,7 @@ IDBTransaction.VERSION_CHANGE = 'versionchange';
 
 exports.default = IDBTransaction;
 
-},{"./DOMException.js":305,"./Event.js":306,"./IDBObjectStore.js":312,"./IDBRequest.js":313,"./util.js":319,"eventtarget":300}],315:[function(require,module,exports){
+},{"./DOMException.js":305,"./Event.js":306,"./IDBObjectStore.js":312,"./IDBRequest.js":313,"./util.js":320,"eventtarget":300}],315:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -11912,8 +11890,22 @@ exports.default = Sca;
 },{"atob":1}],317:[function(require,module,exports){
 'use strict';
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; }; /*global GLOBAL*/
-// Object.assign in EventTarget, etc.
+var _globalVars = require('./globalVars.js');
+
+var _globalVars2 = _interopRequireDefault(_globalVars);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+(0, _globalVars2.default)();
+
+},{"./globalVars.js":318}],318:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; }; // Object.assign in EventTarget, etc.
 
 
 require('babel-polyfill');
@@ -11952,37 +11944,35 @@ var _polyfill2 = _interopRequireDefault(_polyfill);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-(function () {
-    'use strict';
+// Globals: window.DEBUG, window.cursorPreloadPackSize=100
 
-    var global = typeof window !== 'undefined' ? window : GLOBAL; // DEBUG, cursorPreloadPackSize=100
-
-    function shim(name, value) {
+function shim(name, value) {
+    try {
+        // Try setting the property. This will fail if the property is read-only.
+        window[name] = value;
+    } catch (e) {
+        console.log(e);
+    }
+    if (window[name] !== value && Object.defineProperty) {
+        // Setting a read-only property failed, so try re-defining the property
         try {
-            // Try setting the property. This will fail if the property is read-only.
-            window[name] = value;
+            Object.defineProperty(window, name, {
+                value: value
+            });
         } catch (e) {
-            console.log(e);
+            // With `indexedDB`, PhantomJS 2.2.1 fails here and below but
+            //  not above, while Chrome is reverse (and Firefox doesn't
+            //  get here since no WebSQL to use for shimming)
+            console.log('failed defineProperty');
         }
-        if (window[name] !== value && Object.defineProperty) {
-            // Setting a read-only property failed, so try re-defining the property
-            try {
-                Object.defineProperty(window, name, {
-                    value: value
-                });
-            } catch (e) {
-                // With `indexedDB`, PhantomJS 2.2.1 fails here and below but
-                //  not above, while Chrome is reverse (and Firefox doesn't
-                //  get here since no WebSQL to use for shimming)
-                console.log('failed defineProperty');
-            }
 
-            if (window[name] !== value) {
-                window.console && console.warn && console.warn('Unable to shim ' + name);
-            }
+        if (window[name] !== value) {
+            window.console && console.warn && console.warn('Unable to shim ' + name);
         }
     }
+}
 
+function shimAll() {
     shim('shimIndexedDB', _IDBFactory.shimIndexedDB);
     if (window.shimIndexedDB) {
         window.shimIndexedDB.__useShim = function () {
@@ -12006,7 +11996,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
         };
 
         window.shimIndexedDB.__debug = function (val) {
-            global.DEBUG = val;
+            window.DEBUG = val;
         };
     }
 
@@ -12028,21 +12018,20 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
         window.shimIndexedDB.__useShim();
     } else {
         window.IDBDatabase = window.IDBDatabase || window.webkitIDBDatabase;
-        window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction;
+        window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || {};
         window.IDBCursor = window.IDBCursor || window.webkitIDBCursor;
         window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange;
-        if (!window.IDBTransaction) {
-            window.IDBTransaction = {};
-        }
         /* Some browsers (e.g. Chrome 18 on Android) support IndexedDb but do not allow writing of these properties */
         try {
             window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || 'readonly';
             window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || 'readwrite';
         } catch (e) {}
     }
-})();
+}
 
-},{"./Event.js":306,"./IDBCursor.js":307,"./IDBDatabase.js":308,"./IDBFactory.js":309,"./IDBIndex.js":310,"./IDBKeyRange.js":311,"./IDBObjectStore.js":312,"./IDBRequest.js":313,"./IDBTransaction.js":314,"./polyfill.js":318,"babel-polyfill":2}],318:[function(require,module,exports){
+exports.default = shimAll;
+
+},{"./Event.js":306,"./IDBCursor.js":307,"./IDBDatabase.js":308,"./IDBFactory.js":309,"./IDBIndex.js":310,"./IDBKeyRange.js":311,"./IDBObjectStore.js":312,"./IDBRequest.js":313,"./IDBTransaction.js":314,"./polyfill.js":319,"babel-polyfill":2}],319:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12395,7 +12384,7 @@ function validateKeyLength(key) {
 
 exports.default = polyfill;
 
-},{"./DOMException.js":305,"./Key.js":315}],319:[function(require,module,exports){
+},{"./DOMException.js":305,"./Key.js":315}],320:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {

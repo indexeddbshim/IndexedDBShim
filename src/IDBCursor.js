@@ -1,6 +1,3 @@
-/*global GLOBAL*/
-const global = typeof window !== 'undefined' ? window : GLOBAL;
-
 import {createDOMException} from './DOMException.js';
 import {IDBRequest} from './IDBRequest.js';
 import util from './util.js';
@@ -105,7 +102,7 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
         sql.push('LIMIT', recordsToLoad, 'OFFSET', me.__offset);
     }
     sql = sql.join(' ');
-    global.DEBUG && console.log(sql, sqlValues);
+    window.DEBUG && console.log(sql, sqlValues);
 
     me.__prefetchedData = null;
     me.__prefetchedIndex = 0;
@@ -115,16 +112,16 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
         } else if (data.rows.length > 1) {
             me.__prefetchedData = data.rows;
             me.__prefetchedIndex = 0;
-            global.DEBUG && console.log('Preloaded ' + me.__prefetchedData.length + ' records for cursor');
+            window.DEBUG && console.log('Preloaded ' + me.__prefetchedData.length + ' records for cursor');
             me.__decode(data.rows.item(0), success);
         } else if (data.rows.length === 1) {
             me.__decode(data.rows.item(0), success);
         } else {
-            global.DEBUG && console.log('Reached end of cursors');
+            window.DEBUG && console.log('Reached end of cursors');
             success(undefined, undefined, undefined);
         }
     }, function (tx, err) {
-        global.DEBUG && console.log('Could not execute Cursor.continue', sql, sqlValues);
+        window.DEBUG && console.log('Could not execute Cursor.continue', sql, sqlValues);
         error(err);
     });
 };
@@ -133,7 +130,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
     const me = this;
 
     if (me.__prefetchedData && me.__prefetchedData.length === me.__prefetchedIndex) {
-        global.DEBUG && console.log('Reached end of multiEntry cursor');
+        window.DEBUG && console.log('Reached end of multiEntry cursor');
         success(undefined, undefined, undefined);
         return;
     }
@@ -165,7 +162,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
         sql.push('ORDER BY key', direction);
     }
     sql = sql.join(' ');
-    global.DEBUG && console.log(sql, sqlValues);
+    window.DEBUG && console.log(sql, sqlValues);
 
     me.__prefetchedData = null;
     me.__prefetchedIndex = 0;
@@ -221,21 +218,21 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
             if (me.__count) {
                 success(undefined, rows.length, undefined);
             } else if (rows.length > 1) {
-                global.DEBUG && console.log('Preloaded ' + me.__prefetchedData.length + ' records for multiEntry cursor');
+                window.DEBUG && console.log('Preloaded ' + me.__prefetchedData.length + ' records for multiEntry cursor');
                 me.__decode(rows[0], success);
             } else if (rows.length === 1) {
-                global.DEBUG && console.log('Reached end of multiEntry cursor');
+                window.DEBUG && console.log('Reached end of multiEntry cursor');
                 me.__decode(rows[0], success);
             } else {
-                global.DEBUG && console.log('Reached end of multiEntry cursor');
+                window.DEBUG && console.log('Reached end of multiEntry cursor');
                 success(undefined, undefined, undefined);
             }
         } else {
-            global.DEBUG && console.log('Reached end of multiEntry cursor');
+            window.DEBUG && console.log('Reached end of multiEntry cursor');
             success(undefined, undefined, undefined);
         }
     }, function (tx, err) {
-        global.DEBUG && console.log('Could not execute Cursor.continue', sql, sqlValues);
+        window.DEBUG && console.log('Could not execute Cursor.continue', sql, sqlValues);
         error(err);
     });
 };
@@ -277,7 +274,7 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
 };
 
 IDBCursor.prototype['continue'] = function (key) {
-    const recordsToPreloadOnContinue = global.cursorPreloadPackSize || 100;
+    const recordsToPreloadOnContinue = window.cursorPreloadPackSize || 100;
     const me = this;
 
     this.__store.transaction.__pushToQueue(me.__req, function cursorContinue (tx, args, success, error) {
@@ -330,7 +327,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
                 sql.push('WHERE key = ?');
                 params.push(Key.encode(primaryKey));
 
-                global.DEBUG && console.log(sql.join(' '), encoded, key, primaryKey);
+                window.DEBUG && console.log(sql.join(' '), encoded, key, primaryKey);
                 tx.executeSql(sql.join(' '), params, function (tx, data) {
                     me.__prefetchedData = null;
                     me.__prefetchedIndex = 0;
@@ -353,7 +350,7 @@ IDBCursor.prototype['delete'] = function () {
     return this.__store.transaction.__addToTransactionQueue(function cursorDelete (tx, args, success, error) {
         me.__find(undefined, tx, function (key, value, primaryKey) {
             const sql = 'DELETE FROM  ' + util.quote(me.__store.name) + ' WHERE key = ?';
-            global.DEBUG && console.log(sql, key, primaryKey);
+            window.DEBUG && console.log(sql, key, primaryKey);
             Key.validate(primaryKey);
             tx.executeSql(sql, [Key.encode(primaryKey)], function (tx, data) {
                 me.__prefetchedData = null;

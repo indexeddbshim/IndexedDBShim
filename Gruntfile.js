@@ -16,11 +16,22 @@ module.exports = function (grunt) {
                     transform: [['babelify', {sourceMaps: true}]]
                 },
                 files: {
-                    'dist/<%= pkg.name%>.js': 'src/globalVars.js'
+                    'dist/<%= pkg.name%>.js': 'src/browser.js'
                 }
             },
             node: {
                 options: {
+                    browserifyOptions: {
+                        // https://github.com/substack/node-browserify/issues/1277#issuecomment-115198436
+                        builtins: false,
+                        commondir: false,
+                        browserField: false,
+                        insertGlobalVars: {
+                            process: function () {
+                                return;
+                            }
+                        }
+                    },
                     transform: [['babelify', {sourceMaps: true}]]
                 },
                 files: {
@@ -28,7 +39,6 @@ module.exports = function (grunt) {
                 }
             }
         },
-        clean: ['src/<%= pkg.name%>.js', 'src/<%= pkg.name%>-node.js'],
         uglify: {
             browser: {
                 options: {
@@ -66,6 +76,16 @@ module.exports = function (grunt) {
                 }
             }
         },
+        'node-qunit': {
+            all: {
+                deps: ['./dist/<%= pkg.name%>-node.js', './test/queuedUnit.js', './test/sampleData.js', './test/startTests.js'],
+                tests: './test/nodeTest.js',
+                callback: function (err, res) { // var doneCb = this.async();
+                    if (err) console.log(err);
+                    else console.log(res);
+                }
+            }
+        },
 
         'saucelabs-qunit': {
             all: {
@@ -96,7 +116,7 @@ module.exports = function (grunt) {
         watch: {
             dev: {
                 files: ['src/*'],
-                tasks: ['eslint', 'browserify', 'clean', 'uglify']
+                tasks: ['eslint', 'browserify', 'uglify']
             }
         }
     });
@@ -105,8 +125,10 @@ module.exports = function (grunt) {
         if (key !== 'grunt' && key.indexOf('grunt') === 0) { grunt.loadNpmTasks(key); }
     }
 
-    grunt.registerTask('build', ['clean', 'eslint', 'browserify', 'clean', 'uglify']);
+    grunt.registerTask('build', ['eslint', 'browserify', 'uglify']);
     const testJobs = ['build', 'connect'];
+    grunt.registerTask('node', testJobs.concat('node-qunit'));
+
     if (saucekey !== null) {
         testJobs.push('saucelabs-qunit');
     } else {
@@ -116,7 +138,7 @@ module.exports = function (grunt) {
     grunt.registerTask('test', testJobs);
 
     grunt.registerTask('default', 'build');
-    grunt.registerTask('dev', ['clean', 'build', 'connect', 'watch']);
+    grunt.registerTask('dev', ['build', 'connect', 'watch']);
 };
 
 /**

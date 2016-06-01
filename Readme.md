@@ -152,12 +152,15 @@ Follow all of the steps above to build the project, then run `npm test` to
 run the unit tests.  The tests are run in [PhantomJS](http://phantomjs.org/),
 which is a headless WebKit browser.
 
+To run the Node tests, run `grunt node`.
+
 ### Testing in a Browser
 
-If you want to run the tests in a normal web browser. Then you'll need to
+If you want to run the tests in a normal web browser, you'll need to
 spin-up a local web server and then open [`test/index.html`](https://github.com/axemclion/IndexedDBShim/blob/master/test/index.html)
 and/or [`tests/index.html`](https://github.com/axemclion/IndexedDBShim/blob/master/tests/index.html)
-in your browser.
+in your browser. You can also run `grunt dev` and point your
+browser to `http://localhost:9999/test/index.html`.
 
 ### Testing in a Cordova/PhoneGap app
 

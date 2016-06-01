@@ -1,6 +1,3 @@
-/*global GLOBAL*/
-const global = typeof window !== 'undefined' ? window : GLOBAL;
-
 import {createDOMError, createDOMException} from './DOMException.js';
 import util from './util.js';
 import Key from './Key.js';
@@ -78,7 +75,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
 
         // key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
         const sql = ['CREATE TABLE', util.quote(store.name), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
-        global.DEBUG && console.log(sql);
+        window.DEBUG && console.log(sql);
         tx.executeSql(sql, [], function (tx, data) {
             tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?)', [store.name, JSON.stringify(store.keyPath), store.autoIncrement, '{}'], function () {
                 success(store);
@@ -229,7 +226,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
 
         const sql = sqlStart.join(' ') + sqlEnd.join(' ');
 
-        global.DEBUG && console.log('SQL for adding', sql, sqlValues);
+        window.DEBUG && console.log('SQL for adding', sql, sqlValues);
         tx.executeSql(sql, sqlValues, function (tx, data) {
             Sca.encode(primaryKey, function (primaryKey) {
                 primaryKey = Sca.decode(primaryKey);
@@ -278,7 +275,7 @@ IDBObjectStore.prototype.put = function (value, key) {
                 Key.validate(primaryKey);
                 const sql = 'DELETE FROM ' + util.quote(me.name) + ' where key = ?';
                 tx.executeSql(sql, [Key.encode(primaryKey)], function (tx, data) {
-                    global.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
+                    window.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
                     me.__insertData(tx, encoded, value, primaryKey, success, error);
                 }, function (tx, err) {
                     error(err);
@@ -300,9 +297,9 @@ IDBObjectStore.prototype.get = function (key) {
     Key.validate(key);
     const primaryKey = Key.encode(key);
     return me.transaction.__addToTransactionQueue(function objectStoreGet (tx, args, success, error) {
-        global.DEBUG && console.log('Fetching', me.name, primaryKey);
+        window.DEBUG && console.log('Fetching', me.name, primaryKey);
         tx.executeSql('SELECT * FROM ' + util.quote(me.name) + ' where key = ?', [primaryKey], function (tx, data) {
-            global.DEBUG && console.log('Fetched data', data);
+            window.DEBUG && console.log('Fetched data', data);
             let value;
             try {
                 // Opera can't deal with the try-catch here.
@@ -313,7 +310,7 @@ IDBObjectStore.prototype.get = function (key) {
                 value = Sca.decode(data.rows.item(0).value);
             } catch (e) {
                 // If no result is returned, or error occurs when parsing JSON
-                global.DEBUG && console.log(e);
+                window.DEBUG && console.log(e);
             }
             success(value);
         }, function (tx, err) {
@@ -334,9 +331,9 @@ IDBObjectStore.prototype['delete'] = function (key) {
     const primaryKey = Key.encode(key);
     // TODO key should also support key ranges
     return me.transaction.__addToTransactionQueue(function objectStoreDelete (tx, args, success, error) {
-        global.DEBUG && console.log('Fetching', me.name, primaryKey);
+        window.DEBUG && console.log('Fetching', me.name, primaryKey);
         tx.executeSql('DELETE FROM ' + util.quote(me.name) + ' where key = ?', [primaryKey], function (tx, data) {
-            global.DEBUG && console.log('Deleted from database', data.rowsAffected);
+            window.DEBUG && console.log('Deleted from database', data.rowsAffected);
             success();
         }, function (tx, err) {
             error(err);
@@ -349,7 +346,7 @@ IDBObjectStore.prototype.clear = function () {
     me.transaction.__assertWritable();
     return me.transaction.__addToTransactionQueue(function objectStoreClear (tx, args, success, error) {
         tx.executeSql('DELETE FROM ' + util.quote(me.name), [], function (tx, data) {
-            global.DEBUG && console.log('Cleared all records from database', data.rowsAffected);
+            window.DEBUG && console.log('Cleared all records from database', data.rowsAffected);
             success();
         }, function (tx, err) {
             error(err);

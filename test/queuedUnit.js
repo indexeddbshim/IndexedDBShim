@@ -12,12 +12,14 @@
     var testQueue = [], currentModule = null;
 
     // Filtering the tests based on the URLs
-    var q = window.location.search.substring(1).split('&');
     var filteredTests = [];
-    for (var i = 0; i < q.length; i++) {
-        var parts = q[i].split('=');
-        if (parts[0] === 'filter') {
-            filteredTests.push(unescape(parts[1]));
+    if (window.location) {
+        var q = window.location.search.substring(1).split('&');
+        for (var i = 0; i < q.length; i++) {
+            var parts = q[i].split('=');
+            if (parts[0] === 'filter') {
+                filteredTests.push(unescape(parts[1]));
+            }
         }
     }
 
@@ -58,7 +60,7 @@
             initialized = true;
             start();
         }
-        window.clearTimeout(timer);
+        clearTimeout(timer);
         if (testQueue.length <= 0) {
             console.groupEnd();
             console.log('All tests completed');

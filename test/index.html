@@ -8,19 +8,13 @@
         <link rel="stylesheet" href="index.css" type="text/css" media="screen" />
 
         <script src="https://code.jquery.com/qunit/qunit-1.23.1.js"></script>
-        <script src="queuedUnit.js"></script>
 
         <script src="../dist/indexeddbshim.js"></script>
 
+        <script src="queuedUnit.js"></script>
         <script src="sampleData.js"></script>
         <script src="startTests.js"></script>
         <script>
-            function runWith () {
-                document.getElementById('qunit-tests').innerHTML = '';
-
-                window.indexedDB = window.webkitIndexedDB || window.mozIndexedDB;
-                startTests();
-            }
             function addTest (i) {
                 var x = document.createElement('script');
                 x.src = testFiles[i];
@@ -28,6 +22,12 @@
                     addTestSuite(i + 1);
                 };
                 document.body.appendChild(x);
+            }
+            function runWith () {
+                document.getElementById('qunit-tests').innerHTML = '';
+
+                window.indexedDB = window.webkitIndexedDB || window.mozIndexedDB;
+                startTests();
             }
         </script>
     </head>

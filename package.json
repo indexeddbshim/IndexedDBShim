@@ -44,6 +44,7 @@
     "grunt-contrib-qunit": "^1.2.0",
     "grunt-contrib-uglify": "^1.0.1",
     "grunt-contrib-watch": "^1.0.0",
+    "grunt-node-qunit": "https://github.com/lmartorella/grunt-node-qunit#master",
     "grunt-saucelabs": "~8.6.2",
     "gruntify-eslint": "~2.0.0",
     "matchdep": "^1.0.1",

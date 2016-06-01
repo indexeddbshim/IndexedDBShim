@@ -1,4 +1,3 @@
-/*global GLOBAL*/
 import 'babel-polyfill'; // Object.assign in EventTarget, etc.
 import {shimIDBVersionChangeEvent} from './Event.js';
 import shimIDBKeyRange from './IDBKeyRange.js';
@@ -11,36 +10,35 @@ import {shimIDBRequest, shimIDBOpenDBRequest} from './IDBRequest.js';
 import {shimIDBFactory, shimIndexedDB} from './IDBFactory.js';
 import polyfill from './polyfill.js';
 
-(function () {
-    'use strict';
-    const global = typeof window !== 'undefined' ? window : GLOBAL; // DEBUG, cursorPreloadPackSize=100
+// Globals: window.DEBUG, window.cursorPreloadPackSize=100
 
-    function shim (name, value) {
+function shim (name, value) {
+    try {
+        // Try setting the property. This will fail if the property is read-only.
+        window[name] = value;
+    } catch (e) {
+        console.log(e);
+    }
+    if (window[name] !== value && Object.defineProperty) {
+        // Setting a read-only property failed, so try re-defining the property
         try {
-            // Try setting the property. This will fail if the property is read-only.
-            window[name] = value;
+            Object.defineProperty(window, name, {
+                value: value
+            });
         } catch (e) {
-            console.log(e);
+            // With `indexedDB`, PhantomJS 2.2.1 fails here and below but
+            //  not above, while Chrome is reverse (and Firefox doesn't
+            //  get here since no WebSQL to use for shimming)
+            console.log('failed defineProperty');
         }
-        if (window[name] !== value && Object.defineProperty) {
-            // Setting a read-only property failed, so try re-defining the property
-            try {
-                Object.defineProperty(window, name, {
-                    value: value
-                });
-            } catch (e) {
-                // With `indexedDB`, PhantomJS 2.2.1 fails here and below but
-                //  not above, while Chrome is reverse (and Firefox doesn't
-                //  get here since no WebSQL to use for shimming)
-                console.log('failed defineProperty');
-            }
 
-            if (window[name] !== value) {
-                window.console && console.warn && console.warn('Unable to shim ' + name);
-            }
+        if (window[name] !== value) {
+            window.console && console.warn && console.warn('Unable to shim ' + name);
         }
     }
+}
 
+function shimAll () {
     shim('shimIndexedDB', shimIndexedDB);
     if (window.shimIndexedDB) {
         window.shimIndexedDB.__useShim = function () {
@@ -64,7 +62,7 @@ import polyfill from './polyfill.js';
         };
 
         window.shimIndexedDB.__debug = function (val) {
-            global.DEBUG = val;
+            window.DEBUG = val;
         };
     }
 
@@ -86,16 +84,15 @@ import polyfill from './polyfill.js';
         window.shimIndexedDB.__useShim();
     } else {
         window.IDBDatabase = window.IDBDatabase || window.webkitIDBDatabase;
-        window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction;
+        window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || {};
         window.IDBCursor = window.IDBCursor || window.webkitIDBCursor;
         window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange;
-        if (!window.IDBTransaction) {
-            window.IDBTransaction = {};
-        }
         /* Some browsers (e.g. Chrome 18 on Android) support IndexedDb but do not allow writing of these properties */
         try {
             window.IDBTransaction.READ_ONLY = window.IDBTransaction.READ_ONLY || 'readonly';
             window.IDBTransaction.READ_WRITE = window.IDBTransaction.READ_WRITE || 'readwrite';
         } catch (e) {}
     }
-}());
+}
+
+export default shimAll;

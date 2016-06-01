@@ -1,6 +1,3 @@
-/*global GLOBAL*/
-const global = typeof window !== 'undefined' ? window : GLOBAL;
-
 import {createDOMException} from './DOMException.js';
 import util from './util.js';
 import Key from './Key.js';
@@ -67,7 +64,7 @@ IDBIndex.__createIndex = function (store, index) {
             IDBIndex.__updateIndexList(store, tx, function () {
                 // Add index entries for all existing records
                 tx.executeSql('SELECT * FROM ' + util.quote(store.name), [], function (tx, data) {
-                    global.DEBUG && console.log('Adding existing ' + store.name + ' records to the ' + index.name + ' index');
+                    window.DEBUG && console.log('Adding existing ' + store.name + ' records to the ' + index.name + ' index');
                     addIndexEntry(0);
 
                     function addIndexEntry (i) {
@@ -98,7 +95,7 @@ IDBIndex.__createIndex = function (store, index) {
         } else {
             // For a new index, add a new column to the object store, then apply the index
             const sql = ['ALTER TABLE', util.quote(store.name), 'ADD', util.quote(index.name), 'BLOB'].join(' ');
-            global.DEBUG && console.log(sql);
+            window.DEBUG && console.log(sql);
             tx.executeSql(sql, [], applyIndex, error);
         }
     });
@@ -150,7 +147,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
         };
     }
 
-    global.DEBUG && console.log('Updating the index list for ' + store.name, indexList);
+    window.DEBUG && console.log('Updating the index list for ' + store.name, indexList);
     tx.executeSql('UPDATE __sys__ set indexList = ? where name = ?', [JSON.stringify(indexList), store.name], function () {
         success(store);
     }, failure);
@@ -189,7 +186,7 @@ IDBIndex.prototype.__fetchIndexData = function (key, opType) {
                 sqlValues.push(encodedKey);
             }
         }
-        global.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
+        window.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
         tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
             let recordCount = 0, record = null;
             if (me.multiEntry) {

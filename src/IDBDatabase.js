@@ -1,6 +1,3 @@
-/*global GLOBAL*/
-const global = typeof window !== 'undefined' ? window : GLOBAL;
-
 import {createDOMException} from './DOMException.js';
 import util from './util.js';
 import IDBObjectStore from './IDBObjectStore.js';
@@ -89,7 +86,7 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
 
     if (typeof mode === 'number') {
         mode = mode === 1 ? IDBTransaction.READ_WRITE : IDBTransaction.READ_ONLY;
-        global.DEBUG && console.log('Mode should be a string, but was specified as ', mode);
+        window.DEBUG && console.log('Mode should be a string, but was specified as ', mode);
     } else {
         mode = mode || IDBTransaction.READ_ONLY;
     }

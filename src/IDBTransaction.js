@@ -1,6 +1,3 @@
-/*global GLOBAL*/
-const global = typeof window !== 'undefined' ? window : GLOBAL;
-
 import EventTarget from 'eventtarget';
 import {createEvent} from './Event.js';
 import {logError, findError, DOMError, createDOMException} from './DOMException.js';
@@ -37,7 +34,7 @@ function IDBTransaction (db, storeNames, mode) {
 
 IDBTransaction.prototype.__executeRequests = function () {
     if (this.__running) {
-        global.DEBUG && console.log('Looks like the request set is already running', this.mode);
+        window.DEBUG && console.log('Looks like the request set is already running', this.mode);
         return;
     }
 
@@ -130,7 +127,7 @@ IDBTransaction.prototype.__executeRequests = function () {
     }
 
     function transactionFinished () {
-        global.DEBUG && console.log('Transaction completed');
+        window.DEBUG && console.log('Transaction completed');
         const evt = createEvent('complete');
         try {
             util.callback('oncomplete', me, evt);
@@ -234,7 +231,7 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
 
 IDBTransaction.prototype.abort = function () {
     const me = this;
-    global.DEBUG && console.log('The transaction was aborted', me);
+    window.DEBUG && console.log('The transaction was aborted', me);
     me.__active = false;
     const evt = createEvent('abort');
 

@@ -1,6 +1,3 @@
-/*global GLOBAL*/
-const global = typeof window !== 'undefined' ? window : GLOBAL;
-
 /**
  * Creates a native DOMException, for browsers that support it
  * @returns {DOMException}
@@ -42,7 +39,7 @@ function createError (name, message) {
  * @param {string|Error|null} error
  */
 function logError (name, message, error) {
-    if (global.DEBUG) {
+    if (window.DEBUG) {
         if (error && error.message) {
             error = error.message;
         }

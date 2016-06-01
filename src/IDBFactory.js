@@ -1,7 +1,3 @@
-/*global GLOBAL*/
-const global = typeof window !== 'undefined' ? window : GLOBAL;
-const openDatabase = typeof global.nodeWebsql === 'undefined' ? window.openDatabase : global.nodeWebsql;
-
 import {createEvent} from './Event.js';
 import {findError, createDOMError, DOMError} from './DOMException.js';
 import {IDBOpenDBRequest} from './IDBRequest.js';
@@ -19,7 +15,7 @@ let sysdb;
 function createSysDB (success, failure) {
     function sysDbCreateError (tx, err) {
         err = findError(arguments);
-        global.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
+        window.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
         failure(err);
     }
 
@@ -235,7 +231,7 @@ IDBFactory.prototype.cmp = function (key1, key2) {
     const encodedKey2 = Key.encode(key2);
     const result = encodedKey1 > encodedKey2 ? 1 : encodedKey1 === encodedKey2 ? 0 : -1;
 
-    if (global.DEBUG) {
+    if (window.DEBUG) {
         // verify that the keys encoded correctly
         let decodedKey1 = Key.decode(encodedKey1);
         let decodedKey2 = Key.decode(encodedKey2);
