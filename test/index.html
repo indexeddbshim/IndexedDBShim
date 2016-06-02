@@ -16,12 +16,17 @@
         <script src="startTests.js"></script>
         <script>
             function addTest (i) {
-                var x = document.createElement('script');
-                x.src = testFiles[i];
-                x.onload = function () {
-                    addTestSuite(i + 1);
-                };
-                document.body.appendChild(x);
+                QUnit.test('Setting up qunit', function (assert) { // Needed to set up as test by grunt-contrib-qunit
+                    var done = assert.async();
+                    var x = document.createElement('script');
+                    x.src = testFiles[i];
+                    x.onload = function () {
+                        assert.ok('Loaded test');
+                        addTestSuite(i + 1);
+                        done();
+                    };
+                    document.body.appendChild(x);
+                });
             }
             function runWith () {
                 document.getElementById('qunit-tests').innerHTML = '';

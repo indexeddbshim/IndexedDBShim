@@ -24,7 +24,9 @@
     }
 
     QUnit.test('Setting up qunit', function (assert) {
+        var done = assert.async(); // Needed by grunt-contrib-qunit
         assert.ok('Queued Unit setup complete');
+        done();
     });
 
     /**
@@ -32,8 +34,6 @@
     * nextTest();
     */
     function queuedAsyncTest (name) {
-        console.log('qat');
-
         if (filteredTests.length === 0 || filteredTests.indexOf(currentModule + ': ' + name) !== -1) {
             testQueue.push({
                 'name': name,
@@ -47,8 +47,6 @@
     * Use this in place of module(blah)
     */
     function queuedModule (module) {
-        console.log('qm');
-
         currentModule = module;
     }
 
