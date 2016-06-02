@@ -1,4 +1,4 @@
-/*global QUnit, addTest*/
+/*global addTest*/
 /* eslint-disable no-var */
 var dbVersion = 0; // eslint-disable-line no-unused-vars
 var testNames = ['Database', 'ObjectStore', 'ObjectStoreCrud', 'Cursor', 'Index']; // eslint-disable-line no-unused-vars
@@ -28,7 +28,7 @@ function deleteDB (callback) {
         callback();
     };
     deleteReq.onerror = function (e) {
-        alert('Could not delete database. Database may not exist');
+        console.log('Could not delete database. Database may not exist');
         callback();
     };
 }
@@ -52,4 +52,5 @@ if (typeof global !== 'undefined') {
     global.testFiles = testFiles;
     global.dbVersion = dbVersion;
     global.addTestSuite = addTestSuite;
+    global._ = _;
 }

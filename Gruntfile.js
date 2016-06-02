@@ -142,6 +142,10 @@ module.exports = function (grunt) {
 
     grunt.registerTask('default', 'build');
     grunt.registerTask('dev', ['build', 'connect', 'watch']);
+
+    grunt.event.on('qunit.error.onError', function (msg, trace) {
+        grunt.log.ok('Grunt qunit: ' + msg + '::' + JSON.stringify(trace));
+    });
 };
 
 /**

@@ -8913,6 +8913,38 @@ process.umask = function() { return 0; };
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"_process":303}],305:[function(require,module,exports){
+(function (global){
+module.exports = get_blob()
+
+function get_blob() {
+  if(global.Blob) {
+    try {
+      new Blob(['asdf'], {type: 'text/plain'})
+      return Blob
+    } catch(err) {}
+  }
+
+  var Builder = global.WebKitBlobBuilder ||
+                global.MozBlobBuilder ||
+                global.MSBlobBuilder
+
+  return function(parts, bag) {
+    var builder = new Builder
+      , endings = bag.endings
+      , type = bag.type
+
+    if(endings) for(var i = 0, len = parts.length; i < len; ++i) {
+      builder.append(parts[i], endings)
+    } else for(var i = 0, len = parts.length; i < len; ++i) {
+      builder.append(parts[i])
+    }
+
+    return type ? builder.getBlob(type) : builder.getBlob()
+  }
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],306:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9063,7 +9095,7 @@ exports.DOMException = shimDOMException;
 exports.createDOMException = createDOMException;
 exports.createDOMError = createDOMError;
 
-},{"./cfg.js":318}],306:[function(require,module,exports){
+},{"./cfg.js":319}],307:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9130,7 +9162,7 @@ exports.Event = expEvent;
 exports.IDBVersionChangeEvent = IDBVersionChangeEvent;
 exports.createEvent = createEvent; // Event not currently in use
 
-},{}],307:[function(require,module,exports){
+},{}],308:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9538,7 +9570,7 @@ var IDBCursorWithValue = {};
 exports.IDBCursor = IDBCursor;
 exports.IDBCursorWithValue = IDBCursorWithValue;
 
-},{"./DOMException.js":305,"./IDBIndex.js":310,"./IDBKeyRange.js":311,"./IDBRequest.js":313,"./Key.js":315,"./Sca.js":316,"./cfg.js":318,"./util.js":321}],308:[function(require,module,exports){
+},{"./DOMException.js":306,"./IDBIndex.js":311,"./IDBKeyRange.js":312,"./IDBRequest.js":314,"./Key.js":316,"./Sca.js":317,"./cfg.js":319,"./util.js":322}],309:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9674,7 +9706,7 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
 exports.default = IDBDatabase;
 module.exports = exports['default'];
 
-},{"./DOMException.js":305,"./IDBObjectStore.js":312,"./IDBTransaction.js":314,"./cfg.js":318,"./util.js":321}],309:[function(require,module,exports){
+},{"./DOMException.js":306,"./IDBObjectStore.js":313,"./IDBTransaction.js":315,"./cfg.js":319,"./util.js":322}],310:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9965,7 +9997,7 @@ var shimIndexedDB = new IDBFactory();
 exports.IDBFactory = IDBFactory;
 exports.shimIndexedDB = shimIndexedDB;
 
-},{"./DOMException.js":305,"./Event.js":306,"./IDBDatabase.js":308,"./IDBRequest.js":313,"./IDBTransaction.js":314,"./Key.js":315,"./cfg.js":318,"./util.js":321}],310:[function(require,module,exports){
+},{"./DOMException.js":306,"./Event.js":307,"./IDBDatabase.js":309,"./IDBRequest.js":314,"./IDBTransaction.js":315,"./Key.js":316,"./cfg.js":319,"./util.js":322}],311:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10265,7 +10297,7 @@ IDBIndex.prototype.count = function (key) {
 exports.default = IDBIndex;
 module.exports = exports['default'];
 
-},{"./DOMException.js":305,"./IDBCursor.js":307,"./IDBKeyRange.js":311,"./Key.js":315,"./Sca.js":316,"./cfg.js":318,"./util.js":321}],311:[function(require,module,exports){
+},{"./DOMException.js":306,"./IDBCursor.js":308,"./IDBKeyRange.js":312,"./Key.js":316,"./Sca.js":317,"./cfg.js":319,"./util.js":322}],312:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10317,7 +10349,7 @@ IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
 exports.default = IDBKeyRange;
 module.exports = exports['default'];
 
-},{"./Key.js":315}],312:[function(require,module,exports){
+},{"./Key.js":316}],313:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10811,7 +10843,7 @@ IDBObjectStore.prototype.deleteIndex = function (indexName) {
 exports.default = IDBObjectStore;
 module.exports = exports['default'];
 
-},{"./DOMException.js":305,"./IDBCursor.js":307,"./IDBIndex.js":310,"./IDBKeyRange.js":311,"./IDBTransaction.js":314,"./Key.js":315,"./Sca.js":316,"./cfg.js":318,"./util.js":321}],313:[function(require,module,exports){
+},{"./DOMException.js":306,"./IDBCursor.js":308,"./IDBIndex.js":311,"./IDBKeyRange.js":312,"./IDBTransaction.js":315,"./Key.js":316,"./Sca.js":317,"./cfg.js":319,"./util.js":322}],314:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10838,7 +10870,7 @@ IDBOpenDBRequest.prototype.constructor = IDBOpenDBRequest;
 exports.IDBRequest = IDBRequest;
 exports.IDBOpenDBRequest = IDBOpenDBRequest;
 
-},{}],314:[function(require,module,exports){
+},{}],315:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -11113,7 +11145,7 @@ IDBTransaction.VERSION_CHANGE = 'versionchange';
 exports.default = IDBTransaction;
 module.exports = exports['default'];
 
-},{"./DOMException.js":305,"./Event.js":306,"./IDBObjectStore.js":312,"./IDBRequest.js":313,"./cfg.js":318,"./util.js":321,"eventtarget":300}],315:[function(require,module,exports){
+},{"./DOMException.js":306,"./Event.js":307,"./IDBObjectStore.js":313,"./IDBRequest.js":314,"./cfg.js":319,"./util.js":322,"eventtarget":300}],316:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -11564,7 +11596,7 @@ exports.isMultiEntryMatch = isMultiEntryMatch;
 exports.findMultiEntryMatches = findMultiEntryMatches;
 exports.default = Key;
 
-},{"./DOMException.js":305}],316:[function(require,module,exports){
+},{"./DOMException.js":306}],317:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -11579,7 +11611,13 @@ var _atob = require('atob');
 
 var _atob2 = _interopRequireDefault(_atob);
 
+var _w3cBlob = require('w3c-blob');
+
+var _w3cBlob2 = _interopRequireDefault(_w3cBlob);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// Needed by Node; uses native if available (browser)
 
 /**
  * Implementation of the Structured Cloning Algorithm.  Supports the
@@ -11686,7 +11724,7 @@ function decycle(object, callback) {
         // typeof null === 'object', so go on if this value is really an object but not
         // one of the weird builtin objects.
 
-        if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' && value !== null && !(value instanceof Boolean) && !(value instanceof Date) && !(value instanceof Number) && !(value instanceof RegExp) && !(value instanceof Blob) && !(value instanceof String)) {
+        if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' && value !== null && !(value instanceof Boolean) && !(value instanceof Date) && !(value instanceof Number) && !(value instanceof RegExp) && !(value instanceof _w3cBlob2.default) && !(value instanceof String)) {
             // If the value is an object or array, look to see if we have already
             // encountered it. If so, return a $ref/path object. This is a hard way,
             // linear search that will get slower as the number of unique objects grows.
@@ -11720,7 +11758,7 @@ function decycle(object, callback) {
             }
 
             return nu;
-        } else if (value instanceof Blob) {
+        } else if (value instanceof _w3cBlob2.default) {
             // Queue blob for conversion
             queuedObjects.push(path);
             readBlobAsDataURL(value, path);
@@ -11806,7 +11844,7 @@ function retrocycle($) {
             contentType = parts[0].split(':')[1];
             raw = parts[1];
 
-            return new Blob([raw], { type: contentType });
+            return new _w3cBlob2.default([raw], { type: contentType });
         }
 
         parts = dataURL.split(BASE64_MARKER);
@@ -11818,7 +11856,7 @@ function retrocycle($) {
         for (var i = 0; i < rawLength; ++i) {
             uInt8Array[i] = raw.charCodeAt(i);
         }
-        return new Blob([uInt8Array.buffer], { type: contentType });
+        return new _w3cBlob2.default([uInt8Array.buffer], { type: contentType });
     }
 
     function rez(value) {
@@ -11924,7 +11962,7 @@ exports.encode = encode;
 exports.decode = decode;
 exports.default = Sca;
 
-},{"atob":1}],317:[function(require,module,exports){
+},{"atob":1,"w3c-blob":305}],318:[function(require,module,exports){
 'use strict';
 
 var _globalVars = require('./globalVars.js');
@@ -11941,7 +11979,7 @@ _cfg2.default.win = window;
 
 (0, _globalVars2.default)();
 
-},{"./cfg.js":318,"./globalVars.js":319}],318:[function(require,module,exports){
+},{"./cfg.js":319,"./globalVars.js":320}],319:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -11970,7 +12008,7 @@ var CFG = {};
 exports.default = CFG;
 module.exports = exports['default'];
 
-},{}],319:[function(require,module,exports){
+},{}],320:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12039,7 +12077,6 @@ function shim(name, value) {
             // With `indexedDB`, PhantomJS 2.2.1 fails here and below but
             //  not above, while Chrome is reverse (and Firefox doesn't
             //  get here since no WebSQL to use for shimming)
-            console.log('failed defineProperty');
         }
 
         if (IDB[name] !== value) {
@@ -12109,7 +12146,7 @@ function shimAll(idb) {
 exports.default = shimAll;
 module.exports = exports['default'];
 
-},{"./Event.js":306,"./IDBCursor.js":307,"./IDBDatabase.js":308,"./IDBFactory.js":309,"./IDBIndex.js":310,"./IDBKeyRange.js":311,"./IDBObjectStore.js":312,"./IDBRequest.js":313,"./IDBTransaction.js":314,"./cfg.js":318,"./polyfill.js":320,"babel-polyfill":2}],320:[function(require,module,exports){
+},{"./Event.js":307,"./IDBCursor.js":308,"./IDBDatabase.js":309,"./IDBFactory.js":310,"./IDBIndex.js":311,"./IDBKeyRange.js":312,"./IDBObjectStore.js":313,"./IDBRequest.js":314,"./IDBTransaction.js":315,"./cfg.js":319,"./polyfill.js":321,"babel-polyfill":2}],321:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12463,7 +12500,7 @@ function validateKeyLength(key) {
 exports.default = polyfill;
 module.exports = exports['default'];
 
-},{"./DOMException.js":305,"./Key.js":315}],321:[function(require,module,exports){
+},{"./DOMException.js":306,"./Key.js":316}],322:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12567,4 +12604,4 @@ exports.StringList = StringList;
 exports.quote = quote;
 exports.default = util;
 
-},{}]},{},[317]);
+},{}]},{},[318]);

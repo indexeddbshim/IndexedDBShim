@@ -53,6 +53,7 @@
     "mocha": "^2.5.3",
     "request": "^2.72.0",
     "sinon": "^1.17.4",
+    "w3c-blob": "0.0.1",
     "websql": "^0.4.4"
   },
   "bundleDependencies": [],

@@ -1,4 +1,3 @@
-/*global QUnit*/
 /* eslint-disable no-var */
 /**
  * Ideally unit tests should be independent, but there are some cases where you
@@ -24,12 +23,12 @@
         }
     }
 
-    asyncTest('Setting up qunit', function () {
-        ok('Queued Unit setup complete');
+    QUnit.test('Setting up qunit', function (assert) {
+        assert.ok('Queued Unit setup complete');
     });
 
     /**
-    * Use this method instead of asyncTest. Once the test is finished, call
+    * Use this method instead of QUnit.test. Once the test is finished, call
     * nextTest();
     */
     function queuedAsyncTest (name) {
@@ -57,17 +56,8 @@
     * Once the current test is over, call nextTest() to start running the next
     * test
     */
-    var timer = null;
     var testCount = 1;
-    var initialized = false;
     function nextTest () {
-        console.log('nt' + initialized);
-
-        if (!initialized) {
-            initialized = true;
-            if (typeof global === 'undefined') start();
-        }
-        clearTimeout(timer);
         if (testQueue.length <= 0) {
             if (console.groupEnd) console.groupEnd();
             console.log('All tests completed');
@@ -77,14 +67,14 @@
         if (console.groupEnd) console.groupEnd();
         if (console.groupCollapsed) console.groupCollapsed('=========', testCount++, current.module, ':', current.name, '============');
         else console.log('=========', testCount++, current.module, ':', current.name, '============');
-        if (typeof module === 'function') module(current.module);
-        else QUnit.module(current.module);
+        QUnit.module(current.module);
 
         // Expected asserts specified or not
         if (current.args.length === 2) {
-            asyncTest(current.name, current.args[1]);
+            QUnit.test(current.name, current.args[1]);
         } else if (current.args.length === 3) {
-            asyncTest(current.name, current.args[1], current.args[2]);
+            // QUnit.test(current.name, current.args[1], current.args[2]);
+            throw new Error('Replace 2nd arg to QUnit.test with `assert.expect(2nd arg val)`; test name: ' + current.name);
         }
     }
 
