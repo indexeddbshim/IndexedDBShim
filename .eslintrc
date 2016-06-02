@@ -42,7 +42,6 @@
     "sample": false,
     "queuedAsyncTest": false,
     "queuedModule": false,
-    "unescape": false,
     "process": false,
 
     "util": false,

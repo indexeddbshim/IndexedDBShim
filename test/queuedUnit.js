@@ -17,8 +17,11 @@
         var q = window.location.search.substring(1).split('&');
         for (var i = 0; i < q.length; i++) {
             var parts = q[i].split('=');
-            if (parts[0] === 'filter') {
-                filteredTests.push(unescape(parts[1]));
+            switch (parts[0]) {
+            case 'filter': {
+                filteredTests.push(decodeURIComponent(parts[1]));
+                break;
+            }
             }
         }
     }
