@@ -1,4 +1,6 @@
-(function() {
+/*global shimIndexedDB*/
+/*eslint-disable no-var*/
+(function () {
     'use strict';
 
     // Setup Mocha and Chai
@@ -62,28 +64,26 @@
         DOMError: window.DOMError
     };
 
-
     /**
      * Intercept the first call to Mocha's `describe` function, and use it to initialize the test environment.
      */
-    window.describe = function(name, testSuite) {
+    window.describe = function (name, testSuite) {
         initTestEnvironment();
         mocha.checkLeaks();
         window.describe = describe;
         describe.apply(window, arguments);
     };
 
-
     /**
      * Initializes the test environment, applying the shim if necessary.
      */
-    function initTestEnvironment() {
+    function initTestEnvironment () {
         // Show which features the browser natively supports
-        getElementById("supports-websql").className += env.nativeWebSql ? ' pass' : ' fail';
-        getElementById("supports-indexeddb").className += env.nativeIndexedDB ? ' pass' : ' fail';
-        getElementById("supports-mozindexeddb").className += window.mozIndexedDB ? ' pass' : '';
-        getElementById("supports-webkitindexeddb").className += window.webkitIndexedDB ? ' pass' : '';
-        getElementById("supports-msindexeddb").className += window.msIndexedDB ? ' pass' : '';
+        getElementById('supports-websql').className += env.nativeWebSql ? ' pass' : ' fail';
+        getElementById('supports-indexeddb').className += env.nativeIndexedDB ? ' pass' : ' fail';
+        getElementById('supports-mozindexeddb').className += window.mozIndexedDB ? ' pass' : '';
+        getElementById('supports-webkitindexeddb').className += window.webkitIndexedDB ? ' pass' : '';
+        getElementById('supports-msindexeddb').className += window.msIndexedDB ? ' pass' : '';
 
         // Has a WebSQL shim been loaded?
         env.webSql = window.openDatabase;
@@ -98,8 +98,7 @@
             if (IDBFactory === shimIndexedDB.modules.IDBFactory) {
                 env.indexedDB = shimIndexedDB;
                 env.isShimmed = true;
-            }
-            else {
+            } else {
                 env.isPolyfilled = true;
             }
 
@@ -112,26 +111,24 @@
 
             if (env.nativeIndexedDB) {
                 // Allow users to switch back to the native IndexedDB
-                getElementById("use-native").style.display = 'inline-block';
+                getElementById('use-native').style.display = 'inline-block';
             }
-        }
-        else {
+        } else {
             // Allow users to switch to use the shim instead of the native IndexedDB
-            getElementById("use-shim").style.display = 'inline-block';
+            getElementById('use-shim').style.display = 'inline-block';
         }
 
         if ((env.browser.isIE && !env.browser.isMobile) || (env.browser.isSafari && env.browser.version > 6 && env.isShimmed && !window.device)) {
             // These browsers choke when trying to run all the tests, so show a warning message
-            getElementById("choke-warning").className = 'problem-child';
+            getElementById('choke-warning').className = 'problem-child';
         }
     }
-
 
     /**
      * Returns browser name and version
      * @returns {browserInfo}
      */
-    function getBrowserInfo() {
+    function getBrowserInfo () {
         var userAgent = navigator.userAgent;
         var offset;
 
@@ -175,8 +172,7 @@
             browserInfo.isMobile = userAgent.indexOf('Mobile Safari') !== -1;
             if ((offset = userAgent.indexOf('Version')) !== -1) {
                 browserInfo.version = userAgent.substring(offset + 8);
-            }
-            else {
+            } else {
                 browserInfo.version = userAgent.substring(offset + 7);
             }
         } else if ((offset = userAgent.indexOf('AppleWebKit')) !== -1) {
@@ -195,11 +191,10 @@
         return browserInfo;
     }
 
-
     /**
      * A "safe" wrapper around `document.getElementById`
      */
-    function getElementById(id) {
+    function getElementById (id) {
         return document.getElementById(id) || {style: {}};
     }
 })();

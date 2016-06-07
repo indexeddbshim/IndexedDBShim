@@ -1,12 +1,18 @@
-describe('IDBIndex.openCursor', function() {
+/*eslint-disable no-var*/
+describe('IDBIndex.openCursor', function () {
     'use strict';
 
-    it('should return an IDBRequest', function(done) {
-        util.createDatabase('inline', 'inline-index', function(err, db) {
+    it('should return an IDBRequest', function (done) {
+        util.createDatabase('inline', 'inline-index', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
             var index = store.index('inline-index');
-            tx.onerror = function(event) {
+            tx.onerror = function (event) {
                 done(event.target.error);
             };
 
@@ -16,15 +22,20 @@ describe('IDBIndex.openCursor', function() {
             expect(storeCursor).to.be.an.instanceOf(IDBRequest);
             expect(indexCursor).to.be.an.instanceOf(IDBRequest);
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 db.close();
                 done();
             };
         });
     });
 
-    it('should pass the IDBRequest event to the onsuccess callback', function(done) {
-        util.createDatabase('inline', 'inline-index', function(err, db) {
+    it('should pass the IDBRequest event to the onsuccess callback', function (done) {
+        util.createDatabase('inline', 'inline-index', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
             var index = store.index('inline-index');
@@ -36,17 +47,17 @@ describe('IDBIndex.openCursor', function() {
             storeCursor.onerror = sinon.spy();
             indexCursor.onerror = sinon.spy();
 
-            storeCursor.onsuccess = sinon.spy(function(event) {
+            storeCursor.onsuccess = sinon.spy(function (event) {
                 expect(event).to.be.an.instanceOf(env.Event);
                 expect(event.target).to.equal(storeCursor);
             });
 
-            indexCursor.onsuccess = sinon.spy(function(event) {
+            indexCursor.onsuccess = sinon.spy(function (event) {
                 expect(event).to.be.an.instanceOf(env.Event);
                 expect(event.target).to.equal(indexCursor);
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 sinon.assert.calledOnce(storeCursor.onsuccess);
                 sinon.assert.calledOnce(indexCursor.onsuccess);
 
@@ -59,8 +70,13 @@ describe('IDBIndex.openCursor', function() {
         });
     });
 
-    it('should set IDBRequest.result to the IDBCursor', function(done) {
-        util.createDatabase('inline', 'inline-index', function(err, db) {
+    it('should set IDBRequest.result to the IDBCursor', function (done) {
+        util.createDatabase('inline', 'inline-index', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
             var index = store.index('inline-index');
@@ -74,7 +90,7 @@ describe('IDBIndex.openCursor', function() {
             storeCursor.onerror = sinon.spy();
             indexCursor.onerror = sinon.spy();
 
-            storeCursor.onsuccess = sinon.spy(function(event) {
+            storeCursor.onsuccess = sinon.spy(function (event) {
                 expect(storeCursor.result).to.be.an.instanceOf(IDBCursor);
                 expect(storeCursor.result.source).to.equal(store);
                 expect(storeCursor.result.direction).to.equal('next');
@@ -83,7 +99,7 @@ describe('IDBIndex.openCursor', function() {
                 expect(storeCursor.result.value).to.deep.equal({id: 1, name: 'John Doe'});
             });
 
-            indexCursor.onsuccess = sinon.spy(function(event) {
+            indexCursor.onsuccess = sinon.spy(function (event) {
                 expect(indexCursor.result).to.be.an.instanceOf(IDBCursor);
                 expect(indexCursor.result.source).to.equal(index);
                 expect(indexCursor.result.direction).to.equal('next');
@@ -92,7 +108,7 @@ describe('IDBIndex.openCursor', function() {
                 expect(indexCursor.result.value).to.deep.equal({id: 1, name: 'John Doe'});
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 sinon.assert.calledOnce(storeCursor.onsuccess);
                 sinon.assert.calledOnce(indexCursor.onsuccess);
 
@@ -105,8 +121,13 @@ describe('IDBIndex.openCursor', function() {
         });
     });
 
-    it('should get zero records', function(done) {
-        util.createDatabase('inline', 'inline-index', function(err, db) {
+    it('should get zero records', function (done) {
+        util.createDatabase('inline', 'inline-index', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
             var index = store.index('inline-index');
@@ -118,15 +139,15 @@ describe('IDBIndex.openCursor', function() {
             storeCursor.onerror = sinon.spy();
             indexCursor.onerror = sinon.spy();
 
-            storeCursor.onsuccess = sinon.spy(function(event) {
-                expect(storeCursor.result).to.be.null;
+            storeCursor.onsuccess = sinon.spy(function (event) {
+                expect(storeCursor.result).equal(null);
             });
 
-            indexCursor.onsuccess = sinon.spy(function(event) {
-                expect(indexCursor.result).to.be.null;
+            indexCursor.onsuccess = sinon.spy(function (event) {
+                expect(indexCursor.result).equal(null);
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 sinon.assert.calledOnce(storeCursor.onsuccess);
                 sinon.assert.calledOnce(indexCursor.onsuccess);
 
@@ -139,8 +160,13 @@ describe('IDBIndex.openCursor', function() {
         });
     });
 
-    it('should get one record', function(done) {
-        util.createDatabase('inline', 'inline-index', function(err, db) {
+    it('should get one record', function (done) {
+        util.createDatabase('inline', 'inline-index', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
             var index = store.index('inline-index');
@@ -154,7 +180,7 @@ describe('IDBIndex.openCursor', function() {
             storeCursor.onerror = sinon.spy();
             indexCursor.onerror = sinon.spy();
 
-            storeCursor.onsuccess = sinon.spy(function(event) {
+            storeCursor.onsuccess = sinon.spy(function (event) {
                 expect(storeCursor.result).to.be.an.instanceOf(IDBCursor);
                 expect(storeCursor.result.source).to.equal(store);
                 expect(storeCursor.result.direction).to.equal('next');
@@ -163,7 +189,7 @@ describe('IDBIndex.openCursor', function() {
                 expect(storeCursor.result.value).to.deep.equal({id: 1, name: 'John Doe'});
             });
 
-            indexCursor.onsuccess = sinon.spy(function(event) {
+            indexCursor.onsuccess = sinon.spy(function (event) {
                 expect(indexCursor.result).to.be.an.instanceOf(IDBCursor);
                 expect(indexCursor.result.source).to.equal(index);
                 expect(indexCursor.result.direction).to.equal('next');
@@ -172,7 +198,7 @@ describe('IDBIndex.openCursor', function() {
                 expect(indexCursor.result.value).to.deep.equal({id: 1, name: 'John Doe'});
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 sinon.assert.calledOnce(storeCursor.onsuccess);
                 sinon.assert.calledOnce(indexCursor.onsuccess);
 
@@ -185,8 +211,13 @@ describe('IDBIndex.openCursor', function() {
         });
     });
 
-    it('should get all records', function(done) {
-        util.createDatabase('inline', 'inline-index', function(err, db) {
+    it('should get all records', function (done) {
+        util.createDatabase('inline', 'inline-index', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
             var index = store.index('inline-index');
@@ -201,7 +232,7 @@ describe('IDBIndex.openCursor', function() {
             var indexCursor = index.openCursor();
             var storeCounter = 0, indexCounter = 0;
 
-            storeCursor.onsuccess = sinon.spy(function(event) {
+            storeCursor.onsuccess = sinon.spy(function (event) {
                 if (storeCursor.result) {
                     storeCounter++;
                     expect(storeCursor.result.source).to.equal(store);
@@ -213,7 +244,7 @@ describe('IDBIndex.openCursor', function() {
                 }
             });
 
-            indexCursor.onsuccess = sinon.spy(function(event) {
+            indexCursor.onsuccess = sinon.spy(function (event) {
                 if (indexCursor.result) {
                     indexCounter++;
                     expect(indexCursor.result.source).to.equal(index);
@@ -229,7 +260,7 @@ describe('IDBIndex.openCursor', function() {
             store.add({id: 4});
             store.add({id: 5});
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 sinon.assert.callCount(storeCursor.onsuccess, 6);
                 sinon.assert.callCount(indexCursor.onsuccess, 6);
                 db.close();
@@ -238,11 +269,16 @@ describe('IDBIndex.openCursor', function() {
         });
     });
 
-    it('should allow multiple simultaneous cursors', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should allow multiple simultaneous cursors', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
-            tx.onerror = function(event) {
+            tx.onerror = function (event) {
                 done(event.target.error.message);
             };
 
@@ -257,21 +293,21 @@ describe('IDBIndex.openCursor', function() {
 
             var counter1 = 1, counter2 = 5;
 
-            cursor1.onsuccess = sinon.spy(function(event) {
+            cursor1.onsuccess = sinon.spy(function (event) {
                 if (cursor1.result) {
                     expect(cursor1.result.key).to.equal(counter1++);
                     cursor1.result.continue();
                 }
             });
 
-            cursor2.onsuccess = sinon.spy(function(event) {
+            cursor2.onsuccess = sinon.spy(function (event) {
                 if (cursor2.result) {
                     expect(cursor2.result.key).to.equal(counter2--);
                     cursor2.result.continue();
                 }
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 sinon.assert.callCount(cursor1.onsuccess, 6);
                 sinon.assert.callCount(cursor2.onsuccess, 6);
                 db.close();
@@ -280,15 +316,20 @@ describe('IDBIndex.openCursor', function() {
         });
     });
 
-    it('should get hundreds of records', function(done) {
+    it('should get hundreds of records', function (done) {
         this.timeout(10000);
         this.slow(10000);
 
-        util.createDatabase('inline', 'inline-index', function(err, db) {
+        util.createDatabase('inline', 'inline-index', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
             var index = store.index('inline-index');
-            tx.onerror = function(event) {
+            tx.onerror = function (event) {
                 done(event.target.error.message);
             };
 
@@ -300,7 +341,7 @@ describe('IDBIndex.openCursor', function() {
             var indexCursor = index.openCursor();
             var storeCounter = 0, indexCounter = 0;
 
-            storeCursor.onsuccess = sinon.spy(function(event) {
+            storeCursor.onsuccess = sinon.spy(function (event) {
                 if (storeCursor.result) {
                     storeCounter++;
                     expect(storeCursor.result.source).to.equal(store);
@@ -312,7 +353,7 @@ describe('IDBIndex.openCursor', function() {
                 }
             });
 
-            indexCursor.onsuccess = sinon.spy(function(event) {
+            indexCursor.onsuccess = sinon.spy(function (event) {
                 if (indexCursor.result) {
                     indexCounter++;
                     expect(indexCursor.result.source).to.equal(index);
@@ -324,7 +365,7 @@ describe('IDBIndex.openCursor', function() {
                 }
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 sinon.assert.callCount(storeCursor.onsuccess, 500);
                 sinon.assert.callCount(indexCursor.onsuccess, 500);
                 db.close();
@@ -333,12 +374,17 @@ describe('IDBIndex.openCursor', function() {
         });
     });
 
-    it('should get records from previous transactions', function(done) {
-        util.createDatabase('inline', 'inline-index', function(err, db) {
+    it('should get records from previous transactions', function (done) {
+        util.createDatabase('inline', 'inline-index', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var storeCursor, indexCursor, storeCounter = 0, indexCounter = 0;
             transaction1();
 
-            function transaction1() {
+            function transaction1 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
                 tx.onerror = done;
@@ -349,7 +395,7 @@ describe('IDBIndex.openCursor', function() {
                 store.add({id: 3});
             }
 
-            function transaction2() {
+            function transaction2 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
                 tx.onerror = done;
@@ -359,7 +405,7 @@ describe('IDBIndex.openCursor', function() {
                 store.add({id: 5});
             }
 
-            function transaction3() {
+            function transaction3 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
                 var index = store.index('inline-index');
@@ -368,21 +414,21 @@ describe('IDBIndex.openCursor', function() {
                 storeCursor = store.openCursor();
                 indexCursor = index.openCursor();
 
-                storeCursor.onsuccess = sinon.spy(function(event) {
+                storeCursor.onsuccess = sinon.spy(function (event) {
                     if (storeCursor.result) {
                         expect(storeCursor.result.key).to.equal(++storeCounter);
                         storeCursor.result.continue();
                     }
                 });
 
-                indexCursor.onsuccess = sinon.spy(function(event) {
+                indexCursor.onsuccess = sinon.spy(function (event) {
                     if (indexCursor.result) {
                         expect(indexCursor.result.key).to.equal(++indexCounter);
                         indexCursor.result.continue();
                     }
                 });
 
-                tx.oncomplete = function() {
+                tx.oncomplete = function () {
                     sinon.assert.callCount(storeCursor.onsuccess, 6);
                     sinon.assert.callCount(indexCursor.onsuccess, 6);
                     db.close();
@@ -392,8 +438,13 @@ describe('IDBIndex.openCursor', function() {
         });
     });
 
-    it('should allow these keys', function(done) {
-        util.createDatabase('out-of-line-generated', 'inline-index', function(err, db) {
+    it('should allow these keys', function (done) {
+        util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line-generated', 'readwrite');
             var store = tx.objectStore('out-of-line-generated');
             var index = store.index('inline-index');
@@ -420,17 +471,17 @@ describe('IDBIndex.openCursor', function() {
                 getKey(undefined);                  // undefined
             }
 
-            function getKey(key) {
+            function getKey (key) {
                 gettingCounter++;
                 var storeCursor = store.openCursor(key);
                 var indexCursor = index.openCursor(key);
                 storeCursor.onerror = indexCursor.onerror = done;
-                storeCursor.onsuccess = indexCursor.onsuccess = function() {
+                storeCursor.onsuccess = indexCursor.onsuccess = function () {
                     gottenCounter++;
                 };
             }
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 // Make sure all the gets completed
                 expect(gottenCounter).to.equal(gettingCounter * 2);
 
@@ -440,8 +491,13 @@ describe('IDBIndex.openCursor', function() {
         });
     });
 
-    it('should not allow these keys', function(done) {
-        util.createDatabase('out-of-line-generated', 'inline-index', function(err, db) {
+    it('should not allow these keys', function (done) {
+        util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line-generated', 'readwrite');
             var store = tx.objectStore('out-of-line-generated');
             var index = store.index('inline-index');
@@ -461,25 +517,23 @@ describe('IDBIndex.openCursor', function() {
                 tryToGet(/^regex$/);                        // RegExp
             }
 
-            function tryToGet(key, IDBObj) {
+            function tryToGet (key, IDBObj) {
                 if (!IDBObj) {
                     tryToGet(key, store);
                     tryToGet(key, index);
-                }
-                else {
+                } else {
                     var err = null;
 
                     try {
                         IDBObj.openCursor(key);
-                    }
-                    catch (e) {
+                    } catch (e) {
                         err = e;
                     }
 
                     if (!env.isPolyfilled) {
                         expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
                     }
-                    expect(err).to.be.ok;
+                    assert.isOk(err);
                     expect(err.name).to.equal('DataError');
                 }
             }
@@ -489,33 +543,34 @@ describe('IDBIndex.openCursor', function() {
         });
     });
 
-    describe('queries', function() {
+    describe('queries', function () {
         var queries, queriesCompleted;
 
-        function query(source, keyRange, direction, expected) {
+        function query (source, keyRange, direction, expected) {
             queries++;
             if (arguments.length === 2) {
                 expected = keyRange;
                 keyRange = undefined;
                 direction = 'next';
-            }
-            else if (arguments.length === 3) {
+            } else if (arguments.length === 3) {
                 expected = direction;
                 direction = 'next';
             }
 
-            util.query(source, keyRange, direction, function(err, data) {
-                var expectedLength = typeof(expected) === 'number' ? expected : expected.length;
+            util.query(source, keyRange, direction, function (err, data) {
+                if (err) {
+                    throw err;
+                }
+                var expectedLength = typeof expected === 'number' ? expected : expected.length;
                 if (data.length !== expectedLength) {
                     throw new Error('Expected ' + expectedLength + ' results, but got ' + data.length + '\n' + JSON.stringify(data.slice(0, 10), null, 2));
                 }
                 if (expected instanceof Array) {
                     for (var i = 0; i < data.length; i++) {
-                        ['primaryKey', 'key', 'value'].forEach(function(prop) {
+                        ['primaryKey', 'key', 'value'].forEach(function (prop) {
                             try {
                                 expect(data[i][prop]).to.deep.equal(expected[i][prop]);
-                            }
-                            catch (e) {
+                            } catch (e) {
                                 throw new Error('The ' + prop + ' of result #' + (i + 1) + ' (of ' + data.length + ') does not match.\n' + JSON.stringify(data[i], null, 2));
                             }
                         });
@@ -525,17 +580,22 @@ describe('IDBIndex.openCursor', function() {
             });
         }
 
-        beforeEach(function() {
+        beforeEach(function () {
             queries = queriesCompleted = 0;
         });
 
-        it('should query out-of-line keys', function(done) {
-            util.createDatabase('out-of-line', 'inline-index', function(err, db) {
+        it('should query out-of-line keys', function (done) {
+            util.createDatabase('out-of-line', 'inline-index', function (err, db) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database');
+                    done();
+                    return;
+                }
                 var tx = db.transaction('out-of-line', 'readwrite');
                 var store = tx.objectStore('out-of-line');
                 var index = store.index('inline-index');
                 tx.onerror = done;
-                tx.oncomplete = function() {
+                tx.oncomplete = function () {
                     expect(queries).to.equal(queriesCompleted);
                     db.close();
                     done();
@@ -571,13 +631,18 @@ describe('IDBIndex.openCursor', function() {
             });
         });
 
-        it('should query generated out-of-line keys', function(done) {
-            util.createDatabase('out-of-line-generated', 'inline-index', function(err, db) {
+        it('should query generated out-of-line keys', function (done) {
+            util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database');
+                    done();
+                    return;
+                }
                 var tx = db.transaction('out-of-line-generated', 'readwrite');
                 var store = tx.objectStore('out-of-line-generated');
                 var index = store.index('inline-index');
                 tx.onerror = done;
-                tx.oncomplete = function() {
+                tx.oncomplete = function () {
                     expect(queries).to.equal(queriesCompleted);
                     db.close();
                     done();
@@ -609,14 +674,19 @@ describe('IDBIndex.openCursor', function() {
             });
         });
 
-        util.skipIf(env.isNative && env.browser.isIE, 'should query compound out-of-line keys', function(done) {
+        util.skipIf(env.isNative && env.browser.isIE, 'should query compound out-of-line keys', function (done) {
             // BUG: IE's native IndexedDB does not support compound keys at all
-            util.createDatabase('out-of-line-compound', 'inline-index', function(err, db) {
+            util.createDatabase('out-of-line-compound', 'inline-index', function (err, db) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database');
+                    done();
+                    return;
+                }
                 var tx = db.transaction('out-of-line-compound', 'readwrite');
                 var store = tx.objectStore('out-of-line-compound');
                 var index = store.index('inline-index');
                 tx.onerror = done;
-                tx.oncomplete = function() {
+                tx.oncomplete = function () {
                     expect(queries).to.equal(queriesCompleted);
                     db.close();
                     done();
@@ -653,13 +723,18 @@ describe('IDBIndex.openCursor', function() {
             });
         });
 
-        it('should query inline keys', function(done) {
-            util.createDatabase('dotted', 'dotted-index', function(err, db) {
+        it('should query inline keys', function (done) {
+            util.createDatabase('dotted', 'dotted-index', function (err, db) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database');
+                    done();
+                    return;
+                }
                 var tx = db.transaction('dotted', 'readwrite');
                 var store = tx.objectStore('dotted');
                 var index = store.index('dotted-index');
                 tx.onerror = done;
-                tx.oncomplete = function() {
+                tx.oncomplete = function () {
                     expect(queries).to.equal(queriesCompleted);
                     db.close();
                     done();
@@ -707,13 +782,18 @@ describe('IDBIndex.openCursor', function() {
             });
         });
 
-        it('should query generated inline keys', function(done) {
-            util.createDatabase('dotted-generated', 'dotted-index', function(err, db) {
+        it('should query generated inline keys', function (done) {
+            util.createDatabase('dotted-generated', 'dotted-index', function (err, db) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database');
+                    done();
+                    return;
+                }
                 var tx = db.transaction('dotted-generated', 'readwrite');
                 var store = tx.objectStore('dotted-generated');
                 var index = store.index('dotted-index');
                 tx.onerror = done;
-                tx.oncomplete = function() {
+                tx.oncomplete = function () {
                     expect(queries).to.equal(queriesCompleted);
                     db.close();
                     done();
@@ -749,14 +829,19 @@ describe('IDBIndex.openCursor', function() {
             });
         });
 
-        util.skipIf(env.isNative && env.browser.isIE, 'should query compound inline keys', function(done) {
+        util.skipIf(env.isNative && env.browser.isIE, 'should query compound inline keys', function (done) {
             // BUG: IE's native IndexedDB does not support compound keys at all
-            util.createDatabase('dotted-compound', 'compound-index', function(err, db) {
+            util.createDatabase('dotted-compound', 'compound-index', function (err, db) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database');
+                    done();
+                    return;
+                }
                 var tx = db.transaction('dotted-compound', 'readwrite');
                 var store = tx.objectStore('dotted-compound');
                 var index = store.index('compound-index');
                 tx.onerror = done;
-                tx.oncomplete = function() {
+                tx.oncomplete = function () {
                     expect(queries).to.equal(queriesCompleted);
                     db.close();
                     done();
@@ -774,43 +859,48 @@ describe('IDBIndex.openCursor', function() {
                 // Object Store queries
                 query(store, IDBKeyRange.bound(-Infinity, Infinity), []);
                 query(store, IDBKeyRange.bound([-Infinity], [Infinity], true, true), 'prev', [
-                    {primaryKey: [1,2,3], key: [1,2,3], value: {id: 1, name: {first: 2, last: 3}}},
-                    {primaryKey: [-1,-2,-3], key: [-1,-2,-3], value: {id: -1, name: {first: -2, last: -3}}},
-                    {primaryKey: [-1,-3,-2], key: [-1,-3,-2], value: {id: -1, name: {first: -3, last: -2}}}
+                    {primaryKey: [1, 2, 3], key: [1, 2, 3], value: {id: 1, name: {first: 2, last: 3}}},
+                    {primaryKey: [-1, -2, -3], key: [-1, -2, -3], value: {id: -1, name: {first: -2, last: -3}}},
+                    {primaryKey: [-1, -3, -2], key: [-1, -3, -2], value: {id: -1, name: {first: -3, last: -2}}}
                 ]);
                 query(store, IDBKeyRange.bound([' '], ['Z']), 'nextunique', [
-                    {primaryKey: ['-1','-2','-3'], key: ['-1','-2','-3'], value: {id: '-1', name: {first: '-2', last: '-3'}}},
-                    {primaryKey: ['-1','-3','-2'], key: ['-1','-3','-2'], value: {id: '-1', name: {first: '-3', last: '-2'}}},
-                    {primaryKey: ['1','2','3'], key: ['1','2','3'], value: {id: '1', name: {first: '2', last: '3'}}}
+                    {primaryKey: ['-1', '-2', '-3'], key: ['-1', '-2', '-3'], value: {id: '-1', name: {first: '-2', last: '-3'}}},
+                    {primaryKey: ['-1', '-3', '-2'], key: ['-1', '-3', '-2'], value: {id: '-1', name: {first: '-3', last: '-2'}}},
+                    {primaryKey: ['1', '2', '3'], key: ['1', '2', '3'], value: {id: '1', name: {first: '2', last: '3'}}}
                 ]);
 
                 // Index queries
                 query(index, IDBKeyRange.bound(' ', 'Z'), []);
                 query(index, IDBKeyRange.bound([new Date(2001, 1, 1), new Date(2003, 1, 1)], [new Date(9999, 11, 31)]), [
-                    {primaryKey: [new Date(2001, 1, 1),new Date(2003, 3, 3),new Date(2002, 2, 2)], key: [new Date(2001, 1, 1),new Date(2003, 3, 3),new Date(2002, 2, 2)], value: {id: new Date(2001, 1, 1), name: {first: new Date(2003, 3, 3), last: new Date(2002, 2, 2)}}}
+                    {primaryKey: [new Date(2001, 1, 1), new Date(2003, 3, 3), new Date(2002, 2, 2)], key: [new Date(2001, 1, 1), new Date(2003, 3, 3), new Date(2002, 2, 2)], value: {id: new Date(2001, 1, 1), name: {first: new Date(2003, 3, 3), last: new Date(2002, 2, 2)}}}
                 ]);
                 query(index, IDBKeyRange.upperBound([new Date(9999, 11, 31)]), [
-                    {primaryKey: [-1,-3,-2], key: [-1,-3,-2], value: {id: -1, name: {first: -3, last: -2}}},
-                    {primaryKey: [-1,-2,-3], key: [-1,-2,-3], value: {id: -1, name: {first: -2, last: -3}}},
-                    {primaryKey: [1,2,3], key: [1,2,3], value: {id: 1, name: {first: 2, last: 3}}},
-                    {primaryKey: [new Date(2001, 1, 1),new Date(2002, 2, 2),new Date(2003, 3, 3)], key: [new Date(2001, 1, 1),new Date(2002, 2, 2),new Date(2003, 3, 3)], value: {id: new Date(2001, 1, 1), name: {first: new Date(2002, 2, 2), last: new Date(2003, 3, 3)}}},
-                    {primaryKey: [new Date(2001, 1, 1),new Date(2003, 3, 3),new Date(2002, 2, 2)], key: [new Date(2001, 1, 1),new Date(2003, 3, 3),new Date(2002, 2, 2)], value: {id: new Date(2001, 1, 1), name: {first: new Date(2003, 3, 3), last: new Date(2002, 2, 2)}}}
+                    {primaryKey: [-1, -3, -2], key: [-1, -3, -2], value: {id: -1, name: {first: -3, last: -2}}},
+                    {primaryKey: [-1, -2, -3], key: [-1, -2, -3], value: {id: -1, name: {first: -2, last: -3}}},
+                    {primaryKey: [1, 2, 3], key: [1, 2, 3], value: {id: 1, name: {first: 2, last: 3}}},
+                    {primaryKey: [new Date(2001, 1, 1), new Date(2002, 2, 2), new Date(2003, 3, 3)], key: [new Date(2001, 1, 1), new Date(2002, 2, 2), new Date(2003, 3, 3)], value: {id: new Date(2001, 1, 1), name: {first: new Date(2002, 2, 2), last: new Date(2003, 3, 3)}}},
+                    {primaryKey: [new Date(2001, 1, 1), new Date(2003, 3, 3), new Date(2002, 2, 2)], key: [new Date(2001, 1, 1), new Date(2003, 3, 3), new Date(2002, 2, 2)], value: {id: new Date(2001, 1, 1), name: {first: new Date(2003, 3, 3), last: new Date(2002, 2, 2)}}}
                 ]);
             });
         });
 
-        util.skipIf(env.isNative && env.browser.isIE, 'should query indexes other than the primary key', function(done) {
+        util.skipIf(env.isNative && env.browser.isIE, 'should query indexes other than the primary key', function (done) {
             // BUG: IE's native IndexedDB does not support compound keys at all
 
             // NOTE: The object store's keyPath is "id".  The index's keyPath is ["id","name.first","name.last"]
-            util.createDatabase('inline', 'compound-index', function(err, db) {
+            util.createDatabase('inline', 'compound-index', function (err, db) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database');
+                    done();
+                    return;
+                }
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
                 var index = store.index('compound-index');
-                tx.onerror = function(event) {
+                tx.onerror = function (event) {
                     done(event.target.error);
                 };
-                tx.oncomplete = function() {
+                tx.oncomplete = function () {
                     expect(queries).to.equal(queriesCompleted);
                     db.close();
                     done();
@@ -847,36 +937,41 @@ describe('IDBIndex.openCursor', function() {
                 // Index queries
                 query(index, IDBKeyRange.bound(' ', 'Z'), []);
                 query(index, IDBKeyRange.lowerBound(['']), [
-                    {primaryKey: '-1', key: ['-1','-2','-3'], value: {id: '-1', name: {first: '-2', last: '-3'}}},
-                    {primaryKey: '1', key: ['1','2','3'], value: {id: '1', name: {first: '2', last: '3'}}}
+                    {primaryKey: '-1', key: ['-1', '-2', '-3'], value: {id: '-1', name: {first: '-2', last: '-3'}}},
+                    {primaryKey: '1', key: ['1', '2', '3'], value: {id: '1', name: {first: '2', last: '3'}}}
                 ]);
                 query(index, IDBKeyRange.lowerBound([]), 'prev', [
-                    {primaryKey: '1', key: ['1','2','3'], value: {id: '1', name: {first: '2', last: '3'}}},
-                    {primaryKey: '-1', key: ['-1','-2','-3'], value: {id: '-1', name: {first: '-2', last: '-3'}}},
-                    {primaryKey: 1, key: [1,2,3], value: {id: 1, name: {first: 2, last: 3}}},
-                    {primaryKey: -1, key: [-1,-2,-3], value: {id: -1, name: {first: -2, last: -3}}}
+                    {primaryKey: '1', key: ['1', '2', '3'], value: {id: '1', name: {first: '2', last: '3'}}},
+                    {primaryKey: '-1', key: ['-1', '-2', '-3'], value: {id: '-1', name: {first: '-2', last: '-3'}}},
+                    {primaryKey: 1, key: [1, 2, 3], value: {id: 1, name: {first: 2, last: 3}}},
+                    {primaryKey: -1, key: [-1, -2, -3], value: {id: -1, name: {first: -2, last: -3}}}
                 ]);
                 query(index, [
-                    {primaryKey: -1, key: [-1,-2,-3], value: {id: -1, name: {first: -2, last: -3}}},
-                    {primaryKey: 1, key: [1,2,3], value: {id: 1, name: {first: 2, last: 3}}},
-                    {primaryKey: '-1', key: ['-1','-2','-3'], value: {id: '-1', name: {first: '-2', last: '-3'}}},
-                    {primaryKey: '1', key: ['1','2','3'], value: {id: '1', name: {first: '2', last: '3'}}}
+                    {primaryKey: -1, key: [-1, -2, -3], value: {id: -1, name: {first: -2, last: -3}}},
+                    {primaryKey: 1, key: [1, 2, 3], value: {id: 1, name: {first: 2, last: 3}}},
+                    {primaryKey: '-1', key: ['-1', '-2', '-3'], value: {id: '-1', name: {first: '-2', last: '-3'}}},
+                    {primaryKey: '1', key: ['1', '2', '3'], value: {id: '1', name: {first: '2', last: '3'}}}
                 ]);
                 query(index, IDBKeyRange.upperBound([new Date(1900, 1, 1)]), [
-                    {primaryKey: -1, key: [-1,-2,-3], value: {id: -1, name: {first: -2, last: -3}}},
-                    {primaryKey: 1, key: [1,2,3], value: {id: 1, name: {first: 2, last: 3}}}
+                    {primaryKey: -1, key: [-1, -2, -3], value: {id: -1, name: {first: -2, last: -3}}},
+                    {primaryKey: 1, key: [1, 2, 3], value: {id: 1, name: {first: 2, last: 3}}}
                 ]);
             });
         });
 
-        util.skipIf(env.browser.isIE,'should query multi-entry indexes', function(done) {
+        util.skipIf(env.browser.isIE, 'should query multi-entry indexes', function (done) {
             // BUG: IE's native IndexedDB does not support multi-entry indexes
-            util.createDatabase('inline', 'multi-entry-index', function(err, db) {
+            util.createDatabase('inline', 'multi-entry-index', function (err, db) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database');
+                    done();
+                    return;
+                }
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
                 var index = store.index('multi-entry-index');
                 tx.onerror = done;
-                tx.oncomplete = function() {
+                tx.oncomplete = function () {
                     expect(queries).to.equal(queriesCompleted);
                     db.close();
                     done();
@@ -899,7 +994,7 @@ describe('IDBIndex.openCursor', function() {
                 query(store, IDBKeyRange.lowerBound(['a']), 'prevunique', [
                     {primaryKey: [['a', [['b'], 'c']]], key: [['a', [['b'], 'c']]], value: {id: [['a', [['b'], 'c']]]}},
                     {primaryKey: ['b'], key: ['b'], value: {id: ['b']}},
-                    {primaryKey: ['a','b','c'], key: ['a','b','c'], value: {id: ['a','b','c']}},
+                    {primaryKey: ['a', 'b', 'c'], key: ['a', 'b', 'c'], value: {id: ['a', 'b', 'c']}},
                     {primaryKey: ['a'], key: ['a'], value: {id: ['a']}}
                 ]);
 
@@ -912,45 +1007,50 @@ describe('IDBIndex.openCursor', function() {
                     query(index, IDBKeyRange.only('a'), [
                         {primaryKey: 'a', key: 'a', value: {id: 'a'}},
                         {primaryKey: ['a'], key: 'a', value: {id: ['a']}},
-                        {primaryKey: ['a','b','c'], key: 'a', value: {id: ['a','b','c']}}
+                        {primaryKey: ['a', 'b', 'c'], key: 'a', value: {id: ['a', 'b', 'c']}}
                     ]);
                     query(index, IDBKeyRange.lowerBound('a'), [
                         {primaryKey: 'a', key: 'a', value: {id: 'a'}},
                         {primaryKey: ['a'], key: 'a', value: {id: ['a']}},
-                        {primaryKey: ['a','b','c'], key: 'a', value: {id: ['a','b','c']}},
-                        {primaryKey: ['a','b','c'], key: 'b', value: {id: ['a','b','c']}},
+                        {primaryKey: ['a', 'b', 'c'], key: 'a', value: {id: ['a', 'b', 'c']}},
+                        {primaryKey: ['a', 'b', 'c'], key: 'b', value: {id: ['a', 'b', 'c']}},
                         {primaryKey: ['b'], key: 'b', value: {id: ['b']}},
-                        {primaryKey: ['a','b','c'], key: 'c', value: {id: ['a','b','c']}},
+                        {primaryKey: ['a', 'b', 'c'], key: 'c', value: {id: ['a', 'b', 'c']}},
                         {primaryKey: [['a', [['b'], 'c']]], key: ['a', [['b'], 'c']], value: {id: [['a', [['b'], 'c']]]}}
                     ]);
                     query(index, IDBKeyRange.lowerBound('a', true), 'prev', [
                         {primaryKey: [['a', [['b'], 'c']]], key: ['a', [['b'], 'c']], value: {id: [['a', [['b'], 'c']]]}},
-                        {primaryKey: ['a','b','c'], key: 'c', value: {id: ['a','b','c']}},
+                        {primaryKey: ['a', 'b', 'c'], key: 'c', value: {id: ['a', 'b', 'c']}},
                         {primaryKey: ['b'], key: 'b', value: {id: ['b']}},
-                        {primaryKey: ['a','b','c'], key: 'b', value: {id: ['a','b','c']}}
+                        {primaryKey: ['a', 'b', 'c'], key: 'b', value: {id: ['a', 'b', 'c']}}
                     ]);
                     query(index, IDBKeyRange.lowerBound('a', true), 'prevunique', [
                         {primaryKey: [['a', [['b'], 'c']]], key: ['a', [['b'], 'c']], value: {id: [['a', [['b'], 'c']]]}},
-                        {primaryKey: ['a','b','c'], key: 'c', value: {id: ['a','b','c']}},
-                        {primaryKey: ['a','b','c'], key: 'b', value: {id: ['a','b','c']}}
+                        {primaryKey: ['a', 'b', 'c'], key: 'c', value: {id: ['a', 'b', 'c']}},
+                        {primaryKey: ['a', 'b', 'c'], key: 'b', value: {id: ['a', 'b', 'c']}}
                     ]);
                 }
             });
         });
 
-        util.skipIf(env.browser.isIE,'should query multi-entry indexes with hundreds of records', function(done) {
+        util.skipIf(env.browser.isIE, 'should query multi-entry indexes with hundreds of records', function (done) {
             // BUG: IE's native IndexedDB does not support multi-entry indexes
             this.timeout(40000);
             this.slow(10000);
 
-            util.createDatabase('inline', 'multi-entry-index', function(err, db) {
+            util.createDatabase('inline', 'multi-entry-index', function (err, db) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database');
+                    done();
+                    return;
+                }
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
                 var index = store.index('multi-entry-index');
-                tx.onerror = function(event) {
+                tx.onerror = function (event) {
                     done(event.target.error.message);
                 };
-                tx.oncomplete = function() {
+                tx.oncomplete = function () {
                     expect(queries).to.equal(queriesCompleted);
                     db.close();
                     done();
@@ -981,9 +1081,14 @@ describe('IDBIndex.openCursor', function() {
         });
     });
 
-    describe('failure tests', function() {
-        it('should throw an error if the key range is invalid', function(done) {
-            util.createDatabase('out-of-line-generated', 'inline-index', function(err, db) {
+    describe('failure tests', function () {
+        it('should throw an error if the key range is invalid', function (done) {
+            util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database');
+                    done();
+                    return;
+                }
                 var tx = db.transaction('out-of-line-generated', 'readwrite');
                 var store = tx.objectStore('out-of-line-generated');
                 var index = store.index('inline-index');
@@ -991,15 +1096,13 @@ describe('IDBIndex.openCursor', function() {
 
                 try {
                     store.openCursor(IDBKeyRange.upperBound({foo: 'bar'}));
-                }
-                catch (e) {
+                } catch (e) {
                     storeErr = e;
                 }
 
                 try {
                     index.openCursor(IDBKeyRange.lowerBound({foo: 'bar'}));
-                }
-                catch (e) {
+                } catch (e) {
                     indexErr = e;
                 }
 
@@ -1014,8 +1117,13 @@ describe('IDBIndex.openCursor', function() {
             });
         });
 
-        it('should throw an error if the direction is invalid', function(done) {
-            util.createDatabase('out-of-line-generated', 'inline-index', function(err, db) {
+        it('should throw an error if the direction is invalid', function (done) {
+            util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database');
+                    done();
+                    return;
+                }
                 var tx = db.transaction('out-of-line-generated', 'readwrite');
                 var store = tx.objectStore('out-of-line-generated');
                 var index = store.index('inline-index');
@@ -1023,15 +1131,13 @@ describe('IDBIndex.openCursor', function() {
 
                 try {
                     store.openCursor(1, 'ascending');   // not a valid direction
-                }
-                catch (e) {
+                } catch (e) {
                     storeErr = e;
                 }
 
                 try {
                     index.openCursor(1, 'Next');        // direction is case-sensitive
-                }
-                catch (e) {
+                } catch (e) {
                     indexErr = e;
                 }
 
@@ -1050,26 +1156,29 @@ describe('IDBIndex.openCursor', function() {
             });
         });
 
-        it('should throw an error if the transaction is closed', function(done) {
-            util.createDatabase('out-of-line-generated', 'inline-index', function(err, db) {
+        it('should throw an error if the transaction is closed', function (done) {
+            util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database');
+                    done();
+                    return;
+                }
                 var tx = db.transaction('out-of-line-generated', 'readwrite');
                 var store = tx.objectStore('out-of-line-generated');
                 var index = store.index('inline-index');
 
-                setTimeout(function() {
+                setTimeout(function () {
                     var storeErr, indexErr;
 
                     try {
                         store.openCursor(1);
-                    }
-                    catch (e) {
+                    } catch (e) {
                         storeErr = e;
                     }
 
                     try {
                         index.openCursor(1);
-                    }
-                    catch (e) {
+                    } catch (e) {
                         indexErr = e;
                     }
 

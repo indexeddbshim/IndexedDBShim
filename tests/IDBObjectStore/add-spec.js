@@ -1,27 +1,33 @@
-describe('IDBObjectStore.add', function() {
+/*eslint-disable no-var*/
+describe('IDBObjectStore.add', function () {
     'use strict';
 
     var onerror;
-    beforeEach(function() {
+    beforeEach(function () {
         onerror = window.onerror;
 
         if (env.browser.isFirefox) {
             // Firefox throws a global error when a transaction fails.
             // Catch the error and stop it from propagating
-            window.onerror = function() {
+            window.onerror = function () {
                 return true;
             };
         }
     });
 
-    afterEach(function() {
+    afterEach(function () {
         // Restore the global error handler
         window.onerror = onerror;
     });
 
-    it('should throw an error if an out-of-line key already exists', function(done) {
-        util.createDatabase('out-of-line', function(err, db) {
-            window.onerror = function() {
+    it('should throw an error if an out-of-line key already exists', function (done) {
+        util.createDatabase('out-of-line', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
+            window.onerror = function () {
                 return true;
             };
 
@@ -37,7 +43,7 @@ describe('IDBObjectStore.add', function() {
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
-            tx.onabort = function() {
+            tx.onabort = function () {
                 // The first add should succeed
                 sinon.assert.calledOnce(add1.onsuccess);
                 sinon.assert.notCalled(add1.onerror);
@@ -68,8 +74,13 @@ describe('IDBObjectStore.add', function() {
         });
     });
 
-    it('should throw an error if an out-of-line key conflict occurs in simultaneous transactions', function(done) {
-        util.createDatabase('out-of-line', function(err, db) {
+    it('should throw an error if an out-of-line key conflict occurs in simultaneous transactions', function (done) {
+        util.createDatabase('out-of-line', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx1 = db.transaction('out-of-line', 'readwrite');
             var tx2 = db.transaction('out-of-line', 'readwrite');
             var tx3 = db.transaction('out-of-line', 'readwrite');
@@ -85,18 +96,18 @@ describe('IDBObjectStore.add', function() {
             save1.onsuccess = save2.onsuccess = save3.onsuccess = sinon.spy();
             tx1.onerror = tx2.onerror = tx3.onerror = sinon.spy();
 
-            tx1.onabort = tx2.onabort = tx3.onabort = sinon.spy(function() {
+            tx1.onabort = tx2.onabort = tx3.onabort = sinon.spy(function () {
                 if (tx1.oncomplete.calledOnce && tx1.onerror.calledTwice && tx1.onabort.calledTwice) {
                     expect(save1.result).to.equal(1);
-                    expect(save2.result).not.to.be.ok;
-                    expect(save3.result).not.to.be.ok;
+                    assert.isNotOk(save2.result);
+                    assert.isNotOk(save3.result);
 
                     expect(save2.error.name).to.equal('ConstraintError');
                     expect(save3.error.name).to.equal('ConstraintError');
 
                     if (env.isShimmed || !env.browser.isSafari) {
-                        expect(save2.result).to.be.undefined;   // Safari uses null
-                        expect(save3.result).to.be.undefined;   // Safari uses null
+                        expect(save2.result).equal(undefined);   // Safari uses null
+                        expect(save3.result).equal(undefined);   // Safari uses null
 
                         expect(save2.error).to.be.an.instanceOf(env.DOMError);     // Safari's DOMError is private
                         expect(save3.error).to.be.an.instanceOf(env.DOMError);     // Safari's DOMError is private
@@ -116,8 +127,13 @@ describe('IDBObjectStore.add', function() {
         });
     });
 
-    it('should throw an error if a generated out-of-line key already exists', function(done) {
-        util.createDatabase('out-of-line-generated', function(err, db) {
+    it('should throw an error if a generated out-of-line key already exists', function (done) {
+        util.createDatabase('out-of-line-generated', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line-generated', 'readwrite');
             tx.onerror = sinon.spy();
 
@@ -130,7 +146,7 @@ describe('IDBObjectStore.add', function() {
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
-            tx.onabort = function() {
+            tx.onabort = function () {
                 // The first add should succeed
                 sinon.assert.calledOnce(add1.onsuccess);
                 sinon.assert.notCalled(add1.onerror);
@@ -161,8 +177,13 @@ describe('IDBObjectStore.add', function() {
         });
     });
 
-    it('should throw an error if an inline key already exists', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should throw an error if an inline key already exists', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             tx.onerror = sinon.spy();
 
@@ -175,7 +196,7 @@ describe('IDBObjectStore.add', function() {
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
-            tx.onabort = function() {
+            tx.onabort = function () {
                 // The first add should succeed
                 sinon.assert.calledOnce(add1.onsuccess);
                 sinon.assert.notCalled(add1.onerror);
@@ -206,8 +227,13 @@ describe('IDBObjectStore.add', function() {
         });
     });
 
-    it('should throw an error if an inline key conflict occurs in simultaneous transactions', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should throw an error if an inline key conflict occurs in simultaneous transactions', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx1 = db.transaction('inline', 'readwrite');
             var tx2 = db.transaction('inline', 'readwrite');
             var tx3 = db.transaction('inline', 'readwrite');
@@ -223,18 +249,18 @@ describe('IDBObjectStore.add', function() {
             save1.onsuccess = save2.onsuccess = save3.onsuccess = sinon.spy();
             tx1.onerror = tx2.onerror = tx3.onerror = sinon.spy();
 
-            tx1.onabort = tx2.onabort = tx3.onabort = sinon.spy(function() {
+            tx1.onabort = tx2.onabort = tx3.onabort = sinon.spy(function () {
                 if (tx1.oncomplete.calledOnce && tx1.onerror.calledTwice && tx1.onabort.calledTwice) {
                     expect(save1.result).to.equal(1);
-                    expect(save2.result).not.to.be.ok;
-                    expect(save3.result).not.to.be.ok;
+                    assert.isNotOk(save2.result);
+                    assert.isNotOk(save3.result);
 
                     expect(save2.error.name).to.equal('ConstraintError');
                     expect(save3.error.name).to.equal('ConstraintError');
 
                     if (env.isShimmed || !env.browser.isSafari) {
-                        expect(save2.result).to.be.undefined;   // Safari uses null
-                        expect(save3.result).to.be.undefined;   // Safari uses null
+                        expect(save2.result).equal(undefined);   // Safari uses null
+                        expect(save3.result).equal(undefined);   // Safari uses null
 
                         expect(save2.error).to.be.an.instanceOf(env.DOMError);     // Safari's DOMError is private
                         expect(save3.error).to.be.an.instanceOf(env.DOMError);     // Safari's DOMError is private
@@ -254,8 +280,13 @@ describe('IDBObjectStore.add', function() {
         });
     });
 
-    it('should throw an error if a generated inline key already exists', function(done) {
-        util.createDatabase('inline-generated', function(err, db) {
+    it('should throw an error if a generated inline key already exists', function (done) {
+        util.createDatabase('inline-generated', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('inline-generated', 'readwrite');
             tx.onerror = sinon.spy();
 
@@ -268,7 +299,7 @@ describe('IDBObjectStore.add', function() {
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
-            tx.onabort = function() {
+            tx.onabort = function () {
                 // The first add should succeed
                 sinon.assert.calledOnce(add1.onsuccess);
                 sinon.assert.notCalled(add1.onerror);
@@ -299,8 +330,13 @@ describe('IDBObjectStore.add', function() {
         });
     });
 
-    it('should throw an error if a dotted key already exists', function(done) {
-        util.createDatabase('dotted', function(err, db) {
+    it('should throw an error if a dotted key already exists', function (done) {
+        util.createDatabase('dotted', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('dotted', 'readwrite');
             tx.onerror = sinon.spy();
 
@@ -313,7 +349,7 @@ describe('IDBObjectStore.add', function() {
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
-            tx.onabort = function() {
+            tx.onabort = function () {
                 // The first add should succeed
                 sinon.assert.calledOnce(add1.onsuccess);
                 sinon.assert.notCalled(add1.onerror);
@@ -344,8 +380,13 @@ describe('IDBObjectStore.add', function() {
         });
     });
 
-    it('should throw an error if a generated dotted key already exists', function(done) {
-        util.createDatabase('dotted-generated', function(err, db) {
+    it('should throw an error if a generated dotted key already exists', function (done) {
+        util.createDatabase('dotted-generated', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('dotted-generated', 'readwrite');
             tx.onerror = sinon.spy();
 
@@ -358,7 +399,7 @@ describe('IDBObjectStore.add', function() {
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
-            tx.onabort = function() {
+            tx.onabort = function () {
                 // The first add should succeed
                 sinon.assert.calledOnce(add1.onsuccess);
                 sinon.assert.notCalled(add1.onerror);
@@ -389,9 +430,14 @@ describe('IDBObjectStore.add', function() {
         });
     });
 
-    util.skipIf(env.isNative && env.browser.isIE, 'should throw an error if a compound out-of-line key already exists', function(done) {
+    util.skipIf(env.isNative && env.browser.isIE, 'should throw an error if a compound out-of-line key already exists', function (done) {
         // BUG: IE's native IndexedDB does not support compound keys at all
-        util.createDatabase('out-of-line-compound', function(err, db) {
+        util.createDatabase('out-of-line-compound', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line-compound', 'readwrite');
             tx.onerror = sinon.spy();
 
@@ -404,7 +450,7 @@ describe('IDBObjectStore.add', function() {
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
-            tx.onabort = function() {
+            tx.onabort = function () {
                 // The first add should succeed
                 sinon.assert.calledOnce(add1.onsuccess);
                 sinon.assert.notCalled(add1.onerror);
@@ -435,9 +481,14 @@ describe('IDBObjectStore.add', function() {
         });
     });
 
-    util.skipIf(env.isNative && env.browser.isIE, 'should throw an error if a compound key already exists', function(done) {
+    util.skipIf(env.isNative && env.browser.isIE, 'should throw an error if a compound key already exists', function (done) {
         // BUG: IE's native IndexedDB does not support compound keys at all
-        util.createDatabase('inline-compound', function(err, db) {
+        util.createDatabase('inline-compound', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('inline-compound', 'readwrite');
             tx.onerror = sinon.spy();
 
@@ -450,7 +501,7 @@ describe('IDBObjectStore.add', function() {
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
-            tx.onabort = function() {
+            tx.onabort = function () {
                 // The first add should succeed
                 sinon.assert.calledOnce(add1.onsuccess);
                 sinon.assert.notCalled(add1.onerror);
@@ -481,9 +532,14 @@ describe('IDBObjectStore.add', function() {
         });
     });
 
-    util.skipIf(env.isNative && env.browser.isIE, 'should throw an error if a dotted compound key already exists', function(done) {
+    util.skipIf(env.isNative && env.browser.isIE, 'should throw an error if a dotted compound key already exists', function (done) {
         // BUG: IE's native IndexedDB does not support compound keys at all
-        util.createDatabase('dotted-compound', function(err, db) {
+        util.createDatabase('dotted-compound', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('dotted-compound', 'readwrite');
             tx.onerror = sinon.spy();
 
@@ -496,7 +552,7 @@ describe('IDBObjectStore.add', function() {
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
-            tx.onabort = function() {
+            tx.onabort = function () {
                 // The first add should succeed
                 sinon.assert.calledOnce(add1.onsuccess);
                 sinon.assert.notCalled(add1.onerror);

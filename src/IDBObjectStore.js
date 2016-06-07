@@ -304,7 +304,7 @@ IDBObjectStore.prototype.get = function (key) {
             let value;
             try {
                 // Opera can't deal with the try-catch here.
-                if (0 === data.rows.length) {
+                if (data.rows.length === 0) {
                     return success();
                 }
 

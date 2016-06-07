@@ -1,4 +1,5 @@
-(function() {
+/*eslint-disable no-var*/
+(function () {
     'use strict';
 
     var databaseNamePrefix = 'IndexedDBShim_Test_Database_';
@@ -8,7 +9,7 @@
     /**
      * This function runs before every test.
      */
-    beforeEach(function() {
+    beforeEach(function () {
         // Track the current test
         util.currentTest = this.currentTest;
 
@@ -19,17 +20,15 @@
         util.currentTest.slow(300);
     });
 
-
     /**
      * This function runs after every test
      */
-    afterEach(function(done) {
+    afterEach(function (done) {
         // Delete all databases that were created during this test
-        util.asyncForEach(util.currentTest.databases, done, function(dbName) {
+        util.asyncForEach(util.currentTest.databases, done, function (dbName) {
             return env.indexedDB.deleteDatabase(dbName);
         });
     });
-
 
     util = window.util = {
         sampleData: {
@@ -44,22 +43,19 @@
             veryLongString: new Array(1001).join('1234567890')  // 10,000 characters
         },
 
-
         /**
          * Skips the given test if the given condition is true.
          * @param {boolean} condition
          * @param {string} title
          * @param {function} test
          */
-        skipIf: function(condition, title, test) {
+        skipIf: function (condition, title, test) {
             if (condition) {
                 it.skip(title, test);
-            }
-            else {
+            } else {
                 it(title, test);
             }
         },
-
 
         /**
          * Creates a test database with one or more pre-defined schema items.
@@ -67,40 +63,38 @@
          * @param   {...string}     schema      One or more pre-defined schema items. (see {@link createSchemaItem})
          * @param   {function}      done        `function(err, db)`
          */
-        createDatabase: function(schema, done) {
+        createDatabase: function (schema, done) {
             schema = Array.prototype.slice.call(arguments, 0, arguments.length - 1);
             done = arguments[arguments.length - 1];
 
-            util.generateDatabaseName(function(err, dbName) {
+            util.generateDatabaseName(function (err, dbName) {
                 // Open the database
                 var open = env.indexedDB.open(dbName, 1);
 
-                open.onerror = open.onblocked = function(event) {
+                open.onerror = open.onblocked = function (event) {
                     var err;
                     try {
                         err = event.target.error;
                         console.error(err.message);
-                    }
-                    finally {
+                    } finally {
                         done(err || 'Unknown Error');
                     }
                 };
 
                 // Add the specified schema items
-                open.onupgradeneeded = function() {
+                open.onupgradeneeded = function () {
                     open.transaction.onerror = open.onerror;
-                    schema.forEach(function(schemaItem) {
+                    schema.forEach(function (schemaItem) {
                         createSchemaItem(open.transaction, schemaItem);
                     });
                 };
 
                 // Done!
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     done(err, open.result);
                 };
             });
         },
-
 
         /**
          * Returns all data in the given object store or index.
@@ -108,10 +102,9 @@
          * @param   {IDBObjectStore|IDBIndex}   store   The object store or index
          * @param   {function}                  done    `function(err, data)`
          */
-        getAll: function(store, done) {
+        getAll: function (store, done) {
             util.query(store, done);
         },
-
 
         /**
          * Queries data in the given object store or index.
@@ -121,13 +114,12 @@
          * @param   {string}                    [direction] The direction of the cursor
          * @param   {function}                  done        `function(err, data)`
          */
-        query: function(store, keyRange, direction, done) {
+        query: function (store, keyRange, direction, done) {
             if (arguments.length === 2) {
                 done = keyRange;
                 keyRange = undefined;
                 direction = 'next';
-            }
-            else if (arguments.length === 3) {
+            } else if (arguments.length === 3) {
                 done = direction;
                 direction = 'next';
             }
@@ -136,10 +128,10 @@
 
             try {
                 var open = keyRange === undefined ? store.openCursor() : store.openCursor(keyRange, direction);
-                open.onerror = function() {
+                open.onerror = function () {
                     done(open.error, data);
                 };
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     var cursor = open.result;
                     if (cursor) {
                         var key = cursor.key;
@@ -162,17 +154,14 @@
                             value: cursor.value
                         });
                         cursor.continue();
-                    }
-                    else {
+                    } else {
                         done(null, data);
                     }
                 };
-            }
-            catch (e) {
+            } catch (e) {
                 done(e, data);
             }
         },
-
 
         /**
          * Generates a new database name that is unique for this test-run.
@@ -182,7 +171,7 @@
          *
          * @param   {function}  done    `function(err, dbName)`
          */
-        generateDatabaseName: function(done) {
+        generateDatabaseName: function (done) {
             dbNameCounter++;
             var dbName = databaseNamePrefix + dbNameCounter;
 
@@ -191,21 +180,19 @@
 
             // Just in case the database already exists, delete it
             var request = env.indexedDB.deleteDatabase(dbName);
-            request.onsuccess = function() {
+            request.onsuccess = function () {
                 done(null, dbName);
             };
-            request.onerror = request.onblocked = function() {
-                    var err;
-                    try {
-                        err = request.error;
-                        console.error(err.message);
-                    }
-                    finally {
-                        done(err || 'Unknown Error');
-                    }
+            request.onerror = request.onblocked = function () {
+                var err;
+                try {
+                    err = request.error;
+                    console.error(err.message);
+                } finally {
+                    done(err || 'Unknown Error');
+                }
             };
         },
-
 
         /**
          * An asynchronous for-each loop
@@ -222,24 +209,22 @@
          * If iterator returns an {@link IDBRequest} or {@link IDBTransaction} object,
          * then `next` will automatically be bound to the `onsuccess`, `onerror`, `onblocked`, and `oncomplete` events.
          */
-        asyncForEach: function(array, done, iterator) {
+        asyncForEach: function (array, done, iterator) {
             var i = 0;
             next();
 
-            function next(err) {
+            function next (err) {
                 if (err) {
                     done(err);
-                }
-                else if (i >= array.length) {
+                } else if (i >= array.length) {
                     done();
-                }
-                else if (i < array.length) {
+                } else if (i < array.length) {
                     var item = array[i++];
-                    setTimeout(function() {
+                    setTimeout(function () {
                         var nextCalled = false;
 
                         // Call the iterator function
-                        var request = iterator(item, i - 1, function(err) {
+                        var request = iterator(item, i - 1, function (err) {
                             if (!nextCalled) {
                                 nextCalled = true;
                                 next(err);
@@ -247,15 +232,14 @@
                         });
 
                         // If it returned an IDBRequest or IDBTransaction, then bind to its events
-                        if (typeof(request) === 'object') {
-                            request.onsuccess = request.onerror = request.onblocked = request.oncomplete = function() {
+                        if (typeof request === 'object') {
+                            request.onsuccess = request.onerror = request.onblocked = request.oncomplete = function () {
                                 if (!nextCalled) {
                                     nextCalled = true;
                                     var err;
                                     try {
                                         err = request.error;
-                                    }
-                                    catch (e) {/* Some browsers throw an error when accessing the error property */}
+                                    } catch (e) { /* Some browsers throw an error when accessing the error property */ }
                                     next(err);
                                 }
                             };
@@ -266,12 +250,11 @@
         }
     };
 
-
     /**
      * A class with instance and prototype properties.
      * Used to test the IndexedDB structured cloning algorithm.
      */
-    function Person(name, age, dob, isMarried) {
+    function Person (name, age, dob, isMarried) {
         name && (this.name = name);
         age && (this.age = age);
         dob && (this.dob = dob);
@@ -283,73 +266,70 @@
     Person.prototype.dob = new Date(1900, 0, 1);
     Person.prototype.isMarried = false;
 
-
     /**
      * Creates a pre-defined schema item for use in a test.
      *
      * @param   {IDBTransaction}    tx              The database upgrade transaction
      * @param   {string}            schemaItem      The name of the schema item to create
      */
-    function createSchemaItem(tx, schemaItem) {
+    function createSchemaItem (tx, schemaItem) {
         switch (schemaItem) {
-            case 'out-of-line':
-            case 'out-of-line-compound':
-                tx.db.createObjectStore(schemaItem);
-                break;
-            case 'out-of-line-generated':
-                tx.db.createObjectStore(schemaItem, {autoIncrement: true});
-                break;
-            case 'inline':
-                tx.db.createObjectStore(schemaItem, {keyPath: 'id'});
-                break;
-            case 'inline-generated':
-                tx.db.createObjectStore(schemaItem, {keyPath: 'id', autoIncrement: true});
-                break;
-            case 'inline-compound':
-                tx.db.createObjectStore(schemaItem, {keyPath: ['id', 'name']});
-                break;
-            case 'dotted':
-                tx.db.createObjectStore(schemaItem, {keyPath: 'name.first'});
-                break;
-            case 'dotted-generated':
-                tx.db.createObjectStore(schemaItem, {keyPath: 'name.first', autoIncrement: true});
-                break;
-            case 'dotted-compound':
-                tx.db.createObjectStore(schemaItem, {keyPath: ['id', 'name.first', 'name.last']});
-                break;
-            case 'inline-index':
-                createIndex(schemaItem, 'id');
-                break;
-            case 'unique-index':
-                createIndex(schemaItem, 'id', {unique: true});
-                break;
-            case 'multi-entry-index':
-                createIndex(schemaItem, 'id', {multiEntry: true});
-                break;
-            case 'unique-multi-entry-index':
-                createIndex(schemaItem, 'id', {unique: true, multiEntry: true});
-                break;
-            case 'dotted-index':
-                createIndex(schemaItem, 'name.first');
-                break;
-            case 'compound-index':
-                createIndex(schemaItem, ['id', 'name.first', 'name.last']);
-                break;
-            case 'compound-index-unique':
-                createIndex(schemaItem, ['id', 'name.first', 'name.last'], {unique: true});
-                break;
-            default:
-                throw new Error(schemaItem + ' is not one of the pre-defined schema items');
+        case 'out-of-line':
+        case 'out-of-line-compound':
+            tx.db.createObjectStore(schemaItem);
+            break;
+        case 'out-of-line-generated':
+            tx.db.createObjectStore(schemaItem, {autoIncrement: true});
+            break;
+        case 'inline':
+            tx.db.createObjectStore(schemaItem, {keyPath: 'id'});
+            break;
+        case 'inline-generated':
+            tx.db.createObjectStore(schemaItem, {keyPath: 'id', autoIncrement: true});
+            break;
+        case 'inline-compound':
+            tx.db.createObjectStore(schemaItem, {keyPath: ['id', 'name']});
+            break;
+        case 'dotted':
+            tx.db.createObjectStore(schemaItem, {keyPath: 'name.first'});
+            break;
+        case 'dotted-generated':
+            tx.db.createObjectStore(schemaItem, {keyPath: 'name.first', autoIncrement: true});
+            break;
+        case 'dotted-compound':
+            tx.db.createObjectStore(schemaItem, {keyPath: ['id', 'name.first', 'name.last']});
+            break;
+        case 'inline-index':
+            createIndex(schemaItem, 'id');
+            break;
+        case 'unique-index':
+            createIndex(schemaItem, 'id', {unique: true});
+            break;
+        case 'multi-entry-index':
+            createIndex(schemaItem, 'id', {multiEntry: true});
+            break;
+        case 'unique-multi-entry-index':
+            createIndex(schemaItem, 'id', {unique: true, multiEntry: true});
+            break;
+        case 'dotted-index':
+            createIndex(schemaItem, 'name.first');
+            break;
+        case 'compound-index':
+            createIndex(schemaItem, ['id', 'name.first', 'name.last']);
+            break;
+        case 'compound-index-unique':
+            createIndex(schemaItem, ['id', 'name.first', 'name.last'], {unique: true});
+            break;
+        default:
+            throw new Error(schemaItem + ' is not one of the pre-defined schema items');
         }
 
         // Creates an index on all object stores
-        function createIndex(name, keyPath, options) {
+        function createIndex (name, keyPath, options) {
             for (var i = 0; i < tx.db.objectStoreNames.length; i++) {
                 var store = tx.objectStore(tx.db.objectStoreNames[i]);
                 store.createIndex(name, keyPath, options);
             }
         }
     }
-
-
 })();

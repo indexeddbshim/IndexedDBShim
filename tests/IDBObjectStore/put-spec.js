@@ -1,8 +1,14 @@
-describe('IDBObjectStore.put', function() {
+/* eslint-disable no-var */
+describe('IDBObjectStore.put', function () {
     'use strict';
 
-    it('should update an existing record with an out-of-line key', function(done) {
-        util.createDatabase('out-of-line', function(err, db) {
+    it('should update an existing record with an out-of-line key', function (done) {
+        util.createDatabase('out-of-line', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line', 'readwrite');
             tx.onerror = done;
 
@@ -11,11 +17,16 @@ describe('IDBObjectStore.put', function() {
             store.put({foo: 'bar'}, 12345);
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    assert.fail(true, true, 'Error getting all');
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 // The table should only contain one record
                 expect(allData).to.have.lengthOf(1);
                 expect(allData[0]).to.deep.equal({
@@ -28,8 +39,13 @@ describe('IDBObjectStore.put', function() {
         });
     });
 
-    it('should update an existing record with a generated out-of-line key', function(done) {
-        util.createDatabase('out-of-line-generated', function(err, db) {
+    it('should update an existing record with a generated out-of-line key', function (done) {
+        util.createDatabase('out-of-line-generated', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line-generated', 'readwrite');
             tx.onerror = done;
 
@@ -38,11 +54,16 @@ describe('IDBObjectStore.put', function() {
             store.put({foo: 'bar'}, 1);
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    assert.fail(true, true, 'Error getting all');
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 // The table should only contain one record
                 expect(allData).to.have.lengthOf(1);
                 expect(allData[0]).to.deep.equal({
@@ -55,8 +76,13 @@ describe('IDBObjectStore.put', function() {
         });
     });
 
-    it('should update an existing record with an inline key', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should update an existing record with an inline key', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
@@ -65,11 +91,16 @@ describe('IDBObjectStore.put', function() {
             store.put({id: 12345, biz: 'baz'});
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    assert.fail(true, true, 'Error getting all');
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 // The table should only contain one record
                 expect(allData).to.have.lengthOf(1);
                 expect(allData[0]).to.deep.equal({
@@ -82,8 +113,13 @@ describe('IDBObjectStore.put', function() {
         });
     });
 
-    it('should update an existing record with a generated inline key', function(done) {
-        util.createDatabase('inline-generated', function(err, db) {
+    it('should update an existing record with a generated inline key', function (done) {
+        util.createDatabase('inline-generated', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('inline-generated', 'readwrite');
             tx.onerror = done;
 
@@ -92,11 +128,16 @@ describe('IDBObjectStore.put', function() {
             store.put({id: 1, biz: 'baz'});
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    assert.fail(true, true, 'Error getting all');
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 // The table should only contain one record
                 expect(allData).to.have.lengthOf(1);
                 expect(allData[0]).to.deep.equal({
@@ -109,8 +150,13 @@ describe('IDBObjectStore.put', function() {
         });
     });
 
-    it('should update an existing record with a dotted key', function(done) {
-        util.createDatabase('dotted', function(err, db) {
+    it('should update an existing record with a dotted key', function (done) {
+        util.createDatabase('dotted', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('dotted', 'readwrite');
             tx.onerror = done;
 
@@ -119,11 +165,16 @@ describe('IDBObjectStore.put', function() {
             store.put({name: {first: 'John', last: 'Smith'}, age: 42});
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    assert.fail(true, true, 'Error getting all');
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 // The table should only contain one record
                 expect(allData).to.have.lengthOf(1);
                 expect(allData[0]).to.deep.equal({
@@ -136,8 +187,13 @@ describe('IDBObjectStore.put', function() {
         });
     });
 
-    it('should update an existing record with a generated dotted key', function(done) {
-        util.createDatabase('dotted-generated', function(err, db) {
+    it('should update an existing record with a generated dotted key', function (done) {
+        util.createDatabase('dotted-generated', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('dotted-generated', 'readwrite');
             tx.onerror = done;
 
@@ -146,11 +202,16 @@ describe('IDBObjectStore.put', function() {
             store.put({name: {first: 1, last: 'Smith'}, age: 42});
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    assert.fail(true, true, 'Error getting all');
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 // The table should only contain one record
                 expect(allData).to.have.lengthOf(1);
                 expect(allData[0]).to.deep.equal({
@@ -163,9 +224,14 @@ describe('IDBObjectStore.put', function() {
         });
     });
 
-    util.skipIf(env.isNative && env.browser.isIE, 'should update an existing record with a compound out-of-line key', function(done) {
+    util.skipIf(env.isNative && env.browser.isIE, 'should update an existing record with a compound out-of-line key', function (done) {
         // BUG: IE's native IndexedDB does not support compound keys at all
-        util.createDatabase('out-of-line-compound', function(err, db) {
+        util.createDatabase('out-of-line-compound', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line-compound', 'readwrite');
             tx.onerror = done;
 
@@ -174,11 +240,16 @@ describe('IDBObjectStore.put', function() {
             store.put({foo: 'bar'}, [1, 'two', new Date(2003, 4, 5)]);
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    assert.fail(true, true, 'Error getting all');
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 // The table should only contain one record
                 expect(allData).to.have.lengthOf(1);
                 expect(allData[0]).to.deep.equal({
@@ -191,9 +262,14 @@ describe('IDBObjectStore.put', function() {
         });
     });
 
-    util.skipIf(env.isNative && env.browser.isIE, 'should update an existing record with a compound key', function(done) {
+    util.skipIf(env.isNative && env.browser.isIE, 'should update an existing record with a compound key', function (done) {
         // BUG: IE's native IndexedDB does not support compound keys at all
-        util.createDatabase('inline-compound', function(err, db) {
+        util.createDatabase('inline-compound', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('inline-compound', 'readwrite');
             tx.onerror = done;
 
@@ -202,11 +278,16 @@ describe('IDBObjectStore.put', function() {
             store.put({id: 12345, name: 'John Doe', age: 42});
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    assert.fail(true, true, 'Error getting all');
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 // The table should only contain one record
                 expect(allData).to.have.lengthOf(1);
                 expect(allData[0]).to.deep.equal({
@@ -219,9 +300,14 @@ describe('IDBObjectStore.put', function() {
         });
     });
 
-    util.skipIf(env.isNative && env.browser.isIE, 'should update an existing record with a dotted compound key', function(done) {
+    util.skipIf(env.isNative && env.browser.isIE, 'should update an existing record with a dotted compound key', function (done) {
         // BUG: IE's native IndexedDB does not support compound keys at all
-        util.createDatabase('dotted-compound', function(err, db) {
+        util.createDatabase('dotted-compound', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('dotted-compound', 'readwrite');
             tx.onerror = done;
 
@@ -230,11 +316,16 @@ describe('IDBObjectStore.put', function() {
             store.put({id: 12345, name: {first: 'John', last: 'Doe'}, age: 42});
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    assert.fail(true, true, 'Error getting all');
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 // The table should only contain one record
                 expect(allData).to.have.lengthOf(1);
                 expect(allData[0]).to.deep.equal({
@@ -247,9 +338,14 @@ describe('IDBObjectStore.put', function() {
         });
     });
 
-    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should distinguish between very-long string keys (10,000+ characters)', function(done) {
+    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should distinguish between very-long string keys (10,000+ characters)', function (done) {
         // BUG: IE's IndexedDB truncates string keys at 889 characters
-        util.createDatabase('out-of-line', function(err, db) {
+        util.createDatabase('out-of-line', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line', 'readwrite');
             tx.onerror = done;
 
@@ -264,11 +360,16 @@ describe('IDBObjectStore.put', function() {
             store.put({foo: 'bar'}, key2);
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    assert.fail(true, true, 'Error getting all');
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 // The table should contain two records
                 expect(allData).to.have.lengthOf(2);
                 expect(allData).to.deep.equal([
@@ -282,9 +383,14 @@ describe('IDBObjectStore.put', function() {
         });
     });
 
-    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should distinguish between very-long string keys (890+ characters)', function(done) {
+    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should distinguish between very-long string keys (890+ characters)', function (done) {
         // BUG: IE's IndexedDB truncates string keys at 889 characters
-        util.createDatabase('out-of-line', function(err, db) {
+        util.createDatabase('out-of-line', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line', 'readwrite');
             tx.onerror = done;
 
@@ -299,11 +405,16 @@ describe('IDBObjectStore.put', function() {
             store.put({foo: 'bar'}, key2);
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    assert.fail(true, true, 'Error getting all');
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 // The table should contain two records
                 expect(allData).to.have.lengthOf(2);
                 expect(allData).to.deep.equal([
@@ -317,9 +428,14 @@ describe('IDBObjectStore.put', function() {
         });
     });
 
-    it('should distinguish between very-long string keys (889 characters)', function(done) {
+    it('should distinguish between very-long string keys (889 characters)', function (done) {
         // BUG: IE's IndexedDB truncates string keys at 889 characters
-        util.createDatabase('out-of-line', function(err, db) {
+        util.createDatabase('out-of-line', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line', 'readwrite');
             tx.onerror = done;
 
@@ -334,11 +450,16 @@ describe('IDBObjectStore.put', function() {
             store.put({foo: 'bar'}, key2);
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    assert.fail(true, true, 'Error getting all');
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 // The table should contain two records
                 expect(allData).to.have.lengthOf(2);
                 expect(allData).to.deep.equal([
@@ -352,9 +473,14 @@ describe('IDBObjectStore.put', function() {
         });
     });
 
-    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should distinguish between very-long compound keys (890+ characters)', function(done) {
+    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should distinguish between very-long compound keys (890+ characters)', function (done) {
         // BUG: IE's IndexedDB truncates string keys at 889 characters
-        util.createDatabase('out-of-line', function(err, db) {
+        util.createDatabase('out-of-line', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line', 'readwrite');
             tx.onerror = done;
 
@@ -364,11 +490,16 @@ describe('IDBObjectStore.put', function() {
             store.put({foo: 'bar'}, [veryLongString, 1, 2, 3, 4, 6]);   // idbModules.Key encodes this as an 925-character string
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    assert.fail(true, true, 'Error getting all');
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 // The table should contain two records
                 expect(allData).to.have.lengthOf(2);
                 expect(allData).to.deep.equal([
@@ -382,9 +513,14 @@ describe('IDBObjectStore.put', function() {
         });
     });
 
-    util.skipIf(env.browser.isIE && env.isNative, 'should distinguish between compound keys under 890 total characters', function(done) {
+    util.skipIf(env.browser.isIE && env.isNative, 'should distinguish between compound keys under 890 total characters', function (done) {
         // BUG: IE's IndexedDB truncates string keys at 889 characters
-        util.createDatabase('out-of-line', function(err, db) {
+        util.createDatabase('out-of-line', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line', 'readwrite');
             tx.onerror = done;
 
@@ -393,11 +529,16 @@ describe('IDBObjectStore.put', function() {
             store.put({foo: 'bar'}, [1, 2, 3, 5]);   // idbModules.Key encodes this as an 844-character string
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    assert.fail(true, true, 'Error getting all');
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 // The table should contain two records
                 expect(allData).to.have.lengthOf(2);
                 expect(allData).to.deep.equal([

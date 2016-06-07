@@ -1,44 +1,55 @@
-describe('IDBFactory.open', function() {
+/* eslint-disable no-var */
+describe('IDBFactory.open', function () {
     'use strict';
 
     var indexedDB;
-    beforeEach(function() {
+    beforeEach(function () {
         indexedDB = env.indexedDB;
     });
 
-    describe('success tests', function() {
-        it('should return an IDBOpenDBRequest', function(done) {
-            util.generateDatabaseName(function(err, name) {
+    describe('success tests', function () {
+        it('should return an IDBOpenDBRequest', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database name');
+                    done();
+                    return;
+                }
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 expect(open).to.be.an.instanceOf(IDBOpenDBRequest);
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     open.result.close();
                     done();
                 };
             });
         });
 
-        it('should have a reference to the upgrade transaction', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should have a reference to the upgrade transaction', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database name');
+                    done();
+                    return;
+                }
                 var tx;
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 // The transaction property is null initially
-                expect(open.transaction).to.be.null;
+                expect(open.transaction).equal(null);
 
-                open.onupgradeneeded = function() {
+                open.onupgradeneeded = function () {
                     // The transaction property is an IDBTransaction during the onupgradeneeded event
                     expect(open.transaction).to.be.an.instanceOf(IDBTransaction);
                     tx = open.transaction;
                 };
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     // The transaction property is null again in the onsuccess event
-                    expect(open.transaction).to.be.null;
+                    expect(open.transaction).equal(null);
                     expect(tx).to.be.an.instanceOf(IDBTransaction);
 
                     open.result.close();
@@ -47,16 +58,21 @@ describe('IDBFactory.open', function() {
             });
         });
 
-        it('should pass an IDBVersionChangeEvent to the onupgradeneeded event', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should pass an IDBVersionChangeEvent to the onupgradeneeded event', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database name');
+                    done();
+                    return;
+                }
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = sinon.spy(function(event) {
+                open.onupgradeneeded = sinon.spy(function (event) {
                     expect(event).to.be.an.instanceOf(IDBVersionChangeEvent);
                 });
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     sinon.assert.calledOnce(open.onupgradeneeded);
                     open.result.close();
                     done();
@@ -64,12 +80,17 @@ describe('IDBFactory.open', function() {
             });
         });
 
-        it('should pass the IDBOpenDBRequest to the onsuccess event', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should pass the IDBOpenDBRequest to the onsuccess event', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database name');
+                    done();
+                    return;
+                }
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onsuccess = function(event) {
+                open.onsuccess = function (event) {
                     expect(event).to.be.an.instanceOf(env.Event);
                     expect(event.target).to.equal(open);
                     open.result.close();
@@ -78,12 +99,17 @@ describe('IDBFactory.open', function() {
             });
         });
 
-        it('should set the IDBOpenDBRequest.result to the database', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should set the IDBOpenDBRequest.result to the database', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database name');
+                    done();
+                    return;
+                }
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     expect(open.result).to.be.an.instanceOf(IDBDatabase);
                     expect(open.result.name).to.equal(name);
 
@@ -93,11 +119,16 @@ describe('IDBFactory.open', function() {
             });
         });
 
-        it('should populate all IDBDatabase properties', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should populate all IDBDatabase properties', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database name');
+                    done();
+                    return;
+                }
                 var open = indexedDB.open(name, 1);
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     var db = open.result;
                     expect(db.name).to.equal(name);
                     expect(db.version).to.equal(1);
@@ -109,12 +140,17 @@ describe('IDBFactory.open', function() {
             });
         });
 
-        it('should open (and create) a new database', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should open (and create) a new database', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database name');
+                    done();
+                    return;
+                }
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = sinon.spy(function(event) {
+                open.onupgradeneeded = sinon.spy(function (event) {
                     var db = event.target.result;
 
                     expect(db.version).to.equal(1);
@@ -124,7 +160,7 @@ describe('IDBFactory.open', function() {
                     }
                 });
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     sinon.assert.calledOnce(open.onupgradeneeded);
                     open.result.close();
                     done();
@@ -132,12 +168,17 @@ describe('IDBFactory.open', function() {
             });
         });
 
-        it('should open (and create) a new database without specifying version number', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should open (and create) a new database without specifying version number', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database name');
+                    done();
+                    return;
+                }
                 var open = indexedDB.open(name);                // <--- No version number
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = sinon.spy(function(event) {
+                open.onupgradeneeded = sinon.spy(function (event) {
                     var db = event.target.result;
                     expect(db.version).to.equal(1);
                     if (env.isShimmed || !env.browser.isSafari) {
@@ -146,7 +187,7 @@ describe('IDBFactory.open', function() {
                     }
                 });
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     sinon.assert.calledOnce(open.onupgradeneeded);
                     open.result.close();
                     done();
@@ -154,15 +195,20 @@ describe('IDBFactory.open', function() {
             });
         });
 
-        it('should upgrade an existing database by one version', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should upgrade an existing database by one version', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database name');
+                    done();
+                    return;
+                }
                 createVersion1();
 
-                function createVersion1() {
+                function createVersion1 () {
                     var open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
 
-                    open.onupgradeneeded = sinon.spy(function(event) {
+                    open.onupgradeneeded = sinon.spy(function (event) {
                         var db = event.target.result;
                         expect(db.version).to.equal(1);
                         expect(event.newVersion).to.equal(1);
@@ -171,7 +217,7 @@ describe('IDBFactory.open', function() {
                         }
                     });
 
-                    open.onsuccess = function() {
+                    open.onsuccess = function () {
                         sinon.assert.calledOnce(open.onupgradeneeded);
                         expect(open.result.version).to.equal(1);
                         open.result.close();
@@ -179,18 +225,18 @@ describe('IDBFactory.open', function() {
                     };
                 }
 
-                function createVersion2() {
+                function createVersion2 () {
                     var open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
 
-                    open.onupgradeneeded = sinon.spy(function(event) {
+                    open.onupgradeneeded = sinon.spy(function (event) {
                         var db = event.target.result;
                         expect(db.version).to.equal(2);
                         expect(event.oldVersion).to.equal(1);
                         expect(event.newVersion).to.equal(2);
                     });
 
-                    open.onsuccess = function() {
+                    open.onsuccess = function () {
                         sinon.assert.calledOnce(open.onupgradeneeded);
                         open.result.close();
                         done();
@@ -199,15 +245,20 @@ describe('IDBFactory.open', function() {
             });
         });
 
-        it('should upgrade an existing database by multiple versions', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should upgrade an existing database by multiple versions', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database name');
+                    done();
+                    return;
+                }
                 createVersion1();
 
-                function createVersion1() {
+                function createVersion1 () {
                     var open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
 
-                    open.onupgradeneeded = sinon.spy(function(event) {
+                    open.onupgradeneeded = sinon.spy(function (event) {
                         var db = event.target.result;
                         expect(db.version).to.equal(1);
                         expect(event.newVersion).to.equal(1);
@@ -216,7 +267,7 @@ describe('IDBFactory.open', function() {
                         }
                     });
 
-                    open.onsuccess = function() {
+                    open.onsuccess = function () {
                         sinon.assert.calledOnce(open.onupgradeneeded);
                         expect(open.result.version).to.equal(1);
                         open.result.close();
@@ -224,36 +275,36 @@ describe('IDBFactory.open', function() {
                     };
                 }
 
-                function createVersion2() {
+                function createVersion2 () {
                     var open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
 
-                    open.onupgradeneeded = sinon.spy(function(event) {
+                    open.onupgradeneeded = sinon.spy(function (event) {
                         var db = event.target.result;
                         expect(db.version).to.equal(2);
                         expect(event.oldVersion).to.equal(1);
                         expect(event.newVersion).to.equal(2);
                     });
 
-                    open.onsuccess = function() {
+                    open.onsuccess = function () {
                         sinon.assert.calledOnce(open.onupgradeneeded);
                         open.result.close();
                         setTimeout(createVersion3, 50);
                     };
                 }
 
-                function createVersion3() {
+                function createVersion3 () {
                     var open = indexedDB.open(name, 3);
                     open.onerror = open.onblocked = done;
 
-                    open.onupgradeneeded = sinon.spy(function(event) {
+                    open.onupgradeneeded = sinon.spy(function (event) {
                         var db = event.target.result;
                         expect(db.version).to.equal(3);
                         expect(event.oldVersion).to.equal(2);
                         expect(event.newVersion).to.equal(3);
                     });
 
-                    open.onsuccess = function() {
+                    open.onsuccess = function () {
                         sinon.assert.calledOnce(open.onupgradeneeded);
                         open.result.close();
                         done();
@@ -262,15 +313,20 @@ describe('IDBFactory.open', function() {
             });
         });
 
-        it('should upgrade an existing database by multiple versions at once', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should upgrade an existing database by multiple versions at once', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database name');
+                    done();
+                    return;
+                }
                 createVersion1();
 
-                function createVersion1() {
+                function createVersion1 () {
                     var open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
 
-                    open.onupgradeneeded = sinon.spy(function(event) {
+                    open.onupgradeneeded = sinon.spy(function (event) {
                         var db = event.target.result;
                         expect(db.version).to.equal(1);
                         expect(event.newVersion).to.equal(1);
@@ -279,7 +335,7 @@ describe('IDBFactory.open', function() {
                         }
                     });
 
-                    open.onsuccess = function() {
+                    open.onsuccess = function () {
                         sinon.assert.calledOnce(open.onupgradeneeded);
                         expect(open.result.version).to.equal(1);
                         open.result.close();
@@ -287,18 +343,18 @@ describe('IDBFactory.open', function() {
                     };
                 }
 
-                function createVersion5() {
+                function createVersion5 () {
                     var open = indexedDB.open(name, 5);
                     open.onerror = open.onblocked = done;
 
-                    open.onupgradeneeded = sinon.spy(function(event) {
+                    open.onupgradeneeded = sinon.spy(function (event) {
                         var db = event.target.result;
                         expect(db.version).to.equal(5);
                         expect(event.oldVersion).to.equal(1);
                         expect(event.newVersion).to.equal(5);
                     });
 
-                    open.onsuccess = function() {
+                    open.onsuccess = function () {
                         sinon.assert.calledOnce(open.onupgradeneeded);  // <-- only called once, not five times
                         open.result.close();
                         done();
@@ -308,28 +364,33 @@ describe('IDBFactory.open', function() {
         });
     });
 
-    describe('failure tests', function() {
-        it('should not allow databases to be downgraded', function(done) {
-            util.generateDatabaseName(function(err, name) {
+    describe('failure tests', function () {
+        it('should not allow databases to be downgraded', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database name');
+                    done();
+                    return;
+                }
                 createVersion7();
 
-                function createVersion7() {
+                function createVersion7 () {
                     var open = indexedDB.open(name, 7);
                     open.onerror = open.onblocked = done;
-                    open.onsuccess = function() {
+                    open.onsuccess = function () {
                         expect(open.result.version).to.equal(7);
                         open.result.close();
                         setTimeout(createVersion4, 50);
                     };
                 }
 
-                function createVersion4() {
+                function createVersion4 () {
                     var open = indexedDB.open(name, 4);
                     open.onupgradeneeded = sinon.spy();
                     open.onsuccess = sinon.spy();
                     open.onblocked = sinon.spy();
 
-                    open.onerror = function() {
+                    open.onerror = function () {
                         sinon.assert.notCalled(open.onupgradeneeded);
                         sinon.assert.notCalled(open.onsuccess);
                         sinon.assert.notCalled(open.onblocked);
@@ -344,12 +405,11 @@ describe('IDBFactory.open', function() {
             });
         });
 
-        it('should throw an error if called without params', function() {
+        it('should throw an error if called without params', function () {
             var err;
             try {
                 indexedDB.open();
-            }
-            catch (e) {
+            } catch (e) {
                 err = e;
             }
 
@@ -357,7 +417,7 @@ describe('IDBFactory.open', function() {
             expect(err.name).to.equal('TypeError');
         });
 
-        it('should not allow these version numbers', function() {
+        it('should not allow these version numbers', function () {
             tryToOpen('');
             tryToOpen(util.sampleData.veryLongString);
             tryToOpen('foobar');
@@ -376,13 +436,12 @@ describe('IDBFactory.open', function() {
                 tryToOpen(['a', 'b', 'c']);
             }
 
-            function tryToOpen(version) {
+            function tryToOpen (version) {
                 var err = null;
 
                 try {
                     indexedDB.open('test', version);
-                }
-                catch (e) {
+                } catch (e) {
                     err = e;
                 }
 

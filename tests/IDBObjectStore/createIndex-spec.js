@@ -1,18 +1,24 @@
-describe('IDBObjectStore.createIndex', function() {
+/* eslint-disable no-var */
+describe('IDBObjectStore.createIndex', function () {
     'use strict';
 
     var indexedDB;
-    beforeEach(function() {
+    beforeEach(function () {
         indexedDB = env.indexedDB;
     });
 
-    describe('success tests', function() {
-        it('should create an index with default properties', function(done) {
-            util.generateDatabaseName(function(err, name) {
+    describe('success tests', function () {
+        it('should create an index with default properties', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database');
+                    done();
+                    return;
+                }
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = sinon.spy(function(event) {
+                open.onupgradeneeded = sinon.spy(function (event) {
                     var db = event.target.result;
                     var store = db.createObjectStore('My Store');
                     var index = store.createIndex('My Index', 'foo.bar.baz');
@@ -21,13 +27,13 @@ describe('IDBObjectStore.createIndex', function() {
                     expect(index.objectStore).to.be.an.instanceOf(IDBObjectStore).and.equal(store);
                     expect(index.name).to.equal('My Index');
                     expect(index.keyPath).to.equal('foo.bar.baz');
-                    expect(index.unique).to.be.false;
+                    expect(index.unique).equal(false);
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(index.multiEntry).to.be.false;    // IE doesn't have this property
+                        expect(index.multiEntry).equal(false);    // IE doesn't have this property
                     }
                 });
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     sinon.assert.calledOnce(open.onupgradeneeded);
                     open.result.close();
                     done();
@@ -35,12 +41,17 @@ describe('IDBObjectStore.createIndex', function() {
             });
         });
 
-        it('should create a unique index', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should create a unique index', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database');
+                    done();
+                    return;
+                }
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = sinon.spy(function(event) {
+                open.onupgradeneeded = sinon.spy(function (event) {
                     var db = event.target.result;
                     var store = db.createObjectStore('My Store');
                     var index = store.createIndex('My Index', 'foo.bar.baz', {unique: true});
@@ -49,13 +60,13 @@ describe('IDBObjectStore.createIndex', function() {
                     expect(index.objectStore).to.be.an.instanceOf(IDBObjectStore).and.equal(store);
                     expect(index.name).to.equal('My Index');
                     expect(index.keyPath).to.equal('foo.bar.baz');
-                    expect(index.unique).to.be.true;
+                    expect(index.unique).equal(true);
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(index.multiEntry).to.be.false;    // IE doesn't have this property
+                        expect(index.multiEntry).equal(false);    // IE doesn't have this property
                     }
                 });
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     sinon.assert.calledOnce(open.onupgradeneeded);
                     open.result.close();
                     done();
@@ -63,12 +74,17 @@ describe('IDBObjectStore.createIndex', function() {
             });
         });
 
-        it('should create a multi-entry index', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should create a multi-entry index', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database');
+                    done();
+                    return;
+                }
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = sinon.spy(function(event) {
+                open.onupgradeneeded = sinon.spy(function (event) {
                     var db = event.target.result;
                     var store = db.createObjectStore('My Store');
                     var index = store.createIndex('My Index', 'foo.bar.baz', {multiEntry: true});
@@ -77,13 +93,13 @@ describe('IDBObjectStore.createIndex', function() {
                     expect(index.objectStore).to.be.an.instanceOf(IDBObjectStore).and.equal(store);
                     expect(index.name).to.equal('My Index');
                     expect(index.keyPath).to.equal('foo.bar.baz');
-                    expect(index.unique).to.be.false;
+                    expect(index.unique).equal(false);
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(index.multiEntry).to.be.true;    // IE doesn't have this property
+                        expect(index.multiEntry).equal(true);    // IE doesn't have this property
                     }
                 });
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     sinon.assert.calledOnce(open.onupgradeneeded);
                     open.result.close();
                     done();
@@ -91,12 +107,17 @@ describe('IDBObjectStore.createIndex', function() {
             });
         });
 
-        it('should create a unique, multi-entry index', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should create a unique, multi-entry index', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database');
+                    done();
+                    return;
+                }
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = sinon.spy(function(event) {
+                open.onupgradeneeded = sinon.spy(function (event) {
                     var db = event.target.result;
                     var store = db.createObjectStore('My Store');
                     var index = store.createIndex('My Index', 'foo.bar.baz', {unique: true, multiEntry: true});
@@ -105,13 +126,13 @@ describe('IDBObjectStore.createIndex', function() {
                     expect(index.objectStore).to.be.an.instanceOf(IDBObjectStore).and.equal(store);
                     expect(index.name).to.equal('My Index');
                     expect(index.keyPath).to.equal('foo.bar.baz');
-                    expect(index.unique).to.be.true;
+                    expect(index.unique).equal(true);
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(index.multiEntry).to.be.true;    // IE doesn't have this property
+                        expect(index.multiEntry).equal(true);    // IE doesn't have this property
                     }
                 });
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     sinon.assert.calledOnce(open.onupgradeneeded);
                     open.result.close();
                     done();
@@ -119,15 +140,20 @@ describe('IDBObjectStore.createIndex', function() {
             });
         });
 
-        it('should create new indexes in an existing database', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should create new indexes in an existing database', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database');
+                    done();
+                    return;
+                }
                 createVersion1();
 
-                function createVersion1() {
+                function createVersion1 () {
                     var open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
 
-                    open.onupgradeneeded = sinon.spy(function(event) {
+                    open.onupgradeneeded = sinon.spy(function (event) {
                         var db = event.target.result;
                         var store = db.createObjectStore('My Store');
                         store.createIndex('My Index 1', 'foo');
@@ -137,17 +163,17 @@ describe('IDBObjectStore.createIndex', function() {
                             .to.have.same.members(['My Index 1', 'My Index 2']);
                     });
 
-                    open.onsuccess = function() {
+                    open.onsuccess = function () {
                         open.result.close();
                         setTimeout(createVersion2, 50);
                     };
                 }
 
-                function createVersion2() {
+                function createVersion2 () {
                     var open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
 
-                    open.onupgradeneeded = sinon.spy(function(event) {
+                    open.onupgradeneeded = sinon.spy(function (event) {
                         var store = open.transaction.objectStore('My Store');
 
                         expect(Array.prototype.slice.call(store.indexNames))
@@ -163,7 +189,7 @@ describe('IDBObjectStore.createIndex', function() {
                         }
                     });
 
-                    open.onsuccess = function() {
+                    open.onsuccess = function () {
                         sinon.assert.calledOnce(open.onupgradeneeded);
                         open.result.close();
                         done();
@@ -172,30 +198,30 @@ describe('IDBObjectStore.createIndex', function() {
             });
         });
 
-        it('should persist the schema across database sessions', function(done) {
+        it('should persist the schema across database sessions', function (done) {
             // Create a database schema, then close the database
             util.createDatabase(
                 'out-of-line', 'inline-index', 'unique-index', 'multi-entry-index',
                 'unique-multi-entry-index', 'dotted-index', 'compound-index', 'compound-index-unique',
-                function(err, db) {
+                function (err, db) {
                     if (err) return done(err);
                     db.close();
-                    setTimeout(function() {
+                    setTimeout(function () {
                         verifyDatabaseSchema(db.name);
                     }, 50);
                 }
             );
 
             // Re-open the database, and verify that the schema is the same
-            function verifyDatabaseSchema(name) {
+            function verifyDatabaseSchema (name) {
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     var db = open.result;
                     var tx = db.transaction('out-of-line');
                     var store = tx.objectStore('out-of-line');
-                    tx.onerror = tx.onabort = function(event) {
+                    tx.onerror = tx.onabort = function (event) {
                         done(event.target.error);
                     };
 
@@ -219,14 +245,14 @@ describe('IDBObjectStore.createIndex', function() {
                         verifySchema(store.index('compound-index-unique'), {name: 'compound-index-unique', objectStore: store, keyPath: ['id', 'name.first', 'name.last'], multiEntry: false, unique: true});
                     }
 
-                    tx.oncomplete = function() {
+                    tx.oncomplete = function () {
                         db.close();
                         done();
                     };
                 };
             }
 
-            function verifySchema(obj, schema) {
+            function verifySchema (obj, schema) {
                 for (var prop in schema) {
                     var objValue = obj[prop];
                     var schemaValue = schema[prop];
@@ -246,20 +272,19 @@ describe('IDBObjectStore.createIndex', function() {
         });
     });
 
-    describe('failure tests', function() {
-        it('should throw an error if called without params', function(done) {
-            util.generateDatabaseName(function(err, name) {
+    describe('failure tests', function () {
+        it('should throw an error if called without params', function (done) {
+            util.generateDatabaseName(function (err, name) {
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = sinon.spy(function(event) {
+                open.onupgradeneeded = sinon.spy(function (event) {
                     var db = event.target.result;
                     var store = db.createObjectStore('My Store');
 
                     try {
                         store.createIndex();
-                    }
-                    catch (e) {
+                    } catch (e) {
                         err = e;
                     }
 
@@ -267,7 +292,7 @@ describe('IDBObjectStore.createIndex', function() {
                     expect(err.name).to.equal('TypeError');
                 });
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     sinon.assert.calledOnce(open.onupgradeneeded);
                     open.result.close();
                     done();
@@ -275,19 +300,18 @@ describe('IDBObjectStore.createIndex', function() {
             });
         });
 
-        it('should throw an error if called without a keyPath', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should throw an error if called without a keyPath', function (done) {
+            util.generateDatabaseName(function (err, name) {
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = sinon.spy(function(event) {
+                open.onupgradeneeded = sinon.spy(function (event) {
                     var db = event.target.result;
                     var store = db.createObjectStore('My Store');
 
                     try {
                         store.createIndex('My Index');
-                    }
-                    catch (e) {
+                    } catch (e) {
                         err = e;
                     }
 
@@ -295,7 +319,7 @@ describe('IDBObjectStore.createIndex', function() {
                     expect(err.name).to.equal('TypeError');
                 });
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     sinon.assert.calledOnce(open.onupgradeneeded);
                     open.result.close();
                     done();
@@ -303,31 +327,30 @@ describe('IDBObjectStore.createIndex', function() {
             });
         });
 
-        util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should throw an error if called with an array keyPath with multiEntry true', function(done) {
+        util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should throw an error if called with an array keyPath with multiEntry true', function (done) {
             // BUG: IE's native IndexedDB does not support multi-entry indexes
-            util.generateDatabaseName(function(err, name) {
+            util.generateDatabaseName(function (err, name) {
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = sinon.spy(function(event) {
+                open.onupgradeneeded = sinon.spy(function (event) {
                     var db = event.target.result;
                     var store = db.createObjectStore('My Store');
 
                     try {
                         store.createIndex('My Index', ['id', 'Name'], { multiEntry: true });
-                    }
-                    catch (e) {
+                    } catch (e) {
                         err = e;
                     }
 
                     if (env.isShimmed || !env.browser.isIE) {
                         expect(err).to.be.an.instanceOf(env.DOMException);  // The IE polyfill throws a normal Error
                     }
-                    expect(err).to.be.ok;
+                    assert.isOk(err);
                     expect(err.name).to.equal('InvalidAccessError');
                 });
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     sinon.assert.calledOnce(open.onupgradeneeded);
                     open.result.close();
                     done();
@@ -335,20 +358,19 @@ describe('IDBObjectStore.createIndex', function() {
             });
         });
 
-        it('should throw an error if the index was already created in the same transaction', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should throw an error if the index was already created in the same transaction', function (done) {
+            util.generateDatabaseName(function (err, name) {
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = sinon.spy(function(event) {
+                open.onupgradeneeded = sinon.spy(function (event) {
                     var db = event.target.result;
                     var store = db.createObjectStore('My Store');
                     store.createIndex('My Index', 'foo');
 
                     try {
                         store.createIndex('My Index', 'bar');
-                    }
-                    catch (e) {
+                    } catch (e) {
                         err = e;
                     }
 
@@ -356,7 +378,7 @@ describe('IDBObjectStore.createIndex', function() {
                     expect(err.name).to.equal('ConstraintError');
                 });
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     sinon.assert.calledOnce(open.onupgradeneeded);
                     open.result.close();
                     done();
@@ -364,37 +386,36 @@ describe('IDBObjectStore.createIndex', function() {
             });
         });
 
-        it('should throw an error if the index was already created in a previous transaction', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should throw an error if the index was already created in a previous transaction', function (done) {
+            util.generateDatabaseName(function (err, name) {
                 createVersion1();
 
-                function createVersion1() {
+                function createVersion1 () {
                     var open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
 
-                    open.onupgradeneeded = sinon.spy(function(event) {
+                    open.onupgradeneeded = sinon.spy(function (event) {
                         var db = event.target.result;
                         var store = db.createObjectStore('My Store');
                         store.createIndex('My Index', 'foo');
                     });
 
-                    open.onsuccess = function() {
+                    open.onsuccess = function () {
                         open.result.close();
                         setTimeout(createVersion2, 50);
                     };
                 }
 
-                function createVersion2() {
+                function createVersion2 () {
                     var open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
 
-                    open.onupgradeneeded = sinon.spy(function(event) {
+                    open.onupgradeneeded = sinon.spy(function (event) {
                         var store = open.transaction.objectStore('My Store');
 
                         try {
                             store.createIndex('My Index', 'bar');
-                        }
-                        catch (e) {
+                        } catch (e) {
                             err = e;
                         }
 
@@ -402,7 +423,7 @@ describe('IDBObjectStore.createIndex', function() {
                         expect(err.name).to.equal('ConstraintError');
                     });
 
-                    open.onsuccess = function() {
+                    open.onsuccess = function () {
                         sinon.assert.calledOnce(open.onupgradeneeded);
                         open.result.close();
                         done();

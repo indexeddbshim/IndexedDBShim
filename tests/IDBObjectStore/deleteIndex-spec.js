@@ -1,27 +1,33 @@
-describe('IDBObjectStore.deleteIndex', function() {
+/* eslint-disable no-var */
+describe('IDBObjectStore.deleteIndex', function () {
     'use strict';
 
     var indexedDB;
-    beforeEach(function() {
+    beforeEach(function () {
         indexedDB = env.indexedDB;
     });
 
-    describe('success tests', function() {
-        it('should return undefined', function(done) {
-            util.generateDatabaseName(function(err, name) {
+    describe('success tests', function () {
+        it('should return undefined', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database name');
+                    done();
+                    return;
+                }
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = sinon.spy(function(event) {
+                open.onupgradeneeded = sinon.spy(function (event) {
                     var db = event.target.result;
                     var store = db.createObjectStore('My Store');
                     store.createIndex('My Index', 'foo');
                     var result = store.deleteIndex('My Index');
 
-                    expect(result).to.be.undefined;
+                    expect(result).equal(undefined);
                 });
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     sinon.assert.calledOnce(open.onupgradeneeded);
                     open.result.close();
                     done();
@@ -29,12 +35,17 @@ describe('IDBObjectStore.deleteIndex', function() {
             });
         });
 
-        it('should delete an index that was created in the same transaction', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should delete an index that was created in the same transaction', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database name');
+                    done();
+                    return;
+                }
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = sinon.spy(function(event) {
+                open.onupgradeneeded = sinon.spy(function (event) {
                     var db = event.target.result;
                     var store = db.createObjectStore('My Store');
                     store.createIndex('My Index 1', 'foo');
@@ -49,7 +60,7 @@ describe('IDBObjectStore.deleteIndex', function() {
                         .to.have.same.members(['My Index 1']);
                 });
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     sinon.assert.calledOnce(open.onupgradeneeded);
                     open.result.close();
                     done();
@@ -57,16 +68,21 @@ describe('IDBObjectStore.deleteIndex', function() {
             });
         });
 
-        it('should delete an index that was created in a previous transaction', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should delete an index that was created in a previous transaction', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database name');
+                    done();
+                    return;
+                }
                 transaction1();
 
                 // Create some indexes
-                function transaction1() {
+                function transaction1 () {
                     var open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
 
-                    open.onupgradeneeded = function(event) {
+                    open.onupgradeneeded = function (event) {
                         var db = event.target.result;
                         var store = db.createObjectStore('My Store');
                         store.createIndex('My Index 1', 'foo');
@@ -74,19 +90,19 @@ describe('IDBObjectStore.deleteIndex', function() {
                         store.createIndex('My Index 3', 'foo');
                     };
 
-                    open.onsuccess = function() {
+                    open.onsuccess = function () {
                         open.result.close();
                         setTimeout(transaction2, 50);
                     };
                 }
 
                 // Delete an index
-                function transaction2() {
+                function transaction2 () {
                     var open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
 
-                    open.onupgradeneeded = sinon.spy(function(event) {
-                        var db = event.target.result;
+                    open.onupgradeneeded = sinon.spy(function (event) {
+                        // var db = event.target.result;
                         var store = open.transaction.objectStore('My Store');
 
                         expect(Array.prototype.slice.call(store.indexNames))
@@ -98,7 +114,7 @@ describe('IDBObjectStore.deleteIndex', function() {
                             .to.have.same.members(['My Index 1', 'My Index 3']);
                     });
 
-                    open.onsuccess = function() {
+                    open.onsuccess = function () {
                         sinon.assert.calledOnce(open.onupgradeneeded);
                         open.result.close();
                         done();
@@ -107,21 +123,26 @@ describe('IDBObjectStore.deleteIndex', function() {
             });
         });
 
-        it('should be able to re-create an index that was deleted', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should be able to re-create an index that was deleted', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database name');
+                    done();
+                    return;
+                }
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = sinon.spy(function() {
+                open.onupgradeneeded = sinon.spy(function () {
                     var db = open.result;
                     var store = db.createObjectStore('My Store');
 
                     store.createIndex('My Index', 'foo');
                     var index1 = store.index('My Index');
                     expect(index1.keyPath).to.equal('foo');
-                    expect(index1.unique).to.be.false;
+                    expect(index1.unique).equal(false);
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(index1.multiEntry).to.be.false;   // IE doesn't have this property
+                        expect(index1.multiEntry).equal(false);   // IE doesn't have this property
                     }
 
                     store.deleteIndex('My Index');
@@ -129,13 +150,13 @@ describe('IDBObjectStore.deleteIndex', function() {
                     var index2 = store.index('My Index');
                     expect(index2).not.to.equal(index1);
                     expect(index2.keyPath).to.equal('bar');
-                    expect(index2.unique).to.be.true;
+                    expect(index2.unique).equal(true);
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(index2.multiEntry).to.be.true;   // IE doesn't have this property
+                        expect(index2.multiEntry).equal(true);   // IE doesn't have this property
                     }
                 });
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     sinon.assert.calledOnce(open.onupgradeneeded);
                     open.result.close();
                     done();
@@ -143,46 +164,51 @@ describe('IDBObjectStore.deleteIndex', function() {
             });
         });
 
-        it('should persist the schema across database sessions', function(done) {
+        it('should persist the schema across database sessions', function (done) {
             // Create a database schema, then close the database
             util.createDatabase(
                 'out-of-line', 'inline-index', 'unique-index', 'multi-entry-index',
                 'unique-multi-entry-index', 'dotted-index', 'compound-index', 'compound-index-unique',
-                function(err, db) {
+                function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     db.close();
-                    setTimeout(function() {
+                    setTimeout(function () {
                         deleteObjectStores(db.name);
                     }, 50);
                 }
             );
 
             // Re-open the database, delete some indexes, then close the database
-            function deleteObjectStores(name) {
+            function deleteObjectStores (name) {
                 var open = indexedDB.open(name, 2);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = function() {
-                    var db = open.result;
+                open.onupgradeneeded = function () {
+                    // var db = open.result;
                     var store = open.transaction.objectStore('out-of-line');
                     store.deleteIndex('inline-index');
                     store.deleteIndex('dotted-index');
                 };
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     var db = open.result;
                     db.close();
-                    setTimeout(function() {
+                    setTimeout(function () {
                         verifyDatabaseSchema(db.name);
                     }, 50);
                 };
             }
 
             // Re-open the database, and verify that the indexes are gone
-            function verifyDatabaseSchema(name) {
+            function verifyDatabaseSchema (name) {
                 var open = indexedDB.open(name, 2);
                 open.onerror = open.onblocked = done;
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     var db = open.result;
                     var tx = db.transaction('out-of-line');
                     var store = tx.objectStore('out-of-line');
@@ -206,14 +232,14 @@ describe('IDBObjectStore.deleteIndex', function() {
                         verifySchema(store.index('compound-index-unique'), {name: 'compound-index-unique', objectStore: store, keyPath: ['id', 'name.first', 'name.last'], multiEntry: false, unique: true});
                     }
 
-                    tx.oncomplete = function() {
+                    tx.oncomplete = function () {
                         db.close();
                         done();
                     };
                 };
             }
 
-            function verifySchema(obj, schema) {
+            function verifySchema (obj, schema) {
                 for (var prop in schema) {
                     var objValue = obj[prop];
                     var schemaValue = schema[prop];
@@ -233,20 +259,19 @@ describe('IDBObjectStore.deleteIndex', function() {
         });
     });
 
-    describe('failure tests', function() {
-        it('should throw an error if the index does not exist', function(done) {
-            util.generateDatabaseName(function(err, name) {
+    describe('failure tests', function () {
+        it('should throw an error if the index does not exist', function (done) {
+            util.generateDatabaseName(function (err, name) {
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = sinon.spy(function(event) {
+                open.onupgradeneeded = sinon.spy(function (event) {
                     var db = event.target.result;
                     var store = db.createObjectStore('My Store');
 
                     try {
                         store.deleteIndex('My Index');
-                    }
-                    catch (e) {
+                    } catch (e) {
                         err = e;
                     }
 
@@ -254,7 +279,7 @@ describe('IDBObjectStore.deleteIndex', function() {
                     expect(err.name).to.equal('NotFoundError');
                 });
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     sinon.assert.calledOnce(open.onupgradeneeded);
                     open.result.close();
                     done();
@@ -262,19 +287,18 @@ describe('IDBObjectStore.deleteIndex', function() {
             });
         });
 
-        it('should throw an error if called without params', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should throw an error if called without params', function (done) {
+            util.generateDatabaseName(function (err, name) {
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = sinon.spy(function(event) {
+                open.onupgradeneeded = sinon.spy(function (event) {
                     var db = event.target.result;
                     var store = db.createObjectStore('My Store');
 
                     try {
                         store.deleteIndex();
-                    }
-                    catch (e) {
+                    } catch (e) {
                         err = e;
                     }
 
@@ -282,7 +306,7 @@ describe('IDBObjectStore.deleteIndex', function() {
                     expect(err.name).to.equal('TypeError');
                 });
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     sinon.assert.calledOnce(open.onupgradeneeded);
                     open.result.close();
                     done();

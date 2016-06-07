@@ -1,8 +1,14 @@
-describe('IDBObjectStore.clear', function() {
+/* eslint-disable no-var */
+describe('IDBObjectStore.clear', function () {
     'use strict';
 
-    it('should return an IDBRequest', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should return an IDBRequest', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
@@ -10,15 +16,20 @@ describe('IDBObjectStore.clear', function() {
             var clear = store.clear();
             expect(clear).to.be.an.instanceOf(IDBRequest);
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 db.close();
                 done();
             };
         });
     });
 
-    it('should pass the IDBRequest event to the onsuccess callback', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should pass the IDBRequest event to the onsuccess callback', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
@@ -26,12 +37,12 @@ describe('IDBObjectStore.clear', function() {
             var clear = store.clear();
             clear.onerror = done;
 
-            clear.onsuccess = sinon.spy(function(event) {
+            clear.onsuccess = sinon.spy(function (event) {
                 expect(event).to.be.an.instanceOf(env.Event);
                 expect(event.target).to.equal(clear);
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 sinon.assert.calledOnce(clear.onsuccess);
                 db.close();
                 done();
@@ -39,19 +50,24 @@ describe('IDBObjectStore.clear', function() {
         });
     });
 
-    it('should set the IDBRequest.result to undefined', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should set the IDBRequest.result to undefined', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
             var store = tx.objectStore('inline');
             var clear = store.clear();
 
-            clear.onsuccess = sinon.spy(function() {
-                expect(clear.result).to.be.undefined;
+            clear.onsuccess = sinon.spy(function () {
+                expect(clear.result).equal(undefined);
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 sinon.assert.calledOnce(clear.onsuccess);
                 db.close();
                 done();
@@ -59,8 +75,13 @@ describe('IDBObjectStore.clear', function() {
         });
     });
 
-    it('should clear all records', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should clear all records', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var allData, clearedData, clear;
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
@@ -72,19 +93,29 @@ describe('IDBObjectStore.clear', function() {
             store.add({id: 4});
             store.add({id: 5});
 
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    assert.fail(true, true, 'Error getting all');
+                    done();
+                    return;
+                }
                 allData = data;
 
                 clear = store.clear();
                 clear.onerror = done;
                 clear.onsuccess = sinon.spy();
 
-                util.getAll(store, function(err, data) {
+                util.getAll(store, function (err, data) {
+                    if (err) {
+                        assert.fail(true, true, 'Error getting all');
+                        done();
+                        return;
+                    }
                     clearedData = data;
                 });
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 // Make sure all 5 records existed before the clear
                 expect(allData).to.have.same.deep.members([
                     {primaryKey: 1, key: 1, value: {id: 1}},
@@ -104,13 +135,18 @@ describe('IDBObjectStore.clear', function() {
         });
     });
 
-    it('should clear all records from previous transactions', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should clear all records from previous transactions', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var allData, clearedData, cleared = sinon.spy();
 
             transaction1();
 
-            function transaction1() {
+            function transaction1 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
                 tx.onerror = done;
@@ -121,7 +157,7 @@ describe('IDBObjectStore.clear', function() {
                 store.add({id: 3});
             }
 
-            function transaction2() {
+            function transaction2 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
                 tx.onerror = done;
@@ -130,12 +166,17 @@ describe('IDBObjectStore.clear', function() {
                 store.add({id: 4});
                 store.add({id: 5});
 
-                util.getAll(store, function(err, data) {
+                util.getAll(store, function (err, data) {
+                    if (err) {
+                        assert.fail(true, true, 'Error getting all');
+                        done();
+                        return;
+                    }
                     allData = data;
                 });
             }
 
-            function transaction3() {
+            function transaction3 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
                 tx.onerror = done;
@@ -145,12 +186,17 @@ describe('IDBObjectStore.clear', function() {
                 clear.onerror = done;
                 clear.onsuccess = cleared;
 
-                util.getAll(store, function(err, data) {
+                util.getAll(store, function (err, data) {
+                    if (err) {
+                        assert.fail(true, true, 'Error getting all');
+                        done();
+                        return;
+                    }
                     clearedData = data;
                 });
             }
 
-            function checkResults() {
+            function checkResults () {
                 // Make sure all 5 records existed before the clear
                 expect(allData).to.have.same.deep.members([
                     {primaryKey: 1, key: 1, value: {id: 1}},
@@ -170,15 +216,14 @@ describe('IDBObjectStore.clear', function() {
         });
     });
 
-    it('should throw an error if the transaction is read-only', function(done) {
-        util.createDatabase('out-of-line-generated', function(err, db) {
+    it('should throw an error if the transaction is read-only', function (done) {
+        util.createDatabase('out-of-line-generated', function (err, db) {
             var tx = db.transaction('out-of-line-generated', 'readonly');
             var store = tx.objectStore('out-of-line-generated');
 
             try {
                 store.clear();
-            }
-            catch (e) {
+            } catch (e) {
                 err = e;
             }
 
@@ -190,16 +235,15 @@ describe('IDBObjectStore.clear', function() {
         });
     });
 
-    it('should throw an error if the transaction is closed', function(done) {
-        util.createDatabase('out-of-line-generated', function(err, db) {
+    it('should throw an error if the transaction is closed', function (done) {
+        util.createDatabase('out-of-line-generated', function (err, db) {
             var tx = db.transaction('out-of-line-generated', 'readwrite');
             var store = tx.objectStore('out-of-line-generated');
 
-            setTimeout(function() {
+            setTimeout(function () {
                 try {
                     store.clear();
-                }
-                catch (e) {
+                } catch (e) {
                     err = e;
                 }
 
@@ -211,5 +255,4 @@ describe('IDBObjectStore.clear', function() {
             }, 50);
         });
     });
-
 });

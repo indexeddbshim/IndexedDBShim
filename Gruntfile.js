@@ -110,7 +110,7 @@ module.exports = function (grunt) {
         },
 
         eslint: {
-            files: ['src/**/*.js', 'Gruntfile.js'],
+            files: ['src/**/*.js', 'test/**/*.js', 'tests/**/*.js', 'Gruntfile.js'],
             options: {
                 configFile: '.eslintrc'
             }

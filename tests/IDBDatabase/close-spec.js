@@ -1,18 +1,29 @@
-describe('IDBDatabase.close', function() {
+/* eslint-disable no-var */
+describe('IDBDatabase.close', function () {
     'use strict';
 
-    it('should return void', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should return void', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var result = db.close();
-            expect(result).to.be.undefined;
+            expect(result).equal(undefined);
             done();
         });
     });
 
-    it('should wait for a transaction to complete first', function(done) {
-        util.createDatabase('out-of-line-generated', function(err, db) {
+    it('should wait for a transaction to complete first', function (done) {
+        util.createDatabase('out-of-line-generated', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line-generated', 'readwrite');
-            tx.onerror = function(event) {
+            tx.onerror = function (event) {
                 done(event.target.error);
             };
 
@@ -22,7 +33,7 @@ describe('IDBDatabase.close', function() {
             var put = store.put({foo: 'bar'});
             put.onsuccess = sinon.spy();
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 sinon.assert.calledOnce(put.onsuccess);
 
                 done();
@@ -30,19 +41,29 @@ describe('IDBDatabase.close', function() {
         });
     });
 
-    it('should do nothing if the database is already closed', function(done) {
-        util.createDatabase('out-of-line-generated', function(err, db) {
+    it('should do nothing if the database is already closed', function (done) {
+        util.createDatabase('out-of-line-generated', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             db.close();
 
-            setTimeout(function() {
+            setTimeout(function () {
                 db.close();
                 done();
             }, 50);
         });
     });
 
-    it('should do nothing if called multiple times', function(done) {
-        util.createDatabase('out-of-line-generated', function(err, db) {
+    it('should do nothing if called multiple times', function (done) {
+        util.createDatabase('out-of-line-generated', function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             db.close();
             db.close();
             db.close();
@@ -51,8 +72,13 @@ describe('IDBDatabase.close', function() {
         });
     });
 
-    it('should ignore any parameters', function(done) {
-        util.createDatabase(function(err, db) {
+    it('should ignore any parameters', function (done) {
+        util.createDatabase(function (err, db) {
+            if (err) {
+                assert.fail(true, true, 'Error creating database');
+                done();
+                return;
+            }
             db.close('foobar');
             db.close({foo: 'bar'});
             db.close(db);

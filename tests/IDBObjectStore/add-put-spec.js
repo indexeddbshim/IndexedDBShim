@@ -1,13 +1,19 @@
+/*eslint-disable no-var, spaced-comment*/
 /*********************************************************
  *     This file contains tests that are THE SAME for
  *       IDBObjectStore.add and IDBObjectStore.put
  *********************************************************/
-['put', 'add'].forEach(function(save) {
+['put', 'add'].forEach(function (save) {
     'use strict';
 
-    describe('IDBObjectStore.' + save, function() {
-        it('should return an IDBRequest', function(done) {
-            util.createDatabase('inline', function(err, db) {
+    describe('IDBObjectStore.' + save, function () {
+        it('should return an IDBRequest', function (done) {
+            util.createDatabase('inline', function (err, db) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database');
+                    done();
+                    return;
+                }
                 var tx = db.transaction('inline', 'readwrite');
                 tx.onerror = done;
 
@@ -15,15 +21,20 @@
                 var save1 = store[save]({id: 12345});
                 expect(save1).to.be.an.instanceOf(IDBRequest);
 
-                tx.oncomplete = function() {
+                tx.oncomplete = function () {
                     db.close();
                     done();
                 };
             });
         });
 
-        it('should pass the IDBRequest event to the onsuccess callback', function(done) {
-            util.createDatabase('inline', function(err, db) {
+        it('should pass the IDBRequest event to the onsuccess callback', function (done) {
+            util.createDatabase('inline', function (err, db) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database');
+                    done();
+                    return;
+                }
                 var tx = db.transaction('inline', 'readwrite');
                 tx.onerror = done;
 
@@ -31,12 +42,12 @@
                 var save1 = store[save]({id: 12345});
                 save1.onerror = done;
 
-                save1.onsuccess = sinon.spy(function(event) {
+                save1.onsuccess = sinon.spy(function (event) {
                     expect(event).to.be.an.instanceOf(env.Event);
                     expect(event.target).to.equal(save1);
                 });
 
-                tx.oncomplete = function() {
+                tx.oncomplete = function () {
                     sinon.assert.calledOnce(save1.onsuccess);
                     db.close();
                     done();
@@ -44,11 +55,16 @@
             });
         });
 
-        it('should save a structured clone of the data, not the actual data', function(done) {
+        it('should save a structured clone of the data, not the actual data', function (done) {
             var john = new util.sampleData.Person('John Doe');
             var bob = new util.sampleData.Person('Bob Smith', 30, new Date(2000, 5, 20), true);
 
-            util.createDatabase('out-of-line-generated', function(err, db) {
+            util.createDatabase('out-of-line-generated', function (err, db) {
+                if (err) {
+                    assert.fail(true, true, 'Error creating database');
+                    done();
+                    return;
+                }
                 var tx = db.transaction('out-of-line-generated', 'readwrite');
                 tx.onerror = done;
 
@@ -57,11 +73,16 @@
                 store[save](bob);
 
                 var allData;
-                util.getAll(store, function(err, data) {
+                util.getAll(store, function (err, data) {
+                    if (err) {
+                        assert.fail(true, true, 'Error getting all');
+                        done();
+                        return;
+                    }
                     allData = data;
                 });
 
-                tx.oncomplete = function() {
+                tx.oncomplete = function () {
                     expect(allData).to.have.lengthOf(2);
 
                     // The data should have been cloned
@@ -85,15 +106,14 @@
             });
         });
 
-        it('should throw an error if the transaction is read-only', function(done) {
-            util.createDatabase('out-of-line-generated', function(err, db) {
+        it('should throw an error if the transaction is read-only', function (done) {
+            util.createDatabase('out-of-line-generated', function (err, db) {
                 var tx = db.transaction('out-of-line-generated', 'readonly');
                 var store = tx.objectStore('out-of-line-generated');
 
                 try {
                     store[save]({foo: 'bar'});
-                }
-                catch (e) {
+                } catch (e) {
                     err = e;
                 }
 
@@ -105,16 +125,15 @@
             });
         });
 
-        it('should throw an error if the transaction is closed', function(done) {
-            util.createDatabase('out-of-line-generated', function(err, db) {
+        it('should throw an error if the transaction is closed', function (done) {
+            util.createDatabase('out-of-line-generated', function (err, db) {
                 var tx = db.transaction('out-of-line-generated', 'readwrite');
                 var store = tx.objectStore('out-of-line-generated');
 
-                setTimeout(function() {
+                setTimeout(function () {
                     try {
                         store[save]({foo: 'bar'});
-                    }
-                    catch (e) {
+                    } catch (e) {
                         err = e;
                     }
 
@@ -127,15 +146,14 @@
             });
         });
 
-        it('should throw an error if called without params', function(done) {
-            util.createDatabase('out-of-line-generated', function(err, db) {
+        it('should throw an error if called without params', function (done) {
+            util.createDatabase('out-of-line-generated', function (err, db) {
                 var tx = db.transaction('out-of-line-generated', 'readwrite');
                 var store = tx.objectStore('out-of-line-generated');
 
                 try {
                     store[save]();
-                }
-                catch (e) {
+                } catch (e) {
                     err = e;
                 }
 
@@ -147,9 +165,14 @@
             });
         });
 
-        describe('out-of-line keys', function() {
-            it('should save data with an out-of-line key', function(done) {
-                util.createDatabase('out-of-line', function(err, db) {
+        describe('out-of-line keys', function () {
+            it('should save data with an out-of-line key', function (done) {
+                util.createDatabase('out-of-line', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx = db.transaction('out-of-line', 'readwrite');
                     tx.onerror = done;
 
@@ -158,11 +181,16 @@
                     var save2 = store[save]({biz: 'baz'}, 45678);
 
                     var allData;
-                    util.getAll(store, function(err, data) {
+                    util.getAll(store, function (err, data) {
+                        if (err) {
+                            assert.fail(true, true, 'Error getting all');
+                            done();
+                            return;
+                        }
                         allData = data;
                     });
 
-                    tx.oncomplete = function() {
+                    tx.oncomplete = function () {
                         expect(save1.result).to.equal(12345);
                         expect(save2.result).to.equal(45678);
 
@@ -177,8 +205,13 @@
                 });
             });
 
-            it('should save data with a generated out-of-line key', function(done) {
-                util.createDatabase('out-of-line-generated', function(err, db) {
+            it('should save data with a generated out-of-line key', function (done) {
+                util.createDatabase('out-of-line-generated', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx = db.transaction('out-of-line-generated', 'readwrite');
                     tx.onerror = done;
 
@@ -187,11 +220,16 @@
                     var save2 = store[save]({biz: 'baz'});
 
                     var allData;
-                    util.getAll(store, function(err, data) {
+                    util.getAll(store, function (err, data) {
+                        if (err) {
+                            assert.fail(true, true, 'Error getting all');
+                            done();
+                            return;
+                        }
                         allData = data;
                     });
 
-                    tx.oncomplete = function() {
+                    tx.oncomplete = function () {
                         expect(save1.result).to.equal(1);
                         expect(save2.result).to.equal(2);
 
@@ -206,11 +244,16 @@
                 });
             });
 
-            util.skipIf(env.isNative && env.browser.isSafari, 'should allow generated out-of-line keys to be specified', function(done) {
+            util.skipIf(env.isNative && env.browser.isSafari, 'should allow generated out-of-line keys to be specified', function (done) {
                 // BUG: Safari's native IndexedDB resets the key generator whenever key is specified, causing key conflicts
-                util.createDatabase('out-of-line-generated', function(err, db) {
+                util.createDatabase('out-of-line-generated', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx = db.transaction('out-of-line-generated', 'readwrite');
-                    tx.onerror = function(event) {
+                    tx.onerror = function (event) {
                         done(tx.error || event);
                     };
 
@@ -222,11 +265,16 @@
                     var save5 = store[save]({baz: 'biz'});          // <-- generated key
 
                     var allData;
-                    util.getAll(store, function(err, data) {
+                    util.getAll(store, function (err, data) {
+                        if (err) {
+                            assert.fail(true, true, 'Error getting all');
+                            done();
+                            return;
+                        }
                         allData = data;
                     });
 
-                    tx.oncomplete = function() {
+                    tx.oncomplete = function () {
                         expect(save1.result).to.equal(1);       // Generated keys should always start at 1
                         expect(save2.result).to.equal('abc');   // This key was explicitly specified
                         expect(save3.result).to.be.above(1);    // Depending on the implementation, it might be 2 or 3
@@ -247,8 +295,13 @@
                 });
             });
 
-            it('should allow these keys', function(done) {
-                util.createDatabase('out-of-line', function(err, db) {
+            it('should allow these keys', function (done) {
+                util.createDatabase('out-of-line', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx = db.transaction('out-of-line', 'readwrite');
                     var store = tx.objectStore('out-of-line');
                     tx.onerror = done;
@@ -270,12 +323,12 @@
                         saveKey([new Date(2005, 6, 7)]);    // array of Dates
                     }
 
-                    function saveKey(key) {
+                    function saveKey (key) {
                         savingCounter++;
                         var saving = store[save]({foo: key}, key);
                         saving.onerror = done;
-                        saving.onsuccess = function() {
-                            if (typeof(key) === 'object') {
+                        saving.onsuccess = function () {
+                            if (typeof key === 'object') {
                                 // The key should be a clone, not the same object
                                 expect(saving.result).not.to.equal(key);
                                 expect(saving.result).to.deep.equal(key);
@@ -284,14 +337,14 @@
                             // Re-fetch the data using the key
                             var get = store.get(key);
                             get.onerror = done;
-                            get.onsuccess = function() {
+                            get.onsuccess = function () {
                                 expect(get.result).to.deep.equal({foo: key});
                                 savedCounter++;
                             };
                         };
                     }
 
-                    tx.oncomplete = function() {
+                    tx.oncomplete = function () {
                         // Make sure all the saves completed
                         expect(savedCounter).to.equal(savingCounter);
 
@@ -301,8 +354,13 @@
                 });
             });
 
-            it('should not allow these keys', function(done) {
-                util.createDatabase('out-of-line', function(err, db) {
+            it('should not allow these keys', function (done) {
+                util.createDatabase('out-of-line', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx = db.transaction('out-of-line', 'readwrite');
                     var store = tx.objectStore('out-of-line');
                     tx.onerror = done;
@@ -324,20 +382,19 @@
                         tryToSaveKey(/^regex$/);                        // RegExp
                     }
 
-                    function tryToSaveKey(key) {
+                    function tryToSaveKey (key) {
                         var err = null;
 
                         try {
                             store[save]({foo: 'bar'}, key);
-                        }
-                        catch (e) {
+                        } catch (e) {
                             err = e;
                         }
 
                         if (!env.isPolyfilled) {
                             expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
                         }
-                        expect(err).to.be.ok;
+                        assert.isOk(err);
                         expect(err.name).to.equal('DataError');
                     }
 
@@ -346,8 +403,13 @@
                 });
             });
 
-            it('should allow these data types', function(done) {
-                util.createDatabase('out-of-line-generated', function(err, db) {
+            it('should allow these data types', function (done) {
+                util.createDatabase('out-of-line-generated', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx = db.transaction('out-of-line-generated', 'readwrite');
                     var store = tx.objectStore('out-of-line-generated');
                     tx.onerror = done;
@@ -384,16 +446,16 @@
                         saveData(null);                                 // null
                     }
 
-                    function saveData(data) {
+                    function saveData (data) {
                         savingCounter++;
                         var saving = store[save](data);
                         saving.onerror = done;
-                        saving.onsuccess = function() {
+                        saving.onsuccess = function () {
                             // Re-fetch the data to make sure it serialized/deserialized correctly
                             var get = store.get(saving.result);
                             get.onerror = done;
-                            get.onsuccess = function() {
-                                if (typeof(data) === 'object' && data !== null) {
+                            get.onsuccess = function () {
+                                if (typeof data === 'object' && data !== null) {
                                     // The data should be a clone, not the same object
                                     expect(get.result).not.to.equal(data);
                                 }
@@ -403,12 +465,10 @@
                                     for (var i = 0; i < data.length; i++) {
                                         expect(get.result[i]).to.deep.equal(data[i]);
                                     }
-                                }
-                                else if (data instanceof util.sampleData.Person) {
+                                } else if (data instanceof util.sampleData.Person) {
                                     // Only the "name" and "age" properties should have been serialized
                                     expect(get.result).to.deep.equal({name: 'John', age: 30});
-                                }
-                                else {
+                                } else {
                                     expect(get.result).to.deep.equal(data);
                                 }
 
@@ -417,7 +477,7 @@
                         };
                     }
 
-                    tx.oncomplete = function() {
+                    tx.oncomplete = function () {
                         // Make sure all the saves completed
                         expect(savedCounter).to.equal(savingCounter);
 
@@ -427,8 +487,8 @@
                 });
             });
 
-            it('should throw an error if no key is specified', function(done) {
-                util.createDatabase('out-of-line', function(err, db) {
+            it('should throw an error if no key is specified', function (done) {
+                util.createDatabase('out-of-line', function (err, db) {
                     var tx = db.transaction('out-of-line', 'readwrite');
                     tx.onerror = done;
 
@@ -436,8 +496,7 @@
                     try {
                         // Not specifying a key for an out-of-line object store
                         store[save]({foo: 'bar'});
-                    }
-                    catch (e) {
+                    } catch (e) {
                         err = e;
                     }
 
@@ -449,8 +508,13 @@
                 });
             });
 
-            it('should save out-of-line keys in multiple simultaneous transactions', function(done) {
-                util.createDatabase('out-of-line', function(err, db) {
+            it('should save out-of-line keys in multiple simultaneous transactions', function (done) {
+                util.createDatabase('out-of-line', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx1 = db.transaction('out-of-line', 'readwrite');
                     var tx2 = db.transaction('out-of-line', 'readwrite');
                     var tx3 = db.transaction('out-of-line', 'readwrite');
@@ -464,11 +528,16 @@
                     var save3 = store3[save]({foo: 'three'}, 3);
 
                     var allData;
-                    util.getAll(store3, function(err, data) {
+                    util.getAll(store3, function (err, data) {
+                        if (err) {
+                            assert.fail(true, true, 'Error getting all');
+                            done();
+                            return;
+                        }
                         allData = data;
                     });
 
-                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function() {
+                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
                         if (tx1.oncomplete.calledThrice) {
                             expect(save1.result).to.equal(1);
                             expect(save2.result).to.equal(2);
@@ -487,8 +556,13 @@
                 });
             });
 
-            it('should save generated out-of-line keys in multiple simultaneous transactions', function(done) {
-                util.createDatabase('out-of-line-generated', function(err, db) {
+            it('should save generated out-of-line keys in multiple simultaneous transactions', function (done) {
+                util.createDatabase('out-of-line-generated', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx1 = db.transaction('out-of-line-generated', 'readwrite');
                     var tx2 = db.transaction('out-of-line-generated', 'readwrite');
                     var tx3 = db.transaction('out-of-line-generated', 'readwrite');
@@ -502,11 +576,16 @@
                     var save3 = store3[save]({foo: 'three'});
 
                     var allData;
-                    util.getAll(store3, function(err, data) {
+                    util.getAll(store3, function (err, data) {
+                        if (err) {
+                            assert.fail(true, true, 'Error getting all');
+                            done();
+                            return;
+                        }
                         allData = data;
                     });
 
-                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function() {
+                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
                         if (tx1.oncomplete.calledThrice) {
                             if (save1.result === save2.result && save2.result === save3.result) {
                                 return done(new Error('The same primary key was generated for multiple records'));
@@ -530,9 +609,14 @@
             });
         });
 
-        describe('inline keys', function() {
-            it('should save data with an inline key', function(done) {
-                util.createDatabase('inline', function(err, db) {
+        describe('inline keys', function () {
+            it('should save data with an inline key', function (done) {
+                util.createDatabase('inline', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx = db.transaction('inline', 'readwrite');
                     tx.onerror = done;
 
@@ -541,11 +625,16 @@
                     var save2 = store[save]({id: 45678});
 
                     var allData;
-                    util.getAll(store, function(err, data) {
+                    util.getAll(store, function (err, data) {
+                        if (err) {
+                            assert.fail(true, true, 'Error getting all');
+                            done();
+                            return;
+                        }
                         allData = data;
                     });
 
-                    tx.oncomplete = function() {
+                    tx.oncomplete = function () {
                         expect(save1.result).to.deep.equal(12345);
                         expect(save2.result).to.deep.equal(45678);
 
@@ -560,8 +649,13 @@
                 });
             });
 
-            it('should save data with a generated inline key', function(done) {
-                util.createDatabase('inline-generated', function(err, db) {
+            it('should save data with a generated inline key', function (done) {
+                util.createDatabase('inline-generated', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx = db.transaction('inline-generated', 'readwrite');
                     tx.onerror = done;
 
@@ -570,11 +664,16 @@
                     var save2 = store[save]({biz: 'baz'});
 
                     var allData;
-                    util.getAll(store, function(err, data) {
+                    util.getAll(store, function (err, data) {
+                        if (err) {
+                            assert.fail(true, true, 'Error getting all');
+                            done();
+                            return;
+                        }
                         allData = data;
                     });
 
-                    tx.oncomplete = function() {
+                    tx.oncomplete = function () {
                         expect(save1.result).to.deep.equal(1);
                         expect(save2.result).to.deep.equal(2);
 
@@ -589,9 +688,14 @@
                 });
             });
 
-            util.skipIf(env.isNative && env.browser.isSafari, 'should allow generated inline keys to be specified', function(done) {
+            util.skipIf(env.isNative && env.browser.isSafari, 'should allow generated inline keys to be specified', function (done) {
                 // BUG: Safari's native IndexedDB resets the key generator whenever key is specified, causing key conflicts
-                util.createDatabase('inline-generated', function(err, db) {
+                util.createDatabase('inline-generated', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx = db.transaction('inline-generated', 'readwrite');
                     tx.onerror = done;
 
@@ -603,11 +707,16 @@
                     var save5 = store[save]({baz: 'biz'});             // <-- generated key
 
                     var allData;
-                    util.getAll(store, function(err, data) {
+                    util.getAll(store, function (err, data) {
+                        if (err) {
+                            assert.fail(true, true, 'Error getting all');
+                            done();
+                            return;
+                        }
                         allData = data;
                     });
 
-                    tx.oncomplete = function() {
+                    tx.oncomplete = function () {
                         expect(save1.result).to.equal(1);       // Generated keys should always start at 1
                         expect(save2.result).to.equal('abc');   // This key was explicitly specified
                         expect(save3.result).to.be.above(1);    // Depending on the implementation, it might be 2 or 3
@@ -628,8 +737,13 @@
                 });
             });
 
-            it('should allow these keys', function(done) {
-                util.createDatabase('inline', function(err, db) {
+            it('should allow these keys', function (done) {
+                util.createDatabase('inline', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx = db.transaction('inline', 'readwrite');
                     var store = tx.objectStore('inline');
                     tx.onerror = done;
@@ -651,12 +765,12 @@
                         saveKey([new Date(2005, 6, 7)]);    // array of Dates
                     }
 
-                    function saveKey(key) {
+                    function saveKey (key) {
                         savingCounter++;
                         var saving = store[save]({id: key});
                         saving.onerror = done;
-                        saving.onsuccess = function() {
-                            if (typeof(key) === 'object') {
+                        saving.onsuccess = function () {
+                            if (typeof key === 'object') {
                                 // The key should be a clone, not the same object
                                 expect(saving.result).not.to.equal(key);
                                 expect(saving.result).to.deep.equal(key);
@@ -665,14 +779,14 @@
                             // Re-fetch the data using the key
                             var get = store.get(key);
                             get.onerror = done;
-                            get.onsuccess = function() {
+                            get.onsuccess = function () {
                                 expect(get.result).to.deep.equal({id: key});
                                 savedCounter++;
                             };
                         };
                     }
 
-                    tx.oncomplete = function() {
+                    tx.oncomplete = function () {
                         // Make sure all the saves completed
                         expect(savedCounter).to.equal(savingCounter);
 
@@ -682,8 +796,13 @@
                 });
             });
 
-            it('should not allow these keys', function(done) {
-                util.createDatabase('inline', function(err, db) {
+            it('should not allow these keys', function (done) {
+                util.createDatabase('inline', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx = db.transaction('inline', 'readwrite');
                     var store = tx.objectStore('inline');
                     tx.onerror = done;
@@ -705,20 +824,19 @@
                         tryToSaveKey(null);                             // null
                     }
 
-                    function tryToSaveKey(key) {
+                    function tryToSaveKey (key) {
                         var err = null;
 
                         try {
                             store[save]({id: key});
-                        }
-                        catch (e) {
+                        } catch (e) {
                             err = e;
                         }
 
                         if (!env.isPolyfilled) {
                             expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
                         }
-                        expect(err).to.be.ok;
+                        assert.isOk(err);
                         expect(err.name).to.equal('DataError');
                     }
 
@@ -727,8 +845,13 @@
                 });
             });
 
-            it('should allow these data types', function(done) {
-                util.createDatabase('inline-generated', function(err, db) {
+            it('should allow these data types', function (done) {
+                util.createDatabase('inline-generated', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx = db.transaction('inline-generated', 'readwrite');
                     var store = tx.objectStore('inline-generated');
                     tx.onerror = done;
@@ -751,16 +874,16 @@
                         saveData(/^regex$/);                            // RegExp
                     }
 
-                    function saveData(data) {
+                    function saveData (data) {
                         savingCounter++;
                         var saving = store[save](data);
                         saving.onerror = done;
-                        saving.onsuccess = function() {
+                        saving.onsuccess = function () {
                             // Re-fetch the data to make sure it serialized/deserialized correctly
                             var get = store.get(saving.result);
                             get.onerror = done;
-                            get.onsuccess = function() {
-                                if (typeof(data) === 'object' && data !== null) {
+                            get.onsuccess = function () {
+                                if (typeof data === 'object' && data !== null) {
                                     // The data should be a clone, not the same object
                                     expect(get.result).not.to.equal(data);
                                 }
@@ -770,12 +893,10 @@
                                     for (var i = 0; i < data.length; i++) {
                                         expect(get.result[i]).to.deep.equal(data[i]);
                                     }
-                                }
-                                else if (data instanceof util.sampleData.Person) {
+                                } else if (data instanceof util.sampleData.Person) {
                                     // Only the "name" and "age" properties should have been serialized
                                     expect(get.result).to.deep.equal({id: get.result.id, name: 'John', age: 30});
-                                }
-                                else {
+                                } else {
                                     data.id = get.result.id;
                                     expect(get.result).to.deep.equal(data);
                                 }
@@ -785,7 +906,7 @@
                         };
                     }
 
-                    tx.oncomplete = function() {
+                    tx.oncomplete = function () {
                         // Make sure all the saves completed
                         expect(savedCounter).to.equal(savingCounter);
 
@@ -795,8 +916,13 @@
                 });
             });
 
-            it('should not allow these data types', function(done) {
-                util.createDatabase('inline-generated', function(err, db) {
+            it('should not allow these data types', function (done) {
+                util.createDatabase('inline-generated', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx = db.transaction('inline-generated', 'readwrite');
                     var store = tx.objectStore('inline-generated');
                     tx.onerror = done;
@@ -817,13 +943,12 @@
                         tryToSaveData(null);            // null
                     }
 
-                    function tryToSaveData(value) {
+                    function tryToSaveData (value) {
                         var err;
 
                         try {
                             store[save](value);
-                        }
-                        catch (e) {
+                        } catch (e) {
                             err = e;
                         }
 
@@ -836,8 +961,8 @@
                 });
             });
 
-            it('should throw an error if a key is specified', function(done) {
-                util.createDatabase('inline', function(err, db) {
+            it('should throw an error if a key is specified', function (done) {
+                util.createDatabase('inline', function (err, db) {
                     var tx = db.transaction('inline', 'readwrite');
                     tx.onerror = done;
 
@@ -845,8 +970,7 @@
                     try {
                         // Specifying an out-of-line key for an inline object store
                         store[save]({id: 12345}, 45678);
-                    }
-                    catch (e) {
+                    } catch (e) {
                         err = e;
                     }
 
@@ -858,8 +982,13 @@
                 });
             });
 
-            it('should save inline keys in multiple simultaneous transactions', function(done) {
-                util.createDatabase('inline', function(err, db) {
+            it('should save inline keys in multiple simultaneous transactions', function (done) {
+                util.createDatabase('inline', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx1 = db.transaction('inline', 'readwrite');
                     var tx2 = db.transaction('inline', 'readwrite');
                     var tx3 = db.transaction('inline', 'readwrite');
@@ -873,11 +1002,16 @@
                     var save3 = store3[save]({id: 'three'});
 
                     var allData;
-                    util.getAll(store3, function(err, data) {
+                    util.getAll(store3, function (err, data) {
+                        if (err) {
+                            assert.fail(true, true, 'Error getting all');
+                            done();
+                            return;
+                        }
                         allData = data;
                     });
 
-                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function() {
+                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
                         if (tx1.oncomplete.calledThrice) {
                             expect(save1.result).to.equal('one');
                             expect(save2.result).to.equal('two');
@@ -896,8 +1030,13 @@
                 });
             });
 
-            it('should save generated inline keys in multiple simultaneous transactions', function(done) {
-                util.createDatabase('inline-generated', function(err, db) {
+            it('should save generated inline keys in multiple simultaneous transactions', function (done) {
+                util.createDatabase('inline-generated', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx1 = db.transaction('inline-generated', 'readwrite');
                     var tx2 = db.transaction('inline-generated', 'readwrite');
                     var tx3 = db.transaction('inline-generated', 'readwrite');
@@ -911,11 +1050,16 @@
                     var save3 = store3[save]({foo: 'three'});
 
                     var allData;
-                    util.getAll(store3, function(err, data) {
+                    util.getAll(store3, function (err, data) {
+                        if (err) {
+                            assert.fail(true, true, 'Error getting all');
+                            done();
+                            return;
+                        }
                         allData = data;
                     });
 
-                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function() {
+                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
                         if (tx1.oncomplete.calledThrice) {
                             if (save1.result === save2.result && save2.result === save3.result) {
                                 return done(new Error('The same primary key was generated for multiple records'));
@@ -939,9 +1083,14 @@
             });
         });
 
-        describe('dotted keys', function() {
-            it('should save data with a dotted key', function(done) {
-                util.createDatabase('dotted', function(err, db) {
+        describe('dotted keys', function () {
+            it('should save data with a dotted key', function (done) {
+                util.createDatabase('dotted', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx = db.transaction('dotted', 'readwrite');
                     tx.onerror = done;
 
@@ -950,11 +1099,16 @@
                     var save2 = store[save]({name: {first: 'Bob', last: 'Smith'}});
 
                     var allData;
-                    util.getAll(store, function(err, data) {
+                    util.getAll(store, function (err, data) {
+                        if (err) {
+                            assert.fail(true, true, 'Error getting all');
+                            done();
+                            return;
+                        }
                         allData = data;
                     });
 
-                    tx.oncomplete = function() {
+                    tx.oncomplete = function () {
                         expect(save1.result).to.deep.equal('John');
                         expect(save2.result).to.deep.equal('Bob');
 
@@ -969,8 +1123,13 @@
                 });
             });
 
-            it('should save data with a generated dotted key', function(done) {
-                util.createDatabase('dotted-generated', function(err, db) {
+            it('should save data with a generated dotted key', function (done) {
+                util.createDatabase('dotted-generated', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx = db.transaction('dotted-generated', 'readwrite');
                     tx.onerror = done;
 
@@ -979,11 +1138,16 @@
                     var save2 = store[save]({lastName: 'Smith'});
 
                     var allData;
-                    util.getAll(store, function(err, data) {
+                    util.getAll(store, function (err, data) {
+                        if (err) {
+                            assert.fail(true, true, 'Error getting all');
+                            done();
+                            return;
+                        }
                         allData = data;
                     });
 
-                    tx.oncomplete = function() {
+                    tx.oncomplete = function () {
                         expect(save1.result).to.deep.equal(1);
                         expect(save2.result).to.deep.equal(2);
 
@@ -998,8 +1162,13 @@
                 });
             });
 
-            it('should save dotted keys in multiple simultaneous transactions', function(done) {
-                util.createDatabase('dotted', function(err, db) {
+            it('should save dotted keys in multiple simultaneous transactions', function (done) {
+                util.createDatabase('dotted', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx1 = db.transaction('dotted', 'readwrite');
                     var tx2 = db.transaction('dotted', 'readwrite');
                     var tx3 = db.transaction('dotted', 'readwrite');
@@ -1013,11 +1182,16 @@
                     var save3 = store3[save]({name: {first: 'Bob'}});
 
                     var allData;
-                    util.getAll(store3, function(err, data) {
+                    util.getAll(store3, function (err, data) {
+                        if (err) {
+                            assert.fail(true, true, 'Error getting all');
+                            done();
+                            return;
+                        }
                         allData = data;
                     });
 
-                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function() {
+                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
                         if (tx1.oncomplete.calledThrice) {
                             expect(save1.result).to.equal('John');
                             expect(save2.result).to.equal('Sarah');
@@ -1036,8 +1210,13 @@
                 });
             });
 
-            it('should save generated dotted keys in multiple simultaneous transactions', function(done) {
-                util.createDatabase('dotted-generated', function(err, db) {
+            it('should save generated dotted keys in multiple simultaneous transactions', function (done) {
+                util.createDatabase('dotted-generated', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx1 = db.transaction('dotted-generated', 'readwrite');
                     var tx2 = db.transaction('dotted-generated', 'readwrite');
                     var tx3 = db.transaction('dotted-generated', 'readwrite');
@@ -1051,11 +1230,16 @@
                     var save3 = store3[save]({foo: 'three'});
 
                     var allData;
-                    util.getAll(store3, function(err, data) {
+                    util.getAll(store3, function (err, data) {
+                        if (err) {
+                            assert.fail(true, true, 'Error getting all');
+                            done();
+                            return;
+                        }
                         allData = data;
                     });
 
-                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function() {
+                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
                         if (tx1.oncomplete.calledThrice) {
                             if (save1.result === save2.result && save2.result === save3.result) {
                                 return done(new Error('The same primary key was generated for multiple records'));
@@ -1079,10 +1263,15 @@
             });
         });
 
-        describe('compound keys', function() {
-            util.skipIf(env.isNative && env.browser.isIE, 'should save data with a compound out-of-line key', function(done) {
+        describe('compound keys', function () {
+            util.skipIf(env.isNative && env.browser.isIE, 'should save data with a compound out-of-line key', function (done) {
                 // BUG: IE's native IndexedDB does not support compound keys at all
-                util.createDatabase('out-of-line-compound', function(err, db) {
+                util.createDatabase('out-of-line-compound', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx = db.transaction('out-of-line-compound', 'readwrite');
                     tx.onerror = done;
 
@@ -1091,11 +1280,16 @@
                     var save2 = store[save]({biz: 'baz'}, ['a', 'b', 3]);
 
                     var allData;
-                    util.getAll(store, function(err, data) {
+                    util.getAll(store, function (err, data) {
+                        if (err) {
+                            assert.fail(true, true, 'Error getting all');
+                            done();
+                            return;
+                        }
                         allData = data;
                     });
 
-                    tx.oncomplete = function() {
+                    tx.oncomplete = function () {
                         expect(save1.result).to.deep.equal([1, 2, 'c']);
                         expect(save2.result).to.deep.equal(['a', 'b', 3]);
 
@@ -1110,9 +1304,14 @@
                 });
             });
 
-            util.skipIf(env.isNative && env.browser.isIE, 'should save data with a compound inline key', function(done) {
+            util.skipIf(env.isNative && env.browser.isIE, 'should save data with a compound inline key', function (done) {
                 // BUG: IE's native IndexedDB does not support compound keys at all
-                util.createDatabase('inline-compound', function(err, db) {
+                util.createDatabase('inline-compound', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx = db.transaction('inline-compound', 'readwrite');
                     tx.onerror = done;
 
@@ -1121,11 +1320,16 @@
                     var save2 = store[save]({id: 12345, name: 'Bob Smith'});
 
                     var allData;
-                    util.getAll(store, function(err, data) {
+                    util.getAll(store, function (err, data) {
+                        if (err) {
+                            assert.fail(true, true, 'Error getting all');
+                            done();
+                            return;
+                        }
                         allData = data;
                     });
 
-                    tx.oncomplete = function() {
+                    tx.oncomplete = function () {
                         expect(save1.result).to.deep.equal([12345, 'John Doe']);
                         expect(save2.result).to.deep.equal([12345, 'Bob Smith']);
 
@@ -1140,9 +1344,14 @@
                 });
             });
 
-            util.skipIf(env.isNative && env.browser.isIE, 'should save data with a compound dotted key', function(done) {
+            util.skipIf(env.isNative && env.browser.isIE, 'should save data with a compound dotted key', function (done) {
                 // BUG: IE's native IndexedDB does not support compound keys at all
-                util.createDatabase('dotted-compound', function(err, db) {
+                util.createDatabase('dotted-compound', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx = db.transaction('dotted-compound', 'readwrite');
                     tx.onerror = done;
 
@@ -1151,11 +1360,16 @@
                     var save2 = store[save]({id: 12345, name: {first: 'Bob', last: 'Smith'}});
 
                     var allData;
-                    util.getAll(store, function(err, data) {
+                    util.getAll(store, function (err, data) {
+                        if (err) {
+                            assert.fail(true, true, 'Error getting all');
+                            done();
+                            return;
+                        }
                         allData = data;
                     });
 
-                    tx.oncomplete = function() {
+                    tx.oncomplete = function () {
                         expect(save1.result).to.deep.equal([12345, 'John', 'Doe']);
                         expect(save2.result).to.deep.equal([12345, 'Bob', 'Smith']);
 
@@ -1170,9 +1384,14 @@
                 });
             });
 
-            util.skipIf(env.isNative && env.browser.isIE, 'should allow these keys', function(done) {
+            util.skipIf(env.isNative && env.browser.isIE, 'should allow these keys', function (done) {
                 // BUG: IE's native IndexedDB does not support compound keys at all
-                util.createDatabase('dotted-compound', function(err, db) {
+                util.createDatabase('dotted-compound', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx = db.transaction('dotted-compound', 'readwrite');
                     var store = tx.objectStore('dotted-compound');
                     tx.onerror = done;
@@ -1194,12 +1413,12 @@
                         saveKey(util.sampleData.veryLongString);    // very long string
                     }
 
-                    function saveKey(key) {
+                    function saveKey (key) {
                         savingCounter++;
                         var saving = store[save]({id: 1, name: {first: 'abc', last: key}});
                         saving.onerror = done;
-                        saving.onsuccess = function() {
-                            if (typeof(key) === 'object') {
+                        saving.onsuccess = function () {
+                            if (typeof key === 'object') {
                                 // The key should be a clone, not the same object
                                 expect(saving.result[2]).not.to.equal(key);
                                 expect(saving.result[2]).to.deep.equal(key);
@@ -1208,14 +1427,14 @@
                             // Re-fetch the data using the key
                             var get = store.get([1, 'abc', key]);
                             get.onerror = done;
-                            get.onsuccess = function() {
+                            get.onsuccess = function () {
                                 expect(get.result).to.deep.equal({id: 1, name: {first: 'abc', last: key}});
                                 savedCounter++;
                             };
                         };
                     }
 
-                    tx.oncomplete = function() {
+                    tx.oncomplete = function () {
                         // Make sure all the saves completed
                         expect(savedCounter).to.equal(savingCounter);
 
@@ -1225,9 +1444,14 @@
                 });
             });
 
-            util.skipIf(env.isNative && env.browser.isIE, 'should not allow these keys', function(done) {
+            util.skipIf(env.isNative && env.browser.isIE, 'should not allow these keys', function (done) {
                 // BUG: IE's native IndexedDB does not support compound keys at all
-                util.createDatabase('dotted-compound', function(err, db) {
+                util.createDatabase('dotted-compound', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx = db.transaction('dotted-compound', 'readwrite');
                     var store = tx.objectStore('dotted-compound');
                     tx.onerror = done;
@@ -1248,20 +1472,19 @@
                         tryToSaveKey(null);                 // null
                     }
 
-                    function tryToSaveKey(key) {
+                    function tryToSaveKey (key) {
                         var err = null;
 
                         try {
                             store[save]({id: 1, name: {first: 'abc', last: key}});
-                        }
-                        catch (e) {
+                        } catch (e) {
                             err = e;
                         }
 
                         if (!env.isPolyfilled) {
                             expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
                         }
-                        expect(err).to.be.ok;
+                        assert.isOk(err);
                         expect(err.name).to.equal('DataError');
                     }
 
@@ -1270,24 +1493,23 @@
                 });
             });
 
-            util.skipIf(env.isNative && env.browser.isIE, 'should throw an error if the key is incomplete', function(done) {
+            util.skipIf(env.isNative && env.browser.isIE, 'should throw an error if the key is incomplete', function (done) {
                 // BUG: IE's native IndexedDB does not support compound keys at all
-                util.createDatabase('inline-compound', function(err, db) {
+                util.createDatabase('inline-compound', function (err, db) {
                     var tx = db.transaction('inline-compound', 'readwrite');
                     tx.onerror = done;
 
                     var store = tx.objectStore('inline-compound');
                     try {
                         store[save]({id: 1});   // The "name" property is missing
-                    }
-                    catch (e) {
+                    } catch (e) {
                         err = e;
                     }
 
                     if (!env.isPolyfilled) {
                         expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
                     }
-                    expect(err).to.be.ok;
+                    assert.isOk(err);
                     expect(err.name).to.equal('DataError');
 
                     db.close();
@@ -1295,9 +1517,14 @@
                 });
             });
 
-            util.skipIf(env.isNative && env.browser.isIE, 'should save compound inline keys in multiple simultaneous transactions', function(done) {
+            util.skipIf(env.isNative && env.browser.isIE, 'should save compound inline keys in multiple simultaneous transactions', function (done) {
                 // BUG: IE's native IndexedDB does not support compound keys at all
-                util.createDatabase('inline-compound', function(err, db) {
+                util.createDatabase('inline-compound', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx1 = db.transaction('inline-compound', 'readwrite');
                     var tx2 = db.transaction('inline-compound', 'readwrite');
                     var tx3 = db.transaction('inline-compound', 'readwrite');
@@ -1311,11 +1538,16 @@
                     var save3 = store3[save]({id: 3, name: 'Bob'});
 
                     var allData;
-                    util.getAll(store3, function(err, data) {
+                    util.getAll(store3, function (err, data) {
+                        if (err) {
+                            assert.fail(true, true, 'Error getting all');
+                            done();
+                            return;
+                        }
                         allData = data;
                     });
 
-                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function() {
+                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
                         if (tx1.oncomplete.calledThrice) {
                             expect(save1.result).to.deep.equal([1, 'John']);
                             expect(save2.result).to.deep.equal([2, 'Sarah']);
@@ -1334,9 +1566,14 @@
                 });
             });
 
-            util.skipIf(env.isNative && env.browser.isIE, 'should save compound out-of-line keys in multiple simultaneous transactions', function(done) {
+            util.skipIf(env.isNative && env.browser.isIE, 'should save compound out-of-line keys in multiple simultaneous transactions', function (done) {
                 // BUG: IE's native IndexedDB does not support compound keys at all
-                util.createDatabase('out-of-line', function(err, db) {
+                util.createDatabase('out-of-line', function (err, db) {
+                    if (err) {
+                        assert.fail(true, true, 'Error creating database');
+                        done();
+                        return;
+                    }
                     var tx1 = db.transaction('out-of-line', 'readwrite');
                     var tx2 = db.transaction('out-of-line', 'readwrite');
                     var tx3 = db.transaction('out-of-line', 'readwrite');
@@ -1350,20 +1587,25 @@
                     var save3 = store3[save]({foo: 'three'}, [3, 'b', 3]);
 
                     var allData;
-                    util.getAll(store3, function(err, data) {
+                    util.getAll(store3, function (err, data) {
+                        if (err) {
+                            assert.fail(true, true, 'Error getting all');
+                            done();
+                            return;
+                        }
                         allData = data;
                     });
 
-                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function() {
+                    tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
                         if (tx1.oncomplete.calledThrice) {
-                            expect(save1.result).to.deep.equal([1,'b',3]);
-                            expect(save2.result).to.deep.equal([2,'b',3]);
-                            expect(save3.result).to.deep.equal([3,'b',3]);
+                            expect(save1.result).to.deep.equal([1, 'b', 3]);
+                            expect(save2.result).to.deep.equal([2, 'b', 3]);
+                            expect(save3.result).to.deep.equal([3, 'b', 3]);
 
                             expect(allData).to.have.same.deep.members([
-                                {primaryKey: [1,'b',3], key: [1,'b',3], value: {foo: 'one'}},
-                                {primaryKey: [2,'b',3], key: [2,'b',3], value: {foo: 'two'}},
-                                {primaryKey: [3,'b',3], key: [3,'b',3], value: {foo: 'three'}}
+                                {primaryKey: [1, 'b', 3], key: [1, 'b', 3], value: {foo: 'one'}},
+                                {primaryKey: [2, 'b', 3], key: [2, 'b', 3], value: {foo: 'two'}},
+                                {primaryKey: [3, 'b', 3], key: [3, 'b', 3], value: {foo: 'three'}}
                             ]);
 
                             db.close();
