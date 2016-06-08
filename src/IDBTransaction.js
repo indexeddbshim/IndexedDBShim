@@ -1,10 +1,10 @@
-import EventTarget from 'eventtarget';
 import {createEvent} from './Event.js';
 import {logError, findError, DOMError, createDOMException} from './DOMException.js';
 import {IDBRequest} from './IDBRequest.js';
 import util from './util.js';
 import IDBObjectStore from './IDBObjectStore.js';
 import CFG from './cfg.js';
+import EventTarget from 'eventtarget';
 
 let uniqueID = 0;
 

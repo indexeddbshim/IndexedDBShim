@@ -1,8 +1,8 @@
 import {createDOMException} from './DOMException.js';
+import {IDBCursor} from './IDBCursor.js';
 import util from './util.js';
 import Key from './Key.js';
 import IDBKeyRange from './IDBKeyRange.js';
-import {IDBCursor} from './IDBCursor.js';
 import Sca from './Sca.js';
 import CFG from './cfg.js';
 

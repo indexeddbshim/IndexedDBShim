@@ -17503,6 +17503,8 @@ Object.defineProperty(exports, "__esModule", {
 
 var _DOMException = require('./DOMException.js');
 
+var _IDBCursor = require('./IDBCursor.js');
+
 var _util = require('./util.js');
 
 var _util2 = _interopRequireDefault(_util);
@@ -17514,8 +17516,6 @@ var _Key2 = _interopRequireDefault(_Key);
 var _IDBKeyRange = require('./IDBKeyRange.js');
 
 var _IDBKeyRange2 = _interopRequireDefault(_IDBKeyRange);
-
-var _IDBCursor = require('./IDBCursor.js');
 
 var _Sca = require('./Sca.js');
 
@@ -17857,6 +17857,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 var _DOMException = require('./DOMException.js');
 
+var _IDBCursor = require('./IDBCursor.js');
+
 var _util = require('./util.js');
 
 var _util2 = _interopRequireDefault(_util);
@@ -17868,8 +17870,6 @@ var _Key2 = _interopRequireDefault(_Key);
 var _IDBKeyRange = require('./IDBKeyRange.js');
 
 var _IDBKeyRange2 = _interopRequireDefault(_IDBKeyRange);
-
-var _IDBCursor = require('./IDBCursor.js');
 
 var _IDBIndex = require('./IDBIndex.js');
 
@@ -18374,10 +18374,6 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _eventtarget = require('eventtarget');
-
-var _eventtarget2 = _interopRequireDefault(_eventtarget);
-
 var _Event = require('./Event.js');
 
 var _DOMException = require('./DOMException.js');
@@ -18395,6 +18391,10 @@ var _IDBObjectStore2 = _interopRequireDefault(_IDBObjectStore);
 var _cfg = require('./cfg.js');
 
 var _cfg2 = _interopRequireDefault(_cfg);
+
+var _eventtarget = require('eventtarget');
+
+var _eventtarget2 = _interopRequireDefault(_eventtarget);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -19502,11 +19502,15 @@ require('babel-polyfill');
 
 var _Event = require('./Event.js');
 
+var _IDBCursor = require('./IDBCursor.js');
+
+var _IDBRequest = require('./IDBRequest.js');
+
+var _IDBFactory = require('./IDBFactory.js');
+
 var _IDBKeyRange = require('./IDBKeyRange.js');
 
 var _IDBKeyRange2 = _interopRequireDefault(_IDBKeyRange);
-
-var _IDBCursor = require('./IDBCursor.js');
 
 var _IDBObjectStore = require('./IDBObjectStore.js');
 
@@ -19523,10 +19527,6 @@ var _IDBTransaction2 = _interopRequireDefault(_IDBTransaction);
 var _IDBDatabase = require('./IDBDatabase.js');
 
 var _IDBDatabase2 = _interopRequireDefault(_IDBDatabase);
-
-var _IDBRequest = require('./IDBRequest.js');
-
-var _IDBFactory = require('./IDBFactory.js');
 
 var _polyfill = require('./polyfill.js');
 
@@ -19573,19 +19573,21 @@ function shimAll(idb) {
             if (typeof _cfg2.default.win.openDatabase !== 'undefined') {
                 // Polyfill ALL of IndexedDB, using WebSQL
                 shim('indexedDB', _IDBFactory.shimIndexedDB);
-                shim('IDBFactory', _IDBFactory.shimIDBFactory);
+                console.log('sif');
+                console.log(_IDBFactory.IDBFactory);
+                shim('IDBFactory', _IDBFactory.IDBFactory);
                 shim('IDBDatabase', _IDBDatabase2.default);
                 shim('IDBObjectStore', _IDBObjectStore2.default);
                 shim('IDBIndex', _IDBIndex2.default);
                 shim('IDBTransaction', _IDBTransaction2.default);
-                shim('IDBCursor', _IDBCursor.shimIDBCursor);
+                shim('IDBCursor', _IDBCursor.IDBCursor);
                 shim('IDBKeyRange', _IDBKeyRange2.default);
-                shim('IDBRequest', _IDBRequest.shimIDBRequest);
-                shim('IDBOpenDBRequest', _IDBRequest.shimIDBOpenDBRequest);
-                shim('IDBVersionChangeEvent', _Event.shimIDBVersionChangeEvent);
+                shim('IDBRequest', _IDBRequest.IDBRequest);
+                shim('IDBOpenDBRequest', _IDBRequest.IDBOpenDBRequest);
+                shim('IDBVersionChangeEvent', _Event.IDBVersionChangeEvent);
             } else if (_typeof(IDB.indexedDB) === 'object') {
                 // Polyfill the missing IndexedDB features (no need for IDBEnvironment, the window containing indexedDB itself))
-                (0, _polyfill2.default)(_IDBCursor.shimIDBCursor, _IDBCursor.shimIDBCursorWithValue, _IDBDatabase2.default, _IDBFactory.shimIDBFactory, _IDBIndex2.default, _IDBKeyRange2.default, _IDBObjectStore2.default, _IDBRequest.shimIDBRequest, _IDBTransaction2.default);
+                (0, _polyfill2.default)(_IDBCursor.IDBCursor, _IDBCursor.IDBCursorWithValue, _IDBDatabase2.default, _IDBFactory.IDBFactory, _IDBIndex2.default, _IDBKeyRange2.default, _IDBObjectStore2.default, _IDBRequest.IDBRequest, _IDBTransaction2.default);
             }
         };
 

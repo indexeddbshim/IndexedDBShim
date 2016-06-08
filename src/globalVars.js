@@ -1,13 +1,13 @@
 import 'babel-polyfill'; // Object.assign in EventTarget, etc.
-import {shimIDBVersionChangeEvent} from './Event.js';
+import {IDBVersionChangeEvent as shimIDBVersionChangeEvent} from './Event.js';
+import {IDBCursor as shimIDBCursor, IDBCursorWithValue as shimIDBCursorWithValue} from './IDBCursor.js';
+import {IDBRequest as shimIDBRequest, IDBOpenDBRequest as shimIDBOpenDBRequest} from './IDBRequest.js';
+import {IDBFactory as shimIDBFactory, shimIndexedDB} from './IDBFactory.js';
 import shimIDBKeyRange from './IDBKeyRange.js';
-import {shimIDBCursor, shimIDBCursorWithValue} from './IDBCursor.js';
 import shimIDBObjectStore from './IDBObjectStore.js';
 import shimIDBIndex from './IDBIndex.js';
 import shimIDBTransaction from './IDBTransaction.js';
 import shimIDBDatabase from './IDBDatabase.js';
-import {shimIDBRequest, shimIDBOpenDBRequest} from './IDBRequest.js';
-import {shimIDBFactory, shimIndexedDB} from './IDBFactory.js';
 import polyfill from './polyfill.js';
 import CFG from './cfg.js';
 
@@ -46,6 +46,8 @@ function shimAll (idb) {
             if (typeof CFG.win.openDatabase !== 'undefined') {
                 // Polyfill ALL of IndexedDB, using WebSQL
                 shim('indexedDB', shimIndexedDB);
+                console.log('sif');
+                console.log(shimIDBFactory);
                 shim('IDBFactory', shimIDBFactory);
                 shim('IDBDatabase', shimIDBDatabase);
                 shim('IDBObjectStore', shimIDBObjectStore);
