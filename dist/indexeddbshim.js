@@ -10688,7 +10688,7 @@ IDBObjectStore.prototype.get = function (key) {
             var value = void 0;
             try {
                 // Opera can't deal with the try-catch here.
-                if (0 === data.rows.length) {
+                if (data.rows.length === 0) {
                     return success();
                 }
 
@@ -12551,7 +12551,7 @@ var StringList = function StringList() {
 StringList.prototype = {
     // Interface.
     contains: function contains(str) {
-        return -1 !== this._items.indexOf(str);
+        return this._items.indexOf(str) !== -1;
     },
     item: function item(key) {
         return this._items[key];
