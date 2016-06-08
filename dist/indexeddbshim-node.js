@@ -19573,8 +19573,6 @@ function shimAll(idb) {
             if (typeof _cfg2.default.win.openDatabase !== 'undefined') {
                 // Polyfill ALL of IndexedDB, using WebSQL
                 shim('indexedDB', _IDBFactory.shimIndexedDB);
-                console.log('sif');
-                console.log(_IDBFactory.IDBFactory);
                 shim('IDBFactory', _IDBFactory.IDBFactory);
                 shim('IDBDatabase', _IDBDatabase2.default);
                 shim('IDBObjectStore', _IDBObjectStore2.default);

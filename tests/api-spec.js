@@ -8,7 +8,7 @@ describe('IndexedDB API', function () {
     }
 
     it('should expose indexedDB', function () {
-        expect(env.indexedDB).to.be.an('object');
+        expect(env.indexedDB && typeof env.indexedDB).equal('object'); // When using native, an('object') will show custom string
         expect(env.indexedDB).to.be.an.instanceOf(IDBFactory);
     });
 

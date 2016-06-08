@@ -1141,8 +1141,8 @@ describe('IDBIndex.openCursor', function () {
                     indexErr = e;
                 }
 
-                expect(storeErr).to.be.an('object');
-                expect(indexErr).to.be.an('object');
+                expect(storeErr && typeof storeErr).equal('object');
+                expect(indexErr && typeof indexErr).equal('object');
                 if (env.isShimmed || !env.browser.isIE) {
                     expect(storeErr).to.be.an.instanceOf(TypeError);    // IE throws a DOMException
                     expect(storeErr.name).to.equal('TypeError');        // IE is InvalidAccessError

@@ -396,7 +396,7 @@ describe('IDBFactory.open', function () {
                         sinon.assert.notCalled(open.onblocked);
 
                         if (env.isShimmed || !env.browser.isSafari) {
-                            expect(open.error).to.be.an.instanceOf(env.DOMError);   // Safari's DOMError is private
+                            expect(open.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
                         }
                         expect(open.error.name).to.equal('VersionError');
                         done();
@@ -429,7 +429,6 @@ describe('IDBFactory.open', function () {
             tryToOpen(/^regex$/);
 
             if (env.isShimmed || !env.browser.isFirefox) {
-                tryToOpen(undefined);
                 tryToOpen(null);
                 tryToOpen({foo: 'bar'});
                 tryToOpen([]);
@@ -445,7 +444,7 @@ describe('IDBFactory.open', function () {
                     err = e;
                 }
 
-                expect(err).to.be.an('object');
+                expect(typeof err).equal('object'); // When using native, an('object') will show custom string
                 if (env.isShimmed || !env.browser.isIE) {
                     expect(err).to.be.an.instanceOf(TypeError); // IE throws a DOMException
                     expect(err.name).to.equal('TypeError');

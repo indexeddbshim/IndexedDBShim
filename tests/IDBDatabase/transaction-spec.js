@@ -249,7 +249,7 @@ describe('IDBDatabase.transaction', function () {
                     err = e;
                 }
 
-                expect(err).to.be.an('object');
+                expect(err && typeof err).equal('object'); // When using native, an('object') will show custom string
                 if (env.isShimmed || !env.browser.isIE) {
                     expect(err).to.be.an.instanceOf(TypeError);     // IE throws a DOMException
                     expect(err.name).to.equal('TypeError');         // IE throws "InvalidAccessError"
@@ -268,7 +268,7 @@ describe('IDBDatabase.transaction', function () {
                     err = e;
                 }
 
-                expect(err).to.be.an('object');
+                expect(err && typeof err).equal('object'); // When using native, an('object') will show custom string
                 if (env.isShimmed || (!env.browser.isIE && !env.browser.isFirefox)) {
                     expect(err).to.be.an.instanceOf(TypeError);     // IE & Firefox throw a DOMException
                     expect(err.name).to.equal('TypeError');         // IE & Firefox throw "InvalidAccessError"
