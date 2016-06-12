@@ -107,6 +107,6 @@
         var transaction = new idbModules.IDBTransaction(this, storeNames, mode);
         return transaction;
     };
-    
+
     idbModules.IDBDatabase = IDBDatabase;
 }(idbModules));

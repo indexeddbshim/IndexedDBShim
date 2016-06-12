@@ -1,5 +1,4 @@
 /* global module:false */
-/*jshint globalstrict: true*/
 "use strict";
 
 module.exports = function(grunt) {
@@ -66,26 +65,26 @@ module.exports = function(grunt) {
 			}
 		},
 
-		jshint: {
-			files: ['src/**/*.js'],
+		eslint: {
+			files: ['src/**/*.js', 'Gruntfile.js', 'build.js'],
 			options: {
-				jshintrc: '.jshintrc'
+				configFile: ".eslintrc"
 			}
 		},
 
 		watch: {
 			dev: {
 				files: ["src/*"],
-				tasks: ["jshint", "concat"]
+				tasks: ["eslint", "concat"]
 			}
 		}
 	});
 
 	for (var key in grunt.file.readJSON('package.json').devDependencies) {
-		if (key !== 'grunt' && key.indexOf('grunt') === 0) grunt.loadNpmTasks(key);
+		if (key !== 'grunt' && key.indexOf('grunt') === 0) {grunt.loadNpmTasks(key);}
 	}
 
-	grunt.registerTask('build', ['jshint', 'concat', 'uglify']);
+	grunt.registerTask('build', ['eslint', 'concat', 'uglify']);
 	var testJobs = ["build", "connect"];
 	if (saucekey !== null) {
 		testJobs.push("saucelabs-qunit");

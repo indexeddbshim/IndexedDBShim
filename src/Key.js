@@ -1,3 +1,4 @@
+/*eslint-disable no-eval*/
 (function(idbModules) {
     "use strict";
 

@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "lint": {
+      "maximum-heading-length": false,
+      "ordered-list-marker-value": "ordered"
+    }
+  }
+}

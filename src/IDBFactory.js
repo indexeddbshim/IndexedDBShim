@@ -228,7 +228,7 @@
         var encodedKey1 = idbModules.Key.encode(key1);
         var encodedKey2 = idbModules.Key.encode(key2);
         var result = encodedKey1 > encodedKey2 ? 1 : encodedKey1 === encodedKey2 ? 0 : -1;
-        
+
         if (idbModules.DEBUG) {
             // verify that the keys encoded correctly
             var decodedKey1 = idbModules.Key.decode(encodedKey1);
@@ -250,7 +250,7 @@
                 console.warn(key2 + ' was incorrectly encoded as ' + decodedKey2);
             }
         }
-        
+
         return result;
     };
 

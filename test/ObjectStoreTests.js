@@ -35,7 +35,7 @@ queuedAsyncTest("Creating an Object Store", function(){
         start();
         stop();
     };
-    
+
     dbOpenRequest.onblocked = function(){
         ok(false, "Database open is now blocked");
         _("Database open blocked");
@@ -93,7 +93,7 @@ queuedAsyncTest("Deleting an Object Store", function(){
         start();
         stop();
     };
-    
+
     dbOpenRequest.onblocked = function(e){
         ok(false, "Database open request blocked");
         _("Database open blocked");

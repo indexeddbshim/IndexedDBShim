@@ -4,7 +4,7 @@ describe('IndexedDB API', function() {
     // Determines whether the given thing is a class
     function isAClass(thing) {
         return (typeof(thing) === 'function' ||
-            (typeof(thing) === 'object' && (thing.__proto__ || thing.prototype)));  // jshint ignore:line
+            (typeof(thing) === 'object' && (thing.__proto__ || thing.prototype)));
     }
 
     it('should expose indexedDB', function() {

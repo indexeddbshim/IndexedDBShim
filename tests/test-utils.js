@@ -3,6 +3,7 @@
 
     var databaseNamePrefix = 'IndexedDBShim_Test_Database_';
     var dbNameCounter = 0;
+    var util;
 
     /**
      * This function runs before every test.
@@ -30,7 +31,7 @@
     });
 
 
-    var util = window.util = {
+    util = window.util = {
         sampleData: {
             /**
              * A custom class, used to test the IndexedDB structured cloning algorithm

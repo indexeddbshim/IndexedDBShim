@@ -18,8 +18,8 @@
     }
     IDBOpenDBRequest.prototype = new IDBRequest();
     IDBOpenDBRequest.prototype.constructor = IDBOpenDBRequest;
-    
+
     idbModules.IDBRequest = IDBRequest;
     idbModules.IDBOpenDBRequest = IDBOpenDBRequest;
-    
+
 }(idbModules));

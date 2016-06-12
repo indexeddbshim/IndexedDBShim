@@ -267,13 +267,13 @@ describe('IDBFactory.cmp', function() {
             tryToCompare([1, null, 2]);                         // array with null
             tryToCompare([true, false]);                        // array of booleans
             tryToCompare([{foo: 'bar'}]);                       // array of objects
-            tryToCompare(new Boolean(true));                    // jshint ignore:line
-            tryToCompare(new Object());                         // jshint ignore:line
+            tryToCompare(new Boolean(true));
+            tryToCompare(new Object());
 
             if (env.isShimmed || !env.browser.isIE) {
                 tryToCompare(null);                             // null
-                tryToCompare(new Number(12345));                // jshint ignore:line
-                tryToCompare(new String('hello world'));        // jshint ignore:line
+                tryToCompare(new Number(12345));
+                tryToCompare(new String('hello world'));
                 tryToCompare(new Date(''));                     // invalid date
                 tryToCompare(new RegExp("asdf"));               // RegExp object
                 tryToCompare(/asdf/);                           // RegExp literal
@@ -291,7 +291,7 @@ describe('IDBFactory.cmp', function() {
                 if (env.isShimmed || !env.browser.isIE) {
                     expect(err).to.be.an.instanceOf(env.DOMException);
                 }
-                expect(err).to.be.ok;
+                expect(err).to.be.ok; // eslint-disable-line no-unused-expressions
                 expect(err.name).to.equal('DataError');
             }
         });

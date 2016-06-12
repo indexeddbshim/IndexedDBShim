@@ -140,7 +140,7 @@ onObjectStoreOpen("Updating non-existant in Object Store", DB.OBJECT_STORE_1, fu
         start();
         objectStore.transaction.db.close();
         nextTest();
-        
+
     };
     req.onerror = function(){
         _("Could not add data to database");
@@ -258,4 +258,3 @@ queuedAsyncTest("Lots of data Added to objectStore1", function(){
         start();
     };
 });
-
