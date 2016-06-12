@@ -136,7 +136,7 @@ module.exports = function (grunt) {
         watch: {
             dev: {
                 files: ['src/*'],
-                tasks: ['eslint', 'browserify']
+                tasks: ['eslint', 'browserify', 'uglify']
             }
         }
     });

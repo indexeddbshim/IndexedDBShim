@@ -1,5 +1,5 @@
 import {createDOMException} from './DOMException.js';
-import {IDBCursor} from './IDBCursor.js';
+import {IDBCursor, IDBCursorWithValue} from './IDBCursor.js';
 import util from './util.js';
 import Key from './Key.js';
 import IDBKeyRange from './IDBKeyRange.js';
@@ -383,6 +383,10 @@ IDBObjectStore.prototype.count = function (key) {
 
 IDBObjectStore.prototype.openCursor = function (range, direction) {
     return new IDBCursor(range, direction, this, this, 'key', 'value').__req;
+};
+
+IDBObjectStore.prototype.openKeyCursor = function (range, direction) {
+    return new IDBCursorWithValue(range, direction, this, this, 'key', 'key').__req;
 };
 
 IDBObjectStore.prototype.index = function (indexName) {

@@ -370,6 +370,22 @@ IDBCursor.prototype['delete'] = function () {
     });
 };
 
-// Todo: Add IDBCursorWithValue?
-const IDBCursorWithValue = {};
+class IDBCursorWithValue extends IDBCursor {
+}
+Object.defineProperty(IDBCursorWithValue.prototype, '_value', {
+    enumerable: false,
+    configurable: false,
+    writable: true
+});
+Object.defineProperty(IDBCursorWithValue.prototype, 'value', {
+    enumerable: true,
+    configurable: true,
+    get: function () {
+        return this._value;
+    },
+    set: function (val) {
+        this._value = val;
+    }
+});
+
 export {IDBCursor, IDBCursorWithValue};

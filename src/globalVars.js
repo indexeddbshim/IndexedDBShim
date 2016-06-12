@@ -55,6 +55,7 @@ function shimAll (idb) {
                 shim('IDBIndex', shimIDBIndex);
                 shim('IDBTransaction', shimIDBTransaction);
                 shim('IDBCursor', shimIDBCursor);
+                shim('IDBCursorWithValue', shimIDBCursorWithValue);
                 shim('IDBKeyRange', shimIDBKeyRange);
                 shim('IDBRequest', shimIDBRequest);
                 shim('IDBOpenDBRequest', shimIDBOpenDBRequest);

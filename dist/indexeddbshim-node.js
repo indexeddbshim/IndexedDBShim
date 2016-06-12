@@ -16602,6 +16602,12 @@ var _cfg2 = _interopRequireDefault(_cfg);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 /**
  * The IndexedDB Cursor Object
  * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBCursor
@@ -16967,8 +16973,34 @@ IDBCursor.prototype['delete'] = function () {
     });
 };
 
-// Todo: Add IDBCursorWithValue?
-var IDBCursorWithValue = {};
+var IDBCursorWithValue = function (_IDBCursor) {
+    _inherits(IDBCursorWithValue, _IDBCursor);
+
+    function IDBCursorWithValue() {
+        _classCallCheck(this, IDBCursorWithValue);
+
+        return _possibleConstructorReturn(this, Object.getPrototypeOf(IDBCursorWithValue).apply(this, arguments));
+    }
+
+    return IDBCursorWithValue;
+}(IDBCursor);
+
+Object.defineProperty(IDBCursorWithValue.prototype, '_value', {
+    enumerable: false,
+    configurable: false,
+    writable: true
+});
+Object.defineProperty(IDBCursorWithValue.prototype, 'value', {
+    enumerable: true,
+    configurable: true,
+    get: function get() {
+        return this._value;
+    },
+    set: function set(val) {
+        this._value = val;
+    }
+});
+
 exports.IDBCursor = IDBCursor;
 exports.IDBCursorWithValue = IDBCursorWithValue;
 
@@ -17668,7 +17700,7 @@ IDBIndex.prototype.openCursor = function (range, direction) {
  * @returns {IDBRequest}
  */
 IDBIndex.prototype.openKeyCursor = function (range, direction) {
-    return new _IDBCursor.IDBCursor(range, direction, this.objectStore, this, this.name, 'key').__req;
+    return new _IDBCursor.IDBCursorWithValue(range, direction, this.objectStore, this, this.name, 'key').__req;
 };
 
 IDBIndex.prototype.get = function (key) {
@@ -18179,6 +18211,10 @@ IDBObjectStore.prototype.count = function (key) {
 
 IDBObjectStore.prototype.openCursor = function (range, direction) {
     return new _IDBCursor.IDBCursor(range, direction, this, this, 'key', 'value').__req;
+};
+
+IDBObjectStore.prototype.openKeyCursor = function (range, direction) {
+    return new _IDBCursor.IDBCursorWithValue(range, direction, this, this, 'key', 'key').__req;
 };
 
 IDBObjectStore.prototype.index = function (indexName) {
@@ -19483,6 +19519,7 @@ function shimAll(idb) {
                 shim('IDBIndex', _IDBIndex2.default);
                 shim('IDBTransaction', _IDBTransaction2.default);
                 shim('IDBCursor', _IDBCursor.IDBCursor);
+                shim('IDBCursorWithValue', _IDBCursor.IDBCursorWithValue);
                 shim('IDBKeyRange', _IDBKeyRange2.default);
                 shim('IDBRequest', _IDBRequest.IDBRequest);
                 shim('IDBOpenDBRequest', _IDBRequest.IDBOpenDBRequest);
