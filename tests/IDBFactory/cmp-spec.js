@@ -1,8 +1,9 @@
-describe('IDBFactory.cmp', function() {
+/* eslint-disable no-var */
+describe('IDBFactory.cmp', function () {
     'use strict';
 
     var indexedDB;
-    beforeEach(function() {
+    beforeEach(function () {
         indexedDB = env.indexedDB;
     });
 
@@ -12,7 +13,7 @@ describe('IDBFactory.cmp', function() {
     results[1] = ', but it was greater';
 
     // Asserts that a is less than b, and that b is less than a
-    function compare(a, b) {
+    function compare (a, b) {
         var result = indexedDB.cmp(a, b);
         if (result !== -1) {
             throw new Error('Expected ' + a + ' to be less than ' + b + results[result]);
@@ -25,7 +26,7 @@ describe('IDBFactory.cmp', function() {
     }
 
     // Asserts that a equals b, and that b equals a
-    function equal(a, b) {
+    function equal (a, b) {
         if (arguments.length === 1) {
             b = a;
         }
@@ -41,8 +42,8 @@ describe('IDBFactory.cmp', function() {
         }
     }
 
-    describe('simple keys', function() {
-        it('should compare two numbers', function() {
+    describe('simple keys', function () {
+        it('should compare two numbers', function () {
             compare(1, 2);
             compare(-2, -1);
             compare(-1, 1);
@@ -92,7 +93,7 @@ describe('IDBFactory.cmp', function() {
             equal(-Number.MAX_VALUE);
         });
 
-        it('should compare two strings', function() {
+        it('should compare two strings', function () {
             compare('', ' ');
             compare('a', 'b');
             compare('A', 'a');
@@ -136,7 +137,7 @@ describe('IDBFactory.cmp', function() {
             equal(util.sampleData.veryLongString);
         });
 
-        it('should compare two dates', function() {
+        it('should compare two dates', function () {
             compare(new Date(0), new Date(1));
             compare(new Date(0), new Date());
             compare(new Date(12345), new Date(12346));
@@ -146,8 +147,7 @@ describe('IDBFactory.cmp', function() {
 
             try {
                 compare(new Date(-12345), new Date(-12344));
-            }
-            catch (e) {
+            } catch (e) {
                 // Some browsers throw an error when creating a date with a negative number
             }
 
@@ -156,7 +156,7 @@ describe('IDBFactory.cmp', function() {
             equal(new Date('2000-01-01T00:00:00.000Z'));
         });
 
-        it('should compare different data types', function() {
+        it('should compare different data types', function () {
             if (env.isShimmed || !env.browser.isIE) {
                 // IE doesn't support array keys
                 // arrays are greater than strings, numbers, and dates
@@ -177,8 +177,7 @@ describe('IDBFactory.cmp', function() {
 
             try {
                 compare(new Date(-9999), '');
-            }
-            catch (e) {
+            } catch (e) {
                 // Some browsers throw an error when creating a date with a negative number
             }
 
@@ -189,17 +188,17 @@ describe('IDBFactory.cmp', function() {
         });
     });
 
-    describe('compound keys', function() {
-        util.skipIf(env.isNative && env.browser.isIE, 'should compare numeric arrays', function() {
+    describe('compound keys', function () {
+        util.skipIf(env.isNative && env.browser.isIE, 'should compare numeric arrays', function () {
             // BUG: IE's native IndexedDB does not support compound keys at all
             compare([], [0]);
             compare([0], [1]);
             compare([-1], [0]);
             compare([-0.00000000001], [0]);
             compare([0.99999999999999], [1]);
-            compare([0], [0,0]);
-            compare([0,0], [1]);
-            compare([-1], [0,0]);
+            compare([0], [0, 0]);
+            compare([0, 0], [1]);
+            compare([-1], [0, 0]);
 
             equal([]);
             equal([], []);
@@ -214,21 +213,21 @@ describe('IDBFactory.cmp', function() {
             }
         });
 
-        util.skipIf(env.isNative && env.browser.isIE, 'should compare string arrays', function() {
+        util.skipIf(env.isNative && env.browser.isIE, 'should compare string arrays', function () {
             // BUG: IE's native IndexedDB does not support compound keys at all
             compare([], ['']);
             compare([''], [' ']);
             compare([''], ['0']);
             compare(['Z'], ['a']);
             compare([''], ['a']);
-            compare(['',''], ['a']);
-            compare(['a','b','c','d'], ['a','b','c','d','']);
-            compare(['a','a','a',''], ['a','a','a','a']);
+            compare(['', ''], ['a']);
+            compare(['a', 'b', 'c', 'd'], ['a', 'b', 'c', 'd', '']);
+            compare(['a', 'a', 'a', ''], ['a', 'a', 'a', 'a']);
 
             equal(['']);
             equal([''], ['']);
             equal([' '], [' ']);
-            equal(['a','b','c'], ['a','b','c']);
+            equal(['a', 'b', 'c'], ['a', 'b', 'c']);
 
             if (!env.browser.isIE) {
                 // BUG: IE truncates string keys at 889 characters.
@@ -237,25 +236,27 @@ describe('IDBFactory.cmp', function() {
             }
         });
 
-        util.skipIf(env.isNative && env.browser.isIE, 'should compare nested arrays', function() {
+        util.skipIf(env.isNative && env.browser.isIE, 'should compare nested arrays', function () {
             // BUG: IE's native IndexedDB does not support compound keys at all
             compare([], [[]]);
-            compare([[]], [[],[]]);
+            compare([[]], [[], []]);
             compare([[[]]], [[[[]]]]);
-            compare([1,[2,[3]]], [[0],[0,[0]]]);
+            compare([1, [2, [3]]], [[0], [0, [0]]]);
             compare([0, [2, [3]]], [1]);
-            compare([[2],[3,[4]]], [[2],[3,[4],[]]]);
-            compare([[],[[],[1]]], [[],[[0],[]]]);
+            compare([[2], [3, [4]]], [[2], [3, [4], []]]);
+            compare([[], [[], [1]]], [[], [[0], []]]);
 
             equal([[[[]]]]);
             equal([[[[]]]], [[[[]]]]);
-            equal(['a',['b'],['c',['d']]], ['a',['b'],['c',['d']]]);
-            equal([[[['a'],'b'],'c']], [[[['a'],'b'],'c']]);
+            equal(['a', ['b'], ['c', ['d']]], ['a', ['b'], ['c', ['d']]]);
+            equal([[[['a'], 'b'], 'c']], [[[['a'], 'b'], 'c']]);
         });
     });
 
-    describe('failure tests', function() {
-        it('should not allow these keys', function() {
+    describe('failure tests', function () {
+        it('should not allow these keys', function () {
+            this.timeout(5000);
+
             tryToCompare(undefined);                            // undefined
             tryToCompare(NaN);                                  // NaN
             tryToCompare(true);                                 // boolean
@@ -267,24 +268,23 @@ describe('IDBFactory.cmp', function() {
             tryToCompare([1, null, 2]);                         // array with null
             tryToCompare([true, false]);                        // array of booleans
             tryToCompare([{foo: 'bar'}]);                       // array of objects
-            tryToCompare(new Boolean(true));
-            tryToCompare(new Object());
+            tryToCompare(new Boolean(true)); // eslint-disable-line no-new-wrappers
+            tryToCompare(new Object()); // eslint-disable-line no-new-object
 
             if (env.isShimmed || !env.browser.isIE) {
                 tryToCompare(null);                             // null
-                tryToCompare(new Number(12345));
-                tryToCompare(new String('hello world'));
+                tryToCompare(new Number(12345)); // eslint-disable-line no-new-wrappers
+                tryToCompare(new String('hello world')); // eslint-disable-line no-new-wrappers
                 tryToCompare(new Date(''));                     // invalid date
-                tryToCompare(new RegExp("asdf"));               // RegExp object
+                tryToCompare(new RegExp('asdf'));               // RegExp object
                 tryToCompare(/asdf/);                           // RegExp literal
             }
 
-            function tryToCompare(x) {
+            function tryToCompare (x) {
                 var err;
                 try {
                     indexedDB.cmp(1, x);
-                }
-                catch (e) {
+                } catch (e) {
                     err = e;
                 }
 
@@ -296,12 +296,11 @@ describe('IDBFactory.cmp', function() {
             }
         });
 
-        it('should throw an error if called without params', function() {
+        it('should throw an error if called without params', function () {
             var err;
             try {
                 indexedDB.cmp();
-            }
-            catch (e) {
+            } catch (e) {
                 err = e;
             }
 
@@ -309,12 +308,11 @@ describe('IDBFactory.cmp', function() {
             expect(err.name).to.equal('TypeError');
         });
 
-        it('should throw an error if called with only one param', function() {
+        it('should throw an error if called with only one param', function () {
             var err;
             try {
                 indexedDB.cmp(1);
-            }
-            catch (e) {
+            } catch (e) {
                 err = e;
             }
 

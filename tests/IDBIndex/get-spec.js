@@ -1,8 +1,14 @@
-describe('IDBIndex.get', function() {
+/* eslint-disable no-var */
+describe('IDBIndex.get', function () {
     'use strict';
 
-    it('should return an IDBRequest', function(done) {
-        util.createDatabase('inline', 'inline-index', function(err, db) {
+    it('should return an IDBRequest', function (done) {
+        util.createDatabase('inline', 'inline-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
             var index = store.index('inline-index');
@@ -14,15 +20,20 @@ describe('IDBIndex.get', function() {
             expect(storeGet).to.be.an.instanceOf(IDBRequest);
             expect(indexGet).to.be.an.instanceOf(IDBRequest);
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 db.close();
                 done();
             };
         });
     });
 
-    it('should pass the IDBRequest event to the onsuccess callback', function(done) {
-        util.createDatabase('inline', 'inline-index', function(err, db) {
+    it('should pass the IDBRequest event to the onsuccess callback', function (done) {
+        util.createDatabase('inline', 'inline-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
             var index = store.index('inline-index');
@@ -34,17 +45,17 @@ describe('IDBIndex.get', function() {
             storeGet.onerror = sinon.spy();
             indexGet.onerror = sinon.spy();
 
-            storeGet.onsuccess = sinon.spy(function(event) {
+            storeGet.onsuccess = sinon.spy(function (event) {
                 expect(event).to.be.an.instanceOf(env.Event);
                 expect(event.target).to.equal(storeGet);
             });
 
-            indexGet.onsuccess = sinon.spy(function(event) {
+            indexGet.onsuccess = sinon.spy(function (event) {
                 expect(event).to.be.an.instanceOf(env.Event);
                 expect(event.target).to.equal(indexGet);
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 sinon.assert.calledOnce(storeGet.onsuccess);
                 sinon.assert.calledOnce(indexGet.onsuccess);
 
@@ -57,20 +68,25 @@ describe('IDBIndex.get', function() {
         });
     });
 
-    it('should get a record', function(done) {
-        util.createDatabase('inline', 'inline-index', function(err, db) {
+    it('should get a record', function (done) {
+        util.createDatabase('inline', 'inline-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
             var index = store.index('inline-index');
             tx.onerror = done;
 
             var storeGet, indexGet;
-            store.add({id: 1}).onsuccess = function() {
+            store.add({id: 1}).onsuccess = function () {
                 storeGet = store.get(1);
                 indexGet = index.get(1);
             };
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(storeGet.result).to.deep.equal({id: 1});
                 expect(indexGet.result).to.deep.equal({id: 1});
 
@@ -80,26 +96,31 @@ describe('IDBIndex.get', function() {
         });
     });
 
-    it('should not get a record if the key is not found', function(done) {
-        util.createDatabase('inline', 'inline-index', function(err, db) {
+    it('should not get a record if the key is not found', function (done) {
+        util.createDatabase('inline', 'inline-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
             var index = store.index('inline-index');
             tx.onerror = done;
 
             var storeGet, indexGet;
-            store.add({id: 1}).onsuccess = function() {
+            store.add({id: 1}).onsuccess = function () {
                 storeGet = store.get(2);
                 indexGet = index.get(2);
             };
 
-            tx.oncomplete = function() {
-                expect(storeGet.result).not.to.be.ok;
-                expect(indexGet.result).not.to.be.ok;
+            tx.oncomplete = function () {
+                expect(storeGet.result).to.not.be.ok;
+                expect(indexGet.result).to.not.be.ok;
 
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(storeGet.result).to.be.undefined;    // Safari returns null
-                    expect(indexGet.result).to.be.undefined;    // Safari returns null
+                    expect(storeGet.result).equal(undefined);    // Safari returns null
+                    expect(indexGet.result).equal(undefined);    // Safari returns null
                 }
 
                 db.close();
@@ -108,8 +129,13 @@ describe('IDBIndex.get', function() {
         });
     });
 
-    it('should get records immediately after creating them', function(done) {
-        util.createDatabase('inline', 'inline-index', function(err, db) {
+    it('should get records immediately after creating them', function (done) {
+        util.createDatabase('inline', 'inline-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
             var index = store.index('inline-index');
@@ -126,7 +152,7 @@ describe('IDBIndex.get', function() {
             var indexGet2 = index.get(2);
             var indexGet3 = index.get(3);
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(storeGet1.result).to.deep.equal({id: 1});
                 expect(storeGet2.result).to.deep.equal({id: 2});
                 expect(storeGet3.result).to.deep.equal({id: 3});
@@ -141,11 +167,16 @@ describe('IDBIndex.get', function() {
         });
     });
 
-    it('should get records from previous transactions', function(done) {
-        util.createDatabase('inline', 'inline-index', function(err, db) {
+    it('should get records from previous transactions', function (done) {
+        util.createDatabase('inline', 'inline-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             transaction1();
 
-            function transaction1() {
+            function transaction1 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
                 tx.onerror = done;
@@ -156,7 +187,7 @@ describe('IDBIndex.get', function() {
                 store.add({id: 3});
             }
 
-            function transaction2() {
+            function transaction2 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
                 tx.onerror = done;
@@ -169,7 +200,7 @@ describe('IDBIndex.get', function() {
             var storeGet1, storeGet2, storeGet3, storeGet4, storeGet5,
                 indexGet1, indexGet2, indexGet3, indexGet4, indexGet5;
 
-            function transaction3() {
+            function transaction3 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
                 var index = store.index('inline-index');
@@ -189,7 +220,7 @@ describe('IDBIndex.get', function() {
                 indexGet5 = index.get(5);
             }
 
-            function checkResults() {
+            function checkResults () {
                 expect(storeGet1.result).to.deep.equal({id: 1});
                 expect(storeGet2.result).to.deep.equal({id: 2});
                 expect(storeGet3.result).to.deep.equal({id: 3});
@@ -208,12 +239,17 @@ describe('IDBIndex.get', function() {
         });
     });
 
-    it('should get data using out-of-line keys', function(done) {
-        util.createDatabase('out-of-line', 'inline-index', function(err, db) {
+    it('should get data using out-of-line keys', function (done) {
+        util.createDatabase('out-of-line', 'inline-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line', 'readwrite');
             var store = tx.objectStore('out-of-line');
             var index = store.index('inline-index');
-            tx.onerror = function(event) {
+            tx.onerror = function (event) {
                 done(event.target.error);
             };
 
@@ -231,19 +267,19 @@ describe('IDBIndex.get', function() {
             var indexGet2 = index.get(3);
             var indexGet3 = index.get(101);
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(storeGet1.result).to.equal('five');
                 expect(storeGet2.result).to.equal('three');
                 expect(storeGet3.result).to.equal('one');
 
                 // Out-of-line keys aren't included in indexes
-                expect(indexGet1.result).not.to.be.ok;
-                expect(indexGet2.result).not.to.be.ok;
-                expect(indexGet3.result).not.to.be.ok;
+                expect(indexGet1.result).to.not.be.ok;
+                expect(indexGet2.result).to.not.be.ok;
+                expect(indexGet3.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(indexGet1.result).to.be.undefined;   // Safari returns null
-                    expect(indexGet2.result).to.be.undefined;   // Safari returns null
-                    expect(indexGet3.result).to.be.undefined;   // Safari returns null
+                    expect(indexGet1.result).equal(undefined);   // Safari returns null
+                    expect(indexGet2.result).equal(undefined);   // Safari returns null
+                    expect(indexGet3.result).equal(undefined);   // Safari returns null
                 }
 
                 db.close();
@@ -252,9 +288,14 @@ describe('IDBIndex.get', function() {
         });
     });
 
-    util.skipIf(env.isNative && env.browser.isIE, 'should get data using compound out-of-line keys', function(done) {
+    util.skipIf(env.isNative && env.browser.isIE, 'should get data using compound out-of-line keys', function (done) {
         // BUG: IE's native IndexedDB does not support compound keys at all
-        util.createDatabase('out-of-line-compound', 'inline-index', function(err, db) {
+        util.createDatabase('out-of-line-compound', 'inline-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line-compound', 'readwrite');
             var store = tx.objectStore('out-of-line-compound');
             var index = store.index('inline-index');
@@ -274,19 +315,19 @@ describe('IDBIndex.get', function() {
             var indexGet2 = index.get([1, 'oh', 1]);
             var indexGet3 = index.get(['t', 'w', 'o']);
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(storeGet1.result).to.equal('five');
                 expect(storeGet2.result).to.equal('one');
                 expect(storeGet3.result).to.equal('two');
 
                 // Out-of-line keys aren't included in indexes
-                expect(indexGet1.result).not.to.be.ok;
-                expect(indexGet2.result).not.to.be.ok;
-                expect(indexGet3.result).not.to.be.ok;
+                expect(indexGet1.result).to.not.be.ok;
+                expect(indexGet2.result).to.not.be.ok;
+                expect(indexGet3.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(indexGet1.result).to.be.undefined;   // Safari returns null
-                    expect(indexGet2.result).to.be.undefined;   // Safari returns null
-                    expect(indexGet3.result).to.be.undefined;   // Safari returns null
+                    expect(indexGet1.result).equal(undefined);   // Safari returns null
+                    expect(indexGet2.result).equal(undefined);   // Safari returns null
+                    expect(indexGet3.result).equal(undefined);   // Safari returns null
                 }
 
                 db.close();
@@ -295,8 +336,13 @@ describe('IDBIndex.get', function() {
         });
     });
 
-    it('should get data using generated out-of-line keys', function(done) {
-        util.createDatabase('out-of-line-generated', 'inline-index', function(err, db) {
+    it('should get data using generated out-of-line keys', function (done) {
+        util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line-generated', 'readwrite');
             var store = tx.objectStore('out-of-line-generated');
             var index = store.index('inline-index');
@@ -316,19 +362,19 @@ describe('IDBIndex.get', function() {
             var indexGet2 = index.get(2);
             var indexGet3 = index.get(5);
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(storeGet1.result).to.equal('four');
                 expect(storeGet2.result).to.equal('two');
                 expect(storeGet3.result).to.equal('five');
 
                 // Out-of-line keys aren't included in indexes
-                expect(indexGet1.result).not.to.be.ok;
-                expect(indexGet2.result).not.to.be.ok;
-                expect(indexGet3.result).not.to.be.ok;
+                expect(indexGet1.result).to.not.be.ok;
+                expect(indexGet2.result).to.not.be.ok;
+                expect(indexGet3.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(indexGet1.result).to.be.undefined;   // Safari returns null
-                    expect(indexGet2.result).to.be.undefined;   // Safari returns null
-                    expect(indexGet3.result).to.be.undefined;   // Safari returns null
+                    expect(indexGet1.result).equal(undefined);   // Safari returns null
+                    expect(indexGet2.result).equal(undefined);   // Safari returns null
+                    expect(indexGet3.result).equal(undefined);   // Safari returns null
                 }
 
                 db.close();
@@ -337,8 +383,13 @@ describe('IDBIndex.get', function() {
         });
     });
 
-    it('should get data using inline keys', function(done) {
-        util.createDatabase('inline', 'inline-index', function(err, db) {
+    it('should get data using inline keys', function (done) {
+        util.createDatabase('inline', 'inline-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
             var index = store.index('inline-index');
@@ -358,7 +409,7 @@ describe('IDBIndex.get', function() {
             var indexGet2 = index.get('five');
             var indexGet3 = index.get('two');
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(storeGet1.result).to.deep.equal({id: 'four'});
                 expect(storeGet2.result).to.deep.equal({id: 'five'});
                 expect(storeGet3.result).to.deep.equal({id: 'two'});
@@ -373,13 +424,18 @@ describe('IDBIndex.get', function() {
         });
     });
 
-    util.skipIf(env.isNative && env.browser.isIE, 'should get data using compound inline keys', function(done) {
+    util.skipIf(env.isNative && env.browser.isIE, 'should get data using compound inline keys', function (done) {
         // BUG: IE's native IndexedDB does not support compound keys at all
-        util.createDatabase('inline-compound', 'inline-index', function(err, db) {
+        util.createDatabase('inline-compound', 'inline-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('inline-compound', 'readwrite');
             var store = tx.objectStore('inline-compound');
             var index = store.index('inline-index');
-            tx.onerror = function(event) {
+            tx.onerror = function (event) {
                 done(event.target.error);
             };
 
@@ -397,7 +453,7 @@ describe('IDBIndex.get', function() {
             var indexGet2 = index.get(1);
             var indexGet3 = index.get(5);
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(storeGet1.result).to.deep.equal({id: 3, name: 'three'});
                 expect(storeGet2.result).to.deep.equal({id: 1, name: 'one'});
                 expect(storeGet3.result).to.deep.equal({id: 5, name: 'five'});
@@ -412,12 +468,17 @@ describe('IDBIndex.get', function() {
         });
     });
 
-    it('should get data using generated inline keys', function(done) {
-        util.createDatabase('inline-generated', 'inline-index', function(err, db) {
+    it('should get data using generated inline keys', function (done) {
+        util.createDatabase('inline-generated', 'inline-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('inline-generated', 'readwrite');
             var store = tx.objectStore('inline-generated');
             var index = store.index('inline-index');
-            tx.onerror = function(event) {
+            tx.onerror = function (event) {
                 done(event.target.error);
             };
 
@@ -435,7 +496,7 @@ describe('IDBIndex.get', function() {
             var indexGet2 = index.get(1);
             var indexGet3 = index.get(5);
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(storeGet1.result).to.deep.equal({id: 3, name: 'three'});
                 expect(storeGet2.result).to.deep.equal({id: 1, name: 'one'});
                 expect(storeGet3.result).to.deep.equal({id: 5, name: 'five'});
@@ -453,8 +514,13 @@ describe('IDBIndex.get', function() {
         });
     });
 
-    it('should get data using dotted keys', function(done) {
-        util.createDatabase('dotted', 'dotted-index', function(err, db) {
+    it('should get data using dotted keys', function (done) {
+        util.createDatabase('dotted', 'dotted-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('dotted', 'readwrite');
             var store = tx.objectStore('dotted');
             var index = store.index('dotted-index');
@@ -474,7 +540,7 @@ describe('IDBIndex.get', function() {
             var indexGet2 = index.get('five');
             var indexGet3 = index.get('three');
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(storeGet1.result).to.deep.equal({name: {first: 'two'}});
                 expect(storeGet2.result).to.deep.equal({name: {first: 'five'}});
                 expect(storeGet3.result).to.deep.equal({name: {first: 'three'}});
@@ -489,9 +555,14 @@ describe('IDBIndex.get', function() {
         });
     });
 
-    util.skipIf(env.isNative && env.browser.isIE, 'should get data using compound dotted keys', function(done) {
+    util.skipIf(env.isNative && env.browser.isIE, 'should get data using compound dotted keys', function (done) {
         // BUG: IE's native IndexedDB does not support compound keys at all
-        util.createDatabase('dotted-compound', 'compound-index', function(err, db) {
+        util.createDatabase('dotted-compound', 'compound-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('dotted-compound', 'readwrite');
             var store = tx.objectStore('dotted-compound');
             var index = store.index('compound-index');
@@ -511,7 +582,7 @@ describe('IDBIndex.get', function() {
             var indexGet2 = index.get([1, 'five', 'abc']);
             var indexGet3 = index.get([1, 'three', 'abc']);
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(storeGet1.result).to.deep.equal({id: 1, name: {first: 'two', last: 'abc'}});
                 expect(storeGet2.result).to.deep.equal({id: 1, name: {first: 'five', last: 'abc'}});
                 expect(storeGet3.result).to.deep.equal({id: 1, name: {first: 'three', last: 'abc'}});
@@ -526,8 +597,14 @@ describe('IDBIndex.get', function() {
         });
     });
 
-    it('should get data using generated dotted keys', function(done) {
-        util.createDatabase('dotted-generated', 'dotted-index', function(err, db) {
+    it('should get data using generated dotted keys', function (done) {
+        this.timeout(5000);
+        util.createDatabase('dotted-generated', 'dotted-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('dotted-generated', 'readwrite');
             var store = tx.objectStore('dotted-generated');
             var index = store.index('dotted-index');
@@ -547,7 +624,7 @@ describe('IDBIndex.get', function() {
             var indexGet2 = index.get(5);
             var indexGet3 = index.get(1);
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(storeGet1.result).to.deep.equal({name: {first: 4, last: 'abc'}});
                 expect(storeGet2.result).to.deep.equal({name: {first: 5, last: 'abc'}});
                 expect(storeGet3.result).to.deep.equal({name: {first: 1, last: 'abc'}});
@@ -565,8 +642,14 @@ describe('IDBIndex.get', function() {
         });
     });
 
-    it('should allow these keys', function(done) {
-        util.createDatabase('out-of-line-generated', 'inline-index', function(err, db) {
+    it('should allow these keys', function (done) {
+        this.timeout(5000);
+        util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line-generated', 'readwrite');
             var store = tx.objectStore('out-of-line-generated');
             var index = store.index('inline-index');
@@ -588,17 +671,17 @@ describe('IDBIndex.get', function() {
                 getKey([new Date(2005, 6, 7)]);    // array of Dates
             }
 
-            function getKey(key) {
+            function getKey (key) {
                 gettingCounter++;
                 var storeGet = store.get(key);
                 var indexGet = index.get(key);
                 storeGet.onerror = indexGet.onerror = done;
-                storeGet.onsuccess = indexGet.onsuccess = function() {
+                storeGet.onsuccess = indexGet.onsuccess = function () {
                     gottenCounter++;
                 };
             }
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 // Make sure all the gets completed
                 expect(gottenCounter).to.equal(gettingCounter * 2);
 
@@ -608,8 +691,14 @@ describe('IDBIndex.get', function() {
         });
     });
 
-    it('should not allow these keys', function(done) {
-        util.createDatabase('out-of-line-generated', 'inline-index', function(err, db) {
+    it('should not allow these keys', function (done) {
+        this.timeout(5000);
+        util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line-generated', 'readwrite');
             var store = tx.objectStore('out-of-line-generated');
             var index = store.index('inline-index');
@@ -630,18 +719,16 @@ describe('IDBIndex.get', function() {
                 tryToGet(/^regex$/);                        // RegExp
             }
 
-            function tryToGet(key, IDBObj) {
+            function tryToGet (key, IDBObj) {
                 if (!IDBObj) {
                     tryToGet(key, store);
                     tryToGet(key, index);
-                }
-                else {
+                } else {
                     var err = null;
 
                     try {
                         IDBObj.get(key);
-                    }
-                    catch (e) {
+                    } catch (e) {
                         err = e;
                     }
 
@@ -658,9 +745,14 @@ describe('IDBIndex.get', function() {
         });
     });
 
-    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled),'should get multi-entry indexes', function(done) {
+    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should get multi-entry indexes', function (done) {
         // BUG: IE's native IndexedDB does not support multi-entry indexes
-        util.createDatabase('inline', 'multi-entry-index', function(err, db) {
+        util.createDatabase('inline', 'multi-entry-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
             var index = store.index('multi-entry-index');
@@ -690,27 +782,26 @@ describe('IDBIndex.get', function() {
             var storeGet6 = store.get(['b']);
             var indexGet6 = index.get(['b']);
 
-
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(storeGet1.result).to.deep.equal({id: 'a'});
                 expect(storeGet2.result).to.deep.equal({id: ['a']});
-                expect(storeGet3.result).to.be.undefined;
-                expect(storeGet4.result).to.be.undefined;
+                expect(storeGet3.result).equal(undefined);
+                expect(storeGet4.result).equal(undefined);
                 expect(storeGet5.result).to.deep.equal({id: ['a', 'b', 'c']});
                 expect(storeGet6.result).to.deep.equal({id: ['b']});
 
                 expect(indexGet1.result).to.deep.equal({id: 'a'});
-                expect(indexGet2.result).not.to.be.ok;
+                expect(indexGet2.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(indexGet2.result).to.be.undefined;     // Safari returns null
+                    expect(indexGet2.result).equal(undefined);     // Safari returns null
                 }
                 expect(indexGet3.result.id).to.include('b');      // Some browsers return different records
                 expect(indexGet4.result).to.deep.equal({id: ['a', 'b', 'c']});
-                expect(indexGet5.result).not.to.be.ok;
-                expect(indexGet6.result).not.to.be.ok;
+                expect(indexGet5.result).to.not.be.ok;
+                expect(indexGet6.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(indexGet5.result).to.be.undefined;     // Safari returns null
-                    expect(indexGet6.result).to.be.undefined;     // Safari returns null
+                    expect(indexGet5.result).equal(undefined);     // Safari returns null
+                    expect(indexGet6.result).equal(undefined);     // Safari returns null
                 }
 
                 db.close();
@@ -719,9 +810,14 @@ describe('IDBIndex.get', function() {
         });
     });
 
-    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled),'should get unique, multi-entry indexes', function(done) {
+    util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should get unique, multi-entry indexes', function (done) {
         // BUG: IE's native IndexedDB does not support multi-entry indexes
-        util.createDatabase('inline', 'unique-multi-entry-index', function(err, db) {
+        util.createDatabase('inline', 'unique-multi-entry-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
             var index = store.index('unique-multi-entry-index');
@@ -746,25 +842,24 @@ describe('IDBIndex.get', function() {
             var storeGet5 = store.get(['c', 'd', 'e']);
             var indexGet5 = index.get(['c', 'd', 'e']);
 
-
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(storeGet1.result).to.deep.equal({id: 'a'});
-                expect(storeGet2.result).to.be.undefined;
-                expect(storeGet3.result).to.be.undefined;
-                expect(storeGet4.result).to.be.undefined;
+                expect(storeGet2.result).equal(undefined);
+                expect(storeGet3.result).equal(undefined);
+                expect(storeGet4.result).equal(undefined);
                 expect(storeGet5.result).to.deep.equal({id: ['c', 'd', 'e']});
 
                 expect(indexGet1.result).to.deep.equal({id: 'a'});
-                expect(indexGet2.result).not.to.be.ok;
+                expect(indexGet2.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(indexGet2.result).to.be.undefined;     // Safari returns null
+                    expect(indexGet2.result).equal(undefined);     // Safari returns null
                 }
                 expect(indexGet3.result).to.deep.equal({id: ['b']});
-                expect(indexGet4.result).not.to.be.ok;
-                expect(indexGet5.result).not.to.be.ok;
+                expect(indexGet4.result).to.not.be.ok;
+                expect(indexGet5.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(indexGet4.result).to.be.undefined;
-                    expect(indexGet5.result).to.be.undefined;     // Safari returns null
+                    expect(indexGet4.result).equal(undefined);
+                    expect(indexGet5.result).equal(undefined);     // Safari returns null
                 }
 
                 db.close();
@@ -773,9 +868,14 @@ describe('IDBIndex.get', function() {
         });
     });
 
-    util.skipIf(env.isNative && env.browser.isIE, 'should not throw an error if called an incomplete compound key', function(done) {
+    util.skipIf(env.isNative && env.browser.isIE, 'should not throw an error if called an incomplete compound key', function (done) {
         // BUG: IE's native IndexedDB does not support compound keys at all
-        util.createDatabase('inline-compound', 'compound-index', function(err, db) {
+        util.createDatabase('inline-compound', 'compound-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('inline-compound', 'readwrite');
             var store = tx.objectStore('inline-compound');
             var index = store.index('compound-index');
@@ -788,16 +888,16 @@ describe('IDBIndex.get', function() {
             storeGet.onerror = sinon.spy();
             indexGet.onerror = sinon.spy();
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 // Make sure no error was thrown
                 sinon.assert.notCalled(storeGet.onerror);
                 sinon.assert.notCalled(indexGet.onerror);
 
                 // Make sure no data was returned
-                expect(storeGet.result).to.be.undefined;
-                expect(indexGet.result).not.to.be.ok;
+                expect(storeGet.result).equal(undefined);
+                expect(indexGet.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(indexGet.result).to.be.undefined;    // Safari returns null
+                    expect(indexGet.result).equal(undefined);    // Safari returns null
                 }
 
                 db.close();
@@ -806,26 +906,29 @@ describe('IDBIndex.get', function() {
         });
     });
 
-    it('should throw an error if the transaction is closed', function(done) {
-        util.createDatabase('out-of-line-generated', 'inline-index', function(err, db) {
+    it('should throw an error if the transaction is closed', function (done) {
+        util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line-generated', 'readwrite');
             var store = tx.objectStore('out-of-line-generated');
             var index = store.index('inline-index');
 
-            setTimeout(function() {
+            setTimeout(function () {
                 var storeErr, indexErr;
 
                 try {
                     store.get(1);
-                }
-                catch (e) {
+                } catch (e) {
                     storeErr = e;
                 }
 
                 try {
                     index.get(1);
-                }
-                catch (e) {
+                } catch (e) {
                     indexErr = e;
                 }
 
@@ -837,12 +940,17 @@ describe('IDBIndex.get', function() {
 
                 db.close();
                 done();
-            }, 50);
+            }, env.transactionDuration);
         });
     });
 
-    it('should throw an error if called without params', function(done) {
-        util.createDatabase('out-of-line-generated', 'inline-index', function(err, db) {
+    it('should throw an error if called without params', function (done) {
+        util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line-generated', 'readwrite');
             var store = tx.objectStore('out-of-line-generated');
             var index = store.index('inline-index');
@@ -850,15 +958,13 @@ describe('IDBIndex.get', function() {
 
             try {
                 store.get();
-            }
-            catch (e) {
+            } catch (e) {
                 storeErr = e;
             }
 
             try {
                 index.get();
-            }
-            catch (e) {
+            } catch (e) {
                 indexErr = e;
             }
 

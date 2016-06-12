@@ -1,13 +1,20 @@
-describe('IDBFactory.deleteDatabase', function() {
+/* eslint-disable no-var */
+describe('IDBFactory.deleteDatabase', function () {
     'use strict';
+    this.timeout(5000);
 
     var indexedDB;
-    beforeEach(function() {
+    beforeEach(function () {
         indexedDB = env.indexedDB;
     });
 
-    it('should return an IDBOpenDBRequest', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should return an IDBOpenDBRequest', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             db.close();
             var del = indexedDB.deleteDatabase(db.name);
 
@@ -16,23 +23,28 @@ describe('IDBFactory.deleteDatabase', function() {
         });
     });
 
-    it('should return an IDBOpenDBRequest, even if the database doesn\'t exist', function(done) {
+    it('should return an IDBOpenDBRequest, even if the database doesn\'t exist', function (done) {
         var del = indexedDB.deleteDatabase('foobar');
         expect(del).to.be.an.instanceOf(IDBOpenDBRequest);
 
         del.onerror = sinon.spy();
-        del.onsuccess = function() {
+        del.onsuccess = function () {
             sinon.assert.notCalled(del.onerror);
             done();
         };
     });
 
-    it('should pass an IDBVersionChangeEvent to the onsuccess event', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should pass an IDBVersionChangeEvent to the onsuccess event', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             db.close();
             var del = indexedDB.deleteDatabase(db.name);
 
-            del.onsuccess = function(event) {
+            del.onsuccess = function (event) {
                 if (env.isShimmed || (!env.browser.isIE && !env.browser.isSafari)) {
                     expect(event).to.be.an.instanceOf(IDBVersionChangeEvent);   // IE and Safari use a normal event
                 }
@@ -41,12 +53,17 @@ describe('IDBFactory.deleteDatabase', function() {
         });
     });
 
-    it('should pass the IDBOpenDBRequest to the onsuccess event', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should pass the IDBOpenDBRequest to the onsuccess event', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             db.close();
             var del = indexedDB.deleteDatabase(db.name);
 
-            del.onsuccess = function(event) {
+            del.onsuccess = function (event) {
                 expect(event).to.be.an.instanceOf(env.Event);
                 expect(event.target).to.equal(del);
                 done();
@@ -54,31 +71,40 @@ describe('IDBFactory.deleteDatabase', function() {
         });
     });
 
-    it('should set IDBOpenDBRequest.result to undefined', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should set IDBOpenDBRequest.result to undefined', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             db.close();
             var del = indexedDB.deleteDatabase(db.name);
 
-            del.onsuccess = function() {
-                expect(del.result).to.be.undefined;
+            del.onsuccess = function () {
+                expect(del.result).equal(undefined);
                 done();
             };
         });
     });
 
-    it('should delete the database', function(done) {
-        util.generateDatabaseName(function(err, name) {
+    it('should delete the database', function (done) {
+        util.generateDatabaseName(function (err, name) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             // Create version 5 of the database
-            indexedDB.open(name, 5).onsuccess = function(event) {
+            indexedDB.open(name, 5).onsuccess = function (event) {
                 var db = event.target.result;
                 expect(db.version).to.equal(5);
                 db.close();
 
                 // Delete the database
-                indexedDB.deleteDatabase(name).onsuccess = function() {
-
+                indexedDB.deleteDatabase(name).onsuccess = function () {
                     // Create version 3 of the database.
-                    indexedDB.open(name, 3).onsuccess = function(event) {
+                    indexedDB.open(name, 3).onsuccess = function (event) {
                         var db = event.target.result;
                         expect(db.version).to.equal(3);
 
@@ -90,14 +116,19 @@ describe('IDBFactory.deleteDatabase', function() {
         });
     });
 
-    it('should fire the onblocked event if the database is open', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should fire the onblocked event if the database is open', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var alreadyDone = false;
             var del = indexedDB.deleteDatabase(db.name);
             del.onerror = sinon.spy();
 
             // It will either be blocked, or it will delete successfully
-            del.onsuccess = del.onblocked = function(event) {
+            del.onsuccess = del.onblocked = function (event) {
                 sinon.assert.notCalled(del.onerror);
 
                 expect(event).to.be.an.instanceOf(env.Event);
@@ -112,7 +143,7 @@ describe('IDBFactory.deleteDatabase', function() {
         });
     });
 
-    it('should allow all of these parameter types', function(done) {
+    it('should allow all of these parameter types', function (done) {
         var deletingCounter = 0, deletedCounter = 0;
 
         deleteDatabase(undefined);
@@ -133,11 +164,11 @@ describe('IDBFactory.deleteDatabase', function() {
             deleteDatabase(null);
         }
 
-        function deleteDatabase(name) {
+        function deleteDatabase (name) {
             deletingCounter++;
             var del = indexedDB.deleteDatabase(name);
             del.onerror = sinon.spy();
-            del.onsuccess = function() {
+            del.onsuccess = function () {
                 sinon.assert.notCalled(del.onerror);
 
                 if (++deletedCounter === deletingCounter) {
@@ -147,12 +178,11 @@ describe('IDBFactory.deleteDatabase', function() {
         }
     });
 
-    it('should throw an error if called without params', function() {
+    it('should throw an error if called without params', function () {
         var err;
         try {
             indexedDB.deleteDatabase();
-        }
-        catch (e) {
+        } catch (e) {
             err = e;
         }
 

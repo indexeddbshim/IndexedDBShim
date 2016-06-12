@@ -1,177 +1,178 @@
+<!DOCTYPE html>
 <html>
     <head>
         <title>Pouch DB on IndexedDB Shim</title>
-        <script type = "text/javascript" src = "http://cloud.github.com/downloads/daleharvey/pouchdb/pouch.alpha.js">
+        <script src="http://cloud.github.com/downloads/daleharvey/pouchdb/pouch.alpha.js">
         </script>
-        <script type = "text/javascript" src = "/IndexedDBShim/dist/indexeddbshim.min.js">
+        <script src="/IndexedDBShim/dist/indexeddbshim.min.js">
         </script>
-        <script type = "text/javascript">
+        <script>
             var db;
-            function printResult(){
-            	write("Executed : ", arguments);
+            function printResult () {
+                write('Executed : ', arguments);
             }
         </script>
     </head>
     <body>
-        <div class = "splash">
-            <h1><img src = "images/trialtool.png" style ="vertical-align:middle; height : 1.5em">PouchDB with IndexedDB Shim</h1>
+        <div class="splash">
+            <h1><img src="images/trialtool.png" style ="vertical-align:middle; height: 1.5em">PouchDB with IndexedDB Shim</h1>
             <p>
                 <ul>
                     <li>
-                        Pouch DB - <a href = "http://pouchdb.com">http://pouchdb.com/</a>
+                        Pouch DB - <a href="http://pouchdb.com">http://pouchdb.com/</a>
                     </li>
                     <li>
-                        IndexedDB Polyfill - <a href = "http://nparashuram.com/IndexedDBShim/">http://nparashuram.com/IndexedDBShim/</a>
+                        IndexedDB Polyfill - <a href="http://nparashuram.com/IndexedDBShim/">http://nparashuram.com/IndexedDBShim/</a>
                     </li>
                 </ul>
             </p>
         </div>
         <ul>
-            <li class="example-set" id = "pouchExamples">
-                <a class = "example-set-name" href = "#">Pouch DB Examples</a>
+            <li class="example-set" id="pouchExamples">
+                <a class="example-set-name" href="#">Pouch DB Examples</a>
                 <ul>
-                    <li class = "example" id = "forceShim">
-                        <a class = "example-name" href = "#">Force use of IndexedDB Shim</a>
-                        <script type="text/javascript">
+                    <li class="example" id="forceShim">
+                        <a class="example-name" href="#">Force use of IndexedDB Shim</a>
+                        <script>
                             window.shimIndexedDB && window.shimIndexedDB.__useShim();
                         </script>
                     </li>
-                    <li class = "example" id = "createDB">
-                        <a class = "example-name" href = "#">Create Database</a>
-                        <div class = "example-docs">
-                            <iframe style ="width : 100%; height : 700px" src = "http://pouchdb.com/#create-a-database">
+                    <li class="example" id="createDB">
+                        <a class="example-name" href="#">Create Database</a>
+                        <div class="example-docs">
+                            <iframe style ="width: 100%; height: 700px" src="http://pouchdb.com/#create-a-database">
                             </iframe>
                         </div>
-                        <script type="text/javascript">
+                        <script>
                             Pouch('idb://test', function(err, res){
-                            	write("Database created");
-                            	db = res;
-                            	/* Code for ${db.open} */
+                                write("Database created");
+                                db = res;
+                                /* Code for ${db.open} */
                             });
                         </script>
                     </li>
-                    <li class = "example" id = "deleteDB">
-                        <a class = "example-name">Delete Database</a>
-                        <div class = "example-docs">
-                            <iframe style ="width : 100%; height : 700px" src = "http://pouchdb.com/#delete-a-database">
+                    <li class="example" id="deleteDB">
+                        <a class="example-name">Delete Database</a>
+                        <div class="example-docs">
+                            <iframe style ="width: 100%; height: 700px" src="http://pouchdb.com/#delete-a-database">
                             </iframe>
                         </div>
-                        <script type="text/javascript">
+                        <script>
                             Pouch.destroy('idb://test', function(err, info){
-                            	write("Database deleted", info, err);
+                                write("Database deleted", info, err);
                             });
                         </script>
                     </li>
-                    <li class = "example" insertAt = "db.open" depends = "createDB">
-                        <a class = "example-name">Create a Document</a>
-                        <div class = "example-docs">
-                            <iframe style ="width : 100%; height : 700px" src = "http://pouchdb.com/#create-a-document">
+                    <li class="example" insertAt="db.open" depends="createDB">
+                        <a class="example-name">Create a Document</a>
+                        <div class="example-docs">
+                            <iframe style ="width: 100%; height: 700px" src="http://pouchdb.com/#create-a-document">
                             </iframe>
                         </div>
-                        <script type="text/javascript">
+                        <script>
                             db.post({
-                            	title: 'Title ' + new Date()
+                                title: 'Title ' + new Date()
                             }, printResult);
                         </script>
                     </li>
-                    <li class = "example" insertAt = "db.open" depends = "createDB">
-                        <a class = "example-name">Update a Document</a>
-                        <div class = "example-docs">
-                            <iframe style ="width : 100%; height : 700px" src = "http://pouchdb.com/#update-a-document">
+                    <li class="example" insertAt="db.open" depends="createDB">
+                        <a class="example-name">Update a Document</a>
+                        <div class="example-docs">
+                            <iframe style ="width: 100%; height: 700px" src="http://pouchdb.com/#update-a-document">
                             </iframe>
                         </div>
-                        <script type="text/javascript">
+                        <script>
                             db.put({
-                            	_id: 'mydoc-' + Math.random(),
-                            	title: "Title" + new Date()
+                                _id: 'mydoc-' + Math.random(),
+                                title: "Title" + new Date()
                             }, printResult);
                         </script>
                     </li>
-                    <li class = "example" insertAt = "db.open" depends = "createDB">
-                        <a class = "example-name">Save an attachment</a>
-                        <div class = "example-docs">
+                    <li class="example" insertAt="db.open" depends="createDB">
+                        <a class="example-name">Save an attachment</a>
+                        <div class="example-docs">
                         </div>
-                        <script type="text/javascript">
+                        <script>
                             db.put({
-                            	_id: 'otherdoc',
-                            	title: 'Legendary Hearts'
+                                _id: 'otherdoc',
+                                title: 'Legendary Hearts'
                             }, function(err, response){
-                            	var doc = 'Legendary hearts, tear us all apart\nMake our emotions bleed, crying out in need';
-                            	db.putAttachment('otherdoc/text', response.rev, doc, 'text/plain', printResult);
+                                var doc = 'Legendary hearts, tear us all apart\nMake our emotions bleed, crying out in need';
+                                db.putAttachment('otherdoc/text', response.rev, doc, 'text/plain', printResult);
                             });
                         </script>
                     </li>
-                    <li class = "example" insertAt = "db.open" depends = "createDB">
-                        <a class = "example-name">Create a batch of documents</a>
-                        <div class = "example-docs">
-                            <iframe style ="width : 100%; height : 700px" src = "http://pouchdb.com/#create-a-batch-of-documents">
+                    <li class="example" insertAt="db.open" depends="createDB">
+                        <a class="example-name">Create a batch of documents</a>
+                        <div class="example-docs">
+                            <iframe style ="width: 100%; height: 700px" src="http://pouchdb.com/#create-a-batch-of-documents">
                             </iframe>
                         </div>
-                        <script type="text/javascript">
+                        <script>
                             db.bulkDocs({
-                            	docs: [{
-                            		title: 'Lisa Says ' + new Date()
-                            	}, ]
+                                docs: [{
+                                    title: 'Lisa Says ' + new Date()
+                                }, ]
                             }, printResult);
                         </script>
                     </li>
-                    <li class = "example" insertAt = "db.open" depends = "createDB">
-                        <a class = "example-name">Fetch a document</a>
-                        <div class = "example-docs">
-                            <iframe style ="width : 100%; height : 700px" src = "http://pouchdb.com/#fetch-a-document">
+                    <li class="example" insertAt="db.open" depends="createDB">
+                        <a class="example-name">Fetch a document</a>
+                        <div class="example-docs">
+                            <iframe style ="width: 100%; height: 700px" src="http://pouchdb.com/#fetch-a-document">
                             </iframe>
                         </div>
-                        <script type="text/javascript">
+                        <script>
                             db.get('otherdoc', printResult);
                         </script>
                     </li>
-                    <li class = "example" insertAt = "db.open" depends = "createDB">
-                        <a class = "example-name">Fetch all documents</a>
-                        <div class = "example-docs">
-                            <iframe style ="width : 100%; height : 700px" src = "http://pouchdb.com/#fetch-documents">
+                    <li class="example" insertAt="db.open" depends="createDB">
+                        <a class="example-name">Fetch all documents</a>
+                        <div class="example-docs">
+                            <iframe style ="width: 100%; height: 700px" src="http://pouchdb.com/#fetch-documents">
                             </iframe>
                         </div>
-                        <script type="text/javascript">
+                        <script>
                             db.allDocs(printResult);
                         </script>
                     </li>
-                    <li class = "example" insertAt = "db.open" depends = "createDB">
-                        <a class = "example-name">Query the database</a>
-                        <div class = "example-docs">
-                            <iframe style ="width : 100%; height : 700px" src = "http://pouchdb.com/#query-the-database">
+                    <li class="example" insertAt="db.open" depends="createDB">
+                        <a class="example-name">Query the database</a>
+                        <div class="example-docs">
+                            <iframe style ="width: 100%; height: 700px" src="http://pouchdb.com/#query-the-database">
                             </iframe>
                         </div>
-                        <script type="text/javascript">
+                        <script>
                             function map(doc){
-                            	if (doc.title) {
-                            		emit(doc.title, null);
-                            	}
+                                if (doc.title) {
+                                    emit(doc.title, null);
+                                }
                             }
-                            
+
                             db.query({
-                            	map: map
+                                map: map
                             }, {
-                            	reduce: false
+                                reduce: false
                             }, printResult);
                         </script>
                     </li>
-                    <li class = "example" insertAt = "db.open" depends = "createDB">
-                        <a class = "example-name">Delete a document</a>
-                        <div class = "example-docs">
-                            <iframe style ="width : 100%; height : 700px" src = "http://pouchdb.com/#delete-a-document">
+                    <li class="example" insertAt="db.open" depends="createDB">
+                        <a class="example-name">Delete a document</a>
+                        <div class="example-docs">
+                            <iframe style ="width: 100%; height: 700px" src="http://pouchdb.com/#delete-a-document">
                             </iframe>
                         </div>
-                        <script type="text/javascript">
+                        <script>
                             db.remove("otherdoc", printResult);
                         </script>
                     </li>
-                    <li class = "example" insertAt = "db.open" depends = "createDB">
-                        <a class = "example-name">Get database information</a>
-                        <div class = "example-docs">
-                            <iframe style ="width : 100%; height : 700px" src = "http://pouchdb.com/#get-database-information">
+                    <li class="example" insertAt="db.open" depends="createDB">
+                        <a class="example-name">Get database information</a>
+                        <div class="example-docs">
+                            <iframe style ="width: 100%; height: 700px" src="http://pouchdb.com/#get-database-information">
                             </iframe>
                         </div>
-                        <script type="text/javascript">
+                        <script>
                             db.info(printResult)
                         </script>
                     </li>

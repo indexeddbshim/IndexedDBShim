@@ -17,9 +17,10 @@
 * Does nothing if the browser already [natively supports IndexedDB](http://caniuse.com/#search=indexeddb)
 * Can _optionally replace_ native IndexedDB on browsers with [buggy implementations](http://www.raymondcamden.com/2014/09/25/IndexedDB-on-iOS-8-Broken-Bad/)
 * Can _optionally enhance_ native IndexedDB on browsers that are [missing certain features](http://codepen.io/cemerick/pen/Itymi)
-* Works on __desktop__ and __mobile__ devices.
+* Works on __desktop__ and __mobile__ devices
 * Works on __Cordova__ and __PhoneGap__ via the [IndexedDB plug-in](http://plugins.cordova.io/#/package/com.msopentech.websql)
-* This shim is basically an IndexedDB-to-WebSql adapter
+* This shim is basically an IndexedDB-to-WebSql adapter.
+* Can be used in Node (courtesy of [websql](https://www.npmjs.com/package/websql))
 * More details about the project at [gh-pages](http://nparashuram.com/IndexedDBShim)
 
 ## Installation
@@ -154,10 +155,16 @@ which is a headless WebKit browser.
 
 ### Testing in a Browser
 
-If you want to run the tests in a normal web browser. Then you'll need to
+If you want to run the tests in a normal web browser, you'll need to
 spin-up a local web server and then open [`test/index.html`](https://github.com/axemclion/IndexedDBShim/blob/master/test/index.html)
 and/or [`tests/index.html`](https://github.com/axemclion/IndexedDBShim/blob/master/tests/index.html)
-in your browser.
+in your browser. You can also run `grunt dev` and point your
+browser to `http://localhost:9999/test/index.html`.
+
+### Testing in Node
+
+To run the Node tests, run `npm run nodequnit` and `npm run mocha`. To
+run a specific mocha test, run `npm --test=... run mocha`.
 
 ### Testing in a Cordova/PhoneGap app
 

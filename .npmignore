@@ -7,3 +7,11 @@
 /index.html
 /Gruntfile.js
 /travis.sh
+
+/sauce_connect.log
+/npm-debug.log
+/dbName*
+
+# Should be deleted by Grunt
+/IndexedDBShim_Test_Database_*
+/__sysdb__*

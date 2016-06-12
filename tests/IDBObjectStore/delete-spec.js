@@ -1,8 +1,14 @@
-describe('IDBObjectStore.delete', function() {
+/* eslint-disable no-var */
+describe('IDBObjectStore.delete', function () {
     'use strict';
 
-    it('should return an IDBRequest', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should return an IDBRequest', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
@@ -11,15 +17,20 @@ describe('IDBObjectStore.delete', function() {
 
             expect(del).to.be.an.instanceOf(IDBRequest);
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 db.close();
                 done();
             };
         });
     });
 
-    it('should pass the IDBRequest event to the onsuccess callback', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should pass the IDBRequest event to the onsuccess callback', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
@@ -27,12 +38,12 @@ describe('IDBObjectStore.delete', function() {
             var del = store.delete('foo');
             del.onerror = sinon.spy();
 
-            del.onsuccess = sinon.spy(function(event) {
+            del.onsuccess = sinon.spy(function (event) {
                 expect(event).to.be.an.instanceOf(env.Event);
                 expect(event.target).to.equal(del);
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 sinon.assert.calledOnce(del.onsuccess);
                 sinon.assert.notCalled(del.onerror);
                 db.close();
@@ -41,8 +52,13 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    it('should set IDBRequest.result to undefined', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should set IDBRequest.result to undefined', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
@@ -50,11 +66,11 @@ describe('IDBObjectStore.delete', function() {
             store.add({id: 'foo'});
             var del = store.delete('foo');
 
-            del.onsuccess = sinon.spy(function() {
-                expect(del.result).to.be.undefined;
+            del.onsuccess = sinon.spy(function () {
+                expect(del.result).equal(undefined);
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 sinon.assert.calledOnce(del.onsuccess);
                 db.close();
                 done();
@@ -62,22 +78,32 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    it('should delete a record', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should delete a record', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var allData;
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
             tx.onerror = done;
 
-            store.add({id: 1}).onsuccess = function() {
-                store.delete(1).onsuccess = function() {
-                    util.getAll(store, function(err, data) {
+            store.add({id: 1}).onsuccess = function () {
+                store.delete(1).onsuccess = function () {
+                    util.getAll(store, function (err, data) {
+                        if (err) {
+                            expect(function () { throw err; }).to.not.throw(Error);
+                            done();
+                            return;
+                        }
                         allData = data;
                     });
                 };
             };
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(allData).to.have.lengthOf(0);
                 db.close();
                 done();
@@ -85,22 +111,32 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    it('should not delete a record if the key is not found', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should not delete a record if the key is not found', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var allData;
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
             tx.onerror = done;
 
-            store.add({id: 1}).onsuccess = function() {
-                store.delete(2).onsuccess = function() {
-                    util.getAll(store, function(err, data) {
+            store.add({id: 1}).onsuccess = function () {
+                store.delete(2).onsuccess = function () {
+                    util.getAll(store, function (err, data) {
+                        if (err) {
+                            expect(function () { throw err; }).to.not.throw(Error);
+                            done();
+                            return;
+                        }
                         allData = data;
                     });
                 };
             };
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(allData).to.have.same.deep.members([
                     {primaryKey: 1, key: 1, value: {id: 1}}
                 ]);
@@ -111,8 +147,13 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    it('should delete records immediately after creating them', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should delete records immediately after creating them', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
             tx.onerror = done;
@@ -126,11 +167,16 @@ describe('IDBObjectStore.delete', function() {
             store.delete(3);
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(allData).to.have.lengthOf(0);
                 db.close();
                 done();
@@ -138,13 +184,18 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    it('should delete records from previous transactions', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should delete records from previous transactions', function (done) {
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var allData, deletedData;
 
             transaction1();
 
-            function transaction1() {
+            function transaction1 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
                 tx.onerror = done;
@@ -155,7 +206,7 @@ describe('IDBObjectStore.delete', function() {
                 store.add({id: 3});
             }
 
-            function transaction2() {
+            function transaction2 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
                 tx.onerror = done;
@@ -164,12 +215,17 @@ describe('IDBObjectStore.delete', function() {
                 store.add({id: 4});
                 store.add({id: 5});
 
-                util.getAll(store, function(err, data) {
+                util.getAll(store, function (err, data) {
+                    if (err) {
+                        expect(function () { throw err; }).to.not.throw(Error);
+                        done();
+                        return;
+                    }
                     allData = data;
                 });
             }
 
-            function transaction3() {
+            function transaction3 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
                 tx.onerror = done;
@@ -181,12 +237,17 @@ describe('IDBObjectStore.delete', function() {
                 store.delete(4);
                 store.delete(5);
 
-                util.getAll(store, function(err, data) {
+                util.getAll(store, function (err, data) {
+                    if (err) {
+                        expect(function () { throw err; }).to.not.throw(Error);
+                        done();
+                        return;
+                    }
                     deletedData = data;
                 });
             }
 
-            function checkResults() {
+            function checkResults () {
                 // Make sure all 5 records existed before the delete
                 expect(allData).to.have.same.deep.members([
                     {primaryKey: 1, key: 1, value: {id: 1}},
@@ -205,8 +266,13 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    it('should delete data using out-of-line keys', function(done) {
-        util.createDatabase('out-of-line', function(err, db) {
+    it('should delete data using out-of-line keys', function (done) {
+        util.createDatabase('out-of-line', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line', 'readwrite');
             var store = tx.objectStore('out-of-line');
             tx.onerror = done;
@@ -223,11 +289,16 @@ describe('IDBObjectStore.delete', function() {
             store.delete(3);
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(allData).to.have.same.deep.members([
                     {primaryKey: 222, key: 222, value: 'two'},
                     {primaryKey: 44, key: 44, value: 'four'}
@@ -239,9 +310,14 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    util.skipIf(env.isNative && env.browser.isIE, 'should delete data using compound out-of-line keys', function(done) {
+    util.skipIf(env.isNative && env.browser.isIE, 'should delete data using compound out-of-line keys', function (done) {
         // BUG: IE's native IndexedDB does not support compound keys at all
-        util.createDatabase('out-of-line-compound', function(err, db) {
+        util.createDatabase('out-of-line-compound', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line-compound', 'readwrite');
             var store = tx.objectStore('out-of-line-compound');
             tx.onerror = done;
@@ -258,11 +334,16 @@ describe('IDBObjectStore.delete', function() {
             store.delete(['five']);
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(allData).to.have.same.deep.members([
                     {primaryKey: [3, 3], key: [3, 3], value: 'three'},
                     {primaryKey: [4, '4'], key: [4, '4'], value: 'four'}
@@ -274,8 +355,13 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    it('should delete data using generated out-of-line keys', function(done) {
-        util.createDatabase('out-of-line-generated', function(err, db) {
+    it('should delete data using generated out-of-line keys', function (done) {
+        util.createDatabase('out-of-line-generated', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line-generated', 'readwrite');
             var store = tx.objectStore('out-of-line-generated');
             tx.onerror = done;
@@ -292,11 +378,16 @@ describe('IDBObjectStore.delete', function() {
             store.delete(2);
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(allData).to.have.same.deep.members([
                     {primaryKey: 1, key: 1, value: 'one'},
                     {primaryKey: 3, key: 3, value: 'three'}
@@ -308,8 +399,14 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    it('should delete data using inline keys', function(done) {
-        util.createDatabase('inline', function(err, db) {
+    it('should delete data using inline keys', function (done) {
+        this.timeout(5000);
+        util.createDatabase('inline', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('inline', 'readwrite');
             var store = tx.objectStore('inline');
             tx.onerror = done;
@@ -326,11 +423,16 @@ describe('IDBObjectStore.delete', function() {
             store.delete('four');
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(allData).to.have.same.deep.members([
                     {primaryKey: 'one', key: 'one', value: {id: 'one'}},
                     {primaryKey: 'three', key: 'three', value: {id: 'three'}}
@@ -342,9 +444,14 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    util.skipIf(env.isNative && env.browser.isIE, 'should delete data using compound inline keys', function(done) {
+    util.skipIf(env.isNative && env.browser.isIE, 'should delete data using compound inline keys', function (done) {
         // BUG: IE's native IndexedDB does not support compound keys at all
-        util.createDatabase('inline-compound', function(err, db) {
+        util.createDatabase('inline-compound', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('inline-compound', 'readwrite');
             var store = tx.objectStore('inline-compound');
             tx.onerror = done;
@@ -361,11 +468,16 @@ describe('IDBObjectStore.delete', function() {
             store.delete([3, 'three']);
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(allData).to.have.same.deep.members([
                     {primaryKey: [2, 'two'], key: [2, 'two'], value: {id: 2, name: 'two'}},
                     {primaryKey: [4, 'four'], key: [4, 'four'], value: {id: 4, name: 'four'}}
@@ -377,8 +489,13 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    it('should delete data using generated inline keys', function(done) {
-        util.createDatabase('inline-generated', function(err, db) {
+    it('should delete data using generated inline keys', function (done) {
+        util.createDatabase('inline-generated', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('inline-generated', 'readwrite');
             var store = tx.objectStore('inline-generated');
             tx.onerror = done;
@@ -395,11 +512,16 @@ describe('IDBObjectStore.delete', function() {
             store.delete(3);
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(allData).to.have.same.deep.members([
                     {primaryKey: 2, key: 2, value: {id: 2, name: 'two'}},
                     {primaryKey: 4, key: 4, value: {id: 4, name: 'four'}}
@@ -411,8 +533,14 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    it('should delete data using dotted keys', function(done) {
-        util.createDatabase('dotted', function(err, db) {
+    it('should delete data using dotted keys', function (done) {
+        this.timeout(5000);
+        util.createDatabase('dotted', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('dotted', 'readwrite');
             var store = tx.objectStore('dotted');
             tx.onerror = done;
@@ -429,11 +557,16 @@ describe('IDBObjectStore.delete', function() {
             store.delete('three');
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(allData).to.have.same.deep.members([
                     {primaryKey: 'one', key: 'one', value: {name: {first: 'one'}}},
                     {primaryKey: 'four', key: 'four', value: {name: {first: 'four'}}}
@@ -445,9 +578,14 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    util.skipIf(env.isNative && env.browser.isIE, 'should delete data using compound dotted keys', function(done) {
+    util.skipIf(env.isNative && env.browser.isIE, 'should delete data using compound dotted keys', function (done) {
         // BUG: IE's native IndexedDB does not support compound keys at all
-        util.createDatabase('dotted-compound', function(err, db) {
+        util.createDatabase('dotted-compound', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('dotted-compound', 'readwrite');
             var store = tx.objectStore('dotted-compound');
             tx.onerror = done;
@@ -464,11 +602,16 @@ describe('IDBObjectStore.delete', function() {
             store.delete([1, 'three', 'abc']);
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(allData).to.have.same.deep.members([
                     {primaryKey: [1, 'one', 'abc'], key: [1, 'one', 'abc'], value: {id: 1, name: {first: 'one', last: 'abc'}}},
                     {primaryKey: [1, 'four', 'abc'], key: [1, 'four', 'abc'], value: {id: 1, name: {first: 'four', last: 'abc'}}}
@@ -480,8 +623,14 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    it('should delete data using generated dotted keys', function(done) {
-        util.createDatabase('dotted-generated', function(err, db) {
+    it('should delete data using generated dotted keys', function (done) {
+        this.timeout(5000);
+        util.createDatabase('dotted-generated', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('dotted-generated', 'readwrite');
             var store = tx.objectStore('dotted-generated');
             tx.onerror = done;
@@ -498,11 +647,16 @@ describe('IDBObjectStore.delete', function() {
             store.delete(4);
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 expect(allData).to.have.same.deep.members([
                     {primaryKey: 2, key: 2, value: {name: {first: 2, last: 'abc'}}},
                     {primaryKey: 3, key: 3, value: {name: {first: 3, last: 'abc'}}}
@@ -514,8 +668,14 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    it('should allow these keys', function(done) {
-        util.createDatabase('out-of-line-generated', function(err, db) {
+    it('should allow these keys', function (done) {
+        this.timeout(5000);
+        util.createDatabase('out-of-line-generated', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line-generated', 'readwrite');
             var store = tx.objectStore('out-of-line-generated');
             var deletingCounter = 0, deletedCounter = 0;
@@ -536,16 +696,16 @@ describe('IDBObjectStore.delete', function() {
                 deleteKey([new Date(2005, 6, 7)]);    // array of Dates
             }
 
-            function deleteKey(key) {
+            function deleteKey (key) {
                 deletingCounter++;
                 var del = store.delete(key);
                 del.onerror = done;
-                del.onsuccess = function() {
+                del.onsuccess = function () {
                     deletedCounter++;
                 };
             }
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 // Make sure all the deletes completed
                 expect(deletedCounter).to.equal(deletingCounter);
 
@@ -555,8 +715,14 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    it('should not allow these keys', function(done) {
-        util.createDatabase('out-of-line-generated', function(err, db) {
+    it('should not allow these keys', function (done) {
+        this.timeout(5000);
+        util.createDatabase('out-of-line-generated', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('out-of-line-generated', 'readwrite');
             var store = tx.objectStore('out-of-line-generated');
 
@@ -576,13 +742,12 @@ describe('IDBObjectStore.delete', function() {
                 tryToDelete(/^regex$/);                         // RegExp
             }
 
-            function tryToDelete(key) {
+            function tryToDelete (key) {
                 var err = null;
 
                 try {
                     store.delete(key);
-                }
-                catch (e) {
+                } catch (e) {
                     err = e;
                 }
 
@@ -598,9 +763,14 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    util.skipIf(env.isNative && env.browser.isIE, 'should not throw an error if called an incomplete compound key', function(done) {
+    util.skipIf(env.isNative && env.browser.isIE, 'should not throw an error if called an incomplete compound key', function (done) {
         // BUG: IE's native IndexedDB does not support compound keys at all
-        util.createDatabase('inline-compound', function(err, db) {
+        util.createDatabase('inline-compound', function (err, db) {
+            if (err) {
+                expect(function () { throw err; }).to.not.throw(Error);
+                done();
+                return;
+            }
             var tx = db.transaction('inline-compound', 'readwrite');
             var store = tx.objectStore('inline-compound');
 
@@ -610,11 +780,16 @@ describe('IDBObjectStore.delete', function() {
             del.onerror = sinon.spy();
 
             var allData;
-            util.getAll(store, function(err, data) {
+            util.getAll(store, function (err, data) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
                 allData = data;
             });
 
-            tx.oncomplete = function() {
+            tx.oncomplete = function () {
                 // Make sure no error was thrown
                 sinon.assert.notCalled(del.onerror);
 
@@ -629,15 +804,14 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    it('should throw an error if the transaction is read-only', function(done) {
-        util.createDatabase('out-of-line-generated', function(err, db) {
+    it('should throw an error if the transaction is read-only', function (done) {
+        util.createDatabase('out-of-line-generated', function (err, db) {
             var tx = db.transaction('out-of-line-generated', 'readonly');
             var store = tx.objectStore('out-of-line-generated');
 
             try {
                 store.delete(1);
-            }
-            catch (e) {
+            } catch (e) {
                 err = e;
             }
 
@@ -649,16 +823,15 @@ describe('IDBObjectStore.delete', function() {
         });
     });
 
-    it('should throw an error if the transaction is closed', function(done) {
-        util.createDatabase('out-of-line-generated', function(err, db) {
+    it('should throw an error if the transaction is closed', function (done) {
+        util.createDatabase('out-of-line-generated', function (err, db) {
             var tx = db.transaction('out-of-line-generated', 'readwrite');
             var store = tx.objectStore('out-of-line-generated');
 
-            setTimeout(function() {
+            setTimeout(function () {
                 try {
                     store.delete(1);
-                }
-                catch (e) {
+                } catch (e) {
                     err = e;
                 }
 
@@ -667,19 +840,18 @@ describe('IDBObjectStore.delete', function() {
 
                 db.close();
                 done();
-            }, 50);
+            }, env.transactionDuration);
         });
     });
 
-    it('should throw an error if called without params', function(done) {
-        util.createDatabase('out-of-line-generated', function(err, db) {
+    it('should throw an error if called without params', function (done) {
+        util.createDatabase('out-of-line-generated', function (err, db) {
             var tx = db.transaction('out-of-line-generated', 'readwrite');
             var store = tx.objectStore('out-of-line-generated');
 
             try {
                 store.delete();
-            }
-            catch (e) {
+            } catch (e) {
                 err = e;
             }
 

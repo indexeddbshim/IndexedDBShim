@@ -1,26 +1,32 @@
-describe('IDBDatabase.deleteObjectStore', function() {
+/* eslint-disable no-var */
+describe('IDBDatabase.deleteObjectStore', function () {
     'use strict';
 
     var indexedDB;
-    beforeEach(function() {
+    beforeEach(function () {
         indexedDB = env.indexedDB;
     });
 
-    describe('success tests', function() {
-        it('should return undefined', function(done) {
-            util.generateDatabaseName(function(err, name) {
+    describe('success tests', function () {
+        it('should return undefined', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = sinon.spy(function(event) {
+                open.onupgradeneeded = sinon.spy(function (event) {
                     var db = event.target.result;
                     db.createObjectStore('My Store');
                     var result = db.deleteObjectStore('My Store');
 
-                    expect(result).to.be.undefined;
+                    expect(result).equal(undefined);
                 });
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     sinon.assert.calledOnce(open.onupgradeneeded);
                     open.result.close();
                     done();
@@ -28,12 +34,17 @@ describe('IDBDatabase.deleteObjectStore', function() {
             });
         });
 
-        it('should delete an object store that was created in the same transaction', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should delete an object store that was created in the same transaction', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = sinon.spy(function(event) {
+                open.onupgradeneeded = sinon.spy(function (event) {
                     var db = event.target.result;
                     db.createObjectStore('My Store 1');
                     db.createObjectStore('My Store 2');
@@ -47,7 +58,7 @@ describe('IDBDatabase.deleteObjectStore', function() {
                         .to.have.same.members(['My Store 1']);
                 });
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     sinon.assert.calledOnce(open.onupgradeneeded);
                     open.result.close();
                     done();
@@ -55,34 +66,39 @@ describe('IDBDatabase.deleteObjectStore', function() {
             });
         });
 
-        it('should delete an object store that was created in a previous transaction', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should delete an object store that was created in a previous transaction', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
                 transaction1();
 
                 // Create some object stores
-                function transaction1() {
+                function transaction1 () {
                     var open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
 
-                    open.onupgradeneeded = function(event) {
+                    open.onupgradeneeded = function (event) {
                         var db = event.target.result;
                         db.createObjectStore('My Store 1');
                         db.createObjectStore('My Store 2');
                         db.createObjectStore('My Store 3');
                     };
 
-                    open.onsuccess = function() {
+                    open.onsuccess = function () {
                         open.result.close();
                         setTimeout(transaction2, 50);
                     };
                 }
 
                 // Delete an object store
-                function transaction2() {
+                function transaction2 () {
                     var open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
 
-                    open.onupgradeneeded = sinon.spy(function(event) {
+                    open.onupgradeneeded = sinon.spy(function (event) {
                         var db = event.target.result;
 
                         expect(Array.prototype.slice.call(db.objectStoreNames))
@@ -94,7 +110,7 @@ describe('IDBDatabase.deleteObjectStore', function() {
                             .to.have.same.members(['My Store 1', 'My Store 3']);
                     });
 
-                    open.onsuccess = function() {
+                    open.onsuccess = function () {
                         sinon.assert.calledOnce(open.onupgradeneeded);
                         open.result.close();
                         done();
@@ -103,12 +119,17 @@ describe('IDBDatabase.deleteObjectStore', function() {
             });
         });
 
-        it('should be able to re-create an object store that was deleted', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should be able to re-create an object store that was deleted', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = sinon.spy(function() {
+                open.onupgradeneeded = sinon.spy(function () {
                     var db = open.result;
                     var tx = open.transaction;
 
@@ -116,7 +137,7 @@ describe('IDBDatabase.deleteObjectStore', function() {
                     var store1 = tx.objectStore('My Store');
                     expect(store1.keyPath).to.equal('foo');
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(store1.autoIncrement).to.be.false;   // IE doesn't have this property
+                        expect(store1.autoIncrement).equal(false);   // IE doesn't have this property
                     }
 
                     db.deleteObjectStore('My Store');
@@ -125,11 +146,11 @@ describe('IDBDatabase.deleteObjectStore', function() {
                     expect(store2).not.to.equal(store1);
                     expect(store2.keyPath).to.equal('bar');
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(store1.autoIncrement).to.be.false;   // IE doesn't have this property
+                        expect(store1.autoIncrement).equal(false);   // IE doesn't have this property
                     }
                 });
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     sinon.assert.calledOnce(open.onupgradeneeded);
                     open.result.close();
                     done();
@@ -137,47 +158,52 @@ describe('IDBDatabase.deleteObjectStore', function() {
             });
         });
 
-        util.skipIf(env.isNative && env.browser.isSafari, 'should persist the schema across database sessions', function(done) {
+        util.skipIf(env.isNative && env.browser.isSafari, 'should persist the schema across database sessions', function (done) {
             // BUG: Safari's native IndexedDB does not support opening multiple object stores
 
             // Create a database schema, then close the database
             util.createDatabase(
                 'out-of-line', 'out-of-line-generated', 'inline', 'inline-generated',
                 'inline-compound', 'dotted', 'dotted-generated', 'dotted-compound',
-                function(err, db) {
+                function (err, db) {
+                    if (err) {
+                        expect(function () { throw err; }).to.not.throw(Error);
+                        done();
+                        return;
+                    }
                     db.close();
-                    setTimeout(function() {
+                    setTimeout(function () {
                         deleteObjectStores(db.name);
                     }, 50);
                 }
             );
 
             // Re-open the database, delete some object stores, then close the database
-            function deleteObjectStores(name) {
+            function deleteObjectStores (name) {
                 var open = indexedDB.open(name, 2);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = function(event) {
+                open.onupgradeneeded = function (event) {
                     var db = event.target.result;
                     db.deleteObjectStore('out-of-line');
                     db.deleteObjectStore('dotted-generated');
                 };
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     var db = open.result;
                     db.close();
-                    setTimeout(function() {
+                    setTimeout(function () {
                         verifyDatabaseSchema(db.name);
                     }, 50);
                 };
             }
 
             // Re-open the database, and verify that the object stores are gone
-            function verifyDatabaseSchema(name) {
+            function verifyDatabaseSchema (name) {
                 var open = indexedDB.open(name, 2);
                 open.onerror = open.onblocked = done;
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     var db = open.result;
                     var tx = db.transaction(db.objectStoreNames);
                     tx.onerror = tx.onabort = done;
@@ -197,18 +223,18 @@ describe('IDBDatabase.deleteObjectStore', function() {
 
                     if (env.isShimmed || !env.browser.isIE) {
                         // IE doesn't support compound keys
-                        verifySchema(tx.objectStore('inline-compound'), {name: 'inline-compound', keyPath: ['id','name'], autoIncrement: false, indexNames: []});
-                        verifySchema(tx.objectStore('dotted-compound'), {name: 'dotted-compound', keyPath: ['id','name.first','name.last'], autoIncrement: false, indexNames: []});
+                        verifySchema(tx.objectStore('inline-compound'), {name: 'inline-compound', keyPath: ['id', 'name'], autoIncrement: false, indexNames: []});
+                        verifySchema(tx.objectStore('dotted-compound'), {name: 'dotted-compound', keyPath: ['id', 'name.first', 'name.last'], autoIncrement: false, indexNames: []});
                     }
 
-                    tx.oncomplete = function() {
+                    tx.oncomplete = function () {
                         db.close();
                         done();
                     };
                 };
             }
 
-            function verifySchema(obj, schema) {
+            function verifySchema (obj, schema) {
                 for (var prop in schema) {
                     var objValue = obj[prop];
                     var schemaValue = schema[prop];
@@ -228,19 +254,18 @@ describe('IDBDatabase.deleteObjectStore', function() {
         });
     });
 
-    describe('failure tests', function() {
-        it('should throw an error if the object store does not exist', function(done) {
-            util.generateDatabaseName(function(err, name) {
+    describe('failure tests', function () {
+        it('should throw an error if the object store does not exist', function (done) {
+            util.generateDatabaseName(function (err, name) {
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = sinon.spy(function(event) {
+                open.onupgradeneeded = sinon.spy(function (event) {
                     var db = event.target.result;
 
                     try {
                         db.deleteObjectStore('My Store');
-                    }
-                    catch (e) {
+                    } catch (e) {
                         err = e;
                     }
 
@@ -248,7 +273,7 @@ describe('IDBDatabase.deleteObjectStore', function() {
                     expect(err.name).to.equal('NotFoundError');
                 });
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     sinon.assert.calledOnce(open.onupgradeneeded);
                     open.result.close();
                     done();
@@ -256,18 +281,17 @@ describe('IDBDatabase.deleteObjectStore', function() {
             });
         });
 
-        it('should throw an error if called without params', function(done) {
-            util.generateDatabaseName(function(err, name) {
+        it('should throw an error if called without params', function (done) {
+            util.generateDatabaseName(function (err, name) {
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
-                open.onupgradeneeded = sinon.spy(function(event) {
+                open.onupgradeneeded = sinon.spy(function (event) {
                     var db = event.target.result;
 
                     try {
                         db.deleteObjectStore();
-                    }
-                    catch (e) {
+                    } catch (e) {
                         err = e;
                     }
 
@@ -275,7 +299,7 @@ describe('IDBDatabase.deleteObjectStore', function() {
                     expect(err.name).to.equal('TypeError');
                 });
 
-                open.onsuccess = function() {
+                open.onsuccess = function () {
                     sinon.assert.calledOnce(open.onupgradeneeded);
                     open.result.close();
                     done();

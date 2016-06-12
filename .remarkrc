@@ -2,7 +2,8 @@
   "plugins": {
     "lint": {
       "maximum-heading-length": false,
-      "ordered-list-marker-value": "ordered"
+      "ordered-list-marker-value": "ordered",
+      "list-item-indent": false
     }
   }
 }
