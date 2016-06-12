@@ -1,6 +1,6 @@
 /*global testFiles, addTestSuite, startTests */
 
-const shimAll = require('../dist/indexeddbshim-node');
+const shimAll = require('../dist/indexeddbshim-node.min');
 shimAll(GLOBAL.window);
 
 function addTest (i) { // eslint-disable-line no-unused-vars

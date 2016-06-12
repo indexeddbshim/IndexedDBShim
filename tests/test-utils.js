@@ -244,7 +244,7 @@
                                 }
                             };
                         }
-                    }, 0);
+                    }, typeof window !== 'undefined' && typeof global === 'undefined' ? 0 : 300);
                 }
             }
         }

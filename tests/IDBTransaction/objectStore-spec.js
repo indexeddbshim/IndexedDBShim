@@ -145,7 +145,7 @@ describe('IDBTransaction.objectStore', function () {
 
                 db.close();
                 done();
-            }, 50);
+            }, env.transactionDuration);
         });
     });
 });

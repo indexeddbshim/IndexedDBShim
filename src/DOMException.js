@@ -5,10 +5,7 @@ import CFG from './cfg.js';
  * @returns {DOMException}
  */
 function createNativeDOMException (name, message) {
-    const e = new DOMException.prototype.constructor(0, message);
-    e.name = name || 'DOMException';
-    e.message = message;
-    return e;
+    return new DOMException.prototype.constructor(message, name || 'DOMException');
 }
 
 /**
@@ -66,7 +63,10 @@ function findError (args) {
         }
         for (let i = 0; i < args.length; i++) {
             const arg = args[i];
-            if (arg instanceof Error || arg instanceof DOMException) {
+            if (arg instanceof Error ||
+                (typeof DOMError !== 'undefined' && arg instanceof DOMError) ||
+                (typeof DOMException !== 'undefined' && arg instanceof DOMException)
+            ) {
                 return arg;
             } else if (arg && typeof arg.message === 'string') {
                 err = arg;
@@ -111,6 +111,7 @@ if (useNativeDOMException) {
     };
 }
 
+// These are now unused, as the spec calls for DOMException instead
 let createDOMError, shimDOMError;
 if (useNativeDOMError) {
     shimDOMError = DOMError;

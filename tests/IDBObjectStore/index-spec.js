@@ -45,6 +45,7 @@ describe('IDBObjectStore.index', function () {
     });
 
     it('should throw an error if called without params', function (done) {
+        this.timeout(5000);
         util.createDatabase('inline', 'inline-index', function (err, db) {
             var tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;

@@ -1,11 +1,11 @@
-/*global shimIndexedDB*/
+/*global shimIndexedDB */
 /*eslint-disable no-var*/
 (function () {
     'use strict';
 
     // Setup Mocha and Chai
     mocha.setup('bdd');
-    mocha.globals(['indexedDB']);
+    mocha.globals(['indexedDB', '__stub__onerror']);
     window.expect = chai.expect;
     var describe = window.describe;
 
@@ -61,7 +61,11 @@
          */
         Event: window.Event,
         DOMException: window.DOMException,
-        DOMError: window.DOMError
+
+        /**
+         * Safe duration by which transaction should have expired
+        */
+        transactionDuration: 500
     };
 
     /**
@@ -89,7 +93,7 @@
         env.webSql = window.openDatabase;
 
         // Should we use the shim instead of the native IndexedDB?
-        var useShim = location.search.indexOf('useShim=true') > 0;
+        var useShim = location.search.indexOf('useShim=true') > -1;
         if (useShim || !window.indexedDB || window.indexedDB === window.shimIndexedDB) {
             // Replace the browser's native IndexedDB with the shim
             shimIndexedDB.__useShim();
@@ -106,7 +110,6 @@
                 // Use the shimmed Error & Event classes instead of the native ones
                 env.Event = shimIndexedDB.modules.Event;
                 env.DOMException = shimIndexedDB.modules.DOMException;
-                env.DOMError = shimIndexedDB.modules.DOMError;
             }
 
             if (env.nativeIndexedDB) {
@@ -129,13 +132,13 @@
      * @returns {browserInfo}
      */
     function getBrowserInfo () {
-        var userAgent = navigator.userAgent;
+        var userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
         var offset;
 
         /** @name browserInfo **/
         var browserInfo = {
             name: '',
-            version: 0,
+            version: '0',
             isMobile: false,
             isChrome: false,
             isIE: false,
@@ -195,6 +198,9 @@
      * A "safe" wrapper around `document.getElementById`
      */
     function getElementById (id) {
+        if (typeof document === 'undefined') {
+            return {className: '', style: {}};
+        }
         return document.getElementById(id) || {style: {}};
     }
 })();

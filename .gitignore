@@ -7,3 +7,8 @@ node_modules
 sauce_connect.log
 npm-debug.log
 src/indexeddbshim*
+dbName*
+
+# Should be deleted by Grunt
+IndexedDBShim_Test_Database_*
+__sysdb__*

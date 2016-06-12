@@ -9,35 +9,33 @@
 
         <script src="https://code.jquery.com/qunit/qunit-1.23.1.js"></script>
 
-        <script src="../dist/indexeddbshim.js"></script>
+        <script src="../dist/indexeddbshim.min.js"></script>
 
         <script src="queuedUnit.js"></script>
         <script src="sampleData.js"></script>
         <script src="startTests.js"></script>
         <script>
-            function addTest (i) {
-                if (typeof _phantom === 'undefined') { // The sequence below does not work with testId URL params (and adds cruft anyways)
-                    var x = document.createElement('script');
-                    x.src = testFiles[i];
-                    x.onload = function () {
-                        addTestSuite(i + 1);
-                    };
-                    document.body.appendChild(x);
-                    return;
-                }
+            // Prevent `QUnit` from running tests
+            //  Used in combination with QUnit.start() below;
+            // The timing happens to work in the browser
+            //   without manual start, but the timing of grunt-contrib-qunit
+            //   necessitates this asynchronous approach (which should be
+            //   safer anyways).
+            QUnit.config.autostart = false;
 
-                QUnit.test('Setting up qunit', function (assert) { // Needed to set up as test by grunt-contrib-qunit
-                    var done = assert.async();
-                    var x = document.createElement('script');
-                    x.src = testFiles[i];
-                    x.onload = function () {
-                        assert.ok('Loaded test');
-                        addTestSuite(i + 1);
-                        done();
-                    };
-                    document.body.appendChild(x);
-                });
+            function addTest (i) {
+                var x = document.createElement('script');
+                x.src = testFiles[i];
+                x.onload = function () {
+                    // All test files are loaded at this stage.
+                    if (testFiles.length === (i + 1)) {
+                        QUnit.start();
+                    }
+                    addTestSuite(i + 1);
+                };
+                document.body.appendChild(x);
             }
+
             function runWith () {
                 document.getElementById('qunit-tests').innerHTML = '';
 

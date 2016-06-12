@@ -255,6 +255,8 @@ describe('IDBFactory.cmp', function () {
 
     describe('failure tests', function () {
         it('should not allow these keys', function () {
+            this.timeout(5000);
+
             tryToCompare(undefined);                            // undefined
             tryToCompare(NaN);                                  // NaN
             tryToCompare(true);                                 // boolean

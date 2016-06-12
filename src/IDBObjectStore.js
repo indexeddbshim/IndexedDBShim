@@ -1,4 +1,4 @@
-import {createDOMError, createDOMException} from './DOMException.js';
+import {createDOMException} from './DOMException.js';
 import {IDBCursor} from './IDBCursor.js';
 import util from './util.js';
 import Key from './Key.js';
@@ -234,7 +234,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
                 success(primaryKey);
             });
         }, function (tx, err) {
-            error(createDOMError('ConstraintError', err.message, err));
+            error(createDOMException('ConstraintError', err.message, err));
         });
     } catch (e) {
         error(e);

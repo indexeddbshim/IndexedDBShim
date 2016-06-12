@@ -136,6 +136,7 @@ describe('IDBObjectStore.clear', function () {
     });
 
     it('should clear all records from previous transactions', function (done) {
+        this.timeout(5000);
         util.createDatabase('inline', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -252,7 +253,7 @@ describe('IDBObjectStore.clear', function () {
 
                 db.close();
                 done();
-            }, 50);
+            }, env.transactionDuration);
         });
     });
 });

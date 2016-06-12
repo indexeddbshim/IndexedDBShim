@@ -317,8 +317,8 @@ describe('IDBIndex.openCursor', function () {
     });
 
     it('should get hundreds of records', function (done) {
-        this.timeout(10000);
-        this.slow(10000);
+        this.timeout(20000);
+        this.slow(20000);
 
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
@@ -439,6 +439,7 @@ describe('IDBIndex.openCursor', function () {
     });
 
     it('should allow these keys', function (done) {
+        this.timeout(10000);
         util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -492,6 +493,7 @@ describe('IDBIndex.openCursor', function () {
     });
 
     it('should not allow these keys', function (done) {
+        this.timeout(5000);
         util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -1182,15 +1184,15 @@ describe('IDBIndex.openCursor', function () {
                         indexErr = e;
                     }
 
-                    expect(storeErr).to.be.an.instanceOf(env.DOMException);
+                    if (!env.browser.isFirefox) expect(storeErr).to.be.an.instanceOf(env.DOMException);
                     expect(storeErr.name).to.equal('TransactionInactiveError');
 
-                    expect(indexErr).to.be.an.instanceOf(env.DOMException);
+                    if (!env.browser.isFirefox) expect(indexErr).to.be.an.instanceOf(env.DOMException);
                     expect(indexErr.name).to.equal('TransactionInactiveError');
 
                     db.close();
                     done();
-                }, 50);
+                }, env.transactionDuration);
             });
         });
     });

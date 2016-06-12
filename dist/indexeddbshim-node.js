@@ -16460,10 +16460,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @returns {DOMException}
  */
 function createNativeDOMException(name, message) {
-    var e = new DOMException.prototype.constructor(0, message);
-    e.name = name || 'DOMException';
-    e.message = message;
-    return e;
+    return new DOMException.prototype.constructor(message, name || 'DOMException');
 }
 
 /**
@@ -16521,7 +16518,7 @@ function findError(args) {
         }
         for (var i = 0; i < args.length; i++) {
             var arg = args[i];
-            if (arg instanceof Error || arg instanceof DOMException) {
+            if (arg instanceof Error || typeof DOMError !== 'undefined' && arg instanceof DOMError || typeof DOMException !== 'undefined' && arg instanceof DOMException) {
                 return arg;
             } else if (arg && typeof arg.message === 'string') {
                 err = arg;
@@ -16569,6 +16566,7 @@ if (useNativeDOMException) {
     };
 }
 
+// These are now unused, as the spec calls for DOMException instead
 var createDOMError = void 0,
     shimDOMError = void 0;
 if (useNativeDOMError) {
@@ -17269,7 +17267,9 @@ function createSysDB(success, failure) {
  * https://w3c.github.io/IndexedDB/#idl-def-IDBFactory
  * @constructor
  */
-function IDBFactory() {}
+function IDBFactory() {
+    this.modules = { DOMException: _DOMException.DOMException, Event: _Event.Event, IDBFactory: IDBFactory };
+}
 
 /**
  * The IndexedDB Method to create a new database and return the DB
@@ -17298,7 +17298,7 @@ IDBFactory.prototype.open = function (name, version) {
         calledDbCreateError = true;
         var evt = (0, _Event.createEvent)('error', arguments);
         req.readyState = 'done';
-        req.error = err || _DOMException.DOMError;
+        req.error = err || _DOMException.DOMException;
         _util2.default.callback('onerror', req, evt);
     }
 
@@ -17309,7 +17309,7 @@ IDBFactory.prototype.open = function (name, version) {
             version = oldVersion || 1;
         }
         if (version <= 0 || oldVersion > version) {
-            var err = (0, _DOMException.createDOMError)('VersionError', 'An attempt was made to open a database using a lower version than the existing version.', version);
+            var err = (0, _DOMException.createDOMException)('VersionError', 'An attempt was made to open a database using a lower version than the existing version.', version);
             dbCreateError(err);
             return;
         }
@@ -17385,7 +17385,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         }
         err = (0, _DOMException.findError)(arguments);
         req.readyState = 'done';
-        req.error = err || _DOMException.DOMError;
+        req.error = err || _DOMException.DOMException;
         var e = (0, _Event.createEvent)('error');
         e.debug = arguments;
         _util2.default.callback('onerror', req, e);
@@ -18115,7 +18115,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
                 success(primaryKey);
             });
         }, function (tx, err) {
-            error((0, _DOMException.createDOMError)('ConstraintError', err.message, err));
+            error((0, _DOMException.createDOMException)('ConstraintError', err.message, err));
         });
     } catch (e) {
         error(e);
@@ -18459,7 +18459,7 @@ IDBTransaction.prototype.__executeRequests = function () {
             try {
                 // Fire an error event for the current IDBRequest
                 q.req.readyState = 'done';
-                q.req.error = err || _DOMException.DOMError;
+                q.req.error = err || _DOMException.DOMException;
                 q.req.result = undefined;
                 var e = (0, _Event.createEvent)('error', err);
                 _util2.default.callback('onerror', q.req, e);
@@ -19489,6 +19489,7 @@ exports.default = CFG;
 module.exports = exports['default'];
 
 },{}],370:[function(require,module,exports){
+(function (global){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -19537,6 +19538,9 @@ var _cfg = require('./cfg.js');
 var _cfg2 = _interopRequireDefault(_cfg);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var glob = typeof global !== 'undefined' ? global : window;
+glob._babelPolyfill = false; // http://stackoverflow.com/questions/31282702/conflicting-use-of-babel-register
 
 var IDB = void 0;
 
@@ -19626,6 +19630,7 @@ function shimAll(idb) {
 exports.default = shimAll;
 module.exports = exports['default'];
 
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./Event.js":358,"./IDBCursor.js":359,"./IDBDatabase.js":360,"./IDBFactory.js":361,"./IDBIndex.js":362,"./IDBKeyRange.js":363,"./IDBObjectStore.js":364,"./IDBRequest.js":365,"./IDBTransaction.js":366,"./cfg.js":369,"./polyfill.js":372,"babel-polyfill":3}],371:[function(require,module,exports){
 'use strict';
 

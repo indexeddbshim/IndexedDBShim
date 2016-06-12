@@ -598,6 +598,7 @@ describe('IDBIndex.get', function () {
     });
 
     it('should get data using generated dotted keys', function (done) {
+        this.timeout(5000);
         util.createDatabase('dotted-generated', 'dotted-index', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -642,6 +643,7 @@ describe('IDBIndex.get', function () {
     });
 
     it('should allow these keys', function (done) {
+        this.timeout(5000);
         util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -690,6 +692,7 @@ describe('IDBIndex.get', function () {
     });
 
     it('should not allow these keys', function (done) {
+        this.timeout(5000);
         util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -937,7 +940,7 @@ describe('IDBIndex.get', function () {
 
                 db.close();
                 done();
-            }, 50);
+            }, env.transactionDuration);
         });
     });
 

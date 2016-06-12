@@ -366,6 +366,7 @@ describe('IDBFactory.open', function () {
 
     describe('failure tests', function () {
         it('should not allow databases to be downgraded', function (done) {
+            this.timeout(5000);
             util.generateDatabaseName(function (err, name) {
                 if (err) {
                     assert.fail(true, true, 'Error creating database name');
@@ -380,7 +381,7 @@ describe('IDBFactory.open', function () {
                     open.onsuccess = function () {
                         expect(open.result.version).to.equal(7);
                         open.result.close();
-                        setTimeout(createVersion4, 50);
+                        setTimeout(createVersion4, env.transactionDuration);
                     };
                 }
 
@@ -395,7 +396,7 @@ describe('IDBFactory.open', function () {
                         sinon.assert.notCalled(open.onsuccess);
                         sinon.assert.notCalled(open.onblocked);
 
-                        if (env.isShimmed || !env.browser.isSafari) {
+                        if (env.isShimmed || (!env.browser.isSafari && !env.browser.isFirefox)) {
                             expect(open.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
                         }
                         expect(open.error.name).to.equal('VersionError');

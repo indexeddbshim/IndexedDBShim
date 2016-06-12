@@ -400,6 +400,7 @@ describe('IDBObjectStore.delete', function () {
     });
 
     it('should delete data using inline keys', function (done) {
+        this.timeout(5000);
         util.createDatabase('inline', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -533,6 +534,7 @@ describe('IDBObjectStore.delete', function () {
     });
 
     it('should delete data using dotted keys', function (done) {
+        this.timeout(5000);
         util.createDatabase('dotted', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -622,6 +624,7 @@ describe('IDBObjectStore.delete', function () {
     });
 
     it('should delete data using generated dotted keys', function (done) {
+        this.timeout(5000);
         util.createDatabase('dotted-generated', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -666,6 +669,7 @@ describe('IDBObjectStore.delete', function () {
     });
 
     it('should allow these keys', function (done) {
+        this.timeout(5000);
         util.createDatabase('out-of-line-generated', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -712,6 +716,7 @@ describe('IDBObjectStore.delete', function () {
     });
 
     it('should not allow these keys', function (done) {
+        this.timeout(5000);
         util.createDatabase('out-of-line-generated', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -835,7 +840,7 @@ describe('IDBObjectStore.delete', function () {
 
                 db.close();
                 done();
-            }, 50);
+            }, env.transactionDuration);
         });
     });
 

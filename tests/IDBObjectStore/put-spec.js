@@ -40,6 +40,8 @@ describe('IDBObjectStore.put', function () {
     });
 
     it('should update an existing record with a generated out-of-line key', function (done) {
+        this.timeout(5000);
+
         util.createDatabase('out-of-line-generated', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -114,6 +116,8 @@ describe('IDBObjectStore.put', function () {
     });
 
     it('should update an existing record with a generated inline key', function (done) {
+        this.timeout(5000);
+
         util.createDatabase('inline-generated', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -339,6 +343,7 @@ describe('IDBObjectStore.put', function () {
     });
 
     util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should distinguish between very-long string keys (10,000+ characters)', function (done) {
+        this.timeout(10000);
         // BUG: IE's IndexedDB truncates string keys at 889 characters
         util.createDatabase('out-of-line', function (err, db) {
             if (err) {

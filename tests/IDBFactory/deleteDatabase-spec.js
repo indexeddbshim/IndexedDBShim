@@ -1,6 +1,7 @@
 /* eslint-disable no-var */
 describe('IDBFactory.deleteDatabase', function () {
     'use strict';
+    this.timeout(5000);
 
     var indexedDB;
     beforeEach(function () {

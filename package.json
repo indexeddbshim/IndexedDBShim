@@ -9,7 +9,9 @@
   "description": "A polyfill for IndexedDB using WebSql",
   "scripts": {
     "start": "grunt",
-    "test": "grunt test"
+    "test": "grunt test",
+    "mocha": "grunt mocha && grunt clean",
+    "nodequnit": "grunt nodequnit"
   },
   "repository": {
     "type": "git",
@@ -46,6 +48,7 @@
     "grunt-contrib-qunit": "^1.2.0",
     "grunt-contrib-uglify": "^1.0.1",
     "grunt-contrib-watch": "^1.0.0",
+    "grunt-mocha-test": "^0.12.7",
     "grunt-node-qunit": "https://github.com/lmartorella/grunt-node-qunit#master",
     "grunt-saucelabs": "~8.6.2",
     "gruntify-eslint": "~2.0.0",

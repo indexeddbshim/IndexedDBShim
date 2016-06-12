@@ -21,6 +21,7 @@ describe('IDBObjectStore.add', function () {
     });
 
     it('should throw an error if an out-of-line key already exists', function (done) {
+        this.timeout(5000);
         util.createDatabase('out-of-line', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -56,7 +57,7 @@ describe('IDBObjectStore.add', function () {
                 sinon.assert.notCalled(tx.oncomplete);
                 sinon.assert.called(tx.onerror);
 
-                if (env.isShimmed || !env.browser.isSafari) {
+                if (env.isShimmed || (!env.browser.isSafari && !env.browser.isFirefox)) {
                     expect(add2.error).to.be.an.instanceOf(env.DOMException);   // Was DOMError before latest draft spec
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
@@ -75,6 +76,7 @@ describe('IDBObjectStore.add', function () {
     });
 
     it('should throw an error if an out-of-line key conflict occurs in simultaneous transactions', function (done) {
+        this.timeout(5000);
         util.createDatabase('out-of-line', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -109,8 +111,10 @@ describe('IDBObjectStore.add', function () {
                         expect(save2.result).equal(undefined);   // Safari uses null
                         expect(save3.result).equal(undefined);   // Safari uses null
 
-                        expect(save2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
-                        expect(save3.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
+                        if (!env.browser.isFirefox) {
+                            expect(save2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
+                            expect(save3.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
+                        }
                     }
 
                     db.close();
@@ -159,7 +163,7 @@ describe('IDBObjectStore.add', function () {
                 sinon.assert.notCalled(tx.oncomplete);
                 sinon.assert.called(tx.onerror);
 
-                if (env.isShimmed || !env.browser.isSafari) {
+                if (env.isShimmed || (!env.browser.isSafari && !env.browser.isFirefox)) {
                     expect(add2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
@@ -178,6 +182,8 @@ describe('IDBObjectStore.add', function () {
     });
 
     it('should throw an error if an inline key already exists', function (done) {
+        this.timeout(5000);
+
         util.createDatabase('inline', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -209,7 +215,7 @@ describe('IDBObjectStore.add', function () {
                 sinon.assert.notCalled(tx.oncomplete);
                 sinon.assert.called(tx.onerror);
 
-                if (env.isShimmed || !env.browser.isSafari) {
+                if (env.isShimmed || (!env.browser.isSafari && !env.browser.isFirefox)) {
                     expect(add2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
@@ -228,6 +234,7 @@ describe('IDBObjectStore.add', function () {
     });
 
     it('should throw an error if an inline key conflict occurs in simultaneous transactions', function (done) {
+        this.timeout(10000);
         util.createDatabase('inline', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -262,8 +269,10 @@ describe('IDBObjectStore.add', function () {
                         expect(save2.result).equal(undefined);   // Safari uses null
                         expect(save3.result).equal(undefined);   // Safari uses null
 
-                        expect(save2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
-                        expect(save3.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
+                        if (!env.browser.isFirefox) {
+                            expect(save2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
+                            expect(save3.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
+                        }
                     }
 
                     db.close();
@@ -281,6 +290,8 @@ describe('IDBObjectStore.add', function () {
     });
 
     it('should throw an error if a generated inline key already exists', function (done) {
+        this.timeout(5000);
+
         util.createDatabase('inline-generated', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -312,7 +323,7 @@ describe('IDBObjectStore.add', function () {
                 sinon.assert.notCalled(tx.oncomplete);
                 sinon.assert.called(tx.onerror);
 
-                if (env.isShimmed || !env.browser.isSafari) {
+                if (env.isShimmed || (!env.browser.isSafari && !env.browser.isFirefox)) {
                     expect(add2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
@@ -331,6 +342,7 @@ describe('IDBObjectStore.add', function () {
     });
 
     it('should throw an error if a dotted key already exists', function (done) {
+        this.timeout(5000);
         util.createDatabase('dotted', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -362,7 +374,7 @@ describe('IDBObjectStore.add', function () {
                 sinon.assert.notCalled(tx.oncomplete);
                 sinon.assert.called(tx.onerror);
 
-                if (env.isShimmed || !env.browser.isSafari) {
+                if (env.isShimmed || (!env.browser.isSafari && !env.browser.isFirefox)) {
                     expect(add2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
@@ -381,6 +393,8 @@ describe('IDBObjectStore.add', function () {
     });
 
     it('should throw an error if a generated dotted key already exists', function (done) {
+        this.timeout(5000);
+
         util.createDatabase('dotted-generated', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -412,7 +426,7 @@ describe('IDBObjectStore.add', function () {
                 sinon.assert.notCalled(tx.oncomplete);
                 sinon.assert.called(tx.onerror);
 
-                if (env.isShimmed || !env.browser.isSafari) {
+                if (env.isShimmed || (!env.browser.isSafari && !env.browser.isFirefox)) {
                     expect(add2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
@@ -431,6 +445,7 @@ describe('IDBObjectStore.add', function () {
     });
 
     util.skipIf(env.isNative && env.browser.isIE, 'should throw an error if a compound out-of-line key already exists', function (done) {
+        this.timeout(5000);
         // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('out-of-line-compound', function (err, db) {
             if (err) {
@@ -463,7 +478,7 @@ describe('IDBObjectStore.add', function () {
                 sinon.assert.notCalled(tx.oncomplete);
                 sinon.assert.called(tx.onerror);
 
-                if (env.isShimmed || !env.browser.isSafari) {
+                if (env.isShimmed || (!env.browser.isSafari && !env.browser.isFirefox)) {
                     expect(add2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
@@ -482,6 +497,7 @@ describe('IDBObjectStore.add', function () {
     });
 
     util.skipIf(env.isNative && env.browser.isIE, 'should throw an error if a compound key already exists', function (done) {
+        this.timeout(5000);
         // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('inline-compound', function (err, db) {
             if (err) {
@@ -514,7 +530,7 @@ describe('IDBObjectStore.add', function () {
                 sinon.assert.notCalled(tx.oncomplete);
                 sinon.assert.called(tx.onerror);
 
-                if (env.isShimmed || !env.browser.isSafari) {
+                if (env.isShimmed || (!env.browser.isSafari && !env.browser.isFirefox)) {
                     expect(add2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
@@ -533,6 +549,7 @@ describe('IDBObjectStore.add', function () {
     });
 
     util.skipIf(env.isNative && env.browser.isIE, 'should throw an error if a dotted compound key already exists', function (done) {
+        this.timeout(5000);
         // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('dotted-compound', function (err, db) {
             if (err) {
@@ -565,7 +582,7 @@ describe('IDBObjectStore.add', function () {
                 sinon.assert.notCalled(tx.oncomplete);
                 sinon.assert.called(tx.onerror);
 
-                if (env.isShimmed || !env.browser.isSafari) {
+                if (env.isShimmed || (!env.browser.isSafari && !env.browser.isFirefox)) {
                     expect(add2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
                 }
                 expect(add2.error.name).to.equal('ConstraintError');

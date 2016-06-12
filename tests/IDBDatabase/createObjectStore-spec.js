@@ -192,6 +192,7 @@ describe('IDBDatabase.createObjectStore', function () {
         });
 
         util.skipIf(env.isNative && env.browser.isSafari, 'should persist the schema across database sessions', function (done) {
+            this.timeout(5000);
             // BUG: Safari's native IndexedDB does not support opening multiple object stores
 
             // Create a database schema, then close the database

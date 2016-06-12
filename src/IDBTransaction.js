@@ -1,5 +1,5 @@
 import {createEvent} from './Event.js';
-import {logError, findError, DOMError, createDOMException} from './DOMException.js';
+import {logError, findError, DOMException, createDOMException} from './DOMException.js';
 import {IDBRequest} from './IDBRequest.js';
 import util from './util.js';
 import IDBObjectStore from './IDBObjectStore.js';
@@ -65,7 +65,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 try {
                     // Fire an error event for the current IDBRequest
                     q.req.readyState = 'done';
-                    q.req.error = err || DOMError;
+                    q.req.error = err || DOMException;
                     q.req.result = undefined;
                     const e = createEvent('error', err);
                     util.callback('onerror', q.req, e);

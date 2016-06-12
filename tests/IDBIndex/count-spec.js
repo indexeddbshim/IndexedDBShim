@@ -239,8 +239,8 @@ describe('IDBIndex.count', function () {
 
     util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should return the count for multi-entry indexes', function (done) {
         // BUG: IE's native IndexedDB does not support multi-entry indexes
-        this.timeout(10000);
-        this.slow(10000);
+        this.timeout(35000);
+        this.slow(35000);
 
         util.createDatabase('inline', 'multi-entry-index', function (err, db) {
             if (err) {
@@ -301,8 +301,8 @@ describe('IDBIndex.count', function () {
 
     util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should return the count for unique, multi-entry indexes', function (done) {
         // BUG: IE's native IndexedDB does not support multi-entry indexes
-        this.timeout(10000);
-        this.slow(10000);
+        this.timeout(20000);
+        this.slow(20000);
 
         util.createDatabase('inline', 'unique-multi-entry-index', function (err, db) {
             if (err) {
@@ -611,7 +611,7 @@ describe('IDBIndex.count', function () {
 
                 db.close();
                 done();
-            }, 50);
+            }, env.transactionDuration);
         });
     });
 });

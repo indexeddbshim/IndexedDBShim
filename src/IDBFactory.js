@@ -1,5 +1,5 @@
-import {createEvent} from './Event.js';
-import {findError, createDOMError, DOMError} from './DOMException.js';
+import {createEvent, Event} from './Event.js';
+import {findError, createDOMException, DOMException} from './DOMException.js';
 import {IDBOpenDBRequest} from './IDBRequest.js';
 import util from './util.js';
 import Key from './Key.js';
@@ -36,6 +36,7 @@ function createSysDB (success, failure) {
  * @constructor
  */
 function IDBFactory () {
+    this.modules = {DOMException, Event, IDBFactory};
 }
 
 /**
@@ -65,7 +66,7 @@ IDBFactory.prototype.open = function (name, version) {
         calledDbCreateError = true;
         const evt = createEvent('error', arguments);
         req.readyState = 'done';
-        req.error = err || DOMError;
+        req.error = err || DOMException;
         util.callback('onerror', req, evt);
     }
 
@@ -76,7 +77,7 @@ IDBFactory.prototype.open = function (name, version) {
             version = oldVersion || 1;
         }
         if (version <= 0 || oldVersion > version) {
-            const err = createDOMError('VersionError', 'An attempt was made to open a database using a lower version than the existing version.', version);
+            const err = createDOMException('VersionError', 'An attempt was made to open a database using a lower version than the existing version.', version);
             dbCreateError(err);
             return;
         }
@@ -152,7 +153,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         }
         err = findError(arguments);
         req.readyState = 'done';
-        req.error = err || DOMError;
+        req.error = err || DOMException;
         const e = createEvent('error');
         e.debug = arguments;
         util.callback('onerror', req, e);

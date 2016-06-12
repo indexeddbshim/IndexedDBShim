@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
   <head lang="en">
-    <meta charset="UTF-8">
+    <meta charset="UTF-8"/>
     <meta name="msapplication-tap-highlight" content="no"/>
     <meta name="viewport" content="user-scalable=no, initial-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi"/>
     <title>Testing IndexedDB Shim</title>
 
-    <link rel="stylesheet" href="lib/mocha.css"/>
+    <link rel="stylesheet" href="../node_modules/mocha/mocha.css"/>
     <link rel="stylesheet" href="styles.css"/>
   </head>
   <body>
@@ -36,14 +36,14 @@
     </div>
 
     <!-- Test Environment -->
-    <script src="lib/mocha.js"></script>
-    <script src="lib/chai.js"></script>
-    <script src="lib/sinon.js"></script>
+    <script src="../node_modules/mocha/mocha.js"></script>
+    <script src="../node_modules/chai/chai.js"></script>
+    <script src="../node_modules/sinon/pkg/sinon.js"></script>
     <script src="test-environment.js"></script>
     <script src="test-utils.js"></script>
 
-    <script type="text/javascript" src="cordova.js"></script>
-    <script type="text/javascript">
+    <script src="cordova.js"></script>
+    <script>
       document.addEventListener('deviceready', onDeviceReady, false);
 
       function onDeviceReady() {
@@ -80,7 +80,6 @@
 
       function addScript(url) {
         var scriptElem = document.createElement('script');
-        scriptElem.type = 'text/javascript';
         scriptElem.src = url;
         document.head.appendChild(scriptElem);
       }

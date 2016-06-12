@@ -63,6 +63,11 @@ module.exports = function (grunt) {
                 dest: 'dist/<%=pkg.name%>-node.min.js'
             }
         },
+        clean: {
+            node: {
+                src: ['IndexedDBShim_Test_Database_*', '__sysdb__*']
+            }
+        },
         connect: {
             server: {
                 options: {
@@ -87,6 +92,18 @@ module.exports = function (grunt) {
                     if (err) console.log(err);
                     else console.log(res);
                 }
+            }
+        },
+
+        mochaTest: {
+            test: {
+                options: {
+                    bail: false,
+                    reporter: 'spec',
+                    quiet: false, // Optionally suppress output to standard out (defaults to false)
+                    clearRequireCache: false // Optionally clear the require cache before running tests (defaults to false)
+                },
+                src: ['tests/test-node.js']
             }
         },
 
@@ -119,7 +136,7 @@ module.exports = function (grunt) {
         watch: {
             dev: {
                 files: ['src/*'],
-                tasks: ['eslint', 'browserify', 'uglify']
+                tasks: ['eslint', 'browserify']
             }
         }
     });
@@ -128,9 +145,10 @@ module.exports = function (grunt) {
         if (key !== 'grunt' && key.indexOf('grunt') === 0) { grunt.loadNpmTasks(key); }
     }
 
-    grunt.registerTask('build', ['eslint', 'browserify']); // , 'uglify']);
+    grunt.registerTask('build', ['eslint', 'browserify', 'uglify']);
     const testJobs = ['build', 'connect'];
-    grunt.registerTask('node', testJobs.concat('node-qunit'));
+    grunt.registerTask('nodequnit', testJobs.concat('node-qunit'));
+    grunt.registerTask('mocha', ['mochaTest']); // clean:node isn't working here as locked (even with force:true on it or grunt-wait) so we do in package.json
 
     if (saucekey !== null) {
         testJobs.push('saucelabs-qunit');

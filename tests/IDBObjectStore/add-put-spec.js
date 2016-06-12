@@ -142,7 +142,7 @@
 
                     db.close();
                     done();
-                }, 50);
+                }, env.transactionDuration);
             });
         });
 
@@ -245,6 +245,7 @@
             });
 
             util.skipIf(env.isNative && env.browser.isSafari, 'should allow generated out-of-line keys to be specified', function (done) {
+                this.timeout(5000);
                 // BUG: Safari's native IndexedDB resets the key generator whenever key is specified, causing key conflicts
                 util.createDatabase('out-of-line-generated', function (err, db) {
                     if (err) {
@@ -296,6 +297,8 @@
             });
 
             it('should allow these keys', function (done) {
+                this.timeout(15000);
+
                 util.createDatabase('out-of-line', function (err, db) {
                     if (err) {
                         assert.fail(true, true, 'Error creating database');
@@ -355,6 +358,7 @@
             });
 
             it('should not allow these keys', function (done) {
+                this.timeout(5000);
                 util.createDatabase('out-of-line', function (err, db) {
                     if (err) {
                         assert.fail(true, true, 'Error creating database');
@@ -404,6 +408,7 @@
             });
 
             it('should allow these data types', function (done) {
+                this.timeout(5000);
                 util.createDatabase('out-of-line-generated', function (err, db) {
                     if (err) {
                         assert.fail(true, true, 'Error creating database');
@@ -738,6 +743,8 @@
             });
 
             it('should allow these keys', function (done) {
+                this.timeout(10000);
+
                 util.createDatabase('inline', function (err, db) {
                     if (err) {
                         assert.fail(true, true, 'Error creating database');
@@ -797,6 +804,7 @@
             });
 
             it('should not allow these keys', function (done) {
+                this.timeout(5000);
                 util.createDatabase('inline', function (err, db) {
                     if (err) {
                         assert.fail(true, true, 'Error creating database');
@@ -917,6 +925,7 @@
             });
 
             it('should not allow these data types', function (done) {
+                this.timeout(5000);
                 util.createDatabase('inline-generated', function (err, db) {
                     if (err) {
                         assert.fail(true, true, 'Error creating database');
@@ -1385,6 +1394,8 @@
             });
 
             util.skipIf(env.isNative && env.browser.isIE, 'should allow these keys', function (done) {
+                this.timeout(10000);
+
                 // BUG: IE's native IndexedDB does not support compound keys at all
                 util.createDatabase('dotted-compound', function (err, db) {
                     if (err) {
@@ -1445,6 +1456,7 @@
             });
 
             util.skipIf(env.isNative && env.browser.isIE, 'should not allow these keys', function (done) {
+                this.timeout(5000);
                 // BUG: IE's native IndexedDB does not support compound keys at all
                 util.createDatabase('dotted-compound', function (err, db) {
                     if (err) {

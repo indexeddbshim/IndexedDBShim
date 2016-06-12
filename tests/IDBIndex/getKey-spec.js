@@ -525,6 +525,7 @@ describe('IDBIndex.getKey', function () {
     });
 
     it('should allow these keys', function (done) {
+        this.timeout(5000);
         util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -572,6 +573,7 @@ describe('IDBIndex.getKey', function () {
     });
 
     it('should not allow these keys', function (done) {
+        this.timeout(5000);
         util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
             if (err) {
                 assert.fail(true, true, 'Error creating database');
@@ -756,7 +758,7 @@ describe('IDBIndex.getKey', function () {
 
                 db.close();
                 done();
-            }, 50);
+            }, env.transactionDuration);
         });
     });
 
