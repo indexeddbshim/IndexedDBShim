@@ -11,7 +11,7 @@ describe('IDBDatabase.deleteObjectStore', function () {
         it('should return undefined', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database name');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -37,7 +37,7 @@ describe('IDBDatabase.deleteObjectStore', function () {
         it('should delete an object store that was created in the same transaction', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -69,7 +69,7 @@ describe('IDBDatabase.deleteObjectStore', function () {
         it('should delete an object store that was created in a previous transaction', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -122,7 +122,7 @@ describe('IDBDatabase.deleteObjectStore', function () {
         it('should be able to re-create an object store that was deleted', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -167,7 +167,7 @@ describe('IDBDatabase.deleteObjectStore', function () {
                 'inline-compound', 'dotted', 'dotted-generated', 'dotted-compound',
                 function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }

@@ -6,7 +6,7 @@ describe('IDBDatabase.transaction', function () {
         it('should return an IDBTransaction', function (done) {
             util.createDatabase('inline', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -21,7 +21,7 @@ describe('IDBDatabase.transaction', function () {
         it('should have a reference to the database', function (done) {
             util.createDatabase('inline', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -36,7 +36,7 @@ describe('IDBDatabase.transaction', function () {
         it('should pass the IDBTransaction to the oncomplete callback', function (done) {
             util.createDatabase('out-of-line', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -56,7 +56,7 @@ describe('IDBDatabase.transaction', function () {
         it('should open a single object store', function (done) {
             util.createDatabase('inline-generated', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -73,7 +73,7 @@ describe('IDBDatabase.transaction', function () {
 
             util.createDatabase('inline', 'out-of-line', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -127,7 +127,7 @@ describe('IDBDatabase.transaction', function () {
         it('can be explicitly set to "readwrite" mode', function (done) {
             util.createDatabase('inline', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -147,7 +147,7 @@ describe('IDBDatabase.transaction', function () {
         it('should allow simultaneous transaction', function (done) {
             util.createDatabase('out-of-line-generated', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }

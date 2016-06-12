@@ -24,7 +24,7 @@ describe('IDBObjectStore.add', function () {
         this.timeout(5000);
         util.createDatabase('out-of-line', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -79,7 +79,7 @@ describe('IDBObjectStore.add', function () {
         this.timeout(5000);
         util.createDatabase('out-of-line', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -101,8 +101,8 @@ describe('IDBObjectStore.add', function () {
             tx1.onabort = tx2.onabort = tx3.onabort = sinon.spy(function () {
                 if (tx1.oncomplete.calledOnce && tx1.onerror.calledTwice && tx1.onabort.calledTwice) {
                     expect(save1.result).to.equal(1);
-                    assert.isNotOk(save2.result);
-                    assert.isNotOk(save3.result);
+                    expect(save2.result).to.not.be.ok;
+                    expect(save3.result).to.not.be.ok;
 
                     expect(save2.error.name).to.equal('ConstraintError');
                     expect(save3.error.name).to.equal('ConstraintError');
@@ -134,7 +134,7 @@ describe('IDBObjectStore.add', function () {
     it('should throw an error if a generated out-of-line key already exists', function (done) {
         util.createDatabase('out-of-line-generated', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -186,7 +186,7 @@ describe('IDBObjectStore.add', function () {
 
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -237,7 +237,7 @@ describe('IDBObjectStore.add', function () {
         this.timeout(10000);
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -259,8 +259,8 @@ describe('IDBObjectStore.add', function () {
             tx1.onabort = tx2.onabort = tx3.onabort = sinon.spy(function () {
                 if (tx1.oncomplete.calledOnce && tx1.onerror.calledTwice && tx1.onabort.calledTwice) {
                     expect(save1.result).to.equal(1);
-                    assert.isNotOk(save2.result);
-                    assert.isNotOk(save3.result);
+                    expect(save2.result).to.not.be.ok;
+                    expect(save3.result).to.not.be.ok;
 
                     expect(save2.error.name).to.equal('ConstraintError');
                     expect(save3.error.name).to.equal('ConstraintError');
@@ -294,7 +294,7 @@ describe('IDBObjectStore.add', function () {
 
         util.createDatabase('inline-generated', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -345,7 +345,7 @@ describe('IDBObjectStore.add', function () {
         this.timeout(5000);
         util.createDatabase('dotted', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -397,7 +397,7 @@ describe('IDBObjectStore.add', function () {
 
         util.createDatabase('dotted-generated', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -449,7 +449,7 @@ describe('IDBObjectStore.add', function () {
         // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('out-of-line-compound', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -501,7 +501,7 @@ describe('IDBObjectStore.add', function () {
         // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('inline-compound', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -553,7 +553,7 @@ describe('IDBObjectStore.add', function () {
         // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('dotted-compound', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }

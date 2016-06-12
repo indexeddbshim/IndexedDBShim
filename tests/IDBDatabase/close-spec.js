@@ -5,7 +5,7 @@ describe('IDBDatabase.close', function () {
     it('should return void', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -18,7 +18,7 @@ describe('IDBDatabase.close', function () {
     it('should wait for a transaction to complete first', function (done) {
         util.createDatabase('out-of-line-generated', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -44,7 +44,7 @@ describe('IDBDatabase.close', function () {
     it('should do nothing if the database is already closed', function (done) {
         util.createDatabase('out-of-line-generated', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -60,7 +60,7 @@ describe('IDBDatabase.close', function () {
     it('should do nothing if called multiple times', function (done) {
         util.createDatabase('out-of-line-generated', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -75,7 +75,7 @@ describe('IDBDatabase.close', function () {
     it('should ignore any parameters', function (done) {
         util.createDatabase(function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }

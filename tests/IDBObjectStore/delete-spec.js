@@ -5,7 +5,7 @@ describe('IDBObjectStore.delete', function () {
     it('should return an IDBRequest', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -27,7 +27,7 @@ describe('IDBObjectStore.delete', function () {
     it('should pass the IDBRequest event to the onsuccess callback', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -55,7 +55,7 @@ describe('IDBObjectStore.delete', function () {
     it('should set IDBRequest.result to undefined', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -81,7 +81,7 @@ describe('IDBObjectStore.delete', function () {
     it('should delete a record', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -94,7 +94,7 @@ describe('IDBObjectStore.delete', function () {
                 store.delete(1).onsuccess = function () {
                     util.getAll(store, function (err, data) {
                         if (err) {
-                            assert.fail(true, true, 'Error getting all');
+                            expect(function () { throw err; }).to.not.throw(Error);
                             done();
                             return;
                         }
@@ -114,7 +114,7 @@ describe('IDBObjectStore.delete', function () {
     it('should not delete a record if the key is not found', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -127,7 +127,7 @@ describe('IDBObjectStore.delete', function () {
                 store.delete(2).onsuccess = function () {
                     util.getAll(store, function (err, data) {
                         if (err) {
-                            assert.fail(true, true, 'Error getting all');
+                            expect(function () { throw err; }).to.not.throw(Error);
                             done();
                             return;
                         }
@@ -150,7 +150,7 @@ describe('IDBObjectStore.delete', function () {
     it('should delete records immediately after creating them', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -169,7 +169,7 @@ describe('IDBObjectStore.delete', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -187,7 +187,7 @@ describe('IDBObjectStore.delete', function () {
     it('should delete records from previous transactions', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -217,7 +217,7 @@ describe('IDBObjectStore.delete', function () {
 
                 util.getAll(store, function (err, data) {
                     if (err) {
-                        assert.fail(true, true, 'Error getting all');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -239,7 +239,7 @@ describe('IDBObjectStore.delete', function () {
 
                 util.getAll(store, function (err, data) {
                     if (err) {
-                        assert.fail(true, true, 'Error getting all');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -269,7 +269,7 @@ describe('IDBObjectStore.delete', function () {
     it('should delete data using out-of-line keys', function (done) {
         util.createDatabase('out-of-line', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -291,7 +291,7 @@ describe('IDBObjectStore.delete', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -314,7 +314,7 @@ describe('IDBObjectStore.delete', function () {
         // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('out-of-line-compound', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -336,7 +336,7 @@ describe('IDBObjectStore.delete', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -358,7 +358,7 @@ describe('IDBObjectStore.delete', function () {
     it('should delete data using generated out-of-line keys', function (done) {
         util.createDatabase('out-of-line-generated', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -380,7 +380,7 @@ describe('IDBObjectStore.delete', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -403,7 +403,7 @@ describe('IDBObjectStore.delete', function () {
         this.timeout(5000);
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -425,7 +425,7 @@ describe('IDBObjectStore.delete', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -448,7 +448,7 @@ describe('IDBObjectStore.delete', function () {
         // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('inline-compound', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -470,7 +470,7 @@ describe('IDBObjectStore.delete', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -492,7 +492,7 @@ describe('IDBObjectStore.delete', function () {
     it('should delete data using generated inline keys', function (done) {
         util.createDatabase('inline-generated', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -514,7 +514,7 @@ describe('IDBObjectStore.delete', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -537,7 +537,7 @@ describe('IDBObjectStore.delete', function () {
         this.timeout(5000);
         util.createDatabase('dotted', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -559,7 +559,7 @@ describe('IDBObjectStore.delete', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -582,7 +582,7 @@ describe('IDBObjectStore.delete', function () {
         // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('dotted-compound', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -604,7 +604,7 @@ describe('IDBObjectStore.delete', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -627,7 +627,7 @@ describe('IDBObjectStore.delete', function () {
         this.timeout(5000);
         util.createDatabase('dotted-generated', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -649,7 +649,7 @@ describe('IDBObjectStore.delete', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -672,7 +672,7 @@ describe('IDBObjectStore.delete', function () {
         this.timeout(5000);
         util.createDatabase('out-of-line-generated', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -719,7 +719,7 @@ describe('IDBObjectStore.delete', function () {
         this.timeout(5000);
         util.createDatabase('out-of-line-generated', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -754,7 +754,7 @@ describe('IDBObjectStore.delete', function () {
                 if (!env.isPolyfilled) {
                     expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
                 }
-                assert.isOk(err);
+                expect(err).to.be.ok;
                 expect(err.name).to.equal('DataError');
             }
 
@@ -767,7 +767,7 @@ describe('IDBObjectStore.delete', function () {
         // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('inline-compound', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -782,7 +782,7 @@ describe('IDBObjectStore.delete', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }

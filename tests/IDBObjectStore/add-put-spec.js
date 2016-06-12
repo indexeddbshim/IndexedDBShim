@@ -10,7 +10,7 @@
         it('should return an IDBRequest', function (done) {
             util.createDatabase('inline', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -31,7 +31,7 @@
         it('should pass the IDBRequest event to the onsuccess callback', function (done) {
             util.createDatabase('inline', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -61,7 +61,7 @@
 
             util.createDatabase('out-of-line-generated', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -75,7 +75,7 @@
                 var allData;
                 util.getAll(store, function (err, data) {
                     if (err) {
-                        assert.fail(true, true, 'Error getting all');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -169,7 +169,7 @@
             it('should save data with an out-of-line key', function (done) {
                 util.createDatabase('out-of-line', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -183,7 +183,7 @@
                     var allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
-                            assert.fail(true, true, 'Error getting all');
+                            expect(function () { throw err; }).to.not.throw(Error);
                             done();
                             return;
                         }
@@ -208,7 +208,7 @@
             it('should save data with a generated out-of-line key', function (done) {
                 util.createDatabase('out-of-line-generated', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -222,7 +222,7 @@
                     var allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
-                            assert.fail(true, true, 'Error getting all');
+                            expect(function () { throw err; }).to.not.throw(Error);
                             done();
                             return;
                         }
@@ -249,7 +249,7 @@
                 // BUG: Safari's native IndexedDB resets the key generator whenever key is specified, causing key conflicts
                 util.createDatabase('out-of-line-generated', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -268,7 +268,7 @@
                     var allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
-                            assert.fail(true, true, 'Error getting all');
+                            expect(function () { throw err; }).to.not.throw(Error);
                             done();
                             return;
                         }
@@ -301,7 +301,7 @@
 
                 util.createDatabase('out-of-line', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -361,7 +361,7 @@
                 this.timeout(5000);
                 util.createDatabase('out-of-line', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -398,7 +398,7 @@
                         if (!env.isPolyfilled) {
                             expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
                         }
-                        assert.isOk(err);
+                        expect(err).to.be.ok;
                         expect(err.name).to.equal('DataError');
                     }
 
@@ -411,7 +411,7 @@
                 this.timeout(5000);
                 util.createDatabase('out-of-line-generated', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -516,7 +516,7 @@
             it('should save out-of-line keys in multiple simultaneous transactions', function (done) {
                 util.createDatabase('out-of-line', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -535,7 +535,7 @@
                     var allData;
                     util.getAll(store3, function (err, data) {
                         if (err) {
-                            assert.fail(true, true, 'Error getting all');
+                            expect(function () { throw err; }).to.not.throw(Error);
                             done();
                             return;
                         }
@@ -564,7 +564,7 @@
             it('should save generated out-of-line keys in multiple simultaneous transactions', function (done) {
                 util.createDatabase('out-of-line-generated', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -583,7 +583,7 @@
                     var allData;
                     util.getAll(store3, function (err, data) {
                         if (err) {
-                            assert.fail(true, true, 'Error getting all');
+                            expect(function () { throw err; }).to.not.throw(Error);
                             done();
                             return;
                         }
@@ -618,7 +618,7 @@
             it('should save data with an inline key', function (done) {
                 util.createDatabase('inline', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -632,7 +632,7 @@
                     var allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
-                            assert.fail(true, true, 'Error getting all');
+                            expect(function () { throw err; }).to.not.throw(Error);
                             done();
                             return;
                         }
@@ -657,7 +657,7 @@
             it('should save data with a generated inline key', function (done) {
                 util.createDatabase('inline-generated', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -671,7 +671,7 @@
                     var allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
-                            assert.fail(true, true, 'Error getting all');
+                            expect(function () { throw err; }).to.not.throw(Error);
                             done();
                             return;
                         }
@@ -697,7 +697,7 @@
                 // BUG: Safari's native IndexedDB resets the key generator whenever key is specified, causing key conflicts
                 util.createDatabase('inline-generated', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -714,7 +714,7 @@
                     var allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
-                            assert.fail(true, true, 'Error getting all');
+                            expect(function () { throw err; }).to.not.throw(Error);
                             done();
                             return;
                         }
@@ -747,7 +747,7 @@
 
                 util.createDatabase('inline', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -807,7 +807,7 @@
                 this.timeout(5000);
                 util.createDatabase('inline', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -844,7 +844,7 @@
                         if (!env.isPolyfilled) {
                             expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
                         }
-                        assert.isOk(err);
+                        expect(err).to.be.ok;
                         expect(err.name).to.equal('DataError');
                     }
 
@@ -856,7 +856,7 @@
             it('should allow these data types', function (done) {
                 util.createDatabase('inline-generated', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -928,7 +928,7 @@
                 this.timeout(5000);
                 util.createDatabase('inline-generated', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -994,7 +994,7 @@
             it('should save inline keys in multiple simultaneous transactions', function (done) {
                 util.createDatabase('inline', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -1013,7 +1013,7 @@
                     var allData;
                     util.getAll(store3, function (err, data) {
                         if (err) {
-                            assert.fail(true, true, 'Error getting all');
+                            expect(function () { throw err; }).to.not.throw(Error);
                             done();
                             return;
                         }
@@ -1042,7 +1042,7 @@
             it('should save generated inline keys in multiple simultaneous transactions', function (done) {
                 util.createDatabase('inline-generated', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -1061,7 +1061,7 @@
                     var allData;
                     util.getAll(store3, function (err, data) {
                         if (err) {
-                            assert.fail(true, true, 'Error getting all');
+                            expect(function () { throw err; }).to.not.throw(Error);
                             done();
                             return;
                         }
@@ -1096,7 +1096,7 @@
             it('should save data with a dotted key', function (done) {
                 util.createDatabase('dotted', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -1110,7 +1110,7 @@
                     var allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
-                            assert.fail(true, true, 'Error getting all');
+                            expect(function () { throw err; }).to.not.throw(Error);
                             done();
                             return;
                         }
@@ -1135,7 +1135,7 @@
             it('should save data with a generated dotted key', function (done) {
                 util.createDatabase('dotted-generated', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -1149,7 +1149,7 @@
                     var allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
-                            assert.fail(true, true, 'Error getting all');
+                            expect(function () { throw err; }).to.not.throw(Error);
                             done();
                             return;
                         }
@@ -1174,7 +1174,7 @@
             it('should save dotted keys in multiple simultaneous transactions', function (done) {
                 util.createDatabase('dotted', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -1193,7 +1193,7 @@
                     var allData;
                     util.getAll(store3, function (err, data) {
                         if (err) {
-                            assert.fail(true, true, 'Error getting all');
+                            expect(function () { throw err; }).to.not.throw(Error);
                             done();
                             return;
                         }
@@ -1222,7 +1222,7 @@
             it('should save generated dotted keys in multiple simultaneous transactions', function (done) {
                 util.createDatabase('dotted-generated', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -1241,7 +1241,7 @@
                     var allData;
                     util.getAll(store3, function (err, data) {
                         if (err) {
-                            assert.fail(true, true, 'Error getting all');
+                            expect(function () { throw err; }).to.not.throw(Error);
                             done();
                             return;
                         }
@@ -1277,7 +1277,7 @@
                 // BUG: IE's native IndexedDB does not support compound keys at all
                 util.createDatabase('out-of-line-compound', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -1291,7 +1291,7 @@
                     var allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
-                            assert.fail(true, true, 'Error getting all');
+                            expect(function () { throw err; }).to.not.throw(Error);
                             done();
                             return;
                         }
@@ -1317,7 +1317,7 @@
                 // BUG: IE's native IndexedDB does not support compound keys at all
                 util.createDatabase('inline-compound', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -1331,7 +1331,7 @@
                     var allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
-                            assert.fail(true, true, 'Error getting all');
+                            expect(function () { throw err; }).to.not.throw(Error);
                             done();
                             return;
                         }
@@ -1357,7 +1357,7 @@
                 // BUG: IE's native IndexedDB does not support compound keys at all
                 util.createDatabase('dotted-compound', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -1371,7 +1371,7 @@
                     var allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
-                            assert.fail(true, true, 'Error getting all');
+                            expect(function () { throw err; }).to.not.throw(Error);
                             done();
                             return;
                         }
@@ -1399,7 +1399,7 @@
                 // BUG: IE's native IndexedDB does not support compound keys at all
                 util.createDatabase('dotted-compound', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -1460,7 +1460,7 @@
                 // BUG: IE's native IndexedDB does not support compound keys at all
                 util.createDatabase('dotted-compound', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -1496,7 +1496,7 @@
                         if (!env.isPolyfilled) {
                             expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
                         }
-                        assert.isOk(err);
+                        expect(err).to.be.ok;
                         expect(err.name).to.equal('DataError');
                     }
 
@@ -1521,7 +1521,7 @@
                     if (!env.isPolyfilled) {
                         expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
                     }
-                    assert.isOk(err);
+                    expect(err).to.be.ok;
                     expect(err.name).to.equal('DataError');
 
                     db.close();
@@ -1533,7 +1533,7 @@
                 // BUG: IE's native IndexedDB does not support compound keys at all
                 util.createDatabase('inline-compound', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -1552,7 +1552,7 @@
                     var allData;
                     util.getAll(store3, function (err, data) {
                         if (err) {
-                            assert.fail(true, true, 'Error getting all');
+                            expect(function () { throw err; }).to.not.throw(Error);
                             done();
                             return;
                         }
@@ -1582,7 +1582,7 @@
                 // BUG: IE's native IndexedDB does not support compound keys at all
                 util.createDatabase('out-of-line', function (err, db) {
                     if (err) {
-                        assert.fail(true, true, 'Error creating database');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -1601,7 +1601,7 @@
                     var allData;
                     util.getAll(store3, function (err, data) {
                         if (err) {
-                            assert.fail(true, true, 'Error getting all');
+                            expect(function () { throw err; }).to.not.throw(Error);
                             done();
                             return;
                         }

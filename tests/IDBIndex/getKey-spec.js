@@ -5,7 +5,7 @@ describe('IDBIndex.getKey', function () {
     it('should return an IDBRequest', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -28,7 +28,7 @@ describe('IDBIndex.getKey', function () {
     it('should pass the IDBRequest event to the onsuccess callback', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -58,7 +58,7 @@ describe('IDBIndex.getKey', function () {
     it('should get a record', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -84,7 +84,7 @@ describe('IDBIndex.getKey', function () {
     it('should not get a record if the key is not found', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -99,7 +99,7 @@ describe('IDBIndex.getKey', function () {
             };
 
             tx.oncomplete = function () {
-                assert.isNotOk(key.result);
+                expect(key.result).to.not.be.ok;
 
                 if (env.isShimmed || !env.browser.isSafari) {
                     expect(key.result).equal(undefined);    // Safari returns null
@@ -114,7 +114,7 @@ describe('IDBIndex.getKey', function () {
     it('should get records immediately after creating them', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -145,7 +145,7 @@ describe('IDBIndex.getKey', function () {
     it('should get records from previous transactions', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -203,7 +203,7 @@ describe('IDBIndex.getKey', function () {
     it('should get data using out-of-line keys', function (done) {
         util.createDatabase('out-of-line', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -224,9 +224,9 @@ describe('IDBIndex.getKey', function () {
 
             tx.oncomplete = function () {
                 // Out-of-line keys aren't included in indexes
-                assert.isNotOk(key1.result);
-                assert.isNotOk(key2.result);
-                assert.isNotOk(key3.result);
+                expect(key1.result).to.not.be.ok;
+                expect(key2.result).to.not.be.ok;
+                expect(key3.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
                     expect(key1.result).equal(undefined);   // Safari returns null
                     expect(key2.result).equal(undefined);   // Safari returns null
@@ -243,7 +243,7 @@ describe('IDBIndex.getKey', function () {
         // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('out-of-line-compound', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -264,9 +264,9 @@ describe('IDBIndex.getKey', function () {
 
             tx.oncomplete = function () {
                 // Out-of-line keys aren't included in indexes
-                assert.isNotOk(key1.result);
-                assert.isNotOk(key2.result);
-                assert.isNotOk(key3.result);
+                expect(key1.result).to.not.be.ok;
+                expect(key2.result).to.not.be.ok;
+                expect(key3.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
                     expect(key1.result).equal(undefined);   // Safari returns null
                     expect(key2.result).equal(undefined);   // Safari returns null
@@ -282,7 +282,7 @@ describe('IDBIndex.getKey', function () {
     it('should get data using generated out-of-line keys', function (done) {
         util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -303,9 +303,9 @@ describe('IDBIndex.getKey', function () {
 
             tx.oncomplete = function () {
                 // Out-of-line keys aren't included in indexes
-                assert.isNotOk(key1.result);
-                assert.isNotOk(key2.result);
-                assert.isNotOk(key3.result);
+                expect(key1.result).to.not.be.ok;
+                expect(key2.result).to.not.be.ok;
+                expect(key3.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
                     expect(key1.result).equal(undefined);   // Safari returns null
                     expect(key2.result).equal(undefined);   // Safari returns null
@@ -321,7 +321,7 @@ describe('IDBIndex.getKey', function () {
     it('should get data using inline keys', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -355,7 +355,7 @@ describe('IDBIndex.getKey', function () {
         // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('inline-compound', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -388,7 +388,7 @@ describe('IDBIndex.getKey', function () {
     it('should get data using generated inline keys', function (done) {
         util.createDatabase('inline-generated', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -424,7 +424,7 @@ describe('IDBIndex.getKey', function () {
     it('should get data using dotted keys', function (done) {
         util.createDatabase('dotted', 'dotted-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -458,7 +458,7 @@ describe('IDBIndex.getKey', function () {
         // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('dotted-compound', 'compound-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -491,7 +491,7 @@ describe('IDBIndex.getKey', function () {
     it('should get data using generated dotted keys', function (done) {
         util.createDatabase('dotted-generated', 'dotted-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -528,7 +528,7 @@ describe('IDBIndex.getKey', function () {
         this.timeout(5000);
         util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -576,7 +576,7 @@ describe('IDBIndex.getKey', function () {
         this.timeout(5000);
         util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -612,7 +612,7 @@ describe('IDBIndex.getKey', function () {
                 if (!env.isPolyfilled) {
                     expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
                 }
-                assert.isOk(err);
+                expect(err).to.be.ok;
                 expect(err.name).to.equal('DataError');
             }
 
@@ -625,7 +625,7 @@ describe('IDBIndex.getKey', function () {
         // BUG: IE's native IndexedDB does not support multi-entry indexes
         util.createDatabase('inline', 'multi-entry-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -647,13 +647,13 @@ describe('IDBIndex.getKey', function () {
 
             tx.oncomplete = function () {
                 expect(key1.result).to.deep.equal('a');
-                assert.isNotOk(key2.result);
+                expect(key2.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
                     expect(key2.result).equal(undefined);     // Safari returns null
                 }
                 expect(key3.result).to.include('b');        // Some browsers return different records
                 expect(key4.result).to.deep.equal(['a', 'b', 'c']);
-                assert.isNotOk(key5.result);
+                expect(key5.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
                     expect(key5.result).equal(undefined);     // Safari returns null
                 }
@@ -668,7 +668,7 @@ describe('IDBIndex.getKey', function () {
         // BUG: IE's native IndexedDB does not support multi-entry indexes
         util.createDatabase('inline', 'unique-multi-entry-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -689,13 +689,13 @@ describe('IDBIndex.getKey', function () {
 
             tx.oncomplete = function () {
                 expect(key1.result).to.deep.equal('a');
-                assert.isNotOk(key2.result);
+                expect(key2.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
                     expect(key2.result).equal(undefined);     // Safari returns null
                 }
                 expect(key3.result).to.deep.equal(['b']);
-                assert.isNotOk(key4.result);
-                assert.isNotOk(key5.result);
+                expect(key4.result).to.not.be.ok;
+                expect(key5.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
                     expect(key4.result).equal(undefined);
                     expect(key5.result).equal(undefined);     // Safari returns null
@@ -711,7 +711,7 @@ describe('IDBIndex.getKey', function () {
         // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('inline-compound', 'compound-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -729,7 +729,7 @@ describe('IDBIndex.getKey', function () {
                 sinon.assert.notCalled(key.onerror);
 
                 // Make sure no data was returned
-                assert.isNotOk(key.result);
+                expect(key.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
                     expect(key.result).equal(undefined);    // Safari returns null
                 }

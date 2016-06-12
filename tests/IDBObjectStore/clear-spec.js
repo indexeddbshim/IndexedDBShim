@@ -5,7 +5,7 @@ describe('IDBObjectStore.clear', function () {
     it('should return an IDBRequest', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -26,7 +26,7 @@ describe('IDBObjectStore.clear', function () {
     it('should pass the IDBRequest event to the onsuccess callback', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -53,7 +53,7 @@ describe('IDBObjectStore.clear', function () {
     it('should set the IDBRequest.result to undefined', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -78,7 +78,7 @@ describe('IDBObjectStore.clear', function () {
     it('should clear all records', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -95,7 +95,7 @@ describe('IDBObjectStore.clear', function () {
 
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -107,7 +107,7 @@ describe('IDBObjectStore.clear', function () {
 
                 util.getAll(store, function (err, data) {
                     if (err) {
-                        assert.fail(true, true, 'Error getting all');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -139,7 +139,7 @@ describe('IDBObjectStore.clear', function () {
         this.timeout(5000);
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -169,7 +169,7 @@ describe('IDBObjectStore.clear', function () {
 
                 util.getAll(store, function (err, data) {
                     if (err) {
-                        assert.fail(true, true, 'Error getting all');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }
@@ -189,7 +189,7 @@ describe('IDBObjectStore.clear', function () {
 
                 util.getAll(store, function (err, data) {
                     if (err) {
-                        assert.fail(true, true, 'Error getting all');
+                        expect(function () { throw err; }).to.not.throw(Error);
                         done();
                         return;
                     }

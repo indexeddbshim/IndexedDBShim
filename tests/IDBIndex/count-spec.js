@@ -5,7 +5,7 @@ describe('IDBIndex.count', function () {
     it('should return an IDBRequest', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -31,7 +31,7 @@ describe('IDBIndex.count', function () {
     it('should have a reference to the transaction', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -57,7 +57,7 @@ describe('IDBIndex.count', function () {
     it('should pass the IDBRequest to the onsuccess event', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -95,7 +95,7 @@ describe('IDBIndex.count', function () {
     it('should return zero if there are no records', function (done) {
         util.createDatabase('out-of-line', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -119,7 +119,7 @@ describe('IDBIndex.count', function () {
     it('should return one if there is one record', function (done) {
         util.createDatabase('out-of-line', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -147,7 +147,7 @@ describe('IDBIndex.count', function () {
     it('should return the count for multiple records', function (done) {
         util.createDatabase('out-of-line', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -176,7 +176,7 @@ describe('IDBIndex.count', function () {
         // BUG: IE throws an error if the key is undefined
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -204,7 +204,7 @@ describe('IDBIndex.count', function () {
     it('should return the count for multiple records filtered by range', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -244,7 +244,7 @@ describe('IDBIndex.count', function () {
 
         util.createDatabase('inline', 'multi-entry-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -306,7 +306,7 @@ describe('IDBIndex.count', function () {
 
         util.createDatabase('inline', 'unique-multi-entry-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -365,7 +365,7 @@ describe('IDBIndex.count', function () {
         // BUG: IE's native IndexedDB does not support multi-entry indexes
         util.createDatabase('inline', 'unique-multi-entry-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -401,7 +401,7 @@ describe('IDBIndex.count', function () {
     it('should return different values as records are added/removed', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -454,7 +454,7 @@ describe('IDBIndex.count', function () {
         // BUG: IE's native IndexedDB does not support multi-entry indexes
         util.createDatabase('inline', 'multi-entry-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -523,7 +523,7 @@ describe('IDBIndex.count', function () {
         // BUG: IE's native IndexedDB does not support multi-entry indexes
         util.createDatabase('inline', 'unique-multi-entry-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -584,7 +584,7 @@ describe('IDBIndex.count', function () {
     it('should throw an error if the transaction is closed', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }

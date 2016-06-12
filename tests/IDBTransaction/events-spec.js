@@ -6,7 +6,7 @@ describe('IDBTransaction events', function () {
         this.timeout(5000);
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -27,7 +27,7 @@ describe('IDBTransaction events', function () {
     it('should fire the oncomplete event if a transaction does nothing', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -43,7 +43,7 @@ describe('IDBTransaction events', function () {
     it('should fire the oncomplete event if a synchronous error occurs', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -87,7 +87,7 @@ describe('IDBTransaction events', function () {
         this.timeout(5000);
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -157,7 +157,7 @@ describe('IDBTransaction events', function () {
     it('should not fire the onerror event if an error occurs during oncomplete', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -221,7 +221,7 @@ describe('IDBTransaction events', function () {
         this.timeout(5000);
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }

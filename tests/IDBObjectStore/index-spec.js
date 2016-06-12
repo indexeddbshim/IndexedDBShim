@@ -5,7 +5,7 @@ describe('IDBObjectStore.index', function () {
     it('should return an IDBIndex', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -26,7 +26,7 @@ describe('IDBObjectStore.index', function () {
     it('should have a reference to the object store', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }

@@ -11,7 +11,7 @@ describe('IDBFactory.open', function () {
         it('should return an IDBOpenDBRequest', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database name');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -30,7 +30,7 @@ describe('IDBFactory.open', function () {
         it('should have a reference to the upgrade transaction', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database name');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -61,7 +61,7 @@ describe('IDBFactory.open', function () {
         it('should pass an IDBVersionChangeEvent to the onupgradeneeded event', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database name');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -83,7 +83,7 @@ describe('IDBFactory.open', function () {
         it('should pass the IDBOpenDBRequest to the onsuccess event', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database name');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -102,7 +102,7 @@ describe('IDBFactory.open', function () {
         it('should set the IDBOpenDBRequest.result to the database', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database name');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -122,7 +122,7 @@ describe('IDBFactory.open', function () {
         it('should populate all IDBDatabase properties', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database name');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -143,7 +143,7 @@ describe('IDBFactory.open', function () {
         it('should open (and create) a new database', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database name');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -171,7 +171,7 @@ describe('IDBFactory.open', function () {
         it('should open (and create) a new database without specifying version number', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database name');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -198,7 +198,7 @@ describe('IDBFactory.open', function () {
         it('should upgrade an existing database by one version', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database name');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -248,7 +248,7 @@ describe('IDBFactory.open', function () {
         it('should upgrade an existing database by multiple versions', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database name');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -316,7 +316,7 @@ describe('IDBFactory.open', function () {
         it('should upgrade an existing database by multiple versions at once', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database name');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -369,7 +369,7 @@ describe('IDBFactory.open', function () {
             this.timeout(5000);
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database name');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }

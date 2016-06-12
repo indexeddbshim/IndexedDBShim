@@ -11,7 +11,7 @@ describe('IDBObjectStore.createIndex', function () {
         it('should create an index with default properties', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -44,7 +44,7 @@ describe('IDBObjectStore.createIndex', function () {
         it('should create a unique index', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -77,7 +77,7 @@ describe('IDBObjectStore.createIndex', function () {
         it('should create a multi-entry index', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -110,7 +110,7 @@ describe('IDBObjectStore.createIndex', function () {
         it('should create a unique, multi-entry index', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -143,7 +143,7 @@ describe('IDBObjectStore.createIndex', function () {
         it('should create new indexes in an existing database', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -346,7 +346,7 @@ describe('IDBObjectStore.createIndex', function () {
                     if (env.isShimmed || !env.browser.isIE) {
                         expect(err).to.be.an.instanceOf(env.DOMException);  // The IE polyfill throws a normal Error
                     }
-                    assert.isOk(err);
+                    expect(err).to.be.ok;
                     expect(err.name).to.equal('InvalidAccessError');
                 });
 

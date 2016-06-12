@@ -5,7 +5,7 @@ describe('IDBObjectStore.put', function () {
     it('should update an existing record with an out-of-line key', function (done) {
         util.createDatabase('out-of-line', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -19,7 +19,7 @@ describe('IDBObjectStore.put', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -44,7 +44,7 @@ describe('IDBObjectStore.put', function () {
 
         util.createDatabase('out-of-line-generated', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -58,7 +58,7 @@ describe('IDBObjectStore.put', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -81,7 +81,7 @@ describe('IDBObjectStore.put', function () {
     it('should update an existing record with an inline key', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -95,7 +95,7 @@ describe('IDBObjectStore.put', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -120,7 +120,7 @@ describe('IDBObjectStore.put', function () {
 
         util.createDatabase('inline-generated', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -134,7 +134,7 @@ describe('IDBObjectStore.put', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -157,7 +157,7 @@ describe('IDBObjectStore.put', function () {
     it('should update an existing record with a dotted key', function (done) {
         util.createDatabase('dotted', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -171,7 +171,7 @@ describe('IDBObjectStore.put', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -194,7 +194,7 @@ describe('IDBObjectStore.put', function () {
     it('should update an existing record with a generated dotted key', function (done) {
         util.createDatabase('dotted-generated', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -208,7 +208,7 @@ describe('IDBObjectStore.put', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -232,7 +232,7 @@ describe('IDBObjectStore.put', function () {
         // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('out-of-line-compound', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -246,7 +246,7 @@ describe('IDBObjectStore.put', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -270,7 +270,7 @@ describe('IDBObjectStore.put', function () {
         // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('inline-compound', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -284,7 +284,7 @@ describe('IDBObjectStore.put', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -308,7 +308,7 @@ describe('IDBObjectStore.put', function () {
         // BUG: IE's native IndexedDB does not support compound keys at all
         util.createDatabase('dotted-compound', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -322,7 +322,7 @@ describe('IDBObjectStore.put', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -347,7 +347,7 @@ describe('IDBObjectStore.put', function () {
         // BUG: IE's IndexedDB truncates string keys at 889 characters
         util.createDatabase('out-of-line', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -367,7 +367,7 @@ describe('IDBObjectStore.put', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -392,7 +392,7 @@ describe('IDBObjectStore.put', function () {
         // BUG: IE's IndexedDB truncates string keys at 889 characters
         util.createDatabase('out-of-line', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -412,7 +412,7 @@ describe('IDBObjectStore.put', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -437,7 +437,7 @@ describe('IDBObjectStore.put', function () {
         // BUG: IE's IndexedDB truncates string keys at 889 characters
         util.createDatabase('out-of-line', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -457,7 +457,7 @@ describe('IDBObjectStore.put', function () {
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -482,7 +482,7 @@ describe('IDBObjectStore.put', function () {
         // BUG: IE's IndexedDB truncates string keys at 889 characters
         util.createDatabase('out-of-line', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -491,13 +491,13 @@ describe('IDBObjectStore.put', function () {
 
             var store = tx.objectStore('out-of-line');
             var veryLongString = util.sampleData.veryLongString.substr(0, 400);
-            store.put({foo: 'bar'}, [veryLongString, 1, 2, 3, 4, 5]);   // idbModules.Key encodes this as an 925-character string
-            store.put({foo: 'bar'}, [veryLongString, 1, 2, 3, 4, 6]);   // idbModules.Key encodes this as an 925-character string
+            store.put({foo: 'bar'}, [veryLongString, 1, 2, 3, 4, 5]);   // Key encodes this as an 925-character string
+            store.put({foo: 'bar'}, [veryLongString, 1, 2, 3, 4, 6]);   // Key encodes this as an 925-character string
 
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -522,7 +522,7 @@ describe('IDBObjectStore.put', function () {
         // BUG: IE's IndexedDB truncates string keys at 889 characters
         util.createDatabase('out-of-line', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -530,13 +530,13 @@ describe('IDBObjectStore.put', function () {
             tx.onerror = done;
 
             var store = tx.objectStore('out-of-line');
-            store.put({foo: 'bar'}, [1, 2, 3, 4]);   // idbModules.Key encodes this as an 844-character string
-            store.put({foo: 'bar'}, [1, 2, 3, 5]);   // idbModules.Key encodes this as an 844-character string
+            store.put({foo: 'bar'}, [1, 2, 3, 4]);   // Key encodes this as an 844-character string
+            store.put({foo: 'bar'}, [1, 2, 3, 5]);   // Key encodes this as an 844-character string
 
             var allData;
             util.getAll(store, function (err, data) {
                 if (err) {
-                    assert.fail(true, true, 'Error getting all');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }

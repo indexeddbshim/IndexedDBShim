@@ -11,7 +11,7 @@ describe('IDBDatabase.createObjectStore', function () {
         it('should create an object store with an out-of-line key', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -43,7 +43,7 @@ describe('IDBDatabase.createObjectStore', function () {
         it('should create an object store with a generated out-of-line key', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -75,7 +75,7 @@ describe('IDBDatabase.createObjectStore', function () {
         it('should create an object store with an inline key', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -107,7 +107,7 @@ describe('IDBDatabase.createObjectStore', function () {
         it('should create an object store with a generated inline key', function (done) {
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -140,7 +140,7 @@ describe('IDBDatabase.createObjectStore', function () {
             // BUG: Safari's native IndexedDB aborts the 2nd transaction (without any error)
             util.generateDatabaseName(function (err, name) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }

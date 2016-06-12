@@ -5,7 +5,7 @@ describe('IDBIndex.openCursor', function () {
     it('should return an IDBRequest', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -32,7 +32,7 @@ describe('IDBIndex.openCursor', function () {
     it('should pass the IDBRequest event to the onsuccess callback', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -73,7 +73,7 @@ describe('IDBIndex.openCursor', function () {
     it('should set IDBRequest.result to the IDBCursor', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -124,7 +124,7 @@ describe('IDBIndex.openCursor', function () {
     it('should get zero records', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -163,7 +163,7 @@ describe('IDBIndex.openCursor', function () {
     it('should get one record', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -214,7 +214,7 @@ describe('IDBIndex.openCursor', function () {
     it('should get all records', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -272,7 +272,7 @@ describe('IDBIndex.openCursor', function () {
     it('should allow multiple simultaneous cursors', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -322,7 +322,7 @@ describe('IDBIndex.openCursor', function () {
 
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -377,7 +377,7 @@ describe('IDBIndex.openCursor', function () {
     it('should get records from previous transactions', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -442,7 +442,7 @@ describe('IDBIndex.openCursor', function () {
         this.timeout(10000);
         util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -496,7 +496,7 @@ describe('IDBIndex.openCursor', function () {
         this.timeout(5000);
         util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -535,7 +535,7 @@ describe('IDBIndex.openCursor', function () {
                     if (!env.isPolyfilled) {
                         expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
                     }
-                    assert.isOk(err);
+                    expect(err).to.be.ok;
                     expect(err.name).to.equal('DataError');
                 }
             }
@@ -589,7 +589,7 @@ describe('IDBIndex.openCursor', function () {
         it('should query out-of-line keys', function (done) {
             util.createDatabase('out-of-line', 'inline-index', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -636,7 +636,7 @@ describe('IDBIndex.openCursor', function () {
         it('should query generated out-of-line keys', function (done) {
             util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -680,7 +680,7 @@ describe('IDBIndex.openCursor', function () {
             // BUG: IE's native IndexedDB does not support compound keys at all
             util.createDatabase('out-of-line-compound', 'inline-index', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -728,7 +728,7 @@ describe('IDBIndex.openCursor', function () {
         it('should query inline keys', function (done) {
             util.createDatabase('dotted', 'dotted-index', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -787,7 +787,7 @@ describe('IDBIndex.openCursor', function () {
         it('should query generated inline keys', function (done) {
             util.createDatabase('dotted-generated', 'dotted-index', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -835,7 +835,7 @@ describe('IDBIndex.openCursor', function () {
             // BUG: IE's native IndexedDB does not support compound keys at all
             util.createDatabase('dotted-compound', 'compound-index', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -892,7 +892,7 @@ describe('IDBIndex.openCursor', function () {
             // NOTE: The object store's keyPath is "id".  The index's keyPath is ["id","name.first","name.last"]
             util.createDatabase('inline', 'compound-index', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -965,7 +965,7 @@ describe('IDBIndex.openCursor', function () {
             // BUG: IE's native IndexedDB does not support multi-entry indexes
             util.createDatabase('inline', 'multi-entry-index', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -1042,7 +1042,7 @@ describe('IDBIndex.openCursor', function () {
 
             util.createDatabase('inline', 'multi-entry-index', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -1087,7 +1087,7 @@ describe('IDBIndex.openCursor', function () {
         it('should throw an error if the key range is invalid', function (done) {
             util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -1122,7 +1122,7 @@ describe('IDBIndex.openCursor', function () {
         it('should throw an error if the direction is invalid', function (done) {
             util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
@@ -1161,7 +1161,7 @@ describe('IDBIndex.openCursor', function () {
         it('should throw an error if the transaction is closed', function (done) {
             util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
                 if (err) {
-                    assert.fail(true, true, 'Error creating database');
+                    expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }

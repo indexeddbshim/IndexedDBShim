@@ -5,7 +5,7 @@ describe('IDBTransaction.objectStore', function () {
     it('should return an IDBObjectStore', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -22,7 +22,7 @@ describe('IDBTransaction.objectStore', function () {
     it('should have a reference to the transaction', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -75,7 +75,7 @@ describe('IDBTransaction.objectStore', function () {
     it('should throw an error if the object store is not in the transaction', function (done) {
         util.createDatabase('inline', 'inline-generated', 'out-of-line', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }

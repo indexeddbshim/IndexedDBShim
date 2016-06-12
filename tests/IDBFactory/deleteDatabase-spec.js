@@ -11,7 +11,7 @@ describe('IDBFactory.deleteDatabase', function () {
     it('should return an IDBOpenDBRequest', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -37,7 +37,7 @@ describe('IDBFactory.deleteDatabase', function () {
     it('should pass an IDBVersionChangeEvent to the onsuccess event', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -56,7 +56,7 @@ describe('IDBFactory.deleteDatabase', function () {
     it('should pass the IDBOpenDBRequest to the onsuccess event', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -74,7 +74,7 @@ describe('IDBFactory.deleteDatabase', function () {
     it('should set IDBOpenDBRequest.result to undefined', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -91,7 +91,7 @@ describe('IDBFactory.deleteDatabase', function () {
     it('should delete the database', function (done) {
         util.generateDatabaseName(function (err, name) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
@@ -119,7 +119,7 @@ describe('IDBFactory.deleteDatabase', function () {
     it('should fire the onblocked event if the database is open', function (done) {
         util.createDatabase('inline', function (err, db) {
             if (err) {
-                assert.fail(true, true, 'Error creating database');
+                expect(function () { throw err; }).to.not.throw(Error);
                 done();
                 return;
             }
