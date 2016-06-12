@@ -4,7 +4,6 @@ import {IDBRequest} from './IDBRequest.js';
 import util from './util.js';
 import IDBObjectStore from './IDBObjectStore.js';
 import CFG from './cfg.js';
-import EventTarget from 'eventtarget';
 
 let uniqueID = 0;
 
@@ -241,8 +240,6 @@ IDBTransaction.prototype.abort = function () {
         util.callback('onabort', me, evt);
     }, 0);
 };
-
-Object.assign(IDBTransaction.prototype, EventTarget.prototype);
 
 IDBTransaction.READ_ONLY = 'readonly';
 IDBTransaction.READ_WRITE = 'readwrite';

@@ -1,4 +1,4 @@
-import 'babel-polyfill'; // Object.assign in EventTarget, etc.
+import 'babel-polyfill';
 import {IDBVersionChangeEvent as shimIDBVersionChangeEvent} from './Event.js';
 import {IDBCursor as shimIDBCursor, IDBCursorWithValue as shimIDBCursorWithValue} from './IDBCursor.js';
 import {IDBRequest as shimIDBRequest, IDBOpenDBRequest as shimIDBOpenDBRequest} from './IDBRequest.js';

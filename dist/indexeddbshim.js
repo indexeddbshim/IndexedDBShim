@@ -73,7 +73,7 @@ define(String.prototype, "padRight", "".padEnd);
   [][key] && define(Array, key, Function.call.bind([][key]));
 });
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"core-js/fn/regexp/escape":5,"core-js/shim":299,"regenerator-runtime/runtime":304}],3:[function(require,module,exports){
+},{"core-js/fn/regexp/escape":5,"core-js/shim":299,"regenerator-runtime/runtime":303}],3:[function(require,module,exports){
 'use strict'
 
 exports.toByteArray = toByteArray
@@ -1899,7 +1899,7 @@ function isnan (val) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"base64-js":3,"ieee754":301,"isarray":302}],5:[function(require,module,exports){
+},{"base64-js":3,"ieee754":300,"isarray":301}],5:[function(require,module,exports){
 require('../../modules/core.regexp.escape');
 module.exports = require('../../modules/_core').RegExp.escape;
 },{"../../modules/_core":26,"../../modules/core.regexp.escape":123}],6:[function(require,module,exports){
@@ -7959,99 +7959,6 @@ require('./modules/web.immediate');
 require('./modules/web.dom.iterable');
 module.exports = require('./modules/_core');
 },{"./modules/_core":26,"./modules/es6.array.copy-within":124,"./modules/es6.array.every":125,"./modules/es6.array.fill":126,"./modules/es6.array.filter":127,"./modules/es6.array.find":129,"./modules/es6.array.find-index":128,"./modules/es6.array.for-each":130,"./modules/es6.array.from":131,"./modules/es6.array.index-of":132,"./modules/es6.array.is-array":133,"./modules/es6.array.iterator":134,"./modules/es6.array.join":135,"./modules/es6.array.last-index-of":136,"./modules/es6.array.map":137,"./modules/es6.array.of":138,"./modules/es6.array.reduce":140,"./modules/es6.array.reduce-right":139,"./modules/es6.array.slice":141,"./modules/es6.array.some":142,"./modules/es6.array.sort":143,"./modules/es6.array.species":144,"./modules/es6.date.now":145,"./modules/es6.date.to-iso-string":146,"./modules/es6.date.to-json":147,"./modules/es6.date.to-primitive":148,"./modules/es6.date.to-string":149,"./modules/es6.function.bind":150,"./modules/es6.function.has-instance":151,"./modules/es6.function.name":152,"./modules/es6.map":153,"./modules/es6.math.acosh":154,"./modules/es6.math.asinh":155,"./modules/es6.math.atanh":156,"./modules/es6.math.cbrt":157,"./modules/es6.math.clz32":158,"./modules/es6.math.cosh":159,"./modules/es6.math.expm1":160,"./modules/es6.math.fround":161,"./modules/es6.math.hypot":162,"./modules/es6.math.imul":163,"./modules/es6.math.log10":164,"./modules/es6.math.log1p":165,"./modules/es6.math.log2":166,"./modules/es6.math.sign":167,"./modules/es6.math.sinh":168,"./modules/es6.math.tanh":169,"./modules/es6.math.trunc":170,"./modules/es6.number.constructor":171,"./modules/es6.number.epsilon":172,"./modules/es6.number.is-finite":173,"./modules/es6.number.is-integer":174,"./modules/es6.number.is-nan":175,"./modules/es6.number.is-safe-integer":176,"./modules/es6.number.max-safe-integer":177,"./modules/es6.number.min-safe-integer":178,"./modules/es6.number.parse-float":179,"./modules/es6.number.parse-int":180,"./modules/es6.number.to-fixed":181,"./modules/es6.number.to-precision":182,"./modules/es6.object.assign":183,"./modules/es6.object.create":184,"./modules/es6.object.define-properties":185,"./modules/es6.object.define-property":186,"./modules/es6.object.freeze":187,"./modules/es6.object.get-own-property-descriptor":188,"./modules/es6.object.get-own-property-names":189,"./modules/es6.object.get-prototype-of":190,"./modules/es6.object.is":194,"./modules/es6.object.is-extensible":191,"./modules/es6.object.is-frozen":192,"./modules/es6.object.is-sealed":193,"./modules/es6.object.keys":195,"./modules/es6.object.prevent-extensions":196,"./modules/es6.object.seal":197,"./modules/es6.object.set-prototype-of":198,"./modules/es6.object.to-string":199,"./modules/es6.parse-float":200,"./modules/es6.parse-int":201,"./modules/es6.promise":202,"./modules/es6.reflect.apply":203,"./modules/es6.reflect.construct":204,"./modules/es6.reflect.define-property":205,"./modules/es6.reflect.delete-property":206,"./modules/es6.reflect.enumerate":207,"./modules/es6.reflect.get":210,"./modules/es6.reflect.get-own-property-descriptor":208,"./modules/es6.reflect.get-prototype-of":209,"./modules/es6.reflect.has":211,"./modules/es6.reflect.is-extensible":212,"./modules/es6.reflect.own-keys":213,"./modules/es6.reflect.prevent-extensions":214,"./modules/es6.reflect.set":216,"./modules/es6.reflect.set-prototype-of":215,"./modules/es6.regexp.constructor":217,"./modules/es6.regexp.flags":218,"./modules/es6.regexp.match":219,"./modules/es6.regexp.replace":220,"./modules/es6.regexp.search":221,"./modules/es6.regexp.split":222,"./modules/es6.regexp.to-string":223,"./modules/es6.set":224,"./modules/es6.string.anchor":225,"./modules/es6.string.big":226,"./modules/es6.string.blink":227,"./modules/es6.string.bold":228,"./modules/es6.string.code-point-at":229,"./modules/es6.string.ends-with":230,"./modules/es6.string.fixed":231,"./modules/es6.string.fontcolor":232,"./modules/es6.string.fontsize":233,"./modules/es6.string.from-code-point":234,"./modules/es6.string.includes":235,"./modules/es6.string.italics":236,"./modules/es6.string.iterator":237,"./modules/es6.string.link":238,"./modules/es6.string.raw":239,"./modules/es6.string.repeat":240,"./modules/es6.string.small":241,"./modules/es6.string.starts-with":242,"./modules/es6.string.strike":243,"./modules/es6.string.sub":244,"./modules/es6.string.sup":245,"./modules/es6.string.trim":246,"./modules/es6.symbol":247,"./modules/es6.typed.array-buffer":248,"./modules/es6.typed.data-view":249,"./modules/es6.typed.float32-array":250,"./modules/es6.typed.float64-array":251,"./modules/es6.typed.int16-array":252,"./modules/es6.typed.int32-array":253,"./modules/es6.typed.int8-array":254,"./modules/es6.typed.uint16-array":255,"./modules/es6.typed.uint32-array":256,"./modules/es6.typed.uint8-array":257,"./modules/es6.typed.uint8-clamped-array":258,"./modules/es6.weak-map":259,"./modules/es6.weak-set":260,"./modules/es7.array.includes":261,"./modules/es7.asap":262,"./modules/es7.error.is-error":263,"./modules/es7.map.to-json":264,"./modules/es7.math.iaddh":265,"./modules/es7.math.imulh":266,"./modules/es7.math.isubh":267,"./modules/es7.math.umulh":268,"./modules/es7.object.define-getter":269,"./modules/es7.object.define-setter":270,"./modules/es7.object.entries":271,"./modules/es7.object.get-own-property-descriptors":272,"./modules/es7.object.lookup-getter":273,"./modules/es7.object.lookup-setter":274,"./modules/es7.object.values":275,"./modules/es7.observable":276,"./modules/es7.reflect.define-metadata":277,"./modules/es7.reflect.delete-metadata":278,"./modules/es7.reflect.get-metadata":280,"./modules/es7.reflect.get-metadata-keys":279,"./modules/es7.reflect.get-own-metadata":282,"./modules/es7.reflect.get-own-metadata-keys":281,"./modules/es7.reflect.has-metadata":283,"./modules/es7.reflect.has-own-metadata":284,"./modules/es7.reflect.metadata":285,"./modules/es7.set.to-json":286,"./modules/es7.string.at":287,"./modules/es7.string.match-all":288,"./modules/es7.string.pad-end":289,"./modules/es7.string.pad-start":290,"./modules/es7.string.trim-left":291,"./modules/es7.string.trim-right":292,"./modules/es7.symbol.async-iterator":293,"./modules/es7.symbol.observable":294,"./modules/es7.system.global":295,"./modules/web.dom.iterable":296,"./modules/web.immediate":297,"./modules/web.timers":298}],300:[function(require,module,exports){
-
-function EventTarget() {}
-
-Object.assign(EventTarget.prototype, {
-
-  addEventListener: function (type, listener) {
-    if (!this._listeners) Object.defineProperty(this, '_listeners', {value: {}})
-    var listeners = this._listeners
-
-    var listenersByType = listeners[type]
-    if (listenersByType === undefined) listeners[type] = listenersByType = [];
-
-    if (listenersByType.some(function (l) {
-      return l === listener
-    })) return
-
-    listenersByType.push(listener)
-  },
-
-  dispatchEvent: function (ev) {
-    if (!this._listeners) Object.defineProperty(this, '_listeners', {value: {}})
-    var listeners = this._listeners
-    if (ev._dispatched) throw new DOMException('The object is in an invalid state.', 'InvalidStateError')
-    ev._dispatched = true
-
-    var type = ev.type
-    if (type == undefined || type == '') throw new DOMException('UNSPECIFIED_EVENT_TYPE_ERR', 'UNSPECIFIED_EVENT_TYPE_ERR')
-
-    var listenersByType = listeners[type].concat() || []
-
-    var dummyListener = this['on' + type]
-    var dummyIPos = listenersByType.length ? 1 : 0
-
-    var stopImmediatePropagation = false
-
-    // [ToDo] Use read-only properties instead of attributes when available
-    ev.cancelable = true
-    ev.defaultPrevented = false
-    ev.isTrusted = false
-    ev.preventDefault = function () {
-      if (this.cancelable) this.defaultPrevented = true
-    }
-    ev.stopImmediatePropagation = function () {
-      stopImmediatePropagation = true
-    }
-    ev.target = this
-    ev.timeStamp = new Date().getTime()
-
-    listenersByType.some(function (listener, i) {
-      if (stopImmediatePropagation) return true
-      if (i === dummyIPos && typeof dummyListener === 'function') {
-        // We don't splice this in as could be overwritten; executes here per
-        //  https://html.spec.whatwg.org/multipage/webappapis.html#event-handler-attributes:event-handlers-14
-        dummyListener.call(this, ev)
-      }
-      listener.call(this, ev)
-    }, this)
-    if (typeof dummyListener === 'function' && listenersByType.length < 2) dummyListener.call(this, ev) // Won't have executed if too short
-
-    return !ev.defaultPrevented
-  },
-
-  hasEventListener: function (type, listener) {
-    if (!this._listeners) Object.defineProperty(this, '_listeners', {value: {}})
-
-    var listeners = this._listeners;
-    if (listeners[type] !== undefined && listeners[type].indexOf(listener) !== - 1) {
-      return true
-    }
-    return false
-  },
-
-  removeEventListener: function (type, listener) {
-    if (!this._listeners) Object.defineProperty(this, '_listeners', {value: {}})
-    var listeners = this._listeners
-
-    var listenersByType = listeners[type]
-    if (listenersByType === undefined) return
-
-    listenersByType.some(function (l, i) {
-      if (l === listener) {
-        listenersByType.splice(i, 1)
-        return true
-      }
-    })
-
-    if (!listenersByType.length) delete listeners[type]
-  }
-})
-
-if (typeof module !== 'undefined' && module.exports) module.exports = EventTarget
-
-},{}],301:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -8137,14 +8044,14 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],302:[function(require,module,exports){
+},{}],301:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],303:[function(require,module,exports){
+},{}],302:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -8240,7 +8147,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],304:[function(require,module,exports){
+},{}],303:[function(require,module,exports){
 (function (process,global){
 /**
  * Copyright (c) 2014, Facebook, Inc.
@@ -8912,7 +8819,7 @@ process.umask = function() { return 0; };
 );
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":303}],305:[function(require,module,exports){
+},{"_process":302}],304:[function(require,module,exports){
 (function (global){
 module.exports = get_blob()
 
@@ -8944,7 +8851,7 @@ function get_blob() {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],306:[function(require,module,exports){
+},{}],305:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9093,7 +9000,7 @@ exports.DOMException = shimDOMException;
 exports.createDOMException = createDOMException;
 exports.createDOMError = createDOMError;
 
-},{"./cfg.js":319}],307:[function(require,module,exports){
+},{"./cfg.js":318}],306:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9160,7 +9067,7 @@ exports.Event = expEvent;
 exports.IDBVersionChangeEvent = IDBVersionChangeEvent;
 exports.createEvent = createEvent; // Event not currently in use
 
-},{}],308:[function(require,module,exports){
+},{}],307:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9568,7 +9475,7 @@ var IDBCursorWithValue = {};
 exports.IDBCursor = IDBCursor;
 exports.IDBCursorWithValue = IDBCursorWithValue;
 
-},{"./DOMException.js":306,"./IDBIndex.js":311,"./IDBKeyRange.js":312,"./IDBRequest.js":314,"./Key.js":316,"./Sca.js":317,"./cfg.js":319,"./util.js":322}],309:[function(require,module,exports){
+},{"./DOMException.js":305,"./IDBIndex.js":310,"./IDBKeyRange.js":311,"./IDBRequest.js":313,"./Key.js":315,"./Sca.js":316,"./cfg.js":318,"./util.js":321}],308:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9704,7 +9611,7 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
 exports.default = IDBDatabase;
 module.exports = exports['default'];
 
-},{"./DOMException.js":306,"./IDBObjectStore.js":313,"./IDBTransaction.js":315,"./cfg.js":319,"./util.js":322}],310:[function(require,module,exports){
+},{"./DOMException.js":305,"./IDBObjectStore.js":312,"./IDBTransaction.js":314,"./cfg.js":318,"./util.js":321}],309:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9997,7 +9904,7 @@ var shimIndexedDB = new IDBFactory();
 exports.IDBFactory = IDBFactory;
 exports.shimIndexedDB = shimIndexedDB;
 
-},{"./DOMException.js":306,"./Event.js":307,"./IDBDatabase.js":309,"./IDBRequest.js":314,"./IDBTransaction.js":315,"./Key.js":316,"./cfg.js":319,"./util.js":322}],311:[function(require,module,exports){
+},{"./DOMException.js":305,"./Event.js":306,"./IDBDatabase.js":308,"./IDBRequest.js":313,"./IDBTransaction.js":314,"./Key.js":315,"./cfg.js":318,"./util.js":321}],310:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10297,7 +10204,7 @@ IDBIndex.prototype.count = function (key) {
 exports.default = IDBIndex;
 module.exports = exports['default'];
 
-},{"./DOMException.js":306,"./IDBCursor.js":308,"./IDBKeyRange.js":312,"./Key.js":316,"./Sca.js":317,"./cfg.js":319,"./util.js":322}],312:[function(require,module,exports){
+},{"./DOMException.js":305,"./IDBCursor.js":307,"./IDBKeyRange.js":311,"./Key.js":315,"./Sca.js":316,"./cfg.js":318,"./util.js":321}],311:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10349,7 +10256,7 @@ IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
 exports.default = IDBKeyRange;
 module.exports = exports['default'];
 
-},{"./Key.js":316}],313:[function(require,module,exports){
+},{"./Key.js":315}],312:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10843,7 +10750,7 @@ IDBObjectStore.prototype.deleteIndex = function (indexName) {
 exports.default = IDBObjectStore;
 module.exports = exports['default'];
 
-},{"./DOMException.js":306,"./IDBCursor.js":308,"./IDBIndex.js":311,"./IDBKeyRange.js":312,"./IDBTransaction.js":315,"./Key.js":316,"./Sca.js":317,"./cfg.js":319,"./util.js":322}],314:[function(require,module,exports){
+},{"./DOMException.js":305,"./IDBCursor.js":307,"./IDBIndex.js":310,"./IDBKeyRange.js":311,"./IDBTransaction.js":314,"./Key.js":315,"./Sca.js":316,"./cfg.js":318,"./util.js":321}],313:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10870,7 +10777,7 @@ IDBOpenDBRequest.prototype.constructor = IDBOpenDBRequest;
 exports.IDBRequest = IDBRequest;
 exports.IDBOpenDBRequest = IDBOpenDBRequest;
 
-},{}],315:[function(require,module,exports){
+},{}],314:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10894,10 +10801,6 @@ var _IDBObjectStore2 = _interopRequireDefault(_IDBObjectStore);
 var _cfg = require('./cfg.js');
 
 var _cfg2 = _interopRequireDefault(_cfg);
-
-var _eventtarget = require('eventtarget');
-
-var _eventtarget2 = _interopRequireDefault(_eventtarget);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -11136,8 +11039,6 @@ IDBTransaction.prototype.abort = function () {
     }, 0);
 };
 
-Object.assign(IDBTransaction.prototype, _eventtarget2.default.prototype);
-
 IDBTransaction.READ_ONLY = 'readonly';
 IDBTransaction.READ_WRITE = 'readwrite';
 IDBTransaction.VERSION_CHANGE = 'versionchange';
@@ -11145,7 +11046,7 @@ IDBTransaction.VERSION_CHANGE = 'versionchange';
 exports.default = IDBTransaction;
 module.exports = exports['default'];
 
-},{"./DOMException.js":306,"./Event.js":307,"./IDBObjectStore.js":313,"./IDBRequest.js":314,"./cfg.js":319,"./util.js":322,"eventtarget":300}],316:[function(require,module,exports){
+},{"./DOMException.js":305,"./Event.js":306,"./IDBObjectStore.js":312,"./IDBRequest.js":313,"./cfg.js":318,"./util.js":321}],315:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -11596,7 +11497,7 @@ exports.isMultiEntryMatch = isMultiEntryMatch;
 exports.findMultiEntryMatches = findMultiEntryMatches;
 exports.default = Key;
 
-},{"./DOMException.js":306}],317:[function(require,module,exports){
+},{"./DOMException.js":305}],316:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -11962,7 +11863,7 @@ exports.encode = encode;
 exports.decode = decode;
 exports.default = Sca;
 
-},{"atob":1,"w3c-blob":305}],318:[function(require,module,exports){
+},{"atob":1,"w3c-blob":304}],317:[function(require,module,exports){
 'use strict';
 
 var _globalVars = require('./globalVars.js');
@@ -11979,7 +11880,7 @@ _cfg2.default.win = window;
 
 (0, _globalVars2.default)();
 
-},{"./cfg.js":319,"./globalVars.js":320}],319:[function(require,module,exports){
+},{"./cfg.js":318,"./globalVars.js":319}],318:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12008,7 +11909,7 @@ var CFG = {};
 exports.default = CFG;
 module.exports = exports['default'];
 
-},{}],320:[function(require,module,exports){
+},{}],319:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -12016,8 +11917,7 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; }; // Object.assign in EventTarget, etc.
-
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 require('babel-polyfill');
 
@@ -12151,7 +12051,7 @@ exports.default = shimAll;
 module.exports = exports['default'];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./Event.js":307,"./IDBCursor.js":308,"./IDBDatabase.js":309,"./IDBFactory.js":310,"./IDBIndex.js":311,"./IDBKeyRange.js":312,"./IDBObjectStore.js":313,"./IDBRequest.js":314,"./IDBTransaction.js":315,"./cfg.js":319,"./polyfill.js":321,"babel-polyfill":2}],321:[function(require,module,exports){
+},{"./Event.js":306,"./IDBCursor.js":307,"./IDBDatabase.js":308,"./IDBFactory.js":309,"./IDBIndex.js":310,"./IDBKeyRange.js":311,"./IDBObjectStore.js":312,"./IDBRequest.js":313,"./IDBTransaction.js":314,"./cfg.js":318,"./polyfill.js":320,"babel-polyfill":2}],320:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12505,7 +12405,7 @@ function validateKeyLength(key) {
 exports.default = polyfill;
 module.exports = exports['default'];
 
-},{"./DOMException.js":306,"./Key.js":316}],322:[function(require,module,exports){
+},{"./DOMException.js":305,"./Key.js":315}],321:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12609,4 +12509,4 @@ exports.StringList = StringList;
 exports.quote = quote;
 exports.default = util;
 
-},{}]},{},[318]);
+},{}]},{},[317]);
