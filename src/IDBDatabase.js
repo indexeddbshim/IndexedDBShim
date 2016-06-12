@@ -86,13 +86,13 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
     }
 
     if (typeof mode === 'number') {
-        mode = mode === 1 ? IDBTransaction.READ_WRITE : IDBTransaction.READ_ONLY;
+        mode = mode === 1 ? 'readwrite' : 'readonly';
         CFG.DEBUG && console.log('Mode should be a string, but was specified as ', mode);
     } else {
-        mode = mode || IDBTransaction.READ_ONLY;
+        mode = mode || 'readonly';
     }
 
-    if (mode !== IDBTransaction.READ_ONLY && mode !== IDBTransaction.READ_WRITE) {
+    if (mode !== 'readonly' && mode !== 'readwrite') {
         throw new TypeError('Invalid transaction mode: ' + mode);
     }
 

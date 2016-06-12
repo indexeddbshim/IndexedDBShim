@@ -191,7 +191,7 @@ IDBTransaction.prototype.__assertActive = function () {
 };
 
 IDBTransaction.prototype.__assertWritable = function () {
-    if (this.mode === IDBTransaction.READ_ONLY) {
+    if (this.mode === 'readonly') {
         throw createDOMException('ReadOnlyError', 'The transaction is read only');
     }
 };
@@ -201,7 +201,7 @@ IDBTransaction.prototype.__assertVersionChange = function () {
 };
 
 IDBTransaction.__assertVersionChange = function (tx) {
-    if (!tx || tx.mode !== IDBTransaction.VERSION_CHANGE) {
+    if (!tx || tx.mode !== 'versionchange') {
         throw createDOMException('InvalidStateError', 'Not a version transaction');
     }
 };
@@ -218,7 +218,7 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
     if (!this.__active) {
         throw createDOMException('InvalidStateError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
-    if (this.__storeNames.indexOf(objectStoreName) === -1 && this.mode !== IDBTransaction.VERSION_CHANGE) {
+    if (this.__storeNames.indexOf(objectStoreName) === -1 && this.mode !== 'versionchange') {
         throw createDOMException('NotFoundError', objectStoreName + ' is not participating in this transaction');
     }
     const store = this.db.__objectStores[objectStoreName];
@@ -240,9 +240,5 @@ IDBTransaction.prototype.abort = function () {
         util.callback('onabort', me, evt);
     }, 0);
 };
-
-IDBTransaction.READ_ONLY = 'readonly';
-IDBTransaction.READ_WRITE = 'readwrite';
-IDBTransaction.VERSION_CHANGE = 'versionchange';
 
 export default IDBTransaction;

@@ -9616,13 +9616,13 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
     }
 
     if (typeof mode === 'number') {
-        mode = mode === 1 ? _IDBTransaction2.default.READ_WRITE : _IDBTransaction2.default.READ_ONLY;
+        mode = mode === 1 ? 'readwrite' : 'readonly';
         _cfg2.default.DEBUG && console.log('Mode should be a string, but was specified as ', mode);
     } else {
-        mode = mode || _IDBTransaction2.default.READ_ONLY;
+        mode = mode || 'readonly';
     }
 
-    if (mode !== _IDBTransaction2.default.READ_ONLY && mode !== _IDBTransaction2.default.READ_WRITE) {
+    if (mode !== 'readonly' && mode !== 'readwrite') {
         throw new TypeError('Invalid transaction mode: ' + mode);
     }
 
@@ -9768,7 +9768,7 @@ IDBFactory.prototype.open = function (name, version) {
                                 var e = (0, _Event.createEvent)('upgradeneeded');
                                 e.oldVersion = oldVersion;
                                 e.newVersion = version;
-                                req.transaction = req.result.__versionTransaction = new _IDBTransaction2.default(req.source, [], _IDBTransaction2.default.VERSION_CHANGE);
+                                req.transaction = req.result.__versionTransaction = new _IDBTransaction2.default(req.source, [], 'versionchange');
                                 req.transaction.__addToTransactionQueue(function onupgradeneeded(tx, args, success) {
                                     _util2.default.callback('onupgradeneeded', req, e);
                                     success();
@@ -11025,7 +11025,7 @@ IDBTransaction.prototype.__assertActive = function () {
 };
 
 IDBTransaction.prototype.__assertWritable = function () {
-    if (this.mode === IDBTransaction.READ_ONLY) {
+    if (this.mode === 'readonly') {
         throw (0, _DOMException.createDOMException)('ReadOnlyError', 'The transaction is read only');
     }
 };
@@ -11035,7 +11035,7 @@ IDBTransaction.prototype.__assertVersionChange = function () {
 };
 
 IDBTransaction.__assertVersionChange = function (tx) {
-    if (!tx || tx.mode !== IDBTransaction.VERSION_CHANGE) {
+    if (!tx || tx.mode !== 'versionchange') {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'Not a version transaction');
     }
 };
@@ -11052,7 +11052,7 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
     if (!this.__active) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
-    if (this.__storeNames.indexOf(objectStoreName) === -1 && this.mode !== IDBTransaction.VERSION_CHANGE) {
+    if (this.__storeNames.indexOf(objectStoreName) === -1 && this.mode !== 'versionchange') {
         throw (0, _DOMException.createDOMException)('NotFoundError', objectStoreName + ' is not participating in this transaction');
     }
     var store = this.db.__objectStores[objectStoreName];
@@ -11074,10 +11074,6 @@ IDBTransaction.prototype.abort = function () {
         _util2.default.callback('onabort', me, evt);
     }, 0);
 };
-
-IDBTransaction.READ_ONLY = 'readonly';
-IDBTransaction.READ_WRITE = 'readwrite';
-IDBTransaction.VERSION_CHANGE = 'versionchange';
 
 exports.default = IDBTransaction;
 module.exports = exports['default'];
@@ -12076,11 +12072,6 @@ function shimAll(idb) {
         IDB.IDBTransaction = IDB.IDBTransaction || IDB.webkitIDBTransaction || {};
         IDB.IDBCursor = IDB.IDBCursor || IDB.webkitIDBCursor;
         IDB.IDBKeyRange = IDB.IDBKeyRange || IDB.webkitIDBKeyRange;
-        /* Some browsers (e.g. Chrome 18 on Android) support IndexedDb but do not allow writing of these properties */
-        try {
-            IDB.IDBTransaction.READ_ONLY = IDB.IDBTransaction.READ_ONLY || 'readonly';
-            IDB.IDBTransaction.READ_WRITE = IDB.IDBTransaction.READ_WRITE || 'readwrite';
-        } catch (e) {}
     }
 }
 
@@ -12343,12 +12334,6 @@ function compoundKeyPolyfill(IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFact
             return removeInlineCompoundKey(result);
         }
     });
-
-    try {
-        if (!IDBTransaction.VERSION_CHANGE) {
-            IDBTransaction.VERSION_CHANGE = 'versionchange';
-        }
-    } catch (e) {}
 }
 
 var compoundKeysPropertyName = '__$$compoundKey';

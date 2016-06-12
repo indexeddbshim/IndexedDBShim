@@ -241,12 +241,6 @@ function compoundKeyPolyfill (IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFac
             return removeInlineCompoundKey(result);
         }
     });
-
-    try {
-        if (!IDBTransaction.VERSION_CHANGE) {
-            IDBTransaction.VERSION_CHANGE = 'versionchange';
-        }
-    } catch (e) {}
 }
 
 const compoundKeysPropertyName = '__$$compoundKey';

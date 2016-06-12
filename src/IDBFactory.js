@@ -94,7 +94,7 @@ IDBFactory.prototype.open = function (name, version) {
                                 const e = createEvent('upgradeneeded');
                                 e.oldVersion = oldVersion;
                                 e.newVersion = version;
-                                req.transaction = req.result.__versionTransaction = new IDBTransaction(req.source, [], IDBTransaction.VERSION_CHANGE);
+                                req.transaction = req.result.__versionTransaction = new IDBTransaction(req.source, [], 'versionchange');
                                 req.transaction.__addToTransactionQueue(function onupgradeneeded (tx, args, success) {
                                     util.callback('onupgradeneeded', req, e);
                                     success();

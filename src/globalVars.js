@@ -94,11 +94,6 @@ function shimAll (idb) {
         IDB.IDBTransaction = IDB.IDBTransaction || IDB.webkitIDBTransaction || {};
         IDB.IDBCursor = IDB.IDBCursor || IDB.webkitIDBCursor;
         IDB.IDBKeyRange = IDB.IDBKeyRange || IDB.webkitIDBKeyRange;
-        /* Some browsers (e.g. Chrome 18 on Android) support IndexedDb but do not allow writing of these properties */
-        try {
-            IDB.IDBTransaction.READ_ONLY = IDB.IDBTransaction.READ_ONLY || 'readonly';
-            IDB.IDBTransaction.READ_WRITE = IDB.IDBTransaction.READ_WRITE || 'readwrite';
-        } catch (e) {}
     }
 }
 
