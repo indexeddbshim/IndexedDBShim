@@ -1,6 +1,6 @@
 # IndexedDB Polyfill
 
-## Use a single offline storage API across all desktop and mobile browsers
+## Use a single offline storage API across all desktop and mobile browsers and Node.js
 
 [![Build Status](https://img.shields.io/travis/axemclion/IndexedDBShim.svg)](https://travis-ci.org/axemclion/IndexedDBShim)
 [![Dependencies](https://img.shields.io/david/dev/axemclion/indexeddbshim.svg)](https://david-dm.org/axemclion/indexeddbshim)
@@ -20,7 +20,7 @@
 * Works on __desktop__ and __mobile__ devices
 * Works on __Cordova__ and __PhoneGap__ via the [IndexedDB plug-in](http://plugins.cordova.io/#/package/com.msopentech.websql)
 * This shim is basically an IndexedDB-to-WebSql adapter.
-* Can be used in Node (courtesy of [websql](https://www.npmjs.com/package/websql))
+* Can be used in Node (courtesy of [websql](https://www.npmjs.com/package/websql) which sits on top of SQLite3)
 * More details about the project at [gh-pages](http://nparashuram.com/IndexedDBShim)
 
 ## Installation
