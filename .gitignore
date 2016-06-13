@@ -12,3 +12,6 @@ dbName*
 # Should be deleted by Grunt
 IndexedDBShim_Test_Database_*
 __sysdb__*
+testdb-*
+test0.*
+TestDatabase*

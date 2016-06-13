@@ -1,6 +1,7 @@
 /src
 /test
 /tests
+/tests-polyfill
 /examples
 /.*
 /bower.json

@@ -66,6 +66,9 @@ module.exports = function (grunt) {
         clean: {
             node: {
                 src: ['IndexedDBShim_Test_Database_*', '__sysdb__*']
+            },
+            polyfill: {
+                src: ['testdb-*', 'test0.*', 'TestDatabase*']
             }
         },
         connect: {

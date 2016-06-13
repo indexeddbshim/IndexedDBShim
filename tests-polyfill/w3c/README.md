@@ -1,0 +1,1 @@
+These tests come from https://github.com/w3c/web-platform-tests/tree/master/IndexedDB but they are designed to run in a web browser, which is annoying for this project. So I converted them to Mocha tests, hopefully without losing anything.

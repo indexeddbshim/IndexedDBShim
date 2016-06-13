@@ -10,8 +10,9 @@
   "scripts": {
     "start": "grunt",
     "test": "grunt test",
-    "mocha": "grunt mocha && grunt clean",
-    "nodequnit": "grunt nodequnit"
+    "mocha": "grunt mocha && grunt clean:node",
+    "nodequnit": "grunt nodequnit",
+    "tests-polyfill": "grunt clean:polyfill && mocha tests-polyfill/**/*.js && browserify-test -t [ babelify --presets es2015 ] tests-polyfill/**/*.js && grunt clean:polyfill"
   },
   "repository": {
     "type": "git",
