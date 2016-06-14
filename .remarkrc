@@ -3,7 +3,8 @@
     "lint": {
       "maximum-heading-length": false,
       "ordered-list-marker-value": "ordered",
-      "list-item-indent": false
+      "list-item-indent": false,
+      "list-item-spacing": false
     }
   }
 }
