@@ -1090,7 +1090,7 @@ describe('Objectstore - Add', function() {
                         var addRequest = objectstore.add(data, key);
 
                         addRequest.onsuccess = function (e){
-                            assert.ok(true, "data added");
+                            assert.ok(false, "data added");
                         };
                         addRequest.onerror = function (e){
                             assert.ok(false, "Add error");
@@ -1140,7 +1140,7 @@ describe('Objectstore - Add', function() {
                         var addRequest = objectstore.add(addData, addData.id + 1);
 
                         addRequest.onsuccess = function (e){
-                            assert.ok(true, "data added");
+                            assert.ok(false, "data added");
                         };
                         addRequest.onerror = function (e){
                             equal(e.target.error.name, "ConstraintError", "ConstraintError");
@@ -1190,7 +1190,7 @@ describe('Objectstore - Add', function() {
                         var addRequest = objectstore.add(addData, addData.id + 1);
 
                         addRequest.onsuccess = function (e){
-                            assert.ok(true, "data added");
+                            assert.ok(false, "data added");
                         };
                         addRequest.onerror = function (e){
                             equal(e.target.error.name, "ConstraintError", "ConstraintError");

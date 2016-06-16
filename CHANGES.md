@@ -34,6 +34,11 @@
 - Fix: Allow `__versionTransaction` not to exist (if user calling it wrong)
     for `create/deleteObjectStore` and test it so it will return an
     `InvalidStateError`
+- Fix: Avoid `LIKE` check on auto-complete sequence check (could be store
+    name inside another store name);
+- Fix: Ensure numeric keys passed to `add()` or `put()` on an autocomplete
+    store which are greater or equal to the "current number" will update
+    the auto-increment counter
 - Feature: Support Node cleanly via `websql` SQLite3 library
 - Feature: Add `IDBObjectStore.openKeyCursor` (no tests yet, however)
 - Feature: Add ".sqlite" extension to database name for sake of (Windows)
@@ -51,6 +56,7 @@
     add as ESLint rules, other minor changes
 - Refactoring (ESLint): Move from JSHint to ESLint and to "standard" config,
     with a few exceptions
+- Refactoring: upper-case SQL keywords for greater visual distinction
 - Refactoring: Where safe, switch from `typeof ... === 'undefined'` to
     check against undefined (safe for strict mode implicit in modules)
 - Refactoring: Use spread operator in place of `arguments` where named

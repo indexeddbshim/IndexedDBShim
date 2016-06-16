@@ -90,7 +90,7 @@ IDBFactory.prototype.open = function (name, version) {
                     if (oldVersion < version) {
                         // DB Upgrade in progress
                         sysdb.transaction(function (systx) {
-                            systx.executeSql('UPDATE dbVersions set version = ? where name = ?', [version, name], function () {
+                            systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [version, name], function () {
                                 const e = createEvent('upgradeneeded');
                                 e.oldVersion = oldVersion;
                                 e.newVersion = version;
@@ -116,7 +116,7 @@ IDBFactory.prototype.open = function (name, version) {
 
     createSysDB(function () {
         sysdb.transaction(function (tx) {
-            tx.executeSql('SELECT * FROM dbVersions where name = ?', [name], function (tx, data) {
+            tx.executeSql('SELECT * FROM dbVersions WHERE name = ?', [name], function (tx, data) {
                 if (data.rows.length === 0) {
                     // Database with this name does not exist
                     tx.executeSql('INSERT INTO dbVersions VALUES (?,?)', [name, version || 1], function () {
@@ -162,7 +162,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
 
     function deleteFromDbVersions () {
         sysdb.transaction(function (systx) {
-            systx.executeSql('DELETE FROM dbVersions where name = ? ', [name], function () {
+            systx.executeSql('DELETE FROM dbVersions WHERE name = ? ', [name], function () {
                 req.result = undefined;
                 const e = createEvent('success');
                 e.newVersion = null;
@@ -174,7 +174,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
 
     createSysDB(function () {
         sysdb.transaction(function (systx) {
-            systx.executeSql('SELECT * FROM dbVersions where name = ?', [name], function (tx, data) {
+            systx.executeSql('SELECT * FROM dbVersions WHERE name = ?', [name], function (tx, data) {
                 if (data.rows.length === 0) {
                     req.result = undefined;
                     const e = createEvent('success');

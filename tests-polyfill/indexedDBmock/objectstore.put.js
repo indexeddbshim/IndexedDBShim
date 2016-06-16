@@ -1091,7 +1091,7 @@ describe('Objectstore - Put', function() {
                         var putRequest = objectstore.put(data, key);
 
                         putRequest.onsuccess = function (e){
-                            ok(false, "data putted");
+                            assert.ok(false, "data putted");
                         };
                         putRequest.onerror = function (e){
                             assert.ok(false, "Put error");
@@ -1141,7 +1141,7 @@ describe('Objectstore - Put', function() {
                         var putRequest = objectstore.put(addData, addData.id + 1);
 
                         putRequest.onsuccess = function (e){
-                            ok(false, "data putted");
+                            assert.ok(false, "data putted");
                         };
                         putRequest.onerror = function (e){
                             equal(e.target.error.name, "ConstraintError", "ConstraintError");

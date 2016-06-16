@@ -75,7 +75,7 @@ IDBIndex.__createIndex = function (store, index) {
                                 let indexKey = Key.getValue(value, index.keyPath);
                                 indexKey = Key.encode(indexKey, index.multiEntry);
 
-                                tx.executeSql('UPDATE ' + util.quote(store.name) + ' set ' + util.quote(index.name) + ' = ? where key = ?', [indexKey, data.rows.item(i).key], function (tx, data) {
+                                tx.executeSql('UPDATE ' + util.quote(store.name) + ' SET ' + util.quote(index.name) + ' = ? WHERE key = ?', [indexKey, data.rows.item(i).key], function (tx, data) {
                                     addIndexEntry(i + 1);
                                 }, error);
                             } catch (e) {
@@ -149,7 +149,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
     }
 
     CFG.DEBUG && console.log('Updating the index list for ' + store.name, indexList);
-    tx.executeSql('UPDATE __sys__ set indexList = ? where name = ?', [JSON.stringify(indexList), store.name], function () {
+    tx.executeSql('UPDATE __sys__ SET indexList = ? WHERE name = ?', [JSON.stringify(indexList), store.name], function () {
         success(store);
     }, failure);
 };

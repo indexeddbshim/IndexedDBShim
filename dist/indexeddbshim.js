@@ -9802,7 +9802,7 @@ IDBFactory.prototype.open = function (name, version) {
                     if (oldVersion < version) {
                         // DB Upgrade in progress
                         sysdb.transaction(function (systx) {
-                            systx.executeSql('UPDATE dbVersions set version = ? where name = ?', [version, name], function () {
+                            systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [version, name], function () {
                                 var e = (0, _Event.createEvent)('upgradeneeded');
                                 e.oldVersion = oldVersion;
                                 e.newVersion = version;
@@ -9828,7 +9828,7 @@ IDBFactory.prototype.open = function (name, version) {
 
     createSysDB(function () {
         sysdb.transaction(function (tx) {
-            tx.executeSql('SELECT * FROM dbVersions where name = ?', [name], function (tx, data) {
+            tx.executeSql('SELECT * FROM dbVersions WHERE name = ?', [name], function (tx, data) {
                 if (data.rows.length === 0) {
                     // Database with this name does not exist
                     tx.executeSql('INSERT INTO dbVersions VALUES (?,?)', [name, version || 1], function () {
@@ -9879,7 +9879,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
 
     function deleteFromDbVersions() {
         sysdb.transaction(function (systx) {
-            systx.executeSql('DELETE FROM dbVersions where name = ? ', [name], function () {
+            systx.executeSql('DELETE FROM dbVersions WHERE name = ? ', [name], function () {
                 req.result = undefined;
                 var e = (0, _Event.createEvent)('success');
                 e.newVersion = null;
@@ -9891,7 +9891,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
 
     createSysDB(function () {
         sysdb.transaction(function (systx) {
-            systx.executeSql('SELECT * FROM dbVersions where name = ?', [name], function (tx, data) {
+            systx.executeSql('SELECT * FROM dbVersions WHERE name = ?', [name], function (tx, data) {
                 if (data.rows.length === 0) {
                     req.result = undefined;
                     var e = (0, _Event.createEvent)('success');
@@ -10083,7 +10083,7 @@ IDBIndex.__createIndex = function (store, index) {
                                 var indexKey = _Key2.default.getValue(value, index.keyPath);
                                 indexKey = _Key2.default.encode(indexKey, index.multiEntry);
 
-                                tx.executeSql('UPDATE ' + _util2.default.quote(store.name) + ' set ' + _util2.default.quote(index.name) + ' = ? where key = ?', [indexKey, data.rows.item(i).key], function (tx, data) {
+                                tx.executeSql('UPDATE ' + _util2.default.quote(store.name) + ' SET ' + _util2.default.quote(index.name) + ' = ? WHERE key = ?', [indexKey, data.rows.item(i).key], function (tx, data) {
                                     addIndexEntry(i + 1);
                                 }, error);
                             } catch (e) {
@@ -10157,7 +10157,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
     }
 
     _cfg2.default.DEBUG && console.log('Updating the index list for ' + store.name, indexList);
-    tx.executeSql('UPDATE __sys__ set indexList = ? where name = ?', [JSON.stringify(indexList), store.name], function () {
+    tx.executeSql('UPDATE __sys__ SET indexList = ? WHERE name = ?', [JSON.stringify(indexList), store.name], function () {
         success(store);
     }, failure);
 };
@@ -10485,7 +10485,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
             failure((0, _DOMException.createDOMException)(0, 'Could not delete ObjectStore', err));
         }
 
-        tx.executeSql('SELECT * FROM __sys__ where name = ?', [store.name], function (tx, data) {
+        tx.executeSql('SELECT * FROM __sys__ WHERE name = ?', [store.name], function (tx, data) {
             if (data.rows.length > 0) {
                 tx.executeSql('DROP TABLE ' + _util2.default.quote(store.name), [], function () {
                     tx.executeSql('DELETE FROM __sys__ WHERE name = ?', [store.name], function () {
@@ -10546,7 +10546,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
     var me = this;
 
     function getNextAutoIncKey(callback) {
-        tx.executeSql('SELECT * FROM sqlite_sequence where name like ?', [me.name], function (tx, data) {
+        tx.executeSql('SELECT * FROM sqlite_sequence WHERE name = ?', [me.name], function (tx, data) {
             if (data.rows.length !== 1) {
                 callback(1);
             } else {
@@ -10582,7 +10582,8 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
     }
 };
 
-IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey, success, error) {
+IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey, passedKey, success, error) {
+    var me = this;
     try {
         var paramMap = {};
         if (primaryKey !== undefined) {
@@ -10612,7 +10613,15 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         tx.executeSql(sql, sqlValues, function (tx, data) {
             _Sca2.default.encode(primaryKey, function (primaryKey) {
                 primaryKey = _Sca2.default.decode(primaryKey);
-                success(primaryKey);
+                if (typeof passedKey === 'number' && passedKey >= primaryKey) {
+                    tx.executeSql('UPDATE sqlite_sequence SET seq = ? WHERE name = ?', [primaryKey, me.name], function (tx, data) {
+                        success(primaryKey);
+                    }, function (tx, err) {
+                        error((0, _DOMException.createDOMException)('UnknownError', 'Could not set the auto increment value for key', err));
+                    });
+                } else {
+                    success(primaryKey);
+                }
             });
         }, function (tx, err) {
             error((0, _DOMException.createDOMException)('ConstraintError', err.message, err));
@@ -10634,7 +10643,7 @@ IDBObjectStore.prototype.add = function (value, key) {
     me.transaction.__pushToQueue(request, function objectStoreAdd(tx, args, success, error) {
         me.__deriveKey(tx, value, key, function (primaryKey) {
             _Sca2.default.encode(value, function (encoded) {
-                me.__insertData(tx, encoded, value, primaryKey, success, error);
+                me.__insertData(tx, encoded, value, primaryKey, key, success, error);
             });
         }, error);
     });
@@ -10655,10 +10664,10 @@ IDBObjectStore.prototype.put = function (value, key) {
             _Sca2.default.encode(value, function (encoded) {
                 // First try to delete if the record exists
                 _Key2.default.validate(primaryKey);
-                var sql = 'DELETE FROM ' + _util2.default.quote(me.name) + ' where key = ?';
+                var sql = 'DELETE FROM ' + _util2.default.quote(me.name) + ' WHERE key = ?';
                 tx.executeSql(sql, [_Key2.default.encode(primaryKey)], function (tx, data) {
                     _cfg2.default.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
-                    me.__insertData(tx, encoded, value, primaryKey, success, error);
+                    me.__insertData(tx, encoded, value, primaryKey, key, success, error);
                 }, function (tx, err) {
                     error(err);
                 });
@@ -10680,7 +10689,7 @@ IDBObjectStore.prototype.get = function (key) {
     var primaryKey = _Key2.default.encode(key);
     return me.transaction.__addToTransactionQueue(function objectStoreGet(tx, args, success, error) {
         _cfg2.default.DEBUG && console.log('Fetching', me.name, primaryKey);
-        tx.executeSql('SELECT * FROM ' + _util2.default.quote(me.name) + ' where key = ?', [primaryKey], function (tx, data) {
+        tx.executeSql('SELECT * FROM ' + _util2.default.quote(me.name) + ' WHERE key = ?', [primaryKey], function (tx, data) {
             _cfg2.default.DEBUG && console.log('Fetched data', data);
             var value = void 0;
             try {
@@ -10714,7 +10723,7 @@ IDBObjectStore.prototype['delete'] = function (key) {
     // TODO key should also support key ranges
     return me.transaction.__addToTransactionQueue(function objectStoreDelete(tx, args, success, error) {
         _cfg2.default.DEBUG && console.log('Fetching', me.name, primaryKey);
-        tx.executeSql('DELETE FROM ' + _util2.default.quote(me.name) + ' where key = ?', [primaryKey], function (tx, data) {
+        tx.executeSql('DELETE FROM ' + _util2.default.quote(me.name) + ' WHERE key = ?', [primaryKey], function (tx, data) {
             _cfg2.default.DEBUG && console.log('Deleted from database', data.rowsAffected);
             success();
         }, function (tx, err) {
