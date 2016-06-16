@@ -122,7 +122,16 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
  * @param {*} key       Used for out-of-line keys
  * @private
  */
-IDBObjectStore.prototype.__validateKey = function (value, key) {
+IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
+    value && typeof value === 'object' && JSON.stringify(value, function (key, val) {
+        if (['function', 'symbol', 'undefined'].includes(typeof val) ||
+            value instanceof Error || // Duck-typing with some util.isError would be better, but too easy to get a false match
+            (value.nodeType > 0 && typeof value.nodeName === 'string') // DOM nodes
+        ) {
+            throw createDOMException('DataCloneError', 'The data being stored could not be cloned by the internal structured cloning algorithm.');
+        }
+        return val;
+    });
     if (this.keyPath) {
         if (key !== undefined) {
             throw createDOMException('DataError', 'The object store uses in-line keys and the key parameter was provided', this);
@@ -255,7 +264,7 @@ IDBObjectStore.prototype.add = function (value, key) {
     if (arguments.length === 0) {
         throw new TypeError('No value was specified');
     }
-    this.__validateKey(value, key);
+    this.__validateKeyAndValue(value, key);
     me.transaction.__assertWritable();
 
     const request = me.transaction.__createRequest();
@@ -274,7 +283,7 @@ IDBObjectStore.prototype.put = function (value, key) {
     if (arguments.length === 0) {
         throw new TypeError('No value was specified');
     }
-    this.__validateKey(value, key);
+    this.__validateKeyAndValue(value, key);
     me.transaction.__assertWritable();
 
     const request = me.transaction.__createRequest();
