@@ -67,7 +67,7 @@ describe('W3C IDBFactory.deleteDatabase Tests', function () {
 
     // idbfactory_deletedatabase4
     it('Test events opening a second database when one connection is open already', function (done) {
-        var openrq = indexedDB.open('db', 3);
+        var openrq = indexedDB.open('db.sqlite', 3);
 
         openrq.onupgradeneeded = function(e) {
             e.target.result.createObjectStore('store');
@@ -89,7 +89,7 @@ describe('W3C IDBFactory.deleteDatabase Tests', function () {
         openrq.onblocked = function () { throw new Error("open.blocked"); };
 
         function Second(e) {
-            var deleterq = indexedDB.deleteDatabase('db');
+            var deleterq = indexedDB.deleteDatabase('db.sqlite');
 
             deleterq.onsuccess = function(e) { done(); }
 
@@ -112,7 +112,7 @@ describe('W3C IDBFactory.deleteDatabase Tests', function () {
     it('IDBVersionChangeEvent fired in upgradeneeded, versionchange and deleteDatabase', function (done) {
         var db;
 
-        var openrq = indexedDB.open('db', 3);
+        var openrq = indexedDB.open('db.sqlite', 3);
 
         openrq.onupgradeneeded = function(e) {
             assert.equal(e.oldVersion, 0, "old version (upgradeneeded)");
@@ -142,7 +142,7 @@ describe('W3C IDBFactory.deleteDatabase Tests', function () {
         openrq.onblocked = function () { throw new Error("open.blocked"); };
 
         function deleteDB (e) {
-            var deleterq = indexedDB.deleteDatabase('db');
+            var deleterq = indexedDB.deleteDatabase('db.sqlite');
 
             deleterq.onsuccess = function(e) {
                 assert.equal(e.oldVersion, 3, "old version (delete.success)");

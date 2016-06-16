@@ -28,14 +28,17 @@
     numbers) throw `TypeError` as per W3C tests (even though the spec is
     silent on bad counts except for count=0)
 - Fix: Add transaction to `IDBCursor` request
-- Fix: Update keyRange behavior and tests to reflect draft spec;
-- Fix: Adapt changes from wibimaster:Fix_Object_Type to allow object and
-    `null` type encoding/decoding;
+- Fix: Update keyRange behavior and tests to reflect draft spec
+- Fix: Adapt changes from wibimaster:Fix_Object_Type to allow object, boolean,
+    and `null` type encoding/decoding
 - Fix: Allow `__versionTransaction` not to exist (if user calling it wrong)
     for `create/deleteObjectStore` and test it so it will return an
-    `InvalidStateError`;
+    `InvalidStateError`
 - Feature: Support Node cleanly via `websql` SQLite3 library
 - Feature: Add `IDBObjectStore.openKeyCursor` (no tests yet, however)
+- Feature: Add ".sqlite" extension to database name for sake of (Windows)
+    file type identification
+- Repo files: Rename test folders for ease in distinguishing
 - Refactoring (Avoid globals): Change from using window global to a CFG module
     for better maintainability
 - Refactoring (Avoid deprecated): Avoid deprecated `unescape`
@@ -49,9 +52,9 @@
 - Refactoring (ESLint): Move from JSHint to ESLint and to "standard" config,
     with a few exceptions
 - Refactoring: Where safe, switch from `typeof ... === 'undefined'` to
-    check against undefined (safe for strict mode implicit in modules);
+    check against undefined (safe for strict mode implicit in modules)
 - Refactoring: Use spread operator in place of `arguments` where named
-    args not needed (also may be more future-proof);
+    args not needed (also may be more future-proof)
 - Updating: Bump various `devDependency` min versions
 - Testing: Update tests per current spec and behavior
 - Testing: Ensure db closes after each test to allow non-blocking `open()`
@@ -66,10 +69,11 @@
 - Test scaffolding (W3C): Fix args to initionalSituation()
 - Test scaffolding (W3C): Fix test ok condition, typo
 - Test scaffolding (W3C): Fix assertions
-(Testing: W3C IDBCursor.advance.js tests now all passing);
-
+- (Testing: W3C IDBCursor.advance.js tests now all passing)
+- Testing (Grunt): Clarify Grunt tasks, expand tasks for cleaning, make tests
+    more granular
 - Testing (Grunt): Remove now redundant `sourceMappingURL`, use
-    `sourceMapName` per current specs;
+    `sourceMapName` per current specs
 - Testing (Grunt): Add `uglify` to grunt watch task
 - Testing (PhantomJS): Deal with PhantomJS error
 - Testing (QUnit): Upgrade QUnit refs

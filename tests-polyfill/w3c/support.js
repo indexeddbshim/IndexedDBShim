@@ -1,5 +1,15 @@
 var indexedDB = require('../test-helper');
 
+var dbPrefix = 'testdb-';
+var dbSuffix = '.sqlite';
+
+function getDBName () {
+    return dbPrefix + new Date().getTime() + dbSuffix;
+}
+function getDBNameRandom () {
+    return dbPrefix + new Date().getTime() + Math.random() + dbSuffix;
+}
+
 function createdb(done, dbname, version)
 {
     var rq_open = createdb_for_multiple_tests(dbname, version);
@@ -10,7 +20,7 @@ function createdb_for_multiple_tests(dbname, version) {
     var rq_open,
         fake_open = {},
         test = null,
-        dbname = (dbname ? dbname : "testdb-" + new Date().getTime() + Math.random() );
+        dbname = (dbname || support.getDBNameRandom());
 
     if (version)
         rq_open = indexedDB.open(dbname, version);
@@ -149,5 +159,7 @@ function format_value(val, seen)
 
 module.exports = {
     createdb: createdb,
-    format_value: format_value
+    format_value: format_value,
+    getDBName: getDBName,
+    getDBNameRandom: getDBNameRandom
 };

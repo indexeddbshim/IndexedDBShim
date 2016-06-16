@@ -4,7 +4,7 @@ global.deepEqual = require('assert').deepEqual
 
 global.indexedDb = require('../test-helper')
 global.KeyRange = IDBKeyRange;
-global.dbName = "TestDatabase";
+global.dbName = "TestDatabase.sqlite";
 global.objectStoreName = "objectStore";
 global.anOtherObjectStoreName = "anOtherObjectStoreName";
 global.indexProperty = "name";

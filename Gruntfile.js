@@ -64,11 +64,23 @@ module.exports = function (grunt) {
             }
         },
         clean: {
-            node: {
-                src: ['IndexedDBShim_Test_Database_*', '__sysdb__*']
+            qunitTests: {
+                src: ['dbName*']
             },
-            polyfill: {
-                src: ['testdb-*', 'test0.*', 'TestDatabase*']
+            mochaTests: {
+                src: ['IndexedDBShim_Test_Database_*', 'test.sqlite']
+            },
+            mock: {
+                src: ['TestDatabase*']
+            },
+            w3c: {
+                src: ['testdb-*', 'database_name*', 'idbtransaction*', 'db.sqlite']
+            },
+            fake: {
+                src: ['test0.*']
+            },
+            sysDB: {
+                src: ['__sysdb__*']
             }
         },
         connect: {
@@ -82,15 +94,15 @@ module.exports = function (grunt) {
         qunit: {
             all: {
                 options: {
-                    urls: ['http://localhost:9999/test/index.html']
+                    urls: ['http://localhost:9999/tests-qunit/index.html']
                 }
             }
         },
         'node-qunit': {
             all: {
-                deps: ['./test/node-init.js', './test/queuedUnit.js', './test/sampleData.js', './test/startTests.js'],
+                deps: ['./tests-qunit/node-init.js', './tests-qunit/queuedUnit.js', './tests-qunit/sampleData.js', './tests-qunit/startTests.js'],
                 code: './dist/<%= pkg.name%>-node.js',
-                tests: './test/nodeTest.js',
+                tests: './tests-qunit/nodeTest.js',
                 callback: function (err, res) { // var doneCb = this.async();
                     if (err) console.log(err);
                     else console.log(res);
@@ -106,7 +118,7 @@ module.exports = function (grunt) {
                     quiet: false, // Optionally suppress output to standard out (defaults to false)
                     clearRequireCache: false // Optionally clear the require cache before running tests (defaults to false)
                 },
-                src: ['tests/test-node.js']
+                src: ['tests-mocha/test-node.js']
             }
         },
 
@@ -116,7 +128,7 @@ module.exports = function (grunt) {
                     username: 'indexeddbshim',
                     key: saucekey,
                     tags: ['master'],
-                    urls: ['http://127.0.0.1:9999/test/index.html'],
+                    urls: ['http://127.0.0.1:9999/tests-qunit/index.html'],
                     browsers: [{
                         browserName: 'safari',
                         platform: 'Windows 2008',
@@ -130,7 +142,7 @@ module.exports = function (grunt) {
         },
 
         eslint: {
-            files: ['src/**/*.js', 'test/**/*.js', 'tests/**/*.js', 'Gruntfile.js'],
+            files: ['src/**/*.js', 'tests-qunit/**/*.js', 'tests-mocha/**/*.js', 'Gruntfile.js'],
             options: {
                 configFile: '.eslintrc'
             }
@@ -151,7 +163,7 @@ module.exports = function (grunt) {
     grunt.registerTask('build', ['eslint', 'browserify', 'uglify']);
     const testJobs = ['build', 'connect'];
     grunt.registerTask('nodequnit', testJobs.concat('node-qunit'));
-    grunt.registerTask('mocha', ['mochaTest']); // clean:node isn't working here as locked (even with force:true on it or grunt-wait) so we do in package.json
+    grunt.registerTask('mocha', ['mochaTest']); // clean:mochaTests isn't working here as locked (even with force:true on it or grunt-wait) so we do in package.json
 
     if (saucekey !== null) {
         testJobs.push('saucelabs-qunit');
@@ -159,7 +171,11 @@ module.exports = function (grunt) {
         testJobs.push('qunit');
     }
 
-    grunt.registerTask('test', testJobs);
+    grunt.registerTask('phantom-qunit', testJobs);
+
+    grunt.registerTask('clean-mocha', ['clean:mochaTests', 'clean:sysDB']);
+    grunt.registerTask('clean-qunit', ['clean:qunitTests', 'clean:sysDB']);
+    grunt.registerTask('clean-polyfill', ['clean:fake', 'clean:mock', 'clean:w3c', 'clean:sysDB']);
 
     grunt.registerTask('default', 'build');
     grunt.registerTask('dev', ['build', 'connect', 'watch']);

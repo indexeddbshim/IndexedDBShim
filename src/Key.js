@@ -7,7 +7,7 @@ let Key = {};
 /**
  * Encodes the keys based on their types. This is required to maintain collations
  */
-const collations = ['undefined', 'number', 'date', 'string', 'array', 'object'];
+const collations = ['undefined', 'number', 'date', 'string', 'array', 'object', 'boolean'];
 
 /**
  * The sign values for numbers, ordered from least to greatest.
@@ -31,13 +31,12 @@ const types = {
         }
     },
 
-    // Dates are encoded as ISO 8601 strings, in UTC time zone.
-    date: {
+    boolean: {
         encode: function (key) {
-            return collations.indexOf('date') + '-' + key.toJSON();
+            return collations.indexOf('boolean') + '-' + key;
         },
         decode: function (key) {
-            return new Date(key.slice(2));
+            return Boolean(key.slice(2));
         }
     },
 
@@ -199,6 +198,16 @@ const types = {
             }
             return decoded;
         }
+    },
+
+    // Dates are encoded as ISO 8601 strings, in UTC time zone.
+    date: {
+        encode: function (key) {
+            return collations.indexOf('date') + '-' + key.toJSON();
+        },
+        decode: function (key) {
+            return new Date(key.slice(2));
+        }
     }
 };
 
@@ -314,7 +323,7 @@ function validate (key) {
         for (let i = 0; i < key.length; i++) {
             validate(key[i]);
         }
-    } else if (!types[type] || type === 'object' || (type !== 'string' && isNaN(key))) {
+    } else if (!types[type] || type === 'object' || type === 'boolean' || (type !== 'string' && isNaN(key))) {
         throw createDOMException('DataError', 'Not a valid key');
     }
 }

@@ -3,6 +3,7 @@
     'use strict';
 
     var databaseNamePrefix = 'IndexedDBShim_Test_Database_';
+    var databaseSuffix = '.sqlite';
     var dbNameCounter = 0;
     var util;
 
@@ -173,7 +174,7 @@
          */
         generateDatabaseName: function (done) {
             dbNameCounter++;
-            var dbName = databaseNamePrefix + dbNameCounter;
+            var dbName = databaseNamePrefix + dbNameCounter + databaseSuffix;
 
             // Remember this database name, so it can be deleted when the test is done
             util.currentTest.databases.push(dbName);
