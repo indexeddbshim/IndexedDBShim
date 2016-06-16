@@ -44,17 +44,17 @@ function compoundKeyPolyfill (IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFac
 
     IDBFactory.prototype.cmp = function (key1, key2) {
         const args = Array.prototype.slice.call(arguments);
-        if (key1 instanceof Array) {
+        if (Array.isArray(key1)) {
             args[0] = encodeCompoundKey(key1);
         }
-        if (key2 instanceof Array) {
+        if (Array.isArray(key2)) {
             args[1] = encodeCompoundKey(key2);
         }
         return cmp.apply(this, args);
     };
 
     IDBDatabase.prototype.createObjectStore = function (name, opts) {
-        if (opts && opts.keyPath instanceof Array) {
+        if (opts && Array.isArray(opts.keyPath)) {
             opts.keyPath = encodeCompoundKeyPath(opts.keyPath);
         }
         return createObjectStore.apply(this, arguments);
@@ -62,18 +62,18 @@ function compoundKeyPolyfill (IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFac
 
     IDBObjectStore.prototype.createIndex = function (name, keyPath, opts) {
         const args = Array.prototype.slice.call(arguments);
-        if (keyPath instanceof Array) {
+        if (Array.isArray(keyPath)) {
             args[1] = encodeCompoundKeyPath(keyPath);
         }
         return createIndex.apply(this, args);
     };
 
-    IDBObjectStore.prototype.add = function (value, key) {
-        return this.__insertData(add, arguments);
+    IDBObjectStore.prototype.add = function (...args/* value, key */) {
+        return this.__insertData(add, args);
     };
 
-    IDBObjectStore.prototype.put = function (value, key) {
-        return this.__insertData(put, arguments);
+    IDBObjectStore.prototype.put = function (...args/* value, key */) {
+        return this.__insertData(put, args);
     };
 
     IDBObjectStore.prototype.__insertData = function (method, args) {
@@ -82,7 +82,7 @@ function compoundKeyPolyfill (IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFac
         const key = args[1];
 
         // out-of-line key
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[1] = encodeCompoundKey(key);
         }
 
@@ -109,7 +109,7 @@ function compoundKeyPolyfill (IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFac
 
     IDBIndex.prototype.get = function (key) {
         const args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return indexGet.apply(this, args);
@@ -117,7 +117,7 @@ function compoundKeyPolyfill (IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFac
 
     IDBIndex.prototype.getKey = function (key) {
         const args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return indexGetKey.apply(this, args);
@@ -125,7 +125,7 @@ function compoundKeyPolyfill (IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFac
 
     IDBIndex.prototype.openCursor = function (key) {
         const args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return indexCursor.apply(this, args);
@@ -133,7 +133,7 @@ function compoundKeyPolyfill (IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFac
 
     IDBIndex.prototype.openKeyCursor = function (key) {
         const args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return indexKeyCursor.apply(this, args);
@@ -141,7 +141,7 @@ function compoundKeyPolyfill (IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFac
 
     IDBObjectStore.prototype.get = function (key) {
         const args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return storeGet.apply(this, args);
@@ -149,7 +149,7 @@ function compoundKeyPolyfill (IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFac
 
     IDBObjectStore.prototype.delete = function (key) {
         const args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return storeDelete.apply(this, args);
@@ -157,7 +157,7 @@ function compoundKeyPolyfill (IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFac
 
     IDBObjectStore.prototype.openCursor = function (key) {
         const args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return storeCursor.apply(this, args);
@@ -165,7 +165,7 @@ function compoundKeyPolyfill (IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFac
 
     IDBObjectStore.prototype.openKeyCursor = function (key) {
         const args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return storeKeyCursor.apply(this, args);
@@ -173,10 +173,10 @@ function compoundKeyPolyfill (IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFac
 
     IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
         const args = Array.prototype.slice.call(arguments);
-        if (lower instanceof Array) {
+        if (Array.isArray(lower)) {
             args[0] = encodeCompoundKey(lower);
         }
-        if (upper instanceof Array) {
+        if (Array.isArray(upper)) {
             args[1] = encodeCompoundKey(upper);
         }
         return bound.apply(IDBKeyRange, args);
@@ -184,7 +184,7 @@ function compoundKeyPolyfill (IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFac
 
     IDBKeyRange.upperBound = function (key, open) {
         const args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return upperBound.apply(IDBKeyRange, args);
@@ -192,7 +192,7 @@ function compoundKeyPolyfill (IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFac
 
     IDBKeyRange.lowerBound = function (key, open) {
         const args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return lowerBound.apply(IDBKeyRange, args);
@@ -200,7 +200,7 @@ function compoundKeyPolyfill (IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFac
 
     IDBKeyRange.only = function (key) {
         const args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return only.apply(IDBKeyRange, args);

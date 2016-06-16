@@ -1,5 +1,5 @@
-import {createDOMException} from './DOMException.js';
 import {IDBRequest} from './IDBRequest.js';
+import {createDOMException} from './DOMException.js';
 import util from './util.js';
 import Key from './Key.js';
 import IDBKeyRange from './IDBKeyRange.js';
@@ -23,7 +23,7 @@ function IDBCursor (range, direction, store, source, keyColumnName, valueColumnN
     if (range === null) {
         range = undefined;
     }
-    if (range !== undefined && !(range instanceof IDBKeyRange)) {
+    if (range !== undefined && !(util.instanceOf(range, IDBKeyRange))) {
         range = new IDBKeyRange(range, range, false, false);
     }
     store.transaction.__assertActive();
@@ -38,30 +38,30 @@ function IDBCursor (range, direction, store, source, keyColumnName, valueColumnN
     this.__store = store;
     this.__range = range;
     this.__req = new IDBRequest();
+    this.__req.transaction = this.__store.transaction;
     this.__keyColumnName = keyColumnName;
     this.__valueColumnName = valueColumnName;
     this.__valueDecoder = valueColumnName === 'value' ? Sca : Key;
     this.__count = count;
     this.__offset = -1; // Setting this to -1 as continue will set it to 0 anyway
     this.__lastKeyContinued = undefined; // Used when continuing with a key
-    this.__multiEntryIndex = source instanceof IDBIndex ? source.multiEntry : false;
+    this.__multiEntryIndex = util.instanceOf(source, IDBIndex) ? source.multiEntry : false;
     this.__unique = this.direction.indexOf('unique') !== -1;
 
     if (range !== undefined) {
         // Encode the key range and cache the encoded values, so we don't have to re-encode them over and over
-        range.__lower = range.lower !== undefined && Key.encode(range.lower, this.__multiEntryIndex);
-        range.__upper = range.upper !== undefined && Key.encode(range.upper, this.__multiEntryIndex);
+        range.__lower = range.lower !== null && Key.encode(range.lower, this.__multiEntryIndex);
+        range.__upper = range.upper !== null && Key.encode(range.upper, this.__multiEntryIndex);
     }
-
+    this.__gotValue = true;
     this['continue']();
 }
 
-IDBCursor.prototype.__find = function (/* key, tx, success, error, recordsToLoad */) {
-    const args = Array.prototype.slice.call(arguments);
+IDBCursor.prototype.__find = function (...args /* key, tx, success, error, recordsToLoad */) {
     if (this.__multiEntryIndex) {
-        this.__findMultiEntry.apply(this, args);
+        this.__findMultiEntry(...args);
     } else {
-        this.__findBasic.apply(this, args);
+        this.__findBasic(...args);
     }
 };
 
@@ -73,19 +73,19 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
     let sql = ['SELECT * FROM', util.quote(me.__store.name)];
     const sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
-    if (me.__range && (me.__range.lower !== undefined || me.__range.upper !== undefined)) {
+    if (me.__range && (me.__range.lower !== null || me.__range.upper !== null)) {
         sql.push('AND');
-        if (me.__range.lower !== undefined) {
+        if (me.__range.lower !== null) {
             sql.push(quotedKeyColumnName, (me.__range.lowerOpen ? '>' : '>='), '?');
             sqlValues.push(me.__range.__lower);
         }
-        (me.__range.lower !== undefined && me.__range.upper !== undefined) && sql.push('AND');
-        if (me.__range.upper !== undefined) {
+        (me.__range.lower !== null && me.__range.upper !== null) && sql.push('AND');
+        if (me.__range.upper !== null) {
             sql.push(quotedKeyColumnName, (me.__range.upperOpen ? '<' : '<='), '?');
             sqlValues.push(me.__range.__upper);
         }
     }
-    if (typeof key !== 'undefined') {
+    if (key !== undefined) {
         me.__lastKeyContinued = key;
         me.__offset = 0;
     }
@@ -97,9 +97,8 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
 
     // Determine the ORDER BY direction based on the cursor.
     const direction = me.direction === 'prev' || me.direction === 'prevunique' ? 'DESC' : 'ASC';
-
     if (!me.__count) {
-        sql.push('ORDER BY', quotedKeyColumnName, direction);
+        sql.push('ORDER BY', quotedKeyColumnName, direction, ',', 'key', direction); // Needed for DESC
         sql.push('LIMIT', recordsToLoad, 'OFFSET', me.__offset);
     }
     sql = sql.join(' ');
@@ -140,13 +139,13 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
     let sql = ['SELECT * FROM', util.quote(me.__store.name)];
     const sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
-    if (me.__range && (me.__range.lower !== undefined && me.__range.upper !== undefined)) {
+    if (me.__range && (me.__range.lower !== null && me.__range.upper !== null)) {
         if (me.__range.upper.indexOf(me.__range.lower) === 0) {
             sql.push('AND', quotedKeyColumnName, 'LIKE ?');
             sqlValues.push('%' + me.__range.__lower.slice(0, -1) + '%');
         }
     }
-    if (typeof key !== 'undefined') {
+    if (key !== undefined) {
         me.__lastKeyContinued = key;
         me.__offset = 0;
     }
@@ -245,6 +244,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
 IDBCursor.prototype.__onsuccess = function (success) {
     const me = this;
     return function (key, value, primaryKey) {
+        me.__gotValue = true;
         if (me.__count) {
             success(value, me.__req);
         } else {
@@ -274,11 +274,26 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
     callback(key, val, primaryKey);
 };
 
+IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
+    if (!this.__store.transaction.db.objectStoreNames.contains(this.__store.name) ||
+        util.instanceOf(this.source, IDBIndex) && !this.__store.indexNames.contains(this.source.name)) {
+        throw createDOMException('InvalidStateError', 'The cursor\'s source or effective object store has been deleted');
+    }
+};
+
 IDBCursor.prototype['continue'] = function (key) {
     const recordsToPreloadOnContinue = CFG.cursorPreloadPackSize || 100;
     const me = this;
+    if (!this.__gotValue) {
+        throw createDOMException('InvalidStateError', 'The cursor is being iterated or has iterated past its end.');
+    }
+    me.__gotValue = false;
+    me.__store.transaction.__assertActive();
+    me.__sourceOrEffectiveObjStoreDeleted();
 
-    this.__store.transaction.__pushToQueue(me.__req, function cursorContinue (tx, args, success, error) {
+    if (key !== undefined) Key.validate(key);
+
+    me.__store.transaction.__pushToQueue(me.__req, function cursorContinue (tx, args, success, error) {
         me.__offset++;
 
         if (me.__prefetchedData) {
@@ -296,11 +311,17 @@ IDBCursor.prototype['continue'] = function (key) {
 };
 
 IDBCursor.prototype.advance = function (count) {
-    if (count <= 0) {
-        throw createDOMException('Type Error', 'Count is invalid - 0 or negative', count);
-    }
     const me = this;
-    this.__store.transaction.__pushToQueue(me.__req, function cursorAdvance (tx, args, success, error) {
+    if (!Number.isFinite(count) || count <= 0) {
+        throw new TypeError('Count is invalid - 0 or negative: ' + count);
+    }
+    me.__store.transaction.__assertActive();
+    me.__sourceOrEffectiveObjStoreDeleted();
+    if (!me.__gotValue) {
+        throw createDOMException('InvalidStateError', 'The cursor is being iterated or has iterated past its end.');
+    }
+    me.__gotValue = false;
+    me.__store.transaction.__pushToQueue(me.__req, function cursorAdvance (tx, args, success, error) {
         me.__offset += count;
         me.__find(undefined, tx, me.__onsuccess(success), error);
     });
@@ -372,7 +393,7 @@ IDBCursor.prototype['delete'] = function () {
 
 class IDBCursorWithValue extends IDBCursor {
 }
-Object.defineProperty(IDBCursorWithValue.prototype, '_value', {
+Object.defineProperty(IDBCursorWithValue.prototype, '__value', {
     enumerable: false,
     configurable: false,
     writable: true
@@ -381,10 +402,10 @@ Object.defineProperty(IDBCursorWithValue.prototype, 'value', {
     enumerable: true,
     configurable: true,
     get: function () {
-        return this._value;
+        return this.__value;
     },
     set: function (val) {
-        this._value = val;
+        this.__value = val;
     }
 });
 

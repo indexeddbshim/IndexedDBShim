@@ -1,12 +1,13 @@
 /*eslint-disable no-eval*/
 import {createDOMException} from './DOMException.js';
+import util from './util.js';
 
 let Key = {};
 
 /**
  * Encodes the keys based on their types. This is required to maintain collations
  */
-const collations = ['undefined', 'number', 'date', 'string', 'array'];
+const collations = ['undefined', 'number', 'date', 'string', 'array', 'object'];
 
 /**
  * The sign values for numbers, ordered from least to greatest.
@@ -36,7 +37,7 @@ const types = {
             return collations.indexOf('date') + '-' + key.toJSON();
         },
         decode: function (key) {
-            return new Date(key.substring(2));
+            return new Date(key.slice(2));
         }
     },
 
@@ -156,12 +157,22 @@ const types = {
             return collations.indexOf('string') + '-' + key;
         },
         decode: function (key, inArray) {
-            key = key.substring(2);
+            key = key.slice(2);
             if (inArray) {
                 // remove the space at the end, and the dash before each character
                 key = key.substr(0, key.length - 1).replace(/-(.)/g, '$1');
             }
             return key;
+        }
+    },
+
+    // Objects are encoded as JSON strings.
+    object: {
+        encode: function (key) {
+            return collations.indexOf('object') + '-' + JSON.stringify(key);
+        },
+        decode: function (key) {
+            return JSON.parse(key.slice(2));
         }
     },
 
@@ -179,7 +190,7 @@ const types = {
             return collations.indexOf('array') + '-' + JSON.stringify(encoded);
         },
         decode: function (key) {
-            const decoded = JSON.parse(key.substring(2));
+            const decoded = JSON.parse(key.slice(2));
             decoded.pop();                                                  // remove the extra item
             for (let i = 0; i < decoded.length; i++) {
                 const item = decoded[i];
@@ -288,12 +299,9 @@ function negate (s) {
  * Returns the string "number", "date", "string", or "array".
  */
 function getType (key) {
-    if (key instanceof Date) {
-        return 'date';
-    }
-    if (key instanceof Array) {
-        return 'array';
-    }
+    if (Array.isArray(key)) return 'array';
+    if (util.isDate(key)) return 'date';
+    if (key === null) return 'null';
     return typeof key;
 }
 
@@ -306,7 +314,7 @@ function validate (key) {
         for (let i = 0; i < key.length; i++) {
             validate(key[i]);
         }
-    } else if (!types[type] || (type !== 'string' && isNaN(key))) {
+    } else if (!types[type] || type === 'object' || (type !== 'string' && isNaN(key))) {
         throw createDOMException('DataError', 'Not a valid key');
     }
 }
@@ -318,12 +326,14 @@ function validate (key) {
  */
 function getValue (source, keyPath) {
     try {
-        if (keyPath instanceof Array) {
+        if (Array.isArray(keyPath)) {
             const arrayValue = [];
             for (let i = 0; i < keyPath.length; i++) {
                 arrayValue.push(eval('source.' + keyPath[i]));
             }
             return arrayValue;
+        } else if (keyPath === '') {
+            return source;
         } else {
             return eval('source.' + keyPath);
         }
@@ -364,11 +374,11 @@ function isMultiEntryMatch (encodedEntry, encodedKey) {
 }
 
 function isKeyInRange (key, range) {
-    let lowerMatch = range.lower === undefined;
-    let upperMatch = range.upper === undefined;
+    let lowerMatch = range.lower === null;
+    let upperMatch = range.upper === null;
     const encodedKey = encode(key, true);
 
-    if (range.lower !== undefined) {
+    if (range.lower !== null) {
         if (range.lowerOpen && encodedKey > range.__lower) {
             lowerMatch = true;
         }
@@ -376,7 +386,7 @@ function isKeyInRange (key, range) {
             lowerMatch = true;
         }
     }
-    if (range.upper !== undefined) {
+    if (range.upper !== null) {
         if (range.upperOpen && encodedKey < range.__upper) {
             upperMatch = true;
         }
@@ -391,11 +401,11 @@ function isKeyInRange (key, range) {
 function findMultiEntryMatches (keyEntry, range) {
     const matches = [];
 
-    if (keyEntry instanceof Array) {
+    if (Array.isArray(keyEntry)) {
         for (let i = 0; i < keyEntry.length; i++) {
             let key = keyEntry[i];
 
-            if (key instanceof Array) {
+            if (Array.isArray(key)) {
                 if (range.lower === range.upper) {
                     continue;
                 }
@@ -423,7 +433,7 @@ function findMultiEntryMatches (keyEntry, range) {
 }
 
 function encode (key, inArray) {
-    if (key === undefined) {
+    if (key == null) {
         return null;
     }
     return types[getType(key)].encode(key, inArray);

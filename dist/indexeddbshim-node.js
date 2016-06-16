@@ -16356,6 +16356,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.createDOMError = exports.createDOMException = exports.DOMException = exports.DOMError = exports.findError = exports.logError = undefined;
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
 var _cfg = require('./cfg.js');
 
 var _cfg2 = _interopRequireDefault(_cfg);
@@ -16411,6 +16413,10 @@ function logError(name, message, error) {
     }
 };
 
+function isErrorOrDOMErrorOrDOMException(obj) {
+    return obj && (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === 'object' && typeof obj.name === 'string';
+}
+
 /**
  * Finds the error argument.  This is useful because some WebSQL callbacks
  * pass the error as the first argument, and some pass it as the second argument.
@@ -16425,7 +16431,7 @@ function findError(args) {
         }
         for (var i = 0; i < args.length; i++) {
             var arg = args[i];
-            if (arg instanceof Error || typeof DOMError !== 'undefined' && arg instanceof DOMError || typeof DOMException !== 'undefined' && arg instanceof DOMException) {
+            if (isErrorOrDOMErrorOrDOMException(arg)) {
                 return arg;
             } else if (arg && typeof arg.message === 'string') {
                 err = arg;
@@ -16442,7 +16448,7 @@ var test = void 0,
 // Test whether we can use the browser's native DOMException class
 try {
     test = createNativeDOMException('test name', 'test message');
-    if (test instanceof DOMException && test.name === 'test name' && test.message === 'test message') {
+    if (isErrorOrDOMErrorOrDOMException(test) && test.name === 'test name' && test.message === 'test message') {
         // Native DOMException works as expected
         useNativeDOMException = true;
     }
@@ -16451,7 +16457,7 @@ try {
 // Test whether we can use the browser's native DOMError class
 try {
     test = createNativeDOMError('test name', 'test message');
-    if (test instanceof DOMError && test.name === 'test name' && test.message === 'test message') {
+    if (isErrorOrDOMErrorOrDOMException(test) && test.name === 'test name' && test.message === 'test message') {
         // Native DOMError works as expected
         useNativeDOMError = true;
     }
@@ -16519,6 +16525,10 @@ function createNativeEvent(type, debug) {
     return event;
 }
 
+function isEvent(ev) {
+    return typeof ev.bubbles === 'boolean' && typeof ev.stopPropgation === 'function';
+}
+
 /**
  * A shim Event class, for browsers that don't allow us to create native Event objects.
  * @constructor
@@ -16539,7 +16549,7 @@ try {
     var target = { test: 'test target' };
     test.target = target;
 
-    if (test instanceof Event && test.type === 'test type' && test.debug === 'test debug' && test.target === target) {
+    if (isEvent(test) && test.type === 'test type' && test.debug === 'test debug' && test.target === target) {
         // Native events work as expected
         useNativeEvent = true;
     }
@@ -16572,9 +16582,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.IDBCursorWithValue = exports.IDBCursor = undefined;
 
-var _DOMException = require('./DOMException.js');
-
 var _IDBRequest = require('./IDBRequest.js');
+
+var _DOMException = require('./DOMException.js');
 
 var _util = require('./util.js');
 
@@ -16624,7 +16634,7 @@ function IDBCursor(range, direction, store, source, keyColumnName, valueColumnNa
     if (range === null) {
         range = undefined;
     }
-    if (range !== undefined && !(range instanceof _IDBKeyRange2.default)) {
+    if (range !== undefined && !_util2.default.instanceOf(range, _IDBKeyRange2.default)) {
         range = new _IDBKeyRange2.default(range, range, false, false);
     }
     store.transaction.__assertActive();
@@ -16639,30 +16649,30 @@ function IDBCursor(range, direction, store, source, keyColumnName, valueColumnNa
     this.__store = store;
     this.__range = range;
     this.__req = new _IDBRequest.IDBRequest();
+    this.__req.transaction = this.__store.transaction;
     this.__keyColumnName = keyColumnName;
     this.__valueColumnName = valueColumnName;
     this.__valueDecoder = valueColumnName === 'value' ? _Sca2.default : _Key2.default;
     this.__count = count;
     this.__offset = -1; // Setting this to -1 as continue will set it to 0 anyway
     this.__lastKeyContinued = undefined; // Used when continuing with a key
-    this.__multiEntryIndex = source instanceof _IDBIndex2.default ? source.multiEntry : false;
+    this.__multiEntryIndex = _util2.default.instanceOf(source, _IDBIndex2.default) ? source.multiEntry : false;
     this.__unique = this.direction.indexOf('unique') !== -1;
 
     if (range !== undefined) {
         // Encode the key range and cache the encoded values, so we don't have to re-encode them over and over
-        range.__lower = range.lower !== undefined && _Key2.default.encode(range.lower, this.__multiEntryIndex);
-        range.__upper = range.upper !== undefined && _Key2.default.encode(range.upper, this.__multiEntryIndex);
+        range.__lower = range.lower !== null && _Key2.default.encode(range.lower, this.__multiEntryIndex);
+        range.__upper = range.upper !== null && _Key2.default.encode(range.upper, this.__multiEntryIndex);
     }
-
+    this.__gotValue = true;
     this['continue']();
 }
 
 IDBCursor.prototype.__find = function () /* key, tx, success, error, recordsToLoad */{
-    var args = Array.prototype.slice.call(arguments);
     if (this.__multiEntryIndex) {
-        this.__findMultiEntry.apply(this, args);
+        this.__findMultiEntry.apply(this, arguments);
     } else {
-        this.__findBasic.apply(this, args);
+        this.__findBasic.apply(this, arguments);
     }
 };
 
@@ -16674,19 +16684,19 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
     var sql = ['SELECT * FROM', _util2.default.quote(me.__store.name)];
     var sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
-    if (me.__range && (me.__range.lower !== undefined || me.__range.upper !== undefined)) {
+    if (me.__range && (me.__range.lower !== null || me.__range.upper !== null)) {
         sql.push('AND');
-        if (me.__range.lower !== undefined) {
+        if (me.__range.lower !== null) {
             sql.push(quotedKeyColumnName, me.__range.lowerOpen ? '>' : '>=', '?');
             sqlValues.push(me.__range.__lower);
         }
-        me.__range.lower !== undefined && me.__range.upper !== undefined && sql.push('AND');
-        if (me.__range.upper !== undefined) {
+        me.__range.lower !== null && me.__range.upper !== null && sql.push('AND');
+        if (me.__range.upper !== null) {
             sql.push(quotedKeyColumnName, me.__range.upperOpen ? '<' : '<=', '?');
             sqlValues.push(me.__range.__upper);
         }
     }
-    if (typeof key !== 'undefined') {
+    if (key !== undefined) {
         me.__lastKeyContinued = key;
         me.__offset = 0;
     }
@@ -16698,9 +16708,8 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
 
     // Determine the ORDER BY direction based on the cursor.
     var direction = me.direction === 'prev' || me.direction === 'prevunique' ? 'DESC' : 'ASC';
-
     if (!me.__count) {
-        sql.push('ORDER BY', quotedKeyColumnName, direction);
+        sql.push('ORDER BY', quotedKeyColumnName, direction, ',', 'key', direction); // Needed for DESC
         sql.push('LIMIT', recordsToLoad, 'OFFSET', me.__offset);
     }
     sql = sql.join(' ');
@@ -16741,13 +16750,13 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
     var sql = ['SELECT * FROM', _util2.default.quote(me.__store.name)];
     var sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
-    if (me.__range && me.__range.lower !== undefined && me.__range.upper !== undefined) {
+    if (me.__range && me.__range.lower !== null && me.__range.upper !== null) {
         if (me.__range.upper.indexOf(me.__range.lower) === 0) {
             sql.push('AND', quotedKeyColumnName, 'LIKE ?');
             sqlValues.push('%' + me.__range.__lower.slice(0, -1) + '%');
         }
     }
-    if (typeof key !== 'undefined') {
+    if (key !== undefined) {
         me.__lastKeyContinued = key;
         me.__offset = 0;
     }
@@ -16848,6 +16857,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
 IDBCursor.prototype.__onsuccess = function (success) {
     var me = this;
     return function (key, value, primaryKey) {
+        me.__gotValue = true;
         if (me.__count) {
             success(value, me.__req);
         } else {
@@ -16877,11 +16887,25 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
     callback(key, val, primaryKey);
 };
 
+IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
+    if (!this.__store.transaction.db.objectStoreNames.contains(this.__store.name) || _util2.default.instanceOf(this.source, _IDBIndex2.default) && !this.__store.indexNames.contains(this.source.name)) {
+        throw (0, _DOMException.createDOMException)('InvalidStateError', 'The cursor\'s source or effective object store has been deleted');
+    }
+};
+
 IDBCursor.prototype['continue'] = function (key) {
     var recordsToPreloadOnContinue = _cfg2.default.cursorPreloadPackSize || 100;
     var me = this;
+    if (!this.__gotValue) {
+        throw (0, _DOMException.createDOMException)('InvalidStateError', 'The cursor is being iterated or has iterated past its end.');
+    }
+    me.__gotValue = false;
+    me.__store.transaction.__assertActive();
+    me.__sourceOrEffectiveObjStoreDeleted();
 
-    this.__store.transaction.__pushToQueue(me.__req, function cursorContinue(tx, args, success, error) {
+    if (key !== undefined) _Key2.default.validate(key);
+
+    me.__store.transaction.__pushToQueue(me.__req, function cursorContinue(tx, args, success, error) {
         me.__offset++;
 
         if (me.__prefetchedData) {
@@ -16899,11 +16923,17 @@ IDBCursor.prototype['continue'] = function (key) {
 };
 
 IDBCursor.prototype.advance = function (count) {
-    if (count <= 0) {
-        throw (0, _DOMException.createDOMException)('Type Error', 'Count is invalid - 0 or negative', count);
-    }
     var me = this;
-    this.__store.transaction.__pushToQueue(me.__req, function cursorAdvance(tx, args, success, error) {
+    if (!Number.isFinite(count) || count <= 0) {
+        throw new TypeError('Count is invalid - 0 or negative: ' + count);
+    }
+    me.__store.transaction.__assertActive();
+    me.__sourceOrEffectiveObjStoreDeleted();
+    if (!me.__gotValue) {
+        throw (0, _DOMException.createDOMException)('InvalidStateError', 'The cursor is being iterated or has iterated past its end.');
+    }
+    me.__gotValue = false;
+    me.__store.transaction.__pushToQueue(me.__req, function cursorAdvance(tx, args, success, error) {
         me.__offset += count;
         me.__find(undefined, tx, me.__onsuccess(success), error);
     });
@@ -16985,7 +17015,7 @@ var IDBCursorWithValue = function (_IDBCursor) {
     return IDBCursorWithValue;
 }(IDBCursor);
 
-Object.defineProperty(IDBCursorWithValue.prototype, '_value', {
+Object.defineProperty(IDBCursorWithValue.prototype, '__value', {
     enumerable: false,
     configurable: false,
     writable: true
@@ -16994,10 +17024,10 @@ Object.defineProperty(IDBCursorWithValue.prototype, 'value', {
     enumerable: true,
     configurable: true,
     get: function get() {
-        return this._value;
+        return this.__value;
     },
     set: function set(val) {
-        this._value = val;
+        this.__value = val;
     }
 });
 
@@ -17065,7 +17095,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName, createOptions) {
     if (this.__objectStores[storeName]) {
         throw (0, _DOMException.createDOMException)('ConstraintError', 'Object store "' + storeName + '" already exists in ' + this.name);
     }
-    this.__versionTransaction.__assertVersionChange();
+    _IDBTransaction2.default.__assertVersionChange(this.__versionTransaction); // this.__versionTransaction may not exist if called mistakenly by user in onsuccess
 
     createOptions = createOptions || {};
     /** @name IDBObjectStoreProperties **/
@@ -17092,7 +17122,7 @@ IDBDatabase.prototype.deleteObjectStore = function (storeName) {
     if (!store) {
         throw (0, _DOMException.createDOMException)('NotFoundError', 'Object store "' + storeName + '" does not exist in ' + this.name);
     }
-    this.__versionTransaction.__assertVersionChange();
+    _IDBTransaction2.default.__assertVersionChange(this.__versionTransaction); // this.__versionTransaction may not exist if called mistakenly by user in onsuccess
 
     _IDBObjectStore2.default.__deleteObjectStore(this, store);
 };
@@ -17133,8 +17163,7 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
         }
     }
 
-    var transaction = new _IDBTransaction2.default(this, storeNames, mode);
-    return transaction;
+    return new _IDBTransaction2.default(this, storeNames, mode);
 };
 
 exports.default = IDBDatabase;
@@ -17185,8 +17214,12 @@ var sysdb = void 0;
  * Craetes the sysDB to keep track of version numbers for databases
  **/
 function createSysDB(success, failure) {
-    function sysDbCreateError(tx, err) {
-        err = (0, _DOMException.findError)(arguments);
+    function sysDbCreateError() /* tx, err*/{
+        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
+        }
+
+        var err = (0, _DOMException.findError)(args);
         _cfg2.default.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
         failure(err);
     }
@@ -17229,13 +17262,18 @@ IDBFactory.prototype.open = function (name, version) {
     }
     name = name + ''; // cast to a string
 
-    function dbCreateError(tx, err) {
+    function dbCreateError() /* tx, err*/{
         if (calledDbCreateError) {
             return;
         }
-        err = (0, _DOMException.findError)(arguments);
+
+        for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+            args[_key2] = arguments[_key2];
+        }
+
+        var err = (0, _DOMException.findError)(args);
         calledDbCreateError = true;
-        var evt = (0, _Event.createEvent)('error', arguments);
+        var evt = (0, _Event.createEvent)('error', args);
         req.readyState = 'done';
         req.error = err || _DOMException.DOMException;
         _util2.default.callback('onerror', req, evt);
@@ -17244,7 +17282,7 @@ IDBFactory.prototype.open = function (name, version) {
     function openDB(oldVersion) {
         var db = _cfg2.default.win.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
         req.readyState = 'done';
-        if (typeof version === 'undefined') {
+        if (version === undefined) {
             version = oldVersion || 1;
         }
         if (version <= 0 || oldVersion > version) {
@@ -17318,15 +17356,20 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     }
     name = name + ''; // cast to a string
 
-    function dbError(tx, err) {
+    function dbError() /* tx, err*/{
         if (calledDBError) {
             return;
         }
-        err = (0, _DOMException.findError)(arguments);
+
+        for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+            args[_key3] = arguments[_key3];
+        }
+
+        var err = (0, _DOMException.findError)(args);
         req.readyState = 'done';
         req.error = err || _DOMException.DOMException;
         var e = (0, _Event.createEvent)('error');
-        e.debug = arguments;
+        e.debug = args;
         _util2.default.callback('onerror', req, e);
         calledDBError = true;
     }
@@ -17439,6 +17482,8 @@ exports.shimIndexedDB = shimIndexedDB;
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 var _DOMException = require('./DOMException.js');
 
@@ -17660,7 +17705,7 @@ IDBIndex.prototype.__fetchIndexData = function (key, opType) {
                         recordCount++;
                         record = record || row;
                     } else if (!hasKey && rowKey !== undefined) {
-                        recordCount = recordCount + (rowKey instanceof Array ? rowKey.length : 1);
+                        recordCount = recordCount + (Array.isArray(rowKey) ? rowKey.length : 1);
                         record = record || row;
                     }
                 }
@@ -17724,11 +17769,17 @@ IDBIndex.prototype.count = function (key) {
     if (key === undefined) {
         return this.__fetchIndexData('count');
     }
-    if (key instanceof _IDBKeyRange2.default) {
+    if (_util2.default.instanceOf(key, _IDBKeyRange2.default)) {
         return new _IDBCursor.IDBCursor(key, 'next', this.objectStore, this, this.name, 'value', true).__req;
     }
     return this.__fetchIndexData(key, 'count');
 };
+
+Object.defineProperty(IDBIndex, Symbol.hasInstance, {
+    value: function value(obj) {
+        return obj && (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === 'object' && typeof obj.openCursor === 'function' && typeof obj.multiEntry === 'boolean';
+    }
+});
 
 exports.default = IDBIndex;
 module.exports = exports['default'];
@@ -17739,6 +17790,8 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 var _Key = require('./Key.js');
 
@@ -17755,10 +17808,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @param {Object} upperOpen
  */
 function IDBKeyRange(lower, upper, lowerOpen, upperOpen) {
-    if (lower !== undefined) {
+    if (lower !== null) {
         _Key2.default.validate(lower);
     }
-    if (upper !== undefined) {
+    if (upper !== null) {
         _Key2.default.validate(upper);
     }
 
@@ -17773,14 +17826,19 @@ IDBKeyRange.only = function (value) {
 };
 
 IDBKeyRange.lowerBound = function (value, open) {
-    return new IDBKeyRange(value, undefined, open, undefined);
+    return new IDBKeyRange(value, null, open, true);
 };
 IDBKeyRange.upperBound = function (value, open) {
-    return new IDBKeyRange(undefined, value, undefined, open);
+    return new IDBKeyRange(null, value, true, open);
 };
 IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
     return new IDBKeyRange(lower, upper, lowerOpen, upperOpen);
 };
+Object.defineProperty(IDBKeyRange, Symbol.hasInstance, {
+    value: function value(obj) {
+        return obj && (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === 'object' && 'upper' in obj && typeof obj.lowerOpen === 'boolean';
+    }
+});
 
 exports.default = IDBKeyRange;
 module.exports = exports['default'];
@@ -17944,7 +18002,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
  */
 IDBObjectStore.prototype.__validateKey = function (value, key) {
     if (this.keyPath) {
-        if (typeof key !== 'undefined') {
+        if (key !== undefined) {
             throw (0, _DOMException.createDOMException)('DataError', 'The object store uses in-line keys and the key parameter was provided', this);
         } else if (value && (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object') {
             key = _Key2.default.getValue(value, this.keyPath);
@@ -17959,7 +18017,7 @@ IDBObjectStore.prototype.__validateKey = function (value, key) {
             throw (0, _DOMException.createDOMException)('DataError', 'KeyPath was specified, but value was not an object');
         }
     } else {
-        if (typeof key === 'undefined') {
+        if (key === undefined) {
             if (this.autoIncrement) {
                 // A key will be generated
                 return;
@@ -18012,7 +18070,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
             success(primaryKey);
         }
     } else {
-        if (typeof key === 'undefined' && me.autoIncrement) {
+        if (key === undefined && me.autoIncrement) {
             // Looks like this has autoInc, so lets get the next in sequence and return that.
             getNextAutoIncKey(success);
         } else {
@@ -18024,7 +18082,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
 IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey, success, error) {
     try {
         var paramMap = {};
-        if (typeof primaryKey !== 'undefined') {
+        if (primaryKey !== undefined) {
             _Key2.default.validate(primaryKey);
             paramMap.key = _Key2.default.encode(primaryKey);
         }
@@ -18178,7 +18236,7 @@ IDBObjectStore.prototype.clear = function () {
 IDBObjectStore.prototype.count = function (key) {
     var _this = this;
 
-    if (key instanceof _IDBKeyRange2.default) {
+    if (_util2.default.instanceOf(key, _IDBKeyRange2.default)) {
         return new _IDBCursor.IDBCursor(key, 'next', this, this, 'key', 'value', true).__req;
     } else {
         var _ret = function () {
@@ -18243,7 +18301,7 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath, optionalPar
     if (arguments.length === 1) {
         throw new TypeError('No key path was specified');
     }
-    if (keyPath instanceof Array && optionalParameters && optionalParameters.multiEntry) {
+    if (Array.isArray(keyPath) && optionalParameters && optionalParameters.multiEntry) {
         throw (0, _DOMException.createDOMException)('InvalidAccessError', 'The keyPath argument was an array and the multiEntry option is true.');
     }
     if (this.__indexes[indexName] && !this.__indexes[indexName].__deleted) {
@@ -18348,6 +18406,8 @@ var uniqueID = 0;
  * @constructor
  */
 function IDBTransaction(db, storeNames, mode) {
+    var _this = this;
+
     this.__id = ++uniqueID; // for debugging simultaneous transactions
     this.__active = true;
     this.__running = false;
@@ -18360,9 +18420,8 @@ function IDBTransaction(db, storeNames, mode) {
     this.onabort = this.onerror = this.oncomplete = null;
 
     // Kick off the transaction as soon as all synchronous code is done.
-    var me = this;
     setTimeout(function () {
-        me.__executeRequests();
+        _this.__executeRequests();
     }, 0);
 }
 
@@ -18393,8 +18452,12 @@ IDBTransaction.prototype.__executeRequests = function () {
             executeNextRequest();
         }
 
-        function error(tx, err) {
-            err = (0, _DOMException.findError)(arguments);
+        function error() /* tx, err */{
+            for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+                args[_key] = arguments[_key];
+            }
+
+            var err = (0, _DOMException.findError)(args);
             try {
                 // Fire an error event for the current IDBRequest
                 q.req.readyState = 'done';
@@ -18561,6 +18624,8 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
 };
 
 IDBTransaction.prototype.abort = function () {
+    var _this2 = this;
+
     var me = this;
     _cfg2.default.DEBUG && console.log('The transaction was aborted', me);
     me.__active = false;
@@ -18568,7 +18633,7 @@ IDBTransaction.prototype.abort = function () {
 
     // Fire the "onabort" event asynchronously, so errors don't bubble
     setTimeout(function () {
-        _util2.default.callback('onabort', me, evt);
+        _util2.default.callback('onabort', _this2, evt);
     }, 0);
 };
 
@@ -18588,12 +18653,18 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 var _DOMException = require('./DOMException.js');
 
+var _util = require('./util.js');
+
+var _util2 = _interopRequireDefault(_util);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 var Key = {};
 
 /**
  * Encodes the keys based on their types. This is required to maintain collations
  */
-var collations = ['undefined', 'number', 'date', 'string', 'array'];
+var collations = ['undefined', 'number', 'date', 'string', 'array', 'object'];
 
 /**
  * The sign values for numbers, ordered from least to greatest.
@@ -18623,7 +18694,7 @@ var types = {
             return collations.indexOf('date') + '-' + key.toJSON();
         },
         decode: function decode(key) {
-            return new Date(key.substring(2));
+            return new Date(key.slice(2));
         }
     },
 
@@ -18739,12 +18810,22 @@ var types = {
             return collations.indexOf('string') + '-' + key;
         },
         decode: function decode(key, inArray) {
-            key = key.substring(2);
+            key = key.slice(2);
             if (inArray) {
                 // remove the space at the end, and the dash before each character
                 key = key.substr(0, key.length - 1).replace(/-(.)/g, '$1');
             }
             return key;
+        }
+    },
+
+    // Objects are encoded as JSON strings.
+    object: {
+        encode: function encode(key) {
+            return collations.indexOf('object') + '-' + JSON.stringify(key);
+        },
+        decode: function decode(key) {
+            return JSON.parse(key.slice(2));
         }
     },
 
@@ -18762,7 +18843,7 @@ var types = {
             return collations.indexOf('array') + '-' + JSON.stringify(encoded);
         },
         decode: function decode(key) {
-            var decoded = JSON.parse(key.substring(2));
+            var decoded = JSON.parse(key.slice(2));
             decoded.pop(); // remove the extra item
             for (var i = 0; i < decoded.length; i++) {
                 var item = decoded[i];
@@ -18869,12 +18950,9 @@ function negate(s) {
  * Returns the string "number", "date", "string", or "array".
  */
 function getType(key) {
-    if (key instanceof Date) {
-        return 'date';
-    }
-    if (key instanceof Array) {
-        return 'array';
-    }
+    if (Array.isArray(key)) return 'array';
+    if (_util2.default.isDate(key)) return 'date';
+    if (key === null) return 'null';
     return typeof key === 'undefined' ? 'undefined' : _typeof(key);
 }
 
@@ -18887,7 +18965,7 @@ function validate(key) {
         for (var i = 0; i < key.length; i++) {
             validate(key[i]);
         }
-    } else if (!types[type] || type !== 'string' && isNaN(key)) {
+    } else if (!types[type] || type === 'object' || type !== 'string' && isNaN(key)) {
         throw (0, _DOMException.createDOMException)('DataError', 'Not a valid key');
     }
 }
@@ -18899,12 +18977,14 @@ function validate(key) {
  */
 function getValue(source, keyPath) {
     try {
-        if (keyPath instanceof Array) {
+        if (Array.isArray(keyPath)) {
             var arrayValue = [];
             for (var i = 0; i < keyPath.length; i++) {
                 arrayValue.push(eval('source.' + keyPath[i]));
             }
             return arrayValue;
+        } else if (keyPath === '') {
+            return source;
         } else {
             return eval('source.' + keyPath);
         }
@@ -18945,11 +19025,11 @@ function isMultiEntryMatch(encodedEntry, encodedKey) {
 }
 
 function isKeyInRange(key, range) {
-    var lowerMatch = range.lower === undefined;
-    var upperMatch = range.upper === undefined;
+    var lowerMatch = range.lower === null;
+    var upperMatch = range.upper === null;
     var encodedKey = _encode(key, true);
 
-    if (range.lower !== undefined) {
+    if (range.lower !== null) {
         if (range.lowerOpen && encodedKey > range.__lower) {
             lowerMatch = true;
         }
@@ -18957,7 +19037,7 @@ function isKeyInRange(key, range) {
             lowerMatch = true;
         }
     }
-    if (range.upper !== undefined) {
+    if (range.upper !== null) {
         if (range.upperOpen && encodedKey < range.__upper) {
             upperMatch = true;
         }
@@ -18972,11 +19052,11 @@ function isKeyInRange(key, range) {
 function findMultiEntryMatches(keyEntry, range) {
     var matches = [];
 
-    if (keyEntry instanceof Array) {
+    if (Array.isArray(keyEntry)) {
         for (var i = 0; i < keyEntry.length; i++) {
             var key = keyEntry[i];
 
-            if (key instanceof Array) {
+            if (Array.isArray(key)) {
                 if (range.lower === range.upper) {
                     continue;
                 }
@@ -19004,7 +19084,7 @@ function findMultiEntryMatches(keyEntry, range) {
 }
 
 function _encode(key, inArray) {
-    if (key === undefined) {
+    if (key == null) {
         return null;
     }
     return types[getType(key)].encode(key, inArray);
@@ -19026,7 +19106,7 @@ exports.isMultiEntryMatch = isMultiEntryMatch;
 exports.findMultiEntryMatches = findMultiEntryMatches;
 exports.default = Key;
 
-},{"./DOMException.js":356}],367:[function(require,module,exports){
+},{"./DOMException.js":356,"./util.js":372}],367:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -19035,6 +19115,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = exports.decode = exports.encode = exports.retrocycle = exports.decycle = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; }; /*eslint-disable no-eval*/
+// Needed by Node; uses native if available (browser)
 
 
 var _atob = require('atob');
@@ -19045,9 +19126,11 @@ var _w3cBlob = require('w3c-blob');
 
 var _w3cBlob2 = _interopRequireDefault(_w3cBlob);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+var _util = require('./util.js');
 
-// Needed by Node; uses native if available (browser)
+var _util2 = _interopRequireDefault(_util);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
  * Implementation of the Structured Cloning Algorithm.  Supports the
@@ -19119,7 +19202,7 @@ function decycle(object, callback) {
         reader.onloadend = function (loadedEvent) {
             var dataURL = loadedEvent.target.result;
             var blobtype = 'Blob';
-            if (blob instanceof File) {
+            if (_util2.default.isFile(blob)) {
                 // blobtype = 'File';
             }
             updateEncodedBlob(dataURL, path, blobtype);
@@ -19154,7 +19237,9 @@ function decycle(object, callback) {
         // typeof null === 'object', so go on if this value is really an object but not
         // one of the weird builtin objects.
 
-        if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' && value !== null && !(value instanceof Boolean) && !(value instanceof Date) && !(value instanceof Number) && !(value instanceof RegExp) && !(value instanceof _w3cBlob2.default) && !(value instanceof String)) {
+        var isObj = (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' && value !== null;
+        var valOfType = isObj && _typeof(value.valueOf());
+        if (isObj && !['boolean', 'number', 'string'].includes(valOfType) && !_util2.default.isDate(value) && !_util2.default.isRegExp(value) && !_util2.default.isBlob(_w3cBlob2.default)) {
             // If the value is an object or array, look to see if we have already
             // encountered it. If so, return a $ref/path object. This is a hard way,
             // linear search that will get slower as the number of unique objects grows.
@@ -19188,26 +19273,26 @@ function decycle(object, callback) {
             }
 
             return nu;
-        } else if (value instanceof _w3cBlob2.default) {
+        } else if (_util2.default.isBlob(value)) {
             // Queue blob for conversion
             queuedObjects.push(path);
             readBlobAsDataURL(value, path);
-        } else if (value instanceof Boolean) {
+        } else if (valOfType === 'boolean') {
             value = {
                 '$type': 'Boolean',
                 '$enc': value.toString()
             };
-        } else if (value instanceof Date) {
+        } else if (_util2.default.isDate(value)) {
             value = {
                 '$type': 'Date',
                 '$enc': value.getTime()
             };
-        } else if (value instanceof Number) {
+        } else if (valOfType === 'number') {
             value = {
                 '$type': 'Number',
                 '$enc': value.toString()
             };
-        } else if (value instanceof RegExp) {
+        } else if (_util2.default.isRegExp(value)) {
             value = {
                 '$type': 'RegExp',
                 '$enc': value.toString()
@@ -19392,7 +19477,7 @@ exports.encode = encode;
 exports.decode = decode;
 exports.default = Sca;
 
-},{"atob":2,"w3c-blob":348}],368:[function(require,module,exports){
+},{"./util.js":372,"atob":2,"w3c-blob":348}],368:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -19506,7 +19591,7 @@ function shimAll(idb) {
     shim('shimIndexedDB', _IDBFactory.shimIndexedDB);
     if (IDB.shimIndexedDB) {
         IDB.shimIndexedDB.__useShim = function () {
-            if (typeof _cfg2.default.win.openDatabase !== 'undefined') {
+            if (_cfg2.default.win.openDatabase !== undefined) {
                 // Polyfill ALL of IndexedDB, using WebSQL
                 shim('indexedDB', _IDBFactory.shimIndexedDB);
                 shim('IDBFactory', _IDBFactory.IDBFactory);
@@ -19545,7 +19630,7 @@ function shimAll(idb) {
         }
     }
 
-    if ((typeof IDB.indexedDB === 'undefined' || !IDB.indexedDB || poorIndexedDbSupport) && typeof _cfg2.default.win.openDatabase !== 'undefined') {
+    if ((IDB.indexedDB === undefined || !IDB.indexedDB || poorIndexedDbSupport) && _cfg2.default.win.openDatabase !== undefined) {
         IDB.shimIndexedDB.__useShim();
     } else {
         IDB.IDBDatabase = IDB.IDBDatabase || IDB.webkitIDBDatabase;
@@ -19645,17 +19730,17 @@ function compoundKeyPolyfill(IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFact
 
     IDBFactory.prototype.cmp = function (key1, key2) {
         var args = Array.prototype.slice.call(arguments);
-        if (key1 instanceof Array) {
+        if (Array.isArray(key1)) {
             args[0] = encodeCompoundKey(key1);
         }
-        if (key2 instanceof Array) {
+        if (Array.isArray(key2)) {
             args[1] = encodeCompoundKey(key2);
         }
         return cmp.apply(this, args);
     };
 
     IDBDatabase.prototype.createObjectStore = function (name, opts) {
-        if (opts && opts.keyPath instanceof Array) {
+        if (opts && Array.isArray(opts.keyPath)) {
             opts.keyPath = encodeCompoundKeyPath(opts.keyPath);
         }
         return createObjectStore.apply(this, arguments);
@@ -19663,18 +19748,26 @@ function compoundKeyPolyfill(IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFact
 
     IDBObjectStore.prototype.createIndex = function (name, keyPath, opts) {
         var args = Array.prototype.slice.call(arguments);
-        if (keyPath instanceof Array) {
+        if (Array.isArray(keyPath)) {
             args[1] = encodeCompoundKeyPath(keyPath);
         }
         return createIndex.apply(this, args);
     };
 
-    IDBObjectStore.prototype.add = function (value, key) {
-        return this.__insertData(add, arguments);
+    IDBObjectStore.prototype.add = function () /* value, key */{
+        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
+        }
+
+        return this.__insertData(add, args);
     };
 
-    IDBObjectStore.prototype.put = function (value, key) {
-        return this.__insertData(put, arguments);
+    IDBObjectStore.prototype.put = function () /* value, key */{
+        for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+            args[_key2] = arguments[_key2];
+        }
+
+        return this.__insertData(put, args);
     };
 
     IDBObjectStore.prototype.__insertData = function (method, args) {
@@ -19683,7 +19776,7 @@ function compoundKeyPolyfill(IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFact
         var key = args[1];
 
         // out-of-line key
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[1] = encodeCompoundKey(key);
         }
 
@@ -19710,7 +19803,7 @@ function compoundKeyPolyfill(IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFact
 
     IDBIndex.prototype.get = function (key) {
         var args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return indexGet.apply(this, args);
@@ -19718,7 +19811,7 @@ function compoundKeyPolyfill(IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFact
 
     IDBIndex.prototype.getKey = function (key) {
         var args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return indexGetKey.apply(this, args);
@@ -19726,7 +19819,7 @@ function compoundKeyPolyfill(IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFact
 
     IDBIndex.prototype.openCursor = function (key) {
         var args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return indexCursor.apply(this, args);
@@ -19734,7 +19827,7 @@ function compoundKeyPolyfill(IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFact
 
     IDBIndex.prototype.openKeyCursor = function (key) {
         var args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return indexKeyCursor.apply(this, args);
@@ -19742,7 +19835,7 @@ function compoundKeyPolyfill(IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFact
 
     IDBObjectStore.prototype.get = function (key) {
         var args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return storeGet.apply(this, args);
@@ -19750,7 +19843,7 @@ function compoundKeyPolyfill(IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFact
 
     IDBObjectStore.prototype.delete = function (key) {
         var args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return storeDelete.apply(this, args);
@@ -19758,7 +19851,7 @@ function compoundKeyPolyfill(IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFact
 
     IDBObjectStore.prototype.openCursor = function (key) {
         var args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return storeCursor.apply(this, args);
@@ -19766,7 +19859,7 @@ function compoundKeyPolyfill(IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFact
 
     IDBObjectStore.prototype.openKeyCursor = function (key) {
         var args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return storeKeyCursor.apply(this, args);
@@ -19774,10 +19867,10 @@ function compoundKeyPolyfill(IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFact
 
     IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
         var args = Array.prototype.slice.call(arguments);
-        if (lower instanceof Array) {
+        if (Array.isArray(lower)) {
             args[0] = encodeCompoundKey(lower);
         }
-        if (upper instanceof Array) {
+        if (Array.isArray(upper)) {
             args[1] = encodeCompoundKey(upper);
         }
         return bound.apply(IDBKeyRange, args);
@@ -19785,7 +19878,7 @@ function compoundKeyPolyfill(IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFact
 
     IDBKeyRange.upperBound = function (key, open) {
         var args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return upperBound.apply(IDBKeyRange, args);
@@ -19793,7 +19886,7 @@ function compoundKeyPolyfill(IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFact
 
     IDBKeyRange.lowerBound = function (key, open) {
         var args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return lowerBound.apply(IDBKeyRange, args);
@@ -19801,7 +19894,7 @@ function compoundKeyPolyfill(IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFact
 
     IDBKeyRange.only = function (key) {
         var args = Array.prototype.slice.call(arguments);
-        if (key instanceof Array) {
+        if (Array.isArray(key)) {
             args[0] = encodeCompoundKey(key);
         }
         return only.apply(IDBKeyRange, args);
@@ -19941,6 +20034,9 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
 var cleanInterface = false;
 
 var testObject = { test: true };
@@ -20004,7 +20100,9 @@ StringList.prototype = {
         }
     },
     splice: function splice() /* index, howmany, item1, ..., itemX*/{
-        this._items.splice.apply(this._items, arguments);
+        var _items;
+
+        (_items = this._items).splice.apply(_items, arguments);
         this.length = this._items.length;
         for (var i in this) {
             if (i === String(parseInt(i, 10))) {
@@ -20032,11 +20130,37 @@ function quote(arg) {
     return '"' + arg + '"';
 }
 
-var util = { callback: callback, StringList: StringList, quote: quote };
+// Babel doesn't seem to provide a means of using the `instanceof` operator with Symbol.hasInstance (yet?)
+function instanceOf(obj, Clss) {
+    return Clss[Symbol.hasInstance](obj);
+}
+
+function isDate(obj) {
+    return obj && (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === 'object' && typeof obj.getDate === 'function';
+}
+
+function isBlob(obj) {
+    return obj && (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === 'object' && typeof obj.size === 'number' && typeof obj.slice === 'function';
+}
+
+function isRegExp(obj) {
+    return obj && (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === 'object' && typeof obj.flags === 'string' && typeof obj.exec === 'function';
+}
+
+function isFile(obj) {
+    return obj && (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === 'object' && typeof obj.name === 'string' && isBlob(obj);
+}
+
+var util = { callback: callback, StringList: StringList, quote: quote, instanceOf: instanceOf, isDate: isDate, isBlob: isBlob, isRegExp: isRegExp, isFile: isFile };
 
 exports.callback = callback;
 exports.StringList = StringList;
 exports.quote = quote;
+exports.instanceOf = instanceOf;
+exports.isDate = isDate;
+exports.isBlob = isBlob;
+exports.isRegExp = isRegExp;
+exports.isFile = isFile;
 exports.default = util;
 
 },{}]},{},[370])(370)

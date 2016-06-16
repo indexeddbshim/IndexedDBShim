@@ -12,7 +12,7 @@ describe('IDBFactory.cmp', function () {
     results[0] = ', but they were equal';
     results[1] = ', but it was greater';
 
-    // Asserts that a is less than b, and that b is less than a
+    // Asserts that a is less than b, and that b is greater than a
     function compare (a, b) {
         var result = indexedDB.cmp(a, b);
         if (result !== -1) {

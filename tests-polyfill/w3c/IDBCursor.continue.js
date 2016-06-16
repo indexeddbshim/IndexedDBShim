@@ -298,7 +298,7 @@ describe('W3C IDBCursor.continue Tests', function () {
                     assert.throws(
                         function() { cursor.continue(true); }, DataError);
 
-                    assert(cursor instanceof FDBCursorWithValue, "cursor");
+                    assert(cursor instanceof FDBCursor, "cursor"); // Changed as per new spec behavior: see https://github.com/brettz9/web-platform-tests/pull/1
 
                     done();
                 };

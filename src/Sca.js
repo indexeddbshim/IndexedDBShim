@@ -1,6 +1,7 @@
 /*eslint-disable no-eval*/
 import atob from 'atob';
 import Blob from 'w3c-blob'; // Needed by Node; uses native if available (browser)
+import util from './util.js';
 
 /**
  * Implementation of the Structured Cloning Algorithm.  Supports the
@@ -72,7 +73,7 @@ function decycle (object, callback) {
         reader.onloadend = function (loadedEvent) {
             const dataURL = loadedEvent.target.result;
             const blobtype = 'Blob';
-            if (blob instanceof File) {
+            if (util.isFile(blob)) {
                 // blobtype = 'File';
             }
             updateEncodedBlob(dataURL, path, blobtype);
@@ -105,13 +106,14 @@ function decycle (object, callback) {
         // typeof null === 'object', so go on if this value is really an object but not
         // one of the weird builtin objects.
 
-        if (typeof value === 'object' && value !== null &&
-            !(value instanceof Boolean) &&
-            !(value instanceof Date) &&
-            !(value instanceof Number) &&
-            !(value instanceof RegExp) &&
-            !(value instanceof Blob) &&
-            !(value instanceof String)) {
+        const isObj = typeof value === 'object' && value !== null;
+        const valOfType = isObj && typeof value.valueOf();
+        if (isObj &&
+            !(['boolean', 'number', 'string'].includes(valOfType)) &&
+            !(util.isDate(value)) &&
+            !(util.isRegExp(value)) &&
+            !(util.isBlob(Blob))
+        ) {
             // If the value is an object or array, look to see if we have already
             // encountered it. If so, return a $ref/path object. This is a hard way,
             // linear search that will get slower as the number of unique objects grows.
@@ -146,26 +148,26 @@ function decycle (object, callback) {
             }
 
             return nu;
-        } else if (value instanceof Blob) {
+        } else if (util.isBlob(value)) {
             // Queue blob for conversion
             queuedObjects.push(path);
             readBlobAsDataURL(value, path);
-        } else if (value instanceof Boolean) {
+        } else if (valOfType === 'boolean') {
             value = {
                 '$type': 'Boolean',
                 '$enc': value.toString()
             };
-        } else if (value instanceof Date) {
+        } else if (util.isDate(value)) {
             value = {
                 '$type': 'Date',
                 '$enc': value.getTime()
             };
-        } else if (value instanceof Number) {
+        } else if (valOfType === 'number') {
             value = {
                 '$type': 'Number',
                 '$enc': value.toString()
             };
-        } else if (value instanceof RegExp) {
+        } else if (util.isRegExp(value)) {
             value = {
                 '$type': 'RegExp',
                 '$enc': value.toString()

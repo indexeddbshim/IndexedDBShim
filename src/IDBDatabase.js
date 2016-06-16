@@ -38,7 +38,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName, createOptions) {
     if (this.__objectStores[storeName]) {
         throw createDOMException('ConstraintError', 'Object store "' + storeName + '" already exists in ' + this.name);
     }
-    this.__versionTransaction.__assertVersionChange();
+    IDBTransaction.__assertVersionChange(this.__versionTransaction); // this.__versionTransaction may not exist if called mistakenly by user in onsuccess
 
     createOptions = createOptions || {};
     /** @name IDBObjectStoreProperties **/
@@ -65,7 +65,7 @@ IDBDatabase.prototype.deleteObjectStore = function (storeName) {
     if (!store) {
         throw createDOMException('NotFoundError', 'Object store "' + storeName + '" does not exist in ' + this.name);
     }
-    this.__versionTransaction.__assertVersionChange();
+    IDBTransaction.__assertVersionChange(this.__versionTransaction); // this.__versionTransaction may not exist if called mistakenly by user in onsuccess
 
     IDBObjectStore.__deleteObjectStore(this, store);
 };
@@ -106,8 +106,7 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
         }
     }
 
-    const transaction = new IDBTransaction(this, storeNames, mode);
-    return transaction;
+    return new IDBTransaction(this, storeNames, mode);
 };
 
 export default IDBDatabase;

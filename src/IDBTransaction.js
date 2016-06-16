@@ -28,8 +28,7 @@ function IDBTransaction (db, storeNames, mode) {
     this.onabort = this.onerror = this.oncomplete = null;
 
     // Kick off the transaction as soon as all synchronous code is done.
-    const me = this;
-    setTimeout(function () { me.__executeRequests(); }, 0);
+    setTimeout(() => { this.__executeRequests(); }, 0);
 }
 
 IDBTransaction.prototype.__executeRequests = function () {
@@ -59,8 +58,8 @@ IDBTransaction.prototype.__executeRequests = function () {
                 executeNextRequest();
             }
 
-            function error (tx, err) {
-                err = findError(arguments);
+            function error (...args /* tx, err */) {
+                const err = findError(args);
                 try {
                     // Fire an error event for the current IDBRequest
                     q.req.readyState = 'done';
@@ -236,8 +235,8 @@ IDBTransaction.prototype.abort = function () {
     const evt = createEvent('abort');
 
     // Fire the "onabort" event asynchronously, so errors don't bubble
-    setTimeout(function () {
-        util.callback('onabort', me, evt);
+    setTimeout(() => {
+        util.callback('onabort', this, evt);
     }, 0);
 };
 

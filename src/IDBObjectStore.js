@@ -124,7 +124,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
  */
 IDBObjectStore.prototype.__validateKey = function (value, key) {
     if (this.keyPath) {
-        if (typeof key !== 'undefined') {
+        if (key !== undefined) {
             throw createDOMException('DataError', 'The object store uses in-line keys and the key parameter was provided', this);
         } else if (value && typeof value === 'object') {
             key = Key.getValue(value, this.keyPath);
@@ -139,7 +139,7 @@ IDBObjectStore.prototype.__validateKey = function (value, key) {
             throw createDOMException('DataError', 'KeyPath was specified, but value was not an object');
         }
     } else {
-        if (typeof key === 'undefined') {
+        if (key === undefined) {
             if (this.autoIncrement) {
                 // A key will be generated
                 return;
@@ -192,7 +192,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
             success(primaryKey);
         }
     } else {
-        if (typeof key === 'undefined' && me.autoIncrement) {
+        if (key === undefined && me.autoIncrement) {
             // Looks like this has autoInc, so lets get the next in sequence and return that.
             getNextAutoIncKey(success);
         } else {
@@ -204,7 +204,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
 IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey, success, error) {
     try {
         const paramMap = {};
-        if (typeof primaryKey !== 'undefined') {
+        if (primaryKey !== undefined) {
             Key.validate(primaryKey);
             paramMap.key = Key.encode(primaryKey);
         }
@@ -356,7 +356,7 @@ IDBObjectStore.prototype.clear = function () {
 };
 
 IDBObjectStore.prototype.count = function (key) {
-    if (key instanceof IDBKeyRange) {
+    if (util.instanceOf(key, IDBKeyRange)) {
         return new IDBCursor(key, 'next', this, this, 'key', 'value', true).__req;
     } else {
         const me = this;
@@ -415,7 +415,7 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath, optionalPar
     if (arguments.length === 1) {
         throw new TypeError('No key path was specified');
     }
-    if (keyPath instanceof Array && optionalParameters && optionalParameters.multiEntry) {
+    if (Array.isArray(keyPath) && optionalParameters && optionalParameters.multiEntry) {
         throw createDOMException('InvalidAccessError', 'The keyPath argument was an array and the multiEntry option is true.');
     }
     if (this.__indexes[indexName] && !this.__indexes[indexName].__deleted) {

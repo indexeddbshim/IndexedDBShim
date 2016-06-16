@@ -129,7 +129,7 @@ global.initionalSituationObjectStoreNoAutoIncrement = function(callBack, done, a
                 }
             }
         };
-    });
+    }, done, assert);
 }
 global.initionalSituationObjectStoreWithAutoIncrement = function(callBack, done, assert) {
     initionalSituation(function() {
@@ -153,7 +153,7 @@ global.initionalSituationObjectStoreWithAutoIncrement = function(callBack, done,
                 }
             }
         };
-    });
+    }, done, assert);
 }
 global.initionalSituationObjectStoreWithKeyPathNoAutoIncrement = function(callBack, done, assert) {
     initionalSituation(function() {
@@ -177,7 +177,7 @@ global.initionalSituationObjectStoreWithKeyPathNoAutoIncrement = function(callBa
                 }
             }
         };
-    });
+    }, done, assert);
 }
 global.initionalSituationObjectStoreWithKeyPathAndAutoIncrement = function(callBack, done, assert) {
     initionalSituation(function() {
@@ -201,7 +201,7 @@ global.initionalSituationObjectStoreWithKeyPathAndAutoIncrement = function(callB
                 }
             }
         };
-    });
+    }, done, assert);
 }
 global.initionalSituationObjectStoreNoAutoIncrementWithData = function(callBack, done, assert) {
     initionalSituation(function() {
@@ -226,7 +226,7 @@ global.initionalSituationObjectStoreNoAutoIncrementWithData = function(callBack,
                 }
             }
         };
-    });
+    }, done, assert);
 }
 global.initionalSituationObjectStoreWithKeyPathAndData = function(callBack, done, assert) {
     initionalSituation(function() {
@@ -251,7 +251,7 @@ global.initionalSituationObjectStoreWithKeyPathAndData = function(callBack, done
                 }
             }
         };
-    });
+    }, done, assert);
 }
 global.initionalSituationObjectStoreWithKeyPathAndDataNoAutoIncrement = function(callBack, done, assert) {
     initionalSituation(function() {
@@ -276,7 +276,7 @@ global.initionalSituationObjectStoreWithKeyPathAndDataNoAutoIncrement = function
                 }
             }
         };
-    });
+    }, done, assert);
 }
 global.initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement = function(callBack, done, assert) {
     initionalSituation(function() {
@@ -310,7 +310,7 @@ global.initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement = 
                 }
             }
         };
-    });
+    }, done, assert);
 }
 global.initionalSituationIndex = function(callBack, done, assert) {
     initionalSituation(function(){

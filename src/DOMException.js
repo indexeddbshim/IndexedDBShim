@@ -49,6 +49,10 @@ function logError (name, message, error) {
     }
 };
 
+function isErrorOrDOMErrorOrDOMException (obj) {
+    return obj && typeof obj === 'object' && typeof obj.name === 'string';
+}
+
 /**
  * Finds the error argument.  This is useful because some WebSQL callbacks
  * pass the error as the first argument, and some pass it as the second argument.
@@ -63,10 +67,7 @@ function findError (args) {
         }
         for (let i = 0; i < args.length; i++) {
             const arg = args[i];
-            if (arg instanceof Error ||
-                (typeof DOMError !== 'undefined' && arg instanceof DOMError) ||
-                (typeof DOMException !== 'undefined' && arg instanceof DOMException)
-            ) {
+            if (isErrorOrDOMErrorOrDOMException(arg)) {
                 return arg;
             } else if (arg && typeof arg.message === 'string') {
                 err = arg;
@@ -81,7 +82,7 @@ let test, useNativeDOMException = false, useNativeDOMError = false;
 // Test whether we can use the browser's native DOMException class
 try {
     test = createNativeDOMException('test name', 'test message');
-    if (test instanceof DOMException && test.name === 'test name' && test.message === 'test message') {
+    if (isErrorOrDOMErrorOrDOMException(test) && test.name === 'test name' && test.message === 'test message') {
         // Native DOMException works as expected
         useNativeDOMException = true;
     }
@@ -90,7 +91,7 @@ try {
 // Test whether we can use the browser's native DOMError class
 try {
     test = createNativeDOMError('test name', 'test message');
-    if (test instanceof DOMError && test.name === 'test name' && test.message === 'test message') {
+    if (isErrorOrDOMErrorOrDOMException(test) && test.name === 'test name' && test.message === 'test message') {
         // Native DOMError works as expected
         useNativeDOMError = true;
     }

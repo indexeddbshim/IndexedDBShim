@@ -9,10 +9,10 @@ import Key from './Key.js';
  * @param {Object} upperOpen
  */
 function IDBKeyRange (lower, upper, lowerOpen, upperOpen) {
-    if (lower !== undefined) {
+    if (lower !== null) {
         Key.validate(lower);
     }
-    if (upper !== undefined) {
+    if (upper !== null) {
         Key.validate(upper);
     }
 
@@ -27,13 +27,16 @@ IDBKeyRange.only = function (value) {
 };
 
 IDBKeyRange.lowerBound = function (value, open) {
-    return new IDBKeyRange(value, undefined, open, undefined);
+    return new IDBKeyRange(value, null, open, true);
 };
 IDBKeyRange.upperBound = function (value, open) {
-    return new IDBKeyRange(undefined, value, undefined, open);
+    return new IDBKeyRange(null, value, true, open);
 };
 IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
     return new IDBKeyRange(lower, upper, lowerOpen, upperOpen);
 };
+Object.defineProperty(IDBKeyRange, Symbol.hasInstance, {
+    value: obj => obj && typeof obj === 'object' && 'upper' in obj && typeof obj.lowerOpen === 'boolean'
+});
 
 export default IDBKeyRange;

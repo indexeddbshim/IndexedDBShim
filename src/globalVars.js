@@ -46,7 +46,7 @@ function shimAll (idb) {
     shim('shimIndexedDB', shimIndexedDB);
     if (IDB.shimIndexedDB) {
         IDB.shimIndexedDB.__useShim = function () {
-            if (typeof CFG.win.openDatabase !== 'undefined') {
+            if (CFG.win.openDatabase !== undefined) {
                 // Polyfill ALL of IndexedDB, using WebSQL
                 shim('indexedDB', shimIndexedDB);
                 shim('IDBFactory', shimIDBFactory);
@@ -87,7 +87,7 @@ function shimAll (idb) {
         }
     }
 
-    if ((typeof IDB.indexedDB === 'undefined' || !IDB.indexedDB || poorIndexedDbSupport) && typeof CFG.win.openDatabase !== 'undefined') {
+    if ((IDB.indexedDB === undefined || !IDB.indexedDB || poorIndexedDbSupport) && CFG.win.openDatabase !== undefined) {
         IDB.shimIndexedDB.__useShim();
     } else {
         IDB.IDBDatabase = IDB.IDBDatabase || IDB.webkitIDBDatabase;

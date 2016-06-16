@@ -14,8 +14,8 @@ let sysdb;
  * Craetes the sysDB to keep track of version numbers for databases
  **/
 function createSysDB (success, failure) {
-    function sysDbCreateError (tx, err) {
-        err = findError(arguments);
+    function sysDbCreateError (...args /* tx, err*/) {
+        const err = findError(args);
         CFG.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
         failure(err);
     }
@@ -58,13 +58,13 @@ IDBFactory.prototype.open = function (name, version) {
     }
     name = name + ''; // cast to a string
 
-    function dbCreateError (tx, err) {
+    function dbCreateError (...args /* tx, err*/) {
         if (calledDbCreateError) {
             return;
         }
-        err = findError(arguments);
+        const err = findError(args);
         calledDbCreateError = true;
-        const evt = createEvent('error', arguments);
+        const evt = createEvent('error', args);
         req.readyState = 'done';
         req.error = err || DOMException;
         util.callback('onerror', req, evt);
@@ -73,7 +73,7 @@ IDBFactory.prototype.open = function (name, version) {
     function openDB (oldVersion) {
         const db = CFG.win.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
         req.readyState = 'done';
-        if (typeof version === 'undefined') {
+        if (version === undefined) {
             version = oldVersion || 1;
         }
         if (version <= 0 || oldVersion > version) {
@@ -147,15 +147,15 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     }
     name = name + ''; // cast to a string
 
-    function dbError (tx, err) {
+    function dbError (...args /* tx, err*/) {
         if (calledDBError) {
             return;
         }
-        err = findError(arguments);
+        const err = findError(args);
         req.readyState = 'done';
         req.error = err || DOMException;
         const e = createEvent('error');
-        e.debug = arguments;
+        e.debug = args;
         util.callback('onerror', req, e);
         calledDBError = true;
     }

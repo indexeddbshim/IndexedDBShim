@@ -14,6 +14,10 @@ function createNativeEvent (type, debug) {
     return event;
 }
 
+function isEvent (ev) {
+    return typeof ev.bubbles === 'boolean' && typeof ev.stopPropgation === 'function';
+}
+
 /**
  * A shim Event class, for browsers that don't allow us to create native Event objects.
  * @constructor
@@ -34,7 +38,7 @@ try {
     const target = {test: 'test target'};
     test.target = target;
 
-    if (test instanceof Event && test.type === 'test type' && test.debug === 'test debug' && test.target === target) {
+    if (isEvent(test) && test.type === 'test type' && test.debug === 'test debug' && test.target === target) {
         // Native events work as expected
         useNativeEvent = true;
     }

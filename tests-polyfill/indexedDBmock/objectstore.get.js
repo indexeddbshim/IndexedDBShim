@@ -151,7 +151,7 @@ describe('Objectstore - Get', function() {
         }, done, assert);
     });
 
-    it("Retrieving data - key range lowerBound exclusieve", function (done) {
+    it("Retrieving data - key range lowerBound exclusive", function (done) {
         initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
             var request = indexedDb.open(dbName);
             request.onsuccess = function(e){

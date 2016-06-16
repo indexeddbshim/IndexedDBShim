@@ -60,8 +60,8 @@ StringList.prototype = {
             this[i] = this._items[i];
         }
     },
-    splice: function (/* index, howmany, item1, ..., itemX*/) {
-        this._items.splice.apply(this._items, arguments);
+    splice: function (...args /* index, howmany, item1, ..., itemX*/) {
+        this._items.splice(...args);
         this.length = this._items.length;
         for (const i in this) {
             if (i === String(parseInt(i, 10))) {
@@ -89,6 +89,27 @@ function quote (arg) {
     return '"' + arg + '"';
 }
 
-const util = {callback, StringList, quote};
+// Babel doesn't seem to provide a means of using the `instanceof` operator with Symbol.hasInstance (yet?)
+function instanceOf (obj, Clss) {
+    return Clss[Symbol.hasInstance](obj);
+}
 
-export {callback, StringList, quote, util as default};
+function isDate (obj) {
+    return obj && typeof obj === 'object' && typeof obj.getDate === 'function';
+}
+
+function isBlob (obj) {
+    return obj && typeof obj === 'object' && typeof obj.size === 'number' && typeof obj.slice === 'function';
+}
+
+function isRegExp (obj) {
+    return obj && typeof obj === 'object' && typeof obj.flags === 'string' && typeof obj.exec === 'function';
+}
+
+function isFile (obj) {
+    return obj && typeof obj === 'object' && typeof obj.name === 'string' && isBlob(obj);
+}
+
+const util = {callback, StringList, quote, instanceOf, isDate, isBlob, isRegExp, isFile};
+
+export {callback, StringList, quote, instanceOf, isDate, isBlob, isRegExp, isFile, util as default};

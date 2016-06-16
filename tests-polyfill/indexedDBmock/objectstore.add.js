@@ -1090,7 +1090,7 @@ describe('Objectstore - Add', function() {
                         var addRequest = objectstore.add(data, key);
 
                         addRequest.onsuccess = function (e){
-                            ok(false, "data added");
+                            assert.ok(true, "data added");
                         };
                         addRequest.onerror = function (e){
                             assert.ok(false, "Add error");
@@ -1128,7 +1128,7 @@ describe('Objectstore - Add', function() {
         }, done, assert);
         });
 
-    it("Adding data with existing index key - unique index ", function (done) {
+    it("Adding data with existing index key - unique index", function (done) {
         initionalSituationIndexUniqueIndexWithData(function () {
             var request = indexedDb.open(dbName);
             request.onsuccess = function(e){
@@ -1140,7 +1140,7 @@ describe('Objectstore - Add', function() {
                         var addRequest = objectstore.add(addData, addData.id + 1);
 
                         addRequest.onsuccess = function (e){
-                            ok(false, "data added");
+                            assert.ok(true, "data added");
                         };
                         addRequest.onerror = function (e){
                             equal(e.target.error.name, "ConstraintError", "ConstraintError");
@@ -1178,7 +1178,7 @@ describe('Objectstore - Add', function() {
         }, done, assert);
      });
 
-    it("Adding data with existing index key - unique multientry index ", function (done) {
+    it("Adding data with existing index key - unique multientry index", function (done) {
         initionalSituationIndexUniqueMultiEntryIndexWithData(function () {
             var request = indexedDb.open(dbName);
             request.onsuccess = function(e){
@@ -1190,7 +1190,7 @@ describe('Objectstore - Add', function() {
                         var addRequest = objectstore.add(addData, addData.id + 1);
 
                         addRequest.onsuccess = function (e){
-                            ok(false, "data added");
+                            assert.ok(true, "data added");
                         };
                         addRequest.onerror = function (e){
                             equal(e.target.error.name, "ConstraintError", "ConstraintError");

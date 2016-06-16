@@ -198,7 +198,7 @@ IDBIndex.prototype.__fetchIndexData = function (key, opType) {
                         recordCount++;
                         record = record || row;
                     } else if (!hasKey && rowKey !== undefined) {
-                        recordCount = recordCount + (rowKey instanceof Array ? rowKey.length : 1);
+                        recordCount = recordCount + (Array.isArray(rowKey) ? rowKey.length : 1);
                         record = record || row;
                     }
                 }
@@ -261,10 +261,14 @@ IDBIndex.prototype.count = function (key) {
     if (key === undefined) {
         return this.__fetchIndexData('count');
     }
-    if (key instanceof IDBKeyRange) {
+    if (util.instanceOf(key, IDBKeyRange)) {
         return new IDBCursor(key, 'next', this.objectStore, this, this.name, 'value', true).__req;
     }
     return this.__fetchIndexData(key, 'count');
 };
+
+Object.defineProperty(IDBIndex, Symbol.hasInstance, {
+    value: obj => obj && typeof obj === 'object' && typeof obj.openCursor === 'function' && typeof obj.multiEntry === 'boolean'
+});
 
 export default IDBIndex;

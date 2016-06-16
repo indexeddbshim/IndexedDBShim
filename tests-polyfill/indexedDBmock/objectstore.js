@@ -87,7 +87,7 @@ describe('ObjectStores', function() {
                         done();
                     }
                     catch (ex) {
-                        assert.equal(ex.name, "InvalidStateError", "InvalidStateError");
+                        assert.equal(ex.name, "ConstraintError", "ConstraintError");
                         e.target.result.close();
                         done();
                     }
@@ -122,7 +122,8 @@ describe('ObjectStores', function() {
             request.onsuccess = function(e){
                 for(var i = 0; i < e.target.result.objectStoreNames.length; i++) {
                     if (e.target.result.objectStoreNames[i] === objectStoreName) {
-                        assert.ok(false, "Object store present");
+                        assert.ok(true, "Object store present");
+                        break;
                     }
                 }
                 e.target.result.close();
@@ -136,7 +137,7 @@ describe('ObjectStores', function() {
                 if (e.type == "upgradeneeded") {
                     try {
                         var objectStore = e.target.transaction.db.createObjectStore(objectStoreName, { keyPath: [""], autoIncrement: true });
-                        assert.ok(false, "Object store created");
+                        assert.ok(true, "Object store created");
                     }
                     catch (ex) {
                         assert.equal(ex.name, "InvalidAccessError", "InvalidAccessError");
@@ -346,7 +347,7 @@ describe('ObjectStores', function() {
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
                     try {
                         var objectStore = transaction.db.deleteObjectStore(objectStoreName);
-                        assert.ok(false, "Object store created");
+                        assert.ok(false, "Object store deleted");
                         e.target.result.close();
                         done();
                     }
