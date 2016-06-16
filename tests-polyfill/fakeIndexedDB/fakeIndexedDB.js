@@ -1,10 +1,14 @@
 var assert = require('assert')
 var indexedDB = require('../test-helper')
 
+function getFakeTestName () {
+    return 'test' + Math.random() + '.sqlite';
+}
+
 describe('indexedDB Tests', function () {
     describe('Transaction Lifetime', function () {
         it('Transactions should be activated from queue based on mode', function (done) {
-            var request = indexedDB.open('test' + Math.random());
+            var request = indexedDB.open(getFakeTestName());
             request.onupgradeneeded = function(e) {
                 var db = e.target.result;
                 var store = db.createObjectStore('store', {keyPath: 'key'});
@@ -65,7 +69,7 @@ describe('indexedDB Tests', function () {
     });
     describe('Transaction Rollback', function () {
         it('Rollback FDBObjectStore.add', function (done) {
-            var request = indexedDB.open('test' + Math.random());
+            var request = indexedDB.open(getFakeTestName());
             request.onupgradeneeded = function(e) {
                 var db = e.target.result;
                 var store = db.createObjectStore('store', {autoIncrement: true});
@@ -106,7 +110,7 @@ describe('indexedDB Tests', function () {
         });
 
         it('Rollback FDBObjectStore.clear', function (done) {
-            var request = indexedDB.open('test' + Math.random());
+            var request = indexedDB.open(getFakeTestName());
             request.onupgradeneeded = function(e) {
                 var db = e.target.result;
                 var store = db.createObjectStore('store', {autoIncrement: true});
@@ -136,7 +140,7 @@ describe('indexedDB Tests', function () {
         });
 
         it('Rollback FDBObjectStore.delete', function (done) {
-            var request = indexedDB.open('test' + Math.random());
+            var request = indexedDB.open(getFakeTestName());
             request.onupgradeneeded = function(e) {
                 var db = e.target.result;
                 var store = db.createObjectStore('store', {autoIncrement: true});
@@ -166,7 +170,7 @@ describe('indexedDB Tests', function () {
         });
 
         it('Rollback FDBObjectStore.put', function (done) {
-            var request = indexedDB.open('test' + Math.random());
+            var request = indexedDB.open(getFakeTestName());
             request.onupgradeneeded = function(e) {
                 var db = e.target.result;
                 var store = db.createObjectStore('store', {autoIncrement: true});
@@ -195,7 +199,7 @@ describe('indexedDB Tests', function () {
         });
 
         it('Rollback FDBCursor.delete', function (done) {
-            var request = indexedDB.open('test' + Math.random());
+            var request = indexedDB.open(getFakeTestName());
             request.onupgradeneeded = function(e) {
                 var db = e.target.result;
                 var store = db.createObjectStore('store', {autoIncrement: true});
@@ -229,7 +233,7 @@ describe('indexedDB Tests', function () {
         });
 
         it('Rollback FDBCursor.update', function (done) {
-            var request = indexedDB.open('test' + Math.random());
+            var request = indexedDB.open(getFakeTestName());
             request.onupgradeneeded = function(e) {
                 var db = e.target.result;
                 var store = db.createObjectStore('store', {autoIncrement: true});
@@ -263,7 +267,7 @@ describe('indexedDB Tests', function () {
         });
 
         it('Rollback of versionchange transaction', function (done) {
-            var dbName = 'test' + Math.random();
+            var dbName = getFakeTestName();
             var request = indexedDB.open(dbName);
             request.onupgradeneeded = function(e) {
                 var db = e.target.result;

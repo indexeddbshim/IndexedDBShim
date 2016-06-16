@@ -88,7 +88,7 @@ describe('W3C IDBCursor Behavior Tests', function () {
             var directions = ["next", "prev", "nextunique", "prevunique"];
             var doneCount = 0;
 
-            var open_rq = indexedDB.open("testdb-" + new Date().getTime() + Math.random());
+            var open_rq = indexedDB.open(support.getDBNameRandom());
 
             open_rq.onupgradeneeded = function(e) {
                 var objStore = e.target.result.createObjectStore("test");
@@ -146,7 +146,7 @@ describe('W3C IDBCursor Behavior Tests', function () {
             var directions = ["next", "prev", "nextunique", "prevunique"];
             var doneCount = 0;
 
-            var open_rq = indexedDB.open("testdb-" + new Date().getTime() + Math.random());
+            var open_rq = indexedDB.open(support.getDBNameRandom());
 
             open_rq.onupgradeneeded = function(e) {
                 var objStore = e.target.result.createObjectStore("test");
@@ -204,7 +204,7 @@ describe('W3C IDBCursor Behavior Tests', function () {
             var directions = ["next", "prev", "nextunique", "prevunique"];
             var doneCount = 0;
 
-            var open_rq = indexedDB.open("testdb-" + new Date().getTime() + Math.random());
+            var open_rq = indexedDB.open(support.getDBNameRandom());
 
             open_rq.onupgradeneeded = function(e) {
                 var objStore = e.target.result.createObjectStore("test");
@@ -261,7 +261,7 @@ describe('W3C IDBCursor Behavior Tests', function () {
             var directions = ["next", "prev", "nextunique", "prevunique"];
             var doneCount = 0;
 
-            var open_rq = indexedDB.open("testdb-" + new Date().getTime() + Math.random());
+            var open_rq = indexedDB.open(support.getDBNameRandom());
 
             open_rq.onupgradeneeded = function(e) {
                 var objStore = e.target.result.createObjectStore("test");
@@ -760,7 +760,7 @@ describe('W3C IDBCursor Behavior Tests', function () {
     // idbcursor-source
     it('IDBCursor.source', function (done) {
         var db;
-        var open_rq = indexedDB.open('testdb-' + new Date().getTime());
+        var open_rq = indexedDB.open(support.getDBName());
         open_rq.onupgradeneeded = function(e) {
             db = e.target.result;
             var objStore = db.createObjectStore("my_objectstore");

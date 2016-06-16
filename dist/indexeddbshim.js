@@ -9730,7 +9730,7 @@ function createSysDB(success, failure) {
     if (sysdb) {
         success();
     } else {
-        sysdb = _cfg2.default.win.openDatabase('__sysdb__', 1, 'System Database', DEFAULT_DB_SIZE);
+        sysdb = _cfg2.default.win.openDatabase('__sysdb__.sqlite', 1, 'System Database', DEFAULT_DB_SIZE);
         sysdb.transaction(function (tx) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);', [], success, sysDbCreateError);
         }, sysDbCreateError);
@@ -11167,7 +11167,7 @@ var Key = {};
 /**
  * Encodes the keys based on their types. This is required to maintain collations
  */
-var collations = ['undefined', 'number', 'date', 'string', 'array', 'object'];
+var collations = ['undefined', 'number', 'date', 'string', 'array', 'object', 'boolean'];
 
 /**
  * The sign values for numbers, ordered from least to greatest.
@@ -11191,13 +11191,12 @@ var types = {
         }
     },
 
-    // Dates are encoded as ISO 8601 strings, in UTC time zone.
-    date: {
+    boolean: {
         encode: function encode(key) {
-            return collations.indexOf('date') + '-' + key.toJSON();
+            return collations.indexOf('boolean') + '-' + key;
         },
         decode: function decode(key) {
-            return new Date(key.slice(2));
+            return Boolean(key.slice(2));
         }
     },
 
@@ -11355,6 +11354,16 @@ var types = {
             }
             return decoded;
         }
+    },
+
+    // Dates are encoded as ISO 8601 strings, in UTC time zone.
+    date: {
+        encode: function encode(key) {
+            return collations.indexOf('date') + '-' + key.toJSON();
+        },
+        decode: function decode(key) {
+            return new Date(key.slice(2));
+        }
     }
 };
 
@@ -11468,7 +11477,7 @@ function validate(key) {
         for (var i = 0; i < key.length; i++) {
             validate(key[i]);
         }
-    } else if (!types[type] || type === 'object' || type !== 'string' && isNaN(key)) {
+    } else if (!types[type] || type === 'object' || type === 'boolean' || type !== 'string' && isNaN(key)) {
         throw (0, _DOMException.createDOMException)('DataError', 'Not a valid key');
     }
 }

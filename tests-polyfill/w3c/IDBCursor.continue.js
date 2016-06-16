@@ -21,7 +21,7 @@ describe('W3C IDBCursor.continue Tests', function () {
                           { value: "taco",    key: 2 } ];
 
             before(function (done) {
-                open = indexedDB.open('testdb-' + new Date().getTime());
+                open = indexedDB.open(support.getDBName());
                 open.onupgradeneeded = function(e) {
                     var os, i;
                     db = e.target.result;

@@ -10,7 +10,7 @@ describe('W3C Transaction Behavior Tests', function () {
         var db, db_got_versionchange, db2,
             events = [];
 
-        var openrq = indexedDB.open('db', 3);
+        var openrq = indexedDB.open('db.sqlite', 3);
 
         // 1
         openrq.onupgradeneeded = function(e) {
@@ -49,7 +49,7 @@ describe('W3C Transaction Behavior Tests', function () {
             assert(db instanceof FDBDatabase);
             assert.deepEqual(db.objectStoreNames, [ "store" ]);
 
-            var openrq2 = indexedDB.open('db', 4);
+            var openrq2 = indexedDB.open('db.sqlite', 4);
 
             // 4
             openrq2.onupgradeneeded = function(e) {
@@ -78,7 +78,7 @@ describe('W3C Transaction Behavior Tests', function () {
                     ]);
 
                 if (db2) db2.close();
-                indexedDB.deleteDatabase('db');
+                indexedDB.deleteDatabase('db.sqlite');
                 setTimeout(function() {
                     done();
                 }, 10);
@@ -95,7 +95,7 @@ describe('W3C Transaction Behavior Tests', function () {
         var db, db_got_versionchange, db2,
             events = [];
 
-        var openrq = indexedDB.open('db', 3);
+        var openrq = indexedDB.open('db.sqlite', 3);
 
         // 1
         openrq.onupgradeneeded = function(e) {
@@ -134,7 +134,7 @@ describe('W3C Transaction Behavior Tests', function () {
             assert(db instanceof FDBDatabase);
             assert.deepEqual(db.objectStoreNames, [ "store" ]);
 
-            var openrq2 = indexedDB.open('db', 4);
+            var openrq2 = indexedDB.open('db.sqlite', 4);
 
             // 4
             openrq2.onblocked = function(e) {
@@ -171,7 +171,7 @@ describe('W3C Transaction Behavior Tests', function () {
                     ]);
 
                 if (db2) db2.close();
-                indexedDB.deleteDatabase('db');
+                indexedDB.deleteDatabase('db.sqlite');
                 setTimeout(function() { done(); }, 10);
             };
 

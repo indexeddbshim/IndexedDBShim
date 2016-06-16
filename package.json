@@ -9,10 +9,14 @@
   "description": "A polyfill for IndexedDB using WebSql",
   "scripts": {
     "start": "grunt",
-    "test": "grunt test",
-    "mocha": "grunt mocha && grunt clean:node",
-    "nodequnit": "grunt nodequnit",
-    "tests-polyfill": "grunt clean:polyfill && mocha tests-polyfill/**/*.js && browserify-test -t [ babelify --presets es2015 ] tests-polyfill/**/*.js && grunt clean:polyfill"
+    "test": "npm run phantom-qunit",
+    "phantom-qunit": "grunt phantom-qunit",
+    "qunit": "grunt nodequnit && grunt clean-qunit",
+    "mocha": "grunt mocha && grunt clean-mocha",
+    "fake": "mocha tests-polyfill/fakeIndexedDB/fakeIndexedDB.js && grunt clean:fake",
+    "mock": "mocha tests-polyfill/indexedDBmock/*.js && grunt clean:mock",
+    "w3c": "mocha tests-polyfill/w3c/*.js && grunt clean:w3c",
+    "tests-polyfill": "grunt clean-polyfill && npm run fake && npm run mock && npm run w3c && browserify-test -t [ babelify --presets es2015 ] tests-polyfill/**/*.js"
   },
   "repository": {
     "type": "git",
