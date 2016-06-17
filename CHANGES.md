@@ -43,7 +43,7 @@
     store which are greater or equal to the "current number" will update
     the auto-increment counter
 - Feature: Support Node cleanly via `websql` SQLite3 library
-- Feature: Add `IDBObjectStore.openKeyCursor` (no tests yet, however)
+- Feature: Add `IDBObjectStore.openKeyCursor`
 - Feature: Add `IDBKeyRange.includes()` with test
 - Feature: Allow ranges to be passed to `IDBObjectStore.get`.
 - Feature: Add ".sqlite" extension to database name for sake of (Windows)

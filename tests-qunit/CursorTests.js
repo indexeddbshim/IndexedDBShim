@@ -9,7 +9,7 @@
                 var db = dbOpenRequest.result;
                 var transaction = db.transaction([DB.OBJECT_STORE_1, DB.OBJECT_STORE_2], 'readwrite');
                 var objectStore = transaction.objectStore(DB.OBJECT_STORE_1);
-                callback(objectStore, assert, done);
+                callback(objectStore, db, assert, done);
             };
             dbOpenRequest.onerror = function (e) {
                 assert.ok(false, 'Database NOT Opened successfully');
@@ -22,7 +22,7 @@
 
     queuedModule('Cursor');
 
-    openObjectStore('Iterating over cursor', DB.OBJECT_STORE_1, function (objectStore, assert, done) {
+    openObjectStore('Iterating over cursor', DB.OBJECT_STORE_1, function (objectStore, db, assert, done) {
         var cursorReq = objectStore.openCursor();
         var count = 0;
         cursorReq.onsuccess = function (e) {
@@ -45,7 +45,7 @@
             done();
         };
     });
-    openObjectStore('Updating using a cursor', DB.OBJECT_STORE_1, function (objectStore, assert, done) {
+    openObjectStore('Updating using a cursor', DB.OBJECT_STORE_1, function (objectStore, db, assert, done) {
         var cursorReq = objectStore.openCursor();
         cursorReq.onsuccess = function (e) {
             var cursor = cursorReq.result;
@@ -81,7 +81,7 @@
         };
     });
 
-    openObjectStore('Deleting using a cursor', DB.OBJECT_STORE_1, function (objectStore, assert, done) {
+    openObjectStore('Deleting using a cursor', DB.OBJECT_STORE_1, function (objectStore, db, assert, done) {
         var cursorReq = objectStore.openCursor();
         var totalRows = 15;
         var cursorIteration = 0;
@@ -114,6 +114,29 @@
         };
         cursorReq.onerror = function (e) {
             _('Error on cursor request');
+            assert.ok(false, 'Could not continue opening cursor');
+            nextTest();
+            done();
+        };
+    });
+
+    openObjectStore('Store Key Cursor', DB.OBJECT_STORE_1, function (objectStore, db, assert, done) {
+        var indexCursorReq = objectStore.openKeyCursor();
+        indexCursorReq.onsuccess = function () {
+            var cursor = indexCursorReq.result;
+            if (cursor) {
+                _('Iterating over cursor ' + cursor.key + ' for value ' + JSON.stringify(cursor.value));
+                cursor['continue']();
+            } else {
+                assert.ok(true, 'Cursor Iteration completed');
+                db.close();
+                nextTest();
+                done();
+            }
+        };
+        indexCursorReq.onerror = function () {
+            _('Error on cursor request');
+            db.close();
             assert.ok(false, 'Could not continue opening cursor');
             nextTest();
             done();
