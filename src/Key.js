@@ -383,13 +383,13 @@ function isMultiEntryMatch (encodedEntry, encodedKey) {
 }
 
 function isKeyInRange (key, range, checkCached) {
-    let lowerMatch = range.lower === null;
-    let upperMatch = range.upper === null;
+    let lowerMatch = range.lower === undefined;
+    let upperMatch = range.upper === undefined;
     const encodedKey = encode(key, true);
     const lower = checkCached ? range.__lower : encode(range.lower, true);
     const upper = checkCached ? range.__upper : encode(range.upper, true);
 
-    if (range.lower !== null) {
+    if (range.lower !== undefined) {
         if (range.lowerOpen && encodedKey > lower) {
             lowerMatch = true;
         }
@@ -397,7 +397,7 @@ function isKeyInRange (key, range, checkCached) {
             lowerMatch = true;
         }
     }
-    if (range.upper !== null) {
+    if (range.upper !== undefined) {
         if (range.upperOpen && encodedKey < upper) {
             upperMatch = true;
         }

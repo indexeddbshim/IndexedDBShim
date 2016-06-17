@@ -50,8 +50,8 @@ function IDBCursor (range, direction, store, source, keyColumnName, valueColumnN
 
     if (range !== undefined) {
         // Encode the key range and cache the encoded values, so we don't have to re-encode them over and over
-        range.__lower = range.lower !== null && Key.encode(range.lower, this.__multiEntryIndex);
-        range.__upper = range.upper !== null && Key.encode(range.upper, this.__multiEntryIndex);
+        range.__lower = range.lower !== undefined && Key.encode(range.lower, this.__multiEntryIndex);
+        range.__upper = range.upper !== undefined && Key.encode(range.upper, this.__multiEntryIndex);
     }
     this.__gotValue = true;
     this['continue']();
@@ -128,7 +128,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
     let sql = ['SELECT * FROM', util.quote(me.__store.name)];
     const sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
-    if (me.__range && (me.__range.lower !== null && me.__range.upper !== null)) {
+    if (me.__range && (me.__range.lower !== undefined && me.__range.upper !== undefined)) {
         if (me.__range.upper.indexOf(me.__range.lower) === 0) {
             sql.push('AND', quotedKeyColumnName, 'LIKE ?');
             sqlValues.push('%' + me.__range.__lower.slice(0, -1) + '%');

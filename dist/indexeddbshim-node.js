@@ -16659,8 +16659,8 @@ function IDBCursor(range, direction, store, source, keyColumnName, valueColumnNa
 
     if (range !== undefined) {
         // Encode the key range and cache the encoded values, so we don't have to re-encode them over and over
-        range.__lower = range.lower !== null && _Key2.default.encode(range.lower, this.__multiEntryIndex);
-        range.__upper = range.upper !== null && _Key2.default.encode(range.upper, this.__multiEntryIndex);
+        range.__lower = range.lower !== undefined && _Key2.default.encode(range.lower, this.__multiEntryIndex);
+        range.__upper = range.upper !== undefined && _Key2.default.encode(range.upper, this.__multiEntryIndex);
     }
     this.__gotValue = true;
     this['continue']();
@@ -16737,7 +16737,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
     var sql = ['SELECT * FROM', _util2.default.quote(me.__store.name)];
     var sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
-    if (me.__range && me.__range.lower !== null && me.__range.upper !== null) {
+    if (me.__range && me.__range.lower !== undefined && me.__range.upper !== undefined) {
         if (me.__range.upper.indexOf(me.__range.lower) === 0) {
             sql.push('AND', quotedKeyColumnName, 'LIKE ?');
             sqlValues.push('%' + me.__range.__lower.slice(0, -1) + '%');
@@ -17796,10 +17796,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @param {Object} upperOpen
  */
 function IDBKeyRange(lower, upper, lowerOpen, upperOpen) {
-    if (lower !== null) {
+    if (lower !== undefined) {
         _Key2.default.validate(lower);
     }
-    if (upper !== null) {
+    if (upper !== undefined) {
         _Key2.default.validate(upper);
     }
 
@@ -17817,10 +17817,10 @@ IDBKeyRange.only = function (value) {
 };
 
 IDBKeyRange.lowerBound = function (value, open) {
-    return new IDBKeyRange(value, null, open, true);
+    return new IDBKeyRange(value, undefined, open, true);
 };
 IDBKeyRange.upperBound = function (value, open) {
-    return new IDBKeyRange(null, value, true, open);
+    return new IDBKeyRange(undefined, value, true, open);
 };
 IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
     return new IDBKeyRange(lower, upper, lowerOpen, upperOpen);
@@ -17832,14 +17832,14 @@ Object.defineProperty(IDBKeyRange, Symbol.hasInstance, {
 });
 
 function setSQLForRange(range, quotedKeyColumnName, sql, sqlValues, addAnd, checkCached) {
-    if (range && (range.lower !== null || range.upper !== null)) {
+    if (range && (range.lower !== undefined || range.upper !== undefined)) {
         if (addAnd) sql.push('AND');
-        if (range.lower !== null) {
+        if (range.lower !== undefined) {
             sql.push(quotedKeyColumnName, range.lowerOpen ? '>' : '>=', '?');
             sqlValues.push(checkCached ? range.__lower : range.lower);
         }
-        range.lower !== null && range.upper !== null && sql.push('AND');
-        if (range.upper !== null) {
+        range.lower !== undefined && range.upper !== undefined && sql.push('AND');
+        if (range.upper !== undefined) {
             sql.push(quotedKeyColumnName, range.upperOpen ? '<' : '<=', '?');
             sqlValues.push(checkCached ? range.__upper : range.upper);
         }
@@ -18208,8 +18208,8 @@ IDBObjectStore.prototype.get = function (range) {
     });
     sql = sql.join(' ');
 
-    if (range.lower !== null) _Key2.default.validate(range.lower);
-    if (range.upper !== null) _Key2.default.validate(range.upper);
+    if (range.lower !== undefined) _Key2.default.validate(range.lower);
+    if (range.upper !== undefined) _Key2.default.validate(range.upper);
 
     return me.transaction.__addToTransactionQueue(function objectStoreGet(tx, args, success, error) {
         _cfg2.default.DEBUG && console.log('Fetching', me.name, sqlValues);
@@ -19070,13 +19070,13 @@ function isMultiEntryMatch(encodedEntry, encodedKey) {
 }
 
 function isKeyInRange(key, range, checkCached) {
-    var lowerMatch = range.lower === null;
-    var upperMatch = range.upper === null;
+    var lowerMatch = range.lower === undefined;
+    var upperMatch = range.upper === undefined;
     var encodedKey = _encode(key, true);
     var lower = checkCached ? range.__lower : _encode(range.lower, true);
     var upper = checkCached ? range.__upper : _encode(range.upper, true);
 
-    if (range.lower !== null) {
+    if (range.lower !== undefined) {
         if (range.lowerOpen && encodedKey > lower) {
             lowerMatch = true;
         }
@@ -19084,7 +19084,7 @@ function isKeyInRange(key, range, checkCached) {
             lowerMatch = true;
         }
     }
-    if (range.upper !== null) {
+    if (range.upper !== undefined) {
         if (range.upperOpen && encodedKey < upper) {
             upperMatch = true;
         }

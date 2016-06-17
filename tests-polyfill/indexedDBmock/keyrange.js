@@ -58,7 +58,7 @@ describe('KeyRange', function() {
         var keyRange = KeyRange.lowerBound(value);
 
         assert.equal(keyRange.lower, value, "lower: " + keyRange.lower);
-        assert.strictEqual(keyRange.upper, null, "upper: " + keyRange.upper);
+        assert.strictEqual(keyRange.upper, undefined, "upper: " + keyRange.upper);
         assert.equal(keyRange.lowerOpen, false, "lowerOpen: " + keyRange.lowerOpen);
         assert.equal(keyRange.upperOpen, true, "upperOpen: " + keyRange.upperOpen);
     });
@@ -68,7 +68,7 @@ describe('KeyRange', function() {
         var keyRange = KeyRange.lowerBound(value, false);
 
         assert.equal(keyRange.lower, value, "lower: " + keyRange.lower);
-        assert.strictEqual(keyRange.upper, null, "upper: " + keyRange.upper);
+        assert.strictEqual(keyRange.upper, undefined, "upper: " + keyRange.upper);
         assert.equal(keyRange.lowerOpen, false, "lowerOpen: " + keyRange.lowerOpen);
         assert.equal(keyRange.upperOpen, true, "upperOpen: " + keyRange.upperOpen);
     });
@@ -78,7 +78,7 @@ describe('KeyRange', function() {
         var keyRange = KeyRange.lowerBound(value, true);
 
         assert.equal(keyRange.lower, value, "lower: " + keyRange.lower);
-        assert.strictEqual(keyRange.upper, null, "upper: " + keyRange.upper);
+        assert.strictEqual(keyRange.upper, undefined, "upper: " + keyRange.upper);
         assert.equal(keyRange.lowerOpen, true, "lowerOpen: " + keyRange.lowerOpen);
         assert.equal(keyRange.upperOpen, true, "upperOpen: " + keyRange.upperOpen);
     });
@@ -97,7 +97,7 @@ describe('KeyRange', function() {
 
         var keyRange = KeyRange.upperBound(value);
 
-        assert.strictEqual(keyRange.lower, null, "lower: " + keyRange.lower);
+        assert.strictEqual(keyRange.lower, undefined, "lower: " + keyRange.lower);
         assert.equal(keyRange.upper, value, "upper: " + keyRange.upper);
         assert.equal(keyRange.lowerOpen, true, "lowerOpen: " + keyRange.lowerOpen);
         assert.equal(keyRange.upperOpen, false, "upperOpen: " + keyRange.upperOpen);
@@ -107,7 +107,7 @@ describe('KeyRange', function() {
 
         var keyRange = KeyRange.upperBound(value, false);
 
-        assert.strictEqual(keyRange.lower, null, "lower: " + keyRange.lower);
+        assert.strictEqual(keyRange.lower, undefined, "lower: " + keyRange.lower);
         assert.equal(keyRange.upper, value, "upper: " + keyRange.upper);
         assert.equal(keyRange.lowerOpen, true, "lowerOpen: " + keyRange.lowerOpen);
         assert.equal(keyRange.upperOpen, false, "upperOpen: " + keyRange.upperOpen);
@@ -117,7 +117,7 @@ describe('KeyRange', function() {
 
         var keyRange = KeyRange.upperBound(value, true);
 
-        assert.strictEqual(keyRange.lower, null, "lower: " + keyRange.lower);
+        assert.strictEqual(keyRange.lower, undefined, "lower: " + keyRange.lower);
         assert.equal(keyRange.upper, value, "upper: " + keyRange.upper);
         assert.equal(keyRange.lowerOpen, true, "lowerOpen: " + keyRange.lowerOpen);
         assert.equal(keyRange.upperOpen, true, "upperOpen: " + keyRange.upperOpen);

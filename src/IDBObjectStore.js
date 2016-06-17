@@ -324,8 +324,8 @@ IDBObjectStore.prototype.get = function (range) {
     sqlValues = sqlValues.map((sqlValue) => Key.encode(sqlValue));
     sql = sql.join(' ');
 
-    if (range.lower !== null) Key.validate(range.lower);
-    if (range.upper !== null) Key.validate(range.upper);
+    if (range.lower !== undefined) Key.validate(range.lower);
+    if (range.upper !== undefined) Key.validate(range.upper);
 
     return me.transaction.__addToTransactionQueue(function objectStoreGet (tx, args, success, error) {
         CFG.DEBUG && console.log('Fetching', me.name, sqlValues);

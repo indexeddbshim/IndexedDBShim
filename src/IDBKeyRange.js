@@ -9,10 +9,10 @@ import Key from './Key.js';
  * @param {Object} upperOpen
  */
 function IDBKeyRange (lower, upper, lowerOpen, upperOpen) {
-    if (lower !== null) {
+    if (lower !== undefined) {
         Key.validate(lower);
     }
-    if (upper !== null) {
+    if (upper !== undefined) {
         Key.validate(upper);
     }
 
@@ -30,10 +30,10 @@ IDBKeyRange.only = function (value) {
 };
 
 IDBKeyRange.lowerBound = function (value, open) {
-    return new IDBKeyRange(value, null, open, true);
+    return new IDBKeyRange(value, undefined, open, true);
 };
 IDBKeyRange.upperBound = function (value, open) {
-    return new IDBKeyRange(null, value, true, open);
+    return new IDBKeyRange(undefined, value, true, open);
 };
 IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
     return new IDBKeyRange(lower, upper, lowerOpen, upperOpen);
@@ -43,14 +43,14 @@ Object.defineProperty(IDBKeyRange, Symbol.hasInstance, {
 });
 
 function setSQLForRange (range, quotedKeyColumnName, sql, sqlValues, addAnd, checkCached) {
-    if (range && (range.lower !== null || range.upper !== null)) {
+    if (range && (range.lower !== undefined || range.upper !== undefined)) {
         if (addAnd) sql.push('AND');
-        if (range.lower !== null) {
+        if (range.lower !== undefined) {
             sql.push(quotedKeyColumnName, (range.lowerOpen ? '>' : '>='), '?');
             sqlValues.push(checkCached ? range.__lower : range.lower);
         }
-        (range.lower !== null && range.upper !== null) && sql.push('AND');
-        if (range.upper !== null) {
+        (range.lower !== undefined && range.upper !== undefined) && sql.push('AND');
+        if (range.upper !== undefined) {
             sql.push(quotedKeyColumnName, (range.upperOpen ? '<' : '<='), '?');
             sqlValues.push(checkCached ? range.__upper : range.upper);
         }
