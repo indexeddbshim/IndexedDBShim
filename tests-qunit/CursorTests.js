@@ -121,6 +121,13 @@
     });
 
     openObjectStore('Store Key Cursor', DB.OBJECT_STORE_1, function (objectStore, db, assert, done) {
+        if (!objectStore.openKeyCursor) {
+            assert.ok(false, 'Environment doesn\'t yet support objectStore.openKeyCursor');
+            db.close();
+            nextTest();
+            done();
+            return;
+        }
         var indexCursorReq = objectStore.openKeyCursor();
         indexCursorReq.onsuccess = function () {
             var cursor = indexCursorReq.result;
