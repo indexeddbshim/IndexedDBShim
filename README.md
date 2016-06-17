@@ -161,26 +161,55 @@ The output files will be generated in the `dist` directory
 
 ## Testing
 
-### Automated Unit Tests
+There are currently three folders for tests, `tests-qunit`,
+`tests-mocha` and `tests-polyfill` (the latter are also Mocha-based
+tests, but at present [only work in Node](https://github.com/axemclion/IndexedDBShim/issues/249)).
 
-Follow all of the steps above to build the project, then run `npm test` to
-run the unit tests.  The tests are run in [PhantomJS](http://phantomjs.org/),
+They can be run through a variety of means as described below.
+
+### Browser testing
+
+All QUnit-based browser tests should pass except one
+`index.openCursor(range)` test when run on PhantomJS due apparently to
+a bug with the PhantomJS implementation (but the test reports itself
+as having this problem).
+
+All Mocha-based browser tests should pass except for one test having
+a [problem in Firefox](https://github.com/axemclion/IndexedDBShim/issues/250).
+
+#### Headless browser unit testing
+
+Follow all of the steps above to build the project, then run `npm test`
+(or `npm run phantom-qunit` or `grunt phantom-qunit`) to run the unit
+tests.  The tests are run in [PhantomJS](http://phantomjs.org/),
 which is a headless WebKit browser.
 
-### Testing in a Browser
+#### Manual browser testing
 
 If you want to run the tests in a normal web browser, you'll need to
-spin-up a local web server and then open [`test/index.html`](https://github.com/axemclion/IndexedDBShim/blob/master/test/index.html)
-and/or [`tests/index.html`](https://github.com/axemclion/IndexedDBShim/blob/master/tests/index.html)
+spin-up a local web server and then open [`tests-qunit/index.html?noglobals`](https://github.com/axemclion/IndexedDBShim/blob/master/tests-qunit/index.html?noglobals)
+and/or [`tests-mocha/index.html`](https://github.com/axemclion/IndexedDBShim/blob/master/tests-mocha/index.html)
 in your browser. You can also run `grunt dev` and point your
-browser to `http://localhost:9999/test/index.html`.
+browser to `http://localhost:9999/tests-qunit/index.html` or
+`http://localhost:9999/tests-mocha/index.html`.
 
-### Testing in Node
+Note that, for the Mocha tests, you probably wish to
+"Switch to IndexedDBShim" when doing
+the testing since otherwise, it will only test the native implementation.
 
-To run the Node tests, run `npm run qunit`, `npm run mocha`, and
-`npm run tests-polyfill` (or its components `npm run fake`,
-`npm run mock`, `npm run w3c`). To run a specific Mocha test (which
-includes the `tests-polyfill` tests), run `npm --test=... run mocha`.
+### Node Testing
+
+To run the Node tests, run the following:
+
+1. `npm run qunit` - The full test suite sometimes
+    [does not complete execution](https://github.com/axemclion/IndexedDBShim/issues/251).
+2. `npm run mocha`
+3. `npm run tests-polyfill` (or its components `npm run fake`,
+`npm run mock`, `npm run w3c`). Note that none of these are currently
+    passing in full, however.
+
+To run a specific Mocha test (which includes the `tests-polyfill`
+tests), run `npm --test=... run mocha`.
 
 ### Testing in a Cordova/PhoneGap app
 
