@@ -177,8 +177,10 @@ browser to `http://localhost:9999/test/index.html`.
 
 ### Testing in Node
 
-To run the Node tests, run `npm run qunit` and `npm run mocha`. To
-run a specific mocha test, run `npm --test=... run mocha`.
+To run the Node tests, run `npm run qunit`, `npm run mocha`, and
+`npm run tests-polyfill` (or its components `npm run fake`,
+`npm run mock`, `npm run w3c`). To run a specific Mocha test (which
+includes the `tests-polyfill` tests), run `npm --test=... run mocha`.
 
 ### Testing in a Cordova/PhoneGap app
 
