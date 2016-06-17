@@ -1,8 +1,8 @@
 import {createDOMException} from './DOMException.js';
 import {IDBCursor, IDBCursorWithValue} from './IDBCursor.js';
+import {setSQLForRange, IDBKeyRange} from './IDBKeyRange.js';
 import util from './util.js';
 import Key from './Key.js';
-import IDBKeyRange from './IDBKeyRange.js';
 import IDBIndex from './IDBIndex.js';
 import IDBTransaction from './IDBTransaction.js';
 import Sca from './Sca.js';
@@ -305,19 +305,29 @@ IDBObjectStore.prototype.put = function (value, key) {
     return request;
 };
 
-IDBObjectStore.prototype.get = function (key) {
-    // TODO Key should also be a key range
+IDBObjectStore.prototype.get = function (range) {
     const me = this;
 
     if (arguments.length === 0) {
         throw new TypeError('No key was specified');
     }
 
-    Key.validate(key);
-    const primaryKey = Key.encode(key);
+    if (!(util.instanceOf(range, IDBKeyRange))) {
+        range = IDBKeyRange.only(range);
+    }
+
+    let sql = ['SELECT * FROM ', util.quote(me.name), ' WHERE '];
+    let sqlValues = [];
+    setSQLForRange(range, 'key', sql, sqlValues);
+    sqlValues = sqlValues.map((sqlValue) => Key.encode(sqlValue));
+    sql = sql.join(' ');
+
+    if (range.lower !== null) Key.validate(range.lower);
+    if (range.upper !== null) Key.validate(range.upper);
+
     return me.transaction.__addToTransactionQueue(function objectStoreGet (tx, args, success, error) {
-        CFG.DEBUG && console.log('Fetching', me.name, primaryKey);
-        tx.executeSql('SELECT * FROM ' + util.quote(me.name) + ' WHERE key = ?', [primaryKey], function (tx, data) {
+        CFG.DEBUG && console.log('Fetching', me.name, sqlValues);
+        tx.executeSql(sql, sqlValues, function (tx, data) {
             CFG.DEBUG && console.log('Fetched data', data);
             let value;
             try {

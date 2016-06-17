@@ -21,6 +21,9 @@ function IDBKeyRange (lower, upper, lowerOpen, upperOpen) {
     this.lowerOpen = !!lowerOpen;
     this.upperOpen = !!upperOpen;
 }
+IDBKeyRange.prototype.includes = function (key) {
+    return Key.isKeyInRange(key, this);
+};
 
 IDBKeyRange.only = function (value) {
     return new IDBKeyRange(value, value, false, false);
@@ -39,4 +42,19 @@ Object.defineProperty(IDBKeyRange, Symbol.hasInstance, {
     value: obj => obj && typeof obj === 'object' && 'upper' in obj && typeof obj.lowerOpen === 'boolean'
 });
 
-export default IDBKeyRange;
+function setSQLForRange (range, quotedKeyColumnName, sql, sqlValues, addAnd, checkCached) {
+    if (range && (range.lower !== null || range.upper !== null)) {
+        if (addAnd) sql.push('AND');
+        if (range.lower !== null) {
+            sql.push(quotedKeyColumnName, (range.lowerOpen ? '>' : '>='), '?');
+            sqlValues.push(checkCached ? range.__lower : range.lower);
+        }
+        (range.lower !== null && range.upper !== null) && sql.push('AND');
+        if (range.upper !== null) {
+            sql.push(quotedKeyColumnName, (range.upperOpen ? '<' : '<='), '?');
+            sqlValues.push(checkCached ? range.__upper : range.upper);
+        }
+    }
+}
+
+export {setSQLForRange, IDBKeyRange, IDBKeyRange as default};

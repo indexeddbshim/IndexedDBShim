@@ -16586,6 +16586,8 @@ var _IDBRequest = require('./IDBRequest.js');
 
 var _DOMException = require('./DOMException.js');
 
+var _IDBKeyRange = require('./IDBKeyRange.js');
+
 var _util = require('./util.js');
 
 var _util2 = _interopRequireDefault(_util);
@@ -16593,10 +16595,6 @@ var _util2 = _interopRequireDefault(_util);
 var _Key = require('./Key.js');
 
 var _Key2 = _interopRequireDefault(_Key);
-
-var _IDBKeyRange = require('./IDBKeyRange.js');
-
-var _IDBKeyRange2 = _interopRequireDefault(_IDBKeyRange);
 
 var _Sca = require('./Sca.js');
 
@@ -16634,8 +16632,8 @@ function IDBCursor(range, direction, store, source, keyColumnName, valueColumnNa
     if (range === null) {
         range = undefined;
     }
-    if (range !== undefined && !_util2.default.instanceOf(range, _IDBKeyRange2.default)) {
-        range = new _IDBKeyRange2.default(range, range, false, false);
+    if (range !== undefined && !_util2.default.instanceOf(range, _IDBKeyRange.IDBKeyRange)) {
+        range = new _IDBKeyRange.IDBKeyRange(range, range, false, false);
     }
     store.transaction.__assertActive();
     if (direction !== undefined && ['next', 'prev', 'nextunique', 'prevunique'].indexOf(direction) === -1) {
@@ -16684,18 +16682,7 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
     var sql = ['SELECT * FROM', _util2.default.quote(me.__store.name)];
     var sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
-    if (me.__range && (me.__range.lower !== null || me.__range.upper !== null)) {
-        sql.push('AND');
-        if (me.__range.lower !== null) {
-            sql.push(quotedKeyColumnName, me.__range.lowerOpen ? '>' : '>=', '?');
-            sqlValues.push(me.__range.__lower);
-        }
-        me.__range.lower !== null && me.__range.upper !== null && sql.push('AND');
-        if (me.__range.upper !== null) {
-            sql.push(quotedKeyColumnName, me.__range.upperOpen ? '<' : '<=', '?');
-            sqlValues.push(me.__range.__upper);
-        }
-    }
+    (0, _IDBKeyRange.setSQLForRange)(me.__range, quotedKeyColumnName, sql, sqlValues, true, true);
     if (key !== undefined) {
         me.__lastKeyContinued = key;
         me.__offset = 0;
@@ -17790,6 +17777,7 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+exports.default = exports.IDBKeyRange = exports.setSQLForRange = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
@@ -17820,6 +17808,9 @@ function IDBKeyRange(lower, upper, lowerOpen, upperOpen) {
     this.lowerOpen = !!lowerOpen;
     this.upperOpen = !!upperOpen;
 }
+IDBKeyRange.prototype.includes = function (key) {
+    return _Key2.default.isKeyInRange(key, this);
+};
 
 IDBKeyRange.only = function (value) {
     return new IDBKeyRange(value, value, false, false);
@@ -17840,8 +17831,24 @@ Object.defineProperty(IDBKeyRange, Symbol.hasInstance, {
     }
 });
 
+function setSQLForRange(range, quotedKeyColumnName, sql, sqlValues, addAnd, checkCached) {
+    if (range && (range.lower !== null || range.upper !== null)) {
+        if (addAnd) sql.push('AND');
+        if (range.lower !== null) {
+            sql.push(quotedKeyColumnName, range.lowerOpen ? '>' : '>=', '?');
+            sqlValues.push(checkCached ? range.__lower : range.lower);
+        }
+        range.lower !== null && range.upper !== null && sql.push('AND');
+        if (range.upper !== null) {
+            sql.push(quotedKeyColumnName, range.upperOpen ? '<' : '<=', '?');
+            sqlValues.push(checkCached ? range.__upper : range.upper);
+        }
+    }
+}
+
+exports.setSQLForRange = setSQLForRange;
+exports.IDBKeyRange = IDBKeyRange;
 exports.default = IDBKeyRange;
-module.exports = exports['default'];
 
 },{"./Key.js":366}],363:[function(require,module,exports){
 'use strict';
@@ -17856,6 +17863,8 @@ var _DOMException = require('./DOMException.js');
 
 var _IDBCursor = require('./IDBCursor.js');
 
+var _IDBKeyRange = require('./IDBKeyRange.js');
+
 var _util = require('./util.js');
 
 var _util2 = _interopRequireDefault(_util);
@@ -17863,10 +17872,6 @@ var _util2 = _interopRequireDefault(_util);
 var _Key = require('./Key.js');
 
 var _Key2 = _interopRequireDefault(_Key);
-
-var _IDBKeyRange = require('./IDBKeyRange.js');
-
-var _IDBKeyRange2 = _interopRequireDefault(_IDBKeyRange);
 
 var _IDBIndex = require('./IDBIndex.js');
 
@@ -18182,19 +18187,31 @@ IDBObjectStore.prototype.put = function (value, key) {
     return request;
 };
 
-IDBObjectStore.prototype.get = function (key) {
-    // TODO Key should also be a key range
+IDBObjectStore.prototype.get = function (range) {
     var me = this;
 
     if (arguments.length === 0) {
         throw new TypeError('No key was specified');
     }
 
-    _Key2.default.validate(key);
-    var primaryKey = _Key2.default.encode(key);
+    if (!_util2.default.instanceOf(range, _IDBKeyRange.IDBKeyRange)) {
+        range = _IDBKeyRange.IDBKeyRange.only(range);
+    }
+
+    var sql = ['SELECT * FROM ', _util2.default.quote(me.name), ' WHERE '];
+    var sqlValues = [];
+    (0, _IDBKeyRange.setSQLForRange)(range, 'key', sql, sqlValues);
+    sqlValues = sqlValues.map(function (sqlValue) {
+        return _Key2.default.encode(sqlValue);
+    });
+    sql = sql.join(' ');
+
+    if (range.lower !== null) _Key2.default.validate(range.lower);
+    if (range.upper !== null) _Key2.default.validate(range.upper);
+
     return me.transaction.__addToTransactionQueue(function objectStoreGet(tx, args, success, error) {
-        _cfg2.default.DEBUG && console.log('Fetching', me.name, primaryKey);
-        tx.executeSql('SELECT * FROM ' + _util2.default.quote(me.name) + ' WHERE key = ?', [primaryKey], function (tx, data) {
+        _cfg2.default.DEBUG && console.log('Fetching', me.name, sqlValues);
+        tx.executeSql(sql, sqlValues, function (tx, data) {
             _cfg2.default.DEBUG && console.log('Fetched data', data);
             var value = void 0;
             try {
@@ -18253,7 +18270,7 @@ IDBObjectStore.prototype.clear = function () {
 IDBObjectStore.prototype.count = function (key) {
     var _this = this;
 
-    if (_util2.default.instanceOf(key, _IDBKeyRange2.default)) {
+    if (_util2.default.instanceOf(key, _IDBKeyRange.IDBKeyRange)) {
         return new _IDBCursor.IDBCursor(key, 'next', this, this, 'key', 'value', true).__req;
     } else {
         var _ret = function () {
@@ -18663,7 +18680,7 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.default = exports.findMultiEntryMatches = exports.isMultiEntryMatch = exports.setValue = exports.getValue = exports.validate = exports.decode = exports.encode = undefined;
+exports.default = exports.findMultiEntryMatches = exports.isKeyInRange = exports.isMultiEntryMatch = exports.setValue = exports.getValue = exports.validate = exports.decode = exports.encode = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; }; /*eslint-disable no-eval*/
 
@@ -19050,24 +19067,26 @@ function isMultiEntryMatch(encodedEntry, encodedKey) {
     }
 }
 
-function isKeyInRange(key, range) {
+function isKeyInRange(key, range, checkCached) {
     var lowerMatch = range.lower === null;
     var upperMatch = range.upper === null;
     var encodedKey = _encode(key, true);
+    var lower = checkCached ? range.__lower : _encode(range.lower, true);
+    var upper = checkCached ? range.__upper : _encode(range.upper, true);
 
     if (range.lower !== null) {
-        if (range.lowerOpen && encodedKey > range.__lower) {
+        if (range.lowerOpen && encodedKey > lower) {
             lowerMatch = true;
         }
-        if (!range.lowerOpen && encodedKey >= range.__lower) {
+        if (!range.lowerOpen && encodedKey >= lower) {
             lowerMatch = true;
         }
     }
     if (range.upper !== null) {
-        if (range.upperOpen && encodedKey < range.__upper) {
+        if (range.upperOpen && encodedKey < upper) {
             upperMatch = true;
         }
-        if (!range.upperOpen && encodedKey <= range.__upper) {
+        if (!range.upperOpen && encodedKey <= upper) {
             upperMatch = true;
         }
     }
@@ -19097,12 +19116,12 @@ function findMultiEntryMatches(keyEntry, range) {
                 }
             }
 
-            if (isKeyInRange(key, range)) {
+            if (isKeyInRange(key, range, true)) {
                 matches.push(key);
             }
         }
     } else {
-        if (isKeyInRange(keyEntry, range)) {
+        if (isKeyInRange(keyEntry, range, true)) {
             matches.push(keyEntry);
         }
     }
@@ -19122,13 +19141,14 @@ function _decode(key, inArray) {
     return types[collations[key.substring(0, 1)]].decode(key, inArray);
 }
 
-exports.default = Key = { encode: _encode, decode: _decode, validate: validate, getValue: getValue, setValue: setValue, isMultiEntryMatch: isMultiEntryMatch, findMultiEntryMatches: findMultiEntryMatches };
+exports.default = Key = { encode: _encode, decode: _decode, validate: validate, getValue: getValue, setValue: setValue, isMultiEntryMatch: isMultiEntryMatch, isKeyInRange: isKeyInRange, findMultiEntryMatches: findMultiEntryMatches };
 exports.encode = _encode;
 exports.decode = _decode;
 exports.validate = validate;
 exports.getValue = getValue;
 exports.setValue = setValue;
 exports.isMultiEntryMatch = isMultiEntryMatch;
+exports.isKeyInRange = isKeyInRange;
 exports.findMultiEntryMatches = findMultiEntryMatches;
 exports.default = Key;
 

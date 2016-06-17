@@ -1,8 +1,8 @@
 import {IDBRequest} from './IDBRequest.js';
 import {createDOMException} from './DOMException.js';
+import {setSQLForRange, IDBKeyRange} from './IDBKeyRange.js';
 import util from './util.js';
 import Key from './Key.js';
-import IDBKeyRange from './IDBKeyRange.js';
 import Sca from './Sca.js';
 import IDBIndex from './IDBIndex.js';
 import CFG from './cfg.js';
@@ -73,18 +73,7 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
     let sql = ['SELECT * FROM', util.quote(me.__store.name)];
     const sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
-    if (me.__range && (me.__range.lower !== null || me.__range.upper !== null)) {
-        sql.push('AND');
-        if (me.__range.lower !== null) {
-            sql.push(quotedKeyColumnName, (me.__range.lowerOpen ? '>' : '>='), '?');
-            sqlValues.push(me.__range.__lower);
-        }
-        (me.__range.lower !== null && me.__range.upper !== null) && sql.push('AND');
-        if (me.__range.upper !== null) {
-            sql.push(quotedKeyColumnName, (me.__range.upperOpen ? '<' : '<='), '?');
-            sqlValues.push(me.__range.__upper);
-        }
-    }
+    setSQLForRange(me.__range, quotedKeyColumnName, sql, sqlValues, true, true);
     if (key !== undefined) {
         me.__lastKeyContinued = key;
         me.__offset = 0;

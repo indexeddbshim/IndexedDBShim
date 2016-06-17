@@ -41,6 +41,8 @@
     the auto-increment counter
 - Feature: Support Node cleanly via `websql` SQLite3 library
 - Feature: Add `IDBObjectStore.openKeyCursor` (no tests yet, however)
+- Feature: Add `IDBKeyRange.includes()` with test
+- Feature: Allow ranges to be passed to `IDBObjectStore.get`.
 - Feature: Add ".sqlite" extension to database name for sake of (Windows)
     file type identification
 - Repo files: Rename test folders for ease in distinguishing

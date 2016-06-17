@@ -382,24 +382,26 @@ function isMultiEntryMatch (encodedEntry, encodedKey) {
     }
 }
 
-function isKeyInRange (key, range) {
+function isKeyInRange (key, range, checkCached) {
     let lowerMatch = range.lower === null;
     let upperMatch = range.upper === null;
     const encodedKey = encode(key, true);
+    const lower = checkCached ? range.__lower : encode(range.lower, true);
+    const upper = checkCached ? range.__upper : encode(range.upper, true);
 
     if (range.lower !== null) {
-        if (range.lowerOpen && encodedKey > range.__lower) {
+        if (range.lowerOpen && encodedKey > lower) {
             lowerMatch = true;
         }
-        if (!range.lowerOpen && encodedKey >= range.__lower) {
+        if (!range.lowerOpen && encodedKey >= lower) {
             lowerMatch = true;
         }
     }
     if (range.upper !== null) {
-        if (range.upperOpen && encodedKey < range.__upper) {
+        if (range.upperOpen && encodedKey < upper) {
             upperMatch = true;
         }
-        if (!range.upperOpen && encodedKey <= range.__upper) {
+        if (!range.upperOpen && encodedKey <= upper) {
             upperMatch = true;
         }
     }
@@ -429,12 +431,12 @@ function findMultiEntryMatches (keyEntry, range) {
                 }
             }
 
-            if (isKeyInRange(key, range)) {
+            if (isKeyInRange(key, range, true)) {
                 matches.push(key);
             }
         }
     } else {
-        if (isKeyInRange(keyEntry, range)) {
+        if (isKeyInRange(keyEntry, range, true)) {
             matches.push(keyEntry);
         }
     }
@@ -454,5 +456,5 @@ function decode (key, inArray) {
     return types[collations[key.substring(0, 1)]].decode(key, inArray);
 }
 
-Key = {encode, decode, validate, getValue, setValue, isMultiEntryMatch, findMultiEntryMatches};
-export {encode, decode, validate, getValue, setValue, isMultiEntryMatch, findMultiEntryMatches, Key as default};
+Key = {encode, decode, validate, getValue, setValue, isMultiEntryMatch, isKeyInRange, findMultiEntryMatches};
+export {encode, decode, validate, getValue, setValue, isMultiEntryMatch, isKeyInRange, findMultiEntryMatches, Key as default};

@@ -42,6 +42,7 @@ window.onerror = function () {
             'IDBIndex/get-spec.js',
             'IDBIndex/getKey-spec.js',
             'IDBIndex/openCursor-spec.js',
+            'IDBKeyRange/includes-spec.js',
             'IDBObjectStore/add-spec.js',
             'IDBObjectStore/put-spec.js',
             'IDBObjectStore/add-put-spec.js',
