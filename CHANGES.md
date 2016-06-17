@@ -5,6 +5,9 @@
 - License: Add back missing MIT license
 - Breaking change/Fix: Remove `IDBTransaction` mode constants and tests since
     now being removed from IndexedDB
+- Breaking change: If you were overriding/monkey-patching globals, these are
+    no longer available with a shift to ES6 modules (see below). The cfg.js
+    module can be imported in its place to change the default values, however.
 - Breaking change (minor): Change "modules" property of `IDBFactory` to only
     expose `DOMException`, `Event`, and `IDBFactory` (replacing the former
     use of `idbModules` with ES6 modules and a CFG module for the globals:
