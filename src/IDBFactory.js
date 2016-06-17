@@ -71,7 +71,7 @@ IDBFactory.prototype.open = function (name, version) {
     }
 
     function openDB (oldVersion) {
-        const db = CFG.win.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
+        const db = CFG.win.openDatabase('D_' + name, 1, name, DEFAULT_DB_SIZE);
         req.readyState = 'done';
         if (version === undefined) {
             version = oldVersion || 1;
@@ -184,7 +184,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                     return;
                 }
                 version = data.rows.item(0).version;
-                const db = CFG.win.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
+                const db = CFG.win.openDatabase('D_' + name, 1, name, DEFAULT_DB_SIZE);
                 db.transaction(function (tx) {
                     tx.executeSql('SELECT * FROM __sys__', [], function (tx, data) {
                         const tables = data.rows;
@@ -197,7 +197,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                                 }, dbError);
                             } else {
                                 // Delete all tables in this database, maintained in the sys table
-                                tx.executeSql('DROP TABLE ' + util.quote(tables.item(i).name), [], function () {
+                                tx.executeSql('DROP TABLE ' + util.quote('s_' + tables.item(i).name), [], function () {
                                     deleteTables(i + 1);
                                 }, function () {
                                     deleteTables(i + 1);

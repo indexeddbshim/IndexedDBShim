@@ -16679,7 +16679,7 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
 
     var me = this;
     var quotedKeyColumnName = _util2.default.quote(me.__keyColumnName);
-    var sql = ['SELECT * FROM', _util2.default.quote(me.__store.name)];
+    var sql = ['SELECT * FROM', _util2.default.quote('s_' + me.__store.name)];
     var sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
     (0, _IDBKeyRange.setSQLForRange)(me.__range, quotedKeyColumnName, sql, sqlValues, true, true);
@@ -16734,7 +16734,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
     }
 
     var quotedKeyColumnName = _util2.default.quote(me.__keyColumnName);
-    var sql = ['SELECT * FROM', _util2.default.quote(me.__store.name)];
+    var sql = ['SELECT * FROM', _util2.default.quote('s_' + me.__store.name)];
     var sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
     if (me.__range && me.__range.lower !== undefined && me.__range.upper !== undefined) {
@@ -16934,14 +16934,14 @@ IDBCursor.prototype.update = function (valueToUpdate) {
             me.__find(undefined, tx, function (key, value, primaryKey) {
                 var store = me.__store;
                 var params = [encoded];
-                var sql = ['UPDATE', _util2.default.quote(store.name), 'SET value = ?'];
+                var sql = ['UPDATE', _util2.default.quote('s_' + store.name), 'SET value = ?'];
                 _Key2.default.validate(primaryKey);
 
                 // Also correct the indexes in the table
                 for (var i = 0; i < store.indexNames.length; i++) {
                     var index = store.__indexes[store.indexNames[i]];
                     var indexKey = _Key2.default.getValue(valueToUpdate, index.keyPath);
-                    sql.push(',', _util2.default.quote(index.name), '= ?');
+                    sql.push(',', _util2.default.quote('_' + index.name), '= ?');
                     params.push(_Key2.default.encode(indexKey, index.multiEntry));
                 }
 
@@ -16970,7 +16970,7 @@ IDBCursor.prototype['delete'] = function () {
     me.__store.transaction.__assertWritable();
     return this.__store.transaction.__addToTransactionQueue(function cursorDelete(tx, args, success, error) {
         me.__find(undefined, tx, function (key, value, primaryKey) {
-            var sql = 'DELETE FROM  ' + _util2.default.quote(me.__store.name) + ' WHERE key = ?';
+            var sql = 'DELETE FROM  ' + _util2.default.quote('s_' + me.__store.name) + ' WHERE key = ?';
             _cfg2.default.DEBUG && console.log(sql, key, primaryKey);
             _Key2.default.validate(primaryKey);
             tx.executeSql(sql, [_Key2.default.encode(primaryKey)], function (tx, data) {
@@ -17267,7 +17267,7 @@ IDBFactory.prototype.open = function (name, version) {
     }
 
     function openDB(oldVersion) {
-        var db = _cfg2.default.win.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
+        var db = _cfg2.default.win.openDatabase('D_' + name, 1, name, DEFAULT_DB_SIZE);
         req.readyState = 'done';
         if (version === undefined) {
             version = oldVersion || 1;
@@ -17385,7 +17385,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                     return;
                 }
                 version = data.rows.item(0).version;
-                var db = _cfg2.default.win.openDatabase(name, 1, name, DEFAULT_DB_SIZE);
+                var db = _cfg2.default.win.openDatabase('D_' + name, 1, name, DEFAULT_DB_SIZE);
                 db.transaction(function (tx) {
                     tx.executeSql('SELECT * FROM __sys__', [], function (tx, data) {
                         var tables = data.rows;
@@ -17398,7 +17398,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                                 }, dbError);
                             } else {
                                 // Delete all tables in this database, maintained in the sys table
-                                tx.executeSql('DROP TABLE ' + _util2.default.quote(tables.item(i).name), [], function () {
+                                tx.executeSql('DROP TABLE ' + _util2.default.quote('s_' + tables.item(i).name), [], function () {
                                     deleteTables(i + 1);
                                 }, function () {
                                     deleteTables(i + 1);
@@ -17556,7 +17556,7 @@ IDBIndex.__createIndex = function (store, index) {
             // Update the object store's index list
             IDBIndex.__updateIndexList(store, tx, function () {
                 // Add index entries for all existing records
-                tx.executeSql('SELECT * FROM ' + _util2.default.quote(store.name), [], function (tx, data) {
+                tx.executeSql('SELECT * FROM ' + _util2.default.quote('s_' + store.name), [], function (tx, data) {
                     _cfg2.default.DEBUG && console.log('Adding existing ' + store.name + ' records to the ' + index.name + ' index');
                     addIndexEntry(0);
 
@@ -17567,7 +17567,7 @@ IDBIndex.__createIndex = function (store, index) {
                                 var indexKey = _Key2.default.getValue(value, index.keyPath);
                                 indexKey = _Key2.default.encode(indexKey, index.multiEntry);
 
-                                tx.executeSql('UPDATE ' + _util2.default.quote(store.name) + ' SET ' + _util2.default.quote(index.name) + ' = ? WHERE key = ?', [indexKey, data.rows.item(i).key], function (tx, data) {
+                                tx.executeSql('UPDATE ' + _util2.default.quote('s_' + store.name) + ' SET ' + _util2.default.quote('_' + index.name) + ' = ? WHERE key = ?', [indexKey, data.rows.item(i).key], function (tx, data) {
                                     addIndexEntry(i + 1);
                                 }, error);
                             } catch (e) {
@@ -17587,7 +17587,7 @@ IDBIndex.__createIndex = function (store, index) {
             applyIndex(tx);
         } else {
             // For a new index, add a new column to the object store, then apply the index
-            var sql = ['ALTER TABLE', _util2.default.quote(store.name), 'ADD', _util2.default.quote(index.name), 'BLOB'].join(' ');
+            var sql = ['ALTER TABLE', _util2.default.quote('s_' + store.name), 'ADD', _util2.default.quote('_' + index.name), 'BLOB'].join(' ');
             _cfg2.default.DEBUG && console.log(sql);
             tx.executeSql(sql, [], applyIndex, error);
         }
@@ -17607,7 +17607,7 @@ IDBIndex.__deleteIndex = function (store, index) {
 
     // Remove the index in WebSQL
     var transaction = store.transaction;
-    transaction.__addToTransactionQueue(function createIndex(tx, args, success, failure) {
+    transaction.__addToTransactionQueue(function deleteIndex(tx, args, success, failure) {
         function error(tx, err) {
             failure((0, _DOMException.createDOMException)(0, 'Could not delete index "' + index.name + '"', err));
         }
@@ -17669,14 +17669,14 @@ IDBIndex.prototype.__fetchIndexData = function (key, opType) {
     }
 
     return me.objectStore.transaction.__addToTransactionQueue(function fetchIndexData(tx, args, success, error) {
-        var sql = ['SELECT * FROM', _util2.default.quote(me.objectStore.name), 'WHERE', _util2.default.quote(me.name), 'NOT NULL'];
+        var sql = ['SELECT * FROM', _util2.default.quote('s_' + me.objectStore.name), 'WHERE', _util2.default.quote('_' + me.name), 'NOT NULL'];
         var sqlValues = [];
         if (hasKey) {
             if (me.multiEntry) {
-                sql.push('AND', _util2.default.quote(me.name), 'LIKE ?');
+                sql.push('AND', _util2.default.quote('_' + me.name), 'LIKE ?');
                 sqlValues.push('%' + encodedKey + '%');
             } else {
-                sql.push('AND', _util2.default.quote(me.name), '= ?');
+                sql.push('AND', _util2.default.quote('_' + me.name), '= ?');
                 sqlValues.push(encodedKey);
             }
         }
@@ -17687,8 +17687,8 @@ IDBIndex.prototype.__fetchIndexData = function (key, opType) {
             if (me.multiEntry) {
                 for (var i = 0; i < data.rows.length; i++) {
                     var row = data.rows.item(i);
-                    var rowKey = _Key2.default.decode(row[me.name]);
-                    if (hasKey && _Key2.default.isMultiEntryMatch(encodedKey, row[me.name])) {
+                    var rowKey = _Key2.default.decode(row['_' + me.name]);
+                    if (hasKey && _Key2.default.isMultiEntryMatch(encodedKey, row['_' + me.name])) {
                         recordCount++;
                         record = record || row;
                     } else if (!hasKey && rowKey !== undefined) {
@@ -17722,7 +17722,7 @@ IDBIndex.prototype.__fetchIndexData = function (key, opType) {
  * @returns {IDBRequest}
  */
 IDBIndex.prototype.openCursor = function (range, direction) {
-    return new _IDBCursor.IDBCursor(range, direction, this.objectStore, this, this.name, 'value').__req;
+    return new _IDBCursor.IDBCursor(range, direction, this.objectStore, this, '_' + this.name, 'value').__req;
 };
 
 /**
@@ -17732,20 +17732,20 @@ IDBIndex.prototype.openCursor = function (range, direction) {
  * @returns {IDBRequest}
  */
 IDBIndex.prototype.openKeyCursor = function (range, direction) {
-    return new _IDBCursor.IDBCursorWithValue(range, direction, this.objectStore, this, this.name, 'key').__req;
+    return new _IDBCursor.IDBCursorWithValue(range, direction, this.objectStore, this, '_' + this.name, 'key').__req;
 };
 
 IDBIndex.prototype.get = function (key) {
-    if (arguments.length === 0) {
-        throw new TypeError('No key was specified');
+    if (key == null) {
+        throw (0, _DOMException.createDOMException)('DataError', 'No key was specified');
     }
 
     return this.__fetchIndexData(key, 'value');
 };
 
 IDBIndex.prototype.getKey = function (key) {
-    if (arguments.length === 0) {
-        throw new TypeError('No key was specified');
+    if (key == null) {
+        throw (0, _DOMException.createDOMException)('DataError', 'No key was specified');
     }
 
     return this.__fetchIndexData(key, 'key');
@@ -17757,7 +17757,7 @@ IDBIndex.prototype.count = function (key) {
         return this.__fetchIndexData('count');
     }
     if (_util2.default.instanceOf(key, _IDBKeyRange2.default)) {
-        return new _IDBCursor.IDBCursor(key, 'next', this.objectStore, this, this.name, 'value', true).__req;
+        return new _IDBCursor.IDBCursor(key, 'next', this.objectStore, this, '_' + this.name, 'value', true).__req;
     }
     return this.__fetchIndexData(key, 'count');
 };
@@ -17967,7 +17967,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
         }
 
         // key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
-        var sql = ['CREATE TABLE', _util2.default.quote(store.name), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
+        var sql = ['CREATE TABLE', _util2.default.quote('s_' + store.name), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
         _cfg2.default.DEBUG && console.log(sql);
         tx.executeSql(sql, [], function (tx, data) {
             tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?)', [store.name, JSON.stringify(store.keyPath), store.autoIncrement, '{}'], function () {
@@ -17998,7 +17998,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
 
         tx.executeSql('SELECT * FROM __sys__ WHERE name = ?', [store.name], function (tx, data) {
             if (data.rows.length > 0) {
-                tx.executeSql('DROP TABLE ' + _util2.default.quote(store.name), [], function () {
+                tx.executeSql('DROP TABLE ' + _util2.default.quote('s_' + store.name), [], function () {
                     tx.executeSql('DELETE FROM __sys__ WHERE name = ?', [store.name], function () {
                         success();
                     }, error);
@@ -18016,7 +18016,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
  */
 IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
     value && (typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object' && JSON.stringify(value, function (key, val) {
-        if (['function', 'symbol', 'undefined'].includes(typeof val === 'undefined' ? 'undefined' : _typeof(val)) || value instanceof Error || // Duck-typing with some util.isError would be better, but too easy to get a false match
+        if (['function', 'symbol'].includes(typeof val === 'undefined' ? 'undefined' : _typeof(val)) || value instanceof Error || // Duck-typing with some util.isError would be better, but too easy to get a false match
         value.nodeType > 0 && typeof value.nodeName === 'string' // DOM nodes
         ) {
                 throw (0, _DOMException.createDOMException)('DataCloneError', 'The data being stored could not be cloned by the internal structured cloning algorithm.');
@@ -18065,7 +18065,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
     var me = this;
 
     function getNextAutoIncKey(callback) {
-        tx.executeSql('SELECT * FROM sqlite_sequence WHERE name = ?', [me.name], function (tx, data) {
+        tx.executeSql('SELECT * FROM sqlite_sequence WHERE name = ?', ['s_' + me.name], function (tx, data) {
             if (data.rows.length !== 1) {
                 callback(1);
             } else {
@@ -18104,7 +18104,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
 IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey, passedKey, success, error) {
     var me = this;
     try {
-        var sqlStart = ['INSERT INTO ', _util2.default.quote(this.name), '('];
+        var sqlStart = ['INSERT INTO ', _util2.default.quote('s_' + this.name), '('];
         var sqlEnd = [' VALUES ('];
         var sqlValues = [];
         var paramMap = {};
@@ -18119,7 +18119,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             paramMap[index.name] = _Key2.default.encode(_Key2.default.getValue(value, index.keyPath), index.multiEntry);
         }
         for (var key in paramMap) {
-            sqlStart.push(_util2.default.quote(key) + ',');
+            sqlStart.push(_util2.default.quote('_' + key) + ',');
             sqlEnd.push('?,');
             sqlValues.push(paramMap[key]);
         }
@@ -18135,7 +18135,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             _Sca2.default.encode(primaryKey, function (primaryKey) {
                 primaryKey = _Sca2.default.decode(primaryKey);
                 if (typeof passedKey === 'number' && passedKey >= primaryKey && me.autoIncrement) {
-                    tx.executeSql('UPDATE sqlite_sequence SET seq = ? WHERE name = ?', [primaryKey, me.name], function (tx, data) {
+                    tx.executeSql('UPDATE sqlite_sequence SET seq = ? WHERE name = ?', [primaryKey, 's_' + me.name], function (tx, data) {
                         success(primaryKey);
                     }, function (tx, err) {
                         error((0, _DOMException.createDOMException)('UnknownError', 'Could not set the auto increment value for key', err));
@@ -18185,7 +18185,7 @@ IDBObjectStore.prototype.put = function (value, key) {
             _Sca2.default.encode(value, function (encoded) {
                 // First try to delete if the record exists
                 _Key2.default.validate(primaryKey);
-                var sql = 'DELETE FROM ' + _util2.default.quote(me.name) + ' WHERE key = ?';
+                var sql = 'DELETE FROM ' + _util2.default.quote('s_' + me.name) + ' WHERE key = ?';
                 tx.executeSql(sql, [_Key2.default.encode(primaryKey)], function (tx, data) {
                     _cfg2.default.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
                     me.__insertData(tx, encoded, value, primaryKey, key, success, error);
@@ -18201,15 +18201,15 @@ IDBObjectStore.prototype.put = function (value, key) {
 IDBObjectStore.prototype.get = function (range) {
     var me = this;
 
-    if (arguments.length === 0) {
-        throw new TypeError('No key was specified');
+    if (range == null) {
+        throw (0, _DOMException.createDOMException)('DataError', 'No key was specified');
     }
 
     if (!_util2.default.instanceOf(range, _IDBKeyRange.IDBKeyRange)) {
         range = _IDBKeyRange.IDBKeyRange.only(range);
     }
 
-    var sql = ['SELECT * FROM ', _util2.default.quote(me.name), ' WHERE '];
+    var sql = ['SELECT * FROM ', _util2.default.quote('s_' + me.name), ' WHERE '];
     var sqlValues = [];
     (0, _IDBKeyRange.setSQLForRange)(range, 'key', sql, sqlValues);
     sqlValues = sqlValues.map(function (sqlValue) {
@@ -18246,8 +18246,8 @@ IDBObjectStore.prototype.get = function (range) {
 IDBObjectStore.prototype['delete'] = function (key) {
     var me = this;
 
-    if (arguments.length === 0) {
-        throw new TypeError('No key was specified');
+    if (key == null) {
+        throw (0, _DOMException.createDOMException)('DataError', 'No key was specified');
     }
 
     me.transaction.__assertWritable();
@@ -18256,7 +18256,7 @@ IDBObjectStore.prototype['delete'] = function (key) {
     // TODO key should also support key ranges
     return me.transaction.__addToTransactionQueue(function objectStoreDelete(tx, args, success, error) {
         _cfg2.default.DEBUG && console.log('Fetching', me.name, primaryKey);
-        tx.executeSql('DELETE FROM ' + _util2.default.quote(me.name) + ' WHERE key = ?', [primaryKey], function (tx, data) {
+        tx.executeSql('DELETE FROM ' + _util2.default.quote('s_' + me.name) + ' WHERE key = ?', [primaryKey], function (tx, data) {
             _cfg2.default.DEBUG && console.log('Deleted from database', data.rowsAffected);
             success();
         }, function (tx, err) {
@@ -18269,7 +18269,7 @@ IDBObjectStore.prototype.clear = function () {
     var me = this;
     me.transaction.__assertWritable();
     return me.transaction.__addToTransactionQueue(function objectStoreClear(tx, args, success, error) {
-        tx.executeSql('DELETE FROM ' + _util2.default.quote(me.name), [], function (tx, data) {
+        tx.executeSql('DELETE FROM ' + _util2.default.quote('s_' + me.name), [], function (tx, data) {
             _cfg2.default.DEBUG && console.log('Cleared all records from database', data.rowsAffected);
             success();
         }, function (tx, err) {
@@ -18296,7 +18296,7 @@ IDBObjectStore.prototype.count = function (key) {
 
             return {
                 v: me.transaction.__addToTransactionQueue(function objectStoreCount(tx, args, success, error) {
-                    var sql = 'SELECT * FROM ' + _util2.default.quote(me.name) + (hasKey ? ' WHERE key = ?' : '');
+                    var sql = 'SELECT * FROM ' + _util2.default.quote('s_' + me.name) + (hasKey ? ' WHERE key = ?' : '');
                     var sqlValues = [];
                     hasKey && sqlValues.push(_Key2.default.encode(key));
                     tx.executeSql(sql, sqlValues, function (tx, data) {

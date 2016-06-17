@@ -992,6 +992,7 @@
             });
 
             it('should save inline keys in multiple simultaneous transactions', function (done) {
+                this.timeout(5000);
                 util.createDatabase('inline', function (err, db) {
                     if (err) {
                         expect(function () { throw err; }).to.not.throw(Error);

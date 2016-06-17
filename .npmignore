@@ -11,8 +11,15 @@
 
 /sauce_connect.log
 /npm-debug.log
-/dbName*
 
 # Should be deleted by Grunt
-/IndexedDBShim_Test_Database_*
 /__sysdb__*
+/D_dbName*
+/D_IndexedDBShim_Test_Database_*
+/D_test.sqlite
+/D_TestDatabase*
+/D_testdb-*
+/D_database_name*
+/D_idbtransaction*
+/D_db.sqlite
+/D_test0.*

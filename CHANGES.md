@@ -3,6 +3,9 @@
 ## Version 3.0.0 (Unreleased)
 
 - License: Add back missing MIT license
+- Security fix: Avoid SQL injection potential--ensure store names and index
+    names are prefixed as SQLite columns to avoid conflict with built-in
+    columns; add test
 - Breaking change/Fix: Remove `IDBTransaction` mode constants and tests since
     now being removed from IndexedDB
 - Breaking change: If you were overriding/monkey-patching globals, these are
@@ -47,6 +50,8 @@
     bounds
 - Fix: If `lower` is greater than the `upper` argument to `IDBKeyRange.bound`,
     throw a `DataError`
+- Fix: Throw `DataError` instead of `TypeError` with bad
+    `get()`/`getKey`/`delete()`
 - Feature: Support Node cleanly via `websql` SQLite3 library
 - Feature: Add `IDBObjectStore.openKeyCursor`
 - Feature: Add `IDBKeyRange.includes()` with test

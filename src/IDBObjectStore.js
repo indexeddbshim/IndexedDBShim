@@ -75,7 +75,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
         }
 
         // key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
-        const sql = ['CREATE TABLE', util.quote(store.name), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
+        const sql = ['CREATE TABLE', util.quote('s_' + store.name), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
         CFG.DEBUG && console.log(sql);
         tx.executeSql(sql, [], function (tx, data) {
             tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?)', [store.name, JSON.stringify(store.keyPath), store.autoIncrement, '{}'], function () {
@@ -106,7 +106,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
 
         tx.executeSql('SELECT * FROM __sys__ WHERE name = ?', [store.name], function (tx, data) {
             if (data.rows.length > 0) {
-                tx.executeSql('DROP TABLE ' + util.quote(store.name), [], function () {
+                tx.executeSql('DROP TABLE ' + util.quote('s_' + store.name), [], function () {
                     tx.executeSql('DELETE FROM __sys__ WHERE name = ?', [store.name], function () {
                         success();
                     }, error);
@@ -124,7 +124,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
  */
 IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
     value && typeof value === 'object' && JSON.stringify(value, function (key, val) {
-        if (['function', 'symbol', 'undefined'].includes(typeof val) ||
+        if (['function', 'symbol'].includes(typeof val) ||
             value instanceof Error || // Duck-typing with some util.isError would be better, but too easy to get a false match
             (value.nodeType > 0 && typeof value.nodeName === 'string') // DOM nodes
         ) {
@@ -174,7 +174,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
     const me = this;
 
     function getNextAutoIncKey (callback) {
-        tx.executeSql('SELECT * FROM sqlite_sequence WHERE name = ?', [me.name], function (tx, data) {
+        tx.executeSql('SELECT * FROM sqlite_sequence WHERE name = ?', ['s_' + me.name], function (tx, data) {
             if (data.rows.length !== 1) {
                 callback(1);
             } else {
@@ -213,7 +213,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
 IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey, passedKey, success, error) {
     const me = this;
     try {
-        const sqlStart = ['INSERT INTO ', util.quote(this.name), '('];
+        const sqlStart = ['INSERT INTO ', util.quote('s_' + this.name), '('];
         const sqlEnd = [' VALUES ('];
         const sqlValues = [];
         const paramMap = {};
@@ -228,7 +228,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             paramMap[index.name] = Key.encode(Key.getValue(value, index.keyPath), index.multiEntry);
         }
         for (const key in paramMap) {
-            sqlStart.push(util.quote(key) + ',');
+            sqlStart.push(util.quote('_' + key) + ',');
             sqlEnd.push('?,');
             sqlValues.push(paramMap[key]);
         }
@@ -244,7 +244,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             Sca.encode(primaryKey, function (primaryKey) {
                 primaryKey = Sca.decode(primaryKey);
                 if (typeof passedKey === 'number' && passedKey >= primaryKey && me.autoIncrement) {
-                    tx.executeSql('UPDATE sqlite_sequence SET seq = ? WHERE name = ?', [primaryKey, me.name], function (tx, data) {
+                    tx.executeSql('UPDATE sqlite_sequence SET seq = ? WHERE name = ?', [primaryKey, 's_' + me.name], function (tx, data) {
                         success(primaryKey);
                     }, function (tx, err) {
                         error(createDOMException('UnknownError', 'Could not set the auto increment value for key', err));
@@ -294,7 +294,7 @@ IDBObjectStore.prototype.put = function (value, key) {
             Sca.encode(value, function (encoded) {
                 // First try to delete if the record exists
                 Key.validate(primaryKey);
-                const sql = 'DELETE FROM ' + util.quote(me.name) + ' WHERE key = ?';
+                const sql = 'DELETE FROM ' + util.quote('s_' + me.name) + ' WHERE key = ?';
                 tx.executeSql(sql, [Key.encode(primaryKey)], function (tx, data) {
                     CFG.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
                     me.__insertData(tx, encoded, value, primaryKey, key, success, error);
@@ -310,15 +310,15 @@ IDBObjectStore.prototype.put = function (value, key) {
 IDBObjectStore.prototype.get = function (range) {
     const me = this;
 
-    if (arguments.length === 0) {
-        throw new TypeError('No key was specified');
+    if (range == null) {
+        throw createDOMException('DataError', 'No key was specified');
     }
 
     if (!(util.instanceOf(range, IDBKeyRange))) {
         range = IDBKeyRange.only(range);
     }
 
-    let sql = ['SELECT * FROM ', util.quote(me.name), ' WHERE '];
+    let sql = ['SELECT * FROM ', util.quote('s_' + me.name), ' WHERE '];
     let sqlValues = [];
     setSQLForRange(range, 'key', sql, sqlValues);
     sqlValues = sqlValues.map((sqlValue) => Key.encode(sqlValue));
@@ -353,8 +353,8 @@ IDBObjectStore.prototype.get = function (range) {
 IDBObjectStore.prototype['delete'] = function (key) {
     const me = this;
 
-    if (arguments.length === 0) {
-        throw new TypeError('No key was specified');
+    if (key == null) {
+        throw createDOMException('DataError', 'No key was specified');
     }
 
     me.transaction.__assertWritable();
@@ -363,7 +363,7 @@ IDBObjectStore.prototype['delete'] = function (key) {
     // TODO key should also support key ranges
     return me.transaction.__addToTransactionQueue(function objectStoreDelete (tx, args, success, error) {
         CFG.DEBUG && console.log('Fetching', me.name, primaryKey);
-        tx.executeSql('DELETE FROM ' + util.quote(me.name) + ' WHERE key = ?', [primaryKey], function (tx, data) {
+        tx.executeSql('DELETE FROM ' + util.quote('s_' + me.name) + ' WHERE key = ?', [primaryKey], function (tx, data) {
             CFG.DEBUG && console.log('Deleted from database', data.rowsAffected);
             success();
         }, function (tx, err) {
@@ -376,7 +376,7 @@ IDBObjectStore.prototype.clear = function () {
     const me = this;
     me.transaction.__assertWritable();
     return me.transaction.__addToTransactionQueue(function objectStoreClear (tx, args, success, error) {
-        tx.executeSql('DELETE FROM ' + util.quote(me.name), [], function (tx, data) {
+        tx.executeSql('DELETE FROM ' + util.quote('s_' + me.name), [], function (tx, data) {
             CFG.DEBUG && console.log('Cleared all records from database', data.rowsAffected);
             success();
         }, function (tx, err) {
@@ -399,7 +399,7 @@ IDBObjectStore.prototype.count = function (key) {
         }
 
         return me.transaction.__addToTransactionQueue(function objectStoreCount (tx, args, success, error) {
-            const sql = 'SELECT * FROM ' + util.quote(me.name) + (hasKey ? ' WHERE key = ?' : '');
+            const sql = 'SELECT * FROM ' + util.quote('s_' + me.name) + (hasKey ? ' WHERE key = ?' : '');
             const sqlValues = [];
             hasKey && sqlValues.push(Key.encode(key));
             tx.executeSql(sql, sqlValues, function (tx, data) {

@@ -11,11 +11,11 @@
     "start": "grunt",
     "test": "npm run phantom-qunit",
     "phantom-qunit": "grunt phantom-qunit",
-    "qunit": "grunt nodequnit && grunt clean-qunit",
-    "mocha": "grunt mocha && grunt clean-mocha",
-    "fake": "mocha tests-polyfill/fakeIndexedDB/fakeIndexedDB.js && grunt clean:fake",
-    "mock": "mocha tests-polyfill/indexedDBmock/*.js && grunt clean:mock",
-    "w3c": "mocha tests-polyfill/w3c/*.js && grunt clean:w3c",
+    "qunit": "grunt clean-qunit && grunt nodequnit && grunt clean-qunit",
+    "mocha": "grunt clean-mocha && grunt mocha && grunt clean-mocha",
+    "fake": "grunt clean-fake && mocha tests-polyfill/fakeIndexedDB/fakeIndexedDB.js && grunt clean-fake",
+    "mock": "grunt clean-mock && mocha tests-polyfill/indexedDBmock/*.js && grunt clean-mock",
+    "w3c": "grunt clean-w3c && mocha tests-polyfill/w3c/*.js && grunt clean-w3c",
     "tests-polyfill": "grunt clean-polyfill && npm run fake && npm run mock && npm run w3c && browserify-test -t [ babelify --presets es2015 ] tests-polyfill/**/*.js"
   },
   "repository": {

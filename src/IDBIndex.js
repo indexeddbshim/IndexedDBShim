@@ -64,7 +64,7 @@ IDBIndex.__createIndex = function (store, index) {
             // Update the object store's index list
             IDBIndex.__updateIndexList(store, tx, function () {
                 // Add index entries for all existing records
-                tx.executeSql('SELECT * FROM ' + util.quote(store.name), [], function (tx, data) {
+                tx.executeSql('SELECT * FROM ' + util.quote('s_' + store.name), [], function (tx, data) {
                     CFG.DEBUG && console.log('Adding existing ' + store.name + ' records to the ' + index.name + ' index');
                     addIndexEntry(0);
 
@@ -75,7 +75,7 @@ IDBIndex.__createIndex = function (store, index) {
                                 let indexKey = Key.getValue(value, index.keyPath);
                                 indexKey = Key.encode(indexKey, index.multiEntry);
 
-                                tx.executeSql('UPDATE ' + util.quote(store.name) + ' SET ' + util.quote(index.name) + ' = ? WHERE key = ?', [indexKey, data.rows.item(i).key], function (tx, data) {
+                                tx.executeSql('UPDATE ' + util.quote('s_' + store.name) + ' SET ' + util.quote('_' + index.name) + ' = ? WHERE key = ?', [indexKey, data.rows.item(i).key], function (tx, data) {
                                     addIndexEntry(i + 1);
                                 }, error);
                             } catch (e) {
@@ -95,7 +95,7 @@ IDBIndex.__createIndex = function (store, index) {
             applyIndex(tx);
         } else {
             // For a new index, add a new column to the object store, then apply the index
-            const sql = ['ALTER TABLE', util.quote(store.name), 'ADD', util.quote(index.name), 'BLOB'].join(' ');
+            const sql = ['ALTER TABLE', util.quote('s_' + store.name), 'ADD', util.quote('_' + index.name), 'BLOB'].join(' ');
             CFG.DEBUG && console.log(sql);
             tx.executeSql(sql, [], applyIndex, error);
         }
@@ -115,7 +115,7 @@ IDBIndex.__deleteIndex = function (store, index) {
 
     // Remove the index in WebSQL
     const transaction = store.transaction;
-    transaction.__addToTransactionQueue(function createIndex (tx, args, success, failure) {
+    transaction.__addToTransactionQueue(function deleteIndex (tx, args, success, failure) {
         function error (tx, err) {
             failure(createDOMException(0, 'Could not delete index "' + index.name + '"', err));
         }
@@ -176,14 +176,14 @@ IDBIndex.prototype.__fetchIndexData = function (key, opType) {
     }
 
     return me.objectStore.transaction.__addToTransactionQueue(function fetchIndexData (tx, args, success, error) {
-        const sql = ['SELECT * FROM', util.quote(me.objectStore.name), 'WHERE', util.quote(me.name), 'NOT NULL'];
+        const sql = ['SELECT * FROM', util.quote('s_' + me.objectStore.name), 'WHERE', util.quote('_' + me.name), 'NOT NULL'];
         const sqlValues = [];
         if (hasKey) {
             if (me.multiEntry) {
-                sql.push('AND', util.quote(me.name), 'LIKE ?');
+                sql.push('AND', util.quote('_' + me.name), 'LIKE ?');
                 sqlValues.push('%' + encodedKey + '%');
             } else {
-                sql.push('AND', util.quote(me.name), '= ?');
+                sql.push('AND', util.quote('_' + me.name), '= ?');
                 sqlValues.push(encodedKey);
             }
         }
@@ -193,8 +193,8 @@ IDBIndex.prototype.__fetchIndexData = function (key, opType) {
             if (me.multiEntry) {
                 for (let i = 0; i < data.rows.length; i++) {
                     const row = data.rows.item(i);
-                    const rowKey = Key.decode(row[me.name]);
-                    if (hasKey && Key.isMultiEntryMatch(encodedKey, row[me.name])) {
+                    const rowKey = Key.decode(row['_' + me.name]);
+                    if (hasKey && Key.isMultiEntryMatch(encodedKey, row['_' + me.name])) {
                         recordCount++;
                         record = record || row;
                     } else if (!hasKey && rowKey !== undefined) {
@@ -227,7 +227,7 @@ IDBIndex.prototype.__fetchIndexData = function (key, opType) {
  * @returns {IDBRequest}
  */
 IDBIndex.prototype.openCursor = function (range, direction) {
-    return new IDBCursor(range, direction, this.objectStore, this, this.name, 'value').__req;
+    return new IDBCursor(range, direction, this.objectStore, this, '_' + this.name, 'value').__req;
 };
 
 /**
@@ -237,20 +237,20 @@ IDBIndex.prototype.openCursor = function (range, direction) {
  * @returns {IDBRequest}
  */
 IDBIndex.prototype.openKeyCursor = function (range, direction) {
-    return new IDBCursorWithValue(range, direction, this.objectStore, this, this.name, 'key').__req;
+    return new IDBCursorWithValue(range, direction, this.objectStore, this, '_' + this.name, 'key').__req;
 };
 
 IDBIndex.prototype.get = function (key) {
-    if (arguments.length === 0) {
-        throw new TypeError('No key was specified');
+    if (key == null) {
+        throw createDOMException('DataError', 'No key was specified');
     }
 
     return this.__fetchIndexData(key, 'value');
 };
 
 IDBIndex.prototype.getKey = function (key) {
-    if (arguments.length === 0) {
-        throw new TypeError('No key was specified');
+    if (key == null) {
+        throw createDOMException('DataError', 'No key was specified');
     }
 
     return this.__fetchIndexData(key, 'key');
@@ -262,7 +262,7 @@ IDBIndex.prototype.count = function (key) {
         return this.__fetchIndexData('count');
     }
     if (util.instanceOf(key, IDBKeyRange)) {
-        return new IDBCursor(key, 'next', this.objectStore, this, this.name, 'value', true).__req;
+        return new IDBCursor(key, 'next', this.objectStore, this, '_' + this.name, 'value', true).__req;
     }
     return this.__fetchIndexData(key, 'count');
 };

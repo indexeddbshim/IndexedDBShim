@@ -65,19 +65,19 @@ module.exports = function (grunt) {
         },
         clean: {
             qunitTests: {
-                src: ['dbName*']
+                src: ['D_dbName*']
             },
             mochaTests: {
-                src: ['IndexedDBShim_Test_Database_*', 'test.sqlite']
+                src: ['D_IndexedDBShim_Test_Database_*', 'D_test.sqlite']
             },
             mock: {
-                src: ['TestDatabase*']
+                src: ['D_TestDatabase*']
             },
             w3c: {
-                src: ['testdb-*', 'database_name*', 'idbtransaction*', 'db.sqlite']
+                src: ['D_testdb-*', 'D_database_name*', 'D_idbtransaction*', 'D_db.sqlite']
             },
             fake: {
-                src: ['test0.*']
+                src: ['D_test0.*']
             },
             sysDB: {
                 src: ['__sysdb__*']
@@ -176,6 +176,9 @@ module.exports = function (grunt) {
     grunt.registerTask('clean-mocha', ['clean:mochaTests', 'clean:sysDB']);
     grunt.registerTask('clean-qunit', ['clean:qunitTests', 'clean:sysDB']);
     grunt.registerTask('clean-polyfill', ['clean:fake', 'clean:mock', 'clean:w3c', 'clean:sysDB']);
+    grunt.registerTask('clean-fake', ['clean:fake', 'clean:sysDB']);
+    grunt.registerTask('clean-mock', ['clean:mock', 'clean:sysDB']);
+    grunt.registerTask('clean-w3c', ['clean:w3c', 'clean:sysDB']);
 
     grunt.registerTask('default', 'build');
     grunt.registerTask('dev', ['build', 'connect', 'watch']);

@@ -275,6 +275,11 @@ describe('IDBObjectStore.createIndex', function () {
     describe('failure tests', function () {
         it('should throw an error if called without params', function (done) {
             util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
@@ -302,6 +307,11 @@ describe('IDBObjectStore.createIndex', function () {
 
         it('should throw an error if called without a keyPath', function (done) {
             util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
@@ -330,6 +340,11 @@ describe('IDBObjectStore.createIndex', function () {
         util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should throw an error if called with an array keyPath with multiEntry true', function (done) {
             // BUG: IE's native IndexedDB does not support multi-entry indexes
             util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
@@ -388,6 +403,11 @@ describe('IDBObjectStore.createIndex', function () {
 
         it('should throw an error if the index was already created in a previous transaction', function (done) {
             util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
                 createVersion1();
 
                 function createVersion1 () {
@@ -429,6 +449,33 @@ describe('IDBObjectStore.createIndex', function () {
                         done();
                     };
                 }
+            });
+        });
+
+        it('should allow `key`, `value`, or `inc` for index names (column names used internally)', function (done) {
+            util.generateDatabaseName(function (err, name) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
+                var open = indexedDB.open(name, 1);
+                open.onerror = open.onblocked = done;
+                open.onupgradeneeded = sinon.spy(function (event) {
+                    var db = event.target.result;
+                    var store = db.createObjectStore('test');
+                    store.createIndex('value', 'id');
+                    expect(store.indexNames.contains('value')).equal(true);
+                    store.createIndex('key', 'id');
+                    expect(store.indexNames.contains('key')).equal(true);
+                    store.createIndex('inc', 'id');
+                    expect(store.indexNames.contains('inc')).equal(true);
+                });
+                open.onsuccess = function () {
+                    sinon.assert.calledOnce(open.onupgradeneeded);
+                    open.result.close();
+                    done();
+                };
             });
         });
     });
