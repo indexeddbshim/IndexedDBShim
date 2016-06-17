@@ -213,18 +213,20 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
 IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey, passedKey, success, error) {
     const me = this;
     try {
+        const sqlStart = ['INSERT INTO ', util.quote(this.name), '('];
+        const sqlEnd = [' VALUES ('];
+        const sqlValues = [];
         const paramMap = {};
         if (primaryKey !== undefined) {
             Key.validate(primaryKey);
-            paramMap.key = Key.encode(primaryKey);
+            sqlStart.push('key,');
+            sqlEnd.push('?,');
+            sqlValues.push(Key.encode(primaryKey));
         }
         for (let i = 0; i < this.indexNames.length; i++) {
             const index = this.__indexes[this.indexNames[i]];
             paramMap[index.name] = Key.encode(Key.getValue(value, index.keyPath), index.multiEntry);
         }
-        const sqlStart = ['INSERT INTO ', util.quote(this.name), '('];
-        const sqlEnd = [' VALUES ('];
-        const sqlValues = [];
         for (const key in paramMap) {
             sqlStart.push(util.quote(key) + ',');
             sqlEnd.push('?,');

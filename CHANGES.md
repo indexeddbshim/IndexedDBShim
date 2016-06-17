@@ -42,6 +42,7 @@
 - Fix: Ensure numeric keys passed to `add()` or `put()` on an autocomplete
     store which are greater or equal to the "current number" will update
     the auto-increment counter
+- Fix: Avoid potential problem with data insertion if an index were named "key"
 - Feature: Support Node cleanly via `websql` SQLite3 library
 - Feature: Add `IDBObjectStore.openKeyCursor`
 - Feature: Add `IDBKeyRange.includes()` with test

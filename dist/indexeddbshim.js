@@ -10598,18 +10598,20 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
 IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey, passedKey, success, error) {
     var me = this;
     try {
+        var sqlStart = ['INSERT INTO ', _util2.default.quote(this.name), '('];
+        var sqlEnd = [' VALUES ('];
+        var sqlValues = [];
         var paramMap = {};
         if (primaryKey !== undefined) {
             _Key2.default.validate(primaryKey);
-            paramMap.key = _Key2.default.encode(primaryKey);
+            sqlStart.push('key,');
+            sqlEnd.push('?,');
+            sqlValues.push(_Key2.default.encode(primaryKey));
         }
         for (var i = 0; i < this.indexNames.length; i++) {
             var index = this.__indexes[this.indexNames[i]];
             paramMap[index.name] = _Key2.default.encode(_Key2.default.getValue(value, index.keyPath), index.multiEntry);
         }
-        var sqlStart = ['INSERT INTO ', _util2.default.quote(this.name), '('];
-        var sqlEnd = [' VALUES ('];
-        var sqlValues = [];
         for (var key in paramMap) {
             sqlStart.push(_util2.default.quote(key) + ',');
             sqlEnd.push('?,');
