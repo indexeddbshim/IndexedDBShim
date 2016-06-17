@@ -18134,7 +18134,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         tx.executeSql(sql, sqlValues, function (tx, data) {
             _Sca2.default.encode(primaryKey, function (primaryKey) {
                 primaryKey = _Sca2.default.decode(primaryKey);
-                if (typeof passedKey === 'number' && passedKey >= primaryKey) {
+                if (typeof passedKey === 'number' && passedKey >= primaryKey && me.autoIncrement) {
                     tx.executeSql('UPDATE sqlite_sequence SET seq = ? WHERE name = ?', [primaryKey, me.name], function (tx, data) {
                         success(primaryKey);
                     }, function (tx, err) {
