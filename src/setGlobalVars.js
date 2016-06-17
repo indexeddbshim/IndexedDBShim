@@ -11,7 +11,7 @@ import shimIDBDatabase from './IDBDatabase.js';
 import polyfill from './polyfill.js';
 import CFG from './cfg.js';
 
-const glob = typeof global !== 'undefined' ? global : window;
+const glob = typeof global !== 'undefined' ? global : (typeof window !== 'undefined' ? window : self);
 glob._babelPolyfill = false; // http://stackoverflow.com/questions/31282702/conflicting-use-of-babel-register
 
 let IDB;
@@ -42,7 +42,7 @@ function shim (name, value) {
 }
 
 function setGlobalVars (idb) {
-    IDB = idb || typeof window !== 'undefined' ? window : {};
+    IDB = idb || (typeof window !== 'undefined' ? window : (typeof self !== 'undefined' ? self : {}));
     shim('shimIndexedDB', shimIndexedDB);
     if (IDB.shimIndexedDB) {
         IDB.shimIndexedDB.__useShim = function () {

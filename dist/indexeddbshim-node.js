@@ -19994,7 +19994,7 @@ var _cfg2 = _interopRequireDefault(_cfg);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var glob = typeof global !== 'undefined' ? global : window;
+var glob = typeof global !== 'undefined' ? global : typeof window !== 'undefined' ? window : self;
 glob._babelPolyfill = false; // http://stackoverflow.com/questions/31282702/conflicting-use-of-babel-register
 
 var IDB = void 0;
@@ -20025,7 +20025,7 @@ function shim(name, value) {
 }
 
 function setGlobalVars(idb) {
-    IDB = idb || typeof window !== 'undefined' ? window : {};
+    IDB = idb || (typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {});
     shim('shimIndexedDB', _IDBFactory.shimIndexedDB);
     if (IDB.shimIndexedDB) {
         IDB.shimIndexedDB.__useShim = function () {
