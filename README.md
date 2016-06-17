@@ -167,6 +167,13 @@ tests, but at present [only work in Node](https://github.com/axemclion/IndexedDB
 
 They can be run through a variety of means as described below.
 
+To properly build the files (lint, browserify, and minify), use `npm start`
+or to also keep a web server, run `npm run dev` (or `grunt dev`).
+
+The tests produce various database files. These are avoided in
+`.gitignore` and should be cleaned up if the tests pass, but if
+you wish to delete them all manually, run `npm run clean`.
+
 ### Browser testing
 
 All QUnit-based browser tests should pass except one
@@ -189,7 +196,7 @@ which is a headless WebKit browser.
 If you want to run the tests in a normal web browser, you'll need to
 spin-up a local web server and then open [`tests-qunit/index.html?noglobals`](https://github.com/axemclion/IndexedDBShim/blob/master/tests-qunit/index.html?noglobals)
 and/or [`tests-mocha/index.html`](https://github.com/axemclion/IndexedDBShim/blob/master/tests-mocha/index.html)
-in your browser. You can also run `grunt dev` and point your
+in your browser. You can also run `npm run dev` and point your
 browser to `http://localhost:9999/tests-qunit/index.html` or
 `http://localhost:9999/tests-mocha/index.html`.
 

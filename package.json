@@ -10,6 +10,8 @@
   "scripts": {
     "start": "grunt",
     "test": "npm run phantom-qunit",
+    "dev": "grunt dev",
+    "clean": "grunt clean",
     "phantom-qunit": "grunt phantom-qunit",
     "qunit": "grunt clean-qunit && grunt nodequnit && grunt clean-qunit",
     "mocha": "grunt clean-mocha && grunt mocha && grunt clean-mocha",
