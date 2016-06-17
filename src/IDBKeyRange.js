@@ -1,3 +1,4 @@
+import {createDOMException} from './DOMException.js';
 import Key from './Key.js';
 
 /**
@@ -9,6 +10,9 @@ import Key from './Key.js';
  * @param {Object} upperOpen
  */
 function IDBKeyRange (lower, upper, lowerOpen, upperOpen) {
+    if (lower === undefined && upper === undefined) {
+        throw new TypeError('Both arguments to the key range method cannot be undefined');
+    }
     if (lower !== undefined) {
         Key.validate(lower);
     }
@@ -22,6 +26,7 @@ function IDBKeyRange (lower, upper, lowerOpen, upperOpen) {
     this.upperOpen = !!upperOpen;
 }
 IDBKeyRange.prototype.includes = function (key) {
+    Key.validate(key);
     return Key.isKeyInRange(key, this);
 };
 
@@ -36,6 +41,9 @@ IDBKeyRange.upperBound = function (value, open) {
     return new IDBKeyRange(undefined, value, true, open);
 };
 IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
+    if (Key.encode(lower) > Key.encode(upper)) {
+        throw createDOMException('DataError', '`lower` must not be greater than `upper` argument in `bound()` call.');
+    }
     return new IDBKeyRange(lower, upper, lowerOpen, upperOpen);
 };
 Object.defineProperty(IDBKeyRange, Symbol.hasInstance, {

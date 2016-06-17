@@ -43,6 +43,10 @@
     store which are greater or equal to the "current number" will update
     the auto-increment counter
 - Fix: Avoid potential problem with data insertion if an index were named "key"
+- Fix: Throw `TypeError` when `undefined` occurs for both `lower` and `upper`
+    bounds
+- Fix: If `lower` is greater than the `upper` argument to `IDBKeyRange.bound`,
+    throw a `DataError`
 - Feature: Support Node cleanly via `websql` SQLite3 library
 - Feature: Add `IDBObjectStore.openKeyCursor`
 - Feature: Add `IDBKeyRange.includes()` with test

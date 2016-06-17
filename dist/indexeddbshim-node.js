@@ -17781,6 +17781,8 @@ exports.default = exports.IDBKeyRange = exports.setSQLForRange = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
+var _DOMException = require('./DOMException.js');
+
 var _Key = require('./Key.js');
 
 var _Key2 = _interopRequireDefault(_Key);
@@ -17796,6 +17798,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @param {Object} upperOpen
  */
 function IDBKeyRange(lower, upper, lowerOpen, upperOpen) {
+    if (lower === undefined && upper === undefined) {
+        throw new TypeError('Both arguments to the key range method cannot be undefined');
+    }
     if (lower !== undefined) {
         _Key2.default.validate(lower);
     }
@@ -17809,6 +17814,7 @@ function IDBKeyRange(lower, upper, lowerOpen, upperOpen) {
     this.upperOpen = !!upperOpen;
 }
 IDBKeyRange.prototype.includes = function (key) {
+    _Key2.default.validate(key);
     return _Key2.default.isKeyInRange(key, this);
 };
 
@@ -17823,6 +17829,9 @@ IDBKeyRange.upperBound = function (value, open) {
     return new IDBKeyRange(undefined, value, true, open);
 };
 IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
+    if (_Key2.default.encode(lower) > _Key2.default.encode(upper)) {
+        throw (0, _DOMException.createDOMException)('DataError', '`lower` must not be greater than `upper` argument in `bound()` call.');
+    }
     return new IDBKeyRange(lower, upper, lowerOpen, upperOpen);
 };
 Object.defineProperty(IDBKeyRange, Symbol.hasInstance, {
@@ -17850,7 +17859,7 @@ exports.setSQLForRange = setSQLForRange;
 exports.IDBKeyRange = IDBKeyRange;
 exports.default = IDBKeyRange;
 
-},{"./Key.js":366}],363:[function(require,module,exports){
+},{"./DOMException.js":356,"./Key.js":366}],363:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
