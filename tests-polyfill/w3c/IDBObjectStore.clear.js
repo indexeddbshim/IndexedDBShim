@@ -1,4 +1,5 @@
 var assert = require('assert');
+var indexedDB = require('../test-helper');
 var InvalidStateError = DOMException;
 var ReadOnlyError = DOMException;
 var support = require('./support');

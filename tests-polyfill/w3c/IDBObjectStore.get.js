@@ -1,4 +1,5 @@
 var assert = require('assert');
+var indexedDB = require('../test-helper');
 var FDBKeyRange = IDBKeyRange;
 var DataError = DOMException;
 var TransactionInactiveError = DOMException;

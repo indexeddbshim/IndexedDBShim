@@ -1,4 +1,5 @@
 var assert = require('assert');
+var indexedDB = require('../test-helper');
 var support = require('./support');
 var createdb = support.createdb;
 

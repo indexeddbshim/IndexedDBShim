@@ -1,4 +1,5 @@
 var assert = require('assert');
+var indexedDB = require('../test-helper');
 var InvalidStateError = DOMException;
 var NotFoundError = DOMException;
 var support = require('./support');
@@ -90,6 +91,6 @@ describe('W3C IDBDatabase.deleteObjectStore Tests', function () {
         open_rq.onsuccess = function(e) {
             assert.deepEqual(keys, [5, 6, 1], "keys");
             done();
-        } 
+        }
     });
 });

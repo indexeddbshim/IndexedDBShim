@@ -1,4 +1,5 @@
 var assert = require('assert');
+var indexedDB = require('../test-helper');
 var InvalidAccessError = DOMException;
 var InvalidStateError = DOMException;
 var NotFoundError = DOMException;

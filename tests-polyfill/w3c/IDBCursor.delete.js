@@ -1,4 +1,5 @@
 var assert = require('assert');
+var indexedDB = require('../test-helper');
 var FDBCursor = IDBCursor;
 var InvalidStateError = DOMException;
 var ReadOnlyError = DOMException;

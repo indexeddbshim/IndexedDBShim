@@ -1,4 +1,5 @@
 var assert = require('assert');
+var indexedDB = require('../test-helper');
 var FDBIndex = IDBIndex;
 var ConstraintError = DOMException;
 var InvalidStateError = DOMException;

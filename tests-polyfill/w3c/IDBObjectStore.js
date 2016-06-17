@@ -1,4 +1,5 @@
 var assert = require('assert');
+var indexedDB = require('../test-helper');
 var FDBOpenDBRequest = IDBOpenDBRequest;
 var FDBTransaction = IDBTransaction;
 var InvalidStateError = DOMException;
