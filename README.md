@@ -34,6 +34,19 @@ You can download the [development](https://raw.githubusercontent.com/axemclion/I
 npm install indexeddbshim
 ```
 
+To set up:
+
+```js
+const setGlobalVars = require('indexeddbshim');
+// This function defines `shimIndexedDB`, `indexedDB`, `IDBFactory`, etc. on
+//  one of the following objects in order of precedence:
+// 1. A passed in object
+// 2. `window` (for Node, define `GLOBAL.window = GLOBAL;`)
+// 3. A new object
+GLOBAL.window = GLOBAL; // We'll allow ourselves to use `window.indexedDB` or `indexedDB` as a global
+setGlobalVars();
+```
+
 ### Bower
 
 ````bash

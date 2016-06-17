@@ -41,8 +41,8 @@ function shim (name, value) {
     }
 }
 
-function shimAll (idb) {
-    IDB = idb || window;
+function setGlobalVars (idb) {
+    IDB = idb || typeof window !== 'undefined' ? window : {};
     shim('shimIndexedDB', shimIndexedDB);
     if (IDB.shimIndexedDB) {
         IDB.shimIndexedDB.__useShim = function () {
@@ -95,6 +95,7 @@ function shimAll (idb) {
         IDB.IDBCursor = IDB.IDBCursor || IDB.webkitIDBCursor;
         IDB.IDBKeyRange = IDB.IDBKeyRange || IDB.webkitIDBKeyRange;
     }
+    return IDB;
 }
 
-export default shimAll;
+export default setGlobalVars;

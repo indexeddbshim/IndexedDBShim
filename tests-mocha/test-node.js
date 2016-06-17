@@ -17,8 +17,8 @@ window.onerror = function () {
 };
 
 (function () {
-    const shimAll = require('../dist/indexeddbshim-node.min.js');
-    shimAll();
+    const setGlobalVars = require('../dist/indexeddbshim-node.min.js');
+    setGlobalVars();
 
     require('./test-environment.js');
     require('./test-utils.js');

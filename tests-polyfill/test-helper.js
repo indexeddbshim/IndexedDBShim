@@ -1,7 +1,7 @@
 GLOBAL.window = GLOBAL;
 
-const shimAll = require('../dist/indexeddbshim-node.min');
-shimAll();
+const setGlobalVars = require('../dist/indexeddbshim-node.min');
+setGlobalVars();
 
 window.DOMException = indexedDB.modules.DOMException;
 

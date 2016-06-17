@@ -25,7 +25,7 @@
   "bugs": {
     "url": "https://github.com/axemclion/IndexedDBShim/issues"
   },
-  "main": "dist/indexeddbshim.js",
+  "main": "dist/indexeddbshim-node.js",
   "keywords": [
     "indexedDB",
     "database",
