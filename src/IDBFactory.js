@@ -222,7 +222,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
  * @param key2
  * @returns {number}
  */
-IDBFactory.prototype.cmp = function (key1, key2) {
+function cmp (key1, key2) {
     if (arguments.length < 2) {
         throw new TypeError('You must provide two keys to be compared');
     }
@@ -256,7 +256,9 @@ IDBFactory.prototype.cmp = function (key1, key2) {
     }
 
     return result;
-};
+}
+
+IDBFactory.prototype.cmp = cmp;
 
 const shimIndexedDB = new IDBFactory();
-export {IDBFactory, shimIndexedDB};
+export {IDBFactory, cmp, shimIndexedDB};

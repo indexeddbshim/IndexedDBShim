@@ -9091,6 +9091,8 @@ var _DOMException = require('./DOMException.js');
 
 var _IDBKeyRange = require('./IDBKeyRange.js');
 
+var _IDBFactory = require('./IDBFactory.js');
+
 var _util = require('./util.js');
 
 var _util2 = _interopRequireDefault(_util);
@@ -9393,6 +9395,13 @@ IDBCursor.prototype['continue'] = function (key) {
     }
     if (key !== undefined) _Key2.default.validate(key);
 
+    if (key !== undefined) {
+        var cmpResult = (0, _IDBFactory.cmp)(key, me.key);
+        if (cmpResult === 0 || me.direction.includes('next') && cmpResult === -1 || me.direction.includes('prev') && cmpResult === 1) {
+            throw (0, _DOMException.createDOMException)('DataError', 'Cannot continue the cursor in an unexpected direction');
+        }
+    }
+
     me.__gotValue = false;
 
     me.__store.transaction.__pushToQueue(me.__req, function cursorContinue(tx, args, success, error) {
@@ -9524,7 +9533,7 @@ Object.defineProperty(IDBCursorWithValue.prototype, 'value', {
 exports.IDBCursor = IDBCursor;
 exports.IDBCursorWithValue = IDBCursorWithValue;
 
-},{"./DOMException.js":305,"./IDBIndex.js":310,"./IDBKeyRange.js":311,"./IDBRequest.js":313,"./Key.js":315,"./Sca.js":316,"./cfg.js":318,"./util.js":321}],308:[function(require,module,exports){
+},{"./DOMException.js":305,"./IDBFactory.js":309,"./IDBIndex.js":310,"./IDBKeyRange.js":311,"./IDBRequest.js":313,"./Key.js":315,"./Sca.js":316,"./cfg.js":318,"./util.js":321}],308:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9665,7 +9674,7 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.shimIndexedDB = exports.IDBFactory = undefined;
+exports.shimIndexedDB = exports.cmp = exports.IDBFactory = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
@@ -9926,7 +9935,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
  * @param key2
  * @returns {number}
  */
-IDBFactory.prototype.cmp = function (key1, key2) {
+function cmp(key1, key2) {
     if (arguments.length < 2) {
         throw new TypeError('You must provide two keys to be compared');
     }
@@ -9960,10 +9969,13 @@ IDBFactory.prototype.cmp = function (key1, key2) {
     }
 
     return result;
-};
+}
+
+IDBFactory.prototype.cmp = cmp;
 
 var shimIndexedDB = new IDBFactory();
 exports.IDBFactory = IDBFactory;
+exports.cmp = cmp;
 exports.shimIndexedDB = shimIndexedDB;
 
 },{"./DOMException.js":305,"./Event.js":306,"./IDBDatabase.js":308,"./IDBRequest.js":313,"./IDBTransaction.js":314,"./Key.js":315,"./cfg.js":318,"./util.js":321}],310:[function(require,module,exports){

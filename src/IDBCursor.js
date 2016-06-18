@@ -1,6 +1,7 @@
 import {IDBRequest} from './IDBRequest.js';
 import {createDOMException} from './DOMException.js';
 import {setSQLForRange, IDBKeyRange} from './IDBKeyRange.js';
+import {cmp} from './IDBFactory.js';
 import util from './util.js';
 import Key from './Key.js';
 import Sca from './Sca.js';
@@ -279,6 +280,16 @@ IDBCursor.prototype['continue'] = function (key) {
         throw createDOMException('InvalidStateError', 'The cursor is being iterated or has iterated past its end.');
     }
     if (key !== undefined) Key.validate(key);
+
+    if (key !== undefined) {
+        const cmpResult = cmp(key, me.key);
+        if (cmpResult === 0 ||
+            (me.direction.includes('next') && cmpResult === -1) ||
+            (me.direction.includes('prev') && cmpResult === 1)
+        ) {
+            throw createDOMException('DataError', 'Cannot continue the cursor in an unexpected direction');
+        }
+    }
 
     me.__gotValue = false;
 

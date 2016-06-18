@@ -52,6 +52,7 @@
     throw a `DataError`
 - Fix: Throw `DataError` instead of `TypeError` with bad
     `get()`/`getKey`/`delete()`
+- Fix: Throw `DataError` upon continuing the cursor in an unexpected direction
 - Feature: Support Node cleanly via `websql` SQLite3 library
 - Feature: Add `IDBObjectStore.openKeyCursor`
 - Feature: Add `IDBKeyRange.includes()` with test
