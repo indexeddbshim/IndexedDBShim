@@ -4,7 +4,7 @@
     'use strict';
 
     // Setup Mocha and Chai
-    mocha.setup('bdd');
+    mocha.setup({ui: 'bdd', timeout: 5000});
     mocha.globals(['indexedDB', '__stub__onerror']);
     window.expect = chai.expect;
     var describe = window.describe;
