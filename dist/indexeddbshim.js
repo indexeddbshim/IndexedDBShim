@@ -9139,7 +9139,7 @@ function IDBCursor(range, direction, store, source, keyColumnName, valueColumnNa
         range = new _IDBKeyRange.IDBKeyRange(range, range, false, false);
     }
     store.transaction.__assertActive();
-    if (direction !== undefined && ['next', 'prev', 'nextunique', 'prevunique'].indexOf(direction) === -1) {
+    if (direction !== undefined && !['next', 'prev', 'nextunique', 'prevunique'].includes(direction)) {
         throw new TypeError(direction + 'is not a valid cursor direction');
     }
 
@@ -9158,7 +9158,7 @@ function IDBCursor(range, direction, store, source, keyColumnName, valueColumnNa
     this.__offset = -1; // Setting this to -1 as continue will set it to 0 anyway
     this.__lastKeyContinued = undefined; // Used when continuing with a key
     this.__multiEntryIndex = _util2.default.instanceOf(source, _IDBIndex2.default) ? source.multiEntry : false;
-    this.__unique = this.direction.indexOf('unique') !== -1;
+    this.__unique = this.direction.includes('unique');
 
     if (range !== undefined) {
         // Encode the key range and cache the encoded values, so we don't have to re-encode them over and over
@@ -9386,14 +9386,14 @@ IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
 IDBCursor.prototype['continue'] = function (key) {
     var recordsToPreloadOnContinue = _cfg2.default.cursorPreloadPackSize || 100;
     var me = this;
+    me.__store.transaction.__assertActive();
+    me.__sourceOrEffectiveObjStoreDeleted();
     if (!this.__gotValue) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'The cursor is being iterated or has iterated past its end.');
     }
-    me.__gotValue = false;
-    me.__store.transaction.__assertActive();
-    me.__sourceOrEffectiveObjStoreDeleted();
-
     if (key !== undefined) _Key2.default.validate(key);
+
+    me.__gotValue = false;
 
     me.__store.transaction.__pushToQueue(me.__req, function cursorContinue(tx, args, success, error) {
         me.__offset++;
@@ -11160,7 +11160,7 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
     if (!this.__active) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
-    if (this.__storeNames.indexOf(objectStoreName) === -1 && this.mode !== 'versionchange') {
+    if (!this.__storeNames.includes(objectStoreName) && this.mode !== 'versionchange') {
         throw (0, _DOMException.createDOMException)('NotFoundError', objectStoreName + ' is not participating in this transaction');
     }
     var store = this.db.__objectStores[objectStoreName];
@@ -11575,7 +11575,7 @@ function isMultiEntryMatch(encodedEntry, encodedKey) {
     var keyType = collations[encodedKey.substring(0, 1)];
 
     if (keyType === 'array') {
-        return encodedKey.indexOf(encodedEntry) > 1;
+        return encodedKey.includes(encodedEntry);
     } else {
         return encodedKey === encodedEntry;
     }
@@ -11914,7 +11914,7 @@ function retrocycle($) {
         var contentType = void 0,
             parts = void 0,
             raw = void 0;
-        if (dataURL.indexOf(BASE64_MARKER) === -1) {
+        if (!dataURL.includes(BASE64_MARKER)) {
             parts = dataURL.split(',');
             contentType = parts[0].split(':')[1];
             raw = parts[1];
@@ -12631,7 +12631,7 @@ var StringList = function StringList() {
 StringList.prototype = {
     // Interface.
     contains: function contains(str) {
-        return this._items.indexOf(str) !== -1;
+        return this._items.includes(str);
     },
     item: function item(key) {
         return this._items[key];

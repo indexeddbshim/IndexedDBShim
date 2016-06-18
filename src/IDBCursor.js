@@ -27,7 +27,7 @@ function IDBCursor (range, direction, store, source, keyColumnName, valueColumnN
         range = new IDBKeyRange(range, range, false, false);
     }
     store.transaction.__assertActive();
-    if (direction !== undefined && ['next', 'prev', 'nextunique', 'prevunique'].indexOf(direction) === -1) {
+    if (direction !== undefined && !(['next', 'prev', 'nextunique', 'prevunique'].includes(direction))) {
         throw new TypeError(direction + 'is not a valid cursor direction');
     }
 
@@ -46,7 +46,7 @@ function IDBCursor (range, direction, store, source, keyColumnName, valueColumnN
     this.__offset = -1; // Setting this to -1 as continue will set it to 0 anyway
     this.__lastKeyContinued = undefined; // Used when continuing with a key
     this.__multiEntryIndex = util.instanceOf(source, IDBIndex) ? source.multiEntry : false;
-    this.__unique = this.direction.indexOf('unique') !== -1;
+    this.__unique = this.direction.includes('unique');
 
     if (range !== undefined) {
         // Encode the key range and cache the encoded values, so we don't have to re-encode them over and over
@@ -273,14 +273,14 @@ IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
 IDBCursor.prototype['continue'] = function (key) {
     const recordsToPreloadOnContinue = CFG.cursorPreloadPackSize || 100;
     const me = this;
+    me.__store.transaction.__assertActive();
+    me.__sourceOrEffectiveObjStoreDeleted();
     if (!this.__gotValue) {
         throw createDOMException('InvalidStateError', 'The cursor is being iterated or has iterated past its end.');
     }
-    me.__gotValue = false;
-    me.__store.transaction.__assertActive();
-    me.__sourceOrEffectiveObjStoreDeleted();
-
     if (key !== undefined) Key.validate(key);
+
+    me.__gotValue = false;
 
     me.__store.transaction.__pushToQueue(me.__req, function cursorContinue (tx, args, success, error) {
         me.__offset++;

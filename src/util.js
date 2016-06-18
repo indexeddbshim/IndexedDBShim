@@ -43,7 +43,7 @@ const StringList = function () {
 StringList.prototype = {
     // Interface.
     contains: function (str) {
-        return this._items.indexOf(str) !== -1;
+        return this._items.includes(str);
     },
     item: function (key) {
         return this._items[key];

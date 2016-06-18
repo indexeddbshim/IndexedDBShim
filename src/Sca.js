@@ -229,7 +229,7 @@ function retrocycle ($) {
         let contentType,
             parts,
             raw;
-        if (dataURL.indexOf(BASE64_MARKER) === -1) {
+        if (!dataURL.includes(BASE64_MARKER)) {
             parts = dataURL.split(',');
             contentType = parts[0].split(':')[1];
             raw = parts[1];
