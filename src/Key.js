@@ -376,7 +376,7 @@ function isMultiEntryMatch (encodedEntry, encodedKey) {
     const keyType = collations[encodedKey.substring(0, 1)];
 
     if (keyType === 'array') {
-        return encodedKey.includes(encodedEntry);
+        return encodedKey.indexOf(encodedEntry) > 1;
     } else {
         return encodedKey === encodedEntry;
     }
