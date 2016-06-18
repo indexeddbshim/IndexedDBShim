@@ -18669,7 +18669,7 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
     if (!this.__active) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
-    if (!this.__storeNames.includes(objectStoreName) && this.mode !== 'versionchange') {
+    if (this.__storeNames.indexOf(objectStoreName) === -1 && this.mode !== 'versionchange') {
         throw (0, _DOMException.createDOMException)('NotFoundError', objectStoreName + ' is not participating in this transaction');
     }
     var store = this.db.__objectStores[objectStoreName];
