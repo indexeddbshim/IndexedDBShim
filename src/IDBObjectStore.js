@@ -233,6 +233,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
                     return;
                 }
                 const encodedKey = Key.encode(indexKey, index.multiEntry);
+                const multiCheck = index.multiEntry && Array.isArray(indexKey);
                 fetchIndexData(index, true, encodedKey, 'key', tx, null, function success (key) {
                     if (key === undefined) {
                         setIndexInfo(index);
@@ -242,10 +243,10 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
                     reject(createDOMException(
                         'ConstraintError',
                         'Index already contains a record equal to ' +
-                            (index.multiEntry && Array.isArray(indexKey) ? 'one of the subkeys of' : '') +
+                            (multiCheck ? 'one of the subkeys of' : '') +
                             '`indexKey`'
                     ));
-                }, reject);
+                }, reject, multiCheck ? indexKey : null);
             } else {
                 setIndexInfo(index);
                 resolve();

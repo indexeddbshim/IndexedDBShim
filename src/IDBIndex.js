@@ -231,11 +231,19 @@ Object.defineProperty(IDBIndex, Symbol.hasInstance, {
     value: obj => util.isObj(obj) && typeof obj.openCursor === 'function' && typeof obj.multiEntry === 'boolean'
 });
 
-function fetchIndexData (index, hasKey, encodedKey, opType, tx, args, success, error) {
+function fetchIndexData (index, hasKey, encodedKey, opType, tx, args, success, error, multiChecks) {
     const sql = ['SELECT * FROM', util.quote('s_' + index.objectStore.name), 'WHERE', util.quote('_' + index.name), 'NOT NULL'];
     const sqlValues = [];
     if (hasKey) {
-        if (index.multiEntry) {
+        if (multiChecks) {
+            sql.push('AND (');
+            multiChecks.forEach((innerKey, i) => {
+                if (i > 0) sql.push('OR');
+                sql.push(util.quote('_' + index.name), 'LIKE ?');
+                sqlValues.push('%' + Key.encode(innerKey, index.multiEntry) + '%');
+            });
+            sql.push(')');
+        } else if (index.multiEntry) {
             sql.push('AND', util.quote('_' + index.name), 'LIKE ?');
             sqlValues.push('%' + encodedKey + '%');
         } else {
@@ -250,19 +258,22 @@ function fetchIndexData (index, hasKey, encodedKey, opType, tx, args, success, e
             for (let i = 0; i < data.rows.length; i++) {
                 const row = data.rows.item(i);
                 const rowKey = Key.decode(row['_' + index.name]);
-                if (hasKey && Key.isMultiEntryMatch(encodedKey, row['_' + index.name])) {
+                if (hasKey && (
+                    (multiChecks && multiChecks.some((check) => rowKey.includes(check))) || // More precise than our SQL
+                    Key.isMultiEntryMatch(encodedKey, row['_' + index.name]))) {
                     recordCount++;
                     record = record || row;
-                } else if (!hasKey && rowKey !== undefined) {
-                    recordCount = recordCount + (Array.isArray(rowKey) ? rowKey.length : 1);
-                    record = record || row;
+                } else if (!hasKey && !multiChecks) {
+                    if (rowKey !== undefined) {
+                        recordCount = recordCount + (Array.isArray(rowKey) ? rowKey.length : 1);
+                        record = record || row;
+                    }
                 }
             }
         } else {
             recordCount = data.rows.length;
             record = recordCount && data.rows.item(0);
         }
-
         if (opType === 'count') {
             success(recordCount);
         } else if (recordCount === 0) {

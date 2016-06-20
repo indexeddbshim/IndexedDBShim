@@ -17912,11 +17912,19 @@ Object.defineProperty(IDBIndex, Symbol.hasInstance, {
     }
 });
 
-function fetchIndexData(index, hasKey, encodedKey, opType, tx, args, success, error) {
+function fetchIndexData(index, hasKey, encodedKey, opType, tx, args, success, error, multiChecks) {
     var sql = ['SELECT * FROM', util.quote('s_' + index.objectStore.name), 'WHERE', util.quote('_' + index.name), 'NOT NULL'];
     var sqlValues = [];
     if (hasKey) {
-        if (index.multiEntry) {
+        if (multiChecks) {
+            sql.push('AND (');
+            multiChecks.forEach(function (innerKey, i) {
+                if (i > 0) sql.push('OR');
+                sql.push(util.quote('_' + index.name), 'LIKE ?');
+                sqlValues.push('%' + _Key2.default.encode(innerKey, index.multiEntry) + '%');
+            });
+            sql.push(')');
+        } else if (index.multiEntry) {
             sql.push('AND', util.quote('_' + index.name), 'LIKE ?');
             sqlValues.push('%' + encodedKey + '%');
         } else {
@@ -17929,22 +17937,30 @@ function fetchIndexData(index, hasKey, encodedKey, opType, tx, args, success, er
         var recordCount = 0,
             record = null;
         if (index.multiEntry) {
-            for (var i = 0; i < data.rows.length; i++) {
+            var _loop = function _loop(i) {
                 var row = data.rows.item(i);
                 var rowKey = _Key2.default.decode(row['_' + index.name]);
-                if (hasKey && _Key2.default.isMultiEntryMatch(encodedKey, row['_' + index.name])) {
+                if (hasKey && (multiChecks && multiChecks.some(function (check) {
+                    return rowKey.includes(check);
+                }) || // More precise than our SQL
+                _Key2.default.isMultiEntryMatch(encodedKey, row['_' + index.name]))) {
                     recordCount++;
                     record = record || row;
-                } else if (!hasKey && rowKey !== undefined) {
-                    recordCount = recordCount + (Array.isArray(rowKey) ? rowKey.length : 1);
-                    record = record || row;
+                } else if (!hasKey && !multiChecks) {
+                    if (rowKey !== undefined) {
+                        recordCount = recordCount + (Array.isArray(rowKey) ? rowKey.length : 1);
+                        record = record || row;
+                    }
                 }
+            };
+
+            for (var i = 0; i < data.rows.length; i++) {
+                _loop(i);
             }
         } else {
             recordCount = data.rows.length;
             record = recordCount && data.rows.item(0);
         }
-
         if (opType === 'count') {
             success(recordCount);
         } else if (recordCount === 0) {
@@ -18317,21 +18333,28 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
                 paramMap[index.name] = _Key2.default.encode(indexKey, index.multiEntry);
             }
             if (index.unique) {
-                try {
-                    _Key2.default.validate(indexKey);
-                } catch (err) {
-                    resolve();
-                    return;
-                }
-                var encodedKey = _Key2.default.encode(indexKey, index.multiEntry);
-                (0, _IDBIndex.fetchIndexData)(index, true, encodedKey, 'key', tx, null, function success(key) {
-                    if (key === undefined) {
-                        setIndexInfo(index);
+                var _ret = function () {
+                    try {
+                        _Key2.default.validate(indexKey);
+                    } catch (err) {
                         resolve();
-                        return;
+                        return {
+                            v: void 0
+                        };
                     }
-                    reject((0, _DOMException.createDOMException)('ConstraintError', 'Index already contains a record equal to ' + (index.multiEntry && Array.isArray(indexKey) ? 'one of the subkeys of' : '') + '`indexKey`'));
-                }, reject);
+                    var encodedKey = _Key2.default.encode(indexKey, index.multiEntry);
+                    var multiCheck = index.multiEntry && Array.isArray(indexKey);
+                    (0, _IDBIndex.fetchIndexData)(index, true, encodedKey, 'key', tx, null, function success(key) {
+                        if (key === undefined) {
+                            setIndexInfo(index);
+                            resolve();
+                            return;
+                        }
+                        reject((0, _DOMException.createDOMException)('ConstraintError', 'Index already contains a record equal to ' + (multiCheck ? 'one of the subkeys of' : '') + '`indexKey`'));
+                    }, reject, multiCheck ? indexKey : null);
+                }();
+
+                if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
             } else {
                 setIndexInfo(index);
                 resolve();
@@ -18511,7 +18534,7 @@ IDBObjectStore.prototype.count = function (key) {
     if (util.instanceOf(key, _IDBKeyRange.IDBKeyRange)) {
         return new _IDBCursor.IDBCursor(key, 'next', this, this, 'key', 'value', true).__req;
     } else {
-        var _ret = function () {
+        var _ret2 = function () {
             var me = _this2;
             var hasKey = false;
 
@@ -18535,7 +18558,7 @@ IDBObjectStore.prototype.count = function (key) {
             };
         }();
 
-        if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+        if ((typeof _ret2 === 'undefined' ? 'undefined' : _typeof(_ret2)) === "object") return _ret2.v;
     }
 };
 
