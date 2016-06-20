@@ -1,7 +1,7 @@
 import {createEvent} from './Event.js';
 import {logError, findError, DOMException, createDOMException} from './DOMException.js';
 import {IDBRequest} from './IDBRequest.js';
-import util from './util.js';
+import * as util from './util.js';
 import IDBObjectStore from './IDBObjectStore.js';
 import CFG from './cfg.js';
 

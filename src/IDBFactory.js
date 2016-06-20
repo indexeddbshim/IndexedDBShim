@@ -1,7 +1,7 @@
 import {createEvent, Event} from './Event.js';
 import {findError, createDOMException, DOMException} from './DOMException.js';
 import {IDBOpenDBRequest} from './IDBRequest.js';
-import util from './util.js';
+import * as util from './util.js';
 import Key from './Key.js';
 import IDBTransaction from './IDBTransaction.js';
 import IDBDatabase from './IDBDatabase.js';

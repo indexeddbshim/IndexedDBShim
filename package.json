@@ -63,6 +63,7 @@
     "mocha": "^2.5.3",
     "request": "^2.72.0",
     "sinon": "^1.17.4",
+    "sync-promise": "https://github.com/brettz9/sync-promise#full-sync-missing-promise-features",
     "w3c-blob": "0.0.1",
     "websql": "^0.4.4"
   },

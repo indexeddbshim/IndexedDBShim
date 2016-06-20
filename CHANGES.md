@@ -15,6 +15,8 @@
     expose `DOMException`, `Event`, and `IDBFactory` (replacing the former
     use of `idbModules` with ES6 modules and a CFG module for the globals:
     see below)
+- Breaking change (minor): Change "eval" to "evaluate" in exception message
+    for bad key from `keyPath`
 - Fix: Properly implement and utilize `IDBCursorWithValue`
 - Fix: Use latest draft spec's (and implementations') use of `DOMException`
     instead of `DOMError`
@@ -53,10 +55,13 @@
 - Fix: Throw `DataError` instead of `TypeError` with bad
     `get()`/`getKey`/`delete()`
 - Fix: Throw `DataError` upon continuing the cursor in an unexpected direction
+- Fix: Key validation: Avoid circular arrays
+- Fix: Key validation: Disallow Dates with NaN as \[\[DateValue]]
 - Feature: Support Node cleanly via `websql` SQLite3 library
 - Feature: Add `IDBObjectStore.openKeyCursor`
 - Feature: Add `IDBKeyRange.includes()` with test
 - Feature: Allow ranges to be passed to `IDBObjectStore.get`.
+- Feature: Key value retrieval: Allow "length" type key
 - Feature: Add ".sqlite" extension to database name for sake of (Windows)
     file type identification
 - Repo files: Rename test folders for ease in distinguishing
@@ -77,6 +82,12 @@
     check against undefined (safe for strict mode implicit in modules)
 - Refactoring: Use spread operator in place of `arguments` where named
     args not needed (also may be more future-proof)
+- Refactoring: Have `setSQLForRange` handle key encoding
+- Refactoring: `isObj` utility, further use of `Array.isArray()`
+- Refactoring: Rename `Key.getValue` to `Key.evaluateKeyPathOnValue`
+    (greater spec parity).
+- Refactoring: Key value retrieval: Avoid `eval()` (in Key--still used
+    in Sca.js)
 - Updating: Bump various `devDependency` min versions
 - Testing: Update tests per current spec and behavior
 - Testing: Ensure db closes after each test to allow non-blocking `open()`
@@ -107,4 +118,6 @@
 - Testing (Mocha): Add mocha tests to grunt (along with clean-up) and add
     node-qunit for Node mocha testing
 - Testing (Mocha): Allow passing in specific test files to mocha tests
+- Testing: Increase default Mocha timeout to 5000ms (Chrome failing some
+    at 2000ms)
 - Testing (Cordova): Update Cordova testing (untested)

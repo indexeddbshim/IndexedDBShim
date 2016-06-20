@@ -1,4 +1,5 @@
 import CFG from './cfg.js';
+import * as util from './util.js';
 
 /**
  * Creates a native DOMException, for browsers that support it
@@ -50,7 +51,7 @@ function logError (name, message, error) {
 };
 
 function isErrorOrDOMErrorOrDOMException (obj) {
-    return obj && typeof obj === 'object' && typeof obj.name === 'string';
+    return util.isObj(obj) && typeof obj.name === 'string';
 }
 
 /**

@@ -2,7 +2,7 @@ import {IDBRequest} from './IDBRequest.js';
 import {createDOMException} from './DOMException.js';
 import {setSQLForRange, IDBKeyRange} from './IDBKeyRange.js';
 import {cmp} from './IDBFactory.js';
-import util from './util.js';
+import * as util from './util.js';
 import Key from './Key.js';
 import Sca from './Sca.js';
 import IDBIndex from './IDBIndex.js';
@@ -341,7 +341,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
                 // Also correct the indexes in the table
                 for (let i = 0; i < store.indexNames.length; i++) {
                     const index = store.__indexes[store.indexNames[i]];
-                    const indexKey = Key.getValue(valueToUpdate, index.keyPath);
+                    const indexKey = Key.evaluateKeyPathOnValue(valueToUpdate, index.keyPath);
                     sql.push(',', util.quote('_' + index.name), '= ?');
                     params.push(Key.encode(indexKey, index.multiEntry));
                 }

@@ -1,6 +1,5 @@
-/*eslint-disable no-eval*/
 import {createDOMException} from './DOMException.js';
-import util from './util.js';
+import * as util from './util.js';
 
 let Key = {};
 
@@ -20,6 +19,7 @@ const collations = ['undefined', 'number', 'date', 'string', 'array', 'object', 
  */
 const signValues = ['negativeInfinity', 'bigNegative', 'smallNegative', 'smallPositive', 'bigPositive', 'positiveInfinity'];
 
+// Todo: Support `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
 const types = {
     // Undefined is not a valid key type.  It's only used when there is no key.
     undefined: {
@@ -310,45 +310,75 @@ function negate (s) {
 function getType (key) {
     if (Array.isArray(key)) return 'array';
     if (util.isDate(key)) return 'date';
-    if (key === null) return 'null';
+    // if (util.isArrayBufferOrView(key)) return 'ArrayBuffer'; // Todo: Support
     return typeof key;
 }
 
 /**
- * Keys must be strings, numbers, Dates, or Arrays
+ * Keys must be strings, numbers (besides NaN), Dates (if value is not NaN),
+ *   Arrays (or, once supported, ArrayBuffer) objects
  */
-function validate (key) {
+function validate (key, arrayRefs) {
     const type = getType(key);
-    if (type === 'array') {
-        for (let i = 0; i < key.length; i++) {
-            validate(key[i]);
+    switch (type) {
+    case 'ArrayBuffer': // Will just return once implemented (not a possible type yet)
+        return;
+    case 'array':
+        arrayRefs = arrayRefs || [];
+        arrayRefs.push(key);
+        key.forEach((item) => {
+            if (arrayRefs.includes(item)) throw createDOMException('DataError', 'An array key cannot be circular');
+            validate(item, arrayRefs);
+        });
+        return;
+    case 'date':
+        if (!Number.isNaN(key.getTime())) {
+            return;
         }
-    } else if (!types[type] || type === 'object' || type === 'boolean' || (type !== 'string' && isNaN(key))) {
-        throw createDOMException('DataError', 'Not a valid key');
+        // Falls through
+    default:
+        // allow for strings, numbers instead of first part of this check:
+        // Other `typeof` types which are not valid keys:
+        //    'undefined', 'boolean', 'object' (including `null`), 'symbol', 'function'
+        if (!['string', 'number'].includes(type) || Number.isNaN(key)) {
+            throw createDOMException('DataError', 'Not a valid key');
+        }
     }
 }
 
 /**
- * Returns the value of an inline key
+ * Returns the value of an inline key based on a key path
  * @param {object} source
  * @param {string|array} keyPath
  */
-function getValue (source, keyPath) {
-    try {
-        if (Array.isArray(keyPath)) {
-            const arrayValue = [];
-            for (let i = 0; i < keyPath.length; i++) {
-                arrayValue.push(eval('source.' + keyPath[i]));
+function evaluateKeyPathOnValue (value, keyPath) {
+    if (Array.isArray(keyPath)) {
+        const arrayValue = [];
+        return keyPath.some((kpPart) => {
+            const key = evaluateKeyPathOnValue(value, kpPart);
+            try {
+                validate(key);
+            } catch (err) {
+                return true;
             }
-            return arrayValue;
-        } else if (keyPath === '') {
-            return source;
-        } else {
-            return eval('source.' + keyPath);
-        }
-    } catch (e) {
+            arrayValue.push(key);
+        }, []) ? undefined : arrayValue;
+    }
+    if (keyPath === '') {
+        return value;
+    }
+    const identifiers = keyPath.split('.');
+    if (typeof value === 'string' && identifiers.slice(-1) === 'length') {
+        return value.length;
+    }
+    if (!util.isObj(value)) {
         return undefined;
     }
+    identifiers.some((idntfr) => {
+        value = value[idntfr];
+        return value === undefined;
+    });
+    return value;
 }
 
 /**
@@ -447,6 +477,8 @@ function encode (key, inArray) {
     if (key == null) {
         return null;
     }
+    // Above should be returning null for undefined/null?
+    // Currently has array, date, number, string; remove boolean, object (not null), undefined?
     return types[getType(key)].encode(key, inArray);
 }
 function decode (key, inArray) {
@@ -456,5 +488,5 @@ function decode (key, inArray) {
     return types[collations[key.substring(0, 1)]].decode(key, inArray);
 }
 
-Key = {encode, decode, validate, getValue, setValue, isMultiEntryMatch, isKeyInRange, findMultiEntryMatches};
-export {encode, decode, validate, getValue, setValue, isMultiEntryMatch, isKeyInRange, findMultiEntryMatches, Key as default};
+Key = {encode, decode, validate, evaluateKeyPathOnValue, setValue, isMultiEntryMatch, isKeyInRange, findMultiEntryMatches};
+export {encode, decode, validate, evaluateKeyPathOnValue, setValue, isMultiEntryMatch, isKeyInRange, findMultiEntryMatches, Key as default};

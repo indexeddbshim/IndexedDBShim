@@ -1,7 +1,7 @@
 /*eslint-disable no-eval*/
 import atob from 'atob';
 import Blob from 'w3c-blob'; // Needed by Node; uses native if available (browser)
-import util from './util.js';
+import * as util from './util.js';
 
 /**
  * Implementation of the Structured Cloning Algorithm.  Supports the
@@ -106,7 +106,7 @@ function decycle (object, callback) {
         // typeof null === 'object', so go on if this value is really an object but not
         // one of the weird builtin objects.
 
-        const isObj = typeof value === 'object' && value !== null;
+        const isObj = util.isObj(value);
         const valOfType = isObj && typeof value.valueOf();
         if (isObj &&
             !(['boolean', 'number', 'string'].includes(valOfType)) &&
@@ -131,7 +131,7 @@ function decycle (object, callback) {
 
             // If it is an array, replicate the array.
 
-            if (Object.prototype.toString.apply(value) === '[object Array]') {
+            if (Array.isArray(value)) {
                 nu = [];
                 for (i = 0; i < value.length; i += 1) {
                     nu[i] = derez(value[i], path + '[' + i + ']');
@@ -257,11 +257,11 @@ function retrocycle ($) {
 
         let i, item, name, path;
 
-        if (value && typeof value === 'object') {
-            if (Object.prototype.toString.apply(value) === '[object Array]') {
+        if (util.isObj(value)) {
+            if (Array.isArray(value)) {
                 for (i = 0; i < value.length; i += 1) {
                     item = value[i];
-                    if (item && typeof item === 'object') {
+                    if (util.isObj(item)) {
                         path = item.$ref;
                         if (typeof path === 'string' && px.test(path)) {
                             value[i] = eval(path);

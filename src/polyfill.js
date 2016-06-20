@@ -283,7 +283,7 @@ function decodeCompoundKeyPath (keyPath) {
 function setInlineCompoundKey (value, encodedKeyPath) {
     // Encode the key
     const keyPath = decodeCompoundKeyPath(encodedKeyPath);
-    const key = Key.getValue(value, keyPath);
+    const key = Key.evaluateKeyPathOnValue(value, keyPath);
     const encodedKey = encodeCompoundKey(key);
 
     // Store the encoded key inline

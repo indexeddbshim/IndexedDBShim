@@ -1,5 +1,5 @@
 import {createDOMException} from './DOMException.js';
-import util from './util.js';
+import * as util from './util.js';
 import IDBObjectStore from './IDBObjectStore.js';
 import IDBTransaction from './IDBTransaction.js';
 import CFG from './cfg.js';

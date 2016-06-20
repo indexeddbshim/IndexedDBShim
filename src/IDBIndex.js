@@ -1,6 +1,6 @@
 import {createDOMException} from './DOMException.js';
 import {IDBCursor, IDBCursorWithValue} from './IDBCursor.js';
-import util from './util.js';
+import * as util from './util.js';
 import Key from './Key.js';
 import IDBKeyRange from './IDBKeyRange.js';
 import Sca from './Sca.js';
@@ -72,7 +72,7 @@ IDBIndex.__createIndex = function (store, index) {
                         if (i < data.rows.length) {
                             try {
                                 const value = Sca.decode(data.rows.item(i).value);
-                                let indexKey = Key.getValue(value, index.keyPath);
+                                let indexKey = Key.evaluateKeyPathOnValue(value, index.keyPath);
                                 indexKey = Key.encode(indexKey, index.multiEntry);
 
                                 tx.executeSql('UPDATE ' + util.quote('s_' + store.name) + ' SET ' + util.quote('_' + index.name) + ' = ? WHERE key = ?', [indexKey, data.rows.item(i).key], function (tx, data) {
@@ -175,48 +175,8 @@ IDBIndex.prototype.__fetchIndexData = function (key, opType) {
         hasKey = true;
     }
 
-    return me.objectStore.transaction.__addToTransactionQueue(function fetchIndexData (tx, args, success, error) {
-        const sql = ['SELECT * FROM', util.quote('s_' + me.objectStore.name), 'WHERE', util.quote('_' + me.name), 'NOT NULL'];
-        const sqlValues = [];
-        if (hasKey) {
-            if (me.multiEntry) {
-                sql.push('AND', util.quote('_' + me.name), 'LIKE ?');
-                sqlValues.push('%' + encodedKey + '%');
-            } else {
-                sql.push('AND', util.quote('_' + me.name), '= ?');
-                sqlValues.push(encodedKey);
-            }
-        }
-        CFG.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
-        tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
-            let recordCount = 0, record = null;
-            if (me.multiEntry) {
-                for (let i = 0; i < data.rows.length; i++) {
-                    const row = data.rows.item(i);
-                    const rowKey = Key.decode(row['_' + me.name]);
-                    if (hasKey && Key.isMultiEntryMatch(encodedKey, row['_' + me.name])) {
-                        recordCount++;
-                        record = record || row;
-                    } else if (!hasKey && rowKey !== undefined) {
-                        recordCount = recordCount + (Array.isArray(rowKey) ? rowKey.length : 1);
-                        record = record || row;
-                    }
-                }
-            } else {
-                recordCount = data.rows.length;
-                record = recordCount && data.rows.item(0);
-            }
-
-            if (opType === 'count') {
-                success(recordCount);
-            } else if (recordCount === 0) {
-                success(undefined);
-            } else if (opType === 'key') {
-                success(Key.decode(record.key));
-            } else { // when opType is value
-                success(Sca.decode(record.value));
-            }
-        }, error);
+    return me.objectStore.transaction.__addToTransactionQueue(function (...args) {
+        fetchIndexData(me, hasKey, encodedKey, opType, ...args);
     });
 };
 
@@ -268,7 +228,51 @@ IDBIndex.prototype.count = function (key) {
 };
 
 Object.defineProperty(IDBIndex, Symbol.hasInstance, {
-    value: obj => obj && typeof obj === 'object' && typeof obj.openCursor === 'function' && typeof obj.multiEntry === 'boolean'
+    value: obj => util.isObj(obj) && typeof obj.openCursor === 'function' && typeof obj.multiEntry === 'boolean'
 });
 
-export default IDBIndex;
+function fetchIndexData (index, hasKey, encodedKey, opType, tx, args, success, error) {
+    const sql = ['SELECT * FROM', util.quote('s_' + index.objectStore.name), 'WHERE', util.quote('_' + index.name), 'NOT NULL'];
+    const sqlValues = [];
+    if (hasKey) {
+        if (index.multiEntry) {
+            sql.push('AND', util.quote('_' + index.name), 'LIKE ?');
+            sqlValues.push('%' + encodedKey + '%');
+        } else {
+            sql.push('AND', util.quote('_' + index.name), '= ?');
+            sqlValues.push(encodedKey);
+        }
+    }
+    CFG.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
+    tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
+        let recordCount = 0, record = null;
+        if (index.multiEntry) {
+            for (let i = 0; i < data.rows.length; i++) {
+                const row = data.rows.item(i);
+                const rowKey = Key.decode(row['_' + index.name]);
+                if (hasKey && Key.isMultiEntryMatch(encodedKey, row['_' + index.name])) {
+                    recordCount++;
+                    record = record || row;
+                } else if (!hasKey && rowKey !== undefined) {
+                    recordCount = recordCount + (Array.isArray(rowKey) ? rowKey.length : 1);
+                    record = record || row;
+                }
+            }
+        } else {
+            recordCount = data.rows.length;
+            record = recordCount && data.rows.item(0);
+        }
+
+        if (opType === 'count') {
+            success(recordCount);
+        } else if (recordCount === 0) {
+            success(undefined);
+        } else if (opType === 'key') {
+            success(Key.decode(record.key));
+        } else { // when opType is value
+            success(Sca.decode(record.value));
+        }
+    }, error);
+}
+
+export {fetchIndexData, IDBIndex, IDBIndex as default};

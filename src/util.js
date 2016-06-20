@@ -50,6 +50,9 @@ StringList.prototype = {
     },
 
     // Helpers. Should only be used internally.
+    map: function (cb, thisArg) {
+        return this._items.map(cb, thisArg);
+    },
     indexOf: function (str) {
         return this._items.indexOf(str);
     },
@@ -94,22 +97,34 @@ function instanceOf (obj, Clss) {
     return Clss[Symbol.hasInstance](obj);
 }
 
+function isObj (obj) {
+    return obj && typeof obj === 'object';
+}
+
 function isDate (obj) {
-    return obj && typeof obj === 'object' && typeof obj.getDate === 'function';
+    return isObj(obj) && typeof obj.getDate === 'function';
 }
 
 function isBlob (obj) {
-    return obj && typeof obj === 'object' && typeof obj.size === 'number' && typeof obj.slice === 'function';
+    return isObj(obj) && typeof obj.size === 'number' && typeof obj.slice === 'function';
 }
 
 function isRegExp (obj) {
-    return obj && typeof obj === 'object' && typeof obj.flags === 'string' && typeof obj.exec === 'function';
+    return isObj(obj) && typeof obj.flags === 'string' && typeof obj.exec === 'function';
 }
 
 function isFile (obj) {
-    return obj && typeof obj === 'object' && typeof obj.name === 'string' && isBlob(obj);
+    return isObj(obj) && typeof obj.name === 'string' && isBlob(obj);
 }
 
-const util = {callback, StringList, quote, instanceOf, isDate, isBlob, isRegExp, isFile};
+/*
+// Todo: Utilize with encoding/decoding
+function isArrayBufferOrView (obj) {
+    return isObj(obj) && typeof obj.byteLength === 'number' && (
+        typeof obj.slice === 'function' || // `TypedArray` (view on buffer) or `ArrayBuffer`
+        typeof obj.getFloat64 === 'function' // `DataView` (view on buffer)
+    );
+}
+*/
 
-export {callback, StringList, quote, instanceOf, isDate, isBlob, isRegExp, isFile, util as default};
+export {callback, StringList, quote, instanceOf, isObj, isDate, isBlob, isRegExp, isFile};

@@ -1,5 +1,6 @@
 import {createDOMException} from './DOMException.js';
 import Key from './Key.js';
+import * as util from './util.js';
 
 /**
  * The IndexedDB KeyRange object
@@ -47,7 +48,7 @@ IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
     return new IDBKeyRange(lower, upper, lowerOpen, upperOpen);
 };
 Object.defineProperty(IDBKeyRange, Symbol.hasInstance, {
-    value: obj => obj && typeof obj === 'object' && 'upper' in obj && typeof obj.lowerOpen === 'boolean'
+    value: obj => util.isObj(obj) && 'upper' in obj && typeof obj.lowerOpen === 'boolean'
 });
 
 function setSQLForRange (range, quotedKeyColumnName, sql, sqlValues, addAnd, checkCached) {
@@ -55,12 +56,12 @@ function setSQLForRange (range, quotedKeyColumnName, sql, sqlValues, addAnd, che
         if (addAnd) sql.push('AND');
         if (range.lower !== undefined) {
             sql.push(quotedKeyColumnName, (range.lowerOpen ? '>' : '>='), '?');
-            sqlValues.push(checkCached ? range.__lower : range.lower);
+            sqlValues.push(checkCached ? range.__lower : Key.encode(range.lower));
         }
         (range.lower !== undefined && range.upper !== undefined) && sql.push('AND');
         if (range.upper !== undefined) {
             sql.push(quotedKeyColumnName, (range.upperOpen ? '<' : '<='), '?');
-            sqlValues.push(checkCached ? range.__upper : range.upper);
+            sqlValues.push(checkCached ? range.__upper : Key.encode(range.upper));
         }
     }
 }

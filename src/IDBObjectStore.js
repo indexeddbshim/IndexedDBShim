@@ -1,12 +1,13 @@
 import {createDOMException} from './DOMException.js';
 import {IDBCursor, IDBCursorWithValue} from './IDBCursor.js';
 import {setSQLForRange, IDBKeyRange} from './IDBKeyRange.js';
-import util from './util.js';
+import * as util from './util.js';
 import Key from './Key.js';
-import IDBIndex from './IDBIndex.js';
+import {fetchIndexData, IDBIndex} from './IDBIndex.js';
 import IDBTransaction from './IDBTransaction.js';
 import Sca from './Sca.js';
 import CFG from './cfg.js';
+import SyncPromise from 'sync-promise';
 
 /**
  * IndexedDB Object Store
@@ -123,7 +124,8 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
  * @private
  */
 IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
-    value && typeof value === 'object' && JSON.stringify(value, function (key, val) {
+    const isObj = util.isObj(value);
+    isObj && JSON.stringify(value, function (key, val) {
         if (['function', 'symbol'].includes(typeof val) ||
             value instanceof Error || // Duck-typing with some util.isError would be better, but too easy to get a false match
             (value.nodeType > 0 && typeof value.nodeName === 'string') // DOM nodes
@@ -135,14 +137,14 @@ IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
     if (this.keyPath) {
         if (key !== undefined) {
             throw createDOMException('DataError', 'The object store uses in-line keys and the key parameter was provided', this);
-        } else if (value && typeof value === 'object') {
-            key = Key.getValue(value, this.keyPath);
+        } else if (isObj) {
+            key = Key.evaluateKeyPathOnValue(value, this.keyPath);
             if (key === undefined) {
                 if (this.autoIncrement) {
                     // A key will be generated
                     return;
                 }
-                throw createDOMException('DataError', 'Could not eval key from keyPath');
+                throw createDOMException('DataError', 'Could not evaluate a key from keyPath');
             }
         } else {
             throw createDOMException('DataError', 'KeyPath was specified, but value was not an object');
@@ -186,7 +188,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
     }
 
     if (me.keyPath) {
-        const primaryKey = Key.getValue(value, me.keyPath);
+        const primaryKey = Key.evaluateKeyPathOnValue(value, me.keyPath);
         if (primaryKey === undefined && me.autoIncrement) {
             getNextAutoIncKey(function (primaryKey) {
                 try {
@@ -212,20 +214,53 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
 
 IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey, passedKey, success, error) {
     const me = this;
-    try {
+    const paramMap = {};
+    const indexPromises = me.indexNames.map((indexName) => {
+        return new SyncPromise((resolve, reject) => {
+            const index = me.__indexes[indexName];
+            const indexKey = Key.evaluateKeyPathOnValue(value, index.keyPath); // Add as necessary to this and skip past this index if exceptions here)
+            function setIndexInfo (index) {
+                if (indexKey === undefined) {
+                    return;
+                }
+                paramMap[index.name] = Key.encode(indexKey, index.multiEntry);
+            }
+            if (index.unique) {
+                try {
+                    Key.validate(indexKey);
+                } catch (err) {
+                    resolve();
+                    return;
+                }
+                const encodedKey = Key.encode(indexKey, index.multiEntry);
+                fetchIndexData(index, true, encodedKey, 'key', tx, null, function success (key) {
+                    if (key === undefined) {
+                        setIndexInfo(index);
+                        resolve();
+                        return;
+                    }
+                    reject(createDOMException(
+                        'ConstraintError',
+                        'Index already contains a record equal to ' +
+                            (index.multiEntry && Array.isArray(indexKey) ? 'one of the subkeys of' : '') +
+                            '`indexKey`'
+                    ));
+                }, reject);
+            } else {
+                setIndexInfo(index);
+                resolve();
+            }
+        });
+    });
+    SyncPromise.all(indexPromises).then(() => {
         const sqlStart = ['INSERT INTO ', util.quote('s_' + this.name), '('];
         const sqlEnd = [' VALUES ('];
         const sqlValues = [];
-        const paramMap = {};
         if (primaryKey !== undefined) {
             Key.validate(primaryKey);
             sqlStart.push('key,');
             sqlEnd.push('?,');
             sqlValues.push(Key.encode(primaryKey));
-        }
-        for (let i = 0; i < this.indexNames.length; i++) {
-            const index = this.__indexes[this.indexNames[i]];
-            paramMap[index.name] = Key.encode(Key.getValue(value, index.keyPath), index.multiEntry);
         }
         for (const key in paramMap) {
             sqlStart.push(util.quote('_' + key) + ',');
@@ -256,9 +291,9 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         }, function (tx, err) {
             error(createDOMException('ConstraintError', err.message, err));
         });
-    } catch (e) {
-        error(e);
-    }
+    }).catch(function (err) {
+        error(err);
+    });
 };
 
 IDBObjectStore.prototype.add = function (value, key) {
@@ -319,9 +354,8 @@ IDBObjectStore.prototype.get = function (range) {
     }
 
     let sql = ['SELECT * FROM ', util.quote('s_' + me.name), ' WHERE '];
-    let sqlValues = [];
+    const sqlValues = [];
     setSQLForRange(range, 'key', sql, sqlValues);
-    sqlValues = sqlValues.map((sqlValue) => Key.encode(sqlValue));
     sql = sql.join(' ');
 
     if (range.lower !== undefined) Key.validate(range.lower);
