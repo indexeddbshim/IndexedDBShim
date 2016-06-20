@@ -219,6 +219,12 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         return new SyncPromise((resolve, reject) => {
             const index = me.__indexes[indexName];
             const indexKey = Key.evaluateKeyPathOnValue(value, index.keyPath); // Add as necessary to this and skip past this index if exceptions here)
+            try {
+                Key.validate(indexKey);
+            } catch (err) {
+                resolve();
+                return;
+            }
             function setIndexInfo (index) {
                 if (indexKey === undefined) {
                     return;
@@ -226,12 +232,6 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
                 paramMap[index.name] = Key.encode(indexKey, index.multiEntry);
             }
             if (index.unique) {
-                try {
-                    Key.validate(indexKey);
-                } catch (err) {
-                    resolve();
-                    return;
-                }
                 const encodedKey = Key.encode(indexKey, index.multiEntry);
                 const multiCheck = index.multiEntry && Array.isArray(indexKey);
                 fetchIndexData(index, true, encodedKey, 'key', tx, null, function success (key) {

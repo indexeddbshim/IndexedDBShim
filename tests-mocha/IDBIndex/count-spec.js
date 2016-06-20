@@ -301,8 +301,8 @@ describe('IDBIndex.count', function () {
 
     util.skipIf(env.browser.isIE && (env.isNative || env.isPolyfilled), 'should return the count for unique, multi-entry indexes', function (done) {
         // BUG: IE's native IndexedDB does not support multi-entry indexes
-        this.timeout(20000);
-        this.slow(20000);
+        this.timeout(25000);
+        this.slow(25000);
 
         util.createDatabase('inline', 'unique-multi-entry-index', function (err, db) {
             if (err) {

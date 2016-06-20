@@ -10543,8 +10543,12 @@ IDBKeyRange.upperBound = function (value, open) {
     return new IDBKeyRange(undefined, value, true, open);
 };
 IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
-    if (_Key2.default.encode(lower) > _Key2.default.encode(upper)) {
-        throw (0, _DOMException.createDOMException)('DataError', '`lower` must not be greater than `upper` argument in `bound()` call.');
+    if (lower !== undefined && upper !== undefined) {
+        _Key2.default.validate(lower);
+        _Key2.default.validate(upper);
+        if (_Key2.default.encode(lower) > _Key2.default.encode(upper)) {
+            throw (0, _DOMException.createDOMException)('DataError', '`lower` must not be greater than `upper` argument in `bound()` call.');
+        }
     }
     return new IDBKeyRange(lower, upper, lowerOpen, upperOpen);
 };
@@ -10829,6 +10833,12 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         return new _syncPromise2.default(function (resolve, reject) {
             var index = me.__indexes[indexName];
             var indexKey = _Key2.default.evaluateKeyPathOnValue(value, index.keyPath); // Add as necessary to this and skip past this index if exceptions here)
+            try {
+                _Key2.default.validate(indexKey);
+            } catch (err) {
+                resolve();
+                return;
+            }
             function setIndexInfo(index) {
                 if (indexKey === undefined) {
                     return;
@@ -10836,15 +10846,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
                 paramMap[index.name] = _Key2.default.encode(indexKey, index.multiEntry);
             }
             if (index.unique) {
-                var _ret = function () {
-                    try {
-                        _Key2.default.validate(indexKey);
-                    } catch (err) {
-                        resolve();
-                        return {
-                            v: void 0
-                        };
-                    }
+                (function () {
                     var encodedKey = _Key2.default.encode(indexKey, index.multiEntry);
                     var multiCheck = index.multiEntry && Array.isArray(indexKey);
                     (0, _IDBIndex.fetchIndexData)(index, true, encodedKey, 'key', tx, null, function success(key) {
@@ -10855,9 +10857,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
                         }
                         reject((0, _DOMException.createDOMException)('ConstraintError', 'Index already contains a record equal to ' + (multiCheck ? 'one of the subkeys of' : '') + '`indexKey`'));
                     }, reject, multiCheck ? indexKey : null);
-                }();
-
-                if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+                })();
             } else {
                 setIndexInfo(index);
                 resolve();
@@ -11463,7 +11463,7 @@ var Key = {};
 /**
  * Encodes the keys based on their types. This is required to maintain collations
  */
-var collations = ['undefined', 'number', 'date', 'string', 'array', 'object', 'boolean'];
+var collations = ['undefined', 'number', 'date', 'string', 'array'];
 
 /**
  * The sign values for numbers, ordered from least to greatest.
@@ -11485,15 +11485,6 @@ var types = {
         },
         decode: function decode(key) {
             return undefined;
-        }
-    },
-
-    boolean: {
-        encode: function encode(key) {
-            return collations.indexOf('boolean') + '-' + key;
-        },
-        decode: function decode(key) {
-            return Boolean(key.slice(2));
         }
     },
 
@@ -11615,16 +11606,6 @@ var types = {
                 key = key.substr(0, key.length - 1).replace(/-(.)/g, '$1');
             }
             return key;
-        }
-    },
-
-    // Objects are encoded as JSON strings.
-    object: {
-        encode: function encode(key) {
-            return collations.indexOf('object') + '-' + JSON.stringify(key);
-        },
-        decode: function decode(key) {
-            return JSON.parse(key.slice(2));
         }
     },
 
@@ -11932,11 +11913,11 @@ function findMultiEntryMatches(keyEntry, range) {
 }
 
 function _encode(key, inArray) {
-    if (key == null) {
+    // Bad keys like `null`, `object`, `boolean`, 'function', 'symbol' should not be passed here due to prior validation
+    if (key === undefined) {
         return null;
     }
-    // Above should be returning null for undefined/null?
-    // Currently has array, date, number, string; remove boolean, object (not null), undefined?
+    // Currently has array, date, number, string
     return types[getType(key)].encode(key, inArray);
 }
 function _decode(key, inArray) {

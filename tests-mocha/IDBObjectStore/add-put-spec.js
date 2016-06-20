@@ -55,6 +55,49 @@
             });
         });
 
+        it('should safely ignore unique index checks with bad index keys', function (done) {
+            var stringIndex = {keyField: 'foo', id: 'bar'};
+            var nullIndex = {keyField: 'biz', id: null};
+            var boolIndex = {keyField: 'biz', id: null}; // This one would throw due to unique constraints if the key were valid
+            util.createDatabase('out-of-line-generated', 'unique-index', function (err, db) {
+                if (err) {
+                    expect(function () { throw err; }).to.not.throw(Error);
+                    done();
+                    return;
+                }
+                var tx = db.transaction('out-of-line-generated', 'readwrite');
+                tx.onerror = done;
+
+                var store = tx.objectStore('out-of-line-generated');
+                store[save](stringIndex);
+                store[save](nullIndex);
+                store[save](boolIndex);
+
+                var allData;
+                util.getAll(store, function (err, data) {
+                    if (err) {
+                        expect(function () { throw err; }).to.not.throw(Error);
+                        done();
+                        return;
+                    }
+                    allData = data;
+                });
+
+                tx.oncomplete = function () {
+                    expect(allData).to.have.lengthOf(3);
+                    console.log(allData);
+
+                    // The data should have been cloned
+                    expect(allData[0].value).not.to.equal(stringIndex);
+                    expect(allData[1].value).not.to.equal(nullIndex);
+                    expect(allData[2].value).not.to.equal(boolIndex);
+
+                    db.close();
+                    done();
+                };
+            });
+        });
+
         it('should save a structured clone of the data, not the actual data', function (done) {
             var john = new util.sampleData.Person('John Doe');
             var bob = new util.sampleData.Person('Bob Smith', 30, new Date(2000, 5, 20), true);

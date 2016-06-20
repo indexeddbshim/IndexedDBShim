@@ -6,7 +6,7 @@ let Key = {};
 /**
  * Encodes the keys based on their types. This is required to maintain collations
  */
-const collations = ['undefined', 'number', 'date', 'string', 'array', 'object', 'boolean'];
+const collations = ['undefined', 'number', 'date', 'string', 'array'];
 
 /**
  * The sign values for numbers, ordered from least to greatest.
@@ -28,15 +28,6 @@ const types = {
         },
         decode: function (key) {
             return undefined;
-        }
-    },
-
-    boolean: {
-        encode: function (key) {
-            return collations.indexOf('boolean') + '-' + key;
-        },
-        decode: function (key) {
-            return Boolean(key.slice(2));
         }
     },
 
@@ -162,16 +153,6 @@ const types = {
                 key = key.substr(0, key.length - 1).replace(/-(.)/g, '$1');
             }
             return key;
-        }
-    },
-
-    // Objects are encoded as JSON strings.
-    object: {
-        encode: function (key) {
-            return collations.indexOf('object') + '-' + JSON.stringify(key);
-        },
-        decode: function (key) {
-            return JSON.parse(key.slice(2));
         }
     },
 
@@ -474,11 +455,11 @@ function findMultiEntryMatches (keyEntry, range) {
 }
 
 function encode (key, inArray) {
-    if (key == null) {
+    // Bad keys like `null`, `object`, `boolean`, 'function', 'symbol' should not be passed here due to prior validation
+    if (key === undefined) {
         return null;
     }
-    // Above should be returning null for undefined/null?
-    // Currently has array, date, number, string; remove boolean, object (not null), undefined?
+    // Currently has array, date, number, string
     return types[getType(key)].encode(key, inArray);
 }
 function decode (key, inArray) {

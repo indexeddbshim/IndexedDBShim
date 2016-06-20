@@ -114,8 +114,8 @@ module.exports = function (grunt) {
             test: {
                 options: {
                     bail: false,
-                    reporter: 'spec',
                     timeout: 5000,
+                    reporter: 'spec',
                     quiet: false, // Optionally suppress output to standard out (defaults to false)
                     clearRequireCache: false // Optionally clear the require cache before running tests (defaults to false)
                 },

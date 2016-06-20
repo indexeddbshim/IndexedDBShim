@@ -317,8 +317,8 @@ describe('IDBIndex.openCursor', function () {
     });
 
     it('should get hundreds of records', function (done) {
-        this.timeout(20000);
-        this.slow(20000);
+        this.timeout(25000);
+        this.slow(25000);
 
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {

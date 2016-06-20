@@ -42,8 +42,12 @@ IDBKeyRange.upperBound = function (value, open) {
     return new IDBKeyRange(undefined, value, true, open);
 };
 IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
-    if (Key.encode(lower) > Key.encode(upper)) {
-        throw createDOMException('DataError', '`lower` must not be greater than `upper` argument in `bound()` call.');
+    if (lower !== undefined && upper !== undefined) {
+        Key.validate(lower);
+        Key.validate(upper);
+        if (Key.encode(lower) > Key.encode(upper)) {
+            throw createDOMException('DataError', '`lower` must not be greater than `upper` argument in `bound()` call.');
+        }
     }
     return new IDBKeyRange(lower, upper, lowerOpen, upperOpen);
 };

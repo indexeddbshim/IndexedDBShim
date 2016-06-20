@@ -57,6 +57,7 @@
 - Fix: Throw `DataError` upon continuing the cursor in an unexpected direction
 - Fix: Key validation: Avoid circular arrays
 - Fix: Key validation: Disallow Dates with NaN as \[\[DateValue]]
+- Fix: Ensure validation occurs for indexes before storage;
 - Feature: Support Node cleanly via `websql` SQLite3 library
 - Feature: Add `IDBObjectStore.openKeyCursor`
 - Feature: Add `IDBKeyRange.includes()` with test
@@ -118,6 +119,8 @@
 - Testing (Mocha): Add mocha tests to grunt (along with clean-up) and add
     node-qunit for Node mocha testing
 - Testing (Mocha): Allow passing in specific test files to mocha tests
+- Testing (Mocha): Add test to ensure unique index checks are safely ignored
+    with bad index keys
 - Testing: Increase default Mocha timeout to 5000ms (Chrome failing some
-    at 2000ms)
+    at 2000ms as was Node occasionally)
 - Testing (Cordova): Update Cordova testing (untested)
