@@ -28,6 +28,7 @@
     "url": "https://github.com/axemclion/IndexedDBShim/issues"
   },
   "main": "dist/indexeddbshim-node.js",
+  "browser": "dist/indexeddbshim.min.js",
   "keywords": [
     "indexedDB",
     "database",
