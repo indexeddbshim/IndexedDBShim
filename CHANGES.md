@@ -103,7 +103,8 @@
 - Test scaffolding (W3C): Fix args to initionalSituation()
 - Test scaffolding (W3C): Fix test ok condition, typo
 - Test scaffolding (W3C): Fix assertions
-- (Testing: W3C IDBCursor.advance.js tests now all passing)
+- (Testing: tests-mocha, tests-qunit, and indexedDBmock tests now all
+    passing in browser and Node; from W3C, IDBCursor.advance.js is passing)
 - Testing (Grunt): Clarify Grunt tasks, expand tasks for cleaning, make tests
     more granular
 - Testing (Grunt): Remove now redundant `sourceMappingURL`, use
