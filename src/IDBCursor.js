@@ -86,9 +86,24 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
     }
 
     // Determine the ORDER BY direction based on the cursor.
-    const direction = me.direction === 'prev' || me.direction === 'prevunique' ? 'DESC' : 'ASC';
     if (!me.__count) {
-        sql.push('ORDER BY', quotedKeyColumnName, direction, ',', 'key', direction); // Needed for DESC
+        // Todo: Fix the following in multiEntry too (use 'matchingKey' for key column name?)
+        const direction = ['prev', 'prevunique'].includes(me.direction) ? 'DESC' : 'ASC';
+
+        // 1. Sort by key
+        sql.push('ORDER BY', quotedKeyColumnName, direction); // Todo: Any reason for this first sorting?
+
+        // 2. Sort by primaryKey (if defined and not unique)
+        if (!me.__unique && me.__keyColumnName !== 'key') { // Avoid adding 'key' twice
+            sql.push(',', util.quote('key'), direction);
+        }
+
+        // 3. Sort by position (if defined)
+
+        if (!me.__unique && util.instanceOf(me.source, IDBIndex)) {
+            // 4. Sort by object store position (if defined and not unique)
+            sql.push(',', util.quote(me.__valueColumnName), direction);
+        }
         sql.push('LIMIT', recordsToLoad, 'OFFSET', me.__offset);
     }
     sql = sql.join(' ');
@@ -146,7 +161,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
     }
 
     // Determine the ORDER BY direction based on the cursor.
-    const direction = me.direction === 'prev' || me.direction === 'prevunique' ? 'DESC' : 'ASC';
+    const direction = ['prev', 'prevunique'].includes(me.direction) ? 'DESC' : 'ASC';
 
     if (!me.__count) {
         sql.push('ORDER BY key', direction);
@@ -300,7 +315,13 @@ IDBCursor.prototype['continue'] = function (key) {
             // We have pre-loaded data for the cursor
             me.__prefetchedIndex++;
             if (me.__prefetchedIndex < me.__prefetchedData.length) {
-                me.__decode(me.__prefetchedData.item(me.__prefetchedIndex), me.__onsuccess(success));
+                me.__decode(me.__prefetchedData.item(me.__prefetchedIndex), function (k, val, primKey) {
+                    if (key !== undefined && k !== key) {
+                        cursorContinue(tx, args, success, error);
+                        return;
+                    }
+                    me.__onsuccess(success)(k, val, primKey);
+                });
                 return;
             }
         }

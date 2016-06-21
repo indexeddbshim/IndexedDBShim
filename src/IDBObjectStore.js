@@ -164,7 +164,7 @@ IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
 };
 
 /**
- * From the store properties and object, extracts the value for the key in hte object Store
+ * From the store properties and object, extracts the value for the key in the object store
  * If the table has auto increment, get the next in sequence
  * @param {Object} tx
  * @param {Object} value
@@ -356,7 +356,7 @@ IDBObjectStore.prototype.get = function (range) {
 
     let sql = ['SELECT * FROM ', util.quote('s_' + me.name), ' WHERE '];
     const sqlValues = [];
-    setSQLForRange(range, 'key', sql, sqlValues);
+    setSQLForRange(range, util.quote('key'), sql, sqlValues);
     sql = sql.join(' ');
 
     if (range.lower !== undefined) Key.validate(range.lower);

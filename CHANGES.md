@@ -60,10 +60,14 @@
 - Fix: Ensure validation occurs for indexes before storage
 - Fix: Implement `IDBVersionChangeEvent` properly and utilize to allow
     `instanceof` checks
+- Fix: Sort properly for next/prev(unique) (potentially by key,
+    primary key, (position,) obj. store position)
+- Fix: Be safe in quoting "key" column (reserved SQLite word)
 - Feature: Support Node cleanly via `websql` SQLite3 library
 - Feature: Add `IDBObjectStore.openKeyCursor`
 - Feature: Add `IDBKeyRange.includes()` with test
 - Feature: Allow ranges to be passed to `IDBObjectStore.get`.
+- Feature: Allow key argument with `IDBCursor.continue`.
 - Feature: Key value retrieval: Allow "length" type key
 - Feature: Add ".sqlite" extension to database name for sake of (Windows)
     file type identification
