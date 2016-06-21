@@ -44,17 +44,38 @@ try {
     }
 } catch (e) {}
 
-let expEvent, createEvent, IDBVersionChangeEvent;
+let expEvent, createEvent;
 if (useNativeEvent) {
     expEvent = Event;
-    IDBVersionChangeEvent = Event;
     createEvent = createNativeEvent;
 } else {
     expEvent = ShimEvent;
-    IDBVersionChangeEvent = ShimEvent;
     createEvent = function (type, debug) {
         return new ShimEvent(type, debug);
     };
+}
+
+class IDBVersionChangeEvent extends expEvent {
+    constructor (type, eventInitDict) { // eventInitDict is a IDBVersionChangeEventInit (but is not defined as a global)
+        super(type);
+        Object.defineProperty(this, 'target', {
+            writable: true
+        });
+        Object.defineProperty(this, 'oldVersion', {
+            enumerable: true,
+            configurable: true,
+            get: function () {
+                return eventInitDict.oldVersion;
+            }
+        });
+        Object.defineProperty(this, 'newVersion', {
+            enumerable: true,
+            configurable: true,
+            get: function () {
+                return eventInitDict.newVersion;
+            }
+        });
+    }
 }
 
 export {expEvent as Event, IDBVersionChangeEvent, createEvent}; // Event not currently in use

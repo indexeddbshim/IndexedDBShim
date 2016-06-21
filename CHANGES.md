@@ -57,7 +57,9 @@
 - Fix: Throw `DataError` upon continuing the cursor in an unexpected direction
 - Fix: Key validation: Avoid circular arrays
 - Fix: Key validation: Disallow Dates with NaN as \[\[DateValue]]
-- Fix: Ensure validation occurs for indexes before storage;
+- Fix: Ensure validation occurs for indexes before storage
+- Fix: Implement `IDBVersionChangeEvent` properly and utilize to allow
+    `instanceof` checks
 - Feature: Support Node cleanly via `websql` SQLite3 library
 - Feature: Add `IDBObjectStore.openKeyCursor`
 - Feature: Add `IDBKeyRange.includes()` with test
@@ -89,6 +91,7 @@
     (greater spec parity).
 - Refactoring: Key value retrieval: Avoid `eval()` (in Key--still used
     in Sca.js)
+- Refactoring: Use ES6 classes for cleaner inheritance
 - Updating: Bump various `devDependency` min versions
 - Testing: Update tests per current spec and behavior
 - Testing: Ensure db closes after each test to allow non-blocking `open()`

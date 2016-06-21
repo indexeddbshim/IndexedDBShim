@@ -91,9 +91,7 @@ IDBFactory.prototype.open = function (name, version) {
                         // DB Upgrade in progress
                         sysdb.transaction(function (systx) {
                             systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [version, name], function () {
-                                const e = createEvent('upgradeneeded');
-                                e.oldVersion = oldVersion;
-                                e.newVersion = version;
+                                const e = new IDBVersionChangeEvent('upgradeneeded', {oldVersion, newVersion: version});
                                 req.transaction = req.result.__versionTransaction = new IDBTransaction(req.source, [], 'versionchange');
                                 req.transaction.__addToTransactionQueue(function onupgradeneeded (tx, args, success) {
                                     util.callback('onupgradeneeded', req, e);
@@ -164,9 +162,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         sysdb.transaction(function (systx) {
             systx.executeSql('DELETE FROM dbVersions WHERE name = ? ', [name], function () {
                 req.result = undefined;
-                const e = createEvent('success');
-                e.newVersion = null;
-                e.oldVersion = version;
+                const e = new IDBVersionChangeEvent('success', {oldVersion: version, newVersion: null});
                 util.callback('onsuccess', req, e);
             }, dbError);
         }, dbError);
@@ -177,9 +173,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
             systx.executeSql('SELECT * FROM dbVersions WHERE name = ?', [name], function (tx, data) {
                 if (data.rows.length === 0) {
                     req.result = undefined;
-                    const e = createEvent('success');
-                    e.newVersion = null;
-                    e.oldVersion = version;
+                    const e = new IDBVersionChangeEvent('success', {oldVersion: version, newVersion: null});
                     util.callback('onsuccess', req, e);
                     return;
                 }

@@ -16672,6 +16672,13 @@ exports.createDOMError = createDOMError;
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 /**
  * Creates a native Event object, for browsers that support it
  * @returns {Event}
@@ -16719,19 +16726,48 @@ try {
 } catch (e) {}
 
 var expEvent = void 0,
-    createEvent = void 0,
-    IDBVersionChangeEvent = void 0;
+    createEvent = void 0;
 if (useNativeEvent) {
     exports.Event = expEvent = Event;
-    exports.IDBVersionChangeEvent = IDBVersionChangeEvent = Event;
     exports.createEvent = createEvent = createNativeEvent;
 } else {
     exports.Event = expEvent = ShimEvent;
-    exports.IDBVersionChangeEvent = IDBVersionChangeEvent = ShimEvent;
     exports.createEvent = createEvent = function createEvent(type, debug) {
         return new ShimEvent(type, debug);
     };
 }
+
+var IDBVersionChangeEvent = function (_expEvent) {
+    _inherits(IDBVersionChangeEvent, _expEvent);
+
+    function IDBVersionChangeEvent(type, eventInitDict) {
+        _classCallCheck(this, IDBVersionChangeEvent);
+
+        var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(IDBVersionChangeEvent).call(this, type)); // eventInitDict is a IDBVersionChangeEventInit (but is not defined as a global)
+
+
+        Object.defineProperty(_this, 'target', {
+            writable: true
+        });
+        Object.defineProperty(_this, 'oldVersion', {
+            enumerable: true,
+            configurable: true,
+            get: function get() {
+                return eventInitDict.oldVersion;
+            }
+        });
+        Object.defineProperty(_this, 'newVersion', {
+            enumerable: true,
+            configurable: true,
+            get: function get() {
+                return eventInitDict.newVersion;
+            }
+        });
+        return _this;
+    }
+
+    return IDBVersionChangeEvent;
+}(expEvent);
 
 exports.Event = expEvent;
 exports.IDBVersionChangeEvent = IDBVersionChangeEvent;
@@ -17465,9 +17501,7 @@ IDBFactory.prototype.open = function (name, version) {
                         // DB Upgrade in progress
                         sysdb.transaction(function (systx) {
                             systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [version, name], function () {
-                                var e = (0, _Event.createEvent)('upgradeneeded');
-                                e.oldVersion = oldVersion;
-                                e.newVersion = version;
+                                var e = new IDBVersionChangeEvent('upgradeneeded', { oldVersion: oldVersion, newVersion: version });
                                 req.transaction = req.result.__versionTransaction = new _IDBTransaction2.default(req.source, [], 'versionchange');
                                 req.transaction.__addToTransactionQueue(function onupgradeneeded(tx, args, success) {
                                     util.callback('onupgradeneeded', req, e);
@@ -17543,9 +17577,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         sysdb.transaction(function (systx) {
             systx.executeSql('DELETE FROM dbVersions WHERE name = ? ', [name], function () {
                 req.result = undefined;
-                var e = (0, _Event.createEvent)('success');
-                e.newVersion = null;
-                e.oldVersion = version;
+                var e = new IDBVersionChangeEvent('success', { oldVersion: version, newVersion: null });
                 util.callback('onsuccess', req, e);
             }, dbError);
         }, dbError);
@@ -17556,9 +17588,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
             systx.executeSql('SELECT * FROM dbVersions WHERE name = ?', [name], function (tx, data) {
                 if (data.rows.length === 0) {
                     req.result = undefined;
-                    var e = (0, _Event.createEvent)('success');
-                    e.newVersion = null;
-                    e.oldVersion = version;
+                    var e = new IDBVersionChangeEvent('success', { oldVersion: version, newVersion: null });
                     util.callback('onsuccess', req, e);
                     return;
                 }
@@ -18640,25 +18670,46 @@ module.exports = exports['default'];
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
-  value: true
+    value: true
 });
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 /**
  * The IDBRequest Object that is returns for all async calls
  * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#request-api
  */
-function IDBRequest() {
-  this.onsuccess = this.onerror = this.result = this.error = this.source = this.transaction = null;
-  this.readyState = 'pending';
-}
+
+var IDBRequest = function IDBRequest() {
+    _classCallCheck(this, IDBRequest);
+
+    this.onsuccess = this.onerror = this.result = this.error = this.source = this.transaction = null;
+    this.readyState = 'pending';
+};
 
 /**
  * The IDBOpenDBRequest called when a database is opened
  */
-function IDBOpenDBRequest() {
-  this.onblocked = this.onupgradeneeded = null;
-}
-IDBOpenDBRequest.prototype = new IDBRequest();
-IDBOpenDBRequest.prototype.constructor = IDBOpenDBRequest;
+
+
+var IDBOpenDBRequest = function (_IDBRequest) {
+    _inherits(IDBOpenDBRequest, _IDBRequest);
+
+    function IDBOpenDBRequest() {
+        _classCallCheck(this, IDBOpenDBRequest);
+
+        var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(IDBOpenDBRequest).call(this));
+
+        _this.onblocked = _this.onupgradeneeded = null;
+        return _this;
+    }
+
+    return IDBOpenDBRequest;
+}(IDBRequest);
 
 exports.IDBRequest = IDBRequest;
 exports.IDBOpenDBRequest = IDBOpenDBRequest;
