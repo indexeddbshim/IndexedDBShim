@@ -131,9 +131,17 @@ module.exports = function (grunt) {
                     tags: ['master'],
                     urls: ['http://127.0.0.1:9999/tests-qunit/index.html'],
                     browsers: [{
+                        browserName: 'chrome',
+                        platform: 'Windows 10',
+                        version: '51.0'
+                        /*
                         browserName: 'safari',
                         platform: 'Windows 2008',
                         version: '5'
+                    }, {
+                        browserName: 'opera',
+                        version: '12'
+                        */
                     }]
                 }
             }
