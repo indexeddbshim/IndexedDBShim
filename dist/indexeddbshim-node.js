@@ -20386,12 +20386,18 @@ function setGlobalVars(idb) {
 
     // Detect browsers with known IndexedDb issues (e.g. Android pre-4.4)
     var poorIndexedDbSupport = false;
-    if (typeof navigator !== 'undefined' && (navigator.userAgent.match(/Android 2/) || navigator.userAgent.match(/Android 3/) || navigator.userAgent.match(/Android 4\.[0-3]/))) {
-        /* Chrome is an exception. It supports IndexedDb */
-        if (!navigator.userAgent.match(/Chrome/)) {
+    if (typeof navigator !== 'undefined' && ( // Ignore Node or other environments
+
+    // Bad non-Chrome Android support
+    (navigator.userAgent.match(/Android 2/) || navigator.userAgent.match(/Android 3/) || navigator.userAgent.match(/Android 4\.[0-3]/)) && !navigator.userAgent.match(/Chrome/) ||
+    // Bad non-Safari iOS9 support (see <https://github.com/axemclion/IndexedDBShim/issues/252>)
+    (navigator.userAgent.indexOf('Safari') === -1 || navigator.userAgent.indexOf('Chrome') > -1) && // Exclude genuine Safari: http://stackoverflow.com/a/7768006/271577
+    // Detect iOS: http://stackoverflow.com/questions/9038625/detect-if-device-is-ios/9039885#9039885
+    // and detect version 9: http://stackoverflow.com/a/26363560/271577
+    /iPad|iPhone|iPod.* os 9_/i.test(navigator.userAgent) && !window.MSStream // But avoid IE11
+    )) {
             poorIndexedDbSupport = true;
         }
-    }
 
     if ((IDB.indexedDB === undefined || !IDB.indexedDB || poorIndexedDbSupport) && _cfg2.default.win.openDatabase !== undefined) {
         IDB.shimIndexedDB.__useShim();
