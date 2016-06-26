@@ -16,8 +16,9 @@
   "license": "Apache-2.0",
   "ignore": [
     "/src",
-    "/test",
-    "/tests",
+    "/tests-mocha",
+    "/tests-polyfill",
+    "/tests-qunit",
     "/examples",
     "/.*",
     "/index.html",

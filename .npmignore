@@ -1,7 +1,7 @@
 /src
-/test
-/tests
+/tests-mocha
 /tests-polyfill
+/tests-qunit
 /examples
 /.*
 /bower.json
