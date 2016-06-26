@@ -134,9 +134,6 @@ module.exports = function (grunt) {
                         browserName: 'safari',
                         platform: 'Windows 2008',
                         version: '5'
-                    }, {
-                        browserName: 'opera',
-                        version: '12'
                     }]
                 }
             }
