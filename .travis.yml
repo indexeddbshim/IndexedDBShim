@@ -1,14 +1,15 @@
---- 
-before_script: 
+---
+before_install: if [[ `npm -v` != 3* ]]; then npm i -g npm@3; fi
+before_script:
 - ./travis.sh before
 - npm install -g grunt-cli
-node_js: 
+node_js:
 - 0.10
-notifications: 
+notifications:
   email: false
 language: node_js
-env: 
-  global: 
+env:
+  global:
   - secure: |-
       INvIY8gsdXFMcFPI9gQumHjdWDQUFTY/7J4UwHynXRaWRk7fvGFkcKEUvHsr
       E2p4SE1Qor5WXAgbUUoffXcvd2LACozVI03DlC/fV+kkA7I6qxtdootkLyXM
@@ -17,7 +18,7 @@ env:
       fMzmFeFRu8Y9M5KNaxHM9nmnjIMvRvRGJsXeTCB9m/oKVBrkcwP54Y8RWO6Z
       EmtsKn2TQGm7+hsBXpKcmTBFdhiB10gQQg2/jw+RtWnMEY7xXB2Mts6FKRXy
       ZcG/WV2PBZ+wnvQjEwMfmL6nSSDo3hIgmJOkbu0QcBpTeu44B3Y=
-after_failure: 
+after_failure:
 - ./travis.sh revert
-after_success: 
+after_success:
 - ./travis.sh merge
