@@ -11,7 +11,7 @@ dbName*
 
 # Should be deleted by Grunt
 __sysdb__*
-D_dbName
+D_dbName*
 D_IndexedDBShim_Test_Database_*
 D_test.sqlite
 D_TestDatabase*
