@@ -3,7 +3,7 @@
 
 module.exports = function (grunt) {
     let saucekey = null;
-    if (typeof process.env.saucekey !== 'undefined') {
+    if (typeof process.env.SAUCE_ACCESS_KEY !== 'undefined') {
         saucekey = process.env.SAUCE_ACCESS_KEY;
     }
     const pkg = require('./package.json');
