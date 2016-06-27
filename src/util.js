@@ -1,3 +1,5 @@
+import {createDOMException} from './DOMException.js';
+
 let cleanInterface = false;
 
 const testObject = {test: true};
@@ -127,4 +129,21 @@ function isArrayBufferOrView (obj) {
 }
 */
 
-export {callback, StringList, quote, instanceOf, isObj, isDate, isBlob, isRegExp, isFile};
+function isNotClonable (value) {
+    return ['function', 'symbol'].includes(typeof value) ||
+        (isObj(value) && (
+            value instanceof Error || // Duck-typing with some util.isError would be better, but too easy to get a false match
+            (value.nodeType > 0 && typeof value.nodeName === 'string') // DOM nodes
+        ));
+}
+
+function throwIfNotClonable (value, errMsg) {
+    JSON.stringify(value, function (key, val) {
+        if (isNotClonable(val)) {
+            throw createDOMException('DataCloneError', errMsg);
+        }
+        return val;
+    });
+}
+
+export {callback, StringList, quote, instanceOf, isObj, isDate, isBlob, isRegExp, isFile, throwIfNotClonable};

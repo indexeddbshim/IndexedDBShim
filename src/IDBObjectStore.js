@@ -124,25 +124,16 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
  * @private
  */
 IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
-    const isObj = util.isObj(value);
-    isObj && JSON.stringify(value, function (key, val) {
-        if (['function', 'symbol'].includes(typeof val) ||
-            value instanceof Error || // Duck-typing with some util.isError would be better, but too easy to get a false match
-            (value.nodeType > 0 && typeof value.nodeName === 'string') // DOM nodes
-        ) {
-            throw createDOMException('DataCloneError', 'The data being stored could not be cloned by the internal structured cloning algorithm.');
-        }
-        return val;
-    });
-    if (this.keyPath) {
+    util.throwIfNotClonable(value, 'The data to be stored could not be cloned by the internal structured cloning algorithm.');
+    if (this.keyPath !== null) {
         if (key !== undefined) {
             throw createDOMException('DataError', 'The object store uses in-line keys and the key parameter was provided', this);
-        } else if (isObj) {
+        } else if (util.isObj(value)) {
             key = Key.evaluateKeyPathOnValue(value, this.keyPath);
             if (key === undefined) {
                 if (this.autoIncrement) {
                     // A key will be generated
-                    return;
+                    return key;
                 }
                 throw createDOMException('DataError', 'Could not evaluate a key from keyPath');
             }
@@ -153,7 +144,7 @@ IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
         if (key === undefined) {
             if (this.autoIncrement) {
                 // A key will be generated
-                return;
+                return key;
             } else {
                 throw createDOMException('DataError', 'The object store uses out-of-line keys and has no key generator and the key parameter was not provided. ', this);
             }
@@ -161,6 +152,7 @@ IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
     }
 
     Key.validate(key);
+    return key;
 };
 
 /**
@@ -187,7 +179,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
         });
     }
 
-    if (me.keyPath) {
+    if (me.keyPath !== null) {
         const primaryKey = Key.evaluateKeyPathOnValue(value, me.keyPath);
         if (primaryKey === undefined && me.autoIncrement) {
             getNextAutoIncKey(function (primaryKey) {

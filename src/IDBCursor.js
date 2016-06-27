@@ -47,7 +47,8 @@ function IDBCursor (range, direction, store, source, keyColumnName, valueColumnN
     this.__count = count;
     this.__offset = -1; // Setting this to -1 as continue will set it to 0 anyway
     this.__lastKeyContinued = undefined; // Used when continuing with a key
-    this.__multiEntryIndex = util.instanceOf(source, IDBIndex) ? source.multiEntry : false;
+    this.__indexSource = util.instanceOf(source, IDBIndex);
+    this.__multiEntryIndex = this.__indexSource ? source.multiEntry : false;
     this.__unique = this.direction.includes('unique');
 
     if (range !== undefined) {
@@ -101,7 +102,7 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
 
         // 3. Sort by position (if defined)
 
-        if (!me.__unique && util.instanceOf(me.source, IDBIndex)) {
+        if (!me.__unique && me.__indexSource) {
             // 4. Sort by object store position (if defined and not unique)
             sql.push(',', util.quote(me.__valueColumnName), direction);
         }
@@ -282,7 +283,7 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
 
 IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
     if (!this.__store.transaction.db.objectStoreNames.contains(this.__store.name) ||
-        util.instanceOf(this.source, IDBIndex) && !this.__store.indexNames.contains(this.source.name)) {
+        this.__indexSource && !this.__store.indexNames.contains(this.source.name)) {
         throw createDOMException('InvalidStateError', 'The cursor\'s source or effective object store has been deleted');
     }
 };
@@ -351,6 +352,7 @@ IDBCursor.prototype.advance = function (count) {
 
 IDBCursor.prototype.update = function (valueToUpdate) {
     const me = this;
+    if (!arguments.length) throw new TypeError('A value must be passed to update()');
     me.__store.transaction.__assertActive();
     me.__store.transaction.__assertWritable();
     me.__sourceOrEffectiveObjStoreDeleted();
@@ -359,6 +361,13 @@ IDBCursor.prototype.update = function (valueToUpdate) {
     }
     if (me.__keyOnly) {
         throw createDOMException('InvalidStateError', 'This cursor method cannot be called when the key only flag has been set.');
+    }
+    util.throwIfNotClonable(valueToUpdate, 'The data to be updated could not be cloned by the internal structured cloning algorithm.');
+    if (me.__store.keyPath !== null) {
+        const evaluatedKey = me.__store.__validateKeyAndValue(valueToUpdate);
+        if (me.primaryKey !== evaluatedKey) {
+            throw createDOMException('DataError', 'They key of the supplied value to `update` is not equal to the cursor\'s effective key');
+        }
     }
     return me.__store.transaction.__addToTransactionQueue(function cursorUpdate (tx, args, success, error) {
         Sca.encode(valueToUpdate, function (encoded) {

@@ -66,6 +66,11 @@
 - Fix: Throw for `IDBCursor.update/delete` if transaction not active,
     if source or effective object store deleted, if got value not set,
     or if a key method has been invoked
+- Fix: Throw `DataCloneError` if `IDBCursor.update` value is not
+    clonable by the Structured Cloning Algorithm
+- Fix: Throw `TypeError` if call to `update()` has no arguments
+- Fix: Allow empty string key path to be utilized when validating
+    `add`/`put` input
 - Feature: Support Node cleanly via `websql` SQLite3 library
 - Feature: Add `IDBObjectStore.openKeyCursor`
 - Feature: Add `IDBKeyRange.includes()` with test
@@ -115,7 +120,8 @@
 - Test scaffolding (W3C): Fix assertions
 - (Testing: tests-mocha, tests-qunit, and indexedDBmock tests now all
     passing in browser and Node; from W3C, IDBCursor.advance.js,
-    IDBCursor.continue.js, and IDBCursor.delete.js are passing)
+    IDBCursor.continue.js, IDBCursor.delete.js, and IDBCursor.update.js
+    are passing)
 - Testing (Grunt): Clarify Grunt tasks, expand tasks for cleaning, make tests
     more granular
 - Testing (Grunt): Remove now redundant `sourceMappingURL`, use

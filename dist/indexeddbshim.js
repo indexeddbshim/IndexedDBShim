@@ -9361,7 +9361,8 @@ function IDBCursor(range, direction, store, source, keyColumnName, valueColumnNa
     this.__count = count;
     this.__offset = -1; // Setting this to -1 as continue will set it to 0 anyway
     this.__lastKeyContinued = undefined; // Used when continuing with a key
-    this.__multiEntryIndex = util.instanceOf(source, _IDBIndex2.default) ? source.multiEntry : false;
+    this.__indexSource = util.instanceOf(source, _IDBIndex2.default);
+    this.__multiEntryIndex = this.__indexSource ? source.multiEntry : false;
     this.__unique = this.direction.includes('unique');
 
     if (range !== undefined) {
@@ -9416,7 +9417,7 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
 
         // 3. Sort by position (if defined)
 
-        if (!me.__unique && util.instanceOf(me.source, _IDBIndex2.default)) {
+        if (!me.__unique && me.__indexSource) {
             // 4. Sort by object store position (if defined and not unique)
             sql.push(',', util.quote(me.__valueColumnName), direction);
         }
@@ -9598,7 +9599,7 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
 };
 
 IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
-    if (!this.__store.transaction.db.objectStoreNames.contains(this.__store.name) || util.instanceOf(this.source, _IDBIndex2.default) && !this.__store.indexNames.contains(this.source.name)) {
+    if (!this.__store.transaction.db.objectStoreNames.contains(this.__store.name) || this.__indexSource && !this.__store.indexNames.contains(this.source.name)) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'The cursor\'s source or effective object store has been deleted');
     }
 };
@@ -9664,6 +9665,7 @@ IDBCursor.prototype.advance = function (count) {
 
 IDBCursor.prototype.update = function (valueToUpdate) {
     var me = this;
+    if (!arguments.length) throw new TypeError('A value must be passed to update()');
     me.__store.transaction.__assertActive();
     me.__store.transaction.__assertWritable();
     me.__sourceOrEffectiveObjStoreDeleted();
@@ -9672,6 +9674,13 @@ IDBCursor.prototype.update = function (valueToUpdate) {
     }
     if (me.__keyOnly) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This cursor method cannot be called when the key only flag has been set.');
+    }
+    util.throwIfNotClonable(valueToUpdate, 'The data to be updated could not be cloned by the internal structured cloning algorithm.');
+    if (me.__store.keyPath !== null) {
+        var evaluatedKey = me.__store.__validateKeyAndValue(valueToUpdate);
+        if (me.primaryKey !== evaluatedKey) {
+            throw (0, _DOMException.createDOMException)('DataError', 'They key of the supplied value to `update` is not equal to the cursor\'s effective key');
+        }
     }
     return me.__store.transaction.__addToTransactionQueue(function cursorUpdate(tx, args, success, error) {
         _Sca2.default.encode(valueToUpdate, function (encoded) {
@@ -10806,24 +10815,16 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
  * @private
  */
 IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
-    var isObj = util.isObj(value);
-    isObj && JSON.stringify(value, function (key, val) {
-        if (['function', 'symbol'].includes(typeof val === 'undefined' ? 'undefined' : _typeof(val)) || value instanceof Error || // Duck-typing with some util.isError would be better, but too easy to get a false match
-        value.nodeType > 0 && typeof value.nodeName === 'string' // DOM nodes
-        ) {
-                throw (0, _DOMException.createDOMException)('DataCloneError', 'The data being stored could not be cloned by the internal structured cloning algorithm.');
-            }
-        return val;
-    });
-    if (this.keyPath) {
+    util.throwIfNotClonable(value, 'The data to be stored could not be cloned by the internal structured cloning algorithm.');
+    if (this.keyPath !== null) {
         if (key !== undefined) {
             throw (0, _DOMException.createDOMException)('DataError', 'The object store uses in-line keys and the key parameter was provided', this);
-        } else if (isObj) {
+        } else if (util.isObj(value)) {
             key = _Key2.default.evaluateKeyPathOnValue(value, this.keyPath);
             if (key === undefined) {
                 if (this.autoIncrement) {
                     // A key will be generated
-                    return;
+                    return key;
                 }
                 throw (0, _DOMException.createDOMException)('DataError', 'Could not evaluate a key from keyPath');
             }
@@ -10834,7 +10835,7 @@ IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
         if (key === undefined) {
             if (this.autoIncrement) {
                 // A key will be generated
-                return;
+                return key;
             } else {
                 throw (0, _DOMException.createDOMException)('DataError', 'The object store uses out-of-line keys and has no key generator and the key parameter was not provided. ', this);
             }
@@ -10842,6 +10843,7 @@ IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
     }
 
     _Key2.default.validate(key);
+    return key;
 };
 
 /**
@@ -10868,7 +10870,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
         });
     }
 
-    if (me.keyPath) {
+    if (me.keyPath !== null) {
         var primaryKey = _Key2.default.evaluateKeyPathOnValue(value, me.keyPath);
         if (primaryKey === undefined && me.autoIncrement) {
             getNextAutoIncKey(function (primaryKey) {
@@ -12947,8 +12949,11 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+exports.throwIfNotClonable = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.quote = exports.StringList = exports.callback = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
+var _DOMException = require('./DOMException.js');
 
 var cleanInterface = false;
 
@@ -13081,6 +13086,21 @@ function isArrayBufferOrView (obj) {
 }
 */
 
+function isNotClonable(value) {
+    return ['function', 'symbol'].includes(typeof value === 'undefined' ? 'undefined' : _typeof(value)) || isObj(value) && (value instanceof Error || // Duck-typing with some util.isError would be better, but too easy to get a false match
+    value.nodeType > 0 && typeof value.nodeName === 'string' // DOM nodes
+    );
+}
+
+function throwIfNotClonable(value, errMsg) {
+    JSON.stringify(value, function (key, val) {
+        if (isNotClonable(val)) {
+            throw (0, _DOMException.createDOMException)('DataCloneError', errMsg);
+        }
+        return val;
+    });
+}
+
 exports.callback = callback;
 exports.StringList = StringList;
 exports.quote = quote;
@@ -13090,5 +13110,6 @@ exports.isDate = isDate;
 exports.isBlob = isBlob;
 exports.isRegExp = isRegExp;
 exports.isFile = isFile;
+exports.throwIfNotClonable = throwIfNotClonable;
 
-},{}]},{},[318]);
+},{"./DOMException.js":306}]},{},[318]);
