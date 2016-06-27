@@ -16853,7 +16853,8 @@ function IDBCursor(range, direction, store, source, keyColumnName, valueColumnNa
     this.__req.transaction = this.__store.transaction;
     this.__keyColumnName = keyColumnName;
     this.__valueColumnName = valueColumnName;
-    this.__valueDecoder = valueColumnName === 'value' ? _Sca2.default : _Key2.default;
+    this.__keyOnly = valueColumnName === 'key';
+    this.__valueDecoder = this.__keyOnly ? _Key2.default : _Sca2.default;
     this.__count = count;
     this.__offset = -1; // Setting this to -1 as continue will set it to 0 anyway
     this.__lastKeyContinued = undefined; // Used when continuing with a key
@@ -17104,7 +17105,7 @@ IDBCursor.prototype['continue'] = function (key) {
     var me = this;
     me.__store.transaction.__assertActive();
     me.__sourceOrEffectiveObjStoreDeleted();
-    if (!this.__gotValue) {
+    if (!me.__gotValue) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'The cursor is being iterated or has iterated past its end.');
     }
     if (key !== undefined) _Key2.default.validate(key);
@@ -17160,7 +17161,15 @@ IDBCursor.prototype.advance = function (count) {
 
 IDBCursor.prototype.update = function (valueToUpdate) {
     var me = this;
+    me.__store.transaction.__assertActive();
     me.__store.transaction.__assertWritable();
+    me.__sourceOrEffectiveObjStoreDeleted();
+    if (!me.__gotValue) {
+        throw (0, _DOMException.createDOMException)('InvalidStateError', 'The cursor is being iterated or has iterated past its end.');
+    }
+    if (me.__keyOnly) {
+        throw (0, _DOMException.createDOMException)('InvalidStateError', 'This cursor method cannot be called when the key only flag has been set.');
+    }
     return me.__store.transaction.__addToTransactionQueue(function cursorUpdate(tx, args, success, error) {
         _Sca2.default.encode(valueToUpdate, function (encoded) {
             me.__find(undefined, tx, function (key, value, primaryKey) {
@@ -17199,7 +17208,15 @@ IDBCursor.prototype.update = function (valueToUpdate) {
 
 IDBCursor.prototype['delete'] = function () {
     var me = this;
+    me.__store.transaction.__assertActive();
     me.__store.transaction.__assertWritable();
+    me.__sourceOrEffectiveObjStoreDeleted();
+    if (!me.__gotValue) {
+        throw (0, _DOMException.createDOMException)('InvalidStateError', 'The cursor is being iterated or has iterated past its end.');
+    }
+    if (me.__keyOnly) {
+        throw (0, _DOMException.createDOMException)('InvalidStateError', 'This cursor method cannot be called when the key only flag has been set.');
+    }
     return this.__store.transaction.__addToTransactionQueue(function cursorDelete(tx, args, success, error) {
         me.__find(undefined, tx, function (key, value, primaryKey) {
             var sql = 'DELETE FROM  ' + util.quote('s_' + me.__store.name) + ' WHERE key = ?';

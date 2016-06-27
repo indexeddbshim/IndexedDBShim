@@ -63,6 +63,9 @@
 - Fix: Sort properly for next/prev(unique) (potentially by key,
     primary key, (position,) obj. store position)
 - Fix: Be safe in quoting "key" column (reserved SQLite word)
+- Fix: Throw for `IDBCursor.update/delete` if transaction not active,
+    if source or effective object store deleted, if got value not set,
+    or if a key method has been invoked
 - Feature: Support Node cleanly via `websql` SQLite3 library
 - Feature: Add `IDBObjectStore.openKeyCursor`
 - Feature: Add `IDBKeyRange.includes()` with test
@@ -107,11 +110,12 @@
 - Testing (W3C): Change example to expect `ConstraintError` (since object
     store already existing per test)--though perhaps should ensure it is
     not yet existing
-- Test scaffolding (W3C): Fix args to initionalSituation()
+- Test scaffolding (W3C): Fix args to `initionalSituation()`
 - Test scaffolding (W3C): Fix test ok condition, typo
 - Test scaffolding (W3C): Fix assertions
 - (Testing: tests-mocha, tests-qunit, and indexedDBmock tests now all
-    passing in browser and Node; from W3C, IDBCursor.advance.js is passing)
+    passing in browser and Node; from W3C, IDBCursor.advance.js,
+    IDBCursor.continue.js, and IDBCursor.delete.js are passing)
 - Testing (Grunt): Clarify Grunt tasks, expand tasks for cleaning, make tests
     more granular
 - Testing (Grunt): Remove now redundant `sourceMappingURL`, use
