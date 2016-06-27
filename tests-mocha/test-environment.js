@@ -65,7 +65,7 @@
         /**
          * Safe duration by which transaction should have expired
         */
-        transactionDuration: 500
+        transactionDuration: 1000
     };
 
     /**

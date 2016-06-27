@@ -9403,7 +9403,6 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
 
     // Determine the ORDER BY direction based on the cursor.
     if (!me.__count) {
-        // Todo: Fix the following in multiEntry too (use 'matchingKey' for key column name?)
         var direction = ['prev', 'prevunique'].includes(me.direction) ? 'DESC' : 'ASC';
 
         // 1. Sort by key
@@ -9477,11 +9476,25 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
         sqlValues.push(_Key2.default.encode(me.__lastKeyContinued));
     }
 
-    // Determine the ORDER BY direction based on the cursor.
-    var direction = ['prev', 'prevunique'].includes(me.direction) ? 'DESC' : 'ASC';
-
     if (!me.__count) {
-        sql.push('ORDER BY key', direction);
+        // Determine the ORDER BY direction based on the cursor.
+        var direction = ['prev', 'prevunique'].includes(me.direction) ? 'DESC' : 'ASC';
+
+        // 1. Sort by key
+        sql.push('ORDER BY', quotedKeyColumnName, direction); // Todo: Any reason for this first sorting?
+
+        // 2. Sort by primaryKey (if defined and not unique)
+        if (!me.__unique && me.__keyColumnName !== 'key') {
+            // Avoid adding 'key' twice
+            sql.push(',', util.quote('key'), direction);
+        }
+
+        // 3. Sort by position (if defined)
+
+        if (!me.__unique && me.__indexSource) {
+            // 4. Sort by object store position (if defined and not unique)
+            sql.push(',', util.quote(me.__valueColumnName), direction);
+        }
     }
     sql = sql.join(' ');
     _cfg2.default.DEBUG && console.log(sql, sqlValues);
