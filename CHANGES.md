@@ -71,6 +71,18 @@
 - Fix: Throw `TypeError` if call to `update()` has no arguments
 - Fix: Allow empty string key path to be utilized when validating
     `add`/`put` input
+- Fix: Add more precise `toString` behaviors
+- Fix: Make `key`/`primaryKey`/`direction`/`source`/`value` properties
+    of `IDBCursor` readonly
+- Fix: Avoid iterating unique values
+- Fix: Ensure `IDBRequest.error` returns `null` rather than `undefined` upon
+    success event
+- Fix: Make `IDBRequest` properties (`result`, `error`, `source`,
+    `transaction`, `readyState`) readonly
+- Fix: Correct `IDBRequest.source` to reflect `IDBCursor`, `IDBIndex`,
+    or `IDBObjectStore` as appropriate
+- Fix: Prevent race condition error if attempting to find indexes during
+    insertion when index creation has begun but not yet completed
 - Feature: Support Node cleanly via `websql` SQLite3 library
 - Feature: Add `IDBObjectStore.openKeyCursor`
 - Feature: Add `IDBKeyRange.includes()` with test

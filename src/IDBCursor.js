@@ -19,7 +19,7 @@ import CFG from './cfg.js';
  * @param {string} valueColumnName
  * @param {boolean} count
  */
-function IDBCursor (range, direction, store, source, keyColumnName, valueColumnName, count) {
+function IDBCursor (range, direction, store, source, keyColumnName, valueColumnName, count, reqSource) {
     // Calling openCursor on an index or objectstore with null is allowed but we treat it as undefined internally
     if (range === null) {
         range = undefined;
@@ -32,14 +32,18 @@ function IDBCursor (range, direction, store, source, keyColumnName, valueColumnN
         throw new TypeError(direction + 'is not a valid cursor direction');
     }
 
-    this.source = source;
-    this.direction = direction || 'next';
+    Object.defineProperties(this, {
+        // Babel is not respecting default writable false here, so make explicit
+        source: {writable: false, value: source},
+        direction: {writable: false, value: direction || 'next'}
+    });
     this.key = undefined;
     this.primaryKey = undefined;
     this.__store = store;
     this.__range = range;
     this.__req = new IDBRequest();
-    this.__req.transaction = this.__store.transaction;
+    this.__req.__source = reqSource !== undefined ? reqSource : this;
+    this.__req.__transaction = this.__store.transaction;
     this.__keyColumnName = keyColumnName;
     this.__valueColumnName = valueColumnName;
     this.__keyOnly = valueColumnName === 'key';
@@ -267,9 +271,12 @@ IDBCursor.prototype.__onsuccess = function (success) {
         if (me.__count) {
             success(value, me.__req);
         } else {
-            me.key = key === undefined ? null : key;
-            me.value = value === undefined ? null : value;
-            me.primaryKey = primaryKey === undefined ? null : primaryKey;
+            Object.defineProperties(me, {
+                // Babel is not respecting default writable false here, so make explicit
+                key: {writable: false, value: key === undefined ? null : key},
+                primaryKey: {writable: false, value: primaryKey === undefined ? null : primaryKey}
+            });
+            me.__value = value === undefined ? null : value;
             const result = key === undefined ? null : me;
             success(result, me.__req);
         }
@@ -330,11 +337,26 @@ IDBCursor.prototype['continue'] = function (key) {
             me.__prefetchedIndex++;
             if (me.__prefetchedIndex < me.__prefetchedData.length) {
                 me.__decode(me.__prefetchedData.item(me.__prefetchedIndex), function (k, val, primKey) {
-                    if (key !== undefined && k !== key) {
-                        cursorContinue(tx, args, success, error);
+                    function triggerSuccess () {
+                        if (key !== undefined && k !== key) {
+                            cursorContinue(tx, args, success, error);
+                            return;
+                        }
+                        me.__onsuccess(success)(k, val, primKey);
+                    }
+                    if (me.__unique && !me.__multiEntryIndex) {
+                        Sca.encode(val, function (encVal) {
+                            Sca.encode(me.value, function (encMeVal) {
+                                if (encVal === encMeVal) {
+                                    cursorContinue(tx, args, success, error);
+                                    return;
+                                }
+                                triggerSuccess();
+                            });
+                        });
                         return;
                     }
-                    me.__onsuccess(success)(k, val, primKey);
+                    triggerSuccess();
                 });
                 return;
             }
@@ -414,7 +436,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
                 });
             }, error);
         });
-    });
+    }, undefined, me);
 };
 
 IDBCursor.prototype['delete'] = function () {
@@ -447,25 +469,12 @@ IDBCursor.prototype['delete'] = function () {
                 error(data);
             });
         }, error);
-    });
+    }, undefined, me);
 };
 
 class IDBCursorWithValue extends IDBCursor {
 }
-Object.defineProperty(IDBCursorWithValue.prototype, '__value', {
-    enumerable: false,
-    configurable: false,
-    writable: true
-});
-Object.defineProperty(IDBCursorWithValue.prototype, 'value', {
-    enumerable: true,
-    configurable: true,
-    get: function () {
-        return this.__value;
-    },
-    set: function (val) {
-        this.__value = val;
-    }
-});
+
+util.defineReadonlyProperties(IDBCursorWithValue.prototype, 'value');
 
 export {IDBCursor, IDBCursorWithValue};

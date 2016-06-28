@@ -16830,7 +16830,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
  * @param {string} valueColumnName
  * @param {boolean} count
  */
-function IDBCursor(range, direction, store, source, keyColumnName, valueColumnName, count) {
+function IDBCursor(range, direction, store, source, keyColumnName, valueColumnName, count, reqSource) {
     // Calling openCursor on an index or objectstore with null is allowed but we treat it as undefined internally
     if (range === null) {
         range = undefined;
@@ -16843,14 +16843,18 @@ function IDBCursor(range, direction, store, source, keyColumnName, valueColumnNa
         throw new TypeError(direction + 'is not a valid cursor direction');
     }
 
-    this.source = source;
-    this.direction = direction || 'next';
+    Object.defineProperties(this, {
+        // Babel is not respecting default writable false here, so make explicit
+        source: { writable: false, value: source },
+        direction: { writable: false, value: direction || 'next' }
+    });
     this.key = undefined;
     this.primaryKey = undefined;
     this.__store = store;
     this.__range = range;
     this.__req = new _IDBRequest.IDBRequest();
-    this.__req.transaction = this.__store.transaction;
+    this.__req.__source = reqSource !== undefined ? reqSource : this;
+    this.__req.__transaction = this.__store.transaction;
     this.__keyColumnName = keyColumnName;
     this.__valueColumnName = valueColumnName;
     this.__keyOnly = valueColumnName === 'key';
@@ -17082,9 +17086,12 @@ IDBCursor.prototype.__onsuccess = function (success) {
         if (me.__count) {
             success(value, me.__req);
         } else {
-            me.key = key === undefined ? null : key;
-            me.value = value === undefined ? null : value;
-            me.primaryKey = primaryKey === undefined ? null : primaryKey;
+            Object.defineProperties(me, {
+                // Babel is not respecting default writable false here, so make explicit
+                key: { writable: false, value: key === undefined ? null : key },
+                primaryKey: { writable: false, value: primaryKey === undefined ? null : primaryKey }
+            });
+            me.__value = value === undefined ? null : value;
             var result = key === undefined ? null : me;
             success(result, me.__req);
         }
@@ -17141,11 +17148,26 @@ IDBCursor.prototype['continue'] = function (key) {
             me.__prefetchedIndex++;
             if (me.__prefetchedIndex < me.__prefetchedData.length) {
                 me.__decode(me.__prefetchedData.item(me.__prefetchedIndex), function (k, val, primKey) {
-                    if (key !== undefined && k !== key) {
-                        cursorContinue(tx, args, success, error);
+                    function triggerSuccess() {
+                        if (key !== undefined && k !== key) {
+                            cursorContinue(tx, args, success, error);
+                            return;
+                        }
+                        me.__onsuccess(success)(k, val, primKey);
+                    }
+                    if (me.__unique && !me.__multiEntryIndex) {
+                        _Sca2.default.encode(val, function (encVal) {
+                            _Sca2.default.encode(me.value, function (encMeVal) {
+                                if (encVal === encMeVal) {
+                                    cursorContinue(tx, args, success, error);
+                                    return;
+                                }
+                                triggerSuccess();
+                            });
+                        });
                         return;
                     }
-                    me.__onsuccess(success)(k, val, primKey);
+                    triggerSuccess();
                 });
                 return;
             }
@@ -17225,7 +17247,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
                 });
             }, error);
         });
-    });
+    }, undefined, me);
 };
 
 IDBCursor.prototype['delete'] = function () {
@@ -17258,7 +17280,7 @@ IDBCursor.prototype['delete'] = function () {
                 error(data);
             });
         }, error);
-    });
+    }, undefined, me);
 };
 
 var IDBCursorWithValue = function (_IDBCursor) {
@@ -17273,21 +17295,7 @@ var IDBCursorWithValue = function (_IDBCursor) {
     return IDBCursorWithValue;
 }(IDBCursor);
 
-Object.defineProperty(IDBCursorWithValue.prototype, '__value', {
-    enumerable: false,
-    configurable: false,
-    writable: true
-});
-Object.defineProperty(IDBCursorWithValue.prototype, 'value', {
-    enumerable: true,
-    configurable: true,
-    get: function get() {
-        return this.__value;
-    },
-    set: function set(val) {
-        this.__value = val;
-    }
-});
+util.defineReadonlyProperties(IDBCursorWithValue.prototype, 'value');
 
 exports.IDBCursor = IDBCursor;
 exports.IDBCursorWithValue = IDBCursorWithValue;
@@ -17536,14 +17544,14 @@ IDBFactory.prototype.open = function (name, version) {
         var err = (0, _DOMException.findError)(args);
         calledDbCreateError = true;
         var evt = (0, _Event.createEvent)('error', args);
-        req.readyState = 'done';
-        req.error = err || _DOMException.DOMException;
+        req.__readyState = 'done';
+        req.__error = err || _DOMException.DOMException;
         util.callback('onerror', req, evt);
     }
 
     function openDB(oldVersion) {
         var db = _cfg2.default.win.openDatabase('D_' + name, 1, name, DEFAULT_DB_SIZE);
-        req.readyState = 'done';
+        req.__readyState = 'done';
         if (version === undefined) {
             version = oldVersion || 1;
         }
@@ -17557,19 +17565,19 @@ IDBFactory.prototype.open = function (name, version) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS __sys__ (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB)', [], function () {
                 tx.executeSql('SELECT * FROM __sys__', [], function (tx, data) {
                     var e = (0, _Event.createEvent)('success');
-                    req.source = req.result = new _IDBDatabase2.default(db, name, version, data);
+                    req.__source = req.__result = new _IDBDatabase2.default(db, name, version, data);
                     if (oldVersion < version) {
                         // DB Upgrade in progress
                         sysdb.transaction(function (systx) {
                             systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [version, name], function () {
                                 var e = new IDBVersionChangeEvent('upgradeneeded', { oldVersion: oldVersion, newVersion: version });
-                                req.transaction = req.result.__versionTransaction = new _IDBTransaction2.default(req.source, [], 'versionchange');
+                                req.__transaction = req.result.__versionTransaction = new _IDBTransaction2.default(req.source, [], 'versionchange');
                                 req.transaction.__addToTransactionQueue(function onupgradeneeded(tx, args, success) {
                                     util.callback('onupgradeneeded', req, e);
                                     success();
                                 });
                                 req.transaction.__oncomplete = function () {
-                                    req.transaction = null;
+                                    req.__transaction = null;
                                     var e = (0, _Event.createEvent)('success');
                                     util.callback('onsuccess', req, e);
                                 };
@@ -17626,8 +17634,8 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         }
 
         var err = (0, _DOMException.findError)(args);
-        req.readyState = 'done';
-        req.error = err || _DOMException.DOMException;
+        req.__readyState = 'done';
+        req.__error = err || _DOMException.DOMException;
         var e = (0, _Event.createEvent)('error');
         e.debug = args;
         util.callback('onerror', req, e);
@@ -17637,7 +17645,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     function deleteFromDbVersions() {
         sysdb.transaction(function (systx) {
             systx.executeSql('DELETE FROM dbVersions WHERE name = ? ', [name], function () {
-                req.result = undefined;
+                req.__result = undefined;
                 var e = new IDBVersionChangeEvent('success', { oldVersion: version, newVersion: null });
                 util.callback('onsuccess', req, e);
             }, dbError);
@@ -17648,7 +17656,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         sysdb.transaction(function (systx) {
             systx.executeSql('SELECT * FROM dbVersions WHERE name = ?', [name], function (tx, data) {
                 if (data.rows.length === 0) {
-                    req.result = undefined;
+                    req.__result = undefined;
                     var e = new IDBVersionChangeEvent('success', { oldVersion: version, newVersion: null });
                     util.callback('onsuccess', req, e);
                     return;
@@ -17729,6 +17737,10 @@ function cmp(key1, key2) {
 }
 
 IDBFactory.prototype.cmp = cmp;
+
+IDBFactory.prototype.toString = function () {
+    return '[object IDBFactory]';
+};
 
 var shimIndexedDB = new IDBFactory();
 exports.IDBFactory = IDBFactory;
@@ -17815,6 +17827,7 @@ IDBIndex.__createIndex = function (store, index) {
     var columnExists = !!store.__indexes[index.name] && store.__indexes[index.name].__deleted;
 
     // Add the index to the IDBObjectStore
+    index.__pending = true;
     store.__indexes[index.name] = index;
     store.indexNames.push(index.name);
 
@@ -17848,6 +17861,7 @@ IDBIndex.__createIndex = function (store, index) {
                                 addIndexEntry(i + 1);
                             }
                         } else {
+                            delete index.__pending;
                             success(store);
                         }
                     }
@@ -17864,7 +17878,7 @@ IDBIndex.__createIndex = function (store, index) {
             _cfg2.default.DEBUG && console.log(sql);
             tx.executeSql(sql, [], applyIndex, error);
         }
-    });
+    }, undefined, store);
 };
 
 /**
@@ -17887,7 +17901,7 @@ IDBIndex.__deleteIndex = function (store, index) {
 
         // Update the object store's index list
         IDBIndex.__updateIndexList(store, tx, success, error);
-    });
+    }, undefined, store);
 };
 
 /**
@@ -17947,7 +17961,7 @@ IDBIndex.prototype.__fetchIndexData = function (key, opType) {
         }
 
         fetchIndexData.apply(undefined, [me, hasKey, encodedKey, opType].concat(args));
-    });
+    }, undefined, me);
 };
 
 /**
@@ -17957,7 +17971,7 @@ IDBIndex.prototype.__fetchIndexData = function (key, opType) {
  * @returns {IDBRequest}
  */
 IDBIndex.prototype.openCursor = function (range, direction) {
-    return new _IDBCursor.IDBCursor(range, direction, this.objectStore, this, '_' + this.name, 'value').__req;
+    return new _IDBCursor.IDBCursorWithValue(range, direction, this.objectStore, this, '_' + this.name, 'value').__req;
 };
 
 /**
@@ -17967,7 +17981,7 @@ IDBIndex.prototype.openCursor = function (range, direction) {
  * @returns {IDBRequest}
  */
 IDBIndex.prototype.openKeyCursor = function (range, direction) {
-    return new _IDBCursor.IDBCursorWithValue(range, direction, this.objectStore, this, '_' + this.name, 'key').__req;
+    return new _IDBCursor.IDBCursor(range, direction, this.objectStore, this, '_' + this.name, 'key').__req;
 };
 
 IDBIndex.prototype.get = function (key) {
@@ -17992,9 +18006,13 @@ IDBIndex.prototype.count = function (key) {
         return this.__fetchIndexData('count');
     }
     if (util.instanceOf(key, _IDBKeyRange2.default)) {
-        return new _IDBCursor.IDBCursor(key, 'next', this.objectStore, this, '_' + this.name, 'value', true).__req;
+        return new _IDBCursor.IDBCursorWithValue(key, 'next', this.objectStore, this, '_' + this.name, 'value', true).__req;
     }
     return this.__fetchIndexData(key, 'count');
+};
+
+IDBIndex.prototype.toString = function () {
+    return '[object IDBIndex]';
 };
 
 Object.defineProperty(IDBIndex, Symbol.hasInstance, {
@@ -18413,6 +18431,10 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
     var indexPromises = me.indexNames.map(function (indexName) {
         return new _syncPromise2.default(function (resolve, reject) {
             var index = me.__indexes[indexName];
+            if (index.__pending) {
+                resolve();
+                return;
+            }
             var indexKey = _Key2.default.evaluateKeyPathOnValue(value, index.keyPath); // Add as necessary to this and skip past this index if exceptions here)
             try {
                 _Key2.default.validate(indexKey);
@@ -18451,7 +18473,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         var sqlValues = [];
         if (primaryKey !== undefined) {
             _Key2.default.validate(primaryKey);
-            sqlStart.push('key,');
+            sqlStart.push(util.quote('key'), ',');
             sqlEnd.push('?,');
             sqlValues.push(_Key2.default.encode(primaryKey));
         }
@@ -18497,7 +18519,7 @@ IDBObjectStore.prototype.add = function (value, key) {
     this.__validateKeyAndValue(value, key);
     me.transaction.__assertWritable();
 
-    var request = me.transaction.__createRequest();
+    var request = me.transaction.__createRequest(me);
     me.transaction.__pushToQueue(request, function objectStoreAdd(tx, args, success, error) {
         me.__deriveKey(tx, value, key, function (primaryKey) {
             _Sca2.default.encode(value, function (encoded) {
@@ -18516,7 +18538,7 @@ IDBObjectStore.prototype.put = function (value, key) {
     this.__validateKeyAndValue(value, key);
     me.transaction.__assertWritable();
 
-    var request = me.transaction.__createRequest();
+    var request = me.transaction.__createRequest(me);
     me.transaction.__pushToQueue(request, function objectStorePut(tx, args, success, error) {
         me.__deriveKey(tx, value, key, function (primaryKey) {
             _Sca2.default.encode(value, function (encoded) {
@@ -18574,7 +18596,7 @@ IDBObjectStore.prototype.get = function (range) {
         }, function (tx, err) {
             error(err);
         });
-    });
+    }, undefined, me);
 };
 
 IDBObjectStore.prototype['delete'] = function (key) {
@@ -18596,7 +18618,7 @@ IDBObjectStore.prototype['delete'] = function (key) {
         }, function (tx, err) {
             error(err);
         });
-    });
+    }, undefined, me);
 };
 
 IDBObjectStore.prototype.clear = function () {
@@ -18609,17 +18631,15 @@ IDBObjectStore.prototype.clear = function () {
         }, function (tx, err) {
             error(err);
         });
-    });
+    }, undefined, me);
 };
 
 IDBObjectStore.prototype.count = function (key) {
-    var _this2 = this;
-
+    var me = this;
     if (util.instanceOf(key, _IDBKeyRange.IDBKeyRange)) {
-        return new _IDBCursor.IDBCursor(key, 'next', this, this, 'key', 'value', true).__req;
+        return new _IDBCursor.IDBCursorWithValue(key, 'next', this, this, 'key', 'value', true, me).__req;
     } else {
         var _ret2 = function () {
-            var me = _this2;
             var hasKey = false;
 
             // key is optional
@@ -18638,7 +18658,7 @@ IDBObjectStore.prototype.count = function (key) {
                     }, function (tx, err) {
                         error(err);
                     });
-                })
+                }, undefined, me)
             };
         }();
 
@@ -18647,11 +18667,11 @@ IDBObjectStore.prototype.count = function (key) {
 };
 
 IDBObjectStore.prototype.openCursor = function (range, direction) {
-    return new _IDBCursor.IDBCursor(range, direction, this, this, 'key', 'value').__req;
+    return new _IDBCursor.IDBCursorWithValue(range, direction, this, this, 'key', 'value').__req;
 };
 
 IDBObjectStore.prototype.openKeyCursor = function (range, direction) {
-    return new _IDBCursor.IDBCursorWithValue(range, direction, this, this, 'key', 'key').__req;
+    return new _IDBCursor.IDBCursor(range, direction, this, this, 'key', 'key').__req;
 };
 
 IDBObjectStore.prototype.index = function (indexName) {
@@ -18717,6 +18737,10 @@ IDBObjectStore.prototype.deleteIndex = function (indexName) {
     _IDBIndex.IDBIndex.__deleteIndex(this, index);
 };
 
+IDBObjectStore.prototype.toString = function () {
+    return '[object IDBObjectStore]';
+};
+
 exports.default = IDBObjectStore;
 module.exports = exports['default'];
 
@@ -18726,6 +18750,15 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+exports.IDBOpenDBRequest = exports.IDBRequest = undefined;
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _util = require('./util.js');
+
+var util = _interopRequireWildcard(_util);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
@@ -18738,17 +18771,29 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#request-api
  */
 
-var IDBRequest = function IDBRequest() {
-    _classCallCheck(this, IDBRequest);
+var IDBRequest = function () {
+    function IDBRequest() {
+        _classCallCheck(this, IDBRequest);
 
-    this.onsuccess = this.onerror = this.result = this.error = this.source = this.transaction = null;
-    this.readyState = 'pending';
-};
+        this.onsuccess = this.onerror = this.__result = this.__error = this.__source = this.__transaction = null;
+        this.__readyState = 'pending';
+    }
+
+    _createClass(IDBRequest, [{
+        key: 'toString',
+        value: function toString() {
+            return '[object IDBRequest]';
+        }
+    }]);
+
+    return IDBRequest;
+}();
+
+util.defineReadonlyProperties(IDBRequest.prototype, ['result', 'error', 'source', 'transaction', 'readyState']);
 
 /**
  * The IDBOpenDBRequest called when a database is opened
  */
-
 
 var IDBOpenDBRequest = function (_IDBRequest) {
     _inherits(IDBOpenDBRequest, _IDBRequest);
@@ -18762,13 +18807,20 @@ var IDBOpenDBRequest = function (_IDBRequest) {
         return _this;
     }
 
+    _createClass(IDBOpenDBRequest, [{
+        key: 'toString',
+        value: function toString() {
+            return '[object IDBOpenDBRequest]';
+        }
+    }]);
+
     return IDBOpenDBRequest;
 }(IDBRequest);
 
 exports.IDBRequest = IDBRequest;
 exports.IDBOpenDBRequest = IDBOpenDBRequest;
 
-},{}],366:[function(require,module,exports){
+},{"./util.js":373}],366:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -18845,9 +18897,9 @@ IDBTransaction.prototype.__executeRequests = function () {
             if (req) {
                 q.req = req; // Need to do this in case of cursors
             }
-            q.req.readyState = 'done';
-            q.req.result = result;
-            delete q.req.error;
+            q.req.__readyState = 'done';
+            q.req.__result = result;
+            q.req.__error = null;
             var e = (0, _Event.createEvent)('success');
             util.callback('onsuccess', q.req, e);
             i++;
@@ -18862,9 +18914,9 @@ IDBTransaction.prototype.__executeRequests = function () {
             var err = (0, _DOMException.findError)(args);
             try {
                 // Fire an error event for the current IDBRequest
-                q.req.readyState = 'done';
-                q.req.error = err || _DOMException.DOMException;
-                q.req.result = undefined;
+                q.req.__readyState = 'done';
+                q.req.__error = err || _DOMException.DOMException;
+                q.req.__result = undefined;
                 var e = (0, _Event.createEvent)('error', err);
                 util.callback('onerror', q.req, e);
             } finally {
@@ -18944,10 +18996,10 @@ IDBTransaction.prototype.__executeRequests = function () {
  * @returns {IDBRequest}
  * @protected
  */
-IDBTransaction.prototype.__createRequest = function () {
+IDBTransaction.prototype.__createRequest = function (source) {
     var request = new _IDBRequest.IDBRequest();
-    request.source = this.db;
-    request.transaction = this;
+    request.__source = source !== undefined ? source : this.db;
+    request.__transaction = this;
     return request;
 };
 
@@ -18958,8 +19010,8 @@ IDBTransaction.prototype.__createRequest = function () {
  * @returns {IDBRequest}
  * @protected
  */
-IDBTransaction.prototype.__addToTransactionQueue = function (callback, args) {
-    var request = this.__createRequest();
+IDBTransaction.prototype.__addToTransactionQueue = function (callback, args, source) {
+    var request = this.__createRequest(source);
     this.__pushToQueue(request, callback, args);
     return request;
 };
@@ -20474,7 +20526,7 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.throwIfNotClonable = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.quote = exports.StringList = exports.callback = undefined;
+exports.defineReadonlyProperties = exports.throwIfNotClonable = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.quote = exports.StringList = exports.callback = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
@@ -20626,6 +20678,24 @@ function throwIfNotClonable(value, errMsg) {
     });
 }
 
+function defineReadonlyProperties(obj, props) {
+    props = typeof props === 'string' ? [props] : props;
+    props.forEach(function (prop) {
+        Object.defineProperty(obj, '__' + prop, {
+            enumerable: false,
+            configurable: false,
+            writable: true
+        });
+        Object.defineProperty(obj, prop, {
+            enumerable: true,
+            configurable: true,
+            get: function get() {
+                return this['__' + prop];
+            }
+        });
+    });
+}
+
 exports.callback = callback;
 exports.StringList = StringList;
 exports.quote = quote;
@@ -20636,6 +20706,7 @@ exports.isBlob = isBlob;
 exports.isRegExp = isRegExp;
 exports.isFile = isFile;
 exports.throwIfNotClonable = throwIfNotClonable;
+exports.defineReadonlyProperties = defineReadonlyProperties;
 
 },{"./DOMException.js":357}]},{},[370])(370)
 });

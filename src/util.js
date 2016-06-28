@@ -146,4 +146,22 @@ function throwIfNotClonable (value, errMsg) {
     });
 }
 
-export {callback, StringList, quote, instanceOf, isObj, isDate, isBlob, isRegExp, isFile, throwIfNotClonable};
+function defineReadonlyProperties (obj, props) {
+    props = typeof props === 'string' ? [props] : props;
+    props.forEach(function (prop) {
+        Object.defineProperty(obj, '__' + prop, {
+            enumerable: false,
+            configurable: false,
+            writable: true
+        });
+        Object.defineProperty(obj, prop, {
+            enumerable: true,
+            configurable: true,
+            get: function () {
+                return this['__' + prop];
+            }
+        });
+    });
+}
+
+export {callback, StringList, quote, instanceOf, isObj, isDate, isBlob, isRegExp, isFile, throwIfNotClonable, defineReadonlyProperties};

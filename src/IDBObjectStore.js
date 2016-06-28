@@ -210,6 +210,10 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
     const indexPromises = me.indexNames.map((indexName) => {
         return new SyncPromise((resolve, reject) => {
             const index = me.__indexes[indexName];
+            if (index.__pending) {
+                resolve();
+                return;
+            }
             const indexKey = Key.evaluateKeyPathOnValue(value, index.keyPath); // Add as necessary to this and skip past this index if exceptions here)
             try {
                 Key.validate(indexKey);
@@ -251,7 +255,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         const sqlValues = [];
         if (primaryKey !== undefined) {
             Key.validate(primaryKey);
-            sqlStart.push('key,');
+            sqlStart.push(util.quote('key'), ',');
             sqlEnd.push('?,');
             sqlValues.push(Key.encode(primaryKey));
         }
@@ -297,7 +301,7 @@ IDBObjectStore.prototype.add = function (value, key) {
     this.__validateKeyAndValue(value, key);
     me.transaction.__assertWritable();
 
-    const request = me.transaction.__createRequest();
+    const request = me.transaction.__createRequest(me);
     me.transaction.__pushToQueue(request, function objectStoreAdd (tx, args, success, error) {
         me.__deriveKey(tx, value, key, function (primaryKey) {
             Sca.encode(value, function (encoded) {
@@ -316,7 +320,7 @@ IDBObjectStore.prototype.put = function (value, key) {
     this.__validateKeyAndValue(value, key);
     me.transaction.__assertWritable();
 
-    const request = me.transaction.__createRequest();
+    const request = me.transaction.__createRequest(me);
     me.transaction.__pushToQueue(request, function objectStorePut (tx, args, success, error) {
         me.__deriveKey(tx, value, key, function (primaryKey) {
             Sca.encode(value, function (encoded) {
@@ -374,7 +378,7 @@ IDBObjectStore.prototype.get = function (range) {
         }, function (tx, err) {
             error(err);
         });
-    });
+    }, undefined, me);
 };
 
 IDBObjectStore.prototype['delete'] = function (key) {
@@ -396,7 +400,7 @@ IDBObjectStore.prototype['delete'] = function (key) {
         }, function (tx, err) {
             error(err);
         });
-    });
+    }, undefined, me);
 };
 
 IDBObjectStore.prototype.clear = function () {
@@ -409,14 +413,14 @@ IDBObjectStore.prototype.clear = function () {
         }, function (tx, err) {
             error(err);
         });
-    });
+    }, undefined, me);
 };
 
 IDBObjectStore.prototype.count = function (key) {
+    const me = this;
     if (util.instanceOf(key, IDBKeyRange)) {
-        return new IDBCursor(key, 'next', this, this, 'key', 'value', true).__req;
+        return new IDBCursorWithValue(key, 'next', this, this, 'key', 'value', true, me).__req;
     } else {
-        const me = this;
         let hasKey = false;
 
         // key is optional
@@ -434,16 +438,16 @@ IDBObjectStore.prototype.count = function (key) {
             }, function (tx, err) {
                 error(err);
             });
-        });
+        }, undefined, me);
     }
 };
 
 IDBObjectStore.prototype.openCursor = function (range, direction) {
-    return new IDBCursor(range, direction, this, this, 'key', 'value').__req;
+    return new IDBCursorWithValue(range, direction, this, this, 'key', 'value').__req;
 };
 
 IDBObjectStore.prototype.openKeyCursor = function (range, direction) {
-    return new IDBCursorWithValue(range, direction, this, this, 'key', 'key').__req;
+    return new IDBCursor(range, direction, this, this, 'key', 'key').__req;
 };
 
 IDBObjectStore.prototype.index = function (indexName) {
@@ -507,6 +511,10 @@ IDBObjectStore.prototype.deleteIndex = function (indexName) {
     this.transaction.__assertVersionChange();
 
     IDBIndex.__deleteIndex(this, index);
+};
+
+IDBObjectStore.prototype.toString = function () {
+    return '[object IDBObjectStore]';
 };
 
 export default IDBObjectStore;

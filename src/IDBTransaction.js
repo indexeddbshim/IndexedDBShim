@@ -47,11 +47,11 @@ IDBTransaction.prototype.__executeRequests = function () {
 
             function success (result, req) {
                 if (req) {
-                    q.req = req;// Need to do this in case of cursors
+                    q.req = req; // Need to do this in case of cursors
                 }
-                q.req.readyState = 'done';
-                q.req.result = result;
-                delete q.req.error;
+                q.req.__readyState = 'done';
+                q.req.__result = result;
+                q.req.__error = null;
                 const e = createEvent('success');
                 util.callback('onsuccess', q.req, e);
                 i++;
@@ -62,9 +62,9 @@ IDBTransaction.prototype.__executeRequests = function () {
                 const err = findError(args);
                 try {
                     // Fire an error event for the current IDBRequest
-                    q.req.readyState = 'done';
-                    q.req.error = err || DOMException;
-                    q.req.result = undefined;
+                    q.req.__readyState = 'done';
+                    q.req.__error = err || DOMException;
+                    q.req.__result = undefined;
                     const e = createEvent('error', err);
                     util.callback('onerror', q.req, e);
                 } finally {
@@ -147,10 +147,10 @@ IDBTransaction.prototype.__executeRequests = function () {
  * @returns {IDBRequest}
  * @protected
  */
-IDBTransaction.prototype.__createRequest = function () {
+IDBTransaction.prototype.__createRequest = function (source) {
     const request = new IDBRequest();
-    request.source = this.db;
-    request.transaction = this;
+    request.__source = source !== undefined ? source : this.db;
+    request.__transaction = this;
     return request;
 };
 
@@ -161,8 +161,8 @@ IDBTransaction.prototype.__createRequest = function () {
  * @returns {IDBRequest}
  * @protected
  */
-IDBTransaction.prototype.__addToTransactionQueue = function (callback, args) {
-    const request = this.__createRequest();
+IDBTransaction.prototype.__addToTransactionQueue = function (callback, args, source) {
+    const request = this.__createRequest(source);
     this.__pushToQueue(request, callback, args);
     return request;
 };

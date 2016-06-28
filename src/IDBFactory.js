@@ -65,14 +65,14 @@ IDBFactory.prototype.open = function (name, version) {
         const err = findError(args);
         calledDbCreateError = true;
         const evt = createEvent('error', args);
-        req.readyState = 'done';
-        req.error = err || DOMException;
+        req.__readyState = 'done';
+        req.__error = err || DOMException;
         util.callback('onerror', req, evt);
     }
 
     function openDB (oldVersion) {
         const db = CFG.win.openDatabase('D_' + name, 1, name, DEFAULT_DB_SIZE);
-        req.readyState = 'done';
+        req.__readyState = 'done';
         if (version === undefined) {
             version = oldVersion || 1;
         }
@@ -86,19 +86,19 @@ IDBFactory.prototype.open = function (name, version) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS __sys__ (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB)', [], function () {
                 tx.executeSql('SELECT * FROM __sys__', [], function (tx, data) {
                     const e = createEvent('success');
-                    req.source = req.result = new IDBDatabase(db, name, version, data);
+                    req.__source = req.__result = new IDBDatabase(db, name, version, data);
                     if (oldVersion < version) {
                         // DB Upgrade in progress
                         sysdb.transaction(function (systx) {
                             systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [version, name], function () {
                                 const e = new IDBVersionChangeEvent('upgradeneeded', {oldVersion, newVersion: version});
-                                req.transaction = req.result.__versionTransaction = new IDBTransaction(req.source, [], 'versionchange');
+                                req.__transaction = req.result.__versionTransaction = new IDBTransaction(req.source, [], 'versionchange');
                                 req.transaction.__addToTransactionQueue(function onupgradeneeded (tx, args, success) {
                                     util.callback('onupgradeneeded', req, e);
                                     success();
                                 });
                                 req.transaction.__oncomplete = function () {
-                                    req.transaction = null;
+                                    req.__transaction = null;
                                     const e = createEvent('success');
                                     util.callback('onsuccess', req, e);
                                 };
@@ -150,8 +150,8 @@ IDBFactory.prototype.deleteDatabase = function (name) {
             return;
         }
         const err = findError(args);
-        req.readyState = 'done';
-        req.error = err || DOMException;
+        req.__readyState = 'done';
+        req.__error = err || DOMException;
         const e = createEvent('error');
         e.debug = args;
         util.callback('onerror', req, e);
@@ -161,7 +161,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     function deleteFromDbVersions () {
         sysdb.transaction(function (systx) {
             systx.executeSql('DELETE FROM dbVersions WHERE name = ? ', [name], function () {
-                req.result = undefined;
+                req.__result = undefined;
                 const e = new IDBVersionChangeEvent('success', {oldVersion: version, newVersion: null});
                 util.callback('onsuccess', req, e);
             }, dbError);
@@ -172,7 +172,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         sysdb.transaction(function (systx) {
             systx.executeSql('SELECT * FROM dbVersions WHERE name = ?', [name], function (tx, data) {
                 if (data.rows.length === 0) {
-                    req.result = undefined;
+                    req.__result = undefined;
                     const e = new IDBVersionChangeEvent('success', {oldVersion: version, newVersion: null});
                     util.callback('onsuccess', req, e);
                     return;
@@ -253,6 +253,10 @@ function cmp (key1, key2) {
 }
 
 IDBFactory.prototype.cmp = cmp;
+
+IDBFactory.prototype.toString = function () {
+    return '[object IDBFactory]';
+};
 
 const shimIndexedDB = new IDBFactory();
 export {IDBFactory, cmp, shimIndexedDB};
