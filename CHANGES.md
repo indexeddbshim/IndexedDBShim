@@ -149,7 +149,7 @@
     passing in browser and Node; from W3C, IDBCursor.advance.js,
     IDBCursor.continue.js, IDBCursor.delete.js, IDBCursor.update.js,
     IDBKeyrange.js, IDBDatabase.createObjectStore.js,
-    IDBDatabase.deleteObjectStore.js are passing)
+    IDBDatabase.deleteObjectStore.js, IDBObjectStore.index.js are passing)
 - Testing (Grunt): Clarify Grunt tasks, expand tasks for cleaning, make tests
     more granular
 - Testing (Grunt): Remove now redundant `sourceMappingURL`, use

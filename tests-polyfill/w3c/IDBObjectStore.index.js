@@ -6,7 +6,7 @@ var createdb = support.createdb;
 
 describe('W3C IDBObjectStore.index Tests', function () {
     // idbobjectstore_index
-    it('removes the index', function (done) {
+    it('returns an index', function (done) {
         var db;
 
         var open_rq = createdb(done);
