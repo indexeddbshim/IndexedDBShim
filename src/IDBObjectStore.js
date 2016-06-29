@@ -275,9 +275,9 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         tx.executeSql(sql, sqlValues, function (tx, data) {
             Sca.encode(primaryKey, function (primaryKey) {
                 primaryKey = Sca.decode(primaryKey);
-                if (typeof passedKey === 'number' && passedKey >= primaryKey && me.autoIncrement) {
-                    tx.executeSql('UPDATE sqlite_sequence SET seq = ? WHERE name = ?', [primaryKey, 's_' + me.name], function (tx, data) {
-                        success(primaryKey);
+                if (me.autoIncrement && [passedKey, primaryKey].every((key) => typeof key === 'number') && passedKey >= primaryKey) {
+                    tx.executeSql('UPDATE sqlite_sequence SET seq = ? WHERE name = ?', [passedKey, 's_' + me.name], function (tx, data) {
+                        success(passedKey);
                     }, function (tx, err) {
                         error(createDOMException('UnknownError', 'Could not set the auto increment value for key', err));
                     });

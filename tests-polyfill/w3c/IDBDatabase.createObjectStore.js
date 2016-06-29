@@ -140,7 +140,7 @@ describe('W3C IDBDatabase.createObjectStore Tests', function () {
 
     // idbdatabase_createobjectstore8-parameters
     it('IDBObjectStoreParameters', function (done) {
-        this.timeout(5000);
+        this.timeout(8000);
         var numTried = 0;
         var numDone = 0;
         function optionalParameters(desc, params) {
