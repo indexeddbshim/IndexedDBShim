@@ -18,5 +18,5 @@ D_TestDatabase*
 D_testdb-*
 D_database_name*
 D_idbtransaction*
-D_db.sqlite
-D_test0.*
+D_db.sqlite*
+D_test*

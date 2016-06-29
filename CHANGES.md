@@ -148,8 +148,10 @@
 - (Testing: tests-mocha, tests-qunit, and indexedDBmock tests now all
     passing in browser and Node; from W3C, IDBCursor.advance.js,
     IDBCursor.continue.js, IDBCursor.delete.js, IDBCursor.update.js,
-    IDBKeyrange.js, IDBDatabase.createObjectStore.js,
-    IDBDatabase.deleteObjectStore.js, IDBObjectStore.index.js are passing)
+    IDBDatabase.createObjectStore.js, IDBDatabase.deleteObjectStore.js,
+    IDBDatabase.transaction.js, IDBFactory.cmp.js,
+    IDBFactory.deleteDatabase.js, IDBKeyrange.js, IDBObjectStore.index.js
+    are passing)
 - Testing (Grunt): Clarify Grunt tasks, expand tasks for cleaning, make tests
     more granular
 - Testing (Grunt): Remove now redundant `sourceMappingURL`, use
