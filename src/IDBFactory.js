@@ -97,6 +97,9 @@ IDBFactory.prototype.open = function (name, version) {
                                     util.callback('onupgradeneeded', req, e);
                                     success();
                                 });
+                                req.transaction.__beforeOncomplete = function () {
+                                    req.result.__versionTransaction = null;
+                                };
                                 req.transaction.__oncomplete = function () {
                                     req.__transaction = null;
                                     const e = createEvent('success');

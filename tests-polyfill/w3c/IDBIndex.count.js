@@ -1,7 +1,6 @@
 var assert = require('assert');
 var indexedDB = require('../test-helper');
 var FDBKeyRange = IDBKeyRange;
-var DataError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -108,9 +107,9 @@ describe('W3C IDBIndex.count Tests', function () {
                           .objectStore("store")
                           .index("index");
 
-            assert.throws(function() {
+            support.throws(function() {
                 index.count(NaN);
-            }, DataError);
+            }, 'DataError');
 
             done();
         }

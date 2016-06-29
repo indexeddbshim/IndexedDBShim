@@ -1,9 +1,6 @@
 var assert = require('assert');
 var indexedDB = require('../test-helper');
 var FDBRequest = IDBRequest;
-var DataError = DOMException;
-var InvalidStateError = DOMException;
-var ReadOnlyError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -283,9 +280,9 @@ describe('W3C IDBObjectStore.put Tests', function () {
               db = e.target.result,
               objStore = db.createObjectStore("store", { keyPath: "key" });
 
-            assert.throws(function() {
+            support.throws(function() {
                 rq = objStore.put(record, 1);
-            }, DataError);
+            }, 'DataError');
 
             assert.equal(rq, undefined);
             done();
@@ -305,9 +302,9 @@ describe('W3C IDBObjectStore.put Tests', function () {
             var rq,
               objStore = db.createObjectStore("store", { keyPath: "key" });
 
-            assert.throws(function() {
+            support.throws(function() {
                 rq = objStore.put(record);
-            }, DataError);
+            }, 'DataError');
 
             assert.equal(rq, undefined);
             done();
@@ -327,9 +324,9 @@ describe('W3C IDBObjectStore.put Tests', function () {
             var rq,
               objStore = db.createObjectStore("store", { keyPath: "key" });
 
-            assert.throws(function() {
+            support.throws(function() {
                 rq = objStore.put(record);
-            }, DataError);
+            }, 'DataError');
 
             assert.equal(rq, undefined);
             done();
@@ -349,9 +346,9 @@ describe('W3C IDBObjectStore.put Tests', function () {
             var rq,
               objStore = db.createObjectStore("store", { keyPath: "key" });
 
-            assert.throws(function() {
+            support.throws(function() {
                 rq = objStore.put(record);
-            }, DataError);
+            }, 'DataError');
 
             assert.equal(rq, undefined);
             done();
@@ -371,9 +368,9 @@ describe('W3C IDBObjectStore.put Tests', function () {
             var rq,
               objStore = db.createObjectStore("store");
 
-            assert.throws(function() {
+            support.throws(function() {
                 rq = objStore.put(record, { value: 1 });
-            }, DataError);
+            }, 'DataError');
 
             assert.equal(rq, undefined);
             done();
@@ -418,9 +415,9 @@ describe('W3C IDBObjectStore.put Tests', function () {
         open_rq.onsuccess = function (event) {
             var txn = db.transaction("store");
             var ostore = txn.objectStore("store");
-            assert.throws(function() {
+            support.throws(function() {
                 ostore.put({pKey: "primaryKey_0"});
-            }, ReadOnlyError);
+            }, 'ReadOnlyError');
             done();
         }
     });
@@ -438,9 +435,9 @@ describe('W3C IDBObjectStore.put Tests', function () {
         }
 
         open_rq.onsuccess = function (event) {
-            assert.throws(function() {
+            support.throws(function() {
                 ostore.put({pKey: "primaryKey_0"});
-            }, InvalidStateError);
+            }, 'InvalidStateError');
             done();
         }
     });

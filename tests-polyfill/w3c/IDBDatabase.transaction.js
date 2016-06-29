@@ -1,8 +1,5 @@
 var assert = require('assert');
 var indexedDB = require('../test-helper');
-var InvalidAccessError = DOMException;
-var InvalidStateError = DOMException;
-var NotFoundError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -14,9 +11,9 @@ describe('W3C IDBDatabase.transaction Tests', function () {
         open_rq.onupgradeneeded = function () {};
         open_rq.onsuccess = function (e) {
             var db = e.target.result;
-            assert.throws(function () {
+            support.throws(function () {
                 db.transaction('non-existing');
-            }, NotFoundError);
+            }, 'NotFoundError');
             done();
         };
     });
@@ -50,9 +47,9 @@ describe('W3C IDBDatabase.transaction Tests', function () {
         open_rq.onsuccess = function () {
             db.close();
 
-            assert.throws(function () {
+            support.throws(function () {
                 db.transaction('test');
-            }, InvalidStateError);
+            }, 'InvalidStateError');
 
             done();
         };
@@ -84,9 +81,9 @@ describe('W3C IDBDatabase.transaction Tests', function () {
         open_rq.onupgradeneeded = function () {};
         open_rq.onsuccess = function (e) {
             db = e.target.result;
-            assert.throws(function () {
+            support.throws(function () {
                 db.transaction([]);
-            }, InvalidAccessError);
+            }, 'InvalidAccessError');
 
             done();
         };

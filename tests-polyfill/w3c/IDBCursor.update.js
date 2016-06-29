@@ -1,11 +1,6 @@
 var assert = require('assert');
 var indexedDB = require('../test-helper');
 var FDBCursor = IDBCursor;
-var DataError = DOMException;
-var DataCloneError = DOMException;
-var InvalidStateError = DOMException;
-var ReadOnlyError = DOMException;
-var TransactionInactiveError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -90,7 +85,7 @@ describe('W3C IDBCursor.update Tests', function () {
 
                 cursor_rq.onsuccess = function(e) {
                     var cursor = e.target.result;
-                    assert.throws(function() { cursor.update(cursor.value); }, ReadOnlyError);
+                    support.throws(function() { cursor.update(cursor.value); }, 'ReadOnlyError');
                     done();
                 };
             }
@@ -120,7 +115,7 @@ describe('W3C IDBCursor.update Tests', function () {
                 };
 
                 e.target.transaction.oncomplete = function(e) {
-                    assert.throws(function() { cursor.update(record); }, TransactionInactiveError)
+                    support.throws(function() { cursor.update(record); }, 'TransactionInactiveError')
                     done();
                 };
             }
@@ -148,9 +143,9 @@ describe('W3C IDBCursor.update Tests', function () {
 
                     db.deleteObjectStore("store");
                     cursor.value.iKey += "_updated";
-                    assert.throws(function() {
+                    support.throws(function() {
                         cursor.update(cursor.value);
-                    }, InvalidStateError, "If the cursor's source or effective object store has been deleted, the implementation MUST throw a DOMException of type InvalidStateError");
+                    }, 'InvalidStateError', "If the cursor's source or effective object store has been deleted, the implementation MUST throw a DOMException of type InvalidStateError");
 
                     done();
                 };
@@ -187,9 +182,9 @@ describe('W3C IDBCursor.update Tests', function () {
 
                     var record = cursor.value;
                     record.data = new Error();
-                    assert.throws(function() {
+                    support.throws(function() {
                         cursor.update(record);
-                    }, DataCloneError);
+                    }, 'DataCloneError');
                     done();
                 };
             }
@@ -255,7 +250,7 @@ describe('W3C IDBCursor.update Tests', function () {
                     var cursor = e.target.result;
                     assert(cursor instanceof FDBCursor);
 
-                    assert.throws(function() { cursor.update(null); }, DataError);
+                    support.throws(function() { cursor.update(null); }, 'DataError');
                     done();
                 };
             }
@@ -336,7 +331,7 @@ describe('W3C IDBCursor.update Tests', function () {
 
                 cursor_rq.onsuccess = function(e) {
                     var cursor = e.target.result;
-                    assert.throws(function() { cursor.update(cursor.value); }, ReadOnlyError);
+                    support.throws(function() { cursor.update(cursor.value); }, 'ReadOnlyError');
                     done();
                 };
             }
@@ -365,7 +360,7 @@ describe('W3C IDBCursor.update Tests', function () {
                 };
 
                 e.target.transaction.oncomplete = function(e) {
-                    assert.throws(function() { cursor.update(record); }, TransactionInactiveError)
+                    support.throws(function() { cursor.update(record); }, 'TransactionInactiveError')
                     done();
                 };
             }
@@ -423,9 +418,9 @@ describe('W3C IDBCursor.update Tests', function () {
 
                     db.deleteObjectStore("test");
                     cursor.value += "_updated";
-                    assert.throws(function() {
+                    support.throws(function() {
                         cursor.update(cursor.value);
-                    }, InvalidStateError, "If the cursor's source or effective object store has been deleted, the implementation MUST throw a DOMException of type InvalidStateError");
+                    }, 'InvalidStateError', "If the cursor's source or effective object store has been deleted, the implementation MUST throw a DOMException of type InvalidStateError");
 
 
                     done();
@@ -461,9 +456,9 @@ describe('W3C IDBCursor.update Tests', function () {
 
                     var record = cursor.value;
                     record.data = function () {};
-                    assert.throws(function() {
+                    support.throws(function() {
                         cursor.update(record);
-                    }, DataCloneError);
+                    }, 'DataCloneError');
                     done();
                 };
             }
@@ -525,7 +520,7 @@ describe('W3C IDBCursor.update Tests', function () {
                     var cursor = e.target.result;
                     assert(cursor instanceof FDBCursor);
 
-                    assert.throws(function() { cursor.update(null); }, DataError);
+                    support.throws(function() { cursor.update(null); }, 'DataError');
                     done();
                 };
             }

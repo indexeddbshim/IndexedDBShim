@@ -3,9 +3,6 @@ var indexedDB = require('../test-helper');
 var FDBCursor = IDBCursor;
 var FDBCursorWithValue = IDBCursorWithValue;
 var FDBKeyRange = IDBKeyRange;
-var DataError = DOMException;
-var InvalidStateError = DOMException;
-var TransactionInactiveError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -295,8 +292,8 @@ describe('W3C IDBCursor.continue Tests', function () {
                 cursor_rq.onsuccess = function(e) {
                     var cursor = e.target.result;
 
-                    assert.throws(
-                        function() { cursor.continue(true); }, DataError);
+                    support.throws(
+                        function() { cursor.continue(true); }, 'DataError');
 
                     assert(cursor instanceof FDBCursor, "cursor"); // Changed as per new spec behavior: see https://github.com/brettz9/web-platform-tests/pull/1
 
@@ -337,8 +334,8 @@ describe('W3C IDBCursor.continue Tests', function () {
                     }
 
                     // First time checks key equal, second time checks key less than
-                    assert.throws(
-                        function() { cursor.continue(records[0].iKey); }, DataError);
+                    support.throws(
+                        function() { cursor.continue(records[0].iKey); }, 'DataError');
 
                     cursor.continue();
 
@@ -386,8 +383,8 @@ describe('W3C IDBCursor.continue Tests', function () {
                     case 1:
                         assert.equal(record.pKey, records[1].pKey, "second pKey");
                         assert.equal(record.iKey, records[1].iKey, "second iKey");
-                        assert.throws(
-                            function() { cursor.continue("indexKey_2"); }, DataError);
+                        support.throws(
+                            function() { cursor.continue("indexKey_2"); }, 'DataError');
                         done();
                         break;
 
@@ -522,9 +519,9 @@ describe('W3C IDBCursor.continue Tests', function () {
                     assert(cursor instanceof FDBCursor);
 
                     event.target.transaction.abort();
-                    assert.throws(function() {
+                    support.throws(function() {
                         cursor.continue();
-                    }, TransactionInactiveError, "Calling continue() should throws an exception TransactionInactiveError when the transaction is not active.");
+                    }, 'TransactionInactiveError', "Calling continue() should throws an exception TransactionInactiveError when the transaction is not active.");
 
                     done();
                 };
@@ -552,9 +549,9 @@ describe('W3C IDBCursor.continue Tests', function () {
                     assert(cursor instanceof FDBCursor);
 
                     db.deleteObjectStore("store");
-                    assert.throws(function() {
+                    support.throws(function() {
                         cursor.continue();
-                    }, InvalidStateError, "If the cursor's source or effective object store has been deleted, the implementation MUST throw a DOMException of type InvalidStateError");
+                    }, 'InvalidStateError', "If the cursor's source or effective object store has been deleted, the implementation MUST throw a DOMException of type InvalidStateError");
 
                     done();
                 };
@@ -595,11 +592,11 @@ describe('W3C IDBCursor.continue Tests', function () {
                     cursor.continue(undefined);
 
                     // Second try
-                    assert.throws(
-                        function() { cursor.continue(); }, 'second continue', InvalidStateError);
+                    support.throws(
+                        function() { cursor.continue(); }, 'InvalidStateError', 'second continue');
 
-                    assert.throws(
-                        function() { cursor.continue(3); }, 'third continue', InvalidStateError);
+                    support.throws(
+                        function() { cursor.continue(3); }, 'InvalidStateError', 'third continue');
 
                     count++;
                 };
@@ -670,8 +667,8 @@ describe('W3C IDBCursor.continue Tests', function () {
                     var cursor = e.target.result;
 
                     assert(cursor instanceof FDBCursor, "cursor exists");
-                    assert.throws(
-                        function() { cursor.continue(true); }, DataError);
+                    support.throws(
+                        function() { cursor.continue(true); }, 'DataError');
 
                     done();
                 };
@@ -702,8 +699,8 @@ describe('W3C IDBCursor.continue Tests', function () {
                     var cursor = e.target.result;
 
                     assert(cursor instanceof FDBCursor, "cursor exist");
-                    assert.throws(
-                        function() { cursor.continue(records[0].pKey); }, DataError);
+                    support.throws(
+                        function() { cursor.continue(records[0].pKey); }, 'DataError');
 
                     done();
                 };
@@ -745,8 +742,8 @@ describe('W3C IDBCursor.continue Tests', function () {
 
                     case 1:
                         assert.equal(cursor.value.pKey, records[1].pKey, "second cursor pkey");
-                        assert.throws(
-                            function() { cursor.continue(records[2].pKey); }, DataError);
+                        support.throws(
+                            function() { cursor.continue(records[2].pKey); }, 'DataError');
                         done();
                         break;
 
@@ -784,9 +781,9 @@ describe('W3C IDBCursor.continue Tests', function () {
                     assert(cursor instanceof FDBCursor, "cursor exists");
 
                     e.target.transaction.abort();
-                    assert.throws(function() {
+                    support.throws(function() {
                         cursor.continue();
-                    }, TransactionInactiveError, "Calling continue() should throws an exception TransactionInactiveError when the transaction is not active.");
+                    }, 'TransactionInactiveError', "Calling continue() should throws an exception TransactionInactiveError when the transaction is not active.");
 
 
                     done();
@@ -815,9 +812,9 @@ describe('W3C IDBCursor.continue Tests', function () {
                     assert(cursor instanceof FDBCursor, "cursor exists");
 
                     db.deleteObjectStore("test");
-                    assert.throws(function() {
+                    support.throws(function() {
                         cursor.continue();
-                    }, InvalidStateError, "If the cursor's source or effective object store has been deleted, the implementation MUST throw a DOMException of type InvalidStateError");
+                    }, 'InvalidStateError', "If the cursor's source or effective object store has been deleted, the implementation MUST throw a DOMException of type InvalidStateError");
 
                     done();
                 };

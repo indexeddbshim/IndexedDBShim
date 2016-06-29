@@ -1,8 +1,6 @@
 var assert = require('assert');
 var indexedDB = require('../test-helper');
 var FDBKeyRange = IDBKeyRange;
-var DataError = DOMException;
-var TransactionInactiveError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -139,9 +137,9 @@ describe('W3C IDBObjectStore.get Tests', function () {
             var store = db.transaction("store")
                           .objectStore("store");
             store.transaction.abort();
-            assert.throws(function () {
+            support.throws(function () {
                 store.get(1);
-            }, TransactionInactiveError);
+            }, 'TransactionInactiveError');
             done();
         }
     });
@@ -159,9 +157,9 @@ describe('W3C IDBObjectStore.get Tests', function () {
         open_rq.onsuccess = function(e) {
             var store = db.transaction("store")
                           .objectStore("store")
-            assert.throws(function () {
+            support.throws(function () {
                 store.get(null)
-            }, DataError);
+            }, 'DataError');
             done();
         }
     });

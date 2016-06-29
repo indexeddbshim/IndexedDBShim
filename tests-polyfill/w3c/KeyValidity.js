@@ -1,7 +1,6 @@
 var assert = require('assert');
 var indexedDB = require('../test-helper');
 var FDBRequest = IDBRequest;
-var DataError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -29,15 +28,15 @@ describe('W3C Key Validity Tests', function () {
             // set the current test, and run it
             open_rq.onupgradeneeded = function(e) {
                 objStore = e.target.result.createObjectStore("store");
-                assert.throws(function() {
+                support.throws(function() {
                     objStore.add("value", key);
-                }, DataError, desc);
+                }, 'DataError', desc);
 
                 /*if (is_cloneable(key)) {
                     objStore2 = e.target.result.createObjectStore("store2", { keyPath: ["x", "keypath"] });
-                    assert.throws(function() {
+                    support.throws(function() {
                         objStore2.add({ x: "value", keypath: key });
-                    }, DataError, desc);
+                    }, 'DataError', desc);
                 }*/
 
                 numDone += 1;

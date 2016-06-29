@@ -1,6 +1,5 @@
 var assert = require('assert');
 var indexedDB = require('../test-helper');
-var DataError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -23,26 +22,26 @@ describe('W3C IDBFactory.cmp Tests', function () {
         }, TypeError);
     });
     it("null", function() {
-        assert.throws(function() {
+        support.throws(function() {
             indexedDB.cmp(null, null);
-        }, DataError);
-        assert.throws(function() {
+        }, 'DataError');
+        support.throws(function() {
             indexedDB.cmp(1, null);
-        }, DataError);
-        assert.throws(function() {
+        }, 'DataError');
+        support.throws(function() {
             indexedDB.cmp(null, 1);
-        }, DataError);
+        }, 'DataError');
     });
     it("NaN", function() {
-        assert.throws(function() {
+        support.throws(function() {
             indexedDB.cmp(NaN, NaN);
-        }, DataError);
-        assert.throws(function() {
+        }, 'DataError');
+        support.throws(function() {
             indexedDB.cmp(1, NaN);
-        }, DataError);
-        assert.throws(function() {
+        }, 'DataError');
+        support.throws(function() {
             indexedDB.cmp(NaN, 1);
-        }, DataError);
+        }, 'DataError');
     });
 
     // keyorder

@@ -1,7 +1,6 @@
 var assert = require('assert');
 var indexedDB = require('../test-helper');
 var FDBKeyRange = IDBKeyRange;
-var InvalidStateError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -98,9 +97,9 @@ describe('W3C IDBObjectStore.count Tests', function () {
         }
 
         open_rq.onsuccess = function (event) {
-            assert.throws(function(){
+            support.throws(function(){
                 ostore.count();
-            }, InvalidStateError);
+            }, 'InvalidStateError');
             done();
         }
     });

@@ -1,8 +1,5 @@
 var assert = require('assert');
 var FDBKeyRange = IDBKeyRange;
-var DataError = DOMException;
-var InvalidStateError = DOMException;
-var TransactionInactiveError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -105,9 +102,9 @@ describe('W3C IDBIndex.getKey Tests', function () {
             db = e.target.result;
             var index = db.createObjectStore("test", { keyPath: "key" })
                           .createIndex("index", "indexedProperty");
-            assert.throws(function(){
+            support.throws(function(){
                 index.getKey(NaN);
-            }, DataError);
+            }, 'DataError');
             done();
         };
         open_rq.onsuccess = function () {};
@@ -123,9 +120,9 @@ describe('W3C IDBIndex.getKey Tests', function () {
             var index = store.createIndex("index", "indexedProperty");
             store.add({ key: 1, indexedProperty: "data" });
             store.deleteIndex("index");
-            assert.throws(function(){
+            support.throws(function(){
                 index.getKey("data");
-            }, InvalidStateError);
+            }, 'InvalidStateError');
             done();
         }
         open_rq.onsuccess = function () {};
@@ -141,9 +138,9 @@ describe('W3C IDBIndex.getKey Tests', function () {
             var index = store.createIndex("index", "indexedProperty");
             store.add({ key: 1, indexedProperty: "data" });
             e.target.transaction.abort();
-            assert.throws(function(){
+            support.throws(function(){
                 index.getKey("data");
-            }, TransactionInactiveError);
+            }, 'TransactionInactiveError');
             done();
         }
         open_rq.onerror = function () {};

@@ -2,8 +2,6 @@ var assert = require('assert');
 var indexedDB = require('../test-helper');
 var FDBCursor = IDBCursor;
 var FDBKeyRange = IDBKeyRange;
-var InvalidStateError = DOMException;
-var TransactionInactiveError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -435,11 +433,11 @@ describe('W3C IDBCursor.advance Tests', function () {
                     cursor.advance(1);
 
                     // Second try
-                    assert.throws(
-                        function() { cursor.advance(1); }, InvalidStateError, 'second advance');
+                    support.throws(
+                        function() { cursor.advance(1); }, 'InvalidStateError', 'second advance');
 
-                    assert.throws(
-                        function() { cursor.advance(3); }, InvalidStateError, 'third advance');
+                    support.throws(
+                        function() { cursor.advance(3); }, 'InvalidStateError', 'third advance');
 
                     count++;
                 };
@@ -454,19 +452,19 @@ describe('W3C IDBCursor.advance Tests', function () {
                     var cursor = e.target.result;
 
                     assert.throws(
-                        function() { cursor.advance(true); }, TypeError);
+                        function() { cursor.advance(true); }, 'TypeError');
 
                     assert.throws(
-                        function() { cursor.advance({}); }, TypeError);
+                        function() { cursor.advance({}); }, 'TypeError');
 
                     assert.throws(
-                        function() { cursor.advance([]); }, TypeError);
+                        function() { cursor.advance([]); }, 'TypeError');
 
                     assert.throws(
-                        function() { cursor.advance(""); }, TypeError);
+                        function() { cursor.advance(""); }, 'TypeError');
 
                     assert.throws(
-                        function() { cursor.advance("1 2"); }, TypeError);
+                        function() { cursor.advance("1 2"); }, 'TypeError');
 
                     done();
                 };
@@ -481,14 +479,14 @@ describe('W3C IDBCursor.advance Tests', function () {
                     var cursor = e.target.result;
 
                     assert.throws(
-                        function() { cursor.advance(null); }, TypeError);
+                        function() { cursor.advance(null); }, 'TypeError');
 
                     assert.throws(
-                        function() { cursor.advance(undefined); }, TypeError);
+                        function() { cursor.advance(undefined); }, 'TypeError');
 
                     var myvar = null;
                     assert.throws(
-                        function() { cursor.advance(myvar); }, TypeError);
+                        function() { cursor.advance(myvar); }, 'TypeError');
 
                     done();
                 };
@@ -503,7 +501,7 @@ describe('W3C IDBCursor.advance Tests', function () {
                     var cursor = e.target.result;
 
                     assert.throws(
-                        function() { cursor.advance(); }, TypeError);
+                        function() { cursor.advance(); }, 'TypeError');
 
                     done();
                 };
@@ -518,26 +516,26 @@ describe('W3C IDBCursor.advance Tests', function () {
                     var cursor = e.target.result;
 
                     assert.throws(
-                        function() { cursor.advance(-1); }, TypeError);
+                        function() { cursor.advance(-1); }, 'TypeError');
 
                     assert.throws(
-                        function() { cursor.advance(NaN); }, TypeError);
+                        function() { cursor.advance(NaN); }, 'TypeError');
 
                     assert.throws(
-                        function() { cursor.advance(0); }, TypeError);
+                        function() { cursor.advance(0); }, 'TypeError');
 
                     assert.throws(
-                        function() { cursor.advance(-0); }, TypeError);
+                        function() { cursor.advance(-0); }, 'TypeError');
 
                     assert.throws(
-                        function() { cursor.advance(Infinity); }, TypeError);
+                        function() { cursor.advance(Infinity); }, 'TypeError');
 
                     assert.throws(
-                        function() { cursor.advance(-Infinity); }, TypeError);
+                        function() { cursor.advance(-Infinity); }, 'TypeError');
 
                     var myvar = -999999;
                     assert.throws(
-                        function() { cursor.advance(myvar); }, TypeError);
+                        function() { cursor.advance(myvar); }, 'TypeError');
 
                     done();
                 };
@@ -559,7 +557,7 @@ describe('W3C IDBCursor.advance Tests', function () {
                     }
 
                     assert.throws(
-                        function() { cursor.advance(0); }, TypeError);
+                        function() { cursor.advance(0); }, 'TypeError');
 
                     cursor.advance(1);
                     count++;
@@ -645,7 +643,7 @@ describe('W3C IDBCursor.advance Tests', function () {
 
                     assert(cursor != null, "cursor exist");
                     assert.throws(
-                        function() { cursor.advance(true); }, TypeError);
+                        function() { cursor.advance(true); }, 'TypeError');
 
                     done();
                 };
@@ -680,7 +678,7 @@ describe('W3C IDBCursor.advance Tests', function () {
 
                     assert(cursor != null, "cursor exist");
                     assert.throws(
-                        function() { cursor.advance(-1); }, TypeError);
+                        function() { cursor.advance(-1); }, 'TypeError');
 
                     done();
                 };
@@ -752,7 +750,7 @@ describe('W3C IDBCursor.advance Tests', function () {
 
                     assert.throws(function() {
                         cursor.advance(0);
-                    }, TypeError, "Calling advance() with count argument 0 should throw TypeError.");
+                    }, 'TypeError', "Calling advance() with count argument 0 should throw TypeError.");
 
                     done();
                 };
@@ -780,9 +778,9 @@ describe('W3C IDBCursor.advance Tests', function () {
                     assert(cursor instanceof FDBCursor);
 
                     event.target.transaction.abort();
-                    assert.throws(function() {
+                    support.throws(function() {
                         cursor.advance(1);
-                    }, TransactionInactiveError, "Calling advance() should throws an exception TransactionInactiveError when the transaction is not active.");
+                    }, 'TransactionInactiveError', "Calling advance() should throws an exception TransactionInactiveError when the transaction is not active.");
 
                     done();
                 };
@@ -812,9 +810,9 @@ describe('W3C IDBCursor.advance Tests', function () {
                         assert(cursor instanceof FDBCursor);
 
                         cursor.advance(1);
-                        assert.throws(function() {
+                        support.throws(function() {
                             cursor.advance(1);
-                        }, InvalidStateError, "Calling advance() should throw DOMException when the cursor is currently being iterated.");
+                        }, 'InvalidStateError', "Calling advance() should throw DOMException when the cursor is currently being iterated.");
 
                         if (!reallyDone) {
                             reallyDone = true;
@@ -846,9 +844,9 @@ describe('W3C IDBCursor.advance Tests', function () {
                     assert(cursor instanceof FDBCursor, "cursor exist");
 
                     db.deleteObjectStore("store");
-                    assert.throws(function() {
+                    support.throws(function() {
                         cursor.advance(1);
-                    }, InvalidStateError, "If the cursor's source or effective object store has been deleted, the implementation MUST throw a DOMException of type InvalidStateError");
+                    }, 'InvalidStateError', "If the cursor's source or effective object store has been deleted, the implementation MUST throw a DOMException of type InvalidStateError");
 
                     done();
                 };
@@ -927,7 +925,7 @@ describe('W3C IDBCursor.advance Tests', function () {
 
                     assert.throws(function() {
                         cursor.advance(0);
-                    }, TypeError, "Calling advance() with count argument 0 should throw TypeError.");
+                    }, 'TypeError', "Calling advance() with count argument 0 should throw TypeError.");
 
                     done();
                 };
@@ -957,9 +955,9 @@ describe('W3C IDBCursor.advance Tests', function () {
                     assert(cursor instanceof FDBCursor);
 
                     event.target.transaction.abort();
-                    assert.throws(function() {
+                    support.throws(function() {
                         cursor.advance(1);
-                    }, TransactionInactiveError, "Calling advance() should throws an exception TransactionInactiveError when the transaction is not active");
+                    }, 'TransactionInactiveError', "Calling advance() should throws an exception TransactionInactiveError when the transaction is not active");
 
                     done();
                 };
@@ -991,9 +989,9 @@ describe('W3C IDBCursor.advance Tests', function () {
                         assert(cursor instanceof FDBCursor);
 
                         cursor.advance(1);
-                        assert.throws(function() {
+                        support.throws(function() {
                             cursor.advance(1);
-                        }, InvalidStateError, "Calling advance() should throw DOMException when the cursor is currently being iterated.");
+                        }, 'InvalidStateError', "Calling advance() should throw DOMException when the cursor is currently being iterated.");
 
                         if (!reallyDone) {
                             reallyDone = true;
@@ -1023,9 +1021,9 @@ describe('W3C IDBCursor.advance Tests', function () {
                     assert(cursor instanceof FDBCursor, "cursor exist");
 
                     db.deleteObjectStore("store");
-                    assert.throws(function() {
+                    support.throws(function() {
                         cursor.advance(1);
-                    }, InvalidStateError, "If the cursor's source or effective object store has been deleted, the implementation MUST throw a DOMException of type InvalidStateError");
+                    }, 'InvalidStateError', "If the cursor's source or effective object store has been deleted, the implementation MUST throw a DOMException of type InvalidStateError");
 
                     done();
                 };

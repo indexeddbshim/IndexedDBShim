@@ -1,7 +1,7 @@
 var assert = require('assert');
+var support = require('./support');
 var indexedDB = require('../test-helper');
 var FDBKeyRange = IDBKeyRange;
-var DataError = DOMException;
 
 describe('W3C IDBKeyRange Tests', function () {
     // idbkeyrange
@@ -63,43 +63,43 @@ describe('W3C IDBKeyRange Tests', function () {
 
         // Null parameters
         it("FDBKeyRange.bound(null, null) - null parameters are incorrect.", function() {
-            assert.throws(function() {
+            support.throws(function() {
                 FDBKeyRange.bound(null, null);
-            }, DataError);
+            }, 'DataError');
         });
 
         // // Null parameter
         it("FDBKeyRange.bound(1, null / null, 1) - null parameter is incorrect.", function() {
-            assert.throws(function() {
+            support.throws(function() {
                 FDBKeyRange.bound(1, null);
-            }, DataError);
-            assert.throws(function() {
+            }, 'DataError');
+            support.throws(function() {
                 FDBKeyRange.bound(null, 1);
-            }, DataError);
+            }, 'DataError');
         });
 
         // bound incorrect
         it("FDBKeyRange.bound(lower, upper / lower > upper) -  'lower' is greater than 'upper'.", function() {
             var lowerBad = Math.floor(Math.random()*31) + 5;
             var upper = lowerBad - 1;
-            assert.throws(function() {
+            support.throws(function() {
                 FDBKeyRange.bound(lowerBad, upper);
-            }, DataError);
-            assert.throws(function() {
+            }, 'DataError');
+            support.throws(function() {
                 FDBKeyRange.bound('b', 'a');
-            }, DataError);
+            }, 'DataError');
         });
 
         it("FDBKeyRange.bound(DOMString/Date/Array, 1) - A DOMString, Date and Array are greater than a float.", function() {
-            assert.throws(function() {
+            support.throws(function() {
                 FDBKeyRange.bound('a', 1);
-            }, DataError);
-            assert.throws(function() {
+            }, 'DataError');
+            support.throws(function() {
                 FDBKeyRange.bound(new Date(), 1);
-            }, DataError);
-            assert.throws(function() {
+            }, 'DataError');
+            support.throws(function() {
                 FDBKeyRange.bound([1, 2], 1);
-            }, DataError);
+            }, 'DataError');
         });
 
 
@@ -116,9 +116,9 @@ describe('W3C IDBKeyRange Tests', function () {
 
         // Valid type key error
         it("FDBKeyRange.bound(true, 1) - boolean is not a valid key type.", function() {
-            assert.throws(function() {
+            support.throws(function() {
                 FDBKeyRange.bound(true, 1);
-            }, DataError);
+            }, 'DataError');
         });
     });
 });

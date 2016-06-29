@@ -1,6 +1,5 @@
 var assert = require('assert');
 var indexedDB = require('../test-helper');
-var InvalidStateError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -92,7 +91,7 @@ describe('W3C IDBDatabase.close Tests', function () {
             assert(!!db)
             assert.equal(db.version, 1)
             assert.equal(db.objectStoreNames.length, 1)
-            assert.throws(function() { db.transaction('os') }, InvalidStateError)
+            support.throws(function() { db.transaction('os') }, 'InvalidStateError')
 
             done()
         }

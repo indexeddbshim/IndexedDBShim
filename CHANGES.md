@@ -90,6 +90,10 @@
 - Fix: Clone options object passed to `createObjectStore`
 - Fix: For `createObjectStore`, throw if transaction is not active, or
     if auto-increment with empty string or array key path
+- Fix: Ensure `__versionTransaction` set to `null` and set before `oncomplete`
+    so that `versionchange` checks inside `e.target.transaction.oncomplete`
+    within `onupgradeneeded` or inside `onsuccess` will fail (and thus will
+    attempts to create or delete object stores)
 - Feature: Support Node cleanly via `websql` SQLite3 library
 - Feature: Add `IDBObjectStore.openKeyCursor`
 - Feature: Add `IDBKeyRange.includes()` with test

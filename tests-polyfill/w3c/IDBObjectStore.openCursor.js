@@ -1,6 +1,5 @@
 var assert = require('assert');
 var indexedDB = require('../test-helper');
-var DataError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -46,12 +45,12 @@ describe('W3C IDBObjectStore.openCursor Tests', function () {
         };
         open.onsuccess = function() {
             var idx = db.transaction("test").objectStore("test").index("index");
-            assert.throws(
-                function() { idx.openCursor({ lower: "a" }); }, DataError);
-            assert.throws(
-                function() { idx.openCursor({ lower: "a", lowerOpen: false }); }, DataError);
-            assert.throws(
-                function() { idx.openCursor({ lower: "a", lowerOpen: false, upper: null, upperOpen: false }); }, DataError);
+            support.throws(
+                function() { idx.openCursor({ lower: "a" }); }, 'DataError');
+            support.throws(
+                function() { idx.openCursor({ lower: "a", lowerOpen: false }); }, 'DataError');
+            support.throws(
+                function() { idx.openCursor({ lower: "a", lowerOpen: false, upper: null, upperOpen: false }); }, 'DataError');
             done();
         }
     });

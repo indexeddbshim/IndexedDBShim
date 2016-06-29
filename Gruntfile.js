@@ -74,7 +74,7 @@ module.exports = function (grunt) {
                 src: ['D_TestDatabase*']
             },
             w3c: {
-                src: ['D_testdb-*', 'D_database_name*', 'D_idbtransaction*', 'D_db.sqlite']
+                src: ['D_testdb-*', 'D_database_name*', 'D_idbtransaction*', 'D_db.sqlite*']
             },
             fake: {
                 src: ['D_test0.*']

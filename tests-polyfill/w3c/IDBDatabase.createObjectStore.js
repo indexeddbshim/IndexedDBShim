@@ -1,8 +1,6 @@
 var assert = require('assert');
 var indexedDB = require('../test-helper');
 var FDBObjectStore = IDBObjectStore;
-var ConstraintError = DOMException;
-var InvalidStateError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -58,8 +56,8 @@ describe('W3C IDBDatabase.createObjectStore Tests', function () {
         open_rq.onupgradeneeded = function() {}
         open_rq.onsuccess = function (e) {
             var db = e.target.result
-            assert.throws(
-                function() { db.createObjectStore('fails') }, InvalidStateError)
+            support.throws(
+                function() { db.createObjectStore('fails') }, 'InvalidStateError')
             done();
         }
     });
@@ -71,8 +69,8 @@ describe('W3C IDBDatabase.createObjectStore Tests', function () {
         open_rq.onupgradeneeded = function(e) {
             var db = e.target.result
             db.createObjectStore("dupe")
-            assert.throws(
-                function() { db.createObjectStore("dupe") }, ConstraintError)
+            support.throws(
+                function() { db.createObjectStore("dupe") }, 'ConstraintError')
 
             // Bonus test creating a new objectstore after the exception
             db.createObjectStore("dupe ")
@@ -264,11 +262,11 @@ describe('W3C IDBDatabase.createObjectStore Tests', function () {
         open_rq.onupgradeneeded = function (e) {
             var db = e.target.result;
             db.createObjectStore("store");
-            assert.throws(function(){
+            support.throws(function(){
                 db.createObjectStore("store", {
                     keyPath: "key1",
                 });
-            }, ConstraintError);
+            }, 'ConstraintError');
             done();
         }
         open_rq.onsuccess = function () {};

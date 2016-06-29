@@ -1,8 +1,6 @@
 var assert = require('assert');
 var indexedDB = require('../test-helper');
 var FDBIndex = IDBIndex;
-var ConstraintError = DOMException;
-var InvalidStateError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -381,9 +379,9 @@ describe('W3C IDBObjectStore.createIndex Tests', function () {
             var db = e.target.result;
             var ostore = db.createObjectStore("store");
             ostore.createIndex("a", "a");
-            assert.throws(function(){
+            support.throws(function(){
                 ostore.createIndex("a", "a");
-            }, ConstraintError);
+            }, 'ConstraintError');
             done();
         }
         open_rq.onsuccess = function () {};
@@ -417,9 +415,9 @@ describe('W3C IDBObjectStore.createIndex Tests', function () {
         }
 
         open_rq.onsuccess = function (event) {
-            assert.throws(function(){
+            support.throws(function(){
                 ostore.createIndex("index", "indexedProperty");
-            }, InvalidStateError);
+            }, 'InvalidStateError');
             done();
         }
     });
@@ -437,9 +435,9 @@ describe('W3C IDBObjectStore.createIndex Tests', function () {
         open_rq.onsuccess = function (event) {
             var txn = db.transaction("store", "readwrite");
             ostore = txn.objectStore("store");
-            assert.throws(function(){
+            support.throws(function(){
                 ostore.createIndex("index", "indexedProperty");
-            }, InvalidStateError);
+            }, 'InvalidStateError');
             done();
         }
     });

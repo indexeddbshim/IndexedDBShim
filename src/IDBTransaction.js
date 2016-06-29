@@ -129,6 +129,7 @@ IDBTransaction.prototype.__executeRequests = function () {
         CFG.DEBUG && console.log('Transaction completed');
         const evt = createEvent('complete');
         try {
+            util.callback('__beforeOncomplete', me, evt);
             util.callback('oncomplete', me, evt);
             util.callback('__oncomplete', me, evt);
         } catch (e) {

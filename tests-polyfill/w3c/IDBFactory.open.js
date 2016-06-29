@@ -2,7 +2,6 @@ var assert = require('assert');
 var indexedDB = require('../test-helper');
 var FDBVersionChangeEvent = IDBVersionChangeEvent;
 //var FDBTransaction = IDBTransaction;
-//var InvalidStateError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 var format_value = support.format_value;

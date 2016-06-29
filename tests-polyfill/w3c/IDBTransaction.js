@@ -2,7 +2,6 @@ var assert = require('assert');
 var indexedDB = require('../test-helper');
 var FDBOpenDBRequest = IDBOpenDBRequest;
 var FDBTransaction = IDBTransaction;
-var InvalidStateError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -78,18 +77,18 @@ describe('W3C IDBTransaction Tests', function () {
                 .add("versionchange1", 1)
                 .addEventListener("success", log("versionchange_add.success"))
 
-            assert.throws(function () {
+            support.throws(function () {
                 db.transaction("store");
-            }, InvalidStateError);
+            }, 'InvalidStateError');
 
             e.target.transaction
                 .objectStore("store")
                 .count(2)
                 .addEventListener("success", log("versionchange_count.success"))
 
-            assert.throws(function () {
+            support.throws(function () {
                 db.transaction("store", "readwrite");
-            }, InvalidStateError);
+            }, 'InvalidStateError');
 
             open_rq.transaction
                 .objectStore("store")

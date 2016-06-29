@@ -1,7 +1,4 @@
 var assert = require('assert');
-var DataError = DOMException;
-var InvalidStateError = DOMException;
-var TransactionInactiveError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -18,9 +15,9 @@ describe('W3C IDBIndex.openKeyCursor Tests', function () {
 
             store.add({ key: 1, indexedProperty: "data" });
 
-            assert.throws(function(){
+            support.throws(function(){
                 index.openKeyCursor(NaN);
-            }, DataError);
+            }, 'DataError');
             done();
         }
         open_rq.onsuccess = function () {};
@@ -39,9 +36,9 @@ describe('W3C IDBIndex.openKeyCursor Tests', function () {
             store.add({ key: 1, indexedProperty: "data" });
             store.deleteIndex("index");
 
-            assert.throws(function(){
+            support.throws(function(){
                 index.openKeyCursor();
-            }, InvalidStateError);
+            }, 'InvalidStateError');
             done();
         }
         open_rq.onsuccess = function () {};
@@ -60,9 +57,9 @@ describe('W3C IDBIndex.openKeyCursor Tests', function () {
 
             e.target.transaction.abort();
 
-            assert.throws(function(){
+            support.throws(function(){
                 index.openKeyCursor();
-            }, TransactionInactiveError);
+            }, 'TransactionInactiveError');
             done();
         }
         open_rq.onerror = function () {};

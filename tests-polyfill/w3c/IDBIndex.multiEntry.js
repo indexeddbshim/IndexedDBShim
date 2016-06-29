@@ -1,5 +1,4 @@
 var assert = require('assert');
-var InvalidAccessError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -53,9 +52,9 @@ describe('W3C IDBIndex.multiEntry Tests', function () {
         open_rq.onupgradeneeded = function(e) {
             var store = e.target.result.createObjectStore("store");
 
-            assert.throws(function() {
+            support.throws(function() {
                 store.createIndex('actors', ['name'], { multiEntry: true })
-            }, InvalidAccessError);
+            }, 'InvalidAccessError');
 
             done();
         };

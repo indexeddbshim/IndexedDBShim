@@ -1,6 +1,5 @@
 var assert = require('assert');
 var indexedDB = require('../test-helper');
-var NotFoundError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -31,9 +30,9 @@ describe('W3C IDBObjectStore.deleteIndex Tests', function () {
                   objStore = db.transaction("test")
                                .objectStore("test");
 
-                assert.throws(function() {
+                support.throws(function() {
                     index = objStore.index("index")
-                }, NotFoundError);
+                }, 'NotFoundError');
                 assert.equal(index, undefined);
                 done();
             }

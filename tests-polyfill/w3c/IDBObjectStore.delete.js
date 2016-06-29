@@ -1,8 +1,6 @@
 var assert = require('assert');
 var indexedDB = require('../test-helper');
 var FDBKeyRange = IDBKeyRange;
-var InvalidStateError = DOMException;
-var ReadOnlyError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -182,9 +180,9 @@ describe('W3C IDBObjectStore.delete Tests', function () {
         open_rq.onsuccess = function (event) {
             var txn = db.transaction("store");
             var ostore = txn.objectStore("store");
-            assert.throws(function(){
+            support.throws(function(){
                 ostore.delete("primaryKey_0");
-            }, ReadOnlyError);
+            }, 'ReadOnlyError');
             done();
         }
     });
@@ -204,9 +202,9 @@ describe('W3C IDBObjectStore.delete Tests', function () {
         }
 
         open_rq.onsuccess = function (event) {
-            assert.throws(function(){
+            support.throws(function(){
                 ostore.delete("primaryKey_0");
-            }, InvalidStateError);
+            }, 'InvalidStateError');
             done();
         }
     });

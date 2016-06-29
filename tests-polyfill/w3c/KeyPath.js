@@ -1,7 +1,6 @@
 var assert = require('assert');
 var indexedDB = require('../test-helper');
 //var FDBRequest = IDBRequest;
-//var DataError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 

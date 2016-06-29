@@ -1,7 +1,5 @@
 var assert = require('assert');
 var indexedDB = require('../test-helper');
-var InvalidStateError = DOMException;
-var NotFoundError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -37,9 +35,9 @@ describe('W3C IDBDatabase.deleteObjectStore Tests', function () {
 
             e.target.transaction.oncomplete = function (e)
             {
-                assert.throws(function() {
+                support.throws(function() {
                     db.deleteObjectStore("delete_outside");
-                }, InvalidStateError);
+                }, 'InvalidStateError');
                 done();
             };
         }
@@ -53,9 +51,9 @@ describe('W3C IDBDatabase.deleteObjectStore Tests', function () {
         open_rq.onupgradeneeded = function(e)
         {
             var db = e.target.result;
-            assert.throws(function() {
+            support.throws(function() {
                 db.deleteObjectStore('whatever');
-            }, NotFoundError);
+            }, 'NotFoundError');
             done();
         }
         open_rq.onsuccess = function () {};
@@ -83,9 +81,9 @@ describe('W3C IDBDatabase.deleteObjectStore Tests', function () {
             assert(objStore2.indexNames.indexOf("idx") < 0, "index exist on new objstore");
             assert.equal(objStore2.keyPath, null, "keyPath");
 
-            assert.throws(function() {
+            support.throws(function() {
                objStore2.index("idx");
-            }, NotFoundError);
+            }, 'NotFoundError');
         }
 
         open_rq.onsuccess = function(e) {

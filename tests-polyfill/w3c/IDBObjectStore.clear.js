@@ -1,7 +1,5 @@
 var assert = require('assert');
 var indexedDB = require('../test-helper');
-var InvalidStateError = DOMException;
-var ReadOnlyError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -90,9 +88,9 @@ describe('W3C IDBObjectStore.clear Tests', function () {
         open_rq.onsuccess = function (event) {
             var txn = db.transaction("store");
             var ostore = txn.objectStore("store");
-            assert.throws(function(){
+            support.throws(function(){
                 ostore.clear();
-            }, ReadOnlyError);
+            }, 'ReadOnlyError');
             done();
         }
     });
@@ -110,9 +108,9 @@ describe('W3C IDBObjectStore.clear Tests', function () {
         }
 
         open_rq.onsuccess = function (event) {
-            assert.throws(function(){
+            support.throws(function(){
                 ostore.clear();
-            }, InvalidStateError);
+            }, 'InvalidStateError');
             done();
         }
     });

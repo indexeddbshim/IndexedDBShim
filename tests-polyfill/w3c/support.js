@@ -1,3 +1,4 @@
+var assert = require('assert');
 var indexedDB = require('../test-helper');
 
 var dbPrefix = 'testdb-';
@@ -157,9 +158,40 @@ function format_value(val, seen)
     }
 }
 
+var errs = [
+    "AbortError",
+    "ConstraintError",
+    "DataCloneError",
+    "DataError",
+    "InvalidAccessError",
+    "InvalidStateError",
+    "NotFoundError",
+    "QuotaExceededError",
+    "SyntaxError",
+    "ReadOnlyError",
+    "TransactionInactiveError",
+    "UnknownError",
+    "VersionError"
+];
+
+function throws (cb, errName, msg) {
+    if (errs.indexOf(errName) === -1) {
+        throw new Error("Unrecognized error name");
+    }
+    try {
+        cb();
+    } catch (err) {
+        assert(err instanceof DOMException, "DOMException");
+        assert.equal(err.name, errName, msg);
+        return;
+    }
+    throw new Error("Assertion did not throw: " + msg);
+}
+
 module.exports = {
     createdb: createdb,
     format_value: format_value,
     getDBName: getDBName,
-    getDBNameRandom: getDBNameRandom
+    getDBNameRandom: getDBNameRandom,
+    throws: throws
 };

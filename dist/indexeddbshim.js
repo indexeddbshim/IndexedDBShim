@@ -10094,6 +10094,9 @@ IDBFactory.prototype.open = function (name, version) {
                                     util.callback('onupgradeneeded', req, e);
                                     success();
                                 });
+                                req.transaction.__beforeOncomplete = function () {
+                                    req.result.__versionTransaction = null;
+                                };
                                 req.transaction.__oncomplete = function () {
                                     req.__transaction = null;
                                     var e = (0, _Event.createEvent)('success');
@@ -11501,6 +11504,7 @@ IDBTransaction.prototype.__executeRequests = function () {
         _cfg2.default.DEBUG && console.log('Transaction completed');
         var evt = (0, _Event.createEvent)('complete');
         try {
+            util.callback('__beforeOncomplete', me, evt);
             util.callback('oncomplete', me, evt);
             util.callback('__oncomplete', me, evt);
         } catch (e) {

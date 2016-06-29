@@ -2,7 +2,6 @@ var assert = require('assert');
 var indexedDB = require('../test-helper');
 var FDBOpenDBRequest = IDBOpenDBRequest;
 var FDBTransaction = IDBTransaction;
-var InvalidStateError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -27,16 +26,16 @@ describe('W3C IDBObjectStore Tests', function () {
             db.deleteObjectStore("store");
             assert.equal(db.objectStoreNames.length, 0, "objectStoreNames.length after delete");
 
-            assert.throws(function() { objStore.add(2); }, InvalidStateError);
-            assert.throws(function() { objStore.put(3); }, InvalidStateError);
-            assert.throws(function() { objStore.get(1); }, InvalidStateError);
-            assert.throws(function() { objStore.clear(); }, InvalidStateError);
-            assert.throws(function() { objStore.count(); }, InvalidStateError);
-            assert.throws(function() { objStore.delete(1); }, InvalidStateError);
-            assert.throws(function() { objStore.openCursor(); }, InvalidStateError);
-            assert.throws(function() { objStore.index("idx"); }, InvalidStateError);
-            assert.throws(function() { objStore.deleteIndex("idx"); }, InvalidStateError);
-            assert.throws(function() { objStore.createIndex("idx2", "a"); }, InvalidStateError);
+            support.throws(function() { objStore.add(2); }, 'InvalidStateError');
+            support.throws(function() { objStore.put(3); }, 'InvalidStateError');
+            support.throws(function() { objStore.get(1); }, 'InvalidStateError');
+            support.throws(function() { objStore.clear(); }, 'InvalidStateError');
+            support.throws(function() { objStore.count(); }, 'InvalidStateError');
+            support.throws(function() { objStore.delete(1); }, 'InvalidStateError');
+            support.throws(function() { objStore.openCursor(); }, 'InvalidStateError');
+            support.throws(function() { objStore.index("idx"); }, 'InvalidStateError');
+            support.throws(function() { objStore.deleteIndex("idx"); }, 'InvalidStateError');
+            support.throws(function() { objStore.createIndex("idx2", "a"); }, 'InvalidStateError');
         }
 
         open_rq.onsuccess = function() {

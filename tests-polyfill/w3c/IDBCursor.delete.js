@@ -1,9 +1,6 @@
 var assert = require('assert');
 var indexedDB = require('../test-helper');
 var FDBCursor = IDBCursor;
-var InvalidStateError = DOMException;
-var ReadOnlyError = DOMException;
-var TransactionInactiveError = DOMException;
 var support = require('./support');
 var createdb = support.createdb;
 
@@ -95,7 +92,7 @@ describe('W3C IDBCursor.delete Tests', function () {
                     var cursor = e.target.result;
 
                     assert(cursor instanceof FDBCursor, "cursor exist");
-                    assert.throws(function() { cursor.delete(); }, ReadOnlyError);
+                    support.throws(function() { cursor.delete(); }, 'ReadOnlyError');
                     done();
                 };
             }
@@ -124,7 +121,7 @@ describe('W3C IDBCursor.delete Tests', function () {
                 };
 
                 e.target.transaction.oncomplete = function(e) {
-                    assert.throws(function() { cursor.delete(); }, TransactionInactiveError)
+                    support.throws(function() { cursor.delete(); }, 'TransactionInactiveError')
                     done();
                 };
             }
@@ -151,9 +148,9 @@ describe('W3C IDBCursor.delete Tests', function () {
                     assert(cursor instanceof FDBCursor, "cursor exist");
 
                     db.deleteObjectStore("store");
-                    assert.throws(function() {
+                    support.throws(function() {
                         cursor.delete();
-                    }, InvalidStateError, "If the cursor's source or effective object store has been deleted, the implementation MUST throw a DOMException of type InvalidStateError");
+                    }, 'InvalidStateError', "If the cursor's source or effective object store has been deleted, the implementation MUST throw a DOMException of type InvalidStateError");
 
                     done();
                 };
@@ -184,9 +181,9 @@ describe('W3C IDBCursor.delete Tests', function () {
                     if (cursor) {
                         assert(cursor instanceof FDBCursor, "cursor exist");
                         cursor.continue();
-                        assert.throws(function() {
+                        support.throws(function() {
                             cursor.delete();
-                        }, InvalidStateError);
+                        }, 'InvalidStateError');
 
                         if (count === 1) {
                             done();
@@ -279,7 +276,7 @@ describe('W3C IDBCursor.delete Tests', function () {
                     var cursor = e.target.result;
 
                     assert(cursor != null, "cursor exist");
-                    assert.throws(function() { cursor.delete(); }, ReadOnlyError);
+                    support.throws(function() { cursor.delete(); }, 'ReadOnlyError');
                     done();
                 };
             }
@@ -307,7 +304,7 @@ describe('W3C IDBCursor.delete Tests', function () {
                 };
 
                 e.target.transaction.oncomplete = function(e) {
-                    assert.throws(function() { cursor.delete(); }, TransactionInactiveError)
+                    support.throws(function() { cursor.delete(); }, 'TransactionInactiveError')
                     done();
                 };
             }
@@ -333,9 +330,9 @@ describe('W3C IDBCursor.delete Tests', function () {
                     assert(cursor instanceof FDBCursor, "cursor exist");
 
                     db.deleteObjectStore("store");
-                    assert.throws(function() {
+                    support.throws(function() {
                         cursor.delete();
-                    }, InvalidStateError, "If the cursor's source or effective object store has been deleted, the implementation MUST throw a DOMException of type InvalidStateError");
+                    }, 'InvalidStateError', "If the cursor's source or effective object store has been deleted, the implementation MUST throw a DOMException of type InvalidStateError");
 
                     done();
                 };
@@ -369,9 +366,9 @@ describe('W3C IDBCursor.delete Tests', function () {
                     if (cursor) {
                         assert(cursor instanceof FDBCursor, "cursor exist");
                         cursor.continue();
-                        assert.throws(function() {
+                        support.throws(function() {
                             cursor.delete();
-                        }, InvalidStateError);
+                        }, 'InvalidStateError');
 
                         if (count === 1) {
                             done();
