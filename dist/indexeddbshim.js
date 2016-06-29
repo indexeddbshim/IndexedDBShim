@@ -10929,7 +10929,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
                 }
             });
         } else {
-            success(primaryKey);
+            success(primaryKey, me.autoIncrement);
         }
     } else {
         if (key === undefined && me.autoIncrement) {
@@ -10941,7 +10941,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
     }
 };
 
-IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey, passedKey, success, error) {
+IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey, passedKey, addedAutoIncKeyPathKey, success, error) {
     var _this = this;
 
     var me = this;
@@ -11011,9 +11011,12 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         tx.executeSql(sql, sqlValues, function (tx, data) {
             _Sca2.default.encode(primaryKey, function (primaryKey) {
                 primaryKey = _Sca2.default.decode(primaryKey);
-                if ([passedKey, primaryKey].every(function (key) {
-                    return typeof key === 'number';
-                }) && passedKey >= primaryKey && me.autoIncrement) {
+                if (addedAutoIncKeyPathKey) {
+                    passedKey = primaryKey; // Add to UPDATE below
+                }
+                if (me.autoIncrement && (addedAutoIncKeyPathKey && typeof passedKey === 'number' ||
+                // Todo: If primaryKey is not a number, we should be checking the value of any previous "current number" and compare with that
+                typeof passedKey === 'number' && (typeof primaryKey !== 'number' || passedKey >= primaryKey))) {
                     tx.executeSql('UPDATE sqlite_sequence SET seq = ? WHERE name = ?', [passedKey, 's_' + me.name], function (tx, data) {
                         success(passedKey);
                     }, function (tx, err) {
@@ -11041,9 +11044,9 @@ IDBObjectStore.prototype.add = function (value, key) {
 
     var request = me.transaction.__createRequest(me);
     me.transaction.__pushToQueue(request, function objectStoreAdd(tx, args, success, error) {
-        me.__deriveKey(tx, value, key, function (primaryKey) {
+        me.__deriveKey(tx, value, key, function (primaryKey, addedAutoIncKeyPathKey) {
             _Sca2.default.encode(value, function (encoded) {
-                me.__insertData(tx, encoded, value, primaryKey, key, success, error);
+                me.__insertData(tx, encoded, value, primaryKey, key, addedAutoIncKeyPathKey, success, error);
             });
         }, error);
     });
@@ -11060,14 +11063,14 @@ IDBObjectStore.prototype.put = function (value, key) {
 
     var request = me.transaction.__createRequest(me);
     me.transaction.__pushToQueue(request, function objectStorePut(tx, args, success, error) {
-        me.__deriveKey(tx, value, key, function (primaryKey) {
+        me.__deriveKey(tx, value, key, function (primaryKey, addedAutoIncKeyPathKey) {
             _Sca2.default.encode(value, function (encoded) {
                 // First try to delete if the record exists
                 _Key2.default.validate(primaryKey);
                 var sql = 'DELETE FROM ' + util.quote('s_' + me.name) + ' WHERE key = ?';
                 tx.executeSql(sql, [_Key2.default.encode(primaryKey)], function (tx, data) {
                     _cfg2.default.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
-                    me.__insertData(tx, encoded, value, primaryKey, key, success, error);
+                    me.__insertData(tx, encoded, value, primaryKey, key, addedAutoIncKeyPathKey, success, error);
                 }, function (tx, err) {
                     error(err);
                 });

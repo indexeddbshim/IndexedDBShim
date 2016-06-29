@@ -42,11 +42,13 @@
 - Fix: Allow `__versionTransaction` not to exist (if user calling it wrong)
     for `create/deleteObjectStore` and test it so it will return an
     `InvalidStateError`
-- Fix: Avoid `LIKE` check on auto-complete sequence check (could be store
+- Fix: Avoid `LIKE` check on auto-increment sequence check (could be store
     name inside another store name);
-- Fix: Ensure numeric keys passed to `add()` or `put()` on an autocomplete
+- Fix: Ensure numeric keys passed to `add()` or `put()` on an auto-increment
     store which are greater or equal to the "current number" will update
     the auto-increment counter
+- Fix: Ensure a keyPath added numeric auto-increment key will update the
+    auto-increment counter
 - Fix: Avoid potential problem with data insertion if an index were named "key"
 - Fix: Throw `TypeError` when `undefined` occurs for both `lower` and `upper`
     bounds
@@ -146,7 +148,8 @@
 - (Testing: tests-mocha, tests-qunit, and indexedDBmock tests now all
     passing in browser and Node; from W3C, IDBCursor.advance.js,
     IDBCursor.continue.js, IDBCursor.delete.js, IDBCursor.update.js,
-    IDBKeyrange.js, and IDBDatabase.createObjectStore.js are passing)
+    IDBKeyrange.js, IDBDatabase.createObjectStore.js,
+    IDBDatabase.deleteObjectStore.js are passing)
 - Testing (Grunt): Clarify Grunt tasks, expand tasks for cleaning, make tests
     more granular
 - Testing (Grunt): Remove now redundant `sourceMappingURL`, use
