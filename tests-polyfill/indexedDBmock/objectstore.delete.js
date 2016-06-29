@@ -575,7 +575,7 @@ describe("Objectstore - Delete", function () {
                         };
                     }
                     catch (ex){
-                        assert.equal(ex.name, "TypeError", ex.name);
+                        assert.equal(ex.name, "DataError", ex.name);
                         ct++;
                     }
 
