@@ -1,4 +1,5 @@
 import {createDOMException} from './DOMException.js';
+import CFG from './cfg.js';
 
 let cleanInterface = false;
 
@@ -164,4 +165,34 @@ function defineReadonlyProperties (obj, props) {
     });
 }
 
-export {callback, StringList, quote, instanceOf, isObj, isDate, isBlob, isRegExp, isFile, throwIfNotClonable, defineReadonlyProperties};
+const HexDigit = '[0-9a-fA-F]';
+// The commented out line below is technically the grammar, with a SyntaxError
+//   to occur if larger than U+10FFFF, but we will prevent the error by
+//   establishing the limit in regular expressions
+// const HexDigits = HexDigit + HexDigit + '*';
+const HexDigits = '0*(?:' + HexDigit + '{1,5}|10' + HexDigit + '{4})*';
+const UnicodeEscapeSequence = '(?:u' + HexDigit + '{4}|u{' + HexDigits + '})';
+
+function isIdentifier (item) {
+    // For load-time and run-time performance, we don't provide the complete regular
+    //   expression for identifiers, but these can be passed in, using the expressions
+    //   found at https://gist.github.com/brettz9/b4cd6821d990daa023b2e604de371407
+    // ID_Start (includes Other_ID_Start)
+    const UnicodeIDStart = CFG.UnicodeIDStart || '[$A-Z_a-z]';
+    // ID_Continue (includes Other_ID_Continue)
+    const UnicodeIDContinue = CFG.UnicodeIDContinue || '[$0-9A-Z_a-z]';
+    const IdentifierStart = '(?:' + UnicodeIDStart + '|[$_]|\\\\' + UnicodeEscapeSequence + ')';
+    const IdentifierPart = '(?:' + UnicodeIDContinue + '|[$_]|\\\\' + UnicodeEscapeSequence + '|\\u200C|\\u200D)';
+    return (new RegExp('^' + IdentifierStart + IdentifierPart + '*$')).test(item);
+}
+
+function isValidKeyPathString (keyPathString) {
+    return typeof keyPathString === 'string' &&
+        (keyPathString === '' || isIdentifier(keyPathString) || keyPathString.split('.').every(isIdentifier));
+}
+
+function isValidKeyPath (keyPath) {
+    return isValidKeyPathString(keyPath) || (Array.isArray(keyPath) && keyPath.length && keyPath.every(isValidKeyPathString));
+}
+
+export {callback, StringList, quote, instanceOf, isObj, isDate, isBlob, isRegExp, isFile, throwIfNotClonable, defineReadonlyProperties, isValidKeyPath};

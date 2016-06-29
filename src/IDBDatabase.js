@@ -35,17 +35,32 @@ IDBDatabase.prototype.createObjectStore = function (storeName, createOptions) {
     if (arguments.length === 0) {
         throw new TypeError('No object store name was specified');
     }
+    IDBTransaction.__assertVersionChange(this.__versionTransaction); // this.__versionTransaction may not exist if called mistakenly by user in onsuccess
+    this.__versionTransaction.__assertActive();
     if (this.__objectStores[storeName]) {
         throw createDOMException('ConstraintError', 'Object store "' + storeName + '" already exists in ' + this.name);
     }
-    IDBTransaction.__assertVersionChange(this.__versionTransaction); // this.__versionTransaction may not exist if called mistakenly by user in onsuccess
+    createOptions = Object.assign({}, createOptions);
+    if (createOptions.keyPath === undefined) {
+        createOptions.keyPath = null;
+    }
 
-    createOptions = createOptions || {};
+    const keyPath = createOptions.keyPath;
+    const autoIncrement = createOptions.autoIncrement;
+
+    if (keyPath !== null && !util.isValidKeyPath(keyPath)) {
+        // throw createDOMException('SyntaxError', 'The keyPath argument contains an invalid key path.');
+        throw new SyntaxError('The keyPath argument contains an invalid key path.');
+    }
+    if (autoIncrement && (keyPath === '' || Array.isArray(keyPath))) {
+        throw createDOMException('InvalidAccessError', 'With autoIncrement set, the keyPath argument must not be an array or empty string.');
+    }
+
     /** @name IDBObjectStoreProperties **/
     const storeProperties = {
         name: storeName,
-        keyPath: JSON.stringify(createOptions.keyPath || null),
-        autoInc: JSON.stringify(createOptions.autoIncrement),
+        keyPath: JSON.stringify(keyPath),
+        autoInc: JSON.stringify(autoIncrement),
         indexList: '{}'
     };
     const store = new IDBObjectStore(storeProperties, this.__versionTransaction);

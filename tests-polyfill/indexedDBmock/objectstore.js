@@ -87,7 +87,7 @@ describe('ObjectStores', function() {
                         done();
                     }
                     catch (ex) {
-                        assert.equal(ex.name, "ConstraintError", "ConstraintError");
+                        assert.equal(ex.name, "InvalidStateError", "InvalidStateError");
                         e.target.result.close();
                         done();
                     }

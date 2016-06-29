@@ -24,6 +24,7 @@ describe('W3C IDBCursor Behavior Tests', function () {
     describe('direction', function () {
         // idbcursor-direction
         it('IDBCursor.direction', function (done) {
+            this.timeout(4000);
             var count = 0;
             function cursor_direction(constant, dir)
             {

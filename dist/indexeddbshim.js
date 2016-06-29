@@ -9863,17 +9863,32 @@ IDBDatabase.prototype.createObjectStore = function (storeName, createOptions) {
     if (arguments.length === 0) {
         throw new TypeError('No object store name was specified');
     }
+    _IDBTransaction2.default.__assertVersionChange(this.__versionTransaction); // this.__versionTransaction may not exist if called mistakenly by user in onsuccess
+    this.__versionTransaction.__assertActive();
     if (this.__objectStores[storeName]) {
         throw (0, _DOMException.createDOMException)('ConstraintError', 'Object store "' + storeName + '" already exists in ' + this.name);
     }
-    _IDBTransaction2.default.__assertVersionChange(this.__versionTransaction); // this.__versionTransaction may not exist if called mistakenly by user in onsuccess
+    createOptions = Object.assign({}, createOptions);
+    if (createOptions.keyPath === undefined) {
+        createOptions.keyPath = null;
+    }
 
-    createOptions = createOptions || {};
+    var keyPath = createOptions.keyPath;
+    var autoIncrement = createOptions.autoIncrement;
+
+    if (keyPath !== null && !util.isValidKeyPath(keyPath)) {
+        // throw createDOMException('SyntaxError', 'The keyPath argument contains an invalid key path.');
+        throw new SyntaxError('The keyPath argument contains an invalid key path.');
+    }
+    if (autoIncrement && (keyPath === '' || Array.isArray(keyPath))) {
+        throw (0, _DOMException.createDOMException)('InvalidAccessError', 'With autoIncrement set, the keyPath argument must not be an array or empty string.');
+    }
+
     /** @name IDBObjectStoreProperties **/
     var storeProperties = {
         name: storeName,
-        keyPath: JSON.stringify(createOptions.keyPath || null),
-        autoInc: JSON.stringify(createOptions.autoIncrement),
+        keyPath: JSON.stringify(keyPath),
+        autoInc: JSON.stringify(autoIncrement),
         indexList: '{}'
     };
     var store = new _IDBObjectStore2.default(storeProperties, this.__versionTransaction);
@@ -12496,9 +12511,11 @@ var CFG = {};
 
 ['DEBUG', // boolean
 'cursorPreloadPackSize', // 100
-'win' // (window on which there may be an `openDatabase` method (if any)
+'win', // (window on which there may be an `openDatabase` method (if any)
 //  for WebSQL; the browser throws if attempting to call
 //  `openDatabase` without the window)
+'UnicodeIDStart', // See https://gist.github.com/brettz9/b4cd6821d990daa023b2e604de371407
+'UnicodeIDContinue' // See https://gist.github.com/brettz9/b4cd6821d990daa023b2e604de371407
 ].forEach(function (prop) {
     Object.defineProperty(CFG, prop, {
         get: function get() {
@@ -12977,6 +12994,9 @@ function setGlobalVars(idb) {
         IDB.shimIndexedDB.__debug = function (val) {
             _cfg2.default.DEBUG = val;
         };
+        IDB.shimIndexedDB.__setCFG = function (prop, val) {
+            _cfg2.default[prop] = val;
+        };
     }
 
     // Workaround to prevent an error in Firefox
@@ -13020,11 +13040,17 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.defineReadonlyProperties = exports.throwIfNotClonable = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.quote = exports.StringList = exports.callback = undefined;
+exports.isValidKeyPath = exports.defineReadonlyProperties = exports.throwIfNotClonable = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.quote = exports.StringList = exports.callback = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 var _DOMException = require('./DOMException.js');
+
+var _cfg = require('./cfg.js');
+
+var _cfg2 = _interopRequireDefault(_cfg);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var cleanInterface = false;
 
@@ -13190,6 +13216,35 @@ function defineReadonlyProperties(obj, props) {
     });
 }
 
+var HexDigit = '[0-9a-fA-F]';
+// The commented out line below is technically the grammar, with a SyntaxError
+//   to occur if larger than U+10FFFF, but we will prevent the error by
+//   establishing the limit in regular expressions
+// const HexDigits = HexDigit + HexDigit + '*';
+var HexDigits = '0*(?:' + HexDigit + '{1,5}|10' + HexDigit + '{4})*';
+var UnicodeEscapeSequence = '(?:u' + HexDigit + '{4}|u{' + HexDigits + '})';
+
+function isIdentifier(item) {
+    // For load-time and run-time performance, we don't provide the complete regular
+    //   expression for identifiers, but these can be passed in, using the expressions
+    //   found at https://gist.github.com/brettz9/b4cd6821d990daa023b2e604de371407
+    // ID_Start (includes Other_ID_Start)
+    var UnicodeIDStart = _cfg2.default.UnicodeIDStart || '[$A-Z_a-z]';
+    // ID_Continue (includes Other_ID_Continue)
+    var UnicodeIDContinue = _cfg2.default.UnicodeIDContinue || '[$0-9A-Z_a-z]';
+    var IdentifierStart = '(?:' + UnicodeIDStart + '|[$_]|\\\\' + UnicodeEscapeSequence + ')';
+    var IdentifierPart = '(?:' + UnicodeIDContinue + '|[$_]|\\\\' + UnicodeEscapeSequence + '|\\u200C|\\u200D)';
+    return new RegExp('^' + IdentifierStart + IdentifierPart + '*$').test(item);
+}
+
+function isValidKeyPathString(keyPathString) {
+    return typeof keyPathString === 'string' && (keyPathString === '' || isIdentifier(keyPathString) || keyPathString.split('.').every(isIdentifier));
+}
+
+function isValidKeyPath(keyPath) {
+    return isValidKeyPathString(keyPath) || Array.isArray(keyPath) && keyPath.length && keyPath.every(isValidKeyPathString);
+}
+
 exports.callback = callback;
 exports.StringList = StringList;
 exports.quote = quote;
@@ -13201,5 +13256,6 @@ exports.isRegExp = isRegExp;
 exports.isFile = isFile;
 exports.throwIfNotClonable = throwIfNotClonable;
 exports.defineReadonlyProperties = defineReadonlyProperties;
+exports.isValidKeyPath = isValidKeyPath;
 
-},{"./DOMException.js":306}]},{},[318]);
+},{"./DOMException.js":306,"./cfg.js":319}]},{},[318]);

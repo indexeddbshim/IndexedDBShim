@@ -83,6 +83,11 @@
     or `IDBObjectStore` as appropriate
 - Fix: Prevent race condition error if attempting to find indexes during
     insertion when index creation has begun but not yet completed
+- Fix: Validate keyPath supplied to `createObjectStore`
+- Fix: Allow for empty string keyPath to `createObjectStore`
+- Fix: Clone options object passed to `createObjectStore`
+- Fix: For `createObjectStore`, throw if transaction is not active, or
+    if auto-increment with empty string or array key path
 - Feature: Support Node cleanly via `websql` SQLite3 library
 - Feature: Add `IDBObjectStore.openKeyCursor`
 - Feature: Add `IDBKeyRange.includes()` with test
@@ -91,6 +96,9 @@
 - Feature: Key value retrieval: Allow "length" type key
 - Feature: Add ".sqlite" extension to database name for sake of (Windows)
     file type identification
+- Feature: Expose `__setCFG(prop, val)` method for setting pseudo-global
+    property used internally for config, e.g., for setting Unicode
+    regular expression strings
 - Repo files: Rename test folders for ease in distinguishing
 - Refactoring (Avoid globals): Change from using window global to a CFG module
     for better maintainability
@@ -123,6 +131,8 @@
 - Testing: Work on Node tests and for Firefox (including increasing timeouts
     as needed)
 - Testing: Rely on `node_modules` paths for testing framework files
+- Testing (mock): Expect `InvalidStateError` instead of `ConstraintError`
+    when not in an upgrade transaction calling `createObjectStore`
 - Testing (W3C): Fix test to reflect latest draft spec -- see <https://github.com/brettz9/web-platform-tests/pull/1>
 - Testing (W3C): Change example to expect `ConstraintError` (since object
     store already existing per test)--though perhaps should ensure it is
@@ -130,10 +140,13 @@
 - Test scaffolding (W3C): Fix args to `initionalSituation()`
 - Test scaffolding (W3C): Fix test ok condition, typo
 - Test scaffolding (W3C): Fix assertions
+- Testing (W3C): Increase timeout for Node testing `createObjectStore`'s
+    `IDBObjectStoreParameters` test and IDBCursorBehavior's
+    `IDBCursor.direction`
 - (Testing: tests-mocha, tests-qunit, and indexedDBmock tests now all
     passing in browser and Node; from W3C, IDBCursor.advance.js,
-    IDBCursor.continue.js, IDBCursor.delete.js, and IDBCursor.update.js
-    are passing)
+    IDBCursor.continue.js, IDBCursor.delete.js, IDBCursor.update.js, and
+    IDBDatabase.createObjectStore.js are passing)
 - Testing (Grunt): Clarify Grunt tasks, expand tasks for cleaning, make tests
     more granular
 - Testing (Grunt): Remove now redundant `sourceMappingURL`, use
