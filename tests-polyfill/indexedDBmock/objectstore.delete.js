@@ -1,8 +1,14 @@
 require('./setup')
 var assert = require('assert')
 
-describe('Objectstore - Get', function() {
-    it("Retrieving data - no data present for key", function (done) {
+/**
+ * Created by Kristof on 29/03/2015.
+ */
+
+describe("Objectstore - Delete", function () {
+
+    it("Deleting data - no data present for key", function (done) {
+        var expect = 2, ct = 0;
         var key = 1;
 
         initionalSituationObjectStoreNoAutoIncrement(function () {
@@ -13,24 +19,37 @@ describe('Objectstore - Get', function() {
                     var objectstore = transaction.objectStore(objectStoreName);
 
                     try{
-                        var getRequest = objectstore.get(key);
-                        getRequest.onsuccess = function (e){
-                            equal(e.target.result, undefined, "Data undefined");
+                        var deleteRequest = objectstore.delete(key);
+                        deleteRequest.onsuccess = function (e){
+                            assert.equal(e.target.result, undefined, "Data undefined");
+                            ct++;
+
+                            var countRequest = objectstore.count(key);
+
+                            countRequest.onsuccess = function (e){
+                                assert.equal(e.target.result, 0, "Data deleted");
+                                ct++;
+
+                            };
+                            countRequest.onerror = function (e){
+                                assert.ok(false, "Count error");
+                            };
                         };
-                        getRequest.onerror = function (e){
-                            assert.ok(false, "Get error");
+                        deleteRequest.onerror = function (e){
+                            assert.ok(false, "Delete error");
                         };
                     }
                     catch (ex){
-                        assert.ok(false, "Get error");
+                        assert.ok(false, "Delete error");
                     }
 
                     transaction.oncomplete = function (e){
+                        equal(ct, expect, "Expected test count");
                         e.target.db.close();
                         done();
                     };
                     transaction.onabort = function (err){
-                        equal(err.error.name, "AbortError", "AbortError");
+                        assert.equal(err.error.name, "AbortError", "AbortError");
                         e.target.result.close();
                         done();
                     };
@@ -52,8 +71,9 @@ describe('Objectstore - Get', function() {
             };
         }, done, assert);
     });
+    it("Deleting data - key", function (done) {
+        var expect = 1, ct = 0;
 
-    it("Retrieving data - external key", function (done) {
         initionalSituationObjectStoreNoAutoIncrementWithData(function () {
             var request = indexedDb.open(dbName);
             request.onsuccess = function(e){
@@ -62,361 +82,17 @@ describe('Objectstore - Get', function() {
                     var objectstore = transaction.objectStore(objectStoreName);
 
                     try{
-                        var getRequest = objectstore.get(addData.id);
-                        getRequest.onsuccess = function (e){
-                            deepEqual(e.target.result, addData, "Data undefined");
-                        };
-                        getRequest.onerror = function (e){
-                            assert.ok(false, "Get error");
-                        };
-                    }
-                    catch (ex){
-                        assert.ok(false, "Get error");
-                    }
-
-                    transaction.oncomplete = function (e){
-                        e.target.db.close();
-                        done();
-                    };
-                    transaction.onabort = function (err){
-                        equal(err.error.name, "AbortError", "AbortError");
-                        e.target.result.close();
-                        done();
-                    };
-                    transaction.onerror = function (){
-                        assert.ok(false, "Transaction error");
-                        e.target.result.close();
-                        done();
-                    };
-                }
-                catch (ex) {
-                    assert.ok(false, "Transaction error");
-                    e.target.result.close();
-                    done();
-                }
-            };
-            request.onerror = function(){
-                assert.ok(false, "Database error");
-                done();
-            };
-        }, done, assert);
-    });
-
-    it("Retrieving data - internal key", function (done) {
-        initionalSituationObjectStoreWithKeyPathAndData(function () {
-            var request = indexedDb.open(dbName);
-            request.onsuccess = function(e){
-                try{
-                    var transaction = e.target.result.transaction([objectStoreName], "readwrite");
-                    var objectstore = transaction.objectStore(objectStoreName);
-
-                    try{
-                        var getRequest = objectstore.get(addData.id);
-                        getRequest.onsuccess = function (e){
-                            deepEqual(e.target.result, addData, "Data undefined");
-                        };
-                        getRequest.onerror = function (e){
-                            assert.ok(false, "Get error");
-                        };
-                    }
-                    catch (ex){
-                        assert.ok(false, "Get error");
-                    }
-
-                    transaction.oncomplete = function (e){
-                        e.target.db.close();
-                        done();
-                    };
-                    transaction.onabort = function (err){
-                        equal(err.error.name, "AbortError", "AbortError");
-                        e.target.result.close();
-                        done();
-                    };
-                    transaction.onerror = function (){
-                        assert.ok(false, "Transaction error");
-                        e.target.result.close();
-                        done();
-                    };
-                }
-                catch (ex) {
-                    assert.ok(false, "Transaction error");
-                    e.target.result.close();
-                    done();
-                }
-            };
-            request.onerror = function(){
-                assert.ok(false, "Database error");
-                done();
-            };
-        }, done, assert);
-    });
-
-    it("Retrieving data - key range lowerBound exclusive", function (done) {
-        initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
-            request.onsuccess = function(e){
-                try{
-                    var transaction = e.target.result.transaction([objectStoreName], "readwrite");
-                    var objectstore = transaction.objectStore(objectStoreName);
-
-                    try{
-                        var getRequest = objectstore.get(KeyRange.lowerBound(5, true));
-                        getRequest.onsuccess = function (e){
-                            deepEqual(e.target.result, addData6, "Data");
-                        };
-                        getRequest.onerror = function (e){
-                            assert.ok(false, "Get error");
-                        };
-                    }
-                    catch (ex){
-                        assert.ok(false, "Get error");
-                    }
-
-                    transaction.oncomplete = function (e){
-                        e.target.db.close();
-                        done();
-                    };
-                    transaction.onabort = function (err){
-                        equal(err.error.name, "AbortError", "AbortError");
-                        e.target.result.close();
-                        done();
-                    };
-                    transaction.onerror = function (){
-                        assert.ok(false, "Transaction error");
-                        e.target.result.close();
-                        done();
-                    };
-                }
-                catch (ex) {
-                    assert.ok(false, "Transaction error");
-                    e.target.result.close();
-                    done();
-                }
-            };
-            request.onerror = function(){
-                assert.ok(false, "Database error");
-                done();
-            };
-        }, done, assert);
-    });
-
-    it("Retrieving data - key range lowerBound inclusieve", function (done) {
-        initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
-            request.onsuccess = function(e){
-                try{
-                    var transaction = e.target.result.transaction([objectStoreName], "readwrite");
-                    var objectstore = transaction.objectStore(objectStoreName);
-
-                    try{
-                        var getRequest = objectstore.get(KeyRange.lowerBound(5));
-                        getRequest.onsuccess = function (e){
-                            deepEqual(e.target.result, addData5, "Data");
-                        };
-                        getRequest.onerror = function (e){
-                            assert.ok(false, "Get error");
-                        };
-                    }
-                    catch (ex){
-                        assert.ok(false, "Get error");
-                    }
-
-                    transaction.oncomplete = function (e){
-                        e.target.db.close();
-                        done();
-                    };
-                    transaction.onabort = function (err){
-                        equal(err.error.name, "AbortError", "AbortError");
-                        e.target.result.close();
-                        done();
-                    };
-                    transaction.onerror = function (){
-                        assert.ok(false, "Transaction error");
-                        e.target.result.close();
-                        done();
-                    };
-                }
-                catch (ex) {
-                    assert.ok(false, "Transaction error");
-                    e.target.result.close();
-                    done();
-                }
-            };
-            request.onerror = function(){
-                assert.ok(false, "Database error");
-                done();
-            };
-        }, done, assert);
-    });
-
-    it("Retrieving data - key range upperBound", function (done) {
-        initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
-            request.onsuccess = function(e){
-                try{
-                    var transaction = e.target.result.transaction([objectStoreName], "readwrite");
-                    var objectstore = transaction.objectStore(objectStoreName);
-
-                    try{
-                        var getRequest = objectstore.get(KeyRange.upperBound(5));
-                        getRequest.onsuccess = function (e){
-                            deepEqual(e.target.result, addData, "No data Data");
-                        };
-                        getRequest.onerror = function (e){
-                            assert.ok(false, "Get error");
-                        };
-                    }
-                    catch (ex){
-                        assert.ok(false, "Get error");
-                    }
-
-                    transaction.oncomplete = function (e){
-                        e.target.db.close();
-                        done();
-                    };
-                    transaction.onabort = function (err){
-                        equal(err.error.name, "AbortError", "AbortError");
-                        e.target.result.close();
-                        done();
-                    };
-                    transaction.onerror = function (){
-                        assert.ok(false, "Transaction error");
-                        e.target.result.close();
-                        done();
-                    };
-                }
-                catch (ex) {
-                    assert.ok(false, "Transaction error");
-                    e.target.result.close();
-                    done();
-                }
-            };
-            request.onerror = function(){
-                assert.ok(false, "Database error");
-                done();
-            };
-        }, done, assert);
-    });
-
-    it("Retrieving data - key range upperBound exclusieve", function (done) {
-        initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
-            request.onsuccess = function(e){
-                try{
-                    var transaction = e.target.result.transaction([objectStoreName], "readwrite");
-                    var objectstore = transaction.objectStore(objectStoreName);
-
-                    try{
-                        var getRequest = objectstore.get(KeyRange.upperBound(1, true));
-                        getRequest.onsuccess = function (e){
-                            deepEqual(e.target.result, undefined, "No data Data");
-                        };
-                        getRequest.onerror = function (e){
-                            assert.ok(false, "Get error");
-                        };
-                    }
-                    catch (ex){
-                        assert.ok(false, "Get error");
-                    }
-
-                    transaction.oncomplete = function (e){
-                        e.target.db.close();
-                        done();
-                    };
-                    transaction.onabort = function (err){
-                        equal(err.error.name, "AbortError", "AbortError");
-                        e.target.result.close();
-                        done();
-                    };
-                    transaction.onerror = function (){
-                        assert.ok(false, "Transaction error");
-                        e.target.result.close();
-                        done();
-                    };
-                }
-                catch (ex) {
-                    assert.ok(false, "Transaction error");
-                    e.target.result.close();
-                    done();
-                }
-            };
-            request.onerror = function(){
-                assert.ok(false, "Database error");
-                done();
-            };
-        }, done, assert);
-    });
-
-    it("Retrieving data - key range upperBound inclusieve", function (done) {
-        initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
-            request.onsuccess = function(e){
-                try{
-                    var transaction = e.target.result.transaction([objectStoreName], "readwrite");
-                    var objectstore = transaction.objectStore(objectStoreName);
-
-                    try{
-                        var getRequest = objectstore.get(KeyRange.upperBound(1, false));
-                        getRequest.onsuccess = function (e){
-                            deepEqual(e.target.result, addData, "Data");
-                        };
-                        getRequest.onerror = function (e){
-                            assert.ok(false, "Get error");
-                        };
-                    }
-                    catch (ex){
-                        assert.ok(false, "Get error");
-                    }
-
-                    transaction.oncomplete = function (e){
-                        e.target.db.close();
-                        done();
-                    };
-                    transaction.onabort = function (err){
-                        assert.equal(err.error.name, "AbortError", "AbortError");
-                        e.target.result.close();
-                        done();
-                    };
-                    transaction.onerror = function (){
-                        assert.ok(false, "Transaction error");
-                        e.target.result.close();
-                        done();
-                    };
-                }
-                catch (ex) {
-                    assert.ok(false, "Transaction error");
-                    e.target.result.close();
-                    done();
-                }
-            };
-            request.onerror = function(){
-                assert.ok(false, "Database error");
-                done();
-            };
-        }, done, assert);
-    });
-    it("Retrieving data - key range only", function (done) {
-        var expect = 1, ct = 0;
-
-        initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
-            request.onsuccess = function(e){
-                try{
-                    var transaction = e.target.result.transaction([objectStoreName], "readwrite");
-                    var objectstore = transaction.objectStore(objectStoreName);
-
-                    try{
-                        var getRequest = objectstore.get(KeyRange.only(1));
-                        getRequest.onsuccess = function (e){
-                            assert.deepEqual(e.target.result, addData, "Data");
+                        var deleteRequest = objectstore.delete(addData.id);
+                        deleteRequest.onsuccess = function (e){
+                            assert.equal(e.target.result, undefined, "Data deleted");
                             ct++;
                         };
-                        getRequest.onerror = function (e){
-                            assert.ok(false, "Get error");
+                        deleteRequest.onerror = function (e){
+                            assert.ok(false, "Delete error");
                         };
                     }
                     catch (ex){
-                        assert.ok(false, "Get error");
+                        assert.ok(false, "Delete error");
                     }
 
                     transaction.oncomplete = function (e){
@@ -447,8 +123,8 @@ describe('Objectstore - Get', function() {
             };
         }, done, assert);
     });
-    it("Retrieving data - key range between", function (done) {
-        var expect = 1, ct = 0;
+    it("Deleting data - key range lowerBound exclusieve", function (done) {
+        var expect = 2, ct = 0;
 
         initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
             var request = indexedDb.open(dbName);
@@ -458,18 +134,28 @@ describe('Objectstore - Get', function() {
                     var objectstore = transaction.objectStore(objectStoreName);
 
                     try{
-                        var getRequest = objectstore.get(KeyRange.bound(1,5, false, false));
-                        getRequest.onsuccess = function (e){
-                            assert.deepEqual(e.target.result, addData, "Data");
+                        var deleteRequest = objectstore.delete(KeyRange.lowerBound(5, true));
+                        deleteRequest.onsuccess = function (e){
+                            assert.equal(e.target.result, undefined, "Data deleted");
                             ct++;
 
+                            var countRequest = objectstore.count(KeyRange.lowerBound(5, true));
+
+                            countRequest.onsuccess = function (e){
+                                assert.equal(e.target.result, 0, "Data deleted");
+                                ct++;
+
+                            };
+                            countRequest.onerror = function (e){
+                                assert.ok(false, "Count error");
+                            };
                         };
-                        getRequest.onerror = function (e){
-                            assert.ok(false, "Get error");
+                        deleteRequest.onerror = function (e){
+                            assert.ok(false, "Delete error");
                         };
                     }
                     catch (ex){
-                        assert.ok(false, "Get error");
+                        assert.ok(false, "Delete error");
                     }
 
                     transaction.oncomplete = function (e){
@@ -478,7 +164,7 @@ describe('Objectstore - Get', function() {
                         done();
                     };
                     transaction.onabort = function (err){
-                        equal(err.error.name, "AbortError", "AbortError");
+                        assert.equal(err.error.name, "AbortError", "AbortError");
                         e.target.result.close();
                         done();
                     };
@@ -500,7 +186,322 @@ describe('Objectstore - Get', function() {
             };
         }, done, assert);
     });
-    it("Retrieving data - key invalid", function (done) {
+    it("Deleting data - key range lowerBound inclusieve", function (done) {
+        var expect = 2, ct = 0;
+
+        initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
+            var request = indexedDb.open(dbName);
+            request.onsuccess = function(e){
+                try{
+                    var transaction = e.target.result.transaction([objectStoreName], "readwrite");
+                    var objectstore = transaction.objectStore(objectStoreName);
+
+                    try{
+                        var deleteRequest = objectstore.delete(KeyRange.lowerBound(5));
+                        deleteRequest.onsuccess = function (e){
+                            assert.equal(e.target.result, undefined, "Data deleted");
+                            ct++;
+
+                            var countRequest = objectstore.count(KeyRange.lowerBound(5));
+
+                            countRequest.onsuccess = function (e){
+                                assert.equal(e.target.result, 0, "Data deleted");
+                                ct++;
+
+                            };
+                            countRequest.onerror = function (e){
+                                assert.ok(false, "Count error");
+                            };
+                        };
+                        deleteRequest.onerror = function (e){
+                            assert.ok(false, "Delete error");
+                        };
+                    }
+                    catch (ex){
+                        assert.ok(false, "Delete error");
+                    }
+
+                    transaction.oncomplete = function (e){
+                        equal(ct, expect, "Expected test count");
+                        e.target.db.close();
+                        done();
+                    };
+                    transaction.onabort = function (err){
+                        assert.equal(err.error.name, "AbortError", "AbortError");
+                        e.target.result.close();
+                        done();
+                    };
+                    transaction.onerror = function (){
+                        assert.ok(false, "Transaction error");
+                        e.target.result.close();
+                        done();
+                    };
+                }
+                catch (ex) {
+                    assert.ok(false, "Transaction error");
+                    e.target.result.close();
+                    done();
+                }
+            };
+            request.onerror = function(){
+                assert.ok(false, "Database error");
+                done();
+            };
+        }, done, assert);
+    });
+    it("Deleting data - key range upperBound exclusieve", function (done) {
+        var expect = 2, ct = 0;
+
+        initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
+            var request = indexedDb.open(dbName);
+            request.onsuccess = function(e){
+                try{
+                    var transaction = e.target.result.transaction([objectStoreName], "readwrite");
+                    var objectstore = transaction.objectStore(objectStoreName);
+
+                    try{
+                        var deleteRequest = objectstore.delete(KeyRange.upperBound(5, true));
+                        deleteRequest.onsuccess = function (e){
+                            assert.equal(e.target.result, undefined, "Data deleted");
+                            ct++;
+
+                            var countRequest = objectstore.count(KeyRange.upperBound(5, true));
+
+                            countRequest.onsuccess = function (e){
+                                assert.equal(e.target.result, 0, "Data deleted");
+                                ct++;
+
+                            };
+                            countRequest.onerror = function (e){
+                                assert.ok(false, "Count error");
+                            };
+                        };
+                        deleteRequest.onerror = function (e){
+                            assert.ok(false, "Delete error");
+                        };
+                    }
+                    catch (ex){
+                        assert.ok(false, "Delete error");
+                    }
+
+                    transaction.oncomplete = function (e){
+                        equal(ct, expect, "Expected test count");
+                        e.target.db.close();
+                        done();
+                    };
+                    transaction.onabort = function (err){
+                        assert.equal(err.error.name, "AbortError", "AbortError");
+                        e.target.result.close();
+                        done();
+                    };
+                    transaction.onerror = function (){
+                        assert.ok(false, "Transaction error");
+                        e.target.result.close();
+                        done();
+                    };
+                }
+                catch (ex) {
+                    assert.ok(false, "Transaction error");
+                    e.target.result.close();
+                    done();
+                }
+            };
+            request.onerror = function(){
+                assert.ok(false, "Database error");
+                done();
+            };
+        }, done, assert);
+    });
+    it("Deleting data - key range upperBound inclusieve", function (done) {
+        var expect = 2, ct = 0;
+
+        initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
+            var request = indexedDb.open(dbName);
+            request.onsuccess = function(e){
+                try{
+                    var transaction = e.target.result.transaction([objectStoreName], "readwrite");
+                    var objectstore = transaction.objectStore(objectStoreName);
+
+                    try{
+                        var deleteRequest = objectstore.delete(KeyRange.upperBound(5, false));
+                        deleteRequest.onsuccess = function (e){
+                            assert.equal(e.target.result, undefined, "Data deleted");
+                            ct++;
+
+                            var countRequest = objectstore.count(KeyRange.upperBound(5, false));
+
+                            countRequest.onsuccess = function (e){
+                                assert.equal(e.target.result, 0, "Data deleted");
+                                ct++;
+
+                            };
+                            countRequest.onerror = function (e){
+                                assert.ok(false, "Count error");
+                            };
+                        };
+                        deleteRequest.onerror = function (e){
+                            assert.ok(false, "Delete error");
+                        };
+                    }
+                    catch (ex){
+                        assert.ok(false, "Delete error");
+                    }
+
+                    transaction.oncomplete = function (e){
+                        equal(ct, expect, "Expected test count");
+                        e.target.db.close();
+                        done();
+                    };
+                    transaction.onabort = function (err){
+                        assert.equal(err.error.name, "AbortError", "AbortError");
+                        e.target.result.close();
+                        done();
+                    };
+                    transaction.onerror = function (){
+                        assert.ok(false, "Transaction error");
+                        e.target.result.close();
+                        done();
+                    };
+                }
+                catch (ex) {
+                    assert.ok(false, "Transaction error");
+                    e.target.result.close();
+                    done();
+                }
+            };
+            request.onerror = function(){
+                assert.ok(false, "Database error");
+                done();
+            };
+        }, done, assert);
+    });
+    it("Deleting data - key range only", function (done) {
+        var expect = 2, ct = 0;
+
+        initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
+            var request = indexedDb.open(dbName);
+            request.onsuccess = function(e){
+                try{
+                    var transaction = e.target.result.transaction([objectStoreName], "readwrite");
+                    var objectstore = transaction.objectStore(objectStoreName);
+
+                    try{
+                        var deleteRequest = objectstore.delete(KeyRange.only(1));
+                        deleteRequest.onsuccess = function (e){
+                            assert.equal(e.target.result, undefined, "Data deleted");
+                            ct++;
+
+                            var countRequest = objectstore.count(KeyRange.only(1));
+
+                            countRequest.onsuccess = function (e){
+                                assert.equal(e.target.result, 0, "Data deleted");
+                                ct++;
+
+                            };
+                            countRequest.onerror = function (e){
+                                assert.ok(false, "Count error");
+                            };
+                        };
+                        deleteRequest.onerror = function (e){
+                            assert.ok(false, "Delete error");
+                        };
+                    }
+                    catch (ex){
+                        assert.ok(false, "Delete error");
+                    }
+
+                    transaction.oncomplete = function (e){
+                        equal(ct, expect, "Expected test count");
+                        e.target.db.close();
+                        done();
+                    };
+                    transaction.onabort = function (err){
+                        assert.equal(err.error.name, "AbortError", "AbortError");
+                        e.target.result.close();
+                        done();
+                    };
+                    transaction.onerror = function (){
+                        assert.ok(false, "Transaction error");
+                        e.target.result.close();
+                        done();
+                    };
+                }
+                catch (ex) {
+                    assert.ok(false, "Transaction error");
+                    e.target.result.close();
+                    done();
+                }
+            };
+            request.onerror = function(){
+                assert.ok(false, "Database error");
+                done();
+            };
+        }, done, assert);
+    });
+    it("Deleting data - key range between", function (done) {
+        var expect = 2, ct = 0;
+
+        initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
+            var request = indexedDb.open(dbName);
+            request.onsuccess = function(e){
+                try{
+                    var transaction = e.target.result.transaction([objectStoreName], "readwrite");
+                    var objectstore = transaction.objectStore(objectStoreName);
+
+                    try{
+                        var deleteRequest = objectstore.delete(KeyRange.bound(1,5, false, false));
+                        deleteRequest.onsuccess = function (e){
+                            assert.equal(e.target.result, undefined, "Data deleted");
+                            ct++;
+
+                            var countRequest = objectstore.count(KeyRange.bound(1,5, false, false));
+
+                            countRequest.onsuccess = function (e){
+                                assert.equal(e.target.result, 0, "Data deleted");
+                                ct++;
+
+                            };
+                            countRequest.onerror = function (e){
+                                assert.ok(false, "Count error");
+                            };
+                        };
+                        deleteRequest.onerror = function (e){
+                            assert.ok(false, "Delete error");
+                        };
+                    }
+                    catch (ex){
+                        assert.ok(false, "Delete error");
+                    }
+
+                    transaction.oncomplete = function (e){
+                        equal(ct, expect, "Expected test count");
+                        e.target.db.close();
+                        done();
+                    };
+                    transaction.onabort = function (err){
+                        assert.equal(err.error.name, "AbortError", "AbortError");
+                        e.target.result.close();
+                        done();
+                    };
+                    transaction.onerror = function (){
+                        assert.ok(false, "Transaction error");
+                        e.target.result.close();
+                        done();
+                    };
+                }
+                catch (ex) {
+                    assert.ok(false, "Transaction error");
+                    e.target.result.close();
+                    done();
+                }
+            };
+            request.onerror = function(){
+                assert.ok(false, "Database error");
+                done();
+            };
+        }, done, assert);
+    });
+    it("Deleting data - key invalid", function (done) {
         var expect = 1, ct = 0;
         var key = 1;
 
@@ -512,12 +513,12 @@ describe('Objectstore - Get', function() {
                     var objectstore = transaction.objectStore(objectStoreName);
 
                     try{
-                        var getRequest = objectstore.get(function(){});
-                        getRequest.onsuccess = function (e){
-                            assert.ok(false, "Data retrieved");
+                        var deleteRequest = objectstore.delete(function(){});
+                        deleteRequest.onsuccess = function (e){
+                            assert.ok(false, "Data deleted");
                         };
-                        getRequest.onerror = function (e){
-                            assert.ok(false, "Get error");
+                        deleteRequest.onerror = function (e){
+                            assert.ok(false, "Delete error");
                         };
                     }
                     catch (ex){
@@ -553,4 +554,110 @@ describe('Objectstore - Get', function() {
             };
         }, done, assert);
     });
+    it("Deleting data - no key", function (done) {
+        var expect = 1, ct = 0;
+        var key = 1;
+
+        initionalSituationObjectStoreNoAutoIncrement(function () {
+            var request = indexedDb.open(dbName);
+            request.onsuccess = function(e){
+                try{
+                    var transaction = e.target.result.transaction([objectStoreName], "readwrite");
+                    var objectstore = transaction.objectStore(objectStoreName);
+
+                    try{
+                        var deleteRequest = objectstore.delete();
+                        deleteRequest.onsuccess = function (e){
+                            assert.ok(false, "Data deleted");
+                        };
+                        deleteRequest.onerror = function (e){
+                            assert.ok(false, "Delete error");
+                        };
+                    }
+                    catch (ex){
+                        assert.equal(ex.name, "TypeError", ex.name);
+                        ct++;
+                    }
+
+                    transaction.oncomplete = function (e){
+                        equal(ct, expect, "Expected test count");
+                        e.target.db.close();
+                        done();
+                    };
+                    transaction.onabort = function (err){
+                        assert.equal(err.error.name, "AbortError", "AbortError");
+                        e.target.result.close();
+                        done();
+                    };
+                    transaction.onerror = function (){
+                        assert.ok(false, "Transaction error");
+                        e.target.result.close();
+                        done();
+                    };
+                }
+                catch (ex) {
+                    assert.ok(false, "Transaction error");
+                    e.target.result.close();
+                    done();
+                }
+            };
+            request.onerror = function(){
+                assert.ok(false, "Database error");
+                done();
+            };
+        }, done, assert);
+    });
+    it("Deleting data - ReadOnly transaction", function (done) {
+        var expect = 1, ct = 0;
+
+        initionalSituationObjectStoreNoAutoIncrement(function () {
+            var request = indexedDb.open(dbName);
+            request.onsuccess = function(e){
+                try{
+                    var transaction = e.target.result.transaction([objectStoreName], "readonly");
+                    var objectstore = transaction.objectStore(objectStoreName);
+
+                    try{
+                        var deleteRequest = objectstore.delete(1);
+                        deleteRequest.onsuccess = function (e){
+                            assert.ok(false, "data deleted");
+                        };
+                        deleteRequest.onerror = function (e){
+                            assert.ok(false, "delete error");
+                        };
+                    }
+                    catch (ex){
+                        assert.equal(ex.name, "ReadOnlyError", "ReadOnlyError");
+                        ct++;
+                    }
+
+                    transaction.oncomplete = function (e){
+                        equal(ct, expect, "Expected test count");
+                        e.target.db.close();
+                        done();
+                    };
+                    transaction.onabort = function (err){
+                        assert.ok(false, "Transaction abort");
+                        e.target.result.close();
+                        done();
+                    };
+                    transaction.onerror = function (){
+                        assert.ok(false, "Transaction error");
+                        e.target.result.close();
+                        done();
+                    };
+                }
+                catch (ex) {
+                    assert.ok(false, "Transaction exception");
+                    e.target.result.close();
+                    done();
+                }
+            };
+            request.onerror = function(){
+                assert.ok(false, "Database error");
+                done();
+            };
+        }, done, assert);
+    });
+    // TODO Add test with indexes check if data is present
 });

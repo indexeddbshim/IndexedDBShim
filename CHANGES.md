@@ -133,6 +133,7 @@
 - Testing: Work on Node tests and for Firefox (including increasing timeouts
     as needed)
 - Testing: Rely on `node_modules` paths for testing framework files
+- Testing (mock): Update IndexedDBMock tests
 - Testing (mock): Expect `InvalidStateError` instead of `ConstraintError`
     when not in an upgrade transaction calling `createObjectStore`
 - Testing (W3C): Fix test to reflect latest draft spec -- see <https://github.com/brettz9/web-platform-tests/pull/1>
@@ -145,13 +146,14 @@
 - Testing (W3C): Increase timeout for Node testing `createObjectStore`'s
     `IDBObjectStoreParameters` test and IDBCursorBehavior's
     `IDBCursor.direction`
-- (Testing: tests-mocha, tests-qunit, and indexedDBmock tests now all
-    passing in browser and Node; from W3C, IDBCursor.advance.js,
-    IDBCursor.continue.js, IDBCursor.delete.js, IDBCursor.update.js,
-    IDBDatabase.createObjectStore.js, IDBDatabase.deleteObjectStore.js,
-    IDBDatabase.transaction.js, IDBFactory.cmp.js,
-    IDBFactory.deleteDatabase.js, IDBKeyrange.js, IDBObjectStore.index.js
-    are passing)
+- (Testing: tests-mocha and tests-qunit tests now all
+    passing in browser and Node; from indexedDBmock, database.js and
+    objectstore.delete.js are not passing;
+    from W3C, IDBCursor.advance.js, IDBCursor.continue.js,
+    IDBCursor.delete.js, IDBCursor.update.js, IDBDatabase.createObjectStore.js,
+    IDBDatabase.deleteObjectStore.js, IDBDatabase.transaction.js,
+    IDBFactory.cmp.js, IDBFactory.deleteDatabase.js, IDBKeyrange.js,
+    IDBObjectStore.index.js are passing)
 - Testing (Grunt): Clarify Grunt tasks, expand tasks for cleaning, make tests
     more granular
 - Testing (Grunt): Remove now redundant `sourceMappingURL`, use

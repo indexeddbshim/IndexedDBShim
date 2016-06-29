@@ -700,7 +700,7 @@ describe('Objectstore - Add', function() {
                 assert.ok(false, "Database error");
                 done();
             };
-        });
+        }, done, assert);
         });
 
     it("Adding data with invalid key", function (done) {
@@ -1228,4 +1228,6 @@ describe('Objectstore - Add', function() {
         }, done, assert);
         });
     // TODO: test adding data to a deleted objectstore
+
+    // TODO Add test with indexes check if data is present
 });
