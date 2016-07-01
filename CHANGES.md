@@ -144,6 +144,9 @@
 - Fix: Apply `toString()` (and convert from sparse to dense) for
     validation within key path arrays
 - Fix: Validate `IDBKeyRange`-like objects (e.g., passed to cursor methods)
+- Feature: `IDBIndex` methods, `get`, `getKey`, `count` to allow obtaining
+    first record of an IDBKeyRange (or IDBKeyRange-like range) and change
+    error messages to indicate "key or range"
 - Feature: Support Node cleanly via `websql` SQLite3 library
 - Feature: Add `IDBObjectStore.openKeyCursor`
 - Feature: Add `IDBKeyRange.includes()` with test
@@ -218,8 +221,7 @@
     From fakeIndexedDB (Node), only fakeIndexedDB.js is not passing;
     From indexedDBmock (Node), only database.js is not passing;
     From W3C (Node), only IDBCursorBehavior.js, IDBDatabase.close.js,
-        IDBFactory.open.js, IDBIndex.get.js, IDBIndex.getKey.js,
-        IDBIndex.multiEntry.js, IBObjectStore.add.js,
+        IDBFactory.open.js, IDBIndex.multiEntry.js, IBObjectStore.add.js,
         IDBObjectStore.createIndex.js, IDBObjectStore.js,
         IDBObjectStore.put.js, IDBTransaction.abort.js, IDBTransaction.js,
         KeyGenerator.js, KeyPath.js, RequestBehavior.js, TransactionBehavior.js

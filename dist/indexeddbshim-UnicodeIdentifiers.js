@@ -10337,8 +10337,6 @@ var _Key2 = _interopRequireDefault(_Key);
 
 var _IDBKeyRange = require('./IDBKeyRange.js');
 
-var _IDBKeyRange2 = _interopRequireDefault(_IDBKeyRange);
-
 var _Sca = require('./Sca.js');
 
 var _Sca2 = _interopRequireDefault(_Sca);
@@ -10511,9 +10509,9 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
  * @returns {IDBRequest}
  * @private
  */
-IDBIndex.prototype.__fetchIndexData = function (key, opType, nullDisallowed) {
+IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, unboundedAllowed) {
     var me = this;
-    var hasKey = void 0;
+    var hasUnboundedRange = unboundedAllowed && range == null;
 
     if (this.__deleted) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This index has been deleted');
@@ -10523,20 +10521,11 @@ IDBIndex.prototype.__fetchIndexData = function (key, opType, nullDisallowed) {
     }
     IDBTransaction.__assertActive(this.objectStore.transaction);
 
-    if (nullDisallowed && key == null) {
-        throw (0, _DOMException.createDOMException)('DataError', 'No key was specified');
+    if (nullDisallowed && !unboundedAllowed && range == null) {
+        throw (0, _DOMException.createDOMException)('DataError', 'No key or range was specified');
     }
 
-    // key is optional
-    if (arguments.length === 1) {
-        opType = key;
-        hasKey = false;
-    } else {
-        _Key2.default.validate(key);
-        hasKey = true;
-    }
-
-    var fetchArgs = fetchIndexData(me, hasKey, key, opType, false);
+    var fetchArgs = fetchIndexData(me, !hasUnboundedRange, range, opType, false);
     return me.objectStore.transaction.__addToTransactionQueue(function () {
         for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
             args[_key] = arguments[_key];
@@ -10588,17 +10577,13 @@ IDBIndex.prototype.getAllKeys = function (query, count) {
 
 IDBIndex.prototype.count = function (query) {
     // key is optional
-    if (query == null) {
-        // unbounded
-        return this.__fetchIndexData('count');
-    }
-    if (util.instanceOf(query, _IDBKeyRange2.default)) {
+    if (util.instanceOf(query, _IDBKeyRange.IDBKeyRange)) {
         if (!query.toString() !== '[object IDBKeyRange]') {
-            query = new _IDBKeyRange2.default(query.lower, query.upper, query.lowerOpen, query.upperOpen);
+            query = new _IDBKeyRange.IDBKeyRange(query.lower, query.upper, query.lowerOpen, query.upperOpen);
         }
         return new _IDBCursor.IDBCursorWithValue(query, 'next', this.objectStore, this, '_' + this.name, 'value', true).__req;
     }
-    return this.__fetchIndexData(query, 'count');
+    return this.__fetchIndexData(query, 'count', false, true);
 };
 
 IDBIndex.prototype.toString = function () {
@@ -10646,7 +10631,7 @@ function executeFetchIndexData(index, hasKey, encodedKey, opType, multiChecks, s
             var _loop = function _loop(i) {
                 var row = data.rows.item(i);
                 var rowKey = _Key2.default.decode(row['_' + index.name]);
-                if (hasKey && (multiChecks && multiChecks.some(function (check) {
+                if (hasKey && (multiChecks && encodedKey.some(function (check) {
                     return rowKey.includes(check);
                 }) || // More precise than our SQL
                 _Key2.default.isMultiEntryMatch(encodedKey, row['_' + index.name]))) {
@@ -10680,14 +10665,13 @@ function executeFetchIndexData(index, hasKey, encodedKey, opType, multiChecks, s
     }, error);
 }
 
-function fetchIndexData(index, hasKey, indexKey, opType, multiChecks) {
-    var encodedKey = _Key2.default.encode(indexKey, index.multiEntry);
+function fetchIndexData(index, hasRange, range, opType, multiChecks) {
     var sql = ['SELECT * FROM', util.quote('s_' + index.objectStore.name), 'WHERE', util.quote('_' + index.name), 'NOT NULL'];
     var sqlValues = [];
-    if (hasKey) {
+    if (hasRange) {
         if (multiChecks) {
             sql.push('AND (');
-            multiChecks.forEach(function (innerKey, i) {
+            range.forEach(function (innerKey, i) {
                 if (i > 0) sql.push('OR');
                 sql.push(util.quote('_' + index.name), "LIKE ? ESCAPE '^' ");
                 sqlValues.push('%' + util.sqlLIKEEscape(_Key2.default.encode(innerKey, index.multiEntry)) + '%');
@@ -10695,14 +10679,22 @@ function fetchIndexData(index, hasKey, indexKey, opType, multiChecks) {
             sql.push(')');
         } else if (index.multiEntry) {
             sql.push('AND', util.quote('_' + index.name), "LIKE ? ESCAPE '^'");
-            sqlValues.push('%' + util.sqlLIKEEscape(encodedKey) + '%');
+            range = _Key2.default.encode(range, index.multiEntry);
+            sqlValues.push('%' + util.sqlLIKEEscape(range) + '%');
         } else {
-            sql.push('AND', util.quote('_' + index.name), '= ?');
-            sqlValues.push(encodedKey);
+            if (util.instanceOf(range, _IDBKeyRange.IDBKeyRange)) {
+                // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
+                if (!range.toString() !== '[object IDBKeyRange]') {
+                    range = new _IDBKeyRange.IDBKeyRange(range.lower, range.upper, range.lowerOpen, range.upperOpen);
+                }
+            } else {
+                range = _IDBKeyRange.IDBKeyRange.only(range);
+            }
+            (0, _IDBKeyRange.setSQLForRange)(range, util.quote('_' + index.name), sql, sqlValues, true, false);
         }
     }
     _cfg2.default.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
-    return [index, hasKey, encodedKey, opType, multiChecks, sql, sqlValues];
+    return [index, hasRange, range, opType, multiChecks, sql, sqlValues];
 }
 
 exports.fetchIndexData = fetchIndexData;
@@ -11084,7 +11076,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             if (index.unique) {
                 (function () {
                     var multiCheck = index.multiEntry && Array.isArray(indexKey);
-                    var fetchArgs = (0, _IDBIndex.fetchIndexData)(index, true, indexKey, 'key', multiCheck ? indexKey : null);
+                    var fetchArgs = (0, _IDBIndex.fetchIndexData)(index, true, indexKey, 'key', multiCheck);
                     _IDBIndex.executeFetchIndexData.apply(undefined, _toConsumableArray(fetchArgs).concat([tx, null, function success(key) {
                         if (key === undefined) {
                             setIndexInfo(index);
@@ -11211,7 +11203,7 @@ IDBObjectStore.prototype.get = function (range) {
     }
     _IDBTransaction2.default.__assertActive(me.transaction);
     if (range == null) {
-        throw (0, _DOMException.createDOMException)('DataError', 'No key was specified');
+        throw (0, _DOMException.createDOMException)('DataError', 'No key or range was specified');
     }
 
     if (util.instanceOf(range, _IDBKeyRange.IDBKeyRange)) {
@@ -11279,7 +11271,7 @@ IDBObjectStore.prototype['delete'] = function (range) {
     me.transaction.__assertWritable();
 
     if (range == null) {
-        throw (0, _DOMException.createDOMException)('DataError', 'No key was specified');
+        throw (0, _DOMException.createDOMException)('DataError', 'No key or range was specified');
     }
 
     if (util.instanceOf(range, _IDBKeyRange.IDBKeyRange)) {

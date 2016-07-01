@@ -232,7 +232,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             }
             if (index.unique) {
                 const multiCheck = index.multiEntry && Array.isArray(indexKey);
-                const fetchArgs = fetchIndexData(index, true, indexKey, 'key', (multiCheck ? indexKey : null));
+                const fetchArgs = fetchIndexData(index, true, indexKey, 'key', multiCheck);
                 executeFetchIndexData(...fetchArgs, tx, null, function success (key) {
                     if (key === undefined) {
                         setIndexInfo(index);
@@ -365,7 +365,7 @@ IDBObjectStore.prototype.get = function (range) {
     }
     IDBTransaction.__assertActive(me.transaction);
     if (range == null) {
-        throw createDOMException('DataError', 'No key was specified');
+        throw createDOMException('DataError', 'No key or range was specified');
     }
 
     if (util.instanceOf(range, IDBKeyRange)) {
@@ -433,7 +433,7 @@ IDBObjectStore.prototype['delete'] = function (range) {
     me.transaction.__assertWritable();
 
     if (range == null) {
-        throw createDOMException('DataError', 'No key was specified');
+        throw createDOMException('DataError', 'No key or range was specified');
     }
 
     if (util.instanceOf(range, IDBKeyRange)) {
