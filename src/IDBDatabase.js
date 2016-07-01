@@ -133,6 +133,9 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
 
     return new IDBTransaction(this, storeNames, mode);
 };
+IDBDatabase.prototype.toString = function () {
+    return '[object IDBDatabase]';
+};
 
 util.defineReadonlyProperties(IDBDatabase.prototype, ['name', 'version', 'objectStoreNames']);
 

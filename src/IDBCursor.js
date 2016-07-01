@@ -25,7 +25,12 @@ function IDBCursor (range, direction, store, source, keyColumnName, valueColumnN
     if (range === null) {
         range = undefined;
     }
-    if (range !== undefined && !(util.instanceOf(range, IDBKeyRange))) {
+    if (util.instanceOf(range, IDBKeyRange)) {
+        // We still need to validate duck-typing (the above check is based on duck-typing)
+        if (!range.toString() !== '[object IDBKeyRange]') {
+            range = new IDBKeyRange(range.lower, range.upper, range.lowerOpen, range.upperOpen);
+        }
+    } else if (range !== undefined) {
         range = new IDBKeyRange(range, range, false, false);
     }
     if (direction !== undefined && !(['next', 'prev', 'nextunique', 'prevunique'].includes(direction))) {
@@ -475,9 +480,16 @@ IDBCursor.prototype['delete'] = function () {
     }, undefined, me);
 };
 
+IDBCursor.prototype.toString = function () {
+    return '[object IDBCursor]';
+};
+
 util.defineReadonlyProperties(IDBCursor.prototype, ['key', 'primaryKey']);
 
 class IDBCursorWithValue extends IDBCursor {
+    toString () {
+        return '[object IDBCursorWithValue]';
+    }
 }
 
 util.defineReadonlyProperties(IDBCursorWithValue.prototype, 'value');

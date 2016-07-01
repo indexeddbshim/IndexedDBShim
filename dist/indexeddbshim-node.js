@@ -16781,6 +16781,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.IDBCursorWithValue = exports.IDBCursor = undefined;
 
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
 var _IDBRequest = require('./IDBRequest.js');
 
 var _DOMException = require('./DOMException.js');
@@ -16836,7 +16838,12 @@ function IDBCursor(range, direction, store, source, keyColumnName, valueColumnNa
     if (range === null) {
         range = undefined;
     }
-    if (range !== undefined && !util.instanceOf(range, _IDBKeyRange.IDBKeyRange)) {
+    if (util.instanceOf(range, _IDBKeyRange.IDBKeyRange)) {
+        // We still need to validate duck-typing (the above check is based on duck-typing)
+        if (!range.toString() !== '[object IDBKeyRange]') {
+            range = new _IDBKeyRange.IDBKeyRange(range.lower, range.upper, range.lowerOpen, range.upperOpen);
+        }
+    } else if (range !== undefined) {
         range = new _IDBKeyRange.IDBKeyRange(range, range, false, false);
     }
     if (direction !== undefined && !['next', 'prev', 'nextunique', 'prevunique'].includes(direction)) {
@@ -17286,6 +17293,10 @@ IDBCursor.prototype['delete'] = function () {
     }, undefined, me);
 };
 
+IDBCursor.prototype.toString = function () {
+    return '[object IDBCursor]';
+};
+
 util.defineReadonlyProperties(IDBCursor.prototype, ['key', 'primaryKey']);
 
 var IDBCursorWithValue = function (_IDBCursor) {
@@ -17296,6 +17307,13 @@ var IDBCursorWithValue = function (_IDBCursor) {
 
         return _possibleConstructorReturn(this, Object.getPrototypeOf(IDBCursorWithValue).apply(this, arguments));
     }
+
+    _createClass(IDBCursorWithValue, [{
+        key: 'toString',
+        value: function toString() {
+            return '[object IDBCursorWithValue]';
+        }
+    }]);
 
     return IDBCursorWithValue;
 }(IDBCursor);
@@ -17471,6 +17489,9 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
     }
 
     return new _IDBTransaction2.default(this, storeNames, mode);
+};
+IDBDatabase.prototype.toString = function () {
+    return '[object IDBDatabase]';
 };
 
 util.defineReadonlyProperties(IDBDatabase.prototype, ['name', 'version', 'objectStoreNames']);
@@ -18244,6 +18265,9 @@ IDBKeyRange.upperBound = function (value, open) {
 };
 IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
     return new IDBKeyRange(lower, upper, lowerOpen, upperOpen);
+};
+IDBKeyRange.prototype.toString = function () {
+    return '[object IDBKeyRange]';
 };
 
 util.defineReadonlyProperties(IDBKeyRange.prototype, ['lower', 'upper', 'lowerOpen', 'upperOpen']);
@@ -19288,6 +19312,9 @@ IDBTransaction.prototype.abort = function () {
     setTimeout(function () {
         util.callback('onabort', _this2, evt);
     }, 0);
+};
+IDBTransaction.prototype.toString = function () {
+    return '[object IDBTransaction]';
 };
 
 IDBTransaction.__assertVersionChange = function (tx) {

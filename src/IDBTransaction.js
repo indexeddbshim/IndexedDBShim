@@ -246,6 +246,9 @@ IDBTransaction.prototype.abort = function () {
         util.callback('onabort', this, evt);
     }, 0);
 };
+IDBTransaction.prototype.toString = function () {
+    return '[object IDBTransaction]';
+};
 
 IDBTransaction.__assertVersionChange = function (tx) {
     if (!tx || tx.mode !== 'versionchange') {

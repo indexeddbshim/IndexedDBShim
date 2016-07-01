@@ -143,6 +143,7 @@
 - Fix: For `IDBObjectStore.createIndex`, throw if transaction not active
 - Fix: Apply `toString()` (and convert from sparse to dense) for
     validation within key path arrays
+- Fix: Validate `IDBKeyRange`-like objects (e.g., passed to cursor methods)
 - Feature: Support Node cleanly via `websql` SQLite3 library
 - Feature: Add `IDBObjectStore.openKeyCursor`
 - Feature: Add `IDBKeyRange.includes()` with test
@@ -220,7 +221,7 @@
     IDBIndex.js, IDBIndex.openKeyCursor.js, IDBKeyrange.js,
     IDBObjectStore.clear.js, IDBObjectStore.count.js,
     IDBObjectStore.deleteIndex.js, IDBObjectStore.get.js,
-    IDBObjectStore.index.js, KeyValidity.js
+    IDBObjectStore.index.js, IDBObjectStore.openCursor.js, KeyValidity.js
     are passing)
 - Testing (Grunt): Clarify Grunt tasks, expand tasks for cleaning, make tests
     more granular
