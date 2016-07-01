@@ -153,8 +153,6 @@
     property used internally for config, e.g., for setting Unicode
     regular expression strings
 - Feature: Implement `IDBTransaction.objectStoreNames`
-- Feature (Incomplete): Begin work on proper `IDBObjectStore.name` and
-    `IDBIndex.name` setters, throwing as necessary
 - Repo files: Rename test folders for ease in distinguishing
 - Refactoring (Avoid globals): Change from using window global to a CFG module
     for better maintainability
