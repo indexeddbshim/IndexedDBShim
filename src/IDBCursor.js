@@ -26,7 +26,7 @@ function IDBCursor (range, direction, store, source, keyColumnName, valueColumnN
         range = undefined;
     }
     if (util.instanceOf(range, IDBKeyRange)) {
-        // We still need to validate duck-typing (the above check is based on duck-typing)
+        // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
         if (!range.toString() !== '[object IDBKeyRange]') {
             range = new IDBKeyRange(range.lower, range.upper, range.lowerOpen, range.upperOpen);
         }

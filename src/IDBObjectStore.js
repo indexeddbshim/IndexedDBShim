@@ -368,7 +368,12 @@ IDBObjectStore.prototype.get = function (range) {
         throw createDOMException('DataError', 'No key was specified');
     }
 
-    if (!(util.instanceOf(range, IDBKeyRange))) {
+    if (util.instanceOf(range, IDBKeyRange)) {
+        // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
+        if (!range.toString() !== '[object IDBKeyRange]') {
+            range = new IDBKeyRange(range.lower, range.upper, range.lowerOpen, range.upperOpen);
+        }
+    } else {
         range = IDBKeyRange.only(range);
     }
 
@@ -376,9 +381,6 @@ IDBObjectStore.prototype.get = function (range) {
     const sqlValues = [];
     setSQLForRange(range, util.quote('key'), sql, sqlValues);
     sql = sql.join(' ');
-
-    if (range.lower !== undefined) Key.validate(range.lower);
-    if (range.upper !== undefined) Key.validate(range.upper);
 
     return me.transaction.__addToTransactionQueue(function objectStoreGet (tx, args, success, error) {
         CFG.DEBUG && console.log('Fetching', me.name, sqlValues);
@@ -474,6 +476,10 @@ IDBObjectStore.prototype.count = function (key) {
     }
     IDBTransaction.__assertActive(me.transaction);
     if (util.instanceOf(key, IDBKeyRange)) {
+        // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
+        if (!key.toString() !== '[object IDBKeyRange]') {
+            key = new IDBKeyRange(key.lower, key.upper, key.lowerOpen, key.upperOpen);
+        }
         return new IDBCursorWithValue(key, 'next', this, this, 'key', 'value', true, me).__req;
     } else {
         const hasKey = key != null;

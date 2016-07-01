@@ -16839,7 +16839,7 @@ function IDBCursor(range, direction, store, source, keyColumnName, valueColumnNa
         range = undefined;
     }
     if (util.instanceOf(range, _IDBKeyRange.IDBKeyRange)) {
-        // We still need to validate duck-typing (the above check is based on duck-typing)
+        // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
         if (!range.toString() !== '[object IDBKeyRange]') {
             range = new _IDBKeyRange.IDBKeyRange(range.lower, range.upper, range.lowerOpen, range.upperOpen);
         }
@@ -18699,7 +18699,12 @@ IDBObjectStore.prototype.get = function (range) {
         throw (0, _DOMException.createDOMException)('DataError', 'No key was specified');
     }
 
-    if (!util.instanceOf(range, _IDBKeyRange.IDBKeyRange)) {
+    if (util.instanceOf(range, _IDBKeyRange.IDBKeyRange)) {
+        // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
+        if (!range.toString() !== '[object IDBKeyRange]') {
+            range = new _IDBKeyRange.IDBKeyRange(range.lower, range.upper, range.lowerOpen, range.upperOpen);
+        }
+    } else {
         range = _IDBKeyRange.IDBKeyRange.only(range);
     }
 
@@ -18707,9 +18712,6 @@ IDBObjectStore.prototype.get = function (range) {
     var sqlValues = [];
     (0, _IDBKeyRange.setSQLForRange)(range, util.quote('key'), sql, sqlValues);
     sql = sql.join(' ');
-
-    if (range.lower !== undefined) _Key2.default.validate(range.lower);
-    if (range.upper !== undefined) _Key2.default.validate(range.upper);
 
     return me.transaction.__addToTransactionQueue(function objectStoreGet(tx, args, success, error) {
         _cfg2.default.DEBUG && console.log('Fetching', me.name, sqlValues);
@@ -18805,6 +18807,10 @@ IDBObjectStore.prototype.count = function (key) {
     }
     _IDBTransaction2.default.__assertActive(me.transaction);
     if (util.instanceOf(key, _IDBKeyRange.IDBKeyRange)) {
+        // We still need to validate duck-typed object (the above check is based on duck-typing)
+        if (!key.toString() !== '[object IDBKeyRange]') {
+            key = new _IDBKeyRange.IDBKeyRange(key.lower, key.upper, key.lowerOpen, key.upperOpen);
+        }
         return new _IDBCursor.IDBCursorWithValue(key, 'next', this, this, 'key', 'value', true, me).__req;
     } else {
         var _ret2 = function () {
