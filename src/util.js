@@ -214,7 +214,15 @@ function isValidKeyPathString (keyPathString) {
 }
 
 function isValidKeyPath (keyPath) {
-    return isValidKeyPathString(keyPath) || (Array.isArray(keyPath) && keyPath.length && keyPath.every(isValidKeyPathString));
+    return isValidKeyPathString(keyPath) || (
+        Array.isArray(keyPath) && keyPath.length &&
+            // Convert array from sparse to dense http://www.2ality.com/2012/06/dense-arrays.html
+            Array.apply(null, keyPath).every(function (kpp) {
+                // If W3C tests are accurate, it appears sequence<DOMString> implies `toString()`
+                // See also https://heycam.github.io/webidl/#idl-DOMString
+                return isValidKeyPathString(kpp.toString());
+            })
+    );
 }
 
 export {callback, StringList, stripNUL, quote, sqlLIKEEscape, instanceOf,

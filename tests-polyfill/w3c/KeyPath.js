@@ -1,10 +1,11 @@
 var assert = require('assert');
-var indexedDB = require('../test-helper');
+var indexedDB = require('../test-helper-unicode');
 //var FDBRequest = IDBRequest;
 var support = require('./support');
 var createdb = support.createdb;
 
 describe('W3C Key Path Tests', function () {
+    this.timeout(20000);
     // keypath
     it('Keypath', function (done) {
         var numChecks = 0;

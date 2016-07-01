@@ -141,6 +141,8 @@
 - Fix: For `IDBObjectStore.createIndex`, throw SyntaxError if not a
     valid keyPath given
 - Fix: For `IDBObjectStore.createIndex`, throw if transaction not active
+- Fix: Apply `toString()` (and convert from sparse to dense) for
+    validation within key path arrays
 - Feature: Support Node cleanly via `websql` SQLite3 library
 - Feature: Add `IDBObjectStore.openKeyCursor`
 - Feature: Add `IDBKeyRange.includes()` with test
@@ -149,8 +151,9 @@
 - Feature: Key value retrieval: Allow "length" type key
 - Feature: Add ".sqlite" extension to database name for sake of (Windows)
     file type identification
-- Feature: Expose `__setCFG(prop, val)` method for setting pseudo-global
-    property used internally for config, e.g., for setting Unicode
+- Feature: Expose `__setConfig(prop, val)` method for setting pseudo-global
+    property used internally for config.
+- Feature: Expose `__setUnicodeIdentifiers()` for setting Unicode
     regular expression strings
 - Feature: Implement `IDBTransaction.objectStoreNames`
 - Feature: Add `IDB.shimIndexedDB.__setUnicodeIdentifier` scaffolding for
@@ -203,6 +206,7 @@
 - Testing (W3C): Increase timeout for Node testing `createObjectStore`'s
     `IDBObjectStoreParameters` test and IDBCursorBehavior's
     `IDBCursor.direction`
+- Testing (W3C): Utilize Unicode in KeyPath.js test
 - Test scaffolding (W3C): Fix args to `initionalSituation()`
 - Test scaffolding (W3C): Fix test ok condition, typo
 - Test scaffolding (W3C): Fix assertions

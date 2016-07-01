@@ -11,6 +11,35 @@ module.exports = function (grunt) {
     grunt.initConfig({
         pkg: pkg,
         browserify: {
+            unicode: {
+                options: {
+                    transform: [['babelify']]
+                },
+                files: {
+                    'dist/<%= pkg.name%>-UnicodeIdentifiers.js': 'src/browser-UnicodeIdentifiers.js'
+                }
+            },
+            unicodeNode: {
+                options: {
+                    transform: [['babelify']],
+                    // Avoid `window` checking
+                    browserifyOptions: {
+                        standalone: 'dummyPlaceholder',
+                        // https://github.com/substack/node-browserify/issues/1277#issuecomment-115198436
+                        builtins: false,
+                        commondir: false,
+                        browserField: false, // Avoid `browser` entry in package.json
+                        insertGlobalVars: {
+                            process: function () {
+                                return;
+                            }
+                        }
+                    }
+                },
+                files: {
+                    'dist/<%= pkg.name%>-UnicodeIdentifiers-node.js': 'src/node-UnicodeIdentifiers.js'
+                }
+            },
             browser: {
                 options: {
                     transform: [['babelify', {sourceMaps: true}]]
@@ -42,6 +71,14 @@ module.exports = function (grunt) {
             }
         },
         uglify: {
+            unicode: {
+                src: 'dist/<%= pkg.name%>-UnicodeIdentifiers.js',
+                dest: 'dist/<%= pkg.name%>-UnicodeIdentifiers.min.js'
+            },
+            unicodeNode: {
+                src: 'dist/<%= pkg.name%>-UnicodeIdentifiers-node.js',
+                dest: 'dist/<%= pkg.name%>-UnicodeIdentifiers-node.min.js'
+            },
             browser: {
                 options: {
                     banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',

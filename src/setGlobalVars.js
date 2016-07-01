@@ -74,13 +74,9 @@ function setGlobalVars (idb) {
         IDB.shimIndexedDB.__setConfig = function (prop, val) {
             CFG[prop] = val;
         };
-        IDB.shimIndexedDB.__setUnicodeIdentifiers = function () {
-            // You must first set `CFG.System` with a polyfill (untested)
-            //   and possibly also add a Promise and/or ES6 polyfill
-            return CFG.System.import('./src/UnicodeIdentifiers').then((ui) => {
-                this.__setConfig('UnicodeIDStart', ui.UnicodeIDStart);
-                this.__setConfig('UnicodeIDContinue', ui.UnicodeIDContinue);
-            });
+        IDB.shimIndexedDB.__setUnicodeIdentifiers = function (ui) {
+            this.__setConfig('UnicodeIDStart', ui.UnicodeIDStart);
+            this.__setConfig('UnicodeIDContinue', ui.UnicodeIDContinue);
         };
     }
 
