@@ -307,10 +307,11 @@ function validate (key, arrayRefs) {
     case 'array':
         arrayRefs = arrayRefs || [];
         arrayRefs.push(key);
-        key.forEach((item) => {
+        for (let i = 0; i < key.length; i++) { // We cannot iterate here with array extras as we must ensure sparse arrays are invalidated
+            const item = key[i];
             if (arrayRefs.includes(item)) throw createDOMException('DataError', 'An array key cannot be circular');
             validate(item, arrayRefs);
-        });
+        }
         return;
     case 'date':
         if (!Number.isNaN(key.getTime())) {

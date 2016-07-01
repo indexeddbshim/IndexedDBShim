@@ -5,6 +5,7 @@ var support = require('./support');
 var createdb = support.createdb;
 
 describe('W3C Key Validity Tests', function () {
+    this.timeout(15000);
     // key_invalid
     it('Invalid key', function (done) {
         var numChecks = 0;

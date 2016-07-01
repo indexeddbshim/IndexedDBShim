@@ -216,7 +216,7 @@
     IDBIndex.js, IDBIndex.openKeyCursor.js, IDBKeyrange.js,
     IDBObjectStore.clear.js, IDBObjectStore.count.js,
     IDBObjectStore.deleteIndex.js, IDBObjectStore.get.js,
-    IDBObjectStore.index.js
+    IDBObjectStore.index.js, KeyValidity.js
     are passing)
 - Testing (Grunt): Clarify Grunt tasks, expand tasks for cleaning, make tests
     more granular
