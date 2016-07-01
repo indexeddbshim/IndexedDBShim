@@ -20197,9 +20197,10 @@ var CFG = {};
 'win', // (window on which there may be an `openDatabase` method (if any)
 //  for WebSQL; the browser throws if attempting to call
 //  `openDatabase` without the window)
-// Todo: Provide an API for optional dynamic `System.import()` loading of these large regular expression strings
-'UnicodeIDStart', // See https://gist.github.com/brettz9/b4cd6821d990daa023b2e604de371407
-'UnicodeIDContinue' // See https://gist.github.com/brettz9/b4cd6821d990daa023b2e604de371407
+// See optional dynamic `System.import()` loading API (shimIndexedDB.__setUnicodeIdentifiers)
+//    of these large regular expression strings:
+'UnicodeIDStart', // See `src/UnicodeIdentifiers.js`
+'UnicodeIDContinue' // See `src/UnicodeIdentifiers.js`
 ].forEach(function (prop) {
     Object.defineProperty(CFG, prop, {
         get: function get() {
@@ -20708,6 +20709,16 @@ function setGlobalVars(idb) {
         };
         IDB.shimIndexedDB.__setConfig = function (prop, val) {
             _cfg2.default[prop] = val;
+        };
+        IDB.shimIndexedDB.__setUnicodeIdentifiers = function () {
+            var _this = this;
+
+            // You must first set `CFG.System` with a polyfill (untested)
+            //   and possibly also add a Promise and/or ES6 polyfill
+            return _cfg2.default.System.import('./src/UnicodeIdentifiers').then(function (ui) {
+                _this.__setConfig('UnicodeIDStart', ui.UnicodeIDStart);
+                _this.__setConfig('UnicodeIDContinue', ui.UnicodeIDContinue);
+            });
         };
     }
 

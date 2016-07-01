@@ -153,6 +153,10 @@
     property used internally for config, e.g., for setting Unicode
     regular expression strings
 - Feature: Implement `IDBTransaction.objectStoreNames`
+- Feature: Add `IDB.shimIndexedDB.__setUnicodeIdentifier` scaffolding for
+    importing and setting Unicode identifier regular expression strings for
+    the sake of full key path validation compliance (may slow
+    loading/performance, requires polyfills, and is untested)
 - Repo files: Rename test folders for ease in distinguishing
 - Refactoring (Avoid globals): Change from using window global to a CFG module
     for better maintainability
