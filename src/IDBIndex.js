@@ -215,12 +215,12 @@ IDBIndex.prototype.openKeyCursor = function (range, direction) {
     return new IDBCursor(range, direction, this.objectStore, this, '_' + this.name, 'key').__req;
 };
 
-IDBIndex.prototype.get = function (key) {
-    return this.__fetchIndexData(key, 'value', true);
+IDBIndex.prototype.get = function (query) {
+    return this.__fetchIndexData(query, 'value', true);
 };
 
-IDBIndex.prototype.getKey = function (key) {
-    return this.__fetchIndexData(key, 'key', true);
+IDBIndex.prototype.getKey = function (query) {
+    return this.__fetchIndexData(query, 'key', true);
 };
 
 /*
@@ -235,15 +235,18 @@ IDBIndex.prototype.getAllKeys = function (query, count) {
 };
 */
 
-IDBIndex.prototype.count = function (key) {
+IDBIndex.prototype.count = function (query) {
     // key is optional
-    if (key == null) { // unbounded
+    if (query == null) { // unbounded
         return this.__fetchIndexData('count');
     }
-    if (util.instanceOf(key, IDBKeyRange)) {
-        return new IDBCursorWithValue(key, 'next', this.objectStore, this, '_' + this.name, 'value', true).__req;
+    if (util.instanceOf(query, IDBKeyRange)) {
+        if (!query.toString() !== '[object IDBKeyRange]') {
+            query = new IDBKeyRange(query.lower, query.upper, query.lowerOpen, query.upperOpen);
+        }
+        return new IDBCursorWithValue(query, 'next', this.objectStore, this, '_' + this.name, 'value', true).__req;
     }
-    return this.__fetchIndexData(key, 'count');
+    return this.__fetchIndexData(query, 'count');
 };
 
 IDBIndex.prototype.toString = function () {
