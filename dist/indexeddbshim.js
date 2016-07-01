@@ -11257,7 +11257,7 @@ IDBObjectStore.prototype.getAllKeys = function (query, count) {
 };
 */
 
-IDBObjectStore.prototype['delete'] = function (key) {
+IDBObjectStore.prototype['delete'] = function (range) {
     var me = this;
 
     if (me.__deleted) {
@@ -11266,17 +11266,27 @@ IDBObjectStore.prototype['delete'] = function (key) {
     _IDBTransaction2.default.__assertActive(me.transaction);
     me.transaction.__assertWritable();
 
-    if (key == null) {
+    if (range == null) {
         throw (0, _DOMException.createDOMException)('DataError', 'No key was specified');
     }
 
-    _Key2.default.validate(key);
-    var primaryKey = _Key2.default.encode(key);
-    // TODO delete() key should also support key ranges
+    if (util.instanceOf(range, _IDBKeyRange.IDBKeyRange)) {
+        // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
+        if (!range.toString() !== '[object IDBKeyRange]') {
+            range = new _IDBKeyRange.IDBKeyRange(range.lower, range.upper, range.lowerOpen, range.upperOpen);
+        }
+    } else {
+        range = _IDBKeyRange.IDBKeyRange.only(range);
+    }
+
+    var sql = ['DELETE FROM ', util.quote('s_' + me.name), ' WHERE '];
+    var sqlValues = [];
+    (0, _IDBKeyRange.setSQLForRange)(range, util.quote('key'), sql, sqlValues);
+    sql = sql.join(' ');
 
     return me.transaction.__addToTransactionQueue(function objectStoreDelete(tx, args, success, error) {
-        _cfg2.default.DEBUG && console.log('Fetching', me.name, primaryKey);
-        tx.executeSql('DELETE FROM ' + util.quote('s_' + me.name) + ' WHERE key = ?', [primaryKey], function (tx, data) {
+        _cfg2.default.DEBUG && console.log('Deleting', me.name, sqlValues);
+        tx.executeSql(sql, sqlValues, function (tx, data) {
             _cfg2.default.DEBUG && console.log('Deleted from database', data.rowsAffected);
             success();
         }, function (tx, err) {
