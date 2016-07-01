@@ -13,16 +13,16 @@
 
 ## Features
 
-* Adds full IndexedDB support to any web browser that [supports WebSql](http://caniuse.com/#search=websql)
-* Does nothing if the browser already [natively supports IndexedDB](http://caniuse.com/#search=indexeddb)
-* Can _optionally replace_ native IndexedDB on browsers with [buggy implementations](http://www.raymondcamden.com/2014/09/25/IndexedDB-on-iOS-8-Broken-Bad/)
-* Can _optionally enhance_ native IndexedDB on browsers that are [missing certain features](http://codepen.io/cemerick/pen/Itymi)
-* Works on __desktop__ and __mobile__ devices
-* Works on __Cordova__ and __PhoneGap__ via the [IndexedDB plug-in](http://plugins.cordova.io/#/package/com.msopentech.websql)
-* This shim is basically an IndexedDB-to-WebSql adapter.
-* Can be used in Node (courtesy of [websql](https://www.npmjs.com/package/websql)
+- Adds full IndexedDB support to any web browser that [supports WebSql](http://caniuse.com/#search=websql)
+- Does nothing if the browser already [natively supports IndexedDB](http://caniuse.com/#search=indexeddb)
+- Can _optionally replace_ native IndexedDB on browsers with [buggy implementations](http://www.raymondcamden.com/2014/09/25/IndexedDB-on-iOS-8-Broken-Bad/)
+- Can _optionally enhance_ native IndexedDB on browsers that are [missing certain features](http://codepen.io/cemerick/pen/Itymi)
+- Works on __desktop__ and __mobile__ devices
+- Works on __Cordova__ and __PhoneGap__ via the [IndexedDB plug-in](http://plugins.cordova.io/#/package/com.msopentech.websql)
+- This shim is basically an IndexedDB-to-WebSql adapter.
+- Can be used in Node (courtesy of [websql](https://www.npmjs.com/package/websql)
     which sits on top of SQLite3)
-* More details about the project at [gh-pages](http://nparashuram.com/IndexedDBShim)
+- More details about the project at [gh-pages](http://nparashuram.com/IndexedDBShim)
 
 ## Installation
 
@@ -102,6 +102,35 @@ To print out detailed debug messages, add this line to your script:
 window.shimIndexedDB.__debug(true);
 ```
 
+## Configuration
+
+Rather than using globals, a method has been provided to share state across
+IndexedDBShim modules.
+
+Its signature:
+
+```js
+shimIndexedDB.__setConfig(property, value);
+```
+
+The available properties are:
+
+- __DEBUG__ - Boolean (equivalent to `shimIndexedDB.__debug`)
+- __cursorPreloadPackSize__ - Number indicating how many records to preload for
+    caching of (non-multiEntry) `IDBCursor.continue` calls. Defaults to 100.
+- __win__,  Object on which there may be an `openDatabase` method (if any)
+    for WebSQL; Defaults to `window` or `self` in the browser and for Node,
+    it is set by default to [`node-websql`](https://github.com/nolanlawson/node-websql).
+- __UnicodeIDStart__ and __UnicodeIDContinue__ - Invocation of
+    `createObjectStore` and `createIndex` calls for validation of key paths.
+    The specification technically allows all [`IdentifierName`](https://tc39.github.io/ecma262/#prod-IdentifierName)
+    strings, but as this requires a [very large regular expression](https://gist.github.com/brettz9/b4cd6821d990daa023b2e604de371407),
+    it is replaced by default with `[$A-Z_a-z]` and `[$0-9A-Z_a-z]`,
+    respectively. Note that these are and must be expressed as strings,
+    not `RegExp` objects. You can use this configuration to change the default
+    to match the spec or as you see fit. In the future we may allow the spec
+    behavior via optional dynamic loading of an internal module.
+
 ## Known Issues
 
 All code has bugs, and this project is no exception.  If you find a bug,
@@ -110,6 +139,13 @@ Or better yet, [send us a fix](https://github.com/axemclion/IndexedDBShim/pulls)
 Please make sure someone else hasn't already reported the same bug though.
 
 There are a few bugs that are outside of our power to fix.  Namely:
+
+### NUL in identifiers
+
+We silently strip NUL characters from strings that will be stored internally as
+SQLite identifiers, such as database, store, and index names. While it may be
+possible that these could be escaped in some manner to satisfy SQLite, for now
+we are simply stripping them silently.
 
 ### iOS
 

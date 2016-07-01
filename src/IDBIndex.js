@@ -14,11 +14,12 @@ import CFG from './cfg.js';
  * @constructor
  */
 function IDBIndex (store, indexProperties) {
-    this.objectStore = store;
-    this.name = indexProperties.columnName;
-    this.keyPath = indexProperties.keyPath;
-    this.multiEntry = indexProperties.optionalParams && indexProperties.optionalParams.multiEntry;
-    this.unique = indexProperties.optionalParams && indexProperties.optionalParams.unique;
+    this.__objectStore = store;
+    this.__name = util.stripNUL(indexProperties.columnName);
+    this.__keyPath = Array.isArray(indexProperties.keyPath) ? indexProperties.keyPath.slice() : indexProperties.keyPath;
+    const optionalParams = indexProperties.optionalParams;
+    this.__multiEntry = !!(optionalParams && optionalParams.multiEntry);
+    this.__unique = !!(optionalParams && optionalParams.unique);
     this.__deleted = !!indexProperties.__deleted;
 }
 
@@ -163,9 +164,21 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
  * @returns {IDBRequest}
  * @private
  */
-IDBIndex.prototype.__fetchIndexData = function (key, opType) {
+IDBIndex.prototype.__fetchIndexData = function (key, opType, nullDisallowed) {
     const me = this;
     let hasKey, encodedKey;
+
+    if (this.__deleted) {
+        throw createDOMException('InvalidStateError', 'This index has been deleted');
+    }
+    if (this.objectStore.__deleted) {
+        throw createDOMException('InvalidStateError', "This index's object store has been deleted");
+    }
+    IDBTransaction.__assertActive(this.objectStore.transaction);
+
+    if (nullDisallowed && key == null) {
+        throw createDOMException('DataError', 'No key was specified');
+    }
 
     // key is optional
     if (arguments.length === 1) {
@@ -203,24 +216,28 @@ IDBIndex.prototype.openKeyCursor = function (range, direction) {
 };
 
 IDBIndex.prototype.get = function (key) {
-    if (key == null) {
-        throw createDOMException('DataError', 'No key was specified');
-    }
-
-    return this.__fetchIndexData(key, 'value');
+    return this.__fetchIndexData(key, 'value', true);
 };
 
 IDBIndex.prototype.getKey = function (key) {
-    if (key == null) {
-        throw createDOMException('DataError', 'No key was specified');
-    }
-
-    return this.__fetchIndexData(key, 'key');
+    return this.__fetchIndexData(key, 'key', true);
 };
+
+/*
+// Todo: Implement getAll
+IDBIndex.prototype.getAll = function (query, count) {
+};
+*/
+
+/*
+// Todo: Implement getAllKeys
+IDBIndex.prototype.getAllKeys = function (query, count) {
+};
+*/
 
 IDBIndex.prototype.count = function (key) {
     // key is optional
-    if (key === undefined) {
+    if (key == null) { // unbounded
         return this.__fetchIndexData('count');
     }
     if (util.instanceOf(key, IDBKeyRange)) {
@@ -233,8 +250,35 @@ IDBIndex.prototype.toString = function () {
     return '[object IDBIndex]';
 };
 
+util.defineReadonlyProperties(IDBIndex.prototype, ['objectStore', 'keyPath', 'multiEntry', 'unique']);
+
 Object.defineProperty(IDBIndex, Symbol.hasInstance, {
     value: obj => util.isObj(obj) && typeof obj.openCursor === 'function' && typeof obj.multiEntry === 'boolean'
+});
+
+Object.defineProperty(IDBIndex.prototype, 'name', {
+    enumerable: false,
+    configurable: false,
+    get: function () {
+        return this.__name;
+    },
+    set: function (name) {
+        name = util.stripNUL(name);
+        IDBTransaction.__assertVersionChange(this.objectStore.transaction);
+        IDBTransaction.__assertActive(this.objectStore.transaction);
+        if (this.__deleted) {
+            throw createDOMException('InvalidStateError', 'This index has been deleted');
+        }
+        if (this.objectStore.__deleted) {
+            throw createDOMException('InvalidStateError', "This index's object store has been deleted");
+        }
+        if (this.name === name) {
+            return;
+        }
+        // Todo: Rename in database, throwing ConstraintError if index already existing
+
+        this.__name = name;
+    }
 });
 
 function fetchIndexData (index, hasKey, encodedKey, opType, tx, args, success, error, multiChecks) {
@@ -245,13 +289,13 @@ function fetchIndexData (index, hasKey, encodedKey, opType, tx, args, success, e
             sql.push('AND (');
             multiChecks.forEach((innerKey, i) => {
                 if (i > 0) sql.push('OR');
-                sql.push(util.quote('_' + index.name), 'LIKE ?');
-                sqlValues.push('%' + Key.encode(innerKey, index.multiEntry) + '%');
+                sql.push(util.quote('_' + index.name), "LIKE ? ESCAPE '^' ");
+                sqlValues.push('%' + util.sqlLIKEEscape(Key.encode(innerKey, index.multiEntry)) + '%');
             });
             sql.push(')');
         } else if (index.multiEntry) {
-            sql.push('AND', util.quote('_' + index.name), 'LIKE ?');
-            sqlValues.push('%' + encodedKey + '%');
+            sql.push('AND', util.quote('_' + index.name), "LIKE ? ESCAPE '^'");
+            sqlValues.push('%' + util.sqlLIKEEscape(encodedKey) + '%');
         } else {
             sql.push('AND', util.quote('_' + index.name), '= ?');
             sqlValues.push(encodedKey);

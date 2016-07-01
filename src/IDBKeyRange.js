@@ -20,11 +20,16 @@ function IDBKeyRange (lower, upper, lowerOpen, upperOpen) {
     if (upper !== undefined) {
         Key.validate(upper);
     }
+    if (lower !== undefined && upper !== undefined && lower !== upper) {
+        if (Key.encode(lower) > Key.encode(upper)) {
+            throw createDOMException('DataError', '`lower` must not be greater than `upper` argument in `bound()` call.');
+        }
+    }
 
-    this.lower = lower;
-    this.upper = upper;
-    this.lowerOpen = !!lowerOpen;
-    this.upperOpen = !!upperOpen;
+    this.__lower = lower;
+    this.__upper = upper;
+    this.__lowerOpen = !!lowerOpen;
+    this.__upperOpen = !!upperOpen;
 }
 IDBKeyRange.prototype.includes = function (key) {
     Key.validate(key);
@@ -42,15 +47,11 @@ IDBKeyRange.upperBound = function (value, open) {
     return new IDBKeyRange(undefined, value, true, open);
 };
 IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
-    if (lower !== undefined && upper !== undefined) {
-        Key.validate(lower);
-        Key.validate(upper);
-        if (Key.encode(lower) > Key.encode(upper)) {
-            throw createDOMException('DataError', '`lower` must not be greater than `upper` argument in `bound()` call.');
-        }
-    }
     return new IDBKeyRange(lower, upper, lowerOpen, upperOpen);
 };
+
+util.defineReadonlyProperties(IDBKeyRange.prototype, ['lower', 'upper', 'lowerOpen', 'upperOpen']);
+
 Object.defineProperty(IDBKeyRange, Symbol.hasInstance, {
     value: obj => util.isObj(obj) && 'upper' in obj && typeof obj.lowerOpen === 'boolean'
 });
@@ -60,12 +61,12 @@ function setSQLForRange (range, quotedKeyColumnName, sql, sqlValues, addAnd, che
         if (addAnd) sql.push('AND');
         if (range.lower !== undefined) {
             sql.push(quotedKeyColumnName, (range.lowerOpen ? '>' : '>='), '?');
-            sqlValues.push(checkCached ? range.__lower : Key.encode(range.lower));
+            sqlValues.push(checkCached ? range.__lowerCached : Key.encode(range.lower));
         }
         (range.lower !== undefined && range.upper !== undefined) && sql.push('AND');
         if (range.upper !== undefined) {
             sql.push(quotedKeyColumnName, (range.upperOpen ? '<' : '<='), '?');
-            sqlValues.push(checkCached ? range.__upper : Key.encode(range.upper));
+            sqlValues.push(checkCached ? range.__upperCached : Key.encode(range.upper));
         }
     }
 }

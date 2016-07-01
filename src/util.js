@@ -53,6 +53,9 @@ StringList.prototype = {
     },
 
     // Helpers. Should only be used internally.
+    forEach: function (cb, thisArg) {
+        this._items.forEach(cb, thisArg);
+    },
     map: function (cb, thisArg) {
         return this._items.map(cb, thisArg);
     },
@@ -91,8 +94,27 @@ if (cleanInterface) {
     }
 }
 
+function stripNUL (arg) {
+    // http://stackoverflow.com/a/6701665/271577
+    return arg.replace(/\0/g, '');
+}
+
+function sqlEscape (arg) {
+    // https://www.sqlite.org/lang_keywords.html
+    // http://stackoverflow.com/a/6701665/271577
+    // There is no need to escape ', `, or [], as
+    //   we should always be within double quotes
+    // NUL should have already been stripped
+    return arg.replace(/"/g, '""');
+}
+
 function quote (arg) {
-    return '"' + arg + '"';
+    return '"' + sqlEscape(arg) + '"';
+}
+
+function sqlLIKEEscape (str) {
+    // https://www.sqlite.org/lang_expr.html#like
+    return sqlEscape(str).replace(/\^/g, '^^');
 }
 
 // Babel doesn't seem to provide a means of using the `instanceof` operator with Symbol.hasInstance (yet?)
@@ -121,7 +143,7 @@ function isFile (obj) {
 }
 
 /*
-// Todo: Utilize with encoding/decoding
+// Todo: Uncomment and use with ArrayBuffer encoding/decoding when ready
 function isArrayBufferOrView (obj) {
     return isObj(obj) && typeof obj.byteLength === 'number' && (
         typeof obj.slice === 'function' || // `TypedArray` (view on buffer) or `ArrayBuffer`
@@ -195,4 +217,6 @@ function isValidKeyPath (keyPath) {
     return isValidKeyPathString(keyPath) || (Array.isArray(keyPath) && keyPath.length && keyPath.every(isValidKeyPathString));
 }
 
-export {callback, StringList, quote, instanceOf, isObj, isDate, isBlob, isRegExp, isFile, throwIfNotClonable, defineReadonlyProperties, isValidKeyPath};
+export {callback, StringList, stripNUL, quote, sqlLIKEEscape, instanceOf,
+    isObj, isDate, isBlob, isRegExp, isFile, throwIfNotClonable,
+    defineReadonlyProperties, isValidKeyPath};

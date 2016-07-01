@@ -394,9 +394,9 @@ describe('W3C IDBObjectStore.createIndex Tests', function () {
        open_rq.onupgradeneeded = function (e) {
            var db = e.target.result;
            var ostore = db.createObjectStore("store");
-           assert.throws(function(){
+           support.throws(function(){
                ostore.createIndex("ab", ".");
-           }, SyntaxError);
+           }, 'SyntaxError');
            done();
        }
        open_rq.onsuccess = function () {};

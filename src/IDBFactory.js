@@ -50,13 +50,13 @@ IDBFactory.prototype.open = function (name, version) {
 
     if (arguments.length === 0) {
         throw new TypeError('Database name is required');
-    } else if (arguments.length === 2) {
+    } else if (arguments.length >= 2) {
         version = parseFloat(version);
         if (isNaN(version) || !isFinite(version) || version <= 0) {
             throw new TypeError('Invalid database version: ' + version);
         }
     }
-    name = name + ''; // cast to a string
+    name = util.stripNUL(String(name)); // cast to a string
 
     function dbCreateError (...args /* tx, err*/) {
         if (calledDbCreateError) {
@@ -76,7 +76,7 @@ IDBFactory.prototype.open = function (name, version) {
         if (version === undefined) {
             version = oldVersion || 1;
         }
-        if (version <= 0 || oldVersion > version) {
+        if (oldVersion > version) {
             const err = createDOMException('VersionError', 'An attempt was made to open a database using a lower version than the existing version.', version);
             dbCreateError(err);
             return;
@@ -92,7 +92,7 @@ IDBFactory.prototype.open = function (name, version) {
                         sysdb.transaction(function (systx) {
                             systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [version, name], function () {
                                 const e = new IDBVersionChangeEvent('upgradeneeded', {oldVersion, newVersion: version});
-                                req.__transaction = req.result.__versionTransaction = new IDBTransaction(req.source, [], 'versionchange');
+                                req.__transaction = req.result.__versionTransaction = new IDBTransaction(req.source, req.source.objectStoreNames, 'versionchange');
                                 req.transaction.__addToTransactionQueue(function onupgradeneeded (tx, args, success) {
                                     util.callback('onupgradeneeded', req, e);
                                     success();
@@ -146,7 +146,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     if (arguments.length === 0) {
         throw new TypeError('Database name is required');
     }
-    name = name + ''; // cast to a string
+    name = util.stripNUL(String(name)); // cast to a string
 
     function dbError (...args /* tx, err*/) {
         if (calledDBError) {

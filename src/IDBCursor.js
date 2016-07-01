@@ -21,13 +21,13 @@ import CFG from './cfg.js';
  */
 function IDBCursor (range, direction, store, source, keyColumnName, valueColumnName, count, reqSource) {
     // Calling openCursor on an index or objectstore with null is allowed but we treat it as undefined internally
+    IDBTransaction.__assertActive(store.transaction);
     if (range === null) {
         range = undefined;
     }
     if (range !== undefined && !(util.instanceOf(range, IDBKeyRange))) {
         range = new IDBKeyRange(range, range, false, false);
     }
-    store.transaction.__assertActive();
     if (direction !== undefined && !(['next', 'prev', 'nextunique', 'prevunique'].includes(direction))) {
         throw new TypeError(direction + 'is not a valid cursor direction');
     }
@@ -37,8 +37,9 @@ function IDBCursor (range, direction, store, source, keyColumnName, valueColumnN
         source: {writable: false, value: source},
         direction: {writable: false, value: direction || 'next'}
     });
-    this.key = undefined;
-    this.primaryKey = undefined;
+    this.__key = undefined;
+    this.__primaryKey = undefined;
+
     this.__store = store;
     this.__range = range;
     this.__req = new IDBRequest();
@@ -57,8 +58,8 @@ function IDBCursor (range, direction, store, source, keyColumnName, valueColumnN
 
     if (range !== undefined) {
         // Encode the key range and cache the encoded values, so we don't have to re-encode them over and over
-        range.__lower = range.lower !== undefined && Key.encode(range.lower, this.__multiEntryIndex);
-        range.__upper = range.upper !== undefined && Key.encode(range.upper, this.__multiEntryIndex);
+        range.__lowerCached = range.lower !== undefined && Key.encode(range.lower, this.__multiEntryIndex);
+        range.__upperCached = range.upper !== undefined && Key.encode(range.upper, this.__multiEntryIndex);
     }
     this.__gotValue = true;
     this['continue']();
@@ -151,8 +152,8 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
     if (me.__range && (me.__range.lower !== undefined && me.__range.upper !== undefined)) {
         if (me.__range.upper.indexOf(me.__range.lower) === 0) {
-            sql.push('AND', quotedKeyColumnName, 'LIKE ?');
-            sqlValues.push('%' + me.__range.__lower.slice(0, -1) + '%');
+            sql.push('AND', quotedKeyColumnName, "LIKE ? ESCAPE '^'");
+            sqlValues.push('%' + util.sqlLIKEEscape(me.__range.__lowerCached.slice(0, -1)) + '%');
         }
     }
     if (key !== undefined) {
@@ -271,11 +272,8 @@ IDBCursor.prototype.__onsuccess = function (success) {
         if (me.__count) {
             success(value, me.__req);
         } else {
-            Object.defineProperties(me, {
-                // Babel is not respecting default writable false here, so make explicit
-                key: {writable: false, value: key === undefined ? null : key},
-                primaryKey: {writable: false, value: primaryKey === undefined ? null : primaryKey}
-            });
+            me.__key = key === undefined ? null : key;
+            me.__primaryKey = primaryKey === undefined ? null : primaryKey;
             me.__value = value === undefined ? null : value;
             const result = key === undefined ? null : me;
             success(result, me.__req);
@@ -310,7 +308,7 @@ IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
 IDBCursor.prototype['continue'] = function (key) {
     const recordsToPreloadOnContinue = CFG.cursorPreloadPackSize || 100;
     const me = this;
-    me.__store.transaction.__assertActive();
+    IDBTransaction.__assertActive(me.__store.transaction);
     me.__sourceOrEffectiveObjStoreDeleted();
     if (!me.__gotValue) {
         throw createDOMException('InvalidStateError', 'The cursor is being iterated or has iterated past its end.');
@@ -367,12 +365,17 @@ IDBCursor.prototype['continue'] = function (key) {
     });
 };
 
+/*
+// Todo:
+IDBCursor.prototype.continuePrimaryKey = function (key, primaryKey) {};
+*/
+
 IDBCursor.prototype.advance = function (count) {
     const me = this;
     if (!Number.isFinite(count) || count <= 0) {
         throw new TypeError('Count is invalid - 0 or negative: ' + count);
     }
-    me.__store.transaction.__assertActive();
+    IDBTransaction.__assertActive(me.__store.transaction);
     me.__sourceOrEffectiveObjStoreDeleted();
     if (!me.__gotValue) {
         throw createDOMException('InvalidStateError', 'The cursor is being iterated or has iterated past its end.');
@@ -387,7 +390,7 @@ IDBCursor.prototype.advance = function (count) {
 IDBCursor.prototype.update = function (valueToUpdate) {
     const me = this;
     if (!arguments.length) throw new TypeError('A value must be passed to update()');
-    me.__store.transaction.__assertActive();
+    IDBTransaction.__assertActive(me.__store.transaction);
     me.__store.transaction.__assertWritable();
     me.__sourceOrEffectiveObjStoreDeleted();
     if (!me.__gotValue) {
@@ -400,7 +403,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
     if (me.__store.keyPath !== null) {
         const evaluatedKey = me.__store.__validateKeyAndValue(valueToUpdate);
         if (me.primaryKey !== evaluatedKey) {
-            throw createDOMException('DataError', 'They key of the supplied value to `update` is not equal to the cursor\'s effective key');
+            throw createDOMException('DataError', 'The key of the supplied value to `update` is not equal to the cursor\'s effective key');
         }
     }
     return me.__store.transaction.__addToTransactionQueue(function cursorUpdate (tx, args, success, error) {
@@ -441,7 +444,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
 
 IDBCursor.prototype['delete'] = function () {
     const me = this;
-    me.__store.transaction.__assertActive();
+    IDBTransaction.__assertActive(me.__store.transaction);
     me.__store.transaction.__assertWritable();
     me.__sourceOrEffectiveObjStoreDeleted();
     if (!me.__gotValue) {
@@ -471,6 +474,8 @@ IDBCursor.prototype['delete'] = function () {
         }, error);
     }, undefined, me);
 };
+
+util.defineReadonlyProperties(IDBCursor.prototype, ['key', 'primaryKey']);
 
 class IDBCursorWithValue extends IDBCursor {
 }

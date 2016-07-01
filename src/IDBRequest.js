@@ -6,7 +6,9 @@ import * as util from './util.js';
  */
 class IDBRequest {
     constructor () {
-        this.onsuccess = this.onerror = this.__result = this.__error = this.__source = this.__transaction = null;
+        this.onsuccess = this.onerror = null;
+        this.__result = undefined;
+        this.__error = this.__source = this.__transaction = null;
         this.__readyState = 'pending';
     }
     toString () {

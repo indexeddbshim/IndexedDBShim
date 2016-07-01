@@ -3,9 +3,13 @@
 ## Version 3.0.0 (Unreleased)
 
 - License: Add back missing MIT license
-- Security fix: Avoid SQL injection potential--ensure store names and index
-    names are prefixed as SQLite columns to avoid conflict with built-in
+- Security fix: Avoid SQL injection potential--ensure database, store and
+    index names are prefixed as SQLite columns to avoid conflict with built-in
     columns; add test
+- Security fix: Ensure LIKE clauses escape special characters
+- Security fix: Strip SQLite-disallowed-for-column-names NUL characters from
+    database, store, and index names, documenting this limitation
+- Security fix: Ensure quoting (for column names) escapes double quotes
 - Breaking change/Fix: Remove `IDBTransaction` mode constants and tests since
     now being removed from IndexedDB
 - Breaking change: If you were overriding/monkey-patching globals, these are
@@ -65,6 +69,8 @@
 - Fix: Sort properly for next/prev(unique) (potentially by key,
     primary key, (position,) obj. store position)
 - Fix: Be safe in quoting "key" column (reserved SQLite word)
+- Fix: For all public methods, seek to ensure error checking occurs in
+    proper order and add missing checks
 - Fix: Throw for `IDBCursor.update/delete` if transaction not active,
     if source or effective object store deleted, if got value not set,
     or if a key method has been invoked
@@ -74,13 +80,44 @@
 - Fix: Allow empty string key path to be utilized when validating
     `add`/`put` input
 - Fix: Add more precise `toString` behaviors
-- Fix: Make `key`/`primaryKey`/`direction`/`source`/`value` properties
-    of `IDBCursor` readonly
 - Fix: Avoid iterating unique values
 - Fix: Ensure `IDBRequest.error` returns `null` rather than `undefined` upon
     success event
+- Fix: Ensure `indexedDB` is readonly
+- Fix: Make `IDBCursor` properties, `key`, `primaryKey`, `direction`, `source`,
+    `value` readonly
 - Fix: Make `IDBRequest` properties (`result`, `error`, `source`,
     `transaction`, `readyState`) readonly
+- Fix: Make `IDBDatabase` properties, `name`, `version`, and
+    `objectStoreNames` readonly
+- Fix: Make `IDBKeyRange` properties, `lower`, `upper`, `lowerOpen`, and
+    `upperOpen` readonly, renaming cached range attributes
+- Fix: Make `IDBTransaction` properties, `objectStoreNames`, `mode`, `db`,
+    and `error` readonly
+- Fix: Make `IDBIndex` properties, `objectStore`, `keyPath`, `multiEntry`,
+    `unique` readonly
+- Fix: Make `IDBObjectStore` properties, `keyPath`, `indexNames`,
+    `transaction`, `autoIncrement` readonly
+- Fix: Ensure `keyPath` does not return same instance as passed in (if
+        an array)
+- Fix: Ensure `IDBIndex` properties, `multiEntry`, `unique` are always boolean
+- Fix: Ensure an `IDBTransaction.objectStore` call always returns the
+    same instance if for the same transaction
+- Fix: For `IDBTransaction.abort()`, throw `InvalidStateError` if
+    transaction not active
+- Fix: Ensure `IDBIndex` retrieval methods throw upon index or store being
+    deleted, upon transaction inactive
+- Fix: Allow `IDBIndex.count` to pass `null` as key
+- Fix: Assert not in versionchange transaction when calling
+    `IDBDatabase.transaction`
+- Fix: Ensure `DOMException` variant of `SyntaxError` is thrown for
+    bad key paths
+- Fix: Assure correct error checking order
+- Fix: Deal with arguments > 2 to `IDBFactory.open()`
+- Fix: In `IDBObjectStore` methods, throw upon transaction inactive;
+    fix checking error
+- Fix: In `IDBObjectStore.count`, allow `null` (as with `undefined`) to
+    indicate unbounded range
 - Fix: Correct `IDBRequest.source` to reflect `IDBCursor`, `IDBIndex`,
     or `IDBObjectStore` as appropriate
 - Fix: Prevent race condition error if attempting to find indexes during
@@ -94,6 +131,16 @@
     so that `versionchange` checks inside `e.target.transaction.oncomplete`
     within `onupgradeneeded` or inside `onsuccess` will fail (and thus will
     attempts to create or delete object stores)
+- Fix (Incomplete): Begin work on proper `IDBObjectStore.name` and
+    `IDBIndex.name` setters, throwing as necessary
+- Fix: Throw InvalidStateError if store deleted (for `IDBObjectStore`
+    methods: `add`, `put`, `get`, `delete`, `clear`, `count`, `openCursor`,
+    `openKeyCursor`, `index`, `createIndex`, `deleteeIndex`)
+- Fix: For `IDBObjectStore.deleteIndex`, throw if not in upgrade
+    transaction or if transaction is inactive
+- Fix: For `IDBObjectStore.createIndex`, throw SyntaxError if not a
+    valid keyPath given
+- Fix: For `IDBObjectStore.createIndex`, throw if transaction not active
 - Feature: Support Node cleanly via `websql` SQLite3 library
 - Feature: Add `IDBObjectStore.openKeyCursor`
 - Feature: Add `IDBKeyRange.includes()` with test
@@ -105,6 +152,9 @@
 - Feature: Expose `__setCFG(prop, val)` method for setting pseudo-global
     property used internally for config, e.g., for setting Unicode
     regular expression strings
+- Feature: Implement `IDBTransaction.objectStoreNames`
+- Feature (Incomplete): Begin work on proper `IDBObjectStore.name` and
+    `IDBIndex.name` setters, throwing as necessary
 - Repo files: Rename test folders for ease in distinguishing
 - Refactoring (Avoid globals): Change from using window global to a CFG module
     for better maintainability
@@ -130,7 +180,10 @@
 - Refactoring: Key value retrieval: Avoid `eval()` (in Key--still used
     in Sca.js)
 - Refactoring: Use ES6 classes for cleaner inheritance
+- Refactoring: Avoid JSON methods upon each `objectStore`/`createObjectStore`
+    call in favor of one-time in `IDBDatabase`
 - Updating: Bump various `devDependency` min versions
+- Documentation: Document `shimIndexedDB.__setConfig()` and NUL stripping.
 - Testing: Update tests per current spec and behavior
 - Testing: Ensure db closes after each test to allow non-blocking `open()`
     (was affecting testing)
@@ -144,12 +197,13 @@
 - Testing (W3C): Change example to expect `ConstraintError` (since object
     store already existing per test)--though perhaps should ensure it is
     not yet existing
-- Test scaffolding (W3C): Fix args to `initionalSituation()`
-- Test scaffolding (W3C): Fix test ok condition, typo
-- Test scaffolding (W3C): Fix assertions
+- Testing (W3C): Ensure `DOMException` variant of `SyntaxError` is checked
 - Testing (W3C): Increase timeout for Node testing `createObjectStore`'s
     `IDBObjectStoreParameters` test and IDBCursorBehavior's
     `IDBCursor.direction`
+- Test scaffolding (W3C): Fix args to `initionalSituation()`
+- Test scaffolding (W3C): Fix test ok condition, typo
+- Test scaffolding (W3C): Fix assertions
 - (Testing: tests-mocha and tests-qunit tests now all
     passing in browser and Node; from indexedDBmock, database.js and
     objectstore.delete.js are not passing;

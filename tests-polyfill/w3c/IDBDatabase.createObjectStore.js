@@ -109,14 +109,14 @@ describe('W3C IDBDatabase.createObjectStore Tests', function () {
         open_rq.onupgradeneeded = function(e) {
             var db = e.target.result
 
-            assert.throws(function() {
+            support.throws(function() {
                     db.createObjectStore("invalidkeypath", { keyPath: "Invalid Keypath" })
-                }, SyntaxError)
+                }, 'SyntaxError')
 
-            assert.throws(function() {
+            support.throws(function() {
                     db.createObjectStore("invalidkeypath", { autoIncrement: true,
                                                              keyPath: "Invalid Keypath" })
-                }, SyntaxError)
+                }, 'SyntaxError')
 
             done()
         }
@@ -174,6 +174,7 @@ describe('W3C IDBDatabase.createObjectStore Tests', function () {
 
     // idbdatabase_createobjectstore9-invalidparameters
     it('Invalid optionalParameters', function (done) {
+        this.timeout(5000);
         var numTried = 0;
         var numDone = 0;
         function invalid_optionalParameters(desc, params) {

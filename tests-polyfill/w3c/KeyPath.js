@@ -160,14 +160,14 @@ describe('W3C Key Path Tests', function () {
                 store_name  = "store-" + Date.now() + Math.random();
             open_rq.onupgradeneeded = function (e) {
                 var db = e.target.result;
-                assert.throws(function() {
+                support.throws(function() {
                         db.createObjectStore(store_name, { keyPath: keypath })
-                    }, SyntaxError, "createObjectStore with keyPath");
+                    }, 'SyntaxError', "createObjectStore with keyPath");
 
                 store = db.createObjectStore(store_name);
-                assert.throws(function() {
+                support.throws(function() {
                         store.createIndex('index', keypath);
-                    }, SyntaxError, "createIndex with keyPath");
+                    }, 'SyntaxError', "createIndex with keyPath");
 
                 db.close();
 

@@ -291,7 +291,7 @@ function negate (s) {
 function getType (key) {
     if (Array.isArray(key)) return 'array';
     if (util.isDate(key)) return 'date';
-    // if (util.isArrayBufferOrView(key)) return 'ArrayBuffer'; // Todo: Support
+    // if (util.isArrayBufferOrView(key)) return 'ArrayBuffer'; // Todo: Uncomment when supported
     return typeof key;
 }
 
@@ -397,8 +397,8 @@ function isKeyInRange (key, range, checkCached) {
     let lowerMatch = range.lower === undefined;
     let upperMatch = range.upper === undefined;
     const encodedKey = encode(key, true);
-    const lower = checkCached ? range.__lower : encode(range.lower, true);
-    const upper = checkCached ? range.__upper : encode(range.upper, true);
+    const lower = checkCached ? range.__lowerCached : encode(range.lower, true);
+    const upper = checkCached ? range.__upperCached : encode(range.upper, true);
 
     if (range.lower !== undefined) {
         if (range.lowerOpen && encodedKey > lower) {

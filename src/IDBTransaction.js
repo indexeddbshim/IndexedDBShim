@@ -21,11 +21,12 @@ function IDBTransaction (db, storeNames, mode) {
     this.__running = false;
     this.__errored = false;
     this.__requests = [];
-    this.__storeNames = storeNames;
-    this.mode = mode;
-    this.db = db;
-    this.error = null;
+    this.__objectStoreNames = storeNames;
+    this.__mode = mode;
+    this.__db = db;
+    this.__error = null;
     this.onabort = this.onerror = this.oncomplete = null;
+    this.__storeClones = {};
 
     // Kick off the transaction as soon as all synchronous code is done.
     setTimeout(() => { this.__executeRequests(); }, 0);
@@ -116,11 +117,12 @@ IDBTransaction.prototype.__executeRequests = function () {
         }
 
         try {
-            me.error = err;
+            me.__error = err;
             const evt = createEvent('error');
             util.callback('onerror', me, evt);
             util.callback('onerror', me.db, evt);
         } finally {
+            me.__storeClones = {};
             me.abort();
         }
     }
@@ -138,6 +140,8 @@ IDBTransaction.prototype.__executeRequests = function () {
             // (this may seem odd/bad, but it's how all native IndexedDB implementations work)
             me.__errored = true;
             throw e;
+        } finally {
+            me.__storeClones = {};
         }
     }
 };
@@ -200,12 +204,6 @@ IDBTransaction.prototype.__assertVersionChange = function () {
     IDBTransaction.__assertVersionChange(this);
 };
 
-IDBTransaction.__assertVersionChange = function (tx) {
-    if (!tx || tx.mode !== 'versionchange') {
-        throw createDOMException('InvalidStateError', 'Not a version transaction');
-    }
-};
-
 /**
  * Returns the specified object store.
  * @param {string} objectStoreName
@@ -215,10 +213,11 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
     if (arguments.length === 0) {
         throw new TypeError('No object store name was specified');
     }
+    objectStoreName = util.stripNUL(objectStoreName);
     if (!this.__active) {
         throw createDOMException('InvalidStateError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
-    if (this.__storeNames.indexOf(objectStoreName) === -1 && this.mode !== 'versionchange') {
+    if (this.__objectStoreNames.indexOf(objectStoreName) === -1) {
         throw createDOMException('NotFoundError', objectStoreName + ' is not participating in this transaction');
     }
     const store = this.db.__objectStores[objectStoreName];
@@ -226,13 +225,20 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
         throw createDOMException('NotFoundError', objectStoreName + ' does not exist in ' + this.db.name);
     }
 
-    return IDBObjectStore.__clone(store, this);
+    if (!this.__storeClones[objectStoreName]) {
+        this.__storeClones[objectStoreName] = IDBObjectStore.__clone(store, this);
+    }
+    return this.__storeClones[objectStoreName];
 };
 
 IDBTransaction.prototype.abort = function () {
     const me = this;
     CFG.DEBUG && console.log('The transaction was aborted', me);
+    if (!this.__active) {
+        throw createDOMException('InvalidStateError', 'A request was placed against a transaction which is currently not active, or which is finished');
+    }
     me.__active = false;
+    me.__storeClones = {};
     const evt = createEvent('abort');
 
     // Fire the "onabort" event asynchronously, so errors don't bubble
@@ -240,5 +246,24 @@ IDBTransaction.prototype.abort = function () {
         util.callback('onabort', this, evt);
     }, 0);
 };
+
+IDBTransaction.__assertVersionChange = function (tx) {
+    if (!tx || tx.mode !== 'versionchange') {
+        throw createDOMException('InvalidStateError', 'Not a version transaction');
+    }
+};
+IDBTransaction.__assertNotVersionChange = function (tx) {
+    if (tx && tx.mode === 'versionchange') {
+        throw createDOMException('InvalidStateError', 'Cannot be called during a version transaction');
+    }
+};
+
+IDBTransaction.__assertActive = function (tx) {
+    if (!tx || !tx.__active) {
+        throw createDOMException('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
+    }
+};
+
+util.defineReadonlyProperties(IDBTransaction.prototype, ['objectStoreNames', 'mode', 'db', 'error']);
 
 export default IDBTransaction;

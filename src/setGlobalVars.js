@@ -26,9 +26,11 @@ function shim (name, value) {
     if (IDB[name] !== value && Object.defineProperty) {
         // Setting a read-only property failed, so try re-defining the property
         try {
-            Object.defineProperty(IDB, name, {
-                value: value
-            });
+            const desc = {value};
+            if (name === 'indexedDB') {
+                desc.writable = false; // Make explicit for Babel
+            }
+            Object.defineProperty(IDB, name, desc);
         } catch (e) {
             // With `indexedDB`, PhantomJS 2.2.1 fails here and below but
             //  not above, while Chrome is reverse (and Firefox doesn't
