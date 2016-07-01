@@ -20706,7 +20706,7 @@ function setGlobalVars(idb) {
         IDB.shimIndexedDB.__debug = function (val) {
             _cfg2.default.DEBUG = val;
         };
-        IDB.shimIndexedDB.__setCFG = function (prop, val) {
+        IDB.shimIndexedDB.__setConfig = function (prop, val) {
             _cfg2.default[prop] = val;
         };
     }
