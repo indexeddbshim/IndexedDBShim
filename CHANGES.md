@@ -212,8 +212,12 @@
     from W3C, IDBCursor.advance.js, IDBCursor.continue.js,
     IDBCursor.delete.js, IDBCursor.update.js, IDBDatabase.createObjectStore.js,
     IDBDatabase.deleteObjectStore.js, IDBDatabase.transaction.js,
-    IDBFactory.cmp.js, IDBFactory.deleteDatabase.js, IDBKeyrange.js,
-    IDBObjectStore.index.js are passing)
+    IDBFactory.cmp.js, IDBFactory.deleteDatabase.js, IDBIndex.count.js,
+    IDBIndex.js, IDBIndex.openKeyCursor.js, IDBKeyrange.js,
+    IDBObjectStore.clear.js, IDBObjectStore.count.js,
+    IDBObjectStore.deleteIndex.js, IDBObjectStore.get.js,
+    IDBObjectStore.index.js
+    are passing)
 - Testing (Grunt): Clarify Grunt tasks, expand tasks for cleaning, make tests
     more granular
 - Testing (Grunt): Remove now redundant `sourceMappingURL`, use

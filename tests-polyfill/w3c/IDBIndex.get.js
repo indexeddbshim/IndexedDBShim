@@ -1,6 +1,6 @@
 var assert = require('assert');
-var FDBKeyRange = IDBKeyRange;
 var support = require('./support');
+var FDBKeyRange = IDBKeyRange;
 var createdb = support.createdb;
 
 describe('W3C IDBIndex.get Tests', function () {

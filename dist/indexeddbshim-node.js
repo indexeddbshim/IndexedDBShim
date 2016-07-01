@@ -18833,7 +18833,7 @@ IDBObjectStore.prototype.index = function (indexName) {
     }
     _IDBTransaction2.default.__assertActive(this.transaction);
     var index = this.__indexes[indexName];
-    if (!index) {
+    if (!index || index.__deleted) {
         throw (0, _DOMException.createDOMException)('NotFoundError', 'Index "' + indexName + '" does not exist on ' + this.name);
     }
 

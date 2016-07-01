@@ -520,7 +520,7 @@ IDBObjectStore.prototype.index = function (indexName) {
     }
     IDBTransaction.__assertActive(this.transaction);
     const index = this.__indexes[indexName];
-    if (!index) {
+    if (!index || index.__deleted) {
         throw createDOMException('NotFoundError', 'Index "' + indexName + '" does not exist on ' + this.name);
     }
 
