@@ -166,7 +166,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
  */
 IDBIndex.prototype.__fetchIndexData = function (key, opType, nullDisallowed) {
     const me = this;
-    let hasKey, encodedKey;
+    let hasKey;
 
     if (this.__deleted) {
         throw createDOMException('InvalidStateError', 'This index has been deleted');
@@ -186,12 +186,12 @@ IDBIndex.prototype.__fetchIndexData = function (key, opType, nullDisallowed) {
         hasKey = false;
     } else {
         Key.validate(key);
-        encodedKey = Key.encode(key, me.multiEntry);
         hasKey = true;
     }
 
+    const fetchArgs = fetchIndexData(me, hasKey, key, opType, false);
     return me.objectStore.transaction.__addToTransactionQueue(function (...args) {
-        fetchIndexData(me, hasKey, encodedKey, opType, ...args);
+        executeFetchIndexData(...fetchArgs, ...args);
     }, undefined, me);
 };
 
@@ -284,27 +284,7 @@ Object.defineProperty(IDBIndex.prototype, 'name', {
     }
 });
 
-function fetchIndexData (index, hasKey, encodedKey, opType, tx, args, success, error, multiChecks) {
-    const sql = ['SELECT * FROM', util.quote('s_' + index.objectStore.name), 'WHERE', util.quote('_' + index.name), 'NOT NULL'];
-    const sqlValues = [];
-    if (hasKey) {
-        if (multiChecks) {
-            sql.push('AND (');
-            multiChecks.forEach((innerKey, i) => {
-                if (i > 0) sql.push('OR');
-                sql.push(util.quote('_' + index.name), "LIKE ? ESCAPE '^' ");
-                sqlValues.push('%' + util.sqlLIKEEscape(Key.encode(innerKey, index.multiEntry)) + '%');
-            });
-            sql.push(')');
-        } else if (index.multiEntry) {
-            sql.push('AND', util.quote('_' + index.name), "LIKE ? ESCAPE '^'");
-            sqlValues.push('%' + util.sqlLIKEEscape(encodedKey) + '%');
-        } else {
-            sql.push('AND', util.quote('_' + index.name), '= ?');
-            sqlValues.push(encodedKey);
-        }
-    }
-    CFG.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
+function executeFetchIndexData (index, hasKey, encodedKey, opType, multiChecks, sql, sqlValues, tx, args, success, error) {
     tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
         let recordCount = 0, record = null;
         if (index.multiEntry) {
@@ -339,4 +319,29 @@ function fetchIndexData (index, hasKey, encodedKey, opType, tx, args, success, e
     }, error);
 }
 
-export {fetchIndexData, IDBIndex, IDBIndex as default};
+function fetchIndexData (index, hasKey, indexKey, opType, multiChecks) {
+    const encodedKey = Key.encode(indexKey, index.multiEntry);
+    const sql = ['SELECT * FROM', util.quote('s_' + index.objectStore.name), 'WHERE', util.quote('_' + index.name), 'NOT NULL'];
+    const sqlValues = [];
+    if (hasKey) {
+        if (multiChecks) {
+            sql.push('AND (');
+            multiChecks.forEach((innerKey, i) => {
+                if (i > 0) sql.push('OR');
+                sql.push(util.quote('_' + index.name), "LIKE ? ESCAPE '^' ");
+                sqlValues.push('%' + util.sqlLIKEEscape(Key.encode(innerKey, index.multiEntry)) + '%');
+            });
+            sql.push(')');
+        } else if (index.multiEntry) {
+            sql.push('AND', util.quote('_' + index.name), "LIKE ? ESCAPE '^'");
+            sqlValues.push('%' + util.sqlLIKEEscape(encodedKey) + '%');
+        } else {
+            sql.push('AND', util.quote('_' + index.name), '= ?');
+            sqlValues.push(encodedKey);
+        }
+    }
+    CFG.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
+    return [index, hasKey, encodedKey, opType, multiChecks, sql, sqlValues];
+}
+
+export {fetchIndexData, executeFetchIndexData, IDBIndex, IDBIndex as default};

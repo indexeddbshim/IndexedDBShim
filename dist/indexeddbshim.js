@@ -10321,7 +10321,7 @@ exports.shimIndexedDB = shimIndexedDB;
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.default = exports.IDBIndex = exports.fetchIndexData = undefined;
+exports.default = exports.IDBIndex = exports.executeFetchIndexData = exports.fetchIndexData = undefined;
 
 var _DOMException = require('./DOMException.js');
 
@@ -10350,6 +10350,8 @@ var _cfg2 = _interopRequireDefault(_cfg);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 /**
  * IDB Index
@@ -10511,8 +10513,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
  */
 IDBIndex.prototype.__fetchIndexData = function (key, opType, nullDisallowed) {
     var me = this;
-    var hasKey = void 0,
-        encodedKey = void 0;
+    var hasKey = void 0;
 
     if (this.__deleted) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This index has been deleted');
@@ -10532,16 +10533,16 @@ IDBIndex.prototype.__fetchIndexData = function (key, opType, nullDisallowed) {
         hasKey = false;
     } else {
         _Key2.default.validate(key);
-        encodedKey = _Key2.default.encode(key, me.multiEntry);
         hasKey = true;
     }
 
+    var fetchArgs = fetchIndexData(me, hasKey, key, opType, false);
     return me.objectStore.transaction.__addToTransactionQueue(function () {
         for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
             args[_key] = arguments[_key];
         }
 
-        fetchIndexData.apply(undefined, [me, hasKey, encodedKey, opType].concat(args));
+        executeFetchIndexData.apply(undefined, _toConsumableArray(fetchArgs).concat(args));
     }, undefined, me);
 };
 
@@ -10637,27 +10638,7 @@ Object.defineProperty(IDBIndex.prototype, 'name', {
     }
 });
 
-function fetchIndexData(index, hasKey, encodedKey, opType, tx, args, success, error, multiChecks) {
-    var sql = ['SELECT * FROM', util.quote('s_' + index.objectStore.name), 'WHERE', util.quote('_' + index.name), 'NOT NULL'];
-    var sqlValues = [];
-    if (hasKey) {
-        if (multiChecks) {
-            sql.push('AND (');
-            multiChecks.forEach(function (innerKey, i) {
-                if (i > 0) sql.push('OR');
-                sql.push(util.quote('_' + index.name), "LIKE ? ESCAPE '^' ");
-                sqlValues.push('%' + util.sqlLIKEEscape(_Key2.default.encode(innerKey, index.multiEntry)) + '%');
-            });
-            sql.push(')');
-        } else if (index.multiEntry) {
-            sql.push('AND', util.quote('_' + index.name), "LIKE ? ESCAPE '^'");
-            sqlValues.push('%' + util.sqlLIKEEscape(encodedKey) + '%');
-        } else {
-            sql.push('AND', util.quote('_' + index.name), '= ?');
-            sqlValues.push(encodedKey);
-        }
-    }
-    _cfg2.default.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
+function executeFetchIndexData(index, hasKey, encodedKey, opType, multiChecks, sql, sqlValues, tx, args, success, error) {
     tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
         var recordCount = 0,
             record = null;
@@ -10699,7 +10680,33 @@ function fetchIndexData(index, hasKey, encodedKey, opType, tx, args, success, er
     }, error);
 }
 
+function fetchIndexData(index, hasKey, indexKey, opType, multiChecks) {
+    var encodedKey = _Key2.default.encode(indexKey, index.multiEntry);
+    var sql = ['SELECT * FROM', util.quote('s_' + index.objectStore.name), 'WHERE', util.quote('_' + index.name), 'NOT NULL'];
+    var sqlValues = [];
+    if (hasKey) {
+        if (multiChecks) {
+            sql.push('AND (');
+            multiChecks.forEach(function (innerKey, i) {
+                if (i > 0) sql.push('OR');
+                sql.push(util.quote('_' + index.name), "LIKE ? ESCAPE '^' ");
+                sqlValues.push('%' + util.sqlLIKEEscape(_Key2.default.encode(innerKey, index.multiEntry)) + '%');
+            });
+            sql.push(')');
+        } else if (index.multiEntry) {
+            sql.push('AND', util.quote('_' + index.name), "LIKE ? ESCAPE '^'");
+            sqlValues.push('%' + util.sqlLIKEEscape(encodedKey) + '%');
+        } else {
+            sql.push('AND', util.quote('_' + index.name), '= ?');
+            sqlValues.push(encodedKey);
+        }
+    }
+    _cfg2.default.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
+    return [index, hasKey, encodedKey, opType, multiChecks, sql, sqlValues];
+}
+
 exports.fetchIndexData = fetchIndexData;
+exports.executeFetchIndexData = executeFetchIndexData;
 exports.IDBIndex = IDBIndex;
 exports.default = IDBIndex;
 
@@ -10847,6 +10854,8 @@ var _syncPromise2 = _interopRequireDefault(_syncPromise);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 /**
  * IndexedDB Object Store
@@ -11074,16 +11083,16 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             }
             if (index.unique) {
                 (function () {
-                    var encodedKey = _Key2.default.encode(indexKey, index.multiEntry);
                     var multiCheck = index.multiEntry && Array.isArray(indexKey);
-                    (0, _IDBIndex.fetchIndexData)(index, true, encodedKey, 'key', tx, null, function success(key) {
+                    var fetchArgs = (0, _IDBIndex.fetchIndexData)(index, true, indexKey, 'key', multiCheck ? indexKey : null);
+                    _IDBIndex.executeFetchIndexData.apply(undefined, _toConsumableArray(fetchArgs).concat([tx, null, function success(key) {
                         if (key === undefined) {
                             setIndexInfo(index);
                             resolve();
                             return;
                         }
                         reject((0, _DOMException.createDOMException)('ConstraintError', 'Index already contains a record equal to ' + (multiCheck ? 'one of the subkeys of' : '') + '`indexKey`'));
-                    }, reject, multiCheck ? indexKey : null);
+                    }, reject]));
                 })();
             } else {
                 setIndexInfo(index);

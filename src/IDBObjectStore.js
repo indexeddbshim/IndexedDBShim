@@ -3,7 +3,7 @@ import {IDBCursor, IDBCursorWithValue} from './IDBCursor.js';
 import {setSQLForRange, IDBKeyRange} from './IDBKeyRange.js';
 import * as util from './util.js';
 import Key from './Key.js';
-import {fetchIndexData, IDBIndex} from './IDBIndex.js';
+import {executeFetchIndexData, fetchIndexData, IDBIndex} from './IDBIndex.js';
 import IDBTransaction from './IDBTransaction.js';
 import Sca from './Sca.js';
 import CFG from './cfg.js';
@@ -231,9 +231,9 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
                 paramMap[index.name] = Key.encode(indexKey, index.multiEntry);
             }
             if (index.unique) {
-                const encodedKey = Key.encode(indexKey, index.multiEntry);
                 const multiCheck = index.multiEntry && Array.isArray(indexKey);
-                fetchIndexData(index, true, encodedKey, 'key', tx, null, function success (key) {
+                const fetchArgs = fetchIndexData(index, true, indexKey, 'key', (multiCheck ? indexKey : null));
+                executeFetchIndexData(...fetchArgs, tx, null, function success (key) {
                     if (key === undefined) {
                         setIndexInfo(index);
                         resolve();
@@ -245,7 +245,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
                             (multiCheck ? 'one of the subkeys of' : '') +
                             '`indexKey`'
                     ));
-                }, reject, multiCheck ? indexKey : null);
+                }, reject);
             } else {
                 setIndexInfo(index);
                 resolve();
