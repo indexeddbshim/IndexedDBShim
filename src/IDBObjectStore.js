@@ -142,7 +142,7 @@ IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
             }
             throw createDOMException('DataError', 'Could not evaluate a key from keyPath');
         }
-        Key.validate(key);
+        Key.convertValueToKey(key);
     } else {
         if (key === undefined) {
             if (this.autoIncrement) {
@@ -151,7 +151,7 @@ IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
             }
             throw createDOMException('DataError', 'The object store uses out-of-line keys and has no key generator and the key parameter was not provided. ', this);
         }
-        Key.validate(key);
+        Key.convertValueToKey(key);
         util.throwIfNotClonable(value, 'The data to be stored could not be cloned by the internal structured cloning algorithm.');
     }
 
@@ -217,9 +217,9 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
                 resolve();
                 return;
             }
-            const indexKey = Key.evaluateKeyPathOnValue(value, index.keyPath); // Add as necessary to this and skip past this index if exceptions here)
+            let indexKey;
             try {
-                Key.validate(indexKey);
+                indexKey = Key.extractKeyFromValueUsingKeyPath(value, index.keyPath, index.multiEntry); // Add as necessary to this and skip past this index if exceptions here)
             } catch (err) {
                 resolve();
                 return;
@@ -257,7 +257,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         const sqlEnd = [' VALUES ('];
         const sqlValues = [];
         if (primaryKey !== undefined) {
-            Key.validate(primaryKey);
+            Key.convertValueToKey(primaryKey);
             sqlStart.push(util.quote('key'), ',');
             sqlEnd.push('?,');
             sqlValues.push(Key.encode(primaryKey));
@@ -343,7 +343,7 @@ IDBObjectStore.prototype.put = function (value, key) {
         me.__deriveKey(tx, value, key, function (primaryKey, addedAutoIncKeyPathKey) {
             Sca.encode(value, function (encoded) {
                 // First try to delete if the record exists
-                Key.validate(primaryKey);
+                Key.convertValueToKey(primaryKey);
                 const sql = 'DELETE FROM ' + util.quote('s_' + me.name) + ' WHERE key = ?';
                 tx.executeSql(sql, [Key.encode(primaryKey)], function (tx, data) {
                     CFG.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
@@ -496,7 +496,7 @@ IDBObjectStore.prototype.count = function (key) {
 
         // key is optional
         if (hasKey) {
-            Key.validate(key);
+            Key.convertValueToKey(key);
         }
 
         return me.transaction.__addToTransactionQueue(function objectStoreCount (tx, args, success, error) {

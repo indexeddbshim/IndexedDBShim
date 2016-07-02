@@ -299,23 +299,34 @@ function getType (key) {
  * Keys must be strings, numbers (besides NaN), Dates (if value is not NaN),
  *   Arrays (or, once supported, ArrayBuffer) objects
  */
-function validate (key, arrayRefs) {
+function convertValueToKey (key, arrayRefs, multiEntry) {
     const type = getType(key);
     switch (type) {
-    case 'ArrayBuffer': // Will just return once implemented (not a possible type yet)
-        return;
+    case 'ArrayBuffer': // Copy bytes once implemented (not a possible type yet)
+        return key;
     case 'array':
         arrayRefs = arrayRefs || [];
         arrayRefs.push(key);
+        const newKeys = [];
         for (let i = 0; i < key.length; i++) { // We cannot iterate here with array extras as we must ensure sparse arrays are invalidated
             const item = key[i];
             if (arrayRefs.includes(item)) throw createDOMException('DataError', 'An array key cannot be circular');
-            validate(item, arrayRefs);
+            let newKey;
+            try {
+                newKey = convertValueToKey(item, arrayRefs);
+            } catch (err) {
+                if (!multiEntry) {
+                    throw err;
+                }
+            }
+            if (!multiEntry || !newKeys.includes(newKey)) {
+                newKeys.push(newKey);
+            }
         }
-        return;
+        return newKeys;
     case 'date':
         if (!Number.isNaN(key.getTime())) {
-            return;
+            return new Date(key.getTime());
         }
         // Falls through
     default:
@@ -325,7 +336,20 @@ function validate (key, arrayRefs) {
         if (!['string', 'number'].includes(type) || Number.isNaN(key)) {
             throw createDOMException('DataError', 'Not a valid key');
         }
+        return key;
     }
+}
+
+function convertValueToKeyMultiEntry (key) {
+    return convertValueToKey(key, null, true);
+}
+
+function extractKeyFromValueUsingKeyPath (value, keyPath, multiEntry) {
+    const key = evaluateKeyPathOnValue(value, keyPath, multiEntry);
+    if (!multiEntry) {
+        return convertValueToKey(key);
+    }
+    return convertValueToKeyMultiEntry(key);
 }
 
 /**
@@ -333,13 +357,13 @@ function validate (key, arrayRefs) {
  * @param {object} source
  * @param {string|array} keyPath
  */
-function evaluateKeyPathOnValue (value, keyPath) {
+function evaluateKeyPathOnValue (value, keyPath, multiEntry) {
     if (Array.isArray(keyPath)) {
         const arrayValue = [];
         return keyPath.some((kpPart) => {
-            const key = evaluateKeyPathOnValue(value, kpPart);
+            let key = extractKeyFromValueUsingKeyPath(value, kpPart, multiEntry);
             try {
-                validate(key);
+                key = convertValueToKey(key);
             } catch (err) {
                 return true;
             }
@@ -470,5 +494,5 @@ function decode (key, inArray) {
     return types[collations[key.substring(0, 1)]].decode(key, inArray);
 }
 
-Key = {encode, decode, validate, evaluateKeyPathOnValue, setValue, isMultiEntryMatch, isKeyInRange, findMultiEntryMatches};
-export {encode, decode, validate, evaluateKeyPathOnValue, setValue, isMultiEntryMatch, isKeyInRange, findMultiEntryMatches, Key as default};
+Key = {encode, decode, convertValueToKey, convertValueToKeyMultiEntry, extractKeyFromValueUsingKeyPath, evaluateKeyPathOnValue, setValue, isMultiEntryMatch, isKeyInRange, findMultiEntryMatches};
+export {encode, decode, convertValueToKey, convertValueToKeyMultiEntry, extractKeyFromValueUsingKeyPath, evaluateKeyPathOnValue, setValue, isMultiEntryMatch, isKeyInRange, findMultiEntryMatches, Key as default};

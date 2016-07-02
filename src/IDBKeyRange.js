@@ -15,10 +15,10 @@ function IDBKeyRange (lower, upper, lowerOpen, upperOpen) {
         throw new TypeError('Both arguments to the key range method cannot be undefined');
     }
     if (lower !== undefined) {
-        Key.validate(lower);
+        Key.convertValueToKey(lower);
     }
     if (upper !== undefined) {
-        Key.validate(upper);
+        Key.convertValueToKey(upper);
     }
     if (lower !== undefined && upper !== undefined && lower !== upper) {
         if (Key.encode(lower) > Key.encode(upper)) {
@@ -32,7 +32,7 @@ function IDBKeyRange (lower, upper, lowerOpen, upperOpen) {
     this.__upperOpen = !!upperOpen;
 }
 IDBKeyRange.prototype.includes = function (key) {
-    Key.validate(key);
+    Key.convertValueToKey(key);
     return Key.isKeyInRange(key, this);
 };
 

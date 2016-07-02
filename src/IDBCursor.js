@@ -93,7 +93,7 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
     }
     if (me.__lastKeyContinued !== undefined) {
         sql.push('AND', quotedKeyColumnName, '>= ?');
-        Key.validate(me.__lastKeyContinued);
+        Key.convertValueToKey(me.__lastKeyContinued);
         sqlValues.push(Key.encode(me.__lastKeyContinued));
     }
 
@@ -167,7 +167,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
     }
     if (me.__lastKeyContinued !== undefined) {
         sql.push('AND', quotedKeyColumnName, '>= ?');
-        Key.validate(me.__lastKeyContinued);
+        Key.convertValueToKey(me.__lastKeyContinued);
         sqlValues.push(Key.encode(me.__lastKeyContinued));
     }
 
@@ -318,7 +318,7 @@ IDBCursor.prototype['continue'] = function (key) {
     if (!me.__gotValue) {
         throw createDOMException('InvalidStateError', 'The cursor is being iterated or has iterated past its end.');
     }
-    if (key !== undefined) Key.validate(key);
+    if (key !== undefined) Key.convertValueToKey(key);
 
     if (key !== undefined) {
         const cmpResult = cmp(key, me.key);
@@ -417,12 +417,12 @@ IDBCursor.prototype.update = function (valueToUpdate) {
                 const store = me.__store;
                 const params = [encoded];
                 const sql = ['UPDATE', util.quote('s_' + store.name), 'SET value = ?'];
-                Key.validate(primaryKey);
+                Key.convertValueToKey(primaryKey);
 
                 // Also correct the indexes in the table
                 for (let i = 0; i < store.indexNames.length; i++) {
                     const index = store.__indexes[store.indexNames[i]];
-                    const indexKey = Key.evaluateKeyPathOnValue(valueToUpdate, index.keyPath);
+                    const indexKey = Key.evaluateKeyPathOnValue(valueToUpdate, index.keyPath, index.multiEntry);
                     sql.push(',', util.quote('_' + index.name), '= ?');
                     params.push(Key.encode(indexKey, index.multiEntry));
                 }
@@ -462,7 +462,7 @@ IDBCursor.prototype['delete'] = function () {
         me.__find(undefined, tx, function (key, value, primaryKey) {
             const sql = 'DELETE FROM  ' + util.quote('s_' + me.__store.name) + ' WHERE key = ?';
             CFG.DEBUG && console.log(sql, key, primaryKey);
-            Key.validate(primaryKey);
+            Key.convertValueToKey(primaryKey);
             tx.executeSql(sql, [Key.encode(primaryKey)], function (tx, data) {
                 me.__prefetchedData = null;
                 me.__prefetchedIndex = 0;

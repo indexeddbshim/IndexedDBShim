@@ -74,7 +74,7 @@ IDBIndex.__createIndex = function (store, index) {
                         if (i < data.rows.length) {
                             try {
                                 const value = Sca.decode(data.rows.item(i).value);
-                                let indexKey = Key.evaluateKeyPathOnValue(value, index.keyPath);
+                                let indexKey = Key.evaluateKeyPathOnValue(value, index.keyPath, index.multiEntry);
                                 indexKey = Key.encode(indexKey, index.multiEntry);
 
                                 tx.executeSql('UPDATE ' + util.quote('s_' + store.name) + ' SET ' + util.quote('_' + index.name) + ' = ? WHERE key = ?', [indexKey, data.rows.item(i).key], function (tx, data) {

@@ -97,7 +97,7 @@ function compoundKeyPolyfill (IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFac
                 const index = this.index(this.indexNames[i]);
                 if (isCompoundKey(index.keyPath)) {
                     try {
-                        setInlineCompoundKey(value, index.keyPath);
+                        setInlineCompoundKey(value, index.keyPath, index.multiEntry);
                     } catch (e) {
                         // The value doesn't have a valid key for this index.
                     }
@@ -280,10 +280,10 @@ function decodeCompoundKeyPath (keyPath) {
     return keyPath;
 }
 
-function setInlineCompoundKey (value, encodedKeyPath) {
+function setInlineCompoundKey (value, encodedKeyPath, multiEntry) {
     // Encode the key
     const keyPath = decodeCompoundKeyPath(encodedKeyPath);
-    const key = Key.evaluateKeyPathOnValue(value, keyPath);
+    const key = Key.evaluateKeyPathOnValue(value, keyPath, multiEntry);
     const encodedKey = encodeCompoundKey(key);
 
     // Store the encoded key inline
@@ -303,7 +303,7 @@ function removeInlineCompoundKey (value) {
 
 function encodeCompoundKey (key) {
     // Validate and encode the key
-    Key.validate(key);
+    Key.convertValueToKey(key);
     key = Key.encode(key);
 
     // Prepend the "__$$compoundKey." prefix

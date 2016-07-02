@@ -144,6 +144,8 @@
 - Fix: Apply `toString()` (and convert from sparse to dense) for
     validation within key path arrays
 - Fix: Validate `IDBKeyRange`-like objects (e.g., passed to cursor methods)
+- Fix: Properly ensure with multiEntry conversions that array members which
+    fail validation as keys are ignored (and avoid adding duplicate members
 - Feature: `IDBIndex` methods, `get`, `getKey`, `count` to allow obtaining
     first record of an IDBKeyRange (or IDBKeyRange-like range) and change
     error messages to indicate "key or range"
@@ -192,6 +194,9 @@
 - Refactoring: Use ES6 classes for cleaner inheritance
 - Refactoring: Avoid JSON methods upon each `objectStore`/`createObjectStore`
     call in favor of one-time in `IDBDatabase`
+- Refactoring: Rename and repurpose `Key.validate` to
+    `Key.convertValueToKey` (also paralleling terminology in the spec),
+    also supporting multiEntry argument
 - Updating: Bump various `devDependency` min versions
 - Documentation: Document `shimIndexedDB.__setConfig()` and NUL stripping.
 - Testing: Update tests per current spec and behavior
@@ -221,7 +226,7 @@
     From fakeIndexedDB (Node), only fakeIndexedDB.js is not passing;
     From indexedDBmock (Node), only database.js is not passing;
     From W3C (Node), only IDBCursorBehavior.js, IDBDatabase.close.js,
-        IDBFactory.open.js, IDBIndex.multiEntry.js, IBObjectStore.add.js,
+        IDBFactory.open.js, IBObjectStore.add.js,
         IDBObjectStore.createIndex.js, IDBObjectStore.js,
         IDBObjectStore.put.js, IDBTransaction.abort.js, IDBTransaction.js,
         KeyGenerator.js, KeyPath.js, RequestBehavior.js, TransactionBehavior.js

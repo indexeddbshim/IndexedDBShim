@@ -224,8 +224,8 @@ function cmp (key1, key2) {
         throw new TypeError('You must provide two keys to be compared');
     }
 
-    Key.validate(key1);
-    Key.validate(key2);
+    Key.convertValueToKey(key1);
+    Key.convertValueToKey(key2);
     const encodedKey1 = Key.encode(key1);
     const encodedKey2 = Key.encode(key2);
     const result = encodedKey1 > encodedKey2 ? 1 : encodedKey1 === encodedKey2 ? 0 : -1;

@@ -16906,7 +16906,7 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
     }
     if (me.__lastKeyContinued !== undefined) {
         sql.push('AND', quotedKeyColumnName, '>= ?');
-        _Key2.default.validate(me.__lastKeyContinued);
+        _Key2.default.convertValueToKey(me.__lastKeyContinued);
         sqlValues.push(_Key2.default.encode(me.__lastKeyContinued));
     }
 
@@ -16981,7 +16981,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
     }
     if (me.__lastKeyContinued !== undefined) {
         sql.push('AND', quotedKeyColumnName, '>= ?');
-        _Key2.default.validate(me.__lastKeyContinued);
+        _Key2.default.convertValueToKey(me.__lastKeyContinued);
         sqlValues.push(_Key2.default.encode(me.__lastKeyContinued));
     }
 
@@ -17134,7 +17134,7 @@ IDBCursor.prototype['continue'] = function (key) {
     if (!me.__gotValue) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'The cursor is being iterated or has iterated past its end.');
     }
-    if (key !== undefined) _Key2.default.validate(key);
+    if (key !== undefined) _Key2.default.convertValueToKey(key);
 
     if (key !== undefined) {
         var cmpResult = (0, _IDBFactory.cmp)(key, me.key);
@@ -17230,12 +17230,12 @@ IDBCursor.prototype.update = function (valueToUpdate) {
                 var store = me.__store;
                 var params = [encoded];
                 var sql = ['UPDATE', util.quote('s_' + store.name), 'SET value = ?'];
-                _Key2.default.validate(primaryKey);
+                _Key2.default.convertValueToKey(primaryKey);
 
                 // Also correct the indexes in the table
                 for (var i = 0; i < store.indexNames.length; i++) {
                     var index = store.__indexes[store.indexNames[i]];
-                    var indexKey = _Key2.default.evaluateKeyPathOnValue(valueToUpdate, index.keyPath);
+                    var indexKey = _Key2.default.evaluateKeyPathOnValue(valueToUpdate, index.keyPath, index.multiEntry);
                     sql.push(',', util.quote('_' + index.name), '= ?');
                     params.push(_Key2.default.encode(indexKey, index.multiEntry));
                 }
@@ -17275,7 +17275,7 @@ IDBCursor.prototype['delete'] = function () {
         me.__find(undefined, tx, function (key, value, primaryKey) {
             var sql = 'DELETE FROM  ' + util.quote('s_' + me.__store.name) + ' WHERE key = ?';
             _cfg2.default.DEBUG && console.log(sql, key, primaryKey);
-            _Key2.default.validate(primaryKey);
+            _Key2.default.convertValueToKey(primaryKey);
             tx.executeSql(sql, [_Key2.default.encode(primaryKey)], function (tx, data) {
                 me.__prefetchedData = null;
                 me.__prefetchedIndex = 0;
@@ -17770,8 +17770,8 @@ function cmp(key1, key2) {
         throw new TypeError('You must provide two keys to be compared');
     }
 
-    _Key2.default.validate(key1);
-    _Key2.default.validate(key2);
+    _Key2.default.convertValueToKey(key1);
+    _Key2.default.convertValueToKey(key2);
     var encodedKey1 = _Key2.default.encode(key1);
     var encodedKey2 = _Key2.default.encode(key2);
     var result = encodedKey1 > encodedKey2 ? 1 : encodedKey1 === encodedKey2 ? 0 : -1;
@@ -17916,7 +17916,7 @@ IDBIndex.__createIndex = function (store, index) {
                         if (i < data.rows.length) {
                             try {
                                 var value = _Sca2.default.decode(data.rows.item(i).value);
-                                var indexKey = _Key2.default.evaluateKeyPathOnValue(value, index.keyPath);
+                                var indexKey = _Key2.default.evaluateKeyPathOnValue(value, index.keyPath, index.multiEntry);
                                 indexKey = _Key2.default.encode(indexKey, index.multiEntry);
 
                                 tx.executeSql('UPDATE ' + util.quote('s_' + store.name) + ' SET ' + util.quote('_' + index.name) + ' = ? WHERE key = ?', [indexKey, data.rows.item(i).key], function (tx, data) {
@@ -18234,10 +18234,10 @@ function IDBKeyRange(lower, upper, lowerOpen, upperOpen) {
         throw new TypeError('Both arguments to the key range method cannot be undefined');
     }
     if (lower !== undefined) {
-        _Key2.default.validate(lower);
+        _Key2.default.convertValueToKey(lower);
     }
     if (upper !== undefined) {
-        _Key2.default.validate(upper);
+        _Key2.default.convertValueToKey(upper);
     }
     if (lower !== undefined && upper !== undefined && lower !== upper) {
         if (_Key2.default.encode(lower) > _Key2.default.encode(upper)) {
@@ -18251,7 +18251,7 @@ function IDBKeyRange(lower, upper, lowerOpen, upperOpen) {
     this.__upperOpen = !!upperOpen;
 }
 IDBKeyRange.prototype.includes = function (key) {
-    _Key2.default.validate(key);
+    _Key2.default.convertValueToKey(key);
     return _Key2.default.isKeyInRange(key, this);
 };
 
@@ -18480,7 +18480,7 @@ IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
             }
             throw (0, _DOMException.createDOMException)('DataError', 'Could not evaluate a key from keyPath');
         }
-        _Key2.default.validate(key);
+        _Key2.default.convertValueToKey(key);
     } else {
         if (key === undefined) {
             if (this.autoIncrement) {
@@ -18489,7 +18489,7 @@ IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
             }
             throw (0, _DOMException.createDOMException)('DataError', 'The object store uses out-of-line keys and has no key generator and the key parameter was not provided. ', this);
         }
-        _Key2.default.validate(key);
+        _Key2.default.convertValueToKey(key);
         util.throwIfNotClonable(value, 'The data to be stored could not be cloned by the internal structured cloning algorithm.');
     }
 
@@ -18557,9 +18557,9 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
                 resolve();
                 return;
             }
-            var indexKey = _Key2.default.evaluateKeyPathOnValue(value, index.keyPath); // Add as necessary to this and skip past this index if exceptions here)
+            var indexKey = void 0;
             try {
-                _Key2.default.validate(indexKey);
+                indexKey = _Key2.default.extractKeyFromValueUsingKeyPath(value, index.keyPath, index.multiEntry); // Add as necessary to this and skip past this index if exceptions here)
             } catch (err) {
                 resolve();
                 return;
@@ -18594,7 +18594,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         var sqlEnd = [' VALUES ('];
         var sqlValues = [];
         if (primaryKey !== undefined) {
-            _Key2.default.validate(primaryKey);
+            _Key2.default.convertValueToKey(primaryKey);
             sqlStart.push(util.quote('key'), ',');
             sqlEnd.push('?,');
             sqlValues.push(_Key2.default.encode(primaryKey));
@@ -18678,7 +18678,7 @@ IDBObjectStore.prototype.put = function (value, key) {
         me.__deriveKey(tx, value, key, function (primaryKey, addedAutoIncKeyPathKey) {
             _Sca2.default.encode(value, function (encoded) {
                 // First try to delete if the record exists
-                _Key2.default.validate(primaryKey);
+                _Key2.default.convertValueToKey(primaryKey);
                 var sql = 'DELETE FROM ' + util.quote('s_' + me.name) + ' WHERE key = ?';
                 tx.executeSql(sql, [_Key2.default.encode(primaryKey)], function (tx, data) {
                     _cfg2.default.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
@@ -18832,7 +18832,7 @@ IDBObjectStore.prototype.count = function (key) {
 
             // key is optional
             if (hasKey) {
-                _Key2.default.validate(key);
+                _Key2.default.convertValueToKey(key);
             }
 
             return {
@@ -19365,7 +19365,7 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.default = exports.findMultiEntryMatches = exports.isKeyInRange = exports.isMultiEntryMatch = exports.setValue = exports.evaluateKeyPathOnValue = exports.validate = exports.decode = exports.encode = undefined;
+exports.default = exports.findMultiEntryMatches = exports.isKeyInRange = exports.isMultiEntryMatch = exports.setValue = exports.evaluateKeyPathOnValue = exports.extractKeyFromValueUsingKeyPath = exports.convertValueToKeyMultiEntry = exports.convertValueToKey = exports.decode = exports.encode = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
@@ -19669,25 +19669,36 @@ function getType(key) {
  * Keys must be strings, numbers (besides NaN), Dates (if value is not NaN),
  *   Arrays (or, once supported, ArrayBuffer) objects
  */
-function validate(key, arrayRefs) {
+function convertValueToKey(key, arrayRefs, multiEntry) {
     var type = getType(key);
     switch (type) {
         case 'ArrayBuffer':
-            // Will just return once implemented (not a possible type yet)
-            return;
+            // Copy bytes once implemented (not a possible type yet)
+            return key;
         case 'array':
             arrayRefs = arrayRefs || [];
             arrayRefs.push(key);
+            var newKeys = [];
             for (var i = 0; i < key.length; i++) {
                 // We cannot iterate here with array extras as we must ensure sparse arrays are invalidated
                 var item = key[i];
                 if (arrayRefs.includes(item)) throw (0, _DOMException.createDOMException)('DataError', 'An array key cannot be circular');
-                validate(item, arrayRefs);
+                var newKey = void 0;
+                try {
+                    newKey = convertValueToKey(item, arrayRefs);
+                } catch (err) {
+                    if (!multiEntry) {
+                        throw err;
+                    }
+                }
+                if (!multiEntry || !newKeys.includes(newKey)) {
+                    newKeys.push(newKey);
+                }
             }
-            return;
+            return newKeys;
         case 'date':
             if (!Number.isNaN(key.getTime())) {
-                return;
+                return new Date(key.getTime());
             }
         // Falls through
         default:
@@ -19697,7 +19708,20 @@ function validate(key, arrayRefs) {
             if (!['string', 'number'].includes(type) || Number.isNaN(key)) {
                 throw (0, _DOMException.createDOMException)('DataError', 'Not a valid key');
             }
+            return key;
     }
+}
+
+function convertValueToKeyMultiEntry(key) {
+    return convertValueToKey(key, null, true);
+}
+
+function extractKeyFromValueUsingKeyPath(value, keyPath, multiEntry) {
+    var key = evaluateKeyPathOnValue(value, keyPath, multiEntry);
+    if (!multiEntry) {
+        return convertValueToKey(key);
+    }
+    return convertValueToKeyMultiEntry(key);
 }
 
 /**
@@ -19705,15 +19729,15 @@ function validate(key, arrayRefs) {
  * @param {object} source
  * @param {string|array} keyPath
  */
-function evaluateKeyPathOnValue(value, keyPath) {
+function evaluateKeyPathOnValue(value, keyPath, multiEntry) {
     if (Array.isArray(keyPath)) {
         var _ret = function () {
             var arrayValue = [];
             return {
                 v: keyPath.some(function (kpPart) {
-                    var key = evaluateKeyPathOnValue(value, kpPart);
+                    var key = extractKeyFromValueUsingKeyPath(value, kpPart, multiEntry);
                     try {
-                        validate(key);
+                        key = convertValueToKey(key);
                     } catch (err) {
                         return true;
                     }
@@ -19848,10 +19872,12 @@ function _decode(key, inArray) {
     return types[collations[key.substring(0, 1)]].decode(key, inArray);
 }
 
-exports.default = Key = { encode: _encode, decode: _decode, validate: validate, evaluateKeyPathOnValue: evaluateKeyPathOnValue, setValue: setValue, isMultiEntryMatch: isMultiEntryMatch, isKeyInRange: isKeyInRange, findMultiEntryMatches: findMultiEntryMatches };
+exports.default = Key = { encode: _encode, decode: _decode, convertValueToKey: convertValueToKey, convertValueToKeyMultiEntry: convertValueToKeyMultiEntry, extractKeyFromValueUsingKeyPath: extractKeyFromValueUsingKeyPath, evaluateKeyPathOnValue: evaluateKeyPathOnValue, setValue: setValue, isMultiEntryMatch: isMultiEntryMatch, isKeyInRange: isKeyInRange, findMultiEntryMatches: findMultiEntryMatches };
 exports.encode = _encode;
 exports.decode = _decode;
-exports.validate = validate;
+exports.convertValueToKey = convertValueToKey;
+exports.convertValueToKeyMultiEntry = convertValueToKeyMultiEntry;
+exports.extractKeyFromValueUsingKeyPath = extractKeyFromValueUsingKeyPath;
 exports.evaluateKeyPathOnValue = evaluateKeyPathOnValue;
 exports.setValue = setValue;
 exports.isMultiEntryMatch = isMultiEntryMatch;
@@ -20440,7 +20466,7 @@ function compoundKeyPolyfill(IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFact
                 var index = this.index(this.indexNames[i]);
                 if (isCompoundKey(index.keyPath)) {
                     try {
-                        setInlineCompoundKey(value, index.keyPath);
+                        setInlineCompoundKey(value, index.keyPath, index.multiEntry);
                     } catch (e) {
                         // The value doesn't have a valid key for this index.
                     }
@@ -20623,10 +20649,10 @@ function decodeCompoundKeyPath(keyPath) {
     return keyPath;
 }
 
-function setInlineCompoundKey(value, encodedKeyPath) {
+function setInlineCompoundKey(value, encodedKeyPath, multiEntry) {
     // Encode the key
     var keyPath = decodeCompoundKeyPath(encodedKeyPath);
-    var key = _Key2.default.evaluateKeyPathOnValue(value, keyPath);
+    var key = _Key2.default.evaluateKeyPathOnValue(value, keyPath, multiEntry);
     var encodedKey = encodeCompoundKey(key);
 
     // Store the encoded key inline
@@ -20646,7 +20672,7 @@ function removeInlineCompoundKey(value) {
 
 function encodeCompoundKey(key) {
     // Validate and encode the key
-    _Key2.default.validate(key);
+    _Key2.default.convertValueToKey(key);
     key = _Key2.default.encode(key);
 
     // Prepend the "__$$compoundKey." prefix
