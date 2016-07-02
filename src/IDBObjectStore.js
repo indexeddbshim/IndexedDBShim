@@ -268,7 +268,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             sqlValues.push(paramMap[key]);
         }
         // removing the trailing comma
-        sqlStart.push('value )');
+        sqlStart.push(util.quote('value') + ' )');
         sqlEnd.push('?)');
         sqlValues.push(encoded);
 

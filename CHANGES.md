@@ -148,6 +148,8 @@
     fail validation as keys are ignored (and avoid adding duplicate members
 - Fix: Ensure `success` event does not fire if database has already been
     closed (in `upgradeneeded`)
+- Fix: Make `length` on `DOMStringList` non-enumerable (impacts W3C tests
+    and also how implemented in Chrome)
 - Feature: `IDBIndex` methods, `get`, `getKey`, `count` to allow obtaining
     first record of an IDBKeyRange (or IDBKeyRange-like range) and change
     error messages to indicate "key or range"

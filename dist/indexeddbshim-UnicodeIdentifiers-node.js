@@ -18608,7 +18608,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             sqlValues.push(paramMap[key]);
         }
         // removing the trailing comma
-        sqlStart.push('value )');
+        sqlStart.push(util.quote('value') + ' )');
         sqlEnd.push('?)');
         sqlValues.push(encoded);
 
@@ -20921,8 +20921,13 @@ var StringList = function StringList() {
     this._items = [];
     // Internal functions on the prototype have been made non-enumerable below.
     if (cleanInterface) {
-        Object.defineProperty(this, '_items', {
-            enumerable: false
+        Object.defineProperties(this, {
+            '_items': {
+                enumerable: false
+            },
+            'length': {
+                enumerable: false
+            }
         });
     }
 };

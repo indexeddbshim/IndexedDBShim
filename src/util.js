@@ -38,8 +38,13 @@ const StringList = function () {
     this._items = [];
     // Internal functions on the prototype have been made non-enumerable below.
     if (cleanInterface) {
-        Object.defineProperty(this, '_items', {
-            enumerable: false
+        Object.defineProperties(this, {
+            '_items': {
+                enumerable: false
+            },
+            'length': {
+                enumerable: false
+            }
         });
     }
 };
