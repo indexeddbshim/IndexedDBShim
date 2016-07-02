@@ -79,7 +79,7 @@
 - Fix: Throw `TypeError` if call to `update()` has no arguments
 - Fix: Allow empty string key path to be utilized when validating
     `add`/`put` input
-- Fix: Add more precise `toString` behaviors
+- Fix: Add more precise `toString` behaviors on IDB* objects
 - Fix: Avoid iterating unique values
 - Fix: Ensure `IDBRequest.error` returns `null` rather than `undefined` upon
     success event
@@ -142,10 +142,12 @@
     valid keyPath given
 - Fix: For `IDBObjectStore.createIndex`, throw if transaction not active
 - Fix: Apply `toString()` (and convert from sparse to dense) for
-    validation within key path arrays
+    validation and utilization within key path arrays
 - Fix: Validate `IDBKeyRange`-like objects (e.g., passed to cursor methods)
 - Fix: Properly ensure with multiEntry conversions that array members which
     fail validation as keys are ignored (and avoid adding duplicate members
+- Fix: Ensure `success` event does not fire if database has already been
+    closed (in `upgradeneeded`)
 - Feature: `IDBIndex` methods, `get`, `getKey`, `count` to allow obtaining
     first record of an IDBKeyRange (or IDBKeyRange-like range) and change
     error messages to indicate "key or range"
@@ -229,7 +231,7 @@
         IDBFactory.open.js, IBObjectStore.add.js,
         IDBObjectStore.createIndex.js, IDBObjectStore.js,
         IDBObjectStore.put.js, IDBTransaction.abort.js, IDBTransaction.js,
-        KeyGenerator.js, KeyPath.js, RequestBehavior.js, TransactionBehavior.js
+        KeyGenerator.js, RequestBehavior.js, TransactionBehavior.js
         are not passing:
 - Testing (Grunt): Clarify Grunt tasks, expand tasks for cleaning, make tests
     more granular

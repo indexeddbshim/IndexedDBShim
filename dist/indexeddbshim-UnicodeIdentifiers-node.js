@@ -17642,6 +17642,9 @@ IDBFactory.prototype.open = function (name, version) {
                                     req.result.__versionTransaction = null;
                                 };
                                 req.transaction.__oncomplete = function () {
+                                    if (req.__result.__closed) {
+                                        return;
+                                    }
                                     req.__transaction = null;
                                     var e = (0, _Event.createEvent)('success');
                                     util.callback('onsuccess', req, e);
@@ -19735,6 +19738,10 @@ function evaluateKeyPathOnValue(value, keyPath, multiEntry) {
             var arrayValue = [];
             return {
                 v: keyPath.some(function (kpPart) {
+                    // If W3C tests are accurate, it appears sequence<DOMString> implies `toString()`
+                    // See also https://heycam.github.io/webidl/#idl-DOMString
+                    // and http://stackoverflow.com/questions/38164752/should-a-call-to-db-close-within-upgradeneeded-inevitably-prevent-onsuccess
+                    kpPart = util.isObj(kpPart) ? kpPart.toString() : kpPart;
                     var key = extractKeyFromValueUsingKeyPath(value, kpPart, multiEntry);
                     try {
                         key = convertValueToKey(key);
@@ -19752,13 +19759,15 @@ function evaluateKeyPathOnValue(value, keyPath, multiEntry) {
         return value;
     }
     var identifiers = keyPath.split('.');
-    if (typeof value === 'string' && identifiers.slice(-1) === 'length') {
-        return value.length;
-    }
-    if (!util.isObj(value)) {
-        return undefined;
-    }
-    identifiers.some(function (idntfr) {
+    identifiers.some(function (idntfr, i) {
+        if (idntfr === 'length' && typeof value === 'string' && i === identifiers.length - 1) {
+            value = value.length;
+            return true;
+        }
+        if (!util.isObj(value)) {
+            value = undefined;
+            return true;
+        }
         value = value[idntfr];
         return value === undefined;
     });

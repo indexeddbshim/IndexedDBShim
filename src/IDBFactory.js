@@ -101,6 +101,9 @@ IDBFactory.prototype.open = function (name, version) {
                                     req.result.__versionTransaction = null;
                                 };
                                 req.transaction.__oncomplete = function () {
+                                    if (req.__result.__closed) {
+                                        return;
+                                    }
                                     req.__transaction = null;
                                     const e = createEvent('success');
                                     util.callback('onsuccess', req, e);

@@ -361,6 +361,10 @@ function evaluateKeyPathOnValue (value, keyPath, multiEntry) {
     if (Array.isArray(keyPath)) {
         const arrayValue = [];
         return keyPath.some((kpPart) => {
+            // If W3C tests are accurate, it appears sequence<DOMString> implies `toString()`
+            // See also https://heycam.github.io/webidl/#idl-DOMString
+            // and http://stackoverflow.com/questions/38164752/should-a-call-to-db-close-within-upgradeneeded-inevitably-prevent-onsuccess
+            kpPart = util.isObj(kpPart) ? kpPart.toString() : kpPart;
             let key = extractKeyFromValueUsingKeyPath(value, kpPart, multiEntry);
             try {
                 key = convertValueToKey(key);
@@ -374,13 +378,15 @@ function evaluateKeyPathOnValue (value, keyPath, multiEntry) {
         return value;
     }
     const identifiers = keyPath.split('.');
-    if (typeof value === 'string' && identifiers.slice(-1) === 'length') {
-        return value.length;
-    }
-    if (!util.isObj(value)) {
-        return undefined;
-    }
-    identifiers.some((idntfr) => {
+    identifiers.some((idntfr, i) => {
+        if (idntfr === 'length' && typeof value === 'string' && i === identifiers.length - 1) {
+            value = value.length;
+            return true;
+        }
+        if (!util.isObj(value)) {
+            value = undefined;
+            return true;
+        }
         value = value[idntfr];
         return value === undefined;
     });

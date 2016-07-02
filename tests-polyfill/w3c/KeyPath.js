@@ -5,9 +5,9 @@ var support = require('./support');
 var createdb = support.createdb;
 
 describe('W3C Key Path Tests', function () {
-    this.timeout(20000);
     // keypath
     it('Keypath', function (done) {
+        this.timeout(15000);
         var numChecks = 0;
         var numDone = 0;
 
@@ -151,6 +151,8 @@ describe('W3C Key Path Tests', function () {
 
     // keypath_invalid
     it('Invalid keypath', function (done) {
+        this.timeout(15000);
+
         var numChecks = 0;
         var numDone = 0;
 
@@ -208,6 +210,7 @@ describe('W3C Key Path Tests', function () {
 
     // keypath_maxsize
     it('Max size', function (done) {
+        this.timeout(5000);
         var numChecks = 0;
         var numDone = 0;
 
