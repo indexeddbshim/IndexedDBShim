@@ -150,6 +150,9 @@
     closed (in `upgradeneeded`)
 - Fix: Make `length` on `DOMStringList` non-enumerable (impacts W3C tests
     and also how implemented in Chrome)
+- Fix: Prevent non-numeric and <= 1 keys from auto-incrementing current number
+- Fix: Prevent incrementing if nevertheless valid key is lower than current
+    number
 - Feature: `IDBIndex` methods, `get`, `getKey`, `count` to allow obtaining
     first record of an IDBKeyRange (or IDBKeyRange-like range) and change
     error messages to indicate "key or range"
@@ -201,6 +204,9 @@
 - Refactoring: Rename and repurpose `Key.validate` to
     `Key.convertValueToKey` (also paralleling terminology in the spec),
     also supporting multiEntry argument
+- Refactoring: Replace SQLite auto-increment with our own table since
+    SQLite's own apparently cannot be decremented successfully;
+    also rename to spec "current number"
 - Updating: Bump various `devDependency` min versions
 - Documentation: Document `shimIndexedDB.__setConfig()` and NUL stripping.
 - Testing: Update tests per current spec and behavior

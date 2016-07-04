@@ -83,7 +83,7 @@ IDBFactory.prototype.open = function (name, version) {
         }
 
         db.transaction(function (tx) {
-            tx.executeSql('CREATE TABLE IF NOT EXISTS __sys__ (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB)', [], function () {
+            tx.executeSql('CREATE TABLE IF NOT EXISTS __sys__ (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB, currNum INTEGER)', [], function () {
                 tx.executeSql('SELECT * FROM __sys__', [], function (tx, data) {
                     const e = createEvent('success');
                     req.__source = req.__result = new IDBDatabase(db, name, version, data);

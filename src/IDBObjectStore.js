@@ -72,6 +72,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
     IDBTransaction.__assertVersionChange(transaction);
     transaction.__addToTransactionQueue(function createObjectStore (tx, args, success, failure) {
         function error (tx, err) {
+            CFG.DEBUG && console.log(err);
             throw createDOMException(0, 'Could not create object store "' + store.name + '"', err);
         }
 
@@ -79,7 +80,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
         const sql = ['CREATE TABLE', util.quote('s_' + store.name), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
         CFG.DEBUG && console.log(sql);
         tx.executeSql(sql, [], function (tx, data) {
-            tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?)', [store.name, JSON.stringify(store.keyPath), store.autoIncrement, '{}'], function () {
+            tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [store.name, JSON.stringify(store.keyPath), store.autoIncrement, '{}', 1], function () {
                 success(store);
             }, error);
         }, error);
@@ -103,6 +104,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
     IDBTransaction.__assertVersionChange(transaction);
     transaction.__addToTransactionQueue(function deleteObjectStore (tx, args, success, failure) {
         function error (tx, err) {
+            CFG.DEBUG && console.log(err);
             failure(createDOMException(0, 'Could not delete ObjectStore', err));
         }
 
@@ -160,7 +162,8 @@ IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
 
 /**
  * From the store properties and object, extracts the value for the key in the object store
- * If the table has auto increment, get the next in sequence
+ * If the table has auto increment, get the current number (unless it has a keyPath leading to a
+ *  valid but non-numeric or < 1 key)
  * @param {Object} tx
  * @param {Object} value
  * @param {Object} key
@@ -170,44 +173,52 @@ IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
 IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failure) {
     const me = this;
 
-    function getNextAutoIncKey (callback) {
-        tx.executeSql('SELECT * FROM sqlite_sequence WHERE name = ?', ['s_' + me.name], function (tx, data) {
+    function getCurrentNumber (callback) {
+        tx.executeSql('SELECT currNum FROM __sys__ WHERE name = ?', [me.name], function (tx, data) {
             if (data.rows.length !== 1) {
                 callback(1);
             } else {
-                callback(data.rows.item(0).seq + 1);
+                callback(data.rows.item(0).currNum);
             }
         }, function (tx, error) {
             failure(createDOMException('DataError', 'Could not get the auto increment value for key', error));
         });
     }
 
-    if (me.keyPath !== null) {
-        const primaryKey = Key.evaluateKeyPathOnValue(value, me.keyPath);
-        if (primaryKey === undefined && me.autoIncrement) {
-            getNextAutoIncKey(function (primaryKey) {
+    // This variable determines against which key comparisons should be made
+    //   when determining whether to update the current number
+    let keyToCheck = key;
+    const hasKeyPath = me.keyPath !== null;
+    if (hasKeyPath) {
+        keyToCheck = Key.evaluateKeyPathOnValue(value, me.keyPath);
+    }
+    // If auto-increment and no valid primaryKey found on the keyPath, get and set the new value, and use
+    if (me.autoIncrement && keyToCheck === undefined) {
+        getCurrentNumber(function (cn) {
+            if (hasKeyPath) {
                 try {
                     // Update the value with the new key
-                    Key.setValue(value, me.keyPath, primaryKey);
-                    success(primaryKey);
+                    Key.setValue(value, me.keyPath, cn);
                 } catch (e) {
                     failure(createDOMException('DataError', 'Could not assign a generated value to the keyPath', e));
                 }
-            });
-        } else {
-            success(primaryKey, me.autoIncrement);
-        }
+            }
+            success(cn);
+        });
+    // If auto-increment and the keyPath item is a valid numeric key, get the old auto-increment to compare if the new is higher
+    //  to determine which to use and whether to update the current number
+    } else if (me.autoIncrement && Number.isFinite(keyToCheck) && keyToCheck >= 1) {
+        getCurrentNumber(function (cn) {
+            const useNewForAutoInc = keyToCheck >= cn;
+            success(keyToCheck, useNewForAutoInc);
+        });
+    // Not auto-increment or auto-increment with a bad (non-numeric or < 1) keyPath key
     } else {
-        if (key === undefined && me.autoIncrement) {
-            // Looks like this has autoInc, so lets get the next in sequence and return that.
-            getNextAutoIncKey(success);
-        } else {
-            success(key);
-        }
+        success(keyToCheck);
     }
 };
 
-IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey, passedKey, addedAutoIncKeyPathKey, success, error) {
+IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey, passedKey, useNewForAutoInc, success, error) {
     const me = this;
     const paramMap = {};
     const indexPromises = me.indexNames.map((indexName) => {
@@ -255,48 +266,85 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
     SyncPromise.all(indexPromises).then(() => {
         const sqlStart = ['INSERT INTO ', util.quote('s_' + this.name), '('];
         const sqlEnd = [' VALUES ('];
-        const sqlValues = [];
+        const insertSqlValues = [];
         if (primaryKey !== undefined) {
             Key.convertValueToKey(primaryKey);
             sqlStart.push(util.quote('key'), ',');
             sqlEnd.push('?,');
-            sqlValues.push(Key.encode(primaryKey));
+            insertSqlValues.push(Key.encode(primaryKey));
         }
         for (const key in paramMap) {
             sqlStart.push(util.quote('_' + key) + ',');
             sqlEnd.push('?,');
-            sqlValues.push(paramMap[key]);
+            insertSqlValues.push(paramMap[key]);
         }
         // removing the trailing comma
         sqlStart.push(util.quote('value') + ' )');
         sqlEnd.push('?)');
-        sqlValues.push(encoded);
+        insertSqlValues.push(encoded);
 
-        const sql = sqlStart.join(' ') + sqlEnd.join(' ');
+        const insertSql = sqlStart.join(' ') + sqlEnd.join(' ');
+        CFG.DEBUG && console.log('SQL for adding', insertSql, insertSqlValues);
 
-        CFG.DEBUG && console.log('SQL for adding', sql, sqlValues);
-        tx.executeSql(sql, sqlValues, function (tx, data) {
-            Sca.encode(primaryKey, function (primaryKey) {
-                primaryKey = Sca.decode(primaryKey);
-                if (addedAutoIncKeyPathKey) {
-                    passedKey = primaryKey; // Add to UPDATE below
-                }
-                if (me.autoIncrement && (
-                    (addedAutoIncKeyPathKey && typeof passedKey === 'number') ||
-                    // Todo: If primaryKey is not a number, we should be checking the value of any previous "current number" and compare with that
-                    (typeof passedKey === 'number' && (typeof primaryKey !== 'number' || passedKey >= primaryKey))
-                )) {
-                    tx.executeSql('UPDATE sqlite_sequence SET seq = ? WHERE name = ?', [passedKey, 's_' + me.name], function (tx, data) {
-                        success(passedKey);
+        const insert = function (result) {
+            let cb;
+            if (typeof result === 'function') {
+                cb = result;
+                result = undefined;
+            }
+            tx.executeSql(insertSql, insertSqlValues, function (tx, data) {
+                if (cb) {
+                    cb();
+                } else success(result);
+            }, function (tx, err) {
+                error(createDOMException('ConstraintError', err.message, err));
+            });
+        };
+
+        // Of what use is encoding then decoding here, especially if the Sca functions don't throw?
+        Sca.encode(primaryKey, function (primaryKey) {
+            primaryKey = Sca.decode(primaryKey);
+            if (!me.autoIncrement) {
+                insert(primaryKey);
+                return;
+            }
+
+            // Bump up the auto-inc counter if the key path-resolved value is valid (greater than old value and >=1) OR
+            //  if a manually passed in key is valid (numeric and >= 1) and >= any primaryKey
+            // Todo: If primaryKey is not a number, we should be checking the value of any previous "current number" and compare with that
+            if (useNewForAutoInc) {
+                insert(function () {
+                    const sql = 'UPDATE __sys__ SET currNum = ? WHERE name = ?';
+                    const sqlValues = [
+                        Math.floor(primaryKey) + 1, me.name
+                    ];
+                    CFG.debug && console.log(sql, sqlValues);
+                    tx.executeSql(sql, sqlValues, function (tx, data) {
+                        success(primaryKey);
                     }, function (tx, err) {
                         error(createDOMException('UnknownError', 'Could not set the auto increment value for key', err));
                     });
-                } else {
-                    success(primaryKey);
-                }
-            });
-        }, function (tx, err) {
-            error(createDOMException('ConstraintError', err.message, err));
+                });
+            // If the key path-resolved value is invalid (not numeric or < 1) or
+            //    if a manually passed in key is invalid (non-numeric or < 1),
+            //    then we don't need to modify the current number
+            } else if (useNewForAutoInc === false || !Number.isFinite(primaryKey) || primaryKey < 1) {
+                insert(primaryKey);
+            // Increment current number by 1 (we cannot leverage SQLite's
+            //  autoincrement (and decrement when not needed), as decrementing
+            //  will be overwritten/ignored upon the next insert)
+            } else {
+                insert(function () {
+                    const sql = 'UPDATE __sys__ SET currNum = currNum + 1 WHERE name = ?';
+                    const sqlValues = [me.name];
+                    CFG.debug && console.log(sql, sqlValues);
+                    tx.executeSql(sql, sqlValues, function (tx, data) {
+                        success(primaryKey);
+                    }, function (tx, err) {
+                        error(createDOMException('UnknownError', 'Could not set the auto increment value for key', err));
+                    });
+                });
+            }
         });
     }).catch(function (err) {
         error(err);
@@ -317,9 +365,9 @@ IDBObjectStore.prototype.add = function (value, key) {
 
     const request = me.transaction.__createRequest(me);
     me.transaction.__pushToQueue(request, function objectStoreAdd (tx, args, success, error) {
-        me.__deriveKey(tx, value, key, function (primaryKey, addedAutoIncKeyPathKey) {
+        me.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
             Sca.encode(value, function (encoded) {
-                me.__insertData(tx, encoded, value, primaryKey, key, addedAutoIncKeyPathKey, success, error);
+                me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, success, error);
             });
         }, error);
     });
@@ -340,14 +388,14 @@ IDBObjectStore.prototype.put = function (value, key) {
 
     const request = me.transaction.__createRequest(me);
     me.transaction.__pushToQueue(request, function objectStorePut (tx, args, success, error) {
-        me.__deriveKey(tx, value, key, function (primaryKey, addedAutoIncKeyPathKey) {
+        me.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
             Sca.encode(value, function (encoded) {
                 // First try to delete if the record exists
                 Key.convertValueToKey(primaryKey);
                 const sql = 'DELETE FROM ' + util.quote('s_' + me.name) + ' WHERE key = ?';
                 tx.executeSql(sql, [Key.encode(primaryKey)], function (tx, data) {
                     CFG.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
-                    me.__insertData(tx, encoded, value, primaryKey, key, addedAutoIncKeyPathKey, success, error);
+                    me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, success, error);
                 }, function (tx, err) {
                     error(err);
                 });
