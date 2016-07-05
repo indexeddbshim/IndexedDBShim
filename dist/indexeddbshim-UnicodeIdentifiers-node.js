@@ -17628,13 +17628,13 @@ IDBFactory.prototype.open = function (name, version) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS __sys__ (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB, currNum INTEGER)', [], function () {
                 tx.executeSql('SELECT * FROM __sys__', [], function (tx, data) {
                     var e = (0, _Event.createEvent)('success');
-                    req.__source = req.__result = new _IDBDatabase2.default(db, name, version, data);
+                    req.__result = new _IDBDatabase2.default(db, name, version, data);
                     if (oldVersion < version) {
                         // DB Upgrade in progress
                         sysdb.transaction(function (systx) {
                             systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [version, name], function () {
                                 var e = new IDBVersionChangeEvent('upgradeneeded', { oldVersion: oldVersion, newVersion: version });
-                                req.__transaction = req.result.__versionTransaction = new _IDBTransaction2.default(req.source, req.source.objectStoreNames, 'versionchange');
+                                req.__transaction = req.result.__versionTransaction = new _IDBTransaction2.default(req.result, req.result.objectStoreNames, 'versionchange');
                                 req.transaction.__addToTransactionQueue(function onupgradeneeded(tx, args, success) {
                                     util.callback('onupgradeneeded', req, e);
                                     success();

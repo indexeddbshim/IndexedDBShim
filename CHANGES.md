@@ -158,6 +158,8 @@
     SQLite, but db/store/index names not case-insensitive in IndexedDB
 - Fix: Stringify calls to `IDBDatabase.createObjectStore` and
     `IDBObjectstore.createIndex` as per W3C tests
+- Fix: Avoid setting `source` for `open` request, as, per new spec, it is
+    to always be `null`
 - Feature: `IDBIndex` methods, `get`, `getKey`, `count` to allow obtaining
     first record of an IDBKeyRange (or IDBKeyRange-like range) and change
     error messages to indicate "key or range"
