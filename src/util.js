@@ -58,6 +58,18 @@ StringList.prototype = {
     },
 
     // Helpers. Should only be used internally.
+    addIndexes: function () {
+        for (let i = 0; i < this._items.length; i++) {
+            this[i] = this._items[i];
+        }
+    },
+    sortList: function () {
+        // http://w3c.github.io/IndexedDB/#sorted-list
+        // https://tc39.github.io/ecma262/#sec-abstract-relational-comparison
+        this._items.sort();
+        this.addIndexes();
+        return this._items;
+    },
     forEach: function (cb, thisArg) {
         this._items.forEach(cb, thisArg);
     },
@@ -69,10 +81,8 @@ StringList.prototype = {
     },
     push: function (item) {
         this._items.push(item);
-        this.length += 1;
-        for (let i = 0; i < this._items.length; i++) {
-            this[i] = this._items[i];
-        }
+        this.length++;
+        this.sortList();
     },
     splice: function (...args /* index, howmany, item1, ..., itemX*/) {
         this._items.splice(...args);
@@ -82,13 +92,15 @@ StringList.prototype = {
                 delete this[i];
             }
         }
-        for (let i = 0; i < this._items.length; i++) {
-            this[i] = this._items[i];
-        }
+        this.sortList();
     }
 };
 if (cleanInterface) {
     for (const i in {
+        'addIndexes': false,
+        'sortList': false,
+        'forEach': false,
+        'map': false,
         'indexOf': false,
         'push': false,
         'splice': false

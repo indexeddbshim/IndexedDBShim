@@ -153,6 +153,8 @@
 - Fix: Prevent non-numeric and <= 1 keys from auto-incrementing current number
 - Fix: Prevent incrementing if nevertheless valid key is lower than current
     number
+- Fix: Ensure sorting of `StringList` (`IDBDatabase.objectStoreNames`,
+    `IDBObjectStore.indexNames`)
 - Feature: `IDBIndex` methods, `get`, `getKey`, `count` to allow obtaining
     first record of an IDBKeyRange (or IDBKeyRange-like range) and change
     error messages to indicate "key or range"

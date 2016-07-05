@@ -13485,6 +13485,18 @@ StringList.prototype = {
     },
 
     // Helpers. Should only be used internally.
+    addIndexes: function addIndexes() {
+        for (var i = 0; i < this._items.length; i++) {
+            this[i] = this._items[i];
+        }
+    },
+    sortList: function sortList() {
+        // http://w3c.github.io/IndexedDB/#sorted-list
+        // https://tc39.github.io/ecma262/#sec-abstract-relational-comparison
+        this._items.sort();
+        this.addIndexes();
+        return this._items;
+    },
     forEach: function forEach(cb, thisArg) {
         this._items.forEach(cb, thisArg);
     },
@@ -13496,10 +13508,8 @@ StringList.prototype = {
     },
     push: function push(item) {
         this._items.push(item);
-        this.length += 1;
-        for (var i = 0; i < this._items.length; i++) {
-            this[i] = this._items[i];
-        }
+        this.length++;
+        this.sortList();
     },
     splice: function splice() /* index, howmany, item1, ..., itemX*/{
         var _items;
@@ -13511,13 +13521,15 @@ StringList.prototype = {
                 delete this[i];
             }
         }
-        for (var _i = 0; _i < this._items.length; _i++) {
-            this[_i] = this._items[_i];
-        }
+        this.sortList();
     }
 };
 if (cleanInterface) {
     for (var i in {
+        'addIndexes': false,
+        'sortList': false,
+        'forEach': false,
+        'map': false,
         'indexOf': false,
         'push': false,
         'splice': false
