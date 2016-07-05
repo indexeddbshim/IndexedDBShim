@@ -24,6 +24,7 @@ function IDBDatabase (db, name, version, storeProperties) {
         ['keyPath', 'autoInc', 'indexList'].forEach(function (prop) {
             item[prop] = JSON.parse(item[prop]);
         });
+        item.idbdb = this;
         const store = new IDBObjectStore(item);
         this.__objectStores[store.name] = store;
         this.objectStoreNames.push(store.name);
@@ -66,7 +67,8 @@ IDBDatabase.prototype.createObjectStore = function (storeName, createOptions) {
         name: storeName,
         keyPath: keyPath,
         autoInc: autoIncrement,
-        indexList: {}
+        indexList: {},
+        idbdb: this
     };
     const store = new IDBObjectStore(storeProperties, this.__versionTransaction);
     IDBObjectStore.__createObjectStore(this, store);

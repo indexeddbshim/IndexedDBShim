@@ -20,6 +20,7 @@ function IDBObjectStore (storeProperties, transaction) {
     this.__name = storeProperties.name;
     this.__keyPath = Array.isArray(storeProperties.keyPath) ? storeProperties.keyPath.slice() : storeProperties.keyPath;
     this.__transaction = transaction;
+    this.__idbdb = storeProperties.idbdb;
 
     // autoInc is numeric (0/1) on WinPhone
     this.__autoIncrement = !!storeProperties.autoInc;
@@ -49,7 +50,8 @@ IDBObjectStore.__clone = function (store, transaction) {
         name: store.name,
         keyPath: Array.isArray(store.keyPath) ? store.keyPath.slice() : store.keyPath,
         autoInc: store.autoIncrement,
-        indexList: {}
+        indexList: {},
+        idbdb: this.__idbdb
     }, transaction);
     newStore.__indexes = store.__indexes;
     newStore.__indexNames = store.indexNames;
@@ -665,17 +667,29 @@ Object.defineProperty(IDBObjectStore.prototype, 'name', {
         return this.__name;
     },
     set: function (name) {
+        const me = this;
         if (this.__deleted) {
             throw createDOMException('InvalidStateError', 'This store has been deleted');
         }
         IDBTransaction.__assertVersionChange(this.transaction);
         IDBTransaction.__assertActive(this.transaction);
-        if (this.name === name) {
+        if (me.name === name) {
             return;
         }
-        // Todo: Rename in database, throwing ConstraintError if store already existing
+        if (me.__idbdb.__objectStores[name]) {
+            throw createDOMException('ConstraintError', 'Object store "' + name + '" already exists in ' + me.__idbdb.name);
+        }
+        me.__name = name;
+        // Todo: Add pending flag to delay queries against this store until renamed in SQLite
 
-        this.__name = name;
+        const sql = 'ALTER TABLE ' + util.escapeStore(this.name) + ' RENAME TO ' + util.escapeStore(name);
+        me.transaction.__addToTransactionQueue(function objectStoreClear (tx, args, success, error) {
+            tx.executeSql(sql, [], function (tx, data) {
+                success();
+            }, function (tx, err) {
+                error(err);
+            });
+        });
     }
 });
 

@@ -9878,6 +9878,7 @@ function IDBDatabase(db, name, version, storeProperties) {
         ['keyPath', 'autoInc', 'indexList'].forEach(function (prop) {
             item[prop] = JSON.parse(item[prop]);
         });
+        item.idbdb = _this;
         var store = new _IDBObjectStore2.default(item);
         _this.__objectStores[store.name] = store;
         _this.objectStoreNames.push(store.name);
@@ -9924,7 +9925,8 @@ IDBDatabase.prototype.createObjectStore = function (storeName, createOptions) {
         name: storeName,
         keyPath: keyPath,
         autoInc: autoIncrement,
-        indexList: {}
+        indexList: {},
+        idbdb: this
     };
     var store = new _IDBObjectStore2.default(storeProperties, this.__versionTransaction);
     _IDBObjectStore2.default.__createObjectStore(this, store);
@@ -10588,6 +10590,45 @@ IDBIndex.prototype.count = function (query) {
     return this.__fetchIndexData(query, 'count', false, true);
 };
 
+IDBIndex.prototype.__renameIndex = function (storeName, oldName, newName) {
+    var colInfoToPreserveArr = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+
+    var newNameType = 'BLOB';
+    var colNamesToPreserve = colInfoToPreserveArr.map(function (colInfo) {
+        return colInfo[0];
+    });
+    var colInfoToPreserve = colInfoToPreserveArr.map(function (colInfo) {
+        return colInfo.join(' ');
+    });
+    var listColInfoToPreserve = colInfoToPreserve.length ? colInfoToPreserve.join(', ') + ', ' : '';
+    var listColsToPreserve = colNamesToPreserve.length ? colNamesToPreserve.join(', ') + ', ' : '';
+
+    var me = this;
+    // We could adapt the approach at http://stackoverflow.com/a/8430746/271577
+    //    to make the approach reusable without passing column names, but it is a bit fragile
+    me.transaction.__addToTransactionQueue(function renameIndex(tx, args, success, error) {
+        var sql = 'ALTER TABLE ' + util.escapeStore(storeName) + ' RENAME TO tmp_' + util.escapeStore(storeName);
+        tx.executeSql(sql, [], function (tx, data) {
+            var sql = 'CREATE TABLE ' + util.escapeStore(storeName) + '(' + listColInfoToPreserve + util.escapeIndex(newName) + ' ' + newNameType + ')';
+            tx.executeSql(sql, [], function (tx, data) {
+                var sql = 'INSERT INTO ' + util.escapeStore(storeName) + '(' + listColsToPreserve + util.escapeIndex(newName) + ') SELECT ' + listColsToPreserve + util.escapeIndex(oldName) + ' FROM tmp_' + util.escapeStore(storeName);
+                tx.executeSql(sql, [], function (tx, data) {
+                    var sql = 'DROP TABLE tmp_' + util.escapeStore(storeName);
+                    tx.executeSql(sql, [], function (tx, data) {
+                        success();
+                    }, function (tx, err) {
+                        error(err);
+                    });
+                }, function (tx, err) {
+                    error(err);
+                });
+            });
+        }, function (tx, err) {
+            error(err);
+        });
+    });
+};
+
 IDBIndex.prototype.toString = function () {
     return '[object IDBIndex]';
 };
@@ -10606,21 +10647,28 @@ Object.defineProperty(IDBIndex.prototype, 'name', {
     get: function get() {
         return this.__name;
     },
-    set: function set(name) {
+    set: function set(newName) {
+        var me = this;
+        var oldName = me.name;
         IDBTransaction.__assertVersionChange(this.objectStore.transaction);
         IDBTransaction.__assertActive(this.objectStore.transaction);
-        if (this.__deleted) {
+        if (me.__deleted) {
             throw (0, _DOMException.createDOMException)('InvalidStateError', 'This index has been deleted');
         }
-        if (this.objectStore.__deleted) {
+        if (me.objectStore.__deleted) {
             throw (0, _DOMException.createDOMException)('InvalidStateError', "This index's object store has been deleted");
         }
-        if (this.name === name) {
+        if (newName === oldName) {
             return;
         }
-        // Todo: Rename in database, throwing ConstraintError if index already existing
+        if (me.objectStore.__indexes[newName] && !me.objectStore.__indexes[newName].__deleted) {
+            throw (0, _DOMException.createDOMException)('ConstraintError', 'Index "' + newName + '" already exists on ' + me.objectStore.name);
+        }
 
-        this.__name = name;
+        me.__name = newName;
+        // Todo: Add pending flag to delay queries against this index until renamed in SQLite
+        var colInfoToPreserveArr = [['key', 'BLOB ' + (me.objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')], ['value', 'BLOB']];
+        this.__renameIndex(me.objectStore.name, oldName, newName, colInfoToPreserveArr);
     }
 });
 
@@ -10861,6 +10909,7 @@ function IDBObjectStore(storeProperties, transaction) {
     this.__name = storeProperties.name;
     this.__keyPath = Array.isArray(storeProperties.keyPath) ? storeProperties.keyPath.slice() : storeProperties.keyPath;
     this.__transaction = transaction;
+    this.__idbdb = storeProperties.idbdb;
 
     // autoInc is numeric (0/1) on WinPhone
     this.__autoIncrement = !!storeProperties.autoInc;
@@ -10890,7 +10939,8 @@ IDBObjectStore.__clone = function (store, transaction) {
         name: store.name,
         keyPath: Array.isArray(store.keyPath) ? store.keyPath.slice() : store.keyPath,
         autoInc: store.autoIncrement,
-        indexList: {}
+        indexList: {},
+        idbdb: this.__idbdb
     }, transaction);
     newStore.__indexes = store.__indexes;
     newStore.__indexNames = store.indexNames;
@@ -11510,17 +11560,29 @@ Object.defineProperty(IDBObjectStore.prototype, 'name', {
         return this.__name;
     },
     set: function set(name) {
+        var me = this;
         if (this.__deleted) {
             throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
         }
         _IDBTransaction2.default.__assertVersionChange(this.transaction);
         _IDBTransaction2.default.__assertActive(this.transaction);
-        if (this.name === name) {
+        if (me.name === name) {
             return;
         }
-        // Todo: Rename in database, throwing ConstraintError if store already existing
+        if (me.__idbdb.__objectStores[name]) {
+            throw (0, _DOMException.createDOMException)('ConstraintError', 'Object store "' + name + '" already exists in ' + me.__idbdb.name);
+        }
+        me.__name = name;
+        // Todo: Add pending flag to delay queries against this store until renamed in SQLite
 
-        this.__name = name;
+        var sql = 'ALTER TABLE ' + util.escapeStore(this.name) + ' RENAME TO ' + util.escapeStore(name);
+        me.transaction.__addToTransactionQueue(function objectStoreClear(tx, args, success, error) {
+            tx.executeSql(sql, [], function (tx, data) {
+                success();
+            }, function (tx, err) {
+                error(err);
+            });
+        });
     }
 });
 

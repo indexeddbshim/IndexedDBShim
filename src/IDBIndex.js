@@ -237,6 +237,42 @@ IDBIndex.prototype.count = function (query) {
     return this.__fetchIndexData(query, 'count', false, true);
 };
 
+IDBIndex.prototype.__renameIndex = function (storeName, oldName, newName, colInfoToPreserveArr = []) {
+    const newNameType = 'BLOB';
+    const colNamesToPreserve = colInfoToPreserveArr.map((colInfo) => colInfo[0]);
+    const colInfoToPreserve = colInfoToPreserveArr.map((colInfo) => colInfo.join(' '));
+    const listColInfoToPreserve = (colInfoToPreserve.length ? (colInfoToPreserve.join(', ') + ', ') : '');
+    const listColsToPreserve = (colNamesToPreserve.length ? (colNamesToPreserve.join(', ') + ', ') : '');
+
+    const me = this;
+    // We could adapt the approach at http://stackoverflow.com/a/8430746/271577
+    //    to make the approach reusable without passing column names, but it is a bit fragile
+    me.transaction.__addToTransactionQueue(function renameIndex (tx, args, success, error) {
+        const sql = 'ALTER TABLE ' + util.escapeStore(storeName) + ' RENAME TO tmp_' + util.escapeStore(storeName);
+        tx.executeSql(sql, [], function (tx, data) {
+            const sql = 'CREATE TABLE ' + util.escapeStore(storeName) + '(' + listColInfoToPreserve + util.escapeIndex(newName) + ' ' + newNameType + ')';
+            tx.executeSql(sql, [], function (tx, data) {
+                const sql = 'INSERT INTO ' + util.escapeStore(storeName) + '(' +
+                    listColsToPreserve +
+                    util.escapeIndex(newName) +
+                    ') SELECT ' + listColsToPreserve + util.escapeIndex(oldName) + ' FROM tmp_' + util.escapeStore(storeName);
+                tx.executeSql(sql, [], function (tx, data) {
+                    const sql = 'DROP TABLE tmp_' + util.escapeStore(storeName);
+                    tx.executeSql(sql, [], function (tx, data) {
+                        success();
+                    }, function (tx, err) {
+                        error(err);
+                    });
+                }, function (tx, err) {
+                    error(err);
+                });
+            });
+        }, function (tx, err) {
+            error(err);
+        });
+    });
+};
+
 IDBIndex.prototype.toString = function () {
     return '[object IDBIndex]';
 };
@@ -253,21 +289,31 @@ Object.defineProperty(IDBIndex.prototype, 'name', {
     get: function () {
         return this.__name;
     },
-    set: function (name) {
+    set: function (newName) {
+        const me = this;
+        const oldName = me.name;
         IDBTransaction.__assertVersionChange(this.objectStore.transaction);
         IDBTransaction.__assertActive(this.objectStore.transaction);
-        if (this.__deleted) {
+        if (me.__deleted) {
             throw createDOMException('InvalidStateError', 'This index has been deleted');
         }
-        if (this.objectStore.__deleted) {
+        if (me.objectStore.__deleted) {
             throw createDOMException('InvalidStateError', "This index's object store has been deleted");
         }
-        if (this.name === name) {
+        if (newName === oldName) {
             return;
         }
-        // Todo: Rename in database, throwing ConstraintError if index already existing
+        if (me.objectStore.__indexes[newName] && !me.objectStore.__indexes[newName].__deleted) {
+            throw createDOMException('ConstraintError', 'Index "' + newName + '" already exists on ' + me.objectStore.name);
+        }
 
-        this.__name = name;
+        me.__name = newName;
+        // Todo: Add pending flag to delay queries against this index until renamed in SQLite
+        const colInfoToPreserveArr = [
+            ['key', 'BLOB ' + (me.objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')],
+            ['value', 'BLOB']
+        ];
+        this.__renameIndex(me.objectStore.name, oldName, newName, colInfoToPreserveArr);
     }
 });
 

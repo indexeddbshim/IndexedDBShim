@@ -83,23 +83,24 @@
 - Fix: Avoid iterating unique values
 - Fix: Ensure `IDBRequest.error` returns `null` rather than `undefined` upon
     success event
-- Fix: Ensure `indexedDB` is readonly
-- Fix: Make `IDBCursor` properties, `key`, `primaryKey`, `direction`, `source`,
-    `value` readonly
-- Fix: Make `IDBRequest` properties (`result`, `error`, `source`,
-    `transaction`, `readyState`) readonly
-- Fix: Make `IDBDatabase` properties, `name`, `version`, and
-    `objectStoreNames` readonly
-- Fix: Make `IDBKeyRange` properties, `lower`, `upper`, `lowerOpen`, and
-    `upperOpen` readonly, renaming cached range attributes
-- Fix: Make `IDBTransaction` properties, `objectStoreNames`, `mode`, `db`,
-    and `error` readonly
-- Fix: Make `IDBIndex` properties, `objectStore`, `keyPath`, `multiEntry`,
-    `unique` readonly
-- Fix: Make `IDBObjectStore` properties, `keyPath`, `indexNames`,
-    `transaction`, `autoIncrement` readonly
-- Fix: Ensure `keyPath` does not return same instance as passed in (if
-        an array)
+- Fix: Readonly
+  - Make `indexedDB` readonly
+  - Make `IDBCursor` properties, `key`, `primaryKey`, `direction`,
+      `source`, `value` readonly
+  - Make `IDBRequest` properties (`result`, `error`, `source`,
+      `transaction`, `readyState`) readonly
+  - Make `IDBDatabase` properties, `name`, `version`, and
+      `objectStoreNames` readonly
+  - Make `IDBKeyRange` properties, `lower`, `upper`, `lowerOpen`, and
+      `upperOpen` readonly, renaming cached range attributes
+  - Make `IDBTransaction` properties, `objectStoreNames`, `mode`, `db`,
+      and `error` readonly
+  - Make `IDBIndex` properties, `objectStore`, `keyPath`, `multiEntry`,
+      `unique` readonly
+  - Make `IDBObjectStore` properties, `keyPath`, `indexNames`,
+      `transaction`, `autoIncrement` readonly
+  - Ensure `keyPath` does not return same instance as passed in (if
+      an array)
 - Fix: Ensure `IDBIndex` properties, `multiEntry`, `unique` are always boolean
 - Fix: Ensure an `IDBTransaction.objectStore` call always returns the
     same instance if for the same transaction
@@ -108,12 +109,12 @@
 - Fix: Ensure `IDBIndex` retrieval methods throw upon index or store being
     deleted, upon transaction inactive
 - Fix: Allow `IDBIndex.count` to pass `null` as key
-- Fix: Assert not in versionchange transaction when calling
+- Fix: Throw if not in versionchange transaction when calling
     `IDBDatabase.transaction`
 - Fix: Ensure `DOMException` variant of `SyntaxError` is thrown for
     bad key paths
 - Fix: Assure correct error checking order
-- Fix: Deal with arguments > 2 to `IDBFactory.open()`
+- Fix: Handle (mistaken) arguments > 2 to `IDBFactory.open()`
 - Fix: In `IDBObjectStore` methods, throw upon transaction inactive;
     fix checking error
 - Fix: In `IDBObjectStore.count`, allow `null` (as with `undefined`) to
@@ -131,8 +132,6 @@
     so that `versionchange` checks inside `e.target.transaction.oncomplete`
     within `onupgradeneeded` or inside `onsuccess` will fail (and thus will
     attempts to create or delete object stores)
-- Fix (Incomplete): Begin work on proper `IDBObjectStore.name` and
-    `IDBIndex.name` setters, throwing as necessary
 - Fix: Throw InvalidStateError if store deleted (for `IDBObjectStore`
     methods: `add`, `put`, `get`, `delete`, `clear`, `count`, `openCursor`,
     `openKeyCursor`, `index`, `createIndex`, `deleteeIndex`)
@@ -180,6 +179,7 @@
     importing and setting Unicode identifier regular expression strings for
     the sake of full key path validation compliance (may slow
     loading/performance, requires polyfills, and is untested)
+- Feature: Add `IDBObjectStore.name` and `IDBIndex.name` setters (untested)
 - Repo files: Rename test folders for ease in distinguishing
 - Refactoring (Avoid globals): Change from using window global to a CFG module
     for better maintainability
