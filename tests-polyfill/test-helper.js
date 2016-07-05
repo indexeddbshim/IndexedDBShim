@@ -7,5 +7,6 @@ setGlobalVars();
 // shimIndexedDB.__debug(true);
 
 window.DOMException = indexedDB.modules.DOMException;
+window.Event = indexedDB.modules.ShimEvent;
 
 module.exports = global.indexedDB

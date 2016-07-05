@@ -78,4 +78,4 @@ class IDBVersionChangeEvent extends expEvent {
     }
 }
 
-export {expEvent as Event, IDBVersionChangeEvent, createEvent}; // Event not currently in use
+export {expEvent as Event, IDBVersionChangeEvent, createEvent, ShimEvent}; // Event not currently in use

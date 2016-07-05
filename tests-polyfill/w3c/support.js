@@ -188,10 +188,16 @@ function throws (cb, errName, msg) {
     throw new Error("Assertion did not throw: " + msg);
 }
 
+function assert_unreached(description) {
+     assert(false, "assert_unreached", description,
+            "Reached unreachable code");
+}
+
 module.exports = {
     createdb: createdb,
     format_value: format_value,
     getDBName: getDBName,
     getDBNameRandom: getDBNameRandom,
-    throws: throws
+    throws: throws,
+    assert_unreached: assert_unreached
 };

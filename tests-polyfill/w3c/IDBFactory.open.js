@@ -3,6 +3,7 @@ var indexedDB = require('../test-helper');
 var FDBVersionChangeEvent = IDBVersionChangeEvent;
 //var FDBTransaction = IDBTransaction;
 var support = require('./support');
+var assert_unreached = support.assert_unreached;
 var createdb = support.createdb;
 var format_value = support.format_value;
 
@@ -169,7 +170,7 @@ describe('W3C IDBFactory.open Tests', function () {
         should_throw(0)
         should_throw(0.5)
         should_throw(0.8)
-        should_throw(0x20000000000000)
+        should_throw(0x20000000000000)  // Number.MAX_SAFE_INTEGER + 1
         should_throw(NaN)
         should_throw(Infinity)
         should_throw(-Infinity)
@@ -191,17 +192,23 @@ describe('W3C IDBFactory.open Tests', function () {
             valueOf: function() { return {}; },
         }, 'object (third)')
 
+
         /* Valid */
 
+        var ct = 0;
         function should_work(val) {
-            var rq = createdb(done, val)
+            var rq = createdb(done, undefined, val)
             rq.onupgradeneeded = function() {
-                done()
+                ct++;
+                if (ct === 2) {
+                    done()
+                }
             }
             rq.onsuccess = function () {}
         }
 
         should_work(1.5)
+        should_work(Number.MAX_SAFE_INTEGER)  // 0x20000000000000 - 1
     });
 
     // idbfactory_open10

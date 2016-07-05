@@ -16771,7 +16771,8 @@ var IDBVersionChangeEvent = function (_expEvent) {
 
 exports.Event = expEvent;
 exports.IDBVersionChangeEvent = IDBVersionChangeEvent;
-exports.createEvent = createEvent; // Event not currently in use
+exports.createEvent = createEvent;
+exports.ShimEvent = ShimEvent; // Event not currently in use
 
 },{}],359:[function(require,module,exports){
 'use strict';
@@ -17573,7 +17574,7 @@ function createSysDB(success, failure) {
  * @constructor
  */
 function IDBFactory() {
-    this.modules = { DOMException: _DOMException.DOMException, Event: _Event.Event, IDBFactory: IDBFactory };
+    this.modules = { DOMException: _DOMException.DOMException, Event: _Event.Event, ShimEvent: _Event.ShimEvent, IDBFactory: IDBFactory };
 }
 
 /**
@@ -17588,8 +17589,10 @@ IDBFactory.prototype.open = function (name, version) {
     if (arguments.length === 0) {
         throw new TypeError('Database name is required');
     } else if (arguments.length >= 2) {
-        version = parseFloat(version);
-        if (isNaN(version) || !isFinite(version) || version <= 0) {
+        version = Number(version);
+        if (isNaN(version) || !isFinite(version) || version >= 0x20000000000000 || // 2 ** 53
+        version < 1) {
+            // The spec only mentions version==0 as throwing, but W3C tests fail with these
             throw new TypeError('Invalid database version: ' + version);
         }
     }

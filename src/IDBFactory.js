@@ -1,4 +1,4 @@
-import {createEvent, Event} from './Event.js';
+import {createEvent, Event, ShimEvent} from './Event.js';
 import {findError, createDOMException, DOMException} from './DOMException.js';
 import {IDBOpenDBRequest} from './IDBRequest.js';
 import * as util from './util.js';
@@ -36,7 +36,7 @@ function createSysDB (success, failure) {
  * @constructor
  */
 function IDBFactory () {
-    this.modules = {DOMException, Event, IDBFactory};
+    this.modules = {DOMException, Event, ShimEvent, IDBFactory};
 }
 
 /**
@@ -51,8 +51,10 @@ IDBFactory.prototype.open = function (name, version) {
     if (arguments.length === 0) {
         throw new TypeError('Database name is required');
     } else if (arguments.length >= 2) {
-        version = parseFloat(version);
-        if (isNaN(version) || !isFinite(version) || version <= 0) {
+        version = Number(version);
+        if (isNaN(version) || !isFinite(version) ||
+            version >= 0x20000000000000 || // 2 ** 53
+            version < 1) { // The spec only mentions version==0 as throwing, but W3C tests fail with these
             throw new TypeError('Invalid database version: ' + version);
         }
     }
