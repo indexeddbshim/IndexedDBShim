@@ -111,9 +111,13 @@ if (cleanInterface) {
     }
 }
 
-function stripNUL (arg) {
+function escapeNULAndCasing (arg) {
     // http://stackoverflow.com/a/6701665/271577
-    return arg.replace(/\0/g, '');
+    return arg.replace(/\^/g, '^^').replace(/\0/g, '^0')
+        // We need to avoid tables being treated as duplicates based on SQLite's case-insensitive table and column names
+        // http://stackoverflow.com/a/17215009/271577
+        // See also https://www.sqlite.org/faq.html#q18 re: Unicode case-insensitive not working
+        .replace(/([A-Z])/g, '^$1');
 }
 
 function sqlEscape (arg) {
@@ -127,6 +131,22 @@ function sqlEscape (arg) {
 
 function quote (arg) {
     return '"' + sqlEscape(arg) + '"';
+}
+
+function escapeDatabaseName (db) {
+    return 'D_' + escapeNULAndCasing(db); // Shouldn't have quoting (do we even need NUL/case escaping here?)
+}
+
+function escapeStore (store) {
+    return quote('s_' + escapeNULAndCasing(store));
+}
+
+function escapeIndex (index) {
+    return quote('_' + escapeNULAndCasing(index));
+}
+
+function escapeIndexName (index) {
+    return '_' + escapeNULAndCasing(index);
 }
 
 function sqlLIKEEscape (str) {
@@ -242,6 +262,8 @@ function isValidKeyPath (keyPath) {
     );
 }
 
-export {callback, StringList, stripNUL, quote, sqlLIKEEscape, instanceOf,
+export {callback, StringList, quote,
+    escapeDatabaseName, escapeStore, escapeIndex, escapeIndexName,
+    sqlLIKEEscape, instanceOf,
     isObj, isDate, isBlob, isRegExp, isFile, throwIfNotClonable,
     defineReadonlyProperties, isValidKeyPath};

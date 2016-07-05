@@ -2,7 +2,7 @@
 (function () {
     'use strict';
 
-    var databaseNamePrefix = 'IndexedDBShim_Test_Database_';
+    var databaseNamePrefix = 'indexeddbshim_test_database_';
     var databaseSuffix = '.sqlite';
     var dbNameCounter = 0;
     var util;

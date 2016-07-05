@@ -140,13 +140,6 @@ Please make sure someone else hasn't already reported the same bug though.
 
 There are a few bugs that are outside of our power to fix.  Namely:
 
-### NUL in identifiers
-
-We silently strip NUL characters from strings that will be stored internally as
-SQLite identifiers, such as database, store, and index names. While it may be
-possible that these could be escaped in some manner to satisfy SQLite, for now
-we are simply stripping them silently.
-
 ### iOS
 
 Due to a [bug in WebKit](https://bugs.webkit.org/show_bug.cgi?id=137034), the

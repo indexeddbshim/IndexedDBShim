@@ -83,7 +83,7 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
 
     const me = this;
     const quotedKeyColumnName = util.quote(me.__keyColumnName);
-    let sql = ['SELECT * FROM', util.quote('s_' + me.__store.name)];
+    let sql = ['SELECT * FROM', util.escapeStore(me.__store.name)];
     const sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
     setSQLForRange(me.__range, quotedKeyColumnName, sql, sqlValues, true, true);
@@ -152,7 +152,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
     }
 
     const quotedKeyColumnName = util.quote(me.__keyColumnName);
-    let sql = ['SELECT * FROM', util.quote('s_' + me.__store.name)];
+    let sql = ['SELECT * FROM', util.escapeStore(me.__store.name)];
     const sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
     if (me.__range && (me.__range.lower !== undefined && me.__range.upper !== undefined)) {
@@ -416,14 +416,14 @@ IDBCursor.prototype.update = function (valueToUpdate) {
             me.__find(undefined, tx, function (key, value, primaryKey) {
                 const store = me.__store;
                 const params = [encoded];
-                const sql = ['UPDATE', util.quote('s_' + store.name), 'SET value = ?'];
+                const sql = ['UPDATE', util.escapeStore(store.name), 'SET value = ?'];
                 Key.convertValueToKey(primaryKey);
 
                 // Also correct the indexes in the table
                 for (let i = 0; i < store.indexNames.length; i++) {
                     const index = store.__indexes[store.indexNames[i]];
                     const indexKey = Key.evaluateKeyPathOnValue(valueToUpdate, index.keyPath, index.multiEntry);
-                    sql.push(',', util.quote('_' + index.name), '= ?');
+                    sql.push(',', util.escapeIndex(index.name), '= ?');
                     params.push(Key.encode(indexKey, index.multiEntry));
                 }
 
@@ -460,7 +460,7 @@ IDBCursor.prototype['delete'] = function () {
     }
     return this.__store.transaction.__addToTransactionQueue(function cursorDelete (tx, args, success, error) {
         me.__find(undefined, tx, function (key, value, primaryKey) {
-            const sql = 'DELETE FROM  ' + util.quote('s_' + me.__store.name) + ' WHERE key = ?';
+            const sql = 'DELETE FROM  ' + util.escapeStore(me.__store.name) + ' WHERE key = ?';
             CFG.DEBUG && console.log(sql, key, primaryKey);
             Key.convertValueToKey(primaryKey);
             tx.executeSql(sql, [Key.encode(primaryKey)], function (tx, data) {

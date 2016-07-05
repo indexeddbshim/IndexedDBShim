@@ -17,7 +17,7 @@ import SyncPromise from 'sync-promise';
  * @constructor
  */
 function IDBObjectStore (storeProperties, transaction) {
-    this.__name = util.stripNUL(storeProperties.name);
+    this.__name = storeProperties.name;
     this.__keyPath = Array.isArray(storeProperties.keyPath) ? storeProperties.keyPath.slice() : storeProperties.keyPath;
     this.__transaction = transaction;
 
@@ -77,7 +77,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
         }
 
         // key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
-        const sql = ['CREATE TABLE', util.quote('s_' + store.name), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
+        const sql = ['CREATE TABLE', util.escapeStore(store.name), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
         CFG.DEBUG && console.log(sql);
         tx.executeSql(sql, [], function (tx, data) {
             tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [store.name, JSON.stringify(store.keyPath), store.autoIncrement, '{}', 1], function () {
@@ -110,7 +110,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
 
         tx.executeSql('SELECT * FROM __sys__ WHERE name = ?', [store.name], function (tx, data) {
             if (data.rows.length > 0) {
-                tx.executeSql('DROP TABLE ' + util.quote('s_' + store.name), [], function () {
+                tx.executeSql('DROP TABLE ' + util.escapeStore(store.name), [], function () {
                     tx.executeSql('DELETE FROM __sys__ WHERE name = ?', [store.name], function () {
                         success();
                     }, error);
@@ -264,7 +264,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         });
     });
     SyncPromise.all(indexPromises).then(() => {
-        const sqlStart = ['INSERT INTO ', util.quote('s_' + this.name), '('];
+        const sqlStart = ['INSERT INTO ', util.escapeStore(this.name), '('];
         const sqlEnd = [' VALUES ('];
         const insertSqlValues = [];
         if (primaryKey !== undefined) {
@@ -274,7 +274,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             insertSqlValues.push(Key.encode(primaryKey));
         }
         for (const key in paramMap) {
-            sqlStart.push(util.quote('_' + key) + ',');
+            sqlStart.push(util.escapeIndex(key) + ',');
             sqlEnd.push('?,');
             insertSqlValues.push(paramMap[key]);
         }
@@ -392,7 +392,7 @@ IDBObjectStore.prototype.put = function (value, key) {
             Sca.encode(value, function (encoded) {
                 // First try to delete if the record exists
                 Key.convertValueToKey(primaryKey);
-                const sql = 'DELETE FROM ' + util.quote('s_' + me.name) + ' WHERE key = ?';
+                const sql = 'DELETE FROM ' + util.escapeStore(me.name) + ' WHERE key = ?';
                 tx.executeSql(sql, [Key.encode(primaryKey)], function (tx, data) {
                     CFG.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
                     me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, success, error);
@@ -425,7 +425,7 @@ IDBObjectStore.prototype.get = function (range) {
         range = IDBKeyRange.only(range);
     }
 
-    let sql = ['SELECT * FROM ', util.quote('s_' + me.name), ' WHERE '];
+    let sql = ['SELECT * FROM ', util.escapeStore(me.name), ' WHERE '];
     const sqlValues = [];
     setSQLForRange(range, util.quote('key'), sql, sqlValues);
     sql = sql.join(' ');
@@ -493,7 +493,7 @@ IDBObjectStore.prototype['delete'] = function (range) {
         range = IDBKeyRange.only(range);
     }
 
-    let sql = ['DELETE FROM ', util.quote('s_' + me.name), ' WHERE '];
+    let sql = ['DELETE FROM ', util.escapeStore(me.name), ' WHERE '];
     const sqlValues = [];
     setSQLForRange(range, util.quote('key'), sql, sqlValues);
     sql = sql.join(' ');
@@ -518,7 +518,7 @@ IDBObjectStore.prototype.clear = function () {
     me.transaction.__assertWritable();
 
     return me.transaction.__addToTransactionQueue(function objectStoreClear (tx, args, success, error) {
-        tx.executeSql('DELETE FROM ' + util.quote('s_' + me.name), [], function (tx, data) {
+        tx.executeSql('DELETE FROM ' + util.escapeStore(me.name), [], function (tx, data) {
             CFG.DEBUG && console.log('Cleared all records from database', data.rowsAffected);
             success();
         }, function (tx, err) {
@@ -548,7 +548,7 @@ IDBObjectStore.prototype.count = function (key) {
         }
 
         return me.transaction.__addToTransactionQueue(function objectStoreCount (tx, args, success, error) {
-            const sql = 'SELECT * FROM ' + util.quote('s_' + me.name) + (hasKey ? ' WHERE key = ?' : '');
+            const sql = 'SELECT * FROM ' + util.escapeStore(me.name) + (hasKey ? ' WHERE key = ?' : '');
             const sqlValues = [];
             hasKey && sqlValues.push(Key.encode(key));
             tx.executeSql(sql, sqlValues, function (tx, data) {
@@ -578,7 +578,6 @@ IDBObjectStore.prototype.index = function (indexName) {
     if (arguments.length === 0) {
         throw new TypeError('No index name was specified');
     }
-    indexName = util.stripNUL(indexName);
     if (this.__deleted) {
         throw createDOMException('InvalidStateError', 'This store has been deleted');
     }
@@ -599,7 +598,7 @@ IDBObjectStore.prototype.index = function (indexName) {
  * @returns {IDBIndex}
  */
 IDBObjectStore.prototype.createIndex = function (indexName, keyPath, optionalParameters) {
-    indexName = util.stripNUL(indexName);
+    indexName = String(indexName); // W3C test within IDBObjectStore.js seems to accept string conversion
     if (arguments.length === 0) {
         throw new TypeError('No index name was specified');
     }
@@ -637,7 +636,6 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath, optionalPar
 };
 
 IDBObjectStore.prototype.deleteIndex = function (indexName) {
-    indexName = util.stripNUL(indexName);
     if (arguments.length === 0) {
         throw new TypeError('No index name was specified');
     }
@@ -667,7 +665,6 @@ Object.defineProperty(IDBObjectStore.prototype, 'name', {
         return this.__name;
     },
     set: function (name) {
-        name = util.stripNUL(name);
         if (this.__deleted) {
             throw createDOMException('InvalidStateError', 'This store has been deleted');
         }

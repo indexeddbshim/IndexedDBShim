@@ -15,7 +15,7 @@ import CFG from './cfg.js';
  */
 function IDBIndex (store, indexProperties) {
     this.__objectStore = store;
-    this.__name = util.stripNUL(indexProperties.columnName);
+    this.__name = indexProperties.columnName;
     this.__keyPath = Array.isArray(indexProperties.keyPath) ? indexProperties.keyPath.slice() : indexProperties.keyPath;
     const optionalParams = indexProperties.optionalParams;
     this.__multiEntry = !!(optionalParams && optionalParams.multiEntry);
@@ -66,7 +66,7 @@ IDBIndex.__createIndex = function (store, index) {
             // Update the object store's index list
             IDBIndex.__updateIndexList(store, tx, function () {
                 // Add index entries for all existing records
-                tx.executeSql('SELECT * FROM ' + util.quote('s_' + store.name), [], function (tx, data) {
+                tx.executeSql('SELECT * FROM ' + util.escapeStore(store.name), [], function (tx, data) {
                     CFG.DEBUG && console.log('Adding existing ' + store.name + ' records to the ' + index.name + ' index');
                     addIndexEntry(0);
 
@@ -77,7 +77,7 @@ IDBIndex.__createIndex = function (store, index) {
                                 let indexKey = Key.evaluateKeyPathOnValue(value, index.keyPath, index.multiEntry);
                                 indexKey = Key.encode(indexKey, index.multiEntry);
 
-                                tx.executeSql('UPDATE ' + util.quote('s_' + store.name) + ' SET ' + util.quote('_' + index.name) + ' = ? WHERE key = ?', [indexKey, data.rows.item(i).key], function (tx, data) {
+                                tx.executeSql('UPDATE ' + util.escapeStore(store.name) + ' SET ' + util.escapeIndex(index.name) + ' = ? WHERE key = ?', [indexKey, data.rows.item(i).key], function (tx, data) {
                                     addIndexEntry(i + 1);
                                 }, error);
                             } catch (e) {
@@ -98,7 +98,7 @@ IDBIndex.__createIndex = function (store, index) {
             applyIndex(tx);
         } else {
             // For a new index, add a new column to the object store, then apply the index
-            const sql = ['ALTER TABLE', util.quote('s_' + store.name), 'ADD', util.quote('_' + index.name), 'BLOB'].join(' ');
+            const sql = ['ALTER TABLE', util.escapeStore(store.name), 'ADD', util.escapeIndex(index.name), 'BLOB'].join(' ');
             CFG.DEBUG && console.log(sql);
             tx.executeSql(sql, [], applyIndex, error);
         }
@@ -193,7 +193,7 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, u
  * @returns {IDBRequest}
  */
 IDBIndex.prototype.openCursor = function (range, direction) {
-    return new IDBCursorWithValue(range, direction, this.objectStore, this, '_' + this.name, 'value').__req;
+    return new IDBCursorWithValue(range, direction, this.objectStore, this, util.escapeIndexName(this.name), 'value').__req;
 };
 
 /**
@@ -203,7 +203,7 @@ IDBIndex.prototype.openCursor = function (range, direction) {
  * @returns {IDBRequest}
  */
 IDBIndex.prototype.openKeyCursor = function (range, direction) {
-    return new IDBCursor(range, direction, this.objectStore, this, '_' + this.name, 'key').__req;
+    return new IDBCursor(range, direction, this.objectStore, this, util.escapeIndexName(this.name), 'key').__req;
 };
 
 IDBIndex.prototype.get = function (query) {
@@ -232,7 +232,7 @@ IDBIndex.prototype.count = function (query) {
         if (!query.toString() !== '[object IDBKeyRange]') {
             query = new IDBKeyRange(query.lower, query.upper, query.lowerOpen, query.upperOpen);
         }
-        return new IDBCursorWithValue(query, 'next', this.objectStore, this, '_' + this.name, 'value', true).__req;
+        return new IDBCursorWithValue(query, 'next', this.objectStore, this, util.escapeIndexName(this.name), 'value', true).__req;
     }
     return this.__fetchIndexData(query, 'count', false, true);
 };
@@ -254,7 +254,6 @@ Object.defineProperty(IDBIndex.prototype, 'name', {
         return this.__name;
     },
     set: function (name) {
-        name = util.stripNUL(name);
         IDBTransaction.__assertVersionChange(this.objectStore.transaction);
         IDBTransaction.__assertActive(this.objectStore.transaction);
         if (this.__deleted) {
@@ -278,10 +277,10 @@ function executeFetchIndexData (index, hasKey, encodedKey, opType, multiChecks, 
         if (index.multiEntry) {
             for (let i = 0; i < data.rows.length; i++) {
                 const row = data.rows.item(i);
-                const rowKey = Key.decode(row['_' + index.name]);
+                const rowKey = Key.decode(row[util.escapeIndexName(index.name)]);
                 if (hasKey && (
                     (multiChecks && encodedKey.some((check) => rowKey.includes(check))) || // More precise than our SQL
-                    Key.isMultiEntryMatch(encodedKey, row['_' + index.name]))) {
+                    Key.isMultiEntryMatch(encodedKey, row[util.escapeIndexName(index.name)]))) {
                     recordCount++;
                     record = record || row;
                 } else if (!hasKey && !multiChecks) {
@@ -308,19 +307,19 @@ function executeFetchIndexData (index, hasKey, encodedKey, opType, multiChecks, 
 }
 
 function fetchIndexData (index, hasRange, range, opType, multiChecks) {
-    const sql = ['SELECT * FROM', util.quote('s_' + index.objectStore.name), 'WHERE', util.quote('_' + index.name), 'NOT NULL'];
+    const sql = ['SELECT * FROM', util.escapeStore(index.objectStore.name), 'WHERE', util.escapeIndex(index.name), 'NOT NULL'];
     const sqlValues = [];
     if (hasRange) {
         if (multiChecks) {
             sql.push('AND (');
             range.forEach((innerKey, i) => {
                 if (i > 0) sql.push('OR');
-                sql.push(util.quote('_' + index.name), "LIKE ? ESCAPE '^' ");
+                sql.push(util.escapeIndex(index.name), "LIKE ? ESCAPE '^' ");
                 sqlValues.push('%' + util.sqlLIKEEscape(Key.encode(innerKey, index.multiEntry)) + '%');
             });
             sql.push(')');
         } else if (index.multiEntry) {
-            sql.push('AND', util.quote('_' + index.name), "LIKE ? ESCAPE '^'");
+            sql.push('AND', util.escapeIndex(index.name), "LIKE ? ESCAPE '^'");
             range = Key.encode(range, index.multiEntry);
             sqlValues.push('%' + util.sqlLIKEEscape(range) + '%');
         } else {
@@ -332,7 +331,7 @@ function fetchIndexData (index, hasRange, range, opType, multiChecks) {
             } else {
                 range = IDBKeyRange.only(range);
             }
-            setSQLForRange(range, util.quote('_' + index.name), sql, sqlValues, true, false);
+            setSQLForRange(range, util.escapeIndex(index.name), sql, sqlValues, true, false);
         }
     }
     CFG.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);

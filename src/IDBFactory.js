@@ -56,7 +56,7 @@ IDBFactory.prototype.open = function (name, version) {
             throw new TypeError('Invalid database version: ' + version);
         }
     }
-    name = util.stripNUL(String(name)); // cast to a string
+    name = String(name); // cast to a string
 
     function dbCreateError (...args /* tx, err*/) {
         if (calledDbCreateError) {
@@ -71,7 +71,7 @@ IDBFactory.prototype.open = function (name, version) {
     }
 
     function openDB (oldVersion) {
-        const db = CFG.win.openDatabase('D_' + name, 1, name, DEFAULT_DB_SIZE);
+        const db = CFG.win.openDatabase(util.escapeDatabaseName(name), 1, name, DEFAULT_DB_SIZE);
         req.__readyState = 'done';
         if (version === undefined) {
             version = oldVersion || 1;
@@ -149,7 +149,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     if (arguments.length === 0) {
         throw new TypeError('Database name is required');
     }
-    name = util.stripNUL(String(name)); // cast to a string
+    name = String(name); // cast to a string
 
     function dbError (...args /* tx, err*/) {
         if (calledDBError) {
@@ -184,7 +184,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                     return;
                 }
                 version = data.rows.item(0).version;
-                const db = CFG.win.openDatabase('D_' + name, 1, name, DEFAULT_DB_SIZE);
+                const db = CFG.win.openDatabase(util.escapeDatabaseName(name), 1, name, DEFAULT_DB_SIZE);
                 db.transaction(function (tx) {
                     tx.executeSql('SELECT * FROM __sys__', [], function (tx, data) {
                         const tables = data.rows;
@@ -197,7 +197,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                                 }, dbError);
                             } else {
                                 // Delete all tables in this database, maintained in the sys table
-                                tx.executeSql('DROP TABLE ' + util.quote('s_' + tables.item(i).name), [], function () {
+                                tx.executeSql('DROP TABLE ' + util.escapeStore(tables.item(i).name), [], function () {
                                     deleteTables(i + 1);
                                 }, function () {
                                     deleteTables(i + 1);

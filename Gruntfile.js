@@ -102,13 +102,13 @@ module.exports = function (grunt) {
         },
         clean: {
             qunitTests: {
-                src: ['D_dbName*']
+                src: ['D_dbname*']
             },
             mochaTests: {
-                src: ['D_IndexedDBShim_Test_Database_*', 'D_test.sqlite']
+                src: ['D_indexeddbshim_test_database_*', 'D_test.sqlite']
             },
             mock: {
-                src: ['D_TestDatabase*']
+                src: ['D_test_database*']
             },
             w3c: {
                 src: ['D_testdb-*', 'D_database_name*', 'D_idbtransaction*', 'D_db.sqlite*']

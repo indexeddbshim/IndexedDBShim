@@ -1,6 +1,6 @@
 /* eslint-disable no-var */
 var DB = { // eslint-disable-line no-unused-vars
-    NAME: 'dbName.sqlite',
+    NAME: 'dbname.sqlite',
     OBJECT_STORE_1: 'objectStore1',
     OBJECT_STORE_2: 'objectStore2',
     OBJECT_STORE_3: 'objectStore3',

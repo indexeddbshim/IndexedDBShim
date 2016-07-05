@@ -37,7 +37,7 @@ function IDBDatabase (db, name, version, storeProperties) {
  * @returns {IDBObjectStore}
  */
 IDBDatabase.prototype.createObjectStore = function (storeName, createOptions) {
-    storeName = util.stripNUL(storeName);
+    storeName = String(storeName); // W3C test within IDBObjectStore.js seems to accept string conversion
     if (arguments.length === 0) {
         throw new TypeError('No object store name was specified');
     }
@@ -78,7 +78,6 @@ IDBDatabase.prototype.createObjectStore = function (storeName, createOptions) {
  * @param {string} storeName
  */
 IDBDatabase.prototype.deleteObjectStore = function (storeName) {
-    storeName = util.stripNUL(storeName);
     if (arguments.length === 0) {
         throw new TypeError('No object store name was specified');
     }

@@ -7,7 +7,7 @@
     index names are prefixed as SQLite columns to avoid conflict with built-in
     columns; add test
 - Security fix: Ensure LIKE clauses escape special characters
-- Security fix: Strip SQLite-disallowed-for-column-names NUL characters from
+- Security fix: Escape SQLite-disallowed-for-column-names NUL characters from
     database, store, and index names, documenting this limitation
 - Security fix: Ensure quoting (for column names) escapes double quotes
 - Breaking change/Fix: Remove `IDBTransaction` mode constants and tests since
@@ -155,6 +155,10 @@
     number
 - Fix: Ensure sorting of `StringList` (`IDBDatabase.objectStoreNames`,
     `IDBObjectStore.indexNames`)
+- Fix: Escape upper-case letters as table/column names case-insensitive in
+    SQLite, but db/store/index names not case-insensitive in IndexedDB
+- Fix: Stringify calls to `IDBDatabase.createObjectStore` and
+    `IDBObjectstore.createIndex` as per W3C tests
 - Feature: `IDBIndex` methods, `get`, `getKey`, `count` to allow obtaining
     first record of an IDBKeyRange (or IDBKeyRange-like range) and change
     error messages to indicate "key or range"
@@ -210,7 +214,7 @@
     SQLite's own apparently cannot be decremented successfully;
     also rename to spec "current number"
 - Updating: Bump various `devDependency` min versions
-- Documentation: Document `shimIndexedDB.__setConfig()` and NUL stripping.
+- Documentation: Document `shimIndexedDB.__setConfig()`.
 - Testing: Update tests per current spec and behavior
 - Testing: Ensure db closes after each test to allow non-blocking `open()`
     (was affecting testing)
@@ -239,7 +243,7 @@
     From indexedDBmock (Node), only database.js is not passing;
     From W3C (Node), only IDBCursorBehavior.js, IDBDatabase.close.js,
         IDBFactory.open.js, IBObjectStore.add.js,
-        IDBObjectStore.createIndex.js, IDBObjectStore.js,
+        IDBObjectStore.createIndex.js,
         IDBObjectStore.put.js, IDBTransaction.abort.js, IDBTransaction.js,
         KeyGenerator.js, RequestBehavior.js, TransactionBehavior.js
         are not passing:

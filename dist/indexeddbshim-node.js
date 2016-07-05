@@ -16896,7 +16896,7 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
 
     var me = this;
     var quotedKeyColumnName = util.quote(me.__keyColumnName);
-    var sql = ['SELECT * FROM', util.quote('s_' + me.__store.name)];
+    var sql = ['SELECT * FROM', util.escapeStore(me.__store.name)];
     var sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
     (0, _IDBKeyRange.setSQLForRange)(me.__range, quotedKeyColumnName, sql, sqlValues, true, true);
@@ -16966,7 +16966,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
     }
 
     var quotedKeyColumnName = util.quote(me.__keyColumnName);
-    var sql = ['SELECT * FROM', util.quote('s_' + me.__store.name)];
+    var sql = ['SELECT * FROM', util.escapeStore(me.__store.name)];
     var sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
     if (me.__range && me.__range.lower !== undefined && me.__range.upper !== undefined) {
@@ -17229,14 +17229,14 @@ IDBCursor.prototype.update = function (valueToUpdate) {
             me.__find(undefined, tx, function (key, value, primaryKey) {
                 var store = me.__store;
                 var params = [encoded];
-                var sql = ['UPDATE', util.quote('s_' + store.name), 'SET value = ?'];
+                var sql = ['UPDATE', util.escapeStore(store.name), 'SET value = ?'];
                 _Key2.default.convertValueToKey(primaryKey);
 
                 // Also correct the indexes in the table
                 for (var i = 0; i < store.indexNames.length; i++) {
                     var index = store.__indexes[store.indexNames[i]];
                     var indexKey = _Key2.default.evaluateKeyPathOnValue(valueToUpdate, index.keyPath, index.multiEntry);
-                    sql.push(',', util.quote('_' + index.name), '= ?');
+                    sql.push(',', util.escapeIndex(index.name), '= ?');
                     params.push(_Key2.default.encode(indexKey, index.multiEntry));
                 }
 
@@ -17273,7 +17273,7 @@ IDBCursor.prototype['delete'] = function () {
     }
     return this.__store.transaction.__addToTransactionQueue(function cursorDelete(tx, args, success, error) {
         me.__find(undefined, tx, function (key, value, primaryKey) {
-            var sql = 'DELETE FROM  ' + util.quote('s_' + me.__store.name) + ' WHERE key = ?';
+            var sql = 'DELETE FROM  ' + util.escapeStore(me.__store.name) + ' WHERE key = ?';
             _cfg2.default.DEBUG && console.log(sql, key, primaryKey);
             _Key2.default.convertValueToKey(primaryKey);
             tx.executeSql(sql, [_Key2.default.encode(primaryKey)], function (tx, data) {
@@ -17392,7 +17392,7 @@ function IDBDatabase(db, name, version, storeProperties) {
  * @returns {IDBObjectStore}
  */
 IDBDatabase.prototype.createObjectStore = function (storeName, createOptions) {
-    storeName = util.stripNUL(storeName);
+    storeName = String(storeName); // W3C test within IDBObjectStore.js seems to accept string conversion
     if (arguments.length === 0) {
         throw new TypeError('No object store name was specified');
     }
@@ -17433,7 +17433,6 @@ IDBDatabase.prototype.createObjectStore = function (storeName, createOptions) {
  * @param {string} storeName
  */
 IDBDatabase.prototype.deleteObjectStore = function (storeName) {
-    storeName = util.stripNUL(storeName);
     if (arguments.length === 0) {
         throw new TypeError('No object store name was specified');
     }
@@ -17592,7 +17591,7 @@ IDBFactory.prototype.open = function (name, version) {
             throw new TypeError('Invalid database version: ' + version);
         }
     }
-    name = util.stripNUL(String(name)); // cast to a string
+    name = String(name); // cast to a string
 
     function dbCreateError() /* tx, err*/{
         if (calledDbCreateError) {
@@ -17612,7 +17611,7 @@ IDBFactory.prototype.open = function (name, version) {
     }
 
     function openDB(oldVersion) {
-        var db = _cfg2.default.win.openDatabase('D_' + name, 1, name, DEFAULT_DB_SIZE);
+        var db = _cfg2.default.win.openDatabase(util.escapeDatabaseName(name), 1, name, DEFAULT_DB_SIZE);
         req.__readyState = 'done';
         if (version === undefined) {
             version = oldVersion || 1;
@@ -17690,7 +17689,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     if (arguments.length === 0) {
         throw new TypeError('Database name is required');
     }
-    name = util.stripNUL(String(name)); // cast to a string
+    name = String(name); // cast to a string
 
     function dbError() /* tx, err*/{
         if (calledDBError) {
@@ -17730,7 +17729,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                     return;
                 }
                 version = data.rows.item(0).version;
-                var db = _cfg2.default.win.openDatabase('D_' + name, 1, name, DEFAULT_DB_SIZE);
+                var db = _cfg2.default.win.openDatabase(util.escapeDatabaseName(name), 1, name, DEFAULT_DB_SIZE);
                 db.transaction(function (tx) {
                     tx.executeSql('SELECT * FROM __sys__', [], function (tx, data) {
                         var tables = data.rows;
@@ -17743,7 +17742,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                                 }, dbError);
                             } else {
                                 // Delete all tables in this database, maintained in the sys table
-                                tx.executeSql('DROP TABLE ' + util.quote('s_' + tables.item(i).name), [], function () {
+                                tx.executeSql('DROP TABLE ' + util.escapeStore(tables.item(i).name), [], function () {
                                     deleteTables(i + 1);
                                 }, function () {
                                     deleteTables(i + 1);
@@ -17860,7 +17859,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
  */
 function IDBIndex(store, indexProperties) {
     this.__objectStore = store;
-    this.__name = util.stripNUL(indexProperties.columnName);
+    this.__name = indexProperties.columnName;
     this.__keyPath = Array.isArray(indexProperties.keyPath) ? indexProperties.keyPath.slice() : indexProperties.keyPath;
     var optionalParams = indexProperties.optionalParams;
     this.__multiEntry = !!(optionalParams && optionalParams.multiEntry);
@@ -17911,7 +17910,7 @@ IDBIndex.__createIndex = function (store, index) {
             // Update the object store's index list
             IDBIndex.__updateIndexList(store, tx, function () {
                 // Add index entries for all existing records
-                tx.executeSql('SELECT * FROM ' + util.quote('s_' + store.name), [], function (tx, data) {
+                tx.executeSql('SELECT * FROM ' + util.escapeStore(store.name), [], function (tx, data) {
                     _cfg2.default.DEBUG && console.log('Adding existing ' + store.name + ' records to the ' + index.name + ' index');
                     addIndexEntry(0);
 
@@ -17922,7 +17921,7 @@ IDBIndex.__createIndex = function (store, index) {
                                 var indexKey = _Key2.default.evaluateKeyPathOnValue(value, index.keyPath, index.multiEntry);
                                 indexKey = _Key2.default.encode(indexKey, index.multiEntry);
 
-                                tx.executeSql('UPDATE ' + util.quote('s_' + store.name) + ' SET ' + util.quote('_' + index.name) + ' = ? WHERE key = ?', [indexKey, data.rows.item(i).key], function (tx, data) {
+                                tx.executeSql('UPDATE ' + util.escapeStore(store.name) + ' SET ' + util.escapeIndex(index.name) + ' = ? WHERE key = ?', [indexKey, data.rows.item(i).key], function (tx, data) {
                                     addIndexEntry(i + 1);
                                 }, error);
                             } catch (e) {
@@ -17943,7 +17942,7 @@ IDBIndex.__createIndex = function (store, index) {
             applyIndex(tx);
         } else {
             // For a new index, add a new column to the object store, then apply the index
-            var sql = ['ALTER TABLE', util.quote('s_' + store.name), 'ADD', util.quote('_' + index.name), 'BLOB'].join(' ');
+            var sql = ['ALTER TABLE', util.escapeStore(store.name), 'ADD', util.escapeIndex(index.name), 'BLOB'].join(' ');
             _cfg2.default.DEBUG && console.log(sql);
             tx.executeSql(sql, [], applyIndex, error);
         }
@@ -18042,7 +18041,7 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, u
  * @returns {IDBRequest}
  */
 IDBIndex.prototype.openCursor = function (range, direction) {
-    return new _IDBCursor.IDBCursorWithValue(range, direction, this.objectStore, this, '_' + this.name, 'value').__req;
+    return new _IDBCursor.IDBCursorWithValue(range, direction, this.objectStore, this, util.escapeIndexName(this.name), 'value').__req;
 };
 
 /**
@@ -18052,7 +18051,7 @@ IDBIndex.prototype.openCursor = function (range, direction) {
  * @returns {IDBRequest}
  */
 IDBIndex.prototype.openKeyCursor = function (range, direction) {
-    return new _IDBCursor.IDBCursor(range, direction, this.objectStore, this, '_' + this.name, 'key').__req;
+    return new _IDBCursor.IDBCursor(range, direction, this.objectStore, this, util.escapeIndexName(this.name), 'key').__req;
 };
 
 IDBIndex.prototype.get = function (query) {
@@ -18081,7 +18080,7 @@ IDBIndex.prototype.count = function (query) {
         if (!query.toString() !== '[object IDBKeyRange]') {
             query = new _IDBKeyRange.IDBKeyRange(query.lower, query.upper, query.lowerOpen, query.upperOpen);
         }
-        return new _IDBCursor.IDBCursorWithValue(query, 'next', this.objectStore, this, '_' + this.name, 'value', true).__req;
+        return new _IDBCursor.IDBCursorWithValue(query, 'next', this.objectStore, this, util.escapeIndexName(this.name), 'value', true).__req;
     }
     return this.__fetchIndexData(query, 'count', false, true);
 };
@@ -18105,7 +18104,6 @@ Object.defineProperty(IDBIndex.prototype, 'name', {
         return this.__name;
     },
     set: function set(name) {
-        name = util.stripNUL(name);
         IDBTransaction.__assertVersionChange(this.objectStore.transaction);
         IDBTransaction.__assertActive(this.objectStore.transaction);
         if (this.__deleted) {
@@ -18130,11 +18128,11 @@ function executeFetchIndexData(index, hasKey, encodedKey, opType, multiChecks, s
         if (index.multiEntry) {
             var _loop = function _loop(i) {
                 var row = data.rows.item(i);
-                var rowKey = _Key2.default.decode(row['_' + index.name]);
+                var rowKey = _Key2.default.decode(row[util.escapeIndexName(index.name)]);
                 if (hasKey && (multiChecks && encodedKey.some(function (check) {
                     return rowKey.includes(check);
                 }) || // More precise than our SQL
-                _Key2.default.isMultiEntryMatch(encodedKey, row['_' + index.name]))) {
+                _Key2.default.isMultiEntryMatch(encodedKey, row[util.escapeIndexName(index.name)]))) {
                     recordCount++;
                     record = record || row;
                 } else if (!hasKey && !multiChecks) {
@@ -18166,19 +18164,19 @@ function executeFetchIndexData(index, hasKey, encodedKey, opType, multiChecks, s
 }
 
 function fetchIndexData(index, hasRange, range, opType, multiChecks) {
-    var sql = ['SELECT * FROM', util.quote('s_' + index.objectStore.name), 'WHERE', util.quote('_' + index.name), 'NOT NULL'];
+    var sql = ['SELECT * FROM', util.escapeStore(index.objectStore.name), 'WHERE', util.escapeIndex(index.name), 'NOT NULL'];
     var sqlValues = [];
     if (hasRange) {
         if (multiChecks) {
             sql.push('AND (');
             range.forEach(function (innerKey, i) {
                 if (i > 0) sql.push('OR');
-                sql.push(util.quote('_' + index.name), "LIKE ? ESCAPE '^' ");
+                sql.push(util.escapeIndex(index.name), "LIKE ? ESCAPE '^' ");
                 sqlValues.push('%' + util.sqlLIKEEscape(_Key2.default.encode(innerKey, index.multiEntry)) + '%');
             });
             sql.push(')');
         } else if (index.multiEntry) {
-            sql.push('AND', util.quote('_' + index.name), "LIKE ? ESCAPE '^'");
+            sql.push('AND', util.escapeIndex(index.name), "LIKE ? ESCAPE '^'");
             range = _Key2.default.encode(range, index.multiEntry);
             sqlValues.push('%' + util.sqlLIKEEscape(range) + '%');
         } else {
@@ -18190,7 +18188,7 @@ function fetchIndexData(index, hasRange, range, opType, multiChecks) {
             } else {
                 range = _IDBKeyRange.IDBKeyRange.only(range);
             }
-            (0, _IDBKeyRange.setSQLForRange)(range, util.quote('_' + index.name), sql, sqlValues, true, false);
+            (0, _IDBKeyRange.setSQLForRange)(range, util.escapeIndex(index.name), sql, sqlValues, true, false);
         }
     }
     _cfg2.default.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
@@ -18357,7 +18355,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
  * @constructor
  */
 function IDBObjectStore(storeProperties, transaction) {
-    this.__name = util.stripNUL(storeProperties.name);
+    this.__name = storeProperties.name;
     this.__keyPath = Array.isArray(storeProperties.keyPath) ? storeProperties.keyPath.slice() : storeProperties.keyPath;
     this.__transaction = transaction;
 
@@ -18417,7 +18415,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
         }
 
         // key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
-        var sql = ['CREATE TABLE', util.quote('s_' + store.name), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
+        var sql = ['CREATE TABLE', util.escapeStore(store.name), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
         _cfg2.default.DEBUG && console.log(sql);
         tx.executeSql(sql, [], function (tx, data) {
             tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [store.name, JSON.stringify(store.keyPath), store.autoIncrement, '{}', 1], function () {
@@ -18450,7 +18448,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
 
         tx.executeSql('SELECT * FROM __sys__ WHERE name = ?', [store.name], function (tx, data) {
             if (data.rows.length > 0) {
-                tx.executeSql('DROP TABLE ' + util.quote('s_' + store.name), [], function () {
+                tx.executeSql('DROP TABLE ' + util.escapeStore(store.name), [], function () {
                     tx.executeSql('DELETE FROM __sys__ WHERE name = ?', [store.name], function () {
                         success();
                     }, error);
@@ -18604,7 +18602,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         });
     });
     _syncPromise2.default.all(indexPromises).then(function () {
-        var sqlStart = ['INSERT INTO ', util.quote('s_' + _this.name), '('];
+        var sqlStart = ['INSERT INTO ', util.escapeStore(_this.name), '('];
         var sqlEnd = [' VALUES ('];
         var insertSqlValues = [];
         if (primaryKey !== undefined) {
@@ -18614,7 +18612,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             insertSqlValues.push(_Key2.default.encode(primaryKey));
         }
         for (var key in paramMap) {
-            sqlStart.push(util.quote('_' + key) + ',');
+            sqlStart.push(util.escapeIndex(key) + ',');
             sqlEnd.push('?,');
             insertSqlValues.push(paramMap[key]);
         }
@@ -18730,7 +18728,7 @@ IDBObjectStore.prototype.put = function (value, key) {
             _Sca2.default.encode(value, function (encoded) {
                 // First try to delete if the record exists
                 _Key2.default.convertValueToKey(primaryKey);
-                var sql = 'DELETE FROM ' + util.quote('s_' + me.name) + ' WHERE key = ?';
+                var sql = 'DELETE FROM ' + util.escapeStore(me.name) + ' WHERE key = ?';
                 tx.executeSql(sql, [_Key2.default.encode(primaryKey)], function (tx, data) {
                     _cfg2.default.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
                     me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, success, error);
@@ -18763,7 +18761,7 @@ IDBObjectStore.prototype.get = function (range) {
         range = _IDBKeyRange.IDBKeyRange.only(range);
     }
 
-    var sql = ['SELECT * FROM ', util.quote('s_' + me.name), ' WHERE '];
+    var sql = ['SELECT * FROM ', util.escapeStore(me.name), ' WHERE '];
     var sqlValues = [];
     (0, _IDBKeyRange.setSQLForRange)(range, util.quote('key'), sql, sqlValues);
     sql = sql.join(' ');
@@ -18831,7 +18829,7 @@ IDBObjectStore.prototype['delete'] = function (range) {
         range = _IDBKeyRange.IDBKeyRange.only(range);
     }
 
-    var sql = ['DELETE FROM ', util.quote('s_' + me.name), ' WHERE '];
+    var sql = ['DELETE FROM ', util.escapeStore(me.name), ' WHERE '];
     var sqlValues = [];
     (0, _IDBKeyRange.setSQLForRange)(range, util.quote('key'), sql, sqlValues);
     sql = sql.join(' ');
@@ -18856,7 +18854,7 @@ IDBObjectStore.prototype.clear = function () {
     me.transaction.__assertWritable();
 
     return me.transaction.__addToTransactionQueue(function objectStoreClear(tx, args, success, error) {
-        tx.executeSql('DELETE FROM ' + util.quote('s_' + me.name), [], function (tx, data) {
+        tx.executeSql('DELETE FROM ' + util.escapeStore(me.name), [], function (tx, data) {
             _cfg2.default.DEBUG && console.log('Cleared all records from database', data.rowsAffected);
             success();
         }, function (tx, err) {
@@ -18888,7 +18886,7 @@ IDBObjectStore.prototype.count = function (key) {
 
             return {
                 v: me.transaction.__addToTransactionQueue(function objectStoreCount(tx, args, success, error) {
-                    var sql = 'SELECT * FROM ' + util.quote('s_' + me.name) + (hasKey ? ' WHERE key = ?' : '');
+                    var sql = 'SELECT * FROM ' + util.escapeStore(me.name) + (hasKey ? ' WHERE key = ?' : '');
                     var sqlValues = [];
                     hasKey && sqlValues.push(_Key2.default.encode(key));
                     tx.executeSql(sql, sqlValues, function (tx, data) {
@@ -18922,7 +18920,6 @@ IDBObjectStore.prototype.index = function (indexName) {
     if (arguments.length === 0) {
         throw new TypeError('No index name was specified');
     }
-    indexName = util.stripNUL(indexName);
     if (this.__deleted) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
@@ -18943,7 +18940,7 @@ IDBObjectStore.prototype.index = function (indexName) {
  * @returns {IDBIndex}
  */
 IDBObjectStore.prototype.createIndex = function (indexName, keyPath, optionalParameters) {
-    indexName = util.stripNUL(indexName);
+    indexName = String(indexName); // W3C test within IDBObjectStore.js seems to accept string conversion
     if (arguments.length === 0) {
         throw new TypeError('No index name was specified');
     }
@@ -18981,7 +18978,6 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath, optionalPar
 };
 
 IDBObjectStore.prototype.deleteIndex = function (indexName) {
-    indexName = util.stripNUL(indexName);
     if (arguments.length === 0) {
         throw new TypeError('No index name was specified');
     }
@@ -19011,7 +19007,6 @@ Object.defineProperty(IDBObjectStore.prototype, 'name', {
         return this.__name;
     },
     set: function set(name) {
-        name = util.stripNUL(name);
         if (this.__deleted) {
             throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
         }
@@ -19349,7 +19344,6 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
     if (arguments.length === 0) {
         throw new TypeError('No object store name was specified');
     }
-    objectStoreName = util.stripNUL(objectStoreName);
     if (!this.__active) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
@@ -20889,7 +20883,7 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.isValidKeyPath = exports.defineReadonlyProperties = exports.throwIfNotClonable = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlLIKEEscape = exports.quote = exports.stripNUL = exports.StringList = exports.callback = undefined;
+exports.isValidKeyPath = exports.defineReadonlyProperties = exports.throwIfNotClonable = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlLIKEEscape = exports.escapeIndexName = exports.escapeIndex = exports.escapeStore = exports.escapeDatabaseName = exports.quote = exports.StringList = exports.callback = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
@@ -21013,9 +21007,13 @@ if (cleanInterface) {
     }
 }
 
-function stripNUL(arg) {
+function escapeNULAndCasing(arg) {
     // http://stackoverflow.com/a/6701665/271577
-    return arg.replace(/\0/g, '');
+    return arg.replace(/\^/g, '^^').replace(/\0/g, '^0')
+    // We need to avoid tables being treated as duplicates based on SQLite's case-insensitive table and column names
+    // http://stackoverflow.com/a/17215009/271577
+    // See also https://www.sqlite.org/faq.html#q18 re: Unicode case-insensitive not working
+    .replace(/([A-Z])/g, '^$1');
 }
 
 function sqlEscape(arg) {
@@ -21029,6 +21027,22 @@ function sqlEscape(arg) {
 
 function quote(arg) {
     return '"' + sqlEscape(arg) + '"';
+}
+
+function escapeDatabaseName(db) {
+    return 'D_' + escapeNULAndCasing(db); // Shouldn't have quoting (do we even need NUL/case escaping here?)
+}
+
+function escapeStore(store) {
+    return quote('s_' + escapeNULAndCasing(store));
+}
+
+function escapeIndex(index) {
+    return quote('_' + escapeNULAndCasing(index));
+}
+
+function escapeIndexName(index) {
+    return '_' + escapeNULAndCasing(index);
 }
 
 function sqlLIKEEscape(str) {
@@ -21141,8 +21155,11 @@ function isValidKeyPath(keyPath) {
 
 exports.callback = callback;
 exports.StringList = StringList;
-exports.stripNUL = stripNUL;
 exports.quote = quote;
+exports.escapeDatabaseName = escapeDatabaseName;
+exports.escapeStore = escapeStore;
+exports.escapeIndex = escapeIndex;
+exports.escapeIndexName = escapeIndexName;
 exports.sqlLIKEEscape = sqlLIKEEscape;
 exports.instanceOf = instanceOf;
 exports.isObj = isObj;
