@@ -123,7 +123,7 @@ describe('W3C IDBObjectStore.createIndex Tests', function () {
 
         open_rq.onsuccess = function(e) {
             log("open_rq.success")(e);
-            assert.deepEqual(events, [ "rq_add1.success",
+            support.assert_array_equals(events, [ "rq_add1.success",
                                            "rq_add2.error: ConstraintError",
                                            "rq_add3.success",
 
@@ -207,7 +207,7 @@ describe('W3C IDBObjectStore.createIndex Tests', function () {
 
         open_rq.onerror = function(e) {
             log("open_rq.error")(e);
-            assert.deepEqual(events, [ "rq_add1.success",
+            support.assert_array_equals(events, [ "rq_add1.success",
                                            "rq_add2.success",
 
                                            "rq_add3.error: AbortError",
@@ -266,7 +266,7 @@ describe('W3C IDBObjectStore.createIndex Tests', function () {
 
         open_rq.onerror = function(e) {
             log("open_rq.error")(e);
-            assert.deepEqual(events, [ "rq_add1.success",
+            support.assert_array_equals(events, [ "rq_add1.success",
 
                                            "rq_add2.error: ConstraintError",
                                            "transaction.error: ConstraintError",
@@ -325,7 +325,7 @@ describe('W3C IDBObjectStore.createIndex Tests', function () {
             };
             idx.get(ar).onsuccess = function(e) {
                 assert.equal(e.target.result.key, 'array', 'key');
-                assert.deepEqual(e.target.result.i, ar, 'array is the same');
+                support.assert_array_equals(e.target.result.i, ar, 'array is the same');
             };
             idx.get(num).onsuccess = function(e) {
                 assert.equal(e.target.result.key, 'number', 'key');
@@ -440,5 +440,88 @@ describe('W3C IDBObjectStore.createIndex Tests', function () {
             }, 'InvalidStateError');
             done();
         }
+    });
+
+    // idbobjectstore_createindex14
+    describe('Exception Order of IDBObjectStore.createIndex()', function (done) {
+        it("InvalidStateError(Incorrect mode) vs. TransactionInactiveError", function (done) {
+            indexeddb_test(
+                function(t, db, txn) {
+                    var store = db.createObjectStore("s");
+                },
+                function(t, db) {
+                    var txn = db.transaction("s");
+                    var store = txn.objectStore("s");
+                    txn.oncomplete = function() {
+                        assert_throws("InvalidStateError", function() {
+                            store.createIndex("index", "foo");
+                        }, "Mode check should precede state check of the transaction");
+                        done();
+                    };
+                }
+            );
+        });
+        it("InvalidStateError(Deleted ObjectStore) vs. TransactionInactiveError", function (done) {
+            var gDeletedObjectStore;
+            indexeddb_test(
+                function(t, db, txn) {
+                    gDeletedObjectStore = db.createObjectStore("s");
+                    db.deleteObjectStore("s");
+                    txn.oncomplete = function() {
+                        assert_throws("InvalidStateError", function() {
+                            gDeletedObjectStore.createIndex("index", "foo");
+                        }, "Deletion check should precede transaction-state check");
+                        t.done();
+                    };
+                },
+                null
+            );
+        });
+        it("TransactionInactiveError vs. ConstraintError", function (done) {
+            indexeddb_test(
+                function(t, db, txn) {
+                    var store = db.createObjectStore("s");
+                    store.createIndex("index", "foo");
+                    txn.oncomplete = function() {
+                        assert_throws("TransactionInactiveError", function() {
+                            store.createIndex("index", "foo");
+                        }, "Transaction-state check should precede index name check");
+                        t.done();
+                    };
+                },
+                null
+            );
+        });
+        it("ConstraintError vs. SyntaxError", function (done) {
+            indexeddb_test(
+                function(t, db) {
+                    var store = db.createObjectStore("s");
+                    store.createIndex("index", "foo");
+                    assert_throws("ConstraintError", function() {
+                        store.createIndex("index", "invalid key path");
+                    }, "Index name check should precede syntax check of the key path");
+                    assert_throws("ConstraintError", function() {
+                        store.createIndex("index",
+                                          ["invalid key path 1", "invalid key path 2"]);
+                    }, "Index name check should precede syntax check of the key path");
+                    t.done();
+                },
+                null
+            );
+        });
+        it("SyntaxError vs. InvalidAccessError", function (done) {
+            indexeddb_test(
+                function(t, db) {
+                    var store = db.createObjectStore("s");
+                    assert_throws("SyntaxError", function() {
+                        store.createIndex("index",
+                                          ["invalid key path 1", "invalid key path 2"],
+                                          { multiEntry: true });
+                    }, "Syntax check should precede multiEntry check of the key path");
+                    t.done();
+                },
+                null
+            );
+        });
     });
 });

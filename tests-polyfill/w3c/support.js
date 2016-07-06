@@ -192,6 +192,58 @@ function assert_unreached(description) {
      assert(false, "assert_unreached", description,
             "Reached unreachable code");
 }
+function assert_true(actual, description) {
+    assert(actual === true, "assert_true", description,
+                            "expected true got ${actual}", {actual:actual});
+}
+function assert_false(actual, description) {
+    assert(actual === false, "assert_false", description,
+                             "expected false got ${actual}", {actual:actual});
+}
+
+function indexeddb_test(dbname, upgrade_func, open_func) {
+    var del = indexedDB.deleteDatabase(dbname);
+    del.onerror = function () {
+        assert(false, 'deleteDatabase should succeed');
+    };
+    var open = indexedDB.open(dbname, 1);
+    open.onerror = function () {
+        assert(false, 'open should succeed');
+    };
+    open.onupgradeneeded = function() {
+        var db = open.result;
+        var tx = open.transaction;
+        upgrade_func(t, db, tx);
+    };
+    open.onsuccess = function() {
+        var db = open.result;
+        if (open_func)
+            open_func(t, db);
+    };
+}
+
+function assert_key_equals(actual, expected, description) {
+    assert.equal(indexedDB.cmp(actual, expected), 0, description);
+}
+
+function assert_array_equals(actual, expected, description) {
+    assert(actual.length === expected.length,
+           "assert_array_equals", description,
+           "lengths differ, expected ${expected} got ${actual}",
+           {expected:expected.length, actual:actual.length});
+
+    for (var i = 0; i < actual.length; i++) {
+        assert(actual.hasOwnProperty(i) === expected.hasOwnProperty(i),
+               "assert_array_equals", description,
+               "property ${i}, property expected to be ${expected} but was ${actual}",
+               {i:i, expected:expected.hasOwnProperty(i) ? "present" : "missing",
+               actual:actual.hasOwnProperty(i) ? "present" : "missing"});
+        assert(same_value(expected[i], actual[i]),
+               "assert_array_equals", description,
+               "property ${i}, expected ${expected} but got ${actual}",
+               {i:i, expected:expected[i], actual:actual[i]});
+    }
+}
 
 module.exports = {
     createdb: createdb,
@@ -199,5 +251,9 @@ module.exports = {
     getDBName: getDBName,
     getDBNameRandom: getDBNameRandom,
     throws: throws,
-    assert_unreached: assert_unreached
+    assert_unreached: assert_unreached,
+    assert_true: assert_true,
+    assert_false: assert_false,
+    assert_key_equals: assert_key_equals,
+    assert_array_equals: assert_array_equals
 };

@@ -4,7 +4,7 @@ var FDBKeyRange = IDBKeyRange;
 var createdb = support.createdb;
 
 describe('W3C IDBIndex.getKey Tests', function () {
-    // idbindex_count
+    // idbindex_getKey
     it("returns the record's primary key", function (done) {
         var db,
           record = { key:1, indexedProperty:"data" };
@@ -27,7 +27,7 @@ describe('W3C IDBIndex.getKey Tests', function () {
         };
     });
 
-    // idbindex_count2
+    // idbindex_getKey2
     it("returns the record's primary key where the index contains duplicate values", function (done) {
         var db,
           records = [ { key:1, indexedProperty:"data" },
@@ -53,7 +53,7 @@ describe('W3C IDBIndex.getKey Tests', function () {
         };
     });
 
-    // idbindex_count3
+    // idbindex_getKey3
     it("attempt to retrieve the primary key of a record that doesn't exist", function (done) {
         var db;
         var open_rq = createdb(done);
@@ -70,7 +70,7 @@ describe('W3C IDBIndex.getKey Tests', function () {
         open_rq.onsuccess = function () {};
     });
 
-    // idbindex_count4
+    // idbindex_getKey4
     it('returns the key of the first record within the range', function (done) {
         var db;
         var open_rq = createdb(done);
@@ -94,7 +94,7 @@ describe('W3C IDBIndex.getKey Tests', function () {
         }
     });
 
-    // idbindex_count5
+    // idbindex_getKey5
     it('throw DataError when using invalid key', function (done) {
         var db;
         var open_rq = createdb(done);
@@ -110,7 +110,7 @@ describe('W3C IDBIndex.getKey Tests', function () {
         open_rq.onsuccess = function () {};
     });
 
-    // idbindex_count6
+    // idbindex_getKey6
     it('throw InvalidStateError when the index is deleted', function (done) {
         var db;
         var open_rq = createdb(done);
@@ -128,7 +128,7 @@ describe('W3C IDBIndex.getKey Tests', function () {
         open_rq.onsuccess = function () {};
     });
 
-    // idbindex_count7
+    // idbindex_getKey7
     it('throw TransactionInactiveError on aborted transaction', function (done) {
         var db;
         var open_rq = createdb(done);
@@ -140,9 +140,25 @@ describe('W3C IDBIndex.getKey Tests', function () {
             e.target.transaction.abort();
             support.throws(function(){
                 index.getKey("data");
-            }, 'TransactionInactiveError');
+            }, 'InvalidStateError');
             done();
         }
         open_rq.onerror = function () {};
+    });
+    // idbindex_getKey8
+    it('throw InvalidStateError on index deleted by aborted upgrade', function (done) {
+        var db;
+        var open_rq = createdb(done);
+        open_rq.onupgradeneeded = function(e) {
+            db = e.target.result;
+            var store = db.createObjectStore("store", { keyPath: "key" });
+            var index = store.createIndex("index", "indexedProperty");
+            store.add({ key: 1, indexedProperty: "data" });
+            e.target.transaction.abort();
+            support.assert_throws(function(){
+                index.getKey("data");
+            }, "InvalidStateError");
+            done();
+        }
     });
 });

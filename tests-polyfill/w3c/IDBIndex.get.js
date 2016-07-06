@@ -165,9 +165,25 @@ describe('W3C IDBIndex.get Tests', function () {
 
             support.throws(function(){
                 index.get("data");
-            }, 'TransactionInactiveError');
+            }, 'InvalidStateError');
             done();
         }
         open_rq.onerror = function () {};
+    });
+    // idbindex_get8
+    it('throw InvalidStateError on index deleted by aborted upgrade', function (done) {
+        var db;
+        var open_rq = createdb(done);
+        open_rq.onupgradeneeded = function(e) {
+            db = e.target.result;
+            var store = db.createObjectStore("store", { keyPath: "key" });
+            var index = store.createIndex("index", "indexedProperty");
+            store.add({ key: 1, indexedProperty: "data" });
+            e.target.transaction.abort();
+            support.assert_throws(function(){
+                index.get("data");
+            }, "InvalidStateError");
+            done();
+        }
     });
 });

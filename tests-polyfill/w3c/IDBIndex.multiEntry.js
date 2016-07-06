@@ -40,7 +40,7 @@ describe('W3C IDBIndex.multiEntry Tests', function () {
             idx.getKey('Bobby').onsuccess = function(e) {
                 gotten_keys.push(e.target.result)
 
-                assert.deepEqual(gotten_keys, expected_keys);
+                support.assert_array_equals(gotten_keys, expected_keys);
                 done();
             };
         }
