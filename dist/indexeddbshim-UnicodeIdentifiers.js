@@ -9299,6 +9299,10 @@ var _util = require('./util.js');
 
 var util = _interopRequireWildcard(_util);
 
+var _IDBTransaction = require('./IDBTransaction.js');
+
+var _IDBTransaction2 = _interopRequireDefault(_IDBTransaction);
+
 var _Key = require('./Key.js');
 
 var _Key2 = _interopRequireDefault(_Key);
@@ -9338,7 +9342,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
  */
 function IDBCursor(range, direction, store, source, keyColumnName, valueColumnName, count, reqSource) {
     // Calling openCursor on an index or objectstore with null is allowed but we treat it as undefined internally
-    IDBTransaction.__assertActive(store.transaction);
+    _IDBTransaction2.default.__assertActive(store.transaction);
     if (range === null) {
         range = undefined;
     }
@@ -9633,7 +9637,7 @@ IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
 IDBCursor.prototype['continue'] = function (key) {
     var recordsToPreloadOnContinue = _cfg2.default.cursorPreloadPackSize || 100;
     var me = this;
-    IDBTransaction.__assertActive(me.__store.transaction);
+    _IDBTransaction2.default.__assertActive(me.__store.transaction);
     me.__sourceOrEffectiveObjStoreDeleted();
     if (!me.__gotValue) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'The cursor is being iterated or has iterated past its end.');
@@ -9697,7 +9701,7 @@ IDBCursor.prototype.advance = function (count) {
     if (!Number.isFinite(count) || count <= 0) {
         throw new TypeError('Count is invalid - 0 or negative: ' + count);
     }
-    IDBTransaction.__assertActive(me.__store.transaction);
+    _IDBTransaction2.default.__assertActive(me.__store.transaction);
     me.__sourceOrEffectiveObjStoreDeleted();
     if (!me.__gotValue) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'The cursor is being iterated or has iterated past its end.');
@@ -9712,7 +9716,7 @@ IDBCursor.prototype.advance = function (count) {
 IDBCursor.prototype.update = function (valueToUpdate) {
     var me = this;
     if (!arguments.length) throw new TypeError('A value must be passed to update()');
-    IDBTransaction.__assertActive(me.__store.transaction);
+    _IDBTransaction2.default.__assertActive(me.__store.transaction);
     me.__store.transaction.__assertWritable();
     me.__sourceOrEffectiveObjStoreDeleted();
     if (!me.__gotValue) {
@@ -9766,7 +9770,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
 
 IDBCursor.prototype['delete'] = function () {
     var me = this;
-    IDBTransaction.__assertActive(me.__store.transaction);
+    _IDBTransaction2.default.__assertActive(me.__store.transaction);
     me.__store.transaction.__assertWritable();
     me.__sourceOrEffectiveObjStoreDeleted();
     if (!me.__gotValue) {
@@ -9827,7 +9831,7 @@ util.defineReadonlyProperties(IDBCursorWithValue.prototype, 'value');
 exports.IDBCursor = IDBCursor;
 exports.IDBCursorWithValue = IDBCursorWithValue;
 
-},{"./DOMException.js":306,"./IDBFactory.js":310,"./IDBIndex.js":311,"./IDBKeyRange.js":312,"./IDBRequest.js":314,"./Key.js":316,"./Sca.js":317,"./cfg.js":320,"./util.js":323}],309:[function(require,module,exports){
+},{"./DOMException.js":306,"./IDBFactory.js":310,"./IDBIndex.js":311,"./IDBKeyRange.js":312,"./IDBRequest.js":314,"./IDBTransaction.js":315,"./Key.js":316,"./Sca.js":317,"./cfg.js":320,"./util.js":323}],309:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {

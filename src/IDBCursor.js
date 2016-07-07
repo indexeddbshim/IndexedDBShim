@@ -3,6 +3,7 @@ import {createDOMException} from './DOMException.js';
 import {setSQLForRange, IDBKeyRange} from './IDBKeyRange.js';
 import {cmp} from './IDBFactory.js';
 import * as util from './util.js';
+import IDBTransaction from './IDBTransaction.js';
 import Key from './Key.js';
 import Sca from './Sca.js';
 import IDBIndex from './IDBIndex.js';
