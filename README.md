@@ -53,6 +53,13 @@ setGlobalVars();
 bower install IndexedDBShim
 ````
 
+### Cloning the repository
+
+If you clone the repository to work against an unstable version, you only
+need to clone the repository recursively if you wish to have the W3C tests
+available for testing (which unfortunately loads all W3C tests into the
+"web-platform-tests" subdirectory rather than just the IndexedDB ones).
+
 ## Using the polyfill
 
 Add the script to your page
@@ -241,8 +248,16 @@ To run the Node tests, run the following:
     [does not complete execution](https://github.com/axemclion/IndexedDBShim/issues/251).
 2. `npm run mocha`
 3. `npm run tests-polyfill` (or its components `npm run fake`,
-`npm run mock`, `npm run w3c`). Note that none of these are currently
+    `npm run mock`). Note that none of these are currently
     passing in full, however.
+4. `npm run w3c` (you must first run
+    `git submodule update --init --recursive` if you have not already
+    recursively cloned the repository). Note that some of these tests
+    may not be passing because of the test environment not being
+    completely configured for Node. We are working on fixing this.
+    There are some older and less complete W3C tests that can be run
+    with `npm run w3c-old`, but the goal is to remove these once
+    the new ones are configured properly.
 
 To run a specific Mocha test (which includes the `tests-polyfill`
 tests), run `npm --test=... run mocha`.
