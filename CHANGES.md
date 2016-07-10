@@ -243,12 +243,14 @@
         passing;
     From fakeIndexedDB (Node), only fakeIndexedDB.js is not passing;
     From indexedDBmock (Node), only database.js is not passing;
-    From W3C (Node), only IDBCursorBehavior.js, IDBDatabase.close.js,
+    From W3C (Old, Node), only IDBCursorBehavior.js, IDBDatabase.close.js,
         IDBFactory.open.js, IBObjectStore.add.js,
         IDBObjectStore.createIndex.js,
         IDBObjectStore.put.js, IDBTransaction.abort.js, IDBTransaction.js,
         KeyGenerator.js, RequestBehavior.js, TransactionBehavior.js
         are not passing:
+    From W3C (New, Node but potentially also browser): only idbkeyrange.js
+        is currently passing
 - Testing (Grunt): Clarify Grunt tasks, expand tasks for cleaning, make tests
     more granular
 - Testing (Grunt): Remove now redundant `sourceMappingURL`, use

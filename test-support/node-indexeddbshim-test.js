@@ -31,6 +31,7 @@ GLOBAL.window = GLOBAL;
 GLOBAL.self = window;
 
 require('../dist/indexeddbshim-node')(window);
+// Todo: Conditionally use Unicode version
 // const idb = require('../dist/indexeddbshim-UnicodeIdentifiers-node');
 
 [
