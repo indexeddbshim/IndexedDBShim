@@ -303,7 +303,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             });
         };
 
-        // Of what use is encoding then decoding here, especially if the Sca functions don't throw?
+        // Of what use is encoding then decoding here, especially if the Sca functions don't throw? Ensuring is not by reference?
         Sca.encode(primaryKey, function (primaryKey) {
             primaryKey = Sca.decode(primaryKey);
             if (!me.autoIncrement) {
@@ -367,11 +367,14 @@ IDBObjectStore.prototype.add = function (value, key) {
 
     const request = me.transaction.__createRequest(me);
     me.transaction.__pushToQueue(request, function objectStoreAdd (tx, args, success, error) {
-        me.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
-            Sca.encode(value, function (encoded) {
-                me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, success, error);
-            });
-        }, error);
+        Sca.encode(value, function (encoded) {
+            value = Sca.decode(encoded);
+            me.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
+                Sca.encode(value, function (encoded) {
+                    me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, success, error);
+                });
+            }, error);
+        });
     });
     return request;
 };
@@ -390,19 +393,22 @@ IDBObjectStore.prototype.put = function (value, key) {
 
     const request = me.transaction.__createRequest(me);
     me.transaction.__pushToQueue(request, function objectStorePut (tx, args, success, error) {
-        me.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
-            Sca.encode(value, function (encoded) {
-                // First try to delete if the record exists
-                Key.convertValueToKey(primaryKey);
-                const sql = 'DELETE FROM ' + util.escapeStore(me.name) + ' WHERE key = ?';
-                tx.executeSql(sql, [Key.encode(primaryKey)], function (tx, data) {
-                    CFG.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
-                    me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, success, error);
-                }, function (tx, err) {
-                    error(err);
+        Sca.encode(value, function (encoded) {
+            value = Sca.decode(encoded);
+            me.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
+                Sca.encode(value, function (encoded) {
+                    // First try to delete if the record exists
+                    Key.convertValueToKey(primaryKey);
+                    const sql = 'DELETE FROM ' + util.escapeStore(me.name) + ' WHERE key = ?';
+                    tx.executeSql(sql, [Key.encode(primaryKey)], function (tx, data) {
+                        CFG.debug && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
+                        me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, success, error);
+                    }, function (tx, err) {
+                        error(err);
+                    });
                 });
-            });
-        }, error);
+            }, error);
+        });
     });
     return request;
 };

@@ -19073,7 +19073,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             });
         };
 
-        // Of what use is encoding then decoding here, especially if the Sca functions don't throw?
+        // Of what use is encoding then decoding here, especially if the Sca functions don't throw? Ensuring is not by reference?
         _Sca2.default.encode(primaryKey, function (primaryKey) {
             primaryKey = _Sca2.default.decode(primaryKey);
             if (!me.autoIncrement) {
@@ -19135,11 +19135,14 @@ IDBObjectStore.prototype.add = function (value, key) {
 
     var request = me.transaction.__createRequest(me);
     me.transaction.__pushToQueue(request, function objectStoreAdd(tx, args, success, error) {
-        me.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
-            _Sca2.default.encode(value, function (encoded) {
-                me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, success, error);
-            });
-        }, error);
+        _Sca2.default.encode(value, function (encoded) {
+            value = _Sca2.default.decode(encoded);
+            me.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
+                _Sca2.default.encode(value, function (encoded) {
+                    me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, success, error);
+                });
+            }, error);
+        });
     });
     return request;
 };
@@ -19158,19 +19161,22 @@ IDBObjectStore.prototype.put = function (value, key) {
 
     var request = me.transaction.__createRequest(me);
     me.transaction.__pushToQueue(request, function objectStorePut(tx, args, success, error) {
-        me.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
-            _Sca2.default.encode(value, function (encoded) {
-                // First try to delete if the record exists
-                _Key2.default.convertValueToKey(primaryKey);
-                var sql = 'DELETE FROM ' + util.escapeStore(me.name) + ' WHERE key = ?';
-                tx.executeSql(sql, [_Key2.default.encode(primaryKey)], function (tx, data) {
-                    _cfg2.default.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
-                    me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, success, error);
-                }, function (tx, err) {
-                    error(err);
+        _Sca2.default.encode(value, function (encoded) {
+            value = _Sca2.default.decode(encoded);
+            me.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
+                _Sca2.default.encode(value, function (encoded) {
+                    // First try to delete if the record exists
+                    _Key2.default.convertValueToKey(primaryKey);
+                    var sql = 'DELETE FROM ' + util.escapeStore(me.name) + ' WHERE key = ?';
+                    tx.executeSql(sql, [_Key2.default.encode(primaryKey)], function (tx, data) {
+                        _cfg2.default.debug && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
+                        me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, success, error);
+                    }, function (tx, err) {
+                        error(err);
+                    });
                 });
-            });
-        }, error);
+            }, error);
+        });
     });
     return request;
 };

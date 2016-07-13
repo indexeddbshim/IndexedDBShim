@@ -716,7 +716,7 @@ describe('IDBObjectStore.delete', function () {
     });
 
     it('should not allow these keys', function (done) {
-        this.timeout(5000);
+        this.timeout(10000);
         util.createDatabase('out-of-line-generated', function (err, db) {
             if (err) {
                 expect(function () { throw err; }).to.not.throw(Error);

@@ -163,6 +163,8 @@
     `IDBObjectstore.createIndex` as per W3C tests
 - Fix: Avoid setting `source` for `open` request, as, per new spec, it is
     to always be `null`
+- Fix: Ensure cloning value before as well as after key evaluated (otherwise,
+    original object will be modified)
 - Feature: `IDBIndex` methods, `get`, `getKey`, `count` to allow obtaining
     first record of an IDBKeyRange (or IDBKeyRange-like range) and change
     error messages to indicate "key or range"
