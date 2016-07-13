@@ -1,4 +1,4 @@
-import {createEvent, Event, ShimEvent} from './Event.js';
+import {createEvent, ShimEvent, ProxyPolyfill, IDBVersionChangeEvent} from './Event.js';
 import {findError, createDOMException, DOMException} from './DOMException.js';
 import {IDBOpenDBRequest} from './IDBRequest.js';
 import * as util from './util.js';
@@ -36,7 +36,7 @@ function createSysDB (success, failure) {
  * @constructor
  */
 function IDBFactory () {
-    this.modules = {DOMException, Event, ShimEvent, IDBFactory};
+    this.modules = {DOMException, Event: typeof Event !== 'undefined' ? Event : ShimEvent, ShimEvent, ProxyPolyfill, IDBFactory};
 }
 
 /**
@@ -69,7 +69,7 @@ IDBFactory.prototype.open = function (name, version) {
         const evt = createEvent('error', args);
         req.__readyState = 'done';
         req.__error = err || DOMException;
-        util.callback('onerror', req, evt);
+        req.dispatchEvent(evt);
     }
 
     function openDB (oldVersion) {
@@ -96,24 +96,24 @@ IDBFactory.prototype.open = function (name, version) {
                                 const e = new IDBVersionChangeEvent('upgradeneeded', {oldVersion, newVersion: version});
                                 req.__transaction = req.result.__versionTransaction = new IDBTransaction(req.result, req.result.objectStoreNames, 'versionchange');
                                 req.transaction.__addToTransactionQueue(function onupgradeneeded (tx, args, success) {
-                                    util.callback('onupgradeneeded', req, e);
+                                    req.dispatchEvent(e);
                                     success();
                                 });
-                                req.transaction.__beforeOncomplete = function () {
+                                req.transaction.on__beforecomplete = function () {
                                     req.result.__versionTransaction = null;
                                 };
-                                req.transaction.__oncomplete = function () {
+                                req.transaction.on__complete = function () {
                                     if (req.__result.__closed) {
                                         return;
                                     }
                                     req.__transaction = null;
                                     const e = createEvent('success');
-                                    util.callback('onsuccess', req, e);
+                                    req.dispatchEvent(e);
                                 };
                             }, dbCreateError);
                         }, dbCreateError);
                     } else {
-                        util.callback('onsuccess', req, e);
+                        req.dispatchEvent(e);
                     }
                 }, dbCreateError);
             }, dbCreateError);
@@ -160,9 +160,8 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         const err = findError(args);
         req.__readyState = 'done';
         req.__error = err || DOMException;
-        const e = createEvent('error');
-        e.debug = args;
-        util.callback('onerror', req, e);
+        const e = createEvent('error', args);
+        req.dispatchEvent(e);
         calledDBError = true;
     }
 
@@ -171,7 +170,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
             systx.executeSql('DELETE FROM dbVersions WHERE name = ? ', [name], function () {
                 req.__result = undefined;
                 const e = new IDBVersionChangeEvent('success', {oldVersion: version, newVersion: null});
-                util.callback('onsuccess', req, e);
+                req.dispatchEvent(e);
             }, dbError);
         }, dbError);
     }
@@ -182,7 +181,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                 if (data.rows.length === 0) {
                     req.__result = undefined;
                     const e = new IDBVersionChangeEvent('success', {oldVersion: version, newVersion: null});
-                    util.callback('onsuccess', req, e);
+                    req.dispatchEvent(e);
                     return;
                 }
                 version = data.rows.item(0).version;

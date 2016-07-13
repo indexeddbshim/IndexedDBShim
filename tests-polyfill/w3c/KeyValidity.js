@@ -157,8 +157,7 @@ describe('W3C Key Validity Tests', function () {
                                .objectStore("store2")
                                .get(['v', key])
                     rq.onsuccess = function(e) {
-                        assert.equal(e.target.result.x, 'v')
-                        assert.deepEqual(e.target.result.keypath, key)
+                        assert.deepEqual(e.target.result, { x: 'v', keypath: key })
                         numDone += 1;
                         if (numDone === numChecks) {
                             done();

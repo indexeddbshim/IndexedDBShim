@@ -255,36 +255,6 @@ describe('W3C IDBCursor.update Tests', function () {
                 };
             }
         });
-
-        // idbcursor_update_index8
-        it('throw InvalidStateError when the cursor is being iterated', function (done) {
-            var db,
-                records = [ { pKey: "primaryKey_0", iKey: "indexKey_0" },
-                            { pKey: "primaryKey_1", iKey: "indexKey_1" } ];
-            var open_rq = createdb(done);
-            open_rq.onupgradeneeded = function(e) {
-                db = e.target.result;
-                var objStore = db.createObjectStore("store", { keyPath: "pKey" });
-                objStore.createIndex("index", "iKey");
-                for (var i = 0; i < records.length; i++)
-                    objStore.add(records[i]);
-            };
-            open_rq.onsuccess = function(e) {
-                var cursor_rq = db.transaction("store", "readwrite")
-                                  .objectStore("store")
-                                  .index("index")
-                                  .openCursor();
-                cursor_rq.onsuccess = function(e) {
-                    var cursor = e.target.result;
-                    support.assert_true(cursor instanceof IDBCursor, "cursor exists");
-                    cursor.continue();
-                    support.throws(function() {
-                        cursor.update({ pKey: "primaryKey_0", iKey: "indexKey_0_updated" });
-                    }, "InvalidStateError");
-                    done();
-                };
-            }
-        });
     });
 
     describe('objectstore', function () {
@@ -551,35 +521,6 @@ describe('W3C IDBCursor.update Tests', function () {
                     assert(cursor instanceof FDBCursor);
 
                     support.throws(function() { cursor.update(null); }, 'DataError');
-                    done();
-                };
-            }
-        });
-
-        // idbcursor_update_objectstore9
-        it('throw InvalidStateError when the cursor is being iterated', function (done) {
-            var db,
-                records = [{ pKey: "primaryKey_0", value: "value_0" },
-                           { pKey: "primaryKey_1", value: "value_1" }];
-            var open_rq = createdb(done);
-            open_rq.onupgradeneeded = function (event) {
-                db = event.target.result;
-                var objStore = db.createObjectStore("store", {keyPath : "pKey"});
-                for (var i = 0; i < records.length; i++) {
-                    objStore.add(records[i]);
-                }
-            }
-            open_rq.onsuccess = function(e) {
-                var cursor_rq = db.transaction("store", "readwrite")
-                                  .objectStore("store")
-                                  .openCursor();
-                cursor_rq.onsuccess = function(event) {
-                    var cursor = event.target.result;
-                    support.assert_true(cursor instanceof IDBCursor, "cursor exists");
-                    cursor.continue();
-                    support.assert_throws(function() {
-                        cursor.update({ pKey: "primaryKey_0", value: "value_0_updated" });
-                    }, "InvalidStateError");
                     done();
                 };
             }

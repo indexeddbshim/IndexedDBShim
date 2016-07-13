@@ -59,7 +59,7 @@ describe('W3C IDBFactory.deleteDatabase Tests', function () {
                 assert.equal(e.oldVersion, 9, "oldVersion")
                 assert.equal(e.newVersion, null, "newVersion")
                 assert.equal(e.target.result, undefined, "result")
-                assert(e instanceof FDBVersionChangeEvent, "e instanceof FDBVersionChangeEvent")
+                assert(support.instanceOf(e, FDBVersionChangeEvent), "e instanceof FDBVersionChangeEvent")
                 done()
             }
         }
@@ -117,7 +117,7 @@ describe('W3C IDBFactory.deleteDatabase Tests', function () {
         openrq.onupgradeneeded = function(e) {
             assert.equal(e.oldVersion, 0, "old version (upgradeneeded)");
             assert.equal(e.newVersion, 3, "new version (upgradeneeded)");
-            assert(e instanceof FDBVersionChangeEvent, "upgradeneeded instanceof IDBVersionChangeEvent");
+            assert(support.instanceOf(e, FDBVersionChangeEvent), "upgradeneeded instanceof IDBVersionChangeEvent");
         };
 
         openrq.onsuccess = function(e) {
@@ -126,7 +126,7 @@ describe('W3C IDBFactory.deleteDatabase Tests', function () {
             db.onversionchange = function(e) {
                 assert.equal(e.oldVersion, 3, "old version (versionchange)");
                 assert.equal(e.newVersion, null, "new version (versionchange)");
-                assert(e instanceof FDBVersionChangeEvent, "versionchange instanceof IDBVersionChangeEvent");
+                assert(support.instanceOf(e, FDBVersionChangeEvent), "versionchange instanceof IDBVersionChangeEvent");
                 db.close();
             };
 
@@ -147,7 +147,7 @@ describe('W3C IDBFactory.deleteDatabase Tests', function () {
             deleterq.onsuccess = function(e) {
                 assert.equal(e.oldVersion, 3, "old version (delete.success)");
                 assert.equal(e.newVersion, null, "new version (delete.success)");
-                assert(e instanceof FDBVersionChangeEvent, "delete.success instanceof IDBVersionChangeEvent");
+                assert(support.instanceOf(e, FDBVersionChangeEvent), "delete.success instanceof IDBVersionChangeEvent");
 
                 setTimeout(function() { done(); }, 10);
             };

@@ -87,7 +87,7 @@ describe('W3C IDBDatabase.deleteObjectStore Tests', function () {
         }
 
         open_rq.onsuccess = function(e) {
-            support.assert_array_equals(keys, [5, 6, 1], "keys");
+            assert.deepEqual(keys, [5, 6, 1], "keys");
             done();
         }
     });

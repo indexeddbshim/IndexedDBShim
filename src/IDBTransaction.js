@@ -4,6 +4,7 @@ import {IDBRequest} from './IDBRequest.js';
 import * as util from './util.js';
 import IDBObjectStore from './IDBObjectStore.js';
 import CFG from './cfg.js';
+import EventTarget from 'eventtarget';
 
 let uniqueID = 0;
 
@@ -54,7 +55,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 q.req.__result = result;
                 q.req.__error = null;
                 const e = createEvent('success');
-                util.callback('onsuccess', q.req, e);
+                q.req.dispatchEvent(e);
                 i++;
                 executeNextRequest();
             }
@@ -67,7 +68,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                     q.req.__error = err || DOMException;
                     q.req.__result = undefined;
                     const e = createEvent('error', err);
-                    util.callback('onerror', q.req, e);
+                    q.req.dispatchEvent(e);
                 } finally {
                     // Fire an error event for the transaction
                     transactionError(err);
@@ -119,8 +120,8 @@ IDBTransaction.prototype.__executeRequests = function () {
         try {
             me.__error = err;
             const evt = createEvent('error');
-            util.callback('onerror', me, evt);
-            util.callback('onerror', me.db, evt);
+            me.dispatchEvent(evt);
+            me.db.dispatchEvent(createEvent('error'));
         } finally {
             me.__storeClones = {};
             me.abort();
@@ -131,9 +132,9 @@ IDBTransaction.prototype.__executeRequests = function () {
         CFG.DEBUG && console.log('Transaction completed');
         const evt = createEvent('complete');
         try {
-            util.callback('__beforeOncomplete', me, evt);
-            util.callback('oncomplete', me, evt);
-            util.callback('__oncomplete', me, evt);
+            me.dispatchEvent(createEvent('__beforecomplete'));
+            me.dispatchEvent(evt);
+            me.dispatchEvent(createEvent('__complete'));
         } catch (e) {
             // An error occurred in the "oncomplete" handler.
             // It's too late to call "onerror" or "onabort". Throw a global error instead.
@@ -242,7 +243,7 @@ IDBTransaction.prototype.abort = function () {
 
     // Fire the "onabort" event asynchronously, so errors don't bubble
     setTimeout(() => {
-        util.callback('onabort', this, evt);
+        me.dispatchEvent(evt);
     }, 0);
 };
 IDBTransaction.prototype.toString = function () {
@@ -267,5 +268,7 @@ IDBTransaction.__assertActive = function (tx) {
 };
 
 util.defineReadonlyProperties(IDBTransaction.prototype, ['objectStoreNames', 'mode', 'db', 'error']);
+
+Object.assign(IDBTransaction.prototype, EventTarget.prototype);
 
 export default IDBTransaction;

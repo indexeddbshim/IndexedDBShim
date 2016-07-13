@@ -101,6 +101,9 @@
       `transaction`, `autoIncrement` readonly
   - Ensure `keyPath` does not return same instance as passed in (if
       an array)
+  - Make `ShimEvent` properties, `type`, `bubbles`, `cancelable`,
+      `eventPhase`, `timeStamp` readonly (and for native events, stop
+      making `target` writable)
 - Fix: Ensure `IDBIndex` properties, `multiEntry`, `unique` are always boolean
 - Fix: Ensure an `IDBTransaction.objectStore` call always returns the
     same instance if for the same transaction
@@ -182,6 +185,13 @@
     the sake of full key path validation compliance (may slow
     loading/performance, requires polyfills, and is untested)
 - Feature: Add `IDBObjectStore.name` and `IDBIndex.name` setters (untested)
+- Feature: Add various missing lesser event properties (`NONE`,
+    `CAPTURING_PHASE`, `AT_TARGET`, `BUBBLING_PHASE`) and initialize readonly
+    `target`, `currentTarget`, `defaultPrevented`, `isTrusted`.
+- Feature: Utilize `EventTarget` to invoke `dispatchEvent` to allow
+    invocation of multiple listeners as by `addEventListener` (not
+    yet treating bubbling or preventDefault); change ShimEvent to utilize
+    polyfill from `eventtarget`
 - Repo files: Rename test folders for ease in distinguishing
 - Refactoring (Avoid globals): Change from using window global to a CFG module
     for better maintainability
@@ -215,6 +225,8 @@
 - Refactoring: Replace SQLite auto-increment with our own table since
     SQLite's own apparently cannot be decremented successfully;
     also rename to spec "current number"
+- Refactoring: Avoid using native events, as we need to let `EventTarget`
+    alter its readonly `target`, `currentTarget`, etc. properties
 - Updating: Bump various `devDependency` min versions
 - Documentation: Document `shimIndexedDB.__setConfig()`.
 - Testing: Update tests per current spec and behavior
@@ -244,11 +256,11 @@
     From fakeIndexedDB (Node), only fakeIndexedDB.js is not passing;
     From indexedDBmock (Node), only database.js is not passing;
     From W3C (Old, Node), only IDBCursorBehavior.js, IDBDatabase.close.js,
-        IDBFactory.open.js, IBObjectStore.add.js,
+        IDBFactory.open.js, IDBObjectStore.add.js,
         IDBObjectStore.createIndex.js,
-        IDBObjectStore.put.js, IDBTransaction.abort.js, IDBTransaction.js,
+        IDBObjectStore.put.js, IDBTransaction.abort.js,
         KeyGenerator.js, RequestBehavior.js, TransactionBehavior.js
-        are not passing:
+        are not passing
     From W3C (New, Node but potentially also browser): only idbkeyrange.js
         is currently passing
 - Testing (Grunt): Clarify Grunt tasks, expand tasks for cleaning, make tests

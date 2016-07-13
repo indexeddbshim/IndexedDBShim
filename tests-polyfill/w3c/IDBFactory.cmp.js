@@ -75,7 +75,7 @@ describe('W3C IDBFactory.cmp Tests', function () {
                     var cursor = e.target.result;
 
                     if (cursor) {
-                        actual_keys.push(cursor.key);
+                        actual_keys.push(cursor.key.valueOf());
                         cursor.continue();
                     }
                     else {

@@ -73,7 +73,7 @@ define(String.prototype, "padRight", "".padEnd);
   [][key] && define(Array, key, Function.call.bind([][key]));
 });
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"core-js/fn/regexp/escape":5,"core-js/shim":299,"regenerator-runtime/runtime":303}],3:[function(require,module,exports){
+},{"core-js/fn/regexp/escape":5,"core-js/shim":299,"regenerator-runtime/runtime":304}],3:[function(require,module,exports){
 'use strict'
 
 exports.toByteArray = toByteArray
@@ -1899,7 +1899,7 @@ function isnan (val) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"base64-js":3,"ieee754":300,"isarray":301}],5:[function(require,module,exports){
+},{"base64-js":3,"ieee754":301,"isarray":302}],5:[function(require,module,exports){
 require('../../modules/core.regexp.escape');
 module.exports = require('../../modules/_core').RegExp.escape;
 },{"../../modules/_core":26,"../../modules/core.regexp.escape":123}],6:[function(require,module,exports){
@@ -7959,6 +7959,424 @@ require('./modules/web.immediate');
 require('./modules/web.dom.iterable');
 module.exports = require('./modules/_core');
 },{"./modules/_core":26,"./modules/es6.array.copy-within":124,"./modules/es6.array.every":125,"./modules/es6.array.fill":126,"./modules/es6.array.filter":127,"./modules/es6.array.find":129,"./modules/es6.array.find-index":128,"./modules/es6.array.for-each":130,"./modules/es6.array.from":131,"./modules/es6.array.index-of":132,"./modules/es6.array.is-array":133,"./modules/es6.array.iterator":134,"./modules/es6.array.join":135,"./modules/es6.array.last-index-of":136,"./modules/es6.array.map":137,"./modules/es6.array.of":138,"./modules/es6.array.reduce":140,"./modules/es6.array.reduce-right":139,"./modules/es6.array.slice":141,"./modules/es6.array.some":142,"./modules/es6.array.sort":143,"./modules/es6.array.species":144,"./modules/es6.date.now":145,"./modules/es6.date.to-iso-string":146,"./modules/es6.date.to-json":147,"./modules/es6.date.to-primitive":148,"./modules/es6.date.to-string":149,"./modules/es6.function.bind":150,"./modules/es6.function.has-instance":151,"./modules/es6.function.name":152,"./modules/es6.map":153,"./modules/es6.math.acosh":154,"./modules/es6.math.asinh":155,"./modules/es6.math.atanh":156,"./modules/es6.math.cbrt":157,"./modules/es6.math.clz32":158,"./modules/es6.math.cosh":159,"./modules/es6.math.expm1":160,"./modules/es6.math.fround":161,"./modules/es6.math.hypot":162,"./modules/es6.math.imul":163,"./modules/es6.math.log10":164,"./modules/es6.math.log1p":165,"./modules/es6.math.log2":166,"./modules/es6.math.sign":167,"./modules/es6.math.sinh":168,"./modules/es6.math.tanh":169,"./modules/es6.math.trunc":170,"./modules/es6.number.constructor":171,"./modules/es6.number.epsilon":172,"./modules/es6.number.is-finite":173,"./modules/es6.number.is-integer":174,"./modules/es6.number.is-nan":175,"./modules/es6.number.is-safe-integer":176,"./modules/es6.number.max-safe-integer":177,"./modules/es6.number.min-safe-integer":178,"./modules/es6.number.parse-float":179,"./modules/es6.number.parse-int":180,"./modules/es6.number.to-fixed":181,"./modules/es6.number.to-precision":182,"./modules/es6.object.assign":183,"./modules/es6.object.create":184,"./modules/es6.object.define-properties":185,"./modules/es6.object.define-property":186,"./modules/es6.object.freeze":187,"./modules/es6.object.get-own-property-descriptor":188,"./modules/es6.object.get-own-property-names":189,"./modules/es6.object.get-prototype-of":190,"./modules/es6.object.is":194,"./modules/es6.object.is-extensible":191,"./modules/es6.object.is-frozen":192,"./modules/es6.object.is-sealed":193,"./modules/es6.object.keys":195,"./modules/es6.object.prevent-extensions":196,"./modules/es6.object.seal":197,"./modules/es6.object.set-prototype-of":198,"./modules/es6.object.to-string":199,"./modules/es6.parse-float":200,"./modules/es6.parse-int":201,"./modules/es6.promise":202,"./modules/es6.reflect.apply":203,"./modules/es6.reflect.construct":204,"./modules/es6.reflect.define-property":205,"./modules/es6.reflect.delete-property":206,"./modules/es6.reflect.enumerate":207,"./modules/es6.reflect.get":210,"./modules/es6.reflect.get-own-property-descriptor":208,"./modules/es6.reflect.get-prototype-of":209,"./modules/es6.reflect.has":211,"./modules/es6.reflect.is-extensible":212,"./modules/es6.reflect.own-keys":213,"./modules/es6.reflect.prevent-extensions":214,"./modules/es6.reflect.set":216,"./modules/es6.reflect.set-prototype-of":215,"./modules/es6.regexp.constructor":217,"./modules/es6.regexp.flags":218,"./modules/es6.regexp.match":219,"./modules/es6.regexp.replace":220,"./modules/es6.regexp.search":221,"./modules/es6.regexp.split":222,"./modules/es6.regexp.to-string":223,"./modules/es6.set":224,"./modules/es6.string.anchor":225,"./modules/es6.string.big":226,"./modules/es6.string.blink":227,"./modules/es6.string.bold":228,"./modules/es6.string.code-point-at":229,"./modules/es6.string.ends-with":230,"./modules/es6.string.fixed":231,"./modules/es6.string.fontcolor":232,"./modules/es6.string.fontsize":233,"./modules/es6.string.from-code-point":234,"./modules/es6.string.includes":235,"./modules/es6.string.italics":236,"./modules/es6.string.iterator":237,"./modules/es6.string.link":238,"./modules/es6.string.raw":239,"./modules/es6.string.repeat":240,"./modules/es6.string.small":241,"./modules/es6.string.starts-with":242,"./modules/es6.string.strike":243,"./modules/es6.string.sub":244,"./modules/es6.string.sup":245,"./modules/es6.string.trim":246,"./modules/es6.symbol":247,"./modules/es6.typed.array-buffer":248,"./modules/es6.typed.data-view":249,"./modules/es6.typed.float32-array":250,"./modules/es6.typed.float64-array":251,"./modules/es6.typed.int16-array":252,"./modules/es6.typed.int32-array":253,"./modules/es6.typed.int8-array":254,"./modules/es6.typed.uint16-array":255,"./modules/es6.typed.uint32-array":256,"./modules/es6.typed.uint8-array":257,"./modules/es6.typed.uint8-clamped-array":258,"./modules/es6.weak-map":259,"./modules/es6.weak-set":260,"./modules/es7.array.includes":261,"./modules/es7.asap":262,"./modules/es7.error.is-error":263,"./modules/es7.map.to-json":264,"./modules/es7.math.iaddh":265,"./modules/es7.math.imulh":266,"./modules/es7.math.isubh":267,"./modules/es7.math.umulh":268,"./modules/es7.object.define-getter":269,"./modules/es7.object.define-setter":270,"./modules/es7.object.entries":271,"./modules/es7.object.get-own-property-descriptors":272,"./modules/es7.object.lookup-getter":273,"./modules/es7.object.lookup-setter":274,"./modules/es7.object.values":275,"./modules/es7.observable":276,"./modules/es7.reflect.define-metadata":277,"./modules/es7.reflect.delete-metadata":278,"./modules/es7.reflect.get-metadata":280,"./modules/es7.reflect.get-metadata-keys":279,"./modules/es7.reflect.get-own-metadata":282,"./modules/es7.reflect.get-own-metadata-keys":281,"./modules/es7.reflect.has-metadata":283,"./modules/es7.reflect.has-own-metadata":284,"./modules/es7.reflect.metadata":285,"./modules/es7.set.to-json":286,"./modules/es7.string.at":287,"./modules/es7.string.match-all":288,"./modules/es7.string.pad-end":289,"./modules/es7.string.pad-start":290,"./modules/es7.string.trim-left":291,"./modules/es7.string.trim-right":292,"./modules/es7.symbol.async-iterator":293,"./modules/es7.symbol.observable":294,"./modules/es7.system.global":295,"./modules/web.dom.iterable":296,"./modules/web.immediate":297,"./modules/web.timers":298}],300:[function(require,module,exports){
+var DOMException, Proxy, Event;
+(function () {
+  'use strict';
+
+  var EventPolyfill;
+  var ProxyPolyfill;
+  var phases = {
+    NONE: 0,
+    CAPTURING_PHASE: 1,
+    AT_TARGET: 2,
+    BUBBLING_PHASE: 3
+  };
+
+  if (typeof DOMException === 'undefined') {
+    DOMException = function (msg, name) {
+      var err = new Error(msg);
+      err.name = name;
+      return err;
+    };
+  }
+
+  EventPolyfill = function EventPolyfill (type, evInit, ev) { // eslint-disable-line no-native-reassign
+    evInit = evInit || {};
+    Object.defineProperties(this, {
+      type: {writable: false, value: type},
+      target: {writable: false, value: null, configurable: true}, // Changeable by proxy
+      currentTarget: {writable: false, value: null, configurable: true}, // Changeable by proxy
+      eventPhase: {writable: false, value: 0, configurable: true}, // Changeable by proxy
+      bubbles: {writable: false, value: 'bubbles' in evInit ? evInit.bubbles : false},
+      cancelable: {writable: false, value: 'cancelable' in evInit ? evInit.cancelable : false},
+      defaultPrevented: {writable: false, value: false, configurable: true} // Changeable by proxy
+      // isTrusted: {writable: false, value: true}, // We are not always using this for user-created events
+      // timeStamp: {writable: false, value: new Date().valueOf()} // This is no longer a timestamp, but monotonic (elapsed?)
+    });
+  };
+  Object.defineProperties(EventPolyfill.prototype, {
+    NONE: {writable: false, value: 0},
+    CAPTURING_PHASE: {writable: false, value: 1},
+    AT_TARGET: {writable: false, value: 2},
+    BUBBLING_PHASE: {writable: false, value: 3}
+  });
+  function copyEvent (ev) {
+    return new EventPolyfill(ev.type, {bubbles: ev.bubbles, cancelable: ev.cancelable});
+  }
+
+  if (typeof Proxy === 'undefined') { // Remove when Proxies well supported: http://caniuse.com/#feat=proxy
+    Proxy = ProxyPolyfill = function ProxyPolyfill (ev /* , handler*/) {
+      this._ev = ev;
+      Object.defineProperties(this,
+        ['target', 'currentTarget', 'eventPhase', 'defaultPrevented'].reduce(function (obj, prop) {
+          obj[prop] = {get: function () {
+            return (('_' + prop) in this && this['_' + prop] !== undefined) ? this['_' + prop] : this._ev[prop];
+          }, set: function (val) {
+            this['_' + prop] = val;
+          }};
+          obj['_' + prop] = {enumerable: false, writable: true};
+          return obj;
+        }, {})
+      );
+      Object.defineProperties(this,
+        [
+          // Event
+          'type', 'NONE', 'CAPTURING_PHASE', 'AT_TARGET', 'BUBBLING_PHASE',
+          'bubbles', 'cancelable', 'isTrusted', 'timeStamp',
+          // Other event properties (not used by our code)
+          'composedPath', 'composed', 'initEvent',
+          // CustomEvent
+          'detail'
+        ].reduce(function (obj, prop) {
+          obj[prop] = {get: function () {
+            return this._ev[prop];
+          }, set: function (val) {
+            this._ev[prop] = val;
+          }};
+          return obj;
+        }, {})
+      );
+    };
+    Proxy.prototype.preventDefault = function () { // eslint-disable-line no-extend-native
+      if (typeof this._ev.preventDefault === 'function') {
+        this._ev.preventDefault();
+        return;
+      }
+      if (this.cancelable && !this._passive) this.defaultPrevented = true;
+    };
+    Proxy.prototype.stopImmediatePropagation = function () { // eslint-disable-line no-extend-native
+      this._stopImmediatePropagation = true;
+    };
+    Proxy.prototype.stopPropagation = function () { // eslint-disable-line no-extend-native
+      this._stopPropagation = true;
+    };
+  }
+
+  function tryCatch (cb) {
+    try {
+      // Per MDN: Exceptions thrown by event handlers are reported
+      //  as uncaught exceptions; the event handlers run on a nested
+      //  callstack: they block the caller until they complete, but
+      //  exceptions do not propagate to the caller.
+      cb();
+    } catch (err) {
+      var error = err;
+      if (typeof err === 'string') {
+        error = 'Uncaught exception: ' + err;
+      } else {
+        error.message = 'Uncaught exception: ' + err.message;
+      }
+      if (window.onerror) window.onerror(error.message, error.fileName, error.lineNumber, null, error);
+      console.log(err);
+    }
+  }
+
+  function getListenersOptions (listeners, type, options) {
+    var listenersByType = listeners[type];
+    if (listenersByType === undefined) listeners[type] = listenersByType = [];
+    options = typeof options === 'boolean' ? {capture: options} : (options || {});
+    var stringifiedOptions = JSON.stringify(options);
+    var listenersByTypeOptions = listenersByType.filter(function (obj) {
+      return stringifiedOptions === JSON.stringify(obj.options);
+    });
+    return {listenersByTypeOptions: listenersByTypeOptions, options: options, listenersByType: listenersByType};
+  }
+
+  var methods = {
+    addListener: function addListener (listeners, listener, type, options) {
+      var listenerOptions = getListenersOptions(listeners, type, options);
+      var listenersByTypeOptions = listenerOptions.listenersByTypeOptions;
+      options = listenerOptions.options;
+      var listenersByType = listenerOptions.listenersByType;
+
+      if (listenersByTypeOptions.some(function (l) {
+        return l.listener === listener;
+      })) return;
+      listenersByType.push({listener: listener, options: options});
+    },
+
+    removeListener: function removeListener (listeners, listener, type, options) {
+      var listenerOptions = getListenersOptions(listeners, type, options);
+      var listenersByType = listenerOptions.listenersByType;
+      var stringifiedOptions = JSON.stringify(listenerOptions.options);
+
+      listenersByType.some(function (l, i) {
+        if (l.listener === listener && stringifiedOptions === JSON.stringify(l.options)) {
+          listenersByType.splice(i, 1);
+          if (!listenersByType.length) delete listeners[type];
+          return true;
+        }
+      });
+    },
+
+    hasListener: function hasListener (listeners, listener, type, options) {
+      var listenerOptions = getListenersOptions(listeners, type, options);
+      var listenersByTypeOptions = listenerOptions.listenersByTypeOptions;
+      return listenersByTypeOptions.some(function (l) {
+        return l.listener === listener;
+      });
+    }
+  };
+
+  function EventTarget (customOptions) {
+    this.setOptions(customOptions);
+  }
+
+  Object.assign(EventTarget.prototype, ['Early', '', 'Late', 'Default'].reduce(function (obj, listenerType) {
+    ['add', 'remove', 'has'].forEach(function (method) {
+      obj[method + listenerType + 'EventListener'] = function (type, listener, options) {
+        if (arguments.length < 2) throw new TypeError('2 or more arguments required');
+        if (typeof type !== 'string') throw new DOMException('UNSPECIFIED_EVENT_TYPE_ERR', 'UNSPECIFIED_EVENT_TYPE_ERR'); // eslint-disable-line eqeqeq
+        if (listener.handleEvent) { listener = listener.handleEvent.bind(listener); }
+        var arrStr = '_' + listenerType.toLowerCase() + (listenerType === '' ? 'l' : 'L') + 'isteners';
+        if (!this[arrStr]) Object.defineProperty(this, arrStr, {value: {}});
+        return methods[method + 'Listener'](this[arrStr], listener, type, options);
+      };
+    });
+    return obj;
+  }, {}));
+
+  Object.assign(EventTarget.prototype, {
+    setOptions: function (customOptions) {
+      customOptions = customOptions || {};
+      this._defaultSync = customOptions.defaultSync;
+      this._extraProperties = customOptions.extraProperties;
+    },
+    dispatchEvent: function (ev) {
+      return this._dispatchEvent(ev, true);
+    },
+    _dispatchEvent: function (ev, setTarget) {
+      var me = this;
+      ['early', '', 'late', 'default'].forEach(function (listenerType) {
+        var arrStr = '_' + listenerType + (listenerType === '' ? 'l' : 'L') + 'isteners';
+        if (!this[arrStr]) Object.defineProperty(this, arrStr, {value: {}});
+      }, this);
+
+      if (setTarget && ev._dispatched) throw new DOMException('The object is in an invalid state.', 'InvalidStateError');
+      ev._dispatched = true;
+
+      var type = ev.type;
+      if (!type || typeof type !== 'string') throw new TypeError('Invalid type');
+
+      var handler = {
+        // Avoid readonly
+        get: function (ev, prop) {
+          if (['preventDefault', 'stopImmediatePropagation', 'stopPropagation'].includes(prop)) {
+            switch (prop) {
+              case 'preventDefault': // Doesn't affect propagation
+                return typeof ev[prop] === 'function' ? ev[prop] : function () {
+                  if (eventProxy.cancelable && !eventProxy._passive) {
+                    eventProxy.defaultPrevented = true;
+                  }
+                };
+              case 'stopImmediatePropagation': // Doesn't affect default
+                return function () {
+                  eventProxy._stopImmediatePropagation = true;
+                };
+              case 'stopPropagation':
+                return function () { // Doesn't affect default
+                  eventProxy._stopPropagation = true;
+                };
+            }
+          }
+          if (['target', 'currentTarget', 'eventPhase', 'defaultPrevented'].includes(prop) && ('_' + prop) in ev) {
+            return ev['_' + prop];
+          }
+          return ev[prop];
+        },
+        set: function (ev, prop, value) {
+          if (['target', 'currentTarget', 'eventPhase', 'defaultPrevented'].includes(prop)) {
+            ev['_' + prop] = value;
+          } else {
+            ev[prop] = value;
+          }
+          return true;
+        }
+      };
+      var eventProxy;
+      if (ev.isProxified) {
+        eventProxy = ev;
+      } else {
+        eventProxy = new Proxy(copyEvent(ev), handler);
+        eventProxy.isProxified = true;
+        [
+          'target', 'currentTarget', 'defaultPrevented',
+          'isTrusted', 'timeStamp',
+          // Other event properties (not used by our code)
+          'composedPath', 'composed', 'initEvent',
+          // CustomEvent
+          'detail',
+          // Our own properties
+          '_dispatched', '_stopImmediatePropagation', '_stopPropagation'
+        ].concat(this._extraProperties || []).forEach(function (prop) {
+          eventProxy[prop] = ev[prop];
+        });
+      }
+
+      function finishEventDispatch () {
+        eventProxy.eventPhase = phases.NONE;
+        eventProxy.currentTarget = null;
+      }
+      function invokeDefaults () {
+        // Ignore stopPropagation from defaults
+        eventProxy._stopImmediatePropagation = undefined;
+        eventProxy._stopPropagation = undefined;
+        // We check here for whether we should invoke since may have changed since timeout (if late listener prevented default)
+        if (!eventProxy.defaultPrevented || !eventProxy.cancelable) { // 2nd check should be redundant
+          eventProxy.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke default listeners
+          eventProxy.target.invokeCurrentListeners(eventProxy.target._defaultListeners, eventProxy, type);
+        }
+        finishEventDispatch();
+      }
+      function continueEventDispatch () {
+        // Ignore stop propagation of user now
+        eventProxy._stopImmediatePropagation = undefined;
+        eventProxy._stopPropagation = undefined;
+        if (!me._defaultSync) {
+          setTimeout(invokeDefaults, 0);
+        } else invokeDefaults();
+
+        eventProxy.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke late listeners
+        // Sync default might have stopped
+        if (!eventProxy._stopPropagation) {
+          eventProxy._stopImmediatePropagation = undefined;
+          eventProxy._stopPropagation = undefined;
+          // We could allow stopPropagation by only executing upon (eventProxy._stopPropagation)
+          eventProxy.target.invokeCurrentListeners(eventProxy.target._lateListeners, eventProxy, type);
+        }
+        finishEventDispatch();
+
+        return !eventProxy.defaultPrevented;
+      }
+
+      if (setTarget) eventProxy.target = this;
+
+      switch (eventProxy.eventPhase) {
+        default: case phases.NONE:
+
+          eventProxy.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke early listeners
+          this.invokeCurrentListeners(this._earlyListeners, eventProxy, type);
+          if (!this.getParent) {
+            eventProxy.eventPhase = phases.AT_TARGET;
+            return this._dispatchEvent(eventProxy, false);
+          }
+
+          var par = this;
+          var root = this;
+          while ((par = par.getParent()) !== null) {
+            par._child = root;
+            root = par;
+          }
+          root._defaultSync = me._defaultSync;
+          eventProxy.eventPhase = phases.CAPTURING_PHASE;
+          return root._dispatchEvent(eventProxy, false);
+        case phases.CAPTURING_PHASE:
+          if (eventProxy._stopPropagation) {
+            return continueEventDispatch();
+          }
+          this.invokeCurrentListeners(this._listeners, eventProxy, type);
+          var child = this._child;
+          if (!child || child === eventProxy.target) {
+            eventProxy.eventPhase = phases.AT_TARGET;
+          }
+          if (child) child._defaultSync = me._defaultSync;
+          return (child || this)._dispatchEvent(eventProxy, false);
+        case phases.AT_TARGET:
+          if (eventProxy._stopPropagation) {
+            return continueEventDispatch();
+          }
+          this.invokeCurrentListeners(this._listeners, eventProxy, type, true);
+          if (!eventProxy.bubbles) {
+            return continueEventDispatch();
+          }
+          eventProxy.eventPhase = phases.BUBBLING_PHASE;
+          return this._dispatchEvent(eventProxy, false);
+        case phases.BUBBLING_PHASE:
+          if (eventProxy._stopPropagation) {
+            return continueEventDispatch();
+          }
+          var parent = this.getParent;
+          if (!parent) {
+            return continueEventDispatch();
+          }
+          parent = this.getParent();
+          this.invokeCurrentListeners(this._listeners, eventProxy, type, true);
+          if (!parent) {
+            return continueEventDispatch();
+          }
+          parent._defaultSync = me._defaultSync;
+          return parent._dispatchEvent(eventProxy, false);
+      }
+    },
+    invokeCurrentListeners: function (listeners, eventProxy, type, checkOnListeners) {
+      var me = this;
+      eventProxy.currentTarget = this;
+
+      var listOpts = getListenersOptions(listeners, type, {});
+      var listenersByType = listOpts.listenersByType.concat();
+      var dummyIPos = listenersByType.length ? 1 : 0;
+
+      listenersByType.some(function (listenerObj, i) {
+        var onListener = checkOnListeners ? me['on' + type] : null;
+        if (eventProxy._stopImmediatePropagation) return true;
+        if (i === dummyIPos && typeof onListener === 'function') {
+          // We don't splice this in as could be overwritten; executes here per
+          //  https://html.spec.whatwg.org/multipage/webappapis.html#event-handler-attributes:event-handlers-14
+          tryCatch(function () {
+            var ret = onListener.call(eventProxy.currentTarget, eventProxy);
+            if (ret === false) {
+              eventProxy.preventDefault();
+            }
+          });
+        }
+        var options = listenerObj.options;
+        var once = options.once; // Remove listener after invoking once
+        var passive = options.passive; // Don't allow `preventDefault`
+        var capture = options.capture; // Use `_child` and set `eventPhase`
+        eventProxy._passive = passive;
+
+        if ((capture && eventProxy.target !== eventProxy.currentTarget && eventProxy.eventPhase === phases.CAPTURING_PHASE) ||
+          (eventProxy.eventPhase === phases.AT_TARGET ||
+          (!capture && eventProxy.target !== eventProxy.currentTarget && eventProxy.eventPhase === phases.BUBBLING_PHASE))
+        ) {
+          var listener = listenerObj.listener;
+          tryCatch(function () {
+            listener.call(eventProxy.currentTarget, eventProxy);
+          });
+          if (once) {
+            this.removeEventListener(type, listener, options);
+          }
+        }
+      }, this);
+      tryCatch(function () {
+        var onListener = checkOnListeners ? me['on' + type] : null;
+        if (typeof onListener === 'function' && listenersByType.length < 2) {
+          var ret = onListener.call(eventProxy.currentTarget, eventProxy); // Won't have executed if too short
+          if (ret === false) {
+            eventProxy.preventDefault();
+          }
+        }
+      });
+
+      return !eventProxy.defaultPrevented;
+    }
+  });
+
+  EventTarget.Event = Event;
+  EventTarget.EventPolyfill = EventPolyfill;
+  EventTarget.ProxyPolyfill = ProxyPolyfill;
+  EventTarget.DOMException = DOMException;
+  EventTarget.Error = Error;
+  EventTarget.TypeError = TypeError;
+
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = EventTarget;
+  } else {
+    window.EventTarget = EventTarget;
+  }
+}());
+
+},{}],301:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -8044,14 +8462,14 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],301:[function(require,module,exports){
+},{}],302:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],302:[function(require,module,exports){
+},{}],303:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -8147,7 +8565,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],303:[function(require,module,exports){
+},{}],304:[function(require,module,exports){
 (function (process,global){
 /**
  * Copyright (c) 2014, Facebook, Inc.
@@ -8819,7 +9237,7 @@ process.umask = function() { return 0; };
 );
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":302}],304:[function(require,module,exports){
+},{"_process":303}],305:[function(require,module,exports){
 // Since [immediate](https://github.com/calvinmetcalf/immediate) is
 //   not doing the trick for our WebSQL transactions (at least in Node),
 //   we are forced to make the promises run fully synchronously.
@@ -8978,7 +9396,7 @@ SyncPromise.reject = function(val) {
 };
 module.exports = SyncPromise;
 
-},{}],305:[function(require,module,exports){
+},{}],306:[function(require,module,exports){
 (function (global){
 module.exports = get_blob()
 
@@ -9010,7 +9428,7 @@ function get_blob() {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],306:[function(require,module,exports){
+},{}],307:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9169,115 +9587,69 @@ exports.DOMException = shimDOMException;
 exports.createDOMException = createDOMException;
 exports.createDOMError = createDOMError;
 
-},{"./cfg.js":320,"./util.js":323}],307:[function(require,module,exports){
+},{"./cfg.js":321,"./util.js":324}],308:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+exports.ProxyPolyfill = exports.ShimEvent = exports.createEvent = exports.IDBVersionChangeEvent = undefined;
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+var _eventtarget = require('eventtarget');
 
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+var _eventtarget2 = _interopRequireDefault(_eventtarget);
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+var _util = require('./util.js');
 
-/**
- * Creates a native Event object, for browsers that support it
- * @returns {Event}
- */
-function createNativeEvent(type, debug) {
-    var event = new Event(type);
-    event.debug = debug;
+var util = _interopRequireWildcard(_util);
 
-    // Make the "target" writable
-    Object.defineProperty(event, 'target', {
-        writable: true
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var ShimEvent = _eventtarget2.default.EventPolyfill;
+var ProxyPolyfill = _eventtarget2.default.ProxyPolyfill;
+
+function createEvent(type, debug, evInit) {
+    var ev = new ShimEvent(type, evInit);
+    ev.debug = debug;
+    return ev;
+}
+
+// Babel apparently having a problem adding `hasInstance` to a class, so we are redefining as a function
+function IDBVersionChangeEvent(type, eventInitDict) {
+    // eventInitDict is a IDBVersionChangeEventInit (but is not defined as a global)
+    ShimEvent.call(this, type);
+    Object.defineProperty(this, 'oldVersion', {
+        enumerable: true,
+        configurable: true,
+        get: function get() {
+            return eventInitDict.oldVersion;
+        }
     });
-
-    return event;
+    Object.defineProperty(this, 'newVersion', {
+        enumerable: true,
+        configurable: true,
+        get: function get() {
+            return eventInitDict.newVersion;
+        }
+    });
 }
+IDBVersionChangeEvent.prototype = new ShimEvent('bogus');
+IDBVersionChangeEvent.prototype.constructor = IDBVersionChangeEvent;
 
-function isEvent(ev) {
-    return typeof ev.bubbles === 'boolean' && typeof ev.stopPropgation === 'function';
-}
-
-/**
- * A shim Event class, for browsers that don't allow us to create native Event objects.
- * @constructor
- */
-function ShimEvent(type, debug) {
-    this.type = type;
-    this.debug = debug;
-    this.bubbles = false;
-    this.cancelable = false;
-    this.eventPhase = 0;
-    this.timeStamp = new Date().valueOf();
-}
-
-var useNativeEvent = false;
-try {
-    // Test whether we can use the browser's native Event class
-    var test = createNativeEvent('test type', 'test debug');
-    var target = { test: 'test target' };
-    test.target = target;
-
-    if (isEvent(test) && test.type === 'test type' && test.debug === 'test debug' && test.target === target) {
-        // Native events work as expected
-        useNativeEvent = true;
+Object.defineProperty(IDBVersionChangeEvent, Symbol.hasInstance, {
+    value: function value(obj) {
+        return util.isObj(obj) && 'oldVersion' in obj && typeof obj.defaultPrevented === 'boolean';
     }
-} catch (e) {}
+});
 
-var expEvent = void 0,
-    createEvent = void 0;
-if (useNativeEvent) {
-    exports.Event = expEvent = Event;
-    exports.createEvent = createEvent = createNativeEvent;
-} else {
-    exports.Event = expEvent = ShimEvent;
-    exports.createEvent = createEvent = function createEvent(type, debug) {
-        return new ShimEvent(type, debug);
-    };
-}
-
-var IDBVersionChangeEvent = function (_expEvent) {
-    _inherits(IDBVersionChangeEvent, _expEvent);
-
-    function IDBVersionChangeEvent(type, eventInitDict) {
-        _classCallCheck(this, IDBVersionChangeEvent);
-
-        var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(IDBVersionChangeEvent).call(this, type)); // eventInitDict is a IDBVersionChangeEventInit (but is not defined as a global)
-
-
-        Object.defineProperty(_this, 'target', {
-            writable: true
-        });
-        Object.defineProperty(_this, 'oldVersion', {
-            enumerable: true,
-            configurable: true,
-            get: function get() {
-                return eventInitDict.oldVersion;
-            }
-        });
-        Object.defineProperty(_this, 'newVersion', {
-            enumerable: true,
-            configurable: true,
-            get: function get() {
-                return eventInitDict.newVersion;
-            }
-        });
-        return _this;
-    }
-
-    return IDBVersionChangeEvent;
-}(expEvent);
-
-exports.Event = expEvent;
 exports.IDBVersionChangeEvent = IDBVersionChangeEvent;
 exports.createEvent = createEvent;
-exports.ShimEvent = ShimEvent; // Event not currently in use
+exports.ShimEvent = ShimEvent;
+exports.ProxyPolyfill = ProxyPolyfill; // Event not currently in use
 
-},{}],308:[function(require,module,exports){
+},{"./util.js":324,"eventtarget":300}],309:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9831,7 +10203,7 @@ util.defineReadonlyProperties(IDBCursorWithValue.prototype, 'value');
 exports.IDBCursor = IDBCursor;
 exports.IDBCursorWithValue = IDBCursorWithValue;
 
-},{"./DOMException.js":306,"./IDBFactory.js":310,"./IDBIndex.js":311,"./IDBKeyRange.js":312,"./IDBRequest.js":314,"./IDBTransaction.js":315,"./Key.js":316,"./Sca.js":317,"./cfg.js":320,"./util.js":323}],309:[function(require,module,exports){
+},{"./DOMException.js":307,"./IDBFactory.js":311,"./IDBIndex.js":312,"./IDBKeyRange.js":313,"./IDBRequest.js":315,"./IDBTransaction.js":316,"./Key.js":317,"./Sca.js":318,"./cfg.js":321,"./util.js":324}],310:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9855,6 +10227,10 @@ var _IDBTransaction2 = _interopRequireDefault(_IDBTransaction);
 var _cfg = require('./cfg.js');
 
 var _cfg2 = _interopRequireDefault(_cfg);
+
+var _eventtarget = require('eventtarget');
+
+var _eventtarget2 = _interopRequireDefault(_eventtarget);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -10005,10 +10381,12 @@ IDBDatabase.prototype.toString = function () {
 
 util.defineReadonlyProperties(IDBDatabase.prototype, ['name', 'version', 'objectStoreNames']);
 
+Object.assign(IDBDatabase.prototype, _eventtarget2.default.prototype);
+
 exports.default = IDBDatabase;
 module.exports = exports['default'];
 
-},{"./DOMException.js":306,"./IDBObjectStore.js":313,"./IDBTransaction.js":315,"./cfg.js":320,"./util.js":323}],310:[function(require,module,exports){
+},{"./DOMException.js":307,"./IDBObjectStore.js":314,"./IDBTransaction.js":316,"./cfg.js":321,"./util.js":324,"eventtarget":300}],311:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10081,7 +10459,7 @@ function createSysDB(success, failure) {
  * @constructor
  */
 function IDBFactory() {
-    this.modules = { DOMException: _DOMException.DOMException, Event: _Event.Event, ShimEvent: _Event.ShimEvent, IDBFactory: IDBFactory };
+    this.modules = { DOMException: _DOMException.DOMException, Event: typeof Event !== 'undefined' ? Event : _Event.ShimEvent, ShimEvent: _Event.ShimEvent, ProxyPolyfill: _Event.ProxyPolyfill, IDBFactory: IDBFactory };
 }
 
 /**
@@ -10119,7 +10497,7 @@ IDBFactory.prototype.open = function (name, version) {
         var evt = (0, _Event.createEvent)('error', args);
         req.__readyState = 'done';
         req.__error = err || _DOMException.DOMException;
-        util.callback('onerror', req, evt);
+        req.dispatchEvent(evt);
     }
 
     function openDB(oldVersion) {
@@ -10143,27 +10521,27 @@ IDBFactory.prototype.open = function (name, version) {
                         // DB Upgrade in progress
                         sysdb.transaction(function (systx) {
                             systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [version, name], function () {
-                                var e = new IDBVersionChangeEvent('upgradeneeded', { oldVersion: oldVersion, newVersion: version });
+                                var e = new _Event.IDBVersionChangeEvent('upgradeneeded', { oldVersion: oldVersion, newVersion: version });
                                 req.__transaction = req.result.__versionTransaction = new _IDBTransaction2.default(req.result, req.result.objectStoreNames, 'versionchange');
                                 req.transaction.__addToTransactionQueue(function onupgradeneeded(tx, args, success) {
-                                    util.callback('onupgradeneeded', req, e);
+                                    req.dispatchEvent(e);
                                     success();
                                 });
-                                req.transaction.__beforeOncomplete = function () {
+                                req.transaction.on__beforecomplete = function () {
                                     req.result.__versionTransaction = null;
                                 };
-                                req.transaction.__oncomplete = function () {
+                                req.transaction.on__complete = function () {
                                     if (req.__result.__closed) {
                                         return;
                                     }
                                     req.__transaction = null;
                                     var e = (0, _Event.createEvent)('success');
-                                    util.callback('onsuccess', req, e);
+                                    req.dispatchEvent(e);
                                 };
                             }, dbCreateError);
                         }, dbCreateError);
                     } else {
-                        util.callback('onsuccess', req, e);
+                        req.dispatchEvent(e);
                     }
                 }, dbCreateError);
             }, dbCreateError);
@@ -10215,9 +10593,8 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         var err = (0, _DOMException.findError)(args);
         req.__readyState = 'done';
         req.__error = err || _DOMException.DOMException;
-        var e = (0, _Event.createEvent)('error');
-        e.debug = args;
-        util.callback('onerror', req, e);
+        var e = (0, _Event.createEvent)('error', args);
+        req.dispatchEvent(e);
         calledDBError = true;
     }
 
@@ -10225,8 +10602,8 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         sysdb.transaction(function (systx) {
             systx.executeSql('DELETE FROM dbVersions WHERE name = ? ', [name], function () {
                 req.__result = undefined;
-                var e = new IDBVersionChangeEvent('success', { oldVersion: version, newVersion: null });
-                util.callback('onsuccess', req, e);
+                var e = new _Event.IDBVersionChangeEvent('success', { oldVersion: version, newVersion: null });
+                req.dispatchEvent(e);
             }, dbError);
         }, dbError);
     }
@@ -10236,8 +10613,8 @@ IDBFactory.prototype.deleteDatabase = function (name) {
             systx.executeSql('SELECT * FROM dbVersions WHERE name = ?', [name], function (tx, data) {
                 if (data.rows.length === 0) {
                     req.__result = undefined;
-                    var e = new IDBVersionChangeEvent('success', { oldVersion: version, newVersion: null });
-                    util.callback('onsuccess', req, e);
+                    var e = new _Event.IDBVersionChangeEvent('success', { oldVersion: version, newVersion: null });
+                    req.dispatchEvent(e);
                     return;
                 }
                 version = data.rows.item(0).version;
@@ -10326,7 +10703,7 @@ exports.IDBFactory = IDBFactory;
 exports.cmp = cmp;
 exports.shimIndexedDB = shimIndexedDB;
 
-},{"./DOMException.js":306,"./Event.js":307,"./IDBDatabase.js":309,"./IDBRequest.js":314,"./IDBTransaction.js":315,"./Key.js":316,"./cfg.js":320,"./util.js":323}],311:[function(require,module,exports){
+},{"./DOMException.js":307,"./Event.js":308,"./IDBDatabase.js":310,"./IDBRequest.js":315,"./IDBTransaction.js":316,"./Key.js":317,"./cfg.js":321,"./util.js":324}],312:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10758,7 +11135,7 @@ exports.executeFetchIndexData = executeFetchIndexData;
 exports.IDBIndex = IDBIndex;
 exports.default = IDBIndex;
 
-},{"./DOMException.js":306,"./IDBCursor.js":308,"./IDBKeyRange.js":312,"./Key.js":316,"./Sca.js":317,"./cfg.js":320,"./util.js":323}],312:[function(require,module,exports){
+},{"./DOMException.js":307,"./IDBCursor.js":309,"./IDBKeyRange.js":313,"./Key.js":317,"./Sca.js":318,"./cfg.js":321,"./util.js":324}],313:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10858,7 +11235,7 @@ exports.setSQLForRange = setSQLForRange;
 exports.IDBKeyRange = IDBKeyRange;
 exports.default = IDBKeyRange;
 
-},{"./DOMException.js":306,"./Key.js":316,"./util.js":323}],313:[function(require,module,exports){
+},{"./DOMException.js":307,"./Key.js":317,"./util.js":324}],314:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -11596,7 +11973,7 @@ Object.defineProperty(IDBObjectStore.prototype, 'name', {
 exports.default = IDBObjectStore;
 module.exports = exports['default'];
 
-},{"./DOMException.js":306,"./IDBCursor.js":308,"./IDBIndex.js":311,"./IDBKeyRange.js":312,"./IDBTransaction.js":315,"./Key.js":316,"./Sca.js":317,"./cfg.js":320,"./util.js":323,"sync-promise":304}],314:[function(require,module,exports){
+},{"./DOMException.js":307,"./IDBCursor.js":309,"./IDBIndex.js":312,"./IDBKeyRange.js":313,"./IDBTransaction.js":316,"./Key.js":317,"./Sca.js":318,"./cfg.js":321,"./util.js":324,"sync-promise":305}],315:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -11609,6 +11986,12 @@ var _createClass = function () { function defineProperties(target, props) { for 
 var _util = require('./util.js');
 
 var util = _interopRequireWildcard(_util);
+
+var _eventtarget = require('eventtarget');
+
+var _eventtarget2 = _interopRequireDefault(_eventtarget);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
@@ -11631,6 +12014,7 @@ var IDBRequest = function () {
         this.__result = undefined;
         this.__error = this.__source = this.__transaction = null;
         this.__readyState = 'pending';
+        this.setOptions({ extraProperties: ['debug'] }); // Ensure EventTarget preserves our properties
     }
 
     _createClass(IDBRequest, [{
@@ -11645,6 +12029,8 @@ var IDBRequest = function () {
 
 util.defineReadonlyProperties(IDBRequest.prototype, ['result', 'error', 'source', 'transaction', 'readyState']);
 
+Object.assign(IDBRequest.prototype, _eventtarget2.default.prototype);
+
 /**
  * The IDBOpenDBRequest called when a database is opened
  */
@@ -11657,6 +12043,7 @@ var IDBOpenDBRequest = function (_IDBRequest) {
 
         var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(IDBOpenDBRequest).call(this));
 
+        _this.setOptions({ extraProperties: ['oldVersion', 'newVersion', 'debug'] }); // Ensure EventTarget preserves our properties
         _this.onblocked = _this.onupgradeneeded = null;
         return _this;
     }
@@ -11674,7 +12061,7 @@ var IDBOpenDBRequest = function (_IDBRequest) {
 exports.IDBRequest = IDBRequest;
 exports.IDBOpenDBRequest = IDBOpenDBRequest;
 
-},{"./util.js":323}],315:[function(require,module,exports){
+},{"./util.js":324,"eventtarget":300}],316:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -11698,6 +12085,10 @@ var _IDBObjectStore2 = _interopRequireDefault(_IDBObjectStore);
 var _cfg = require('./cfg.js');
 
 var _cfg2 = _interopRequireDefault(_cfg);
+
+var _eventtarget = require('eventtarget');
+
+var _eventtarget2 = _interopRequireDefault(_eventtarget);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -11756,7 +12147,7 @@ IDBTransaction.prototype.__executeRequests = function () {
             q.req.__result = result;
             q.req.__error = null;
             var e = (0, _Event.createEvent)('success');
-            util.callback('onsuccess', q.req, e);
+            q.req.dispatchEvent(e);
             i++;
             executeNextRequest();
         }
@@ -11773,7 +12164,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 q.req.__error = err || _DOMException.DOMException;
                 q.req.__result = undefined;
                 var e = (0, _Event.createEvent)('error', err);
-                util.callback('onerror', q.req, e);
+                q.req.dispatchEvent(e);
             } finally {
                 // Fire an error event for the transaction
                 transactionError(err);
@@ -11822,8 +12213,8 @@ IDBTransaction.prototype.__executeRequests = function () {
         try {
             me.__error = err;
             var evt = (0, _Event.createEvent)('error');
-            util.callback('onerror', me, evt);
-            util.callback('onerror', me.db, evt);
+            me.dispatchEvent(evt);
+            me.db.dispatchEvent((0, _Event.createEvent)('error'));
         } finally {
             me.__storeClones = {};
             me.abort();
@@ -11834,9 +12225,9 @@ IDBTransaction.prototype.__executeRequests = function () {
         _cfg2.default.DEBUG && console.log('Transaction completed');
         var evt = (0, _Event.createEvent)('complete');
         try {
-            util.callback('__beforeOncomplete', me, evt);
-            util.callback('oncomplete', me, evt);
-            util.callback('__oncomplete', me, evt);
+            me.dispatchEvent((0, _Event.createEvent)('__beforecomplete'));
+            me.dispatchEvent(evt);
+            me.dispatchEvent((0, _Event.createEvent)('__complete'));
         } catch (e) {
             // An error occurred in the "oncomplete" handler.
             // It's too late to call "onerror" or "onabort". Throw a global error instead.
@@ -11934,8 +12325,6 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
 };
 
 IDBTransaction.prototype.abort = function () {
-    var _this2 = this;
-
     var me = this;
     _cfg2.default.DEBUG && console.log('The transaction was aborted', me);
     if (!this.__active) {
@@ -11947,7 +12336,7 @@ IDBTransaction.prototype.abort = function () {
 
     // Fire the "onabort" event asynchronously, so errors don't bubble
     setTimeout(function () {
-        util.callback('onabort', _this2, evt);
+        me.dispatchEvent(evt);
     }, 0);
 };
 IDBTransaction.prototype.toString = function () {
@@ -11973,10 +12362,12 @@ IDBTransaction.__assertActive = function (tx) {
 
 util.defineReadonlyProperties(IDBTransaction.prototype, ['objectStoreNames', 'mode', 'db', 'error']);
 
+Object.assign(IDBTransaction.prototype, _eventtarget2.default.prototype);
+
 exports.default = IDBTransaction;
 module.exports = exports['default'];
 
-},{"./DOMException.js":306,"./Event.js":307,"./IDBObjectStore.js":313,"./IDBRequest.js":314,"./cfg.js":320,"./util.js":323}],316:[function(require,module,exports){
+},{"./DOMException.js":307,"./Event.js":308,"./IDBObjectStore.js":314,"./IDBRequest.js":315,"./cfg.js":321,"./util.js":324,"eventtarget":300}],317:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12508,7 +12899,7 @@ exports.isKeyInRange = isKeyInRange;
 exports.findMultiEntryMatches = findMultiEntryMatches;
 exports.default = Key;
 
-},{"./DOMException.js":306,"./util.js":323}],317:[function(require,module,exports){
+},{"./DOMException.js":307,"./util.js":324}],318:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12881,7 +13272,7 @@ exports.encode = encode;
 exports.decode = decode;
 exports.default = Sca;
 
-},{"./util.js":323,"atob":1,"w3c-blob":305}],318:[function(require,module,exports){
+},{"./util.js":324,"atob":1,"w3c-blob":306}],319:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12896,7 +13287,7 @@ var UnicodeIDContinue = '(?:[$0-9A-Z_a-z\\xAA\\xB5\\xB7\\xBA\\xC0-\\xD6\\xD8-\\x
 exports.UnicodeIDStart = UnicodeIDStart;
 exports.UnicodeIDContinue = UnicodeIDContinue;
 
-},{}],319:[function(require,module,exports){
+},{}],320:[function(require,module,exports){
 'use strict';
 
 var _UnicodeIdentifiers = require('./UnicodeIdentifiers');
@@ -12931,7 +13322,7 @@ shimIndexedDB.__setUnicodeIdentifiers = function () {
 
 shimIndexedDB.__setUnicodeIdentifiers();
 
-},{"./UnicodeIdentifiers":318,"./cfg.js":320,"./setGlobalVars.js":322}],320:[function(require,module,exports){
+},{"./UnicodeIdentifiers":319,"./cfg.js":321,"./setGlobalVars.js":323}],321:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12963,7 +13354,7 @@ var CFG = {};
 exports.default = CFG;
 module.exports = exports['default'];
 
-},{}],321:[function(require,module,exports){
+},{}],322:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13319,7 +13710,7 @@ function validateKeyLength(key) {
 exports.default = polyfill;
 module.exports = exports['default'];
 
-},{"./DOMException.js":306,"./Key.js":316}],322:[function(require,module,exports){
+},{"./DOMException.js":307,"./Key.js":317}],323:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -13327,7 +13718,8 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; }; // Object.assign in EventTarget, etc.
+
 
 require('babel-polyfill');
 
@@ -13473,13 +13865,13 @@ exports.default = setGlobalVars;
 module.exports = exports['default'];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./Event.js":307,"./IDBCursor.js":308,"./IDBDatabase.js":309,"./IDBFactory.js":310,"./IDBIndex.js":311,"./IDBKeyRange.js":312,"./IDBObjectStore.js":313,"./IDBRequest.js":314,"./IDBTransaction.js":315,"./cfg.js":320,"./polyfill.js":321,"babel-polyfill":2}],323:[function(require,module,exports){
+},{"./Event.js":308,"./IDBCursor.js":309,"./IDBDatabase.js":310,"./IDBFactory.js":311,"./IDBIndex.js":312,"./IDBKeyRange.js":313,"./IDBObjectStore.js":314,"./IDBRequest.js":315,"./IDBTransaction.js":316,"./cfg.js":321,"./polyfill.js":322,"babel-polyfill":2}],324:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.isValidKeyPath = exports.defineReadonlyProperties = exports.throwIfNotClonable = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlLIKEEscape = exports.escapeIndexName = exports.escapeIndex = exports.escapeStore = exports.escapeDatabaseName = exports.quote = exports.StringList = exports.callback = undefined;
+exports.isValidKeyPath = exports.defineReadonlyProperties = exports.throwIfNotClonable = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlLIKEEscape = exports.escapeIndexName = exports.escapeIndex = exports.escapeStore = exports.escapeDatabaseName = exports.quote = exports.StringList = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
@@ -13504,19 +13896,6 @@ if (Object.defineProperty) {
     } catch (e) {
         // Object.defineProperty does not work as intended.
     }
-}
-
-/**
- * A utility method to callback onsuccess, onerror, etc as soon as the calling function's context is over
- * @param {Object} fn
- * @param {Object} context
- * @param {Object} argArray
- */
-function callback(fn, context, event) {
-    // setTimeout(function(){
-    event.target = context;
-    typeof context[fn] === 'function' && context[fn](event);
-    // }, 1);
 }
 
 /**
@@ -13749,7 +14128,6 @@ function isValidKeyPath(keyPath) {
     });
 }
 
-exports.callback = callback;
 exports.StringList = StringList;
 exports.quote = quote;
 exports.escapeDatabaseName = escapeDatabaseName;
@@ -13767,4 +14145,4 @@ exports.throwIfNotClonable = throwIfNotClonable;
 exports.defineReadonlyProperties = defineReadonlyProperties;
 exports.isValidKeyPath = isValidKeyPath;
 
-},{"./DOMException.js":306,"./cfg.js":320}]},{},[319]);
+},{"./DOMException.js":307,"./cfg.js":321}]},{},[320]);

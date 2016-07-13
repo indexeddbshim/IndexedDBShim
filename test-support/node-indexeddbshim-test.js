@@ -79,10 +79,7 @@ readFiles(
                         'console.log(" (' + fileName.replace(/"/g, '\\"').replace(/\\/g, '\\\\') + '): " + test.name);\n' +
                         'if (assertions) console.log(get_assertion(test));\n' +
                         'if (test.message && test.stack) console.log((test.message || " ") + test.stack);\n' +
-                        '});\n')
-                    // We need to do the following two as long as addEventListener is not supported
-                    .replace(/(function auto_fail)/, "rq_open.addEventListener = function (ev, cb) {ev['on' + ev] = cb;};\n$1")
-                    .replace(/(auto_fail\(")/g, '// $1') +
+                        '});\n') +
                     '\n' + content);
             });
         }

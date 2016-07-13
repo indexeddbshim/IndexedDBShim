@@ -21,3 +21,5 @@ D_database_name*
 D_idbtransaction*
 D_db.sqlite*
 D_test*
+D_db*
+D_test-db*

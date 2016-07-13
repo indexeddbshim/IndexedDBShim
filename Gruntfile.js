@@ -111,6 +111,9 @@ module.exports = function (grunt) {
                 src: ['D_test_database*']
             },
             w3c: {
+                src: ['D_db*', 'D_test-db*']
+            },
+            w3cOld: {
                 src: ['D_testdb-*', 'D_database_name*', 'D_idbtransaction*', 'D_db.sqlite*']
             },
             fake: {
@@ -219,10 +222,11 @@ module.exports = function (grunt) {
 
     grunt.registerTask('clean-mocha', ['clean:mochaTests', 'clean:sysDB']);
     grunt.registerTask('clean-qunit', ['clean:qunitTests', 'clean:sysDB']);
-    grunt.registerTask('clean-polyfill', ['clean:fake', 'clean:mock', 'clean:w3c', 'clean:sysDB']);
+    grunt.registerTask('clean-polyfill', ['clean:fake', 'clean:mock', 'clean:w3c-old', 'clean:sysDB']);
     grunt.registerTask('clean-fake', ['clean:fake', 'clean:sysDB']);
     grunt.registerTask('clean-mock', ['clean:mock', 'clean:sysDB']);
     grunt.registerTask('clean-w3c', ['clean:w3c', 'clean:sysDB']);
+    grunt.registerTask('clean-w3c-old', ['clean:w3cOld', 'clean:sysDB']);
 
     grunt.registerTask('default', 'build');
     grunt.registerTask('dev', ['build', 'connect', 'watch']);

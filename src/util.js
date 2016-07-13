@@ -17,19 +17,6 @@ if (Object.defineProperty) {
 }
 
 /**
- * A utility method to callback onsuccess, onerror, etc as soon as the calling function's context is over
- * @param {Object} fn
- * @param {Object} context
- * @param {Object} argArray
- */
-function callback (fn, context, event) {
-    // setTimeout(function(){
-    event.target = context;
-    (typeof context[fn] === 'function') && context[fn](event);
-    // }, 1);
-}
-
-/**
  * Shim the DOMStringList object.
  *
  */
@@ -262,7 +249,7 @@ function isValidKeyPath (keyPath) {
     );
 }
 
-export {callback, StringList, quote,
+export {StringList, quote,
     escapeDatabaseName, escapeStore, escapeIndex, escapeIndexName,
     sqlLIKEEscape, instanceOf,
     isObj, isDate, isBlob, isRegExp, isFile, throwIfNotClonable,

@@ -23,7 +23,7 @@ describe('W3C IDBIndex.openKeyCursor Tests', function () {
         open_rq.onsuccess = function () {};
     });
 
-    // idbindex_openKeyCursor2
+    // idbindex_openKeyCursor
     it('throw InvalidStateError when the index is deleted', function (done) {
         var db;
 
@@ -44,7 +44,7 @@ describe('W3C IDBIndex.openKeyCursor Tests', function () {
         open_rq.onsuccess = function () {};
     });
 
-    // idbindex_openKeyCursor3
+    // idbindex_openKeyCursor
     it('throw TransactionInactiveError on aborted transaction', function (done) {
         var db;
 
@@ -59,26 +59,9 @@ describe('W3C IDBIndex.openKeyCursor Tests', function () {
 
             support.throws(function(){
                 index.openKeyCursor();
-            }, 'InvalidStateError');
+            }, 'TransactionInactiveError');
             done();
         }
         open_rq.onerror = function () {};
-    });
-
-    // idbindex_openKeyCursor4
-    it('throw InvalidStateError on index deleted by aborted upgrade', function (done) {
-        var db;
-        var open_rq = createdb(done);
-        open_rq.onupgradeneeded = function(e) {
-            db = e.target.result;
-            var store = db.createObjectStore("store", { keyPath: "key" });
-            var index = store.createIndex("index", "indexedProperty");
-            store.add({ key: 1, indexedProperty: "data" });
-            e.target.transaction.abort();
-            support.assert_throws(function(){
-                index.openKeyCursor();
-            }, "InvalidStateError");
-            done();
-        }
     });
 });

@@ -3,6 +3,7 @@ import * as util from './util.js';
 import IDBObjectStore from './IDBObjectStore.js';
 import IDBTransaction from './IDBTransaction.js';
 import CFG from './cfg.js';
+import EventTarget from 'eventtarget';
 
 /**
  * IDB Database Object
@@ -139,5 +140,7 @@ IDBDatabase.prototype.toString = function () {
 };
 
 util.defineReadonlyProperties(IDBDatabase.prototype, ['name', 'version', 'objectStoreNames']);
+
+Object.assign(IDBDatabase.prototype, EventTarget.prototype);
 
 export default IDBDatabase;
