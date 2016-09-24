@@ -32,6 +32,12 @@ module.exports = function (grunt) {
                         insertGlobalVars: {
                             process: function () {
                                 return;
+                            },
+                            __filename: function () { // Thankfully, the only __filename
+                                return 'require("path").join(__dirname, "../node_modules/sqlite3/lib/trace.js")';
+                            },
+                            __dirname: function () { // Though two different __dirnames exist, thankfully, the second is of no consequence
+                                return 'require("path").join(__dirname, "../node_modules/sqlite3/lib")';
                             }
                         }
                     }
@@ -61,6 +67,12 @@ module.exports = function (grunt) {
                         insertGlobalVars: {
                             process: function () {
                                 return;
+                            },
+                            __filename: function () { // Thankfully, the only __filename
+                                return 'require("path").join(__dirname, "../node_modules/sqlite3/lib/trace.js")';
+                            },
+                            __dirname: function () { // Though two different __dirnames exist, thankfully, the second is of no consequence
+                                return 'require("path").join(__dirname, "../node_modules/sqlite3/lib")';
                             }
                         }
                     }

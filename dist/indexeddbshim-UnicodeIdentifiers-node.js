@@ -7599,7 +7599,7 @@ sqlite3.verbose = function() {
     return this;
 };
 
-}).call(this,"/wamp\\www\\IndexedDBShim\\node_modules\\sqlite3\\lib")
+}).call(this,require("path").join(__dirname, "../node_modules/sqlite3/lib"))
 },{"./trace":310,"events":undefined,"node-pre-gyp":331,"path":undefined}],310:[function(require,module,exports){
 (function (__filename){
 // Inspired by https://github.com/tlrobinson/long-stack-traces
@@ -7645,8 +7645,8 @@ function filter(error) {
     });
 }
 
-}).call(this,"/wamp\\www\\IndexedDBShim\\node_modules\\sqlite3\\lib\\trace.js")
-},{"events":undefined,"util":undefined}],311:[function(require,module,exports){
+}).call(this,require("path").join(__dirname, "../node_modules/sqlite3/lib/trace.js"))
+},{"events":undefined,"path":undefined,"util":undefined}],311:[function(require,module,exports){
 
 module.exports = exports = abbrev.abbrev = abbrev
 
@@ -10753,7 +10753,7 @@ Object.defineProperty(proto, 'version', {
 });
 
 
-}).call(this,"/wamp\\www\\IndexedDBShim\\node_modules\\sqlite3\\node_modules\\node-pre-gyp\\lib")
+}).call(this,require("path").join(__dirname, "../node_modules/sqlite3/lib"))
 },{"../package":335,"./pre-binding":332,"events":undefined,"nopt":336,"npmlog":337,"path":undefined,"util":undefined}],332:[function(require,module,exports){
 "use strict";
 
@@ -17682,7 +17682,7 @@ var IDBCursorWithValue = function (_IDBCursor) {
     function IDBCursorWithValue() {
         _classCallCheck(this, IDBCursorWithValue);
 
-        return _possibleConstructorReturn(this, Object.getPrototypeOf(IDBCursorWithValue).apply(this, arguments));
+        return _possibleConstructorReturn(this, (IDBCursorWithValue.__proto__ || Object.getPrototypeOf(IDBCursorWithValue)).apply(this, arguments));
     }
 
     _createClass(IDBCursorWithValue, [{
@@ -17930,7 +17930,7 @@ var sysdb = void 0;
  * Craetes the sysDB to keep track of version numbers for databases
  **/
 function createSysDB(success, failure) {
-    function sysDbCreateError() /* tx, err*/{
+    function sysDbCreateError() /* tx, err */{
         for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
             args[_key] = arguments[_key];
         }
@@ -17980,7 +17980,7 @@ IDBFactory.prototype.open = function (name, version) {
     }
     name = String(name); // cast to a string
 
-    function dbCreateError() /* tx, err*/{
+    function dbCreateError() /* tx, err */{
         if (calledDbCreateError) {
             return;
         }
@@ -18078,7 +18078,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     }
     name = String(name); // cast to a string
 
-    function dbError() /* tx, err*/{
+    function dbError() /* tx, err */{
         if (calledDBError) {
             return;
         }
@@ -19544,7 +19544,7 @@ var IDBOpenDBRequest = function (_IDBRequest) {
     function IDBOpenDBRequest() {
         _classCallCheck(this, IDBOpenDBRequest);
 
-        var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(IDBOpenDBRequest).call(this));
+        var _this = _possibleConstructorReturn(this, (IDBOpenDBRequest.__proto__ || Object.getPrototypeOf(IDBOpenDBRequest)).call(this));
 
         _this.setOptions({ extraProperties: ['oldVersion', 'newVersion', 'debug'] }); // Ensure EventTarget preserves our properties
         _this.onblocked = _this.onupgradeneeded = null;
@@ -20410,7 +20410,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = exports.decode = exports.encode = exports.retrocycle = exports.decycle = undefined;
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; }; /*eslint-disable no-eval*/
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; }; /* eslint-disable no-eval */
 // Needed by Node; uses native if available (browser)
 
 
@@ -20849,7 +20849,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-/*globals GLOBAL, shimIndexedDB */
+/* globals GLOBAL, shimIndexedDB */
 
 
 _cfg2.default.win = { openDatabase: _websql2.default };
@@ -21463,7 +21463,7 @@ StringList.prototype = {
         this.length++;
         this.sortList();
     },
-    splice: function splice() /* index, howmany, item1, ..., itemX*/{
+    splice: function splice() /* index, howmany, item1, ..., itemX */{
         var _items;
 
         (_items = this._items).splice.apply(_items, arguments);

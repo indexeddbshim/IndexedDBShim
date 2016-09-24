@@ -41,7 +41,9 @@
     "polyfill",
     "websql"
   ],
-  "dependencies": {},
+  "dependencies": {
+      "websql": "^0.4.4"
+  },
   "devDependencies": {
     "atob": "^2.0.3",
     "babel-plugin-add-module-exports": "^0.2.1",
@@ -75,8 +77,7 @@
     "request": "^2.75.0",
     "sinon": "^1.17.6",
     "sync-promise": "https://github.com/brettz9/sync-promise#full-sync-missing-promise-features",
-    "w3c-blob": "0.0.1",
-    "websql": "^0.4.4"
+    "w3c-blob": "0.0.1"
   },
   "bundleDependencies": [],
   "license": "Apache-2.0",
