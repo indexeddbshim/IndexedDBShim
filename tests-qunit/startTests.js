@@ -1,4 +1,4 @@
-/*global addTest*/
+/* global addTest */
 /* eslint-disable no-var */
 var dbVersion = 0; // eslint-disable-line no-unused-vars
 var testNames = ['Database', 'ObjectStore', 'ObjectStoreCrud', 'Cursor', 'Index']; // eslint-disable-line no-unused-vars

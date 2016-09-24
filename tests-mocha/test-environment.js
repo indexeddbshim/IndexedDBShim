@@ -1,5 +1,5 @@
-/*global shimIndexedDB */
-/*eslint-disable no-var*/
+/* global shimIndexedDB */
+/* eslint-disable no-var */
 (function () {
     'use strict';
 

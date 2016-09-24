@@ -1,4 +1,4 @@
-/*globals GLOBAL*/
+/* globals GLOBAL */
 
 import nodeWebsql from 'websql';
 import setGlobalVars from './setGlobalVars.js';

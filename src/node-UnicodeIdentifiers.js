@@ -1,4 +1,4 @@
-/*globals GLOBAL, shimIndexedDB */
+/* globals GLOBAL, shimIndexedDB */
 import * as UnicodeIdentifiers from './UnicodeIdentifiers';
 
 // BEGIN: Same code as in node.js

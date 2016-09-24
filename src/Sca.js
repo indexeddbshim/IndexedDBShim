@@ -1,4 +1,4 @@
-/*eslint-disable no-eval*/
+/* eslint-disable no-eval */
 import atob from 'atob';
 import Blob from 'w3c-blob'; // Needed by Node; uses native if available (browser)
 import * as util from './util.js';

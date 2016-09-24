@@ -14,7 +14,7 @@ let sysdb;
  * Craetes the sysDB to keep track of version numbers for databases
  **/
 function createSysDB (success, failure) {
-    function sysDbCreateError (...args /* tx, err*/) {
+    function sysDbCreateError (...args /* tx, err */) {
         const err = findError(args);
         CFG.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
         failure(err);
@@ -60,7 +60,7 @@ IDBFactory.prototype.open = function (name, version) {
     }
     name = String(name); // cast to a string
 
-    function dbCreateError (...args /* tx, err*/) {
+    function dbCreateError (...args /* tx, err */) {
         if (calledDbCreateError) {
             return;
         }
@@ -153,7 +153,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     }
     name = String(name); // cast to a string
 
-    function dbError (...args /* tx, err*/) {
+    function dbError (...args /* tx, err */) {
         if (calledDBError) {
             return;
         }

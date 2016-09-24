@@ -71,7 +71,7 @@ StringList.prototype = {
         this.length++;
         this.sortList();
     },
-    splice: function (...args /* index, howmany, item1, ..., itemX*/) {
+    splice: function (...args /* index, howmany, item1, ..., itemX */) {
         this._items.splice(...args);
         this.length = this._items.length;
         for (const i in this) {

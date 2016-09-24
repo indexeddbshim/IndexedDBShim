@@ -1,4 +1,4 @@
-/*global shimIndexedDB*/
+/* global shimIndexedDB */
 import * as UnicodeIdentifiers from './UnicodeIdentifiers';
 
 // BEGIN: Same code as in browser.js

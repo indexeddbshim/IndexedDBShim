@@ -1,4 +1,4 @@
-/*eslint-disable no-var*/
+/* eslint-disable no-var */
 describe('IDBIndex.getKey', function () {
     'use strict';
 

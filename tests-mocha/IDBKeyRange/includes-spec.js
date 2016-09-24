@@ -1,4 +1,4 @@
-/*eslint-disable no-var*/
+/* eslint-disable no-var */
 describe('IDBKeyRange', function () {
     'use strict';
 

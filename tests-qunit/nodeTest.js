@@ -1,4 +1,4 @@
-/*global testFiles, addTestSuite, startTests */
+/* global testFiles, addTestSuite, startTests */
 
 const setGlobalVars = require('../dist/indexeddbshim-node.min');
 setGlobalVars(GLOBAL.window);
