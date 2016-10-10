@@ -8,7 +8,7 @@
     columns; add test
 - Security fix: Ensure LIKE clauses escape special characters
 - Security fix: Escape SQLite-disallowed-for-column-names NUL characters from
-    database, store, and index names, documenting this limitation
+    database, store, and index names
 - Security fix: Ensure quoting (for column names) escapes double quotes
 - Breaking change/Fix: Remove `IDBTransaction` mode constants and tests since
     now being removed from IndexedDB
@@ -41,8 +41,6 @@
     silent on bad counts except for count=0)
 - Fix: Add transaction to `IDBCursor` request
 - Fix: Update keyRange behavior and tests to reflect draft spec
-- Fix: Adapt changes from wibimaster:Fix_Object_Type to allow object, boolean,
-    and `null` type encoding/decoding
 - Fix: Allow `__versionTransaction` not to exist (if user calling it wrong)
     for `create/deleteObjectStore` and test it so it will return an
     `InvalidStateError`
@@ -70,7 +68,7 @@
     primary key, (position,) obj. store position)
 - Fix: Be safe in quoting "key" column (reserved SQLite word)
 - Fix: For all public methods, seek to ensure error checking occurs in
-    proper order and add missing checks
+    spec order and add missing checks
 - Fix: Throw for `IDBCursor.update/delete` if transaction not active,
     if source or effective object store deleted, if got value not set,
     or if a key method has been invoked
@@ -80,7 +78,7 @@
 - Fix: Allow empty string key path to be utilized when validating
     `add`/`put` input
 - Fix: Add more precise `toString` behaviors on IDB* objects
-- Fix: Avoid iterating unique values
+- Fix: Avoid iterating duplicate values for unique iterations
 - Fix: Ensure `IDBRequest.error` returns `null` rather than `undefined` upon
     success event
 - Fix: Readonly
@@ -116,7 +114,6 @@
     `IDBDatabase.transaction`
 - Fix: Ensure `DOMException` variant of `SyntaxError` is thrown for
     bad key paths
-- Fix: Assure correct error checking order
 - Fix: Handle (mistaken) arguments > 2 to `IDBFactory.open()`
 - Fix: In `IDBObjectStore` methods, throw upon transaction inactive;
     fix checking error
@@ -140,7 +137,7 @@
     `openKeyCursor`, `index`, `createIndex`, `deleteeIndex`)
 - Fix: For `IDBObjectStore.deleteIndex`, throw if not in upgrade
     transaction or if transaction is inactive
-- Fix: For `IDBObjectStore.createIndex`, throw SyntaxError if not a
+- Fix: For `IDBObjectStore.createIndex`, throw `SyntaxError` if not a
     valid keyPath given
 - Fix: For `IDBObjectStore.createIndex`, throw if transaction not active
 - Fix: Apply `toString()` (and convert from sparse to dense) for
@@ -155,7 +152,7 @@
 - Fix: Prevent non-numeric and <= 1 keys from auto-incrementing current number
 - Fix: Prevent incrementing if nevertheless valid key is lower than current
     number
-- Fix: Ensure sorting of `StringList` (`IDBDatabase.objectStoreNames`,
+- Fix: Ensure sorting of `StringList` (for `IDBDatabase.objectStoreNames`,
     `IDBObjectStore.indexNames`)
 - Fix: Escape upper-case letters as table/column names case-insensitive in
     SQLite, but db/store/index names not case-insensitive in IndexedDB
@@ -166,7 +163,7 @@
 - Fix: Ensure cloning value before as well as after key evaluated (otherwise,
     original object will be modified)
 - Feature: `IDBIndex` methods, `get`, `getKey`, `count` to allow obtaining
-    first record of an IDBKeyRange (or IDBKeyRange-like range) and change
+    first record of an `IDBKeyRange` (or `IDBKeyRange`-like range) and change
     error messages to indicate "key or range"
 - Feature: Support Node cleanly via `websql` SQLite3 library
 - Feature: Add `IDBObjectStore.openKeyCursor`
@@ -182,7 +179,7 @@
 - Feature: Expose `__setUnicodeIdentifiers()` for setting Unicode
     regular expression strings
 - Feature: Implement `IDBTransaction.objectStoreNames`
-- Feature: Add `IDB.shimIndexedDB.__setUnicodeIdentifier` scaffolding for
+- Feature: Add `IDB.shimIndexedDB.__setUnicodeIdentifiers` scaffolding for
     importing and setting Unicode identifier regular expression strings for
     the sake of full key path validation compliance (may slow
     loading/performance, requires polyfills, and is untested)
@@ -192,7 +189,7 @@
     `target`, `currentTarget`, `defaultPrevented`, `isTrusted`.
 - Feature: Utilize `EventTarget` to invoke `dispatchEvent` to allow
     invocation of multiple listeners as by `addEventListener` (not
-    yet treating bubbling or preventDefault); change ShimEvent to utilize
+    yet treating bubbling or `preventDefault`); change `ShimEvent` to utilize
     polyfill from `eventtarget`
 - Repo files: Rename test folders for ease in distinguishing
 - Refactoring (Avoid globals): Change from using window global to a CFG module
