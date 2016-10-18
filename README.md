@@ -145,6 +145,16 @@ please [let us know about it](https://github.com/axemclion/IndexedDBShim/issues)
 Or better yet, [send us a fix](https://github.com/axemclion/IndexedDBShim/pulls)!
 Please make sure someone else hasn't already reported the same bug though.
 
+1. `eval` is currently in use (in `src/Sca.js`)
+2. Binary/ArrayBuffer/Views on buffers (TypedArray or DataView) support
+3. `IDBCursor.update` should delete then insert rather than update
+4. Certain more recent APIs are missing: `IDBCursor.continuePrimaryKey`,
+    `IDBIndex` (`getAll`, `getAllKeys`), `IDBObjectStore` (`getAll`,
+    `getAllKeys`, `getKey`).
+5. `close` and `blocked` event support (reconcile with existing `versionchange`)
+6. Event bubbling and `preventDefault`
+7. Rollbacks (if possible)
+
 There are a few bugs that are outside of our power to fix.  Namely:
 
 ### iOS

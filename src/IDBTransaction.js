@@ -45,7 +45,7 @@ IDBTransaction.prototype.__executeRequests = function () {
     me.db.__db.transaction(
         function executeRequests (tx) {
             me.__tx = tx;
-            let q = null, i = 0;
+            let q = null, i = -1;
 
             function success (result, req) {
                 if (req) {
@@ -56,7 +56,6 @@ IDBTransaction.prototype.__executeRequests = function () {
                 q.req.__error = null;
                 const e = createEvent('success');
                 q.req.dispatchEvent(e);
-                i++;
                 executeNextRequest();
             }
 
@@ -76,6 +75,7 @@ IDBTransaction.prototype.__executeRequests = function () {
             }
 
             function executeNextRequest () {
+                i++;
                 if (i >= me.__requests.length) {
                     // All requests in the transaction are done
                     me.__requests = [];
@@ -86,7 +86,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 } else {
                     try {
                         q = me.__requests[i];
-                        q.op(tx, q.args, success, error);
+                        q.op(tx, q.args, success, error, executeNextRequest);
                     } catch (e) {
                         error(e);
                     }

@@ -21,6 +21,7 @@ function IDBObjectStore (storeProperties, transaction) {
     this.__keyPath = Array.isArray(storeProperties.keyPath) ? storeProperties.keyPath.slice() : storeProperties.keyPath;
     this.__transaction = transaction;
     this.__idbdb = storeProperties.idbdb;
+    this.__cursors = storeProperties.cursors || [];
 
     // autoInc is numeric (0/1) on WinPhone
     this.__autoIncrement = !!storeProperties.autoInc;
@@ -51,7 +52,8 @@ IDBObjectStore.__clone = function (store, transaction) {
         keyPath: Array.isArray(store.keyPath) ? store.keyPath.slice() : store.keyPath,
         autoInc: store.autoIncrement,
         indexList: {},
-        idbdb: this.__idbdb
+        idbdb: store.__idbdb,
+        cursors: store.__cursors
     }, transaction);
     newStore.__indexes = store.__indexes;
     newStore.__indexNames = store.indexNames;
@@ -320,7 +322,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
                     const sqlValues = [
                         Math.floor(primaryKey) + 1, me.name
                     ];
-                    CFG.debug && console.log(sql, sqlValues);
+                    CFG.DEBUG && console.log(sql, sqlValues);
                     tx.executeSql(sql, sqlValues, function (tx, data) {
                         success(primaryKey);
                     }, function (tx, err) {
@@ -339,7 +341,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
                 insert(function () {
                     const sql = 'UPDATE __sys__ SET currNum = currNum + 1 WHERE name = ?';
                     const sqlValues = [me.name];
-                    CFG.debug && console.log(sql, sqlValues);
+                    CFG.DEBUG && console.log(sql, sqlValues);
                     tx.executeSql(sql, sqlValues, function (tx, data) {
                         success(primaryKey);
                     }, function (tx, err) {
@@ -371,7 +373,12 @@ IDBObjectStore.prototype.add = function (value, key) {
             value = Sca.decode(encoded);
             me.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
                 Sca.encode(value, function (encoded) {
-                    me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, success, error);
+                    me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, function (...args) {
+                        me.__cursors.forEach((cursor) => {
+                            cursor.__addToCache(/* Key.encode(primaryKey), encoded */);
+                        });
+                        success(...args);
+                    }, error);
                 });
             }, error);
         });
@@ -400,9 +407,15 @@ IDBObjectStore.prototype.put = function (value, key) {
                     // First try to delete if the record exists
                     Key.convertValueToKey(primaryKey);
                     const sql = 'DELETE FROM ' + util.escapeStore(me.name) + ' WHERE key = ?';
-                    tx.executeSql(sql, [Key.encode(primaryKey)], function (tx, data) {
-                        CFG.debug && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
-                        me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, success, error);
+                    const encodedPrimaryKey = Key.encode(primaryKey);
+                    tx.executeSql(sql, [encodedPrimaryKey], function (tx, data) {
+                        CFG.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
+                        me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, function (...args) {
+                            me.__cursors.forEach((cursor) => {
+                                cursor.__addToCache(/* encodedPrimaryKey, encoded, !!data.rowsAffected */);
+                            });
+                            success(...args);
+                        }, error);
                     }, function (tx, err) {
                         error(err);
                     });
@@ -437,7 +450,6 @@ IDBObjectStore.prototype.get = function (range) {
     const sqlValues = [];
     setSQLForRange(range, util.quote('key'), sql, sqlValues);
     sql = sql.join(' ');
-
     return me.transaction.__addToTransactionQueue(function objectStoreGet (tx, args, success, error) {
         CFG.DEBUG && console.log('Fetching', me.name, sqlValues);
         tx.executeSql(sql, sqlValues, function (tx, data) {
@@ -501,15 +513,18 @@ IDBObjectStore.prototype['delete'] = function (range) {
         range = IDBKeyRange.only(range);
     }
 
-    let sql = ['DELETE FROM ', util.escapeStore(me.name), ' WHERE '];
+    const sqlArr = ['DELETE FROM ', util.escapeStore(me.name), ' WHERE '];
     const sqlValues = [];
-    setSQLForRange(range, util.quote('key'), sql, sqlValues);
-    sql = sql.join(' ');
+    setSQLForRange(range, util.quote('key'), sqlArr, sqlValues);
+    const sql = sqlArr.join(' ');
 
     return me.transaction.__addToTransactionQueue(function objectStoreDelete (tx, args, success, error) {
         CFG.DEBUG && console.log('Deleting', me.name, sqlValues);
         tx.executeSql(sql, sqlValues, function (tx, data) {
             CFG.DEBUG && console.log('Deleted from database', data.rowsAffected);
+            me.__cursors.forEach((cursor) => {
+                cursor.__deleteFromCache(/* sqlArr, sqlValues */);
+            });
             success();
         }, function (tx, err) {
             error(err);
@@ -528,6 +543,9 @@ IDBObjectStore.prototype.clear = function () {
     return me.transaction.__addToTransactionQueue(function objectStoreClear (tx, args, success, error) {
         tx.executeSql('DELETE FROM ' + util.escapeStore(me.name), [], function (tx, data) {
             CFG.DEBUG && console.log('Cleared all records from database', data.rowsAffected);
+            me.__cursors.forEach((cursor) => {
+                cursor.__clearFromCache();
+            });
             success();
         }, function (tx, err) {
             error(err);
@@ -546,7 +564,8 @@ IDBObjectStore.prototype.count = function (key) {
         if (!key.toString() !== '[object IDBKeyRange]') {
             key = new IDBKeyRange(key.lower, key.upper, key.lowerOpen, key.upperOpen);
         }
-        return new IDBCursorWithValue(key, 'next', this, this, 'key', 'value', true, me).__req;
+        // We don't need to add to cursors array since has the count parameter which won't cache
+        return new IDBCursorWithValue(key, 'next', this, this, 'key', 'value', true).__req;
     } else {
         const hasKey = key != null;
 
@@ -572,14 +591,18 @@ IDBObjectStore.prototype.openCursor = function (range, direction) {
     if (this.__deleted) {
         throw createDOMException('InvalidStateError', 'This store has been deleted');
     }
-    return new IDBCursorWithValue(range, direction, this, this, 'key', 'value').__req;
+    const cursor = new IDBCursorWithValue(range, direction, this, this, 'key', 'value');
+    this.__cursors.push(cursor);
+    return cursor.__req;
 };
 
 IDBObjectStore.prototype.openKeyCursor = function (range, direction) {
     if (this.__deleted) {
         throw createDOMException('InvalidStateError', 'This store has been deleted');
     }
-    return new IDBCursor(range, direction, this, this, 'key', 'key').__req;
+    const cursor = new IDBCursor(range, direction, this, this, 'key', 'key');
+    this.__cursors.push(cursor);
+    return cursor.__req;
 };
 
 IDBObjectStore.prototype.index = function (indexName) {

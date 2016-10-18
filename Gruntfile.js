@@ -211,6 +211,10 @@ module.exports = function (grunt) {
             dev: {
                 files: ['src/*'],
                 tasks: ['eslint', 'browserify', 'uglify']
+            },
+            node: {
+                files: ['src/*'],
+                tasks: ['eslint', 'browserify:node', 'uglify:node']
             }
         }
     });
@@ -220,6 +224,7 @@ module.exports = function (grunt) {
     }
 
     grunt.registerTask('build', ['eslint', 'browserify', 'uglify']);
+    grunt.registerTask('build-node', ['eslint', 'browserify:node', 'uglify:node']);
     const testJobs = ['build', 'connect'];
     grunt.registerTask('nodequnit', testJobs.concat('node-qunit'));
     grunt.registerTask('mocha', ['mochaTest']); // clean:mochaTests isn't working here as locked (even with force:true on it or grunt-wait) so we do in package.json
@@ -241,7 +246,8 @@ module.exports = function (grunt) {
     grunt.registerTask('clean-w3c-old', ['clean:w3cOld', 'clean:sysDB']);
 
     grunt.registerTask('default', 'build');
-    grunt.registerTask('dev', ['build', 'connect', 'watch']);
+    grunt.registerTask('dev', ['build', 'connect', 'watch:dev']);
+    grunt.registerTask('dev-node', ['build-node', 'connect', 'watch:node']);
 
     grunt.event.on('qunit.error.onError', function (msg, trace) {
         grunt.log.ok('Grunt qunit: ' + msg + '::' + JSON.stringify(trace));

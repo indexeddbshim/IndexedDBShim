@@ -21,6 +21,24 @@
     see below)
 - Breaking change (minor): Change "eval" to "evaluate" in exception message
     for bad key from `keyPath`
+- Breaking change: As moved away from SQL offsets for `IDBCursor` retrieval,
+    remove `__lastKeyContinued` property (we can use `__key`); also remove
+    unused `__multiEntryOffset`
+- Fix: For `IDBCursor`, move from SQL offsets to utilization of last key as
+    per spec (and as needed for discovering any db modifications)
+- Fix: In conjunction with `IDBCursor` `continue` and `advance` caching,
+    trigger cache resets/changes (for `IDBCursor`: `delete`, `update`
+    and for `IDBObjectStore`: `add`, `put`, `delete`, `clear`);
+- Fix: Cause `IDBCursor.advance` to properly handle unique values (and also
+    take advantage of caching)
+- Fix: `IDBCursor` key-based `continue` to be direction-sensitive
+- Fix: `IDBCursor` request source should be store or index, not cursor
+- Fix:  stores cursor
+- Fix: Avoid `cursor.update` always getting next key
+- (Fix: Avoid storing cursor (for `IDBObjectStore.count`) if will be no cache)
+
+- Deprecate: Numeric constants as second arguments to
+    `IDBDatabase.prototype.transaction` (use `readonly`/`readwrite` instead).
 - Fix: Properly implement and utilize `IDBCursorWithValue`
 - Fix: Use latest draft spec's (and implementations') use of `DOMException`
     instead of `DOMError`
@@ -192,6 +210,8 @@
     yet treating bubbling or `preventDefault`); change `ShimEvent` to utilize
     polyfill from `eventtarget`
 - Repo files: Rename test folders for ease in distinguishing
+- Optimize: Avoid caching and other processing in `IDBCursor` multiEntry
+    finds (used by `IDBObjectStore` or `IDBIndex` `count` with key range)
 - Refactoring (Avoid globals): Change from using window global to a CFG module
     for better maintainability
 - Refactoring (Avoid deprecated): Avoid deprecated `unescape`
@@ -228,6 +248,8 @@
     alter its readonly `target`, `currentTarget`, etc. properties
 - Updating: Bump various `devDependency` min versions
 - Documentation: Document `shimIndexedDB.__setConfig()`.
+- Documentation: List known issues on README
+- Documentation: Notice on deprecation for transaction mode constants
 - Testing: Update tests per current spec and behavior
 - Testing: Ensure db closes after each test to allow non-blocking `open()`
     (was affecting testing)
@@ -254,7 +276,7 @@
         passing;
     From fakeIndexedDB (Node), only fakeIndexedDB.js is not passing;
     From indexedDBmock (Node), only database.js is not passing;
-    From W3C (Old, Node), only IDBCursorBehavior.js, IDBDatabase.close.js,
+    From W3C (Old, Node), only IDBDatabase.close.js,
         IDBFactory.open.js, IDBObjectStore.add.js,
         IDBObjectStore.createIndex.js,
         IDBObjectStore.put.js, IDBTransaction.abort.js,
@@ -262,6 +284,7 @@
         are not passing
     From W3C (New, Node but potentially also browser): only idbkeyrange.js
         is currently passing
+- Testing (Grunt): Add Node-specific build/dev commands
 - Testing (Grunt): Clarify Grunt tasks, expand tasks for cleaning, make tests
     more granular
 - Testing (Grunt): Remove now redundant `sourceMappingURL`, use

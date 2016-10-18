@@ -21,6 +21,7 @@ function IDBIndex (store, indexProperties) {
     this.__multiEntry = !!(optionalParams && optionalParams.multiEntry);
     this.__unique = !!(optionalParams && optionalParams.unique);
     this.__deleted = !!indexProperties.__deleted;
+    this.__objectStore.__cursors = indexProperties.cursors || [];
 }
 
 /**
@@ -193,7 +194,9 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, u
  * @returns {IDBRequest}
  */
 IDBIndex.prototype.openCursor = function (range, direction) {
-    return new IDBCursorWithValue(range, direction, this.objectStore, this, util.escapeIndexName(this.name), 'value').__req;
+    const cursor = new IDBCursorWithValue(range, direction, this.objectStore, this, util.escapeIndexName(this.name), 'value');
+    this.__objectStore.__cursors.push(cursor);
+    return cursor.__req;
 };
 
 /**
@@ -203,7 +206,9 @@ IDBIndex.prototype.openCursor = function (range, direction) {
  * @returns {IDBRequest}
  */
 IDBIndex.prototype.openKeyCursor = function (range, direction) {
-    return new IDBCursor(range, direction, this.objectStore, this, util.escapeIndexName(this.name), 'key').__req;
+    const cursor = new IDBCursor(range, direction, this.objectStore, this, util.escapeIndexName(this.name), 'key');
+    this.__objectStore.__cursors.push(cursor);
+    return cursor.__req;
 };
 
 IDBIndex.prototype.get = function (query) {
@@ -232,6 +237,7 @@ IDBIndex.prototype.count = function (query) {
         if (!query.toString() !== '[object IDBKeyRange]') {
             query = new IDBKeyRange(query.lower, query.upper, query.lowerOpen, query.upperOpen);
         }
+        // We don't need to add to cursors array since has the count parameter which won't cache
         return new IDBCursorWithValue(query, 'next', this.objectStore, this, util.escapeIndexName(this.name), 'value', true).__req;
     }
     return this.__fetchIndexData(query, 'count', false, true);

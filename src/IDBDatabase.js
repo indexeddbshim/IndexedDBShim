@@ -109,7 +109,7 @@ IDBDatabase.prototype.close = function () {
 IDBDatabase.prototype.transaction = function (storeNames, mode) {
     if (typeof mode === 'number') {
         mode = mode === 1 ? 'readwrite' : 'readonly';
-        CFG.DEBUG && console.log('Mode should be a string, but was specified as ', mode); // Todo: Deprecate and remove this option as no longer in spec
+        CFG.DEBUG && console.log('Mode should be a string, but was specified as ', mode); // Todo: Remove this option as no longer in spec
     } else {
         mode = mode || 'readonly';
     }
