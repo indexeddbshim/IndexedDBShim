@@ -180,6 +180,9 @@
     to always be `null`
 - Fix: Ensure cloning value before as well as after key evaluated (otherwise,
     original object will be modified)
+- Fix: Check for array on range within multiEntry cursor iteration; fixes
+    issue #222
+- Fix: Copy SQLite row `item` object properties (for Safari); fixes issue #261
 - Feature: `IDBIndex` methods, `get`, `getKey`, `count` to allow obtaining
     first record of an `IDBKeyRange` (or `IDBKeyRange`-like range) and change
     error messages to indicate "key or range"
