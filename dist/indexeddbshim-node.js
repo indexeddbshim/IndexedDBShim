@@ -17349,7 +17349,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
     var sql = ['SELECT * FROM', util.escapeStore(me.__store.name)];
     var sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
-    if (me.__range && me.__range.lower !== undefined && me.__range.upper !== undefined) {
+    if (me.__range && me.__range.lower !== undefined && Array.isArray(me.__range.upper)) {
         if (me.__range.upper.indexOf(me.__range.lower) === 0) {
             sql.push('AND', quotedKeyColumnName, "LIKE ? ESCAPE '^'");
             sqlValues.push('%' + util.sqlLIKEEscape(me.__range.__lowerCached.slice(0, -1)) + '%');
@@ -19136,7 +19136,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             });
         };
 
-        // Of what use is encoding then decoding here, especially if the Sca functions don't throw? Ensuring is not by reference?
+        // Need for a clone here?
         _Sca2.default.encode(primaryKey, function (primaryKey) {
             primaryKey = _Sca2.default.decode(primaryKey);
             if (!me.autoIncrement) {

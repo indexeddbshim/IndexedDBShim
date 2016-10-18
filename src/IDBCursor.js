@@ -157,7 +157,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
     let sql = ['SELECT * FROM', util.escapeStore(me.__store.name)];
     const sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
-    if (me.__range && (me.__range.lower !== undefined && me.__range.upper !== undefined)) {
+    if (me.__range && (me.__range.lower !== undefined && Array.isArray(me.__range.upper))) {
         if (me.__range.upper.indexOf(me.__range.lower) === 0) {
             sql.push('AND', quotedKeyColumnName, "LIKE ? ESCAPE '^'");
             sqlValues.push('%' + util.sqlLIKEEscape(me.__range.__lowerCached.slice(0, -1)) + '%');

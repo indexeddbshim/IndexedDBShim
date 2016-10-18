@@ -305,7 +305,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             });
         };
 
-        // Of what use is encoding then decoding here, especially if the Sca functions don't throw? Ensuring is not by reference?
+        // Need for a clone here?
         Sca.encode(primaryKey, function (primaryKey) {
             primaryKey = Sca.decode(primaryKey);
             if (!me.autoIncrement) {
