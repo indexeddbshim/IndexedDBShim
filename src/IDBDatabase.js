@@ -19,14 +19,18 @@ function IDBDatabase (db, name, version, storeProperties) {
 
     this.__objectStores = {};
     this.__objectStoreNames = new util.StringList();
+    const itemCopy = {};
     for (let i = 0; i < storeProperties.rows.length; i++) {
         const item = storeProperties.rows.item(i);
-        // 'name' doesn't need to be JSON-parsed
+        // Safari implements `item` getter return object's properties
+        //  as readonly, so we copy all its properties (except our
+        //  custom `currNum` which we don't need) onto a new object
+        itemCopy.name = item.name;
         ['keyPath', 'autoInc', 'indexList'].forEach(function (prop) {
-            item[prop] = JSON.parse(item[prop]);
+            itemCopy[prop] = JSON.parse(item[prop]);
         });
-        item.idbdb = this;
-        const store = new IDBObjectStore(item);
+        itemCopy.idbdb = this;
+        const store = new IDBObjectStore(itemCopy);
         this.__objectStores[store.name] = store;
         this.objectStoreNames.push(store.name);
     }
