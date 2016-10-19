@@ -19827,7 +19827,7 @@ IDBTransaction.prototype.__executeRequests = function () {
             /*
             // Should a WebSQL timeout end the IndexedDB transaction or treat as UnknownError?
             case 7: { // SQLError.TIMEOUT_ERR
-                me.__active = false;
+                // All transaction errors abort later, so no need to mark inactive
                 name = 'TransactionInactiveError';
                 message = 'A request was placed against a transaction which is currently not active, or which is finished (Internal SQL Timeout).';
                 break;
@@ -19840,7 +19840,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                     break;
                 }
         }
-        message += '(' + errWebsql.message + ')--(' + errWebsql.code + ')';
+        message += ' (' + errWebsql.message + ')--(' + errWebsql.code + ')';
         var err = (0, _DOMException.createDOMException)(name, message);
         transactionError(err);
     });
