@@ -190,6 +190,7 @@
     e.g., `node-websql` doesn't impose `ROLLBACK` limitation as in browsers
 - Fix: As per spec, `DELETE` then `INSERT` rather than `UPDATE` for
     `IDBCursor.update`
+- Feature: Add non-standard `webkitGetDatabaseNames` and test file (issue #223)
 - Feature: Allow `DEFAULT_DB_SIZE` to be set via `CFG.js`;
 - Feature: `IDBIndex` methods, `get`, `getKey`, `count` to allow obtaining
     first record of an `IDBKeyRange` (or `IDBKeyRange`-like range) and change

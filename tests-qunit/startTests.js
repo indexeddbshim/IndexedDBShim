@@ -1,7 +1,7 @@
 /* global addTest */
 /* eslint-disable no-var */
 var dbVersion = 0; // eslint-disable-line no-unused-vars
-var testNames = ['Database', 'ObjectStore', 'ObjectStoreCrud', 'Cursor', 'Index']; // eslint-disable-line no-unused-vars
+var testNames = ['Database', 'ObjectStore', 'ObjectStoreCrud', 'Cursor', 'Index', 'Factory']; // eslint-disable-line no-unused-vars
 var testFiles = testNames.map(function (testName) { return testName + 'Tests.js'; }); // eslint-disable-line no-unused-vars
 
 function _ (msg) { // eslint-disable-line no-unused-vars

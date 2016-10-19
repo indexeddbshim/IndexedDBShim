@@ -18082,7 +18082,6 @@ IDBFactory.prototype.open = function (name, version) {
         db.transaction(function (tx) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS __sys__ (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB, currNum INTEGER)', [], function () {
                 tx.executeSql('SELECT * FROM __sys__', [], function (tx, data) {
-                    var e = (0, _Event.createEvent)('success');
                     req.__result = new _IDBDatabase2.default(db, name, version, data);
                     if (oldVersion < version) {
                         // DB Upgrade in progress
@@ -18108,6 +18107,7 @@ IDBFactory.prototype.open = function (name, version) {
                             }, dbCreateError);
                         }, dbCreateError);
                     } else {
+                        var e = (0, _Event.createEvent)('success');
                         req.dispatchEvent(e);
                     }
                 }, dbCreateError);
@@ -18260,6 +18260,45 @@ function cmp(key1, key2) {
 }
 
 IDBFactory.prototype.cmp = cmp;
+
+/**
+* NON-STANDARD!! (Also may return outdated information)
+* @link https://www.w3.org/Bugs/Public/show_bug.cgi?id=16137
+* @link http://lists.w3.org/Archives/Public/public-webapps/2011JulSep/1537.html
+*/
+IDBFactory.prototype.webkitGetDatabaseNames = function () {
+    var calledDbCreateError = false;
+    function dbGetDatabaseNamesError() /* tx, err */{
+        if (calledDbCreateError) {
+            return;
+        }
+
+        for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+            args[_key4] = arguments[_key4];
+        }
+
+        var err = (0, _DOMException.findError)(args);
+        calledDbCreateError = true;
+        var evt = (0, _Event.createEvent)('error', args);
+        req.__readyState = 'done';
+        req.__error = err || _DOMException.DOMException;
+        req.dispatchEvent(evt);
+    }
+    var req = new _IDBRequest.IDBRequest();
+    createSysDB(function () {
+        sysdb.transaction(function (tx) {
+            tx.executeSql('SELECT name FROM dbVersions', [], function (tx, data) {
+                var dbNames = new util.StringList();
+                for (var i = 0; i < data.rows.length; i++) {
+                    dbNames.push(data.rows.item(i).name);
+                }
+            }, dbGetDatabaseNamesError);
+        }, dbGetDatabaseNamesError);
+    }, dbGetDatabaseNamesError);
+    var e = (0, _Event.createEvent)('success');
+    req.dispatchEvent(e);
+    return req;
+};
 
 IDBFactory.prototype.toString = function () {
     return '[object IDBFactory]';
