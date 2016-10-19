@@ -1,3 +1,4 @@
+
 import {IDBRequest} from './IDBRequest.js';
 import {createDOMException} from './DOMException.js';
 import {setSQLForRange, IDBKeyRange} from './IDBKeyRange.js';
@@ -320,20 +321,6 @@ IDBCursor.prototype.__addToCache = function () {
     this.__prefetchedData = null;
 };
 
-IDBCursor.prototype.__updateCache = function (encKey, encValue) {
-    const me = this;
-    if (!me.__prefetchedData) {
-        return;
-    }
-    for (let i = 0; i < me.__prefetchedData.length; i++) {
-        const item = me.__prefetchedData.item(i);
-        if (encKey === item.key) {
-            item.value = encValue;
-            break;
-        }
-    }
-};
-
 IDBCursor.prototype.__deleteFromCache = function (sql, sqlValues) {
     this.__prefetchedData = null;
 };
@@ -457,40 +444,33 @@ IDBCursor.prototype.update = function (valueToUpdate) {
         }
     }
     return me.__store.transaction.__addToTransactionQueue(function cursorUpdate (tx, args, success, error) {
+        const key = me.key;
+        const primaryKey = me.primaryKey;
+        const store = me.__store;
         Sca.encode(valueToUpdate, function (encoded) {
-            const key = me.key;
-            // const value = me.value; // Todo: Utilize for index?
-            const primaryKey = me.primaryKey;
-            const store = me.__store;
-            // Todo: Fix to run as DELETE and INSERT as per spec (with chance to recreate entry if deleted)
-            const sql = ['UPDATE', util.escapeStore(store.name), 'SET value = ?'];
-            const sqlValues = [encoded];
-            Key.convertValueToKey(primaryKey);
+            const value = Sca.decode(encoded);
+            Sca.encode(value, function (encoded) {
+                // First try to delete if the record exists
+                Key.convertValueToKey(primaryKey);
+                const sql = 'DELETE FROM ' + util.escapeStore(store.name) + ' WHERE key = ?';
+                const encodedPrimaryKey = Key.encode(primaryKey);
+                CFG.DEBUG && console.log(sql, encoded, key, primaryKey, encodedPrimaryKey);
 
-            // Also correct the indexes in the table
-            for (let i = 0; i < store.indexNames.length; i++) {
-                const index = store.__indexes[store.indexNames[i]];
-                const indexKey = Key.evaluateKeyPathOnValue(valueToUpdate, index.keyPath, index.multiEntry);
-                sql.push(',', util.escapeIndex(index.name), '= ?');
-                sqlValues.push(Key.encode(indexKey, index.multiEntry));
-            }
+                tx.executeSql(sql, [encodedPrimaryKey], function (tx, data) {
+                    CFG.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
 
-            sql.push('WHERE key = ?');
-            const encodedPrimaryKey = Key.encode(primaryKey);
-            sqlValues.push(encodedPrimaryKey);
-
-            CFG.DEBUG && console.log(sql.join(' '), encoded, key, primaryKey);
-            tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
-                if (data.rowsAffected === 1) {
-                    me.__store.__cursors.forEach((cursor) => {
-                        cursor.__updateCache(encodedPrimaryKey, encoded);
+                    store.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
+                        store.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, function (...args) {
+                            store.__cursors.forEach((cursor) => {
+                                cursor.__deleteFromCache();
+                                cursor.__addToCache(/* encodedPrimaryKey, encoded, !!data.rowsAffected */);
+                            });
+                            success(...args);
+                        }, error);
+                    }, function (tx, err) {
+                        error(err);
                     });
-                    success(key);
-                } else {
-                    error('No rows with key found' + key);
-                }
-            }, function (tx, data) {
-                error(data);
+                });
             });
         });
     }, undefined, me);

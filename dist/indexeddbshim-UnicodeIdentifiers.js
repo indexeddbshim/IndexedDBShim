@@ -10055,20 +10055,6 @@ IDBCursor.prototype.__addToCache = function () {
     this.__prefetchedData = null;
 };
 
-IDBCursor.prototype.__updateCache = function (encKey, encValue) {
-    var me = this;
-    if (!me.__prefetchedData) {
-        return;
-    }
-    for (var i = 0; i < me.__prefetchedData.length; i++) {
-        var item = me.__prefetchedData.item(i);
-        if (encKey === item.key) {
-            item.value = encValue;
-            break;
-        }
-    }
-};
-
 IDBCursor.prototype.__deleteFromCache = function (sql, sqlValues) {
     this.__prefetchedData = null;
 };
@@ -10190,40 +10176,33 @@ IDBCursor.prototype.update = function (valueToUpdate) {
         }
     }
     return me.__store.transaction.__addToTransactionQueue(function cursorUpdate(tx, args, success, error) {
+        var key = me.key;
+        var primaryKey = me.primaryKey;
+        var store = me.__store;
         _Sca2.default.encode(valueToUpdate, function (encoded) {
-            var key = me.key;
-            // const value = me.value; // Todo: Utilize for index?
-            var primaryKey = me.primaryKey;
-            var store = me.__store;
-            // Todo: Fix to run as DELETE and INSERT as per spec (with chance to recreate entry if deleted)
-            var sql = ['UPDATE', util.escapeStore(store.name), 'SET value = ?'];
-            var sqlValues = [encoded];
-            _Key2.default.convertValueToKey(primaryKey);
+            var value = _Sca2.default.decode(encoded);
+            _Sca2.default.encode(value, function (encoded) {
+                // First try to delete if the record exists
+                _Key2.default.convertValueToKey(primaryKey);
+                var sql = 'DELETE FROM ' + util.escapeStore(store.name) + ' WHERE key = ?';
+                var encodedPrimaryKey = _Key2.default.encode(primaryKey);
+                _CFG2.default.DEBUG && console.log(sql, encoded, key, primaryKey, encodedPrimaryKey);
 
-            // Also correct the indexes in the table
-            for (var i = 0; i < store.indexNames.length; i++) {
-                var index = store.__indexes[store.indexNames[i]];
-                var indexKey = _Key2.default.evaluateKeyPathOnValue(valueToUpdate, index.keyPath, index.multiEntry);
-                sql.push(',', util.escapeIndex(index.name), '= ?');
-                sqlValues.push(_Key2.default.encode(indexKey, index.multiEntry));
-            }
+                tx.executeSql(sql, [encodedPrimaryKey], function (tx, data) {
+                    _CFG2.default.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
 
-            sql.push('WHERE key = ?');
-            var encodedPrimaryKey = _Key2.default.encode(primaryKey);
-            sqlValues.push(encodedPrimaryKey);
-
-            _CFG2.default.DEBUG && console.log(sql.join(' '), encoded, key, primaryKey);
-            tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
-                if (data.rowsAffected === 1) {
-                    me.__store.__cursors.forEach(function (cursor) {
-                        cursor.__updateCache(encodedPrimaryKey, encoded);
+                    store.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
+                        store.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, function () {
+                            store.__cursors.forEach(function (cursor) {
+                                cursor.__deleteFromCache();
+                                cursor.__addToCache();
+                            });
+                            /* encodedPrimaryKey, encoded, !!data.rowsAffected */success.apply(undefined, arguments);
+                        }, error);
+                    }, function (tx, err) {
+                        error(err);
                     });
-                    success(key);
-                } else {
-                    error('No rows with key found' + key);
-                }
-            }, function (tx, data) {
-                error(data);
+                });
             });
         });
     }, undefined, me);

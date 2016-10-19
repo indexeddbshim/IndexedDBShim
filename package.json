@@ -13,13 +13,14 @@
     "dev-node": "grunt dev-node",
     "clean": "grunt clean",
     "w3c-build": "grunt clean-w3c && node test-support/node-buildjs",
-
-    "good": "npm run mock-good && npm run w3c-good && npm run w3c-old-good",
-    "test": "npm run phantom-qunit",
     "phantom-qunit": "grunt phantom-qunit",
+
+    "test": "npm run phantom-qunit",
     "qunit": "grunt clean-qunit && grunt nodequnit && grunt clean-qunit",
     "mocha": "grunt clean-mocha && grunt mocha && grunt clean-mocha",
     "fake": "grunt clean-fake && mocha tests-polyfill/fakeIndexedDB/fakeIndexedDB.js && grunt clean-fake",
+
+    "good": "npm run mock-good && npm run w3c-good && npm run w3c-old-good",
     "mock": "grunt clean-mock && mocha tests-polyfill/indexedDBmock/*.js && grunt clean-mock",
     "mock-good": "grunt clean-mock && mocha tests-polyfill/indexedDBmock/i*.js && mocha tests-polyfill/indexedDBmock/k*.js && mocha tests-polyfill/indexedDBmock/o*.js && mocha tests-polyfill/indexedDBmock/t*.js && grunt clean-mock",
     "w3c-old": "grunt clean-w3c-old && mocha tests-polyfill/w3c/*.js && grunt clean-w3c-old",

@@ -156,17 +156,17 @@ Please make sure someone else hasn't already reported the same bug though.
 
 Here is a summary of known issues to resolve:
 
-1. `IDBCursor.update` should delete then insert rather than update
-2. Event bubbling and `preventDefault`; also report WebSQL `QUOTA_ERR` (4)
+1. Event bubbling and `preventDefault`; also report WebSQL `QUOTA_ERR` (4)
     as `QuotaExceededError` and `TIMEOUT_ERR` (7) probably as
     `TransactionInactiveError` (and treat accordingly) and any others as
     `UnknownError`
-3. Support rollbacks (where possible) through automated `AbortError` calls
-    and support upgrade transaction manual aborts
-4. `close` and `blocked` event support (reconcile with existing `versionchange`)
-5. `eval` is currently in use (in `src/Sca.js`)
-6. Add new Binary/ArrayBuffer/Views on buffers (TypedArray or DataView) support
-7. Certain more recent APIs are missing: `IDBCursor.continuePrimaryKey`,
+2. Support rollbacks (where possible) with automated rollbacks (and
+    `AbortError` calls for requests) and support upgrade transaction manual
+    aborts
+3. `close` and `blocked` event support (reconcile with existing `versionchange`)
+4. `eval` is currently in use (in `src/Sca.js`)
+5. Add new Binary/ArrayBuffer/Views on buffers (TypedArray or DataView) support
+6. Certain more recent APIs are missing: `IDBCursor.continuePrimaryKey`,
     `IDBIndex` (`getAll`, `getAllKeys`), `IDBObjectStore` (`getAll`,
     `getAllKeys`, `getKey`).
 

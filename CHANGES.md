@@ -188,6 +188,8 @@
 - Fix: Copy SQLite row `item` object properties (for Safari); fixes issue #261
 - Fix: Implement rollback upon `IDBTransaction.abort` where possible,
     e.g., `node-websql` doesn't impose `ROLLBACK` limitation as in browsers
+- Fix: As per spec, `DELETE` then `INSERT` rather than `UPDATE` for
+    `IDBCursor.update`
 - Feature: Allow `DEFAULT_DB_SIZE` to be set via `CFG.js`;
 - Feature: `IDBIndex` methods, `get`, `getKey`, `count` to allow obtaining
     first record of an `IDBKeyRange` (or `IDBKeyRange`-like range) and change
