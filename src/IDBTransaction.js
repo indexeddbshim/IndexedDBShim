@@ -105,7 +105,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 break;
             }
             /*
-            // Should a WebSQL timeout end the IndexedDB transaction or treat as UnknownError?
+            // Should a WebSQL timeout treat as IndexedDB `TransactionInactiveError` or `UnknownError`?
             case 7: { // SQLError.TIMEOUT_ERR
                 // All transaction errors abort later, so no need to mark inactive
                 name = 'TransactionInactiveError';
