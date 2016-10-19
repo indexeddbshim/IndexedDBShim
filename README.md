@@ -137,6 +137,13 @@ The available properties are:
     not `RegExp` objects. You can use this configuration to change the default
     to match the spec or as you see fit. In the future we may allow the spec
     behavior via optional dynamic loading of an internal module.
+- __DEFAULT_DB_SIZE__ - Used as estimated size argument (in bytes) to
+    underlying WebSQL `openDatabase` calls. Defaults to `4 * 1024 * 1024` or
+    `25 * 1024 * 1024` in Safari (apparently necessary due to Safari creating
+    larger files). Has no effect in Node (using [`node-websql`](https://github.com/nolanlawson/node-websql)),
+    and its use in WebSQL-compliant browsers is implementation dependent (may
+    be used to suggest this quota to the user rather than prompting the user
+    regularly for say incremental 5MB permissions).
 
 ## Known Issues
 
