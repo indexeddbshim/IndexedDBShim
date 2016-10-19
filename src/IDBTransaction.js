@@ -263,12 +263,30 @@ IDBTransaction.prototype.abort = function () {
     }
     me.__active = false;
     me.__storeClones = {};
-    const evt = createEvent('abort');
 
-    // Fire the "onabort" event asynchronously, so errors don't bubble
-    setTimeout(() => {
-        me.dispatchEvent(evt);
-    }, 0);
+    function abort (tx, errOrResult) {
+        if (typeof errOrResult.code === 'number') {
+            CFG.DEBUG && console.log('Rollback erred; feature is probably not supported as per WebSQL', me);
+        } else {
+            CFG.DEBUG && console.log('Rollback succeeded', me);
+        }
+
+        // Todo: Steps for aborting an upgrade transaction
+        // Todo: Send bubbling `error` events to me.__requests;
+        const evt = createEvent('abort');
+
+        // Todo: Make `abort` event bubble but not cancelable (can probably remove timeout now)
+        // Fire the "onabort" event asynchronously, so errors don't bubble
+        setTimeout(() => {
+            me.dispatchEvent(evt);
+        }, 0);
+    }
+
+    if (me.__tx) {
+        me.__tx.executeSql('ROLLBACK', [], abort, abort);
+    } else {
+        abort(null, {code: 0});
+    }
 };
 IDBTransaction.prototype.toString = function () {
     return '[object IDBTransaction]';
