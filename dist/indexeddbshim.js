@@ -12316,7 +12316,35 @@ IDBTransaction.prototype.__executeRequests = function () {
         }
 
         executeNextRequest();
-    }, function webSqlError(err) {
+    }, function webSqlError(errWebsql) {
+        var name = void 0,
+            message = void 0;
+        switch (errWebsql.code) {
+            case 4:
+                {
+                    // SQLError.QUOTA_ERR
+                    name = 'QuotaExceededError';
+                    message = 'The operation failed because there was not enough remaining storage space, or the storage quota was reached and the user declined to give more space to the database.';
+                    break;
+                }
+            /*
+            // Should a WebSQL timeout end the IndexedDB transaction or treat as UnknownError?
+            case 7: { // SQLError.TIMEOUT_ERR
+                me.__active = false;
+                name = 'TransactionInactiveError';
+                message = 'A request was placed against a transaction which is currently not active, or which is finished (Internal SQL Timeout).';
+                break;
+            }
+            */
+            default:
+                {
+                    name = 'UnknownError';
+                    message = 'The operation failed for reasons unrelated to the database itself and not covered by any other errors.';
+                    break;
+                }
+        }
+        message += '(' + errWebsql.message + ')--(' + errWebsql.code + ')';
+        var err = (0, _DOMException.createDOMException)(name, message);
         transactionError(err);
     });
 

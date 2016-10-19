@@ -26,6 +26,8 @@
     unused `__multiEntryOffset`
 - Deprecate: Numeric constants as second arguments to
     `IDBDatabase.prototype.transaction` (use `readonly`/`readwrite` instead).
+- Fix: Return appropriate IndexedDB error object instead of WebSQL error
+    object; fixes #27
 - Fix: For `IDBCursor`, move from SQL offsets to utilization of last key as
     per spec (and as needed for discovering any db modifications)
 - Fix: In conjunction with `IDBCursor` `continue` and `advance` caching,

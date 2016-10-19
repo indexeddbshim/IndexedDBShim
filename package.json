@@ -14,6 +14,7 @@
     "clean": "grunt clean",
     "w3c-build": "grunt clean-w3c && node test-support/node-buildjs",
 
+    "good": "npm run mock-good && npm run w3c-good && npm run w3c-old-good",
     "test": "npm run phantom-qunit",
     "phantom-qunit": "grunt phantom-qunit",
     "qunit": "grunt clean-qunit && grunt nodequnit && grunt clean-qunit",
