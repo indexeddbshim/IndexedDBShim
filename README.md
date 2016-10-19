@@ -148,7 +148,10 @@ Please make sure someone else hasn't already reported the same bug though.
 Here is a summary of known issues:
 
 1. `IDBCursor.update` should delete then insert rather than update
-2. Event bubbling and `preventDefault`
+2. Event bubbling and `preventDefault`; also report WebSQL `QUOTA_ERR` (4)
+    as `QuotaExceededError` and `TIMEOUT_ERR` (7) probably as
+    `TransactionInactiveError` (and treat accordingly) and any others as
+    `UnknownError`
 3. Support rollbacks (if possible)
 4. `close` and `blocked` event support (reconcile with existing `versionchange`)
 5. `eval` is currently in use (in `src/Sca.js`)
