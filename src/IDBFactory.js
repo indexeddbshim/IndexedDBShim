@@ -261,7 +261,7 @@ function cmp (key1, key2) {
 IDBFactory.prototype.cmp = cmp;
 
 /**
-* NON-STANDARD!! (Also may return outdated information)
+* NON-STANDARD!! (Also may return outdated information if a database has since been deleted)
 * @link https://www.w3.org/Bugs/Public/show_bug.cgi?id=16137
 * @link http://lists.w3.org/Archives/Public/public-webapps/2011JulSep/1537.html
 */
