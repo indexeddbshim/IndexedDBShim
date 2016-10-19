@@ -140,10 +140,12 @@ The available properties are:
 - __DEFAULT_DB_SIZE__ - Used as estimated size argument (in bytes) to
     underlying WebSQL `openDatabase` calls. Defaults to `4 * 1024 * 1024` or
     `25 * 1024 * 1024` in Safari (apparently necessary due to Safari creating
-    larger files). Has no effect in Node (using [`node-websql`](https://github.com/nolanlawson/node-websql)),
-    and its use in WebSQL-compliant browsers is implementation dependent (may
-    be used to suggest this quota to the user rather than prompting the user
-    regularly for say incremental 5MB permissions).
+    larger files and possibly also due to Safari not completing the storage
+    of all records even after permission is given). Has no effect in Node (using [`node-websql`](https://github.com/nolanlawson/node-websql)),
+    and its use in WebSQL-compliant browsers is implementation dependent (the
+    browser may use this information to suggest the use of this quota to the
+    user rather than prompting the user regularly for say incremental 5MB
+    permissions).
 
 ## Known Issues
 
