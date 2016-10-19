@@ -5,9 +5,8 @@ import * as util from './util.js';
 import Key from './Key.js';
 import IDBTransaction from './IDBTransaction.js';
 import IDBDatabase from './IDBDatabase.js';
-import CFG from './cfg.js';
+import CFG from './CFG.js';
 
-const DEFAULT_DB_SIZE = 4 * 1024 * 1024;
 let sysdb;
 
 /**
@@ -23,7 +22,7 @@ function createSysDB (success, failure) {
     if (sysdb) {
         success();
     } else {
-        sysdb = CFG.win.openDatabase('__sysdb__.sqlite', 1, 'System Database', DEFAULT_DB_SIZE);
+        sysdb = CFG.win.openDatabase('__sysdb__.sqlite', 1, 'System Database', CFG.DEFAULT_DB_SIZE);
         sysdb.transaction(function (tx) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);', [], success, sysDbCreateError);
         }, sysDbCreateError);
@@ -73,7 +72,7 @@ IDBFactory.prototype.open = function (name, version) {
     }
 
     function openDB (oldVersion) {
-        const db = CFG.win.openDatabase(util.escapeDatabaseName(name), 1, name, DEFAULT_DB_SIZE);
+        const db = CFG.win.openDatabase(util.escapeDatabaseName(name), 1, name, CFG.DEFAULT_DB_SIZE);
         req.__readyState = 'done';
         if (version === undefined) {
             version = oldVersion || 1;
@@ -185,7 +184,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                     return;
                 }
                 version = data.rows.item(0).version;
-                const db = CFG.win.openDatabase(util.escapeDatabaseName(name), 1, name, DEFAULT_DB_SIZE);
+                const db = CFG.win.openDatabase(util.escapeDatabaseName(name), 1, name, CFG.DEFAULT_DB_SIZE);
                 db.transaction(function (tx) {
                     tx.executeSql('SELECT * FROM __sys__', [], function (tx, data) {
                         const tables = data.rows;

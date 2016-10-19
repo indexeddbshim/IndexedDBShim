@@ -1,5 +1,5 @@
 import {createDOMException} from './DOMException.js';
-import CFG from './cfg.js';
+import CFG from './CFG.js';
 
 let cleanInterface = false;
 

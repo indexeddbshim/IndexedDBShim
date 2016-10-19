@@ -13,7 +13,7 @@
 - Breaking change/Fix: Remove `IDBTransaction` mode constants and tests since
     now being removed from IndexedDB
 - Breaking change: If you were overriding/monkey-patching globals, these are
-    no longer available with a shift to ES6 modules (see below). The cfg.js
+    no longer available with a shift to ES6 modules (see below). The CFG.js
     module can be imported in its place to change the default values, however.
 - Breaking change (minor): Change "modules" property of `IDBFactory` to only
     expose `DOMException`, `Event`, and `IDBFactory` (replacing the former
@@ -24,6 +24,8 @@
 - Breaking change: As moved away from SQL offsets for `IDBCursor` retrieval,
     remove `__lastKeyContinued` property (we can use `__key`); also remove
     unused `__multiEntryOffset`
+- Deprecate: Numeric constants as second arguments to
+    `IDBDatabase.prototype.transaction` (use `readonly`/`readwrite` instead).
 - Fix: For `IDBCursor`, move from SQL offsets to utilization of last key as
     per spec (and as needed for discovering any db modifications)
 - Fix: In conjunction with `IDBCursor` `continue` and `advance` caching,
@@ -36,9 +38,8 @@
 - Fix:  stores cursor
 - Fix: Avoid `cursor.update` always getting next key
 - (Fix: Avoid storing cursor (for `IDBObjectStore.count`) if will be no cache)
-
-- Deprecate: Numeric constants as second arguments to
-    `IDBDatabase.prototype.transaction` (use `readonly`/`readwrite` instead).
+- Fix: In Safari, default DEFAULT_DB_SIZE to a higher value
+    (25 * 1024 * 1024); fixes #115
 - Fix: Properly implement and utilize `IDBCursorWithValue`
 - Fix: Use latest draft spec's (and implementations') use of `DOMException`
     instead of `DOMError`
@@ -183,6 +184,7 @@
 - Fix: Check for array on range within multiEntry cursor iteration; fixes
     issue #222
 - Fix: Copy SQLite row `item` object properties (for Safari); fixes issue #261
+- Feature: Allow `DEFAULT_DB_SIZE` to be set via `CFG.js`;
 - Feature: `IDBIndex` methods, `get`, `getKey`, `count` to allow obtaining
     first record of an `IDBKeyRange` (or `IDBKeyRange`-like range) and change
     error messages to indicate "key or range"

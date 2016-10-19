@@ -4,7 +4,7 @@ import * as UnicodeIdentifiers from './UnicodeIdentifiers';
 // BEGIN: Same code as in node.js
 import nodeWebsql from 'websql';
 import setGlobalVars from './setGlobalVars.js';
-import CFG from './cfg.js';
+import CFG from './CFG.js';
 
 CFG.win = {openDatabase: nodeWebsql};
 // END: Same code as in node.js

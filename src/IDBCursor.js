@@ -7,7 +7,7 @@ import IDBTransaction from './IDBTransaction.js';
 import Key from './Key.js';
 import Sca from './Sca.js';
 import IDBIndex from './IDBIndex.js';
-import CFG from './cfg.js';
+import CFG from './CFG.js';
 
 /**
  * The IndexedDB Cursor Object

@@ -2,7 +2,7 @@
 
 import nodeWebsql from 'websql';
 import setGlobalVars from './setGlobalVars.js';
-import CFG from './cfg.js';
+import CFG from './CFG.js';
 
 CFG.win = {openDatabase: nodeWebsql};
 

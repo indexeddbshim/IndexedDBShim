@@ -6,7 +6,7 @@ import Key from './Key.js';
 import {executeFetchIndexData, fetchIndexData, IDBIndex} from './IDBIndex.js';
 import IDBTransaction from './IDBTransaction.js';
 import Sca from './Sca.js';
-import CFG from './cfg.js';
+import CFG from './CFG.js';
 import SyncPromise from 'sync-promise';
 
 /**

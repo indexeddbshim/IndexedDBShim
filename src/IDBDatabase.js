@@ -2,7 +2,7 @@ import {createDOMException} from './DOMException.js';
 import * as util from './util.js';
 import IDBObjectStore from './IDBObjectStore.js';
 import IDBTransaction from './IDBTransaction.js';
-import CFG from './cfg.js';
+import CFG from './CFG.js';
 import EventTarget from 'eventtarget';
 
 /**

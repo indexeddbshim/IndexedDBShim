@@ -1,4 +1,4 @@
-import CFG from './cfg.js';
+import CFG from './CFG.js';
 import * as util from './util.js';
 
 /**

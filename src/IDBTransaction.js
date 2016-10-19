@@ -3,7 +3,7 @@ import {logError, findError, DOMException, createDOMException} from './DOMExcept
 import {IDBRequest} from './IDBRequest.js';
 import * as util from './util.js';
 import IDBObjectStore from './IDBObjectStore.js';
-import CFG from './cfg.js';
+import CFG from './CFG.js';
 import EventTarget from 'eventtarget';
 
 let uniqueID = 0;

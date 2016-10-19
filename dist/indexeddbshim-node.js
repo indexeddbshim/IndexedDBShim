@@ -16931,11 +16931,44 @@ module.exports = WebSQLTransaction;
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+var map = {};
+var CFG = {};
+
+['DEBUG', // boolean
+'DEFAULT_DB_SIZE', // 4 * 1024 * 1024 or 25 * 1024 * 1024 in Safari
+'cursorPreloadPackSize', // 100
+'win', // (window on which there may be an `openDatabase` method (if any)
+//  for WebSQL; the browser throws if attempting to call
+//  `openDatabase` without the window)
+// See optional dynamic `System.import()` loading API (shimIndexedDB.__setUnicodeIdentifiers)
+//    of these large regular expression strings:
+'UnicodeIDStart', // See `src/UnicodeIdentifiers.js`
+'UnicodeIDContinue' // See `src/UnicodeIdentifiers.js`
+].forEach(function (prop) {
+    Object.defineProperty(CFG, prop, {
+        get: function get() {
+            return map[prop];
+        },
+        set: function set(val) {
+            map[prop] = val;
+        }
+    });
+});
+
+exports.default = CFG;
+module.exports = exports['default'];
+
+},{}],359:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
 exports.createDOMError = exports.createDOMException = exports.DOMException = exports.DOMError = exports.findError = exports.logError = undefined;
 
-var _cfg = require('./cfg.js');
+var _CFG = require('./CFG.js');
 
-var _cfg2 = _interopRequireDefault(_cfg);
+var _CFG2 = _interopRequireDefault(_CFG);
 
 var _util = require('./util.js');
 
@@ -16983,7 +17016,7 @@ function createError(name, message) {
  * @param {string|Error|null} error
  */
 function logError(name, message, error) {
-    if (_cfg2.default.DEBUG) {
+    if (_CFG2.default.DEBUG) {
         if (error && error.message) {
             error = error.message;
         }
@@ -17084,7 +17117,7 @@ exports.DOMException = shimDOMException;
 exports.createDOMException = createDOMException;
 exports.createDOMError = createDOMError;
 
-},{"./cfg.js":370,"./util.js":374}],359:[function(require,module,exports){
+},{"./CFG.js":358,"./util.js":374}],360:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17146,7 +17179,7 @@ exports.createEvent = createEvent;
 exports.ShimEvent = ShimEvent;
 exports.ProxyPolyfill = ProxyPolyfill; // Event not currently in use
 
-},{"./util.js":374,"eventtarget":299}],360:[function(require,module,exports){
+},{"./util.js":374,"eventtarget":299}],361:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17186,9 +17219,9 @@ var _IDBIndex = require('./IDBIndex.js');
 
 var _IDBIndex2 = _interopRequireDefault(_IDBIndex);
 
-var _cfg = require('./cfg.js');
+var _CFG = require('./CFG.js');
 
-var _cfg2 = _interopRequireDefault(_cfg);
+var _CFG2 = _interopRequireDefault(_CFG);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -17314,7 +17347,7 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
         sql.push('LIMIT', recordsToLoad);
     }
     sql = sql.join(' ');
-    _cfg2.default.DEBUG && console.log(sql, sqlValues);
+    _CFG2.default.DEBUG && console.log(sql, sqlValues);
 
     tx.executeSql(sql, sqlValues, function (tx, data) {
         if (me.__count) {
@@ -17322,16 +17355,16 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
         } else if (data.rows.length > 1) {
             me.__prefetchedIndex = 0;
             me.__prefetchedData = data.rows;
-            _cfg2.default.DEBUG && console.log('Preloaded ' + me.__prefetchedData.length + ' records for cursor');
+            _CFG2.default.DEBUG && console.log('Preloaded ' + me.__prefetchedData.length + ' records for cursor');
             me.__decode(data.rows.item(0), success);
         } else if (data.rows.length === 1) {
             me.__decode(data.rows.item(0), success);
         } else {
-            _cfg2.default.DEBUG && console.log('Reached end of cursors');
+            _CFG2.default.DEBUG && console.log('Reached end of cursors');
             success(undefined, undefined, undefined);
         }
     }, function (tx, err) {
-        _cfg2.default.DEBUG && console.log('Could not execute Cursor.continue', sql, sqlValues);
+        _CFG2.default.DEBUG && console.log('Could not execute Cursor.continue', sql, sqlValues);
         error(err);
     });
 };
@@ -17340,7 +17373,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
     var me = this;
 
     if (me.__prefetchedData && me.__prefetchedData.length === me.__prefetchedIndex) {
-        _cfg2.default.DEBUG && console.log('Reached end of multiEntry cursor');
+        _CFG2.default.DEBUG && console.log('Reached end of multiEntry cursor');
         success(undefined, undefined, undefined);
         return;
     }
@@ -17388,7 +17421,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
         }
     }
     sql = sql.join(' ');
-    _cfg2.default.DEBUG && console.log(sql, sqlValues);
+    _CFG2.default.DEBUG && console.log(sql, sqlValues);
 
     tx.executeSql(sql, sqlValues, function (tx, data) {
         if (data.rows.length > 0) {
@@ -17450,24 +17483,24 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
                             return this.data[index];
                         }
                     };
-                    _cfg2.default.DEBUG && console.log('Preloaded ' + me.__prefetchedData.length + ' records for multiEntry cursor');
+                    _CFG2.default.DEBUG && console.log('Preloaded ' + me.__prefetchedData.length + ' records for multiEntry cursor');
                     me.__decode(rows[0], success);
                 } else if (rows.length === 1) {
-                    _cfg2.default.DEBUG && console.log('Reached end of multiEntry cursor');
+                    _CFG2.default.DEBUG && console.log('Reached end of multiEntry cursor');
                     me.__decode(rows[0], success);
                 } else {
-                    _cfg2.default.DEBUG && console.log('Reached end of multiEntry cursor');
+                    _CFG2.default.DEBUG && console.log('Reached end of multiEntry cursor');
                     success(undefined, undefined, undefined);
                 }
             }();
 
             if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
         } else {
-            _cfg2.default.DEBUG && console.log('Reached end of multiEntry cursor');
+            _CFG2.default.DEBUG && console.log('Reached end of multiEntry cursor');
             success(undefined, undefined, undefined);
         }
     }, function (tx, err) {
-        _cfg2.default.DEBUG && console.log('Could not execute Cursor.continue', sql, sqlValues);
+        _CFG2.default.DEBUG && console.log('Could not execute Cursor.continue', sql, sqlValues);
         error(err);
     });
 };
@@ -17543,7 +17576,7 @@ IDBCursor.prototype.__clearFromCache = function () {
 
 IDBCursor.prototype.__continue = function (key, advanceContinue) {
     var me = this;
-    var recordsToPreloadOnContinue = me.__advanceCount || _cfg2.default.cursorPreloadPackSize || 100;
+    var recordsToPreloadOnContinue = me.__advanceCount || _CFG2.default.cursorPreloadPackSize || 100;
     var advanceState = me.__advanceCount !== undefined;
     _IDBTransaction2.default.__assertActive(me.__store.transaction);
     me.__sourceOrEffectiveObjStoreDeleted();
@@ -17676,7 +17709,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
             var encodedPrimaryKey = _Key2.default.encode(primaryKey);
             sqlValues.push(encodedPrimaryKey);
 
-            _cfg2.default.DEBUG && console.log(sql.join(' '), encoded, key, primaryKey);
+            _CFG2.default.DEBUG && console.log(sql.join(' '), encoded, key, primaryKey);
             tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
                 if (data.rowsAffected === 1) {
                     me.__store.__cursors.forEach(function (cursor) {
@@ -17707,7 +17740,7 @@ IDBCursor.prototype['delete'] = function () {
     return this.__store.transaction.__addToTransactionQueue(function cursorDelete(tx, args, success, error) {
         me.__find(undefined, tx, function (key, value, primaryKey) {
             var sql = 'DELETE FROM  ' + util.escapeStore(me.__store.name) + ' WHERE key = ?';
-            _cfg2.default.DEBUG && console.log(sql, key, primaryKey);
+            _CFG2.default.DEBUG && console.log(sql, key, primaryKey);
             _Key2.default.convertValueToKey(primaryKey);
             tx.executeSql(sql, [_Key2.default.encode(primaryKey)], function (tx, data) {
                 if (data.rowsAffected === 1) {
@@ -17755,7 +17788,7 @@ util.defineReadonlyProperties(IDBCursorWithValue.prototype, 'value');
 exports.IDBCursor = IDBCursor;
 exports.IDBCursorWithValue = IDBCursorWithValue;
 
-},{"./DOMException.js":358,"./IDBFactory.js":362,"./IDBIndex.js":363,"./IDBKeyRange.js":364,"./IDBRequest.js":366,"./IDBTransaction.js":367,"./Key.js":368,"./Sca.js":369,"./cfg.js":370,"./util.js":374}],361:[function(require,module,exports){
+},{"./CFG.js":358,"./DOMException.js":359,"./IDBFactory.js":363,"./IDBIndex.js":364,"./IDBKeyRange.js":365,"./IDBRequest.js":367,"./IDBTransaction.js":368,"./Key.js":369,"./Sca.js":370,"./util.js":374}],362:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17776,9 +17809,9 @@ var _IDBTransaction = require('./IDBTransaction.js');
 
 var _IDBTransaction2 = _interopRequireDefault(_IDBTransaction);
 
-var _cfg = require('./cfg.js');
+var _CFG = require('./CFG.js');
 
-var _cfg2 = _interopRequireDefault(_cfg);
+var _CFG2 = _interopRequireDefault(_CFG);
 
 var _eventtarget = require('eventtarget');
 
@@ -17905,7 +17938,7 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
 
     if (typeof mode === 'number') {
         mode = mode === 1 ? 'readwrite' : 'readonly';
-        _cfg2.default.DEBUG && console.log('Mode should be a string, but was specified as ', mode); // Todo: Remove this option as no longer in spec
+        _CFG2.default.DEBUG && console.log('Mode should be a string, but was specified as ', mode); // Todo: Remove this option as no longer in spec
     } else {
             mode = mode || 'readonly';
         }
@@ -17942,7 +17975,7 @@ Object.assign(IDBDatabase.prototype, _eventtarget2.default.prototype);
 exports.default = IDBDatabase;
 module.exports = exports['default'];
 
-},{"./DOMException.js":358,"./IDBObjectStore.js":365,"./IDBTransaction.js":367,"./cfg.js":370,"./util.js":374,"eventtarget":299}],362:[function(require,module,exports){
+},{"./CFG.js":358,"./DOMException.js":359,"./IDBObjectStore.js":366,"./IDBTransaction.js":368,"./util.js":374,"eventtarget":299}],363:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17974,15 +18007,14 @@ var _IDBDatabase = require('./IDBDatabase.js');
 
 var _IDBDatabase2 = _interopRequireDefault(_IDBDatabase);
 
-var _cfg = require('./cfg.js');
+var _CFG = require('./CFG.js');
 
-var _cfg2 = _interopRequireDefault(_cfg);
+var _CFG2 = _interopRequireDefault(_CFG);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-var DEFAULT_DB_SIZE = 4 * 1024 * 1024;
 var sysdb = void 0;
 
 /**
@@ -17995,14 +18027,14 @@ function createSysDB(success, failure) {
         }
 
         var err = (0, _DOMException.findError)(args);
-        _cfg2.default.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
+        _CFG2.default.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
         failure(err);
     }
 
     if (sysdb) {
         success();
     } else {
-        sysdb = _cfg2.default.win.openDatabase('__sysdb__.sqlite', 1, 'System Database', DEFAULT_DB_SIZE);
+        sysdb = _CFG2.default.win.openDatabase('__sysdb__.sqlite', 1, 'System Database', _CFG2.default.DEFAULT_DB_SIZE);
         sysdb.transaction(function (tx) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);', [], success, sysDbCreateError);
         }, sysDbCreateError);
@@ -18057,7 +18089,7 @@ IDBFactory.prototype.open = function (name, version) {
     }
 
     function openDB(oldVersion) {
-        var db = _cfg2.default.win.openDatabase(util.escapeDatabaseName(name), 1, name, DEFAULT_DB_SIZE);
+        var db = _CFG2.default.win.openDatabase(util.escapeDatabaseName(name), 1, name, _CFG2.default.DEFAULT_DB_SIZE);
         req.__readyState = 'done';
         if (version === undefined) {
             version = oldVersion || 1;
@@ -18174,7 +18206,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                     return;
                 }
                 version = data.rows.item(0).version;
-                var db = _cfg2.default.win.openDatabase(util.escapeDatabaseName(name), 1, name, DEFAULT_DB_SIZE);
+                var db = _CFG2.default.win.openDatabase(util.escapeDatabaseName(name), 1, name, _CFG2.default.DEFAULT_DB_SIZE);
                 db.transaction(function (tx) {
                     tx.executeSql('SELECT * FROM __sys__', [], function (tx, data) {
                         var tables = data.rows;
@@ -18223,7 +18255,7 @@ function cmp(key1, key2) {
     var encodedKey2 = _Key2.default.encode(key2);
     var result = encodedKey1 > encodedKey2 ? 1 : encodedKey1 === encodedKey2 ? 0 : -1;
 
-    if (_cfg2.default.DEBUG) {
+    if (_CFG2.default.DEBUG) {
         // verify that the keys encoded correctly
         var decodedKey1 = _Key2.default.decode(encodedKey1);
         var decodedKey2 = _Key2.default.decode(encodedKey2);
@@ -18259,7 +18291,7 @@ exports.IDBFactory = IDBFactory;
 exports.cmp = cmp;
 exports.shimIndexedDB = shimIndexedDB;
 
-},{"./DOMException.js":358,"./Event.js":359,"./IDBDatabase.js":361,"./IDBRequest.js":366,"./IDBTransaction.js":367,"./Key.js":368,"./cfg.js":370,"./util.js":374}],363:[function(require,module,exports){
+},{"./CFG.js":358,"./DOMException.js":359,"./Event.js":360,"./IDBDatabase.js":362,"./IDBRequest.js":367,"./IDBTransaction.js":368,"./Key.js":369,"./util.js":374}],364:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -18285,9 +18317,9 @@ var _Sca = require('./Sca.js');
 
 var _Sca2 = _interopRequireDefault(_Sca);
 
-var _cfg = require('./cfg.js');
+var _CFG = require('./CFG.js');
 
-var _cfg2 = _interopRequireDefault(_cfg);
+var _CFG2 = _interopRequireDefault(_CFG);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -18357,7 +18389,7 @@ IDBIndex.__createIndex = function (store, index) {
             IDBIndex.__updateIndexList(store, tx, function () {
                 // Add index entries for all existing records
                 tx.executeSql('SELECT * FROM ' + util.escapeStore(store.name), [], function (tx, data) {
-                    _cfg2.default.DEBUG && console.log('Adding existing ' + store.name + ' records to the ' + index.name + ' index');
+                    _CFG2.default.DEBUG && console.log('Adding existing ' + store.name + ' records to the ' + index.name + ' index');
                     addIndexEntry(0);
 
                     function addIndexEntry(i) {
@@ -18389,7 +18421,7 @@ IDBIndex.__createIndex = function (store, index) {
         } else {
             // For a new index, add a new column to the object store, then apply the index
             var sql = ['ALTER TABLE', util.escapeStore(store.name), 'ADD', util.escapeIndex(index.name), 'BLOB'].join(' ');
-            _cfg2.default.DEBUG && console.log(sql);
+            _CFG2.default.DEBUG && console.log(sql);
             tx.executeSql(sql, [], applyIndex, error);
         }
     }, undefined, store);
@@ -18441,7 +18473,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
         };
     }
 
-    _cfg2.default.DEBUG && console.log('Updating the index list for ' + store.name, indexList);
+    _CFG2.default.DEBUG && console.log('Updating the index list for ' + store.name, indexList);
     tx.executeSql('UPDATE __sys__ SET indexList = ? WHERE name = ?', [JSON.stringify(indexList), store.name], function () {
         success(store);
     }, failure);
@@ -18688,7 +18720,7 @@ function fetchIndexData(index, hasRange, range, opType, multiChecks) {
             (0, _IDBKeyRange.setSQLForRange)(range, util.escapeIndex(index.name), sql, sqlValues, true, false);
         }
     }
-    _cfg2.default.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
+    _CFG2.default.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
     return [index, hasRange, range, opType, multiChecks, sql, sqlValues];
 }
 
@@ -18697,7 +18729,7 @@ exports.executeFetchIndexData = executeFetchIndexData;
 exports.IDBIndex = IDBIndex;
 exports.default = IDBIndex;
 
-},{"./DOMException.js":358,"./IDBCursor.js":360,"./IDBKeyRange.js":364,"./Key.js":368,"./Sca.js":369,"./cfg.js":370,"./util.js":374}],364:[function(require,module,exports){
+},{"./CFG.js":358,"./DOMException.js":359,"./IDBCursor.js":361,"./IDBKeyRange.js":365,"./Key.js":369,"./Sca.js":370,"./util.js":374}],365:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -18797,7 +18829,7 @@ exports.setSQLForRange = setSQLForRange;
 exports.IDBKeyRange = IDBKeyRange;
 exports.default = IDBKeyRange;
 
-},{"./DOMException.js":358,"./Key.js":368,"./util.js":374}],365:[function(require,module,exports){
+},{"./DOMException.js":359,"./Key.js":369,"./util.js":374}],366:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -18830,9 +18862,9 @@ var _Sca = require('./Sca.js');
 
 var _Sca2 = _interopRequireDefault(_Sca);
 
-var _cfg = require('./cfg.js');
+var _CFG = require('./CFG.js');
 
-var _cfg2 = _interopRequireDefault(_cfg);
+var _CFG2 = _interopRequireDefault(_CFG);
 
 var _syncPromise = require('sync-promise');
 
@@ -18911,13 +18943,13 @@ IDBObjectStore.__createObjectStore = function (db, store) {
     _IDBTransaction2.default.__assertVersionChange(transaction);
     transaction.__addToTransactionQueue(function createObjectStore(tx, args, success, failure) {
         function error(tx, err) {
-            _cfg2.default.DEBUG && console.log(err);
+            _CFG2.default.DEBUG && console.log(err);
             throw (0, _DOMException.createDOMException)(0, 'Could not create object store "' + store.name + '"', err);
         }
 
         // key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
         var sql = ['CREATE TABLE', util.escapeStore(store.name), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
-        _cfg2.default.DEBUG && console.log(sql);
+        _CFG2.default.DEBUG && console.log(sql);
         tx.executeSql(sql, [], function (tx, data) {
             tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [store.name, JSON.stringify(store.keyPath), store.autoIncrement, '{}', 1], function () {
                 success(store);
@@ -18943,7 +18975,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
     _IDBTransaction2.default.__assertVersionChange(transaction);
     transaction.__addToTransactionQueue(function deleteObjectStore(tx, args, success, failure) {
         function error(tx, err) {
-            _cfg2.default.DEBUG && console.log(err);
+            _CFG2.default.DEBUG && console.log(err);
             failure((0, _DOMException.createDOMException)(0, 'Could not delete ObjectStore', err));
         }
 
@@ -19123,7 +19155,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         insertSqlValues.push(encoded);
 
         var insertSql = sqlStart.join(' ') + sqlEnd.join(' ');
-        _cfg2.default.DEBUG && console.log('SQL for adding', insertSql, insertSqlValues);
+        _CFG2.default.DEBUG && console.log('SQL for adding', insertSql, insertSqlValues);
 
         var insert = function insert(result) {
             var cb = void 0;
@@ -19155,7 +19187,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
                 insert(function () {
                     var sql = 'UPDATE __sys__ SET currNum = ? WHERE name = ?';
                     var sqlValues = [Math.floor(primaryKey) + 1, me.name];
-                    _cfg2.default.DEBUG && console.log(sql, sqlValues);
+                    _CFG2.default.DEBUG && console.log(sql, sqlValues);
                     tx.executeSql(sql, sqlValues, function (tx, data) {
                         success(primaryKey);
                     }, function (tx, err) {
@@ -19174,7 +19206,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
                         insert(function () {
                             var sql = 'UPDATE __sys__ SET currNum = currNum + 1 WHERE name = ?';
                             var sqlValues = [me.name];
-                            _cfg2.default.DEBUG && console.log(sql, sqlValues);
+                            _CFG2.default.DEBUG && console.log(sql, sqlValues);
                             tx.executeSql(sql, sqlValues, function (tx, data) {
                                 success(primaryKey);
                             }, function (tx, err) {
@@ -19242,7 +19274,7 @@ IDBObjectStore.prototype.put = function (value, key) {
                     var sql = 'DELETE FROM ' + util.escapeStore(me.name) + ' WHERE key = ?';
                     var encodedPrimaryKey = _Key2.default.encode(primaryKey);
                     tx.executeSql(sql, [encodedPrimaryKey], function (tx, data) {
-                        _cfg2.default.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
+                        _CFG2.default.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
                         me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, function () {
                             me.__cursors.forEach(function (cursor) {
                                 cursor.__addToCache();
@@ -19284,9 +19316,9 @@ IDBObjectStore.prototype.get = function (range) {
     (0, _IDBKeyRange.setSQLForRange)(range, util.quote('key'), sql, sqlValues);
     sql = sql.join(' ');
     return me.transaction.__addToTransactionQueue(function objectStoreGet(tx, args, success, error) {
-        _cfg2.default.DEBUG && console.log('Fetching', me.name, sqlValues);
+        _CFG2.default.DEBUG && console.log('Fetching', me.name, sqlValues);
         tx.executeSql(sql, sqlValues, function (tx, data) {
-            _cfg2.default.DEBUG && console.log('Fetched data', data);
+            _CFG2.default.DEBUG && console.log('Fetched data', data);
             var value = void 0;
             try {
                 // Opera can't deal with the try-catch here.
@@ -19297,7 +19329,7 @@ IDBObjectStore.prototype.get = function (range) {
                 value = _Sca2.default.decode(data.rows.item(0).value);
             } catch (e) {
                 // If no result is returned, or error occurs when parsing JSON
-                _cfg2.default.DEBUG && console.log(e);
+                _CFG2.default.DEBUG && console.log(e);
             }
             success(value);
         }, function (tx, err) {
@@ -19352,9 +19384,9 @@ IDBObjectStore.prototype['delete'] = function (range) {
     var sql = sqlArr.join(' ');
 
     return me.transaction.__addToTransactionQueue(function objectStoreDelete(tx, args, success, error) {
-        _cfg2.default.DEBUG && console.log('Deleting', me.name, sqlValues);
+        _CFG2.default.DEBUG && console.log('Deleting', me.name, sqlValues);
         tx.executeSql(sql, sqlValues, function (tx, data) {
-            _cfg2.default.DEBUG && console.log('Deleted from database', data.rowsAffected);
+            _CFG2.default.DEBUG && console.log('Deleted from database', data.rowsAffected);
             me.__cursors.forEach(function (cursor) {
                 cursor.__deleteFromCache();
             });
@@ -19375,7 +19407,7 @@ IDBObjectStore.prototype.clear = function () {
 
     return me.transaction.__addToTransactionQueue(function objectStoreClear(tx, args, success, error) {
         tx.executeSql('DELETE FROM ' + util.escapeStore(me.name), [], function (tx, data) {
-            _cfg2.default.DEBUG && console.log('Cleared all records from database', data.rowsAffected);
+            _CFG2.default.DEBUG && console.log('Cleared all records from database', data.rowsAffected);
             me.__cursors.forEach(function (cursor) {
                 cursor.__clearFromCache();
             });
@@ -19564,7 +19596,7 @@ Object.defineProperty(IDBObjectStore.prototype, 'name', {
 exports.default = IDBObjectStore;
 module.exports = exports['default'];
 
-},{"./DOMException.js":358,"./IDBCursor.js":360,"./IDBIndex.js":363,"./IDBKeyRange.js":364,"./IDBTransaction.js":367,"./Key.js":368,"./Sca.js":369,"./cfg.js":370,"./util.js":374,"sync-promise":348}],366:[function(require,module,exports){
+},{"./CFG.js":358,"./DOMException.js":359,"./IDBCursor.js":361,"./IDBIndex.js":364,"./IDBKeyRange.js":365,"./IDBTransaction.js":368,"./Key.js":369,"./Sca.js":370,"./util.js":374,"sync-promise":348}],367:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -19652,7 +19684,7 @@ var IDBOpenDBRequest = function (_IDBRequest) {
 exports.IDBRequest = IDBRequest;
 exports.IDBOpenDBRequest = IDBOpenDBRequest;
 
-},{"./util.js":374,"eventtarget":299}],367:[function(require,module,exports){
+},{"./util.js":374,"eventtarget":299}],368:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -19673,9 +19705,9 @@ var _IDBObjectStore = require('./IDBObjectStore.js');
 
 var _IDBObjectStore2 = _interopRequireDefault(_IDBObjectStore);
 
-var _cfg = require('./cfg.js');
+var _CFG = require('./CFG.js');
 
-var _cfg2 = _interopRequireDefault(_cfg);
+var _CFG2 = _interopRequireDefault(_CFG);
 
 var _eventtarget = require('eventtarget');
 
@@ -19718,7 +19750,7 @@ function IDBTransaction(db, storeNames, mode) {
 
 IDBTransaction.prototype.__executeRequests = function () {
     if (this.__running) {
-        _cfg2.default.DEBUG && console.log('Looks like the request set is already running', this.mode);
+        _CFG2.default.DEBUG && console.log('Looks like the request set is already running', this.mode);
         return;
     }
 
@@ -19813,7 +19845,7 @@ IDBTransaction.prototype.__executeRequests = function () {
     }
 
     function transactionFinished() {
-        _cfg2.default.DEBUG && console.log('Transaction completed');
+        _CFG2.default.DEBUG && console.log('Transaction completed');
         var evt = (0, _Event.createEvent)('complete');
         try {
             me.dispatchEvent((0, _Event.createEvent)('__beforecomplete'));
@@ -19917,7 +19949,7 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
 
 IDBTransaction.prototype.abort = function () {
     var me = this;
-    _cfg2.default.DEBUG && console.log('The transaction was aborted', me);
+    _CFG2.default.DEBUG && console.log('The transaction was aborted', me);
     if (!this.__active) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
@@ -19958,7 +19990,7 @@ Object.assign(IDBTransaction.prototype, _eventtarget2.default.prototype);
 exports.default = IDBTransaction;
 module.exports = exports['default'];
 
-},{"./DOMException.js":358,"./Event.js":359,"./IDBObjectStore.js":365,"./IDBRequest.js":366,"./cfg.js":370,"./util.js":374,"eventtarget":299}],368:[function(require,module,exports){
+},{"./CFG.js":358,"./DOMException.js":359,"./Event.js":360,"./IDBObjectStore.js":366,"./IDBRequest.js":367,"./util.js":374,"eventtarget":299}],369:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -20490,7 +20522,7 @@ exports.isKeyInRange = isKeyInRange;
 exports.findMultiEntryMatches = findMultiEntryMatches;
 exports.default = Key;
 
-},{"./DOMException.js":358,"./util.js":374}],369:[function(require,module,exports){
+},{"./DOMException.js":359,"./util.js":374}],370:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -20863,39 +20895,7 @@ exports.encode = encode;
 exports.decode = decode;
 exports.default = Sca;
 
-},{"./util.js":374,"atob":2,"w3c-blob":350}],370:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-var map = {};
-var CFG = {};
-
-['DEBUG', // boolean
-'cursorPreloadPackSize', // 100
-'win', // (window on which there may be an `openDatabase` method (if any)
-//  for WebSQL; the browser throws if attempting to call
-//  `openDatabase` without the window)
-// See optional dynamic `System.import()` loading API (shimIndexedDB.__setUnicodeIdentifiers)
-//    of these large regular expression strings:
-'UnicodeIDStart', // See `src/UnicodeIdentifiers.js`
-'UnicodeIDContinue' // See `src/UnicodeIdentifiers.js`
-].forEach(function (prop) {
-    Object.defineProperty(CFG, prop, {
-        get: function get() {
-            return map[prop];
-        },
-        set: function set(val) {
-            map[prop] = val;
-        }
-    });
-});
-
-exports.default = CFG;
-module.exports = exports['default'];
-
-},{}],371:[function(require,module,exports){
+},{"./util.js":374,"atob":2,"w3c-blob":350}],371:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -20910,18 +20910,18 @@ var _setGlobalVars = require('./setGlobalVars.js');
 
 var _setGlobalVars2 = _interopRequireDefault(_setGlobalVars);
 
-var _cfg = require('./cfg.js');
+var _CFG = require('./CFG.js');
 
-var _cfg2 = _interopRequireDefault(_cfg);
+var _CFG2 = _interopRequireDefault(_CFG);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-_cfg2.default.win = { openDatabase: _websql2.default }; /* globals GLOBAL */
+_CFG2.default.win = { openDatabase: _websql2.default }; /* globals GLOBAL */
 
 exports.default = _setGlobalVars2.default;
 module.exports = exports['default'];
 
-},{"./cfg.js":370,"./setGlobalVars.js":373,"websql":352}],372:[function(require,module,exports){
+},{"./CFG.js":358,"./setGlobalVars.js":373,"websql":352}],372:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -21277,7 +21277,7 @@ function validateKeyLength(key) {
 exports.default = polyfill;
 module.exports = exports['default'];
 
-},{"./DOMException.js":358,"./Key.js":368}],373:[function(require,module,exports){
+},{"./DOMException.js":359,"./Key.js":369}],373:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -21322,9 +21322,9 @@ var _polyfill = require('./polyfill.js');
 
 var _polyfill2 = _interopRequireDefault(_polyfill);
 
-var _cfg = require('./cfg.js');
+var _CFG = require('./CFG.js');
 
-var _cfg2 = _interopRequireDefault(_cfg);
+var _CFG2 = _interopRequireDefault(_CFG);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -21365,7 +21365,7 @@ function setGlobalVars(idb) {
     shim('shimIndexedDB', _IDBFactory.shimIndexedDB);
     if (IDB.shimIndexedDB) {
         IDB.shimIndexedDB.__useShim = function () {
-            if (_cfg2.default.win.openDatabase !== undefined) {
+            if (_CFG2.default.win.openDatabase !== undefined) {
                 // Polyfill ALL of IndexedDB, using WebSQL
                 shim('indexedDB', _IDBFactory.shimIndexedDB);
                 shim('IDBFactory', _IDBFactory.IDBFactory);
@@ -21386,10 +21386,10 @@ function setGlobalVars(idb) {
         };
 
         IDB.shimIndexedDB.__debug = function (val) {
-            _cfg2.default.DEBUG = val;
+            _CFG2.default.DEBUG = val;
         };
         IDB.shimIndexedDB.__setConfig = function (prop, val) {
-            _cfg2.default[prop] = val;
+            _CFG2.default[prop] = val;
         };
         IDB.shimIndexedDB.__setUnicodeIdentifiers = function (ui) {
             this.__setConfig('UnicodeIDStart', ui.UnicodeIDStart);
@@ -21416,8 +21416,12 @@ function setGlobalVars(idb) {
     )) {
             poorIndexedDbSupport = true;
         }
+    _CFG2.default.DEFAULT_DB_SIZE = ( // Safari currently requires larger size: (We don't need a larger size for Node as node-websql doesn't use this info)
+    // https://github.com/axemclion/IndexedDBShim/issues/41
+    // https://github.com/axemclion/IndexedDBShim/issues/115
+    typeof navigator !== 'undefined' && navigator.userAgent.indexOf('Safari') > -1 && navigator.userAgent.indexOf('Chrome') === -1 ? 25 : 4) * 1024 * 1024;
 
-    if ((IDB.indexedDB === undefined || !IDB.indexedDB || poorIndexedDbSupport) && _cfg2.default.win.openDatabase !== undefined) {
+    if ((IDB.indexedDB === undefined || !IDB.indexedDB || poorIndexedDbSupport) && _CFG2.default.win.openDatabase !== undefined) {
         IDB.shimIndexedDB.__useShim();
     } else {
         IDB.IDBDatabase = IDB.IDBDatabase || IDB.webkitIDBDatabase;
@@ -21432,7 +21436,7 @@ exports.default = setGlobalVars;
 module.exports = exports['default'];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./Event.js":359,"./IDBCursor.js":360,"./IDBDatabase.js":361,"./IDBFactory.js":362,"./IDBIndex.js":363,"./IDBKeyRange.js":364,"./IDBObjectStore.js":365,"./IDBRequest.js":366,"./IDBTransaction.js":367,"./cfg.js":370,"./polyfill.js":372,"babel-polyfill":3}],374:[function(require,module,exports){
+},{"./CFG.js":358,"./Event.js":360,"./IDBCursor.js":361,"./IDBDatabase.js":362,"./IDBFactory.js":363,"./IDBIndex.js":364,"./IDBKeyRange.js":365,"./IDBObjectStore.js":366,"./IDBRequest.js":367,"./IDBTransaction.js":368,"./polyfill.js":372,"babel-polyfill":3}],374:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -21444,9 +21448,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 var _DOMException = require('./DOMException.js');
 
-var _cfg = require('./cfg.js');
+var _CFG = require('./CFG.js');
 
-var _cfg2 = _interopRequireDefault(_cfg);
+var _CFG2 = _interopRequireDefault(_CFG);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -21673,9 +21677,9 @@ function isIdentifier(item) {
     //   expression for identifiers, but these can be passed in, using the expressions
     //   found at https://gist.github.com/brettz9/b4cd6821d990daa023b2e604de371407
     // ID_Start (includes Other_ID_Start)
-    var UnicodeIDStart = _cfg2.default.UnicodeIDStart || '[$A-Z_a-z]';
+    var UnicodeIDStart = _CFG2.default.UnicodeIDStart || '[$A-Z_a-z]';
     // ID_Continue (includes Other_ID_Continue)
-    var UnicodeIDContinue = _cfg2.default.UnicodeIDContinue || '[$0-9A-Z_a-z]';
+    var UnicodeIDContinue = _CFG2.default.UnicodeIDContinue || '[$0-9A-Z_a-z]';
     var IdentifierStart = '(?:' + UnicodeIDStart + '|[$_]|\\\\' + UnicodeEscapeSequence + ')';
     var IdentifierPart = '(?:' + UnicodeIDContinue + '|[$_]|\\\\' + UnicodeEscapeSequence + '|\\u200C|\\u200D)';
     return new RegExp('^' + IdentifierStart + IdentifierPart + '*$').test(item);
@@ -21712,5 +21716,5 @@ exports.throwIfNotClonable = throwIfNotClonable;
 exports.defineReadonlyProperties = defineReadonlyProperties;
 exports.isValidKeyPath = isValidKeyPath;
 
-},{"./DOMException.js":358,"./cfg.js":370}]},{},[371])(371)
+},{"./CFG.js":358,"./DOMException.js":359}]},{},[371])(371)
 });

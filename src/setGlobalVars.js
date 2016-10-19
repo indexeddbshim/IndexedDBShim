@@ -9,7 +9,7 @@ import shimIDBIndex from './IDBIndex.js';
 import shimIDBTransaction from './IDBTransaction.js';
 import shimIDBDatabase from './IDBDatabase.js';
 import polyfill from './polyfill.js';
-import CFG from './cfg.js';
+import CFG from './CFG.js';
 
 const glob = typeof global !== 'undefined' ? global : (typeof window !== 'undefined' ? window : self);
 glob._babelPolyfill = false; // http://stackoverflow.com/questions/31282702/conflicting-use-of-babel-register
@@ -104,6 +104,14 @@ function setGlobalVars (idb) {
     )) {
         poorIndexedDbSupport = true;
     }
+    CFG.DEFAULT_DB_SIZE = (
+        ( // Safari currently requires larger size: (We don't need a larger size for Node as node-websql doesn't use this info)
+            // https://github.com/axemclion/IndexedDBShim/issues/41
+            // https://github.com/axemclion/IndexedDBShim/issues/115
+            typeof navigator !== 'undefined' &&
+            navigator.userAgent.indexOf('Safari') > -1 &&
+            navigator.userAgent.indexOf('Chrome') === -1
+        ) ? 25 : 4) * 1024 * 1024;
 
     if ((IDB.indexedDB === undefined || !IDB.indexedDB || poorIndexedDbSupport) && CFG.win.openDatabase !== undefined) {
         IDB.shimIndexedDB.__useShim();

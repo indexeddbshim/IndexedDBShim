@@ -4,7 +4,7 @@ import * as util from './util.js';
 import Key from './Key.js';
 import {setSQLForRange, IDBKeyRange} from './IDBKeyRange.js';
 import Sca from './Sca.js';
-import CFG from './cfg.js';
+import CFG from './CFG.js';
 
 /**
  * IDB Index
