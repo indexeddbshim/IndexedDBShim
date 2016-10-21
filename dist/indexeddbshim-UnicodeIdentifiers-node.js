@@ -39,14 +39,10 @@ require("regenerator-runtime/runtime");
 
 require("core-js/fn/regexp/escape");
 
-/* eslint max-len: 0 */
-
 if (global._babelPolyfill) {
   throw new Error("only one instance of babel-polyfill is allowed");
 }
 global._babelPolyfill = true;
-
-// Should be removed in the next major release:
 
 var DEFINE_PROPERTY = "defineProperty";
 function define(O, key, value) {
@@ -6231,7 +6227,8 @@ var DOMException, Proxy, Event;
       } else {
         error.message = 'Uncaught exception: ' + err.message;
       }
-      if (window.onerror) window.onerror(error.message, error.fileName, error.lineNumber, null, error);
+      // See https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onerror
+      if (window.onerror) window.onerror(error.message, err.fileName, err.lineNumber, null, error);
       console.log(err);
     }
   }
@@ -6374,7 +6371,9 @@ var DOMException, Proxy, Event;
           // Our own properties
           '_dispatched', '_stopImmediatePropagation', '_stopPropagation'
         ].concat(this._extraProperties || []).forEach(function (prop) {
-          eventProxy[prop] = ev[prop];
+          if (prop in ev) {
+            eventProxy[prop] = ev[prop];
+          }
         });
       }
 
@@ -6421,14 +6420,14 @@ var DOMException, Proxy, Event;
 
           eventProxy.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke early listeners
           this.invokeCurrentListeners(this._earlyListeners, eventProxy, type);
-          if (!this.getParent) {
+          if (!this.__getParent) {
             eventProxy.eventPhase = phases.AT_TARGET;
             return this._dispatchEvent(eventProxy, false);
           }
 
           var par = this;
           var root = this;
-          while ((par = par.getParent()) !== null) {
+          while (par.__getParent && (par = par.__getParent()) !== null) {
             par._child = root;
             root = par;
           }
@@ -6460,15 +6459,11 @@ var DOMException, Proxy, Event;
           if (eventProxy._stopPropagation) {
             return continueEventDispatch();
           }
-          var parent = this.getParent;
+          var parent = this.__getParent && this.__getParent();
           if (!parent) {
             return continueEventDispatch();
           }
-          parent = this.getParent();
-          this.invokeCurrentListeners(this._listeners, eventProxy, type, true);
-          if (!parent) {
-            return continueEventDispatch();
-          }
+          parent.invokeCurrentListeners(parent._listeners, eventProxy, type, true);
           parent._defaultSync = me._defaultSync;
           return parent._dispatchEvent(eventProxy, false);
       }
@@ -18262,7 +18257,7 @@ function cmp(key1, key2) {
 IDBFactory.prototype.cmp = cmp;
 
 /**
-* NON-STANDARD!! (Also may return outdated information)
+* NON-STANDARD!! (Also may return outdated information if a database has since been deleted)
 * @link https://www.w3.org/Bugs/Public/show_bug.cgi?id=16137
 * @link http://lists.w3.org/Archives/Public/public-webapps/2011JulSep/1537.html
 */
@@ -18587,7 +18582,7 @@ IDBIndex.prototype.count = function (query) {
 };
 
 IDBIndex.prototype.__renameIndex = function (storeName, oldName, newName) {
-    var colInfoToPreserveArr = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+    var colInfoToPreserveArr = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
 
     var newNameType = 'BLOB';
     var colNamesToPreserve = colInfoToPreserveArr.map(function (colInfo) {

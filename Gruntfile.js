@@ -179,7 +179,7 @@ module.exports = function (grunt) {
             all: {
                 options: {
                     username: 'indexeddbshim',
-                    key: saucekey,
+                    key: function () { return saucekey; }, // Workaround for https://github.com/axemclion/grunt-saucelabs/issues/215
                     tags: ['master'],
                     urls: ['http://127.0.0.1:9999/tests-qunit/index.html'],
                     testTimeout: 8000,
