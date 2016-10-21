@@ -273,7 +273,7 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
         }
         const err = findError(args);
         calledDbCreateError = true;
-        const evt = createEvent('error', args);
+        const evt = createEvent('error', args, {bubbles: true, cancelable: true}); // http://stackoverflow.com/questions/40165909/to-where-do-idbopendbrequest-error-events-bubble-up/40181108#40181108
         req.__readyState = 'done';
         req.__error = err || DOMException;
         req.dispatchEvent(evt);
@@ -286,11 +286,12 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
                 for (let i = 0; i < data.rows.length; i++) {
                     dbNames.push(data.rows.item(i).name);
                 }
+                req.__result = dbNames;
+                const e = createEvent('success'); // http://stackoverflow.com/questions/40165909/to-where-do-idbopendbrequest-error-events-bubble-up/40181108#40181108
+                req.dispatchEvent(e);
             }, dbGetDatabaseNamesError);
         }, dbGetDatabaseNamesError);
     }, dbGetDatabaseNamesError);
-    const e = createEvent('success');
-    req.dispatchEvent(e);
     return req;
 };
 

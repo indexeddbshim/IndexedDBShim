@@ -34,5 +34,10 @@
             nextTest();
             done();
         };
+        req.onerror = function () {
+            assert.ok(false, 'Unexpected error retrieving indexedDB.webkitGetDatabaseName().');
+            nextTest();
+            done();
+        };
     });
 }());
