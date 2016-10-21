@@ -302,6 +302,9 @@
 - Testing (Grunt): Remove now redundant `sourceMappingURL`, use
     `sourceMapName` per current specs
 - Testing (Grunt): Add `uglify` to grunt watch task
+- Testing (Grunt): Allow use of own sauce access key
+- Testing (Grunt): Add task to avoid saucelabs when running PhantomJS
+- Testing (Grunt): Add assorted testing tasks
 - Testing (PhantomJS): Deal with PhantomJS error
 - Testing (QUnit): Upgrade QUnit refs
 - Testing (QUnit): Allow QUnit tests to pass when "Check for globals" enabled

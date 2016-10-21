@@ -2,10 +2,9 @@
 'use strict';
 
 module.exports = function (grunt) {
-    let saucekey = null;
-    if (typeof process.env.SAUCE_ACCESS_KEY !== 'undefined') {
-        saucekey = process.env.SAUCE_ACCESS_KEY;
-    }
+    const sauceuser = typeof process.env.SAUCE_USERNAME !== 'undefined' ? process.env.SAUCE_USERNAME : 'indexeddbshim';
+    const saucekey = typeof process.env.SAUCE_ACCESS_KEY !== 'undefined' ? process.env.SAUCE_ACCESS_KEY : null;
+
     const pkg = require('./package.json');
     bumpVersion(pkg);
     grunt.initConfig({
@@ -178,7 +177,7 @@ module.exports = function (grunt) {
         'saucelabs-qunit': {
             all: {
                 options: {
-                    username: 'indexeddbshim',
+                    username: sauceuser,
                     key: function () { return saucekey; }, // Workaround for https://github.com/axemclion/grunt-saucelabs/issues/215
                     tags: ['master'],
                     urls: ['http://127.0.0.1:9999/tests-qunit/index.html'],
@@ -228,6 +227,8 @@ module.exports = function (grunt) {
     const testJobs = ['build', 'connect'];
     grunt.registerTask('nodequnit', testJobs.concat('node-qunit'));
     grunt.registerTask('mocha', ['mochaTest']); // clean:mochaTests isn't working here as locked (even with force:true on it or grunt-wait) so we do in package.json
+
+    grunt.registerTask('nosauce-qunit', testJobs.concat('qunit'));
 
     if (saucekey !== null) {
         testJobs.push('saucelabs-qunit');
