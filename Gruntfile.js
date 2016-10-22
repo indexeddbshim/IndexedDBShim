@@ -190,14 +190,30 @@ module.exports = function (grunt) {
                         browserName: 'chrome',
                         platform: 'Windows 10',
                         version: '54.0'
-                        /*
+                    /* }, { // Fails non-standard `webkitGetDatabaseNames` test
+                        browserName: 'firefox',
+                        platform: 'Windows 10',
+                        version: '49.0'
+                    }, { // Timing out
+                        browserName: 'Safari',
+                        appiumVersion: '1.5.2',
+                        deviceName: 'iPhone 6',
+                        deviceOrientation: 'portrait',
+                        platformName: 'iOS',
+                        platformVersion: '9.3',
+                        name: 'iPhone 6'
+                    }, { // Timing out
+                        browserName: 'microsoftedge',
+                        platform: 'Windows 10',
+                        version: '14'
+                    }, { // Timing out
                         browserName: 'safari',
-                        platform: 'Windows 2008',
-                        version: '5'
-                    }, {
+                        platform: 'MacOS El Capitan 10.11',
+                        version: '9'
+                    }, { // Timing out
+                        platform: 'Windows 7',
                         browserName: 'opera',
-                        version: '12'
-                        */
+                        version: '12' */
                     }]
                 }
             }
