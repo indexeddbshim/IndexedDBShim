@@ -242,20 +242,20 @@ All QUnit-based tests should pass in modern browsers.
 All Mocha-based browser tests should pass except for one test having
 a [problem in Firefox](https://github.com/axemclion/IndexedDBShim/issues/250).
 
-#### Headless browser unit testing
+#### Automated browser unit testing
 
 Follow all of the steps above to build the project, then run `npm test`
 or `npm run sauce-qunit` (or `npm run phantom-qunit` or
 `grunt phantom-qunit` to avoid using Saucelabs when you have
 credentials set up as environmental variables) to run the unit tests.
 
-The tests are run in [PhantomJS](http://phantomjs.org/),
-which is a headless WebKit browser.
+Note that when not running Saucelabs, the tests are run in
+[PhantomJS](http://phantomjs.org/), which is a headless WebKit browser.
 
-Note that when not running Saucelabs, the older PhantomJS version
-has problems with two tests: `index.openCursor(range)` and
+The older PhantomJS version has problems with two tests, however:
+`index.openCursor(range)` and
 `IDBObjectStore.openKeyCursor` due apparently to
-a bug with the browser used in the older PhantomJS implementation
+a bug with the WebKit browser used in the older PhantomJS implementation
 (but the tests themselves report as having such problems).
 
 #### Manual browser testing
