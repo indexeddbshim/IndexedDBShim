@@ -185,7 +185,7 @@ module.exports = function (grunt) {
                     browsers: [{
                         browserName: 'chrome',
                         platform: 'Windows 10',
-                        version: '51.0'
+                        version: '54.0'
                         /*
                         browserName: 'safari',
                         platform: 'Windows 2008',

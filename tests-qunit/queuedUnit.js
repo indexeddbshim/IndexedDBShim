@@ -1,12 +1,12 @@
 /* eslint-disable no-var */
 /**
  * Ideally unit tests should be independent, but there are some cases where you
- * really want those tests to be executed one after the other Here is some code
+ * really want those tests to be executed one after the other. Here is some code
  * that does exactly that - a wrapper on top of QUnit.
  *
- * Usage Instead of asyncTest, call queuedAsyncTest (same params) Instead of
- * module(), call queuedModule After a test is over and the next test has to
- * run, call nextTest()
+ * Usage: Instead of `asyncTest`, call `queuedAsyncTest` (same params) Instead of
+ * `module()`, call `queuedModule`. After a test is over and the next test has to
+ * run, call `nextTest()`
  */
 (function (window, console) {
     var testQueue = [], currentModule = null;
@@ -78,6 +78,34 @@
             throw new Error('Replace 2nd arg to QUnit.test with `assert.expect(2nd arg val)`; test name: ' + current.name);
         }
     }
+
+    // Following for Saucelabs as per https://github.com/axemclion/grunt-saucelabs#test-result-details-with-qunit
+    var log = [];
+    var testName; // eslint-disable-line no-unused-vars
+    QUnit.done(function (testResults) {
+        var tests = [];
+        for (var i = 0, len = log.length; i < len; i++) {
+            var details = log[i];
+            tests.push({
+                name: details.name,
+                result: details.result,
+                expected: details.expected,
+                actual: details.actual,
+                source: details.source
+            });
+        }
+        testResults.tests = tests;
+
+        window.global_test_results = testResults;
+    });
+    QUnit.testStart(function (testDetails) {
+        QUnit.log(function (details) {
+            if (!details.result) {
+                details.name = testDetails.name;
+                log.push(details);
+            }
+        });
+    });
 
     window.queuedAsyncTest = queuedAsyncTest;
     window.queuedModule = queuedModule;
