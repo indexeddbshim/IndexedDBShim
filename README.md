@@ -250,7 +250,9 @@ a [problem in Firefox](https://github.com/axemclion/IndexedDBShim/issues/250).
 Follow all of the steps above to build the project, then run `npm test`
 (or `npm run phantom-qunit` or `grunt phantom-qunit`) to run the unit
 tests.  The tests are run in [PhantomJS](http://phantomjs.org/),
-which is a headless WebKit browser.
+which is a headless WebKit browser. If you have a Saucelabs account,
+you can run `npm run sauce-qunit` (or it will default to the regular
+PhantomJS tests).
 
 #### Manual browser testing
 

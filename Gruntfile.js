@@ -228,7 +228,7 @@ module.exports = function (grunt) {
     grunt.registerTask('nodequnit', testJobs.concat('node-qunit'));
     grunt.registerTask('mocha', ['mochaTest']); // clean:mochaTests isn't working here as locked (even with force:true on it or grunt-wait) so we do in package.json
 
-    grunt.registerTask('nosauce-qunit', testJobs.concat('qunit'));
+    grunt.registerTask('phantom-qunit', testJobs.concat('qunit'));
 
     if (saucekey !== null) {
         testJobs.push('saucelabs-qunit');
@@ -236,7 +236,7 @@ module.exports = function (grunt) {
         testJobs.push('qunit');
     }
 
-    grunt.registerTask('phantom-qunit', testJobs);
+    grunt.registerTask('sauce-qunit', testJobs);
 
     grunt.registerTask('clean-mocha', ['clean:mochaTests', 'clean:sysDB']);
     grunt.registerTask('clean-qunit', ['clean:qunitTests', 'clean:sysDB']);

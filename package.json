@@ -13,8 +13,8 @@
     "dev-node": "grunt dev-node",
     "clean": "grunt clean",
     "w3c-build": "grunt clean-w3c && node test-support/node-buildjs",
+    "sauce-qunit": "grunt sauce-qunit",
     "phantom-qunit": "grunt phantom-qunit",
-    "nosauce-phantom-qunit": "grunt nosauce-qunit",
 
     "test": "npm run phantom-qunit",
     "qunit": "grunt clean-qunit && grunt nodequnit && grunt clean-qunit",
