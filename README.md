@@ -271,7 +271,7 @@ the testing since otherwise, it will only test the native implementation.
 
 To run the Node tests, run the following:
 
-1. `npm run qunit` - The full test suite sometimes
+1. `npm run node-qunit` - The full test suite sometimes
     [does not complete execution](https://github.com/axemclion/IndexedDBShim/issues/251).
 2. `npm run mocha`
 3. `npm run tests-polyfill` (or its components `npm run fake`,
