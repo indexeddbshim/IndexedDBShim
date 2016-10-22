@@ -237,10 +237,7 @@ you wish to delete them all manually, run `npm run clean`.
 
 ### Browser testing
 
-All QUnit-based browser tests should pass except one
-`index.openCursor(range)` test when run on PhantomJS due apparently to
-a bug with the PhantomJS implementation (but the test reports itself
-as having this problem).
+All QUnit-based tests should pass in modern browsers.
 
 All Mocha-based browser tests should pass except for one test having
 a [problem in Firefox](https://github.com/axemclion/IndexedDBShim/issues/250).
@@ -248,11 +245,18 @@ a [problem in Firefox](https://github.com/axemclion/IndexedDBShim/issues/250).
 #### Headless browser unit testing
 
 Follow all of the steps above to build the project, then run `npm test`
-(or `npm run phantom-qunit` or `grunt phantom-qunit`) to run the unit
-tests.  The tests are run in [PhantomJS](http://phantomjs.org/),
-which is a headless WebKit browser. If you have a Saucelabs account,
-you can run `npm run sauce-qunit` (or it will default to the regular
-PhantomJS tests).
+or `npm run sauce-qunit` (or `npm run phantom-qunit` or
+`grunt phantom-qunit` to avoid using Saucelabs when you have
+credentials set up as environmental variables) to run the unit tests.
+
+The tests are run in [PhantomJS](http://phantomjs.org/),
+which is a headless WebKit browser.
+
+Note that when not running Saucelabs, the older PhantomJS version
+has problems with two tests: `index.openCursor(range)` and
+`IDBObjectStore.openKeyCursor` due apparently to
+a bug with the browser used in the older PhantomJS implementation
+(but the tests themselves report as having such problems).
 
 #### Manual browser testing
 
@@ -276,7 +280,8 @@ To run the Node tests, run the following:
 2. `npm run mocha`
 3. `npm run tests-polyfill` (or its components `npm run fake`,
     `npm run mock`). Note that none of these are currently
-    passing in full, however.
+    passing in full, however. You can run `npm run good` to see the
+    ones which ought to remain passing.
 4. `npm run w3c` (you must first run
     `git submodule update --init --recursive` if you have not already
     recursively cloned the repository). Note that some of these tests
