@@ -182,6 +182,10 @@ module.exports = function (grunt) {
                     tags: ['master'],
                     urls: ['http://127.0.0.1:9999/tests-qunit/index.html'],
                     testTimeout: 8000,
+                    onTestComplete: function (result, callback) {
+                        console.log(result);
+                        callback(null);
+                    },
                     browsers: [{
                         browserName: 'chrome',
                         platform: 'Windows 10',

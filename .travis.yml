@@ -1,7 +1,18 @@
----
-before_install: if [[ `npm -v` != 3* ]]; then npm i -g npm@3; fi
+sudo: false
+cache:
+  directories:
+    - travis_phantomjs
+before_install:
+  # Upgrade PhantomJS to v2.1.1.
+  - "export PHANTOMJS_VERSION=2.1.1"
+  - "export PATH=$PWD/travis_phantomjs/phantomjs-$PHANTOMJS_VERSION-linux-x86_64/bin:$PATH"
+  - "if [ $(phantomjs --version) != $PHANTOMJS_VERSION ]; then rm -rf $PWD/travis_phantomjs; mkdir -p $PWD/travis_phantomjs; fi"
+  - "if [ $(phantomjs --version) != $PHANTOMJS_VERSION ]; then wget https://github.com/Medium/phantomjs/releases/download/v$PHANTOMJS_VERSION/phantomjs-$PHANTOMJS_VERSION-linux-x86_64.tar.bz2 -O $PWD/travis_phantomjs/phantomjs-$PHANTOMJS_VERSION-linux-x86_64.tar.bz2; fi"
+  - "if [ $(phantomjs --version) != $PHANTOMJS_VERSION ]; then tar -xvf $PWD/travis_phantomjs/phantomjs-$PHANTOMJS_VERSION-linux-x86_64.tar.bz2 -C $PWD/travis_phantomjs; fi"
+  - "phantomjs --version"
+  - if [[ `npm -v` != 3* ]]; then npm i -g npm@3; fi
 before_script:
-- ./travis.sh before
+- "./travis.sh before"
 - npm install -g grunt-cli
 node_js:
 - 6.2.2
@@ -10,15 +21,9 @@ notifications:
 language: node_js
 env:
   global:
-  - secure: |-
-      INvIY8gsdXFMcFPI9gQumHjdWDQUFTY/7J4UwHynXRaWRk7fvGFkcKEUvHsr
-      E2p4SE1Qor5WXAgbUUoffXcvd2LACozVI03DlC/fV+kkA7I6qxtdootkLyXM
-      2vpAExSVdxL8bwee0BzSRapE0b2jrK8n7IvCogflYeNvTBp5h8Y=
-  - secure: |-
-      fMzmFeFRu8Y9M5KNaxHM9nmnjIMvRvRGJsXeTCB9m/oKVBrkcwP54Y8RWO6Z
-      EmtsKn2TQGm7+hsBXpKcmTBFdhiB10gQQg2/jw+RtWnMEY7xXB2Mts6FKRXy
-      ZcG/WV2PBZ+wnvQjEwMfmL6nSSDo3hIgmJOkbu0QcBpTeu44B3Y=
+  - secure: "fsW/dvC3qp3tSEKjmFgJJkt3rw3zMmmFj1QNIx6ZTMvzWN7X+NDb3BSFpFSzM5YoJB3RuVxhTCnIekuf3Ekh4ykQ6amWs2Es/EFdS++d1xwnir2EseocpmfTs32GD47obVnUmkbS0qMCZkTHU12PGrD8HOD46PKtBnMQ94Z8kOY="
+  - secure: "aPsjc1RrkRL8C7G9KX2XtwgHRXTQI3lXzUh6xTZRMCPrLXyDvEw+qFgZc/yyXTDwk1h+hop47njFpw2j6SNNR59ZjNHLocmq4ULr+GX6qjLmIwwUnfjDXnF/T9idhTk1G9zIOSP+Fl0mN2Oj2szqoJgoKY9jWQrZxpO7pnSj+2s="
 after_failure:
-- ./travis.sh revert
+- "./travis.sh revert"
 after_success:
-- ./travis.sh merge
+- "./travis.sh merge"

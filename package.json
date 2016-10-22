@@ -16,7 +16,7 @@
     "sauce-qunit": "grunt sauce-qunit",
     "phantom-qunit": "grunt phantom-qunit",
 
-    "test": "npm run phantom-qunit",
+    "test": "npm run sauce-qunit",
     "qunit": "grunt clean-qunit && grunt nodequnit && grunt clean-qunit",
     "mocha": "grunt clean-mocha && grunt mocha && grunt clean-mocha",
     "fake": "grunt clean-fake && mocha tests-polyfill/fakeIndexedDB/fakeIndexedDB.js && grunt clean-fake",
