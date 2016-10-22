@@ -184,11 +184,11 @@ queuedAsyncTest('Creating Indexes', function (assert) {
         try {
             indexCursorReq = index.openCursor(kr);
         } catch (err) {
-            if (err.name === 'DataError') { // PhantomJS 2.2.1 having issue here
+            if (err.name === 'DataError') { // PhantomJS having issue here
                 // as mistakenly confusing supplied key range here with supplying
                 // key to put/add (when in-line keys are used)
                 db.close();
-                assert.ok(false, 'Cursor update failed; possibly PhantomJS 2.2.1 bug');
+                assert.ok(false, 'Cursor update failed; possibly PhantomJS bug');
                 nextTest();
                 done();
                 return;

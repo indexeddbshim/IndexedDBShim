@@ -32,7 +32,7 @@ function shim (name, value) {
             }
             Object.defineProperty(IDB, name, desc);
         } catch (e) {
-            // With `indexedDB`, PhantomJS 2.2.1 fails here and below but
+            // With `indexedDB`, PhantomJS fails here and below but
             //  not above, while Chrome is reverse (and Firefox doesn't
             //  get here since no WebSQL to use for shimming)
         }
