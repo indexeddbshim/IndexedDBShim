@@ -25,7 +25,7 @@ var sample = (function () { // eslint-disable-line no-unused-vars
             // Ensuring a unique integer everytime, for the sake of index get
             var r;
             do {
-                r = parseInt(Math.random() * (arg || 100), 10);
+                r = parseInt(Math.random() * (arg || 100000), 10);
             }
             while (generatedNumbers[r]);
             generatedNumbers[r] = true;
