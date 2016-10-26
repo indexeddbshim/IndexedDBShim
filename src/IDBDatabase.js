@@ -136,7 +136,7 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
     if (storeNames.length === 0) {
         throw createDOMException('InvalidAccessError', 'No object store names were specified');
     }
-
+    // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
     return new IDBTransaction(this, storeNames, mode);
 };
 IDBDatabase.prototype.toString = function () {

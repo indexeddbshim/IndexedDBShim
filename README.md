@@ -166,7 +166,8 @@ Here is a summary of known issues to resolve:
 3. `close` and `blocked` event support (reconcile with existing `versionchange`)
 4. `eval` is currently in use (in `src/Sca.js`)
 5. Add new Binary/ArrayBuffer/Views on buffers (TypedArray or DataView) support
-6. Certain more recent APIs are missing: `IDBCursor.continuePrimaryKey`,
+6. Support cyclic objects (via Structured Cloning Algorithm)
+7. Certain more recent APIs are missing: `IDBCursor.continuePrimaryKey`,
     `IDBIndex` (`getAll`, `getAllKeys`), `IDBObjectStore` (`getAll`,
     `getAllKeys`, `getKey`).
 

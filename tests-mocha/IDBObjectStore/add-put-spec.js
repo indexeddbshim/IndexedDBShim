@@ -85,7 +85,6 @@
 
                 tx.oncomplete = function () {
                     expect(allData).to.have.lengthOf(3);
-                    console.log(allData);
 
                     // The data should have been cloned
                     expect(allData[0].value).not.to.equal(stringIndex);

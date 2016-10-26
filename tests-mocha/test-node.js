@@ -17,7 +17,7 @@ window.onerror = function () {
 };
 
 (function () {
-    const setGlobalVars = require('../dist/indexeddbshim-node.min.js');
+    const setGlobalVars = require('../dist/indexeddbshim-node.js');
     setGlobalVars();
 
     require('./test-environment.js');

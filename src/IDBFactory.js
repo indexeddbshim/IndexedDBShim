@@ -1,4 +1,4 @@
-import {createEvent, ShimEvent, ProxyPolyfill, IDBVersionChangeEvent} from './Event.js';
+import {createEvent, ShimEvent, IDBVersionChangeEvent} from './Event.js';
 import {findError, createDOMException, DOMException} from './DOMException.js';
 import {IDBOpenDBRequest, IDBRequest} from './IDBRequest.js';
 import * as util from './util.js';
@@ -35,7 +35,7 @@ function createSysDB (success, failure) {
  * @constructor
  */
 function IDBFactory () {
-    this.modules = {DOMException, Event: typeof Event !== 'undefined' ? Event : ShimEvent, ShimEvent, ProxyPolyfill, IDBFactory};
+    this.modules = {DOMException, Event: typeof Event !== 'undefined' ? Event : ShimEvent, ShimEvent, IDBFactory};
 }
 
 /**
@@ -65,7 +65,7 @@ IDBFactory.prototype.open = function (name, version) {
         }
         const err = findError(args);
         calledDbCreateError = true;
-        const evt = createEvent('error', args);
+        const evt = createEvent('error', args, {bubbles: true});
         req.__readyState = 'done';
         req.__error = err || DOMException;
         req.dispatchEvent(evt);
@@ -93,7 +93,7 @@ IDBFactory.prototype.open = function (name, version) {
                             systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [version, name], function () {
                                 const e = new IDBVersionChangeEvent('upgradeneeded', {oldVersion, newVersion: version});
                                 req.__transaction = req.result.__versionTransaction = new IDBTransaction(req.result, req.result.objectStoreNames, 'versionchange');
-                                req.transaction.__addToTransactionQueue(function onupgradeneeded (tx, args, success) {
+                                req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded (tx, args, success, error) {
                                     req.dispatchEvent(e);
                                     success();
                                 });
@@ -159,7 +159,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         const err = findError(args);
         req.__readyState = 'done';
         req.__error = err || DOMException;
-        const e = createEvent('error', args);
+        const e = createEvent('error', args, {bubbles: true});
         req.dispatchEvent(e);
         calledDBError = true;
     }
@@ -168,6 +168,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         sysdb.transaction(function (systx) {
             systx.executeSql('DELETE FROM dbVersions WHERE name = ? ', [name], function () {
                 req.__result = undefined;
+                req.__readyState = 'done';
                 const e = new IDBVersionChangeEvent('success', {oldVersion: version, newVersion: null});
                 req.dispatchEvent(e);
             }, dbError);
@@ -287,6 +288,7 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
                     dbNames.push(data.rows.item(i).name);
                 }
                 req.__result = dbNames;
+                req.__readyState = 'done';
                 const e = createEvent('success'); // http://stackoverflow.com/questions/40165909/to-where-do-idbopendbrequest-error-events-bubble-up/40181108#40181108
                 req.dispatchEvent(e);
             }, dbGetDatabaseNamesError);

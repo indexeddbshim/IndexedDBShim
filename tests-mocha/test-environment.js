@@ -108,7 +108,7 @@
 
             if (env.isShimmed) {
                 // Use the shimmed Error & Event classes instead of the native ones
-                env.Event = shimIndexedDB.modules.ProxyPolyfill;
+                env.Event = shimIndexedDB.modules.ShimEvent;
                 env.DOMException = shimIndexedDB.modules.DOMException;
             }
 

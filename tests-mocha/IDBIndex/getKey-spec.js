@@ -774,8 +774,8 @@ describe('IDBIndex.getKey', function () {
                 err = e;
             }
 
-            expect(err).to.be.an.instanceOf(env.DOMException);
-            expect(err.name).to.equal('DataError');
+            expect(err).to.be.an.instanceOf(TypeError);
+            expect(err.name).to.equal('TypeError');
 
             db.close();
             done();

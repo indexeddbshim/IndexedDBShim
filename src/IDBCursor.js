@@ -351,6 +351,7 @@ IDBCursor.prototype.__continue = function (key, advanceContinue) {
     }
 
     me.__gotValue = false;
+    me.__req.__readyState = 'pending'; // Unset done flag
 
     me.__store.transaction.__pushToQueue(me.__req, function cursorContinue (tx, args, success, error, executeNextRequest) {
         function triggerSuccess (k, val, primKey) {

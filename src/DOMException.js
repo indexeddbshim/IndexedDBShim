@@ -10,23 +10,11 @@ function createNativeDOMException (name, message) {
 }
 
 /**
- * Creates a native DOMError, for browsers that support it
- * @returns {DOMError}
- */
-function createNativeDOMError (name, message) {
-    name = name || 'DOMError';
-    const e = new DOMError(name, message);
-    e.name === name || (e.name = name);
-    e.message === message || (e.message = message);
-    return e;
-}
-
-/**
  * Creates a generic Error object
  * @returns {Error}
  */
 function createError (name, message) {
-    const e = new Error(message);
+    const e = new Error(message); // DOMException uses the same `toString` as `Error`, so no need to add
     e.name = name || 'DOMException';
     e.message = message;
     return e;
@@ -78,7 +66,7 @@ function findError (args) {
     return err;
 };
 
-let test, useNativeDOMException = false, useNativeDOMError = false;
+let test, useNativeDOMException = false;
 
 // Test whether we can use the browser's native DOMException class
 try {
@@ -86,15 +74,6 @@ try {
     if (isErrorOrDOMErrorOrDOMException(test) && test.name === 'test name' && test.message === 'test message') {
         // Native DOMException works as expected
         useNativeDOMException = true;
-    }
-} catch (e) {}
-
-// Test whether we can use the browser's native DOMError class
-try {
-    test = createNativeDOMError('test name', 'test message');
-    if (isErrorOrDOMErrorOrDOMException(test) && test.name === 'test name' && test.message === 'test message') {
-        // Native DOMError works as expected
-        useNativeDOMError = true;
     }
 } catch (e) {}
 
@@ -113,20 +92,4 @@ if (useNativeDOMException) {
     };
 }
 
-// These are now unused, as the spec calls for DOMException instead
-let createDOMError, shimDOMError;
-if (useNativeDOMError) {
-    shimDOMError = DOMError;
-    createDOMError = function (name, message, error) {
-        logError(name, message, error);
-        return createNativeDOMError(name, message);
-    };
-} else {
-    shimDOMError = Error;
-    createDOMError = function (name, message, error) {
-        logError(name, message, error);
-        return createError(name, message);
-    };
-}
-
-export {logError, findError, shimDOMError as DOMError, shimDOMException as DOMException, createDOMException, createDOMError};
+export {logError, findError, shimDOMException as DOMException, createDOMException};
