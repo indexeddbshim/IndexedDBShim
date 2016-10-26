@@ -1,5 +1,5 @@
 import {createEvent} from './Event.js';
-import {logError, findError, DOMException, createDOMException} from './DOMException.js';
+import {logError, findError, createDOMException} from './DOMException.js';
 import {IDBRequest} from './IDBRequest.js';
 import * as util from './util.js';
 import IDBObjectStore from './IDBObjectStore.js';
@@ -26,8 +26,10 @@ function IDBTransaction (db, storeNames, mode) {
     this.__mode = mode;
     this.__db = db;
     this.__error = null;
+    this.__internal = false;
     this.onabort = this.onerror = this.oncomplete = null;
     this.__storeClones = {};
+    this.__setOptions({defaultSync: true});
 
     // Kick off the transaction as soon as all synchronous code is done.
     setTimeout(() => { this.__executeRequests(); }, 0);
@@ -51,26 +53,65 @@ IDBTransaction.prototype.__executeRequests = function () {
                 if (req) {
                     q.req = req; // Need to do this in case of cursors
                 }
+                if (q.req.__readyState === 'done') { // Avoid continuing with aborted requests
+                    return;
+                }
                 q.req.__readyState = 'done';
                 q.req.__result = result;
                 q.req.__error = null;
                 const e = createEvent('success');
-                q.req.dispatchEvent(e);
+                try { // Catching a `dispatchEvent` call is normally not possible for a standard `EventTarget`,
+                    // but we are using the `EventTarget` library's `__userErrorEventHandler` to override this
+                    // behavior for convenience in our internal calls
+                    me.__internal = true;
+                    me.__active = true;
+                    q.req.dispatchEvent(e);
+                    // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
+                } catch (err) {
+                    me.__abortTransaction(createDOMException('AbortError', 'A request was aborted.'));
+                    return;
+                }
                 executeNextRequest();
             }
 
             function error (...args /* tx, err */) {
+                if (me.__errored || me.__transactionFinished) {
+                    // We've already called "onerror", "onabort", or thrown within the transaction, so don't do it again.
+                    return;
+                }
+                if (q.req && q.req.__readyState === 'done') { // Avoid continuing with aborted requests
+                    return;
+                }
                 const err = findError(args);
-                try {
-                    // Fire an error event for the current IDBRequest
-                    q.req.__readyState = 'done';
-                    q.req.__error = err || DOMException;
-                    q.req.__result = undefined;
-                    const e = createEvent('error', err);
+                if (!q.req) {
+                    me.__abortTransaction(q.req.__error);
+                    return;
+                }
+                // Fire an error event for the current IDBRequest
+                q.req.__readyState = 'done';
+                q.req.__error = err;
+                q.req.__result = undefined;
+                q.req.addLateEventListener('error', function (e) {
+                    if (e.cancelable && e.defaultPrevented) {
+                        executeNextRequest();
+                    }
+                });
+                q.req.addDefaultEventListener('error', function () {
+                    me.__abortTransaction(q.req.__error);
+                });
+                let e;
+                try { // Catching a `dispatchEvent` call is normally not possible for a standard `EventTarget`,
+                    // but we are using the `EventTarget` library's `__userErrorEventHandler` to override this
+                    // behavior for convenience in our internal calls
+                    me.__internal = true;
+                    me.__active = true;
+                    e = createEvent('error', err, {bubbles: true, cancelable: true});
                     q.req.dispatchEvent(e);
-                } finally {
-                    // Fire an error event for the transaction
-                    transactionError(err);
+                    // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
+                } catch (handlerErr) {
+                    logError('Error', 'An error occurred in a handler attached to request chain', handlerErr); // We do nothing else with this `handlerErr` per spec
+                    e.preventDefault(); // Prevent 'error' default as steps indicate we should abort with `AbortError` even without cancellation
+                    me.__abortTransaction(createDOMException('AbortError', 'A request was aborted.'));
                 }
             }
 
@@ -80,12 +121,18 @@ IDBTransaction.prototype.__executeRequests = function () {
                     // All requests in the transaction are done
                     me.__requests = [];
                     if (me.__active) {
-                        me.__active = false;
                         transactionFinished();
                     }
                 } else {
                     try {
                         q = me.__requests[i];
+                        if (!q.req) {
+                            q.op(tx, q.args, executeNextRequest, error);
+                            return;
+                        }
+                        if (q.req.__readyState === 'done') { // Avoid continuing with aborted requests
+                            return;
+                        }
                         q.op(tx, q.args, success, error, executeNextRequest);
                     } catch (e) {
                         error(e);
@@ -121,42 +168,20 @@ IDBTransaction.prototype.__executeRequests = function () {
             }
             message += ' (' + errWebsql.message + ')--(' + errWebsql.code + ')';
             const err = createDOMException(name, message);
-            transactionError(err);
+            me.__abortTransaction(err);
         }
     );
 
-    function transactionError (err) {
-        logError('Error', 'An error occurred in a transaction', err);
-
-        if (me.__errored) {
-            // We've already called "onerror", "onabort", or thrown, so don't do it again.
-            return;
-        }
-
-        me.__errored = true;
-
-        if (!me.__active) {
-            // The transaction has already completed, so we can't call "onerror" or "onabort".
-            // So throw the error instead.
-            throw err;
-        }
-
-        try {
-            me.__error = err;
-            const evt = createEvent('error');
-            me.dispatchEvent(evt);
-            me.db.dispatchEvent(createEvent('error'));
-        } finally {
-            me.__storeClones = {};
-            me.abort();
-        }
-    }
-
     function transactionFinished () {
+        me.__active = false;
         CFG.DEBUG && console.log('Transaction completed');
         const evt = createEvent('complete');
-        try {
+        me.__transactionFinished = true;
+        try { // Catching a `dispatchEvent` call is normally not possible for a standard `EventTarget`,
+            // but we are using the `EventTarget` library's `__userErrorEventHandler` to override this
+            // behavior for convenience in our internal calls
             me.dispatchEvent(createEvent('__beforecomplete'));
+            me.__internal = true;
             me.dispatchEvent(evt);
             me.dispatchEvent(createEvent('__complete'));
         } catch (e) {
@@ -195,6 +220,17 @@ IDBTransaction.prototype.__addToTransactionQueue = function (callback, args, sou
     const request = this.__createRequest(source);
     this.__pushToQueue(request, callback, args);
     return request;
+};
+
+/**
+ * Adds a callback function to the transaction queue without generating a request
+ * @param {function} callback
+ * @param {*} args
+ * @returns {IDBRequest}
+ * @protected
+ */
+IDBTransaction.prototype.__addNonRequestToTransactionQueue = function (callback, args, source) {
+    this.__pushToQueue(null, callback, args);
 };
 
 /**
@@ -255,38 +291,80 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
     return this.__storeClones[objectStoreName];
 };
 
-IDBTransaction.prototype.abort = function () {
+IDBTransaction.prototype.__abortTransaction = function (err) {
     const me = this;
-    CFG.DEBUG && console.log('The transaction was aborted', me);
-    if (!this.__active) {
-        throw createDOMException('InvalidStateError', 'A request was placed against a transaction which is currently not active, or which is finished');
-    }
-    me.__active = false;
-    me.__storeClones = {};
-
+    me.__active = false; // Setting here and in transactionFinished for https://github.com/w3c/IndexedDB/issues/87
     function abort (tx, errOrResult) {
-        if (typeof errOrResult.code === 'number') {
+        if (!tx) {
+            CFG.DEBUG && console.log('Rollback not possible due to missing transaction', me);
+        } else if (typeof errOrResult.code === 'number') {
             CFG.DEBUG && console.log('Rollback erred; feature is probably not supported as per WebSQL', me);
         } else {
             CFG.DEBUG && console.log('Rollback succeeded', me);
         }
 
         // Todo: Steps for aborting an upgrade transaction
-        // Todo: Send bubbling `error` events to me.__requests;
-        const evt = createEvent('abort');
 
-        // Todo: Make `abort` event bubble but not cancelable (can probably remove timeout now)
-        // Fire the "onabort" event asynchronously, so errors don't bubble
-        setTimeout(() => {
+        if (err !== null) {
+            me.__error = err;
+        }
+
+        logError('Error', 'An error occurred in a transaction', err);
+        if (me.__errored) {
+            // We've already called "onerror", "onabort", or thrown, so don't do it again.
+            return;
+        }
+        me.__errored = true;
+        if (me.__transactionFinished) {
+            // The transaction has already completed, so we can't call "onerror" or "onabort".
+            // So throw the error instead.
+            setTimeout(() => {
+                throw err;
+            }, 0);
+        }
+
+        me.__requests.filter(function (q) {
+            return q.req && q.req.__readyState !== 'done';
+        }).reduce(function (promises, q) {
+            // We reduce to a chain of promises to be queued in order, so we cannot use `Promise.all`
+            //  and I'm unsure whether `setTimeout` currently behaves first-in-first-out with the same timeout
+            //  so we could just use a `forEach`.
+            return promises.then(function () {
+                const reqEvt = createEvent('error', null, {bubbles: true, cancelable: true});
+                q.req.__readyState = 'done';
+                q.req.__result = undefined;
+                q.req.__error = createDOMException('AbortError', 'A request was aborted.');
+                return new Promise(function (resolve) {
+                    setTimeout(() => {
+                        q.req.dispatchEvent(reqEvt); // No need to catch errors
+                        resolve();
+                    }, 0);
+                });
+            });
+        }, Promise.resolve()).then(function () { // Also works when there are no pending requests
+            const evt = createEvent('abort', err, {bubbles: true, cancelable: false});
             me.dispatchEvent(evt);
-        }, 0);
+            me.__storeClones = {};
+        });
     }
 
-    if (me.__tx) {
-        me.__tx.executeSql('ROLLBACK', [], abort, abort);
+    if (me.__tx) { // Not supported in standard SQL (and WebSQL errors should
+        //   rollback automatically), but for Node.js, etc., we give chance for
+        //   manual aborts which would otherwise not work.
+        abort(null, {code: 0});
+        // me.__tx.executeSql('ROLLBACK', [], abort, abort); // Not working in some circumstances, even in node
     } else {
         abort(null, {code: 0});
     }
+};
+
+IDBTransaction.prototype.abort = function () {
+    const me = this;
+    CFG.DEBUG && console.log('The transaction was aborted', me);
+    if (!this.__active) {
+        throw createDOMException('InvalidStateError', 'A request was placed against a transaction which is currently not active, or which is finished');
+    }
+    me.__abortTransaction(null);
 };
 IDBTransaction.prototype.toString = function () {
     return '[object IDBTransaction]';
@@ -307,6 +385,23 @@ IDBTransaction.__assertActive = function (tx) {
     if (!tx || !tx.__active) {
         throw createDOMException('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
+};
+
+/**
+* Used by our EventTarget.prototype library to implement bubbling/capturing
+*/
+IDBTransaction.prototype.__getParent = function () {
+    return this.db;
+};
+/**
+* Used by our EventTarget.prototype library to detect errors in user handlers
+*/
+IDBTransaction.prototype.__userErrorEventHandler = function (error, triggerGlobalErrorEvent) {
+    if (this.__internal) {
+        this.__internal = false;
+        throw error;
+    }
+    triggerGlobalErrorEvent();
 };
 
 util.defineReadonlyProperties(IDBTransaction.prototype, ['objectStoreNames', 'mode', 'db', 'error']);

@@ -58,7 +58,7 @@ IDBIndex.__createIndex = function (store, index) {
 
     // Create the index in WebSQL
     const transaction = store.transaction;
-    transaction.__addToTransactionQueue(function createIndex (tx, args, success, failure) {
+    transaction.__addNonRequestToTransactionQueue(function createIndex (tx, args, success, failure) {
         function error (tx, err) {
             failure(createDOMException(0, 'Could not create index "' + index.name + '"', err));
         }
@@ -119,7 +119,7 @@ IDBIndex.__deleteIndex = function (store, index) {
 
     // Remove the index in WebSQL
     const transaction = store.transaction;
-    transaction.__addToTransactionQueue(function deleteIndex (tx, args, success, failure) {
+    transaction.__addNonRequestToTransactionQueue(function deleteIndex (tx, args, success, failure) {
         function error (tx, err) {
             failure(createDOMException(0, 'Could not delete index "' + index.name + '"', err));
         }
@@ -212,10 +212,16 @@ IDBIndex.prototype.openKeyCursor = function (range, direction) {
 };
 
 IDBIndex.prototype.get = function (query) {
+    if (!arguments.length) { // Per https://heycam.github.io/webidl/
+        throw new TypeError('A parameter was missing for `IDBIndex.get`.');
+    }
     return this.__fetchIndexData(query, 'value', true);
 };
 
 IDBIndex.prototype.getKey = function (query) {
+    if (!arguments.length) { // Per https://heycam.github.io/webidl/
+        throw new TypeError('A parameter was missing for `IDBIndex.getKey`.');
+    }
     return this.__fetchIndexData(query, 'key', true);
 };
 
@@ -253,7 +259,7 @@ IDBIndex.prototype.__renameIndex = function (storeName, oldName, newName, colInf
     const me = this;
     // We could adapt the approach at http://stackoverflow.com/a/8430746/271577
     //    to make the approach reusable without passing column names, but it is a bit fragile
-    me.transaction.__addToTransactionQueue(function renameIndex (tx, args, success, error) {
+    me.transaction.__addNonRequestToTransactionQueue(function renameIndex (tx, args, success, error) {
         const sql = 'ALTER TABLE ' + util.escapeStore(storeName) + ' RENAME TO tmp_' + util.escapeStore(storeName);
         tx.executeSql(sql, [], function (tx, data) {
             const sql = 'CREATE TABLE ' + util.escapeStore(storeName) + '(' + listColInfoToPreserve + util.escapeIndex(newName) + ' ' + newNameType + ')';

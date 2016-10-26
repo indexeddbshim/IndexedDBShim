@@ -968,11 +968,11 @@ describe('IDBIndex.get', function () {
                 indexErr = e;
             }
 
-            expect(storeErr).to.be.an.instanceOf(env.DOMException);
-            expect(storeErr.name).to.equal('DataError');
+            expect(storeErr).to.be.an.instanceOf(TypeError);
+            expect(storeErr.name).to.equal('TypeError');
 
-            expect(indexErr).to.be.an.instanceOf(env.DOMException);
-            expect(indexErr.name).to.equal('DataError');
+            expect(indexErr).to.be.an.instanceOf(TypeError);
+            expect(indexErr.name).to.equal('TypeError');
 
             db.close();
             done();

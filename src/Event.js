@@ -2,7 +2,6 @@ import EventTarget from 'eventtarget';
 import * as util from './util.js';
 
 const ShimEvent = EventTarget.EventPolyfill;
-const ProxyPolyfill = EventTarget.ProxyPolyfill;
 
 function createEvent (type, debug, evInit) {
     const ev = new ShimEvent(type, evInit);
@@ -30,9 +29,17 @@ function IDBVersionChangeEvent (type, eventInitDict) { // eventInitDict is a IDB
 }
 IDBVersionChangeEvent.prototype = new ShimEvent('bogus');
 IDBVersionChangeEvent.prototype.constructor = IDBVersionChangeEvent;
+IDBVersionChangeEvent.prototype.toString = function () {
+    return '[object IDBVersionChangeEvent]';
+};
 
 Object.defineProperty(IDBVersionChangeEvent, Symbol.hasInstance, {
     value: obj => util.isObj(obj) && 'oldVersion' in obj && typeof obj.defaultPrevented === 'boolean'
 });
 
-export {IDBVersionChangeEvent, createEvent, ShimEvent, ProxyPolyfill}; // Event not currently in use
+// We don't add to polyfill as this might not be the desired implementation
+Object.defineProperty(ShimEvent, Symbol.hasInstance, {
+    value: obj => util.isObj(obj) && 'target' in obj && typeof obj.bubbles === 'boolean'
+});
+
+export {IDBVersionChangeEvent, createEvent, ShimEvent}; // Event not currently in use

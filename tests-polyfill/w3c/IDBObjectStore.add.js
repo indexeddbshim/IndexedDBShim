@@ -467,7 +467,7 @@ describe('W3C IDBObjectStore.add Tests', function () {
     });
 
     // value_recursive
-    it.skip('Recursive value', function (done) {
+    it('Recursive value', function (done) {
         var count = 0;
 
         function recursive_value(desc, value) {

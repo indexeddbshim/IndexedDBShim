@@ -21,11 +21,48 @@
     see below)
 - Breaking change (minor): Change "eval" to "evaluate" in exception message
     for bad key from `keyPath`
-- Breaking change: As moved away from SQL offsets for `IDBCursor` retrieval,
-    remove `__lastKeyContinued` property (we can use `__key`); also remove
-    unused `__multiEntryOffset`
+- Breaking change (minor): Remove unneeded `DOMError` methods
+- Breaking change (minor): As moved away from SQL offsets for `IDBCursor`
+    retrieval, remove `__lastKeyContinued` property (we can use `__key`);
+    also remove unused `__multiEntryOffset`
 - Deprecate: Numeric constants as second arguments to
     `IDBDatabase.prototype.transaction` (use `readonly`/`readwrite` instead).
+- Fix: Set `error` property of `IDBTransaction` for certain tx aborts
+- Fix: 'error' and 'abort' bubbling events
+   ((`IDBRequest`->) `IDBTransaction`->`IDBDatabase`),
+   including reuse of same event object upon propagation and potential
+   for cancellation as appropriate; used within `IDBTransaction` and
+   potentially within `IDBFactory`
+- Fix: Set `readyState` to "done", `result` to `undefined`, and `error`
+   to a new `AbortError` on each request when aborting a transaction
+- Fix: Set transaction active flag on while dispatching success/error
+   events
+- Fix: Abort transaction upon request "success" handler throwing or
+   "error" handler throwing or "error" event not being prevented
+- Fix: Trigger queue of "error"-type events on all unfinished
+   requests during transaction abort (then "abort" type event on
+   transaction)
+- Fix: Avoid adding `DOMException` class when error not found (should
+   not occur?)
+- Fix: Use `AbortError` as `IDBTransaction.error` property when
+   "error" handler throws
+- Fix: If transaction already aborted, avoid potential for
+   request errors firing
+- Fix: If transaction already aborted, avoid running further
+   request callbacks or success/error events
+- Fix: Throw for `IDBRequest` or `IDBOpenDBRequest` with `result`
+   and `error` getters if request not yet done
+- Fix: Add duck-typing `instanceof` mechanism for `ShimEvent`
+- Fix: Change type to "abort" for transaction abort events
+- Fix: Set `readyState` for successful `IDBFactory.deleteDatabase`
+    and `IDBFactory.webkitGetDatabaseNames`
+- Fix: Set `readyState` to 'pending' for `IDBCursor` `continue`/`advance`
+- Fix: Avoid adding requests with success events for
+    `createObjectStore`/`deleteObjectStore`/`createIndex`/`deleteIndex`
+    and store/index renaming
+- Fix: Avoid firing multiple `success` events with `IDBFactory.open`
+- Fix: Fire abort event synchronously (otherwise transaction
+    apparently timing out)
 - Fix: Return appropriate IndexedDB error object instead of WebSQL error
     object; fixes #27
 - Fix: For `IDBCursor`, move from SQL offsets to utilization of last key as
@@ -77,8 +114,6 @@
     bounds
 - Fix: If `lower` is greater than the `upper` argument to `IDBKeyRange.bound`,
     throw a `DataError`
-- Fix: Throw `DataError` instead of `TypeError` with bad
-    `get()`/`getKey`/`delete()`
 - Fix: Throw `DataError` upon continuing the cursor in an unexpected direction
 - Fix: Key validation: Avoid circular arrays
 - Fix: Key validation: Disallow Dates with NaN as \[\[DateValue]]
@@ -98,7 +133,8 @@
 - Fix: Throw `TypeError` if call to `update()` has no arguments
 - Fix: Allow empty string key path to be utilized when validating
     `add`/`put` input
-- Fix: Add more precise `toString` behaviors on IDB* objects
+- Fix: Add more precise `toString` behaviors on IDB* objects and
+    `IDBVersionChangeEvent`
 - Fix: Avoid iterating duplicate values for unique iterations
 - Fix: Ensure `IDBRequest.error` returns `null` rather than `undefined` upon
     success event
@@ -262,6 +298,8 @@
 - Documentation: Document `shimIndexedDB.__setConfig()`.
 - Documentation: List known issues on README
 - Documentation: Notice on deprecation for transaction mode constants
+- Documentation: Update summarization of npm testing info
+- npm: Update packages
 - Testing: Update tests per current spec and behavior
 - Testing: Ensure db closes after each test to allow non-blocking `open()`
     (was affecting testing)
@@ -271,31 +309,36 @@
 - Testing (mock): Update IndexedDBMock tests
 - Testing (mock): Expect `InvalidStateError` instead of `ConstraintError`
     when not in an upgrade transaction calling `createObjectStore`
-- Testing (W3C): Fix test to reflect latest draft spec -- see <https://github.com/brettz9/web-platform-tests/pull/1>
-- Testing (W3C): Change example to expect `ConstraintError` (since object
+- Testing (W3C Old): `IDBFactory.open` tests to do more flexible
+   `instanceof` checks;
+- Testing (W3C Old): Fix test to reflect latest draft spec -- see <https://github.com/brettz9/web-platform-tests/pull/1>
+- Testing (W3C Old): Cause recursive value test not to be skipped
+- Testing (W3C Old): Change example to expect `ConstraintError` (since object
     store already existing per test)--though perhaps should ensure it is
     not yet existing
-- Testing (W3C): Ensure `DOMException` variant of `SyntaxError` is checked
-- Testing (W3C): Increase timeout for Node testing `createObjectStore`'s
+- Testing (W3C Old): Ensure `DOMException` variant of `SyntaxError` is checked
+- Testing (W3C Old): Increase timeout for Node testing `createObjectStore`'s
     `IDBObjectStoreParameters` test and IDBCursorBehavior's
     `IDBCursor.direction`
-- Testing (W3C): Utilize Unicode in KeyPath.js test
-- Test scaffolding (W3C): Fix args to `initionalSituation()`
-- Test scaffolding (W3C): Fix test ok condition, typo
-- Test scaffolding (W3C): Fix assertions
+- Testing (W3C Old): Utilize Unicode in `KeyPath.js` test
+- Test scaffolding (W3C Old): Fix args to `initionalSituation()`
+- Test scaffolding (W3C Old): Fix test ok condition, typo
+- Test scaffolding (W3C Old): Fix assertions
 - (Testing:
     From tests-mocha and tests-qunit (Browser and Node), all tests now
         passing;
     From fakeIndexedDB (Node), only fakeIndexedDB.js is not passing;
     From indexedDBmock (Node), only database.js is not passing;
     From W3C (Old, Node), only IDBDatabase.close.js,
-        IDBFactory.open.js, IDBObjectStore.add.js,
+        IDBFactory.open.js, IDBObjectStore.add.js (cyclic values),
         IDBObjectStore.createIndex.js,
-        IDBObjectStore.put.js, IDBTransaction.abort.js,
-        KeyGenerator.js, RequestBehavior.js, TransactionBehavior.js
+        IDBTransaction.abort.js, TransactionBehavior.js
         are not passing
     From W3C (New, Node but potentially also browser): only idbkeyrange.js
         is currently passing
+- Testing (Grunt): Force ESLint (since "standard" currently causing a warning)
+- Testing (Grunt): Avoid uglification during Node testing (just use
+    unminimized files)
 - Testing (Grunt): Add Node-specific build/dev commands
 - Testing (Grunt): Clarify Grunt tasks, expand tasks for cleaning, make tests
     more granular
@@ -303,15 +346,26 @@
     `sourceMapName` per current specs
 - Testing (Grunt): Add `uglify` to grunt watch task
 - Testing (Grunt): Allow use of own sauce access key
-- Testing (Grunt): Add task to avoid saucelabs when running PhantomJS
+- Testing (Grunt): Add task to avoid Saucelabs when running PhantomJS
 - Testing (Grunt): Add assorted testing tasks
+- Testing (Grunt): Update grunt-node-qunit to support latest QUnit
+- Testing (Grunt): Get Saucelabs working (for Chrome and most of Firefox)
+- Testing (Grunt): Log Saucelabs results
 - Testing (PhantomJS): Deal with PhantomJS error
+- Testing (npm): Streamline test names
 - Testing (QUnit): Upgrade QUnit refs
+- Testing (QUnit): Minimize chances for QUnit random integer failure
 - Testing (QUnit): Allow QUnit tests to pass when "Check for globals" enabled
     (put certain test code blocks in closures)
 - Testing (QUnit): Separate out QUnit for sake of choosing between browser
     or Node testing, supporting node-qunit for Node testing
 - Testing (QUnit): Upgrade to QUnit 2.0 API, lint test files
+- Testing (Mocha): Conditionally check for `indexedDB.modules` in case we
+    are running tests without shim
+- Testing improvement: Shim `Event` in Unicode test for parity (even
+    if not needed in current tests)
+- Testing (Mocha): Add missing `IDBKeyRange/includes-spec.js` to browser
+    tests
 - Testing (Mocha): Add mocha tests to grunt (along with clean-up) and add
     node-qunit for Node mocha testing
 - Testing (Mocha): Allow passing in specific test files to mocha tests

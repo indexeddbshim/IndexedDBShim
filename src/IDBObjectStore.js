@@ -74,7 +74,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
     // Add the object store to WebSQL
     const transaction = db.__versionTransaction;
     IDBTransaction.__assertVersionChange(transaction);
-    transaction.__addToTransactionQueue(function createObjectStore (tx, args, success, failure) {
+    transaction.__addNonRequestToTransactionQueue(function createObjectStore (tx, args, success, failure) {
         function error (tx, err) {
             CFG.DEBUG && console.log(err);
             throw createDOMException(0, 'Could not create object store "' + store.name + '"', err);
@@ -106,7 +106,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
     // Remove the object store from WebSQL
     const transaction = db.__versionTransaction;
     IDBTransaction.__assertVersionChange(transaction);
-    transaction.__addToTransactionQueue(function deleteObjectStore (tx, args, success, failure) {
+    transaction.__addNonRequestToTransactionQueue(function deleteObjectStore (tx, args, success, failure) {
         function error (tx, err) {
             CFG.DEBUG && console.log(err);
             failure(createDOMException(0, 'Could not delete ObjectStore', err));
@@ -428,6 +428,9 @@ IDBObjectStore.prototype.put = function (value, key) {
 
 IDBObjectStore.prototype.get = function (range) {
     const me = this;
+    if (!arguments.length) {
+        throw new TypeError('A parameter was missing for `IDBObjectStore.get`.');
+    }
 
     if (me.__deleted) {
         throw createDOMException('InvalidStateError', 'This store has been deleted');
@@ -493,6 +496,9 @@ IDBObjectStore.prototype.getAllKeys = function (query, count) {
 
 IDBObjectStore.prototype['delete'] = function (range) {
     const me = this;
+    if (!arguments.length) {
+        throw new TypeError('A parameter was missing for `IDBObjectStore.delete`.');
+    }
 
     if (me.__deleted) {
         throw createDOMException('InvalidStateError', 'This store has been deleted');
@@ -712,7 +718,7 @@ Object.defineProperty(IDBObjectStore.prototype, 'name', {
         // Todo: Add pending flag to delay queries against this store until renamed in SQLite
 
         const sql = 'ALTER TABLE ' + util.escapeStore(this.name) + ' RENAME TO ' + util.escapeStore(name);
-        me.transaction.__addToTransactionQueue(function objectStoreClear (tx, args, success, error) {
+        me.transaction.__addNonRequestToTransactionQueue(function objectStoreClear (tx, args, success, error) {
             tx.executeSql(sql, [], function (tx, data) {
                 success();
             }, function (tx, err) {

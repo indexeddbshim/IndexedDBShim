@@ -6120,12 +6120,10 @@ require('./modules/web.immediate');
 require('./modules/web.dom.iterable');
 module.exports = require('./modules/_core');
 },{"./modules/_core":25,"./modules/es6.array.copy-within":123,"./modules/es6.array.every":124,"./modules/es6.array.fill":125,"./modules/es6.array.filter":126,"./modules/es6.array.find":128,"./modules/es6.array.find-index":127,"./modules/es6.array.for-each":129,"./modules/es6.array.from":130,"./modules/es6.array.index-of":131,"./modules/es6.array.is-array":132,"./modules/es6.array.iterator":133,"./modules/es6.array.join":134,"./modules/es6.array.last-index-of":135,"./modules/es6.array.map":136,"./modules/es6.array.of":137,"./modules/es6.array.reduce":139,"./modules/es6.array.reduce-right":138,"./modules/es6.array.slice":140,"./modules/es6.array.some":141,"./modules/es6.array.sort":142,"./modules/es6.array.species":143,"./modules/es6.date.now":144,"./modules/es6.date.to-iso-string":145,"./modules/es6.date.to-json":146,"./modules/es6.date.to-primitive":147,"./modules/es6.date.to-string":148,"./modules/es6.function.bind":149,"./modules/es6.function.has-instance":150,"./modules/es6.function.name":151,"./modules/es6.map":152,"./modules/es6.math.acosh":153,"./modules/es6.math.asinh":154,"./modules/es6.math.atanh":155,"./modules/es6.math.cbrt":156,"./modules/es6.math.clz32":157,"./modules/es6.math.cosh":158,"./modules/es6.math.expm1":159,"./modules/es6.math.fround":160,"./modules/es6.math.hypot":161,"./modules/es6.math.imul":162,"./modules/es6.math.log10":163,"./modules/es6.math.log1p":164,"./modules/es6.math.log2":165,"./modules/es6.math.sign":166,"./modules/es6.math.sinh":167,"./modules/es6.math.tanh":168,"./modules/es6.math.trunc":169,"./modules/es6.number.constructor":170,"./modules/es6.number.epsilon":171,"./modules/es6.number.is-finite":172,"./modules/es6.number.is-integer":173,"./modules/es6.number.is-nan":174,"./modules/es6.number.is-safe-integer":175,"./modules/es6.number.max-safe-integer":176,"./modules/es6.number.min-safe-integer":177,"./modules/es6.number.parse-float":178,"./modules/es6.number.parse-int":179,"./modules/es6.number.to-fixed":180,"./modules/es6.number.to-precision":181,"./modules/es6.object.assign":182,"./modules/es6.object.create":183,"./modules/es6.object.define-properties":184,"./modules/es6.object.define-property":185,"./modules/es6.object.freeze":186,"./modules/es6.object.get-own-property-descriptor":187,"./modules/es6.object.get-own-property-names":188,"./modules/es6.object.get-prototype-of":189,"./modules/es6.object.is":193,"./modules/es6.object.is-extensible":190,"./modules/es6.object.is-frozen":191,"./modules/es6.object.is-sealed":192,"./modules/es6.object.keys":194,"./modules/es6.object.prevent-extensions":195,"./modules/es6.object.seal":196,"./modules/es6.object.set-prototype-of":197,"./modules/es6.object.to-string":198,"./modules/es6.parse-float":199,"./modules/es6.parse-int":200,"./modules/es6.promise":201,"./modules/es6.reflect.apply":202,"./modules/es6.reflect.construct":203,"./modules/es6.reflect.define-property":204,"./modules/es6.reflect.delete-property":205,"./modules/es6.reflect.enumerate":206,"./modules/es6.reflect.get":209,"./modules/es6.reflect.get-own-property-descriptor":207,"./modules/es6.reflect.get-prototype-of":208,"./modules/es6.reflect.has":210,"./modules/es6.reflect.is-extensible":211,"./modules/es6.reflect.own-keys":212,"./modules/es6.reflect.prevent-extensions":213,"./modules/es6.reflect.set":215,"./modules/es6.reflect.set-prototype-of":214,"./modules/es6.regexp.constructor":216,"./modules/es6.regexp.flags":217,"./modules/es6.regexp.match":218,"./modules/es6.regexp.replace":219,"./modules/es6.regexp.search":220,"./modules/es6.regexp.split":221,"./modules/es6.regexp.to-string":222,"./modules/es6.set":223,"./modules/es6.string.anchor":224,"./modules/es6.string.big":225,"./modules/es6.string.blink":226,"./modules/es6.string.bold":227,"./modules/es6.string.code-point-at":228,"./modules/es6.string.ends-with":229,"./modules/es6.string.fixed":230,"./modules/es6.string.fontcolor":231,"./modules/es6.string.fontsize":232,"./modules/es6.string.from-code-point":233,"./modules/es6.string.includes":234,"./modules/es6.string.italics":235,"./modules/es6.string.iterator":236,"./modules/es6.string.link":237,"./modules/es6.string.raw":238,"./modules/es6.string.repeat":239,"./modules/es6.string.small":240,"./modules/es6.string.starts-with":241,"./modules/es6.string.strike":242,"./modules/es6.string.sub":243,"./modules/es6.string.sup":244,"./modules/es6.string.trim":245,"./modules/es6.symbol":246,"./modules/es6.typed.array-buffer":247,"./modules/es6.typed.data-view":248,"./modules/es6.typed.float32-array":249,"./modules/es6.typed.float64-array":250,"./modules/es6.typed.int16-array":251,"./modules/es6.typed.int32-array":252,"./modules/es6.typed.int8-array":253,"./modules/es6.typed.uint16-array":254,"./modules/es6.typed.uint32-array":255,"./modules/es6.typed.uint8-array":256,"./modules/es6.typed.uint8-clamped-array":257,"./modules/es6.weak-map":258,"./modules/es6.weak-set":259,"./modules/es7.array.includes":260,"./modules/es7.asap":261,"./modules/es7.error.is-error":262,"./modules/es7.map.to-json":263,"./modules/es7.math.iaddh":264,"./modules/es7.math.imulh":265,"./modules/es7.math.isubh":266,"./modules/es7.math.umulh":267,"./modules/es7.object.define-getter":268,"./modules/es7.object.define-setter":269,"./modules/es7.object.entries":270,"./modules/es7.object.get-own-property-descriptors":271,"./modules/es7.object.lookup-getter":272,"./modules/es7.object.lookup-setter":273,"./modules/es7.object.values":274,"./modules/es7.observable":275,"./modules/es7.reflect.define-metadata":276,"./modules/es7.reflect.delete-metadata":277,"./modules/es7.reflect.get-metadata":279,"./modules/es7.reflect.get-metadata-keys":278,"./modules/es7.reflect.get-own-metadata":281,"./modules/es7.reflect.get-own-metadata-keys":280,"./modules/es7.reflect.has-metadata":282,"./modules/es7.reflect.has-own-metadata":283,"./modules/es7.reflect.metadata":284,"./modules/es7.set.to-json":285,"./modules/es7.string.at":286,"./modules/es7.string.match-all":287,"./modules/es7.string.pad-end":288,"./modules/es7.string.pad-start":289,"./modules/es7.string.trim-left":290,"./modules/es7.string.trim-right":291,"./modules/es7.symbol.async-iterator":292,"./modules/es7.symbol.observable":293,"./modules/es7.system.global":294,"./modules/web.dom.iterable":295,"./modules/web.immediate":296,"./modules/web.timers":297}],299:[function(require,module,exports){
-var DOMException, Proxy, Event;
+var DOMException;
 (function () {
   'use strict';
 
-  var EventPolyfill;
-  var ProxyPolyfill;
   var phases = {
     NONE: 0,
     CAPTURING_PHASE: 1,
@@ -6134,26 +6132,79 @@ var DOMException, Proxy, Event;
   };
 
   if (typeof DOMException === 'undefined') {
-    DOMException = function (msg, name) {
+    // Todo: Better polyfill (if even needed here)
+    DOMException = function (msg, name) { // No need for `toString` as same as for `Error`
       var err = new Error(msg);
       err.name = name;
       return err;
     };
   }
 
-  EventPolyfill = function EventPolyfill (type, evInit, ev) { // eslint-disable-line no-native-reassign
+  var ev = new WeakMap();
+  var evCfg = new WeakMap();
+
+  // Todo: Set _ev argument outside of this function
+  var EventPolyfill = function EventPolyfill (type, evInit, _ev) { // eslint-disable-line no-native-reassign
+    if (!arguments.length) {
+      throw new TypeError("Failed to construct 'Event': 1 argument required, but only 0 present.");
+    }
     evInit = evInit || {};
-    Object.defineProperties(this, {
-      type: {writable: false, value: type},
-      target: {writable: false, value: null, configurable: true}, // Changeable by proxy
-      currentTarget: {writable: false, value: null, configurable: true}, // Changeable by proxy
-      eventPhase: {writable: false, value: 0, configurable: true}, // Changeable by proxy
-      bubbles: {writable: false, value: 'bubbles' in evInit ? evInit.bubbles : false},
-      cancelable: {writable: false, value: 'cancelable' in evInit ? evInit.cancelable : false},
-      defaultPrevented: {writable: false, value: false, configurable: true} // Changeable by proxy
-      // isTrusted: {writable: false, value: true}, // We are not always using this for user-created events
-      // timeStamp: {writable: false, value: new Date().valueOf()} // This is no longer a timestamp, but monotonic (elapsed?)
-    });
+    _ev = _ev || {};
+
+    var _evCfg = {};
+    _evCfg.type = type;
+    if ('bubbles' in evInit) {
+      _evCfg.bubbles = evInit.bubbles;
+    }
+    if ('cancelable' in evInit) {
+      _evCfg.cancelable = evInit.cancelable;
+    }
+    if ('composed' in evInit) {
+      _evCfg.composed = evInit.composed;
+    }
+
+    // _evCfg.isTrusted = true; // We are not always using this for user-created events
+    // _evCfg.timeStamp = new Date().valueOf(); // This is no longer a timestamp, but monotonic (elapsed?)
+
+    ev.set(this, _ev);
+    evCfg.set(this, _evCfg);
+    Object.defineProperties(this,
+      ['target', 'currentTarget', 'eventPhase', 'defaultPrevented'].reduce(function (obj, prop) {
+        obj[prop] = {
+          get: function () {
+            return (/* prop in _evCfg && */ _evCfg[prop] !== undefined) ? _evCfg[prop] : (
+              prop in _ev ? _ev[prop] : (
+                // Defaults
+                prop === 'eventPhase' ? 0 : (prop === 'defaultPrevented' ? false : null)
+              )
+            );
+          }
+        };
+        return obj;
+      }, {})
+    );
+    var props = [
+      // Event
+      'type',
+      'bubbles', 'cancelable', // Defaults to false
+      'isTrusted', 'timeStamp',
+      // Other event properties (not used by our code)
+      'composedPath', 'composed', 'initEvent', 'initCustomEvent'
+    ];
+    if (this.toString() === '[object CustomEvent]') {
+      props.push('detail');
+    }
+
+    Object.defineProperties(this, props.reduce(function (obj, prop) {
+      obj[prop] = {
+        get: function () {
+          return prop in _evCfg ? _evCfg[prop] : (prop in _ev ? _ev[prop] : (
+            ['bubbles', 'cancelable', 'composed'].indexOf(prop) > -1 ? false : undefined
+          ));
+        }
+      };
+      return obj;
+    }, {}));
   };
   Object.defineProperties(EventPolyfill.prototype, {
     NONE: {writable: false, value: 0},
@@ -6161,76 +6212,42 @@ var DOMException, Proxy, Event;
     AT_TARGET: {writable: false, value: 2},
     BUBBLING_PHASE: {writable: false, value: 3}
   });
+  EventPolyfill.prototype.preventDefault = function () {
+    var _ev = ev.get(this);
+    var _evCfg = evCfg.get(this);
+    if (this.cancelable && !_evCfg._passive) {
+      _evCfg.defaultPrevented = true;
+      if (typeof _ev.preventDefault === 'function') { // Prevent any predefined defaults
+        _ev.preventDefault();
+      }
+    };
+  };
+  EventPolyfill.prototype.stopImmediatePropagation = function () {
+    var _evCfg = evCfg.get(this);
+    _evCfg._stopImmediatePropagation = true;
+  };
+  EventPolyfill.prototype.stopPropagation = function () {
+    var _evCfg = evCfg.get(this);
+    _evCfg._stopPropagation = true;
+  };
+  EventPolyfill.prototype.toString = function () {
+    return '[object Event]';
+  };
+
+  var CustomEventPolyfill = function (type, eventInitDict, _ev) {
+    EventPolyfill.call(this, type, eventInitDict, _ev);
+    var _evCfg = evCfg.get(this);
+    _evCfg.detail = eventInitDict && typeof eventInitDict === 'object' ? eventInitDict.detail : null;
+  };
+  CustomEventPolyfill.prototype.toString = function () {
+    return '[object CustomEvent]';
+  };
+
   function copyEvent (ev) {
-    return new EventPolyfill(ev.type, {bubbles: ev.bubbles, cancelable: ev.cancelable});
-  }
-
-  if (typeof Proxy === 'undefined') { // Remove when Proxies well supported: http://caniuse.com/#feat=proxy
-    Proxy = ProxyPolyfill = function ProxyPolyfill (ev /* , handler*/) {
-      this._ev = ev;
-      Object.defineProperties(this,
-        ['target', 'currentTarget', 'eventPhase', 'defaultPrevented'].reduce(function (obj, prop) {
-          obj[prop] = {get: function () {
-            return (('_' + prop) in this && this['_' + prop] !== undefined) ? this['_' + prop] : this._ev[prop];
-          }, set: function (val) {
-            this['_' + prop] = val;
-          }};
-          obj['_' + prop] = {enumerable: false, writable: true};
-          return obj;
-        }, {})
-      );
-      Object.defineProperties(this,
-        [
-          // Event
-          'type', 'NONE', 'CAPTURING_PHASE', 'AT_TARGET', 'BUBBLING_PHASE',
-          'bubbles', 'cancelable', 'isTrusted', 'timeStamp',
-          // Other event properties (not used by our code)
-          'composedPath', 'composed', 'initEvent',
-          // CustomEvent
-          'detail'
-        ].reduce(function (obj, prop) {
-          obj[prop] = {get: function () {
-            return this._ev[prop];
-          }, set: function (val) {
-            this._ev[prop] = val;
-          }};
-          return obj;
-        }, {})
-      );
-    };
-    Proxy.prototype.preventDefault = function () { // eslint-disable-line no-extend-native
-      if (typeof this._ev.preventDefault === 'function') {
-        this._ev.preventDefault();
-        return;
-      }
-      if (this.cancelable && !this._passive) this.defaultPrevented = true;
-    };
-    Proxy.prototype.stopImmediatePropagation = function () { // eslint-disable-line no-extend-native
-      this._stopImmediatePropagation = true;
-    };
-    Proxy.prototype.stopPropagation = function () { // eslint-disable-line no-extend-native
-      this._stopPropagation = true;
-    };
-  }
-
-  function tryCatch (cb) {
-    try {
-      // Per MDN: Exceptions thrown by event handlers are reported
-      //  as uncaught exceptions; the event handlers run on a nested
-      //  callstack: they block the caller until they complete, but
-      //  exceptions do not propagate to the caller.
-      cb();
-    } catch (err) {
-      var error = err;
-      if (typeof err === 'string') {
-        error = 'Uncaught exception: ' + err;
-      } else {
-        error.message = 'Uncaught exception: ' + err.message;
-      }
-      // See https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onerror
-      if (window.onerror) window.onerror(error.message, err.fileName, err.lineNumber, null, error);
-      console.log(err);
+    if ('detail' in ev) {
+      return new CustomEventPolyfill(ev.type, {bubbles: ev.bubbles, cancelable: ev.cancelable, detail: ev.detail}, ev);
     }
+    return new EventPolyfill(ev.type, {bubbles: ev.bubbles, cancelable: ev.cancelable}, ev);
   }
 
   function getListenersOptions (listeners, type, options) {
@@ -6281,7 +6298,7 @@ var DOMException, Proxy, Event;
   };
 
   function EventTarget (customOptions) {
-    this.setOptions(customOptions);
+    this.__setOptions(customOptions);
   }
 
   Object.assign(EventTarget.prototype, ['Early', '', 'Late', 'Default'].reduce(function (obj, listenerType) {
@@ -6299,8 +6316,9 @@ var DOMException, Proxy, Event;
   }, {}));
 
   Object.assign(EventTarget.prototype, {
-    setOptions: function (customOptions) {
+    __setOptions: function (customOptions) {
       customOptions = customOptions || {};
+      // Todo: Make into event properties?
       this._defaultSync = customOptions.defaultSync;
       this._extraProperties = customOptions.extraProperties;
     },
@@ -6314,163 +6332,126 @@ var DOMException, Proxy, Event;
         if (!this[arrStr]) Object.defineProperty(this, arrStr, {value: {}});
       }, this);
 
-      if (setTarget && ev._dispatched) throw new DOMException('The object is in an invalid state.', 'InvalidStateError');
-      ev._dispatched = true;
+      var _evCfg = evCfg.get(ev);
+      if (!_evCfg) { // Todo: Is this ok?
+        _evCfg = evCfg.set(ev, {});
+      }
+      if (setTarget && _evCfg._dispatched) throw new DOMException('The object is in an invalid state.', 'InvalidStateError');
 
-      var type = ev.type;
-      if (!type || typeof type !== 'string') throw new TypeError('Invalid type');
-
-      var handler = {
-        // Avoid readonly
-        get: function (ev, prop) {
-          if (['preventDefault', 'stopImmediatePropagation', 'stopPropagation'].includes(prop)) {
-            switch (prop) {
-              case 'preventDefault': // Doesn't affect propagation
-                return typeof ev[prop] === 'function' ? ev[prop] : function () {
-                  if (eventProxy.cancelable && !eventProxy._passive) {
-                    eventProxy.defaultPrevented = true;
-                  }
-                };
-              case 'stopImmediatePropagation': // Doesn't affect default
-                return function () {
-                  eventProxy._stopImmediatePropagation = true;
-                };
-              case 'stopPropagation':
-                return function () { // Doesn't affect default
-                  eventProxy._stopPropagation = true;
-                };
-            }
-          }
-          if (['target', 'currentTarget', 'eventPhase', 'defaultPrevented'].includes(prop) && ('_' + prop) in ev) {
-            return ev['_' + prop];
-          }
-          return ev[prop];
-        },
-        set: function (ev, prop, value) {
-          if (['target', 'currentTarget', 'eventPhase', 'defaultPrevented'].includes(prop)) {
-            ev['_' + prop] = value;
-          } else {
-            ev[prop] = value;
-          }
-          return true;
-        }
-      };
-      var eventProxy;
-      if (ev.isProxified) {
-        eventProxy = ev;
+      var eventCopy;
+      if (_evCfg._dispatched) {
+        eventCopy = ev;
       } else {
-        eventProxy = new Proxy(copyEvent(ev), handler);
-        eventProxy.isProxified = true;
-        [
-          'target', 'currentTarget', 'defaultPrevented',
-          'isTrusted', 'timeStamp',
-          // Other event properties (not used by our code)
-          'composedPath', 'composed', 'initEvent',
-          // CustomEvent
-          'detail',
-          // Our own properties
-          '_dispatched', '_stopImmediatePropagation', '_stopPropagation'
-        ].concat(this._extraProperties || []).forEach(function (prop) {
+        eventCopy = copyEvent(ev);
+        _evCfg = evCfg.get(eventCopy);
+        _evCfg._dispatched = true;
+        (this._extraProperties || []).forEach(function (prop) {
           if (prop in ev) {
-            eventProxy[prop] = ev[prop];
+            eventCopy[prop] = ev[prop]; // Todo: Put internal to EventPolyfill?
           }
         });
       }
+      var type = eventCopy.type;
 
       function finishEventDispatch () {
-        eventProxy.eventPhase = phases.NONE;
-        eventProxy.currentTarget = null;
+        _evCfg.eventPhase = phases.NONE;
+        _evCfg.currentTarget = null;
+        delete _evCfg._children;
       }
       function invokeDefaults () {
         // Ignore stopPropagation from defaults
-        eventProxy._stopImmediatePropagation = undefined;
-        eventProxy._stopPropagation = undefined;
+        _evCfg._stopImmediatePropagation = undefined;
+        _evCfg._stopPropagation = undefined;
         // We check here for whether we should invoke since may have changed since timeout (if late listener prevented default)
-        if (!eventProxy.defaultPrevented || !eventProxy.cancelable) { // 2nd check should be redundant
-          eventProxy.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke default listeners
-          eventProxy.target.invokeCurrentListeners(eventProxy.target._defaultListeners, eventProxy, type);
+        if (!eventCopy.defaultPrevented || !_evCfg.cancelable) { // 2nd check should be redundant
+          _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke default listeners
+          eventCopy.target.invokeCurrentListeners(eventCopy.target._defaultListeners, eventCopy, type);
         }
         finishEventDispatch();
       }
       function continueEventDispatch () {
         // Ignore stop propagation of user now
-        eventProxy._stopImmediatePropagation = undefined;
-        eventProxy._stopPropagation = undefined;
+        _evCfg._stopImmediatePropagation = undefined;
+        _evCfg._stopPropagation = undefined;
         if (!me._defaultSync) {
           setTimeout(invokeDefaults, 0);
         } else invokeDefaults();
 
-        eventProxy.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke late listeners
+        _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke late listeners
         // Sync default might have stopped
-        if (!eventProxy._stopPropagation) {
-          eventProxy._stopImmediatePropagation = undefined;
-          eventProxy._stopPropagation = undefined;
-          // We could allow stopPropagation by only executing upon (eventProxy._stopPropagation)
-          eventProxy.target.invokeCurrentListeners(eventProxy.target._lateListeners, eventProxy, type);
+        if (!_evCfg._stopPropagation) {
+          _evCfg._stopImmediatePropagation = undefined;
+          _evCfg._stopPropagation = undefined;
+          // We could allow stopPropagation by only executing upon (_evCfg._stopPropagation)
+          eventCopy.target.invokeCurrentListeners(eventCopy.target._lateListeners, eventCopy, type);
         }
         finishEventDispatch();
 
-        return !eventProxy.defaultPrevented;
+        return !eventCopy.defaultPrevented;
       }
 
-      if (setTarget) eventProxy.target = this;
+      if (setTarget) _evCfg.target = this;
 
-      switch (eventProxy.eventPhase) {
+      switch (eventCopy.eventPhase) {
         default: case phases.NONE:
 
-          eventProxy.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke early listeners
-          this.invokeCurrentListeners(this._earlyListeners, eventProxy, type);
+          _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke early listeners
+          this.invokeCurrentListeners(this._earlyListeners, eventCopy, type);
           if (!this.__getParent) {
-            eventProxy.eventPhase = phases.AT_TARGET;
-            return this._dispatchEvent(eventProxy, false);
+            _evCfg.eventPhase = phases.AT_TARGET;
+            return this._dispatchEvent(eventCopy, false);
           }
 
           var par = this;
           var root = this;
           while (par.__getParent && (par = par.__getParent()) !== null) {
-            par._child = root;
+            if (!_evCfg._children) {
+              _evCfg._children = [];
+            }
+            _evCfg._children.push(root);
             root = par;
           }
           root._defaultSync = me._defaultSync;
-          eventProxy.eventPhase = phases.CAPTURING_PHASE;
-          return root._dispatchEvent(eventProxy, false);
+          _evCfg.eventPhase = phases.CAPTURING_PHASE;
+          return root._dispatchEvent(eventCopy, false);
         case phases.CAPTURING_PHASE:
-          if (eventProxy._stopPropagation) {
+          if (_evCfg._stopPropagation) {
             return continueEventDispatch();
           }
-          this.invokeCurrentListeners(this._listeners, eventProxy, type);
-          var child = this._child;
-          if (!child || child === eventProxy.target) {
-            eventProxy.eventPhase = phases.AT_TARGET;
+          this.invokeCurrentListeners(this._listeners, eventCopy, type);
+          var child = _evCfg._children && _evCfg._children.length && _evCfg._children.pop();
+          if (!child || child === eventCopy.target) {
+            _evCfg.eventPhase = phases.AT_TARGET;
           }
           if (child) child._defaultSync = me._defaultSync;
-          return (child || this)._dispatchEvent(eventProxy, false);
+          return (child || this)._dispatchEvent(eventCopy, false);
         case phases.AT_TARGET:
-          if (eventProxy._stopPropagation) {
+          if (_evCfg._stopPropagation) {
             return continueEventDispatch();
           }
-          this.invokeCurrentListeners(this._listeners, eventProxy, type, true);
-          if (!eventProxy.bubbles) {
+          this.invokeCurrentListeners(this._listeners, eventCopy, type, true);
+          if (!_evCfg.bubbles) {
             return continueEventDispatch();
           }
-          eventProxy.eventPhase = phases.BUBBLING_PHASE;
-          return this._dispatchEvent(eventProxy, false);
+          _evCfg.eventPhase = phases.BUBBLING_PHASE;
+          return this._dispatchEvent(eventCopy, false);
         case phases.BUBBLING_PHASE:
-          if (eventProxy._stopPropagation) {
+          if (_evCfg._stopPropagation) {
             return continueEventDispatch();
           }
           var parent = this.__getParent && this.__getParent();
           if (!parent) {
             return continueEventDispatch();
           }
-          parent.invokeCurrentListeners(parent._listeners, eventProxy, type, true);
+          parent.invokeCurrentListeners(parent._listeners, eventCopy, type, true);
           parent._defaultSync = me._defaultSync;
-          return parent._dispatchEvent(eventProxy, false);
+          return parent._dispatchEvent(eventCopy, false);
       }
     },
-    invokeCurrentListeners: function (listeners, eventProxy, type, checkOnListeners) {
+    invokeCurrentListeners: function (listeners, eventCopy, type, checkOnListeners) {
+      var _evCfg = evCfg.get(eventCopy);
       var me = this;
-      eventProxy.currentTarget = this;
+      _evCfg.currentTarget = this;
 
       var listOpts = getListenersOptions(listeners, type, {});
       var listenersByType = listOpts.listenersByType.concat();
@@ -6478,56 +6459,113 @@ var DOMException, Proxy, Event;
 
       listenersByType.some(function (listenerObj, i) {
         var onListener = checkOnListeners ? me['on' + type] : null;
-        if (eventProxy._stopImmediatePropagation) return true;
+        if (_evCfg._stopImmediatePropagation) return true;
         if (i === dummyIPos && typeof onListener === 'function') {
           // We don't splice this in as could be overwritten; executes here per
           //  https://html.spec.whatwg.org/multipage/webappapis.html#event-handler-attributes:event-handlers-14
-          tryCatch(function () {
-            var ret = onListener.call(eventProxy.currentTarget, eventProxy);
+          this.tryCatch(function () {
+            var ret = onListener.call(eventCopy.currentTarget, eventCopy);
             if (ret === false) {
-              eventProxy.preventDefault();
+              eventCopy.preventDefault();
             }
           });
         }
         var options = listenerObj.options;
         var once = options.once; // Remove listener after invoking once
         var passive = options.passive; // Don't allow `preventDefault`
-        var capture = options.capture; // Use `_child` and set `eventPhase`
-        eventProxy._passive = passive;
+        var capture = options.capture; // Use `_children` and set `eventPhase`
+        _evCfg._passive = passive;
 
-        if ((capture && eventProxy.target !== eventProxy.currentTarget && eventProxy.eventPhase === phases.CAPTURING_PHASE) ||
-          (eventProxy.eventPhase === phases.AT_TARGET ||
-          (!capture && eventProxy.target !== eventProxy.currentTarget && eventProxy.eventPhase === phases.BUBBLING_PHASE))
+        if ((capture && eventCopy.target !== eventCopy.currentTarget && eventCopy.eventPhase === phases.CAPTURING_PHASE) ||
+          (eventCopy.eventPhase === phases.AT_TARGET ||
+          (!capture && eventCopy.target !== eventCopy.currentTarget && eventCopy.eventPhase === phases.BUBBLING_PHASE))
         ) {
           var listener = listenerObj.listener;
-          tryCatch(function () {
-            listener.call(eventProxy.currentTarget, eventProxy);
+          this.tryCatch(function () {
+            listener.call(eventCopy.currentTarget, eventCopy);
           });
           if (once) {
             this.removeEventListener(type, listener, options);
           }
         }
       }, this);
-      tryCatch(function () {
+      this.tryCatch(function () {
         var onListener = checkOnListeners ? me['on' + type] : null;
         if (typeof onListener === 'function' && listenersByType.length < 2) {
-          var ret = onListener.call(eventProxy.currentTarget, eventProxy); // Won't have executed if too short
+          var ret = onListener.call(eventCopy.currentTarget, eventCopy); // Won't have executed if too short
           if (ret === false) {
-            eventProxy.preventDefault();
+            eventCopy.preventDefault();
           }
         }
       });
 
-      return !eventProxy.defaultPrevented;
+      return !eventCopy.defaultPrevented;
+    },
+    tryCatch: function (cb) {
+      try {
+        // Per MDN: Exceptions thrown by event handlers are reported
+        //  as uncaught exceptions; the event handlers run on a nested
+        //  callstack: they block the caller until they complete, but
+        //  exceptions do not propagate to the caller.
+        cb();
+      } catch (err) {
+        this.triggerErrorEvent(err);
+      }
+    },
+    triggerErrorEvent: function (err) {
+      var error = err;
+      if (typeof err === 'string') {
+        error = new Error('Uncaught exception: ' + err);
+      } else {
+        error.message = 'Uncaught exception: ' + err.message;
+      }
+
+      var triggerGlobalErrorEvent;
+      if (typeof window === 'undefined' || typeof ErrorEvent === 'undefined' || (
+          window && typeof window === 'object' && !window.dispatchEvent)
+      ) {
+        triggerGlobalErrorEvent = function () {
+          setTimeout(function () { // Node won't be able to catch in this way if we throw in the main thread
+            // console.log(err); // Should we auto-log for user?
+            throw error; // Let user listen to `process.on('uncaughtException', function(err) {});`
+          });
+        };
+      } else {
+        triggerGlobalErrorEvent = function () {
+          // See https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onerror
+          //   and https://github.com/w3c/IndexedDB/issues/49
+
+          // Note that a regular Event will properly trigger
+          //   `window.addEventListener('error')` handlers, but it will not trigger
+          //   `window.onerror` as per https://html.spec.whatwg.org/multipage/webappapis.html#handler-onerror
+          // Note also that the following line won't handle `window.addEventListener` handlers
+          //    if (window.onerror) window.onerror(error.message, err.fileName, err.lineNumber, error.columnNumber, error);
+
+          // `ErrorEvent` properly triggers `window.onerror` and `window.addEventListener('error')` handlers
+          var ev = new ErrorEvent('error', {
+            error: err,
+            message: error.message || '',
+            // We can't get the actually useful user's values!
+            filename: error.fileName || '',
+            lineno: error.lineNumber || 0,
+            colno: error.columnNumber || 0
+          });
+          window.dispatchEvent(ev);
+          // console.log(err); // Should we auto-log for user?
+        };
+      }
+      if (this.__userErrorEventHandler) {
+        this.__userErrorEventHandler(error, triggerGlobalErrorEvent);
+      } else {
+        triggerGlobalErrorEvent();
+      }
     }
   });
 
-  EventTarget.Event = Event;
+  // Todo: Move to own library (but allowing WeakMaps to be passed in for sharing here)
   EventTarget.EventPolyfill = EventPolyfill;
-  EventTarget.ProxyPolyfill = ProxyPolyfill;
+  EventTarget.CustomEventPolyfill = CustomEventPolyfill;
   EventTarget.DOMException = DOMException;
-  EventTarget.Error = Error;
-  EventTarget.TypeError = TypeError;
 
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = EventTarget;
@@ -16959,7 +16997,7 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.createDOMError = exports.createDOMException = exports.DOMException = exports.DOMError = exports.findError = exports.logError = undefined;
+exports.createDOMException = exports.DOMException = exports.findError = exports.logError = undefined;
 
 var _CFG = require('./CFG.js');
 
@@ -16982,23 +17020,11 @@ function createNativeDOMException(name, message) {
 }
 
 /**
- * Creates a native DOMError, for browsers that support it
- * @returns {DOMError}
- */
-function createNativeDOMError(name, message) {
-    name = name || 'DOMError';
-    var e = new DOMError(name, message);
-    e.name === name || (e.name = name);
-    e.message === message || (e.message = message);
-    return e;
-}
-
-/**
  * Creates a generic Error object
  * @returns {Error}
  */
 function createError(name, message) {
-    var e = new Error(message);
+    var e = new Error(message); // DOMException uses the same `toString` as `Error`, so no need to add
     e.name = name || 'DOMException';
     e.message = message;
     return e;
@@ -17051,8 +17077,7 @@ function findError(args) {
 };
 
 var test = void 0,
-    useNativeDOMException = false,
-    useNativeDOMError = false;
+    useNativeDOMException = false;
 
 // Test whether we can use the browser's native DOMException class
 try {
@@ -17060,15 +17085,6 @@ try {
     if (isErrorOrDOMErrorOrDOMException(test) && test.name === 'test name' && test.message === 'test message') {
         // Native DOMException works as expected
         useNativeDOMException = true;
-    }
-} catch (e) {}
-
-// Test whether we can use the browser's native DOMError class
-try {
-    test = createNativeDOMError('test name', 'test message');
-    if (isErrorOrDOMErrorOrDOMException(test) && test.name === 'test name' && test.message === 'test message') {
-        // Native DOMError works as expected
-        useNativeDOMError = true;
     }
 } catch (e) {}
 
@@ -17088,29 +17104,10 @@ if (useNativeDOMException) {
     };
 }
 
-// These are now unused, as the spec calls for DOMException instead
-var createDOMError = void 0,
-    shimDOMError = void 0;
-if (useNativeDOMError) {
-    exports.DOMError = shimDOMError = DOMError;
-    exports.createDOMError = createDOMError = function createDOMError(name, message, error) {
-        logError(name, message, error);
-        return createNativeDOMError(name, message);
-    };
-} else {
-    exports.DOMError = shimDOMError = Error;
-    exports.createDOMError = createDOMError = function createDOMError(name, message, error) {
-        logError(name, message, error);
-        return createError(name, message);
-    };
-}
-
 exports.logError = logError;
 exports.findError = findError;
-exports.DOMError = shimDOMError;
 exports.DOMException = shimDOMException;
 exports.createDOMException = createDOMException;
-exports.createDOMError = createDOMError;
 
 },{"./CFG.js":358,"./util.js":375}],360:[function(require,module,exports){
 'use strict';
@@ -17118,7 +17115,7 @@ exports.createDOMError = createDOMError;
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.ProxyPolyfill = exports.ShimEvent = exports.createEvent = exports.IDBVersionChangeEvent = undefined;
+exports.ShimEvent = exports.createEvent = exports.IDBVersionChangeEvent = undefined;
 
 var _eventtarget = require('eventtarget');
 
@@ -17133,7 +17130,6 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var ShimEvent = _eventtarget2.default.EventPolyfill;
-var ProxyPolyfill = _eventtarget2.default.ProxyPolyfill;
 
 function createEvent(type, debug, evInit) {
     var ev = new ShimEvent(type, evInit);
@@ -17162,6 +17158,9 @@ function IDBVersionChangeEvent(type, eventInitDict) {
 }
 IDBVersionChangeEvent.prototype = new ShimEvent('bogus');
 IDBVersionChangeEvent.prototype.constructor = IDBVersionChangeEvent;
+IDBVersionChangeEvent.prototype.toString = function () {
+    return '[object IDBVersionChangeEvent]';
+};
 
 Object.defineProperty(IDBVersionChangeEvent, Symbol.hasInstance, {
     value: function value(obj) {
@@ -17169,10 +17168,16 @@ Object.defineProperty(IDBVersionChangeEvent, Symbol.hasInstance, {
     }
 });
 
+// We don't add to polyfill as this might not be the desired implementation
+Object.defineProperty(ShimEvent, Symbol.hasInstance, {
+    value: function value(obj) {
+        return util.isObj(obj) && 'target' in obj && typeof obj.bubbles === 'boolean';
+    }
+});
+
 exports.IDBVersionChangeEvent = IDBVersionChangeEvent;
 exports.createEvent = createEvent;
-exports.ShimEvent = ShimEvent;
-exports.ProxyPolyfill = ProxyPolyfill; // Event not currently in use
+exports.ShimEvent = ShimEvent; // Event not currently in use
 
 },{"./util.js":375,"eventtarget":299}],361:[function(require,module,exports){
 'use strict';
@@ -17574,6 +17579,7 @@ IDBCursor.prototype.__continue = function (key, advanceContinue) {
     }
 
     me.__gotValue = false;
+    me.__req.__readyState = 'pending'; // Unset done flag
 
     me.__store.transaction.__pushToQueue(me.__req, function cursorContinue(tx, args, success, error, executeNextRequest) {
         function triggerSuccess(k, val, primKey) {
@@ -17935,7 +17941,7 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
     if (storeNames.length === 0) {
         throw (0, _DOMException.createDOMException)('InvalidAccessError', 'No object store names were specified');
     }
-
+    // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
     return new _IDBTransaction2.default(this, storeNames, mode);
 };
 IDBDatabase.prototype.toString = function () {
@@ -18021,7 +18027,7 @@ function createSysDB(success, failure) {
  * @constructor
  */
 function IDBFactory() {
-    this.modules = { DOMException: _DOMException.DOMException, Event: typeof Event !== 'undefined' ? Event : _Event.ShimEvent, ShimEvent: _Event.ShimEvent, ProxyPolyfill: _Event.ProxyPolyfill, IDBFactory: IDBFactory };
+    this.modules = { DOMException: _DOMException.DOMException, Event: typeof Event !== 'undefined' ? Event : _Event.ShimEvent, ShimEvent: _Event.ShimEvent, IDBFactory: IDBFactory };
 }
 
 /**
@@ -18056,7 +18062,7 @@ IDBFactory.prototype.open = function (name, version) {
 
         var err = (0, _DOMException.findError)(args);
         calledDbCreateError = true;
-        var evt = (0, _Event.createEvent)('error', args);
+        var evt = (0, _Event.createEvent)('error', args, { bubbles: true });
         req.__readyState = 'done';
         req.__error = err || _DOMException.DOMException;
         req.dispatchEvent(evt);
@@ -18084,7 +18090,7 @@ IDBFactory.prototype.open = function (name, version) {
                             systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [version, name], function () {
                                 var e = new _Event.IDBVersionChangeEvent('upgradeneeded', { oldVersion: oldVersion, newVersion: version });
                                 req.__transaction = req.result.__versionTransaction = new _IDBTransaction2.default(req.result, req.result.objectStoreNames, 'versionchange');
-                                req.transaction.__addToTransactionQueue(function onupgradeneeded(tx, args, success) {
+                                req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded(tx, args, success, error) {
                                     req.dispatchEvent(e);
                                     success();
                                 });
@@ -18155,7 +18161,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         var err = (0, _DOMException.findError)(args);
         req.__readyState = 'done';
         req.__error = err || _DOMException.DOMException;
-        var e = (0, _Event.createEvent)('error', args);
+        var e = (0, _Event.createEvent)('error', args, { bubbles: true });
         req.dispatchEvent(e);
         calledDBError = true;
     }
@@ -18164,6 +18170,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         sysdb.transaction(function (systx) {
             systx.executeSql('DELETE FROM dbVersions WHERE name = ? ', [name], function () {
                 req.__result = undefined;
+                req.__readyState = 'done';
                 var e = new _Event.IDBVersionChangeEvent('success', { oldVersion: version, newVersion: null });
                 req.dispatchEvent(e);
             }, dbError);
@@ -18288,6 +18295,7 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
                     dbNames.push(data.rows.item(i).name);
                 }
                 req.__result = dbNames;
+                req.__readyState = 'done';
                 var e = (0, _Event.createEvent)('success'); // http://stackoverflow.com/questions/40165909/to-where-do-idbopendbrequest-error-events-bubble-up/40181108#40181108
                 req.dispatchEvent(e);
             }, dbGetDatabaseNamesError);
@@ -18393,7 +18401,7 @@ IDBIndex.__createIndex = function (store, index) {
 
     // Create the index in WebSQL
     var transaction = store.transaction;
-    transaction.__addToTransactionQueue(function createIndex(tx, args, success, failure) {
+    transaction.__addNonRequestToTransactionQueue(function createIndex(tx, args, success, failure) {
         function error(tx, err) {
             failure((0, _DOMException.createDOMException)(0, 'Could not create index "' + index.name + '"', err));
         }
@@ -18454,7 +18462,7 @@ IDBIndex.__deleteIndex = function (store, index) {
 
     // Remove the index in WebSQL
     var transaction = store.transaction;
-    transaction.__addToTransactionQueue(function deleteIndex(tx, args, success, failure) {
+    transaction.__addNonRequestToTransactionQueue(function deleteIndex(tx, args, success, failure) {
         function error(tx, err) {
             failure((0, _DOMException.createDOMException)(0, 'Could not delete index "' + index.name + '"', err));
         }
@@ -18551,10 +18559,18 @@ IDBIndex.prototype.openKeyCursor = function (range, direction) {
 };
 
 IDBIndex.prototype.get = function (query) {
+    if (!arguments.length) {
+        // Per https://heycam.github.io/webidl/
+        throw new TypeError('A parameter was missing for `IDBIndex.get`.');
+    }
     return this.__fetchIndexData(query, 'value', true);
 };
 
 IDBIndex.prototype.getKey = function (query) {
+    if (!arguments.length) {
+        // Per https://heycam.github.io/webidl/
+        throw new TypeError('A parameter was missing for `IDBIndex.getKey`.');
+    }
     return this.__fetchIndexData(query, 'key', true);
 };
 
@@ -18598,7 +18614,7 @@ IDBIndex.prototype.__renameIndex = function (storeName, oldName, newName) {
     var me = this;
     // We could adapt the approach at http://stackoverflow.com/a/8430746/271577
     //    to make the approach reusable without passing column names, but it is a bit fragile
-    me.transaction.__addToTransactionQueue(function renameIndex(tx, args, success, error) {
+    me.transaction.__addNonRequestToTransactionQueue(function renameIndex(tx, args, success, error) {
         var sql = 'ALTER TABLE ' + util.escapeStore(storeName) + ' RENAME TO tmp_' + util.escapeStore(storeName);
         tx.executeSql(sql, [], function (tx, data) {
             var sql = 'CREATE TABLE ' + util.escapeStore(storeName) + '(' + listColInfoToPreserve + util.escapeIndex(newName) + ' ' + newNameType + ')';
@@ -18955,7 +18971,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
     // Add the object store to WebSQL
     var transaction = db.__versionTransaction;
     _IDBTransaction2.default.__assertVersionChange(transaction);
-    transaction.__addToTransactionQueue(function createObjectStore(tx, args, success, failure) {
+    transaction.__addNonRequestToTransactionQueue(function createObjectStore(tx, args, success, failure) {
         function error(tx, err) {
             _CFG2.default.DEBUG && console.log(err);
             throw (0, _DOMException.createDOMException)(0, 'Could not create object store "' + store.name + '"', err);
@@ -18987,7 +19003,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
     // Remove the object store from WebSQL
     var transaction = db.__versionTransaction;
     _IDBTransaction2.default.__assertVersionChange(transaction);
-    transaction.__addToTransactionQueue(function deleteObjectStore(tx, args, success, failure) {
+    transaction.__addNonRequestToTransactionQueue(function deleteObjectStore(tx, args, success, failure) {
         function error(tx, err) {
             _CFG2.default.DEBUG && console.log(err);
             failure((0, _DOMException.createDOMException)(0, 'Could not delete ObjectStore', err));
@@ -19307,6 +19323,9 @@ IDBObjectStore.prototype.put = function (value, key) {
 
 IDBObjectStore.prototype.get = function (range) {
     var me = this;
+    if (!arguments.length) {
+        throw new TypeError('A parameter was missing for `IDBObjectStore.get`.');
+    }
 
     if (me.__deleted) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
@@ -19372,6 +19391,9 @@ IDBObjectStore.prototype.getAllKeys = function (query, count) {
 
 IDBObjectStore.prototype['delete'] = function (range) {
     var me = this;
+    if (!arguments.length) {
+        throw new TypeError('A parameter was missing for `IDBObjectStore.delete`.');
+    }
 
     if (me.__deleted) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
@@ -19597,7 +19619,7 @@ Object.defineProperty(IDBObjectStore.prototype, 'name', {
         // Todo: Add pending flag to delay queries against this store until renamed in SQLite
 
         var sql = 'ALTER TABLE ' + util.escapeStore(this.name) + ' RENAME TO ' + util.escapeStore(name);
-        me.transaction.__addToTransactionQueue(function objectStoreClear(tx, args, success, error) {
+        me.transaction.__addNonRequestToTransactionQueue(function objectStoreClear(tx, args, success, error) {
             tx.executeSql(sql, [], function (tx, data) {
                 success();
             }, function (tx, err) {
@@ -19619,6 +19641,8 @@ Object.defineProperty(exports, "__esModule", {
 exports.IDBOpenDBRequest = exports.IDBRequest = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _DOMException = require('./DOMException.js');
 
 var _util = require('./util.js');
 
@@ -19651,7 +19675,7 @@ var IDBRequest = function () {
         this.__result = undefined;
         this.__error = this.__source = this.__transaction = null;
         this.__readyState = 'pending';
-        this.setOptions({ extraProperties: ['debug'] }); // Ensure EventTarget preserves our properties
+        this.__setOptions({ extraProperties: ['debug'] }); // Ensure EventTarget preserves our properties
     }
 
     _createClass(IDBRequest, [{
@@ -19659,12 +19683,39 @@ var IDBRequest = function () {
         value: function toString() {
             return '[object IDBRequest]';
         }
+    }, {
+        key: '__getParent',
+        value: function __getParent() {
+            if (this.toString() === '[object IDBOpenDBRequest]') {
+                return null;
+            }
+            return this.__transaction;
+        }
     }]);
 
     return IDBRequest;
 }();
 
-util.defineReadonlyProperties(IDBRequest.prototype, ['result', 'error', 'source', 'transaction', 'readyState']);
+util.defineReadonlyProperties(IDBRequest.prototype, ['source', 'transaction', 'readyState']);
+
+['result', 'error'].forEach(function (prop) {
+    var obj = IDBRequest.prototype;
+    Object.defineProperty(obj, '__' + prop, {
+        enumerable: false,
+        configurable: false,
+        writable: true
+    });
+    Object.defineProperty(obj, prop, {
+        enumerable: true,
+        configurable: true,
+        get: function get() {
+            if (this.__readyState !== 'done') {
+                throw (0, _DOMException.createDOMException)('InvalidStateError', 'The request is still pending.');
+            }
+            return this['__' + prop];
+        }
+    });
+});
 
 Object.assign(IDBRequest.prototype, _eventtarget2.default.prototype);
 
@@ -19680,7 +19731,7 @@ var IDBOpenDBRequest = function (_IDBRequest) {
 
         var _this = _possibleConstructorReturn(this, (IDBOpenDBRequest.__proto__ || Object.getPrototypeOf(IDBOpenDBRequest)).call(this));
 
-        _this.setOptions({ extraProperties: ['oldVersion', 'newVersion', 'debug'] }); // Ensure EventTarget preserves our properties
+        _this.__setOptions({ extraProperties: ['oldVersion', 'newVersion', 'debug'] }); // Ensure EventTarget preserves our properties
         _this.onblocked = _this.onupgradeneeded = null;
         return _this;
     }
@@ -19698,7 +19749,7 @@ var IDBOpenDBRequest = function (_IDBRequest) {
 exports.IDBRequest = IDBRequest;
 exports.IDBOpenDBRequest = IDBOpenDBRequest;
 
-},{"./util.js":375,"eventtarget":299}],368:[function(require,module,exports){
+},{"./DOMException.js":359,"./util.js":375,"eventtarget":299}],368:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -19753,8 +19804,10 @@ function IDBTransaction(db, storeNames, mode) {
     this.__mode = mode;
     this.__db = db;
     this.__error = null;
+    this.__internal = false;
     this.onabort = this.onerror = this.oncomplete = null;
     this.__storeClones = {};
+    this.__setOptions({ defaultSync: true });
 
     // Kick off the transaction as soon as all synchronous code is done.
     setTimeout(function () {
@@ -19780,30 +19833,74 @@ IDBTransaction.prototype.__executeRequests = function () {
             if (req) {
                 q.req = req; // Need to do this in case of cursors
             }
+            if (q.req.__readyState === 'done') {
+                // Avoid continuing with aborted requests
+                return;
+            }
             q.req.__readyState = 'done';
             q.req.__result = result;
             q.req.__error = null;
             var e = (0, _Event.createEvent)('success');
-            q.req.dispatchEvent(e);
+            try {
+                // Catching a `dispatchEvent` call is normally not possible for a standard `EventTarget`,
+                // but we are using the `EventTarget` library's `__userErrorEventHandler` to override this
+                // behavior for convenience in our internal calls
+                me.__internal = true;
+                me.__active = true;
+                q.req.dispatchEvent(e);
+                // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
+            } catch (err) {
+                me.__abortTransaction((0, _DOMException.createDOMException)('AbortError', 'A request was aborted.'));
+                return;
+            }
             executeNextRequest();
         }
 
         function error() /* tx, err */{
+            if (me.__errored || me.__transactionFinished) {
+                // We've already called "onerror", "onabort", or thrown within the transaction, so don't do it again.
+                return;
+            }
+            if (q.req && q.req.__readyState === 'done') {
+                // Avoid continuing with aborted requests
+                return;
+            }
+
             for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
                 args[_key] = arguments[_key];
             }
 
             var err = (0, _DOMException.findError)(args);
+            if (!q.req) {
+                me.__abortTransaction(q.req.__error);
+                return;
+            }
+            // Fire an error event for the current IDBRequest
+            q.req.__readyState = 'done';
+            q.req.__error = err;
+            q.req.__result = undefined;
+            q.req.addLateEventListener('error', function (e) {
+                if (e.cancelable && e.defaultPrevented) {
+                    executeNextRequest();
+                }
+            });
+            q.req.addDefaultEventListener('error', function () {
+                me.__abortTransaction(q.req.__error);
+            });
+            var e = void 0;
             try {
-                // Fire an error event for the current IDBRequest
-                q.req.__readyState = 'done';
-                q.req.__error = err || _DOMException.DOMException;
-                q.req.__result = undefined;
-                var e = (0, _Event.createEvent)('error', err);
+                // Catching a `dispatchEvent` call is normally not possible for a standard `EventTarget`,
+                // but we are using the `EventTarget` library's `__userErrorEventHandler` to override this
+                // behavior for convenience in our internal calls
+                me.__internal = true;
+                me.__active = true;
+                e = (0, _Event.createEvent)('error', err, { bubbles: true, cancelable: true });
                 q.req.dispatchEvent(e);
-            } finally {
-                // Fire an error event for the transaction
-                transactionError(err);
+                // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
+            } catch (handlerErr) {
+                (0, _DOMException.logError)('Error', 'An error occurred in a handler attached to request chain', handlerErr); // We do nothing else with this `handlerErr` per spec
+                e.preventDefault(); // Prevent 'error' default as steps indicate we should abort with `AbortError` even without cancellation
+                me.__abortTransaction((0, _DOMException.createDOMException)('AbortError', 'A request was aborted.'));
             }
         }
 
@@ -19813,12 +19910,19 @@ IDBTransaction.prototype.__executeRequests = function () {
                 // All requests in the transaction are done
                 me.__requests = [];
                 if (me.__active) {
-                    me.__active = false;
                     transactionFinished();
                 }
             } else {
                 try {
                     q = me.__requests[i];
+                    if (!q.req) {
+                        q.op(tx, q.args, executeNextRequest, error);
+                        return;
+                    }
+                    if (q.req.__readyState === 'done') {
+                        // Avoid continuing with aborted requests
+                        return;
+                    }
                     q.op(tx, q.args, success, error, executeNextRequest);
                 } catch (e) {
                     error(e);
@@ -19856,41 +19960,20 @@ IDBTransaction.prototype.__executeRequests = function () {
         }
         message += ' (' + errWebsql.message + ')--(' + errWebsql.code + ')';
         var err = (0, _DOMException.createDOMException)(name, message);
-        transactionError(err);
+        me.__abortTransaction(err);
     });
 
-    function transactionError(err) {
-        (0, _DOMException.logError)('Error', 'An error occurred in a transaction', err);
-
-        if (me.__errored) {
-            // We've already called "onerror", "onabort", or thrown, so don't do it again.
-            return;
-        }
-
-        me.__errored = true;
-
-        if (!me.__active) {
-            // The transaction has already completed, so we can't call "onerror" or "onabort".
-            // So throw the error instead.
-            throw err;
-        }
-
-        try {
-            me.__error = err;
-            var evt = (0, _Event.createEvent)('error');
-            me.dispatchEvent(evt);
-            me.db.dispatchEvent((0, _Event.createEvent)('error'));
-        } finally {
-            me.__storeClones = {};
-            me.abort();
-        }
-    }
-
     function transactionFinished() {
+        me.__active = false;
         _CFG2.default.DEBUG && console.log('Transaction completed');
         var evt = (0, _Event.createEvent)('complete');
+        me.__transactionFinished = true;
         try {
+            // Catching a `dispatchEvent` call is normally not possible for a standard `EventTarget`,
+            // but we are using the `EventTarget` library's `__userErrorEventHandler` to override this
+            // behavior for convenience in our internal calls
             me.dispatchEvent((0, _Event.createEvent)('__beforecomplete'));
+            me.__internal = true;
             me.dispatchEvent(evt);
             me.dispatchEvent((0, _Event.createEvent)('__complete'));
         } catch (e) {
@@ -19929,6 +20012,17 @@ IDBTransaction.prototype.__addToTransactionQueue = function (callback, args, sou
     var request = this.__createRequest(source);
     this.__pushToQueue(request, callback, args);
     return request;
+};
+
+/**
+ * Adds a callback function to the transaction queue without generating a request
+ * @param {function} callback
+ * @param {*} args
+ * @returns {IDBRequest}
+ * @protected
+ */
+IDBTransaction.prototype.__addNonRequestToTransactionQueue = function (callback, args, source) {
+    this.__pushToQueue(null, callback, args);
 };
 
 /**
@@ -19989,38 +20083,82 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
     return this.__storeClones[objectStoreName];
 };
 
-IDBTransaction.prototype.abort = function () {
+IDBTransaction.prototype.__abortTransaction = function (err) {
     var me = this;
-    _CFG2.default.DEBUG && console.log('The transaction was aborted', me);
-    if (!this.__active) {
-        throw (0, _DOMException.createDOMException)('InvalidStateError', 'A request was placed against a transaction which is currently not active, or which is finished');
-    }
-    me.__active = false;
-    me.__storeClones = {};
-
+    me.__active = false; // Setting here and in transactionFinished for https://github.com/w3c/IndexedDB/issues/87
     function abort(tx, errOrResult) {
-        if (typeof errOrResult.code === 'number') {
+        if (!tx) {
+            _CFG2.default.DEBUG && console.log('Rollback not possible due to missing transaction', me);
+        } else if (typeof errOrResult.code === 'number') {
             _CFG2.default.DEBUG && console.log('Rollback erred; feature is probably not supported as per WebSQL', me);
         } else {
             _CFG2.default.DEBUG && console.log('Rollback succeeded', me);
         }
 
         // Todo: Steps for aborting an upgrade transaction
-        // Todo: Send bubbling `error` events to me.__requests;
-        var evt = (0, _Event.createEvent)('abort');
 
-        // Todo: Make `abort` event bubble but not cancelable (can probably remove timeout now)
-        // Fire the "onabort" event asynchronously, so errors don't bubble
-        setTimeout(function () {
+        if (err !== null) {
+            me.__error = err;
+        }
+
+        (0, _DOMException.logError)('Error', 'An error occurred in a transaction', err);
+        if (me.__errored) {
+            // We've already called "onerror", "onabort", or thrown, so don't do it again.
+            return;
+        }
+        me.__errored = true;
+        if (me.__transactionFinished) {
+            // The transaction has already completed, so we can't call "onerror" or "onabort".
+            // So throw the error instead.
+            setTimeout(function () {
+                throw err;
+            }, 0);
+        }
+
+        me.__requests.filter(function (q) {
+            return q.req && q.req.__readyState !== 'done';
+        }).reduce(function (promises, q) {
+            // We reduce to a chain of promises to be queued in order, so we cannot use `Promise.all`
+            //  and I'm unsure whether `setTimeout` currently behaves first-in-first-out with the same timeout
+            //  so we could just use a `forEach`.
+            return promises.then(function () {
+                var reqEvt = (0, _Event.createEvent)('error', null, { bubbles: true, cancelable: true });
+                q.req.__readyState = 'done';
+                q.req.__result = undefined;
+                q.req.__error = (0, _DOMException.createDOMException)('AbortError', 'A request was aborted.');
+                return new Promise(function (resolve) {
+                    setTimeout(function () {
+                        q.req.dispatchEvent(reqEvt); // No need to catch errors
+                        resolve();
+                    }, 0);
+                });
+            });
+        }, Promise.resolve()).then(function () {
+            // Also works when there are no pending requests
+            var evt = (0, _Event.createEvent)('abort', err, { bubbles: true, cancelable: false });
             me.dispatchEvent(evt);
-        }, 0);
+            me.__storeClones = {};
+        });
     }
 
     if (me.__tx) {
-        me.__tx.executeSql('ROLLBACK', [], abort, abort);
-    } else {
+        // Not supported in standard SQL (and WebSQL errors should
+        //   rollback automatically), but for Node.js, etc., we give chance for
+        //   manual aborts which would otherwise not work.
         abort(null, { code: 0 });
+        // me.__tx.executeSql('ROLLBACK', [], abort, abort); // Not working in some circumstances, even in node
+    } else {
+            abort(null, { code: 0 });
+        }
+};
+
+IDBTransaction.prototype.abort = function () {
+    var me = this;
+    _CFG2.default.DEBUG && console.log('The transaction was aborted', me);
+    if (!this.__active) {
+        throw (0, _DOMException.createDOMException)('InvalidStateError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
+    me.__abortTransaction(null);
 };
 IDBTransaction.prototype.toString = function () {
     return '[object IDBTransaction]';
@@ -20041,6 +20179,23 @@ IDBTransaction.__assertActive = function (tx) {
     if (!tx || !tx.__active) {
         throw (0, _DOMException.createDOMException)('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
+};
+
+/**
+* Used by our EventTarget.prototype library to implement bubbling/capturing
+*/
+IDBTransaction.prototype.__getParent = function () {
+    return this.db;
+};
+/**
+* Used by our EventTarget.prototype library to detect errors in user handlers
+*/
+IDBTransaction.prototype.__userErrorEventHandler = function (error, triggerGlobalErrorEvent) {
+    if (this.__internal) {
+        this.__internal = false;
+        throw error;
+    }
+    triggerGlobalErrorEvent();
 };
 
 util.defineReadonlyProperties(IDBTransaction.prototype, ['objectStoreNames', 'mode', 'db', 'error']);

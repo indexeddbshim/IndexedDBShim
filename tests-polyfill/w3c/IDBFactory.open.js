@@ -355,8 +355,7 @@ describe('W3C IDBFactory.open Tests', function () {
 
         open_rq.onupgradeneeded = function(e) {
             db = e.target.result;
-
-            assert(e instanceof FDBVersionChangeEvent, "e instanceof IDBVersionChangeEvent");
+            assert(support.instanceOf(e, FDBVersionChangeEvent), "e instanceof IDBVersionChangeEvent");
             assert.equal(e.oldVersion, 0, "oldVersion");
             assert.equal(e.newVersion, 9, "newVersion");
             assert.equal(e.type, "upgradeneeded", "event type");
@@ -364,8 +363,8 @@ describe('W3C IDBFactory.open Tests', function () {
             assert.equal(db.version, 9, "db.version");
         };
         open_rq.onsuccess = function(e) {
-            assert(e instanceof Event, "e instanceof Event");
-            assert(!(e instanceof FDBVersionChangeEvent), "e not instanceof IDBVersionChangeEvent");
+            assert(support.instanceOf(e, Event), "e instanceof Event");
+            assert(!(support.instanceOf(e, FDBVersionChangeEvent)), "e not instanceof IDBVersionChangeEvent");
             assert.equal(e.type, "success", "event type");
 
 
@@ -377,7 +376,7 @@ describe('W3C IDBFactory.open Tests', function () {
             var open_rq2 = createdb(done, db.name, 10);
             open_rq2.onupgradeneeded = function(e) {
                 var db2 = e.target.result;
-                assert(e instanceof FDBVersionChangeEvent, "e instanceof IDBVersionChangeEvent");
+                assert(support.instanceOf(e, FDBVersionChangeEvent), "e instanceof IDBVersionChangeEvent");
                 assert.equal(e.oldVersion, 9, "oldVersion");
                 assert.equal(e.newVersion, 10, "newVersion");
                 assert.equal(e.type, "upgradeneeded", "event type");

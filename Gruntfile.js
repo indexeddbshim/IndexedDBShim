@@ -232,8 +232,8 @@ module.exports = function (grunt) {
                 tasks: ['eslint', 'browserify', 'uglify']
             },
             node: {
-                files: ['src/*'],
-                tasks: ['eslint', 'browserify:node', 'uglify:node']
+                files: ['src/*', 'node_modules/eventtarget/EventTarget.js'],
+                tasks: ['eslint', 'browserify:node']
             }
         }
     });
@@ -243,7 +243,7 @@ module.exports = function (grunt) {
     }
 
     grunt.registerTask('build', ['eslint', 'browserify', 'uglify']);
-    grunt.registerTask('build-node', ['eslint', 'browserify:node', 'uglify:node']);
+    grunt.registerTask('build-node', ['eslint', 'browserify:node']);
     const testJobs = ['build', 'connect'];
     grunt.registerTask('nodequnit', testJobs.concat('node-qunit'));
     grunt.registerTask('mocha', ['mochaTest']); // clean:mochaTests isn't working here as locked (even with force:true on it or grunt-wait) so we do in package.json
