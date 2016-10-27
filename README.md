@@ -156,18 +156,12 @@ Please make sure someone else hasn't already reported the same bug though.
 
 Here is a summary of known issues to resolve:
 
-1. Event bubbling and `preventDefault`; also report WebSQL `QUOTA_ERR` (4)
-    as `QuotaExceededError` and `TIMEOUT_ERR` (7) probably as
-    `TransactionInactiveError` (and treat accordingly) and any others as
-    `UnknownError`
-2. Support rollbacks (where possible) with automated rollbacks (and
-    `AbortError` calls for requests) and support upgrade transaction manual
-    aborts
-3. `close` and `blocked` event support (reconcile with existing `versionchange`)
-4. `eval` is currently in use (in `src/Sca.js`)
-5. Add new Binary/ArrayBuffer/Views on buffers (TypedArray or DataView) support
-6. Support cyclic objects (via Structured Cloning Algorithm)
-7. Certain more recent APIs are missing: `IDBCursor.continuePrimaryKey`,
+1. Support versionchange rollbacks
+2. `close` and `blocked` event support (reconcile with existing `versionchange`)
+3. `eval` is currently in use (in `src/Sca.js`)
+4. Add new Binary/ArrayBuffer/Views on buffers (TypedArray or DataView) support
+5. Support cyclic objects (via Structured Cloning Algorithm)
+6. Certain more recent APIs are missing: `IDBCursor.continuePrimaryKey`,
     `IDBIndex` (`getAll`, `getAllKeys`), `IDBObjectStore` (`getAll`,
     `getAllKeys`, `getKey`).
 

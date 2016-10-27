@@ -160,6 +160,7 @@ describe('IDBDatabase.deleteObjectStore', function () {
 
         util.skipIf(env.isNative && env.browser.isSafari, 'should persist the schema across database sessions', function (done) {
             // BUG: Safari's native IndexedDB does not support opening multiple object stores
+            this.timeout(8000);
 
             // Create a database schema, then close the database
             util.createDatabase(
