@@ -100,11 +100,17 @@ IDBFactory.prototype.open = function (name, version) {
                                 req.transaction.on__beforecomplete = function () {
                                     req.result.__versionTransaction = null;
                                 };
+                                req.transaction.on__abort = function () {
+                                    const err = createDOMException('AbortError', 'The upgrade transaction was aborted.');
+                                    dbCreateError(err);
+                                };
                                 req.transaction.on__complete = function () {
+                                    req.__transaction = null;
                                     if (req.__result.__closed) {
+                                        const err = createDOMException('AbortError', 'The connection has been closed.');
+                                        dbCreateError(err);
                                         return;
                                     }
-                                    req.__transaction = null;
                                     const e = createEvent('success');
                                     req.dispatchEvent(e);
                                 };

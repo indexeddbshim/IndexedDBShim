@@ -27,6 +27,11 @@
     also remove unused `__multiEntryOffset`
 - Deprecate: Numeric constants as second arguments to
     `IDBDatabase.prototype.transaction` (use `readonly`/`readwrite` instead).
+- Fix: Ensure `AbortError` sent to `IDBOpenDBRequest.onerror` upon a
+    transaction aborting or a connection being closed within an upgrade
+    transaction
+- Fix: Set `IDBOpenDBRequest.transaction` to `null` upon `AbortError` due to
+    closed connection
 - Fix: Set `error` property of `IDBTransaction` for certain tx aborts
 - Fix: 'error' and 'abort' bubbling events
    ((`IDBRequest`->) `IDBTransaction`->`IDBDatabase`),

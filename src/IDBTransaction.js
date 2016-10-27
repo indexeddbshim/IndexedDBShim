@@ -345,6 +345,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
             const evt = createEvent('abort', err, {bubbles: true, cancelable: false});
             me.dispatchEvent(evt);
             me.__storeClones = {};
+            me.dispatchEvent(createEvent('__abort'));
         });
     }
 

@@ -10600,11 +10600,17 @@ IDBFactory.prototype.open = function (name, version) {
                                 req.transaction.on__beforecomplete = function () {
                                     req.result.__versionTransaction = null;
                                 };
+                                req.transaction.on__abort = function () {
+                                    var err = (0, _DOMException.createDOMException)('AbortError', 'The upgrade transaction was aborted.');
+                                    dbCreateError(err);
+                                };
                                 req.transaction.on__complete = function () {
+                                    req.__transaction = null;
                                     if (req.__result.__closed) {
+                                        var _err = (0, _DOMException.createDOMException)('AbortError', 'The connection has been closed.');
+                                        dbCreateError(_err);
                                         return;
                                     }
-                                    req.__transaction = null;
                                     var e = (0, _Event.createEvent)('success');
                                     req.dispatchEvent(e);
                                 };
@@ -12641,6 +12647,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
             var evt = (0, _Event.createEvent)('abort', err, { bubbles: true, cancelable: false });
             me.dispatchEvent(evt);
             me.__storeClones = {};
+            me.dispatchEvent((0, _Event.createEvent)('__abort'));
         });
     }
 
