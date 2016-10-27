@@ -74,6 +74,9 @@ function setGlobalVars (idb) {
         IDB.shimIndexedDB.__setConfig = function (prop, val) {
             CFG[prop] = val;
         };
+        IDB.shimIndexedDB.__getConfig = function (prop) {
+            return CFG[prop];
+        };
         IDB.shimIndexedDB.__setUnicodeIdentifiers = function (ui) {
             this.__setConfig('UnicodeIDStart', ui.UnicodeIDStart);
             this.__setConfig('UnicodeIDContinue', ui.UnicodeIDContinue);

@@ -246,7 +246,8 @@
 - Feature: Add ".sqlite" extension to database name for sake of (Windows)
     file type identification
 - Feature: Expose `__setConfig(prop, val)` method for setting pseudo-global
-    property used internally for config.
+    property used internally for config and `shimIndexedDB.__getConfig()`
+    to read
 - Feature: Expose `__setUnicodeIdentifiers()` for setting Unicode
     regular expression strings
 - Feature: Implement `IDBTransaction.objectStoreNames`
@@ -263,6 +264,7 @@
     yet treating bubbling or `preventDefault`); change `ShimEvent` to utilize
     polyfill from `eventtarget`
 - Repo files: Rename test folders for ease in distinguishing
+- Optimize: use WebSQL `readTransaction` when in `readonly` mode
 - Optimize: Avoid caching and other processing in `IDBCursor` multiEntry
     finds (used by `IDBObjectStore` or `IDBIndex` `count` with key range)
 - Refactoring (Avoid globals): Change from using window global to a CFG module

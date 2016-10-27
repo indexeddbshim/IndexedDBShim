@@ -19830,7 +19830,8 @@ IDBTransaction.prototype.__executeRequests = function () {
     this.__running = true;
     var me = this;
 
-    me.db.__db.transaction(function executeRequests(tx) {
+    me.db.__db[me.mode === 'readonly' ? 'readTransaction' : 'transaction']( // `readTransaction` is optimized, at least in `node-websql`
+    function executeRequests(tx) {
         me.__tx = tx;
         var q = null,
             i = -1;
@@ -21643,6 +21644,9 @@ function setGlobalVars(idb) {
         };
         IDB.shimIndexedDB.__setConfig = function (prop, val) {
             _CFG2.default[prop] = val;
+        };
+        IDB.shimIndexedDB.__getConfig = function (prop) {
+            return _CFG2.default[prop];
         };
         IDB.shimIndexedDB.__setUnicodeIdentifiers = function (ui) {
             this.__setConfig('UnicodeIDStart', ui.UnicodeIDStart);

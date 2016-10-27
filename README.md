@@ -114,15 +114,21 @@ window.shimIndexedDB.__debug(true);
 Rather than using globals, a method has been provided to share state across
 IndexedDBShim modules.
 
-Its signature:
+Its signature for setting configuration:
 
 ```js
 shimIndexedDB.__setConfig(property, value);
 ```
 
+...and for retrieving:
+
+```js
+shimIndexedDB.__getConfig(property);
+```
+
 The available properties are:
 
-- __DEBUG__ - Boolean (equivalent to `shimIndexedDB.__debug`)
+- __DEBUG__ - Boolean (equivalent to calling `shimIndexedDB.__debug(val)`)
 - __cursorPreloadPackSize__ - Number indicating how many records to preload for
     caching of (non-multiEntry) `IDBCursor.continue` calls. Defaults to 100.
 - __win__,  Object on which there may be an `openDatabase` method (if any)

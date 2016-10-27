@@ -44,7 +44,7 @@ IDBTransaction.prototype.__executeRequests = function () {
     this.__running = true;
     const me = this;
 
-    me.db.__db.transaction(
+    me.db.__db[me.mode === 'readonly' ? 'readTransaction' : 'transaction']( // `readTransaction` is optimized, at least in `node-websql`
         function executeRequests (tx) {
             me.__tx = tx;
             let q = null, i = -1;
