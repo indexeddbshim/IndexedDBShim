@@ -100,7 +100,7 @@ if (cleanInterface) {
 
 function escapeNULAndCasing (arg) {
     // http://stackoverflow.com/a/6701665/271577
-    return arg.replace(/\^/g, '^^').replace(/\0/g, '^0')
+    return arg.replace(/\^/g, '^^').replace(/\x00/g, '^0') // eslint-disable-line no-control-regex
         // We need to avoid tables being treated as duplicates based on SQLite's case-insensitive table and column names
         // http://stackoverflow.com/a/17215009/271577
         // See also https://www.sqlite.org/faq.html#q18 re: Unicode case-insensitive not working
