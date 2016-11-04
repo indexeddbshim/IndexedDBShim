@@ -14328,7 +14328,7 @@ function setGlobalVars(idb) {
     (navigator.userAgent.indexOf('Safari') === -1 || navigator.userAgent.indexOf('Chrome') > -1) && // Exclude genuine Safari: http://stackoverflow.com/a/7768006/271577
     // Detect iOS: http://stackoverflow.com/questions/9038625/detect-if-device-is-ios/9039885#9039885
     // and detect version 9: http://stackoverflow.com/a/26363560/271577
-    /iPad|iPhone|iPod.* os 9_/i.test(navigator.userAgent) && !window.MSStream // But avoid IE11
+    /(iPad|iPhone|iPod).* os 9_/i.test(navigator.userAgent) && !window.MSStream // But avoid IE11
     )) {
         poorIndexedDbSupport = true;
     }
