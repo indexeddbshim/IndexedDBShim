@@ -76,7 +76,7 @@ describe('IDBObjectStore.add', function () {
     });
 
     it('should throw an error if an out-of-line key conflict occurs in simultaneous transactions', function (done) {
-        this.timeout(5000);
+        this.timeout(8000);
         util.createDatabase('out-of-line', function (err, db) {
             if (err) {
                 expect(function () { throw err; }).to.not.throw(Error);

@@ -161,6 +161,7 @@ describe('IDBIndex.openCursor', function () {
     });
 
     it('should get one record', function (done) {
+        this.timeout(8000);
         util.createDatabase('inline', 'inline-index', function (err, db) {
             if (err) {
                 expect(function () { throw err; }).to.not.throw(Error);

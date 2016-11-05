@@ -556,6 +556,7 @@
             });
 
             it('should save out-of-line keys in multiple simultaneous transactions', function (done) {
+                this.timeout(8000);
                 util.createDatabase('out-of-line', function (err, db) {
                     if (err) {
                         expect(function () { throw err; }).to.not.throw(Error);
@@ -604,6 +605,7 @@
             });
 
             it('should save generated out-of-line keys in multiple simultaneous transactions', function (done) {
+                this.timeout(8000);
                 util.createDatabase('out-of-line-generated', function (err, db) {
                     if (err) {
                         expect(function () { throw err; }).to.not.throw(Error);

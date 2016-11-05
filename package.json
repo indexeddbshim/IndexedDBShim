@@ -15,11 +15,12 @@
     "w3c-build": "grunt clean-w3c && node test-support/node-buildjs",
     "test": "npm run sauce-qunit",
 
+    "mocha": "grunt clean-mocha && grunt mocha && grunt clean-mocha",
+
     "sauce-qunit": "grunt sauce-qunit",
     "phantom-qunit": "grunt phantom-qunit",
     "node-qunit": "grunt clean-qunit && grunt nodequnit && grunt clean-qunit",
 
-    "mocha": "grunt clean-mocha && grunt mocha && grunt clean-mocha",
     "fake": "grunt clean-fake && mocha tests-polyfill/fakeIndexedDB/fakeIndexedDB.js && grunt clean-fake",
 
     "good": "npm run mock-good && npm run w3c-good && npm run w3c-old-good",
