@@ -17,20 +17,24 @@ glob._babelPolyfill = false; // http://stackoverflow.com/questions/31282702/conf
 let IDB;
 
 function shim (name, value) {
+    const originValue = IDB[name];
+
     try {
         // Try setting the property. This will fail if the property is read-only.
         IDB[name] = value;
+        return originValue;
     } catch (e) {
         console.log(e);
     }
     if (IDB[name] !== value && Object.defineProperty) {
         // Setting a read-only property failed, so try re-defining the property
         try {
-            const desc = {value};
+            const desc = {value, configurable: true};
             if (name === 'indexedDB') {
                 desc.writable = false; // Make explicit for Babel
             }
             Object.defineProperty(IDB, name, desc);
+            return originValue;
         } catch (e) {
             // With `indexedDB`, PhantomJS fails here and below but
             //  not above, while Chrome is reverse (and Firefox doesn't
@@ -47,25 +51,33 @@ function setGlobalVars (idb) {
     IDB = idb || (typeof window !== 'undefined' ? window : (typeof self !== 'undefined' ? self : {}));
     shim('shimIndexedDB', shimIndexedDB);
     if (IDB.shimIndexedDB) {
+        const stashOriginConstants = {};
         IDB.shimIndexedDB.__useShim = function () {
             if (CFG.win.openDatabase !== undefined) {
                 // Polyfill ALL of IndexedDB, using WebSQL
-                shim('indexedDB', shimIndexedDB);
-                shim('IDBFactory', shimIDBFactory);
-                shim('IDBDatabase', shimIDBDatabase);
-                shim('IDBObjectStore', shimIDBObjectStore);
-                shim('IDBIndex', shimIDBIndex);
-                shim('IDBTransaction', shimIDBTransaction);
-                shim('IDBCursor', shimIDBCursor);
-                shim('IDBCursorWithValue', shimIDBCursorWithValue);
-                shim('IDBKeyRange', shimIDBKeyRange);
-                shim('IDBRequest', shimIDBRequest);
-                shim('IDBOpenDBRequest', shimIDBOpenDBRequest);
-                shim('IDBVersionChangeEvent', shimIDBVersionChangeEvent);
+                stashOriginConstants.indexedDB = shim('indexedDB', shimIndexedDB);
+                stashOriginConstants.IDBFactory = shim('IDBFactory', shimIDBFactory);
+                stashOriginConstants.IDBDatabase = shim('IDBDatabase', shimIDBDatabase);
+                stashOriginConstants.IDBObjectStore = shim('IDBObjectStore', shimIDBObjectStore);
+                stashOriginConstants.IDBIndex = shim('IDBIndex', shimIDBIndex);
+                stashOriginConstants.IDBTransaction = shim('IDBTransaction', shimIDBTransaction);
+                stashOriginConstants.IDBCursor = shim('IDBCursor', shimIDBCursor);
+                stashOriginConstants.IDBCursorWithValue = shim('IDBCursorWithValue', shimIDBCursorWithValue);
+                stashOriginConstants.IDBKeyRange = shim('IDBKeyRange', shimIDBKeyRange);
+                stashOriginConstants.IDBRequest = shim('IDBRequest', shimIDBRequest);
+                stashOriginConstants.IDBOpenDBRequest = shim('IDBOpenDBRequest', shimIDBOpenDBRequest);
+                stashOriginConstants.IDBVersionChangeEvent = shim('IDBVersionChangeEvent', shimIDBVersionChangeEvent);
             } else if (typeof IDB.indexedDB === 'object') {
                 // Polyfill the missing IndexedDB features (no need for IDBEnvironment, the window containing indexedDB itself))
                 polyfill(shimIDBCursor, shimIDBCursorWithValue, shimIDBDatabase, shimIDBFactory, shimIDBIndex, shimIDBKeyRange, shimIDBObjectStore, shimIDBRequest, shimIDBTransaction);
             }
+        };
+        IDB.shimIndexedDB.__unuseShim = function () {
+            Object.keys(stashOriginConstants).forEach(function (name) {
+                if (stashOriginConstants[name] && shim(name, stashOriginConstants[name])) {
+                    delete stashOriginConstants[name];
+                }
+            });
         };
 
         IDB.shimIndexedDB.__debug = function (val) {
