@@ -1,6 +1,3 @@
-require('./setup')
-var assert = require('assert')
-
 /**
  * Created by Kristof on 29/03/2015.
  */
@@ -10,7 +7,7 @@ describe("Objectstore - Clear", function () {
         var key = 1;
 
         initionalSituationObjectStoreNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -72,7 +69,7 @@ describe("Objectstore - Clear", function () {
         var expect = 1, ct = 0;
 
         initionalSituationObjectStoreNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readonly");

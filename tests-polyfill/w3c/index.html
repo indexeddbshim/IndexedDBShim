@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8"/>
+    <meta name="msapplication-tap-highlight" content="no"/>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi"/>
+    <title>Testing IndexedDB Shim</title>
+
+    <link rel="stylesheet" href="../../node_modules/mocha/mocha.css"/>
+    <link rel="stylesheet" href="../../tests-mocha/styles.css"/>
+  </head>
+  <body>
+    <div id="mocha">
+      <ul id="supports">
+        <li id="supports-websql" class="test">WebSql</li>
+        <li id="supports-indexeddb" class="test">IndexedDB</li>
+        <li id="supports-mozindexeddb" class="test">mozIndexedDB</li>
+        <li id="supports-webkitindexeddb" class="test">webkitIndexedDB</li>
+        <li id="supports-msindexeddb" class="test">msIndexedDB</li>
+      </ul>
+      <div id="options">
+        <a id="use-native" href="?useShim=false">Switch to Native IndexedDB</a>
+        <a id="use-shim" href="?useShim=true">Switch to IndexedDBShim</a>
+      </div>
+      <div id="choke-warning">
+        <h1>Warning!</h1>
+        <ul>
+          <li class="test fail">
+            <h2>
+              This browser has trouble running the <strong>hundreds</strong> of tests on this page.
+              If you get test failures, then try running each test suite separately, by clicking the test suite's title.
+            </h2>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Test Environment -->
+    <script src="../../node_modules/mocha/mocha.js"></script>
+    <script src="../../node_modules/chai/chai.js"></script>
+    <script src="../../node_modules/sinon/pkg/sinon.js"></script>
+    <script src="../../tests-mocha/test-environment.js"></script>
+    <script src="../../tests-mocha/test-utils.js"></script>
+
+    <!-- IndexedDBShim -->
+    <!--<script src="../../dist/indexeddbshim.js"></script>-->
+    <script src="../../dist/indexeddbshim-UnicodeIdentifiers.js"></script>
+
+    <!--<script src="../src/util.js"></script>-->
+    <!--<script src="../src/polyfill.js"></script>-->
+    <!--<script src="../src/Sca.js"></script>-->
+    <!--<script src="../src/Key.js"></script>-->
+    <!--<script src="../src/Event.js"></script>-->
+    <!--<script src="../src/DOMException.js"></script>-->
+    <!--<script src="../src/IDBRequest.js"></script>-->
+    <!--<script src="../src/IDBKeyRange.js"></script>-->
+    <!--<script src="../src/IDBCursor.js"></script>-->
+    <!--<script src="../src/IDBIndex.js"></script>-->
+    <!--<script src="../src/IDBObjectStore.js"></script>-->
+    <!--<script src="../src/IDBTransaction.js"></script>-->
+    <!--<script src="../src/IDBDatabase.js"></script>-->
+    <!--<script src="../src/IDBFactory.js"></script>-->
+    <!--<script src="../src/setGlobalVars.js"></script>-->
+
+    <script src="support.js"></script>
+    <script>
+    // mocha.setup({ui: 'tdd'});
+    mocha.setup({globals: ['done']}); // Set in support.js
+    var assert = chai.assert;
+    var global = window;
+    </script>
+
+    <!-- Unit Tests -->
+    <script src="IDBCursor.advance.js"></script>
+    <script src="IDBCursor.continue.js"></script>
+    <script src="IDBCursor.delete.js"></script>
+    <script src="IDBCursor.update.js"></script>
+    <script src="IDBCursorBehavior.js"></script>
+    <script src="IDBDatabase.close.js"></script>
+    <script src="IDBDatabase.createObjectStore.js"></script>
+    <script src="IDBDatabase.deleteObjectStore.js"></script>
+    <script src="IDBDatabase.transaction.js"></script>
+    <script src="IDBFactory.cmp.js"></script>
+    <script src="IDBFactory.deleteDatabase.js"></script>
+    <script src="IDBFactory.open.js"></script>
+    <script src="IDBIndex.count.js"></script>
+    <script src="IDBIndex.get.js"></script>
+    <script src="IDBIndex.getKey.js"></script>
+    <script src="IDBIndex.js"></script>
+    <script src="IDBIndex.multiEntry.js"></script>
+    <script src="IDBIndex.openKeyCursor.js"></script>
+    <script src="IDBKeyRange.js"></script>
+    <script src="IDBObjectStore.add.js"></script>
+    <script src="IDBObjectStore.clear.js"></script>
+    <script src="IDBObjectStore.count.js"></script>
+    <script src="IDBObjectStore.createIndex.js"></script>
+    <script src="IDBObjectStore.delete.js"></script>
+    <script src="IDBObjectStore.deleteIndex.js"></script>
+    <script src="IDBObjectStore.get.js"></script>
+    <script src="IDBObjectStore.index.js"></script>
+    <script src="IDBObjectStore.js"></script>
+    <script src="IDBObjectStore.openCursor.js"></script>
+    <script src="IDBObjectStore.put.js"></script>
+    <script src="IDBTransaction.abort.js"></script>
+    <script src="IDBTransaction.js"></script>
+    <script src="KeyGenerator.js"></script>
+    <script src="KeyPath.js"></script>
+    <script src="KeyValidity.js"></script>
+    <script src="RequestBehavior.js"></script>
+    <script src="TransactionBehavior.js"></script>
+
+    <script>
+      mocha.run();
+    </script>
+  </body>
+</html>

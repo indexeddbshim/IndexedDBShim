@@ -1,10 +1,11 @@
 import {createEvent} from './Event.js';
-import {logError, findError, createDOMException} from './DOMException.js';
+import {logError, findError, webSQLErrback, createDOMException} from './DOMException.js';
 import {IDBRequest} from './IDBRequest.js';
 import * as util from './util.js';
 import IDBObjectStore from './IDBObjectStore.js';
 import CFG from './CFG.js';
 import EventTarget from 'eventtarget';
+import SyncPromise from 'sync-promise';
 
 let uniqueID = 0;
 
@@ -29,20 +30,28 @@ function IDBTransaction (db, storeNames, mode) {
     this.__internal = false;
     this.onabort = this.onerror = this.oncomplete = null;
     this.__storeClones = {};
-    this.__setOptions({defaultSync: true});
+    this.__setOptions({defaultSync: true, extraProperties: ['complete']}); // Ensure EventTarget preserves our properties
 
-    // Kick off the transaction as soon as all synchronous code is done.
+    // Kick off the transaction as soon as all synchronous code is done
     setTimeout(() => { this.__executeRequests(); }, 0);
 }
 
+IDBTransaction.prototype.__transFinishedCb = function (err, cb) {
+    if (err) {
+        cb(true);
+        return;
+    }
+    cb();
+};
+
 IDBTransaction.prototype.__executeRequests = function () {
-    if (this.__running) {
-        CFG.DEBUG && console.log('Looks like the request set is already running', this.mode);
+    const me = this;
+    if (me.__running) {
+        CFG.DEBUG && console.log('Looks like the request set is already running', me.mode);
         return;
     }
 
-    this.__running = true;
-    const me = this;
+    me.__running = true;
 
     me.db.__db[me.mode === 'readonly' ? 'readTransaction' : 'transaction']( // `readTransaction` is optimized, at least in `node-websql`
         function executeRequests (tx) {
@@ -50,6 +59,10 @@ IDBTransaction.prototype.__executeRequests = function () {
             let q = null, i = -1;
 
             function success (result, req) {
+                if (me.__errored || me.__requestsFinished) {
+                    // We've already called "onerror", "onabort", or thrown within the transaction, so don't do it again.
+                    return;
+                }
                 if (req) {
                     q.req = req; // Need to do this in case of cursors
                 }
@@ -66,8 +79,10 @@ IDBTransaction.prototype.__executeRequests = function () {
                     me.__internal = true;
                     me.__active = true;
                     q.req.dispatchEvent(e);
+                    me.__internal = false;
                     // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
                 } catch (err) {
+                    me.__internal = false;
                     me.__abortTransaction(createDOMException('AbortError', 'A request was aborted.'));
                     return;
                 }
@@ -75,7 +90,7 @@ IDBTransaction.prototype.__executeRequests = function () {
             }
 
             function error (...args /* tx, err */) {
-                if (me.__errored || me.__transactionFinished) {
+                if (me.__errored || me.__requestsFinished) {
                     // We've already called "onerror", "onabort", or thrown within the transaction, so don't do it again.
                     return;
                 }
@@ -84,7 +99,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 }
                 const err = findError(args);
                 if (!q.req) {
-                    me.__abortTransaction(q.req.__error);
+                    me.__abortTransaction(err);
                     return;
                 }
                 // Fire an error event for the current IDBRequest
@@ -107,8 +122,10 @@ IDBTransaction.prototype.__executeRequests = function () {
                     me.__active = true;
                     e = createEvent('error', err, {bubbles: true, cancelable: true});
                     q.req.dispatchEvent(e);
+                    me.__internal = false;
                     // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
                 } catch (handlerErr) {
+                    me.__internal = false;
                     logError('Error', 'An error occurred in a handler attached to request chain', handlerErr); // We do nothing else with this `handlerErr` per spec
                     e.preventDefault(); // Prevent 'error' default as steps indicate we should abort with `AbortError` even without cancellation
                     me.__abortTransaction(createDOMException('AbortError', 'A request was aborted.'));
@@ -116,12 +133,16 @@ IDBTransaction.prototype.__executeRequests = function () {
             }
 
             function executeNextRequest () {
+                if (me.__errored || me.__requestsFinished) {
+                    // We've already called "onerror", "onabort", or thrown within the transaction, so don't do it again.
+                    return;
+                }
                 i++;
                 if (i >= me.__requests.length) {
                     // All requests in the transaction are done
                     me.__requests = [];
                     if (me.__active) {
-                        transactionFinished();
+                        requestsFinished();
                     }
                 } else {
                     try {
@@ -142,56 +163,91 @@ IDBTransaction.prototype.__executeRequests = function () {
 
             executeNextRequest();
         },
-
-        function webSqlError (errWebsql) {
-            let name, message;
-            switch (errWebsql.code) {
-            case 4: { // SQLError.QUOTA_ERR
-                name = 'QuotaExceededError';
-                message = 'The operation failed because there was not enough remaining storage space, or the storage quota was reached and the user declined to give more space to the database.';
-                break;
+        function webSQLError (webSQLErr) {
+            if (webSQLErr === true) { // Not a genuine SQL error
+                return;
             }
-            /*
-            // Should a WebSQL timeout treat as IndexedDB `TransactionInactiveError` or `UnknownError`?
-            case 7: { // SQLError.TIMEOUT_ERR
-                // All transaction errors abort later, so no need to mark inactive
-                name = 'TransactionInactiveError';
-                message = 'A request was placed against a transaction which is currently not active, or which is finished (Internal SQL Timeout).';
-                break;
-            }
-            */
-            default: {
-                name = 'UnknownError';
-                message = 'The operation failed for reasons unrelated to the database itself and not covered by any other errors.';
-                break;
-            }
-            }
-            message += ' (' + errWebsql.message + ')--(' + errWebsql.code + ')';
-            const err = createDOMException(name, message);
+            const err = webSQLErrback(webSQLErr);
             me.__abortTransaction(err);
+        },
+        function () {
+            // For Node, we don't need to try running here as we can keep
+            //   the transaction running long enough to rollback (in the
+            //   next (non-standard) callback for this transaction call)
+            if (me.__transFinishedCb !== IDBTransaction.prototype.__transFinishedCb) { // Node
+                return;
+            }
+            if (!me.__transactionEndCallback && !me.__requestsFinished) {
+                me.__transactionFinished = true;
+                return;
+            }
+            if (me.__transactionEndCallback && !me.__completed) {
+                me.__transFinishedCb(me.__errored, me.__transactionEndCallback);
+            }
+        },
+        function (currentTask, err, done, rollback, commit) {
+            if (currentTask.readOnly || err) {
+                return true;
+            }
+            me.__transFinishedCb = function (err, cb) {
+                if (err) {
+                    rollback(err, cb);
+                } else {
+                    commit(cb);
+                }
+            };
+            if (me.__transactionEndCallback && !me.__completed) {
+                me.__transFinishedCb(me.__errored, me.__transactionEndCallback);
+            }
+            return false;
         }
     );
 
-    function transactionFinished () {
+    function requestsFinished () {
         me.__active = false;
-        CFG.DEBUG && console.log('Transaction completed');
-        const evt = createEvent('complete');
-        me.__transactionFinished = true;
+        me.__requestsFinished = true;
+        function complete () {
+            me.__completed = true;
+            CFG.DEBUG && console.log('Transaction completed');
+            const evt = createEvent('complete');
+            try {
+                me.__internal = true;
+                me.dispatchEvent(evt);
+                me.__internal = false;
+                me.dispatchEvent(createEvent('__complete'));
+            } catch (e) {
+                me.__internal = false;
+                // An error occurred in the "oncomplete" handler.
+                // It's too late to call "onerror" or "onabort". Throw a global error instead.
+                // (this may seem odd/bad, but it's how all native IndexedDB implementations work)
+                me.__errored = true;
+                throw e;
+            } finally {
+                me.__storeClones = {};
+            }
+        }
+        if (me.mode === 'readwrite') {
+            if (me.__transactionFinished) {
+                complete();
+                return;
+            }
+            me.__transactionEndCallback = complete;
+            return;
+        }
+        if (me.mode === 'readonly') {
+            complete();
+            return;
+        }
         try { // Catching a `dispatchEvent` call is normally not possible for a standard `EventTarget`,
             // but we are using the `EventTarget` library's `__userErrorEventHandler` to override this
             // behavior for convenience in our internal calls
-            me.dispatchEvent(createEvent('__beforecomplete'));
             me.__internal = true;
-            me.dispatchEvent(evt);
-            me.dispatchEvent(createEvent('__complete'));
-        } catch (e) {
-            // An error occurred in the "oncomplete" handler.
-            // It's too late to call "onerror" or "onabort". Throw a global error instead.
-            // (this may seem odd/bad, but it's how all native IndexedDB implementations work)
-            me.__errored = true;
-            throw e;
+            const ev = createEvent('__beforecomplete');
+            ev.complete = complete;
+            me.dispatchEvent(ev);
+        } catch (err) {
         } finally {
-            me.__storeClones = {};
+            me.__internal = false;
         }
     }
 };
@@ -285,7 +341,9 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
         throw createDOMException('NotFoundError', objectStoreName + ' does not exist in ' + this.db.name);
     }
 
-    if (!this.__storeClones[objectStoreName]) {
+    if (!this.__storeClones[objectStoreName] ||
+        this.__storeClones[objectStoreName].__deleted) { // The latter condiiton is to allow store
+                                                         //   recreation to create new clone object
         this.__storeClones[objectStoreName] = IDBObjectStore.__clone(store, this);
     }
     return this.__storeClones[objectStoreName];
@@ -293,55 +351,68 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
 
 IDBTransaction.prototype.__abortTransaction = function (err) {
     const me = this;
-    me.__active = false; // Setting here and in transactionFinished for https://github.com/w3c/IndexedDB/issues/87
+    logError('Error', 'An error occurred in a transaction', err);
+    if (me.__errored) {
+        // We've already called "onerror", "onabort", or thrown, so don't do it again.
+        return;
+    }
+    me.__errored = true;
+
+    if (me.mode === 'versionchange') { // Steps for aborting an upgrade transaction
+        me.db.__version = me.db.__oldVersion;
+        me.db.__objectStoreNames = me.db.__oldObjectStoreNames;
+        Object.keys(me.__storeClones).forEach(function (objectStoreName) {
+            const store = me.__storeClones[objectStoreName];
+            store.__name = store.__originalName;
+            store.__indexNames = store.__oldIndexNames;
+            Object.keys(store.__indexes).forEach(function (indexName) {
+                const index = store.__indexes[indexName];
+                index.__name = index.__originalName;
+            });
+        });
+    }
+    me.__active = false; // Setting here and in requestsFinished for https://github.com/w3c/IndexedDB/issues/87
+
+    if (err !== null) {
+        me.__error = err;
+    }
+
+    if (me.__requestsFinished) {
+        // The transaction has already completed, so we can't call "onerror" or "onabort".
+        // So throw the error instead.
+        setTimeout(() => {
+            throw err;
+        }, 0);
+    }
+
     function abort (tx, errOrResult) {
         if (!tx) {
             CFG.DEBUG && console.log('Rollback not possible due to missing transaction', me);
-        } else if (typeof errOrResult.code === 'number') {
+        } else if (errOrResult && typeof errOrResult.code === 'number') {
             CFG.DEBUG && console.log('Rollback erred; feature is probably not supported as per WebSQL', me);
         } else {
             CFG.DEBUG && console.log('Rollback succeeded', me);
         }
 
-        // Todo: Steps for aborting an upgrade transaction
-
-        if (err !== null) {
-            me.__error = err;
-        }
-
-        logError('Error', 'An error occurred in a transaction', err);
-        if (me.__errored) {
-            // We've already called "onerror", "onabort", or thrown, so don't do it again.
-            return;
-        }
-        me.__errored = true;
-        if (me.__transactionFinished) {
-            // The transaction has already completed, so we can't call "onerror" or "onabort".
-            // So throw the error instead.
-            setTimeout(() => {
-                throw err;
-            }, 0);
-        }
-
         me.__requests.filter(function (q) {
             return q.req && q.req.__readyState !== 'done';
         }).reduce(function (promises, q) {
-            // We reduce to a chain of promises to be queued in order, so we cannot use `Promise.all`
+            // We reduce to a chain of promises to be queued in order, so we cannot use `Promise.all`,
             //  and I'm unsure whether `setTimeout` currently behaves first-in-first-out with the same timeout
             //  so we could just use a `forEach`.
             return promises.then(function () {
-                const reqEvt = createEvent('error', null, {bubbles: true, cancelable: true});
                 q.req.__readyState = 'done';
                 q.req.__result = undefined;
                 q.req.__error = createDOMException('AbortError', 'A request was aborted.');
-                return new Promise(function (resolve) {
+                const reqEvt = createEvent('error', q.req.__error, {bubbles: true, cancelable: true});
+                return new SyncPromise(function (resolve) {
                     setTimeout(() => {
                         q.req.dispatchEvent(reqEvt); // No need to catch errors
                         resolve();
-                    }, 0);
+                    });
                 });
             });
-        }, Promise.resolve()).then(function () { // Also works when there are no pending requests
+        }, SyncPromise.resolve()).then(function () { // Also works when there are no pending requests
             const evt = createEvent('abort', err, {bubbles: true, cancelable: false});
             me.dispatchEvent(evt);
             me.__storeClones = {};
@@ -349,14 +420,23 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         });
     }
 
-    if (me.__tx) { // Not supported in standard SQL (and WebSQL errors should
-        //   rollback automatically), but for Node.js, etc., we give chance for
-        //   manual aborts which would otherwise not work.
-        abort(null, {code: 0});
-        // me.__tx.executeSql('ROLLBACK', [], abort, abort); // Not working in some circumstances, even in node
-    } else {
-        abort(null, {code: 0});
-    }
+    me.__transFinishedCb(true, function (rollback) {
+        if (rollback && me.__tx) { // Not supported in standard SQL (and WebSQL errors should
+            //   rollback automatically), but for Node.js, etc., we give chance for
+            //   manual aborts which would otherwise not work.
+            if (me.mode === 'readwrite') {
+                if (me.__transactionFinished) {
+                    abort();
+                    return;
+                }
+                me.__transactionEndCallback = abort;
+                return;
+            }
+            me.__tx.executeSql('ROLLBACK', [], abort, abort); // Not working in some circumstances, even in Node
+        } else {
+            abort(null, {code: 0});
+        }
+    });
 };
 
 IDBTransaction.prototype.abort = function () {

@@ -1,13 +1,11 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var FDBVersionChangeEvent = IDBVersionChangeEvent;
-//var FDBTransaction = IDBTransaction;
-var support = require('./support');
-var assert_unreached = support.assert_unreached;
-var createdb = support.createdb;
-var format_value = support.format_value;
-
 describe('W3C IDBFactory.open Tests', function () {
+    var FDBVersionChangeEvent = IDBVersionChangeEvent;
+    var Event = indexedDB.modules.ShimEvent;
+    //var FDBTransaction = IDBTransaction;
+    var assert_unreached = support.assert_unreached;
+    var createdb = support.createdb;
+    var format_value = support.format_value;
+
     // idbfactory_open
     it('request has no source', function (done) {
         var open_rq = createdb(done, undefined, 9);
@@ -162,7 +160,7 @@ describe('W3C IDBFactory.open Tests', function () {
             }
             assert.throws(function() {
               indexedDB.open('test', val);
-            }, TypeError, "Calling open() with version argument " + name + " should throw TypeError.");
+            }, TypeError, null, "Calling open() with version argument " + name + " should throw TypeError.");
         }
 
         should_throw(-1)

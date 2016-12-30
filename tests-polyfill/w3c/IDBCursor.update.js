@@ -1,10 +1,7 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var FDBCursor = IDBCursor;
-var support = require('./support');
-var createdb = support.createdb;
 
 describe('W3C IDBCursor.update Tests', function () {
+    var FDBCursor = IDBCursor;
+    var createdb = support.createdb;
     describe('index', function () {
         // idbcursor_update_index
         it('modify a record in the object store', function (done) {
@@ -93,7 +90,7 @@ describe('W3C IDBCursor.update Tests', function () {
 
         // idbcursor_update_index3
         it('attempt to modify a record in an inactive transaction', function (done) {
-            var db, cursor, record
+            var db, cursor, record,
               records = [ { pKey: "primaryKey_0", iKey: "indexKey_0" },
                           { pKey: "primaryKey_1", iKey: "indexKey_1" } ];
 

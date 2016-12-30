@@ -1,10 +1,7 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var FDBObjectStore = IDBObjectStore;
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBDatabase.createObjectStore Tests', function () {
+    var FDBObjectStore = IDBObjectStore;
+    var createdb = support.createdb;
+
     // idbdatabase_createobjectstore
     it('returns an instance of FDBObjectStore', function (done) {
         var open_rq = createdb(done)
@@ -138,7 +135,7 @@ describe('W3C IDBDatabase.createObjectStore Tests', function () {
 
     // idbdatabase_createobjectstore8-parameters
     it('IDBObjectStoreParameters', function (done) {
-        this.timeout(8000);
+        this.timeout(13000);
         var numTried = 0;
         var numDone = 0;
         function optionalParameters(desc, params) {

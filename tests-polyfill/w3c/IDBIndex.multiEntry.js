@@ -1,8 +1,6 @@
-var assert = require('assert');
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBIndex.multiEntry Tests', function () {
+    var createdb = support.createdb;
+
     // idbindex-multientry
     it('adding keys', function (done) {
         var db,

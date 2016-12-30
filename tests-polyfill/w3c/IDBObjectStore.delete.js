@@ -1,10 +1,7 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var FDBKeyRange = IDBKeyRange;
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBObjectStore.delete Tests', function () {
+    var FDBKeyRange = IDBKeyRange;
+    var createdb = support.createdb;
+
     // idbobjectstore_delete
     it('delete removes record (inline keys)', function (done) {
         var db,

@@ -1,11 +1,8 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var FDBOpenDBRequest = IDBOpenDBRequest;
-var FDBTransaction = IDBTransaction;
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBObjectStore Tests', function () {
+    var FDBOpenDBRequest = IDBOpenDBRequest;
+    var FDBTransaction = IDBTransaction;
+    var createdb = support.createdb;
+
     // idbobjectstore_deleted
     it('Attempting to use deleted IDBObjectStore', function (done) {
         var db,
@@ -91,20 +88,20 @@ describe('W3C IDBObjectStore Tests', function () {
             for (var i = 0; i < permutedOrder.length; i++) {
                 objStore = db.createObjectStore(permutedOrder[i]);
             }
-            assert.deepEqual(db.objectStoreNames, expectedOrder);
+            assert.deepEqual(Array.from(db.objectStoreNames), expectedOrder);
 
             // Indexes.
             for (var i = 0; i < permutedOrder.length; i++) {
                 objStore.createIndex(permutedOrder[i], "keyPath");
             }
-            assert.deepEqual(objStore.indexNames, expectedOrder);
+            assert.deepEqual(Array.from(objStore.indexNames), expectedOrder);
         };
 
         request.onsuccess = function(e) {
             // Object stores.
-            assert.deepEqual(db.objectStoreNames, expectedOrder);
+            assert.deepEqual(Array.from(db.objectStoreNames), expectedOrder);
             // Indexes.
-            assert.deepEqual(objStore.indexNames, expectedOrder);
+            assert.deepEqual(Array.from(objStore.indexNames), expectedOrder);
             done();
         };
     });

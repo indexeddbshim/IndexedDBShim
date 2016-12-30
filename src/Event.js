@@ -37,7 +37,7 @@ Object.defineProperty(IDBVersionChangeEvent, Symbol.hasInstance, {
     value: obj => util.isObj(obj) && 'oldVersion' in obj && typeof obj.defaultPrevented === 'boolean'
 });
 
-// We don't add to polyfill as this might not be the desired implementation
+// We don't add within polyfill repo as might not always be the desired implementation
 Object.defineProperty(ShimEvent, Symbol.hasInstance, {
     value: obj => util.isObj(obj) && 'target' in obj && typeof obj.bubbles === 'boolean'
 });

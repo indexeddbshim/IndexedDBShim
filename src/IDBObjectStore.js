@@ -17,7 +17,7 @@ import SyncPromise from 'sync-promise';
  * @constructor
  */
 function IDBObjectStore (storeProperties, transaction) {
-    this.__name = storeProperties.name;
+    this.__name = this.__originalName = storeProperties.name;
     this.__keyPath = Array.isArray(storeProperties.keyPath) ? storeProperties.keyPath.slice() : storeProperties.keyPath;
     this.__transaction = transaction;
     this.__idbdb = storeProperties.idbdb;
@@ -38,6 +38,7 @@ function IDBObjectStore (storeProperties, transaction) {
             }
         }
     }
+    this.__oldIndexNames = this.indexNames.clone();
 }
 
 /**
@@ -57,6 +58,7 @@ IDBObjectStore.__clone = function (store, transaction) {
     }, transaction);
     newStore.__indexes = store.__indexes;
     newStore.__indexNames = store.indexNames;
+    newStore.__oldIndexNames = store.__oldIndexNames;
     return newStore;
 };
 
@@ -77,7 +79,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
     transaction.__addNonRequestToTransactionQueue(function createObjectStore (tx, args, success, failure) {
         function error (tx, err) {
             CFG.DEBUG && console.log(err);
-            throw createDOMException(0, 'Could not create object store "' + store.name + '"', err);
+            throw createDOMException('UnknownError', 'Could not create object store "' + store.name + '"', err);
         }
 
         // key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
@@ -103,13 +105,20 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
     db.__objectStores[store.name] = undefined;
     db.objectStoreNames.splice(db.objectStoreNames.indexOf(store.name), 1);
 
+    const storeClone = db.__versionTransaction.__storeClones[store.name];
+    if (storeClone) {
+        storeClone.__indexNames = new util.StringList();
+        storeClone.__indexes = {};
+        storeClone.__deleted = true;
+    }
+
     // Remove the object store from WebSQL
     const transaction = db.__versionTransaction;
     IDBTransaction.__assertVersionChange(transaction);
     transaction.__addNonRequestToTransactionQueue(function deleteObjectStore (tx, args, success, failure) {
         function error (tx, err) {
             CFG.DEBUG && console.log(err);
-            failure(createDOMException(0, 'Could not delete ObjectStore', err));
+            failure(createDOMException('UnknownError', 'Could not delete ObjectStore', err));
         }
 
         tx.executeSql('SELECT * FROM __sys__ WHERE name = ?', [store.name], function (tx, data) {
@@ -226,6 +235,10 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
     const me = this;
     const paramMap = {};
     const indexPromises = me.indexNames.map((indexName) => {
+        // While this may sometimes resolve sync and sometimes async, the
+        //   idea is to avoid, where possible, unnecessary delays (and
+        //   consuming code ought to only see a difference in the browser
+        //   where we can't control the transaction timeout anyways).
         return new SyncPromise((resolve, reject) => {
             const index = me.__indexes[indexName];
             if (index.__pending) {
@@ -426,11 +439,8 @@ IDBObjectStore.prototype.put = function (value, key) {
     return request;
 };
 
-IDBObjectStore.prototype.get = function (range) {
+IDBObjectStore.prototype.__get = function (range, getKey) {
     const me = this;
-    if (!arguments.length) {
-        throw new TypeError('A parameter was missing for `IDBObjectStore.get`.');
-    }
 
     if (me.__deleted) {
         throw createDOMException('InvalidStateError', 'This store has been deleted');
@@ -449,7 +459,8 @@ IDBObjectStore.prototype.get = function (range) {
         range = IDBKeyRange.only(range);
     }
 
-    let sql = ['SELECT * FROM ', util.escapeStore(me.name), ' WHERE '];
+    const col = getKey ? 'key' : 'value';
+    let sql = ['SELECT ' + util.quote(col) + ' FROM ', util.escapeStore(me.name), ' WHERE '];
     const sqlValues = [];
     setSQLForRange(range, util.quote('key'), sql, sqlValues);
     sql = sql.join(' ');
@@ -457,40 +468,62 @@ IDBObjectStore.prototype.get = function (range) {
         CFG.DEBUG && console.log('Fetching', me.name, sqlValues);
         tx.executeSql(sql, sqlValues, function (tx, data) {
             CFG.DEBUG && console.log('Fetched data', data);
-            let value;
+            let ret;
             try {
                 // Opera can't deal with the try-catch here.
                 if (data.rows.length === 0) {
                     return success();
                 }
-
-                value = Sca.decode(data.rows.item(0).value);
+                if (getKey) {
+                    ret = Key.decode(data.rows.item(0).key, false);
+                } else {
+                    ret = Sca.decode(data.rows.item(0).value);
+                }
             } catch (e) {
                 // If no result is returned, or error occurs when parsing JSON
                 CFG.DEBUG && console.log(e);
             }
-            success(value);
+            success(ret);
         }, function (tx, err) {
             error(err);
         });
     }, undefined, me);
 };
 
+IDBObjectStore.prototype.get = function (query) {
+    if (!arguments.length) {
+        throw new TypeError('A parameter was missing for `IDBObjectStore.get`.');
+    }
+    return this.__get(query);
+};
+
 /*
 // Todo: Implement getKey
 IDBObjectStore.prototype.getKey = function (query) {
+    if (!arguments.length) {
+        throw new TypeError('A parameter was missing for `IDBObjectStore.getKey`.');
+    }
+    return this.__get(query, true);
 };
 */
 
 /*
 // Todo: Implement getAll
 IDBObjectStore.prototype.getAll = function (query, count) {
+    if (!arguments.length) {
+        throw new TypeError('A parameter was missing for `IDBObjectStore.getAll`.');
+    }
+    return this.__get(query, false, true, count);
 };
 */
 
 /*
 // Todo: Implement getAllKeys
 IDBObjectStore.prototype.getAllKeys = function (query, count) {
+    if (!arguments.length) {
+        throw new TypeError('A parameter was missing for `IDBObjectStore.getAllKeys`.');
+    }
+    return this.__get(query, true, true, count);
 };
 */
 
@@ -714,6 +747,11 @@ Object.defineProperty(IDBObjectStore.prototype, 'name', {
         if (me.__idbdb.__objectStores[name]) {
             throw createDOMException('ConstraintError', 'Object store "' + name + '" already exists in ' + me.__idbdb.name);
         }
+
+        delete me.__idbdb.__objectStores[me.name];
+        me.__idbdb.objectStoreNames.splice(me.__idbdb.objectStoreNames.indexOf(me.name), 1);
+        me.__idbdb.__objectStores[name] = me;
+        me.__idbdb.objectStoreNames.push(name);
         me.__name = name;
         // Todo: Add pending flag to delay queries against this store until renamed in SQLite
 

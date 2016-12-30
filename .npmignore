@@ -10,6 +10,7 @@
 /travis.sh
 
 /sauce_connect.log
+/sc_*
 /npm-debug.log
 
 # Should be deleted by Grunt

@@ -1,11 +1,8 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var FDBOpenDBRequest = IDBOpenDBRequest;
-var FDBTransaction = IDBTransaction;
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBTransaction Tests', function () {
+    var FDBOpenDBRequest = IDBOpenDBRequest;
+    var FDBTransaction = IDBTransaction;
+    var createdb = support.createdb;
+
     // idbtransaction
     it('IDBTransaction', function (done) {
         var db;

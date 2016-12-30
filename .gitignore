@@ -5,6 +5,7 @@ node_modules
 .tmp_*
 .DS_Store
 sauce_connect.log
+sc_*
 npm-debug.log
 src/indexeddbshim*
 test-support/js

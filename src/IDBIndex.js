@@ -15,7 +15,7 @@ import CFG from './CFG.js';
  */
 function IDBIndex (store, indexProperties) {
     this.__objectStore = store;
-    this.__name = indexProperties.columnName;
+    this.__name = this.__originalName = indexProperties.columnName;
     this.__keyPath = Array.isArray(indexProperties.keyPath) ? indexProperties.keyPath.slice() : indexProperties.keyPath;
     const optionalParams = indexProperties.optionalParams;
     this.__multiEntry = !!(optionalParams && optionalParams.multiEntry);
@@ -59,15 +59,17 @@ IDBIndex.__createIndex = function (store, index) {
     // Create the index in WebSQL
     const transaction = store.transaction;
     transaction.__addNonRequestToTransactionQueue(function createIndex (tx, args, success, failure) {
+        let indexValues = {};
+
         function error (tx, err) {
-            failure(createDOMException(0, 'Could not create index "' + index.name + '"', err));
+            failure(createDOMException('UnknownError', 'Could not create index "' + index.name + '"', err));
         }
 
         function applyIndex (tx) {
             // Update the object store's index list
             IDBIndex.__updateIndexList(store, tx, function () {
                 // Add index entries for all existing records
-                tx.executeSql('SELECT * FROM ' + util.escapeStore(store.name), [], function (tx, data) {
+                tx.executeSql('SELECT "key", "value" FROM ' + util.escapeStore(store.name), [], function (tx, data) {
                     CFG.DEBUG && console.log('Adding existing ' + store.name + ' records to the ' + index.name + ' index');
                     addIndexEntry(0);
 
@@ -77,16 +79,33 @@ IDBIndex.__createIndex = function (store, index) {
                                 const value = Sca.decode(data.rows.item(i).value);
                                 let indexKey = Key.evaluateKeyPathOnValue(value, index.keyPath, index.multiEntry);
                                 indexKey = Key.encode(indexKey, index.multiEntry);
+                                if (index.unique) {
+                                    if (indexValues[indexKey]) {
+                                        indexValues = {};
+                                        failure(createDOMException(
+                                            'ConstraintError',
+                                            'Duplicate values already exist within the store'
+                                        ));
+                                        return;
+                                    }
+                                    indexValues[indexKey] = true;
+                                }
 
-                                tx.executeSql('UPDATE ' + util.escapeStore(store.name) + ' SET ' + util.escapeIndex(index.name) + ' = ? WHERE key = ?', [indexKey, data.rows.item(i).key], function (tx, data) {
-                                    addIndexEntry(i + 1);
-                                }, error);
+                                tx.executeSql(
+                                    'UPDATE ' + util.escapeStore(store.name) + ' SET ' +
+                                        util.escapeIndex(index.name) + ' = ? WHERE key = ?',
+                                    [indexKey, data.rows.item(i).key],
+                                    function (tx, data) {
+                                        addIndexEntry(i + 1);
+                                    }, error
+                                );
                             } catch (e) {
                                 // Not a valid value to insert into index, so just continue
                                 addIndexEntry(i + 1);
                             }
                         } else {
                             delete index.__pending;
+                            indexValues = {};
                             success(store);
                         }
                     }
@@ -121,7 +140,7 @@ IDBIndex.__deleteIndex = function (store, index) {
     const transaction = store.transaction;
     transaction.__addNonRequestToTransactionQueue(function deleteIndex (tx, args, success, failure) {
         function error (tx, err) {
-            failure(createDOMException(0, 'Could not delete index "' + index.name + '"', err));
+            failure(createDOMException('UnknownError', 'Could not delete index "' + index.name + '"', err));
         }
 
         // Update the object store's index list
@@ -249,17 +268,17 @@ IDBIndex.prototype.count = function (query) {
     return this.__fetchIndexData(query, 'count', false, true);
 };
 
-IDBIndex.prototype.__renameIndex = function (storeName, oldName, newName, colInfoToPreserveArr = []) {
+IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToPreserveArr = []) {
     const newNameType = 'BLOB';
+    const storeName = store.name;
     const colNamesToPreserve = colInfoToPreserveArr.map((colInfo) => colInfo[0]);
     const colInfoToPreserve = colInfoToPreserveArr.map((colInfo) => colInfo.join(' '));
     const listColInfoToPreserve = (colInfoToPreserve.length ? (colInfoToPreserve.join(', ') + ', ') : '');
     const listColsToPreserve = (colNamesToPreserve.length ? (colNamesToPreserve.join(', ') + ', ') : '');
 
-    const me = this;
     // We could adapt the approach at http://stackoverflow.com/a/8430746/271577
     //    to make the approach reusable without passing column names, but it is a bit fragile
-    me.transaction.__addNonRequestToTransactionQueue(function renameIndex (tx, args, success, error) {
+    store.transaction.__addNonRequestToTransactionQueue(function renameIndex (tx, args, success, error) {
         const sql = 'ALTER TABLE ' + util.escapeStore(storeName) + ' RENAME TO tmp_' + util.escapeStore(storeName);
         tx.executeSql(sql, [], function (tx, data) {
             const sql = 'CREATE TABLE ' + util.escapeStore(storeName) + '(' + listColInfoToPreserve + util.escapeIndex(newName) + ' ' + newNameType + ')';
@@ -319,13 +338,18 @@ Object.defineProperty(IDBIndex.prototype, 'name', {
             throw createDOMException('ConstraintError', 'Index "' + newName + '" already exists on ' + me.objectStore.name);
         }
 
+        delete me.objectStore.__indexes[me.name];
+        me.objectStore.indexNames.splice(me.objectStore.indexNames.indexOf(me.name), 1);
+        me.objectStore.__indexes[newName] = me;
+        me.objectStore.indexNames.push(newName);
+
         me.__name = newName;
-        // Todo: Add pending flag to delay queries against this index until renamed in SQLite
+        // Todo: Add pending flag to delay queries against this index until renamed in SQLite?
         const colInfoToPreserveArr = [
             ['key', 'BLOB ' + (me.objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')],
             ['value', 'BLOB']
         ];
-        this.__renameIndex(me.objectStore.name, oldName, newName, colInfoToPreserveArr);
+        this.__renameIndex(me.objectStore, oldName, newName, colInfoToPreserveArr);
     }
 });
 

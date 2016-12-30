@@ -30,9 +30,10 @@ var window = doc.defaultView;
 GLOBAL.window = GLOBAL;
 GLOBAL.self = window;
 
-require('../dist/indexeddbshim-node')(window);
 // Todo: Conditionally use Unicode version
 // const idb = require('../dist/indexeddbshim-UnicodeIdentifiers-node');
+// require('../dist/indexeddbshim-node')(window);
+require('../dist/indexeddbshim-UnicodeIdentifiers-node')(window);
 
 [
     'addEventListener', 'document', 'location', // Needed by testing framework itself
@@ -62,7 +63,8 @@ function write (statusText, status) { // eslint-disable-line no-unused-vars
 
 // Todo: Conditionally add script resources for interfaces test
 readFiles(
-    ['resources/testharness.js', 'resources/testharnessreport.js', 'IndexedDB/support.js'].map(
+    ['resources/testharness.js', 'resources/testharnessreport.js',
+        'IndexedDB/support.js', 'IndexedDB/support-promises.js'].map(
         (resource) => path.join(idbTestPath, resource)
     ),
     function (harnessContent) {

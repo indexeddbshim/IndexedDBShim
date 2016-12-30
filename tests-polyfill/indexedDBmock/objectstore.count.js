@@ -1,6 +1,3 @@
-require('./setup')
-var assert = require('assert')
-
 /**
  * Created by Kristof on 16/10/2015.
  */
@@ -12,7 +9,7 @@ describe("Objectstore - Count", function () {
         var key = 1;
 
         initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -64,7 +61,7 @@ describe("Objectstore - Count", function () {
         var expect = 1, ct = 0;
 
         initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -116,7 +113,7 @@ describe("Objectstore - Count", function () {
         var expect = 1, ct = 0;
 
         initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -168,7 +165,7 @@ describe("Objectstore - Count", function () {
         var expect = 1, ct = 0;
 
         initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -220,7 +217,7 @@ describe("Objectstore - Count", function () {
         var expect = 1, ct = 0;
 
         initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -272,7 +269,7 @@ describe("Objectstore - Count", function () {
         var expect = 1, ct = 0;
 
         initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -324,7 +321,7 @@ describe("Objectstore - Count", function () {
         var expect = 1, ct = 0;
 
         initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -377,7 +374,7 @@ describe("Objectstore - Count", function () {
         var key = 1;
 
         initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -430,7 +427,7 @@ describe("Objectstore - Count", function () {
         var key = 1;
 
         initionalSituationObjectStoreNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");

@@ -1,11 +1,8 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var FDBRequest = IDBRequest;
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C Key Validity Tests', function () {
-    this.timeout(20000);
+    var FDBRequest = IDBRequest;
+    var createdb = support.createdb;
+
+    this.timeout(30000);
     // key_invalid
     it('Invalid key', function (done) {
         var numChecks = 0;

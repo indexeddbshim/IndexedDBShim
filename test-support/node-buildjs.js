@@ -9,7 +9,7 @@ const path = require('path');
 
 // Known scripts
 const testHarnessScripts = ['/resources/testharness.js', '/resources/testharnessreport.js'];
-const supportAndTestHarnessScripts = testHarnessScripts.concat('support.js');
+const supportAndTestHarnessScripts = testHarnessScripts.concat('support.js', 'support-promises.js');
 const webIDLScripts = supportAndTestHarnessScripts.concat('/resources/WebIDLParser.js', '/resources/idlharness.js');
 
 const dirPath = process.argv[2] || 'web-platform-tests/IndexedDB';

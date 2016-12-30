@@ -1,9 +1,6 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C Request Behavior Tests', function () {
+    var createdb = support.createdb;
+
     // request_bubble-and-capture
     it('Bubbling and capturing of request events', function (done) {
         var events = [];

@@ -1,5 +1,5 @@
 import {createEvent, ShimEvent, IDBVersionChangeEvent} from './Event.js';
-import {findError, createDOMException, DOMException} from './DOMException.js';
+import {webSQLErrback, createDOMException, DOMException} from './DOMException.js';
 import {IDBOpenDBRequest, IDBRequest} from './IDBRequest.js';
 import * as util from './util.js';
 import Key from './Key.js';
@@ -13,8 +13,8 @@ let sysdb;
  * Craetes the sysDB to keep track of version numbers for databases
  **/
 function createSysDB (success, failure) {
-    function sysDbCreateError (...args /* tx, err */) {
-        const err = findError(args);
+    function sysDbCreateError (tx, err) {
+        err = webSQLErrback(err);
         CFG.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
         failure(err);
     }
@@ -23,8 +23,8 @@ function createSysDB (success, failure) {
         success();
     } else {
         sysdb = CFG.win.openDatabase('__sysdb__.sqlite', 1, 'System Database', CFG.DEFAULT_DB_SIZE);
-        sysdb.transaction(function (tx) {
-            tx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);', [], success, sysDbCreateError);
+        sysdb.transaction(function (systx) {
+            systx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);', [], success, sysDbCreateError);
         }, sysDbCreateError);
     }
 }
@@ -36,6 +36,7 @@ function createSysDB (success, failure) {
  */
 function IDBFactory () {
     this.modules = {DOMException, Event: typeof Event !== 'undefined' ? Event : ShimEvent, ShimEvent, IDBFactory};
+    this.__connections = [];
 }
 
 /**
@@ -44,6 +45,7 @@ function IDBFactory () {
  * @param {number} version
  */
 IDBFactory.prototype.open = function (name, version) {
+    const me = this;
     const req = new IDBOpenDBRequest();
     let calledDbCreateError = false;
 
@@ -59,15 +61,16 @@ IDBFactory.prototype.open = function (name, version) {
     }
     name = String(name); // cast to a string
 
-    function dbCreateError (...args /* tx, err */) {
+    function dbCreateError (tx, err) {
         if (calledDbCreateError) {
             return;
         }
-        const err = findError(args);
+        err = err ? webSQLErrback(err) : tx;
         calledDbCreateError = true;
-        const evt = createEvent('error', args, {bubbles: true});
+        const evt = createEvent('error', err, {bubbles: true});
         req.__readyState = 'done';
-        req.__error = err || DOMException;
+        req.__error = err;
+        req.__result = undefined;
         req.dispatchEvent(evt);
     }
 
@@ -86,36 +89,105 @@ IDBFactory.prototype.open = function (name, version) {
         db.transaction(function (tx) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS __sys__ (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB, currNum INTEGER)', [], function () {
                 tx.executeSql('SELECT * FROM __sys__', [], function (tx, data) {
-                    req.__result = new IDBDatabase(db, name, version, data);
+                    req.__result = new IDBDatabase(db, name, oldVersion, version, data);
+                    me.__connections.push(req.result);
                     if (oldVersion < version) {
                         // DB Upgrade in progress
+                        let sysdbFinishedCb = function (systx, err, cb) {
+                            if (err) {
+                                try {
+                                    systx.executeSql('ROLLBACK', [], cb, cb);
+                                    return;
+                                } catch (err) { // Browser may fail with expired transaction above so
+                                                // no choice but to manually revert
+                                    sysdb.transaction(function (systx) {
+                                        function reportError () {
+                                            throw new Error('Unable to roll back upgrade transaction!');
+                                        }
+                                        // Attempt to revert
+                                        if (oldVersion === 0) {
+                                            systx.executeSql('DELETE FROM dbVersions WHERE name = ?', [name], cb, reportError);
+                                        } else {
+                                            systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [oldVersion, name], cb, reportError);
+                                        }
+                                    });
+                                    return;
+                                }
+                            }
+                            cb(); // In browser, should auto-commit
+                        };
                         sysdb.transaction(function (systx) {
-                            systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [version, name], function () {
+                            function versionSet () {
                                 const e = new IDBVersionChangeEvent('upgradeneeded', {oldVersion, newVersion: version});
                                 req.__transaction = req.result.__versionTransaction = new IDBTransaction(req.result, req.result.objectStoreNames, 'versionchange');
-                                req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded (tx, args, success, error) {
+                                req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded (tx, args, finished, error) {
                                     req.dispatchEvent(e);
-                                    success();
+                                    finished();
                                 });
-                                req.transaction.on__beforecomplete = function () {
+                                req.transaction.on__beforecomplete = function (ev) {
                                     req.result.__versionTransaction = null;
+                                    if (req.result.__closed) {
+                                        req.transaction.__transFinishedCb(true, function () {
+                                            sysdbFinishedCb(systx, true, function () {
+                                                req.__transaction = null;
+                                                const err = createDOMException('AbortError', 'The connection has been closed.');
+                                                dbCreateError(err);
+                                            });
+                                        });
+                                        throw new Error('Discontinue complete');
+                                    }
+                                    sysdbFinishedCb(systx, false, function () {
+                                        req.transaction.__transFinishedCb(false, function () {
+                                            ev.complete();
+                                            req.__transaction = null;
+                                        });
+                                    });
                                 };
                                 req.transaction.on__abort = function () {
-                                    const err = createDOMException('AbortError', 'The upgrade transaction was aborted.');
-                                    dbCreateError(err);
+                                    req.__transaction = null;
+                                    setTimeout(() => {
+                                        const err = createDOMException('AbortError', 'The upgrade transaction was aborted.');
+                                        sysdbFinishedCb(systx, err, function () {
+                                            dbCreateError(err);
+                                        });
+                                    });
                                 };
                                 req.transaction.on__complete = function () {
+                                    // Since this is running directly after `IDBTransaction.complete`,
+                                    //   there should be a new task. However, while increasing the
+                                    //   timeout 1ms in `IDBTransaction.__executeRequests` can allow
+                                    //   `IDBOpenDBRequest.onsuccess` to trigger faster than a new
+                                    //   transaction as required by "transaction-create_in_versionchange" in
+                                    //   w3c/Transaction.js (though still on a timeout separate from this
+                                    //   preceding `IDBTransaction.oncomplete`), this causes a race condition
+                                    //   somehow with old transactions (e.g., for the Mocha test,
+                                    //   in `IDBObjectStore.deleteIndex`, "should delete an index that was
+                                    //   created in a previous transaction").
+                                    // setTimeout(() => {
                                     req.__transaction = null;
-                                    if (req.__result.__closed) {
-                                        const err = createDOMException('AbortError', 'The connection has been closed.');
-                                        dbCreateError(err);
-                                        return;
-                                    }
                                     const e = createEvent('success');
                                     req.dispatchEvent(e);
+                                    // });
                                 };
-                            }, dbCreateError);
-                        }, dbCreateError);
+                            }
+                            if (oldVersion === 0) {
+                                systx.executeSql('INSERT INTO dbVersions VALUES (?,?)', [name, version], versionSet, dbCreateError);
+                            } else {
+                                systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [version, name], versionSet, dbCreateError);
+                            }
+                        }, dbCreateError, null, function (currentTask, err, done, rollback, commit) {
+                            if (currentTask.readOnly || err) {
+                                return true;
+                            }
+                            sysdbFinishedCb = function (systx, err, cb) {
+                                if (err) {
+                                    rollback(err, cb);
+                                } else {
+                                    commit(cb);
+                                }
+                            };
+                            return false;
+                        });
                     } else {
                         const e = createEvent('success');
                         req.dispatchEvent(e);
@@ -126,13 +198,11 @@ IDBFactory.prototype.open = function (name, version) {
     }
 
     createSysDB(function () {
-        sysdb.transaction(function (tx) {
-            tx.executeSql('SELECT * FROM dbVersions WHERE name = ?', [name], function (tx, data) {
+        sysdb.readTransaction(function (sysReadTx) {
+            sysReadTx.executeSql('SELECT version FROM dbVersions WHERE name = ?', [name], function (sysReadTx, data) {
                 if (data.rows.length === 0) {
                     // Database with this name does not exist
-                    tx.executeSql('INSERT INTO dbVersions VALUES (?,?)', [name, version || 1], function () {
-                        openDB(0);
-                    }, dbCreateError);
+                    openDB(0);
                 } else {
                     openDB(data.rows.item(0).version);
                 }
@@ -151,39 +221,46 @@ IDBFactory.prototype.open = function (name, version) {
 IDBFactory.prototype.deleteDatabase = function (name) {
     const req = new IDBOpenDBRequest();
     let calledDBError = false;
-    let version = null;
+    let version = 0;
 
     if (arguments.length === 0) {
         throw new TypeError('Database name is required');
     }
     name = String(name); // cast to a string
 
-    function dbError (...args /* tx, err */) {
-        if (calledDBError) {
+    let sysdbFinishedCbDelete = function (err, cb) {
+        cb(err);
+    };
+
+    // Although the spec has no specific conditions where an error
+    //  may occur in `deleteDatabase`, it does provide for
+    //  `UnknownError` as we may require upon a SQL deletion error
+    function dbError (err) {
+        if (calledDBError || err === true) {
             return;
         }
-        const err = findError(args);
-        req.__readyState = 'done';
-        req.__error = err || DOMException;
-        const e = createEvent('error', args, {bubbles: true});
-        req.dispatchEvent(e);
-        calledDBError = true;
+        sysdbFinishedCbDelete(true, function () {
+            err = webSQLErrback(err || {});
+            req.__readyState = 'done';
+            req.__error = err;
+            req.__result = undefined;
+            const e = createEvent('error', err, {bubbles: true});
+            req.dispatchEvent(e);
+            calledDBError = true;
+        });
     }
 
-    function deleteFromDbVersions () {
-        sysdb.transaction(function (systx) {
-            systx.executeSql('DELETE FROM dbVersions WHERE name = ? ', [name], function () {
+    createSysDB(function () {
+        function databaseDeleted () {
+            sysdbFinishedCbDelete(false, function () {
                 req.__result = undefined;
                 req.__readyState = 'done';
                 const e = new IDBVersionChangeEvent('success', {oldVersion: version, newVersion: null});
                 req.dispatchEvent(e);
-            }, dbError);
-        }, dbError);
-    }
-
-    createSysDB(function () {
-        sysdb.transaction(function (systx) {
-            systx.executeSql('SELECT * FROM dbVersions WHERE name = ?', [name], function (tx, data) {
+            });
+        }
+        sysdb.readTransaction(function (sysReadTx) {
+            sysReadTx.executeSql('SELECT version FROM dbVersions WHERE name = ?', [name], function (sysReadTx, data) {
                 if (data.rows.length === 0) {
                     req.__result = undefined;
                     const e = new IDBVersionChangeEvent('success', {oldVersion: version, newVersion: null});
@@ -191,30 +268,53 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                     return;
                 }
                 version = data.rows.item(0).version;
-                const db = CFG.win.openDatabase(util.escapeDatabaseName(name), 1, name, CFG.DEFAULT_DB_SIZE);
-                db.transaction(function (tx) {
-                    tx.executeSql('SELECT * FROM __sys__', [], function (tx, data) {
-                        const tables = data.rows;
-                        (function deleteTables (i) {
-                            if (i >= tables.length) {
-                                // If all tables are deleted, delete the housekeeping tables
-                                tx.executeSql('DROP TABLE IF EXISTS __sys__', [], function () {
-                                    // Finally, delete the record for this DB from sysdb
-                                    deleteFromDbVersions();
-                                }, dbError);
-                            } else {
-                                // Delete all tables in this database, maintained in the sys table
-                                tx.executeSql('DROP TABLE ' + util.escapeStore(tables.item(i).name), [], function () {
-                                    deleteTables(i + 1);
-                                }, function () {
-                                    deleteTables(i + 1);
-                                });
-                            }
-                        }(0));
-                    }, function (e) {
-                        // __sysdb table does not exist, but that does not mean delete did not happen
-                        deleteFromDbVersions();
-                    });
+
+                // Since we need two databases which can't be in a single transaction, we
+                //  do this deleting from `dbVersions` first since the `__sys__` deleting
+                //  only impacts file memory whereas this one is critical for avoiding it
+                //  being found via `open` or `webkitGetDatabaseNames`; however, we will
+                //  avoid committing anyways until all deletions are made and rollback the
+                //  `dbVersions` change if they fail
+                sysdb.transaction(function (systx) {
+                    systx.executeSql('DELETE FROM dbVersions WHERE name = ? ', [name], function () {
+                        // Todo: Give config option to Node to delete the entire database file
+                        const db = CFG.win.openDatabase(util.escapeDatabaseName(name), 1, name, CFG.DEFAULT_DB_SIZE);
+                        db.transaction(function (tx) {
+                            tx.executeSql('SELECT name FROM __sys__', [], function (tx, data) {
+                                const tables = data.rows;
+                                (function deleteTables (i) {
+                                    if (i >= tables.length) {
+                                        // If all tables are deleted, delete the housekeeping tables
+                                        tx.executeSql('DROP TABLE IF EXISTS __sys__', [], function () {
+                                            databaseDeleted();
+                                        }, dbError);
+                                    } else {
+                                        // Delete all tables in this database, maintained in the sys table
+                                        tx.executeSql('DROP TABLE ' + util.escapeStore(tables.item(i).name), [], function () {
+                                            deleteTables(i + 1);
+                                        }, function () {
+                                            deleteTables(i + 1);
+                                        });
+                                    }
+                                }(0));
+                            }, function (e) {
+                                // __sys__ table does not exist, but that does not mean delete did not happen
+                                databaseDeleted();
+                            });
+                        });
+                    }, dbError);
+                }, dbError, null, function (currentTask, err, done, rollback, commit) {
+                    if (currentTask.readOnly || err) {
+                        return true;
+                    }
+                    sysdbFinishedCbDelete = function (err, cb) {
+                        if (err) {
+                            rollback(err, cb);
+                        } else {
+                            commit(cb);
+                        }
+                    };
+                    return false;
                 });
             }, dbError);
         }, dbError);
@@ -274,21 +374,22 @@ IDBFactory.prototype.cmp = cmp;
 */
 IDBFactory.prototype.webkitGetDatabaseNames = function () {
     let calledDbCreateError = false;
-    function dbGetDatabaseNamesError (...args /* tx, err */) {
+    function dbGetDatabaseNamesError (tx, err) {
         if (calledDbCreateError) {
             return;
         }
-        const err = findError(args);
+        err = err ? webSQLErrback(err) : tx;
         calledDbCreateError = true;
-        const evt = createEvent('error', args, {bubbles: true, cancelable: true}); // http://stackoverflow.com/questions/40165909/to-where-do-idbopendbrequest-error-events-bubble-up/40181108#40181108
+        const evt = createEvent('error', err, {bubbles: true, cancelable: true}); // http://stackoverflow.com/questions/40165909/to-where-do-idbopendbrequest-error-events-bubble-up/40181108#40181108
         req.__readyState = 'done';
-        req.__error = err || DOMException;
+        req.__error = err;
+        req.__result = undefined;
         req.dispatchEvent(evt);
     }
     const req = new IDBRequest();
     createSysDB(function () {
-        sysdb.transaction(function (tx) {
-            tx.executeSql('SELECT name FROM dbVersions', [], function (tx, data) {
+        sysdb.readTransaction(function (sysReadTx) {
+            sysReadTx.executeSql('SELECT name FROM dbVersions', [], function (sysReadTx, data) {
                 const dbNames = new util.StringList();
                 for (let i = 0; i < data.rows.length; i++) {
                     dbNames.push(data.rows.item(i).name);
@@ -301,6 +402,29 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
         }, dbGetDatabaseNamesError);
     }, dbGetDatabaseNamesError);
     return req;
+};
+
+/**
+* @Todo: Test
+* This is provided to facilitate unit-testing of the
+*  closing of a database connection with a forced flag:
+* <http://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>
+*/
+IDBFactory.prototype.__forceClose = function (connIdx, msg) {
+    const me = this;
+    function forceClose (conn) {
+        conn.__forceClose(msg);
+    }
+    if (connIdx == null) {
+        me.__connections.forEach(forceClose);
+    } else if (!Number.isInteger(connIdx) || connIdx < 0 || connIdx > me.__connections.length - 1) {
+        throw new TypeError(
+            'If providing an argument, __forceClose must be called with a ' +
+            'numeric index to indicate a specific connection to lose'
+        );
+    } else {
+        forceClose(me.__connections[connIdx]);
+    }
 };
 
 IDBFactory.prototype.toString = function () {

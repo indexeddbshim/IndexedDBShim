@@ -1,6 +1,3 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-
 var dbPrefix = 'testdb-';
 var dbSuffix = '.sqlite';
 
@@ -197,7 +194,7 @@ function instanceOf (obj, Clss) {
     return Clss[Symbol.hasInstance](obj);
 }
 
-module.exports = {
+var support = {
     createdb: createdb,
     format_value: format_value,
     instanceOf: instanceOf,
@@ -206,3 +203,7 @@ module.exports = {
     throws: throws,
     assert_unreached: assert_unreached
 };
+
+if (typeof module !== 'undefined') {
+    module.exports = support;
+}

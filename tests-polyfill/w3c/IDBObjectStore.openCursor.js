@@ -1,9 +1,6 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBObjectStore.openCursor Tests', function () {
+    var createdb = support.createdb;
+
     // idbobjectstore_openCursor
     it('iterate through 100 objects', function (done) {
         var db

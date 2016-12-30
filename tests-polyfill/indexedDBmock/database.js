@@ -1,14 +1,11 @@
-require('./setup')
-var assert = require('assert')
-
 describe('Database', function() {
     it("Opening/Creating Database", function (done) {
         initionalSituation(function(){
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
 
             request.onsuccess = function(e){
                 assert.equal(e.target.result.name, dbName, "Database opened/created");
-                // Necessary for indexeddb who work with setVersion
+                // Necessary for indexedDB who work with setVersion
                 assert.equal(parseInt(e.target.result.version), 1, "Database opened/created");
                 e.target.result.close();
                 done();
@@ -30,11 +27,11 @@ describe('Database', function() {
         var version = 2;
 
         initionalSituation(function(){
-            var request = indexedDb.open(dbName, version);
+            var request = indexedDB.open(dbName, version);
 
             request.onsuccess = function(e){
                 assert.equal(e.target.result.name, dbName, "Database opened/created");
-                // Necessary for indexeddb who work with setVersion
+                // Necessary for indexedDB who work with setVersion
                 assert.equal(parseInt(e.target.result.version), version, "Database version");
                 e.target.result.close();
                 done();
@@ -56,7 +53,7 @@ describe('Database', function() {
 
     it("Opening existing Database", function (done) {
         initionalSituationDatabase(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 assert.equal(e.target.result.name, dbName, "Database opened/created");
                 e.target.result.close();
@@ -76,7 +73,7 @@ describe('Database', function() {
         var version = 1;
 
         initionalSituationDatabase(function () {
-            var request = indexedDb.open(dbName, version);
+            var request = indexedDB.open(dbName, version);
             request.onsuccess = function(e){
                 assert.equal(e.target.result.name, dbName, "Database opened/created");
                 assert.equal(parseInt(e.target.result.version), version, "Database version");
@@ -100,7 +97,7 @@ describe('Database', function() {
         var version = 1;
 
         initionalSituationDatabaseVersion(function () {
-            var request = indexedDb.open(dbName, version);
+            var request = indexedDB.open(dbName, version);
 
             request.onsuccess = function(e){
                 assert.ok(false, "Database opened/created");
@@ -124,7 +121,7 @@ describe('Database', function() {
         var version = 2;
 
         initionalSituationDatabase(function () {
-            var request = indexedDb.open(dbName, version);
+            var request = indexedDB.open(dbName, version);
 
             request.onsuccess = function(e){
                 assert.equal(e.target.result.name, dbName, "Database opened/created");
@@ -145,11 +142,11 @@ describe('Database', function() {
     });
 
     it("Deleting existing Database", function (done) {
-        var request = indexedDb.open(dbName);
+        var request = indexedDB.open(dbName);
 
         request.onsuccess = function(e){
             e.target.result.close();
-            var deleteRequest = indexedDb.deleteDatabase(dbName);
+            var deleteRequest = indexedDB.deleteDatabase(dbName);
 
             deleteRequest.onsuccess = function(e){
                 assert.ok(true, "Database removed");
@@ -171,7 +168,7 @@ describe('Database', function() {
 
     it("Deleting non existing Database", function (done) {
         initionalSituation(function () {
-            var deleteRequest = indexedDb.deleteDatabase(dbName);
+            var deleteRequest = indexedDB.deleteDatabase(dbName);
 
             deleteRequest.onsuccess = function(e){
                 assert.ok(true, "Database removed");
@@ -189,7 +186,7 @@ describe('Database', function() {
         var expect = 3, ct = 0;
 
         initionalSituation(function(){
-            var request = indexedDb.open(dbName, version);
+            var request = indexedDB.open(dbName, version);
 
             request.onsuccess = function(e){
                 e.target.result.onversionchange = function(args){
@@ -199,7 +196,7 @@ describe('Database', function() {
                     ct += 3;
                     e.target.result.close();
                 };
-                var request2 = indexedDb.open(dbName, version+1);
+                var request2 = indexedDB.open(dbName, version+1);
                 request2.onsuccess = function(args){
                     e.target.result.close();
                     args.target.result.close();
@@ -223,14 +220,14 @@ describe('Database', function() {
         var expect = 4, ct = 0;
 
         initionalSituation(function(){
-            var request = indexedDb.open(dbName, version);
+            var request = indexedDB.open(dbName, version);
 
             request.onsuccess = function(e){
                 e.target.result.onversionchange = function(args){
                     assert.equal("versionchange", args.type, "Versionchange database");
                     ct++;
                 };
-                var request2 = indexedDb.open(dbName, version+1);
+                var request2 = indexedDB.open(dbName, version+1);
                 request2.onsuccess = function(args){
                     args.target.result.close();
                     equal(ct, expect, "Expected test count");
@@ -265,14 +262,14 @@ describe('Database', function() {
         var expect = 5, ct = 0;
 
         initionalSituation(function(){
-            var request = indexedDb.open(dbName, version);
+            var request = indexedDB.open(dbName, version);
 
             request.onsuccess = function(e){
                 e.target.result.onversionchange = function(args){
                     assert.equal("versionchange", args.type, "Versionchange database");
                     ct++;
                 };
-                var request2 = indexedDb.deleteDatabase(dbName);
+                var request2 = indexedDB.deleteDatabase(dbName);
                 request2.onsuccess = function(args){
                     assert.ok(true, "Database deleted");
                     ct++;

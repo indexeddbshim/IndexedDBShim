@@ -3,7 +3,8 @@
 ## Use a single offline storage API across all desktop and mobile browsers and Node.js
 
 [![Build Status](https://img.shields.io/travis/axemclion/IndexedDBShim.svg)](https://travis-ci.org/axemclion/IndexedDBShim)
-[![Dependencies](https://img.shields.io/david/dev/axemclion/indexeddbshim.svg)](https://david-dm.org/axemclion/indexeddbshim)
+[![Dependencies](https://img.shields.io/david/axemclion/indexeddbshim.svg)](https://david-dm.org/axemclion/indexeddbshim)
+[![devDependencies](https://img.shields.io/david/dev/axemclion/indexeddbshim.svg)](https://david-dm.org/axemclion/indexeddbshim?type=dev)
 [![npm](http://img.shields.io/npm/v/indexeddbshim.svg)](https://www.npmjs.com/package/indexeddbshim)
 [![Bower](http://img.shields.io/bower/v/IndexedDBShim.svg)](http://bower.io/search/?q=IndexedDBShim)
 [![License](https://img.shields.io/npm/l/indexeddbshim.svg)](LICENSE-APACHE)
@@ -98,6 +99,33 @@ On browsers that _don't_ support WebSQL, but _do_ support IndexedDB, this
 line will patch many known problems and add missing features.  For example,
 on Internet Explorer, this will add support for compound keys.
 
+## Force-closing
+
+The spec anticipates the [closing of a database connection with a forced flag](http://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection).
+
+The spec also mentions [some circumstances](http://w3c.github.io/IndexedDB/#database-connection)
+where this may occur:
+
+> A connection may be closed by a user agent in exceptional circumstances,
+> for example due to loss of access to the file system, a permission change,
+> or clearing of the origin’s storage.
+
+Since the latter examples are under the browser's control, this method may
+be more useful on the server or for unit-testing.
+
+The signature is as follows:
+
+```js
+shimIndexedDB.__forceClose(connIdx, msg);
+```
+
+If the first argument, `connIdx` is missing (or `null` or `undefined`),
+all connections will be force-closed. It can alternatively be an integer
+representing a 0-based index to indicate a specific connection to close.
+
+The second argument `msg` will be appended to the `AbortError` that will be
+triggered on the transactions of the connection.
+
 ## Debugging
 
 The IndexedDB polyfill has sourcemaps enabled, so the polyfill can be debugged
@@ -152,6 +180,9 @@ The available properties are:
     browser may use this information to suggest the use of this quota to the
     user rather than prompting the user regularly for say incremental 5MB
     permissions).
+- __sqlBusyTimeout__ - Integer used by Node WebSQL for [SQLite config](https://github.com/mapbox/node-sqlite3/wiki/API#databaseconfigureoption-value) to set the [busy timeout](https://www.sqlite.org/c3ref/busy_timeout.html) (Defaults to 1000 ms)
+- __sqlTrace__ - Callback used by Node WebSQL for [SQLite config](https://github.com/mapbox/node-sqlite3/wiki/API#databaseconfigureoption-value) (Invoked when an SQL statement executes, with a rendering of the statement text)
+- __sqlProfile__ - Callback used by Node WebSQL for [SQLite config](https://github.com/mapbox/node-sqlite3/wiki/API#databaseconfigureoption-value) (Invoked every time an SQL statement executes)
 
 ## Known Issues
 
@@ -162,12 +193,13 @@ Please make sure someone else hasn't already reported the same bug though.
 
 Here is a summary of known issues to resolve:
 
-1. Support versionchange rollbacks
-2. `close` and `blocked` event support (reconcile with existing `versionchange`)
-3. `eval` is currently in use (in `src/Sca.js`)
-4. Add new Binary/ArrayBuffer/Views on buffers (TypedArray or DataView) support
-5. Support cyclic objects (via Structured Cloning Algorithm)
-6. Certain more recent APIs are missing: `IDBCursor.continuePrimaryKey`,
+1. `blocked` and `versionchange` `IDBVersionChangeEvent` event support
+2. Structured Cloning Algorithm
+    1. `eval` is currently in use (in `src/Sca.js`)
+    1. Support cyclic objects
+3. Add new Binary/`ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
+    support
+4. Certain more recent APIs are missing: `IDBCursor.continuePrimaryKey`,
     `IDBIndex` (`getAll`, `getAllKeys`), `IDBObjectStore` (`getAll`,
     `getAllKeys`, `getKey`).
 
@@ -195,7 +227,7 @@ will use the variable instead of the `window.indexedDB` property.  For example:
 })();
 ```
 
-#### Windows Phone
+### Windows Phone
 
 IndexedDBShim works on Windows Phone via a Cordova/PhoneGap plug-in.  There
 are two plugins available: [cordova-plugin-indexedDB](https://github.com/MSOpenTech/cordova-plugin-indexedDB)
@@ -225,12 +257,15 @@ The output files will be generated in the `dist` directory
 
 There are currently three folders for tests, `tests-qunit`,
 `tests-mocha` and `tests-polyfill` (the latter are also Mocha-based
-tests, but at present [only work in Node](https://github.com/axemclion/IndexedDBShim/issues/249)).
+tests, but at present its W3C tests [only work in Node](https://github.com/axemclion/IndexedDBShim/issues/249)).
 
 They can be run through a variety of means as described below.
 
 To properly build the files (lint, browserify, and minify), use `npm start`
-or to also keep a web server, run `npm run dev` (or `grunt dev`).
+or to also keep a web server, run `npm run dev` (or `grunt dev`). If
+you wish to do testing which only rebuilds the browser files, run
+`npm run dev-browser` and if only testing Node, run `npm run dev-node`.
+But before release, one should run `npm run build` (or `npm run dev`).
 
 The tests produce various database files. These are avoided in
 `.gitignore` and should be cleaned up if the tests pass, but if
@@ -280,9 +315,8 @@ To run the Node tests, run the following:
     [does not complete execution](https://github.com/axemclion/IndexedDBShim/issues/251).
 2. `npm run mocha`
 3. `npm run tests-polyfill` (or its components `npm run fake`,
-    `npm run mock`). Note that none of these are currently
-    passing in full, however. You can run `npm run good` to see the
-    ones which ought to remain passing.
+    `npm run mock`, `npm run w3c-old`). Note that only `fake` is
+    currently passing in full, however.
 4. `npm run w3c` (you must first run
     `git submodule update --init --recursive` if you have not already
     recursively cloned the repository). Note that some of these tests

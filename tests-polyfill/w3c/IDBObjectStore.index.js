@@ -1,10 +1,7 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var FDBIndex = IDBIndex;
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBObjectStore.index Tests', function () {
+    var FDBIndex = IDBIndex;
+    var createdb = support.createdb;
+
     // idbobjectstore_index
     it('returns an index', function (done) {
         var db;

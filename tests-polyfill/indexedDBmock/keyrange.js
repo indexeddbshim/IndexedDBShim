@@ -1,6 +1,3 @@
-require('./setup')
-var assert = require('assert')
-
 describe('KeyRange', function() {
     it("only - number", function () {
         var value = 1;

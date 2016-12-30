@@ -1,10 +1,7 @@
-require('./setup')
-var assert = require('assert')
-
 describe('ObjectStores', function() {
     it("Creating ObjectStore", function (done) {
         initionalSituation(function () {
-            var request = indexedDb.open(dbName, 1);
+            var request = indexedDB.open(dbName, 1);
             request.onsuccess = function(e){
                 for(var i = 0; i < e.target.result.objectStoreNames.length; i++) {
                     if (e.target.result.objectStoreNames[i] === objectStoreName) {
@@ -37,7 +34,7 @@ describe('ObjectStores', function() {
         var keyPath = "Id";
         var autoIncrement = true;
         initionalSituation(function () {
-            var request = indexedDb.open(dbName, 1);
+            var request = indexedDB.open(dbName, 1);
             request.onsuccess = function(e){
                 for(var i = 0; i < e.target.result.objectStoreNames.length; i++) {
                     if (e.target.result.objectStoreNames[i] === objectStoreName) {
@@ -76,7 +73,7 @@ describe('ObjectStores', function() {
 
     it("Creating ObjectStore in readwrite transaction", function (done) {
         initionalSituationObjectStore(function () {
-            var request = indexedDb.open(dbName, 1);
+            var request = indexedDB.open(dbName, 1);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -118,7 +115,7 @@ describe('ObjectStores', function() {
 
     it("Creating ObjectStore with autoIncrement and array with empty string as keyPath", function (done) {
         initionalSituation(function () {
-            var request = indexedDb.open(dbName, 1);
+            var request = indexedDB.open(dbName, 1);
             request.onsuccess = function(e){
                 for(var i = 0; i < e.target.result.objectStoreNames.length; i++) {
                     if (e.target.result.objectStoreNames[i] === objectStoreName) {
@@ -149,7 +146,7 @@ describe('ObjectStores', function() {
 
     it("Opening ObjectStore", function (done) {
         initionalSituationObjectStore(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName]);
@@ -189,7 +186,7 @@ describe('ObjectStores', function() {
 
     it("Opening non existing ObjectStore", function (done) {
         initionalSituationObjectStore(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName]);
@@ -234,7 +231,7 @@ describe('ObjectStores', function() {
 
     it("Opening ObjectStore not in transaction scope", function (done) {
         initionalSituation2ObjectStore(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName]);
@@ -280,7 +277,7 @@ describe('ObjectStores', function() {
     it("Deleting ObjectStore", function (done) {
         initionalSituationObjectStore(function () {
             // Delete database if existing
-            var request = indexedDb.open(dbName, 2);
+            var request = indexedDB.open(dbName, 2);
             request.onsuccess = function(e){
                 for(var i = 0; i < e.target.result.objectStoreNames.length; i++) {
                     if (e.target.result.objectStoreNames[i] === objectStoreName) {
@@ -311,7 +308,7 @@ describe('ObjectStores', function() {
     it("Deleting Non existing objectStore", function (done) {
         initionalSituation(function () {
             // Delete database if existing
-            var request = indexedDb.open(dbName, 2);
+            var request = indexedDB.open(dbName, 2);
             request.onsuccess = function(e){
                 for(var i = 0; i < e.target.result.objectStoreNames.length; i++) {
                     if (e.target.result.objectStoreNames[i] === objectStoreName) {
@@ -341,7 +338,7 @@ describe('ObjectStores', function() {
 
     it("Deleting ObjectStore in readwrite transaction", function (done) {
         initionalSituationObjectStore(function () {
-            var request = indexedDb.open(dbName, 1);
+            var request = indexedDB.open(dbName, 1);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");

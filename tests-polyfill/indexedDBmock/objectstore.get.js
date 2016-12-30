@@ -1,12 +1,9 @@
-require('./setup')
-var assert = require('assert')
-
 describe('Objectstore - Get', function() {
     it("Retrieving data - no data present for key", function (done) {
         var key = 1;
 
         initionalSituationObjectStoreNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -55,7 +52,7 @@ describe('Objectstore - Get', function() {
 
     it("Retrieving data - external key", function (done) {
         initionalSituationObjectStoreNoAutoIncrementWithData(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -104,7 +101,7 @@ describe('Objectstore - Get', function() {
 
     it("Retrieving data - internal key", function (done) {
         initionalSituationObjectStoreWithKeyPathAndData(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -153,7 +150,7 @@ describe('Objectstore - Get', function() {
 
     it("Retrieving data - key range lowerBound exclusive", function (done) {
         initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -202,7 +199,7 @@ describe('Objectstore - Get', function() {
 
     it("Retrieving data - key range lowerBound inclusieve", function (done) {
         initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -251,7 +248,7 @@ describe('Objectstore - Get', function() {
 
     it("Retrieving data - key range upperBound", function (done) {
         initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -300,7 +297,7 @@ describe('Objectstore - Get', function() {
 
     it("Retrieving data - key range upperBound exclusieve", function (done) {
         initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -349,7 +346,7 @@ describe('Objectstore - Get', function() {
 
     it("Retrieving data - key range upperBound inclusieve", function (done) {
         initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -399,7 +396,7 @@ describe('Objectstore - Get', function() {
         var expect = 1, ct = 0;
 
         initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -451,7 +448,7 @@ describe('Objectstore - Get', function() {
         var expect = 1, ct = 0;
 
         initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -505,7 +502,7 @@ describe('Objectstore - Get', function() {
         var key = 1;
 
         initionalSituationObjectStoreNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");

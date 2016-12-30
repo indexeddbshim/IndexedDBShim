@@ -1,12 +1,10 @@
-var assert = require('assert');
-var support = require('./support');
-var FDBKeyRange = IDBKeyRange;
-var createdb = support.createdb;
-
 describe('W3C IDBIndex.get Tests', function () {
+    var createdb = support.createdb;
+    var FDBKeyRange = IDBKeyRange;
+
     // idbindex_get
     it('returns the record', function (done) {
-        var db,
+        var db, index,
           record = { key: 1, indexedProperty: "data" };
 
         var open_rq = createdb(done);

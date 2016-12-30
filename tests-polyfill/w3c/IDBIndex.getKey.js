@@ -1,9 +1,7 @@
-var assert = require('assert');
-var support = require('./support');
-var FDBKeyRange = IDBKeyRange;
-var createdb = support.createdb;
-
 describe('W3C IDBIndex.getKey Tests', function () {
+    var FDBKeyRange = IDBKeyRange;
+    var createdb = support.createdb;
+
     // idbindex_count
     it("returns the record's primary key", function (done) {
         var db,

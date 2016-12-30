@@ -1,9 +1,6 @@
-var assert = require('assert');
-var support = require('./support');
-var indexedDB = require('../test-helper');
-var FDBKeyRange = IDBKeyRange;
-
 describe('W3C IDBKeyRange Tests', function () {
+    var FDBKeyRange = IDBKeyRange;
+
     // idbkeyrange
     describe('IDBKeyRange Tests', function () {
         it("FDBKeyRange.only() - returns an FDBKeyRange and the properties are set correctly", function() {

@@ -1,10 +1,7 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var FDBKeyRange = IDBKeyRange;
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBObjectStore.count Tests', function () {
+    var FDBKeyRange = IDBKeyRange;
+    var createdb = support.createdb;
+
     // idbobjectstore_count
     it('returns the number of records in the object store', function (done) {
         var db;

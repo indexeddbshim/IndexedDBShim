@@ -1,9 +1,3 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var FDBKeyRange = IDBKeyRange;
-var support = require('./support');
-var createdb = support.createdb;
-
 function assert_readonly(obj, prop) {
     try {
         obj[prop] = 587238956283;
@@ -21,10 +15,13 @@ function fail_helper(name) {
 }
 
 describe('W3C IDBCursor Behavior Tests', function () {
+    var FDBKeyRange = IDBKeyRange;
+    var createdb = support.createdb;
+
     describe('direction', function () {
         // idbcursor-direction
         it('IDBCursor.direction', function (done) {
-            this.timeout(4000);
+            this.timeout(6000);
             var count = 0;
             function cursor_direction(constant, dir)
             {

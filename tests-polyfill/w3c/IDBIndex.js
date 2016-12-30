@@ -1,8 +1,6 @@
-var assert = require('assert');
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBIndex Tests', function () {
+    var createdb = support.createdb;
+
     // idbindex_indexNames
     it('indexNames', function (done) {
         var db;

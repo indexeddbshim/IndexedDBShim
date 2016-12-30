@@ -1,13 +1,10 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper-unicode');
-//var FDBRequest = IDBRequest;
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C Key Path Tests', function () {
+    //var FDBRequest = IDBRequest;
+    var createdb = support.createdb;
+
     // keypath
     it('Keypath', function (done) {
-        this.timeout(15000);
+        this.timeout(20000);
         var numChecks = 0;
         var numDone = 0;
 
@@ -151,7 +148,7 @@ describe('W3C Key Path Tests', function () {
 
     // keypath_invalid
     it('Invalid keypath', function (done) {
-        this.timeout(15000);
+        this.timeout(30000);
 
         var numChecks = 0;
         var numDone = 0;
@@ -167,7 +164,7 @@ describe('W3C Key Path Tests', function () {
                         db.createObjectStore(store_name, { keyPath: keypath })
                     }, 'SyntaxError', "createObjectStore with keyPath");
 
-                store = db.createObjectStore(store_name);
+                var store = db.createObjectStore(store_name);
                 support.throws(function() {
                         store.createIndex('index', keypath);
                     }, 'SyntaxError', "createIndex with keyPath");
@@ -210,7 +207,7 @@ describe('W3C Key Path Tests', function () {
 
     // keypath_maxsize
     it('Max size', function (done) {
-        this.timeout(5000);
+        this.timeout(10000);
         var numChecks = 0;
         var numDone = 0;
 

@@ -1,10 +1,7 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var FDBRequest = IDBRequest;
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBObjectStore.add Tests', function () {
+    var FDBRequest = IDBRequest;
+    var createdb = support.createdb;
+
     // idbobjectstore_add
     it('add with an inline key', function (done) {
         var db,

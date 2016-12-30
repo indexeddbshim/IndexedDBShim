@@ -1,12 +1,9 @@
-require('./setup')
-var assert = require('assert')
-
 describe('Objectstore - Put', function() {
     it("Putting data", function (done) {
         var data = { test: "test" };
 
         initionalSituationObjectStoreNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -59,7 +56,7 @@ describe('Objectstore - Put', function() {
         var key = 1;
 
         initionalSituationObjectStoreNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -111,7 +108,7 @@ describe('Objectstore - Put', function() {
     it("Putting data - objectstore autoincrement", function (done) {
         var data = { test: "test" };
         initionalSituationObjectStoreWithAutoIncrement(function () {
-    		var request = indexedDb.open(dbName);
+    		var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -163,7 +160,7 @@ describe('Objectstore - Put', function() {
     	var data = { test: "test" };
     	var key = 1;
     	initionalSituationObjectStoreWithAutoIncrement(function () {
-    		var request = indexedDb.open(dbName);
+    		var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -215,7 +212,7 @@ describe('Objectstore - Put', function() {
     it("Putting data with external key (increase autoincrement) - objectstore autoincrement", function (done) {
     	var data = { test: "test" };
     	initionalSituationObjectStoreWithAutoIncrement(function () {
-    		var request = indexedDb.open(dbName);
+    		var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -294,7 +291,7 @@ describe('Objectstore - Put', function() {
     it("Putting data - objectstore keyPath", function (done) {
     	var data = { test: "test" };
     	initionalSituationObjectStoreWithKeyPathNoAutoIncrement(function () {
-    		var request = indexedDb.open(dbName);
+    		var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -345,7 +342,7 @@ describe('Objectstore - Put', function() {
     it("Putting data with inline key - objectstore keyPath", function (done) {
         var data = { test: "test", id: 1 };
         initionalSituationObjectStoreWithKeyPathNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -398,7 +395,7 @@ describe('Objectstore - Put', function() {
         var data = { test: "test" };
         var key = 1;
         initionalSituationObjectStoreWithKeyPathNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -449,7 +446,7 @@ describe('Objectstore - Put', function() {
     it("Putting data - objectstore keyPath autoincrement", function (done) {
         var data = { test: "test" };
         initionalSituationObjectStoreWithKeyPathAndAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -501,7 +498,7 @@ describe('Objectstore - Put', function() {
     it("Putting data with inline key - objectstore keyPath autoincrement", function (done) {
         var data = { test: "test", id:2 };
         initionalSituationObjectStoreWithKeyPathAndAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -554,7 +551,7 @@ describe('Objectstore - Put', function() {
         var data = { test: "test" };
         var key = 1;
         initionalSituationObjectStoreWithKeyPathAndAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -604,7 +601,7 @@ describe('Objectstore - Put', function() {
 
     it("Putting data with existing external key", function (done) {
         initionalSituationObjectStoreNoAutoIncrementWithData(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -655,7 +652,7 @@ describe('Objectstore - Put', function() {
 
     it("Putting data with existing internal key", function (done) {
         initionalSituationObjectStoreWithKeyPathAndDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -708,7 +705,7 @@ describe('Objectstore - Put', function() {
         var data = { test: "test" };
 
         initionalSituationObjectStoreNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -761,7 +758,7 @@ describe('Objectstore - Put', function() {
         var key = "key";
 
         initionalSituationObjectStoreNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -815,7 +812,7 @@ describe('Objectstore - Put', function() {
         var key = [1,2,3];
 
         initionalSituationObjectStoreNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -867,7 +864,7 @@ describe('Objectstore - Put', function() {
     it("Putting data with inline key - string", function (done) {
         var data = { test: "test", id: "key" };
         initionalSituationObjectStoreWithKeyPathNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -919,7 +916,7 @@ describe('Objectstore - Put', function() {
     it("Putting data with inline key - date", function (done) {
         var data = { test: "test", id: new Date() };
         initionalSituationObjectStoreWithKeyPathNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -971,7 +968,7 @@ describe('Objectstore - Put', function() {
     it("Putting data with inline key - array", function (done) {
         var data = { test: "test", id: [1,2,3] };
         initionalSituationObjectStoreWithKeyPathNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -1025,7 +1022,7 @@ describe('Objectstore - Put', function() {
         var key = "key";
 
         initionalSituationObjectStoreNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readonly");
@@ -1081,7 +1078,7 @@ describe('Objectstore - Put', function() {
         var key = "key";
 
         initionalSituationObjectStoreNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -1131,7 +1128,7 @@ describe('Objectstore - Put', function() {
 
     it("Putting data with existing index key - unique index ", function (done) {
         initionalSituationIndexUniqueIndexWithData(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");
@@ -1181,7 +1178,7 @@ describe('Objectstore - Put', function() {
 
     it("Putting data with existing index key - unique multientry index ", function (done) {
         initionalSituationIndexUniqueMultiEntryIndexWithData(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], "readwrite");

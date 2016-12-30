@@ -1,10 +1,7 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var FDBIndex = IDBIndex;
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBTransaction.abort Tests', function () {
+    var FDBIndex = IDBIndex;
+    var createdb = support.createdb;
+
     // abort-in-initial-upgradeneeded
     it('Test that an abort in the initial upgradeneeded sets version back to 0', function (done) {
         var db, open_rq = createdb(done, undefined, 2);
@@ -12,7 +9,7 @@ describe('W3C IDBTransaction.abort Tests', function () {
         open_rq.onupgradeneeded = function(e) {
             db = e.target.result;
             assert.equal(db.version, 2);
-            transaction = e.target.transaction;
+            var transaction = e.target.transaction;
             transaction.oncomplete = function () { throw new Error("unexpected transaction.complete") };
             transaction.onabort = function(e) {
                 assert.equal(e.target.db.version, 0);

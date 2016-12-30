@@ -9,4 +9,4 @@ setGlobalVars();
 window.DOMException = indexedDB.modules.DOMException;
 window.Event = indexedDB.modules.ShimEvent;
 
-module.exports = global.indexedDB
+module.exports = global.indexedDB;

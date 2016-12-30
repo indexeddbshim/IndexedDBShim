@@ -1,8 +1,6 @@
-var assert = require('assert');
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBIndex.openKeyCursor Tests', function () {
+    var createdb = support.createdb;
+
     // idbindex_openKeyCursor
     it('throw DataError when using a invalid key', function (done) {
         var db;

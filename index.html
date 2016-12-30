@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
     <head>
         <meta charset="utf-8">
@@ -15,11 +15,11 @@
                 <div>
                     A polyfill to enable IndexedDB using WebSql.
                     <br/>
-                    IndexedDB is not supported on <a href = "http://caniuse.com/#search=IndexedDB" target="_blank">all browsers</a>. 
+                    IndexedDB is not supported on <a href = "http://caniuse.com/#search=IndexedDB" target="_blank">all browsers</a>.
                     This IndexedDB polyfill exposes the IndexedDB API in unsupported browsers using WebSQL. This shim is basically an IndexedDB-WebSql adapter.
                     <br/>
                     Check out my <a href = "http://blog.nparashuram.com/search/label/indexeddb">blog</a>
-                    for updates. 
+                    for updates.
                 </div>
                 <div>
                     <h2>Download</h2>
@@ -27,35 +27,35 @@
                         <a href = "https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/dist/indexeddbshim.min.js" target = "_blank">Download the polyfill</a>
                     </div>
                     <div style ="margin-top: 10px;">
-                        To keep the code manageable, the modules are in <a href = "https://github.com/axemclion/IndexedDBShim/tree/gh-pages/src">different files</a>. The link above is simply a concatenation of all these files. 
+                        To keep the code manageable, the modules are in <a href = "https://github.com/axemclion/IndexedDBShim/tree/gh-pages/src">different files</a>. The link above is simply a concatenation of all these files.
                         You can build a <a href = "https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/dist/indexeddbshim.js">development</a>
                         or <a href = "https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/dist/indexeddbshim.min.js">production (minified)</a>
-                        version by running the default task in the <a href = "https://github.com/cowboy/grunt">gruntfile</a>. The two files will be put in the 
+                        version by running the default task in the <a href = "https://github.com/cowboy/grunt">gruntfile</a>. The two files will be put in the
                         <code>
                             dist
                         </code>
-                        folder. 
-                        You can also concantenate them again with javascript and download that copy using <a href = "javascript:download()">this link</a>. 
+                        folder.
+                        You can also concantenate them again with JavaScript and download that copy using <a href = "javascript:download()">this link</a>.
                     </div>
                 </div>
                 <div>
                     <h2>Test Cases</h2>
                     <div>
                         <a href ="test/index.html">Run the test cases</a>
-                        to see how the polyfill performs on your non-IndexedDB supported browser like Opera or Safari. It also works on Chrome as Chrome also has WebSQL. 
-                        This would run on devices like the iPad and the iPhone too !! 
+                        to see how the polyfill performs on your non-IndexedDB supported browser like Opera or Safari. It also works on Chrome as Chrome also has WebSQL.
+                        This would run on devices like the iPad and the iPhone too !!
                     </div>
                 </div>
                 <div>
                     <h2>Libraries tested to work with the shim</h2>
                     <div>
-                        The polyfill implements the IndexedDB API specification. 
-                        The following libraries have examples that work with the polyfill. 
+                        The polyfill implements the IndexedDB API specification.
+                        The following libraries have examples that work with the polyfill.
                     </div>
                     <ul>
                         <li>
                             <a href = "http://nparashuram.com/jquery-indexeddb">JQuery-IndexedDB</a>
-                            plugin 
+                            plugin
                             - <a href = "http://nparashuram.com/jquery-indexeddb/example/">See example</a>
                         </li>
                         <li>
@@ -102,14 +102,14 @@
                     <h2>Credits</h2>
                     <div>
                         A big thanks to the <a href = "https://github.com/axemclion/IndexedDBShim/graphs/contributors">contributors</a>
-                        to this project. 
+                        to this project.
                     </div>
                 </div>
             </div>
         </div>
-        <script type = "text/javascript" src= "build.js">
+        <script src= "build.js">
         </script>
-        <script type = "text/javascript">
+        <script>
             function download(){
             	var w = window.open(null, "Download IndexedDB Shim", "menubar=false,toolbar=false,dependent=yes,height=500,width=500,centerscreen=yes,resizable=yes,scrollbars=yes,status=no");
             	w.document.body.innerHTML = "Loading";
@@ -119,13 +119,13 @@
             }
         </script>
         <a href="http://github.com/axemclion/IndexedDBShim"><img style="position: absolute; top: 0; left: 0; border: 0;" src="https://a248.e.akamai.net/camo.github.com/bec6c51521dcc8148146135149fe06a9cc737577/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f6c6566745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub"></a>
-        <script type="text/javascript">
+        <script>
             var _gaq = _gaq || [];
             _gaq.push(['_setAccount', 'UA-617499-9']);
             _gaq.push(['_setDomainName', 'none']);
             _gaq.push(['_setAllowLinker', true]);
             _gaq.push(['_trackPageview']);
-            
+
             (function(){
             	var ga = document.createElement('script');
             	ga.type = 'text/javascript';

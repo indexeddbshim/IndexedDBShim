@@ -1,4 +1,5 @@
 import {createDOMException} from './DOMException.js';
+import {createEvent} from './Event.js';
 import * as util from './util.js';
 import IDBObjectStore from './IDBObjectStore.js';
 import IDBTransaction from './IDBTransaction.js';
@@ -10,13 +11,15 @@ import EventTarget from 'eventtarget';
  * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
  * @constructor
  */
-function IDBDatabase (db, name, version, storeProperties) {
+function IDBDatabase (db, name, oldVersion, version, storeProperties) {
     this.__db = db;
     this.__closed = false;
+    this.__oldVersion = oldVersion;
     this.__version = version;
     this.__name = name;
-    this.onabort = this.onerror = this.onversionchange = null;
+    this.onabort = this.onclose = this.onerror = this.onversionchange = null;
 
+    this.__transactions = [];
     this.__objectStores = {};
     this.__objectStoreNames = new util.StringList();
     const itemCopy = {};
@@ -34,6 +37,7 @@ function IDBDatabase (db, name, version, storeProperties) {
         this.__objectStores[store.name] = store;
         this.objectStoreNames.push(store.name);
     }
+    this.__oldObjectStoreNames = this.objectStoreNames.clone();
 }
 
 /**
@@ -90,7 +94,6 @@ IDBDatabase.prototype.deleteObjectStore = function (storeName) {
     }
     IDBTransaction.__assertVersionChange(this.__versionTransaction);
     IDBTransaction.__assertActive(this.__versionTransaction);
-    delete this.__versionTransaction.__storeClones[storeName];
 
     const store = this.__objectStores[storeName];
     if (!store) {
@@ -111,6 +114,13 @@ IDBDatabase.prototype.close = function () {
  * @returns {IDBTransaction}
  */
 IDBDatabase.prototype.transaction = function (storeNames, mode) {
+    // Since SQLite (at least node-websql and definitely WebSQL) requires
+    //   locking of the whole database, to allow simultaneous readwrite
+    //   operations on transactions without overlapping stores, we'd probably
+    //   need to save the stores in separate databases (we could also consider
+    //   prioritizing readonly but not starving readwrite).
+    // Even for readonly transactions, due to [issue 17](https://github.com/nolanlawson/node-websql/issues/17),
+    //   we're not currently actually running the SQL requests in parallel.
     if (typeof mode === 'number') {
         mode = mode === 1 ? 'readwrite' : 'readonly';
         CFG.DEBUG && console.log('Mode should be a string, but was specified as ', mode); // Todo: Remove this option as no longer in spec
@@ -137,8 +147,31 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
         throw createDOMException('InvalidAccessError', 'No object store names were specified');
     }
     // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
-    return new IDBTransaction(this, storeNames, mode);
+    const trans = new IDBTransaction(this, storeNames, mode);
+    this.__transactions.push(trans);
+    return trans;
 };
+
+// Todo: Test
+IDBDatabase.prototype.__forceClose = function (msg) {
+    const me = this;
+    me.close();
+    let ct = 0;
+    me.__transactions.forEach(function (trans) {
+        trans.on__abort = function () {
+            ct++;
+            if (ct === me.__transactions.length) {
+                // Todo: unblock any pending `upgradeneeded` or `deleteDatabase` calls
+                const evt = createEvent('close');
+                setTimeout(() => {
+                    me.dispatchEvent(evt);
+                });
+            }
+        };
+        trans.__abortTransaction(createDOMException('AbortError', 'The connection was force-closed: ' + (msg || '')));
+    });
+};
+
 IDBDatabase.prototype.toString = function () {
     return '[object IDBDatabase]';
 };

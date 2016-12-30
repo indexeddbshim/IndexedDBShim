@@ -1,9 +1,6 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C Key Generator Tests', function () {
+    var createdb = support.createdb;
+
     // keygenerator
     it('Key generator', function (done) {
         var numChecks = 0;

@@ -45,6 +45,13 @@ StringList.prototype = {
     },
 
     // Helpers. Should only be used internally.
+    clone: function () {
+        const stringList = new StringList();
+        stringList._items = this._items.slice();
+        stringList.length = this.length;
+        stringList.addIndexes();
+        return stringList;
+    },
     addIndexes: function () {
         for (let i = 0; i < this._items.length; i++) {
             this[i] = this._items[i];

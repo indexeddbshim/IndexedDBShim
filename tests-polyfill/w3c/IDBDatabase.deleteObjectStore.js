@@ -1,13 +1,5 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var support = require('./support');
-var createdb = support.createdb;
-
-/*Array.prototype.contains = function (item) {
-    return this.indexOf(item) >= 0;
-}*/
-
 describe('W3C IDBDatabase.deleteObjectStore Tests', function () {
+    var createdb = support.createdb;
     // idbdatabase_deleteObjectStore
     it("object store's name is removed from database's list", function (done) {
         var open_rq = createdb(done)

@@ -1,10 +1,7 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var FDBIndex = IDBIndex;
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBObjectStore.createIndex Tests', function () {
+    var FDBIndex = IDBIndex;
+    var createdb = support.createdb;
+
     // idbobjectstore_createindex
     it('returns an IDBIndex and the properties are set correctly', function (done) {
         var db;
@@ -434,7 +431,7 @@ describe('W3C IDBObjectStore.createIndex Tests', function () {
 
         open_rq.onsuccess = function (event) {
             var txn = db.transaction("store", "readwrite");
-            ostore = txn.objectStore("store");
+            var ostore = txn.objectStore("store");
             support.throws(function(){
                 ostore.createIndex("index", "indexedProperty");
             }, 'InvalidStateError');

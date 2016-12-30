@@ -1,8 +1,7 @@
-global.ok = require('assert').ok
-global.equal = require('assert').equal
-global.deepEqual = require('assert').deepEqual
+global.ok = assert.ok
+global.equal = assert.equal
+global.deepEqual = assert.deepEqual
 
-global.indexedDb = require('../test-helper')
 global.KeyRange = IDBKeyRange;
 global.dbName = "test_database.sqlite";
 global.objectStoreName = "objectStore";
@@ -22,7 +21,7 @@ global.addData10 = { test: "addData10", name: "name10", id: 10 };
 global.msgCreatingInitialSituationFailed = "Creating initial situation failed";
 
 global.initionalSituation = function(callBack, done, assert) {
-    var request = indexedDb.deleteDatabase(dbName);
+    var request = indexedDB.deleteDatabase(dbName);
 
     request.onsuccess = function(){
         callBack();
@@ -34,7 +33,7 @@ global.initionalSituation = function(callBack, done, assert) {
 }
 global.initionalSituationDatabase = function(callBack, done, assert) {
     initionalSituation(function(){
-        var request = indexedDb.open(dbName);
+        var request = indexedDB.open(dbName);
         request.onsuccess = function(e){
             e.target.result.close();
             callBack();
@@ -47,7 +46,7 @@ global.initionalSituationDatabase = function(callBack, done, assert) {
 }
 global.initionalSituationDatabaseVersion = function(callBack, done, assert) {
     initionalSituation(function(){
-        var request = indexedDb.open(dbName, 2);
+        var request = indexedDB.open(dbName, 2);
         request.onsuccess = function(e){
             e.target.result.close();
             callBack();
@@ -60,7 +59,7 @@ global.initionalSituationDatabaseVersion = function(callBack, done, assert) {
 }
 global.initionalSituationObjectStore = function(callBack, done, assert) {
     initionalSituation(function(){
-        var request = indexedDb.open(dbName, 1);
+        var request = indexedDB.open(dbName, 1);
         request.onsuccess = function(e){
             e.target.result.close();
             callBack();
@@ -84,7 +83,7 @@ global.initionalSituationObjectStore = function(callBack, done, assert) {
 }
 global.initionalSituation2ObjectStore = function(callBack, done, assert) {
     initionalSituation(function(){
-        var request = indexedDb.open(dbName, 1);
+        var request = indexedDB.open(dbName, 1);
         request.onsuccess = function(e){
             e.target.result.close();
             callBack();
@@ -109,7 +108,7 @@ global.initionalSituation2ObjectStore = function(callBack, done, assert) {
 }
 global.initionalSituationObjectStoreNoAutoIncrement = function(callBack, done, assert) {
     initionalSituation(function() {
-        var request = indexedDb.open(dbName, 1);
+        var request = indexedDB.open(dbName, 1);
         request.onsuccess = function (e) {
             e.target.result.close();
             callBack();
@@ -133,7 +132,7 @@ global.initionalSituationObjectStoreNoAutoIncrement = function(callBack, done, a
 }
 global.initionalSituationObjectStoreWithAutoIncrement = function(callBack, done, assert) {
     initionalSituation(function() {
-        var request = indexedDb.open(dbName, 1);
+        var request = indexedDB.open(dbName, 1);
         request.onsuccess = function(e) {
             e.target.result.close();
             callBack();
@@ -157,7 +156,7 @@ global.initionalSituationObjectStoreWithAutoIncrement = function(callBack, done,
 }
 global.initionalSituationObjectStoreWithKeyPathNoAutoIncrement = function(callBack, done, assert) {
     initionalSituation(function() {
-        var request = indexedDb.open(dbName, 1);
+        var request = indexedDB.open(dbName, 1);
         request.onsuccess = function(e) {
             e.target.result.close();
             callBack();
@@ -181,7 +180,7 @@ global.initionalSituationObjectStoreWithKeyPathNoAutoIncrement = function(callBa
 }
 global.initionalSituationObjectStoreWithKeyPathAndAutoIncrement = function(callBack, done, assert) {
     initionalSituation(function() {
-        var request = indexedDb.open(dbName, 1);
+        var request = indexedDB.open(dbName, 1);
         request.onsuccess = function(e) {
             e.target.result.close();
             callBack();
@@ -205,7 +204,7 @@ global.initionalSituationObjectStoreWithKeyPathAndAutoIncrement = function(callB
 }
 global.initionalSituationObjectStoreNoAutoIncrementWithData = function(callBack, done, assert) {
     initionalSituation(function() {
-        var request = indexedDb.open(dbName, 1);
+        var request = indexedDB.open(dbName, 1);
         request.onsuccess = function (e) {
             e.target.result.close();
             callBack();
@@ -230,7 +229,7 @@ global.initionalSituationObjectStoreNoAutoIncrementWithData = function(callBack,
 }
 global.initionalSituationObjectStoreWithKeyPathAndData = function(callBack, done, assert) {
     initionalSituation(function() {
-        var request = indexedDb.open(dbName, 1);
+        var request = indexedDB.open(dbName, 1);
         request.onsuccess = function (e) {
             e.target.result.close();
             callBack();
@@ -255,7 +254,7 @@ global.initionalSituationObjectStoreWithKeyPathAndData = function(callBack, done
 }
 global.initionalSituationObjectStoreWithKeyPathAndDataNoAutoIncrement = function(callBack, done, assert) {
     initionalSituation(function() {
-        var request = indexedDb.open(dbName, 1);
+        var request = indexedDB.open(dbName, 1);
         request.onsuccess = function(e) {
             e.target.result.close();
             callBack();
@@ -280,7 +279,7 @@ global.initionalSituationObjectStoreWithKeyPathAndDataNoAutoIncrement = function
 }
 global.initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement = function(callBack, done, assert) {
     initionalSituation(function() {
-        var request = indexedDb.open(dbName, 1);
+        var request = indexedDB.open(dbName, 1);
         request.onsuccess = function(e) {
             e.target.result.close();
             callBack();
@@ -314,7 +313,7 @@ global.initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement = 
 }
 global.initionalSituationIndex = function(callBack, done, assert) {
     initionalSituation(function(){
-        var request = indexedDb.open(dbName, 1);
+        var request = indexedDB.open(dbName, 1);
         request.onsuccess = function(e){
             e.target.result.close();
             callBack();
@@ -339,7 +338,7 @@ global.initionalSituationIndex = function(callBack, done, assert) {
 }
 global.initionalSituationIndexUniqueIndexWithData = function(callBack, done, assert) {
     initionalSituation(function(){
-        var request = indexedDb.open(dbName, 1);
+        var request = indexedDB.open(dbName, 1);
         request.onsuccess = function(e){
             e.target.result.close();
             callBack();
@@ -365,7 +364,7 @@ global.initionalSituationIndexUniqueIndexWithData = function(callBack, done, ass
 }
 global.initionalSituationIndexUniqueMultiEntryIndexWithData = function(callBack, done, assert) {
     initionalSituation(function(){
-        var request = indexedDb.open(dbName, 1);
+        var request = indexedDB.open(dbName, 1);
         request.onsuccess = function(e){
             e.target.result.close();
             callBack();

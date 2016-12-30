@@ -11,7 +11,10 @@ const CFG = {};
     // See optional dynamic `System.import()` loading API (shimIndexedDB.__setUnicodeIdentifiers)
     //    of these large regular expression strings:
     'UnicodeIDStart', // See `src/UnicodeIdentifiers.js`
-    'UnicodeIDContinue' // See `src/UnicodeIdentifiers.js`
+    'UnicodeIDContinue', // See `src/UnicodeIdentifiers.js`
+    'sqlBusyTimeout', // Used by Node WebSQL (Defaults to 1000)
+    'sqlTrace', // Callback used by Node WebSQL
+    'sqlProfile' // Callback used by Node WebSQL
 ].forEach((prop) => {
     Object.defineProperty(CFG, prop, {
         get: function () {

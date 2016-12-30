@@ -1,5 +1,4 @@
 import CFG from './CFG.js';
-import * as util from './util.js';
 
 /**
  * Creates a native DOMException, for browsers that support it
@@ -36,10 +35,11 @@ function logError (name, message, error) {
         console[method](name + ': ' + message + '. ' + (error || ''));
         console.trace && console.trace();
     }
-};
+}
 
 function isErrorOrDOMErrorOrDOMException (obj) {
-    return util.isObj(obj) && typeof obj.name === 'string';
+    return obj && typeof obj === 'object' && // We don't use util.isObj here as mutual dependency causing problems in Babel with browser
+        typeof obj.name === 'string';
 }
 
 /**
@@ -64,7 +64,35 @@ function findError (args) {
         }
     }
     return err;
-};
+}
+
+function webSQLErrback (webSQLErr) {
+    let name, message;
+    switch (webSQLErr.code) {
+    case 4: { // SQLError.QUOTA_ERR
+        name = 'QuotaExceededError';
+        message = 'The operation failed because there was not enough remaining storage space, or the storage quota was reached and the user declined to give more space to the database.';
+        break;
+    }
+    /*
+    // Should a WebSQL timeout treat as IndexedDB `TransactionInactiveError` or `UnknownError`?
+    case 7: { // SQLError.TIMEOUT_ERR
+        // All transaction errors abort later, so no need to mark inactive
+        name = 'TransactionInactiveError';
+        message = 'A request was placed against a transaction which is currently not active, or which is finished (Internal SQL Timeout).';
+        break;
+    }
+    */
+    default: {
+        name = 'UnknownError';
+        message = 'The operation failed for reasons unrelated to the database itself and not covered by any other errors.';
+        break;
+    }
+    }
+    message += ' (' + webSQLErr.message + ')--(' + webSQLErr.code + ')';
+    const err = createDOMException(name, message);
+    return err;
+}
 
 let test, useNativeDOMException = false;
 
@@ -92,4 +120,4 @@ if (useNativeDOMException) {
     };
 }
 
-export {logError, findError, shimDOMException as DOMException, createDOMException};
+export {logError, findError, shimDOMException as DOMException, createDOMException, webSQLErrback};

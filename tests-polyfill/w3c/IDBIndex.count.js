@@ -1,10 +1,7 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var FDBKeyRange = IDBKeyRange;
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBIndex.count Tests', function () {
+    var FDBKeyRange = IDBKeyRange;
+    var createdb = support.createdb;
+
     // idbindex_count
     it('returns the number of records in the index', function (done) {
         var db;

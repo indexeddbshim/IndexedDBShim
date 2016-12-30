@@ -1,12 +1,8 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var FDBCursor = IDBCursor;
-var FDBCursorWithValue = IDBCursorWithValue;
-var FDBKeyRange = IDBKeyRange;
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBCursor.continue Tests', function () {
+    var FDBCursor = IDBCursor;
+    var FDBCursorWithValue = IDBCursorWithValue;
+    var FDBKeyRange = IDBKeyRange;
+    var createdb = support.createdb;
     describe('index', function () {
         // idbcursor-continue
         describe('IDBCursor.continue', function (done) {
@@ -625,7 +621,7 @@ describe('W3C IDBCursor.continue Tests', function () {
                 var store = db.transaction("test")
                               .objectStore("test");
 
-                cursor_rq = store.openCursor();
+                var cursor_rq = store.openCursor();
                 cursor_rq.onsuccess = function(e) {
                     var cursor = e.target.result;
                     if (!cursor) {

@@ -1,10 +1,7 @@
-require('./setup')
-var assert = require('assert')
-
 describe("Transaction", function() {
     it("Opening transaction", function (done) {
         initionalSituationObjectStore(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName]);
@@ -44,7 +41,7 @@ describe("Transaction", function() {
         var mode = "readonly";
 
         initionalSituationObjectStore(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName]);
@@ -84,7 +81,7 @@ describe("Transaction", function() {
         var mode = "readwrite";
 
         initionalSituationObjectStore(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], mode);
@@ -122,7 +119,7 @@ describe("Transaction", function() {
 
     it("Aborting transaction", function (done) {
         initionalSituationObjectStore(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName]);
@@ -160,7 +157,7 @@ describe("Transaction", function() {
 
     it("Opening transaction - without objectStore", function (done) {
         initionalSituationObjectStore(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([]);
@@ -198,7 +195,7 @@ describe("Transaction", function() {
     it("Opening transaction - non existing objectStore", function (done) {
         var anOtherObjectStore = "anOtherObjectStore";
         initionalSituation(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([anOtherObjectStore]);
@@ -239,7 +236,7 @@ describe("Transaction", function() {
         var firstTransactionCommited = false;
 
         initionalSituation2ObjectStore(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName]);
@@ -312,7 +309,7 @@ describe("Transaction", function() {
         var firstTransactionCommited = false;
 
         initionalSituationObjectStore(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName]);
@@ -385,7 +382,7 @@ describe("Transaction", function() {
         var firstTransactionCommited = false;
 
         initionalSituation2ObjectStore(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], mode);
@@ -458,7 +455,7 @@ describe("Transaction", function() {
         var firstTransactionCommited = false;
 
         initionalSituationObjectStoreWithKeyPathAndMultipleDataNoAutoIncrement(function () {
-            var request = indexedDb.open(dbName);
+            var request = indexedDB.open(dbName);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName], mode);

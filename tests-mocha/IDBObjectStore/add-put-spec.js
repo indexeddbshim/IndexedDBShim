@@ -6,7 +6,7 @@
 ['put', 'add'].forEach(function (save) {
     'use strict';
 
-    describe('IDBObjectStore.' + save, function () {
+    describe('IDBObjectStore.' + save + ' (put-add)', function () {
         it('should return an IDBRequest', function (done) {
             util.createDatabase('inline', function (err, db) {
                 if (err) {

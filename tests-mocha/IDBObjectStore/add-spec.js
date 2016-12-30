@@ -1,5 +1,5 @@
 /* eslint-disable no-var */
-describe('IDBObjectStore.add', function () {
+describe('IDBObjectStore.add (only)', function () {
     'use strict';
 
     var onerror;

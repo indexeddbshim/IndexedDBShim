@@ -1,9 +1,5 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBDatabase.transaction Tests', function () {
+    var createdb = support.createdb;
     // idbdatabase_transaction
     it('attempt to open a transaction with invalid scope', function (done) {
         var open_rq = createdb(done);

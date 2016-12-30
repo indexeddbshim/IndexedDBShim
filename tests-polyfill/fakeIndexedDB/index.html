@@ -6,8 +6,8 @@
     <meta name="viewport" content="user-scalable=no, initial-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi"/>
     <title>Testing IndexedDB Shim</title>
 
-    <link rel="stylesheet" href="../node_modules/mocha/mocha.css"/>
-    <link rel="stylesheet" href="styles.css"/>
+    <link rel="stylesheet" href="../../node_modules/mocha/mocha.css"/>
+    <link rel="stylesheet" href="../../tests-mocha/styles.css"/>
   </head>
   <body>
     <div id="mocha">
@@ -36,14 +36,14 @@
     </div>
 
     <!-- Test Environment -->
-    <script src="../node_modules/mocha/mocha.js"></script>
-    <script src="../node_modules/chai/chai.js"></script>
-    <script src="../node_modules/sinon/pkg/sinon.js"></script>
-    <script src="test-environment.js"></script>
-    <script src="test-utils.js"></script>
+    <script src="../../node_modules/mocha/mocha.js"></script>
+    <script src="../../node_modules/chai/chai.js"></script>
+    <script src="../../node_modules/sinon/pkg/sinon.js"></script>
+    <script src="../../tests-mocha/test-environment.js"></script>
+    <script src="../../tests-mocha/test-utils.js"></script>
 
     <!-- IndexedDBShim -->
-    <script src="../dist/indexeddbshim.min.js"></script>
+    <script src="../../dist/indexeddbshim.min.js"></script>
     <!--<script src="../src/Init.js"></script>-->
     <!--<script src="../src/util.js"></script>-->
     <!--<script src="../src/polyfill.js"></script>-->
@@ -62,30 +62,7 @@
     <!--<script src="../src/setGlobalVars.js"></script>-->
 
     <!-- Unit Tests -->
-    <script src="api-spec.js"></script>
-    <script src="IDBDatabase/close-spec.js"></script>
-    <script src="IDBDatabase/createObjectStore-spec.js"></script>
-    <script src="IDBDatabase/deleteObjectStore-spec.js"></script>
-    <script src="IDBDatabase/transaction-spec.js"></script>
-    <script src="IDBFactory/cmp-spec.js"></script>
-    <script src="IDBFactory/deleteDatabase-spec.js"></script>
-    <script src="IDBFactory/open-spec.js"></script>
-    <script src="IDBIndex/count-spec.js"></script>
-    <script src="IDBIndex/get-spec.js"></script>
-    <script src="IDBIndex/getKey-spec.js"></script>
-    <script src="IDBIndex/openCursor-spec.js"></script>
-    <script src="IDBKeyRange/includes-spec.js"></script>
-    <script src="IDBObjectStore/add-put-spec.js"></script>
-    <script src="IDBObjectStore/add-spec.js"></script>
-    <script src="IDBObjectStore/clear-spec.js"></script>
-    <script src="IDBObjectStore/createIndex-spec.js"></script>
-    <script src="IDBObjectStore/delete-spec.js"></script>
-    <script src="IDBObjectStore/deleteIndex-spec.js"></script>
-    <script src="IDBObjectStore/index-spec.js"></script>
-    <script src="IDBObjectStore/put-spec.js"></script>
-    <script src="IDBTransaction/events-spec.js"></script>
-    <script src="IDBTransaction/objectStore-spec.js"></script>
-
+    <script src="fakeIndexedDB.js"></script>
     <script>
       mocha.run();
     </script>

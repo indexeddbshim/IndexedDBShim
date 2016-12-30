@@ -118,17 +118,17 @@ module.exports = function (grunt) {
             mochaTests: {
                 src: ['D_indexeddbshim_test_database_*', 'D_test.sqlite']
             },
+            fake: {
+                src: ['D_test0.*']
+            },
             mock: {
                 src: ['D_test_database*']
             },
             w3c: {
-                src: ['D_db*', 'D_test-db*']
+                src: ['D_db*', 'D_test-db*', 'D_about', 'D_^I^D^B*', 'D_blank*']
             },
             w3cOld: {
                 src: ['D_testdb-*', 'D_database_name*', 'D_idbtransaction*', 'D_db.sqlite*']
-            },
-            fake: {
-                src: ['D_test0.*']
             },
             sysDB: {
                 src: ['__sysdb__*']
@@ -171,6 +171,36 @@ module.exports = function (grunt) {
                     clearRequireCache: false // Optionally clear the require cache before running tests (defaults to false)
                 },
                 src: ['tests-mocha/test-node.js']
+            },
+            fake: {
+                options: {
+                    bail: false,
+                    timeout: 5000,
+                    reporter: 'spec',
+                    quiet: false, // Optionally suppress output to standard out (defaults to false)
+                    clearRequireCache: false // Optionally clear the require cache before running tests (defaults to false)
+                },
+                src: ['tests-polyfill/fakeIndexedDB/test-node.js']
+            },
+            mock: {
+                options: {
+                    bail: false,
+                    timeout: 5000,
+                    reporter: 'spec',
+                    quiet: false, // Optionally suppress output to standard out (defaults to false)
+                    clearRequireCache: false // Optionally clear the require cache before running tests (defaults to false)
+                },
+                src: ['tests-polyfill/indexedDBmock/test-node.js']
+            },
+            w3cOld: {
+                options: {
+                    bail: false,
+                    timeout: 5000,
+                    reporter: 'spec',
+                    quiet: false, // Optionally suppress output to standard out (defaults to false)
+                    clearRequireCache: false // Optionally clear the require cache before running tests (defaults to false)
+                },
+                src: ['tests-polyfill/w3c/test-node.js']
             }
         },
 
@@ -227,13 +257,25 @@ module.exports = function (grunt) {
         },
 
         watch: {
-            dev: {
-                files: ['src/*'],
+            all: {
+                files: ['src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
                 tasks: ['eslint', 'browserify', 'uglify']
             },
+            browser: {
+                files: ['src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
+                tasks: ['eslint', 'browserify:browser', 'uglify:browser']
+            },
             node: {
-                files: ['src/*', 'node_modules/eventtarget/EventTarget.js'],
-                tasks: ['eslint', 'browserify:node']
+                files: ['src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
+                tasks: ['eslint', 'browserify:node', 'uglify:node']
+            },
+            unicode: {
+                files: ['src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
+                tasks: ['eslint', 'browserify:unicode', 'uglify:unicode']
+            },
+            unicodeNode: {
+                files: ['src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
+                tasks: ['eslint', 'browserify:unicodeNode', 'uglify:unicodeNode']
             }
         }
     });
@@ -242,11 +284,16 @@ module.exports = function (grunt) {
         if (key !== 'grunt' && key.indexOf('grunt') === 0) { grunt.loadNpmTasks(key); }
     }
 
+    grunt.registerTask('build-browser', ['eslint', 'browserify:browser', 'uglify:browser']);
+    grunt.registerTask('build-node', ['eslint', 'browserify:node', 'uglify:node']);
     grunt.registerTask('build', ['eslint', 'browserify', 'uglify']);
-    grunt.registerTask('build-node', ['eslint', 'browserify:node']);
+
     const testJobs = ['build', 'connect'];
     grunt.registerTask('nodequnit', testJobs.concat('node-qunit'));
-    grunt.registerTask('mocha', ['mochaTest']); // clean:mochaTests isn't working here as locked (even with force:true on it or grunt-wait) so we do in package.json
+    grunt.registerTask('mocha', ['mochaTest:test']); // clean:mochaTests isn't working here as locked (even with force:true on it or grunt-wait) so we do in package.json
+    grunt.registerTask('fake', ['mochaTest:fake']);
+    grunt.registerTask('mock', ['mochaTest:mock']);
+    grunt.registerTask('w3c-old', ['mochaTest:w3cOld']);
 
     grunt.registerTask('phantom-qunit', testJobs.concat('qunit'));
 
@@ -267,7 +314,8 @@ module.exports = function (grunt) {
     grunt.registerTask('clean-w3c-old', ['clean:w3cOld', 'clean:sysDB']);
 
     grunt.registerTask('default', 'build');
-    grunt.registerTask('dev', ['build', 'connect', 'watch:dev']);
+    grunt.registerTask('dev', ['build', 'connect', 'watch:all']);
+    grunt.registerTask('dev-browser', ['build-browser', 'connect', 'watch:browser']);
     grunt.registerTask('dev-node', ['build-node', 'connect', 'watch:node']);
 
     grunt.event.on('qunit.error.onError', function (msg, trace) {

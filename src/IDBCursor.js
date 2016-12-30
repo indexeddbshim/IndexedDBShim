@@ -416,8 +416,11 @@ IDBCursor.prototype.continuePrimaryKey = function (key, primaryKey) {};
 
 IDBCursor.prototype.advance = function (count) {
     const me = this;
-    if (!Number.isFinite(count) || count <= 0) {
-        throw new TypeError('Count is invalid - 0 or negative: ' + count);
+    if (count === 0) {
+        throw new TypeError('Calling advance() with count argument 0');
+    }
+    if (!Number.isFinite(count) || count < 0) {
+        throw new TypeError('Count is invalid - non-finite or negative: ' + count);
     }
     if (me.__gotValue) { // Only set the count if not running in error (otherwise will override earlier good advance calls)
         me.__advanceCount = count;

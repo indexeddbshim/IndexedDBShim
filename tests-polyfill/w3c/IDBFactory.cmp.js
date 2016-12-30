@@ -1,9 +1,5 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBFactory.cmp Tests', function () {
+    var createdb = support.createdb;
     // idbfactory_cmp
     it("IDBFactory.cmp", function() {
         var greater = indexedDB.cmp(2, 1);
@@ -46,7 +42,7 @@ describe('W3C IDBFactory.cmp Tests', function () {
 
     // keyorder
     it('Key sort order', function (done) {
-        this.timeout(8000);
+        this.timeout(12000);
         var numStarted = 0;
         var numFinished = 0;
         function keysort(desc, unsorted, expected) {

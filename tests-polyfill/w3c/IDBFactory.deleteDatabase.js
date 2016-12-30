@@ -1,10 +1,6 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var FDBVersionChangeEvent = IDBVersionChangeEvent;
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBFactory.deleteDatabase Tests', function () {
+    var FDBVersionChangeEvent = IDBVersionChangeEvent;
+    var createdb = support.createdb;
     // idbfactory_deletedatabase
     it('request has no source', function (done) {
         var open_rq = createdb(done, undefined, 9);
@@ -67,6 +63,7 @@ describe('W3C IDBFactory.deleteDatabase Tests', function () {
 
     // idbfactory_deletedatabase4
     it('Test events opening a second database when one connection is open already', function (done) {
+        var db;
         var openrq = indexedDB.open('db.sqlite', 3);
 
         openrq.onupgradeneeded = function(e) {

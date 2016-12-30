@@ -1,9 +1,6 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBObjectStore.clear Tests', function () {
+    var createdb = support.createdb;
+
     // idbobjectstore_clear
     it('Verify clear removes all records', function (done) {
         var db;

@@ -1,9 +1,6 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBObjectStore.deleteIndex Tests', function () {
+    var createdb = support.createdb;
+
     // idbobjectstore_deleteindex
     it('removes the index', function (done) {
         var db,

@@ -1,10 +1,7 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var FDBDatabase = IDBDatabase;
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C Transaction Behavior Tests', function () {
+    var FDBDatabase = IDBDatabase;
+    var createdb = support.createdb;
+
     // transaction-lifetime
     it('Test events opening a second database when one connection is open already', function (done) {
         var db, db_got_versionchange, db2,

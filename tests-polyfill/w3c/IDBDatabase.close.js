@@ -1,9 +1,5 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBDatabase.close Tests', function () {
+    var createdb = support.createdb;
     // idbdatabase_close
     it('unblock the version change transaction created by an open database request', function (done) {
         var db;

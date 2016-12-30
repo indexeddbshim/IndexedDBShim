@@ -1,11 +1,14 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var FDBCursor = IDBCursor;
-var FDBKeyRange = IDBKeyRange;
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBCursor.advance Tests', function () {
+    var FDBCursor = IDBCursor;
+    var FDBKeyRange = IDBKeyRange;
+    var createdb = support.createdb;
+    /*
+    Object.defineProperty(global, 'done', {
+        set: function(value) {
+            throw new Error("Found the leak!");
+        }
+    });
+    */
     // idbcursor-advance-continue-async
     describe('asyncness', function () {
         var db;
@@ -452,19 +455,19 @@ describe('W3C IDBCursor.advance Tests', function () {
                     var cursor = e.target.result;
 
                     assert.throws(
-                        function() { cursor.advance(true); }, 'TypeError');
+                        function() { cursor.advance(true); }, TypeError);
 
                     assert.throws(
-                        function() { cursor.advance({}); }, 'TypeError');
+                        function() { cursor.advance({}); }, TypeError);
 
                     assert.throws(
-                        function() { cursor.advance([]); }, 'TypeError');
+                        function() { cursor.advance([]); }, TypeError);
 
                     assert.throws(
-                        function() { cursor.advance(""); }, 'TypeError');
+                        function() { cursor.advance(""); }, TypeError);
 
                     assert.throws(
-                        function() { cursor.advance("1 2"); }, 'TypeError');
+                        function() { cursor.advance("1 2"); }, TypeError);
 
                     done();
                 };
@@ -479,14 +482,14 @@ describe('W3C IDBCursor.advance Tests', function () {
                     var cursor = e.target.result;
 
                     assert.throws(
-                        function() { cursor.advance(null); }, 'TypeError');
+                        function() { cursor.advance(null); }, TypeError);
 
                     assert.throws(
-                        function() { cursor.advance(undefined); }, 'TypeError');
+                        function() { cursor.advance(undefined); }, TypeError);
 
                     var myvar = null;
                     assert.throws(
-                        function() { cursor.advance(myvar); }, 'TypeError');
+                        function() { cursor.advance(myvar); }, TypeError);
 
                     done();
                 };
@@ -501,7 +504,7 @@ describe('W3C IDBCursor.advance Tests', function () {
                     var cursor = e.target.result;
 
                     assert.throws(
-                        function() { cursor.advance(); }, 'TypeError');
+                        function() { cursor.advance(); }, TypeError);
 
                     done();
                 };
@@ -516,26 +519,26 @@ describe('W3C IDBCursor.advance Tests', function () {
                     var cursor = e.target.result;
 
                     assert.throws(
-                        function() { cursor.advance(-1); }, 'TypeError');
+                        function() { cursor.advance(-1); }, TypeError);
 
                     assert.throws(
-                        function() { cursor.advance(NaN); }, 'TypeError');
+                        function() { cursor.advance(NaN); }, TypeError);
 
                     assert.throws(
-                        function() { cursor.advance(0); }, 'TypeError');
+                        function() { cursor.advance(0); }, TypeError);
 
                     assert.throws(
-                        function() { cursor.advance(-0); }, 'TypeError');
+                        function() { cursor.advance(-0); }, TypeError);
 
                     assert.throws(
-                        function() { cursor.advance(Infinity); }, 'TypeError');
+                        function() { cursor.advance(Infinity); }, TypeError);
 
                     assert.throws(
-                        function() { cursor.advance(-Infinity); }, 'TypeError');
+                        function() { cursor.advance(-Infinity); }, TypeError);
 
                     var myvar = -999999;
                     assert.throws(
-                        function() { cursor.advance(myvar); }, 'TypeError');
+                        function() { cursor.advance(myvar); }, TypeError);
 
                     done();
                 };
@@ -557,7 +560,7 @@ describe('W3C IDBCursor.advance Tests', function () {
                     }
 
                     assert.throws(
-                        function() { cursor.advance(0); }, 'TypeError');
+                        function() { cursor.advance(0); }, TypeError);
 
                     cursor.advance(1);
                     count++;
@@ -643,7 +646,7 @@ describe('W3C IDBCursor.advance Tests', function () {
 
                     assert(cursor != null, "cursor exist");
                     assert.throws(
-                        function() { cursor.advance(true); }, 'TypeError');
+                        function() { cursor.advance(true); }, TypeError);
 
                     done();
                 };
@@ -678,7 +681,7 @@ describe('W3C IDBCursor.advance Tests', function () {
 
                     assert(cursor != null, "cursor exist");
                     assert.throws(
-                        function() { cursor.advance(-1); }, 'TypeError');
+                        function() { cursor.advance(-1); }, TypeError);
 
                     done();
                 };
@@ -750,7 +753,7 @@ describe('W3C IDBCursor.advance Tests', function () {
 
                     assert.throws(function() {
                         cursor.advance(0);
-                    }, 'TypeError', "Calling advance() with count argument 0 should throw TypeError.");
+                    }, TypeError, null, "Calling advance() with count argument 0 should throw TypeError.");
 
                     done();
                 };
@@ -925,7 +928,7 @@ describe('W3C IDBCursor.advance Tests', function () {
 
                     assert.throws(function() {
                         cursor.advance(0);
-                    }, 'TypeError', "Calling advance() with count argument 0 should throw TypeError.");
+                    }, TypeError, null, "Calling advance() with count argument 0 should throw TypeError.");
 
                     done();
                 };
@@ -937,8 +940,9 @@ describe('W3C IDBCursor.advance Tests', function () {
             var db,
                 records = [{ pKey: "primaryKey_0"},
                            { pKey: "primaryKey_1"}];
-
+console.log('aaaa0');
             var open_rq = createdb(done);
+console.log('aaaa00');
             open_rq.onupgradeneeded = function (event) {
                 db = event.target.result;
                 var objStore = db.createObjectStore("store", {keyPath:"pKey"});
@@ -948,12 +952,14 @@ describe('W3C IDBCursor.advance Tests', function () {
             }
 
             open_rq.onsuccess = function (event) {
+console.log('aaaa111');
                 var txn = db.transaction("store", "readwrite");
                 var rq = txn.objectStore("store").openCursor();
                 rq.onsuccess = function(event) {
                     var cursor = event.target.result;
+console.log('aaaa0');
                     assert(cursor instanceof FDBCursor);
-
+console.log('aaaa1');
                     event.target.transaction.abort();
                     support.throws(function() {
                         cursor.advance(1);

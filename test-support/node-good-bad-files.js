@@ -1,4 +1,4 @@
-module.exports = {
+var goodBad = {
     goodFiles: [
         'idbkeyrange.js'
     ],
@@ -264,3 +264,7 @@ module.exports = {
         'writer-starvation.js'
     ]
 };
+
+if (typeof module !== undefined) {
+    module.exports = goodBad;
+}

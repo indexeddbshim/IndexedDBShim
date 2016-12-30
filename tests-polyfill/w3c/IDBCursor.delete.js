@@ -1,10 +1,6 @@
-var assert = require('assert');
-var indexedDB = require('../test-helper');
-var FDBCursor = IDBCursor;
-var support = require('./support');
-var createdb = support.createdb;
-
 describe('W3C IDBCursor.delete Tests', function () {
+    var FDBCursor = IDBCursor;
+    var createdb = support.createdb;
     describe('index', function () {
         // idbcursor_delete_index
         it('remove a record from the object store', function (done) {

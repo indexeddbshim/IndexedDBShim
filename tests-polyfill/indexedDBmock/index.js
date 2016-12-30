@@ -1,10 +1,7 @@
-require('./setup')
-var assert = require('assert')
-
 describe("Indexes", function() {
     it("Creating Index", function (done) {
         initionalSituationObjectStore(function () {
-            var request = indexedDb.open(dbName, 2);
+            var request = indexedDB.open(dbName, 2);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName]);
@@ -62,7 +59,7 @@ describe("Indexes", function() {
         var unique = true;
         var multiEntry = true;
         initionalSituationObjectStore(function () {
-            var request = indexedDb.open(dbName, 2);
+            var request = indexedDB.open(dbName, 2);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName]);
@@ -125,7 +122,7 @@ describe("Indexes", function() {
 
     it("Opening Index", function (done) {
         initionalSituationIndex(function () {
-            var request = indexedDb.open(dbName, 2);
+            var request = indexedDB.open(dbName, 2);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName]);
@@ -167,7 +164,7 @@ describe("Indexes", function() {
     it("Opening Index - non existing index", function (done) {
         var anotherIndex = "anotherIndex";
         initionalSituationIndex(function () {
-            var request = indexedDb.open(dbName, 2);
+            var request = indexedDB.open(dbName, 2);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName]);
@@ -210,7 +207,7 @@ describe("Indexes", function() {
 
     it("Deleting Index", function (done) {
         initionalSituationIndex(function () {
-            var request = indexedDb.open(dbName, 2);
+            var request = indexedDB.open(dbName, 2);
             request.onsuccess = function(e){
                 try{
                     var transaction = e.target.result.transaction([objectStoreName]);

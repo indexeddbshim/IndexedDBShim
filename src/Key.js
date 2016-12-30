@@ -354,8 +354,10 @@ function extractKeyFromValueUsingKeyPath (value, keyPath, multiEntry) {
 
 /**
  * Returns the value of an inline key based on a key path
- * @param {object} source
+ * @param {object} value
  * @param {string|array} keyPath
+ * @param {boolean} multiEntry
+ * @returns {undefined|array|string}
  */
 function evaluateKeyPathOnValue (value, keyPath, multiEntry) {
     if (Array.isArray(keyPath)) {

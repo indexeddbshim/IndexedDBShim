@@ -1,17 +1,14 @@
-/* globals GLOBAL, shimIndexedDB */
+/* globals GLOBAL */
+import setGlobalVars from './setGlobalVars.js';
+import nodeWebSQL from './nodeWebSQL'; // Importing "websql" would not gain us SQLite config ability
+import CFG from './CFG.js';
 import * as UnicodeIdentifiers from './UnicodeIdentifiers';
 
-// BEGIN: Same code as in node.js
-import nodeWebsql from 'websql';
-import setGlobalVars from './setGlobalVars.js';
-import CFG from './CFG.js';
+CFG.win = {openDatabase: nodeWebSQL};
 
-CFG.win = {openDatabase: nodeWebsql};
-// END: Same code as in node.js
-
-const __setGlobalVars = function () {
-    setGlobalVars();
-    shimIndexedDB.__setUnicodeIdentifiers(UnicodeIdentifiers);
+const __setGlobalVars = function (idb) {
+    idb = setGlobalVars(idb);
+    idb.shimIndexedDB.__setUnicodeIdentifiers(UnicodeIdentifiers);
 };
 
 export default __setGlobalVars;

@@ -49,6 +49,14 @@
    transaction)
 - Fix: Avoid adding `DOMException` class when error not found (should
    not occur?)
+- Fix (minor): Avoid defaulting to `DOMException` class for error
+   instances in `IDBFactory`
+- Fix: Unknown problems creating/deleting object stores or indexes
+   should have `UnknownError` `DOMException` name
+- Fix: Report `ConstraintError` if attempting to add a unique index when
+   existing values are not unique
+- Fix: Ensure IndexedDB `DOMException` is returned for `IDBFactory`
+   method errors instead of WebSQL errors
 - Fix: Use `AbortError` as `IDBTransaction.error` property when
    "error" handler throws
 - Fix: If transaction already aborted, avoid potential for
@@ -57,10 +65,16 @@
    request callbacks or success/error events
 - Fix: Throw for `IDBRequest` or `IDBOpenDBRequest` with `result`
    and `error` getters if request not yet done
+- Fix: Ensure `IDBOpenDBRequest` `result` is set to `undefined` upon
+   erring
+- Fix: Ensure `IDBOpenDBRequest` `transaction` is set to `null` upon
+   completing or aborting
 - Fix: Add duck-typing `instanceof` mechanism for `ShimEvent`
 - Fix: Change type to "abort" for transaction abort events
 - Fix: Set `readyState` for successful `IDBFactory.deleteDatabase`
     and `IDBFactory.webkitGetDatabaseNames`
+- Fix: If calling `deleteDatabase` on non-existing database,
+    ensure `oldVersion` is 0 (not `null`)
 - Fix: Set `readyState` to 'pending' for `IDBCursor` `continue`/`advance`
 - Fix: Avoid adding requests with success events for
     `createObjectStore`/`deleteObjectStore`/`createIndex`/`deleteIndex`
@@ -97,6 +111,7 @@
     (sort by keyPath-indicated value then primary key)
 - Fix: Allow empty string keyPath for index to return value as is (for
     handling non-object values as keys)
+- Fix: Throw error upon non-finite `IDBCursor.advance` count
 - Fix: Ensure the error thrown for a count <=0 to `advance()` is a genuine
     `TypeError`
 - Fix: Ensure other bad counts passed to `advance()` (non-numbers or non-finite
@@ -227,16 +242,35 @@
 - Fix: Check for array on range within multiEntry cursor iteration; fixes
     issue #222
 - Fix: Copy SQLite row `item` object properties (for Safari); fixes issue #261
-- Fix: Implement rollback upon `IDBTransaction.abort` where possible,
-    e.g., `node-websql` doesn't impose `ROLLBACK` limitation as in browsers
+- Fix: Genuinely rollback version in Node
+    - Wrap all possible `openDatabase` operations, including version changes
+        into an effectively single transaction;
+    - Revert `IDBDatabase` `version` and `objectStoreNames`, `IDBObjectStore`
+        `name` and `indexNames`, `IDBIndex` `name` properties after aborted
+        transactions;
+    - Allow `dbVersions` table insert to be undone in one transaction
+        (also avoids second query);
+    - If connection closed or errs, rollback; otherwise, commit only after
+        transaction finished;
+    - Reimplement `deleteDatabase` to delete from `dbVersions` first and
+        rollback everything if there is a failure
+- Fix: In browser, only version can be consistently rolled back since we
+    can't extend WebSQL transaction expiration (and thus force an error to
+    get auto-rollback given that ROLLBACK is not supported)
+- Fix: Destroy index entries from index set upon store deletion and
+    still allow recreation of store handles (but not removing whole
+    clone record, allowing its properties to still be examined)
 - Fix: As per spec, `DELETE` then `INSERT` rather than `UPDATE` for
     `IDBCursor.update`
+- Fix: Add support for new "closed" event via a custom
+    `IDBFactory.__forceClose()` method (untested)
 - Feature: Add non-standard `webkitGetDatabaseNames` and test file (issue #223)
 - Feature: Allow `DEFAULT_DB_SIZE` to be set via `CFG.js`;
 - Feature: `IDBIndex` methods, `get`, `getKey`, `count` to allow obtaining
     first record of an `IDBKeyRange` (or `IDBKeyRange`-like range) and change
     error messages to indicate "key or range"
-- Feature: Support Node cleanly via `websql` SQLite3 library
+- Feature: Support Node cleanly via `websql` SQLite3 library including
+    customization of SQLite `busyTimeout`, `trace` and `profile`
 - Feature: Add `IDBObjectStore.openKeyCursor`
 - Feature: Add `IDBKeyRange.includes()` with test
 - Feature: Allow ranges to be passed to `IDBObjectStore.get` and
@@ -264,9 +298,11 @@
     yet treating bubbling or `preventDefault`); change `ShimEvent` to utilize
     polyfill from `eventtarget`
 - Repo files: Rename test folders for ease in distinguishing
-- Optimize: use WebSQL `readTransaction` when in `readonly` mode
+- Optimize: use WebSQL `readTransaction` as possible/when in `readonly` mode
+- Optimize: Run SELECT only on columns we need
 - Optimize: Avoid caching and other processing in `IDBCursor` multiEntry
     finds (used by `IDBObjectStore` or `IDBIndex` `count` with key range)
+- Optimize: Switch to `SyncPromise` for faster execution
 - Refactoring (Avoid globals): Change from using window global to a CFG module
     for better maintainability
 - Refactoring (Avoid deprecated): Avoid deprecated `unescape`
@@ -301,11 +337,14 @@
     also rename to spec "current number"
 - Refactoring: Avoid using native events, as we need to let `EventTarget`
     alter its readonly `target`, `currentTarget`, etc. properties
+- Refactoring: Throw count 0 error differently from negative count in
+    `IDBCursor.advance`
 - Updating: Bump various `devDependency` min versions
-- Documentation: Document `shimIndexedDB.__setConfig()`.
-- Documentation: List known issues on README
-- Documentation: Notice on deprecation for transaction mode constants
-- Documentation: Update summarization of npm testing info
+- Docs: Document `shimIndexedDB.__setConfig()`.
+- Docs: List known issues on README
+- Docs: Notice on deprecation for transaction mode constants
+- Docs: Update summarization of npm testing info
+- Docs: Distinguish `dependencies`/`devDependencies` display on README
 - npm: Update packages
 - Testing: Update tests per current spec and behavior
 - Testing: Ensure db closes after each test to allow non-blocking `open()`
@@ -313,6 +352,7 @@
 - Testing: Work on Node tests and for Firefox (including increasing timeouts
     as needed)
 - Testing: Rely on `node_modules` paths for testing framework files
+- Testing (fakeIndexedDB.js): Comment out non-standard property checks
 - Testing (mock): Update IndexedDBMock tests
 - Testing (mock): Expect `InvalidStateError` instead of `ConstraintError`
     when not in an upgrade transaction calling `createObjectStore`
@@ -328,24 +368,33 @@
     `IDBObjectStoreParameters` test and IDBCursorBehavior's
     `IDBCursor.direction`
 - Testing (W3C Old): Utilize Unicode in `KeyPath.js` test
+- Testing (W3C Old): Update w3c-old to work with browser
+- Testing (W3C Old): Fix a few globals, increase test timeouts for
+    browser, allow array-like properties as per original tests
 - Test scaffolding (W3C Old): Fix args to `initionalSituation()`
 - Test scaffolding (W3C Old): Fix test ok condition, typo
 - Test scaffolding (W3C Old): Fix assertions
+- Testing (W3C New): Add preliminary testing framework (incomplete)
 - (Testing:
-    From tests-mocha and tests-qunit (Browser and Node), all tests now
-        passing;
-    From fakeIndexedDB (Node), only fakeIndexedDB.js is not passing;
-    From indexedDBmock (Node), only database.js is not passing;
-    From W3C (Old, Node), only IDBDatabase.close.js,
-        IDBFactory.open.js, IDBObjectStore.add.js (cyclic values),
+    From tests-mocha and tests-qunit (Node and browser), all tests
+        are now passing
+
+    From fakeIndexedDB (Node), all tests now passing;
+    From fakeIndexedDB (Browser), only the first test is
+        passing (as expected due to rollback limitations);
+
+    From indexedDBmock (Node and browser), only database.js is not passing;
+
+    From old W3C (Node and browser), only the following are not passing:
+        IDBDatabase.close.js,
+        IDBObjectStore.add.js (cyclic values),
         IDBObjectStore.createIndex.js,
-        IDBTransaction.abort.js, TransactionBehavior.js
-        are not passing
-    From W3C (New, Node but potentially also browser): only idbkeyrange.js
-        is currently passing
+        TransactionBehavior.js
+    From new W3C (Node but potentially also browser): only idbkeyrange.js
+        is currently passing in full
 - Testing (Grunt): Force ESLint (since "standard" currently causing a warning)
-- Testing (Grunt): Avoid uglification during Node testing (just use
-    unminimized files)
+- Testing (Grunt): More granular uglification, add build-browser,
+    dev-browser, Unicode watching
 - Testing (Grunt): Add Node-specific build/dev commands
 - Testing (Grunt): Clarify Grunt tasks, expand tasks for cleaning, make tests
     more granular
@@ -378,6 +427,8 @@
 - Testing (Mocha): Allow passing in specific test files to mocha tests
 - Testing (Mocha): Add test to ensure unique index checks are safely ignored
     with bad index keys
+- Testing (Mocha): Rename test sets for distinguishing
+- Testing (Mocha): Change fakeIndexedDB and indexedDBmock to Mocha tests
 - Testing: Increase default Mocha timeout to 5000ms (Chrome failing some
     at 2000ms as was Node occasionally)
 - Testing (Cordova): Update Cordova testing (untested)
