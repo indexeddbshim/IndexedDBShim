@@ -9,9 +9,13 @@
   },
   "plugins": ["compat"],
   "settings": {
-    "targets": ["chrome", "firefox", "edge", "safari"],
+    "targets": [
+        "chrome", "firefox", "edge", "safari", "ios_saf", "android",
+        "opera", "ie", "op_mini", "bb", "op_mob", "and_chr",
+        "and_ff", "ie_mob", "and_uc", "samsung"
+    ],
     "polyfills": [],
-    "coverage": false,
+    "coverage": true,
     "compiler": "babel"
   },
   "globals": {
