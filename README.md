@@ -154,6 +154,13 @@ representing a 0-based index to indicate a specific connection to close.
 The second argument `msg` will be appended to the `AbortError` that will be
 triggered on the transactions of the connection.
 
+Individual `IDBDatabase` database connections can also be force-closed
+with a particular message:
+
+```js
+db.__forceClose(msg);
+```
+
 ### shimIndexedDB.\__debug(boolean)
 
 The IndexedDB polyfill has sourcemaps enabled, so the polyfill can be debugged
