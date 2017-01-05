@@ -261,7 +261,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             if (index.unique) {
                 const multiCheck = index.multiEntry && Array.isArray(indexKey);
                 const fetchArgs = fetchIndexData(index, true, indexKey, 'key', multiCheck);
-                executeFetchIndexData(...fetchArgs, tx, null, function success (key) {
+                executeFetchIndexData(true, null, ...fetchArgs, tx, null, function success (key) {
                     if (key === undefined) {
                         setIndexInfo(index);
                         resolve();
@@ -281,7 +281,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         });
     });
     SyncPromise.all(indexPromises).then(() => {
-        const sqlStart = ['INSERT INTO ', util.escapeStore(this.name), '('];
+        const sqlStart = ['INSERT INTO ', util.escapeStore(me.name), '('];
         const sqlEnd = [' VALUES ('];
         const insertSqlValues = [];
         if (primaryKey !== undefined) {
@@ -439,7 +439,7 @@ IDBObjectStore.prototype.put = function (value, key) {
     return request;
 };
 
-IDBObjectStore.prototype.__get = function (range, getKey) {
+IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
     const me = this;
 
     if (me.__deleted) {
@@ -463,6 +463,12 @@ IDBObjectStore.prototype.__get = function (range, getKey) {
     let sql = ['SELECT ' + util.quote(col) + ' FROM ', util.escapeStore(me.name), ' WHERE '];
     const sqlValues = [];
     setSQLForRange(range, util.quote('key'), sql, sqlValues);
+    if (!getAll) {
+        count = 1;
+    }
+    if (count) {
+        sql.push('LIMIT', count);
+    }
     sql = sql.join(' ');
     return me.transaction.__addToTransactionQueue(function objectStoreGet (tx, args, success, error) {
         CFG.DEBUG && console.log('Fetching', me.name, sqlValues);
@@ -474,10 +480,23 @@ IDBObjectStore.prototype.__get = function (range, getKey) {
                 if (data.rows.length === 0) {
                     return success();
                 }
+                ret = [];
                 if (getKey) {
-                    ret = Key.decode(data.rows.item(0).key, false);
+                    for (let i = 0; i < data.rows.length; i++) {
+                        // Key.convertValueToKey(data.rows.item(i).key); // Already validated before storage
+                        ret.push(
+                            Key.decode(data.rows.item(i).key, false)
+                        );
+                    }
                 } else {
-                    ret = Sca.decode(data.rows.item(0).value);
+                    for (let i = 0; i < data.rows.length; i++) {
+                        ret.push(
+                            Sca.decode(data.rows.item(0).value)
+                        );
+                    }
+                }
+                if (!getAll) {
+                    ret = ret[0];
                 }
             } catch (e) {
                 // If no result is returned, or error occurs when parsing JSON
@@ -497,35 +516,26 @@ IDBObjectStore.prototype.get = function (query) {
     return this.__get(query);
 };
 
-/*
-// Todo: Implement getKey
 IDBObjectStore.prototype.getKey = function (query) {
     if (!arguments.length) {
         throw new TypeError('A parameter was missing for `IDBObjectStore.getKey`.');
     }
     return this.__get(query, true);
 };
-*/
 
-/*
-// Todo: Implement getAll
 IDBObjectStore.prototype.getAll = function (query, count) {
     if (!arguments.length) {
         throw new TypeError('A parameter was missing for `IDBObjectStore.getAll`.');
     }
     return this.__get(query, false, true, count);
 };
-*/
 
-/*
-// Todo: Implement getAllKeys
 IDBObjectStore.prototype.getAllKeys = function (query, count) {
     if (!arguments.length) {
         throw new TypeError('A parameter was missing for `IDBObjectStore.getAllKeys`.');
     }
     return this.__get(query, true, true, count);
 };
-*/
 
 IDBObjectStore.prototype['delete'] = function (range) {
     const me = this;

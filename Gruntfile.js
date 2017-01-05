@@ -53,6 +53,14 @@ module.exports = function (grunt) {
                     'dist/<%= pkg.name%>.js': 'src/browser.js'
                 }
             },
+            browserNoninvasive: {
+                options: {
+                    transform: [['babelify', {sourceMaps: true}]]
+                },
+                files: {
+                    'dist/<%= pkg.name%>-noninvasive.js': 'src/setGlobalVars.js'
+                }
+            },
             node: {
                 options: {
                     transform: [['babelify', {sourceMaps: true}]],
@@ -99,6 +107,16 @@ module.exports = function (grunt) {
                 },
                 src: 'dist/<%= pkg.name%>.js',
                 dest: 'dist/<%=pkg.name%>.min.js'
+            },
+            browserNoninvasive: {
+                options: {
+                    banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
+                    sourceMap: true,
+                    sourceMapName: 'dist/<%=pkg.name%>-noninvasive.min.js.map',
+                    sourceMapRoot: 'http://nparashuram.com/IndexedDBShim/dist/'
+                },
+                src: 'dist/<%= pkg.name%>-noninvasive.js',
+                dest: 'dist/<%=pkg.name%>-noninvasive.min.js'
             },
             node: {
                 options: {
@@ -265,6 +283,10 @@ module.exports = function (grunt) {
                 files: ['src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
                 tasks: ['eslint', 'browserify:browser', 'uglify:browser']
             },
+            browserNoninvasive: {
+                files: ['src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
+                tasks: ['eslint', 'browserify:browserNoninvasive', 'uglify:browserNoninvasive']
+            },
             node: {
                 files: ['src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
                 tasks: ['eslint', 'browserify:node', 'uglify:node']
@@ -285,6 +307,7 @@ module.exports = function (grunt) {
     }
 
     grunt.registerTask('build-browser', ['eslint', 'browserify:browser', 'uglify:browser']);
+    grunt.registerTask('build-browserNoninvasive', ['eslint', 'browserify:browserNoninvasive', 'uglify:browserNoninvasive']);
     grunt.registerTask('build-node', ['eslint', 'browserify:node', 'uglify:node']);
     grunt.registerTask('build', ['eslint', 'browserify', 'uglify']);
 
@@ -316,6 +339,7 @@ module.exports = function (grunt) {
     grunt.registerTask('default', 'build');
     grunt.registerTask('dev', ['build', 'connect', 'watch:all']);
     grunt.registerTask('dev-browser', ['build-browser', 'connect', 'watch:browser']);
+    grunt.registerTask('dev-browserNoninvasive', ['build-browserNoninvasive', 'connect', 'watch:browserNoninvasive']);
     grunt.registerTask('dev-node', ['build-node', 'connect', 'watch:node']);
 
     grunt.event.on('qunit.error.onError', function (msg, trace) {

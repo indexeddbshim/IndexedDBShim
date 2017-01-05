@@ -179,14 +179,16 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
 
 /**
  * Retrieves index data for the given key
- * @param {*|IDBKeyRange} key
+ * @param {*|IDBKeyRange} range
  * @param {string} opType
+ * @param {boolean} nullDisallowed
+ * @param {number} count
  * @returns {IDBRequest}
  * @private
  */
-IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, unboundedAllowed) {
+IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, count) {
     const me = this;
-    const hasUnboundedRange = unboundedAllowed && range == null;
+    const hasUnboundedRange = !nullDisallowed && range == null;
 
     if (this.__deleted) {
         throw createDOMException('InvalidStateError', 'This index has been deleted');
@@ -196,13 +198,13 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, u
     }
     IDBTransaction.__assertActive(this.objectStore.transaction);
 
-    if (nullDisallowed && !unboundedAllowed && range == null) {
+    if (nullDisallowed && range == null) {
         throw createDOMException('DataError', 'No key or range was specified');
     }
 
     const fetchArgs = fetchIndexData(me, !hasUnboundedRange, range, opType, false);
     return me.objectStore.transaction.__addToTransactionQueue(function (...args) {
-        executeFetchIndexData(...fetchArgs, ...args);
+        executeFetchIndexData(nullDisallowed, count, ...fetchArgs, ...args);
     }, undefined, me);
 };
 
@@ -244,19 +246,20 @@ IDBIndex.prototype.getKey = function (query) {
     return this.__fetchIndexData(query, 'key', true);
 };
 
-/*
-// Todo: Implement getAll
 IDBIndex.prototype.getAll = function (query, count) {
+    return this.__fetchIndexData(query, 'value', false, count);
 };
-*/
 
-/*
-// Todo: Implement getAllKeys
 IDBIndex.prototype.getAllKeys = function (query, count) {
+    return this.__fetchIndexData(query, 'key', false, count);
 };
-*/
 
 IDBIndex.prototype.count = function (query) {
+    // With the exception of needing to check whether the index has been
+    //  deleted, we could, for greater spec parity (if not accuracy),
+    //  just call:
+    //  `return this.__objectStore.count(query);`
+
     // key is optional
     if (util.instanceOf(query, IDBKeyRange)) {
         if (!query.toString() !== '[object IDBKeyRange]') {
@@ -265,7 +268,7 @@ IDBIndex.prototype.count = function (query) {
         // We don't need to add to cursors array since has the count parameter which won't cache
         return new IDBCursorWithValue(query, 'next', this.objectStore, this, util.escapeIndexName(this.name), 'value', true).__req;
     }
-    return this.__fetchIndexData(query, 'count', false, true);
+    return this.__fetchIndexData(query, 'count', false);
 };
 
 IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToPreserveArr = []) {
@@ -353,43 +356,70 @@ Object.defineProperty(IDBIndex.prototype, 'name', {
     }
 });
 
-function executeFetchIndexData (index, hasKey, encodedKey, opType, multiChecks, sql, sqlValues, tx, args, success, error) {
+function executeFetchIndexData (unboundedDisallowed, count, index, hasKey, encodedKey, opType, multiChecks, sql, sqlValues, tx, args, success, error) {
+    if (unboundedDisallowed) {
+        count = 1;
+    }
+    if (count) {
+        sql.push('LIMIT', count);
+    }
+    CFG.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
     tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
-        let recordCount = 0, record = null;
+        const records = [];
+        let recordCount = 0;
+        let record = null;
+        const decode = opType === 'count' ? () => {} : opType === 'key' ? (record) => {
+            // Key.convertValueToKey(record.key); // Already validated before storage
+            return Key.decode(record.key);
+        } : (record) => { // when opType is value
+            return Sca.decode(record.value);
+        };
         if (index.multiEntry) {
+            const escapedIndexName = util.escapeIndexName(index.name);
             for (let i = 0; i < data.rows.length; i++) {
                 const row = data.rows.item(i);
-                const rowKey = Key.decode(row[util.escapeIndexName(index.name)]);
+                const rowKey = Key.decode(row[escapedIndexName]);
                 if (hasKey && (
                     (multiChecks && encodedKey.some((check) => rowKey.includes(check))) || // More precise than our SQL
-                    Key.isMultiEntryMatch(encodedKey, row[util.escapeIndexName(index.name)]))) {
+                    Key.isMultiEntryMatch(encodedKey, row[escapedIndexName])
+                )) {
                     recordCount++;
                     record = record || row;
                 } else if (!hasKey && !multiChecks) {
                     if (rowKey !== undefined) {
-                        recordCount = recordCount + (Array.isArray(rowKey) ? rowKey.length : 1);
+                        recordCount += (Array.isArray(rowKey) ? rowKey.length : 1);
                         record = record || row;
                     }
                 }
+                if (record) {
+                    records.push(decode(record));
+                }
             }
         } else {
-            recordCount = data.rows.length;
-            record = recordCount && data.rows.item(0);
+            for (let i = 0; i < data.rows.length; i++) {
+                record = data.rows.item(i);
+                if (record) {
+                    records.push(decode(record));
+                }
+            }
+            recordCount = records.length;
         }
         if (opType === 'count') {
             success(recordCount);
         } else if (recordCount === 0) {
             success(undefined);
-        } else if (opType === 'key') {
-            success(Key.decode(record.key));
-        } else { // when opType is value
-            success(Sca.decode(record.value));
+        } else if (unboundedDisallowed) {
+            success(records[0]);
+        } else {
+            success(records);
         }
     }, error);
 }
 
 function fetchIndexData (index, hasRange, range, opType, multiChecks) {
-    const sql = ['SELECT * FROM', util.escapeStore(index.objectStore.name), 'WHERE', util.escapeIndex(index.name), 'NOT NULL'];
+    const col = opType === 'count' ? 'key' : opType; // It doesn't matter which column we use for 'count' as long as it is valid
+    const sql = ['SELECT ' + util.quote(col) + (index.multiEntry ? ', ' + util.escapeIndex(index.name) : '') +
+        ' FROM', util.escapeStore(index.objectStore.name), 'WHERE', util.escapeIndex(index.name), 'NOT NULL'];
     const sqlValues = [];
     if (hasRange) {
         if (multiChecks) {
@@ -416,7 +446,6 @@ function fetchIndexData (index, hasRange, range, opType, multiChecks) {
             setSQLForRange(range, util.escapeIndex(index.name), sql, sqlValues, true, false);
         }
     }
-    CFG.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
     return [index, hasRange, range, opType, multiChecks, sql, sqlValues];
 }
 

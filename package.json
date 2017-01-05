@@ -9,30 +9,25 @@
   "description": "A polyfill for IndexedDB using WebSql",
   "scripts": {
     "start": "grunt",
-
     "dev": "grunt dev",
     "dev-browser": "grunt dev-browser",
+    "dev-browserNoninvasive": "grunt dev-browserNoninvasive",
     "dev-node": "grunt dev-node",
     "build": "grunt build",
     "build-browser": "grunt build-browser",
+    "build-browserNoninvasive": "grunt build-browserNoninvasive",
     "build-node": "grunt build-node",
     "clean": "grunt clean",
     "w3c-build": "grunt clean-w3c && node test-support/node-buildjs",
-
     "test": "npm run sauce-qunit",
-
     "mocha": "grunt clean-mocha && grunt mocha && grunt clean-mocha",
-
     "sauce-qunit": "grunt sauce-qunit",
     "phantom-qunit": "grunt phantom-qunit",
     "node-qunit": "grunt clean-qunit && grunt nodequnit && grunt clean-qunit",
-
     "fake": "grunt clean-fake && grunt fake && grunt clean-fake",
     "mock": "grunt clean-mock && grunt mock && grunt clean-mock",
     "w3c-old": "grunt clean-w3c-old && grunt w3c-old && grunt clean-w3c-old",
-
     "tests-polyfill": "grunt clean-polyfill && npm run fake && npm run mock && npm run w3c-old && browserify-test -t [ babelify --presets es2015 ] tests-polyfill/**/*.js",
-
     "w3c": "npm run w3c-build && node test-support/node-indexeddbshim-test && grunt clean-w3c",
     "w3c-good": "npm run w3c -- good",
     "w3c-bad": "npm run w3c -- bad"
@@ -53,7 +48,7 @@
     "websql"
   ],
   "dependencies": {
-      "websql": "https://github.com/brettz9/node-websql#configurable"
+    "websql": "https://github.com/brettz9/node-websql#configurable"
   },
   "devDependencies": {
     "atob": "2.0.3",
@@ -64,10 +59,11 @@
     "chai": "3.5.0",
     "cheerio": "0.22.0",
     "colors": "1.1.2",
+    "eslint": "3.12.2",
     "eslint-config-standard": "6.2.1",
+    "eslint-plugin-compat": "^0.1.1",
     "eslint-plugin-promise": "3.4.0",
     "eslint-plugin-standard": "2.0.1",
-    "eslint": "3.12.2",
     "eventtarget": "https://github.com/brettz9/eventdispatcher.js#early-late-listeners-noproxy",
     "grunt": "1.0.1",
     "grunt-browserify": "5.0.0",
@@ -86,7 +82,7 @@
     "matchdep": "1.0.1",
     "mocha": "3.2.0",
     "request": "2.79.0",
-    "sinon": "1.17.6",
+    "sinon": "1.17.7",
     "sync-promise": "https://github.com/brettz9/sync-promise#full-sync-missing-promise-features",
     "w3c-blob": "0.0.1"
   },

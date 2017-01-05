@@ -27,8 +27,8 @@ var doc = jsdom.jsdom('<div id="log"></div>', {
 */
 
 var window = doc.defaultView;
-GLOBAL.window = GLOBAL;
-GLOBAL.self = window;
+global.window = global;
+global.self = window;
 
 // Todo: Conditionally use Unicode version
 // const idb = require('../dist/indexeddbshim-UnicodeIdentifiers-node');
@@ -41,7 +41,7 @@ require('../dist/indexeddbshim-UnicodeIdentifiers-node')(window);
     'IDBTransaction', 'IDBCursor', 'IDBCursorWithValue', 'IDBKeyRange',
     'IDBRequest', 'IDBOpenDBRequest', 'IDBVersionChangeEvent'
 ].forEach(function (prop) {
-    GLOBAL[prop] = window[prop];
+    global[prop] = window[prop];
 });
 
 // shimIndexedDB.__debug(true);
@@ -74,7 +74,7 @@ readFiles(
                 // Todo: Sandbox!!!
                 eval(harnessContent // eslint-disable-line no-eval
                     // Todo: Figure out a way around this?
-                    .replace(/return window/, 'return GLOBAL')
+                    .replace(/return window/, 'return global')
                     //
                     .replace(/(html \+= "<\/tbody><\/table>";)/, '$1\ntests.forEach((test) => {\n' +
                         'write(status_text, test.status);\n' +

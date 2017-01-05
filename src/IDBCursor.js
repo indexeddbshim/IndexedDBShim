@@ -80,12 +80,13 @@ IDBCursor.prototype.__find = function (...args /* key, tx, success, error, recor
     }
 };
 
-IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLoad) {
+IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error, recordsToLoad) {
     const continueCall = recordsToLoad !== undefined;
     recordsToLoad = recordsToLoad || 1;
 
     const me = this;
     const quotedKeyColumnName = util.quote(me.__keyColumnName);
+    const quotedKey = util.quote('key');
     let sql = ['SELECT * FROM', util.escapeStore(me.__store.name)];
     const sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
@@ -95,6 +96,11 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
     const direction = me.__sqlDirection;
     const op = direction === 'ASC' ? '>' : '<';
 
+    if (primaryKey !== undefined) {
+        sql.push('AND', quotedKey, op + '= ?');
+        // Key.convertValueToKey(primaryKey); // Already checked by `continuePrimaryKey`
+        sqlValues.push(Key.encode(primaryKey));
+    }
     if (key !== undefined) {
         sql.push('AND', quotedKeyColumnName, op + '= ?');
         Key.convertValueToKey(key);
@@ -107,11 +113,11 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
 
     if (!me.__count) {
         // 1. Sort by key
-        sql.push('ORDER BY', quotedKeyColumnName, direction); // Todo: Any reason for this first sorting?
+        sql.push('ORDER BY', quotedKeyColumnName, direction);
 
         // 2. Sort by primaryKey (if defined and not unique)
         if (!me.__unique && me.__keyColumnName !== 'key') { // Avoid adding 'key' twice
-            sql.push(',', util.quote('key'), direction);
+            sql.push(',', quotedKey, direction);
         }
 
         // 3. Sort by position (if defined)
@@ -145,7 +151,7 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
     });
 };
 
-IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
+IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, error) {
     const me = this;
 
     if (me.__prefetchedData && me.__prefetchedData.length === me.__prefetchedIndex) {
@@ -168,7 +174,13 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
     // Determine the ORDER BY direction based on the cursor.
     const direction = me.__sqlDirection;
     const op = direction === 'ASC' ? '>' : '<';
+    const quotedKey = util.quote('key');
 
+    if (primaryKey !== undefined) {
+        sql.push('AND', quotedKey, op + '= ?');
+        // Key.convertValueToKey(primaryKey); // Already checked by `continuePrimaryKey`
+        sqlValues.push(Key.encode(primaryKey));
+    }
     if (key !== undefined) {
         sql.push('AND', quotedKeyColumnName, op + '= ?');
         Key.convertValueToKey(key);
@@ -181,7 +193,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
 
     if (!me.__count) {
         // 1. Sort by key
-        sql.push('ORDER BY', quotedKeyColumnName, direction); // Todo: Any reason for this first sorting?
+        sql.push('ORDER BY', quotedKeyColumnName, direction);
 
         // 2. Sort by primaryKey (if defined and not unique)
         if (!me.__unique && me.__keyColumnName !== 'key') { // Avoid adding 'key' twice
@@ -331,7 +343,6 @@ IDBCursor.prototype.__clearFromCache = function () {
 
 IDBCursor.prototype.__continue = function (key, advanceContinue) {
     const me = this;
-    const recordsToPreloadOnContinue = me.__advanceCount || CFG.cursorPreloadPackSize || 100;
     const advanceState = me.__advanceCount !== undefined;
     IDBTransaction.__assertActive(me.__store.transaction);
     me.__sourceOrEffectiveObjStoreDeleted();
@@ -349,7 +360,12 @@ IDBCursor.prototype.__continue = function (key, advanceContinue) {
             throw createDOMException('DataError', 'Cannot ' + (advanceState ? 'advance' : 'continue') + ' the cursor in an unexpected direction');
         }
     }
+    this.__continueFinish(key, undefined, advanceState);
+};
 
+IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) {
+    const me = this;
+    const recordsToPreloadOnContinue = me.__advanceCount || CFG.cursorPreloadPackSize || 100;
     me.__gotValue = false;
     me.__req.__readyState = 'pending'; // Unset done flag
 
@@ -373,7 +389,7 @@ IDBCursor.prototype.__continue = function (key, advanceContinue) {
             if (me.__prefetchedIndex < me.__prefetchedData.length) {
                 me.__decode(me.__prefetchedData.item(me.__prefetchedIndex), function (k, val, primKey) {
                     function checkKey () {
-                        if (key !== undefined && k !== key) {
+                        if (key !== undefined && k !== key && (primaryKey === undefined || primaryKey !== primKey)) {
                             cursorContinue(tx, args, success, error);
                             return;
                         }
@@ -398,7 +414,7 @@ IDBCursor.prototype.__continue = function (key, advanceContinue) {
         }
 
         // No (or not enough) pre-fetched data, do query
-        me.__find(key, tx, triggerSuccess, function (...args) {
+        me.__find(key, primaryKey, tx, triggerSuccess, function (...args) {
             me.__advanceCount = undefined;
             error(...args);
         }, recordsToPreloadOnContinue);
@@ -409,10 +425,48 @@ IDBCursor.prototype['continue'] = function (key) {
     this.__continue(key);
 };
 
-/*
-// Todo: Implement continuePrimaryKey
-IDBCursor.prototype.continuePrimaryKey = function (key, primaryKey) {};
-*/
+IDBCursor.prototype.continuePrimaryKey = function (key, primaryKey) {
+    const me = this;
+    IDBTransaction.__assertActive(me.__store.transaction);
+    me.__sourceOrEffectiveObjStoreDeleted();
+    if (!me.__indexSource) {
+        throw createDOMException('InvalidAccessError', '`continuePrimaryKey` may only be called on an index source.');
+    }
+    if (!['next', 'prev'].includes(me.direction)) {
+        throw createDOMException('InvalidAccessError', '`continuePrimaryKey` may not be called with unique cursors.');
+    }
+    if (!me.__gotValue) {
+        throw createDOMException('InvalidStateError', 'The cursor is being iterated or has iterated past its end.');
+    }
+    Key.convertValueToKey(key);
+    Key.convertValueToKey(primaryKey);
+
+    const cmpResult = cmp(key, me.key);
+    if (
+        (me.direction === 'next' && cmpResult === -1) ||
+        (me.direction === 'prev' && cmpResult === 1)
+    ) {
+        throw createDOMException('DataError', 'Cannot continue the cursor in an unexpected direction');
+    }
+    function noErrors () {
+        me.__continueFinish(key, primaryKey, false);
+    }
+    if (cmpResult === 0) {
+        Sca.encode(primaryKey, function (encPrimaryKey) {
+            Sca.encode(me.primaryKey, function (encObjectStorePos) {
+                if (encPrimaryKey === encObjectStorePos ||
+                    (me.direction === 'next' && encPrimaryKey < encObjectStorePos) ||
+                    (me.direction === 'prev' && encPrimaryKey > encObjectStorePos)
+                ) {
+                    throw createDOMException('DataError', 'Cannot continue the cursor in an unexpected direction');
+                }
+                noErrors();
+            });
+        });
+    } else {
+        noErrors();
+    }
+};
 
 IDBCursor.prototype.advance = function (count) {
     const me = this;
@@ -492,7 +546,7 @@ IDBCursor.prototype['delete'] = function () {
         throw createDOMException('InvalidStateError', 'This cursor method cannot be called when the key only flag has been set.');
     }
     return this.__store.transaction.__addToTransactionQueue(function cursorDelete (tx, args, success, error) {
-        me.__find(undefined, tx, function (key, value, primaryKey) {
+        me.__find(undefined, undefined, tx, function (key, value, primaryKey) {
             const sql = 'DELETE FROM  ' + util.escapeStore(me.__store.name) + ' WHERE key = ?';
             CFG.DEBUG && console.log(sql, key, primaryKey);
             Key.convertValueToKey(primaryKey);

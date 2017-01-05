@@ -9651,19 +9651,43 @@ Object.defineProperty(exports, "__esModule", {
 var map = {};
 var CFG = {};
 
-['DEBUG', // boolean
-'DEFAULT_DB_SIZE', // 4 * 1024 * 1024 or 25 * 1024 * 1024 in Safari
-'cursorPreloadPackSize', // 100
-'win', // (window on which there may be an `openDatabase` method (if any)
-//  for WebSQL; the browser throws if attempting to call
-//  `openDatabase` without the window)
-// See optional dynamic `System.import()` loading API (shimIndexedDB.__setUnicodeIdentifiers)
-//    of these large regular expression strings:
-'UnicodeIDStart', // See `src/UnicodeIdentifiers.js`
-'UnicodeIDContinue', // See `src/UnicodeIdentifiers.js`
-'sqlBusyTimeout', // Used by Node WebSQL (Defaults to 1000)
-'sqlTrace', // Callback used by Node WebSQL
-'sqlProfile' // Callback used by Node WebSQL
+[
+// Boolean for verbose reporting
+'DEBUG', // Effectively defaults to false (ignored unless true)
+
+// Used by `IDBCursor` continue methods for number of records to cache;
+'cursorPreloadPackSize', //  Defaults to 100
+
+// See optional API (`shimIndexedDB.__setUnicodeIdentifiers`);
+//    or just use the Unicode builds which invoke this method
+//    automatically using the large, fully spec-compliant, regular
+//    expression strings of `src/UnicodeIdentifiers.js`)
+'UnicodeIDStart', // In the non-Unicode builds, defaults to /[$A-Z_a-z]/
+'UnicodeIDContinue', // In the non-Unicode builds, defaults to /[$0-9A-Z_a-z]/
+
+// -----------SQL CONFIG----------
+// Object (`window` in the browser) on which there may be an
+//  `openDatabase` method (if any) for WebSQL. (The browser
+//  throws if attempting to call `openDatabase` without the window
+//  so this is why the config doesn't just allow the function.)
+'win', // Defaults to `window` or `self` in browser builds or
+// a singleton object with the `openDatabase` method set to
+// the "websql" package in Node.
+
+// For internal `openDatabase` calls made by `IDBFactory` methods;
+//  per the WebSQL spec, "User agents are expected to use the display name
+//  and the estimated database size to optimize the user experience.
+//  For example, a user agent could use the estimated size to suggest an
+//  initial quota to the user. This allows a site that is aware that it
+//  will try to use hundreds of megabytes to declare this upfront, instead
+//  of the user agent prompting the user for permission to increase the
+//  quota every five megabytes."
+'DEFAULT_DB_SIZE', // Defaults to (4 * 1024 * 1024) or (25 * 1024 * 1024) in Safari
+
+// Optional Node WebSQL config
+'sqlBusyTimeout', // Defaults to 1000
+'sqlTrace', // Callback not used by default
+'sqlProfile' // Callback not used by default
 ].forEach(function (prop) {
     Object.defineProperty(CFG, prop, {
         get: function get() {
@@ -10020,12 +10044,13 @@ IDBCursor.prototype.__find = function () /* key, tx, success, error, recordsToLo
     }
 };
 
-IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLoad) {
+IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error, recordsToLoad) {
     var continueCall = recordsToLoad !== undefined;
     recordsToLoad = recordsToLoad || 1;
 
     var me = this;
     var quotedKeyColumnName = util.quote(me.__keyColumnName);
+    var quotedKey = util.quote('key');
     var sql = ['SELECT * FROM', util.escapeStore(me.__store.name)];
     var sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
@@ -10035,6 +10060,11 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
     var direction = me.__sqlDirection;
     var op = direction === 'ASC' ? '>' : '<';
 
+    if (primaryKey !== undefined) {
+        sql.push('AND', quotedKey, op + '= ?');
+        // Key.convertValueToKey(primaryKey); // Already checked by `continuePrimaryKey`
+        sqlValues.push(_Key2.default.encode(primaryKey));
+    }
     if (key !== undefined) {
         sql.push('AND', quotedKeyColumnName, op + '= ?');
         _Key2.default.convertValueToKey(key);
@@ -10047,12 +10077,12 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
 
     if (!me.__count) {
         // 1. Sort by key
-        sql.push('ORDER BY', quotedKeyColumnName, direction); // Todo: Any reason for this first sorting?
+        sql.push('ORDER BY', quotedKeyColumnName, direction);
 
         // 2. Sort by primaryKey (if defined and not unique)
         if (!me.__unique && me.__keyColumnName !== 'key') {
             // Avoid adding 'key' twice
-            sql.push(',', util.quote('key'), direction);
+            sql.push(',', quotedKey, direction);
         }
 
         // 3. Sort by position (if defined)
@@ -10086,7 +10116,7 @@ IDBCursor.prototype.__findBasic = function (key, tx, success, error, recordsToLo
     });
 };
 
-IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
+IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, error) {
     var me = this;
 
     if (me.__prefetchedData && me.__prefetchedData.length === me.__prefetchedIndex) {
@@ -10109,7 +10139,13 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
     // Determine the ORDER BY direction based on the cursor.
     var direction = me.__sqlDirection;
     var op = direction === 'ASC' ? '>' : '<';
+    var quotedKey = util.quote('key');
 
+    if (primaryKey !== undefined) {
+        sql.push('AND', quotedKey, op + '= ?');
+        // Key.convertValueToKey(primaryKey); // Already checked by `continuePrimaryKey`
+        sqlValues.push(_Key2.default.encode(primaryKey));
+    }
     if (key !== undefined) {
         sql.push('AND', quotedKeyColumnName, op + '= ?');
         _Key2.default.convertValueToKey(key);
@@ -10122,7 +10158,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, tx, success, error) {
 
     if (!me.__count) {
         // 1. Sort by key
-        sql.push('ORDER BY', quotedKeyColumnName, direction); // Todo: Any reason for this first sorting?
+        sql.push('ORDER BY', quotedKeyColumnName, direction);
 
         // 2. Sort by primaryKey (if defined and not unique)
         if (!me.__unique && me.__keyColumnName !== 'key') {
@@ -10279,7 +10315,6 @@ IDBCursor.prototype.__clearFromCache = function () {
 
 IDBCursor.prototype.__continue = function (key, advanceContinue) {
     var me = this;
-    var recordsToPreloadOnContinue = me.__advanceCount || _CFG2.default.cursorPreloadPackSize || 100;
     var advanceState = me.__advanceCount !== undefined;
     _IDBTransaction2.default.__assertActive(me.__store.transaction);
     me.__sourceOrEffectiveObjStoreDeleted();
@@ -10294,7 +10329,12 @@ IDBCursor.prototype.__continue = function (key, advanceContinue) {
             throw (0, _DOMException.createDOMException)('DataError', 'Cannot ' + (advanceState ? 'advance' : 'continue') + ' the cursor in an unexpected direction');
         }
     }
+    this.__continueFinish(key, undefined, advanceState);
+};
 
+IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) {
+    var me = this;
+    var recordsToPreloadOnContinue = me.__advanceCount || _CFG2.default.cursorPreloadPackSize || 100;
     me.__gotValue = false;
     me.__req.__readyState = 'pending'; // Unset done flag
 
@@ -10318,7 +10358,7 @@ IDBCursor.prototype.__continue = function (key, advanceContinue) {
             if (me.__prefetchedIndex < me.__prefetchedData.length) {
                 me.__decode(me.__prefetchedData.item(me.__prefetchedIndex), function (k, val, primKey) {
                     function checkKey() {
-                        if (key !== undefined && k !== key) {
+                        if (key !== undefined && k !== key && (primaryKey === undefined || primaryKey !== primKey)) {
                             cursorContinue(tx, args, success, error);
                             return;
                         }
@@ -10343,7 +10383,7 @@ IDBCursor.prototype.__continue = function (key, advanceContinue) {
         }
 
         // No (or not enough) pre-fetched data, do query
-        me.__find(key, tx, triggerSuccess, function () {
+        me.__find(key, primaryKey, tx, triggerSuccess, function () {
             me.__advanceCount = undefined;
             error.apply(undefined, arguments);
         }, recordsToPreloadOnContinue);
@@ -10354,10 +10394,42 @@ IDBCursor.prototype['continue'] = function (key) {
     this.__continue(key);
 };
 
-/*
-// Todo: Implement continuePrimaryKey
-IDBCursor.prototype.continuePrimaryKey = function (key, primaryKey) {};
-*/
+IDBCursor.prototype.continuePrimaryKey = function (key, primaryKey) {
+    var me = this;
+    _IDBTransaction2.default.__assertActive(me.__store.transaction);
+    me.__sourceOrEffectiveObjStoreDeleted();
+    if (!me.__indexSource) {
+        throw (0, _DOMException.createDOMException)('InvalidAccessError', '`continuePrimaryKey` may only be called on an index source.');
+    }
+    if (!['next', 'prev'].includes(me.direction)) {
+        throw (0, _DOMException.createDOMException)('InvalidAccessError', '`continuePrimaryKey` may not be called with unique cursors.');
+    }
+    if (!me.__gotValue) {
+        throw (0, _DOMException.createDOMException)('InvalidStateError', 'The cursor is being iterated or has iterated past its end.');
+    }
+    _Key2.default.convertValueToKey(key);
+    _Key2.default.convertValueToKey(primaryKey);
+
+    var cmpResult = (0, _IDBFactory.cmp)(key, me.key);
+    if (me.direction === 'next' && cmpResult === -1 || me.direction === 'prev' && cmpResult === 1) {
+        throw (0, _DOMException.createDOMException)('DataError', 'Cannot continue the cursor in an unexpected direction');
+    }
+    function noErrors() {
+        me.__continueFinish(key, primaryKey, false);
+    }
+    if (cmpResult === 0) {
+        _Sca2.default.encode(primaryKey, function (encPrimaryKey) {
+            _Sca2.default.encode(me.primaryKey, function (encObjectStorePos) {
+                if (encPrimaryKey === encObjectStorePos || me.direction === 'next' && encPrimaryKey < encObjectStorePos || me.direction === 'prev' && encPrimaryKey > encObjectStorePos) {
+                    throw (0, _DOMException.createDOMException)('DataError', 'Cannot continue the cursor in an unexpected direction');
+                }
+                noErrors();
+            });
+        });
+    } else {
+        noErrors();
+    }
+};
 
 IDBCursor.prototype.advance = function (count) {
     var me = this;
@@ -10438,7 +10510,7 @@ IDBCursor.prototype['delete'] = function () {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This cursor method cannot be called when the key only flag has been set.');
     }
     return this.__store.transaction.__addToTransactionQueue(function cursorDelete(tx, args, success, error) {
-        me.__find(undefined, tx, function (key, value, primaryKey) {
+        me.__find(undefined, undefined, tx, function (key, value, primaryKey) {
             var sql = 'DELETE FROM  ' + util.escapeStore(me.__store.name) + ' WHERE key = ?';
             _CFG2.default.DEBUG && console.log(sql, key, primaryKey);
             _Key2.default.convertValueToKey(primaryKey);
@@ -11381,14 +11453,16 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
 
 /**
  * Retrieves index data for the given key
- * @param {*|IDBKeyRange} key
+ * @param {*|IDBKeyRange} range
  * @param {string} opType
+ * @param {boolean} nullDisallowed
+ * @param {number} count
  * @returns {IDBRequest}
  * @private
  */
-IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, unboundedAllowed) {
+IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, count) {
     var me = this;
-    var hasUnboundedRange = unboundedAllowed && range == null;
+    var hasUnboundedRange = !nullDisallowed && range == null;
 
     if (this.__deleted) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This index has been deleted');
@@ -11398,7 +11472,7 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, u
     }
     IDBTransaction.__assertActive(this.objectStore.transaction);
 
-    if (nullDisallowed && !unboundedAllowed && range == null) {
+    if (nullDisallowed && range == null) {
         throw (0, _DOMException.createDOMException)('DataError', 'No key or range was specified');
     }
 
@@ -11408,7 +11482,7 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, u
             args[_key] = arguments[_key];
         }
 
-        executeFetchIndexData.apply(undefined, _toConsumableArray(fetchArgs).concat(args));
+        executeFetchIndexData.apply(undefined, [nullDisallowed, count].concat(_toConsumableArray(fetchArgs), args));
     }, undefined, me);
 };
 
@@ -11452,19 +11526,20 @@ IDBIndex.prototype.getKey = function (query) {
     return this.__fetchIndexData(query, 'key', true);
 };
 
-/*
-// Todo: Implement getAll
 IDBIndex.prototype.getAll = function (query, count) {
+    return this.__fetchIndexData(query, 'value', false, count);
 };
-*/
 
-/*
-// Todo: Implement getAllKeys
 IDBIndex.prototype.getAllKeys = function (query, count) {
+    return this.__fetchIndexData(query, 'key', false, count);
 };
-*/
 
 IDBIndex.prototype.count = function (query) {
+    // With the exception of needing to check whether the index has been
+    //  deleted, we could, for greater spec parity (if not accuracy),
+    //  just call:
+    //  `return this.__objectStore.count(query);`
+
     // key is optional
     if (util.instanceOf(query, _IDBKeyRange.IDBKeyRange)) {
         if (!query.toString() !== '[object IDBKeyRange]') {
@@ -11473,7 +11548,7 @@ IDBIndex.prototype.count = function (query) {
         // We don't need to add to cursors array since has the count parameter which won't cache
         return new _IDBCursor.IDBCursorWithValue(query, 'next', this.objectStore, this, util.escapeIndexName(this.name), 'value', true).__req;
     }
-    return this.__fetchIndexData(query, 'count', false, true);
+    return this.__fetchIndexData(query, 'count', false);
 };
 
 IDBIndex.prototype.__renameIndex = function (store, oldName, newName) {
@@ -11563,25 +11638,45 @@ Object.defineProperty(IDBIndex.prototype, 'name', {
     }
 });
 
-function executeFetchIndexData(index, hasKey, encodedKey, opType, multiChecks, sql, sqlValues, tx, args, success, error) {
+function executeFetchIndexData(unboundedDisallowed, count, index, hasKey, encodedKey, opType, multiChecks, sql, sqlValues, tx, args, success, error) {
+    if (unboundedDisallowed) {
+        count = 1;
+    }
+    if (count) {
+        sql.push('LIMIT', count);
+    }
+    _CFG2.default.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
     tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
-        var recordCount = 0,
-            record = null;
+        var records = [];
+        var recordCount = 0;
+        var record = null;
+        var decode = opType === 'count' ? function () {} : opType === 'key' ? function (record) {
+            // Key.convertValueToKey(record.key); // Already validated before storage
+            return _Key2.default.decode(record.key);
+        } : function (record) {
+            // when opType is value
+            return _Sca2.default.decode(record.value);
+        };
         if (index.multiEntry) {
+            var escapedIndexName = util.escapeIndexName(index.name);
+
             var _loop = function _loop(i) {
                 var row = data.rows.item(i);
-                var rowKey = _Key2.default.decode(row[util.escapeIndexName(index.name)]);
+                var rowKey = _Key2.default.decode(row[escapedIndexName]);
                 if (hasKey && (multiChecks && encodedKey.some(function (check) {
                     return rowKey.includes(check);
                 }) || // More precise than our SQL
-                _Key2.default.isMultiEntryMatch(encodedKey, row[util.escapeIndexName(index.name)]))) {
+                _Key2.default.isMultiEntryMatch(encodedKey, row[escapedIndexName]))) {
                     recordCount++;
                     record = record || row;
                 } else if (!hasKey && !multiChecks) {
                     if (rowKey !== undefined) {
-                        recordCount = recordCount + (Array.isArray(rowKey) ? rowKey.length : 1);
+                        recordCount += Array.isArray(rowKey) ? rowKey.length : 1;
                         record = record || row;
                     }
+                }
+                if (record) {
+                    records.push(decode(record));
                 }
             };
 
@@ -11589,24 +11684,29 @@ function executeFetchIndexData(index, hasKey, encodedKey, opType, multiChecks, s
                 _loop(i);
             }
         } else {
-            recordCount = data.rows.length;
-            record = recordCount && data.rows.item(0);
+            for (var _i = 0; _i < data.rows.length; _i++) {
+                record = data.rows.item(_i);
+                if (record) {
+                    records.push(decode(record));
+                }
+            }
+            recordCount = records.length;
         }
         if (opType === 'count') {
             success(recordCount);
         } else if (recordCount === 0) {
             success(undefined);
-        } else if (opType === 'key') {
-            success(_Key2.default.decode(record.key));
+        } else if (unboundedDisallowed) {
+            success(records[0]);
         } else {
-            // when opType is value
-            success(_Sca2.default.decode(record.value));
+            success(records);
         }
     }, error);
 }
 
 function fetchIndexData(index, hasRange, range, opType, multiChecks) {
-    var sql = ['SELECT * FROM', util.escapeStore(index.objectStore.name), 'WHERE', util.escapeIndex(index.name), 'NOT NULL'];
+    var col = opType === 'count' ? 'key' : opType; // It doesn't matter which column we use for 'count' as long as it is valid
+    var sql = ['SELECT ' + util.quote(col) + (index.multiEntry ? ', ' + util.escapeIndex(index.name) : '') + ' FROM', util.escapeStore(index.objectStore.name), 'WHERE', util.escapeIndex(index.name), 'NOT NULL'];
     var sqlValues = [];
     if (hasRange) {
         if (multiChecks) {
@@ -11633,7 +11733,6 @@ function fetchIndexData(index, hasRange, range, opType, multiChecks) {
             (0, _IDBKeyRange.setSQLForRange)(range, util.escapeIndex(index.name), sql, sqlValues, true, false);
         }
     }
-    _CFG2.default.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
     return [index, hasRange, range, opType, multiChecks, sql, sqlValues];
 }
 
@@ -12013,8 +12112,6 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
 };
 
 IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey, passedKey, useNewForAutoInc, success, error) {
-    var _this = this;
-
     var me = this;
     var paramMap = {};
     var indexPromises = me.indexNames.map(function (indexName) {
@@ -12045,7 +12142,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
                 (function () {
                     var multiCheck = index.multiEntry && Array.isArray(indexKey);
                     var fetchArgs = (0, _IDBIndex.fetchIndexData)(index, true, indexKey, 'key', multiCheck);
-                    _IDBIndex.executeFetchIndexData.apply(undefined, _toConsumableArray(fetchArgs).concat([tx, null, function success(key) {
+                    _IDBIndex.executeFetchIndexData.apply(undefined, [true, null].concat(_toConsumableArray(fetchArgs), [tx, null, function success(key) {
                         if (key === undefined) {
                             setIndexInfo(index);
                             resolve();
@@ -12061,7 +12158,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         });
     });
     _syncPromise2.default.all(indexPromises).then(function () {
-        var sqlStart = ['INSERT INTO ', util.escapeStore(_this.name), '('];
+        var sqlStart = ['INSERT INTO ', util.escapeStore(me.name), '('];
         var sqlEnd = [' VALUES ('];
         var insertSqlValues = [];
         if (primaryKey !== undefined) {
@@ -12217,7 +12314,7 @@ IDBObjectStore.prototype.put = function (value, key) {
     return request;
 };
 
-IDBObjectStore.prototype.__get = function (range, getKey) {
+IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
     var me = this;
 
     if (me.__deleted) {
@@ -12241,6 +12338,12 @@ IDBObjectStore.prototype.__get = function (range, getKey) {
     var sql = ['SELECT ' + util.quote(col) + ' FROM ', util.escapeStore(me.name), ' WHERE '];
     var sqlValues = [];
     (0, _IDBKeyRange.setSQLForRange)(range, util.quote('key'), sql, sqlValues);
+    if (!getAll) {
+        count = 1;
+    }
+    if (count) {
+        sql.push('LIMIT', count);
+    }
     sql = sql.join(' ');
     return me.transaction.__addToTransactionQueue(function objectStoreGet(tx, args, success, error) {
         _CFG2.default.DEBUG && console.log('Fetching', me.name, sqlValues);
@@ -12252,10 +12355,19 @@ IDBObjectStore.prototype.__get = function (range, getKey) {
                 if (data.rows.length === 0) {
                     return success();
                 }
+                ret = [];
                 if (getKey) {
-                    ret = _Key2.default.decode(data.rows.item(0).key, false);
+                    for (var i = 0; i < data.rows.length; i++) {
+                        // Key.convertValueToKey(data.rows.item(i).key); // Already validated before storage
+                        ret.push(_Key2.default.decode(data.rows.item(i).key, false));
+                    }
                 } else {
-                    ret = _Sca2.default.decode(data.rows.item(0).value);
+                    for (var _i = 0; _i < data.rows.length; _i++) {
+                        ret.push(_Sca2.default.decode(data.rows.item(0).value));
+                    }
+                }
+                if (!getAll) {
+                    ret = ret[0];
                 }
             } catch (e) {
                 // If no result is returned, or error occurs when parsing JSON
@@ -12275,35 +12387,26 @@ IDBObjectStore.prototype.get = function (query) {
     return this.__get(query);
 };
 
-/*
-// Todo: Implement getKey
 IDBObjectStore.prototype.getKey = function (query) {
     if (!arguments.length) {
         throw new TypeError('A parameter was missing for `IDBObjectStore.getKey`.');
     }
     return this.__get(query, true);
 };
-*/
 
-/*
-// Todo: Implement getAll
 IDBObjectStore.prototype.getAll = function (query, count) {
     if (!arguments.length) {
         throw new TypeError('A parameter was missing for `IDBObjectStore.getAll`.');
     }
     return this.__get(query, false, true, count);
 };
-*/
 
-/*
-// Todo: Implement getAllKeys
 IDBObjectStore.prototype.getAllKeys = function (query, count) {
     if (!arguments.length) {
         throw new TypeError('A parameter was missing for `IDBObjectStore.getAllKeys`.');
     }
     return this.__get(query, true, true, count);
 };
-*/
 
 IDBObjectStore.prototype['delete'] = function (range) {
     var me = this;
@@ -13516,12 +13619,15 @@ function getType(key) {
 /**
  * Keys must be strings, numbers (besides NaN), Dates (if value is not NaN),
  *   Arrays (or, once supported, ArrayBuffer) objects
+ * @todo Currently this is being used in code for validation but for greater
+ *   spec parity if nothing else, ought to probably instead be returning a
+ *   key object with {type, value}
  */
 function convertValueToKey(key, arrayRefs, multiEntry) {
     var type = getType(key);
     switch (type) {
         case 'ArrayBuffer':
-            // Copy bytes once implemented (not a possible type yet)
+            // Copy bytes once implemented (not a supported type yet)
             return key;
         case 'array':
             arrayRefs = arrayRefs || [];
@@ -14569,7 +14675,23 @@ function shim(name, value) {
     }
 }
 
-function setGlobalVars(idb) {
+function setConfig(prop, val) {
+    if (prop && (typeof prop === 'undefined' ? 'undefined' : _typeof(prop)) === 'object') {
+        for (var p in prop) {
+            setConfig(p, prop[p]);
+        }
+        return;
+    }
+    if (!(prop in _CFG2.default)) {
+        throw new Error(prop + ' is not a valid configuration property');
+    }
+    _CFG2.default[prop] = val;
+}
+
+function setGlobalVars(idb, initialConfig) {
+    if (initialConfig) {
+        setConfig(initialConfig);
+    }
     IDB = idb || (typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {});
     shim('shimIndexedDB', _IDBFactory.shimIndexedDB);
     if (IDB.shimIndexedDB) {
@@ -14597,15 +14719,18 @@ function setGlobalVars(idb) {
         IDB.shimIndexedDB.__debug = function (val) {
             _CFG2.default.DEBUG = val;
         };
-        IDB.shimIndexedDB.__setConfig = function (prop, val) {
-            _CFG2.default[prop] = val;
-        };
+        IDB.shimIndexedDB.__setConfig = setConfig;
         IDB.shimIndexedDB.__getConfig = function (prop) {
+            if (!(prop in _CFG2.default)) {
+                throw new Error(prop + ' is not a valid configuration property');
+            }
             return _CFG2.default[prop];
         };
         IDB.shimIndexedDB.__setUnicodeIdentifiers = function (ui) {
-            this.__setConfig('UnicodeIDStart', ui.UnicodeIDStart);
-            this.__setConfig('UnicodeIDContinue', ui.UnicodeIDContinue);
+            setConfig({
+                UnicodeIDStart: ui.UnicodeIDStart,
+                UnicodeIDContinue: ui.UnicodeIDContinue
+            });
         };
     }
 
@@ -14628,10 +14753,12 @@ function setGlobalVars(idb) {
     )) {
         poorIndexedDbSupport = true;
     }
-    _CFG2.default.DEFAULT_DB_SIZE = ( // Safari currently requires larger size: (We don't need a larger size for Node as node-websql doesn't use this info)
-    // https://github.com/axemclion/IndexedDBShim/issues/41
-    // https://github.com/axemclion/IndexedDBShim/issues/115
-    typeof navigator !== 'undefined' && navigator.userAgent.indexOf('Safari') > -1 && navigator.userAgent.indexOf('Chrome') === -1 ? 25 : 4) * 1024 * 1024;
+    if (!_CFG2.default.DEFAULT_DB_SIZE) {
+        _CFG2.default.DEFAULT_DB_SIZE = ( // Safari currently requires larger size: (We don't need a larger size for Node as node-websql doesn't use this info)
+        // https://github.com/axemclion/IndexedDBShim/issues/41
+        // https://github.com/axemclion/IndexedDBShim/issues/115
+        typeof navigator !== 'undefined' && navigator.userAgent.indexOf('Safari') > -1 && navigator.userAgent.indexOf('Chrome') === -1 ? 25 : 4) * 1024 * 1024;
+    }
 
     if ((IDB.indexedDB === undefined || !IDB.indexedDB || poorIndexedDbSupport) && _CFG2.default.win.openDatabase !== undefined) {
         IDB.shimIndexedDB.__useShim();

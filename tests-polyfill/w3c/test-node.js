@@ -1,4 +1,4 @@
-GLOBAL.window = GLOBAL;
+global.window = global;
 window.location = {search: ''}; // useShim=true // This must go before sinon as well as before our test-environment.js.
 
 window.chai = require('chai');
@@ -21,7 +21,7 @@ window.onerror = function () {
     require('../../tests-mocha/test-environment.js');
     require('../../tests-mocha/test-utils.js');
 
-    GLOBAL.support = require('./support');
+    global.support = require('./support');
 
     var tests; // eslint-disable-line no-var
 

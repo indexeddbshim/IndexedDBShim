@@ -1,4 +1,4 @@
-GLOBAL.window = GLOBAL;
+global.window = global;
 window.location = {search: ''}; // useShim=true // This must go before sinon as well as before our test-environment.js.
 
 window.chai = require('chai');

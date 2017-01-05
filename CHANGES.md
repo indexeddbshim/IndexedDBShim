@@ -27,6 +27,49 @@
     also remove unused `__multiEntryOffset`
 - Deprecate: Numeric constants as second arguments to
     `IDBDatabase.prototype.transaction` (use `readonly`/`readwrite` instead).
+- Enhancement: Throw upon receiving bad config property in config methods
+- Enhancement: Allow initial config object to `setGlobalVars`
+    (e.g., for setting an early `CFG.win` value)
+- Enhancement: Allow non-invasive browser build (inspired
+    by @bolasblack's fork)
+- Enhancement: Add non-standard `webkitGetDatabaseNames` and test file (issue #223)
+- Enhancement: Allow `DEFAULT_DB_SIZE` to be set via `CFG.js`;
+- Enhancement: `IDBIndex` methods, `get`, `getKey`, `count` to allow obtaining
+    first record of an `IDBKeyRange` (or `IDBKeyRange`-like range) and change
+    error messages to indicate "key or range"
+- Enhancement: Support Node cleanly via `websql` SQLite3 library including
+    customization of SQLite `busyTimeout`, `trace` and `profile`
+- Enhancement: Add `IDBObjectStore.openKeyCursor`
+- Enhancement: Add `IDBKeyRange.includes()` with test
+- Enhancement: Allow ranges to be passed to `IDBObjectStore.get` and
+    `IDBObjectStore.delete()`
+- Enhancement: Allow key argument with `IDBCursor.continue`.
+- Enhancement: Key value retrieval: Allow "length" type key
+- Enhancement: Add ".sqlite" extension to database name for sake of (Windows)
+    file type identification
+- Enhancement: Expose `__setConfig(prop, val)` method for setting pseudo-global
+    property used internally for config and `shimIndexedDB.__getConfig()`
+    to read
+- Enhancement: Expose `__setUnicodeIdentifiers()` for setting Unicode
+    regular expression strings
+- Enhancement: Implement `IDBTransaction.objectStoreNames`
+- Enhancement: Add `IDB.shimIndexedDB.__setUnicodeIdentifiers` scaffolding for
+    importing and setting Unicode identifier regular expression strings for
+    the sake of full key path validation compliance (may slow
+    loading/performance, requires polyfills, and is untested)
+- Enhancement: Add `IDBObjectStore.name` and `IDBIndex.name` setters (untested)
+- Enhancement: Add various missing lesser event properties (`NONE`,
+    `CAPTURING_PHASE`, `AT_TARGET`, `BUBBLING_PHASE`) and initialize readonly
+    `target`, `currentTarget`, `defaultPrevented`, `isTrusted`.
+- Enhancement: Utilize `EventTarget` to invoke `dispatchEvent` to allow
+    invocation of multiple listeners as by `addEventListener` (not
+    yet treating bubbling or `preventDefault`); change `ShimEvent` to utilize
+    polyfill from `eventtarget`
+- Missing API: Add `IDBCursor.continuePrimaryKey` (untested)
+- Missing API: Implement `IDBObjectStore.getKey` (untested)
+- Missing APIs: Implement `IDBIndex.getAll/getAllKeys` (untested)
+- Missing APIs: Implement `IDBObjectStore.getAll`,
+      `IDBObjectStore.getAllKeys` (untested)
 - Fix: Ensure `AbortError` sent to `IDBOpenDBRequest.onerror` upon a
     transaction aborting or a connection being closed within an upgrade
     transaction
@@ -264,45 +307,17 @@
     `IDBCursor.update`
 - Fix: Add support for new "closed" event via a custom
     `IDBFactory.__forceClose()` method (untested)
-- Feature: Add non-standard `webkitGetDatabaseNames` and test file (issue #223)
-- Feature: Allow `DEFAULT_DB_SIZE` to be set via `CFG.js`;
-- Feature: `IDBIndex` methods, `get`, `getKey`, `count` to allow obtaining
-    first record of an `IDBKeyRange` (or `IDBKeyRange`-like range) and change
-    error messages to indicate "key or range"
-- Feature: Support Node cleanly via `websql` SQLite3 library including
-    customization of SQLite `busyTimeout`, `trace` and `profile`
-- Feature: Add `IDBObjectStore.openKeyCursor`
-- Feature: Add `IDBKeyRange.includes()` with test
-- Feature: Allow ranges to be passed to `IDBObjectStore.get` and
-    `IDBObjectStore.delete()`
-- Feature: Allow key argument with `IDBCursor.continue`.
-- Feature: Key value retrieval: Allow "length" type key
-- Feature: Add ".sqlite" extension to database name for sake of (Windows)
-    file type identification
-- Feature: Expose `__setConfig(prop, val)` method for setting pseudo-global
-    property used internally for config and `shimIndexedDB.__getConfig()`
-    to read
-- Feature: Expose `__setUnicodeIdentifiers()` for setting Unicode
-    regular expression strings
-- Feature: Implement `IDBTransaction.objectStoreNames`
-- Feature: Add `IDB.shimIndexedDB.__setUnicodeIdentifiers` scaffolding for
-    importing and setting Unicode identifier regular expression strings for
-    the sake of full key path validation compliance (may slow
-    loading/performance, requires polyfills, and is untested)
-- Feature: Add `IDBObjectStore.name` and `IDBIndex.name` setters (untested)
-- Feature: Add various missing lesser event properties (`NONE`,
-    `CAPTURING_PHASE`, `AT_TARGET`, `BUBBLING_PHASE`) and initialize readonly
-    `target`, `currentTarget`, `defaultPrevented`, `isTrusted`.
-- Feature: Utilize `EventTarget` to invoke `dispatchEvent` to allow
-    invocation of multiple listeners as by `addEventListener` (not
-    yet treating bubbling or `preventDefault`); change `ShimEvent` to utilize
-    polyfill from `eventtarget`
 - Repo files: Rename test folders for ease in distinguishing
+- Optimize: Only retrieve required SQLite columns for `IDBIndex`
+      get operations
+- Optimize: Have `IDBObjectStore` and `IDBIndex`'s `get` and
+      `getKey` only retrieve one record from SQLite
 - Optimize: use WebSQL `readTransaction` as possible/when in `readonly` mode
 - Optimize: Run SELECT only on columns we need
 - Optimize: Avoid caching and other processing in `IDBCursor` multiEntry
     finds (used by `IDBObjectStore` or `IDBIndex` `count` with key range)
 - Optimize: Switch to `SyncPromise` for faster execution
+- Refactoring: Replace Node-deprecated `GLOBAL` with `global`
 - Refactoring (Avoid globals): Change from using window global to a CFG module
     for better maintainability
 - Refactoring (Avoid deprecated): Avoid deprecated `unescape`
@@ -340,7 +355,6 @@
 - Refactoring: Throw count 0 error differently from negative count in
     `IDBCursor.advance`
 - Updating: Bump various `devDependency` min versions
-- Docs: Document `shimIndexedDB.__setConfig()`.
 - Docs: List known issues on README
 - Docs: Notice on deprecation for transaction mode constants
 - Docs: Update summarization of npm testing info
@@ -352,10 +366,13 @@
 - Testing: Work on Node tests and for Firefox (including increasing timeouts
     as needed)
 - Testing: Rely on `node_modules` paths for testing framework files
+- Testing (ESLint): Add compat plugin for browser feature testing
 - Testing (fakeIndexedDB.js): Comment out non-standard property checks
 - Testing (mock): Update IndexedDBMock tests
 - Testing (mock): Expect `InvalidStateError` instead of `ConstraintError`
     when not in an upgrade transaction calling `createObjectStore`
+- Testing (W3C Old): Fix global
+- Testing (W3C Old): Bump timeout for browser key validity tests
 - Testing (W3C Old): `IDBFactory.open` tests to do more flexible
    `instanceof` checks;
 - Testing (W3C Old): Fix test to reflect latest draft spec -- see <https://github.com/brettz9/web-platform-tests/pull/1>

@@ -2,7 +2,7 @@ describe('W3C Key Validity Tests', function () {
     var FDBRequest = IDBRequest;
     var createdb = support.createdb;
 
-    this.timeout(30000);
+    this.timeout(35000);
     // key_invalid
     it('Invalid key', function (done) {
         var numChecks = 0;

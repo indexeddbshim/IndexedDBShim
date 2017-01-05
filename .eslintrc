@@ -7,6 +7,13 @@
     "ecmaVersion": 6,
     "sourceType": "module"
   },
+  "plugins": ["compat"],
+  "settings": {
+    "targets": ["chrome", "firefox", "edge", "safari"],
+    "polyfills": [],
+    "coverage": false,
+    "compiler": "babel"
+  },
   "globals": {
     "QUnit": false,
     "_": false,
@@ -31,6 +38,7 @@
     "sinon": false
   },
   "rules": {
+    "compat/compat": 2,
     "semi": [2, "always"],
     "indent": ["error", 4],
     "one-var": 0,

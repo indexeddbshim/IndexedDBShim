@@ -1,1 +1,1 @@
-GLOBAL.window = GLOBAL;
+global.window = global;

@@ -1,4 +1,4 @@
-GLOBAL.window = GLOBAL;
+global.window = global;
 
 const setGlobalVars = require('../dist/indexeddbshim-UnicodeIdentifiers-node');
 // const setGlobalVars = require('../dist/indexeddbshim-node.min');

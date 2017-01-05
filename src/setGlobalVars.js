@@ -43,7 +43,23 @@ function shim (name, value) {
     }
 }
 
-function setGlobalVars (idb) {
+function setConfig (prop, val) {
+    if (prop && typeof prop === 'object') {
+        for (const p in prop) {
+            setConfig(p, prop[p]);
+        }
+        return;
+    }
+    if (!(prop in CFG)) {
+        throw new Error(prop + ' is not a valid configuration property');
+    }
+    CFG[prop] = val;
+}
+
+function setGlobalVars (idb, initialConfig) {
+    if (initialConfig) {
+        setConfig(initialConfig);
+    }
     IDB = idb || (typeof window !== 'undefined' ? window : (typeof self !== 'undefined' ? self : {}));
     shim('shimIndexedDB', shimIndexedDB);
     if (IDB.shimIndexedDB) {
@@ -71,15 +87,18 @@ function setGlobalVars (idb) {
         IDB.shimIndexedDB.__debug = function (val) {
             CFG.DEBUG = val;
         };
-        IDB.shimIndexedDB.__setConfig = function (prop, val) {
-            CFG[prop] = val;
-        };
+        IDB.shimIndexedDB.__setConfig = setConfig;
         IDB.shimIndexedDB.__getConfig = function (prop) {
+            if (!(prop in CFG)) {
+                throw new Error(prop + ' is not a valid configuration property');
+            }
             return CFG[prop];
         };
         IDB.shimIndexedDB.__setUnicodeIdentifiers = function (ui) {
-            this.__setConfig('UnicodeIDStart', ui.UnicodeIDStart);
-            this.__setConfig('UnicodeIDContinue', ui.UnicodeIDContinue);
+            setConfig({
+                UnicodeIDStart: ui.UnicodeIDStart,
+                UnicodeIDContinue: ui.UnicodeIDContinue
+            });
         };
     }
 
@@ -107,14 +126,16 @@ function setGlobalVars (idb) {
     )) {
         poorIndexedDbSupport = true;
     }
-    CFG.DEFAULT_DB_SIZE = (
-        ( // Safari currently requires larger size: (We don't need a larger size for Node as node-websql doesn't use this info)
-            // https://github.com/axemclion/IndexedDBShim/issues/41
-            // https://github.com/axemclion/IndexedDBShim/issues/115
-            typeof navigator !== 'undefined' &&
-            navigator.userAgent.indexOf('Safari') > -1 &&
-            navigator.userAgent.indexOf('Chrome') === -1
-        ) ? 25 : 4) * 1024 * 1024;
+    if (!CFG.DEFAULT_DB_SIZE) {
+        CFG.DEFAULT_DB_SIZE = (
+            ( // Safari currently requires larger size: (We don't need a larger size for Node as node-websql doesn't use this info)
+                // https://github.com/axemclion/IndexedDBShim/issues/41
+                // https://github.com/axemclion/IndexedDBShim/issues/115
+                typeof navigator !== 'undefined' &&
+                navigator.userAgent.indexOf('Safari') > -1 &&
+                navigator.userAgent.indexOf('Chrome') === -1
+            ) ? 25 : 4) * 1024 * 1024;
+    }
 
     if ((IDB.indexedDB === undefined || !IDB.indexedDB || poorIndexedDbSupport) && CFG.win.openDatabase !== undefined) {
         IDB.shimIndexedDB.__useShim();

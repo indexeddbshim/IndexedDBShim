@@ -298,11 +298,14 @@ function getType (key) {
 /**
  * Keys must be strings, numbers (besides NaN), Dates (if value is not NaN),
  *   Arrays (or, once supported, ArrayBuffer) objects
+ * @todo Currently this is being used in code for validation but for greater
+ *   spec parity if nothing else, ought to probably instead be returning a
+ *   key object with {type, value}
  */
 function convertValueToKey (key, arrayRefs, multiEntry) {
     const type = getType(key);
     switch (type) {
-    case 'ArrayBuffer': // Copy bytes once implemented (not a possible type yet)
+    case 'ArrayBuffer': // Copy bytes once implemented (not a supported type yet)
         return key;
     case 'array':
         arrayRefs = arrayRefs || [];
