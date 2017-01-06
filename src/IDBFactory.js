@@ -88,7 +88,7 @@ IDBFactory.prototype.open = function (name, version) {
 
         db.transaction(function (tx) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS __sys__ (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB, currNum INTEGER)', [], function () {
-                tx.executeSql('SELECT * FROM __sys__', [], function (tx, data) {
+                tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList", "currNum" FROM __sys__', [], function (tx, data) {
                     req.__result = new IDBDatabase(db, name, oldVersion, version, data);
                     me.__connections.push(req.result);
                     if (oldVersion < version) {
@@ -199,7 +199,7 @@ IDBFactory.prototype.open = function (name, version) {
 
     createSysDB(function () {
         sysdb.readTransaction(function (sysReadTx) {
-            sysReadTx.executeSql('SELECT version FROM dbVersions WHERE name = ?', [name], function (sysReadTx, data) {
+            sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE name = ?', [name], function (sysReadTx, data) {
                 if (data.rows.length === 0) {
                     // Database with this name does not exist
                     openDB(0);
@@ -260,7 +260,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
             });
         }
         sysdb.readTransaction(function (sysReadTx) {
-            sysReadTx.executeSql('SELECT version FROM dbVersions WHERE name = ?', [name], function (sysReadTx, data) {
+            sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE name = ?', [name], function (sysReadTx, data) {
                 if (data.rows.length === 0) {
                     req.__result = undefined;
                     const e = new IDBVersionChangeEvent('success', {oldVersion: version, newVersion: null});
@@ -280,7 +280,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                         // Todo: Give config option to Node to delete the entire database file
                         const db = CFG.win.openDatabase(util.escapeDatabaseName(name), 1, name, CFG.DEFAULT_DB_SIZE);
                         db.transaction(function (tx) {
-                            tx.executeSql('SELECT name FROM __sys__', [], function (tx, data) {
+                            tx.executeSql('SELECT "name" FROM __sys__', [], function (tx, data) {
                                 const tables = data.rows;
                                 (function deleteTables (i) {
                                     if (i >= tables.length) {
@@ -389,7 +389,7 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
     const req = new IDBRequest();
     createSysDB(function () {
         sysdb.readTransaction(function (sysReadTx) {
-            sysReadTx.executeSql('SELECT name FROM dbVersions', [], function (sysReadTx, data) {
+            sysReadTx.executeSql('SELECT "name" FROM dbVersions', [], function (sysReadTx, data) {
                 const dbNames = new util.StringList();
                 for (let i = 0; i < data.rows.length; i++) {
                     dbNames.push(data.rows.item(i).name);

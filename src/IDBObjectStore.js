@@ -121,7 +121,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
             failure(createDOMException('UnknownError', 'Could not delete ObjectStore', err));
         }
 
-        tx.executeSql('SELECT * FROM __sys__ WHERE name = ?', [store.name], function (tx, data) {
+        tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList", "currNum" FROM __sys__ WHERE name = ?', [store.name], function (tx, data) {
             if (data.rows.length > 0) {
                 tx.executeSql('DROP TABLE ' + util.escapeStore(store.name), [], function () {
                     tx.executeSql('DELETE FROM __sys__ WHERE name = ?', [store.name], function () {
