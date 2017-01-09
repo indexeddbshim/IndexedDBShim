@@ -329,15 +329,7 @@ IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
     }
 };
 
-IDBCursor.prototype.__addToCache = function () {
-    this.__prefetchedData = null;
-};
-
-IDBCursor.prototype.__deleteFromCache = function (sql, sqlValues) {
-    this.__prefetchedData = null;
-};
-
-IDBCursor.prototype.__clearFromCache = function () {
+IDBCursor.prototype.__invalidateCache = function () {
     this.__prefetchedData = null;
 };
 
@@ -520,8 +512,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
                     store.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
                         store.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, function (...args) {
                             store.__cursors.forEach((cursor) => {
-                                cursor.__deleteFromCache();
-                                cursor.__addToCache(/* encodedPrimaryKey, encoded, !!data.rowsAffected */);
+                                cursor.__invalidateCache(); // Delete and add
                             });
                             success(...args);
                         }, error);
@@ -553,7 +544,7 @@ IDBCursor.prototype['delete'] = function () {
             tx.executeSql(sql, [Key.encode(primaryKey)], function (tx, data) {
                 if (data.rowsAffected === 1) {
                     me.__store.__cursors.forEach((cursor) => {
-                        cursor.__deleteFromCache();
+                        cursor.__invalidateCache(); // Delete
                     });
                     success(undefined);
                 } else {

@@ -17,28 +17,29 @@ import SyncPromise from 'sync-promise';
  * @constructor
  */
 function IDBObjectStore (storeProperties, transaction) {
-    this.__name = this.__originalName = storeProperties.name;
-    this.__keyPath = Array.isArray(storeProperties.keyPath) ? storeProperties.keyPath.slice() : storeProperties.keyPath;
-    this.__transaction = transaction;
-    this.__idbdb = storeProperties.idbdb;
-    this.__cursors = storeProperties.cursors || [];
+    const me = this;
+    me.__name = me.__originalName = storeProperties.name;
+    me.__keyPath = Array.isArray(storeProperties.keyPath) ? storeProperties.keyPath.slice() : storeProperties.keyPath;
+    me.__transaction = transaction;
+    me.__idbdb = storeProperties.idbdb;
+    me.__cursors = storeProperties.cursors || [];
 
     // autoInc is numeric (0/1) on WinPhone
-    this.__autoIncrement = !!storeProperties.autoInc;
+    me.__autoIncrement = !!storeProperties.autoInc;
 
-    this.__indexes = {};
-    this.__indexNames = new util.StringList();
+    me.__indexes = {};
+    me.__indexNames = new util.StringList();
     const indexList = storeProperties.indexList;
     for (const indexName in indexList) {
         if (indexList.hasOwnProperty(indexName)) {
-            const index = new IDBIndex(this, indexList[indexName]);
-            this.__indexes[index.name] = index;
+            const index = new IDBIndex(me, indexList[indexName]);
+            me.__indexes[index.name] = index;
             if (!index.__deleted) {
-                this.indexNames.push(index.name);
+                me.indexNames.push(index.name);
             }
         }
     }
-    this.__oldIndexNames = this.indexNames.clone();
+    me.__oldIndexNames = me.indexNames.clone();
 }
 
 /**
@@ -140,14 +141,15 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
  * @private
  */
 IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
-    if (this.keyPath !== null) {
+    const me = this;
+    if (me.keyPath !== null) {
         if (key !== undefined) {
-            throw createDOMException('DataError', 'The object store uses in-line keys and the key parameter was provided', this);
+            throw createDOMException('DataError', 'The object store uses in-line keys and the key parameter was provided', me);
         }
         util.throwIfNotClonable(value, 'The data to be stored could not be cloned by the internal structured cloning algorithm.');
-        key = Key.evaluateKeyPathOnValue(value, this.keyPath);
+        key = Key.evaluateKeyPathOnValue(value, me.keyPath);
         if (key === undefined) {
-            if (this.autoIncrement) {
+            if (me.autoIncrement) {
                 // Todo: Check whether this next check is a problem coming from `IDBCursor.update()`
                 if (!util.isObj(value)) { // Although steps for storing will detect this, we want to throw synchronously for `add`/`put`
                     throw createDOMException('DataError', 'KeyPath was specified, but value was not an object');
@@ -160,11 +162,11 @@ IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
         Key.convertValueToKey(key);
     } else {
         if (key === undefined) {
-            if (this.autoIncrement) {
+            if (me.autoIncrement) {
                 // A key will be generated
                 return undefined;
             }
-            throw createDOMException('DataError', 'The object store uses out-of-line keys and has no key generator and the key parameter was not provided. ', this);
+            throw createDOMException('DataError', 'The object store uses out-of-line keys and has no key generator and the key parameter was not provided. ', me);
         }
         Key.convertValueToKey(key);
         util.throwIfNotClonable(value, 'The data to be stored could not be cloned by the internal structured cloning algorithm.');
@@ -388,7 +390,7 @@ IDBObjectStore.prototype.add = function (value, key) {
                 Sca.encode(value, function (encoded) {
                     me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, function (...args) {
                         me.__cursors.forEach((cursor) => {
-                            cursor.__addToCache(/* Key.encode(primaryKey), encoded */);
+                            cursor.__invalidateCache(); // Add
                         });
                         success(...args);
                     }, error);
@@ -409,7 +411,7 @@ IDBObjectStore.prototype.put = function (value, key) {
     }
     IDBTransaction.__assertActive(me.transaction);
     me.transaction.__assertWritable();
-    this.__validateKeyAndValue(value, key);
+    me.__validateKeyAndValue(value, key);
 
     const request = me.transaction.__createRequest(me);
     me.transaction.__pushToQueue(request, function objectStorePut (tx, args, success, error) {
@@ -425,7 +427,7 @@ IDBObjectStore.prototype.put = function (value, key) {
                         CFG.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
                         me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, function (...args) {
                             me.__cursors.forEach((cursor) => {
-                                cursor.__addToCache(/* encodedPrimaryKey, encoded, !!data.rowsAffected */);
+                                cursor.__invalidateCache(); // Add
                             });
                             success(...args);
                         }, error);
@@ -441,7 +443,6 @@ IDBObjectStore.prototype.put = function (value, key) {
 
 IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
     const me = this;
-
     if (me.__deleted) {
         throw createDOMException('InvalidStateError', 'This store has been deleted');
     }
@@ -572,7 +573,7 @@ IDBObjectStore.prototype['delete'] = function (range) {
         tx.executeSql(sql, sqlValues, function (tx, data) {
             CFG.DEBUG && console.log('Deleted from database', data.rowsAffected);
             me.__cursors.forEach((cursor) => {
-                cursor.__deleteFromCache(/* sqlArr, sqlValues */);
+                cursor.__invalidateCache(); // Delete
             });
             success();
         }, function (tx, err) {
@@ -593,7 +594,7 @@ IDBObjectStore.prototype.clear = function () {
         tx.executeSql('DELETE FROM ' + util.escapeStore(me.name), [], function (tx, data) {
             CFG.DEBUG && console.log('Cleared all records from database', data.rowsAffected);
             me.__cursors.forEach((cursor) => {
-                cursor.__clearFromCache();
+                cursor.__invalidateCache(); // Clear
             });
             success();
         }, function (tx, err) {
@@ -614,7 +615,7 @@ IDBObjectStore.prototype.count = function (key) {
             key = new IDBKeyRange(key.lower, key.upper, key.lowerOpen, key.upperOpen);
         }
         // We don't need to add to cursors array since has the count parameter which won't cache
-        return new IDBCursorWithValue(key, 'next', this, this, 'key', 'value', true).__req;
+        return new IDBCursorWithValue(key, 'next', me, me, 'key', 'value', true).__req;
     } else {
         const hasKey = key != null;
 
@@ -637,37 +638,39 @@ IDBObjectStore.prototype.count = function (key) {
 };
 
 IDBObjectStore.prototype.openCursor = function (range, direction) {
-    if (this.__deleted) {
+    const me = this;
+    if (me.__deleted) {
         throw createDOMException('InvalidStateError', 'This store has been deleted');
     }
-    const cursor = new IDBCursorWithValue(range, direction, this, this, 'key', 'value');
-    this.__cursors.push(cursor);
+    const cursor = new IDBCursorWithValue(range, direction, me, me, 'key', 'value');
+    me.__cursors.push(cursor);
     return cursor.__req;
 };
 
 IDBObjectStore.prototype.openKeyCursor = function (range, direction) {
-    if (this.__deleted) {
+    const me = this;
+    if (me.__deleted) {
         throw createDOMException('InvalidStateError', 'This store has been deleted');
     }
-    const cursor = new IDBCursor(range, direction, this, this, 'key', 'key');
-    this.__cursors.push(cursor);
+    const cursor = new IDBCursor(range, direction, me, me, 'key', 'key');
+    me.__cursors.push(cursor);
     return cursor.__req;
 };
 
 IDBObjectStore.prototype.index = function (indexName) {
+    const me = this;
     if (arguments.length === 0) {
         throw new TypeError('No index name was specified');
     }
-    if (this.__deleted) {
+    if (me.__deleted) {
         throw createDOMException('InvalidStateError', 'This store has been deleted');
     }
-    IDBTransaction.__assertActive(this.transaction);
-    const index = this.__indexes[indexName];
+    IDBTransaction.__assertActive(me.transaction);
+    const index = me.__indexes[indexName];
     if (!index || index.__deleted) {
-        throw createDOMException('NotFoundError', 'Index "' + indexName + '" does not exist on ' + this.name);
+        throw createDOMException('NotFoundError', 'Index "' + indexName + '" does not exist on ' + me.name);
     }
-
-    return IDBIndex.__clone(index, this);
+    return IDBIndex.__clone(index, me);
 };
 
 /**
@@ -678,6 +681,7 @@ IDBObjectStore.prototype.index = function (indexName) {
  * @returns {IDBIndex}
  */
 IDBObjectStore.prototype.createIndex = function (indexName, keyPath, optionalParameters) {
+    const me = this;
     indexName = String(indexName); // W3C test within IDBObjectStore.js seems to accept string conversion
     if (arguments.length === 0) {
         throw new TypeError('No index name was specified');
@@ -685,13 +689,13 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath, optionalPar
     if (arguments.length === 1) {
         throw new TypeError('No key path was specified');
     }
-    IDBTransaction.__assertVersionChange(this.transaction);
-    if (this.__deleted) {
+    IDBTransaction.__assertVersionChange(me.transaction);
+    if (me.__deleted) {
         throw createDOMException('InvalidStateError', 'This store has been deleted');
     }
-    IDBTransaction.__assertActive(this.transaction);
-    if (this.__indexes[indexName] && !this.__indexes[indexName].__deleted) {
-        throw createDOMException('ConstraintError', 'Index "' + indexName + '" already exists on ' + this.name);
+    IDBTransaction.__assertActive(me.transaction);
+    if (me.__indexes[indexName] && !me.__indexes[indexName].__deleted) {
+        throw createDOMException('ConstraintError', 'Index "' + indexName + '" already exists on ' + me.name);
     }
     if (!util.isValidKeyPath(keyPath)) {
         throw createDOMException('SyntaxError', 'A valid keyPath must be supplied');
@@ -710,26 +714,27 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath, optionalPar
             multiEntry: !!optionalParameters.multiEntry
         }
     };
-    const index = new IDBIndex(this, indexProperties);
-    IDBIndex.__createIndex(this, index);
+    const index = new IDBIndex(me, indexProperties);
+    IDBIndex.__createIndex(me, index);
     return index;
 };
 
 IDBObjectStore.prototype.deleteIndex = function (indexName) {
+    const me = this;
     if (arguments.length === 0) {
         throw new TypeError('No index name was specified');
     }
-    IDBTransaction.__assertVersionChange(this.transaction);
-    if (this.__deleted) {
+    IDBTransaction.__assertVersionChange(me.transaction);
+    if (me.__deleted) {
         throw createDOMException('InvalidStateError', 'This store has been deleted');
     }
-    IDBTransaction.__assertActive(this.transaction);
-    const index = this.__indexes[indexName];
+    IDBTransaction.__assertActive(me.transaction);
+    const index = me.__indexes[indexName];
     if (!index) {
-        throw createDOMException('NotFoundError', 'Index "' + indexName + '" does not exist on ' + this.name);
+        throw createDOMException('NotFoundError', 'Index "' + indexName + '" does not exist on ' + me.name);
     }
 
-    IDBIndex.__deleteIndex(this, index);
+    IDBIndex.__deleteIndex(me, index);
 };
 
 IDBObjectStore.prototype.toString = function () {
@@ -746,11 +751,11 @@ Object.defineProperty(IDBObjectStore.prototype, 'name', {
     },
     set: function (name) {
         const me = this;
-        if (this.__deleted) {
+        if (me.__deleted) {
             throw createDOMException('InvalidStateError', 'This store has been deleted');
         }
-        IDBTransaction.__assertVersionChange(this.transaction);
-        IDBTransaction.__assertActive(this.transaction);
+        IDBTransaction.__assertVersionChange(me.transaction);
+        IDBTransaction.__assertActive(me.transaction);
         if (me.name === name) {
             return;
         }
@@ -765,7 +770,7 @@ Object.defineProperty(IDBObjectStore.prototype, 'name', {
         me.__name = name;
         // Todo: Add pending flag to delay queries against this store until renamed in SQLite
 
-        const sql = 'ALTER TABLE ' + util.escapeStore(this.name) + ' RENAME TO ' + util.escapeStore(name);
+        const sql = 'ALTER TABLE ' + util.escapeStore(me.name) + ' RENAME TO ' + util.escapeStore(name);
         me.transaction.__addNonRequestToTransactionQueue(function objectStoreClear (tx, args, success, error) {
             tx.executeSql(sql, [], function (tx, data) {
                 success();

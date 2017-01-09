@@ -14,14 +14,15 @@ import CFG from './CFG.js';
  * @constructor
  */
 function IDBIndex (store, indexProperties) {
-    this.__objectStore = store;
-    this.__name = this.__originalName = indexProperties.columnName;
-    this.__keyPath = Array.isArray(indexProperties.keyPath) ? indexProperties.keyPath.slice() : indexProperties.keyPath;
+    const me = this;
+    me.__objectStore = store;
+    me.__name = me.__originalName = indexProperties.columnName;
+    me.__keyPath = Array.isArray(indexProperties.keyPath) ? indexProperties.keyPath.slice() : indexProperties.keyPath;
     const optionalParams = indexProperties.optionalParams;
-    this.__multiEntry = !!(optionalParams && optionalParams.multiEntry);
-    this.__unique = !!(optionalParams && optionalParams.unique);
-    this.__deleted = !!indexProperties.__deleted;
-    this.__objectStore.__cursors = indexProperties.cursors || [];
+    me.__multiEntry = !!(optionalParams && optionalParams.multiEntry);
+    me.__unique = !!(optionalParams && optionalParams.unique);
+    me.__deleted = !!indexProperties.__deleted;
+    me.__objectStore.__cursors = indexProperties.cursors || [];
 }
 
 /**
@@ -31,6 +32,7 @@ function IDBIndex (store, indexProperties) {
  * @protected
  */
 IDBIndex.__clone = function (index, store) {
+    // Don't need to clone `__deleted` as wouldn't get here
     return new IDBIndex(store, {
         columnName: index.name,
         keyPath: index.keyPath,
@@ -190,13 +192,13 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
     const me = this;
     const hasUnboundedRange = !nullDisallowed && range == null;
 
-    if (this.__deleted) {
+    if (me.__deleted) {
         throw createDOMException('InvalidStateError', 'This index has been deleted');
     }
-    if (this.objectStore.__deleted) {
+    if (me.objectStore.__deleted) {
         throw createDOMException('InvalidStateError', "This index's object store has been deleted");
     }
-    IDBTransaction.__assertActive(this.objectStore.transaction);
+    IDBTransaction.__assertActive(me.objectStore.transaction);
 
     if (nullDisallowed && range == null) {
         throw createDOMException('DataError', 'No key or range was specified');
@@ -215,8 +217,9 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
  * @returns {IDBRequest}
  */
 IDBIndex.prototype.openCursor = function (range, direction) {
-    const cursor = new IDBCursorWithValue(range, direction, this.objectStore, this, util.escapeIndexName(this.name), 'value');
-    this.__objectStore.__cursors.push(cursor);
+    const me = this;
+    const cursor = new IDBCursorWithValue(range, direction, me.objectStore, me, util.escapeIndexName(me.name), 'value');
+    me.__objectStore.__cursors.push(cursor);
     return cursor.__req;
 };
 
@@ -227,8 +230,9 @@ IDBIndex.prototype.openCursor = function (range, direction) {
  * @returns {IDBRequest}
  */
 IDBIndex.prototype.openKeyCursor = function (range, direction) {
-    const cursor = new IDBCursor(range, direction, this.objectStore, this, util.escapeIndexName(this.name), 'key');
-    this.__objectStore.__cursors.push(cursor);
+    const me = this;
+    const cursor = new IDBCursor(range, direction, me.objectStore, me, util.escapeIndexName(me.name), 'key');
+    me.__objectStore.__cursors.push(cursor);
     return cursor.__req;
 };
 
@@ -255,10 +259,11 @@ IDBIndex.prototype.getAllKeys = function (query, count) {
 };
 
 IDBIndex.prototype.count = function (query) {
+    const me = this;
     // With the exception of needing to check whether the index has been
     //  deleted, we could, for greater spec parity (if not accuracy),
     //  just call:
-    //  `return this.__objectStore.count(query);`
+    //  `return me.__objectStore.count(query);`
 
     // key is optional
     if (util.instanceOf(query, IDBKeyRange)) {
@@ -266,9 +271,9 @@ IDBIndex.prototype.count = function (query) {
             query = new IDBKeyRange(query.lower, query.upper, query.lowerOpen, query.upperOpen);
         }
         // We don't need to add to cursors array since has the count parameter which won't cache
-        return new IDBCursorWithValue(query, 'next', this.objectStore, this, util.escapeIndexName(this.name), 'value', true).__req;
+        return new IDBCursorWithValue(query, 'next', me.objectStore, me, util.escapeIndexName(me.name), 'value', true).__req;
     }
-    return this.__fetchIndexData(query, 'count', false);
+    return me.__fetchIndexData(query, 'count', false);
 };
 
 IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToPreserveArr = []) {
@@ -326,8 +331,8 @@ Object.defineProperty(IDBIndex.prototype, 'name', {
     set: function (newName) {
         const me = this;
         const oldName = me.name;
-        IDBTransaction.__assertVersionChange(this.objectStore.transaction);
-        IDBTransaction.__assertActive(this.objectStore.transaction);
+        IDBTransaction.__assertVersionChange(me.objectStore.transaction);
+        IDBTransaction.__assertActive(me.objectStore.transaction);
         if (me.__deleted) {
             throw createDOMException('InvalidStateError', 'This index has been deleted');
         }
@@ -352,7 +357,7 @@ Object.defineProperty(IDBIndex.prototype, 'name', {
             ['key', 'BLOB ' + (me.objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')],
             ['value', 'BLOB']
         ];
-        this.__renameIndex(me.objectStore, oldName, newName, colInfoToPreserveArr);
+        me.__renameIndex(me.objectStore, oldName, newName, colInfoToPreserveArr);
     }
 });
 

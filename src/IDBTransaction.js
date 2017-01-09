@@ -18,22 +18,23 @@ let uniqueID = 0;
  * @constructor
  */
 function IDBTransaction (db, storeNames, mode) {
-    this.__id = ++uniqueID; // for debugging simultaneous transactions
-    this.__active = true;
-    this.__running = false;
-    this.__errored = false;
-    this.__requests = [];
-    this.__objectStoreNames = storeNames;
-    this.__mode = mode;
-    this.__db = db;
-    this.__error = null;
-    this.__internal = false;
-    this.onabort = this.onerror = this.oncomplete = null;
-    this.__storeClones = {};
-    this.__setOptions({defaultSync: true, extraProperties: ['complete']}); // Ensure EventTarget preserves our properties
+    const me = this;
+    me.__id = ++uniqueID; // for debugging simultaneous transactions
+    me.__active = true;
+    me.__running = false;
+    me.__errored = false;
+    me.__requests = [];
+    me.__objectStoreNames = storeNames;
+    me.__mode = mode;
+    me.__db = db;
+    me.__error = null;
+    me.__internal = false;
+    me.onabort = me.onerror = me.oncomplete = null;
+    me.__storeClones = {};
+    me.__setOptions({defaultSync: true, extraProperties: ['complete']}); // Ensure EventTarget preserves our properties
 
     // Kick off the transaction as soon as all synchronous code is done
-    setTimeout(() => { this.__executeRequests(); }, 0);
+    setTimeout(() => { me.__executeRequests(); }, 0);
 }
 
 IDBTransaction.prototype.__transFinishedCb = function (err, cb) {
@@ -259,9 +260,10 @@ IDBTransaction.prototype.__executeRequests = function () {
  * @protected
  */
 IDBTransaction.prototype.__createRequest = function (source) {
+    const me = this;
     const request = new IDBRequest();
-    request.__source = source !== undefined ? source : this.db;
-    request.__transaction = this;
+    request.__source = source !== undefined ? source : me.db;
+    request.__transaction = me;
     return request;
 };
 
@@ -327,26 +329,27 @@ IDBTransaction.prototype.__assertVersionChange = function () {
  * @returns {IDBObjectStore}
  */
 IDBTransaction.prototype.objectStore = function (objectStoreName) {
+    const me = this;
     if (arguments.length === 0) {
         throw new TypeError('No object store name was specified');
     }
-    if (!this.__active) {
+    if (!me.__active) {
         throw createDOMException('InvalidStateError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
-    if (this.__objectStoreNames.indexOf(objectStoreName) === -1) {
+    if (me.__objectStoreNames.indexOf(objectStoreName) === -1) {
         throw createDOMException('NotFoundError', objectStoreName + ' is not participating in this transaction');
     }
-    const store = this.db.__objectStores[objectStoreName];
+    const store = me.db.__objectStores[objectStoreName];
     if (!store) {
-        throw createDOMException('NotFoundError', objectStoreName + ' does not exist in ' + this.db.name);
+        throw createDOMException('NotFoundError', objectStoreName + ' does not exist in ' + me.db.name);
     }
 
-    if (!this.__storeClones[objectStoreName] ||
-        this.__storeClones[objectStoreName].__deleted) { // The latter condiiton is to allow store
+    if (!me.__storeClones[objectStoreName] ||
+        me.__storeClones[objectStoreName].__deleted) { // The latter condition is to allow store
                                                          //   recreation to create new clone object
-        this.__storeClones[objectStoreName] = IDBObjectStore.__clone(store, this);
+        me.__storeClones[objectStoreName] = IDBObjectStore.__clone(store, me);
     }
-    return this.__storeClones[objectStoreName];
+    return me.__storeClones[objectStoreName];
 };
 
 IDBTransaction.prototype.__abortTransaction = function (err) {
@@ -442,7 +445,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
 IDBTransaction.prototype.abort = function () {
     const me = this;
     CFG.DEBUG && console.log('The transaction was aborted', me);
-    if (!this.__active) {
+    if (!me.__active) {
         throw createDOMException('InvalidStateError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
     me.__abortTransaction(null);
