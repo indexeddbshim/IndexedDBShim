@@ -14,7 +14,7 @@ __Use a single, indexable, offline storage API across all desktop and mobile
 browsers and Node.js.__
 
 Even if a browser natively supports IndexedDB, you may still want to use this
-shim.  Some native IndexedDB implemenatations are [very buggy](http://www.raymondcamden.com/2014/9/25/IndexedDB-on-iOS-8--Broken-Bad).
+shim.  Some native IndexedDB implementations are [very buggy](http://www.raymondcamden.com/2014/9/25/IndexedDB-on-iOS-8--Broken-Bad).
 Others are [missing certain features](http://codepen.io/cemerick/pen/Itymi).
 There are also many minor inconsistencies between different browser
 implementations of IndexedDB, such as how errors are handled, how transaction
@@ -478,4 +478,4 @@ to `index.html`.
 
 ## Contributing
 
-Pull requests or Bug reports welcome!!
+Pull requests or Bug reports welcome!
