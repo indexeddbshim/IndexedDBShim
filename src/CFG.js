@@ -34,6 +34,18 @@ const CFG = {};
     //  quota every five megabytes."
     'DEFAULT_DB_SIZE', // Defaults to (4 * 1024 * 1024) or (25 * 1024 * 1024) in Safari
 
+    // Overcoming limitations with node-sqlite3/storing database name on file systems
+    // https://en.wikipedia.org/wiki/Filename#Reserved_characters_and_words
+    'escapeDatabaseName', // Defaults to prefixing database with `D_`, escaping
+                          //   `databaseCharacterEscapeList`, escaping NUL, and
+                          //   escaping upper case letters, as well as enforcing
+                          //   `databaseNameLengthLimit`
+    'unescapeDatabaseName', // Not used internally; usable as a convenience method
+    'databaseCharacterEscapeList', // Defaults to global regex representing the following
+        // (characters nevertheless commonly reserved in modern, Unicode-supporting
+        // systems): 0x00-0x1F 0x7F " * / : < > ? \ |
+    'databaseNameLengthLimit', // Defaults to 254 (shortest typical modern file length limit)
+
     // Optional Node WebSQL config
     'sqlBusyTimeout', // Defaults to 1000
     'sqlTrace', // Callback not used by default

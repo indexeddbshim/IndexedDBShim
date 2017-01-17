@@ -32,8 +32,7 @@ function IDBIndex (store, indexProperties) {
  * @protected
  */
 IDBIndex.__clone = function (index, store) {
-    // Don't need to clone `__deleted` as wouldn't get here
-    return new IDBIndex(store, {
+    const idx = new IDBIndex(store, {
         columnName: index.name,
         keyPath: index.keyPath,
         optionalParams: {
@@ -41,6 +40,8 @@ IDBIndex.__clone = function (index, store) {
             unique: index.unique
         }
     });
+    // idx.__deleted = index.__deleted;
+    return idx;
 };
 
 /**
@@ -51,7 +52,8 @@ IDBIndex.__clone = function (index, store) {
  * @protected
  */
 IDBIndex.__createIndex = function (store, index) {
-    const columnExists = !!store.__indexes[index.name] && store.__indexes[index.name].__deleted;
+    const idx = store.__indexes[index.name];
+    const columnExists = idx && idx.__deleted;
 
     // Add the index to the IDBObjectStore
     index.__pending = true;
@@ -78,7 +80,7 @@ IDBIndex.__createIndex = function (store, index) {
                     function addIndexEntry (i) {
                         if (i < data.rows.length) {
                             try {
-                                const value = Sca.decode(data.rows.item(i).value);
+                                const value = Sca.decode(util.unescapeNUL(data.rows.item(i).value));
                                 let indexKey = Key.evaluateKeyPathOnValue(value, index.keyPath, index.multiEntry);
                                 indexKey = Key.encode(indexKey, index.multiEntry);
                                 if (index.unique) {
@@ -96,7 +98,7 @@ IDBIndex.__createIndex = function (store, index) {
                                 tx.executeSql(
                                     'UPDATE ' + util.escapeStore(store.name) + ' SET ' +
                                         util.escapeIndex(index.name) + ' = ? WHERE key = ?',
-                                    [indexKey, data.rows.item(i).key],
+                                    [util.escapeNUL(indexKey), data.rows.item(i).key],
                                     function (tx, data) {
                                         addIndexEntry(i + 1);
                                     }, error
@@ -174,7 +176,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
     }
 
     CFG.DEBUG && console.log('Updating the index list for ' + store.name, indexList);
-    tx.executeSql('UPDATE __sys__ SET indexList = ? WHERE name = ?', [JSON.stringify(indexList), store.name], function () {
+    tx.executeSql('UPDATE __sys__ SET indexList = ? WHERE name = ?', [JSON.stringify(indexList), util.escapeNUL(store.name)], function () {
         success(store);
     }, failure);
 };
@@ -279,6 +281,7 @@ IDBIndex.prototype.count = function (query) {
 IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToPreserveArr = []) {
     const newNameType = 'BLOB';
     const storeName = store.name;
+    const escapedStoreName = util.escapeStore(storeName);
     const colNamesToPreserve = colInfoToPreserveArr.map((colInfo) => colInfo[0]);
     const colInfoToPreserve = colInfoToPreserveArr.map((colInfo) => colInfo.join(' '));
     const listColInfoToPreserve = (colInfoToPreserve.length ? (colInfoToPreserve.join(', ') + ', ') : '');
@@ -287,16 +290,16 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
     // We could adapt the approach at http://stackoverflow.com/a/8430746/271577
     //    to make the approach reusable without passing column names, but it is a bit fragile
     store.transaction.__addNonRequestToTransactionQueue(function renameIndex (tx, args, success, error) {
-        const sql = 'ALTER TABLE ' + util.escapeStore(storeName) + ' RENAME TO tmp_' + util.escapeStore(storeName);
+        const sql = 'ALTER TABLE ' + escapedStoreName + ' RENAME TO tmp_' + escapedStoreName;
         tx.executeSql(sql, [], function (tx, data) {
-            const sql = 'CREATE TABLE ' + util.escapeStore(storeName) + '(' + listColInfoToPreserve + util.escapeIndex(newName) + ' ' + newNameType + ')';
+            const sql = 'CREATE TABLE ' + escapedStoreName + '(' + listColInfoToPreserve + util.escapeIndex(newName) + ' ' + newNameType + ')';
             tx.executeSql(sql, [], function (tx, data) {
-                const sql = 'INSERT INTO ' + util.escapeStore(storeName) + '(' +
+                const sql = 'INSERT INTO ' + escapedStoreName + '(' +
                     listColsToPreserve +
                     util.escapeIndex(newName) +
-                    ') SELECT ' + listColsToPreserve + util.escapeIndex(oldName) + ' FROM tmp_' + util.escapeStore(storeName);
+                    ') SELECT ' + listColsToPreserve + util.escapeIndex(oldName) + ' FROM tmp_' + escapedStoreName;
                 tx.executeSql(sql, [], function (tx, data) {
-                    const sql = 'DROP TABLE tmp_' + util.escapeStore(storeName);
+                    const sql = 'DROP TABLE tmp_' + escapedStoreName;
                     tx.executeSql(sql, [], function (tx, data) {
                         success();
                     }, function (tx, err) {
@@ -375,9 +378,9 @@ function executeFetchIndexData (unboundedDisallowed, count, index, hasKey, encod
         let record = null;
         const decode = opType === 'count' ? () => {} : opType === 'key' ? (record) => {
             // Key.convertValueToKey(record.key); // Already validated before storage
-            return Key.decode(record.key);
+            return Key.decode(util.unescapeNUL(record.key));
         } : (record) => { // when opType is value
-            return Sca.decode(record.value);
+            return Sca.decode(util.unescapeNUL(record.value));
         };
         if (index.multiEntry) {
             const escapedIndexName = util.escapeIndexName(index.name);

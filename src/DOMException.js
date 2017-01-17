@@ -58,7 +58,8 @@ function findError (args) {
             const arg = args[i];
             if (isErrorOrDOMErrorOrDOMException(arg)) {
                 return arg;
-            } else if (arg && typeof arg.message === 'string') {
+            }
+            if (arg && typeof arg.message === 'string') {
                 err = arg;
             }
         }

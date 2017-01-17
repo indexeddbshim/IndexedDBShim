@@ -107,11 +107,18 @@ if (cleanInterface) {
 
 function escapeNULAndCasing (arg) {
     // http://stackoverflow.com/a/6701665/271577
-    return arg.replace(/\^/g, '^^').replace(/\x00/g, '^0') // eslint-disable-line no-control-regex
+    return arg.replace(/\^/g, '^^').replace(/\0/g, '^0')
         // We need to avoid tables being treated as duplicates based on SQLite's case-insensitive table and column names
         // http://stackoverflow.com/a/17215009/271577
         // See also https://www.sqlite.org/faq.html#q18 re: Unicode case-insensitive not working
         .replace(/([A-Z])/g, '^$1');
+}
+
+function escapeNUL (arg) {
+    return arg.replace(/\^/g, '^^').replace(/\0/g, '^0');
+}
+function unescapeNUL (arg) {
+    return arg.replace(/^0/g, '\0').replace(/\^\^/g, '^');
 }
 
 function sqlEscape (arg) {
@@ -128,7 +135,48 @@ function quote (arg) {
 }
 
 function escapeDatabaseName (db) {
-    return 'D_' + escapeNULAndCasing(db); // Shouldn't have quoting (do we even need NUL/case escaping here?)
+    if (CFG.escapeDatabaseName) {
+        // We at least ensure NUL is escaped by default, but we need to still
+        //   handle empty string and possibly also length (potentially
+        //   throwing if too long), escaping casing (including Unicode?),
+        //   and escaping special characters depending on file system
+        return CFG.escapeDatabaseName(escapeNUL(db));
+    }
+    db = 'D_' + escapeNULAndCasing(db);
+    if (CFG.databaseCharacterEscapeList !== false) {
+        db = db.replace(
+            (CFG.databaseCharacterEscapeList
+                ? new RegExp(CFG.databaseCharacterEscapeList, 'g')
+                : /[\u0000-\u001F\u007F"*/:<>?\\|]/g),
+            function (n0) {
+                return '^1' + n0.charCodeAt().toString(16).padStart(2, '0');
+            }
+        );
+    }
+    if (CFG.databaseNameLengthLimit !== false &&
+        db.length >= (CFG.databaseNameLengthLimit || 254)) {
+        throw new Error(
+            'Unexpectedly long database name supplied; length limit required for Node compatibility; passed length: ' +
+            db.length + '; length limit setting: ' + (CFG.databaseNameLengthLimit || 254) + '.');
+    }
+    return db; // Shouldn't have quoting (do we even need NUL/case escaping here?)
+}
+
+// Not in use internally but supplied for convenience
+function unescapeDatabaseName (db) {
+    if (CFG.unescapeDatabaseName) {
+        // We at least ensure NUL is unescaped by default, but we need to still
+        //   handle empty string and possibly also length (potentially
+        //   throwing if too long), unescaping casing (including Unicode?),
+        //   and unescaping special characters depending on file system
+        return CFG.unescapeDatabaseName(unescapeNUL(db));
+    }
+
+    return db.slice(2) // D_
+        .replace(/\^1([0-9a-f]{2})/g, (n0) => String.fromCharCode(parseInt(n0, 16))) // databaseCharacterEscapeList
+        .replace(/\^([A-Z])/g, '$1')
+        .replace(/\^0/g, '\0')
+        .replace(/\^\^/g, '^');
 }
 
 function escapeStore (store) {
@@ -256,8 +304,9 @@ function isValidKeyPath (keyPath) {
     );
 }
 
-export {StringList, quote,
-    escapeDatabaseName, escapeStore, escapeIndex, escapeIndexName,
+export {StringList, escapeNUL, unescapeNUL, quote,
+    escapeDatabaseName, unescapeDatabaseName,
+    escapeStore, escapeIndex, escapeIndexName,
     sqlLIKEEscape, instanceOf,
     isObj, isDate, isBlob, isRegExp, isFile, throwIfNotClonable,
     defineReadonlyProperties, isValidKeyPath};

@@ -574,7 +574,7 @@ describe('IDBIndex.openCursor', function () {
                             try {
                                 expect(data[i][prop]).to.deep.equal(expected[i][prop]);
                             } catch (e) {
-                                throw new Error('The ' + prop + ' of result #' + (i + 1) + ' (of ' + data.length + ') does not match.\n' + JSON.stringify(data[i], null, 2));
+                                throw new Error('The ' + prop + ' of result #' + (i + 1) + ' (of ' + data.length + ') does not match.\n\nActual:' + JSON.stringify(data[i], null, 2) + '\n\nExpected:' + JSON.stringify(expected[i], null, 2));
                             }
                         });
                     }

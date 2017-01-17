@@ -145,6 +145,9 @@ describe('IDBFactory.deleteDatabase', function () {
 
     it('should allow all of these parameter types', function (done) {
         var deletingCounter = 0, deletedCounter = 0;
+        if (window.shimIndexedDB) {
+            window.shimIndexedDB.__setConfig({databaseNameLengthLimit: util.sampleData.veryLongString.length + 100});
+        }
 
         deleteDatabase(undefined);
         deleteDatabase('');

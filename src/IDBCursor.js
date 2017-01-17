@@ -316,9 +316,9 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
         }
         this.__matchedKeys[rowItem.matchingKey] = true;
     }
-    const key = Key.decode(this.__multiEntryIndex ? rowItem.matchingKey : rowItem[this.__keyColumnName], this.__multiEntryIndex);
-    const val = this.__valueDecoder.decode(rowItem[this.__valueColumnName]);
-    const primaryKey = Key.decode(rowItem.key);
+    const key = Key.decode(util.unescapeNUL(this.__multiEntryIndex ? rowItem.matchingKey : rowItem[this.__keyColumnName]), this.__multiEntryIndex);
+    const val = this.__valueDecoder.decode(util.unescapeNUL(rowItem[this.__valueColumnName]));
+    const primaryKey = Key.decode(util.unescapeNUL(rowItem.key));
     callback(key, val, primaryKey);
 };
 
@@ -506,7 +506,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
                 const encodedPrimaryKey = Key.encode(primaryKey);
                 CFG.DEBUG && console.log(sql, encoded, key, primaryKey, encodedPrimaryKey);
 
-                tx.executeSql(sql, [encodedPrimaryKey], function (tx, data) {
+                tx.executeSql(sql, [util.escapeNUL(encodedPrimaryKey)], function (tx, data) {
                     CFG.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
 
                     store.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
@@ -541,7 +541,7 @@ IDBCursor.prototype['delete'] = function () {
             const sql = 'DELETE FROM  ' + util.escapeStore(me.__store.name) + ' WHERE key = ?';
             CFG.DEBUG && console.log(sql, key, primaryKey);
             Key.convertValueToKey(primaryKey);
-            tx.executeSql(sql, [Key.encode(primaryKey)], function (tx, data) {
+            tx.executeSql(sql, [util.escapeNUL(Key.encode(primaryKey))], function (tx, data) {
                 if (data.rowsAffected === 1) {
                     me.__store.__cursors.forEach((cursor) => {
                         cursor.__invalidateCache(); // Delete

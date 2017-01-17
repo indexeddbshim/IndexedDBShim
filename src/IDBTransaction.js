@@ -364,12 +364,10 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
     if (me.mode === 'versionchange') { // Steps for aborting an upgrade transaction
         me.db.__version = me.db.__oldVersion;
         me.db.__objectStoreNames = me.db.__oldObjectStoreNames;
-        Object.keys(me.__storeClones).forEach(function (objectStoreName) {
-            const store = me.__storeClones[objectStoreName];
+        Object.values(me.__storeClones).forEach(function (store) {
             store.__name = store.__originalName;
             store.__indexNames = store.__oldIndexNames;
-            Object.keys(store.__indexes).forEach(function (indexName) {
-                const index = store.__indexes[indexName];
+            Object.values(store.__indexes).forEach(function (index) {
                 index.__name = index.__originalName;
             });
         });

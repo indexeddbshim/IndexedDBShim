@@ -16648,6 +16648,18 @@ var CFG = {};
 //  quota every five megabytes."
 'DEFAULT_DB_SIZE', // Defaults to (4 * 1024 * 1024) or (25 * 1024 * 1024) in Safari
 
+// Overcoming limitations with node-sqlite3/storing database name on file systems
+// https://en.wikipedia.org/wiki/Filename#Reserved_characters_and_words
+'escapeDatabaseName', // Defaults to prefixing database with `D_`, escaping
+//   `databaseCharacterEscapeList`, escaping NUL, and
+//   escaping upper case letters, as well as enforcing
+//   `databaseNameLengthLimit`
+'unescapeDatabaseName', // Not used internally; usable as a convenience method
+'databaseCharacterEscapeList', // Defaults to global regex representing the following
+// (characters nevertheless commonly reserved in modern, Unicode-supporting
+// systems): 0x00-0x1F 0x7F " * / : < > ? \ |
+'databaseNameLengthLimit', // Defaults to 254 (shortest typical modern file length limit)
+
 // Optional Node WebSQL config
 'sqlBusyTimeout', // Defaults to 1000
 'sqlTrace', // Callback not used by default
@@ -16740,7 +16752,8 @@ function findError(args) {
             var arg = args[i];
             if (isErrorOrDOMErrorOrDOMException(arg)) {
                 return arg;
-            } else if (arg && typeof arg.message === 'string') {
+            }
+            if (arg && typeof arg.message === 'string') {
                 err = arg;
             }
         }
@@ -17253,9 +17266,9 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
         }
         this.__matchedKeys[rowItem.matchingKey] = true;
     }
-    var key = _Key2.default.decode(this.__multiEntryIndex ? rowItem.matchingKey : rowItem[this.__keyColumnName], this.__multiEntryIndex);
-    var val = this.__valueDecoder.decode(rowItem[this.__valueColumnName]);
-    var primaryKey = _Key2.default.decode(rowItem.key);
+    var key = _Key2.default.decode(util.unescapeNUL(this.__multiEntryIndex ? rowItem.matchingKey : rowItem[this.__keyColumnName]), this.__multiEntryIndex);
+    var val = this.__valueDecoder.decode(util.unescapeNUL(rowItem[this.__valueColumnName]));
+    var primaryKey = _Key2.default.decode(util.unescapeNUL(rowItem.key));
     callback(key, val, primaryKey);
 };
 
@@ -17434,7 +17447,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
                 var encodedPrimaryKey = _Key2.default.encode(primaryKey);
                 _CFG2.default.DEBUG && console.log(sql, encoded, key, primaryKey, encodedPrimaryKey);
 
-                tx.executeSql(sql, [encodedPrimaryKey], function (tx, data) {
+                tx.executeSql(sql, [util.escapeNUL(encodedPrimaryKey)], function (tx, data) {
                     _CFG2.default.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
 
                     store.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
@@ -17469,7 +17482,7 @@ IDBCursor.prototype['delete'] = function () {
             var sql = 'DELETE FROM  ' + util.escapeStore(me.__store.name) + ' WHERE key = ?';
             _CFG2.default.DEBUG && console.log(sql, key, primaryKey);
             _Key2.default.convertValueToKey(primaryKey);
-            tx.executeSql(sql, [_Key2.default.encode(primaryKey)], function (tx, data) {
+            tx.executeSql(sql, [util.escapeNUL(_Key2.default.encode(primaryKey))], function (tx, data) {
                 if (data.rowsAffected === 1) {
                     me.__store.__cursors.forEach(function (cursor) {
                         cursor.__invalidateCache(); // Delete
@@ -17822,7 +17835,8 @@ IDBFactory.prototype.open = function (name, version) {
 
     if (arguments.length === 0) {
         throw new TypeError('Database name is required');
-    } else if (arguments.length >= 2) {
+    }
+    if (arguments.length >= 2) {
         version = Number(version);
         if (isNaN(version) || !isFinite(version) || version >= 0x20000000000000 || // 2 ** 53
         version < 1) {
@@ -17831,6 +17845,13 @@ IDBFactory.prototype.open = function (name, version) {
         }
     }
     name = String(name); // cast to a string
+    var sqlSafeName = util.escapeNUL(name);
+    var escapedDatabaseName = void 0;
+    try {
+        escapedDatabaseName = util.escapeDatabaseName(name);
+    } catch (err) {
+        throw err; // new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
+    }
 
     function dbCreateError(tx, err) {
         if (calledDbCreateError) {
@@ -17846,7 +17867,7 @@ IDBFactory.prototype.open = function (name, version) {
     }
 
     function openDB(oldVersion) {
-        var db = _CFG2.default.win.openDatabase(util.escapeDatabaseName(name), 1, name, _CFG2.default.DEFAULT_DB_SIZE);
+        var db = _CFG2.default.win.openDatabase(escapedDatabaseName, 1, name, _CFG2.default.DEFAULT_DB_SIZE);
         req.__readyState = 'done';
         if (version === undefined) {
             version = oldVersion || 1;
@@ -17879,9 +17900,9 @@ IDBFactory.prototype.open = function (name, version) {
                                             }
                                             // Attempt to revert
                                             if (oldVersion === 0) {
-                                                systx.executeSql('DELETE FROM dbVersions WHERE name = ?', [name], cb, reportError);
+                                                systx.executeSql('DELETE FROM dbVersions WHERE name = ?', [sqlSafeName], cb, reportError);
                                             } else {
-                                                systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [oldVersion, name], cb, reportError);
+                                                systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [oldVersion, sqlSafeName], cb, reportError);
                                             }
                                         });
                                         return;
@@ -17944,9 +17965,9 @@ IDBFactory.prototype.open = function (name, version) {
                                     };
                                 }
                                 if (oldVersion === 0) {
-                                    systx.executeSql('INSERT INTO dbVersions VALUES (?,?)', [name, version], versionSet, dbCreateError);
+                                    systx.executeSql('INSERT INTO dbVersions VALUES (?,?)', [sqlSafeName, version], versionSet, dbCreateError);
                                 } else {
-                                    systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [version, name], versionSet, dbCreateError);
+                                    systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [version, sqlSafeName], versionSet, dbCreateError);
                                 }
                             }, dbCreateError, null, function (currentTask, err, done, rollback, commit) {
                                 if (currentTask.readOnly || err) {
@@ -17973,7 +17994,7 @@ IDBFactory.prototype.open = function (name, version) {
 
     createSysDB(function () {
         sysdb.readTransaction(function (sysReadTx) {
-            sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE name = ?', [name], function (sysReadTx, data) {
+            sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE name = ?', [sqlSafeName], function (sysReadTx, data) {
                 if (data.rows.length === 0) {
                     // Database with this name does not exist
                     openDB(0);
@@ -18001,6 +18022,14 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         throw new TypeError('Database name is required');
     }
     name = String(name); // cast to a string
+    var sqlSafeName = util.escapeNUL(name);
+
+    var escapedDatabaseName = void 0;
+    try {
+        escapedDatabaseName = util.escapeDatabaseName(name);
+    } catch (err) {
+        throw err; // throw new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
+    }
 
     var sysdbFinishedCbDelete = function sysdbFinishedCbDelete(err, cb) {
         cb(err);
@@ -18034,7 +18063,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
             });
         }
         sysdb.readTransaction(function (sysReadTx) {
-            sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE name = ?', [name], function (sysReadTx, data) {
+            sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE name = ?', [sqlSafeName], function (sysReadTx, data) {
                 if (data.rows.length === 0) {
                     req.__result = undefined;
                     var e = new _Event.IDBVersionChangeEvent('success', { oldVersion: version, newVersion: null });
@@ -18050,9 +18079,9 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                 //  avoid committing anyways until all deletions are made and rollback the
                 //  `dbVersions` change if they fail
                 sysdb.transaction(function (systx) {
-                    systx.executeSql('DELETE FROM dbVersions WHERE name = ? ', [name], function () {
+                    systx.executeSql('DELETE FROM dbVersions WHERE name = ? ', [sqlSafeName], function () {
                         // Todo: Give config option to Node to delete the entire database file
-                        var db = _CFG2.default.win.openDatabase(util.escapeDatabaseName(name), 1, name, _CFG2.default.DEFAULT_DB_SIZE);
+                        var db = _CFG2.default.win.openDatabase(escapedDatabaseName, 1, name, _CFG2.default.DEFAULT_DB_SIZE);
                         db.transaction(function (tx) {
                             tx.executeSql('SELECT "name" FROM __sys__', [], function (tx, data) {
                                 var tables = data.rows;
@@ -18064,7 +18093,8 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                                         }, dbError);
                                     } else {
                                         // Delete all tables in this database, maintained in the sys table
-                                        tx.executeSql('DROP TABLE ' + util.escapeStore(tables.item(i).name), [], function () {
+                                        tx.executeSql('DROP TABLE ' + util.escapeStore(util.unescapeNUL( // Avoid double-escaping
+                                        tables.item(i).name)), [], function () {
                                             deleteTables(i + 1);
                                         }, function () {
                                             deleteTables(i + 1);
@@ -18166,7 +18196,7 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
             sysReadTx.executeSql('SELECT "name" FROM dbVersions', [], function (sysReadTx, data) {
                 var dbNames = new util.StringList();
                 for (var i = 0; i < data.rows.length; i++) {
-                    dbNames.push(data.rows.item(i).name);
+                    dbNames.push(util.unescapeNUL(data.rows.item(i).name));
                 }
                 req.__result = dbNames;
                 req.__readyState = 'done';
@@ -18269,8 +18299,7 @@ function IDBIndex(store, indexProperties) {
  * @protected
  */
 IDBIndex.__clone = function (index, store) {
-    // Don't need to clone `__deleted` as wouldn't get here
-    return new IDBIndex(store, {
+    var idx = new IDBIndex(store, {
         columnName: index.name,
         keyPath: index.keyPath,
         optionalParams: {
@@ -18278,6 +18307,8 @@ IDBIndex.__clone = function (index, store) {
             unique: index.unique
         }
     });
+    // idx.__deleted = index.__deleted;
+    return idx;
 };
 
 /**
@@ -18288,7 +18319,8 @@ IDBIndex.__clone = function (index, store) {
  * @protected
  */
 IDBIndex.__createIndex = function (store, index) {
-    var columnExists = !!store.__indexes[index.name] && store.__indexes[index.name].__deleted;
+    var idx = store.__indexes[index.name];
+    var columnExists = idx && idx.__deleted;
 
     // Add the index to the IDBObjectStore
     index.__pending = true;
@@ -18315,7 +18347,7 @@ IDBIndex.__createIndex = function (store, index) {
                     function addIndexEntry(i) {
                         if (i < data.rows.length) {
                             try {
-                                var value = _Sca2.default.decode(data.rows.item(i).value);
+                                var value = _Sca2.default.decode(util.unescapeNUL(data.rows.item(i).value));
                                 var indexKey = _Key2.default.evaluateKeyPathOnValue(value, index.keyPath, index.multiEntry);
                                 indexKey = _Key2.default.encode(indexKey, index.multiEntry);
                                 if (index.unique) {
@@ -18327,7 +18359,7 @@ IDBIndex.__createIndex = function (store, index) {
                                     indexValues[indexKey] = true;
                                 }
 
-                                tx.executeSql('UPDATE ' + util.escapeStore(store.name) + ' SET ' + util.escapeIndex(index.name) + ' = ? WHERE key = ?', [indexKey, data.rows.item(i).key], function (tx, data) {
+                                tx.executeSql('UPDATE ' + util.escapeStore(store.name) + ' SET ' + util.escapeIndex(index.name) + ' = ? WHERE key = ?', [util.escapeNUL(indexKey), data.rows.item(i).key], function (tx, data) {
                                     addIndexEntry(i + 1);
                                 }, error);
                             } catch (e) {
@@ -18403,7 +18435,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
     }
 
     _CFG2.default.DEBUG && console.log('Updating the index list for ' + store.name, indexList);
-    tx.executeSql('UPDATE __sys__ SET indexList = ? WHERE name = ?', [JSON.stringify(indexList), store.name], function () {
+    tx.executeSql('UPDATE __sys__ SET indexList = ? WHERE name = ?', [JSON.stringify(indexList), util.escapeNUL(store.name)], function () {
         success(store);
     }, failure);
 };
@@ -18516,6 +18548,7 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName) {
 
     var newNameType = 'BLOB';
     var storeName = store.name;
+    var escapedStoreName = util.escapeStore(storeName);
     var colNamesToPreserve = colInfoToPreserveArr.map(function (colInfo) {
         return colInfo[0];
     });
@@ -18528,13 +18561,13 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName) {
     // We could adapt the approach at http://stackoverflow.com/a/8430746/271577
     //    to make the approach reusable without passing column names, but it is a bit fragile
     store.transaction.__addNonRequestToTransactionQueue(function renameIndex(tx, args, success, error) {
-        var sql = 'ALTER TABLE ' + util.escapeStore(storeName) + ' RENAME TO tmp_' + util.escapeStore(storeName);
+        var sql = 'ALTER TABLE ' + escapedStoreName + ' RENAME TO tmp_' + escapedStoreName;
         tx.executeSql(sql, [], function (tx, data) {
-            var sql = 'CREATE TABLE ' + util.escapeStore(storeName) + '(' + listColInfoToPreserve + util.escapeIndex(newName) + ' ' + newNameType + ')';
+            var sql = 'CREATE TABLE ' + escapedStoreName + '(' + listColInfoToPreserve + util.escapeIndex(newName) + ' ' + newNameType + ')';
             tx.executeSql(sql, [], function (tx, data) {
-                var sql = 'INSERT INTO ' + util.escapeStore(storeName) + '(' + listColsToPreserve + util.escapeIndex(newName) + ') SELECT ' + listColsToPreserve + util.escapeIndex(oldName) + ' FROM tmp_' + util.escapeStore(storeName);
+                var sql = 'INSERT INTO ' + escapedStoreName + '(' + listColsToPreserve + util.escapeIndex(newName) + ') SELECT ' + listColsToPreserve + util.escapeIndex(oldName) + ' FROM tmp_' + escapedStoreName;
                 tx.executeSql(sql, [], function (tx, data) {
-                    var sql = 'DROP TABLE tmp_' + util.escapeStore(storeName);
+                    var sql = 'DROP TABLE tmp_' + escapedStoreName;
                     tx.executeSql(sql, [], function (tx, data) {
                         success();
                     }, function (tx, err) {
@@ -18612,10 +18645,10 @@ function executeFetchIndexData(unboundedDisallowed, count, index, hasKey, encode
         var record = null;
         var decode = opType === 'count' ? function () {} : opType === 'key' ? function (record) {
             // Key.convertValueToKey(record.key); // Already validated before storage
-            return _Key2.default.decode(record.key);
+            return _Key2.default.decode(util.unescapeNUL(record.key));
         } : function (record) {
             // when opType is value
-            return _Sca2.default.decode(record.value);
+            return _Sca2.default.decode(util.unescapeNUL(record.value));
         };
         if (index.multiEntry) {
             var escapedIndexName = util.escapeIndexName(index.name);
@@ -18787,12 +18820,12 @@ function setSQLForRange(range, quotedKeyColumnName, sql, sqlValues, addAnd, chec
         if (addAnd) sql.push('AND');
         if (range.lower !== undefined) {
             sql.push(quotedKeyColumnName, range.lowerOpen ? '>' : '>=', '?');
-            sqlValues.push(checkCached ? range.__lowerCached : _Key2.default.encode(range.lower));
+            sqlValues.push(util.escapeNUL(checkCached ? range.__lowerCached : _Key2.default.encode(range.lower)));
         }
         range.lower !== undefined && range.upper !== undefined && sql.push('AND');
         if (range.upper !== undefined) {
             sql.push(quotedKeyColumnName, range.upperOpen ? '<' : '<=', '?');
-            sqlValues.push(checkCached ? range.__upperCached : _Key2.default.encode(range.upper));
+            sqlValues.push(util.escapeNUL(checkCached ? range.__upperCached : _Key2.default.encode(range.upper)));
         }
     }
 }
@@ -18926,7 +18959,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
         var sql = ['CREATE TABLE', util.escapeStore(store.name), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
         _CFG2.default.DEBUG && console.log(sql);
         tx.executeSql(sql, [], function (tx, data) {
-            tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [store.name, JSON.stringify(store.keyPath), store.autoIncrement, '{}', 1], function () {
+            tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeNUL(store.name), JSON.stringify(store.keyPath), store.autoIncrement, '{}', 1], function () {
                 success(store);
             }, error);
         }, error);
@@ -18961,10 +18994,10 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
             failure((0, _DOMException.createDOMException)('UnknownError', 'Could not delete ObjectStore', err));
         }
 
-        tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList", "currNum" FROM __sys__ WHERE name = ?', [store.name], function (tx, data) {
+        tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList", "currNum" FROM __sys__ WHERE name = ?', [util.escapeNUL(store.name)], function (tx, data) {
             if (data.rows.length > 0) {
                 tx.executeSql('DROP TABLE ' + util.escapeStore(store.name), [], function () {
-                    tx.executeSql('DELETE FROM __sys__ WHERE name = ?', [store.name], function () {
+                    tx.executeSql('DELETE FROM __sys__ WHERE name = ?', [util.escapeNUL(store.name)], function () {
                         success();
                     }, error);
                 }, error);
@@ -19029,7 +19062,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
     var me = this;
 
     function getCurrentNumber(callback) {
-        tx.executeSql('SELECT currNum FROM __sys__ WHERE name = ?', [me.name], function (tx, data) {
+        tx.executeSql('SELECT currNum FROM __sys__ WHERE name = ?', [util.escapeNUL(me.name)], function (tx, data) {
             if (data.rows.length !== 1) {
                 callback(1);
             } else {
@@ -19127,17 +19160,17 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             _Key2.default.convertValueToKey(primaryKey);
             sqlStart.push(util.quote('key'), ',');
             sqlEnd.push('?,');
-            insertSqlValues.push(_Key2.default.encode(primaryKey));
+            insertSqlValues.push(util.escapeNUL(_Key2.default.encode(primaryKey)));
         }
         for (var key in paramMap) {
             sqlStart.push(util.escapeIndex(key) + ',');
             sqlEnd.push('?,');
-            insertSqlValues.push(paramMap[key]);
+            insertSqlValues.push(util.escapeNUL(paramMap[key]));
         }
         // removing the trailing comma
         sqlStart.push(util.quote('value') + ' )');
         sqlEnd.push('?)');
-        insertSqlValues.push(encoded);
+        insertSqlValues.push(util.escapeNUL(encoded));
 
         var insertSql = sqlStart.join(' ') + sqlEnd.join(' ');
         _CFG2.default.DEBUG && console.log('SQL for adding', insertSql, insertSqlValues);
@@ -19171,7 +19204,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             if (useNewForAutoInc) {
                 insert(function () {
                     var sql = 'UPDATE __sys__ SET currNum = ? WHERE name = ?';
-                    var sqlValues = [Math.floor(primaryKey) + 1, me.name];
+                    var sqlValues = [Math.floor(primaryKey) + 1, util.escapeNUL(me.name)];
                     _CFG2.default.DEBUG && console.log(sql, sqlValues);
                     tx.executeSql(sql, sqlValues, function (tx, data) {
                         success(primaryKey);
@@ -19190,7 +19223,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             } else {
                 insert(function () {
                     var sql = 'UPDATE __sys__ SET currNum = currNum + 1 WHERE name = ?';
-                    var sqlValues = [me.name];
+                    var sqlValues = [util.escapeNUL(me.name)];
                     _CFG2.default.DEBUG && console.log(sql, sqlValues);
                     tx.executeSql(sql, sqlValues, function (tx, data) {
                         success(primaryKey);
@@ -19258,7 +19291,7 @@ IDBObjectStore.prototype.put = function (value, key) {
                     _Key2.default.convertValueToKey(primaryKey);
                     var sql = 'DELETE FROM ' + util.escapeStore(me.name) + ' WHERE key = ?';
                     var encodedPrimaryKey = _Key2.default.encode(primaryKey);
-                    tx.executeSql(sql, [encodedPrimaryKey], function (tx, data) {
+                    tx.executeSql(sql, [util.escapeNUL(encodedPrimaryKey)], function (tx, data) {
                         _CFG2.default.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
                         me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, function () {
                             me.__cursors.forEach(function (cursor) {
@@ -19303,6 +19336,9 @@ IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
         count = 1;
     }
     if (count) {
+        if (typeof count !== 'number' || isNaN(count) || !isFinite(count)) {
+            throw new TypeError('The count parameter must be a finite number');
+        }
         sql.push('LIMIT', count);
     }
     sql = sql.join(' ');
@@ -19320,11 +19356,11 @@ IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
                 if (getKey) {
                     for (var i = 0; i < data.rows.length; i++) {
                         // Key.convertValueToKey(data.rows.item(i).key); // Already validated before storage
-                        ret.push(_Key2.default.decode(data.rows.item(i).key, false));
+                        ret.push(_Key2.default.decode(util.unescapeNUL(data.rows.item(i).key), false));
                     }
                 } else {
                     for (var _i = 0; _i < data.rows.length; _i++) {
-                        ret.push(_Sca2.default.decode(data.rows.item(0).value));
+                        ret.push(_Sca2.default.decode(util.unescapeNUL(data.rows.item(0).value)));
                     }
                 }
                 if (!getAll) {
@@ -19460,7 +19496,7 @@ IDBObjectStore.prototype.count = function (key) {
                 v: me.transaction.__addToTransactionQueue(function objectStoreCount(tx, args, success, error) {
                     var sql = 'SELECT * FROM ' + util.escapeStore(me.name) + (hasKey ? ' WHERE key = ?' : '');
                     var sqlValues = [];
-                    hasKey && sqlValues.push(_Key2.default.encode(key));
+                    hasKey && sqlValues.push(util.escapeNUL(_Key2.default.encode(key)));
                     tx.executeSql(sql, sqlValues, function (tx, data) {
                         success(data.rows.length);
                     }, function (tx, err) {
@@ -20143,12 +20179,10 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         // Steps for aborting an upgrade transaction
         me.db.__version = me.db.__oldVersion;
         me.db.__objectStoreNames = me.db.__oldObjectStoreNames;
-        Object.keys(me.__storeClones).forEach(function (objectStoreName) {
-            var store = me.__storeClones[objectStoreName];
+        Object.values(me.__storeClones).forEach(function (store) {
             store.__name = store.__originalName;
             store.__indexNames = store.__oldIndexNames;
-            Object.keys(store.__indexes).forEach(function (indexName) {
-                var index = store.__indexes[indexName];
+            Object.values(store.__indexes).forEach(function (index) {
                 index.__name = index.__originalName;
             });
         });
@@ -21823,7 +21857,7 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.isValidKeyPath = exports.defineReadonlyProperties = exports.throwIfNotClonable = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlLIKEEscape = exports.escapeIndexName = exports.escapeIndex = exports.escapeStore = exports.escapeDatabaseName = exports.quote = exports.StringList = undefined;
+exports.isValidKeyPath = exports.defineReadonlyProperties = exports.throwIfNotClonable = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlLIKEEscape = exports.escapeIndexName = exports.escapeIndex = exports.escapeStore = exports.unescapeDatabaseName = exports.escapeDatabaseName = exports.quote = exports.unescapeNUL = exports.escapeNUL = exports.StringList = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
@@ -21943,11 +21977,18 @@ if (cleanInterface) {
 
 function escapeNULAndCasing(arg) {
     // http://stackoverflow.com/a/6701665/271577
-    return arg.replace(/\^/g, '^^').replace(/\x00/g, '^0') // eslint-disable-line no-control-regex
+    return arg.replace(/\^/g, '^^').replace(/\0/g, '^0')
     // We need to avoid tables being treated as duplicates based on SQLite's case-insensitive table and column names
     // http://stackoverflow.com/a/17215009/271577
     // See also https://www.sqlite.org/faq.html#q18 re: Unicode case-insensitive not working
     .replace(/([A-Z])/g, '^$1');
+}
+
+function escapeNUL(arg) {
+    return arg.replace(/\^/g, '^^').replace(/\0/g, '^0');
+}
+function unescapeNUL(arg) {
+    return arg.replace(/^0/g, '\0').replace(/\^\^/g, '^');
 }
 
 function sqlEscape(arg) {
@@ -21964,7 +22005,40 @@ function quote(arg) {
 }
 
 function escapeDatabaseName(db) {
-    return 'D_' + escapeNULAndCasing(db); // Shouldn't have quoting (do we even need NUL/case escaping here?)
+    if (_CFG2.default.escapeDatabaseName) {
+        // We at least ensure NUL is escaped by default, but we need to still
+        //   handle empty string and possibly also length (potentially
+        //   throwing if too long), escaping casing (including Unicode?),
+        //   and escaping special characters depending on file system
+        return _CFG2.default.escapeDatabaseName(escapeNUL(db));
+    }
+    db = 'D_' + escapeNULAndCasing(db);
+    if (_CFG2.default.databaseCharacterEscapeList !== false) {
+        db = db.replace(_CFG2.default.databaseCharacterEscapeList ? new RegExp(_CFG2.default.databaseCharacterEscapeList, 'g') : /[\u0000-\u001F\u007F"*/:<>?\\|]/g, function (n0) {
+            return '^1' + n0.charCodeAt().toString(16).padStart(2, '0');
+        });
+    }
+    if (_CFG2.default.databaseNameLengthLimit !== false && db.length >= (_CFG2.default.databaseNameLengthLimit || 254)) {
+        throw new Error('Unexpectedly long database name supplied; length limit required for Node compatibility; passed length: ' + db.length + '; length limit setting: ' + (_CFG2.default.databaseNameLengthLimit || 254) + '.');
+    }
+    return db; // Shouldn't have quoting (do we even need NUL/case escaping here?)
+}
+
+// Not in use internally but supplied for convenience
+function unescapeDatabaseName(db) {
+    if (_CFG2.default.unescapeDatabaseName) {
+        // We at least ensure NUL is unescaped by default, but we need to still
+        //   handle empty string and possibly also length (potentially
+        //   throwing if too long), unescaping casing (including Unicode?),
+        //   and unescaping special characters depending on file system
+        return _CFG2.default.unescapeDatabaseName(unescapeNUL(db));
+    }
+
+    return db.slice(2) // D_
+    .replace(/\^1([0-9a-f]{2})/g, function (n0) {
+        return String.fromCharCode(parseInt(n0, 16));
+    }) // databaseCharacterEscapeList
+    .replace(/\^([A-Z])/g, '$1').replace(/\^0/g, '\0').replace(/\^\^/g, '^');
 }
 
 function escapeStore(store) {
@@ -22088,8 +22162,11 @@ function isValidKeyPath(keyPath) {
 }
 
 exports.StringList = StringList;
+exports.escapeNUL = escapeNUL;
+exports.unescapeNUL = unescapeNUL;
 exports.quote = quote;
 exports.escapeDatabaseName = escapeDatabaseName;
+exports.unescapeDatabaseName = unescapeDatabaseName;
 exports.escapeStore = escapeStore;
 exports.escapeIndex = escapeIndex;
 exports.escapeIndexName = escapeIndexName;

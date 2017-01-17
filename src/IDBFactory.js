@@ -51,7 +51,8 @@ IDBFactory.prototype.open = function (name, version) {
 
     if (arguments.length === 0) {
         throw new TypeError('Database name is required');
-    } else if (arguments.length >= 2) {
+    }
+    if (arguments.length >= 2) {
         version = Number(version);
         if (isNaN(version) || !isFinite(version) ||
             version >= 0x20000000000000 || // 2 ** 53
@@ -60,6 +61,13 @@ IDBFactory.prototype.open = function (name, version) {
         }
     }
     name = String(name); // cast to a string
+    const sqlSafeName = util.escapeNUL(name);
+    let escapedDatabaseName;
+    try {
+        escapedDatabaseName = util.escapeDatabaseName(name);
+    } catch (err) {
+        throw err; // new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
+    }
 
     function dbCreateError (tx, err) {
         if (calledDbCreateError) {
@@ -75,7 +83,7 @@ IDBFactory.prototype.open = function (name, version) {
     }
 
     function openDB (oldVersion) {
-        const db = CFG.win.openDatabase(util.escapeDatabaseName(name), 1, name, CFG.DEFAULT_DB_SIZE);
+        const db = CFG.win.openDatabase(escapedDatabaseName, 1, name, CFG.DEFAULT_DB_SIZE);
         req.__readyState = 'done';
         if (version === undefined) {
             version = oldVersion || 1;
@@ -106,9 +114,9 @@ IDBFactory.prototype.open = function (name, version) {
                                         }
                                         // Attempt to revert
                                         if (oldVersion === 0) {
-                                            systx.executeSql('DELETE FROM dbVersions WHERE name = ?', [name], cb, reportError);
+                                            systx.executeSql('DELETE FROM dbVersions WHERE name = ?', [sqlSafeName], cb, reportError);
                                         } else {
-                                            systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [oldVersion, name], cb, reportError);
+                                            systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [oldVersion, sqlSafeName], cb, reportError);
                                         }
                                     });
                                     return;
@@ -171,9 +179,9 @@ IDBFactory.prototype.open = function (name, version) {
                                 };
                             }
                             if (oldVersion === 0) {
-                                systx.executeSql('INSERT INTO dbVersions VALUES (?,?)', [name, version], versionSet, dbCreateError);
+                                systx.executeSql('INSERT INTO dbVersions VALUES (?,?)', [sqlSafeName, version], versionSet, dbCreateError);
                             } else {
-                                systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [version, name], versionSet, dbCreateError);
+                                systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [version, sqlSafeName], versionSet, dbCreateError);
                             }
                         }, dbCreateError, null, function (currentTask, err, done, rollback, commit) {
                             if (currentTask.readOnly || err) {
@@ -199,7 +207,7 @@ IDBFactory.prototype.open = function (name, version) {
 
     createSysDB(function () {
         sysdb.readTransaction(function (sysReadTx) {
-            sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE name = ?', [name], function (sysReadTx, data) {
+            sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE name = ?', [sqlSafeName], function (sysReadTx, data) {
                 if (data.rows.length === 0) {
                     // Database with this name does not exist
                     openDB(0);
@@ -227,6 +235,14 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         throw new TypeError('Database name is required');
     }
     name = String(name); // cast to a string
+    const sqlSafeName = util.escapeNUL(name);
+
+    let escapedDatabaseName;
+    try {
+        escapedDatabaseName = util.escapeDatabaseName(name);
+    } catch (err) {
+        throw err; // throw new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
+    }
 
     let sysdbFinishedCbDelete = function (err, cb) {
         cb(err);
@@ -260,7 +276,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
             });
         }
         sysdb.readTransaction(function (sysReadTx) {
-            sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE name = ?', [name], function (sysReadTx, data) {
+            sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE name = ?', [sqlSafeName], function (sysReadTx, data) {
                 if (data.rows.length === 0) {
                     req.__result = undefined;
                     const e = new IDBVersionChangeEvent('success', {oldVersion: version, newVersion: null});
@@ -276,9 +292,9 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                 //  avoid committing anyways until all deletions are made and rollback the
                 //  `dbVersions` change if they fail
                 sysdb.transaction(function (systx) {
-                    systx.executeSql('DELETE FROM dbVersions WHERE name = ? ', [name], function () {
+                    systx.executeSql('DELETE FROM dbVersions WHERE name = ? ', [sqlSafeName], function () {
                         // Todo: Give config option to Node to delete the entire database file
-                        const db = CFG.win.openDatabase(util.escapeDatabaseName(name), 1, name, CFG.DEFAULT_DB_SIZE);
+                        const db = CFG.win.openDatabase(escapedDatabaseName, 1, name, CFG.DEFAULT_DB_SIZE);
                         db.transaction(function (tx) {
                             tx.executeSql('SELECT "name" FROM __sys__', [], function (tx, data) {
                                 const tables = data.rows;
@@ -290,7 +306,11 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                                         }, dbError);
                                     } else {
                                         // Delete all tables in this database, maintained in the sys table
-                                        tx.executeSql('DROP TABLE ' + util.escapeStore(tables.item(i).name), [], function () {
+                                        tx.executeSql('DROP TABLE ' + util.escapeStore(
+                                            util.unescapeNUL( // Avoid double-escaping
+                                                tables.item(i).name
+                                            )
+                                        ), [], function () {
                                             deleteTables(i + 1);
                                         }, function () {
                                             deleteTables(i + 1);
@@ -392,7 +412,7 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
             sysReadTx.executeSql('SELECT "name" FROM dbVersions', [], function (sysReadTx, data) {
                 const dbNames = new util.StringList();
                 for (let i = 0; i < data.rows.length; i++) {
-                    dbNames.push(data.rows.item(i).name);
+                    dbNames.push(util.unescapeNUL(data.rows.item(i).name));
                 }
                 req.__result = dbNames;
                 req.__readyState = 'done';

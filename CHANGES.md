@@ -9,12 +9,17 @@
 - Security fix: Ensure LIKE clauses escape special characters
 - Security fix: Escape SQLite-disallowed-for-column-names NUL characters from
     database, store, and index names
+- Security fix: Escape/unescape NUL for safety with
+    node-websql->node-sqlite3 (part of fix for #274)
 - Security fix: Ensure quoting (for column names) escapes double quotes
 - Breaking change/Fix: Remove `IDBTransaction` mode constants and tests since
     now being removed from IndexedDB
 - Breaking change: If you were overriding/monkey-patching globals, these are
     no longer available with a shift to ES6 modules (see below). The CFG.js
     module can be imported in its place to change the default values, however.
+- Breaking change: Throw if database name is too long, defaulting to 254 (part
+    of fix for #274) (enforcing compatibility with Node, given our mapping it to
+    file naming on common file systems)
 - Breaking change (minor): Change "modules" property of `IDBFactory` to only
     expose `DOMException`, `Event`, and `IDBFactory` (replacing the former
     use of `idbModules` with ES6 modules and a CFG module for the globals:
@@ -27,6 +32,11 @@
     also remove unused `__multiEntryOffset`
 - Deprecate: Numeric constants as second arguments to
     `IDBDatabase.prototype.transaction` (use `readonly`/`readwrite` instead).
+- Enhancement: Add config to allow user to override `escapeDatabaseName`
+    function (and for convenience, `unescapeDatabaseName`) or to keep
+    it but configure its new config subcomponents,
+    `databaseCharacterBlacklist` and/or `databaseNameLengthLimit`
+     (part of fix for #274)
 - Enhancement: Throw upon receiving bad config property in config methods
 - Enhancement: Allow initial config object to `setGlobalVars`
     (e.g., for setting an early `CFG.win` value)

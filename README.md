@@ -194,7 +194,7 @@ shimIndexedDB.__setConfig(property, value);
 
 #### Configuration options
 
-The available properties are:
+The available properties relevant to browser or Node are:
 
 - __DEBUG__ - Boolean (equivalent to calling `shimIndexedDB.__debug(val)`)
 - __cursorPreloadPackSize__ - Number indicating how many records to preload for
@@ -221,6 +221,65 @@ The available properties are:
     browser may use this information to suggest the use of this quota to the
     user rather than prompting the user regularly for say incremental 5MB
     permissions).
+
+The following config are mostly relevant to Node but has bearing on the
+browser, particularly if one changes the defaults.
+
+- __escapeDatabaseName__ - Due to the Node implementation's reliance on
+    `node-websql`/`node-sqlite3` which create files for each database
+    (and the fact that we haven't provided an option to map filename-safe
+    IDs to arbitrary, user-supplied IndexedDB database names),
+    when the user creates IndexedDB databases, the Node implementation
+    will be subject to the limitations systems can have with filenames.
+    Since IndexedDBShim aims to facilitate code that can work on both
+    the server and client, we have applied some escaping and restrictions
+    by default. The default behavior is to prefix the database name with
+    `D_` (to avoid filesystem, SQLite, and `node-sqlite3` problems if
+    the user supplies the IndexedDB-permitted empty string database
+    name), to escape `^` which we use as our own generally-filename-supported
+    escape character, to escape NUL (which is also problematic in SQLite
+    identifiers and in `node-sqlite3` in general) as `^0`, to escape upper-case
+    letters A-Z as `^A`, `^B`, etc. (since IndexedDB insists on
+    case-sensitivity while file systems often do not), to escape any
+    characters mentioned in `databaseCharacterEscapeList` (as `^1` + a
+    two-hexadecimal-digit-padded sequence), and to throw an `Error` if
+    `databaseNameLengthLimit` is not set to `false` and is surpassed
+    by the resulting escaped name. You can use this `escapeDatabaseName`
+    callback property to override the default behavior, with the callback
+    accepting a single argument of the user's database name choice and
+    returning your own filename-safe value. Note that we do escape NUL and
+    our own escape character (`^`) before passing in the value (for the
+    above-mentioned reasons), though you could unescape and
+    return your own escaped format. While some file systems may not have
+    the other restrictions, you should at a minimum anticipate
+    the possibility for empty strings (since we rely on the result of this
+    function for internal escaping as a SQLite identifier) as well as
+    realize the string `":memory:"` will, if unescaped, have a special
+    meaning with `node-sqlite3`. You can make the escaping more lax,
+    e.g., if your file system is case-sensitive, or you could make it more
+    stringent (e.g., escaping other case-sensitive Unicode characters--a
+    PR would incidentally be welcome, as well as one to optionally support
+    `node-sqlite3`'s interpretation of the empty string and `":memory:"` types
+    for creating temporary databases).
+- __unescapeDatabaseName__ - Not used internally; usable as a convenience method for
+    unescaping strings formatted per our default escaping conventions
+- __databaseCharacterEscapeList__ - When this property and
+    `escapeDatabaseName` are not overridden, the following characters will
+    be escaped by default, even though IndexedDB has no such restrictions,
+    as they are restricted in a number of file systems, even modern,
+    Unicode-supporting ones: `0x00-0x1F 0x7F " * / : < > ? \ |`. This
+    property can be overridden with a string that will be converted into
+    an alternate regular expression or supplied with `false` to disable
+    any character limitations.
+- __databaseNameLengthLimit__ - When this property and
+    `escapeDatabaseName` are not overridden, an error will be thrown if
+    the escaped filename exceeds the length of 254 characters (the shortest
+    typical modern file length maximum). Provide a number to change the
+    limit or supply `false` to disable any length checking.
+
+The following config items are for Node only and are mostly for development
+debugging.
+
 - __sqlBusyTimeout__ - Integer used by Node WebSQL for
     [SQLite config](https://github.com/mapbox/node-sqlite3/wiki/API#databaseconfigureoption-value)
     to set the [busy timeout](https://www.sqlite.org/c3ref/busy_timeout.html)
@@ -231,6 +290,8 @@ The available properties are:
 - __sqlProfile__ - Callback used by Node WebSQL for
     [SQLite config](https://github.com/mapbox/node-sqlite3/wiki/API#databaseconfigureoption-value)
     (Invoked every time an SQL statement executes)
+    // Overcoming limitations with node-sqlite3/storing database name on file systems
+    // https://en.wikipedia.org/wiki/Filename#Reserved_characters_and_words
 
 ### shimIndexedDB.\__getConfig()
 
@@ -267,8 +328,8 @@ an error nor does WebSQL permit manual ROLLBACK commands so that we
 could undo the various WebSQL calls we need to make up IndexedDB
 transactions.
 
-The special build of `websql` that we use does allow such spec-compliant
-(and data-integrity-friendly!) rollback behavior.
+The special build of `websql` that we use does allow such
+IndexedDB-spec-compliant (and data-integrity-friendly!) rollback behavior.
 
 ### iOS
 
