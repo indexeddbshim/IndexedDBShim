@@ -16709,6 +16709,41 @@ function createNativeDOMException(name, message) {
 function createError(name, message) {
     var e = new Error(message); // DOMException uses the same `toString` as `Error`, so no need to add
     e.name = name || 'DOMException';
+    e.code = { // From web-platform-tests testharness.js name_code_map (though not in new spec)
+        IndexSizeError: 1,
+        HierarchyRequestError: 3,
+        WrongDocumentError: 4,
+        InvalidCharacterError: 5,
+        NoModificationAllowedError: 7,
+        NotFoundError: 8,
+        NotSupportedError: 9,
+        InUseAttributeError: 10,
+        InvalidStateError: 11,
+        SyntaxError: 12,
+        InvalidModificationError: 13,
+        NamespaceError: 14,
+        InvalidAccessError: 15,
+        TypeMismatchError: 17,
+        SecurityError: 18,
+        NetworkError: 19,
+        AbortError: 20,
+        URLMismatchError: 21,
+        QuotaExceededError: 22,
+        TimeoutError: 23,
+        InvalidNodeTypeError: 24,
+        DataCloneError: 25,
+
+        EncodingError: 0,
+        NotReadableError: 0,
+        UnknownError: 0,
+        ConstraintError: 0,
+        DataError: 0,
+        TransactionInactiveError: 0,
+        ReadOnlyError: 0,
+        VersionError: 0,
+        OperationError: 0,
+        NotAllowedError: 0
+    }[name];
     e.message = message;
     return e;
 }
@@ -18259,6 +18294,10 @@ var _Key2 = _interopRequireDefault(_Key);
 
 var _IDBKeyRange = require('./IDBKeyRange.js');
 
+var _IDBTransaction = require('./IDBTransaction.js');
+
+var _IDBTransaction2 = _interopRequireDefault(_IDBTransaction);
+
 var _Sca = require('./Sca.js');
 
 var _Sca2 = _interopRequireDefault(_Sca);
@@ -18459,7 +18498,7 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
     if (me.objectStore.__deleted) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', "This index's object store has been deleted");
     }
-    IDBTransaction.__assertActive(me.objectStore.transaction);
+    _IDBTransaction2.default.__assertActive(me.objectStore.transaction);
 
     if (nullDisallowed && range == null) {
         throw (0, _DOMException.createDOMException)('DataError', 'No key or range was specified');
@@ -18604,8 +18643,8 @@ Object.defineProperty(IDBIndex.prototype, 'name', {
     set: function set(newName) {
         var me = this;
         var oldName = me.name;
-        IDBTransaction.__assertVersionChange(me.objectStore.transaction);
-        IDBTransaction.__assertActive(me.objectStore.transaction);
+        _IDBTransaction2.default.__assertVersionChange(me.objectStore.transaction);
+        _IDBTransaction2.default.__assertActive(me.objectStore.transaction);
         if (me.__deleted) {
             throw (0, _DOMException.createDOMException)('InvalidStateError', 'This index has been deleted');
         }
@@ -18734,7 +18773,7 @@ exports.executeFetchIndexData = executeFetchIndexData;
 exports.IDBIndex = IDBIndex;
 exports.default = IDBIndex;
 
-},{"./CFG.js":380,"./DOMException.js":381,"./IDBCursor.js":383,"./IDBKeyRange.js":387,"./Key.js":391,"./Sca.js":392,"./util.js":397}],387:[function(require,module,exports){
+},{"./CFG.js":380,"./DOMException.js":381,"./IDBCursor.js":383,"./IDBKeyRange.js":387,"./IDBTransaction.js":390,"./Key.js":391,"./Sca.js":392,"./util.js":397}],387:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -18929,6 +18968,7 @@ IDBObjectStore.__clone = function (store, transaction) {
         idbdb: store.__idbdb,
         cursors: store.__cursors
     }, transaction);
+
     newStore.__indexes = store.__indexes;
     newStore.__indexNames = store.indexNames;
     newStore.__oldIndexNames = store.__oldIndexNames;
@@ -18949,6 +18989,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
     // Add the object store to WebSQL
     var transaction = db.__versionTransaction;
     _IDBTransaction2.default.__assertVersionChange(transaction);
+
     transaction.__addNonRequestToTransactionQueue(function createObjectStore(tx, args, success, failure) {
         function error(tx, err) {
             _CFG2.default.DEBUG && console.log(err);
@@ -18988,6 +19029,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
     // Remove the object store from WebSQL
     var transaction = db.__versionTransaction;
     _IDBTransaction2.default.__assertVersionChange(transaction);
+
     transaction.__addNonRequestToTransactionQueue(function deleteObjectStore(tx, args, success, failure) {
         function error(tx, err) {
             _CFG2.default.DEBUG && console.log(err);
@@ -19543,6 +19585,20 @@ IDBObjectStore.prototype.index = function (indexName) {
     if (!index || index.__deleted) {
         throw (0, _DOMException.createDOMException)('NotFoundError', 'Index "' + indexName + '" does not exist on ' + me.name);
     }
+    /*
+    // const storeClone = me.transaction.objectStore(me.name); // Ensure clone is made if not present
+    // const indexes = storeClone.__indexes;
+    const storeClones = me.transaction.__storeClones;
+    if (!storeClones[me.name] || storeClones[me.name].__deleted) { // The latter condition is to allow store
+                                                         //   recreation to create new clone object
+        storeClones[me.name] = IDBObjectStore.__clone(me, me.transaction);
+    }
+      const indexes = storeClones[me.name].__indexes;
+    if (!indexes[indexName]) {
+        indexes[indexName] = IDBIndex.__clone(index, me);
+    }
+    return indexes[indexName];
+    */
     return _IDBIndex.IDBIndex.__clone(index, me);
 };
 

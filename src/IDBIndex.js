@@ -3,6 +3,7 @@ import {IDBCursor, IDBCursorWithValue} from './IDBCursor.js';
 import * as util from './util.js';
 import Key from './Key.js';
 import {setSQLForRange, IDBKeyRange} from './IDBKeyRange.js';
+import IDBTransaction from './IDBTransaction.js';
 import Sca from './Sca.js';
 import CFG from './CFG.js';
 

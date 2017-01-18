@@ -14,10 +14,12 @@ dbName*
 # Should be deleted by Grunt
 __sysdb__*
 D_dbName*
-D_IndexedDBShim_Test_Database_*
+D_about*
+D_^I*
 D_test.sqlite
 D_TestDatabase*
 D_testdb-*
+D_blank*
 D_database_name*
 D_idbtransaction*
 D_db.sqlite*

@@ -143,10 +143,10 @@ module.exports = function (grunt) {
                 src: ['D_test_database*']
             },
             w3c: {
-                src: ['D_db*', 'D_test-db*', 'D_about', 'D_^I^D^B*', 'D_blank*']
+                src: ['D_db*', 'D_testdb-*', 'D_test-db*', 'D_about*', 'D_^I^D^B*', 'D_blank*', 'D_database_name*', 'D_idbtransaction*']
             },
             w3cOld: {
-                src: ['D_testdb-*', 'D_database_name*', 'D_idbtransaction*', 'D_db.sqlite*']
+                src: ['D_db.sqlite*', 'D_testdb-*', 'D_database_name*', 'D_idbtransaction*']
             },
             sysDB: {
                 src: ['__sysdb__*']
@@ -268,7 +268,7 @@ module.exports = function (grunt) {
         },
 
         eslint: {
-            files: ['src/**/*.js', 'tests-qunit/**/*.js', 'tests-mocha/**/*.js', 'Gruntfile.js'],
+            files: ['src/**/*.js', 'tests-qunit/**/*.js', 'tests-mocha/**/*.js', 'test-support/node*.js', 'test-support/environment.js', 'Gruntfile.js'],
             options: {
                 configFile: '.eslintrc'
             }

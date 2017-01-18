@@ -17,6 +17,7 @@
             };
         });
     }
+    queuedModule('IDBFactory');
     openDb('webkitGetDatabaseNames', function (db, assert, done) {
         if (!window.indexedDB.webkitGetDatabaseNames) {
             assert.ok(false, 'Database does not support (non-standard) IDBFactory.prototype.webkitGetDatabaseNames()');
@@ -27,8 +28,8 @@
         }
         var req = window.indexedDB.webkitGetDatabaseNames();
         req.onsuccess = function () {
-            assert.equal(req.result.length, 1);
-            assert.equal(req.result.item(0), DB.NAME);
+            assert.equal(req.result.length, 1, 'Database list successfully found');
+            assert.equal(req.result.item(0), DB.NAME, 'Database lits successfully matched earlier-added database');
             _('Database names retrieved');
             db.close();
             nextTest();

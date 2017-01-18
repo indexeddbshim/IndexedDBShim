@@ -1,8 +1,3 @@
-/* eslint-disable no-var */
-Array.prototype.includes = function (item) { // eslint-disable-line no-extend-native
-    return this.indexOf(item) > -1;
-};
-
 const cheerio = require('cheerio');
 const fs = require('fs');
 const path = require('path');
@@ -18,7 +13,7 @@ fs.mkdir(path.join('test-support', 'js'), function () {
         if (err) { return console.log(err); }
         const htmlExt = /\.html?$/;
         const htmlFiles = items.filter((item) => item.match(htmlExt));
-        var ct = 0;
+        let ct = 0;
 
         // Iterate IndexedDB files
         htmlFiles.forEach((htmlFile, i) => {
@@ -29,10 +24,10 @@ fs.mkdir(path.join('test-support', 'js'), function () {
                 if (err) { return console.log(err); }
 
                 // Extract JavaScript content and save to file
-                var $ = cheerio.load(data);
+                const $ = cheerio.load(data);
 
                 // List files without standard 3 items
-                var scriptCount = $('script[src]').length;
+                const scriptCount = $('script[src]').length;
 
                 // Confirm there are no unexpected elements which should be handled in the test
                 // <(?!/?(script(>| src| type="text/javascript")|div( id="?log"?)?>|link|meta|!|title>|html|http|DOM|head>|body>| |=))
@@ -49,10 +44,7 @@ fs.mkdir(path.join('test-support', 'js'), function () {
                 });
 
                 // Build script content
-                var scriptContent = '';
-                // var scriptContent = "require('../node-indexeddbshim-test');\n";
-
-                scriptContent += "document.title = '" + $('title').text().replace(/'/g, "\\'") + "';\n";
+                let scriptContent = '';
                 $('script[src]').each(function (script, item) {
                     const src = $(this).attr('src');
                     if (scriptCount === 3 && !supportAndTestHarnessScripts.includes(src)) {
@@ -64,7 +56,9 @@ fs.mkdir(path.join('test-support', 'js'), function () {
                     } else {
                         // scriptContent += "require('" + src.replace(/^\//, '../../').replace(/^support/, '../support') + "');\n";
                     }
+                    scriptContent += '/' + '*beginscript::' + src + '::endscript*' + '/\n';
                 });
+                scriptContent += "document.title = '" + $('title').text().replace(/'/g, "\\'") + "';\n";
                 scriptContent += $('script').text();
 
                 fs.writeFile(outputFile, scriptContent, function (err) {

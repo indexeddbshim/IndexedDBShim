@@ -15,6 +15,41 @@ function createNativeDOMException (name, message) {
 function createError (name, message) {
     const e = new Error(message); // DOMException uses the same `toString` as `Error`, so no need to add
     e.name = name || 'DOMException';
+    e.code = { // From web-platform-tests testharness.js name_code_map (though not in new spec)
+        IndexSizeError: 1,
+        HierarchyRequestError: 3,
+        WrongDocumentError: 4,
+        InvalidCharacterError: 5,
+        NoModificationAllowedError: 7,
+        NotFoundError: 8,
+        NotSupportedError: 9,
+        InUseAttributeError: 10,
+        InvalidStateError: 11,
+        SyntaxError: 12,
+        InvalidModificationError: 13,
+        NamespaceError: 14,
+        InvalidAccessError: 15,
+        TypeMismatchError: 17,
+        SecurityError: 18,
+        NetworkError: 19,
+        AbortError: 20,
+        URLMismatchError: 21,
+        QuotaExceededError: 22,
+        TimeoutError: 23,
+        InvalidNodeTypeError: 24,
+        DataCloneError: 25,
+
+        EncodingError: 0,
+        NotReadableError: 0,
+        UnknownError: 0,
+        ConstraintError: 0,
+        DataError: 0,
+        TransactionInactiveError: 0,
+        ReadOnlyError: 0,
+        VersionError: 0,
+        OperationError: 0,
+        NotAllowedError: 0
+    }[name];
     e.message = message;
     return e;
 }

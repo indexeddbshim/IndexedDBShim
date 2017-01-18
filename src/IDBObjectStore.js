@@ -57,6 +57,7 @@ IDBObjectStore.__clone = function (store, transaction) {
         idbdb: store.__idbdb,
         cursors: store.__cursors
     }, transaction);
+
     newStore.__indexes = store.__indexes;
     newStore.__indexNames = store.indexNames;
     newStore.__oldIndexNames = store.__oldIndexNames;
@@ -77,6 +78,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
     // Add the object store to WebSQL
     const transaction = db.__versionTransaction;
     IDBTransaction.__assertVersionChange(transaction);
+
     transaction.__addNonRequestToTransactionQueue(function createObjectStore (tx, args, success, failure) {
         function error (tx, err) {
             CFG.DEBUG && console.log(err);
@@ -116,6 +118,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
     // Remove the object store from WebSQL
     const transaction = db.__versionTransaction;
     IDBTransaction.__assertVersionChange(transaction);
+
     transaction.__addNonRequestToTransactionQueue(function deleteObjectStore (tx, args, success, failure) {
         function error (tx, err) {
             CFG.DEBUG && console.log(err);
@@ -673,6 +676,21 @@ IDBObjectStore.prototype.index = function (indexName) {
     if (!index || index.__deleted) {
         throw createDOMException('NotFoundError', 'Index "' + indexName + '" does not exist on ' + me.name);
     }
+    /*
+    // const storeClone = me.transaction.objectStore(me.name); // Ensure clone is made if not present
+    // const indexes = storeClone.__indexes;
+    const storeClones = me.transaction.__storeClones;
+    if (!storeClones[me.name] || storeClones[me.name].__deleted) { // The latter condition is to allow store
+                                                         //   recreation to create new clone object
+        storeClones[me.name] = IDBObjectStore.__clone(me, me.transaction);
+    }
+
+    const indexes = storeClones[me.name].__indexes;
+    if (!indexes[indexName]) {
+        indexes[indexName] = IDBIndex.__clone(index, me);
+    }
+    return indexes[indexName];
+    */
     return IDBIndex.__clone(index, me);
 };
 

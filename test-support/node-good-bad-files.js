@@ -1,4 +1,4 @@
-var goodBad = {
+const goodBad = {
     goodFiles: [
         'idbkeyrange.js'
     ],

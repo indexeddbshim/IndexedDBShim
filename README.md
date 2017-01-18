@@ -452,13 +452,15 @@ To run the Node tests, run the following:
     `npm run mock`, `npm run w3c-old`). Note that only `fake` is
     currently passing in full, however.
 4. `npm run w3c` (you must first run
-    `git submodule update --init --recursive` if you have not already
-    recursively cloned the repository). Note that some of these tests
-    may not be passing because of the test environment not being
+    `git submodule update --init --recursive` (possibly without [init](http://stackoverflow.com/a/10168693/271577)),
+    `git submodule foreach --recursive git fetch`, and
+    `git submodule foreach git merge origin master`). Note that some of
+    these tests may not be passing because of the test environment not being
     completely configured for Node. We are working on fixing this.
     There are some older and less complete W3C tests that can be run
     with `npm run w3c-old`, but the goal is to remove these once
-    the new ones are configured properly.
+    the new ones are configured properly and working in the browser
+    as do the old tests.
 
 To run a specific Mocha test (which includes the `tests-polyfill`
 tests), run `npm --test=... run mocha`.
