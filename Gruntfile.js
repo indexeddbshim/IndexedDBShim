@@ -268,7 +268,7 @@ module.exports = function (grunt) {
         },
 
         eslint: {
-            files: ['src/**/*.js', 'tests-qunit/**/*.js', 'tests-mocha/**/*.js', 'test-support/node*.js', 'test-support/environment.js', 'Gruntfile.js'],
+            files: ['src/**/*.js', 'tests-qunit/**/*.js', 'tests-mocha/**/*.js', 'test-support/node*.js', 'test-support/environment.js', 'test-support/custom-reporter.js', 'Gruntfile.js'],
             options: {
                 configFile: '.eslintrc'
             }

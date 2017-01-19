@@ -18,6 +18,7 @@
     "build-browserNoninvasive": "grunt build-browserNoninvasive",
     "build-node": "grunt build-node",
     "clean": "grunt clean",
+    "eslint": "grunt eslint",
     "w3c-build": "grunt clean-w3c && node test-support/node-buildjs",
     "test": "npm run sauce-qunit",
     "mocha": "grunt clean-mocha && grunt mocha && grunt clean-mocha",
@@ -89,6 +90,6 @@
   "bundleDependencies": [],
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=0.10"
+    "node": ">=6.9.2"
   }
 }
