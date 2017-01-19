@@ -12,13 +12,13 @@ const vmTimeout = 5000; // Time until we give up on the vm (increasing to 40000 
 const fileArg = process.argv[2];
 const dirPath = path.join('test-support', 'js');
 const idbTestPath = 'web-platform-tests';
-const scores = {
+const statuses = {
     Pass: 0,
     Fail: 0,
     Timeout: 0,
     'Not Run': 0
 };
-const shimTests = {
+const shimFiles = {
     Pass: [],
     Fail: [],
     Timeout: [],
@@ -36,7 +36,7 @@ process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
 });
 */
-function readAndEvaluate (jsFiles, initial = '', item = 0) {
+function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
     const fileName = jsFiles[item];
 
     const finished = () => {
@@ -51,18 +51,18 @@ function readAndEvaluate (jsFiles, initial = '', item = 0) {
                 //   in the tests (more tests do pass with these timeouts);
                 //   the timeout, however, does not even seem to be necessary.
                 // setTimeout(() => {
-                readAndEvaluate(jsFiles, initial, ++item);
+                readAndEvaluate(jsFiles, initial, ending, ++item);
                 // }, intervalSpacing);
                 return;
             }
-            shimTests['Files with all tests passing'] = shimTests.Pass.filter((p) =>
-                !shimTests.Fail.includes(p) &&
-                !shimTests.Timeout.includes(p) &&
-                !shimTests['Not Run'].includes(p)
+            shimFiles['Files with all tests passing'] = shimFiles.Pass.filter((p) =>
+                !shimFiles.Fail.includes(p) &&
+                !shimFiles.Timeout.includes(p) &&
+                !shimFiles['Not Run'].includes(p)
             );
             console.log('\nTest files by status (may recur):');
             console.log(
-                Object.entries(shimTests).reduce((_, [status, files]) => {
+                Object.entries(shimFiles).reduce((_, [status, files]) => {
                     if (!files.length) {
                         return _ + '  ' + status + ': 0\n';
                     }
@@ -73,8 +73,8 @@ function readAndEvaluate (jsFiles, initial = '', item = 0) {
             console.log('  Number of files processed: ' + ct);
 
             console.log('\nNumber of total tests by status:');
-            scores['Total tests'] = Object.values(scores).reduce((s, score) => s + score);
-            console.log(JSON.stringify(scores, null, 2) + '\n');
+            statuses['Total tests'] = Object.values(statuses).reduce((s, status) => s + status);
+            console.log(JSON.stringify(statuses, null, 2) + '\n');
             process.exit();
         }
         finishedCheck();
@@ -125,23 +125,13 @@ function readAndEvaluate (jsFiles, initial = '', item = 0) {
                 // Todo: We should be able to copy only those items from jsdom's window that
                 //    we need and thereby avoid doing this (fragile) replace here.
                 harnessContent = harnessContent.replace(/return window/, 'return global');
-                const allContent = initial +
-                        // Insert our own reporting once tests ready for evaluation
-                        // Todo: Make a PR for testharness to use this (more easily overridable)
-                        //   function at this point (for a less fragile solution)
-                        harnessContent.replace(
-                            /(html \+= "<\/tbody><\/table>";)/,
-                            '$1\n' +
-                            'reportResults(tests, status_text, assertions, "' +
-                                fileName.replace(/"/g, '\\"').replace(/\\/g, '\\\\') +
-                            '");\n'
-                        ) +
-                    '\n' + content;
+                // early envt't, harness, reporting env't, specific test
+                const allContent = initial + '\n' + harnessContent + '\n' + ending + '\n' + content;
                 try {
                     // Only pass in safe objects
                     const sandboxObj = {
                         // Todo: Remove require, process dependencies!
-                        require, process, console, scores, shimTests, finished
+                        require, process, console, statuses, shimFiles, finished, fileName
                     };
                     vm.runInNewContext(allContent, sandboxObj, {
                         displayErrors: true,
@@ -179,14 +169,17 @@ function readAndEvaluateFiles (err, jsFiles) {
         // jsFiles = jsFiles.slice(0, 3);
 
         /*
-        Current test statuses with 5 exclusions (vmTimeout = 5000; increment = vmTimeout + 500):
+        Current test statuses with 5 exclusions (vmTimeout = 5000):
           "Pass": 510,
           "Fail": 80,
           "Timeout": 0,
           "Not Run": 22,
           "Total tests": 612
         */
-        readAndEvaluate(jsFiles, initial);
+        fs.readFile(path.join('test-support', 'custom-reporter.js'), 'utf8', function (err, ending) {
+            if (err) { return console.log(err); }
+            readAndEvaluate(jsFiles, initial, ending);
+        });
     });
 }
 
