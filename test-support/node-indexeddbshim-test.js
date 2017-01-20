@@ -193,7 +193,8 @@ function readAndEvaluateFiles (err, jsFiles) {
 
         // Hard-coding problematic files for testing
         // jsFiles = jsFiles.slice(0, 3);
-        // jsFiles = ['name-scopes.js'];
+        // jsFiles = ['idbindex-rename.js','idbobjectstore-rename-abort.js','idbobjectstore-rename-store.js','transaction-abort-index-metadata-revert.js','transaction-abort-object-store-metadata-revert.js']; // Not running tests
+        // jsFiles = ['name-scopes.js']; // Necessarily excluded tests
 
         /*
         Current test statuses with 5 exclusions (vmTimeout = 40000):
