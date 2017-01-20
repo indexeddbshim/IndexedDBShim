@@ -36,6 +36,7 @@ function createSysDB (success, failure) {
  */
 function IDBFactory () {
     this.modules = {DOMException, Event: typeof Event !== 'undefined' ? Event : ShimEvent, ShimEvent, IDBFactory};
+    this.utils = {createDOMException}; // Expose for ease in simulating such exception during testing
     this.__connections = [];
 }
 

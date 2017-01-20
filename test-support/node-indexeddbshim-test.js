@@ -4,6 +4,7 @@ const path = require('path');
 const {goodFiles, badFiles} = require('./node-good-bad-files');
 const vm = require('vm');
 const jsdom = require('jsdom').jsdom;
+const CY = require('cyclonejs');
 
 // CONFIG
 const vmTimeout = 40000; // Time until we give up on the vm (increasing to 40000 didn't make a difference on coverage in earlier versions)
@@ -144,6 +145,18 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
                     // Todo: We might switch based on file to normally try non-Unicode version
                     // indexeddbshimNonUnicode(window);
                     indexeddbshim(window);
+                    // Patch postMessage to throw for SCA (as needed by tests in key_invalid.htm)
+                    const _postMessage = window.postMessage.bind(window);
+                    // Todo: Submit this as PR to jsdom
+                    window.postMessage = function (...args) {
+                        try {
+                            CY.clone(args[0]);
+                        } catch (cloneErr) {
+                            // Todo: Submit the likes of this as a PR to cyclonejs
+                            throw window.indexedDB.utils.createDOMException('DataCloneError', 'Could not clone the message.');
+                        }
+                        _postMessage(...args);
+                    };
                     shimNS.window = window;
 
                     // Should only pass in safe objects
@@ -189,8 +202,8 @@ function readAndEvaluateFiles (err, jsFiles) {
 
         /*
         Current test statuses with 5 exclusions (vmTimeout = 40000):
-          "Pass": 506,
-          "Fail": 84,
+          "Pass": 513,
+          "Fail": 77,
           "Timeout": 0,
           "Not Run": 22,
           "Total tests": 612

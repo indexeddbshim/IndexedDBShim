@@ -11259,6 +11259,7 @@ function createSysDB(success, failure) {
  */
 function IDBFactory() {
     this.modules = { DOMException: _DOMException.DOMException, Event: typeof Event !== 'undefined' ? Event : _Event.ShimEvent, ShimEvent: _Event.ShimEvent, IDBFactory: IDBFactory };
+    this.utils = { createDOMException: _DOMException.createDOMException }; // Expose for ease in simulating such exception during testing
     this.__connections = [];
 }
 
@@ -15466,16 +15467,12 @@ function isArrayBufferOrView (obj) {
 */
 
 function isNotClonable(value) {
-    var erred = false;
     try {
         _cyclonejs2.default.clone(value);
+        return false;
     } catch (err) {
-        erred = true;
+        return true;
     }
-    // Todo: Add the extra checking to PR to cyclonejs if valid
-    return erred || ['function', 'symbol'].includes(typeof value === 'undefined' ? 'undefined' : _typeof(value)) || isObj(value) && (value instanceof Error || // Duck-typing with some util.isError would be better, but too easy to get a false match
-    value.nodeType > 0 && typeof value.nodeName === 'string' // DOM nodes
-    );
 }
 
 function throwIfNotClonable(value, errMsg) {
