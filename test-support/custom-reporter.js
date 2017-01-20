@@ -1,15 +1,7 @@
-/* globals statuses, shimFiles, fileName, finished, add_completion_callback */
+/* globals shimNS, add_completion_callback */
+// Now set-up our mechanism to report results back
 (function () {
-    const shimNS = {
-        write: function (msg) {
-            (process && process.stdout && process.stdout.isTTY) ? process.stdout.write(msg) : console.log(msg);
-        },
-        writeln: function (msg) {
-            console.log(msg);
-        }
-    };
-
-    const colors = require('colors/safe');
+    const colors = shimNS.colors;
     const theme = {
         pass: 'green',
         fail: 'red',
@@ -30,8 +22,8 @@
     function write (statusText, status) {
         const color = colors[Object.keys(theme)[status]];
         let msg = color(statusText);
-        statuses[statusText] += 1;
-        msg += statuses[statusText];
+        shimNS.statuses[statusText] += 1;
+        msg += shimNS.statuses[statusText];
         shimNS.write(msg);
     }
 
@@ -39,6 +31,7 @@
         // Todo: Look instead on `id=log` and possibly `id=summary` or
         //      `id=metadata_cache` if we add one (and `id=metadata_cache`?)
         // Insert our own reporting to be ready once tests evaluate
+        const fileName = shimNS.fileName;
         const trs = [...document.querySelectorAll('table#results > tbody > tr')];
         trs.forEach((tr, i) => {
             const test = tests[i];
@@ -50,18 +43,18 @@
                 assertions = undefined;
             }
             write(statusText, test.status);
-            if (!shimFiles[statusText].includes(fileName)) shimFiles[statusText].push(fileName);
+            if (!shimNS.files[statusText].includes(fileName)) shimNS.files[statusText].push(fileName);
             shimNS.writeln(' (' + fileName + '): ' + test.name);
             if (assertions) shimNS.writeln(assertions);
             if (test.message && test.stack) shimNS.writeln((test.message || ' ') + test.stack);
         });
-        finished();
+        shimNS.finished();
     }
     add_completion_callback((...args) => {
         try {
             reportResults(...args);
         } catch (err) {
-            console.log('err' + err);
+            shimNS.writeln('err' + err);
         }
     });
 }());

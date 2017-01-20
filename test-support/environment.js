@@ -1,9 +1,9 @@
+/* globals shimNS */
 const global = this;
 var self = global; // eslint-disable-line no-var
 self.parent = self;
 
-const jsdom = require('jsdom').jsdom;
-const doc = jsdom('<div id="log"></div>', {});
+const doc = shimNS.jsdom('<div id="log"></div>', {});
 var window = doc.defaultView; // eslint-disable-line no-var
 
 // We could do this for `window` but some tests use some basic DOM,
@@ -18,9 +18,9 @@ var window = doc.defaultView; // eslint-disable-line no-var
     this[prop] = window[prop];
 }, this);
 
-// Todo: We might switch to conditionally use Unicode version
 // require('../dist/indexeddbshim-node')(window);
 require('../dist/indexeddbshim-UnicodeIdentifiers-node')(global);
+// shimNS.indexeddbshim(global);
 window.indexedDB = global.indexedDB;
 
 /*

@@ -12,17 +12,32 @@ const vmTimeout = 5000; // Time until we give up on the vm (increasing to 40000 
 const fileArg = process.argv[2];
 const dirPath = path.join('test-support', 'js');
 const idbTestPath = 'web-platform-tests';
-const statuses = {
-    Pass: 0,
-    Fail: 0,
-    Timeout: 0,
-    'Not Run': 0
-};
-const shimFiles = {
-    Pass: [],
-    Fail: [],
-    Timeout: [],
-    'Not Run': []
+const shimNS = {
+    colors: require('colors/safe'),
+    jsdom: require('jsdom').jsdom,
+    // doc: require('jsdom').jsdom('<div id="log"></div>', {}),
+    // indexeddbshim: require('../dist/indexeddbshim-UnicodeIdentifiers-node'),
+    // indexeddbshimNonUnicode: require('../dist/indexeddbshim-node'),
+    fileName: '',
+    finished: function () { throw new Error('Finished callback not set'); },
+    write: function (msg) {
+        (process && process.stdout && process.stdout.isTTY) ? process.stdout.write(msg) : console.log(msg);
+    },
+    writeln: function (msg) {
+        console.log(msg);
+    },
+    statuses: {
+        Pass: 0,
+        Fail: 0,
+        Timeout: 0,
+        'Not Run': 0
+    },
+    files: {
+        Pass: [],
+        Fail: [],
+        Timeout: [],
+        'Not Run': []
+    }
 };
 let ct = 0;
 
@@ -39,7 +54,7 @@ process.on('unhandledRejection', (reason, p) => {
 function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
     const fileName = jsFiles[item];
 
-    const finished = () => {
+    shimNS.finished = () => {
         ct += 1;
         function finishedCheck () {
             if (ct < jsFiles.length) {
@@ -55,14 +70,16 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
                 // }, intervalSpacing);
                 return;
             }
-            shimFiles['Files with all tests passing'] = shimFiles.Pass.filter((p) =>
-                !shimFiles.Fail.includes(p) &&
-                !shimFiles.Timeout.includes(p) &&
-                !shimFiles['Not Run'].includes(p)
+            shimNS.files['Files with all tests passing'] = shimNS.files.Pass.filter((p) =>
+                !shimNS.files.Fail.includes(p) &&
+                !shimNS.files.Timeout.includes(p) &&
+                !shimNS.files['Not Run'].includes(p)
             );
             console.log('\nTest files by status (may recur):');
             console.log(
-                Object.entries(shimFiles).reduce((_, [status, files]) => {
+                // Object.entries(shimNS.files).reduce((_, [status, files]) => { // Sometimes failing in Node 6.9.2
+                Object.keys(shimNS.files).reduce((_, status) => {
+                    const files = shimNS.files[status];
                     if (!files.length) {
                         return _ + '  ' + status + ': 0\n';
                     }
@@ -73,8 +90,8 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
             console.log('  Number of files processed: ' + ct);
 
             console.log('\nNumber of total tests by status:');
-            statuses['Total tests'] = Object.values(statuses).reduce((s, status) => s + status);
-            console.log(JSON.stringify(statuses, null, 2) + '\n');
+            shimNS.statuses['Total tests'] = Object.values(shimNS.statuses).reduce((s, statusCt) => s + statusCt);
+            console.log(JSON.stringify(shimNS.statuses, null, 2) + '\n');
             process.exit();
         }
         finishedCheck();
@@ -90,7 +107,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
         'transaction-lifetime.js' // Problem creating object store
     ];
     if (excluded.includes(fileName)) {
-        finished();
+        shimNS.finished();
         return;
     }
 
@@ -130,8 +147,12 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
                 try {
                     // Only pass in safe objects
                     const sandboxObj = {
-                        // Todo: Remove require, process dependencies!
-                        require, process, console, statuses, shimFiles, finished, fileName
+                        // Todo: We might switch based on file to normally try non-Unicode version
+                        // shimNS.indexeddbshim = shimNS.indexeddbshimNonUnicode;
+                        // Todo: Remove require dependency!
+                        require,
+                        // console,
+                        shimNS
                     };
                     vm.runInNewContext(allContent, sandboxObj, {
                         displayErrors: true,
@@ -150,7 +171,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
                     fs.writeFile(path.join('test-support', 'latest-erring-bundled.js'), fileSave, function (err) {
                         if (err) { return console.log(err); }
                     });
-                    finished();
+                    shimNS.finished();
                 }
             }
         );

@@ -29,7 +29,8 @@
     "mock": "grunt clean-mock && grunt mock && grunt clean-mock",
     "w3c-old": "grunt clean-w3c-old && grunt w3c-old && grunt clean-w3c-old",
     "tests-polyfill": "grunt clean-polyfill && npm run fake && npm run mock && npm run w3c-old && browserify-test -t [ babelify --presets es2015 ] tests-polyfill/**/*.js",
-    "w3c": "npm run w3c-build && node test-support/node-indexeddbshim-test && grunt clean-w3c",
+    "w3c": "npm run w3c-build && npm run w3c-test",
+    "w3c-test": "node test-support/node-indexeddbshim-test && grunt clean-w3c",
     "w3c-good": "npm run w3c -- good",
     "w3c-bad": "npm run w3c -- bad"
   },
