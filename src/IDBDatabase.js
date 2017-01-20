@@ -3,6 +3,7 @@ import {createEvent} from './Event.js';
 import * as util from './util.js';
 import IDBObjectStore from './IDBObjectStore.js';
 import IDBTransaction from './IDBTransaction.js';
+import Sca from './Sca.js';
 import CFG from './CFG.js';
 import EventTarget from 'eventtarget';
 
@@ -29,7 +30,8 @@ function IDBDatabase (db, name, oldVersion, version, storeProperties) {
         //  as readonly, so we copy all its properties (except our
         //  custom `currNum` which we don't need) onto a new object
         itemCopy.name = item.name;
-        ['keyPath', 'autoInc', 'indexList'].forEach(function (prop) {
+        itemCopy.keyPath = Sca.decode(item.keyPath);
+        ['autoInc', 'indexList'].forEach(function (prop) {
             itemCopy[prop] = JSON.parse(item[prop]);
         });
         itemCopy.idbdb = this;

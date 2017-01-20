@@ -112,7 +112,13 @@ function escapeNULAndCasing (arg) {
         // We need to avoid tables being treated as duplicates based on SQLite's case-insensitive table and column names
         // http://stackoverflow.com/a/17215009/271577
         // See also https://www.sqlite.org/faq.html#q18 re: Unicode case-insensitive not working
-        .replace(/([A-Z])/g, '^$1');
+        .replace(/([A-Z])/g, '^$1')
+        .replace(/([\uD800-\uDBFF])(?![\uDC00-\uDFFF])|(^|[^\uD800-\uDBFF])([\uDC00-\uDFFF])/g, function (_, unmatchedHighSurrogate, unmatchedLowSurrogate) {
+            if (unmatchedHighSurrogate) {
+                return '^2' + unmatchedHighSurrogate + '\uDC00'; // Add a low surrogate for compatibility with `node-sqlite3`: http://bugs.python.org/issue12569 and http://stackoverflow.com/a/6701665/271577
+            }
+            return '^3\uD800' + unmatchedLowSurrogate;
+        });
 }
 
 function escapeNUL (arg) {
@@ -174,9 +180,11 @@ function unescapeDatabaseName (db) {
     }
 
     return db.slice(2) // D_
-        .replace(/\^1([0-9a-f]{2})/g, (n0) => String.fromCharCode(parseInt(n0, 16))) // databaseCharacterEscapeList
-        .replace(/\^([A-Z])/g, '$1')
-        .replace(/\^0/g, '\0')
+        .replace(/(\^+)1([0-9a-f]{2})/g, (_, esc, hex) => esc % 2 ? String.fromCharCode(parseInt(hex, 16)) : _) // databaseCharacterEscapeList
+        .replace(/(\^+)3\uD800([\uDC00-\uDFFF])/g, (_, esc, lowSurr) => esc % 2 ? lowSurr : _)
+        .replace(/(\^+)2([\uD800-\uDBFF])\uDC00/g, (_, esc, highSurr) => esc % 2 ? highSurr : _)
+        .replace(/(\^+)([A-Z])/g, (_, esc, upperCase) => esc % 2 ? upperCase : _)
+        .replace(/(\^+)0/g, (_, esc) => esc % 2 ? '\0' : _)
         .replace(/\^\^/g, '^');
 }
 

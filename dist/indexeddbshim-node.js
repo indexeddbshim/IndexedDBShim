@@ -17954,6 +17954,10 @@ var _IDBTransaction = require('./IDBTransaction.js');
 
 var _IDBTransaction2 = _interopRequireDefault(_IDBTransaction);
 
+var _Sca = require('./Sca.js');
+
+var _Sca2 = _interopRequireDefault(_Sca);
+
 var _CFG = require('./CFG.js');
 
 var _CFG2 = _interopRequireDefault(_CFG);
@@ -17992,7 +17996,8 @@ function IDBDatabase(db, name, oldVersion, version, storeProperties) {
         //  as readonly, so we copy all its properties (except our
         //  custom `currNum` which we don't need) onto a new object
         itemCopy.name = item.name;
-        ['keyPath', 'autoInc', 'indexList'].forEach(function (prop) {
+        itemCopy.keyPath = _Sca2.default.decode(item.keyPath);
+        ['autoInc', 'indexList'].forEach(function (prop) {
             itemCopy[prop] = JSON.parse(item[prop]);
         });
         itemCopy.idbdb = _this;
@@ -18154,7 +18159,7 @@ Object.assign(IDBDatabase.prototype, _eventtarget2.default.prototype);
 exports.default = IDBDatabase;
 module.exports = exports['default'];
 
-},{"./CFG.js":381,"./DOMException.js":382,"./Event.js":383,"./IDBObjectStore.js":389,"./IDBTransaction.js":391,"./util.js":398,"eventtarget":300}],386:[function(require,module,exports){
+},{"./CFG.js":381,"./DOMException.js":382,"./Event.js":383,"./IDBObjectStore.js":389,"./IDBTransaction.js":391,"./Sca.js":393,"./util.js":398,"eventtarget":300}],386:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -19362,16 +19367,18 @@ IDBObjectStore.__createObjectStore = function (db, store) {
     transaction.__addNonRequestToTransactionQueue(function createObjectStore(tx, args, success, failure) {
         function error(tx, err) {
             _CFG2.default.DEBUG && console.log(err);
-            throw (0, _DOMException.createDOMException)('UnknownError', 'Could not create object store "' + store.name + '"', err);
+            failure((0, _DOMException.createDOMException)('UnknownError', 'Could not create object store "' + store.name + '"', err));
         }
 
         // key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
         var sql = ['CREATE TABLE', util.escapeStore(store.name), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
         _CFG2.default.DEBUG && console.log(sql);
         tx.executeSql(sql, [], function (tx, data) {
-            tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeNUL(store.name), JSON.stringify(store.keyPath), store.autoIncrement, '{}', 1], function () {
-                success(store);
-            }, error);
+            _Sca2.default.encode(store.keyPath, function (encodedKeyPath) {
+                tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeNUL(store.name), encodedKeyPath, store.autoIncrement, '{}', 1], function () {
+                    success(store);
+                }, error);
+            });
         }, error);
     });
 };
@@ -22382,7 +22389,12 @@ function escapeNULAndCasing(arg) {
     // We need to avoid tables being treated as duplicates based on SQLite's case-insensitive table and column names
     // http://stackoverflow.com/a/17215009/271577
     // See also https://www.sqlite.org/faq.html#q18 re: Unicode case-insensitive not working
-    .replace(/([A-Z])/g, '^$1');
+    .replace(/([A-Z])/g, '^$1').replace(/([\uD800-\uDBFF])(?![\uDC00-\uDFFF])|(^|[^\uD800-\uDBFF])([\uDC00-\uDFFF])/g, function (_, unmatchedHighSurrogate, unmatchedLowSurrogate) {
+        if (unmatchedHighSurrogate) {
+            return '^2' + unmatchedHighSurrogate + '\uDC00'; // Add a low surrogate for compatibility with `node-sqlite3`: http://bugs.python.org/issue12569 and http://stackoverflow.com/a/6701665/271577
+        }
+        return '^3\uD800' + unmatchedLowSurrogate;
+    });
 }
 
 function escapeNUL(arg) {
@@ -22436,10 +22448,18 @@ function unescapeDatabaseName(db) {
     }
 
     return db.slice(2) // D_
-    .replace(/\^1([0-9a-f]{2})/g, function (n0) {
-        return String.fromCharCode(parseInt(n0, 16));
+    .replace(/(\^+)1([0-9a-f]{2})/g, function (_, esc, hex) {
+        return esc % 2 ? String.fromCharCode(parseInt(hex, 16)) : _;
     }) // databaseCharacterEscapeList
-    .replace(/\^([A-Z])/g, '$1').replace(/\^0/g, '\0').replace(/\^\^/g, '^');
+    .replace(/(\^+)3\uD800([\uDC00-\uDFFF])/g, function (_, esc, lowSurr) {
+        return esc % 2 ? lowSurr : _;
+    }).replace(/(\^+)2([\uD800-\uDBFF])\uDC00/g, function (_, esc, highSurr) {
+        return esc % 2 ? highSurr : _;
+    }).replace(/(\^+)([A-Z])/g, function (_, esc, upperCase) {
+        return esc % 2 ? upperCase : _;
+    }).replace(/(\^+)0/g, function (_, esc) {
+        return esc % 2 ? '\0' : _;
+    }).replace(/\^\^/g, '^');
 }
 
 function escapeStore(store) {

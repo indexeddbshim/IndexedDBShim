@@ -82,16 +82,18 @@ IDBObjectStore.__createObjectStore = function (db, store) {
     transaction.__addNonRequestToTransactionQueue(function createObjectStore (tx, args, success, failure) {
         function error (tx, err) {
             CFG.DEBUG && console.log(err);
-            throw createDOMException('UnknownError', 'Could not create object store "' + store.name + '"', err);
+            failure(createDOMException('UnknownError', 'Could not create object store "' + store.name + '"', err));
         }
 
         // key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
         const sql = ['CREATE TABLE', util.escapeStore(store.name), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
         CFG.DEBUG && console.log(sql);
         tx.executeSql(sql, [], function (tx, data) {
-            tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeNUL(store.name), JSON.stringify(store.keyPath), store.autoIncrement, '{}', 1], function () {
-                success(store);
-            }, error);
+            Sca.encode(store.keyPath, function (encodedKeyPath) {
+                tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeNUL(store.name), encodedKeyPath, store.autoIncrement, '{}', 1], function () {
+                    success(store);
+                }, error);
+            });
         }, error);
     });
 };

@@ -100,11 +100,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
     // Exclude those currently breaking the tests
     // Todo: Replace with `uncaughtException` handlers above?
     const excluded = [
-        'idb_webworkers.js', // No Worker object
-        'idbtransaction_objectStoreNames.js', // Throwing on replacement character in object store name
-        'keypath.js', // Circular keypath
-        'name-scopes.js', // ES templates
-        'transaction-lifetime.js' // Problem creating object store
+        'name-scopes.js' // ES templates
     ];
     if (excluded.includes(shimNS.fileName)) {
         shimNS.finished();
@@ -196,17 +192,16 @@ function readAndEvaluateFiles (err, jsFiles) {
         // console.log(JSON.stringify(jsFiles)); // See what files we've got
 
         // Hard-coding problematic files for testing
-        // jsFiles = ['idb_webworkers.js', 'idbtransaction_objectStoreNames.js'];
         // jsFiles = jsFiles.slice(0, 3);
-        // jsFiles = ['key_invalid.js'];
+        // jsFiles = ['name-scopes.js'];
 
         /*
         Current test statuses with 5 exclusions (vmTimeout = 40000):
-          "Pass": 513,
-          "Fail": 77,
+          "Pass": 537,
+          "Fail": 82,
           "Timeout": 0,
           "Not Run": 22,
-          "Total tests": 612
+          "Total tests": 641
         */
         fs.readFile(path.join('test-support', 'custom-reporter.js'), 'utf8', function (err, ending) {
             if (err) { return console.log(err); }

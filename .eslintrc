@@ -42,7 +42,6 @@
     "sinon": false
   },
   "rules": {
-    "compat/compat": 2,
     "semi": [2, "always"],
     "indent": ["error", 4],
     "one-var": 0,
