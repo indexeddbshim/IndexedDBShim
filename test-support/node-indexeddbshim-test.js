@@ -191,7 +191,7 @@ function readAndEvaluateFiles (err, jsFiles) {
 
         // Hard-coding problematic files for testing
         // jsFiles = jsFiles.slice(0, 3);
-        // jsFiles = ['idbindex-rename.js','idbobjectstore-rename-abort.js','idbobjectstore-rename-store.js','transaction-abort-index-metadata-revert.js','transaction-abort-object-store-metadata-revert.js']; // Not running tests
+        // jsFiles = ['idbindex-rename.js', 'idbobjectstore-rename-abort.js', 'idbobjectstore-rename-store.js', 'transaction-abort-index-metadata-revert.js', 'transaction-abort-object-store-metadata-revert.js']; // Not running tests
 
         /*
         Current test statuses with 0 files excluded (vmTimeout = 40000):
