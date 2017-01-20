@@ -756,7 +756,7 @@ define(String.prototype, "padRight", "".padEnd);
 );
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":303}],4:[function(require,module,exports){
+},{"_process":304}],4:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -2665,7 +2665,7 @@ function isnan (val) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"base64-js":4,"ieee754":301,"isarray":302}],6:[function(require,module,exports){
+},{"base64-js":4,"ieee754":302,"isarray":303}],6:[function(require,module,exports){
 require('../../modules/core.regexp.escape');
 module.exports = require('../../modules/_core').RegExp.escape;
 },{"../../modules/_core":27,"../../modules/core.regexp.escape":123}],7:[function(require,module,exports){
@@ -8720,6 +8720,374 @@ require('./modules/web.immediate');
 require('./modules/web.dom.iterable');
 module.exports = require('./modules/_core');
 },{"./modules/_core":27,"./modules/es6.array.copy-within":124,"./modules/es6.array.every":125,"./modules/es6.array.fill":126,"./modules/es6.array.filter":127,"./modules/es6.array.find":129,"./modules/es6.array.find-index":128,"./modules/es6.array.for-each":130,"./modules/es6.array.from":131,"./modules/es6.array.index-of":132,"./modules/es6.array.is-array":133,"./modules/es6.array.iterator":134,"./modules/es6.array.join":135,"./modules/es6.array.last-index-of":136,"./modules/es6.array.map":137,"./modules/es6.array.of":138,"./modules/es6.array.reduce":140,"./modules/es6.array.reduce-right":139,"./modules/es6.array.slice":141,"./modules/es6.array.some":142,"./modules/es6.array.sort":143,"./modules/es6.array.species":144,"./modules/es6.date.now":145,"./modules/es6.date.to-iso-string":146,"./modules/es6.date.to-json":147,"./modules/es6.date.to-primitive":148,"./modules/es6.date.to-string":149,"./modules/es6.function.bind":150,"./modules/es6.function.has-instance":151,"./modules/es6.function.name":152,"./modules/es6.map":153,"./modules/es6.math.acosh":154,"./modules/es6.math.asinh":155,"./modules/es6.math.atanh":156,"./modules/es6.math.cbrt":157,"./modules/es6.math.clz32":158,"./modules/es6.math.cosh":159,"./modules/es6.math.expm1":160,"./modules/es6.math.fround":161,"./modules/es6.math.hypot":162,"./modules/es6.math.imul":163,"./modules/es6.math.log10":164,"./modules/es6.math.log1p":165,"./modules/es6.math.log2":166,"./modules/es6.math.sign":167,"./modules/es6.math.sinh":168,"./modules/es6.math.tanh":169,"./modules/es6.math.trunc":170,"./modules/es6.number.constructor":171,"./modules/es6.number.epsilon":172,"./modules/es6.number.is-finite":173,"./modules/es6.number.is-integer":174,"./modules/es6.number.is-nan":175,"./modules/es6.number.is-safe-integer":176,"./modules/es6.number.max-safe-integer":177,"./modules/es6.number.min-safe-integer":178,"./modules/es6.number.parse-float":179,"./modules/es6.number.parse-int":180,"./modules/es6.number.to-fixed":181,"./modules/es6.number.to-precision":182,"./modules/es6.object.assign":183,"./modules/es6.object.create":184,"./modules/es6.object.define-properties":185,"./modules/es6.object.define-property":186,"./modules/es6.object.freeze":187,"./modules/es6.object.get-own-property-descriptor":188,"./modules/es6.object.get-own-property-names":189,"./modules/es6.object.get-prototype-of":190,"./modules/es6.object.is":194,"./modules/es6.object.is-extensible":191,"./modules/es6.object.is-frozen":192,"./modules/es6.object.is-sealed":193,"./modules/es6.object.keys":195,"./modules/es6.object.prevent-extensions":196,"./modules/es6.object.seal":197,"./modules/es6.object.set-prototype-of":198,"./modules/es6.object.to-string":199,"./modules/es6.parse-float":200,"./modules/es6.parse-int":201,"./modules/es6.promise":202,"./modules/es6.reflect.apply":203,"./modules/es6.reflect.construct":204,"./modules/es6.reflect.define-property":205,"./modules/es6.reflect.delete-property":206,"./modules/es6.reflect.enumerate":207,"./modules/es6.reflect.get":210,"./modules/es6.reflect.get-own-property-descriptor":208,"./modules/es6.reflect.get-prototype-of":209,"./modules/es6.reflect.has":211,"./modules/es6.reflect.is-extensible":212,"./modules/es6.reflect.own-keys":213,"./modules/es6.reflect.prevent-extensions":214,"./modules/es6.reflect.set":216,"./modules/es6.reflect.set-prototype-of":215,"./modules/es6.regexp.constructor":217,"./modules/es6.regexp.flags":218,"./modules/es6.regexp.match":219,"./modules/es6.regexp.replace":220,"./modules/es6.regexp.search":221,"./modules/es6.regexp.split":222,"./modules/es6.regexp.to-string":223,"./modules/es6.set":224,"./modules/es6.string.anchor":225,"./modules/es6.string.big":226,"./modules/es6.string.blink":227,"./modules/es6.string.bold":228,"./modules/es6.string.code-point-at":229,"./modules/es6.string.ends-with":230,"./modules/es6.string.fixed":231,"./modules/es6.string.fontcolor":232,"./modules/es6.string.fontsize":233,"./modules/es6.string.from-code-point":234,"./modules/es6.string.includes":235,"./modules/es6.string.italics":236,"./modules/es6.string.iterator":237,"./modules/es6.string.link":238,"./modules/es6.string.raw":239,"./modules/es6.string.repeat":240,"./modules/es6.string.small":241,"./modules/es6.string.starts-with":242,"./modules/es6.string.strike":243,"./modules/es6.string.sub":244,"./modules/es6.string.sup":245,"./modules/es6.string.trim":246,"./modules/es6.symbol":247,"./modules/es6.typed.array-buffer":248,"./modules/es6.typed.data-view":249,"./modules/es6.typed.float32-array":250,"./modules/es6.typed.float64-array":251,"./modules/es6.typed.int16-array":252,"./modules/es6.typed.int32-array":253,"./modules/es6.typed.int8-array":254,"./modules/es6.typed.uint16-array":255,"./modules/es6.typed.uint32-array":256,"./modules/es6.typed.uint8-array":257,"./modules/es6.typed.uint8-clamped-array":258,"./modules/es6.weak-map":259,"./modules/es6.weak-set":260,"./modules/es7.array.includes":261,"./modules/es7.asap":262,"./modules/es7.error.is-error":263,"./modules/es7.map.to-json":264,"./modules/es7.math.iaddh":265,"./modules/es7.math.imulh":266,"./modules/es7.math.isubh":267,"./modules/es7.math.umulh":268,"./modules/es7.object.define-getter":269,"./modules/es7.object.define-setter":270,"./modules/es7.object.entries":271,"./modules/es7.object.get-own-property-descriptors":272,"./modules/es7.object.lookup-getter":273,"./modules/es7.object.lookup-setter":274,"./modules/es7.object.values":275,"./modules/es7.observable":276,"./modules/es7.reflect.define-metadata":277,"./modules/es7.reflect.delete-metadata":278,"./modules/es7.reflect.get-metadata":280,"./modules/es7.reflect.get-metadata-keys":279,"./modules/es7.reflect.get-own-metadata":282,"./modules/es7.reflect.get-own-metadata-keys":281,"./modules/es7.reflect.has-metadata":283,"./modules/es7.reflect.has-own-metadata":284,"./modules/es7.reflect.metadata":285,"./modules/es7.set.to-json":286,"./modules/es7.string.at":287,"./modules/es7.string.match-all":288,"./modules/es7.string.pad-end":289,"./modules/es7.string.pad-start":290,"./modules/es7.string.trim-left":291,"./modules/es7.string.trim-right":292,"./modules/es7.symbol.async-iterator":293,"./modules/es7.symbol.observable":294,"./modules/es7.system.global":295,"./modules/web.dom.iterable":296,"./modules/web.immediate":297,"./modules/web.timers":298}],300:[function(require,module,exports){
+/**
+ * Cyclone.js: An Adaptation of the HTML5 structured cloning alogrithm.
+ * @author Travis Kaufman <travis.kaufman@gmail.com>
+ * @license MIT.
+ */
+
+// This module can recursively clone objects, including those containing
+// number, boolean, string, date, and regex objects. It can also clone objects
+// which include cyclic references to itself, including nested cyclic
+// references. It is tested in all ES5-compatible environments.
+(function(root) {
+  'use strict';
+
+  var _hasOwn = Object.prototype.hasOwnProperty;
+  var _toString = Object.prototype.toString;
+  var _slice = Array.prototype.slice;
+
+  function _isFunc(obj) {
+    return (typeof obj === 'function');
+  }
+
+  // Quick and dirty shallow-copy functionality for options hash
+  function _mergeParams(src/*, target1, ..., targetN*/) {
+    return _slice.call(arguments, 1).reduce(function(target, mixin) {
+      for (var key in mixin) {
+        if (_hasOwn.call(mixin, key) && !_hasOwn.call(target, key)) {
+          target[key] = mixin[key];
+        }
+      }
+      return target;
+    }, src);
+  }
+
+  // We shim ES6's Map here if it's not in the environment already. Although
+  // it would be better to use WeakMaps here, this is impossible to do with ES5
+  // since references to objects won't be garbage collected if they're still
+  // in the map, so it's better to keep the implementation consistent.
+  // We can ignore coverage of the following ternary statement.
+  /* istanbul ignore next */
+  var Map = _isFunc(root.Map) ? root.Map : function Map() {
+    Object.defineProperties(this, {
+      inputs: {
+        value: [],
+        enumerable: false
+      },
+      outputs: {
+        value: [],
+        enumerable: false
+      }
+    });
+  };
+
+  // All we need are the `get` and `set` public-facing methods so we shim just
+  // them.
+
+  // Ignoring this and the subsequent if statement since we don't need to cover
+  // shim conditionals.
+  /* istanbul ignore next */
+  if (!_isFunc(Map.prototype.set)) {
+    // Map a given `input` object to a given `output` object. Relatively
+    // straightforward.
+    Map.prototype.set = function(input, output) {
+      // Note that here for our purposes we *never* have to assert that
+      // we're re-assigning since clones will always map 1:1 and never be
+      // overridden by another clone in one go. Therefore that conditional logic
+      // is omitted.
+      this.inputs.push(input);
+      this.outputs.push(output);
+
+      // As per the specification, return the Map object
+      return this;
+    };
+  }
+
+  /* istanbul ignore next */
+  if (!_isFunc(Map.prototype.get)) {
+    // Retrieve the object that's mapped to `input`, or null if input is not
+    // found within the transfer map.
+    Map.prototype.get = function(input) {
+      var idx = this.inputs.indexOf(input);
+      var output;
+
+      if (idx > -1) {
+        output = this.outputs[idx];
+      }
+
+      return output;
+    };
+  }
+
+  // Any custom cloning procedures defined by the client will be stored here.
+  var _customCloneProcedures = [];
+
+  // Performs the "internal structured clone" portion of the structured cloning
+  // algorithm. `input` is any valid object, and `mMap` is a(n empty)
+  // Map instance. `options` is the same as it is for `clone`
+  function _iSClone(input, mMap, options) {
+
+    if (input === null) {
+      return null;
+    }
+
+    if (Object(input) === input) {
+      return _handleObjectClone(input, mMap, options);
+    }
+
+    // If the value is a primitive, simply return it.
+    return input;
+  }
+
+  // Here lies the meat and potatoes of the algorithm. `_handleObjectClone`
+  // is responsible for creating deep copies of complex objects. Its parameters
+  // are the same as for `_isClone`.
+  function _handleObjectClone(input, mMap, options) {
+    // First we make sure that we aren't dealing with a circular reference.
+    var _selfRef = mMap.get(input);
+    if (_selfRef !== undefined) {
+      return _selfRef;
+    }
+
+    // We also check up front to make sure that a client-defined custom
+    // procedure has not been registered for this type of object. If it has,
+    // it takes priority over any of the implementations below.
+    var _cloneAttempt = _attemptCustomClone(input);
+    if (typeof _cloneAttempt !== 'undefined') {
+      return _cloneAttempt;
+    }
+
+    // Most supported object types can be copied simply by creating a new
+    // instance of the object using its current value, so we save that in this
+    // variable.
+    var val = input.valueOf();
+    var obType = _toString.call(input);
+    var output;
+    // We define a collection as either an array of Objects other than String,
+    // Number, Boolean, Date, or RegExp objects. Basically it's any structure
+    // where recursive cloning may be necessary.
+    var isCollection = false;
+
+    switch (obType) {
+      // These cases follow the W3C's specification for how certain objects
+      // are handled. Note that jshint will complain about using Object
+      // wrappers for primitives (as it should), but we have to handle this
+      // case should the client pass one in.
+
+      /*jshint -W053 */
+      case '[object String]':
+        output = new String(val);
+        break;
+
+      case '[object Number]':
+        output = new Number(val);
+        break;
+
+      case '[object Boolean]':
+        output = new Boolean(val);
+        break;
+
+      case '[object Date]':
+        output = new Date(val);
+        break;
+
+      case '[object RegExp]':
+        output = _handleRegExpClone(val);
+        break;
+
+      case '[object ArrayBuffer]':
+        output = _handleArrayBufferClone(input);
+        break;
+
+      case '[object Array]':
+        output = [];
+        isCollection = true;
+        break;
+
+      case '[object Object]':
+        // Although the spec says to simply create an empty object when
+        // encountered with this scenario, we set up the proper prototype chain
+        // in order to correctly copy objects that may not directly inherit
+        // from Object.prototype.
+        output = Object.create(Object.getPrototypeOf(input));
+        isCollection = true;
+        break;
+
+      default:
+        // If `options.allowFunctions` is set to true, we allow functions to
+        // be passed directly into the copied object.
+        if (_isFunc(input) && (options.allowFunctions === true)) {
+          output = input;
+        } else if (_isTypedArray(input)) {
+          // If it is a typed array, clone it according to the W3C spec
+          output = _handleTypedArrayClone(input);
+        } else {
+          throw new TypeError(
+            'Don\'t know how to clone object of type ' + obType
+          );
+        }
+        break;
+    }
+
+    // Map this specific object to its output in case its cyclically referenced
+    mMap.set(input, output);
+
+    if (isCollection) {
+      _handleCollectionClone(input, output, mMap, options);
+    }
+
+    return output;
+  }
+
+  // Handles the safe cloning of RegExp objects, where we explicitly pass the
+  // regex object, the source, and flags separately, as this prevents bugs
+  // within phantomJS (and possibly other environments as well).
+  function _handleRegExpClone(re) {
+    var flags = '';
+    if (re.global) {
+      flags += 'g';
+    }
+    if (re.ignoreCase) {
+      flags += 'i';
+    }
+    if (re.multiline) {
+      flags += 'm';
+    }
+
+    return new RegExp(re.source, flags);
+  }
+
+  // Handles the recursive portion of structured cloning.
+  function _handleCollectionClone(input, output, mMap, options) {
+    // Note that we use own property names here since we've already
+    // used `Object.create()` to create the duplicate, so we have
+    // already acquired the original object's prototype. Note that the W3C
+    // spec explicitly states that this algorithm does *not* walk the
+    // prototype chain, and therefore all Object prototypes are live
+    // (assigned as a reference).
+    Object.getOwnPropertyNames(input).forEach(function(prop) {
+      var desc = Object.getOwnPropertyDescriptor(input, prop);
+      var isNonAccessor = _hasOwn.call(desc, 'value');
+      var inputVal = isNonAccessor ? desc.value : desc.get();
+      var outputVal = _iSClone(inputVal, mMap, options);
+      // If `options.preserveDescriptors` is true, only then do we preserve
+      // descriptors. Otherwise we simply assign the property. This is in an
+      // effort to adhere to the spec, since this behaviour errs more towards
+      // what developers expect.
+      if (options.preserveDescriptors === true) {
+        // We only clone if the property is a non-accessor. We can't really
+        // clone getters and setters, we can only pass them through.
+        if (desc.value !== undefined) {
+          desc.value = outputVal;
+        }
+        Object.defineProperty(output, prop, desc);
+      } else {
+        output[prop] = outputVal;
+      }
+    });
+  }
+
+  // Handles the cloning of ArrayBuffer objects, as specified in the W3C
+  // spec.
+  function _handleArrayBufferClone(buf) {
+    var dst = new ArrayBuffer(buf.byteLength);
+    for (var i = 0, l = buf.byteLength; i < l; i++) {
+      dst[i] = buf[i];
+    }
+    return dst;
+  }
+
+  function _isTypedArray(obj) {
+    var Ctor = Object.getPrototypeOf(obj).constructor;
+    return /^(?:.+)Array$/.test(Ctor.name);
+  }
+
+  // Handles the cloning of TypedArray objects, as specified in the W3C
+  // spec.
+  function _handleTypedArrayClone(typedArray) {
+    var TypedArray = Object.getPrototypeOf(typedArray).constructor;
+    return new TypedArray(
+      _handleArrayBufferClone(typedArray.buffer),
+      typedArray.byteOffset,
+      typedArray.length
+    );
+  }
+
+  function _attemptCustomClone(obj) {
+    var proc;
+    var copy;
+    var procIdx = _customCloneProcedures.length;
+    // Note that if two procedures passed in detect the same type of object,
+    // the latest procedure will take priority.
+    while (procIdx--) {
+      proc = _customCloneProcedures[procIdx];
+      if (proc.detect(obj)) {
+        copy = proc.copy(obj);
+        break;
+      }
+    }
+
+    return copy;
+  }
+
+  // This is the module that we expose to the rest of the world.
+  // CY.clone...get it? :)
+  var CY = {
+    clone: function(input, options) {
+      var result, map = new Map();
+      options = _mergeParams(((typeof options === 'object') ? options : {}), {
+        // If set to true, this will simply pass a function through to the
+        // copied object instead of throwing.
+        allowFunctions: false,
+        // If set to true, this will stop CY.clone() from throwing *any* errors
+        // at all if it can't clone the object. Instead, it will simply return
+        // `null`. This is useful if you don't want a bad clone to halt program
+        // execution.
+        suppressErrors: false
+      });
+
+      // Don't enter try/catch unless suppressErrors is given.
+      // We want to try to avoid context switches if we can to get the most
+      // performance possible out of this function.
+      if (options.suppressErrors === true) {
+        try {
+          result = _iSClone(input, map, options);
+        } catch (err) {
+          result = null;
+        } finally {
+          return result;
+        }
+      }
+
+      return _iSClone(input, map, options);
+    },
+
+    // Returns true if the procedure is successfullly defined, false otherwise.
+    defineCloneProcedure: function(procObj) {
+      // Make sure we can use this procedure
+      if (typeof procObj === 'object' &&
+          _isFunc(procObj.detect) &&
+          _isFunc(procObj.copy)) {
+
+        _customCloneProcedures.push(procObj);
+        return true;
+      }
+
+      return false;
+    },
+
+    clearCustomCloneProcedures: function() {
+      _customCloneProcedures = [];
+    }
+  };
+
+  // Finally we take care of exporting business. We can ignore coverage of this.
+  /* istanbul ignore next */
+  if (typeof module === 'object' && typeof module.exports === 'object') {
+    // Node
+    module.exports = CY;
+  } else if (typeof define === 'function' && define.amd) {
+    // AMD/RequireJS
+    define([], function() { return CY; });
+  } else {
+    // Browser or some other environment. Simply attach the module to the root
+    // object.
+    root.CY = CY;
+  }
+})(this);
+
+},{}],301:[function(require,module,exports){
 var DOMException;
 (function () {
   'use strict';
@@ -9176,7 +9544,7 @@ var DOMException;
   }
 }());
 
-},{}],301:[function(require,module,exports){
+},{}],302:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -9262,14 +9630,14 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],302:[function(require,module,exports){
+},{}],303:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],303:[function(require,module,exports){
+},{}],304:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -9451,7 +9819,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],304:[function(require,module,exports){
+},{}],305:[function(require,module,exports){
 // Since [immediate](https://github.com/calvinmetcalf/immediate) is
 //   not doing the trick for our WebSQL transactions (at least in Node),
 //   we are forced to make the promises run fully synchronously.
@@ -9610,7 +9978,7 @@ SyncPromise.reject = function(val) {
 };
 module.exports = SyncPromise;
 
-},{}],305:[function(require,module,exports){
+},{}],306:[function(require,module,exports){
 (function (global){
 module.exports = get_blob()
 
@@ -9642,7 +10010,7 @@ function get_blob() {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],306:[function(require,module,exports){
+},{}],307:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9714,7 +10082,7 @@ var CFG = {};
 exports.default = CFG;
 module.exports = exports['default'];
 
-},{}],307:[function(require,module,exports){
+},{}],308:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9898,7 +10266,7 @@ exports.DOMException = shimDOMException;
 exports.createDOMException = createDOMException;
 exports.webSQLErrback = webSQLErrback;
 
-},{"./CFG.js":306}],308:[function(require,module,exports){
+},{"./CFG.js":307}],309:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9968,7 +10336,7 @@ exports.IDBVersionChangeEvent = IDBVersionChangeEvent;
 exports.createEvent = createEvent;
 exports.ShimEvent = ShimEvent; // Event not currently in use
 
-},{"./util.js":323,"eventtarget":300}],309:[function(require,module,exports){
+},{"./util.js":324,"eventtarget":301}],310:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10599,7 +10967,7 @@ util.defineReadonlyProperties(IDBCursorWithValue.prototype, 'value');
 exports.IDBCursor = IDBCursor;
 exports.IDBCursorWithValue = IDBCursorWithValue;
 
-},{"./CFG.js":306,"./DOMException.js":307,"./IDBFactory.js":311,"./IDBIndex.js":312,"./IDBKeyRange.js":313,"./IDBRequest.js":315,"./IDBTransaction.js":316,"./Key.js":317,"./Sca.js":318,"./util.js":323}],310:[function(require,module,exports){
+},{"./CFG.js":307,"./DOMException.js":308,"./IDBFactory.js":312,"./IDBIndex.js":313,"./IDBKeyRange.js":314,"./IDBRequest.js":316,"./IDBTransaction.js":317,"./Key.js":318,"./Sca.js":319,"./util.js":324}],311:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10822,7 +11190,7 @@ Object.assign(IDBDatabase.prototype, _eventtarget2.default.prototype);
 exports.default = IDBDatabase;
 module.exports = exports['default'];
 
-},{"./CFG.js":306,"./DOMException.js":307,"./Event.js":308,"./IDBObjectStore.js":314,"./IDBTransaction.js":316,"./util.js":323,"eventtarget":300}],311:[function(require,module,exports){
+},{"./CFG.js":307,"./DOMException.js":308,"./Event.js":309,"./IDBObjectStore.js":315,"./IDBTransaction.js":317,"./util.js":324,"eventtarget":301}],312:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -11308,7 +11676,7 @@ exports.IDBFactory = IDBFactory;
 exports.cmp = cmp;
 exports.shimIndexedDB = shimIndexedDB;
 
-},{"./CFG.js":306,"./DOMException.js":307,"./Event.js":308,"./IDBDatabase.js":310,"./IDBRequest.js":315,"./IDBTransaction.js":316,"./Key.js":317,"./util.js":323}],312:[function(require,module,exports){
+},{"./CFG.js":307,"./DOMException.js":308,"./Event.js":309,"./IDBDatabase.js":311,"./IDBRequest.js":316,"./IDBTransaction.js":317,"./Key.js":318,"./util.js":324}],313:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -11809,7 +12177,7 @@ exports.executeFetchIndexData = executeFetchIndexData;
 exports.IDBIndex = IDBIndex;
 exports.default = IDBIndex;
 
-},{"./CFG.js":306,"./DOMException.js":307,"./IDBCursor.js":309,"./IDBKeyRange.js":313,"./IDBTransaction.js":316,"./Key.js":317,"./Sca.js":318,"./util.js":323}],313:[function(require,module,exports){
+},{"./CFG.js":307,"./DOMException.js":308,"./IDBCursor.js":310,"./IDBKeyRange.js":314,"./IDBTransaction.js":317,"./Key.js":318,"./Sca.js":319,"./util.js":324}],314:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -11909,7 +12277,7 @@ exports.setSQLForRange = setSQLForRange;
 exports.IDBKeyRange = IDBKeyRange;
 exports.default = IDBKeyRange;
 
-},{"./DOMException.js":307,"./Key.js":317,"./util.js":323}],314:[function(require,module,exports){
+},{"./DOMException.js":308,"./Key.js":318,"./util.js":324}],315:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12749,7 +13117,7 @@ Object.defineProperty(IDBObjectStore.prototype, 'name', {
 exports.default = IDBObjectStore;
 module.exports = exports['default'];
 
-},{"./CFG.js":306,"./DOMException.js":307,"./IDBCursor.js":309,"./IDBIndex.js":312,"./IDBKeyRange.js":313,"./IDBTransaction.js":316,"./Key.js":317,"./Sca.js":318,"./util.js":323,"sync-promise":304}],315:[function(require,module,exports){
+},{"./CFG.js":307,"./DOMException.js":308,"./IDBCursor.js":310,"./IDBIndex.js":313,"./IDBKeyRange.js":314,"./IDBTransaction.js":317,"./Key.js":318,"./Sca.js":319,"./util.js":324,"sync-promise":305}],316:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12865,7 +13233,7 @@ var IDBOpenDBRequest = function (_IDBRequest) {
 exports.IDBRequest = IDBRequest;
 exports.IDBOpenDBRequest = IDBOpenDBRequest;
 
-},{"./DOMException.js":307,"./util.js":323,"eventtarget":300}],316:[function(require,module,exports){
+},{"./DOMException.js":308,"./util.js":324,"eventtarget":301}],317:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13402,7 +13770,7 @@ Object.assign(IDBTransaction.prototype, _eventtarget2.default.prototype);
 exports.default = IDBTransaction;
 module.exports = exports['default'];
 
-},{"./CFG.js":306,"./DOMException.js":307,"./Event.js":308,"./IDBObjectStore.js":314,"./IDBRequest.js":315,"./util.js":323,"eventtarget":300,"sync-promise":304}],317:[function(require,module,exports){
+},{"./CFG.js":307,"./DOMException.js":308,"./Event.js":309,"./IDBObjectStore.js":315,"./IDBRequest.js":316,"./util.js":324,"eventtarget":301,"sync-promise":305}],318:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13939,7 +14307,7 @@ exports.isKeyInRange = isKeyInRange;
 exports.findMultiEntryMatches = findMultiEntryMatches;
 exports.default = Key;
 
-},{"./DOMException.js":307,"./util.js":323}],318:[function(require,module,exports){
+},{"./DOMException.js":308,"./util.js":324}],319:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14312,7 +14680,7 @@ exports.encode = encode;
 exports.decode = decode;
 exports.default = Sca;
 
-},{"./util.js":323,"atob":1,"w3c-blob":305}],319:[function(require,module,exports){
+},{"./util.js":324,"atob":1,"w3c-blob":306}],320:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14327,7 +14695,7 @@ var UnicodeIDContinue = '(?:[$0-9A-Z_a-z\\xAA\\xB5\\xB7\\xBA\\xC0-\\xD6\\xD8-\\x
 exports.UnicodeIDStart = UnicodeIDStart;
 exports.UnicodeIDContinue = UnicodeIDContinue;
 
-},{}],320:[function(require,module,exports){
+},{}],321:[function(require,module,exports){
 'use strict';
 
 var _UnicodeIdentifiers = require('./UnicodeIdentifiers');
@@ -14360,7 +14728,7 @@ shimIndexedDB.__setUnicodeIdentifiers = function () {
 
 shimIndexedDB.__setUnicodeIdentifiers();
 
-},{"./CFG.js":306,"./UnicodeIdentifiers":319,"./setGlobalVars.js":322}],321:[function(require,module,exports){
+},{"./CFG.js":307,"./UnicodeIdentifiers":320,"./setGlobalVars.js":323}],322:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14716,7 +15084,7 @@ function validateKeyLength(key) {
 exports.default = polyfill;
 module.exports = exports['default'];
 
-},{"./DOMException.js":307,"./Key.js":317}],322:[function(require,module,exports){
+},{"./DOMException.js":308,"./Key.js":318}],323:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -14899,7 +15267,7 @@ exports.default = setGlobalVars;
 module.exports = exports['default'];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./CFG.js":306,"./Event.js":308,"./IDBCursor.js":309,"./IDBDatabase.js":310,"./IDBFactory.js":311,"./IDBIndex.js":312,"./IDBKeyRange.js":313,"./IDBObjectStore.js":314,"./IDBRequest.js":315,"./IDBTransaction.js":316,"./polyfill.js":321,"babel-polyfill":2}],323:[function(require,module,exports){
+},{"./CFG.js":307,"./Event.js":309,"./IDBCursor.js":310,"./IDBDatabase.js":311,"./IDBFactory.js":312,"./IDBIndex.js":313,"./IDBKeyRange.js":314,"./IDBObjectStore.js":315,"./IDBRequest.js":316,"./IDBTransaction.js":317,"./polyfill.js":322,"babel-polyfill":2}],324:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14914,6 +15282,10 @@ var _DOMException = require('./DOMException.js');
 var _CFG = require('./CFG.js');
 
 var _CFG2 = _interopRequireDefault(_CFG);
+
+var _cyclonejs = require('cyclonejs');
+
+var _cyclonejs2 = _interopRequireDefault(_cyclonejs);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -15142,18 +15514,22 @@ function isArrayBufferOrView (obj) {
 */
 
 function isNotClonable(value) {
-    return ['function', 'symbol'].includes(typeof value === 'undefined' ? 'undefined' : _typeof(value)) || isObj(value) && (value instanceof Error || // Duck-typing with some util.isError would be better, but too easy to get a false match
+    var erred = false;
+    try {
+        _cyclonejs2.default.clone(value);
+    } catch (err) {
+        erred = true;
+    }
+    // Todo: Add the extra checking to PR to cyclonejs if valid
+    return erred || ['function', 'symbol'].includes(typeof value === 'undefined' ? 'undefined' : _typeof(value)) || isObj(value) && (value instanceof Error || // Duck-typing with some util.isError would be better, but too easy to get a false match
     value.nodeType > 0 && typeof value.nodeName === 'string' // DOM nodes
     );
 }
 
 function throwIfNotClonable(value, errMsg) {
-    JSON.stringify(value, function (key, val) {
-        if (isNotClonable(val)) {
-            throw (0, _DOMException.createDOMException)('DataCloneError', errMsg);
-        }
-        return val;
-    });
+    if (isNotClonable(value)) {
+        throw (0, _DOMException.createDOMException)('DataCloneError', errMsg);
+    }
 }
 
 function defineReadonlyProperties(obj, props) {
@@ -15229,4 +15605,4 @@ exports.throwIfNotClonable = throwIfNotClonable;
 exports.defineReadonlyProperties = defineReadonlyProperties;
 exports.isValidKeyPath = isValidKeyPath;
 
-},{"./CFG.js":306,"./DOMException.js":307}]},{},[320]);
+},{"./CFG.js":307,"./DOMException.js":308,"cyclonejs":300}]},{},[321]);

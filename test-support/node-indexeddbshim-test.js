@@ -185,11 +185,12 @@ function readAndEvaluateFiles (err, jsFiles) {
         // Hard-coding problematic files for testing
         // jsFiles = ['idb_webworkers.js', 'idbtransaction_objectStoreNames.js'];
         // jsFiles = jsFiles.slice(0, 3);
+        // jsFiles = ['key_invalid.js'];
 
         /*
         Current test statuses with 5 exclusions (vmTimeout = 40000):
-          "Pass": 501,
-          "Fail": 89,
+          "Pass": 506,
+          "Fail": 84,
           "Timeout": 0,
           "Not Run": 22,
           "Total tests": 612

@@ -207,6 +207,10 @@
     or if a key method has been invoked
 - Fix: Throw `DataCloneError` if `IDBCursor.update` value is not
     clonable by the Structured Cloning Algorithm
+- Fix: Improve structured cloning checking by using cyclonejs (not
+    currently used for cloning though could be used elsewhere where
+    not needed to be encoded); also avoid use of JSON.stringify
+    which only works on a subset of SCA
 - Fix: Throw `TypeError` if call to `update()` has no arguments
 - Fix: Allow empty string key path to be utilized when validating
     `add`/`put` input

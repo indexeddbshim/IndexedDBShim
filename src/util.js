@@ -1,5 +1,6 @@
 import {createDOMException} from './DOMException.js';
 import CFG from './CFG.js';
+import CY from 'cyclonejs';
 
 let cleanInterface = false;
 
@@ -232,20 +233,18 @@ function isArrayBufferOrView (obj) {
 */
 
 function isNotClonable (value) {
-    return ['function', 'symbol'].includes(typeof value) ||
-        (isObj(value) && (
-            value instanceof Error || // Duck-typing with some util.isError would be better, but too easy to get a false match
-            (value.nodeType > 0 && typeof value.nodeName === 'string') // DOM nodes
-        ));
+    try {
+        CY.clone(value);
+        return false;
+    } catch (err) {
+        return true;
+    }
 }
 
 function throwIfNotClonable (value, errMsg) {
-    JSON.stringify(value, function (key, val) {
-        if (isNotClonable(val)) {
-            throw createDOMException('DataCloneError', errMsg);
-        }
-        return val;
-    });
+    if (isNotClonable(value)) {
+        throw createDOMException('DataCloneError', errMsg);
+    }
 }
 
 function defineReadonlyProperties (obj, props) {
