@@ -31,8 +31,10 @@
     "tests-polyfill": "grunt clean-polyfill && npm run fake && npm run mock && npm run w3c-old && browserify-test -t [ babelify --presets es2015 ] tests-polyfill/**/*.js",
     "w3c": "npm run w3c-build && npm run w3c-test",
     "w3c-test": "node test-support/node-indexeddbshim-test && grunt clean-w3c",
-    "w3c-good": "npm run w3c -- good",
-    "w3c-bad": "npm run w3c -- bad"
+    "w3c-good": "npm run w3c-build && node test-support/node-indexeddbshim-test good && grunt clean-w3c",
+    "w3c-bad": "npm run w3c-build && node test-support/node-indexeddbshim-test bad && grunt clean-w3c",
+    "w3c-good-test": "node test-support/node-indexeddbshim-test good && grunt clean-w3c",
+    "w3c-bad-test": "node test-support/node-indexeddbshim-test bad && grunt clean-w3c"
   },
   "repository": {
     "type": "git",

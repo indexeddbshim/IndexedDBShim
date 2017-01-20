@@ -197,7 +197,7 @@ function readAndEvaluateFiles (err, jsFiles) {
         // jsFiles = ['name-scopes.js']; // Necessarily excluded tests
 
         /*
-        Current test statuses with 5 exclusions (vmTimeout = 40000):
+        Current test statuses with 1 file excluded (vmTimeout = 40000):
           "Pass": 537,
           "Fail": 82,
           "Timeout": 0,
