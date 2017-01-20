@@ -165,7 +165,7 @@ describe('IDBObjectStore.deleteIndex', function () {
         });
 
         it('should persist the schema across database sessions', function (done) {
-            this.timeout(5000);
+            this.timeout(10000);
             // Create a database schema, then close the database
             util.createDatabase(
                 'out-of-line', 'inline-index', 'unique-index', 'multi-entry-index',

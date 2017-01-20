@@ -195,11 +195,11 @@ function readAndEvaluateFiles (err, jsFiles) {
 
         /*
         Current test statuses with 0 files excluded (vmTimeout = 40000):
-          "Pass": 537,
+          "Pass": 539,
           "Fail": 82,
           "Timeout": 0,
           "Not Run": 22,
-          "Total tests": 641
+          "Total tests": 643
         */
         fs.readFile(path.join('test-support', 'custom-reporter.js'), 'utf8', function (err, ending) {
             if (err) { return console.log(err); }
