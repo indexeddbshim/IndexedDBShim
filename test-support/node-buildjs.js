@@ -58,7 +58,7 @@ fs.mkdir(path.join('test-support', 'js'), function () {
                     }
                     scriptContent += '/' + '*beginscript::' + src + '::endscript*' + '/\n';
                 });
-                scriptContent += "document.title = '" + $('title').text().replace(/'/g, "\\'") + "';\n";
+                scriptContent += "document.title = '" + $('title').text().replace(/'/g, "\\'").replace(/\n|\r/g, ' ') + "';\n";
                 scriptContent += $('script').text();
 
                 fs.writeFile(outputFile, scriptContent, function (err) {

@@ -99,9 +99,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
 
     // Exclude those currently breaking the tests
     // Todo: Replace with `uncaughtException` handlers above?
-    const excluded = [
-        'name-scopes.js' // ES templates
-    ];
+    const excluded = [];
     if (excluded.includes(shimNS.fileName)) {
         shimNS.finished();
         return;
@@ -194,10 +192,9 @@ function readAndEvaluateFiles (err, jsFiles) {
         // Hard-coding problematic files for testing
         // jsFiles = jsFiles.slice(0, 3);
         // jsFiles = ['idbindex-rename.js','idbobjectstore-rename-abort.js','idbobjectstore-rename-store.js','transaction-abort-index-metadata-revert.js','transaction-abort-object-store-metadata-revert.js']; // Not running tests
-        // jsFiles = ['name-scopes.js']; // Necessarily excluded tests
 
         /*
-        Current test statuses with 1 file excluded (vmTimeout = 40000):
+        Current test statuses with 0 files excluded (vmTimeout = 40000):
           "Pass": 537,
           "Fail": 82,
           "Timeout": 0,

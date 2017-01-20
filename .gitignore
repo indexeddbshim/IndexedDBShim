@@ -1,18 +1,23 @@
 .project
 .settings
 .idea
-node_modules
 .tmp_*
 .DS_Store
 sauce_connect.log
 sc_*
 npm-debug.log
 src/indexeddbshim*
+test-support/latest-erring-bundled.js
+
 test-support/js
-dbName*
+ignore
+node_modules
 
 # Should be deleted by Grunt
+dbName*
 __sysdb__*
+D_x
+D_y
 D_dbName*
 D_about*
 D_^I*
