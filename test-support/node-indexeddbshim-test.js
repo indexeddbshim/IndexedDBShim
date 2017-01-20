@@ -90,7 +90,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
             console.log('  Number of files processed: ' + ct);
 
             console.log('\nNumber of total tests by status:');
-            shimNS.statuses['Total tests'] = Object.values(shimNS.statuses).reduce((s, statusCt) => s + statusCt);
+            shimNS.statuses['Total tests'] = Object.values(shimNS.statuses).reduce((ct, statusCt) => ct + statusCt);
             console.log(JSON.stringify(shimNS.statuses, null, 2) + '\n');
             process.exit();
         }
