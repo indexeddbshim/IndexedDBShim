@@ -3,21 +3,21 @@ const fs = require('fs');
 const path = require('path');
 const {goodFiles, badFiles} = require('./node-good-bad-files');
 const vm = require('vm');
+const jsdom = require('jsdom').jsdom;
 
 // CONFIG
-const vmTimeout = 5000; // Time until we give up on the vm (increasing to 40000 didn't make a difference on coverage)
+const vmTimeout = 40000; // Time until we give up on the vm (increasing to 40000 didn't make a difference on coverage in earlier versions)
 // const intervalSpacing = 1; // Time delay after test before running next
 
 // SET-UP
 const fileArg = process.argv[2];
 const dirPath = path.join('test-support', 'js');
 const idbTestPath = 'web-platform-tests';
+const indexeddbshim = require('../dist/indexeddbshim-UnicodeIdentifiers-node');
+// const indexeddbshimNonUnicode = require('../dist/indexeddbshim-node');
+
 const shimNS = {
     colors: require('colors/safe'),
-    jsdom: require('jsdom').jsdom,
-    // doc: require('jsdom').jsdom('<div id="log"></div>', {}),
-    // indexeddbshim: require('../dist/indexeddbshim-UnicodeIdentifiers-node'),
-    // indexeddbshimNonUnicode: require('../dist/indexeddbshim-node'),
     fileName: '',
     finished: function () { throw new Error('Finished callback not set'); },
     write: function (msg) {
@@ -52,8 +52,7 @@ process.on('unhandledRejection', (reason, p) => {
 });
 */
 function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
-    const fileName = jsFiles[item];
-
+    shimNS.fileName = jsFiles[item];
     shimNS.finished = () => {
         ct += 1;
         function finishedCheck () {
@@ -106,12 +105,12 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
         'name-scopes.js', // ES templates
         'transaction-lifetime.js' // Problem creating object store
     ];
-    if (excluded.includes(fileName)) {
+    if (excluded.includes(shimNS.fileName)) {
         shimNS.finished();
         return;
     }
 
-    fs.readFile(path.join(dirPath, fileName), 'utf8', function (err, content) {
+    fs.readFile(path.join(dirPath, shimNS.fileName), 'utf8', function (err, content) {
         if (err) { return console.log(err); }
 
         const scripts = [];
@@ -136,21 +135,19 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
                 (resource) => path.join(idbTestPath, resource)
             ),
             function (harnessContent) {
-                // This regex replacement ensures that a testharness.js `global_scope` method
-                //   used for exposing variables on the global object will work (in conjunction
-                //   with our also setting `global` in the vm code as the vm's `this`)
-                // Todo: We should be able to copy only those items from jsdom's window that
-                //    we need and thereby avoid doing this (fragile) replace here.
-                harnessContent = harnessContent.replace(/return window/, 'return global');
                 // early envt't, harness, reporting env't, specific test
                 const allContent = initial + '\n' + harnessContent + '\n' + ending + '\n' + content;
                 try {
-                    // Only pass in safe objects
+                    // Build the window each time for test safety
+                    const doc = jsdom('<div id="log"></div>', {});
+                    const window = doc.defaultView; // eslint-disable-line no-var
+                    // Todo: We might switch based on file to normally try non-Unicode version
+                    // indexeddbshimNonUnicode(window);
+                    indexeddbshim(window);
+                    shimNS.window = window;
+
+                    // Should only pass in safe objects
                     const sandboxObj = {
-                        // Todo: We might switch based on file to normally try non-Unicode version
-                        // shimNS.indexeddbshim = shimNS.indexeddbshimNonUnicode;
-                        // Todo: Remove require dependency!
-                        require,
                         // console,
                         shimNS
                     };
@@ -164,7 +161,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
                     //  ESLint rules on this joined file to better notice any other
                     //  issues between the code, custom environment, and harness
                     const fileSave =
-                        '/' + '*' + fileName + ':::' + err /* .replace(new RegExp('\\*' + '/', 'g'), '* /') */ + '*' + '/' +
+                        '/' + '*' + shimNS.fileName + ':::' + err /* .replace(new RegExp('\\*' + '/', 'g'), '* /') */ + '*' + '/' +
                         '/' + '* globals assert_equals, assert_array_equals, assert_unreached, async_test, EventWatcher, SharedWorkerGlobalScope, DedicatedWorkerGlobalScope, ServiceWorkerGlobalScope, WorkerGlobalScope *' + '/\n' +
                         '/' + '*eslint-disable curly, no-unused-vars, no-self-compare, space-in-parens, no-extra-parens, spaced-comment, padded-blocks, no-useless-escape, func-call-spacing, comma-spacing, operator-linebreak, prefer-const, compat/compat, no-unneeded-ternary, space-unary-ops, object-property-newline, no-multiple-empty-lines, block-spacing, space-infix-ops, comma-dangle, no-template-curly-in-string, yoda, quotes, spaced-comment, no-var, key-spacing, camelcase, indent, semi, space-before-function-paren, eqeqeq, brace-style, no-array-constructor, keyword-spacing*' + '/\n' +
                         allContent;
@@ -190,9 +187,9 @@ function readAndEvaluateFiles (err, jsFiles) {
         // jsFiles = jsFiles.slice(0, 3);
 
         /*
-        Current test statuses with 5 exclusions (vmTimeout = 5000):
-          "Pass": 510,
-          "Fail": 80,
+        Current test statuses with 5 exclusions (vmTimeout = 40000):
+          "Pass": 501,
+          "Fail": 89,
           "Timeout": 0,
           "Not Run": 22,
           "Total tests": 612
