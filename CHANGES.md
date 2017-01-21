@@ -438,6 +438,9 @@
             "close-in-upgradeneeded.js","idbcursor-continuePrimaryKey-exception-order.js","idbcursor-source.js","idbdatabase_close.js","idbdatabase_close2.js","idbfactory_cmp3.js","idbfactory_cmp4.js","idbfactory_open9.js","idbindex-rename-abort.js","idbindex-rename-errors.js","idbindex-rename.js","idbindex_get7.js","idbindex_get8.js","idbindex_getAll.js","idbindex_getAllKeys.js","idbindex_getKey7.js","idbindex_getKey8.js","idbindex_openCursor2.js","idbindex_openCursor3.js","idbindex_openKeyCursor3.js","idbindex_openKeyCursor4.js","idbkeyrange.js","idbobjectstore-rename-abort.js","idbobjectstore-rename-store.js","idbobjectstore_createIndex4-deleteIndex-event_order.js","idbobjectstore_get6.js","idbobjectstore_getAll.js","idbobjectstore_getAllKeys.js","idbtransaction_objectStoreNames.js","idb_binary_key_conversion.js","idb_webworkers.js","interfaces.js","transaction-abort-index-metadata-revert.js","transaction-abort-multiple-metadata-revert.js","transaction-abort-object-store-metadata-revert.js","transaction-lifetime-blocked.js","transaction-lifetime.js","upgrade-transaction-lifecycle-backend-aborted.js","upgrade-transaction-lifecycle-user-aborted.js","value.js"
         The following (5) files contain tests which are failing due to not running to completion:
             "idbindex-rename.js","idbobjectstore-rename-abort.js","idbobjectstore-rename-store.js","transaction-abort-index-metadata-revert.js","transaction-abort-object-store-metadata-revert.js"
+        The following (2) files contain tests which are failing due to incomplete test configuration (though they show as failures):
+            "idb_webworkers.js","interfaces.js"
+
 - Testing (Grunt): Force ESLint (since "standard" currently causing a warning)
 - Testing (Grunt): More granular uglification, add build-browser,
     dev-browser, Unicode watching
