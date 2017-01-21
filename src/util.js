@@ -21,7 +21,7 @@ if (Object.defineProperty) {
  * Shim the DOMStringList object.
  *
  */
-const StringList = function () {
+const DOMStringList = function () {
     this.length = 0;
     this._items = [];
     // Internal functions on the prototype have been made non-enumerable below.
@@ -36,7 +36,7 @@ const StringList = function () {
         });
     }
 };
-StringList.prototype = {
+DOMStringList.prototype = {
     // Interface.
     contains: function (str) {
         return this._items.includes(str);
@@ -47,7 +47,7 @@ StringList.prototype = {
 
     // Helpers. Should only be used internally.
     clone: function () {
-        const stringList = new StringList();
+        const stringList = new DOMStringList();
         stringList._items = this._items.slice();
         stringList.length = this.length;
         stringList.addIndexes();
@@ -100,19 +100,23 @@ if (cleanInterface) {
         'push': false,
         'splice': false
     }) {
-        Object.defineProperty(StringList.prototype, i, {
+        Object.defineProperty(DOMStringList.prototype, i, {
             enumerable: false
         });
     }
 }
 
-function escapeNULAndCasing (arg) {
+function escapeNameForSQLiteIdentifier (arg) {
     // http://stackoverflow.com/a/6701665/271577
-    return arg.replace(/\^/g, '^^').replace(/\0/g, '^0')
-        // We need to avoid tables being treated as duplicates based on SQLite's case-insensitive table and column names
-        // http://stackoverflow.com/a/17215009/271577
-        // See also https://www.sqlite.org/faq.html#q18 re: Unicode case-insensitive not working
+    return '_' + // Prevent empty string
+        arg.replace(/\^/g, '^^') // Escape our escape
+        // http://www.sqlite.org/src/tktview?name=57c971fc74
+        .replace(/\0/g, '^0')
+        // We need to avoid identifiers being treated as duplicates based on SQLite's ASCII-only case-insensitive table and column names
+        // (For SQL in general, however, see http://stackoverflow.com/a/17215009/271577
+        // See also https://www.sqlite.org/faq.html#q18 re: Unicode (non-ASCII) case-insensitive not working
         .replace(/([A-Z])/g, '^$1')
+        // http://stackoverflow.com/a/6701665/271577
         .replace(/([\uD800-\uDBFF])(?![\uDC00-\uDFFF])|(^|[^\uD800-\uDBFF])([\uDC00-\uDFFF])/g, function (_, unmatchedHighSurrogate, unmatchedLowSurrogate) {
             if (unmatchedHighSurrogate) {
                 return '^2' + unmatchedHighSurrogate + '\uDC00'; // Add a low surrogate for compatibility with `node-sqlite3`: http://bugs.python.org/issue12569 and http://stackoverflow.com/a/6701665/271577
@@ -121,10 +125,10 @@ function escapeNULAndCasing (arg) {
         });
 }
 
-function escapeNUL (arg) {
+function escapeSQLiteStatement (arg) {
     return arg.replace(/\^/g, '^^').replace(/\0/g, '^0');
 }
-function unescapeNUL (arg) {
+function unescapeSQLiteResponse (arg) {
     return arg.replace(/^0/g, '\0').replace(/\^\^/g, '^');
 }
 
@@ -141,15 +145,15 @@ function quote (arg) {
     return '"' + sqlEscape(arg) + '"';
 }
 
-function escapeDatabaseName (db) {
+function escapeDatabaseNameForSQLAndFiles (db) {
     if (CFG.escapeDatabaseName) {
         // We at least ensure NUL is escaped by default, but we need to still
         //   handle empty string and possibly also length (potentially
         //   throwing if too long), escaping casing (including Unicode?),
         //   and escaping special characters depending on file system
-        return CFG.escapeDatabaseName(escapeNUL(db));
+        return CFG.escapeDatabaseName(escapeSQLiteStatement(db));
     }
-    db = 'D_' + escapeNULAndCasing(db);
+    db = 'D' + escapeNameForSQLiteIdentifier(db);
     if (CFG.databaseCharacterEscapeList !== false) {
         db = db.replace(
             (CFG.databaseCharacterEscapeList
@@ -170,13 +174,13 @@ function escapeDatabaseName (db) {
 }
 
 // Not in use internally but supplied for convenience
-function unescapeDatabaseName (db) {
+function unescapeDatabaseNameForSQLAndFiles (db) {
     if (CFG.unescapeDatabaseName) {
         // We at least ensure NUL is unescaped by default, but we need to still
         //   handle empty string and possibly also length (potentially
         //   throwing if too long), unescaping casing (including Unicode?),
         //   and unescaping special characters depending on file system
-        return CFG.unescapeDatabaseName(unescapeNUL(db));
+        return CFG.unescapeDatabaseName(unescapeSQLiteResponse(db));
     }
 
     return db.slice(2) // D_
@@ -188,16 +192,16 @@ function unescapeDatabaseName (db) {
         .replace(/\^\^/g, '^');
 }
 
-function escapeStore (store) {
-    return quote('s_' + escapeNULAndCasing(store));
+function escapeStoreNameForSQL (store) {
+    return quote('S' + escapeNameForSQLiteIdentifier(store));
 }
 
-function escapeIndex (index) {
-    return quote('_' + escapeNULAndCasing(index));
+function escapeIndexNameForSQL (index) {
+    return quote('I' + escapeNameForSQLiteIdentifier(index));
 }
 
-function escapeIndexName (index) {
-    return '_' + escapeNULAndCasing(index);
+function escapeIndexNameForKeyColumn (index) {
+    return 'I' + escapeNameForSQLiteIdentifier(index);
 }
 
 function sqlLIKEEscape (str) {
@@ -311,9 +315,9 @@ function isValidKeyPath (keyPath) {
     );
 }
 
-export {StringList, escapeNUL, unescapeNUL, quote,
-    escapeDatabaseName, unescapeDatabaseName,
-    escapeStore, escapeIndex, escapeIndexName,
+export {DOMStringList, escapeSQLiteStatement, unescapeSQLiteResponse, quote,
+    escapeDatabaseNameForSQLAndFiles, unescapeDatabaseNameForSQLAndFiles,
+    escapeStoreNameForSQL, escapeIndexNameForSQL, escapeIndexNameForKeyColumn,
     sqlLIKEEscape, instanceOf,
     isObj, isDate, isBlob, isRegExp, isFile, throwIfNotClonable,
     defineReadonlyProperties, isValidKeyPath};

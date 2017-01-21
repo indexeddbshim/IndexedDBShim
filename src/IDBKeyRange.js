@@ -64,12 +64,12 @@ function setSQLForRange (range, quotedKeyColumnName, sql, sqlValues, addAnd, che
         if (addAnd) sql.push('AND');
         if (range.lower !== undefined) {
             sql.push(quotedKeyColumnName, (range.lowerOpen ? '>' : '>='), '?');
-            sqlValues.push(util.escapeNUL(checkCached ? range.__lowerCached : Key.encode(range.lower)));
+            sqlValues.push(util.escapeSQLiteStatement(checkCached ? range.__lowerCached : Key.encode(range.lower)));
         }
         (range.lower !== undefined && range.upper !== undefined) && sql.push('AND');
         if (range.upper !== undefined) {
             sql.push(quotedKeyColumnName, (range.upperOpen ? '<' : '<='), '?');
-            sqlValues.push(util.escapeNUL(checkCached ? range.__upperCached : Key.encode(range.upper)));
+            sqlValues.push(util.escapeSQLiteStatement(checkCached ? range.__upperCached : Key.encode(range.upper)));
         }
     }
 }

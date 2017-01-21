@@ -5,6 +5,11 @@ const CFG = {};
     // Boolean for verbose reporting
     'DEBUG', // Effectively defaults to false (ignored unless true)
 
+    // Used when setting global shims to determine whether to try to add
+    //   other globals shimmed by the library (`DOMException`, `DOMStringList`,
+    //   `Event`)
+    'addNonIDBGlobals', // Effectively defaults to false (ignored unless true)
+
     // Used by `IDBCursor` continue methods for number of records to cache;
     'cursorPreloadPackSize', //  Defaults to 100
 

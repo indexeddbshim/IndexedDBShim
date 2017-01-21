@@ -127,6 +127,7 @@ function webSQLErrback (webSQLErr) {
     }
     message += ' (' + webSQLErr.message + ')--(' + webSQLErr.code + ')';
     const err = createDOMException(name, message);
+    err.sqlError = webSQLErr;
     return err;
 }
 

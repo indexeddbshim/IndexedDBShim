@@ -8,7 +8,8 @@ const supportAndTestHarnessScripts = testHarnessScripts.concat('support.js', 'su
 const webIDLScripts = supportAndTestHarnessScripts.concat('/resources/WebIDLParser.js', '/resources/idlharness.js');
 
 const dirPath = process.argv[2] || 'web-platform-tests/IndexedDB';
-fs.mkdir(path.join('test-support', 'js'), function () {
+const builtJSPath = path.join('test-support', 'js');
+fs.mkdir(builtJSPath, function () {
     fs.readdir(dirPath, function (err, items) {
         if (err) { return console.log(err); }
         const htmlExt = /\.html?$/;
@@ -18,7 +19,7 @@ fs.mkdir(path.join('test-support', 'js'), function () {
         // Iterate IndexedDB files
         htmlFiles.forEach((htmlFile, i) => {
             const jsFile = htmlFile.replace(htmlExt, '.js');
-            const outputFile = path.join('test-support', 'js', jsFile);
+            const outputFile = path.join(builtJSPath, jsFile);
 
             fs.readFile(path.join(dirPath, htmlFile), 'utf8', function (err, data) {
                 if (err) { return console.log(err); }

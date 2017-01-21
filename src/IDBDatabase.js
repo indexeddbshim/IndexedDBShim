@@ -22,7 +22,7 @@ function IDBDatabase (db, name, oldVersion, version, storeProperties) {
 
     this.__transactions = [];
     this.__objectStores = {};
-    this.__objectStoreNames = new util.StringList();
+    this.__objectStoreNames = new util.DOMStringList();
     const itemCopy = {};
     for (let i = 0; i < storeProperties.rows.length; i++) {
         const item = storeProperties.rows.item(i);

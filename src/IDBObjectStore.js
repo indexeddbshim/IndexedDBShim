@@ -28,7 +28,7 @@ function IDBObjectStore (storeProperties, transaction) {
     me.__autoIncrement = !!storeProperties.autoInc;
 
     me.__indexes = {};
-    me.__indexNames = new util.StringList();
+    me.__indexNames = new util.DOMStringList();
     const indexList = storeProperties.indexList;
     for (const indexName in indexList) {
         if (indexList.hasOwnProperty(indexName)) {
@@ -86,11 +86,11 @@ IDBObjectStore.__createObjectStore = function (db, store) {
         }
 
         // key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
-        const sql = ['CREATE TABLE', util.escapeStore(store.name), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
+        const sql = ['CREATE TABLE', util.escapeStoreNameForSQL(store.name), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
         CFG.DEBUG && console.log(sql);
         tx.executeSql(sql, [], function (tx, data) {
             Sca.encode(store.keyPath, function (encodedKeyPath) {
-                tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeNUL(store.name), encodedKeyPath, store.autoIncrement, '{}', 1], function () {
+                tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeSQLiteStatement(store.name), encodedKeyPath, store.autoIncrement, '{}', 1], function () {
                     success(store);
                 }, error);
             });
@@ -112,7 +112,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
 
     const storeClone = db.__versionTransaction.__storeClones[store.name];
     if (storeClone) {
-        storeClone.__indexNames = new util.StringList();
+        storeClone.__indexNames = new util.DOMStringList();
         storeClone.__indexes = {};
         storeClone.__deleted = true;
     }
@@ -127,10 +127,10 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
             failure(createDOMException('UnknownError', 'Could not delete ObjectStore', err));
         }
 
-        tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList", "currNum" FROM __sys__ WHERE name = ?', [util.escapeNUL(store.name)], function (tx, data) {
+        tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList", "currNum" FROM __sys__ WHERE name = ?', [util.escapeSQLiteStatement(store.name)], function (tx, data) {
             if (data.rows.length > 0) {
-                tx.executeSql('DROP TABLE ' + util.escapeStore(store.name), [], function () {
-                    tx.executeSql('DELETE FROM __sys__ WHERE name = ?', [util.escapeNUL(store.name)], function () {
+                tx.executeSql('DROP TABLE ' + util.escapeStoreNameForSQL(store.name), [], function () {
+                    tx.executeSql('DELETE FROM __sys__ WHERE name = ?', [util.escapeSQLiteStatement(store.name)], function () {
                         success();
                     }, error);
                 }, error);
@@ -194,7 +194,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
     const me = this;
 
     function getCurrentNumber (callback) {
-        tx.executeSql('SELECT currNum FROM __sys__ WHERE name = ?', [util.escapeNUL(me.name)], function (tx, data) {
+        tx.executeSql('SELECT currNum FROM __sys__ WHERE name = ?', [util.escapeSQLiteStatement(me.name)], function (tx, data) {
             if (data.rows.length !== 1) {
                 callback(1);
             } else {
@@ -288,24 +288,24 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         });
     });
     SyncPromise.all(indexPromises).then(() => {
-        const sqlStart = ['INSERT INTO ', util.escapeStore(me.name), '('];
+        const sqlStart = ['INSERT INTO ', util.escapeStoreNameForSQL(me.name), '('];
         const sqlEnd = [' VALUES ('];
         const insertSqlValues = [];
         if (primaryKey !== undefined) {
             Key.convertValueToKey(primaryKey);
             sqlStart.push(util.quote('key'), ',');
             sqlEnd.push('?,');
-            insertSqlValues.push(util.escapeNUL(Key.encode(primaryKey)));
+            insertSqlValues.push(util.escapeSQLiteStatement(Key.encode(primaryKey)));
         }
         for (const key in paramMap) {
-            sqlStart.push(util.escapeIndex(key) + ',');
+            sqlStart.push(util.escapeIndexNameForSQL(key) + ',');
             sqlEnd.push('?,');
-            insertSqlValues.push(util.escapeNUL(paramMap[key]));
+            insertSqlValues.push(util.escapeSQLiteStatement(paramMap[key]));
         }
         // removing the trailing comma
         sqlStart.push(util.quote('value') + ' )');
         sqlEnd.push('?)');
-        insertSqlValues.push(util.escapeNUL(encoded));
+        insertSqlValues.push(util.escapeSQLiteStatement(encoded));
 
         const insertSql = sqlStart.join(' ') + sqlEnd.join(' ');
         CFG.DEBUG && console.log('SQL for adding', insertSql, insertSqlValues);
@@ -340,7 +340,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
                 insert(function () {
                     const sql = 'UPDATE __sys__ SET currNum = ? WHERE name = ?';
                     const sqlValues = [
-                        Math.floor(primaryKey) + 1, util.escapeNUL(me.name)
+                        Math.floor(primaryKey) + 1, util.escapeSQLiteStatement(me.name)
                     ];
                     CFG.DEBUG && console.log(sql, sqlValues);
                     tx.executeSql(sql, sqlValues, function (tx, data) {
@@ -360,7 +360,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             } else {
                 insert(function () {
                     const sql = 'UPDATE __sys__ SET currNum = currNum + 1 WHERE name = ?';
-                    const sqlValues = [util.escapeNUL(me.name)];
+                    const sqlValues = [util.escapeSQLiteStatement(me.name)];
                     CFG.DEBUG && console.log(sql, sqlValues);
                     tx.executeSql(sql, sqlValues, function (tx, data) {
                         success(primaryKey);
@@ -426,9 +426,9 @@ IDBObjectStore.prototype.put = function (value, key) {
                 Sca.encode(value, function (encoded) {
                     // First try to delete if the record exists
                     Key.convertValueToKey(primaryKey);
-                    const sql = 'DELETE FROM ' + util.escapeStore(me.name) + ' WHERE key = ?';
+                    const sql = 'DELETE FROM ' + util.escapeStoreNameForSQL(me.name) + ' WHERE key = ?';
                     const encodedPrimaryKey = Key.encode(primaryKey);
-                    tx.executeSql(sql, [util.escapeNUL(encodedPrimaryKey)], function (tx, data) {
+                    tx.executeSql(sql, [util.escapeSQLiteStatement(encodedPrimaryKey)], function (tx, data) {
                         CFG.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
                         me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, function (...args) {
                             me.__cursors.forEach((cursor) => {
@@ -466,7 +466,7 @@ IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
     }
 
     const col = getKey ? 'key' : 'value';
-    let sql = ['SELECT ' + util.quote(col) + ' FROM ', util.escapeStore(me.name), ' WHERE '];
+    let sql = ['SELECT ' + util.quote(col) + ' FROM ', util.escapeStoreNameForSQL(me.name), ' WHERE '];
     const sqlValues = [];
     setSQLForRange(range, util.quote('key'), sql, sqlValues);
     if (!getAll) {
@@ -494,13 +494,13 @@ IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
                     for (let i = 0; i < data.rows.length; i++) {
                         // Key.convertValueToKey(data.rows.item(i).key); // Already validated before storage
                         ret.push(
-                            Key.decode(util.unescapeNUL(data.rows.item(i).key), false)
+                            Key.decode(util.unescapeSQLiteResponse(data.rows.item(i).key), false)
                         );
                     }
                 } else {
                     for (let i = 0; i < data.rows.length; i++) {
                         ret.push(
-                            Sca.decode(util.unescapeNUL(data.rows.item(0).value))
+                            Sca.decode(util.unescapeSQLiteResponse(data.rows.item(0).value))
                         );
                     }
                 }
@@ -571,7 +571,7 @@ IDBObjectStore.prototype['delete'] = function (range) {
         range = IDBKeyRange.only(range);
     }
 
-    const sqlArr = ['DELETE FROM ', util.escapeStore(me.name), ' WHERE '];
+    const sqlArr = ['DELETE FROM ', util.escapeStoreNameForSQL(me.name), ' WHERE '];
     const sqlValues = [];
     setSQLForRange(range, util.quote('key'), sqlArr, sqlValues);
     const sql = sqlArr.join(' ');
@@ -599,7 +599,7 @@ IDBObjectStore.prototype.clear = function () {
     me.transaction.__assertWritable();
 
     return me.transaction.__addToTransactionQueue(function objectStoreClear (tx, args, success, error) {
-        tx.executeSql('DELETE FROM ' + util.escapeStore(me.name), [], function (tx, data) {
+        tx.executeSql('DELETE FROM ' + util.escapeStoreNameForSQL(me.name), [], function (tx, data) {
             CFG.DEBUG && console.log('Cleared all records from database', data.rowsAffected);
             me.__cursors.forEach((cursor) => {
                 cursor.__invalidateCache(); // Clear
@@ -633,9 +633,9 @@ IDBObjectStore.prototype.count = function (key) {
         }
 
         return me.transaction.__addToTransactionQueue(function objectStoreCount (tx, args, success, error) {
-            const sql = 'SELECT * FROM ' + util.escapeStore(me.name) + (hasKey ? ' WHERE key = ?' : '');
+            const sql = 'SELECT * FROM ' + util.escapeStoreNameForSQL(me.name) + (hasKey ? ' WHERE key = ?' : '');
             const sqlValues = [];
-            hasKey && sqlValues.push(util.escapeNUL(Key.encode(key)));
+            hasKey && sqlValues.push(util.escapeSQLiteStatement(Key.encode(key)));
             tx.executeSql(sql, sqlValues, function (tx, data) {
                 success(data.rows.length);
             }, function (tx, err) {
@@ -793,7 +793,7 @@ Object.defineProperty(IDBObjectStore.prototype, 'name', {
         me.__name = name;
         // Todo: Add pending flag to delay queries against this store until renamed in SQLite
 
-        const sql = 'ALTER TABLE ' + util.escapeStore(me.name) + ' RENAME TO ' + util.escapeStore(name);
+        const sql = 'ALTER TABLE ' + util.escapeStoreNameForSQL(me.name) + ' RENAME TO ' + util.escapeStoreNameForSQL(name);
         me.transaction.__addNonRequestToTransactionQueue(function objectStoreClear (tx, args, success, error) {
             tx.executeSql(sql, [], function (tx, data) {
                 success();

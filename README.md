@@ -133,6 +133,11 @@ On browsers that _don't_ support WebSQL, but _do_ support IndexedDB, this
 line will patch many known problems and add missing features. For example,
 on Internet Explorer, this will add support for compound keys.
 
+If `CFG.addNonIDBGlobals` has been set (e.g., on the `initialConfig` argument
+of `setGlobalVars`), the other non-IndexedDB shims necessitated by this
+library will be polyfilled as possible on the chosen "global" (i.e., `Event`,
+`DOMException`, and `DOMStringList`). Mostly useful for testing.
+
 ### shimIndexedDB.\__forceClose(connIdx, msg)
 
 The spec anticipates the [closing of a database connection with a forced flag](http://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection).
@@ -225,6 +230,11 @@ The available properties relevant to browser or Node are:
 The following config are mostly relevant to Node but has bearing on the
 browser, particularly if one changes the defaults.
 
+- __addNonIDBGlobals__ - If set to `true` will polyfill the "global" with
+    non-IndexedDB shims created by and sometimes returned publicly by
+    the library. These include `Event`, `DOMException`, and
+    `DOMStringList`. Mostly useful for debugging (and in Node where these
+    are not available by default).
 - __escapeDatabaseName__ - Due to the Node implementation's reliance on
     `node-websql`/`node-sqlite3` which create files for each database
     (and the fact that we haven't provided an option to map filename-safe
@@ -452,11 +462,13 @@ To run the Node tests, run the following:
     `npm run mock`, `npm run w3c-old`). Note that only `fake` is
     currently passing in full, however.
 4. `npm run w3c` (you must first run
-    `git submodule update --init --recursive` (possibly without [init](http://stackoverflow.com/a/10168693/271577)),
-    `git submodule foreach --recursive git fetch`, and
-    `git submodule foreach git merge origin master`). Note that some of
-    these tests may not be passing because of the test environment not being
-    completely configured for Node. We are working on fixing this.
+    `git submodule update --init --recursive` (possibly without
+    [init](http://stackoverflow.com/a/10168693/271577) too if using
+    an older version of Git), `git submodule foreach --recursive git fetch`,
+    and `git submodule foreach git merge origin master` or
+    `git submodule foreach git pull --ff-only origin master`). Note that some
+    of these tests may not be passing because of the test environment not
+    being completely configured for Node. We are working on fixing this.
     There are some older and less complete W3C tests that can be run
     with `npm run w3c-old`, but the goal is to remove these once
     the new ones are configured properly and working in the browser

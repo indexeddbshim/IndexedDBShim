@@ -74,14 +74,14 @@ IDBIndex.__createIndex = function (store, index) {
             // Update the object store's index list
             IDBIndex.__updateIndexList(store, tx, function () {
                 // Add index entries for all existing records
-                tx.executeSql('SELECT "key", "value" FROM ' + util.escapeStore(store.name), [], function (tx, data) {
+                tx.executeSql('SELECT "key", "value" FROM ' + util.escapeStoreNameForSQL(store.name), [], function (tx, data) {
                     CFG.DEBUG && console.log('Adding existing ' + store.name + ' records to the ' + index.name + ' index');
                     addIndexEntry(0);
 
                     function addIndexEntry (i) {
                         if (i < data.rows.length) {
                             try {
-                                const value = Sca.decode(util.unescapeNUL(data.rows.item(i).value));
+                                const value = Sca.decode(util.unescapeSQLiteResponse(data.rows.item(i).value));
                                 let indexKey = Key.evaluateKeyPathOnValue(value, index.keyPath, index.multiEntry);
                                 indexKey = Key.encode(indexKey, index.multiEntry);
                                 if (index.unique) {
@@ -97,9 +97,9 @@ IDBIndex.__createIndex = function (store, index) {
                                 }
 
                                 tx.executeSql(
-                                    'UPDATE ' + util.escapeStore(store.name) + ' SET ' +
-                                        util.escapeIndex(index.name) + ' = ? WHERE key = ?',
-                                    [util.escapeNUL(indexKey), data.rows.item(i).key],
+                                    'UPDATE ' + util.escapeStoreNameForSQL(store.name) + ' SET ' +
+                                        util.escapeIndexNameForSQL(index.name) + ' = ? WHERE key = ?',
+                                    [util.escapeSQLiteStatement(indexKey), data.rows.item(i).key],
                                     function (tx, data) {
                                         addIndexEntry(i + 1);
                                     }, error
@@ -123,7 +123,7 @@ IDBIndex.__createIndex = function (store, index) {
             applyIndex(tx);
         } else {
             // For a new index, add a new column to the object store, then apply the index
-            const sql = ['ALTER TABLE', util.escapeStore(store.name), 'ADD', util.escapeIndex(index.name), 'BLOB'].join(' ');
+            const sql = ['ALTER TABLE', util.escapeStoreNameForSQL(store.name), 'ADD', util.escapeIndexNameForSQL(index.name), 'BLOB'].join(' ');
             CFG.DEBUG && console.log(sql);
             tx.executeSql(sql, [], applyIndex, error);
         }
@@ -177,7 +177,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
     }
 
     CFG.DEBUG && console.log('Updating the index list for ' + store.name, indexList);
-    tx.executeSql('UPDATE __sys__ SET indexList = ? WHERE name = ?', [JSON.stringify(indexList), util.escapeNUL(store.name)], function () {
+    tx.executeSql('UPDATE __sys__ SET indexList = ? WHERE name = ?', [JSON.stringify(indexList), util.escapeSQLiteStatement(store.name)], function () {
         success(store);
     }, failure);
 };
@@ -221,7 +221,7 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
  */
 IDBIndex.prototype.openCursor = function (range, direction) {
     const me = this;
-    const cursor = new IDBCursorWithValue(range, direction, me.objectStore, me, util.escapeIndexName(me.name), 'value');
+    const cursor = new IDBCursorWithValue(range, direction, me.objectStore, me, util.escapeIndexNameForKeyColumn(me.name), 'value');
     me.__objectStore.__cursors.push(cursor);
     return cursor.__req;
 };
@@ -234,7 +234,7 @@ IDBIndex.prototype.openCursor = function (range, direction) {
  */
 IDBIndex.prototype.openKeyCursor = function (range, direction) {
     const me = this;
-    const cursor = new IDBCursor(range, direction, me.objectStore, me, util.escapeIndexName(me.name), 'key');
+    const cursor = new IDBCursor(range, direction, me.objectStore, me, util.escapeIndexNameForKeyColumn(me.name), 'key');
     me.__objectStore.__cursors.push(cursor);
     return cursor.__req;
 };
@@ -274,7 +274,7 @@ IDBIndex.prototype.count = function (query) {
             query = new IDBKeyRange(query.lower, query.upper, query.lowerOpen, query.upperOpen);
         }
         // We don't need to add to cursors array since has the count parameter which won't cache
-        return new IDBCursorWithValue(query, 'next', me.objectStore, me, util.escapeIndexName(me.name), 'value', true).__req;
+        return new IDBCursorWithValue(query, 'next', me.objectStore, me, util.escapeIndexNameForKeyColumn(me.name), 'value', true).__req;
     }
     return me.__fetchIndexData(query, 'count', false);
 };
@@ -282,7 +282,7 @@ IDBIndex.prototype.count = function (query) {
 IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToPreserveArr = []) {
     const newNameType = 'BLOB';
     const storeName = store.name;
-    const escapedStoreName = util.escapeStore(storeName);
+    const escapedStoreNameSQL = util.escapeStoreNameForSQL(storeName);
     const colNamesToPreserve = colInfoToPreserveArr.map((colInfo) => colInfo[0]);
     const colInfoToPreserve = colInfoToPreserveArr.map((colInfo) => colInfo.join(' '));
     const listColInfoToPreserve = (colInfoToPreserve.length ? (colInfoToPreserve.join(', ') + ', ') : '');
@@ -291,16 +291,16 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
     // We could adapt the approach at http://stackoverflow.com/a/8430746/271577
     //    to make the approach reusable without passing column names, but it is a bit fragile
     store.transaction.__addNonRequestToTransactionQueue(function renameIndex (tx, args, success, error) {
-        const sql = 'ALTER TABLE ' + escapedStoreName + ' RENAME TO tmp_' + escapedStoreName;
+        const sql = 'ALTER TABLE ' + escapedStoreNameSQL + ' RENAME TO tmp_' + escapedStoreNameSQL;
         tx.executeSql(sql, [], function (tx, data) {
-            const sql = 'CREATE TABLE ' + escapedStoreName + '(' + listColInfoToPreserve + util.escapeIndex(newName) + ' ' + newNameType + ')';
+            const sql = 'CREATE TABLE ' + escapedStoreNameSQL + '(' + listColInfoToPreserve + util.escapeIndexNameForSQL(newName) + ' ' + newNameType + ')';
             tx.executeSql(sql, [], function (tx, data) {
-                const sql = 'INSERT INTO ' + escapedStoreName + '(' +
+                const sql = 'INSERT INTO ' + escapedStoreNameSQL + '(' +
                     listColsToPreserve +
-                    util.escapeIndex(newName) +
-                    ') SELECT ' + listColsToPreserve + util.escapeIndex(oldName) + ' FROM tmp_' + escapedStoreName;
+                    util.escapeIndexNameForSQL(newName) +
+                    ') SELECT ' + listColsToPreserve + util.escapeIndexNameForSQL(oldName) + ' FROM tmp_' + escapedStoreNameSQL;
                 tx.executeSql(sql, [], function (tx, data) {
-                    const sql = 'DROP TABLE tmp_' + escapedStoreName;
+                    const sql = 'DROP TABLE tmp_' + escapedStoreNameSQL;
                     tx.executeSql(sql, [], function (tx, data) {
                         success();
                     }, function (tx, err) {
@@ -379,18 +379,18 @@ function executeFetchIndexData (unboundedDisallowed, count, index, hasKey, encod
         let record = null;
         const decode = opType === 'count' ? () => {} : opType === 'key' ? (record) => {
             // Key.convertValueToKey(record.key); // Already validated before storage
-            return Key.decode(util.unescapeNUL(record.key));
+            return Key.decode(util.unescapeSQLiteResponse(record.key));
         } : (record) => { // when opType is value
-            return Sca.decode(util.unescapeNUL(record.value));
+            return Sca.decode(util.unescapeSQLiteResponse(record.value));
         };
         if (index.multiEntry) {
-            const escapedIndexName = util.escapeIndexName(index.name);
+            const escapedIndexNameForKeyCol = util.escapeIndexNameForKeyColumn(index.name);
             for (let i = 0; i < data.rows.length; i++) {
                 const row = data.rows.item(i);
-                const rowKey = Key.decode(row[escapedIndexName]);
+                const rowKey = Key.decode(row[escapedIndexNameForKeyCol]);
                 if (hasKey && (
                     (multiChecks && encodedKey.some((check) => rowKey.includes(check))) || // More precise than our SQL
-                    Key.isMultiEntryMatch(encodedKey, row[escapedIndexName])
+                    Key.isMultiEntryMatch(encodedKey, row[escapedIndexNameForKeyCol])
                 )) {
                     recordCount++;
                     record = record || row;
@@ -427,20 +427,20 @@ function executeFetchIndexData (unboundedDisallowed, count, index, hasKey, encod
 
 function fetchIndexData (index, hasRange, range, opType, multiChecks) {
     const col = opType === 'count' ? 'key' : opType; // It doesn't matter which column we use for 'count' as long as it is valid
-    const sql = ['SELECT ' + util.quote(col) + (index.multiEntry ? ', ' + util.escapeIndex(index.name) : '') +
-        ' FROM', util.escapeStore(index.objectStore.name), 'WHERE', util.escapeIndex(index.name), 'NOT NULL'];
+    const sql = ['SELECT ' + util.quote(col) + (index.multiEntry ? ', ' + util.escapeIndexNameForSQL(index.name) : '') +
+        ' FROM', util.escapeStoreNameForSQL(index.objectStore.name), 'WHERE', util.escapeIndexNameForSQL(index.name), 'NOT NULL'];
     const sqlValues = [];
     if (hasRange) {
         if (multiChecks) {
             sql.push('AND (');
             range.forEach((innerKey, i) => {
                 if (i > 0) sql.push('OR');
-                sql.push(util.escapeIndex(index.name), "LIKE ? ESCAPE '^' ");
+                sql.push(util.escapeIndexNameForSQL(index.name), "LIKE ? ESCAPE '^' ");
                 sqlValues.push('%' + util.sqlLIKEEscape(Key.encode(innerKey, index.multiEntry)) + '%');
             });
             sql.push(')');
         } else if (index.multiEntry) {
-            sql.push('AND', util.escapeIndex(index.name), "LIKE ? ESCAPE '^'");
+            sql.push('AND', util.escapeIndexNameForSQL(index.name), "LIKE ? ESCAPE '^'");
             range = Key.encode(range, index.multiEntry);
             sqlValues.push('%' + util.sqlLIKEEscape(range) + '%');
         } else {
@@ -452,7 +452,7 @@ function fetchIndexData (index, hasRange, range, opType, multiChecks) {
             } else {
                 range = IDBKeyRange.only(range);
             }
-            setSQLForRange(range, util.escapeIndex(index.name), sql, sqlValues, true, false);
+            setSQLForRange(range, util.escapeIndexNameForSQL(index.name), sql, sqlValues, true, false);
         }
     }
     return [index, hasRange, range, opType, multiChecks, sql, sqlValues];

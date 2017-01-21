@@ -12,7 +12,8 @@
     screen,alert,blur,confirm,
     createPopup,
     focus,moveBy,moveTo,open,print,prompt,resizeBy,resizeTo,scroll,scrollBy,scrollTo,toString,
-    log
+    log,
+    DOMStringList, DOMException, Event
     */
     Object.keys(shimNS.window).forEach(function (prop) {
         if (prop[0] === '_' || // One type added by jsdom
@@ -20,6 +21,8 @@
                 // Already added
                 'clearTimeout', 'setTimeout',
                 'addEventListener', 'document',
+                // Let's allow us to override the jsdom console with that in the main script
+                'console',
                 // Not in Chrome (and at least log should not become a global as used in test scripts)
                 'scrollTop', 'scrollLeft', 'createPopup', 'log'
             ].includes(prop)) {
@@ -28,8 +31,6 @@
         this[prop] = shimNS.window[prop];
     }, this);
     // shimIndexedDB.__debug(true);
-    this.DOMException = indexedDB.modules.DOMException;
-    this.Event = indexedDB.modules.ShimEvent;
 
     const colors = shimNS.colors;
     const theme = {

@@ -464,7 +464,7 @@ function findMultiEntryMatches (keyEntry, range) {
             let key = keyEntry[i];
 
             if (Array.isArray(key)) {
-                if (range.lower === range.upper) {
+                if (range && range.lower === range.upper) {
                     continue;
                 }
                 if (key.length === 1) {
@@ -478,12 +478,12 @@ function findMultiEntryMatches (keyEntry, range) {
                 }
             }
 
-            if (isKeyInRange(key, range, true)) {
+            if (range == null || isKeyInRange(key, range, true)) {
                 matches.push(key);
             }
         }
     } else {
-        if (isKeyInRange(keyEntry, range, true)) {
+        if (range == null || isKeyInRange(keyEntry, range, true)) {
             matches.push(keyEntry);
         }
     }

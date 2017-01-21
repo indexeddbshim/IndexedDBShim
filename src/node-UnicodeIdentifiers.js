@@ -5,8 +5,8 @@ import * as UnicodeIdentifiers from './UnicodeIdentifiers';
 
 CFG.win = {openDatabase: nodeWebSQL};
 
-const __setGlobalVars = function (idb) {
-    idb = setGlobalVars(idb);
+const __setGlobalVars = function (idb, initialConfig) {
+    idb = setGlobalVars(idb, initialConfig);
     idb.shimIndexedDB.__setUnicodeIdentifiers(UnicodeIdentifiers);
 };
 

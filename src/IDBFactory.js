@@ -35,7 +35,13 @@ function createSysDB (success, failure) {
  * @constructor
  */
 function IDBFactory () {
-    this.modules = {DOMException, Event: typeof Event !== 'undefined' ? Event : ShimEvent, ShimEvent, IDBFactory};
+    this.modules = { // Export other shims (especially for testing)
+        Event: typeof Event !== 'undefined' ? Event : ShimEvent,
+        ShimEvent,
+        DOMException,
+        DOMStringList: util.DOMStringList,
+        IDBFactory
+    };
     this.utils = {createDOMException}; // Expose for ease in simulating such exception during testing
     this.__connections = [];
 }
@@ -62,10 +68,10 @@ IDBFactory.prototype.open = function (name, version) {
         }
     }
     name = String(name); // cast to a string
-    const sqlSafeName = util.escapeNUL(name);
+    const sqlSafeName = util.escapeSQLiteStatement(name);
     let escapedDatabaseName;
     try {
-        escapedDatabaseName = util.escapeDatabaseName(name);
+        escapedDatabaseName = util.escapeDatabaseNameForSQLAndFiles(name);
     } catch (err) {
         throw err; // new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
     }
@@ -236,11 +242,11 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         throw new TypeError('Database name is required');
     }
     name = String(name); // cast to a string
-    const sqlSafeName = util.escapeNUL(name);
+    const sqlSafeName = util.escapeSQLiteStatement(name);
 
     let escapedDatabaseName;
     try {
-        escapedDatabaseName = util.escapeDatabaseName(name);
+        escapedDatabaseName = util.escapeDatabaseNameForSQLAndFiles(name);
     } catch (err) {
         throw err; // throw new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
     }
@@ -252,12 +258,12 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     // Although the spec has no specific conditions where an error
     //  may occur in `deleteDatabase`, it does provide for
     //  `UnknownError` as we may require upon a SQL deletion error
-    function dbError (err) {
+    function dbError (tx, err) {
         if (calledDBError || err === true) {
             return;
         }
+        err = webSQLErrback(err || tx);
         sysdbFinishedCbDelete(true, function () {
-            err = webSQLErrback(err || {});
             req.__readyState = 'done';
             req.__error = err;
             req.__result = undefined;
@@ -307,8 +313,8 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                                         }, dbError);
                                     } else {
                                         // Delete all tables in this database, maintained in the sys table
-                                        tx.executeSql('DROP TABLE ' + util.escapeStore(
-                                            util.unescapeNUL( // Avoid double-escaping
+                                        tx.executeSql('DROP TABLE ' + util.escapeStoreNameForSQL(
+                                            util.unescapeSQLiteResponse( // Avoid double-escaping
                                                 tables.item(i).name
                                             )
                                         ), [], function () {
@@ -411,9 +417,9 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
     createSysDB(function () {
         sysdb.readTransaction(function (sysReadTx) {
             sysReadTx.executeSql('SELECT "name" FROM dbVersions', [], function (sysReadTx, data) {
-                const dbNames = new util.StringList();
+                const dbNames = new util.DOMStringList();
                 for (let i = 0; i < data.rows.length; i++) {
-                    dbNames.push(util.unescapeNUL(data.rows.item(i).name));
+                    dbNames.push(util.unescapeSQLiteResponse(data.rows.item(i).name));
                 }
                 req.__result = dbNames;
                 req.__readyState = 'done';

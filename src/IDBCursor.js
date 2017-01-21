@@ -87,7 +87,7 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
     const me = this;
     const quotedKeyColumnName = util.quote(me.__keyColumnName);
     const quotedKey = util.quote('key');
-    let sql = ['SELECT * FROM', util.escapeStore(me.__store.name)];
+    let sql = ['SELECT * FROM', util.escapeStoreNameForSQL(me.__store.name)];
     const sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
     setSQLForRange(me.__range, quotedKeyColumnName, sql, sqlValues, true, true);
@@ -161,7 +161,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
     }
 
     const quotedKeyColumnName = util.quote(me.__keyColumnName);
-    let sql = ['SELECT * FROM', util.escapeStore(me.__store.name)];
+    let sql = ['SELECT * FROM', util.escapeStoreNameForSQL(me.__store.name)];
     const sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
     if (me.__range && (me.__range.lower !== undefined && Array.isArray(me.__range.upper))) {
@@ -316,9 +316,9 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
         }
         this.__matchedKeys[rowItem.matchingKey] = true;
     }
-    const key = Key.decode(util.unescapeNUL(this.__multiEntryIndex ? rowItem.matchingKey : rowItem[this.__keyColumnName]), this.__multiEntryIndex);
-    const val = this.__valueDecoder.decode(util.unescapeNUL(rowItem[this.__valueColumnName]));
-    const primaryKey = Key.decode(util.unescapeNUL(rowItem.key));
+    const key = Key.decode(util.unescapeSQLiteResponse(this.__multiEntryIndex ? rowItem.matchingKey : rowItem[this.__keyColumnName]), this.__multiEntryIndex);
+    const val = this.__valueDecoder.decode(util.unescapeSQLiteResponse(rowItem[this.__valueColumnName]));
+    const primaryKey = Key.decode(util.unescapeSQLiteResponse(rowItem.key));
     callback(key, val, primaryKey);
 };
 
@@ -502,11 +502,11 @@ IDBCursor.prototype.update = function (valueToUpdate) {
             Sca.encode(value, function (encoded) {
                 // First try to delete if the record exists
                 Key.convertValueToKey(primaryKey);
-                const sql = 'DELETE FROM ' + util.escapeStore(store.name) + ' WHERE key = ?';
+                const sql = 'DELETE FROM ' + util.escapeStoreNameForSQL(store.name) + ' WHERE key = ?';
                 const encodedPrimaryKey = Key.encode(primaryKey);
                 CFG.DEBUG && console.log(sql, encoded, key, primaryKey, encodedPrimaryKey);
 
-                tx.executeSql(sql, [util.escapeNUL(encodedPrimaryKey)], function (tx, data) {
+                tx.executeSql(sql, [util.escapeSQLiteStatement(encodedPrimaryKey)], function (tx, data) {
                     CFG.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
 
                     store.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
@@ -538,10 +538,10 @@ IDBCursor.prototype['delete'] = function () {
     }
     return this.__store.transaction.__addToTransactionQueue(function cursorDelete (tx, args, success, error) {
         me.__find(undefined, undefined, tx, function (key, value, primaryKey) {
-            const sql = 'DELETE FROM  ' + util.escapeStore(me.__store.name) + ' WHERE key = ?';
+            const sql = 'DELETE FROM  ' + util.escapeStoreNameForSQL(me.__store.name) + ' WHERE key = ?';
             CFG.DEBUG && console.log(sql, key, primaryKey);
             Key.convertValueToKey(primaryKey);
-            tx.executeSql(sql, [util.escapeNUL(Key.encode(primaryKey))], function (tx, data) {
+            tx.executeSql(sql, [util.escapeSQLiteStatement(Key.encode(primaryKey))], function (tx, data) {
                 if (data.rowsAffected === 1) {
                     me.__store.__cursors.forEach((cursor) => {
                         cursor.__invalidateCache(); // Delete

@@ -10,6 +10,7 @@ import shimIDBTransaction from './IDBTransaction.js';
 import shimIDBDatabase from './IDBDatabase.js';
 import polyfill from './polyfill.js';
 import CFG from './CFG.js';
+import * as util from './util.js';
 
 const glob = typeof global !== 'undefined' ? global : (typeof window !== 'undefined' ? window : self);
 glob._babelPolyfill = false; // http://stackoverflow.com/questions/31282702/conflicting-use-of-babel-register
@@ -63,7 +64,7 @@ function setGlobalVars (idb, initialConfig) {
     IDB = idb || (typeof window !== 'undefined' ? window : (typeof self !== 'undefined' ? self : {}));
     shim('shimIndexedDB', shimIndexedDB);
     if (IDB.shimIndexedDB) {
-        IDB.shimIndexedDB.__useShim = function () {
+        IDB.shimIndexedDB.__useShim = function () { // Todo: Accept argument to set DOMException, DOMStringList, Event
             if (CFG.win.openDatabase !== undefined) {
                 // Polyfill ALL of IndexedDB, using WebSQL
                 shim('indexedDB', shimIndexedDB);
@@ -78,6 +79,11 @@ function setGlobalVars (idb, initialConfig) {
                 shim('IDBRequest', shimIDBRequest);
                 shim('IDBOpenDBRequest', shimIDBOpenDBRequest);
                 shim('IDBVersionChangeEvent', shimIDBVersionChangeEvent);
+                if (CFG.addNonIDBGlobals && IDB.indexedDB && IDB.indexedDB.modules) {
+                    shim('DOMStringList', util.DOMStringList);
+                    shim('Event', IDB.indexedDB.modules.Event);
+                    shim('DOMException', IDB.indexedDB.modules.DOMException);
+                }
             } else if (typeof IDB.indexedDB === 'object') {
                 // Polyfill the missing IndexedDB features (no need for IDBEnvironment, the window containing indexedDB itself))
                 polyfill(shimIDBCursor, shimIDBCursorWithValue, shimIDBDatabase, shimIDBFactory, shimIDBIndex, shimIDBKeyRange, shimIDBObjectStore, shimIDBRequest, shimIDBTransaction);

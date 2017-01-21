@@ -1,0 +1,269 @@
+// Todo: Reuse any relevant portions in this file or `node-buildjs.js` for adapting tests for browser shimming
+const fs = require('fs');
+const path = require('path');
+const {goodFiles, badFiles, notRunning} = require('./node-good-bad-files');
+const vm = require('vm');
+const jsdom = require('jsdom');
+const CY = require('cyclonejs');
+const Worker = require('./webworker/webworker'); // Todo: We could export this `Worker` publicly for others looking for a Worker polyfill with IDB support
+const XMLHttpRequest = require('xmlhttprequest');
+
+// CONFIG
+const vmTimeout = 40000; // Time until we give up on the vm (increasing to 40000 didn't make a difference on coverage in earlier versions)
+// const intervalSpacing = 1; // Time delay after test before running next
+
+// SET-UP
+const fileArg = process.argv[2];
+const dirPath = path.join('test-support', 'js');
+const idbTestPath = 'web-platform-tests';
+const indexeddbshim = require('../dist/indexeddbshim-UnicodeIdentifiers-node');
+// const indexeddbshimNonUnicode = require('../dist/indexeddbshim-node');
+
+const shimNS = {
+    colors: require('colors/safe'),
+    fileName: '',
+    finished: function () { throw new Error('Finished callback not set'); },
+    write: function (msg) {
+        (process && process.stdout && process.stdout.isTTY) ? process.stdout.write(msg) : console.log(msg);
+    },
+    writeln: function (msg) {
+        console.log(msg);
+    },
+    statuses: {
+        Pass: 0,
+        Fail: 0,
+        Timeout: 0,
+        'Not Run': 0
+    },
+    files: {
+        Pass: [],
+        Fail: [],
+        Timeout: [],
+        'Not Run': []
+    }
+};
+let ct = 0;
+
+/*
+// Todo: Might use in place of excluded array, but would need to increment, etc.
+process.on('uncaughtException', function(err) {
+    // handle the error safely
+    console.log('idbshim uncaught error:' + err)
+});
+process.on('unhandledRejection', (reason, p) => {
+    console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+});
+*/
+function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
+    shimNS.fileName = jsFiles[item];
+    shimNS.finished = () => {
+        ct += 1;
+        function finishedCheck () {
+            function cleanJSONOutput (...args) {
+                return JSON.stringify(...args).replace(/"/g, "'").replace(/','/g, "', '");
+            }
+            if (ct < jsFiles.length) {
+                // Todo: Have the test environment script itself report back time-outs and
+                //    tweak per test? (but set vmTimeout longer in case needed or even
+                //    remove if we control it on a per-test basis ourselves)
+                // We chain requests to avoid tests having race condition, e.g.,
+                //   potentially reusing database name, etc. if not handled already
+                //   in the tests (more tests do pass with these timeouts);
+                //   the timeout, however, does not even seem to be necessary.
+                // setTimeout(() => {
+                readAndEvaluate(jsFiles, initial, ending, ++item);
+                // }, intervalSpacing);
+                return;
+            }
+            shimNS.files['Files with all tests passing'] = shimNS.files.Pass.filter((p) =>
+                !shimNS.files.Fail.includes(p) &&
+                !shimNS.files.Timeout.includes(p) &&
+                !shimNS.files['Not Run'].includes(p)
+            );
+            console.log('\nTest files by status (may recur):');
+            console.log(
+                // Object.entries(shimNS.files).reduce((_, [status, files]) => { // Sometimes failing in Node 6.9.2
+                Object.keys(shimNS.files).reduce((_, status) => {
+                    const files = shimNS.files[status];
+                    if (!files.length) {
+                        return _ + '  ' + status + ': 0\n';
+                    }
+                    return _ + '  ' + status + ' (' + files.length + '): [\n    ' + cleanJSONOutput(files).slice(1, -1) + '\n  ]\n';
+                }, '\n')
+            );
+
+            console.log('  Number of files processed: ' + ct);
+
+            console.log('\nNumber of total tests by status:');
+            shimNS.statuses['Total tests'] = Object.values(shimNS.statuses).reduce((ct, statusCt) => ct + statusCt);
+            console.log(
+                cleanJSONOutput(shimNS.statuses, null, 2) + '\n'
+            );
+            process.exit();
+        }
+        finishedCheck();
+    };
+
+    // Exclude those currently breaking the tests
+    // Todo: Replace with `uncaughtException` handlers above?
+    const excluded = [];
+    if (excluded.includes(shimNS.fileName)) {
+        shimNS.finished();
+        return;
+    }
+
+    fs.readFile(path.join(dirPath, shimNS.fileName), 'utf8', function (err, content) {
+        if (err) { return console.log(err); }
+
+        const scripts = [];
+        const supported = [
+            'resources/testharness.js', 'resources/testharnessreport.js',
+            'resources/idlharness.js', 'resources/WebIDLParser.js',
+            'support.js', 'support-promises.js'
+        ];
+        // Use paths set in node-buildjs.js (when extracting <script> tags and joining contents)
+        content.replace(/beginscript::(.*?)::endscript/g, (_, src) => {
+            // Fix paths for known support files and report new ones (so we can decide how to handle)
+            if (supported.includes(src) || supported.includes(src.replace(/^\//, ''))) {
+                src = src.replace(/^\//, '');
+                scripts.push(path.join(idbTestPath,
+                    src === 'resources/WebIDLParser.js' // Needs to be built per https://github.com/w3c/testharness.js/issues/231
+                        // This file should be copied by
+                        //  `web-platform-tests/tools/serve/serve` but as I
+                        //  could not set up the W3C test server environment
+                        //  on Windows successfully, we just map it to the
+                        //  source file which appears to be copied unmodified
+                        ? 'resources/webidl2/lib/webidl2.js'
+                        : ((/^resources\//).test(src)
+                            ? src
+                            : 'IndexedDB/' + src)
+                ));
+            } else {
+                console.log('missing?:' + src);
+            }
+        });
+
+        readAndJoinFiles(
+            scripts,
+            function (harnessContent) {
+                // early envt't, harness, reporting env't, specific test
+                const allContent = initial + '\n' + harnessContent + '\n' + ending + '\n' + content;
+
+                // Build the window each time for test safety
+                const basePath = path.join(__dirname, '../web-platform-tests', 'IndexedDB');
+                /*
+                // Todo: We aren't really using this now as it doesn't help
+                //    with XMLHttpRequest; it also changes path of
+                //    node-XMLHttpRequest; submit PR to jsdom to get
+                //    relative local file paths working as in our
+                //    node-XMLHttpRequest fork (and with a desired base path);
+                //    however, we really need to get our own test server running
+                //    to allow URLs to work
+                */
+                jsdom.env({
+                    // Todo: We should get this working with our test server; should work with `XMLHttpRequest` base
+                    // url: 'http://localhost:9999/web-platform-tests/IndexedDB/interfaces.html',
+                    url: 'http://localhost:8000/IndexedDB/interfaces.html', // Leverage the W3C server for interfaces test (assuming it is running); as we are overriding XMLHttpRequest below, we are not really using this at the moment, but to set up, see https://github.com/w3c/web-platform-tests
+                    // url: 'file://' + basePath,
+                    done: function () {
+                        try {
+                            const doc = jsdom.jsdom('<div id="log"></div>', {});
+                            const window = doc.defaultView; // eslint-disable-line no-var
+                            // Todo: We might switch based on file to normally try non-Unicode version
+                            // indexeddbshimNonUnicode(window);
+                            indexeddbshim(window, {addNonIDBGlobals: true});
+                            // window.XMLHttpRequest = XMLHttpRequest({basePath: 'http://localhost:8000/IndexedDB/'}); // Todo: We should support this too
+                            window.XMLHttpRequest = XMLHttpRequest({basePath});
+                            // Patch postMessage to throw for SCA (as needed by tests in key_invalid.htm)
+                            const _postMessage = window.postMessage.bind(window);
+                            // Todo: Submit this as PR to jsdom
+                            window.postMessage = function (...args) {
+                                try {
+                                    CY.clone(args[0]);
+                                } catch (cloneErr) {
+                                    // Todo: Submit the likes of this as a PR to cyclonejs
+                                    throw window.indexedDB.utils.createDOMException('DataCloneError', 'Could not clone the message.');
+                                }
+                                _postMessage(...args);
+                            };
+                            window.Worker = Worker({
+                                relativePathType: 'file', // Todo: We need to change this to "url" when implemented
+                                // Todo: We might auto-detect this by looking at window.location
+                                basePath // Todo: We need to change this to our server's base URL when implemented
+                                // basePath: path.join(__dirname, 'js')
+                            });
+                            shimNS.window = window;
+
+                            // Should only pass in safe objects
+                            const sandboxObj = {
+                                console,
+                                shimNS
+                            };
+                            vm.runInNewContext(allContent, sandboxObj, {
+                                displayErrors: true,
+                                timeout: vmTimeout
+                            });
+                        } catch (err) {
+                            // If there is an issue, save the last erring test along with our
+                            // custom test environment and the harness bundle; avoid some of our
+                            //  ESLint rules on this joined file to better notice any other
+                            //  issues between the code, custom environment, and harness
+                            const fileSave =
+                                '/' + '*' + shimNS.fileName + ':::' + err /* .replace(new RegExp('\\*' + '/', 'g'), '* /') */ + '*' + '/' +
+                                '/' + '* globals assert_equals, assert_array_equals, assert_unreached, async_test, EventWatcher, SharedWorkerGlobalScope, DedicatedWorkerGlobalScope, ServiceWorkerGlobalScope, WorkerGlobalScope *' + '/\n' +
+                                '/' + '*eslint-disable curly, no-unused-vars, no-self-compare, space-in-parens, no-extra-parens, spaced-comment, padded-blocks, no-useless-escape, func-call-spacing, comma-spacing, operator-linebreak, prefer-const, compat/compat, no-unneeded-ternary, space-unary-ops, object-property-newline, no-multiple-empty-lines, block-spacing, space-infix-ops, comma-dangle, no-template-curly-in-string, yoda, quotes, spaced-comment, no-var, key-spacing, camelcase, indent, semi, space-before-function-paren, eqeqeq, brace-style, no-array-constructor, keyword-spacing*' + '/\n' +
+                                allContent;
+                            fs.writeFile(path.join('test-support', 'latest-erring-bundled.js'), fileSave, function (err) {
+                                if (err) { return console.log(err); }
+                            });
+                            shimNS.finished();
+                        }
+                    }
+                });
+            }
+        );
+    });
+}
+
+function readAndEvaluateFiles (err, jsFiles) {
+    if (err) { return console.log(err); }
+    fs.readFile(path.join('test-support', 'environment.js'), 'utf8', function (err, initial) {
+        if (err) { return console.log(err); }
+
+        // console.log(JSON.stringify(jsFiles)); // See what files we've got
+
+        // Hard-coding problematic files for testing
+        // jsFiles = ['idbcursor-continuePrimaryKey-exception-order.js'];
+        // jsFiles = ['interfaces.js'];
+        // jsFiles = ['transaction-lifetime-empty.js'];
+
+        fs.readFile(path.join('test-support', 'custom-reporter.js'), 'utf8', function (err, ending) {
+            if (err) { return console.log(err); }
+            readAndEvaluate(jsFiles, initial, ending);
+        });
+    });
+}
+
+if (fileArg === 'good') {
+    readAndEvaluateFiles(null, goodFiles);
+} else if (fileArg === 'bad') {
+    readAndEvaluateFiles(null, badFiles);
+} else if (fileArg === 'notRunning') {
+    readAndEvaluateFiles(null, notRunning);
+} else if (fileArg && fileArg !== 'all') {
+    readAndEvaluateFiles(null, [fileArg]);
+} else {
+    fs.readdir(dirPath, readAndEvaluateFiles);
+}
+
+function readAndJoinFiles (arr, cb, i = 0, str = '') {
+    const filename = arr[i];
+    if (!filename) { // || i === arr.length - 1) {
+        return cb(str);
+    }
+    fs.readFile(filename, 'utf8', function (err, data) {
+        if (err) { return console.log(err); }
+        str += '/*jsfilename:' + filename + '*/\n\n' + data;
+        readAndJoinFiles(arr, cb, i + 1, str);
+    });
+}
