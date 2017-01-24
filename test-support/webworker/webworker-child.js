@@ -10,25 +10,24 @@
 //      that is listening for connections. The <script> parameter is the
 //      path to the JavaScript source to be executed as the body of the
 //      worker.
-
-var assert = require('assert');
-var fs = require('fs');
-var net = require('net');
-var path = require('path');
-var vm = require('vm');
-var util = require('util');
-var WebSocket = require('ws');
-var wwutil = require('./webworker-util');
-// Had problems with npm and the following when requiring `webworkers`
-//   as a separate repository (due to indirect circular dependency?);
-// var indexeddbshim = require('indexeddbshim');
-var indexeddbshim = require('../../'); // '../../dist/indexeddbshim-UnicodeIdentifiers-node.js');
-
 if (process.argv.length < 4) {
     throw new Error('usage: node worker.js <sock> <script>');
 }
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+const util = require('util');
+const WebSocket = require('ws');
+const wwutil = require('./webworker-util');
+// Had problems with npm and the following when requiring `webworkers`
+//   as a separate repository (due to indirect circular dependency?);
+// const indexeddbshim = require('indexeddbshim');
+const indexeddbshim = require('../../'); // '../../dist/indexeddbshim-UnicodeIdentifiers-node.js');
+const XMLHttpRequest = require('xmlhttprequest');
+// const Worker = require('./webworker'); // Todo: May need to allow workers their own
+
 /*
-var permittedProtocols;
+const permittedProtocols;
 try {
     permittedProtocols = JSON.parse(process.argv[6])
 } catch (err) {
@@ -36,19 +35,25 @@ try {
 }
 */
 
-var sockPath = process.argv[2];
-var workerURL = process.argv[3];
+const workerCtx = {};
+const sockPath = process.argv[2];
+const workerURL = process.argv[3];
+const scriptLoc = new wwutil.WorkerLocation(workerURL);
+// Connect to the parent process
+const ws = new WebSocket('ws+unix://' + sockPath);
+const ms = new wwutil.MsgStream(ws);
 
-var workerOptions = {
+const workerOptions = {
     type: process.argv[4], // "classic" (default), "module"
     credentials: process.argv[5] // "omit" (if type=module), "include", "same-origin"
 };
-var workerConfig = {
+const workerConfig = {
     node: process.argv[6] === 'true', // Whether to add basic Node globals and require capability to worker
     relativePathType: process.argv[7], // "file", "url" - determines Worker `src` argument interpretation; defaults to "url"
-                                        //       relative paths will be relative to `basePath`
+                                        //       relative paths will be relative to `basePath`; absolute paths will be relative to `rootPath`
     basePath: process.argv[8] === 'false' ? false : process.argv[8], // The base path for pathType="url" defaults to `localhost`; the base path for pathType="file"; defaults to the current working directory; if `false`, will throw upon relative paths
-    origin: process.argv[9] // Used for the `Origin` header (may be `null`); if `*` will cause cross-origin restrictions to be ignored
+    rootPath: process.argv[9],
+    origin: process.argv[10] // Used for the `Origin` header (may be `null`); if `*` will cause cross-origin restrictions to be ignored
 };
 
 // Catch exceptions
@@ -60,8 +65,9 @@ var workerConfig = {
 //
 // XXX: There are all sorts of pieces of the error handling spec that are not
 //      being done correctly. Pick a clause, any clause.
-var inErrorHandler = false;
-var exceptionHandler = function(e) {
+let inErrorHandler = false;
+
+const exceptionHandler = function (e) {
     if (!inErrorHandler && workerCtx.onerror) {
         inErrorHandler = true;
         workerCtx.onerror(e);
@@ -73,20 +79,21 @@ var exceptionHandler = function(e) {
     // Don't bother setting inErrorHandler here, as we're already delivering
     // the event to the master anyway
     ms.send([wwutil.MSGTYPE_ERROR, {
-        'message' : wwutil.getErrorMessage(e),
-        'filename' : wwutil.getErrorFilename(e),
-        'lineno' : wwutil.getErrorLine(e)
+        'message': wwutil.getErrorMessage(e),
+        'filename': wwutil.getErrorFilename(e),
+        'lineno': wwutil.getErrorLine(e),
+        'stack': e.stack
     }]);
 };
 
 // Message handling function for messages from the master
-var handleMessage = function(msg, fd) {
+const handleMessage = function (msg, fd) {
     if (!wwutil.isValidMessage(msg)) {
         wwutil.debug('Received invalid message: ' + util.inspect(msg));
         return;
     }
 
-    switch(msg[0]) {
+    switch (msg[0]) {
     case wwutil.MSGTYPE_NOOP:
         break;
 
@@ -107,20 +114,20 @@ var handleMessage = function(msg, fd) {
     case wwutil.MSGTYPE_USER:
         // XXX: I have no idea what the event object here should really look
         //      like. I do know that it needs a 'data' elements, though.
-    	if (workerCtx.onmessage || workerCtx.eventHandlers['message'].length > 0) {
-	        var e = { data : msg[1] };
-	
-	        if (fd) {
-	            e.fd = fd;
-	        }
-	
-	        if(workerCtx.onmessage) {
-	            workerCtx.onmessage(e);
-	        }
-	
-	        for (var i=0; i<workerCtx.eventHandlers['message'].length; i++) {
-	        	workerCtx.eventHandlers['message'][i](e);
-	        }
+        if (workerCtx.onmessage || workerCtx.eventHandlers['message'].length > 0) {
+            const e = { data: msg[1] };
+
+            if (fd) {
+                e.fd = fd;
+            }
+
+            if (workerCtx.onmessage) {
+                workerCtx.onmessage(e);
+            }
+
+            for (let i = 0; i < workerCtx.eventHandlers['message'].length; i++) {
+                workerCtx.eventHandlers['message'][i](e);
+            }
         }
 
         break;
@@ -131,14 +138,12 @@ var handleMessage = function(msg, fd) {
     }
 };
 
-var scriptLoc = new wwutil.WorkerLocation(workerURL);
-
-// Connect to the parent process
-var ws = new WebSocket('ws+unix://' + sockPath);
-var ms = new wwutil.MsgStream(ws);
+// Set up the context for the worker instance
+let workerCtxObj; // eslint-disable-line prefer-const
+let scriptSource;
 
 // Once we connect successfully, set up the rest of the world
-ws.addListener('open', function() {
+ws.addListener('open', function () {
     // When we receive a message from the master, react and possibly
     // dispatch it to the worker context
     ms.addListener('msg', handleMessage);
@@ -162,24 +167,24 @@ ws.addListener('open', function() {
 // See also https://html.spec.whatwg.org/multipage/webappapis.html#fetch-a-module-worker-script-tree
 
 /*
-var workerOptions = {
+const workerOptions = {
     type: process.argv[4], // "classic" (default), "module"
     credentials: process.argv[5] // "omit" (if type=module), "include", "same-origin"
 };
-var workerConfig = {
+const workerConfig = {
     node: process.argv[6] === 'true', // Whether to add basic Node globals and require capability to worker
     relativePathType: process.argv[7], // "file", "url" - determines Worker `src` argument interpretation; defaults to "url"
                                         //       relative paths will be relative to `basePath`
     basePath: process.argv[8], // The base path for pathType="url" defaults to `localhost`; the base path for pathType="file" defaults to the current working directory; if `false`, will throw upon relative paths
-    origin: process.argv[9] // Used for the `Origin` header (may be `null`); if `*` will cause cross-origin restrictions to be ignored
+    rootPath: process.argv[9],
+    origin: process.argv[10] // Used for the `Origin` header (may be `null`); if `*` will cause cross-origin restrictions to be ignored
 };
 */
 
 // Construct the Script object to host the worker's code
-var scriptSource = undefined;
 switch (scriptLoc.protocol) {
 case 'file':
-	scriptSource = fs.readFileSync(scriptLoc.pathname);
+    scriptSource = fs.readFileSync(scriptLoc.pathname);
     break;
 
 default:
@@ -187,9 +192,6 @@ default:
         scriptLoc.protocol);
     process.exit(1);
 }
-
-// Set up the context for the worker instance
-var workerCtx = {};
 
 // Context elements required for node.js
 //
@@ -220,33 +222,64 @@ workerCtx.Float32Array = Float32Array;
 workerCtx.Float64Array = Float64Array;
 
 indexeddbshim(workerCtx); // Add indexedDB globals
+workerCtx.XMLHttpRequest = XMLHttpRequest({basePath: workerConfig.basePath});
 
 // Context elements required by the WebWorkers API spec
-workerCtx.postMessage = function(msg) {
+workerCtx.postMessage = function (msg) {
     ms.send([wwutil.MSGTYPE_USER, msg]);
 };
 workerCtx.self = workerCtx;
+workerCtx.WorkerGlobalScope = workerCtx;
+
+// Todo: In place of this, allow conditionally `SharedWorkerGlobalScope`, or `ServiceWorkerGlobalScope`
+workerCtx.DedicatedWorkerGlobalScope = workerCtx;
+// This was needed for testharness' `instanceof` check which requires it to be callable: `self instanceof DedicatedWorkerGlobalScope`
+workerCtx.DedicatedWorkerGlobalScope[Symbol.hasInstance] = function (inst) { return true; };
+
 workerCtx.location = scriptLoc;
 workerCtx.closing = false;
-workerCtx.close = function() {
+workerCtx.close = function () {
     process.exit(0);
 };
-workerCtx.eventHandlers = {"message": new Array()};
-workerCtx.addEventListener = function(event, handler) {
+workerCtx.eventHandlers = {message: []};
+workerCtx.addEventListener = function (event, handler) {
     if (event in workerCtx.eventHandlers) {
         workerCtx.eventHandlers[event].push(handler);
     }
 };
-workerCtx.importScripts = function() {
+workerCtx.importScripts = function () {
     if (workerOptions.type === 'module') {
         // https://html.spec.whatwg.org/multipage/workers.html#importing-scripts-and-libraries
         throw new TypeError('For modules, `importScripts` should not be used. Use `import` statements instead.');
     }
     // Todo: Support URL/absolute file paths
-    for (var i=0; i<arguments.length; i++) {
-    	vm.runInContext(fs.readFileSync(path.join(process.cwd(), arguments[i])), workerCtxObj);
+    for (let i = 0; i < arguments.length; i++) {
+        // Todo: Handle pathType="url" (defaults to `localhost`) and if basePath is `false` with it
+        const currentPath = (/^[\\/]/).test(arguments[i]) // Root
+                    ? workerConfig.pathType === 'file' && workerConfig.basePath === false ? process.cwd() : workerConfig.rootPath
+                    : workerConfig.pathType === 'file' && workerConfig.basePath === false ? process.cwd() : workerConfig.basePath;
+        /*
+        console.log(path.join(
+            currentPath,
+            arguments[i]
+        ));
+        */
+        try {
+            vm.runInContext(
+                fs.readFileSync(
+                    path.join(
+                        currentPath,
+                        arguments[i]
+                    )
+                ),
+                workerCtxObj
+            );
+        } catch (err) {
+            console.log(err);
+            throw err;
+        }
     }
 };
 
 // Context object for vm script api
-var workerCtxObj = vm.createContext(workerCtx);
+workerCtxObj = vm.createContext(workerCtx);

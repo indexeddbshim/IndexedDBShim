@@ -75,6 +75,11 @@
             }
             write(statusText, test.status);
             if (!shimNS.files[statusText].includes(fileName)) shimNS.files[statusText].push(fileName);
+            if (shimNS.fileMap) {
+                if (!shimNS.fileMap.has(fileName)) shimNS.fileMap.set(fileName, [0, 0]);
+                const [pass, total] = shimNS.fileMap.get(fileName);
+                shimNS.fileMap.set(fileName, [pass + (test.status === 0), total + 1]);
+            }
             shimNS.writeln(' (' + fileName + '): ' + test.name);
             if (assertions) shimNS.writeln(assertions);
             if (test.message && test.stack) shimNS.writeln((test.message || ' ') + test.stack);

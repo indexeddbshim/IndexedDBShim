@@ -35,6 +35,7 @@ const shimNS = {
         Timeout: 0,
         'Not Run': 0
     },
+    // fileMap: new Map(), // Todo: Could add a flag to set
     files: {
         Pass: [],
         Fail: [],
@@ -99,6 +100,16 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
             console.log(
                 cleanJSONOutput(shimNS.statuses, null, 2) + '\n'
             );
+            if (shimNS.fileMap) {
+                console.log(
+                    [...shimNS.fileMap].reduce(
+                        (str, [fileName, [passing, total]]) =>
+                            str + fileName + ': ' + passing + '/' + total + '\n',
+                        ''
+                    )
+                );
+                shimNS.fileMap.clear(); // Release memory
+            }
             process.exit();
         }
         finishedCheck();
@@ -127,16 +138,19 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
             if (supported.includes(src) || supported.includes(src.replace(/^\//, ''))) {
                 src = src.replace(/^\//, '');
                 scripts.push(path.join(idbTestPath,
-                    src === 'resources/WebIDLParser.js' // Needs to be built per https://github.com/w3c/testharness.js/issues/231
-                        // This file should be copied by
-                        //  `web-platform-tests/tools/serve/serve` but as I
-                        //  could not set up the W3C test server environment
-                        //  on Windows successfully, we just map it to the
-                        //  source file which appears to be copied unmodified
-                        ? 'resources/webidl2/lib/webidl2.js'
-                        : ((/^resources\//).test(src)
-                            ? src
-                            : 'IndexedDB/' + src)
+                    // Since the `interfaces.worker.js` Worker script requires this file too,
+                    //    and as our build script is now copying it, we actually don't need this now,
+                    //    but keeping comment in case this possibility is later closed
+                    // src === 'resources/WebIDLParser.js' // See https://github.com/w3c/testharness.js/issues/231
+                    // This file should be rewritten by `web-platform-tests/tools/serve/serve`,
+                    //   but as we are allowing testing independently of this environment (and
+                    //   are using file loading as opposed to URL loading mechanisms in our
+                    //   testing) we just map it to the source file which appears to be rendered
+                    //   unmodified
+                    // ? 'resources/webidl2/lib/webidl2.js' : ()
+                    ((/^resources\//).test(src)
+                        ? src
+                        : 'IndexedDB/' + src)
                 ));
             } else {
                 console.log('missing?:' + src);
@@ -150,7 +164,8 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
                 const allContent = initial + '\n' + harnessContent + '\n' + ending + '\n' + content;
 
                 // Build the window each time for test safety
-                const basePath = path.join(__dirname, '../web-platform-tests', 'IndexedDB');
+                const rootPath = path.join(__dirname, '../web-platform-tests');
+                const basePath = path.join(rootPath, 'IndexedDB');
                 /*
                 // Todo: We aren't really using this now as it doesn't help
                 //    with XMLHttpRequest; it also changes path of
@@ -189,8 +204,9 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
                             window.Worker = Worker({
                                 relativePathType: 'file', // Todo: We need to change this to "url" when implemented
                                 // Todo: We might auto-detect this by looking at window.location
-                                basePath // Todo: We need to change this to our server's base URL when implemented
+                                basePath, // Todo: We need to change this to our server's base URL when implemented
                                 // basePath: path.join(__dirname, 'js')
+                                rootPath
                             });
                             shimNS.window = window;
 

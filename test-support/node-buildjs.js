@@ -65,10 +65,25 @@ fs.mkdir(builtJSPath, function () {
                 fs.writeFile(outputFile, scriptContent, function (err) {
                     if (err) { return console.log(err); }
                     ct++;
-                    // console.log("The file " + outputFile + " was saved!");
                     if (ct === htmlFiles.length - 1) {
-                        console.log('All files have been saved!');
+                        const script = 'interfaces.worker.js';
+                        scriptContent = ['/resources/testharness.js', '/resources/testharnessreport.js'].reduce(
+                            (s, src) => s + '/' + '*beginscript::' + src + '::endscript*' + '/\n',
+                            ''
+                        ) + "document.title = '" + script + "';\n" +
+                            'fetch_tests_from_worker(new Worker("' + script + '"));'; // There is no name conflict as this will be attempting to load from inside web-platform-tests/IndexedDB/
+                        fs.writeFile(path.join(builtJSPath, script), scriptContent, function (err) {
+                            if (err) { return console.log(err); }
+                            fs.readFile('web-platform-tests/resources/webidl2/lib/webidl2.js', 'utf8', function (err, data) {
+                                if (err) { return console.log(err); }
+                                fs.writeFile('web-platform-tests/resources/WebIDLParser.js', data, function (err) {
+                                    if (err) { return console.log(err); }
+                                    console.log('All files have been saved!');
+                                });
+                            });
+                        });
                     }
+                    // console.log("The file " + outputFile + " was saved!");
                 });
             });
         });

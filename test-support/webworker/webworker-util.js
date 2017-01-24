@@ -1,23 +1,23 @@
 // Utilies and other common gook shared between the WebWorker master and
 // its constituent Workers.
 
-var BSON = require('bson');
-var events = require('events');
-var path = require('path');
-var util = require('util');
-var urllib = require('url');
+const BSON = require('bson');
+const events = require('events');
+const path = require('path');
+const util = require('util');
+const urllib = require('url');
 
-var bson = new BSON();
+const bson = new BSON();
 
 // Some debugging functions
-var debugLevel = parseInt(process.env.NODE_DEBUG, 16);
-var debug = (debugLevel & 0x8) ?
-    function() { console.error.apply(this, arguments); } :
-    function() {};
+const debugLevel = parseInt(process.env.NODE_DEBUG, 16);
+const debug = (debugLevel & 0x8)
+    ? function () { console.error.apply(this, arguments); }
+    : function () {};
 exports.debug = debug;
 
 // Extract meaning from stack traces
-var STACK_FRAME_RE = /.* \(?(.+:\d+:\d+)\)?$/;
+const STACK_FRAME_RE = /.* \(?(.+:\d+:\d+)\)?$/;
 
 // Symbolic names for our messages types
 exports.MSGTYPE_NOOP = 0;
@@ -26,9 +26,9 @@ exports.MSGTYPE_CLOSE = 2;
 exports.MSGTYPE_USER = 100;
 
 // Is the given message well-formed?
-var isValidMessage = function(msg) {
-	return (typeof msg[0] !== "undefined" && typeof msg[1] !== "undefined");
-}
+const isValidMessage = function (msg) {
+    return (typeof msg[0] !== 'undefined' && typeof msg[1] !== 'undefined');
+};
 exports.isValidMessage = isValidMessage;
 
 // A simple messaging stream.
@@ -40,73 +40,73 @@ exports.isValidMessage = isValidMessage;
 // message with which it was sent.
 //
 // Sending messages is done with the send() method.
-var MsgStream = function(s) {
-    var self = this;
+const MsgStream = function (s) {
+    const self = this;
 
     events.EventEmitter.call(self);
 
     // Sequence numbers for outgoing and incoming FDs
-    var fds_seqno_sent = 0;
-    var fds_seqno_recvd = 0;
+    let fdsSeqnoSent = 0;
+    let fdsSeqnoRecvd = 0;
 
     // Collections of messages waiting for FDs and vice-versa. These
     // are keyed by FD seqno.
-    var msg_waiting_for_fd = {};
-    var fd_waiting_for_msg = {};
+    const msgWaitingForFd = {};
+    const fdWaitingForMsg = {};
 
     // Get the JS object representing message 'v' with fd 'fd'.
-    var getMsgObj = function(v, fd) {
-        return [(fd != undefined) ? ++fds_seqno_sent : 0, v];
+    const getMsgObj = function (v, fd) {
+        return [(fd !== undefined) ? ++fdsSeqnoSent : 0, v];
     };
 
-    self.send = function(v, fd) {
-        var ms = getMsgObj(v, fd);
+    self.send = function (v, fd) {
+        const ms = getMsgObj(v, fd);
         debug('Process ' + process.pid + ' sending message: ' + util.inspect(ms));
 
         s.send(bson.serialize(ms), {binary: true, mask: true});
     };
 
-    s.on('message', function(ms) {
+    s.on('message', function (ms) {
         debug('Process ' + process.pid + ' received message: ' + ms);
 
-        var mo = bson.deserialize(ms);
+        const mo = bson.deserialize(ms);
 
         // Ignore invalid messages; this is probably worth an error, though
         if (!isValidMessage(mo)) {
             return;
         }
 
-        var fd = undefined;
+        let fd;
 
-        var fd_seq = mo[0];
-        var msg = mo[1];
+        const fdSeq = mo[0];
+        const msg = mo[1];
 
         // If our message has an associated file descriptor that we
         // have not yet received, queue it for later delivery.
-        if (fd_seq) {
-            if (!(fd = fd_waiting_for_msg[fd_seq])) {
-                msg_waiting_for_fd[fd_seq] = msg;
+        if (fdSeq) {
+            if (!(fd = fdWaitingForMsg[fdSeq])) {
+                msgWaitingForFd[fdSeq] = msg;
                 return;
             }
 
-            delete fd_waiting_for_msg[fd_seq];
+            delete fdWaitingForMsg[fdSeq];
         }
 
         // We're complete; emit
         self.emit('msg', msg, fd);
     });
 
-    s.on('fd', function(fd) {
+    s.on('fd', function (fd) {
         // Look for a message that's waiting for our arrival. If we don't
         // have one, enqueu the received FD for later delivery.
-        var msg = msg_waiting_for_fd[++fds_seqno_recvd];
+        const msg = msgWaitingForFd[++fdsSeqnoRecvd];
         if (!msg) {
-            fd_waiting_for_msg[fds_seqno_recvd] = fd;
+            fdWaitingForMsg[fdsSeqnoRecvd] = fd;
             return;
         }
 
         // There was a message waiting for us; emit
-        delete msg_waiting_for_fd[fds_seqno_recvd];
+        delete msgWaitingForFd[fdsSeqnoRecvd];
         self.emit('msg', msg, fd);
     });
 };
@@ -125,10 +125,10 @@ exports.makeFileURL = function (workerConfig, dir) {
 // http://www.whatwg.org/specs/web-workers/current-work/#dom-workerlocation-href
 //
 // XXX: None of these properties are readonly as required by the spec.
-var WorkerLocation = function(url) {
-    var u = urllib.parse(url);
+const WorkerLocation = function (url) {
+    const u = urllib.parse(url);
 
-    var portForProto = function(proto) {
+    const portForProto = function (proto) {
         switch (proto) {
         case 'http':
             return 80;
@@ -144,7 +144,7 @@ var WorkerLocation = function(url) {
                 'Unknown protocol \'' + proto + '\'; returning undefined'
             );
             return undefined;
-        };
+        }
     };
 
     this.href = u.href;
@@ -162,7 +162,7 @@ exports.WorkerLocation = WorkerLocation;
 // Get the error message for a given exception
 //
 // The first line of the stack trace seems to always be the message itself.
-exports.getErrorMessage = function(e) {
+exports.getErrorMessage = function (e) {
     try {
         return e.message || e.stack.split('\n')[0].trim();
     } catch (e) {
@@ -171,9 +171,9 @@ exports.getErrorMessage = function(e) {
 };
 
 // Get the filename for a given exception
-exports.getErrorFilename = function(e) {
+exports.getErrorFilename = function (e) {
     try {
-        var m = e.stack.split('\n')[1].match(STACK_FRAME_RE);
+        const m = e.stack.split('\n')[1].match(STACK_FRAME_RE);
         return m[1].substring(
             0,
             m[1].lastIndexOf(':', m[1].lastIndexOf(':') - 1)
@@ -184,10 +184,10 @@ exports.getErrorFilename = function(e) {
 };
 
 // Get the line number for a given exception
-exports.getErrorLine = function(e) {
+exports.getErrorLine = function (e) {
     try {
-        var m = e.stack.split('\n')[1].match(STACK_FRAME_RE);
-        var parts = m[1].split(':');
+        const m = e.stack.split('\n')[1].match(STACK_FRAME_RE);
+        const parts = m[1].split(':');
         return parseInt(parts[parts.length - 2]);
     } catch (e) {
         return -1;
