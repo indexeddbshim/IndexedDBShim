@@ -42,7 +42,7 @@ describe('W3C IDBFactory.cmp Tests', function () {
 
     // keyorder
     it('Key sort order', function (done) {
-        this.timeout(12000);
+        this.timeout(15000);
         var numStarted = 0;
         var numFinished = 0;
         function keysort(desc, unsorted, expected) {

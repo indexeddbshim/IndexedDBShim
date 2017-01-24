@@ -444,11 +444,10 @@
     From fakeIndexedDB (Browser), only the first test is
         passing (as expected due to rollback limitations);
 
-    From indexedDBmock (Node and browser), only database.js is not passing;
+    From indexedDBmock (Node and browser), only database.js is not passing
 
     From old W3C (Node and browser), only the following are not passing:
         IDBDatabase.close.js,
-        IDBObjectStore.add.js (skipping one for cyclic values),
         IDBObjectStore.createIndex.js,
         TransactionBehavior.js
 
