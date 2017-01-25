@@ -121,9 +121,9 @@ exports.makeFileURL = function (workerConfig, dir) {
     return false;
 };
 
-// Implement the WorkerLocation interface described in
+// Todo: Implement the WorkerLocation interface described in
 // http://www.whatwg.org/specs/web-workers/current-work/#dom-workerlocation-href
-//
+//   Leverage URL/URLSearchParams polyfill?
 // XXX: None of these properties are readonly as required by the spec.
 const WorkerLocation = function (url) {
     const u = urllib.parse(url);

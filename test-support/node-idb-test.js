@@ -7,6 +7,7 @@ const jsdom = require('jsdom');
 const CY = require('cyclonejs');
 const Worker = require('./webworker/webworker'); // Todo: We could export this `Worker` publicly for others looking for a Worker polyfill with IDB support
 const XMLHttpRequest = require('xmlhttprequest');
+const URL = require('js-polyfills/url');
 
 // CONFIG
 const vmTimeout = 40000; // Time until we give up on the vm (increasing to 40000 didn't make a difference on coverage in earlier versions)
@@ -17,6 +18,7 @@ const fileArg = process.argv[2];
 const dirPath = path.join('test-support', 'js');
 const idbTestPath = 'web-platform-tests';
 const indexeddbshim = require('../dist/indexeddbshim-UnicodeIdentifiers-node');
+const workerFileRegex = /^(_service-worker-indexeddb\.https\.js|(_interface-objects-)?00\d(\.worker)?\.js)$/;
 // const indexeddbshimNonUnicode = require('../dist/indexeddbshim-node');
 
 const shimNS = {
@@ -56,7 +58,7 @@ process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
 });
 */
-function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
+function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, item = 0) {
     shimNS.fileName = jsFiles[item];
     shimNS.finished = () => {
         ct += 1;
@@ -73,7 +75,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
                 //   in the tests (more tests do pass with these timeouts);
                 //   the timeout, however, does not even seem to be necessary.
                 // setTimeout(() => {
-                readAndEvaluate(jsFiles, initial, ending, ++item);
+                readAndEvaluate(jsFiles, initial, ending, workers, ++item);
                 // }, intervalSpacing);
                 return;
             }
@@ -111,6 +113,9 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
                 );
                 shimNS.fileMap.clear(); // Release memory
             }
+            if (excluded.length) {
+                console.log('Please note that the following tests are being deliberately excluded as we do not yet have the built-in support for their features (e.g., shared and service workers), and they are not currently allowing the other tests to complete: ' + cleanJSONOutput(excluded));
+            }
             if (shimNS.jsonOutput) {
                 const jsonOutputPath = path.join(
                     'test-support', 'json-output' +
@@ -131,8 +136,9 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
 
     // Exclude those currently breaking the tests
     // Todo: Replace with `uncaughtException` handlers above?
-    const excluded = [];
-    if (excluded.includes(shimNS.fileName)) {
+    const testingAllWorkers = workers && jsFiles.length > 1;
+    const excluded = testingAllWorkers ? ['_interface-objects-003.js', '_interface-objects-004.js', '_service-worker-indexeddb.https.js'] : [];
+    if (excluded.includes(shimNS.fileName) || (!workers && workerFileRegex.test(shimNS.fileName))) {
         shimNS.finished();
         return;
     }
@@ -144,7 +150,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
         const supported = [
             'resources/testharness.js', 'resources/testharnessreport.js',
             'resources/idlharness.js', 'resources/WebIDLParser.js',
-            'support.js', 'support-promises.js'
+            'support.js', 'support-promises.js', 'service-workers/service-worker/resources/test-helpers.sub.js'
         ];
         // Use paths set in node-buildjs.js (when extracting <script> tags and joining contents)
         content.replace(/beginscript::(.*?)::endscript/g, (_, src) => {
@@ -162,7 +168,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
                     //   testing) we just map it to the source file which appears to be rendered
                     //   unmodified
                     // ? 'resources/webidl2/lib/webidl2.js' : ()
-                    ((/^resources\//).test(src)
+                    ((/^(service-workers|resources)/).test(src)
                         ? src
                         : 'IndexedDB/' + src)
                 ));
@@ -203,6 +209,8 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
                             indexeddbshim(window, {addNonIDBGlobals: true});
                             // window.XMLHttpRequest = XMLHttpRequest({basePath: 'http://localhost:8000/IndexedDB/'}); // Todo: We should support this too
                             window.XMLHttpRequest = XMLHttpRequest({basePath});
+                            window.URL = URL.URL;
+                            window.URLSearchParams = URL.URLSearchParams;
                             // We will otherwise miss these tests (though not sure this is the best solution):
                             //   see test_primary_interface_of in idlharness.js
                             window.Object = Object;
@@ -259,7 +267,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
     });
 }
 
-function readAndEvaluateFiles (err, jsFiles) {
+function readAndEvaluateFiles (err, jsFiles, workers) {
     if (err) { return console.log(err); }
     fs.readFile(path.join('test-support', 'environment.js'), 'utf8', function (err, initial) {
         if (err) { return console.log(err); }
@@ -273,21 +281,34 @@ function readAndEvaluateFiles (err, jsFiles) {
 
         fs.readFile(path.join('test-support', 'custom-reporter.js'), 'utf8', function (err, ending) {
             if (err) { return console.log(err); }
-            readAndEvaluate(jsFiles, initial, ending);
+            readAndEvaluate(jsFiles, initial, ending, workers);
         });
     });
 }
 
-if (fileArg === 'good') {
+switch (fileArg) {
+case 'good':
     readAndEvaluateFiles(null, goodFiles);
-} else if (fileArg === 'bad') {
+    break;
+case 'bad':
     readAndEvaluateFiles(null, badFiles);
-} else if (fileArg === 'notRunning') {
+    break;
+case 'notRunning':
     readAndEvaluateFiles(null, notRunning);
-} else if (fileArg && fileArg !== 'all') {
-    readAndEvaluateFiles(null, [fileArg]);
-} else {
-    fs.readdir(dirPath, readAndEvaluateFiles);
+    break;
+case 'workers':
+    fs.readdir(dirPath, function (err, jsFiles) {
+        jsFiles = jsFiles.filter((file) => file.match(workerFileRegex));
+        readAndEvaluateFiles(err, jsFiles, true);
+    });
+    break;
+default:
+    if (fileArg && fileArg !== 'all') {
+        readAndEvaluateFiles(null, [fileArg], true); // Allow specific worker files to be passed
+    } else {
+        fs.readdir(dirPath, readAndEvaluateFiles);
+    }
+    break;
 }
 
 function readAndJoinFiles (arr, cb, i = 0, str = '') {

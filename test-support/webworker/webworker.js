@@ -1,3 +1,4 @@
+// Todo: SharedWorker/ServiceWorker/MessageChannel polyfills
 // WebWorkers implementation.
 //
 // The master and workers communite over a UNIX domain socket at
@@ -29,15 +30,13 @@
 //                          message.
 
 const assert = require('assert');
-const child_process = require('child_process');
+const childProcess = require('child_process');
 const fs = require('fs');
-const net = require('net');
 const http = require('http');
 const path = require('path');
 const util = require('util');
 const wwutil = require('./webworker-util');
 const WebSocketServer = require('ws').Server;
-const inspect = require('eyes').inspector({styles: {all: 'magenta'}});
 const os = require('os');
 const url = require('url');
 const isWin = /^win/.test(os.platform());
@@ -57,7 +56,7 @@ let numWorkersCreated = 0;
 //   basePath: The base path for pathType="url" defaults to `localhost`; the base path for pathType="file" defaults to the current working directory; if `false`, will throw upon relative paths
 //   rootPath: The root path
 //   origin: Used for the `Origin` header (may be `null`); if `*` will cause cross-origin restrictions to be ignored
-//}
+// }
 module.exports = function (workerConfig) {
     workerConfig = workerConfig || {};
     if (workerConfig.permittedProtocols && !Array.isArray(workerConfig.permittedProtocols)) {
@@ -70,8 +69,8 @@ module.exports = function (workerConfig) {
     // Standard options = {
     //   type: "classic" (default), "module"
     //   credentials: "omit" (if type=module), "include", "same-origin"
-    //}
-    const Worker = function(src, opts) {
+    // }
+    const Worker = function (src, opts) {
         // See https://html.spec.whatwg.org/multipage/workers.html#dom-worker
         const self = this;
 
@@ -89,11 +88,16 @@ module.exports = function (workerConfig) {
                 throw new TypeError('Absolute paths are not allowed when `rootPath` is `false`');
             }
             const rootPath = workerConfig.rootPath;
-            if (rootPath) {
-                basePath = wwutil.makeFileURL(workerConfig, rootPath);
+            basePath = 'http://localhost';
+            if (rootPath !== false) {
+                if (workerConfig.relativePathType === 'file') {
+                    basePath = path.join(rootPath || process.cwd(), src);
+                    src = wwutil.makeFileURL(workerConfig, basePath);
+                } else {
+                    // basePath = wwutil.makeFileURL(workerConfig, process.cwd());
+                    src = url.resolve(basePath, src);
+                }
             }
-            basePath = basePath || wwutil.makeFileURL(workerConfig, process.cwd()) || 'http://localhost';
-            src = url.resolve(basePath, src);
         } else {
             basePath = workerConfig.basePath;
             if (basePath === false) {
@@ -109,25 +113,25 @@ module.exports = function (workerConfig) {
 
         // The timeout ID for killing off this worker if it is unresponsive to a
         // graceful shutdown request
-        let killTimeoutID = undefined;
+        let killTimeoutID;
 
         // Process ID of child process running this worker
         //
         // This value persists even once the child process itself has
         // terminated; it is used as a key into datastructures managed by the
         // Master object.
-        let pid = undefined;
+        let pid;
 
         // Child process object
         //
         // This value is 'undefined' until the child process itself is spawned
         // and defined forever after.
-        let cp = undefined;
+        let cp;
 
         // The stream associated with this worker and wwutil.MsgStream that
         // wraps it.
-        let stream = undefined;
-        let msgStream = undefined;
+        let stream;
+        let msgStream;
 
         // Outbound message queue
         //
@@ -136,7 +140,7 @@ module.exports = function (workerConfig) {
         let msgQueue = [];
 
         // Event handlers (onmessage via addEventListener)
-        const eventHandlers = {"message": []};
+        const eventHandlers = {message: []};
 
         // The path to our socket
         const sockFilePath = path.join(SOCK_DIR_PATH, '' + numWorkersCreated++);
@@ -145,7 +149,7 @@ module.exports = function (workerConfig) {
         // Make sure our socket folder is in place (it may have been removed by a previous clean-up)
         try {
             fs.mkdirSync(SOCK_DIR_PATH, parseInt('0700', 8));
-        } catch(e) {}
+        } catch (e) {}
 
         // Server instance for our communication socket with the child process
         //
@@ -153,8 +157,8 @@ module.exports = function (workerConfig) {
 
         const httpServer = http.createServer();
         const wsSrv = new WebSocketServer({ server: httpServer });
-        let handleMessage;
-        wsSrv.addListener('connection', function(s) {
+        let handleMessage; // eslint-disable-line prefer-const
+        wsSrv.addListener('connection', function (s) {
             assert.equal(stream, undefined);
             assert.equal(msgStream, undefined);
 
@@ -162,7 +166,7 @@ module.exports = function (workerConfig) {
             msgStream = new wwutil.MsgStream(s);
 
             // Process any messages waiting to be sent
-            msgQueue.forEach(function(m) {
+            msgQueue.forEach(function (m) {
                 const fd = m.pop();
                 msgStream.send(m, fd);
             });
@@ -177,9 +181,9 @@ module.exports = function (workerConfig) {
         //
         // First fires up the UNIX socket server, then spawns the child process
         // and away we go.
-        const start = function() {
+        const start = function () {
             httpServer.listen(sockPath);
-            httpServer.addListener('listening', function() {
+            httpServer.addListener('listening', function () {
                 const execPath = workerConfig.path || process.execPath || process.argv[0];
 
                 const args = [
@@ -204,7 +208,7 @@ module.exports = function (workerConfig) {
                     }
                 }
 
-                cp = child_process.spawn(
+                cp = childProcess.spawn(
                     execPath,
                     args
                 );
@@ -217,16 +221,16 @@ module.exports = function (workerConfig) {
                     'Spawned process ' + pid + ' for worker \'' + src + '\': ' +
                     execPath + ' ' + args.join(' ')
                 );
-                cp.stdout.on('data', function(d) {
-                  process.stdout.write(d);
-                })
-                cp.stderr.on('data', function(d) {
-                  process.stderr.write(d);
-                })
-                cp.addListener('exit', function(code, signal) {
+                cp.stdout.on('data', function (d) {
+                    process.stdout.write(d);
+                });
+                cp.stderr.on('data', function (d) {
+                    process.stderr.write(d);
+                });
+                cp.addListener('exit', function (code, signal) {
                     wwutil.debug(
                         'Process ' + pid + ' for worker \'' + src +
-                            '\' exited with status ' + code +', signal ' + signal
+                            '\' exited with status ' + code + ', signal ' + signal
                     );
 
                     // If we have an outstanding timeout for killing off this process,
@@ -245,25 +249,26 @@ module.exports = function (workerConfig) {
 
                     wsSrv.close();
                     httpServer.close();
-                    if (msgStream)
+                    if (msgStream) {
                         msgStream = null;
+                    }
 
                     // remove the socket
-                    fs.unlink(sockFilePath, function(e) {
+                    fs.unlink(sockFilePath, function (e) {
                         try {
                             // try removing the socket directory
                             fs.rmdirSync(path.dirname(sockFilePath));
-                        } catch(e) {}
+                        } catch (e) {}
 
                         if (self.onexit) {
-                            process.nextTick(function() {
+                            process.nextTick(function () {
                                 self.onexit(code, signal);
                             });
                         }
                     });
 
                     if (self.onexit) {
-                        process.nextTick(function() {
+                        process.nextTick(function () {
                             self.onexit(code, signal);
                         });
                     }
@@ -274,7 +279,7 @@ module.exports = function (workerConfig) {
         // The primary message handling function for the worker.
         //
         // This is only invoked after handshaking has occurred.
-        handleMessage = function(msg, fd) {
+        handleMessage = function (msg, fd) {
             if (!wwutil.isValidMessage(msg)) {
                 wwutil.debug('Received invalid message: ' + util.inspect(msg));
                 return;
@@ -300,17 +305,17 @@ module.exports = function (workerConfig) {
 
             case wwutil.MSGTYPE_USER:
                 if (self.onmessage || eventHandlers['message'].length > 0) {
-                    const e = { data : msg[1] };
+                    const e = { data: msg[1] };
 
                     if (fd) {
                         e.fd = fd;
                     }
 
-                    if(self.onmessage) {
+                    if (self.onmessage) {
                         self.onmessage(e);
                     }
 
-                    for (let i=0; i<eventHandlers['message'].length; i++) {
+                    for (let i = 0; i < eventHandlers['message'].length; i++) {
                         eventHandlers['message'][i](e);
                     }
                 }
@@ -325,8 +330,8 @@ module.exports = function (workerConfig) {
         };
 
         // Do the heavy lifting of posting a message
-        const postMessageImpl = function(msgType, msg, fd) {
-            assert.ok(msgQueue.length == 0 || !msgStream);
+        const postMessageImpl = function (msgType, msg, fd) {
+            assert.ok(!msgQueue || !msgStream);
 
             const m = [msgType, msg];
 
@@ -339,12 +344,12 @@ module.exports = function (workerConfig) {
         };
 
         // Post a message to the worker
-        self.postMessage = function(msg) {
+        self.postMessage = function (msg) {
             postMessageImpl(wwutil.MSGTYPE_USER, msg);
         };
 
         // Register event handler
-        self.addEventListener = function(event, handler) {
+        self.addEventListener = function (event, handler) {
             if (event in eventHandlers) {
                 eventHandlers[event].push(handler);
             }
@@ -355,11 +360,11 @@ module.exports = function (workerConfig) {
         // Takes a timeout value for forcibly killing off the worker if it does
         // not shut down gracefully on its own. By default, this timeout is
         // 5 seconds. A value of 0 indicates infinite timeout.
-        self.terminate = function(timeout) {
+        self.terminate = function (timeout) {
             assert.notEqual(pid, undefined);
-            assert.ok(cp.pid == pid || !cp.pid);
+            assert.ok(cp.pid === pid || !cp.pid);
 
-            timeout = (timeout === undefined) ?  5000 : timeout;
+            timeout = (timeout === undefined) ? 5000 : timeout;
 
             // The child process is already shut down; no-op
             if (!cp.pid) {
@@ -378,7 +383,7 @@ module.exports = function (workerConfig) {
             // Optionally set a timer to kill off the child process forcefully if
             // it has not shut down by itself.
             if (timeout > 0) {
-                killTimeoutID = setTimeout(function() {
+                killTimeoutID = setTimeout(function () {
                     // Clear our ID since we're now running
                     killTimeoutID = undefined;
 
@@ -405,7 +410,8 @@ module.exports = function (workerConfig) {
 // Perform any one-time initialization
 try {
     fs.mkdirSync(SOCK_DIR_PATH, parseInt('0700', 8));
-} catch(e) {
-    if (e.code && e.code != 'EEXIST')
+} catch (e) {
+    if (e.code && e.code !== 'EEXIST') {
         throw e;
+    }
 }

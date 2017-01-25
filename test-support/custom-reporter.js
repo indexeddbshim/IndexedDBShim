@@ -13,6 +13,7 @@
     createPopup,
     focus,moveBy,moveTo,open,print,prompt,resizeBy,resizeTo,scroll,scrollBy,scrollTo,toString,
     log,
+    URL, URLSearchParams, Worker
     DOMStringList, DOMException, Event
     */
     Object.keys(shimNS.window).forEach(function (prop) {

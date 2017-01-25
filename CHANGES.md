@@ -453,7 +453,8 @@
         TransactionBehavior.js
 
     From new W3C (Node but potentially also browser):
-        See `/test-support/node-good-bad-files.js` for the current test status on these tests.
+        See [`/test-support/node-good-bad-files.js`](test-support/node-good-bad-files.js)
+            for the current test status on these tests.
 - Testing (Grunt): Force ESLint (since "standard" currently causing a warning)
 - Testing (Grunt): More granular uglification, add build-browser,
     dev-browser, Unicode watching

@@ -24,7 +24,10 @@ const wwutil = require('./webworker-util');
 // const indexeddbshim = require('indexeddbshim');
 const indexeddbshim = require('../../'); // '../../dist/indexeddbshim-UnicodeIdentifiers-node.js');
 const XMLHttpRequest = require('xmlhttprequest');
-// const Worker = require('./webworker'); // Todo: May need to allow workers their own
+const Worker = require('./webworker');
+const EventTarget = require('eventtarget');
+const CustomEvent = EventTarget.CustomEventPolyfill;
+const URL = require('js-polyfills/url');
 
 /*
 const permittedProtocols;
@@ -205,24 +208,9 @@ if (workerConfig.node) {
 }
 // XXX: There must be a better way to do this.
 workerCtx.console = console;
-workerCtx.setTimeout = setTimeout;
-workerCtx.clearTimeout = clearTimeout;
-workerCtx.setInterval = setInterval;
-workerCtx.clearInterval = clearInterval;
-workerCtx.Buffer = Buffer;
-workerCtx.ArrayBuffer = ArrayBuffer;
-workerCtx.DataView = DataView;
-workerCtx.Int8Array = Int8Array;
-workerCtx.Int16Array = Int16Array;
-workerCtx.Int32Array = Int32Array;
-workerCtx.Uint8Array = Uint8Array;
-workerCtx.Uint16Array = Uint16Array;
-workerCtx.Uint32Array = Uint32Array;
-workerCtx.Float32Array = Float32Array;
-workerCtx.Float64Array = Float64Array;
-
-indexeddbshim(workerCtx, {addNonIDBGlobals: true}); // Add indexedDB globals (and non-IndexedDB ones that it uses like DOMStringList)
-workerCtx.XMLHttpRequest = XMLHttpRequest({basePath: workerConfig.basePath});
+['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'].forEach((prop) => {
+    workerCtx[prop] = global[prop];
+});
 
 // Context elements required by the WebWorkers API spec
 workerCtx.postMessage = function (msg) {
@@ -260,7 +248,7 @@ workerCtx.importScripts = function () {
     for (let i = 0; i < arguments.length; i++) {
         // Todo: Handle pathType="url" (defaults to `localhost`) and if basePath is `false` with it
         const currentPath = (/^[\\/]/).test(arguments[i]) // Root
-                    ? workerConfig.pathType === 'file' && workerConfig.basePath === false ? process.cwd() : workerConfig.rootPath
+                    ? workerConfig.pathType === 'file' && workerConfig.rootPath === false ? process.cwd() : workerConfig.rootPath
                     : workerConfig.pathType === 'file' && workerConfig.basePath === false ? process.cwd() : workerConfig.basePath;
         /*
         console.log(path.join(
@@ -284,6 +272,21 @@ workerCtx.importScripts = function () {
         }
     }
 };
+
+// Other Objects
+indexeddbshim(workerCtx, {addNonIDBGlobals: true}); // Add indexedDB globals (and non-IndexedDB ones that it uses like DOMStringList)
+workerCtx.XMLHttpRequest = XMLHttpRequest({basePath: workerConfig.basePath});
+workerCtx.EventTarget = EventTarget;
+workerCtx.CustomEvent = CustomEvent;
+workerCtx.URL = URL.URL;
+workerCtx.URLSearchParams = URL.URLSearchParams;
+workerCtx.Worker = Worker({
+    relativePathType: 'file', // Todo: We need to change this to "url" when implemented
+    // Todo: We might auto-detect this by looking at window.location
+    basePath: workerConfig.basePath, // Todo: We need to change this to our server's base URL when implemented
+    // basePath: path.join(__dirname, 'js')
+    rootPath: workerConfig.rootPath
+});
 
 // Context object for vm script api
 workerCtxObj = vm.createContext(workerCtx);

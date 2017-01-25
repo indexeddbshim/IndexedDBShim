@@ -3,16 +3,36 @@
 //    race condition or such to cause pass/fail results to vary; should also
 //    give priority to 'Not Run' tests; also saw variability in
 //    `idbcursor-source.js`
-// Todo: Add /workers/semantics/interface-objects (interfaces and shared workers)
-// Todo: Add /service-workers/service-worker/indexeddb.https.html (shared worker)
 
-Test counts: 284 files (including domstringlist test):  244 good, 40 bad
-Current test statuses with 0 files excluded (vmTimeout = 40000):
+// Passing no argument to `node-idb-test.js` will test all of the IndexedDB
+//   tests including some worker tests, but only those within the
+//  `IndexedDB` directory
+
+IndexedDB Test counts: 284 files (including 1 domstringlist test):  244 good, 40 bad
+Current IndexedDB (and domstringlist) test statuses with 0 files excluded (vmTimeout = 40000):
   'Pass': 664, (including 4 domstringlist tests)
   'Fail': 310,
   'Timeout': 0,
   'Not Run': 22,
   'Total tests': 996 (including 4 domstringlist tests)
+
+// Passing the "workers" argument to `node-idb-test.js` will run the worker
+//   tests with relevance for IndexedDB (e.g., checking that the IndexedDB
+//   APIs exist in a worker context) and which are not present in the
+/    IndexedDB folder.
+// Although those pertaining to IndexedDB are all currently passing for
+//   dedicated workers (though not at all for shared or service workers),
+//   since we have not completely polyfilled workers (nor even exposed them yet
+//   beyond our tests), we'd like for these tests (and eventually all of the
+//   W3C Worker tests, of which there are many) to pass completely,
+//   particularly if we expose the shim.
+
+Worker Test counts: 5 files (1 good, 1 bad, 3 not executing)
+Current worker test statuses with 3 files excluded:
+  'Pass': 66
+  'Fail': 29,
+  'Not Run': 0,
+  'Total tests': 95
 */
 const goodBad = {
     notRunning: [
