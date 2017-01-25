@@ -36,6 +36,7 @@ const shimNS = {
         'Not Run': 0
     },
     // fileMap: new Map(), // Todo: Could add a flag to set
+    // jsonOutput: {results: []},
     files: {
         Pass: [],
         Fail: [],
@@ -110,7 +111,20 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
                 );
                 shimNS.fileMap.clear(); // Release memory
             }
-            process.exit();
+            if (shimNS.jsonOutput) {
+                const jsonOutputPath = path.join(
+                    'test-support', 'json-output' +
+                    // new Date().getTime() +
+                    '.json'
+                );
+                fs.writeFile(jsonOutputPath, JSON.stringify(shimNS.jsonOutput, null, 2), function (err) {
+                    if (err) { console.log(err); return }
+                    console.log('Saved to ' + jsonOutputPath);
+                    process.exit();
+                });
+            } else {
+                process.exit();
+            }
         }
         finishedCheck();
     };
@@ -189,6 +203,10 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
                             indexeddbshim(window, {addNonIDBGlobals: true});
                             // window.XMLHttpRequest = XMLHttpRequest({basePath: 'http://localhost:8000/IndexedDB/'}); // Todo: We should support this too
                             window.XMLHttpRequest = XMLHttpRequest({basePath});
+                            // We will otherwise miss these tests (though not sure this is the best solution):
+                            //   see test_primary_interface_of in idlharness.js
+                            window.Object = Object;
+                            window.Object[Symbol.hasInstance] = function (inst) { return inst && typeof inst === 'object'; };
                             // Patch postMessage to throw for SCA (as needed by tests in key_invalid.htm)
                             const _postMessage = window.postMessage.bind(window);
                             // Todo: Submit this as PR to jsdom

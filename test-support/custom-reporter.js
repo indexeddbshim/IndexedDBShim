@@ -64,6 +64,12 @@
         // Insert our own reporting to be ready once tests evaluate
         const fileName = shimNS.fileName;
         const trs = [...document.querySelectorAll('table#results > tbody > tr')];
+        const jsonOutput = {
+            test: '/indexeddb/' + fileName.replace(/\.js$/, '.htm'),
+            subtests: [],
+            status: 'OK', // When does the status at this level change?
+            message: null // When does the message at this level change?
+        };
         trs.forEach((tr, i) => {
             const test = tests[i];
             const tds = [...tr.querySelectorAll('td')].map((td) => td.textContent);
@@ -80,10 +86,18 @@
                 const [pass, total] = shimNS.fileMap.get(fileName);
                 shimNS.fileMap.set(fileName, [pass + (test.status === 0), total + 1]);
             }
+            if (shimNS.jsonOutput) {
+                jsonOutput.subtests.push({
+                    name: test.name,
+                    status: statusText.toUpperCase(),
+                    message: test.message || null
+                });
+            }
             shimNS.writeln(' (' + fileName + '): ' + test.name);
             if (assertions) shimNS.writeln(assertions);
             if (test.message && test.stack) shimNS.writeln((test.message || ' ') + test.stack);
         });
+        if (shimNS.jsonOutput) shimNS.jsonOutput.results.push(jsonOutput);
         shimNS.finished();
     }
     add_completion_callback((...args) => {

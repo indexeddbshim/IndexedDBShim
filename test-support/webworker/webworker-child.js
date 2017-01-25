@@ -221,7 +221,7 @@ workerCtx.Uint32Array = Uint32Array;
 workerCtx.Float32Array = Float32Array;
 workerCtx.Float64Array = Float64Array;
 
-indexeddbshim(workerCtx); // Add indexedDB globals
+indexeddbshim(workerCtx, {addNonIDBGlobals: true}); // Add indexedDB globals (and non-IndexedDB ones that it uses like DOMStringList)
 workerCtx.XMLHttpRequest = XMLHttpRequest({basePath: workerConfig.basePath});
 
 // Context elements required by the WebWorkers API spec
@@ -234,7 +234,11 @@ workerCtx.WorkerGlobalScope = workerCtx;
 // Todo: In place of this, allow conditionally `SharedWorkerGlobalScope`, or `ServiceWorkerGlobalScope`
 workerCtx.DedicatedWorkerGlobalScope = workerCtx;
 // This was needed for testharness' `instanceof` check which requires it to be callable: `self instanceof DedicatedWorkerGlobalScope`
-workerCtx.DedicatedWorkerGlobalScope[Symbol.hasInstance] = function (inst) { return true; };
+workerCtx.DedicatedWorkerGlobalScope[Symbol.hasInstance] = function (inst) { return inst.WorkerGlobalScope; };
+// We will otherwise miss these tests (though not sure this is the best solution):
+//   see test_primary_interface_of in idlharness.js
+workerCtx.Object = Object;
+workerCtx.Object[Symbol.hasInstance] = function (inst) { return inst && typeof inst === 'object'; };
 
 workerCtx.location = scriptLoc;
 workerCtx.closing = false;

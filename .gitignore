@@ -10,6 +10,7 @@ src/indexeddbshim*
 test-support/latest-erring-bundled.js
 
 test-support/js
+test-support/json-output*
 ignore
 node_modules
 
