@@ -13,15 +13,20 @@ fs.mkdir(builtJSPath, function () {
     fs.readdir(dirPath, function (err, items) {
         if (err) { return console.log(err); }
         const htmlExt = /\.html?$/;
-        const htmlFiles = items.filter((item) => item.match(htmlExt));
+        const normalIndexedDBFiles = items.filter((item) => item.match(htmlExt));
+        const htmlFiles = normalIndexedDBFiles.map((htmlFile) => ({
+            inputFile: path.join(dirPath, htmlFile),
+            outputFile: path.join(builtJSPath, htmlFile.replace(htmlExt, '.js'))
+        })).concat({
+            // Uses IndexedDB test and is used by IndexedDB
+            inputFile: 'web-platform-tests/html/infrastructure/common-dom-interfaces/collections/domstringlist.html',
+            outputFile: path.join(builtJSPath, 'domstringlist.js')
+        });
         let ct = 0;
 
         // Iterate IndexedDB files
-        htmlFiles.forEach((htmlFile, i) => {
-            const jsFile = htmlFile.replace(htmlExt, '.js');
-            const outputFile = path.join(builtJSPath, jsFile);
-
-            fs.readFile(path.join(dirPath, htmlFile), 'utf8', function (err, data) {
+        htmlFiles.forEach(({inputFile, outputFile}, i) => {
+            fs.readFile(inputFile, 'utf8', function (err, data) {
                 if (err) { return console.log(err); }
 
                 // Extract JavaScript content and save to file
@@ -49,11 +54,11 @@ fs.mkdir(builtJSPath, function () {
                 $('script[src]').each(function (script, item) {
                     const src = $(this).attr('src');
                     if (scriptCount === 3 && !supportAndTestHarnessScripts.includes(src)) {
-                        console.log('Found non-typical script src: ' + src + ' in: ' + htmlFile);
+                        console.log('Found non-typical script src: ' + src + ' in: ' + inputFile);
                     } else if (scriptCount === 2 && !testHarnessScripts.includes(src)) {
-                        console.log('Found non-typical script src (out of 2): ' + src + ' in: ' + htmlFile);
+                        console.log('Found non-typical script src (out of 2): ' + src + ' in: ' + inputFile);
                     } else if ((scriptCount < 2 || scriptCount > 3) && !webIDLScripts.includes(src)) {
-                        console.log('Found non-typical script src: ' + src + ' in: ' + htmlFile);
+                        console.log('Found non-typical script src: ' + src + ' in: ' + inputFile);
                     } else {
                         // scriptContent += "require('" + src.replace(/^\//, '../../').replace(/^support/, '../support') + "');\n";
                     }

@@ -39,9 +39,18 @@ const DOMStringList = function () {
 DOMStringList.prototype = {
     // Interface.
     contains: function (str) {
+        if (!arguments.length) {
+            throw new TypeError('DOMStringList.contains must be supplied a value');
+        }
         return this._items.includes(str);
     },
     item: function (key) {
+        if (!arguments.length) {
+            throw new TypeError('DOMStringList.item must be supplied a value');
+        }
+        if (key < 0 || key >= this.length || !Number.isInteger(key)) {
+            return null;
+        }
         return this._items[key];
     },
 

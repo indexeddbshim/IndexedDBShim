@@ -15326,9 +15326,18 @@ var DOMStringList = function DOMStringList() {
 DOMStringList.prototype = {
     // Interface.
     contains: function contains(str) {
+        if (!arguments.length) {
+            throw new TypeError('DOMStringList.contains must be supplied a value');
+        }
         return this._items.includes(str);
     },
     item: function item(key) {
+        if (!arguments.length) {
+            throw new TypeError('DOMStringList.item must be supplied a value');
+        }
+        if (key < 0 || key >= this.length || !Number.isInteger(key)) {
+            return null;
+        }
         return this._items[key];
     },
 

@@ -311,6 +311,7 @@
     closed (in `upgradeneeded`)
 - Fix: Make `length` on `DOMStringList` non-enumerable (impacts W3C tests
     and also how implemented in Chrome)
+- Fix: Error checking for `DOMStringList` methods
 - Fix: Prevent non-numeric and `<= 1` keys from auto-incrementing current number
 - Fix: Prevent incrementing if nevertheless valid key is lower than current
     number
