@@ -75,7 +75,7 @@ use the following instead:
 
 ```js
 const setGlobalVars = require('indexeddbshim');
-GLOBAL.window = GLOBAL; // We'll allow ourselves to use `window.indexedDB` or `indexedDB` as a global
+global.window = global; // We'll allow ourselves to use `window.indexedDB` or `indexedDB` as a global
 setGlobalVars(); // See signature below
 ```
 
@@ -106,7 +106,7 @@ This function defines `shimIndexedDB`, `indexedDB`, `IDBFactory`, etc. on
 one of the following objects in order of precedence:
 
 1. The passed in `winObj` object if defined
-2. `window` (for Node, define `GLOBAL.window = GLOBAL;`)
+2. `window` (for Node, define `global.window = global;`)
 3. `self` (for web workers)
 4. A new object
 
