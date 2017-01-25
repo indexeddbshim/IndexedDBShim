@@ -234,7 +234,7 @@ workerCtx.WorkerGlobalScope = workerCtx;
 // Todo: In place of this, allow conditionally `SharedWorkerGlobalScope`, or `ServiceWorkerGlobalScope`
 workerCtx.DedicatedWorkerGlobalScope = workerCtx;
 // This was needed for testharness' `instanceof` check which requires it to be callable: `self instanceof DedicatedWorkerGlobalScope`
-workerCtx.DedicatedWorkerGlobalScope[Symbol.hasInstance] = function (inst) { return inst.WorkerGlobalScope; };
+workerCtx.DedicatedWorkerGlobalScope[Symbol.hasInstance] = function (inst) { return inst.WorkerGlobalScope && !inst.SharedWorkerGlobalScope && !inst.ServiceWorkerGlobalScope; };
 // We will otherwise miss these tests (though not sure this is the best solution):
 //   see test_primary_interface_of in idlharness.js
 workerCtx.Object = Object;
