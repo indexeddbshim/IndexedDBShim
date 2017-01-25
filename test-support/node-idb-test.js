@@ -118,7 +118,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', item = 0) {
                     '.json'
                 );
                 fs.writeFile(jsonOutputPath, JSON.stringify(shimNS.jsonOutput, null, 2), function (err) {
-                    if (err) { console.log(err); return }
+                    if (err) { console.log(err); return; }
                     console.log('Saved to ' + jsonOutputPath);
                     process.exit();
                 });
