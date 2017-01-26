@@ -15,6 +15,8 @@ const vmTimeout = 40000; // Time until we give up on the vm (increasing to 40000
 
 // SET-UP
 const fileArg = process.argv[2];
+const fileIndex = (/^-?\d+$/).test(fileArg) ? fileArg : (process.argv[3] || undefined);
+const endFileCount = (/^-?\d+$/).test(fileArg) && (/^-?\d+$/).test(process.argv[3]) ? process.argv[3] : (process.argv[4] || undefined);
 const dirPath = path.join('test-support', 'js');
 const idbTestPath = 'web-platform-tests';
 const indexeddbshim = require('../dist/indexeddbshim-UnicodeIdentifiers-node');
@@ -269,8 +271,19 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
     });
 }
 
-function readAndEvaluateFiles (err, jsFiles, workers) {
+function readAndEvaluateFiles (err, jsFiles, workers, recursing) {
     if (err) { return console.log(err); }
+    if (!recursing && fileIndex) { // Start at a particular file count
+        const start = parseInt(fileIndex, 10);
+        const end = (endFileCount ? (start + parseInt(endFileCount, 10)) : jsFiles.length);
+        readAndEvaluateFiles(
+            err,
+            jsFiles.slice(start, end),
+            workers,
+            true
+        );
+        return;
+    }
     fs.readFile(path.join('test-support', 'environment.js'), 'utf8', function (err, initial) {
         if (err) { return console.log(err); }
 
@@ -305,11 +318,11 @@ case 'workers': case 'worker':
     });
     break;
 default:
-    if (fileArg && fileArg !== 'all') {
+    if (!fileIndex && fileArg && fileArg !== 'all') {
         readAndEvaluateFiles(null, [fileArg], true); // Allow specific worker files to be passed
-    } else {
-        fs.readdir(dirPath, readAndEvaluateFiles);
+        break;
     }
+    fs.readdir(dirPath, readAndEvaluateFiles);
     break;
 }
 

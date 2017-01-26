@@ -355,6 +355,8 @@
 - Fix: Closing the database in an upgrade transaction should not
    prevent execution of the `oncomplete` handler (though an `AbortError`
    will subsequently occur)
+- Fix: Allow `IDBFactory.open()` to accept explicit `undefined` version
+- Fix: Round down version in `IDBFactory.open()` (when `> 1`)
 - Repo files: Rename test folders for ease in distinguishing
 - Optimize: Only retrieve required SQLite columns for `IDBIndex`
       get operations
