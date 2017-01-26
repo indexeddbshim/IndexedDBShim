@@ -18121,7 +18121,7 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'An attempt was made to start a new transaction on a database connection that is not open');
     }
 
-    storeNames = [].concat(_toConsumableArray(new Set(typeof storeNames === 'string' ? [storeNames] : storeNames))).sort(); // unique
+    storeNames = typeof storeNames === 'string' ? [storeNames] : [].concat(_toConsumableArray(new Set(storeNames))).sort(); // unique
     storeNames.forEach(function (storeName) {
         if (!_this2.objectStoreNames.contains(storeName)) {
             throw (0, _DOMException.createDOMException)('NotFoundError', 'The "' + storeName + '" object store does not exist');
