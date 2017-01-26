@@ -47,6 +47,7 @@ const shimNS = {
     }
 };
 let ct = 0;
+let excludedCount = 0;
 
 /*
 // Todo: Might use in place of excluded array, but would need to increment, etc.
@@ -96,7 +97,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                 }, '\n')
             );
 
-            console.log('  Number of files processed: ' + ct);
+            console.log('  Number of files processed: ' + (ct - excludedCount));
 
             console.log('\nNumber of total tests by status:');
             shimNS.statuses['Total tests'] = Object.values(shimNS.statuses).reduce((ct, statusCt) => ct + statusCt);
@@ -139,6 +140,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
     const testingAllWorkers = workers && jsFiles.length > 1;
     const excluded = testingAllWorkers ? ['_interface-objects-003.js', '_interface-objects-004.js', '_service-worker-indexeddb.https.js'] : [];
     if (excluded.includes(shimNS.fileName) || (!workers && workerFileRegex.test(shimNS.fileName))) {
+        excludedCount++;
         shimNS.finished();
         return;
     }
@@ -296,7 +298,7 @@ case 'bad':
 case 'notRunning':
     readAndEvaluateFiles(null, notRunning);
     break;
-case 'workers':
+case 'workers': case 'worker':
     fs.readdir(dirPath, function (err, jsFiles) {
         jsFiles = jsFiles.filter((file) => file.match(workerFileRegex));
         readAndEvaluateFiles(err, jsFiles, true);

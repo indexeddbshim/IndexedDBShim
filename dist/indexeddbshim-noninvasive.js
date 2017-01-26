@@ -10687,10 +10687,12 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
 IDBCursor.prototype.__onsuccess = function (success) {
     var me = this;
     return function (key, value, primaryKey) {
-        me.__gotValue = true;
         if (me.__count) {
             success(value, me.__req);
         } else {
+            if (key !== undefined) {
+                me.__gotValue = true;
+            }
             me.__key = key === undefined ? null : key;
             me.__primaryKey = primaryKey === undefined ? null : primaryKey;
             me.__value = value === undefined ? null : value;
