@@ -12148,11 +12148,9 @@ function executeFetchIndexData(unboundedDisallowed, count, index, hasKey, encode
         if (opType === 'count') {
             success(recordCount);
         } else if (recordCount === 0) {
-            success(undefined);
-        } else if (unboundedDisallowed) {
-            success(records[0]);
+            success(unboundedDisallowed ? undefined : []);
         } else {
-            success(records);
+            success(unboundedDisallowed ? records[0] : records);
         }
     }, error);
 }
