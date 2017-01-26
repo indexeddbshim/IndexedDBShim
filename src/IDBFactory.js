@@ -141,16 +141,6 @@ IDBFactory.prototype.open = function (name, version) {
                                 });
                                 req.transaction.on__beforecomplete = function (ev) {
                                     req.result.__versionTransaction = null;
-                                    if (req.result.__closed) {
-                                        req.transaction.__transFinishedCb(true, function () {
-                                            sysdbFinishedCb(systx, true, function () {
-                                                req.__transaction = null;
-                                                const err = createDOMException('AbortError', 'The connection has been closed.');
-                                                dbCreateError(err);
-                                            });
-                                        });
-                                        throw new Error('Discontinue complete');
-                                    }
                                     sysdbFinishedCb(systx, false, function () {
                                         req.transaction.__transFinishedCb(false, function () {
                                             ev.complete();
@@ -168,6 +158,12 @@ IDBFactory.prototype.open = function (name, version) {
                                     });
                                 };
                                 req.transaction.on__complete = function () {
+                                    if (req.result.__closed) {
+                                        req.__transaction = null;
+                                        const err = createDOMException('AbortError', 'The connection has been closed.');
+                                        dbCreateError(err);
+                                        return;
+                                    }
                                     // Since this is running directly after `IDBTransaction.complete`,
                                     //   there should be a new task. However, while increasing the
                                     //   timeout 1ms in `IDBTransaction.__executeRequests` can allow

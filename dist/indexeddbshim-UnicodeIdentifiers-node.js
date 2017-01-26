@@ -18343,16 +18343,6 @@ IDBFactory.prototype.open = function (name, version) {
                                     });
                                     req.transaction.on__beforecomplete = function (ev) {
                                         req.result.__versionTransaction = null;
-                                        if (req.result.__closed) {
-                                            req.transaction.__transFinishedCb(true, function () {
-                                                sysdbFinishedCb(systx, true, function () {
-                                                    req.__transaction = null;
-                                                    var err = (0, _DOMException.createDOMException)('AbortError', 'The connection has been closed.');
-                                                    dbCreateError(err);
-                                                });
-                                            });
-                                            throw new Error('Discontinue complete');
-                                        }
                                         sysdbFinishedCb(systx, false, function () {
                                             req.transaction.__transFinishedCb(false, function () {
                                                 ev.complete();
@@ -18370,6 +18360,12 @@ IDBFactory.prototype.open = function (name, version) {
                                         });
                                     };
                                     req.transaction.on__complete = function () {
+                                        if (req.result.__closed) {
+                                            req.__transaction = null;
+                                            var _err = (0, _DOMException.createDOMException)('AbortError', 'The connection has been closed.');
+                                            dbCreateError(_err);
+                                            return;
+                                        }
                                         // Since this is running directly after `IDBTransaction.complete`,
                                         //   there should be a new task. However, while increasing the
                                         //   timeout 1ms in `IDBTransaction.__executeRequests` can allow
@@ -20467,6 +20463,7 @@ IDBTransaction.prototype.__executeRequests = function () {
     function requestsFinished() {
         me.__active = false;
         me.__requestsFinished = true;
+
         function complete() {
             me.__completed = true;
             _CFG2.default.DEBUG && console.log('Transaction completed');
@@ -20499,17 +20496,9 @@ IDBTransaction.prototype.__executeRequests = function () {
             complete();
             return;
         }
-        try {
-            // Catching a `dispatchEvent` call is normally not possible for a standard `EventTarget`,
-            // but we are using the `EventTarget` library's `__userErrorEventHandler` to override this
-            // behavior for convenience in our internal calls
-            me.__internal = true;
-            var ev = (0, _Event.createEvent)('__beforecomplete');
-            ev.complete = complete;
-            me.dispatchEvent(ev);
-        } catch (err) {} finally {
-            me.__internal = false;
-        }
+        var ev = (0, _Event.createEvent)('__beforecomplete');
+        ev.complete = complete;
+        me.dispatchEvent(ev);
     }
 };
 

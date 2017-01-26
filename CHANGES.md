@@ -352,6 +352,9 @@
     `IDBFactory.__forceClose()` method (untested)
 - Fix: Do not set got value flag if end of iteration (and also avoid
    setting irrelevant got value flag on count cursors)
+- Fix: Closing the database in an upgrade transaction should not
+   prevent execution of the `oncomplete` handler (though an `AbortError`
+   will subsequently occur)
 - Repo files: Rename test folders for ease in distinguishing
 - Optimize: Only retrieve required SQLite columns for `IDBIndex`
       get operations

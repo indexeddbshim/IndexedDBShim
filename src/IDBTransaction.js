@@ -207,6 +207,7 @@ IDBTransaction.prototype.__executeRequests = function () {
     function requestsFinished () {
         me.__active = false;
         me.__requestsFinished = true;
+
         function complete () {
             me.__completed = true;
             CFG.DEBUG && console.log('Transaction completed');
@@ -239,17 +240,9 @@ IDBTransaction.prototype.__executeRequests = function () {
             complete();
             return;
         }
-        try { // Catching a `dispatchEvent` call is normally not possible for a standard `EventTarget`,
-            // but we are using the `EventTarget` library's `__userErrorEventHandler` to override this
-            // behavior for convenience in our internal calls
-            me.__internal = true;
-            const ev = createEvent('__beforecomplete');
-            ev.complete = complete;
-            me.dispatchEvent(ev);
-        } catch (err) {
-        } finally {
-            me.__internal = false;
-        }
+        const ev = createEvent('__beforecomplete');
+        ev.complete = complete;
+        me.dispatchEvent(ev);
     }
 };
 
