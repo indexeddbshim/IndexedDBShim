@@ -96,7 +96,7 @@
     "xmlhttprequest": "https://github.com/brettz9/node-XMLHttpRequest#rel-local-path-base"
   },
   "bundleDependencies": [],
-  "license": "Apache-2.0",
+  "license": "MIT OR Apache-2.0",
   "engines": {
     "node": ">=6.9.2"
   }
