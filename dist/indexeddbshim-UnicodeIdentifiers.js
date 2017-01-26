@@ -11014,6 +11014,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 /**
  * IDB Database Object
  * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
@@ -11155,7 +11157,7 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'An attempt was made to start a new transaction on a database connection that is not open');
     }
 
-    storeNames = typeof storeNames === 'string' ? [storeNames] : storeNames;
+    storeNames = [].concat(_toConsumableArray(new Set(typeof storeNames === 'string' ? [storeNames] : storeNames))).sort(); // unique
     storeNames.forEach(function (storeName) {
         if (!_this2.objectStoreNames.contains(storeName)) {
             throw (0, _DOMException.createDOMException)('NotFoundError', 'The "' + storeName + '" object store does not exist');

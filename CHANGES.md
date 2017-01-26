@@ -357,6 +357,8 @@
    will subsequently occur)
 - Fix: Allow `IDBFactory.open()` to accept explicit `undefined` version
 - Fix: Round down version in `IDBFactory.open()` (when `> 1`)
+- Fix: Ensure store names passed into `IDBDatabase.transaction` are stored
+    as unique names and are sorted
 - Repo files: Rename test folders for ease in distinguishing
 - Optimize: Only retrieve required SQLite columns for `IDBIndex`
       get operations
