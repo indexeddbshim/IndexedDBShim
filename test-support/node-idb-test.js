@@ -230,6 +230,8 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                             window.Object = Object;
                             window.Object[Symbol.hasInstance] = function (inst) { return inst && typeof inst === 'object'; };
 
+                            window.Function = Function; // interfaces.js with check for `DOMStringList`'s prototype being the same Function.prototype
+
                             // We need to overcome the `value.js` test's `instanceof` checks as our IDB object is injected rather than inline
                             // jsdom didn't like us overriding directly or only operating on them as `window` properties
                             const _Array = window.Array;

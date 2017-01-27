@@ -22177,19 +22177,31 @@ glob._babelPolyfill = false; // http://stackoverflow.com/questions/31282702/conf
 
 var IDB = void 0;
 
-function shim(name, value) {
-    try {
-        // Try setting the property. This will fail if the property is read-only.
-        IDB[name] = value;
-    } catch (e) {
-        console.log(e);
+function shim(name, value, propDesc) {
+    if (!propDesc || !Object.defineProperty) {
+        try {
+            // Try setting the property. This will fail if the property is read-only.
+            IDB[name] = value;
+        } catch (e) {
+            console.log(e);
+        }
     }
     if (IDB[name] !== value && Object.defineProperty) {
         // Setting a read-only property failed, so try re-defining the property
         try {
-            var desc = { value: value };
+            var desc = propDesc || {};
             if (name === 'indexedDB') {
+                desc.value = value;
                 desc.writable = false; // Make explicit for Babel
+            } else {
+                // `enumerable` was staying as `true` in Node when
+                //    `writable`/`value` was set instead
+                /*
+                desc.value = value;
+                */
+                desc.get = function () {
+                    return value;
+                };
             }
             Object.defineProperty(IDB, name, desc);
         } catch (e) {
@@ -22197,10 +22209,9 @@ function shim(name, value) {
             //  not above, while Chrome is reverse (and Firefox doesn't
             //  get here since no WebSQL to use for shimming)
         }
-
-        if (IDB[name] !== value) {
-            typeof console !== 'undefined' && console.warn && console.warn('Unable to shim ' + name);
-        }
+    }
+    if (IDB[name] !== value) {
+        typeof console !== 'undefined' && console.warn && console.warn('Unable to shim ' + name);
     }
 }
 
@@ -22241,7 +22252,10 @@ function setGlobalVars(idb, initialConfig) {
                 shim('IDBOpenDBRequest', _IDBRequest.IDBOpenDBRequest);
                 shim('IDBVersionChangeEvent', _Event.IDBVersionChangeEvent);
                 if (_CFG2.default.addNonIDBGlobals && IDB.indexedDB && IDB.indexedDB.modules) {
-                    shim('DOMStringList', util.DOMStringList);
+                    shim('DOMStringList', util.DOMStringList, {
+                        enumerable: false,
+                        configurable: true
+                    });
                     shim('Event', IDB.indexedDB.modules.Event);
                     shim('DOMException', IDB.indexedDB.modules.DOMException);
                 }
