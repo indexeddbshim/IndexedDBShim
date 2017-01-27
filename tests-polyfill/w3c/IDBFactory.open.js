@@ -173,7 +173,6 @@ describe('W3C IDBFactory.open Tests', function () {
         should_throw(Infinity)
         should_throw(-Infinity)
         should_throw("foo")
-        should_throw(undefined)
         should_throw(null)
         should_throw(false)
 

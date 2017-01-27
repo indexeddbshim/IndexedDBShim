@@ -216,7 +216,9 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                             const doc = jsdom.jsdom('<div id="log"></div>', {});
                             const window = doc.defaultView; // eslint-disable-line no-var
 
-                            // Todo: We might switch based on file to normally try non-Unicode version or otherwise exclude properties
+                            // Todo: We might switch based on file to normally try non-Unicode version or otherwise exclude properties as
+                            //   some of these do incur a significant performance cost which could speed up the testing process if avoided,
+                            //   though it could also make the tests more fragile to changes
                             // indexeddbshimNonUnicode(window);
                             indexeddbshim(window, {addNonIDBGlobals: true});
                             // window.XMLHttpRequest = XMLHttpRequest({basePath: 'http://localhost:8000/IndexedDB/'}); // Todo: We should support this too
