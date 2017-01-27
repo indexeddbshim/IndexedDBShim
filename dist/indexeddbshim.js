@@ -12219,7 +12219,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  */
 function IDBKeyRange(lower, upper, lowerOpen, upperOpen) {
     if (lower === undefined && upper === undefined) {
-        throw new TypeError('Both arguments to the key range method cannot be undefined');
+        throw (0, _DOMException.createDOMException)('DataError', 'Both arguments to the key range method cannot be undefined');
     }
     if (lower !== undefined) {
         _Key2.default.convertValueToKey(lower);
@@ -12239,21 +12239,36 @@ function IDBKeyRange(lower, upper, lowerOpen, upperOpen) {
     this.__upperOpen = !!upperOpen;
 }
 IDBKeyRange.prototype.includes = function (key) {
+    if (!arguments.length) {
+        throw new TypeError('IDBKeyRange.includes requires a key argument');
+    }
     _Key2.default.convertValueToKey(key);
     return _Key2.default.isKeyInRange(key, this);
 };
 
 IDBKeyRange.only = function (value) {
+    if (!arguments.length) {
+        throw new TypeError('IDBKeyRange.only requires a value argument');
+    }
     return new IDBKeyRange(value, value, false, false);
 };
 
 IDBKeyRange.lowerBound = function (value, open) {
+    if (!arguments.length) {
+        throw new TypeError('IDBKeyRange.lowerBound requires a value argument');
+    }
     return new IDBKeyRange(value, undefined, open, true);
 };
 IDBKeyRange.upperBound = function (value, open) {
+    if (!arguments.length) {
+        throw new TypeError('IDBKeyRange.upperBound requires a value argument');
+    }
     return new IDBKeyRange(undefined, value, true, open);
 };
 IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
+    if (arguments.length <= 1) {
+        throw new TypeError('IDBKeyRange.bound requires lower and upper arguments');
+    }
     return new IDBKeyRange(lower, upper, lowerOpen, upperOpen);
 };
 IDBKeyRange.prototype[Symbol.toStringTag] = 'IDBKeyRange';

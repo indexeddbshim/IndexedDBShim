@@ -208,8 +208,9 @@
 - Fix: Ensure a keyPath added numeric auto-increment key will update the
     auto-increment counter
 - Fix: Avoid potential problem with data insertion if an index were named "key"
-- Fix: Throw `TypeError` when `undefined` occurs for both `lower` and `upper`
-    bounds
+- Fix: Throw `TypeError` on `IDBKeyRange` methods with inadequate
+   arguments and `DataError`-type `DOMException` with explicit
+   `undefined`
 - Fix: If `lower` is greater than the `upper` argument to `IDBKeyRange.bound`,
     throw a `DataError`
 - Fix: Throw `DataError` upon continuing the cursor in an unexpected direction
