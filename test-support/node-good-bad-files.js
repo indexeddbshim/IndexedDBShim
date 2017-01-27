@@ -16,10 +16,10 @@
 //   tests including some worker tests, but only those within the
 //  `IndexedDB` directory
 
-IndexedDB Test counts: 284 files (including 1 domstringlist file):  249 good, 36 bad
+IndexedDB Test counts: 284 files (including 1 domstringlist file):  249 good, 35 bad
 Current IndexedDB (and domstringlist) test statuses with 0 files excluded (vmTimeout = 40000):
-  'Pass': 684, (including 4 domstringlist tests)
-  'Fail': 290,
+  'Pass': 686, (including 4 domstringlist tests)
+  'Fail': 288,
   'Timeout': 0,
   'Not Run': 22,
   'Total tests': 996 (including 4 domstringlist tests)

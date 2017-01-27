@@ -357,7 +357,7 @@
 - Fix: Round down version in `IDBFactory.open()` (when `> 1`)
 - Fix: Ensure store names passed into `IDBDatabase.transaction` are stored
     as unique names and are sorted
-- Fix: Add `Symbol.toStringTag` to `IDB*` classes for proper
+- Fix: Add `Symbol.toStringTag` (or `toString`) to `IDB*` classes for proper
     `Object.prototype.toString.call`-type invocations checked in
     W3C interface tests)
 - Repo files: Rename test folders for ease in distinguishing
