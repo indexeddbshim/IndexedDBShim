@@ -98,7 +98,18 @@ DOMStringList.prototype = {
         }
         this.sortList();
     },
-    [Symbol.toStringTag]: 'DOMStringList'
+    [Symbol.toStringTag]: 'DOMStringList',
+    // At least because `DOMStringList`, as a [list](https://infra.spec.whatwg.org/#list)
+    //    can be converted to a sequence per https://infra.spec.whatwg.org/#list-iterate
+    //    and particularly as some methods, e.g., `IDBDatabase.transaction`
+    //    expect such sequence<DOMString> (or DOMString), we need an iterator (some of
+    //    the Mocha tests rely on these)
+    [Symbol.iterator]: function* () {
+        let i = 0;
+        while (i < this._items.length) {
+            yield this._items[i++];
+        }
+    }
 };
 if (cleanInterface) {
     for (const i in {

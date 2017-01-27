@@ -116,6 +116,22 @@ IDBDatabase.prototype.close = function () {
  * @returns {IDBTransaction}
  */
 IDBDatabase.prototype.transaction = function (storeNames, mode) {
+    storeNames = typeof storeNames === 'string'
+        ? [storeNames]
+        : (util.isObj(storeNames) && typeof storeNames[Symbol.iterator] === 'function'
+            ? [...new Set(storeNames)].map((storeName) => {
+                if (typeof storeName !== 'string') {
+                    throw new TypeError('Each store name must be a string');
+                }
+                return storeName;
+            }).sort() // unique and sorted
+            : (function () {
+                throw new TypeError('You must supply storeNames to IDBDatabase.transaction');
+            }()));
+    if (storeNames.length === 0) {
+        throw createDOMException('InvalidAccessError', 'No valid object store names were specified');
+    }
+
     // Since SQLite (at least node-websql and definitely WebSQL) requires
     //   locking of the whole database, to allow simultaneous readwrite
     //   operations on transactions without overlapping stores, we'd probably
@@ -139,15 +155,11 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
         throw createDOMException('InvalidStateError', 'An attempt was made to start a new transaction on a database connection that is not open');
     }
 
-    storeNames = typeof storeNames === 'string' ? [storeNames] : [...new Set(storeNames)].sort(); // unique
     storeNames.forEach((storeName) => {
         if (!this.objectStoreNames.contains(storeName)) {
             throw createDOMException('NotFoundError', 'The "' + storeName + '" object store does not exist');
         }
     });
-    if (storeNames.length === 0) {
-        throw createDOMException('InvalidAccessError', 'No object store names were specified');
-    }
     // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
     const trans = new IDBTransaction(this, storeNames, mode);
     this.__transactions.push(trans);

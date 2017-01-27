@@ -361,6 +361,16 @@
 - Fix: Add `Symbol.toStringTag` (or `toString`) to `IDB*` classes for proper
     `Object.prototype.toString.call`-type invocations checked in
     W3C interface tests)
+- Fix: Throw precise and better ordered exceptions upon
+    non-strings or non-iterable objects or non-string sequences being
+    supplied as `storeNames` argument to `IDBDatabase.transaction` (as
+    should occur per WebIDL when converting to a
+    "DOMString or sequence\<DOMString\>");
+    see <https://heycam.github.io/webidl/#es-sequence>
+- Fix: Add iterator to `DOMStringList` as it should be convertable
+    to sequence\<DOMStringList\> per
+    <https://html.spec.whatwg.org/multipage/infrastructure.html#domstringlist>
+    and <https://infra.spec.whatwg.org/#list-iterate>
 - Repo files: Rename test folders for ease in distinguishing
 - Optimize: Only retrieve required SQLite columns for `IDBIndex`
       get operations
@@ -504,6 +514,6 @@
     with bad index keys
 - Testing (Mocha): Rename test sets for distinguishing
 - Testing (Mocha): Change fakeIndexedDB and indexedDBmock to Mocha tests
-- Testing: Increase default Mocha timeout to 5000ms (Chrome failing some
+- Testing (Mocha): Increase default Mocha timeout to 5000ms (Chrome failing some
     at 2000ms as was Node occasionally); tweak as needed
 - Testing (Cordova): Update Cordova testing (untested)

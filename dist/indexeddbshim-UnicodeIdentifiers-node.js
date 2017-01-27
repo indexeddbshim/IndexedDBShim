@@ -18097,6 +18097,19 @@ IDBDatabase.prototype.close = function () {
 IDBDatabase.prototype.transaction = function (storeNames, mode) {
     var _this2 = this;
 
+    storeNames = typeof storeNames === 'string' ? [storeNames] : util.isObj(storeNames) && typeof storeNames[Symbol.iterator] === 'function' ? [].concat(_toConsumableArray(new Set(storeNames))).map(function (storeName) {
+        if (typeof storeName !== 'string') {
+            throw new TypeError('Each store name must be a string');
+        }
+        return storeName;
+    }).sort() // unique and sorted
+    : function () {
+        throw new TypeError('You must supply storeNames to IDBDatabase.transaction');
+    }();
+    if (storeNames.length === 0) {
+        throw (0, _DOMException.createDOMException)('InvalidAccessError', 'No valid object store names were specified');
+    }
+
     // Since SQLite (at least node-websql and definitely WebSQL) requires
     //   locking of the whole database, to allow simultaneous readwrite
     //   operations on transactions without overlapping stores, we'd probably
@@ -18120,15 +18133,11 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'An attempt was made to start a new transaction on a database connection that is not open');
     }
 
-    storeNames = typeof storeNames === 'string' ? [storeNames] : [].concat(_toConsumableArray(new Set(storeNames))).sort(); // unique
     storeNames.forEach(function (storeName) {
         if (!_this2.objectStoreNames.contains(storeName)) {
             throw (0, _DOMException.createDOMException)('NotFoundError', 'The "' + storeName + '" object store does not exist');
         }
     });
-    if (storeNames.length === 0) {
-        throw (0, _DOMException.createDOMException)('InvalidAccessError', 'No object store names were specified');
-    }
     // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
     var trans = new _IDBTransaction2.default(this, storeNames, mode);
     this.__transactions.push(trans);
@@ -22311,6 +22320,8 @@ exports.isValidKeyPath = exports.defineReadonlyProperties = exports.throwIfNotCl
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
+var _DOMStringList$protot;
+
 var _DOMException = require('./DOMException.js');
 
 var _CFG = require('./CFG.js');
@@ -22359,7 +22370,7 @@ var DOMStringList = function DOMStringList() {
         });
     }
 };
-DOMStringList.prototype = _defineProperty({
+DOMStringList.prototype = (_DOMStringList$protot = {
     // Interface.
     contains: function contains(str) {
         if (!arguments.length) {
@@ -22423,7 +22434,34 @@ DOMStringList.prototype = _defineProperty({
         }
         this.sortList();
     }
-}, Symbol.toStringTag, 'DOMStringList');
+}, _defineProperty(_DOMStringList$protot, Symbol.toStringTag, 'DOMStringList'), _defineProperty(_DOMStringList$protot, Symbol.iterator, regeneratorRuntime.mark(function _callee() {
+    var i;
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+            switch (_context.prev = _context.next) {
+                case 0:
+                    i = 0;
+
+                case 1:
+                    if (!(i < this._items.length)) {
+                        _context.next = 6;
+                        break;
+                    }
+
+                    _context.next = 4;
+                    return this._items[i++];
+
+                case 4:
+                    _context.next = 1;
+                    break;
+
+                case 6:
+                case 'end':
+                    return _context.stop();
+            }
+        }
+    }, _callee, this);
+})), _DOMStringList$protot);
 if (cleanInterface) {
     for (var i in {
         'addIndexes': false,
