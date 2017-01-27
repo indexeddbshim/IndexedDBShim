@@ -366,7 +366,7 @@ function evaluateKeyPathOnValue (value, keyPath, multiEntry) {
     if (Array.isArray(keyPath)) {
         const arrayValue = [];
         return keyPath.some((kpPart) => {
-            // If W3C tests are accurate, it appears sequence<DOMString> implies `toString()`
+            // Todo: Confirm as per W3C tests that sequence<DOMString> implies `toString()`
             // See also https://heycam.github.io/webidl/#idl-DOMString
             // and http://stackoverflow.com/questions/38164752/should-a-call-to-db-close-within-upgradeneeded-inevitably-prevent-onsuccess
             kpPart = util.isObj(kpPart) ? kpPart.toString() : kpPart;

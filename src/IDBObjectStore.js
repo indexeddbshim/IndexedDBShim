@@ -760,9 +760,7 @@ IDBObjectStore.prototype.deleteIndex = function (indexName) {
     IDBIndex.__deleteIndex(me, index);
 };
 
-IDBObjectStore.prototype.toString = function () {
-    return '[object IDBObjectStore]';
-};
+IDBObjectStore.prototype[Symbol.toStringTag] = 'IDBObjectStore';
 
 util.defineReadonlyProperties(IDBObjectStore.prototype, ['keyPath', 'indexNames', 'transaction', 'autoIncrement']);
 

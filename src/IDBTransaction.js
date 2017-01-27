@@ -441,9 +441,7 @@ IDBTransaction.prototype.abort = function () {
     }
     me.__abortTransaction(null);
 };
-IDBTransaction.prototype.toString = function () {
-    return '[object IDBTransaction]';
-};
+IDBTransaction.prototype[Symbol.toStringTag] = 'IDBTransaction';
 
 IDBTransaction.__assertVersionChange = function (tx) {
     if (!tx || tx.mode !== 'versionchange') {

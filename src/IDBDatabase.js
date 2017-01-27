@@ -174,9 +174,7 @@ IDBDatabase.prototype.__forceClose = function (msg) {
     });
 };
 
-IDBDatabase.prototype.toString = function () {
-    return '[object IDBDatabase]';
-};
+IDBDatabase.prototype[Symbol.toStringTag] = 'IDBDatabase';
 
 util.defineReadonlyProperties(IDBDatabase.prototype, ['name', 'version', 'objectStoreNames']);
 

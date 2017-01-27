@@ -97,7 +97,8 @@ DOMStringList.prototype = {
             }
         }
         this.sortList();
-    }
+    },
+    [Symbol.toStringTag]: 'DOMStringList'
 };
 if (cleanInterface) {
     for (const i in {
@@ -317,7 +318,7 @@ function isValidKeyPath (keyPath) {
         Array.isArray(keyPath) && keyPath.length &&
             // Convert array from sparse to dense http://www.2ality.com/2012/06/dense-arrays.html
             Array.apply(null, keyPath).every(function (kpp) {
-                // If W3C tests are accurate, it appears sequence<DOMString> implies `toString()`
+                // Todo: Confirm as per W3C tests that sequence<DOMString> implies `toString()`
                 // See also https://heycam.github.io/webidl/#idl-DOMString
                 return isValidKeyPathString(kpp.toString());
             })

@@ -559,16 +559,12 @@ IDBCursor.prototype['delete'] = function () {
     }, undefined, me);
 };
 
-IDBCursor.prototype.toString = function () {
-    return '[object IDBCursor]';
-};
+IDBCursor.prototype[Symbol.toStringTag] = 'IDBCursor';
 
 util.defineReadonlyProperties(IDBCursor.prototype, ['key', 'primaryKey']);
 
 class IDBCursorWithValue extends IDBCursor {
-    toString () {
-        return '[object IDBCursorWithValue]';
-    }
+    get [Symbol.toStringTag] () { return 'IDBCursorWithValue'; }
 }
 
 util.defineReadonlyProperties(IDBCursorWithValue.prototype, 'value');

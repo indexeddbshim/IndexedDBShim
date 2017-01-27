@@ -49,9 +49,7 @@ IDBKeyRange.upperBound = function (value, open) {
 IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
     return new IDBKeyRange(lower, upper, lowerOpen, upperOpen);
 };
-IDBKeyRange.prototype.toString = function () {
-    return '[object IDBKeyRange]';
-};
+IDBKeyRange.prototype[Symbol.toStringTag] = 'IDBKeyRange';
 
 util.defineReadonlyProperties(IDBKeyRange.prototype, ['lower', 'upper', 'lowerOpen', 'upperOpen']);
 

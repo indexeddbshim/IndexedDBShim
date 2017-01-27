@@ -451,9 +451,7 @@ IDBFactory.prototype.__forceClose = function (connIdx, msg) {
     }
 };
 
-IDBFactory.prototype.toString = function () {
-    return '[object IDBFactory]';
-};
+IDBFactory.prototype[Symbol.toStringTag] = 'IDBFactory';
 
 const shimIndexedDB = new IDBFactory();
 export {IDBFactory, cmp, shimIndexedDB};

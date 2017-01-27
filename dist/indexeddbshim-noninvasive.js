@@ -10321,9 +10321,7 @@ function IDBVersionChangeEvent(type, eventInitDict) {
 }
 IDBVersionChangeEvent.prototype = new ShimEvent('bogus');
 IDBVersionChangeEvent.prototype.constructor = IDBVersionChangeEvent;
-IDBVersionChangeEvent.prototype.toString = function () {
-    return '[object IDBVersionChangeEvent]';
-};
+IDBVersionChangeEvent.prototype[Symbol.toStringTag] = 'IDBVersionChangeEvent';
 
 Object.defineProperty(IDBVersionChangeEvent, Symbol.hasInstance, {
     value: function value(obj) {
@@ -10945,9 +10943,7 @@ IDBCursor.prototype['delete'] = function () {
     }, undefined, me);
 };
 
-IDBCursor.prototype.toString = function () {
-    return '[object IDBCursor]';
-};
+IDBCursor.prototype[Symbol.toStringTag] = 'IDBCursor';
 
 util.defineReadonlyProperties(IDBCursor.prototype, ['key', 'primaryKey']);
 
@@ -10961,9 +10957,9 @@ var IDBCursorWithValue = function (_IDBCursor) {
     }
 
     _createClass(IDBCursorWithValue, [{
-        key: 'toString',
-        value: function toString() {
-            return '[object IDBCursorWithValue]';
+        key: Symbol.toStringTag,
+        get: function get() {
+            return 'IDBCursorWithValue';
         }
     }]);
 
@@ -11194,9 +11190,7 @@ IDBDatabase.prototype.__forceClose = function (msg) {
     });
 };
 
-IDBDatabase.prototype.toString = function () {
-    return '[object IDBDatabase]';
-};
+IDBDatabase.prototype[Symbol.toStringTag] = 'IDBDatabase';
 
 util.defineReadonlyProperties(IDBDatabase.prototype, ['name', 'version', 'objectStoreNames']);
 
@@ -11686,9 +11680,7 @@ IDBFactory.prototype.__forceClose = function (connIdx, msg) {
     }
 };
 
-IDBFactory.prototype.toString = function () {
-    return '[object IDBFactory]';
-};
+IDBFactory.prototype[Symbol.toStringTag] = 'IDBFactory';
 
 var shimIndexedDB = new IDBFactory();
 exports.IDBFactory = IDBFactory;
@@ -12045,9 +12037,7 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName) {
     });
 };
 
-IDBIndex.prototype.toString = function () {
-    return '[object IDBIndex]';
-};
+IDBIndex.prototype[Symbol.toStringTag] = 'IDBIndex';
 
 util.defineReadonlyProperties(IDBIndex.prototype, ['objectStore', 'keyPath', 'multiEntry', 'unique']);
 
@@ -12263,9 +12253,7 @@ IDBKeyRange.upperBound = function (value, open) {
 IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
     return new IDBKeyRange(lower, upper, lowerOpen, upperOpen);
 };
-IDBKeyRange.prototype.toString = function () {
-    return '[object IDBKeyRange]';
-};
+IDBKeyRange.prototype[Symbol.toStringTag] = 'IDBKeyRange';
 
 util.defineReadonlyProperties(IDBKeyRange.prototype, ['lower', 'upper', 'lowerOpen', 'upperOpen']);
 
@@ -13089,9 +13077,7 @@ IDBObjectStore.prototype.deleteIndex = function (indexName) {
     _IDBIndex.IDBIndex.__deleteIndex(me, index);
 };
 
-IDBObjectStore.prototype.toString = function () {
-    return '[object IDBObjectStore]';
-};
+IDBObjectStore.prototype[Symbol.toStringTag] = 'IDBObjectStore';
 
 util.defineReadonlyProperties(IDBObjectStore.prototype, ['keyPath', 'indexNames', 'transaction', 'autoIncrement']);
 
@@ -13182,17 +13168,17 @@ var IDBRequest = function () {
     }
 
     _createClass(IDBRequest, [{
-        key: 'toString',
-        value: function toString() {
-            return '[object IDBRequest]';
-        }
-    }, {
         key: '__getParent',
         value: function __getParent() {
             if (this.toString() === '[object IDBOpenDBRequest]') {
                 return null;
             }
             return this.__transaction;
+        }
+    }, {
+        key: Symbol.toStringTag,
+        get: function get() {
+            return 'IDBRequest';
         }
     }]);
 
@@ -13240,9 +13226,9 @@ var IDBOpenDBRequest = function (_IDBRequest) {
     }
 
     _createClass(IDBOpenDBRequest, [{
-        key: 'toString',
-        value: function toString() {
-            return '[object IDBOpenDBRequest]';
+        key: Symbol.toStringTag,
+        get: function get() {
+            return 'IDBOpenDBRequest';
         }
     }]);
 
@@ -13737,9 +13723,7 @@ IDBTransaction.prototype.abort = function () {
     }
     me.__abortTransaction(null);
 };
-IDBTransaction.prototype.toString = function () {
-    return '[object IDBTransaction]';
-};
+IDBTransaction.prototype[Symbol.toStringTag] = 'IDBTransaction';
 
 IDBTransaction.__assertVersionChange = function (tx) {
     if (!tx || tx.mode !== 'versionchange') {
@@ -14163,7 +14147,7 @@ function evaluateKeyPathOnValue(value, keyPath, multiEntry) {
             var arrayValue = [];
             return {
                 v: keyPath.some(function (kpPart) {
-                    // If W3C tests are accurate, it appears sequence<DOMString> implies `toString()`
+                    // Todo: Confirm as per W3C tests that sequence<DOMString> implies `toString()`
                     // See also https://heycam.github.io/webidl/#idl-DOMString
                     // and http://stackoverflow.com/questions/38164752/should-a-call-to-db-close-within-upgradeneeded-inevitably-prevent-onsuccess
                     kpPart = util.isObj(kpPart) ? kpPart.toString() : kpPart;
@@ -15265,6 +15249,8 @@ var _cyclonejs2 = _interopRequireDefault(_cyclonejs);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 var cleanInterface = false;
 
 var testObject = { test: true };
@@ -15299,7 +15285,7 @@ var DOMStringList = function DOMStringList() {
         });
     }
 };
-DOMStringList.prototype = {
+DOMStringList.prototype = _defineProperty({
     // Interface.
     contains: function contains(str) {
         if (!arguments.length) {
@@ -15363,7 +15349,7 @@ DOMStringList.prototype = {
         }
         this.sortList();
     }
-};
+}, Symbol.toStringTag, 'DOMStringList');
 if (cleanInterface) {
     for (var i in {
         'addIndexes': false,
@@ -15578,7 +15564,7 @@ function isValidKeyPath(keyPath) {
     return isValidKeyPathString(keyPath) || Array.isArray(keyPath) && keyPath.length &&
     // Convert array from sparse to dense http://www.2ality.com/2012/06/dense-arrays.html
     Array.apply(null, keyPath).every(function (kpp) {
-        // If W3C tests are accurate, it appears sequence<DOMString> implies `toString()`
+        // Todo: Confirm as per W3C tests that sequence<DOMString> implies `toString()`
         // See also https://heycam.github.io/webidl/#idl-DOMString
         return isValidKeyPathString(kpp.toString());
     });

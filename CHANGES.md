@@ -235,8 +235,6 @@
 - Fix: Throw `TypeError` if call to `update()` has no arguments
 - Fix: Allow empty string key path to be utilized when validating
     `add`/`put` input
-- Fix: Add more precise `toString` behaviors on `IDB*` objects and
-    `IDBVersionChangeEvent`
 - Fix: Avoid iterating duplicate values for unique iterations
 - Fix: Ensure `IDBRequest.error` returns `null` rather than `undefined` upon
     success event
@@ -359,6 +357,9 @@
 - Fix: Round down version in `IDBFactory.open()` (when `> 1`)
 - Fix: Ensure store names passed into `IDBDatabase.transaction` are stored
     as unique names and are sorted
+- Fix: Add `Symbol.toStringTag` to `IDB*` classes for proper
+    `Object.prototype.toString.call`-type invocations checked in
+    W3C interface tests)
 - Repo files: Rename test folders for ease in distinguishing
 - Optimize: Only retrieve required SQLite columns for `IDBIndex`
       get operations

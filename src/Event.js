@@ -29,9 +29,7 @@ function IDBVersionChangeEvent (type, eventInitDict) { // eventInitDict is a IDB
 }
 IDBVersionChangeEvent.prototype = new ShimEvent('bogus');
 IDBVersionChangeEvent.prototype.constructor = IDBVersionChangeEvent;
-IDBVersionChangeEvent.prototype.toString = function () {
-    return '[object IDBVersionChangeEvent]';
-};
+IDBVersionChangeEvent.prototype[Symbol.toStringTag] = 'IDBVersionChangeEvent';
 
 Object.defineProperty(IDBVersionChangeEvent, Symbol.hasInstance, {
     value: obj => util.isObj(obj) && 'oldVersion' in obj && typeof obj.defaultPrevented === 'boolean'

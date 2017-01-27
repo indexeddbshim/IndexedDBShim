@@ -14,9 +14,7 @@ class IDBRequest {
         this.__readyState = 'pending';
         this.__setOptions({extraProperties: ['debug']}); // Ensure EventTarget preserves our properties
     }
-    toString () {
-        return '[object IDBRequest]';
-    }
+    get [Symbol.toStringTag] () { return 'IDBRequest'; }
     __getParent () {
         if (this.toString() === '[object IDBOpenDBRequest]') {
             return null;
@@ -57,9 +55,7 @@ class IDBOpenDBRequest extends IDBRequest {
         this.__setOptions({extraProperties: ['oldVersion', 'newVersion', 'debug']}); // Ensure EventTarget preserves our properties
         this.onblocked = this.onupgradeneeded = null;
     }
-    toString () {
-        return '[object IDBOpenDBRequest]';
-    }
+    get [Symbol.toStringTag] () { return 'IDBOpenDBRequest'; }
 }
 
 export {IDBRequest, IDBOpenDBRequest};

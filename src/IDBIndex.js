@@ -316,9 +316,7 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
     });
 };
 
-IDBIndex.prototype.toString = function () {
-    return '[object IDBIndex]';
-};
+IDBIndex.prototype[Symbol.toStringTag] = 'IDBIndex';
 
 util.defineReadonlyProperties(IDBIndex.prototype, ['objectStore', 'keyPath', 'multiEntry', 'unique']);
 
