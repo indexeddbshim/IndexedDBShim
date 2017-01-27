@@ -22,26 +22,7 @@ if (Object.defineProperty) {
  *
  */
 const DOMStringList = function () {
-    // Internal functions on the prototype have been made non-enumerable below.
-    this._items = [];
-    if (cleanInterface) {
-        Object.defineProperties(this, {
-            '_items': {
-                enumerable: false
-            },
-            '_length': {
-                enumerable: false,
-                writable: true
-            },
-            'length': {
-                enumerable: false,
-                get: function () {
-                    return this._length;
-                }
-            }
-        });
-    }
-    this._length = 0;
+    throw new TypeError('Illegal constructor');
 };
 DOMStringList.prototype = {
     constructor: DOMStringList,
@@ -65,7 +46,7 @@ DOMStringList.prototype = {
 
     // Helpers. Should only be used internally.
     clone: function () {
-        const stringList = new DOMStringList();
+        const stringList = DOMStringList.__createInstance();
         stringList._items = this._items.slice();
         stringList._length = this.length;
         stringList.addIndexes();
@@ -120,28 +101,58 @@ DOMStringList.prototype = {
         }
     }
 };
-if (cleanInterface) {
-    for (const i in {
-        'constructor': false,
-        'addIndexes': false,
-        'sortList': false,
-        'forEach': false,
-        'map': false,
-        'indexOf': false,
-        'push': false,
-        'splice': false
-    }) {
-        Object.defineProperty(DOMStringList.prototype, i, {
-            enumerable: false
-        });
+Object.defineProperty(DOMStringList, Symbol.hasInstance, {
+    value: function (obj) {
+        return ({}.toString.call(obj) === 'DOMStringListPrototype');
     }
+});
+const DOMStringListAlias = DOMStringList;
+Object.defineProperty(DOMStringList, '__createInstance', {
+    value: function () {
+        const DOMStringList = function DOMStringList () {
+            // Internal functions on the prototype have been made non-enumerable below.
+            Object.defineProperties(this, {
+                'length': {
+                    enumerable: true,
+                    get: function () {
+                        return this._length;
+                    }
+                }
+            });
+            this._items = [];
+            this._length = 0;
+        };
+        DOMStringList.prototype = DOMStringListAlias.prototype;
+        return new DOMStringList();
+    }
+});
+
+if (cleanInterface) {
     Object.defineProperty(DOMStringList, 'prototype', {
         writable: false
     });
+
+    const nonenumerableReadonly = ['addIndexes', 'sortList', 'forEach', 'map', 'indexOf', 'push', 'splice', 'constructor', '__createInstance'];
+    nonenumerableReadonly.forEach((nonenumerableReadonly) => {
+        Object.defineProperty(DOMStringList.prototype, nonenumerableReadonly, {
+            enumerable: false
+        });
+    });
+
+    // Illegal invocations
     Object.defineProperty(DOMStringList.prototype, 'length', {
+        enumerable: true,
         get: function () {
             throw new TypeError('Illegal invocation');
         }
+    });
+
+    const nonenumerableWritable = ['_items', '_length'];
+    nonenumerableWritable.forEach((nonenumerableWritable) => {
+        Object.defineProperty(DOMStringList.prototype, nonenumerableWritable, {
+            enumerable: false,
+            writable: true
+        });
     });
 }
 

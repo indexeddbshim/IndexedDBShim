@@ -13,6 +13,7 @@
     "dev-browser": "grunt dev-browser",
     "dev-browserNoninvasive": "grunt dev-browserNoninvasive",
     "dev-node": "grunt dev-node",
+    "dev-unicodeNode": "grunt dev-unicodeNode",
     "build": "grunt build",
     "build-browser": "grunt build-browser",
     "build-browserNoninvasive": "grunt build-browserNoninvasive",

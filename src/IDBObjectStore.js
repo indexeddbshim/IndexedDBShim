@@ -28,7 +28,7 @@ function IDBObjectStore (storeProperties, transaction) {
     me.__autoIncrement = !!storeProperties.autoInc;
 
     me.__indexes = {};
-    me.__indexNames = new util.DOMStringList();
+    me.__indexNames = util.DOMStringList.__createInstance();
     const indexList = storeProperties.indexList;
     for (const indexName in indexList) {
         if (indexList.hasOwnProperty(indexName)) {
@@ -112,7 +112,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
 
     const storeClone = db.__versionTransaction.__storeClones[store.name];
     if (storeClone) {
-        storeClone.__indexNames = new util.DOMStringList();
+        storeClone.__indexNames = util.DOMStringList.__createInstance();
         storeClone.__indexes = {};
         storeClone.__deleted = true;
     }

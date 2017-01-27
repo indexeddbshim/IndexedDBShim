@@ -11032,7 +11032,7 @@ function IDBDatabase(db, name, oldVersion, version, storeProperties) {
 
     this.__transactions = [];
     this.__objectStores = {};
-    this.__objectStoreNames = new util.DOMStringList();
+    this.__objectStoreNames = util.DOMStringList.__createInstance();
     var itemCopy = {};
 
     var _loop = function _loop(i) {
@@ -11658,7 +11658,7 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
     createSysDB(function () {
         sysdb.readTransaction(function (sysReadTx) {
             sysReadTx.executeSql('SELECT "name" FROM dbVersions', [], function (sysReadTx, data) {
-                var dbNames = new util.DOMStringList();
+                var dbNames = util.DOMStringList.__createInstance();
                 for (var i = 0; i < data.rows.length; i++) {
                     dbNames.push(util.unescapeSQLiteResponse(data.rows.item(i).name));
                 }
@@ -12375,7 +12375,7 @@ function IDBObjectStore(storeProperties, transaction) {
     me.__autoIncrement = !!storeProperties.autoInc;
 
     me.__indexes = {};
-    me.__indexNames = new util.DOMStringList();
+    me.__indexNames = util.DOMStringList.__createInstance();
     var indexList = storeProperties.indexList;
     for (var indexName in indexList) {
         if (indexList.hasOwnProperty(indexName)) {
@@ -12459,7 +12459,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
 
     var storeClone = db.__versionTransaction.__storeClones[store.name];
     if (storeClone) {
-        storeClone.__indexNames = new util.DOMStringList();
+        storeClone.__indexNames = util.DOMStringList.__createInstance();
         storeClone.__indexes = {};
         storeClone.__deleted = true;
     }
@@ -15314,26 +15314,7 @@ if (Object.defineProperty) {
  *
  */
 var DOMStringList = function DOMStringList() {
-    // Internal functions on the prototype have been made non-enumerable below.
-    this._items = [];
-    if (cleanInterface) {
-        Object.defineProperties(this, {
-            '_items': {
-                enumerable: false
-            },
-            '_length': {
-                enumerable: false,
-                writable: true
-            },
-            'length': {
-                enumerable: false,
-                get: function get() {
-                    return this._length;
-                }
-            }
-        });
-    }
-    this._length = 0;
+    throw new TypeError('Illegal constructor');
 };
 DOMStringList.prototype = (_DOMStringList$protot = {
     constructor: DOMStringList,
@@ -15357,7 +15338,7 @@ DOMStringList.prototype = (_DOMStringList$protot = {
 
     // Helpers. Should only be used internally.
     clone: function clone() {
-        var stringList = new DOMStringList();
+        var stringList = DOMStringList.__createInstance();
         stringList._items = this._items.slice();
         stringList._length = this.length;
         stringList.addIndexes();
@@ -15429,28 +15410,58 @@ DOMStringList.prototype = (_DOMStringList$protot = {
         }
     }, _callee, this);
 })), _DOMStringList$protot);
-if (cleanInterface) {
-    for (var i in {
-        'constructor': false,
-        'addIndexes': false,
-        'sortList': false,
-        'forEach': false,
-        'map': false,
-        'indexOf': false,
-        'push': false,
-        'splice': false
-    }) {
-        Object.defineProperty(DOMStringList.prototype, i, {
-            enumerable: false
-        });
+Object.defineProperty(DOMStringList, Symbol.hasInstance, {
+    value: function value(obj) {
+        return {}.toString.call(obj) === 'DOMStringListPrototype';
     }
+});
+var DOMStringListAlias = DOMStringList;
+Object.defineProperty(DOMStringList, '__createInstance', {
+    value: function value() {
+        var DOMStringList = function DOMStringList() {
+            // Internal functions on the prototype have been made non-enumerable below.
+            Object.defineProperties(this, {
+                'length': {
+                    enumerable: true,
+                    get: function get() {
+                        return this._length;
+                    }
+                }
+            });
+            this._items = [];
+            this._length = 0;
+        };
+        DOMStringList.prototype = DOMStringListAlias.prototype;
+        return new DOMStringList();
+    }
+});
+
+if (cleanInterface) {
     Object.defineProperty(DOMStringList, 'prototype', {
         writable: false
     });
+
+    var nonenumerableReadonly = ['addIndexes', 'sortList', 'forEach', 'map', 'indexOf', 'push', 'splice', 'constructor', '__createInstance'];
+    nonenumerableReadonly.forEach(function (nonenumerableReadonly) {
+        Object.defineProperty(DOMStringList.prototype, nonenumerableReadonly, {
+            enumerable: false
+        });
+    });
+
+    // Illegal invocations
     Object.defineProperty(DOMStringList.prototype, 'length', {
+        enumerable: true,
         get: function get() {
             throw new TypeError('Illegal invocation');
         }
+    });
+
+    var nonenumerableWritable = ['_items', '_length'];
+    nonenumerableWritable.forEach(function (nonenumerableWritable) {
+        Object.defineProperty(DOMStringList.prototype, nonenumerableWritable, {
+            enumerable: false,
+            writable: true
+        });
     });
 }
 

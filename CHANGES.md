@@ -2,6 +2,10 @@
 
 ## Version 3.0.0 (Unreleased)
 
+Though we have tried to keep this accurate, some changes listed below might
+have been mistakenly ascribed to changes since the previous release whereas
+they were actually changes since a more recent version on `master`.
+
 - License: Add back missing MIT license
 - Security fix: Avoid SQL injection potential--ensure database, store and
     index names are prefixed as SQLite columns to avoid conflict with built-in
@@ -371,6 +375,11 @@
     to sequence\<DOMStringList\> per
     <https://html.spec.whatwg.org/multipage/infrastructure.html#domstringlist>
     and <https://infra.spec.whatwg.org/#list-iterate>
+- Fix: Make `DOMStringList` non-enumerable but configurable
+- Fix: Interface changes for `DOMStringList`: illegal constructor, length
+   enumerable, `instanceof` override
+- Fix: Properly report global shimming errors when setting a readonly
+   failed and `Object.defineProperty` is not present
 - Repo files: Rename test folders for ease in distinguishing
 - Optimize: Only retrieve required SQLite columns for `IDBIndex`
       get operations
@@ -479,7 +488,7 @@
 - Testing (Grunt): Force ESLint (since "standard" currently causing a warning)
 - Testing (Grunt): More granular uglification, add build-browser,
     dev-browser, Unicode watching
-- Testing (Grunt): Add Node-specific build/dev commands
+- Testing (Grunt): Add Node-specific, Unicode-specific build/dev commands
 - Testing (Grunt): Clarify Grunt tasks, expand tasks for cleaning, make tests
     more granular
 - Testing (Grunt): Remove now redundant `sourceMappingURL`, use

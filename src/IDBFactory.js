@@ -414,7 +414,7 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
     createSysDB(function () {
         sysdb.readTransaction(function (sysReadTx) {
             sysReadTx.executeSql('SELECT "name" FROM dbVersions', [], function (sysReadTx, data) {
-                const dbNames = new util.DOMStringList();
+                const dbNames = util.DOMStringList.__createInstance();
                 for (let i = 0; i < data.rows.length; i++) {
                     dbNames.push(util.unescapeSQLiteResponse(data.rows.item(i).name));
                 }
