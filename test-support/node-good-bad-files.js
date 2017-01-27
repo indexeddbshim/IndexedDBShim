@@ -12,14 +12,16 @@
 - `idbobjectstore_openKeyCursor.js` - seems to have its last test in a
     race condition or such to cause pass/fail results to vary
 
+- `interfaces.worker.js`: Sometimes actually times out
+
 // Passing no argument to `node-idb-test.js` will test all of the IndexedDB
 //   tests including some worker tests, but only those within the
 //  `IndexedDB` directory
 
 IndexedDB Test counts: 284 files (including 1 domstringlist file):  251 good, 33 bad
 Current IndexedDB (and domstringlist) test statuses with 0 files excluded (vmTimeout = 40000):
-  'Pass': 693, (including 4 domstringlist tests)
-  'Fail': 281,
+  'Pass': 696, (including 4 domstringlist tests)
+  'Fail': 278,
   'Timeout': 0,
   'Not Run': 22,
   'Total tests': 996 (including 4 domstringlist tests)

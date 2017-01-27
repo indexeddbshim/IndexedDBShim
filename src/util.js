@@ -22,22 +22,31 @@ if (Object.defineProperty) {
  *
  */
 const DOMStringList = function () {
-    this.length = 0;
-    this._items = [];
     // Internal functions on the prototype have been made non-enumerable below.
+    this._items = [];
     if (cleanInterface) {
         Object.defineProperties(this, {
             '_items': {
                 enumerable: false
             },
+            '_length': {
+                enumerable: false,
+                writable: true
+            },
             'length': {
-                enumerable: false
+                enumerable: false,
+                get: function () {
+                    return this._length;
+                }
             }
         });
     }
+    this._length = 0;
 };
 DOMStringList.prototype = {
+    constructor: DOMStringList,
     // Interface.
+    length: 0,
     contains: function (str) {
         if (!arguments.length) {
             throw new TypeError('DOMStringList.contains must be supplied a value');
@@ -58,7 +67,7 @@ DOMStringList.prototype = {
     clone: function () {
         const stringList = new DOMStringList();
         stringList._items = this._items.slice();
-        stringList.length = this.length;
+        stringList._length = this.length;
         stringList.addIndexes();
         return stringList;
     },
@@ -85,12 +94,12 @@ DOMStringList.prototype = {
     },
     push: function (item) {
         this._items.push(item);
-        this.length++;
+        this._length++;
         this.sortList();
     },
     splice: function (...args /* index, howmany, item1, ..., itemX */) {
         this._items.splice(...args);
-        this.length = this._items.length;
+        this._length = this._items.length;
         for (const i in this) {
             if (i === String(parseInt(i, 10))) {
                 delete this[i];
@@ -98,7 +107,7 @@ DOMStringList.prototype = {
         }
         this.sortList();
     },
-    [Symbol.toStringTag]: 'DOMStringList',
+    [Symbol.toStringTag]: 'DOMStringListPrototype',
     // At least because `DOMStringList`, as a [list](https://infra.spec.whatwg.org/#list)
     //    can be converted to a sequence per https://infra.spec.whatwg.org/#list-iterate
     //    and particularly as some methods, e.g., `IDBDatabase.transaction`
@@ -113,6 +122,7 @@ DOMStringList.prototype = {
 };
 if (cleanInterface) {
     for (const i in {
+        'constructor': false,
         'addIndexes': false,
         'sortList': false,
         'forEach': false,
@@ -125,6 +135,14 @@ if (cleanInterface) {
             enumerable: false
         });
     }
+    Object.defineProperty(DOMStringList, 'prototype', {
+        writable: false
+    });
+    Object.defineProperty(DOMStringList.prototype, 'length', {
+        get: function () {
+            throw new TypeError('Illegal invocation');
+        }
+    });
 }
 
 function escapeNameForSQLiteIdentifier (arg) {

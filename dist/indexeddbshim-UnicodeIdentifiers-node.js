@@ -22356,22 +22356,31 @@ if (Object.defineProperty) {
  *
  */
 var DOMStringList = function DOMStringList() {
-    this.length = 0;
-    this._items = [];
     // Internal functions on the prototype have been made non-enumerable below.
+    this._items = [];
     if (cleanInterface) {
         Object.defineProperties(this, {
             '_items': {
                 enumerable: false
             },
+            '_length': {
+                enumerable: false,
+                writable: true
+            },
             'length': {
-                enumerable: false
+                enumerable: false,
+                get: function get() {
+                    return this._length;
+                }
             }
         });
     }
+    this._length = 0;
 };
 DOMStringList.prototype = (_DOMStringList$protot = {
+    constructor: DOMStringList,
     // Interface.
+    length: 0,
     contains: function contains(str) {
         if (!arguments.length) {
             throw new TypeError('DOMStringList.contains must be supplied a value');
@@ -22392,7 +22401,7 @@ DOMStringList.prototype = (_DOMStringList$protot = {
     clone: function clone() {
         var stringList = new DOMStringList();
         stringList._items = this._items.slice();
-        stringList.length = this.length;
+        stringList._length = this.length;
         stringList.addIndexes();
         return stringList;
     },
@@ -22419,14 +22428,14 @@ DOMStringList.prototype = (_DOMStringList$protot = {
     },
     push: function push(item) {
         this._items.push(item);
-        this.length++;
+        this._length++;
         this.sortList();
     },
     splice: function splice() /* index, howmany, item1, ..., itemX */{
         var _items;
 
         (_items = this._items).splice.apply(_items, arguments);
-        this.length = this._items.length;
+        this._length = this._items.length;
         for (var i in this) {
             if (i === String(parseInt(i, 10))) {
                 delete this[i];
@@ -22434,7 +22443,7 @@ DOMStringList.prototype = (_DOMStringList$protot = {
         }
         this.sortList();
     }
-}, _defineProperty(_DOMStringList$protot, Symbol.toStringTag, 'DOMStringList'), _defineProperty(_DOMStringList$protot, Symbol.iterator, regeneratorRuntime.mark(function _callee() {
+}, _defineProperty(_DOMStringList$protot, Symbol.toStringTag, 'DOMStringListPrototype'), _defineProperty(_DOMStringList$protot, Symbol.iterator, regeneratorRuntime.mark(function _callee() {
     var i;
     return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -22464,6 +22473,7 @@ DOMStringList.prototype = (_DOMStringList$protot = {
 })), _DOMStringList$protot);
 if (cleanInterface) {
     for (var i in {
+        'constructor': false,
         'addIndexes': false,
         'sortList': false,
         'forEach': false,
@@ -22476,6 +22486,14 @@ if (cleanInterface) {
             enumerable: false
         });
     }
+    Object.defineProperty(DOMStringList, 'prototype', {
+        writable: false
+    });
+    Object.defineProperty(DOMStringList.prototype, 'length', {
+        get: function get() {
+            throw new TypeError('Illegal invocation');
+        }
+    });
 }
 
 function escapeNameForSQLiteIdentifier(arg) {
