@@ -8,6 +8,7 @@ const CY = require('cyclonejs');
 const Worker = require('./webworker/webworker'); // Todo: We could export this `Worker` publicly for others looking for a Worker polyfill with IDB support
 const XMLHttpRequest = require('xmlhttprequest');
 const URL = require('js-polyfills/url');
+const isDateObject = require('is-date-object');
 
 // CONFIG
 const vmTimeout = 40000; // Time until we give up on the vm (increasing to 40000 didn't make a difference on coverage in earlier versions)
@@ -140,7 +141,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
     // Exclude those currently breaking the tests
     // Todo: Replace with `uncaughtException` handlers above?
     const testingAllWorkers = workers && jsFiles.length > 1;
-    const excluded = testingAllWorkers ? ['_interface-objects-003.js', '_interface-objects-004.js', '_service-worker-indexeddb.https.js'] : [];
+    const excluded = testingAllWorkers ? ['_interface-objects-003.js', '_interface-objects-004.js'] : [];
     if (excluded.includes(shimNS.fileName) || (!workers && workerFileRegex.test(shimNS.fileName))) {
         excludedCount++;
         shimNS.finished();
@@ -206,9 +207,16 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                     // url: 'file://' + basePath,
                     done: function () {
                         try {
+                            // Should only pass in safe objects
+                            const sandboxObj = {
+                                console,
+                                shimNS
+                            };
+
                             const doc = jsdom.jsdom('<div id="log"></div>', {});
                             const window = doc.defaultView; // eslint-disable-line no-var
-                            // Todo: We might switch based on file to normally try non-Unicode version
+
+                            // Todo: We might switch based on file to normally try non-Unicode version or otherwise exclude properties
                             // indexeddbshimNonUnicode(window);
                             indexeddbshim(window, {addNonIDBGlobals: true});
                             // window.XMLHttpRequest = XMLHttpRequest({basePath: 'http://localhost:8000/IndexedDB/'}); // Todo: We should support this too
@@ -219,6 +227,20 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                             //   see test_primary_interface_of in idlharness.js
                             window.Object = Object;
                             window.Object[Symbol.hasInstance] = function (inst) { return inst && typeof inst === 'object'; };
+
+                            // We need to overcome the `value.js` test's `instanceof` checks as our IDB object is injected rather than inline
+                            // jsdom didn't like us overriding directly or only operating on them as `window` properties
+                            const _Array = window.Array;
+                            Object.defineProperty(_Array, Symbol.hasInstance, {
+                                value: obj => Array.isArray(obj)
+                            });
+                            sandboxObj.Array = _Array;
+                            const _Date = window.Date;
+                            Object.defineProperty(_Date, Symbol.hasInstance, {
+                                value: obj => isDateObject(obj)
+                            });
+                            sandboxObj.Date = _Date;
+
                             // Patch postMessage to throw for SCA (as needed by tests in key_invalid.htm)
                             const _postMessage = window.postMessage.bind(window);
                             // Todo: Submit this as PR to jsdom
@@ -240,11 +262,6 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                             });
                             shimNS.window = window;
 
-                            // Should only pass in safe objects
-                            const sandboxObj = {
-                                console,
-                                shimNS
-                            };
                             vm.runInNewContext(allContent, sandboxObj, {
                                 displayErrors: true,
                                 timeout: vmTimeout

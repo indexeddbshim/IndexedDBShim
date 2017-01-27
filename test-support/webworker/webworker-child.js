@@ -288,5 +288,15 @@ workerCtx.Worker = Worker({
     rootPath: workerConfig.rootPath
 });
 
+// Todo: A good Worker polyfill would implement these as possible and
+//   if exposing we should do so; for W3C IndexedDB or IndexedDB-related tests,
+//   however, they do not currently require a working implementation except to
+//   check that they exist
+['SharedWorker', 'MessagePort', 'MessageEvent', 'WorkerNavigator', 'MessageChannel', 'WorkerLocation', 'ImageData', 'ImageBitmap', 'CanvasPath', 'Path2D', 'PromiseRejectionEvent', 'EventSource', 'WebSocket', 'CloseEvent', 'BroadcastChannel', 'XMLHttpRequestEventTarget', 'XMLHttpRequestUpload', 'ProgressEvent', 'FormData', 'File', 'Blob', 'FileList', 'FileReader', 'FileReaderSync', 'ErrorEvent', 'ReadableStream', 'WritableStream', 'ByteLengthQueuingStrategy', 'CountQueuingStrategy'].forEach((prop) => {
+    workerCtx[prop] = function () {
+        throw new Error(prop + ' not implemented');
+    };
+});
+
 // Context object for vm script api
 workerCtxObj = vm.createContext(workerCtx);
