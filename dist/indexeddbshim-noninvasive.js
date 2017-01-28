@@ -9088,10 +9088,10 @@ module.exports = require('./modules/_core');
 })(this);
 
 },{}],301:[function(require,module,exports){
-var DOMException;
 (function () {
   'use strict';
 
+  var ShimDOMException;
   var phases = {
     NONE: 0,
     CAPTURING_PHASE: 1,
@@ -9101,11 +9101,13 @@ var DOMException;
 
   if (typeof DOMException === 'undefined') {
     // Todo: Better polyfill (if even needed here)
-    DOMException = function (msg, name) { // No need for `toString` as same as for `Error`
+    ShimDOMException = function DOMException (msg, name) { // No need for `toString` as same as for `Error`
       var err = new Error(msg);
       err.name = name;
       return err;
     };
+  } else {
+    ShimDOMException = DOMException;
   }
 
   var ev = new WeakMap();
@@ -9117,7 +9119,14 @@ var DOMException;
   * native event properties anyways in order to properly set `target`, etc.
   * @note The regular DOM method `dispatchEvent` won't work with this polyfill as it expects a native event
   */
-  var EventPolyfill = function EventPolyfill (type, evInit, _ev) { // eslint-disable-line no-native-reassign
+  var ShimEvent = function Event (type) { // eslint-disable-line no-native-reassign
+    // For WebIDL checks of function's `length`, we check `arguments` for the optional arguments
+    this[Symbol.toStringTag] = 'Event';
+    this.toString = function () {
+      return '[object Event]';
+    };
+    var evInit = arguments[1];
+    var _ev = arguments[2];
     if (!arguments.length) {
       throw new TypeError("Failed to construct 'Event': 1 argument required, but only 0 present.");
     }
@@ -9125,13 +9134,6 @@ var DOMException;
     _ev = _ev || {};
 
     var _evCfg = {};
-    _evCfg.type = type;
-    if ('bubbles' in evInit) {
-      _evCfg.bubbles = evInit.bubbles;
-    }
-    if ('cancelable' in evInit) {
-      _evCfg.cancelable = evInit.cancelable;
-    }
     if ('composed' in evInit) {
       _evCfg.composed = evInit.composed;
     }
@@ -9141,6 +9143,7 @@ var DOMException;
 
     ev.set(this, _ev);
     evCfg.set(this, _evCfg);
+    this.initEvent(type, evInit.bubbles, evInit.cancelable);
     Object.defineProperties(this,
       ['target', 'currentTarget', 'eventPhase', 'defaultPrevented'].reduce(function (obj, prop) {
         obj[prop] = {
@@ -9161,11 +9164,12 @@ var DOMException;
       'type',
       'bubbles', 'cancelable', // Defaults to false
       'isTrusted', 'timeStamp',
+      'initEvent',
       // Other event properties (not used by our code)
-      'composedPath', 'composed', 'initEvent', 'initCustomEvent'
+      'composedPath', 'composed'
     ];
     if (this.toString() === '[object CustomEvent]') {
-      props.push('detail');
+      props.push('detail', 'initCustomEvent');
     }
 
     Object.defineProperties(this, props.reduce(function (obj, prop) {
@@ -9179,13 +9183,11 @@ var DOMException;
       return obj;
     }, {}));
   };
-  Object.defineProperties(EventPolyfill.prototype, {
-    NONE: {writable: false, value: 0},
-    CAPTURING_PHASE: {writable: false, value: 1},
-    AT_TARGET: {writable: false, value: 2},
-    BUBBLING_PHASE: {writable: false, value: 3}
-  });
-  EventPolyfill.prototype.preventDefault = function () {
+
+  ShimEvent.prototype.preventDefault = function () {
+    if (!(this instanceof ShimEvent)) {
+      throw new TypeError('Illegal invocation');
+    }
     var _ev = ev.get(this);
     var _evCfg = evCfg.get(this);
     if (this.cancelable && !_evCfg._passive) {
@@ -9195,32 +9197,124 @@ var DOMException;
       }
     };
   };
-  EventPolyfill.prototype.stopImmediatePropagation = function () {
+  ShimEvent.prototype.stopImmediatePropagation = function () {
     var _evCfg = evCfg.get(this);
     _evCfg._stopImmediatePropagation = true;
   };
-  EventPolyfill.prototype.stopPropagation = function () {
+  ShimEvent.prototype.stopPropagation = function () {
     var _evCfg = evCfg.get(this);
     _evCfg._stopPropagation = true;
   };
-  EventPolyfill.prototype.toString = function () {
-    return '[object Event]';
-  };
-
-  var CustomEventPolyfill = function (type, eventInitDict, _ev) {
-    EventPolyfill.call(this, type, eventInitDict, _ev);
+  ShimEvent.prototype.initEvent = function (type, bubbles, cancelable) {  // Chrome currently has function length 1 only but WebIDL says 3
+    // var bubbles = arguments[1];
+    // var cancelable = arguments[2];
     var _evCfg = evCfg.get(this);
-    _evCfg.detail = eventInitDict && typeof eventInitDict === 'object' ? eventInitDict.detail : null;
+
+    if (_evCfg._dispatched) {
+      return;
+    }
+
+    _evCfg.type = type;
+    if (bubbles !== undefined) {
+      _evCfg.bubbles = bubbles;
+    }
+    if (cancelable !== undefined) {
+      _evCfg.cancelable = cancelable;
+    }
   };
-  CustomEventPolyfill.prototype.toString = function () {
-    return '[object CustomEvent]';
+  ['type', 'target', 'currentTarget'].forEach(function (prop) {
+    Object.defineProperty(ShimEvent.prototype, prop, {
+      enumerable: true,
+      configurable: true,
+      get: function () {
+        throw new TypeError('Illegal invocation');
+      }
+    });
+  });
+  ['eventPhase', 'defaultPrevented', 'bubbles', 'cancelable', 'timeStamp'].forEach(function (prop) {
+    Object.defineProperty(ShimEvent.prototype, prop, {
+      enumerable: true,
+      configurable: true,
+      get: function () {
+        throw new TypeError('Illegal invocation');
+      }
+    });
+  });
+  ['NONE', 'CAPTURING_PHASE', 'AT_TARGET', 'BUBBLING_PHASE'].forEach(function (prop, i) {
+    Object.defineProperty(ShimEvent, prop, {
+      enumerable: true,
+      writable: false,
+      value: i
+    });
+    Object.defineProperty(ShimEvent.prototype, prop, {
+      writable: false,
+      value: i
+    });
+  });
+  ShimEvent[Symbol.toStringTag] = 'Function';
+  ShimEvent.prototype[Symbol.toStringTag] = 'EventPrototype';
+  Object.defineProperty(ShimEvent, 'prototype', {
+    writable: false
+  });
+
+  var ShimCustomEvent = function CustomEvent (type) {
+    var eventInitDict = arguments[1];
+    var _ev = arguments[2];
+    ShimEvent.call(this, type, eventInitDict, _ev);
+    this[Symbol.toStringTag] = 'CustomEvent';
+    this.toString = function () {
+      return '[object CustomEvent]';
+    };
+    var _evCfg = evCfg.get(this);
+    eventInitDict = eventInitDict || {};
+    this.initCustomEvent(type, evInit.bubbles, evInit.cancelable, 'detail' in evInit ? evInit.detail : null);
   };
+  Object.defineProperty(ShimCustomEvent.prototype, 'constructor', {
+      enumerable: false,
+      writable: true,
+      configurable: true,
+      value: ShimCustomEvent
+  });
+  ShimCustomEvent.prototype.initCustomEvent = function (type, bubbles, cancelable, detail) {
+    if (!(this instanceof ShimCustomEvent)) {
+        throw new TypeError('Illegal invocation');
+    }
+    var _evCfg = evCfg.get(this);
+    ShimCustomEvent.call(this, type, {bubbles: bubbles, cancelable: cancelable, detail: detail}, arguments[4]);
+
+    if (_evCfg._dispatched) {
+      return;
+    }
+
+    if (detail !== undefined) {
+      _evCfg.detail = detail;
+    }
+    Object.defineProperty(this, 'detail', {
+        get: function () {
+            return _evCfg.detail;
+        }
+    });
+  };
+  ShimCustomEvent[Symbol.toStringTag] = 'Function';
+  ShimCustomEvent.prototype[Symbol.toStringTag] = 'CustomEventPrototype';
+  Object.setPrototypeOf(ShimCustomEvent, ShimEvent); // TODO: IDL needs but reported as slow!
+  Object.defineProperty(ShimCustomEvent.prototype, 'detail', {
+    enumerable: true,
+    configurable: true,
+    get: function () {
+      throw new TypeError('Illegal invocation');
+    }
+  });
+  Object.setPrototypeOf(ShimCustomEvent.prototype, ShimEvent.prototype); // TODO: IDL needs but reported as slow!
+  Object.defineProperty(ShimCustomEvent, 'prototype', {
+      writable: false
+  });
 
   function copyEvent (ev) {
     if ('detail' in ev) {
-      return new CustomEventPolyfill(ev.type, {bubbles: ev.bubbles, cancelable: ev.cancelable, detail: ev.detail}, ev);
+      return new ShimCustomEvent(ev.type, {bubbles: ev.bubbles, cancelable: ev.cancelable, detail: ev.detail}, ev);
     }
-    return new EventPolyfill(ev.type, {bubbles: ev.bubbles, cancelable: ev.cancelable}, ev);
+    return new ShimEvent(ev.type, {bubbles: ev.bubbles, cancelable: ev.cancelable}, ev);
   }
 
   function getListenersOptions (listeners, type, options) {
@@ -9270,15 +9364,16 @@ var DOMException;
     }
   };
 
-  function EventTarget (customOptions) {
-    this.__setOptions(customOptions);
+  function EventTarget () {
+    throw new TypeError('Illegal constructor');
   }
 
   Object.assign(EventTarget.prototype, ['Early', '', 'Late', 'Default'].reduce(function (obj, listenerType) {
     ['add', 'remove', 'has'].forEach(function (method) {
-      obj[method + listenerType + 'EventListener'] = function (type, listener, options) {
+      obj[method + listenerType + 'EventListener'] = function (type, listener) {
+        var options = arguments[2]; // We keep the listener `length` as per WebIDL
         if (arguments.length < 2) throw new TypeError('2 or more arguments required');
-        if (typeof type !== 'string') throw new DOMException('UNSPECIFIED_EVENT_TYPE_ERR', 'UNSPECIFIED_EVENT_TYPE_ERR'); // eslint-disable-line eqeqeq
+        if (typeof type !== 'string') throw new ShimDOMException('UNSPECIFIED_EVENT_TYPE_ERR', 'UNSPECIFIED_EVENT_TYPE_ERR'); // eslint-disable-line eqeqeq
         if (listener.handleEvent) { listener = listener.handleEvent.bind(listener); }
         var arrStr = '_' + listenerType.toLowerCase() + (listenerType === '' ? 'l' : 'L') + 'isteners';
         if (!this[arrStr]) Object.defineProperty(this, arrStr, {value: {}});
@@ -9306,7 +9401,7 @@ var DOMException;
       }, this);
 
       var _evCfg = evCfg.get(ev);
-      if (_evCfg && setTarget && _evCfg._dispatched) throw new DOMException('The object is in an invalid state.', 'InvalidStateError');
+      if (_evCfg && setTarget && _evCfg._dispatched) throw new ShimDOMException('The object is in an invalid state.', 'InvalidStateError');
 
       var eventCopy;
       if (_evCfg) {
@@ -9317,7 +9412,7 @@ var DOMException;
         _evCfg._dispatched = true;
         (this._extraProperties || []).forEach(function (prop) {
           if (prop in ev) {
-            eventCopy[prop] = ev[prop]; // Todo: Put internal to `EventPolyfill`?
+            eventCopy[prop] = ev[prop]; // Todo: Put internal to `ShimEvent`?
           }
         });
       }
@@ -9531,17 +9626,31 @@ var DOMException;
       }
     }
   });
+  EventTarget.prototype[Symbol.toStringTag] = 'EventTargetPrototype';
+
+  Object.defineProperty(EventTarget, 'prototype', {
+      writable: false
+  });
+
+  var ShimEventTarget = EventTarget;
+  var EventTargetFactory = {
+    createInstance: function (customOptions) {
+      function EventTarget () {
+        this.__setOptions(customOptions);
+      }
+      EventTarget.prototype = ShimEventTarget.prototype;
+      return new EventTarget();
+    }
+  };
 
   // Todo: Move to own library (but allowing WeakMaps to be passed in for sharing here)
-  EventTarget.EventPolyfill = EventPolyfill;
-  EventTarget.CustomEventPolyfill = CustomEventPolyfill;
-  EventTarget.DOMException = DOMException;
 
-  if (typeof module !== 'undefined' && module.exports) {
-    module.exports = EventTarget;
-  } else {
-    window.EventTarget = EventTarget;
-  }
+  var exportObj = (typeof module !== 'undefined' && module.exports) ? exports : window;
+  exportObj.ShimEvent = ShimEvent;
+  exportObj.ShimCustomEvent = ShimCustomEvent;
+  exportObj.ShimDOMException = ShimDOMException;
+  exportObj.ShimEventTarget = EventTarget;
+  exportObj.EventTargetFactory = EventTargetFactory;
 }());
 
 },{}],302:[function(require,module,exports){
@@ -10024,9 +10133,15 @@ var CFG = {};
 'DEBUG', // Effectively defaults to false (ignored unless true)
 
 // Used when setting global shims to determine whether to try to add
-//   other globals shimmed by the library (`DOMException`, `DOMStringList`,
-//   `Event`)
+//   other globals shimmed by the library (`ShimDOMException`, `ShimDOMStringList`,
+//   `ShimEvent`, `ShimCustomEvent`, `ShimEventTarget`)
 'addNonIDBGlobals', // Effectively defaults to false (ignored unless true)
+
+// Determines whether the slow-performing `Object.setPrototypeOf` calls required
+//    for full WebIDL compliance will be used. Probably only needed for testing
+//    or environments where full introspection on class relationships is required;
+//    see http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
+'fullIDLSupport', // Effectively defaults to false (ignored unless true)
 
 // Used by `IDBCursor` continue methods for number of records to cache;
 'cursorPreloadPackSize', //  Defaults to 100
@@ -10093,11 +10208,11 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.webSQLErrback = exports.createDOMException = exports.DOMException = exports.findError = exports.logError = undefined;
+exports.webSQLErrback = exports.createDOMException = exports.ShimDOMException = exports.findError = exports.logError = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var _CFG = require('./CFG.js');
+var _CFG = require('./CFG');
 
 var _CFG2 = _interopRequireDefault(_CFG);
 
@@ -10251,15 +10366,15 @@ try {
 } catch (e) {}
 
 var createDOMException = void 0,
-    shimDOMException = void 0;
+    ShimDOMException = void 0;
 if (useNativeDOMException) {
-    exports.DOMException = shimDOMException = DOMException;
+    exports.ShimDOMException = ShimDOMException = DOMException;
     exports.createDOMException = createDOMException = function createDOMException(name, message, error) {
         logError(name, message, error);
         return createNativeDOMException(name, message);
     };
 } else {
-    exports.DOMException = shimDOMException = Error;
+    exports.ShimDOMException = ShimDOMException = Error;
     exports.createDOMException = createDOMException = function createDOMException(name, message, error) {
         logError(name, message, error);
         return createError(name, message);
@@ -10268,82 +10383,231 @@ if (useNativeDOMException) {
 
 exports.logError = logError;
 exports.findError = findError;
-exports.DOMException = shimDOMException;
+exports.ShimDOMException = ShimDOMException;
 exports.createDOMException = createDOMException;
 exports.webSQLErrback = webSQLErrback;
 
-},{"./CFG.js":307}],309:[function(require,module,exports){
+},{"./CFG":307}],309:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.ShimEvent = exports.createEvent = exports.IDBVersionChangeEvent = undefined;
+
+var _DOMStringList$protot;
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+var cleanInterface = false;
+
+var testObject = { test: true };
+// Test whether Object.defineProperty really works.
+if (Object.defineProperty) {
+    try {
+        Object.defineProperty(testObject, 'test', { enumerable: false });
+        if (testObject.test) {
+            cleanInterface = true;
+        }
+    } catch (e) {
+        // Object.defineProperty does not work as intended.
+    }
+}
+
+/**
+ * Shim the DOMStringList object.
+ *
+ */
+var DOMStringList = function DOMStringList() {
+    throw new TypeError('Illegal constructor');
+};
+DOMStringList.prototype = (_DOMStringList$protot = {
+    constructor: DOMStringList,
+    // Interface.
+    contains: function contains(str) {
+        if (!arguments.length) {
+            throw new TypeError('DOMStringList.contains must be supplied a value');
+        }
+        return this._items.includes(str);
+    },
+    item: function item(key) {
+        if (!arguments.length) {
+            throw new TypeError('DOMStringList.item must be supplied a value');
+        }
+        if (key < 0 || key >= this.length || !Number.isInteger(key)) {
+            return null;
+        }
+        return this._items[key];
+    },
+
+    // Helpers. Should only be used internally.
+    clone: function clone() {
+        var stringList = DOMStringList.__createInstance();
+        stringList._items = this._items.slice();
+        stringList._length = this.length;
+        stringList.addIndexes();
+        return stringList;
+    },
+    addIndexes: function addIndexes() {
+        for (var i = 0; i < this._items.length; i++) {
+            this[i] = this._items[i];
+        }
+    },
+    sortList: function sortList() {
+        // http://w3c.github.io/IndexedDB/#sorted-list
+        // https://tc39.github.io/ecma262/#sec-abstract-relational-comparison
+        this._items.sort();
+        this.addIndexes();
+        return this._items;
+    },
+    forEach: function forEach(cb, thisArg) {
+        this._items.forEach(cb, thisArg);
+    },
+    map: function map(cb, thisArg) {
+        return this._items.map(cb, thisArg);
+    },
+    indexOf: function indexOf(str) {
+        return this._items.indexOf(str);
+    },
+    push: function push(item) {
+        this._items.push(item);
+        this._length++;
+        this.sortList();
+    },
+    splice: function splice() /* index, howmany, item1, ..., itemX */{
+        var _items;
+
+        (_items = this._items).splice.apply(_items, arguments);
+        this._length = this._items.length;
+        for (var i in this) {
+            if (i === String(parseInt(i, 10))) {
+                delete this[i];
+            }
+        }
+        this.sortList();
+    }
+}, _defineProperty(_DOMStringList$protot, Symbol.toStringTag, 'DOMStringListPrototype'), _defineProperty(_DOMStringList$protot, Symbol.iterator, regeneratorRuntime.mark(function _callee() {
+    var i;
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+            switch (_context.prev = _context.next) {
+                case 0:
+                    i = 0;
+
+                case 1:
+                    if (!(i < this._items.length)) {
+                        _context.next = 6;
+                        break;
+                    }
+
+                    _context.next = 4;
+                    return this._items[i++];
+
+                case 4:
+                    _context.next = 1;
+                    break;
+
+                case 6:
+                case 'end':
+                    return _context.stop();
+            }
+        }
+    }, _callee, this);
+})), _DOMStringList$protot);
+Object.defineProperty(DOMStringList, Symbol.hasInstance, {
+    value: function value(obj) {
+        return {}.toString.call(obj) === 'DOMStringListPrototype';
+    }
+});
+var DOMStringListAlias = DOMStringList;
+Object.defineProperty(DOMStringList, '__createInstance', {
+    value: function value() {
+        var DOMStringList = function DOMStringList() {
+            this.toString = function () {
+                return '[object DOMStringList]';
+            };
+            // Internal functions on the prototype have been made non-enumerable below.
+            Object.defineProperty(this, 'length', {
+                enumerable: true,
+                get: function get() {
+                    return this._length;
+                }
+            });
+            this._items = [];
+            this._length = 0;
+        };
+        DOMStringList.prototype = DOMStringListAlias.prototype;
+        return new DOMStringList();
+    }
+});
+
+if (cleanInterface) {
+    Object.defineProperty(DOMStringList, 'prototype', {
+        writable: false
+    });
+
+    var nonenumerableReadonly = ['addIndexes', 'sortList', 'forEach', 'map', 'indexOf', 'push', 'splice', 'constructor', '__createInstance'];
+    nonenumerableReadonly.forEach(function (nonenumerableReadonly) {
+        Object.defineProperty(DOMStringList.prototype, nonenumerableReadonly, {
+            enumerable: false
+        });
+    });
+
+    // Illegal invocations
+    Object.defineProperty(DOMStringList.prototype, 'length', {
+        configurable: true,
+        enumerable: true,
+        get: function get() {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+
+    var nonenumerableWritable = ['_items', '_length'];
+    nonenumerableWritable.forEach(function (nonenumerableWritable) {
+        Object.defineProperty(DOMStringList.prototype, nonenumerableWritable, {
+            enumerable: false,
+            writable: true
+        });
+    });
+}
+
+exports.default = DOMStringList;
+module.exports = exports['default'];
+
+},{}],310:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.ShimEventTarget = exports.ShimCustomEvent = exports.ShimEvent = exports.createEvent = undefined;
 
 var _eventtarget = require('eventtarget');
 
-var _eventtarget2 = _interopRequireDefault(_eventtarget);
-
-var _util = require('./util.js');
+var _util = require('./util');
 
 var util = _interopRequireWildcard(_util);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var ShimEvent = _eventtarget2.default.EventPolyfill;
-
 function createEvent(type, debug, evInit) {
-    var ev = new ShimEvent(type, evInit);
+    var ev = new _eventtarget.ShimEvent(type, evInit);
     ev.debug = debug;
     return ev;
 }
 
-// Babel apparently having a problem adding `hasInstance` to a class, so we are redefining as a function
-function IDBVersionChangeEvent(type, eventInitDict) {
-    // eventInitDict is a IDBVersionChangeEventInit (but is not defined as a global)
-    ShimEvent.call(this, type);
-    Object.defineProperty(this, 'oldVersion', {
-        enumerable: true,
-        configurable: true,
-        get: function get() {
-            return eventInitDict.oldVersion;
-        }
-    });
-    Object.defineProperty(this, 'newVersion', {
-        enumerable: true,
-        configurable: true,
-        get: function get() {
-            return eventInitDict.newVersion;
-        }
-    });
-}
-IDBVersionChangeEvent.prototype = new ShimEvent('bogus');
-IDBVersionChangeEvent.prototype.constructor = IDBVersionChangeEvent;
-IDBVersionChangeEvent.prototype.toString = function () {
-    return '[object IDBVersionChangeEvent]';
-};
-IDBVersionChangeEvent.prototype[Symbol.toStringTag] = 'IDBVersionChangeEvent';
-
-Object.defineProperty(IDBVersionChangeEvent, Symbol.hasInstance, {
-    value: function value(obj) {
-        return util.isObj(obj) && 'oldVersion' in obj && typeof obj.defaultPrevented === 'boolean';
-    }
-});
-
 // We don't add within polyfill repo as might not always be the desired implementation
-Object.defineProperty(ShimEvent, Symbol.hasInstance, {
+Object.defineProperty(_eventtarget.ShimEvent, Symbol.hasInstance, {
     value: function value(obj) {
         return util.isObj(obj) && 'target' in obj && typeof obj.bubbles === 'boolean';
     }
 });
 
-exports.IDBVersionChangeEvent = IDBVersionChangeEvent;
 exports.createEvent = createEvent;
-exports.ShimEvent = ShimEvent; // Event not currently in use
+exports.ShimEvent = _eventtarget.ShimEvent;
+exports.ShimCustomEvent = _eventtarget.ShimCustomEvent;
+exports.ShimEventTarget = _eventtarget.ShimEventTarget;
 
-},{"./util.js":322,"eventtarget":301}],310:[function(require,module,exports){
+},{"./util":324,"eventtarget":301}],311:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10351,39 +10615,37 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.IDBCursorWithValue = exports.IDBCursor = undefined;
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var _IDBRequest = require('./IDBRequest.js');
+var _IDBRequest = require('./IDBRequest');
 
-var _DOMException = require('./DOMException.js');
+var _DOMException = require('./DOMException');
 
-var _IDBKeyRange = require('./IDBKeyRange.js');
+var _IDBKeyRange = require('./IDBKeyRange');
 
-var _IDBFactory = require('./IDBFactory.js');
+var _IDBFactory = require('./IDBFactory');
 
-var _util = require('./util.js');
+var _util = require('./util');
 
 var util = _interopRequireWildcard(_util);
 
-var _IDBTransaction = require('./IDBTransaction.js');
+var _IDBTransaction = require('./IDBTransaction');
 
 var _IDBTransaction2 = _interopRequireDefault(_IDBTransaction);
 
-var _Key = require('./Key.js');
+var _Key = require('./Key');
 
 var _Key2 = _interopRequireDefault(_Key);
 
-var _Sca = require('./Sca.js');
+var _Sca = require('./Sca');
 
 var _Sca2 = _interopRequireDefault(_Sca);
 
-var _IDBIndex = require('./IDBIndex.js');
+var _IDBIndex = require('./IDBIndex');
 
 var _IDBIndex2 = _interopRequireDefault(_IDBIndex);
 
-var _CFG = require('./CFG.js');
+var _CFG = require('./CFG');
 
 var _CFG2 = _interopRequireDefault(_CFG);
 
@@ -10408,7 +10670,13 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
  * @param {string} valueColumnName
  * @param {boolean} count
  */
-function IDBCursor(range, direction, store, source, keyColumnName, valueColumnName, count) {
+function IDBCursor() {
+    throw new TypeError('Illegal constructor');
+}
+var IDBCursorAlias = IDBCursor;
+IDBCursor.__super = function IDBCursor(range, direction, store, source, keyColumnName, valueColumnName, count) {
+    this[Symbol.toStringTag] = 'IDBCursor';
+    util.defineReadonlyProperties(this, ['key', 'primaryKey']);
     // Calling openCursor on an index or objectstore with null is allowed but we treat it as undefined internally
     _IDBTransaction2.default.__assertActive(store.transaction);
     if (range === null) {
@@ -10417,10 +10685,10 @@ function IDBCursor(range, direction, store, source, keyColumnName, valueColumnNa
     if (util.instanceOf(range, _IDBKeyRange.IDBKeyRange)) {
         // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
         if (!range.toString() !== '[object IDBKeyRange]') {
-            range = new _IDBKeyRange.IDBKeyRange(range.lower, range.upper, range.lowerOpen, range.upperOpen);
+            range = _IDBKeyRange.IDBKeyRange.__createInstance(range.lower, range.upper, range.lowerOpen, range.upperOpen);
         }
     } else if (range !== undefined) {
-        range = new _IDBKeyRange.IDBKeyRange(range, range, false, false);
+        range = _IDBKeyRange.IDBKeyRange.__createInstance(range, range, false, false);
     }
     if (direction !== undefined && !['next', 'prev', 'nextunique', 'prevunique'].includes(direction)) {
         throw new TypeError(direction + 'is not a valid cursor direction');
@@ -10436,7 +10704,7 @@ function IDBCursor(range, direction, store, source, keyColumnName, valueColumnNa
 
     this.__store = store;
     this.__range = range;
-    this.__req = new _IDBRequest.IDBRequest();
+    this.__req = _IDBRequest.IDBRequest.__createInstance();
     this.__req.__source = source;
     this.__req.__transaction = this.__store.transaction;
     this.__keyColumnName = keyColumnName;
@@ -10457,7 +10725,18 @@ function IDBCursor(range, direction, store, source, keyColumnName, valueColumnNa
     }
     this.__gotValue = true;
     this['continue']();
-}
+};
+
+IDBCursor.__createInstance = function () {
+    var IDBCursor = IDBCursorAlias.__super;
+    IDBCursor.prototype = IDBCursorAlias.prototype;
+
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+    }
+
+    return new (Function.prototype.bind.apply(IDBCursor, [null].concat(args)))();
+};
 
 IDBCursor.prototype.__find = function () /* key, tx, success, error, recordsToLoad */{
     if (this.__multiEntryIndex) {
@@ -10807,8 +11086,8 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
     });
 };
 
-IDBCursor.prototype['continue'] = function (key) {
-    this.__continue(key);
+IDBCursor.prototype['continue'] = function () /* key */{
+    this.__continue(arguments[0]);
 };
 
 IDBCursor.prototype.continuePrimaryKey = function (key, primaryKey) {
@@ -10946,9 +11225,20 @@ IDBCursor.prototype['delete'] = function () {
     }, undefined, me);
 };
 
-IDBCursor.prototype[Symbol.toStringTag] = 'IDBCursor';
+IDBCursor.prototype[Symbol.toStringTag] = 'IDBCursorPrototype';
 
-util.defineReadonlyProperties(IDBCursor.prototype, ['key', 'primaryKey']);
+['source', 'direction', 'key', 'primaryKey'].forEach(function (prop) {
+    Object.defineProperty(IDBCursor.prototype, prop, {
+        enumerable: true,
+        configurable: true,
+        get: function get() {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+});
+Object.defineProperty(IDBCursor, 'prototype', {
+    writable: false
+});
 
 var IDBCursorWithValue = function (_IDBCursor) {
     _inherits(IDBCursorWithValue, _IDBCursor);
@@ -10959,55 +11249,79 @@ var IDBCursorWithValue = function (_IDBCursor) {
         return _possibleConstructorReturn(this, (IDBCursorWithValue.__proto__ || Object.getPrototypeOf(IDBCursorWithValue)).apply(this, arguments));
     }
 
-    _createClass(IDBCursorWithValue, [{
-        key: Symbol.toStringTag,
-        get: function get() {
-            return 'IDBCursorWithValue';
-        }
-    }]);
-
     return IDBCursorWithValue;
 }(IDBCursor);
 
-util.defineReadonlyProperties(IDBCursorWithValue.prototype, 'value');
+var IDBCursorWithValueAlias = IDBCursorWithValue;
+IDBCursorWithValue.__createInstance = function () {
+    for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+        args[_key2] = arguments[_key2];
+    }
+
+    function IDBCursorWithValue() {
+        var _IDBCursor$__super;
+
+        (_IDBCursor$__super = IDBCursor.__super).call.apply(_IDBCursor$__super, [this].concat(args));
+        this[Symbol.toStringTag] = 'IDBCursorWithValue';
+        util.defineReadonlyProperties(this, 'value');
+    }
+    IDBCursorWithValue.prototype = IDBCursorWithValueAlias.prototype;
+    return new IDBCursorWithValue();
+};
+
+Object.defineProperty(IDBCursorWithValue.prototype, 'value', {
+    enumerable: true,
+    configurable: true,
+    get: function get() {
+        throw new TypeError('Illegal invocation');
+    }
+});
+
+IDBCursorWithValue.prototype[Symbol.toStringTag] = 'IDBCursorWithValuePrototype';
+
+Object.defineProperty(IDBCursorWithValue, 'prototype', {
+    writable: false
+});
 
 exports.IDBCursor = IDBCursor;
 exports.IDBCursorWithValue = IDBCursorWithValue;
 
-},{"./CFG.js":307,"./DOMException.js":308,"./IDBFactory.js":312,"./IDBIndex.js":313,"./IDBKeyRange.js":314,"./IDBRequest.js":316,"./IDBTransaction.js":317,"./Key.js":318,"./Sca.js":319,"./util.js":322}],311:[function(require,module,exports){
+},{"./CFG":307,"./DOMException":308,"./IDBFactory":313,"./IDBIndex":314,"./IDBKeyRange":315,"./IDBRequest":317,"./IDBTransaction":318,"./Key":320,"./Sca":321,"./util":324}],312:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _DOMException = require('./DOMException.js');
+var _DOMException = require('./DOMException');
 
-var _Event = require('./Event.js');
+var _Event = require('./Event');
 
-var _util = require('./util.js');
+var _util = require('./util');
 
 var util = _interopRequireWildcard(_util);
 
-var _IDBObjectStore = require('./IDBObjectStore.js');
+var _DOMStringList = require('./DOMStringList');
+
+var _DOMStringList2 = _interopRequireDefault(_DOMStringList);
+
+var _IDBObjectStore = require('./IDBObjectStore');
 
 var _IDBObjectStore2 = _interopRequireDefault(_IDBObjectStore);
 
-var _IDBTransaction = require('./IDBTransaction.js');
+var _IDBTransaction = require('./IDBTransaction');
 
 var _IDBTransaction2 = _interopRequireDefault(_IDBTransaction);
 
-var _Sca = require('./Sca.js');
+var _Sca = require('./Sca');
 
 var _Sca2 = _interopRequireDefault(_Sca);
 
-var _CFG = require('./CFG.js');
+var _CFG = require('./CFG');
 
 var _CFG2 = _interopRequireDefault(_CFG);
 
 var _eventtarget = require('eventtarget');
-
-var _eventtarget2 = _interopRequireDefault(_eventtarget);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -11015,47 +11329,77 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
+var listeners = ['onabort', 'onclose', 'onerror', 'onversionchange'];
+var readonlyProperties = ['name', 'version', 'objectStoreNames'];
+
 /**
  * IDB Database Object
  * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
  * @constructor
  */
-function IDBDatabase(db, name, oldVersion, version, storeProperties) {
-    var _this = this;
-
-    this.__db = db;
-    this.__closed = false;
-    this.__oldVersion = oldVersion;
-    this.__version = version;
-    this.__name = name;
-    this.onabort = this.onclose = this.onerror = this.onversionchange = null;
-
-    this.__transactions = [];
-    this.__objectStores = {};
-    this.__objectStoreNames = util.DOMStringList.__createInstance();
-    var itemCopy = {};
-
-    var _loop = function _loop(i) {
-        var item = storeProperties.rows.item(i);
-        // Safari implements `item` getter return object's properties
-        //  as readonly, so we copy all its properties (except our
-        //  custom `currNum` which we don't need) onto a new object
-        itemCopy.name = item.name;
-        itemCopy.keyPath = _Sca2.default.decode(item.keyPath);
-        ['autoInc', 'indexList'].forEach(function (prop) {
-            itemCopy[prop] = JSON.parse(item[prop]);
-        });
-        itemCopy.idbdb = _this;
-        var store = new _IDBObjectStore2.default(itemCopy);
-        _this.__objectStores[store.name] = store;
-        _this.objectStoreNames.push(store.name);
-    };
-
-    for (var i = 0; i < storeProperties.rows.length; i++) {
-        _loop(i);
-    }
-    this.__oldObjectStoreNames = this.objectStoreNames.clone();
+function IDBDatabase() {
+    throw new TypeError('Illegal constructor');
 }
+var IDBDatabaseAlias = IDBDatabase;
+IDBDatabase.__createInstance = function (db, name, oldVersion, version, storeProperties) {
+    function IDBDatabase() {
+        var _this = this;
+
+        this[Symbol.toStringTag] = 'IDBDatabase';
+        util.defineReadonlyProperties(this, readonlyProperties);
+        this.__db = db;
+        this.__closed = false;
+        this.__oldVersion = oldVersion;
+        this.__version = version;
+        this.__name = name;
+        listeners.forEach(function (listener) {
+            Object.defineProperty(_this, listener, {
+                enumerable: true,
+                configurable: true,
+                get: function get() {
+                    return this['__' + listener];
+                },
+                set: function set(val) {
+                    this['__' + listener] = val;
+                }
+            });
+        });
+        listeners.forEach(function (l) {
+            _this[l] = null;
+        });
+
+        this.__transactions = [];
+        this.__objectStores = {};
+        this.__objectStoreNames = _DOMStringList2.default.__createInstance();
+        var itemCopy = {};
+
+        var _loop = function _loop(i) {
+            var item = storeProperties.rows.item(i);
+            // Safari implements `item` getter return object's properties
+            //  as readonly, so we copy all its properties (except our
+            //  custom `currNum` which we don't need) onto a new object
+            itemCopy.name = item.name;
+            itemCopy.keyPath = _Sca2.default.decode(item.keyPath);
+            ['autoInc', 'indexList'].forEach(function (prop) {
+                itemCopy[prop] = JSON.parse(item[prop]);
+            });
+            itemCopy.idbdb = _this;
+            var store = _IDBObjectStore2.default.__createInstance(itemCopy);
+            _this.__objectStores[store.name] = store;
+            _this.objectStoreNames.push(store.name);
+        };
+
+        for (var i = 0; i < storeProperties.rows.length; i++) {
+            _loop(i);
+        }
+        this.__oldObjectStoreNames = this.objectStoreNames.clone();
+    }
+    IDBDatabase.prototype = IDBDatabaseAlias.prototype;
+    return new IDBDatabase();
+};
+
+IDBDatabase.prototype = _eventtarget.EventTargetFactory.createInstance();
+IDBDatabase.prototype[Symbol.toStringTag] = 'IDBDatabasePrototype';
 
 /**
  * Creates a new object store.
@@ -11063,8 +11407,12 @@ function IDBDatabase(db, name, oldVersion, version, storeProperties) {
  * @param {object} [createOptions]
  * @returns {IDBObjectStore}
  */
-IDBDatabase.prototype.createObjectStore = function (storeName, createOptions) {
+IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions */) {
+    var createOptions = arguments[1];
     storeName = String(storeName); // W3C test within IDBObjectStore.js seems to accept string conversion
+    if (!(this instanceof IDBDatabase)) {
+        throw new TypeError('Illegal invocation');
+    }
     if (arguments.length === 0) {
         throw new TypeError('No object store name was specified');
     }
@@ -11096,7 +11444,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName, createOptions) {
         indexList: {},
         idbdb: this
     };
-    var store = new _IDBObjectStore2.default(storeProperties, this.__versionTransaction);
+    var store = _IDBObjectStore2.default.__createInstance(storeProperties, this.__versionTransaction);
     _IDBObjectStore2.default.__createObjectStore(this, store);
     return store;
 };
@@ -11106,6 +11454,9 @@ IDBDatabase.prototype.createObjectStore = function (storeName, createOptions) {
  * @param {string} storeName
  */
 IDBDatabase.prototype.deleteObjectStore = function (storeName) {
+    if (!(this instanceof IDBDatabase)) {
+        throw new TypeError('Illegal invocation');
+    }
     if (arguments.length === 0) {
         throw new TypeError('No object store name was specified');
     }
@@ -11121,6 +11472,9 @@ IDBDatabase.prototype.deleteObjectStore = function (storeName) {
 };
 
 IDBDatabase.prototype.close = function () {
+    if (!(this instanceof IDBDatabase)) {
+        throw new TypeError('Illegal invocation');
+    }
     this.__closed = true;
 };
 
@@ -11130,9 +11484,10 @@ IDBDatabase.prototype.close = function () {
  * @param {string} mode
  * @returns {IDBTransaction}
  */
-IDBDatabase.prototype.transaction = function (storeNames, mode) {
+IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
     var _this2 = this;
 
+    var mode = arguments[1];
     storeNames = typeof storeNames === 'string' ? [storeNames] : util.isObj(storeNames) && typeof storeNames[Symbol.iterator] === 'function' ? [].concat(_toConsumableArray(new Set(storeNames))).map(function (storeName) {
         if (typeof storeName !== 'string') {
             throw new TypeError('Each store name must be a string');
@@ -11175,7 +11530,7 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
         }
     });
     // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
-    var trans = new _IDBTransaction2.default(this, storeNames, mode);
+    var trans = _IDBTransaction2.default.__createInstance(this, storeNames, mode);
     this.__transactions.push(trans);
     return trans;
 };
@@ -11202,16 +11557,44 @@ IDBDatabase.prototype.__forceClose = function (msg) {
     });
 };
 
-IDBDatabase.prototype[Symbol.toStringTag] = 'IDBDatabase';
+listeners.forEach(function (listener) {
+    Object.defineProperty(IDBDatabase.prototype, listener, {
+        enumerable: true,
+        configurable: true,
+        get: function get() {
+            throw new TypeError('Illegal invocation');
+        },
+        set: function set(val) {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+});
 
-util.defineReadonlyProperties(IDBDatabase.prototype, ['name', 'version', 'objectStoreNames']);
+readonlyProperties.forEach(function (prop) {
+    Object.defineProperty(IDBDatabase.prototype, prop, {
+        enumerable: true,
+        configurable: true,
+        get: function get() {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+});
 
-Object.assign(IDBDatabase.prototype, _eventtarget2.default.prototype);
+Object.defineProperty(IDBDatabase.prototype, 'constructor', {
+    enumerable: false,
+    writable: true,
+    configurable: true,
+    value: IDBDatabase
+});
+
+Object.defineProperty(IDBDatabase, 'prototype', {
+    writable: false
+});
 
 exports.default = IDBDatabase;
 module.exports = exports['default'];
 
-},{"./CFG.js":307,"./DOMException.js":308,"./Event.js":309,"./IDBObjectStore.js":315,"./IDBTransaction.js":317,"./Sca.js":319,"./util.js":322,"eventtarget":301}],312:[function(require,module,exports){
+},{"./CFG":307,"./DOMException":308,"./DOMStringList":309,"./Event":310,"./IDBObjectStore":316,"./IDBTransaction":318,"./Sca":321,"./util":324,"eventtarget":301}],313:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -11221,35 +11604,43 @@ exports.shimIndexedDB = exports.cmp = exports.IDBFactory = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var _Event = require('./Event.js');
+var _Event = require('./Event');
 
-var _DOMException = require('./DOMException.js');
+var _IDBVersionChangeEvent = require('./IDBVersionChangeEvent');
 
-var _IDBRequest = require('./IDBRequest.js');
+var _IDBVersionChangeEvent2 = _interopRequireDefault(_IDBVersionChangeEvent);
 
-var _util = require('./util.js');
+var _DOMException = require('./DOMException');
+
+var _IDBRequest = require('./IDBRequest');
+
+var _DOMStringList = require('./DOMStringList');
+
+var _DOMStringList2 = _interopRequireDefault(_DOMStringList);
+
+var _util = require('./util');
 
 var util = _interopRequireWildcard(_util);
 
-var _Key = require('./Key.js');
+var _Key = require('./Key');
 
 var _Key2 = _interopRequireDefault(_Key);
 
-var _IDBTransaction = require('./IDBTransaction.js');
+var _IDBTransaction = require('./IDBTransaction');
 
 var _IDBTransaction2 = _interopRequireDefault(_IDBTransaction);
 
-var _IDBDatabase = require('./IDBDatabase.js');
+var _IDBDatabase = require('./IDBDatabase');
 
 var _IDBDatabase2 = _interopRequireDefault(_IDBDatabase);
 
-var _CFG = require('./CFG.js');
+var _CFG = require('./CFG');
 
 var _CFG2 = _interopRequireDefault(_CFG);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var sysdb = void 0;
 
@@ -11279,25 +11670,40 @@ function createSysDB(success, failure) {
  * @constructor
  */
 function IDBFactory() {
-    this.modules = { // Export other shims (especially for testing)
-        Event: typeof Event !== 'undefined' ? Event : _Event.ShimEvent,
-        ShimEvent: _Event.ShimEvent,
-        DOMException: _DOMException.DOMException,
-        DOMStringList: util.DOMStringList,
-        IDBFactory: IDBFactory
-    };
-    this.utils = { createDOMException: _DOMException.createDOMException }; // Expose for ease in simulating such exception during testing
-    this.__connections = [];
+    throw new TypeError('Illegal constructor');
 }
+var IDBFactoryAlias = IDBFactory;
+IDBFactory.__createInstance = function () {
+    function IDBFactory() {
+        this[Symbol.toStringTag] = 'IDBFactory';
+        this.modules = { // Export other shims (especially for testing)
+            Event: typeof Event !== 'undefined' ? Event : _Event.ShimEvent,
+            ShimEvent: _Event.ShimEvent,
+            ShimCustomEvent: _Event.ShimCustomEvent,
+            ShimEventTarget: _Event.ShimEventTarget,
+            ShimDOMException: _DOMException.ShimDOMException,
+            ShimDOMStringList: _DOMStringList2.default,
+            IDBFactory: IDBFactory
+        };
+        this.utils = { createDOMException: _DOMException.createDOMException }; // Expose for ease in simulating such exception during testing
+        this.__connections = [];
+    }
+    IDBFactory.prototype = IDBFactoryAlias.prototype;
+    return new IDBFactory();
+};
 
 /**
  * The IndexedDB Method to create a new database and return the DB
  * @param {string} name
  * @param {number} version
  */
-IDBFactory.prototype.open = function (name, version) {
+IDBFactory.prototype.open = function (name /* , version */) {
     var me = this;
-    var req = new _IDBRequest.IDBOpenDBRequest();
+    if (!(me instanceof IDBFactory)) {
+        throw new TypeError('Illegal invocation');
+    }
+    var version = arguments[1];
+    var req = _IDBRequest.IDBOpenDBRequest.__createInstance();
     var calledDbCreateError = false;
 
     if (arguments.length === 0) {
@@ -11349,7 +11755,7 @@ IDBFactory.prototype.open = function (name, version) {
         db.transaction(function (tx) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS __sys__ (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB, currNum INTEGER)', [], function () {
                 tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList", "currNum" FROM __sys__', [], function (tx, data) {
-                    req.__result = new _IDBDatabase2.default(db, name, oldVersion, version, data);
+                    req.__result = _IDBDatabase2.default.__createInstance(db, name, oldVersion, version, data);
                     me.__connections.push(req.result);
                     if (oldVersion < version) {
                         (function () {
@@ -11380,8 +11786,8 @@ IDBFactory.prototype.open = function (name, version) {
                             };
                             sysdb.transaction(function (systx) {
                                 function versionSet() {
-                                    var e = new _Event.IDBVersionChangeEvent('upgradeneeded', { oldVersion: oldVersion, newVersion: version });
-                                    req.__transaction = req.result.__versionTransaction = new _IDBTransaction2.default(req.result, req.result.objectStoreNames, 'versionchange');
+                                    var e = new _IDBVersionChangeEvent2.default('upgradeneeded', { oldVersion: oldVersion, newVersion: version });
+                                    req.__transaction = req.result.__versionTransaction = _IDBTransaction2.default.__createInstance(req.result, req.result.objectStoreNames, 'versionchange');
                                     req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded(tx, args, finished, error) {
                                         req.dispatchEvent(e);
                                         finished();
@@ -11478,7 +11884,10 @@ IDBFactory.prototype.open = function (name, version) {
  * @returns {IDBOpenDBRequest}
  */
 IDBFactory.prototype.deleteDatabase = function (name) {
-    var req = new _IDBRequest.IDBOpenDBRequest();
+    if (!(this instanceof IDBFactory)) {
+        throw new TypeError('Illegal invocation');
+    }
+    var req = _IDBRequest.IDBOpenDBRequest.__createInstance();
     var calledDBError = false;
     var version = 0;
 
@@ -11522,7 +11931,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
             sysdbFinishedCbDelete(false, function () {
                 req.__result = undefined;
                 req.__readyState = 'done';
-                var e = new _Event.IDBVersionChangeEvent('success', { oldVersion: version, newVersion: null });
+                var e = new _IDBVersionChangeEvent2.default('success', { oldVersion: version, newVersion: null });
                 req.dispatchEvent(e);
             });
         }
@@ -11530,7 +11939,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
             sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE name = ?', [sqlSafeName], function (sysReadTx, data) {
                 if (data.rows.length === 0) {
                     req.__result = undefined;
-                    var e = new _Event.IDBVersionChangeEvent('success', { oldVersion: version, newVersion: null });
+                    var e = new _IDBVersionChangeEvent2.default('success', { oldVersion: version, newVersion: null });
                     req.dispatchEvent(e);
                     return;
                 }
@@ -11598,10 +12007,6 @@ IDBFactory.prototype.deleteDatabase = function (name) {
  * @returns {number}
  */
 function cmp(key1, key2) {
-    if (arguments.length < 2) {
-        throw new TypeError('You must provide two keys to be compared');
-    }
-
     _Key2.default.convertValueToKey(key1);
     _Key2.default.convertValueToKey(key2);
     var encodedKey1 = _Key2.default.encode(key1);
@@ -11633,7 +12038,15 @@ function cmp(key1, key2) {
     return result;
 }
 
-IDBFactory.prototype.cmp = cmp;
+IDBFactory.prototype.cmp = function (key1, key2) {
+    if (!(this instanceof IDBFactory)) {
+        throw new TypeError('Illegal invocation');
+    }
+    if (arguments.length < 2) {
+        throw new TypeError('You must provide two keys to be compared');
+    }
+    return cmp(key1, key2);
+};
 
 /**
 * NON-STANDARD!! (Also may return outdated information if a database has since been deleted)
@@ -11654,11 +12067,11 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
         req.__result = undefined;
         req.dispatchEvent(evt);
     }
-    var req = new _IDBRequest.IDBRequest();
+    var req = _IDBRequest.IDBRequest.__createInstance();
     createSysDB(function () {
         sysdb.readTransaction(function (sysReadTx) {
             sysReadTx.executeSql('SELECT "name" FROM dbVersions', [], function (sysReadTx, data) {
-                var dbNames = util.DOMStringList.__createInstance();
+                var dbNames = _DOMStringList2.default.__createInstance();
                 for (var i = 0; i < data.rows.length; i++) {
                     dbNames.push(util.unescapeSQLiteResponse(data.rows.item(i).name));
                 }
@@ -11692,14 +12105,18 @@ IDBFactory.prototype.__forceClose = function (connIdx, msg) {
     }
 };
 
-IDBFactory.prototype[Symbol.toStringTag] = 'IDBFactory';
+IDBFactory.prototype[Symbol.toStringTag] = 'IDBFactoryPrototype';
 
-var shimIndexedDB = new IDBFactory();
+Object.defineProperty(IDBFactory, 'prototype', {
+    writable: false
+});
+
+var shimIndexedDB = IDBFactory.__createInstance();
 exports.IDBFactory = IDBFactory;
 exports.cmp = cmp;
 exports.shimIndexedDB = shimIndexedDB;
 
-},{"./CFG.js":307,"./DOMException.js":308,"./Event.js":309,"./IDBDatabase.js":311,"./IDBRequest.js":316,"./IDBTransaction.js":317,"./Key.js":318,"./util.js":322}],313:[function(require,module,exports){
+},{"./CFG":307,"./DOMException":308,"./DOMStringList":309,"./Event":310,"./IDBDatabase":312,"./IDBRequest":317,"./IDBTransaction":318,"./IDBVersionChangeEvent":319,"./Key":320,"./util":324}],314:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -11707,29 +12124,29 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = exports.IDBIndex = exports.executeFetchIndexData = exports.fetchIndexData = undefined;
 
-var _DOMException = require('./DOMException.js');
+var _DOMException = require('./DOMException');
 
-var _IDBCursor = require('./IDBCursor.js');
+var _IDBCursor = require('./IDBCursor');
 
-var _util = require('./util.js');
+var _util = require('./util');
 
 var util = _interopRequireWildcard(_util);
 
-var _Key = require('./Key.js');
+var _Key = require('./Key');
 
 var _Key2 = _interopRequireDefault(_Key);
 
-var _IDBKeyRange = require('./IDBKeyRange.js');
+var _IDBKeyRange = require('./IDBKeyRange');
 
-var _IDBTransaction = require('./IDBTransaction.js');
+var _IDBTransaction = require('./IDBTransaction');
 
 var _IDBTransaction2 = _interopRequireDefault(_IDBTransaction);
 
-var _Sca = require('./Sca.js');
+var _Sca = require('./Sca');
 
 var _Sca2 = _interopRequireDefault(_Sca);
 
-var _CFG = require('./CFG.js');
+var _CFG = require('./CFG');
 
 var _CFG2 = _interopRequireDefault(_CFG);
 
@@ -11739,6 +12156,8 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
+var readonlyProperties = ['objectStore', 'keyPath', 'multiEntry', 'unique'];
+
 /**
  * IDB Index
  * http://www.w3.org/TR/IndexedDB/#idl-def-IDBIndex
@@ -11746,17 +12165,62 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
  * @param {IDBIndexProperties} indexProperties
  * @constructor
  */
-function IDBIndex(store, indexProperties) {
-    var me = this;
-    me.__objectStore = store;
-    me.__name = me.__originalName = indexProperties.columnName;
-    me.__keyPath = Array.isArray(indexProperties.keyPath) ? indexProperties.keyPath.slice() : indexProperties.keyPath;
-    var optionalParams = indexProperties.optionalParams;
-    me.__multiEntry = !!(optionalParams && optionalParams.multiEntry);
-    me.__unique = !!(optionalParams && optionalParams.unique);
-    me.__deleted = !!indexProperties.__deleted;
-    me.__objectStore.__cursors = indexProperties.cursors || [];
+function IDBIndex() {
+    throw new TypeError('Illegal constructor');
 }
+var IDBIndexAlias = IDBIndex;
+IDBIndex.__createInstance = function (store, indexProperties) {
+    function IDBIndex() {
+        var me = this;
+        me[Symbol.toStringTag] = 'IDBIndex';
+        util.defineReadonlyProperties(me, readonlyProperties);
+        me.__objectStore = store;
+        me.__name = me.__originalName = indexProperties.columnName;
+        me.__keyPath = Array.isArray(indexProperties.keyPath) ? indexProperties.keyPath.slice() : indexProperties.keyPath;
+        var optionalParams = indexProperties.optionalParams;
+        me.__multiEntry = !!(optionalParams && optionalParams.multiEntry);
+        me.__unique = !!(optionalParams && optionalParams.unique);
+        me.__deleted = !!indexProperties.__deleted;
+        me.__objectStore.__cursors = indexProperties.cursors || [];
+        Object.defineProperty(me, 'name', {
+            enumerable: false,
+            configurable: false,
+            get: function get() {
+                return this.__name;
+            },
+            set: function set(newName) {
+                var me = this;
+                var oldName = me.name;
+                _IDBTransaction2.default.__assertVersionChange(me.objectStore.transaction);
+                _IDBTransaction2.default.__assertActive(me.objectStore.transaction);
+                if (me.__deleted) {
+                    throw (0, _DOMException.createDOMException)('InvalidStateError', 'This index has been deleted');
+                }
+                if (me.objectStore.__deleted) {
+                    throw (0, _DOMException.createDOMException)('InvalidStateError', "This index's object store has been deleted");
+                }
+                if (newName === oldName) {
+                    return;
+                }
+                if (me.objectStore.__indexes[newName] && !me.objectStore.__indexes[newName].__deleted) {
+                    throw (0, _DOMException.createDOMException)('ConstraintError', 'Index "' + newName + '" already exists on ' + me.objectStore.name);
+                }
+
+                delete me.objectStore.__indexes[me.name];
+                me.objectStore.indexNames.splice(me.objectStore.indexNames.indexOf(me.name), 1);
+                me.objectStore.__indexes[newName] = me;
+                me.objectStore.indexNames.push(newName);
+
+                me.__name = newName;
+                // Todo: Add pending flag to delay queries against this index until renamed in SQLite?
+                var colInfoToPreserveArr = [['key', 'BLOB ' + (me.objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')], ['value', 'BLOB']];
+                me.__renameIndex(me.objectStore, oldName, newName, colInfoToPreserveArr);
+            }
+        });
+    }
+    IDBIndex.prototype = IDBIndexAlias.prototype;
+    return new IDBIndex();
+};
 
 /**
  * Clones an IDBIndex instance for a different IDBObjectStore instance.
@@ -11765,7 +12229,7 @@ function IDBIndex(store, indexProperties) {
  * @protected
  */
 IDBIndex.__clone = function (index, store) {
-    var idx = new IDBIndex(store, {
+    var idx = IDBIndex.__createInstance(store, {
         columnName: index.name,
         keyPath: index.keyPath,
         optionalParams: {
@@ -11947,9 +12411,14 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
  * @param {string} direction
  * @returns {IDBRequest}
  */
-IDBIndex.prototype.openCursor = function (range, direction) {
+IDBIndex.prototype.openCursor = function () /* range, direction */{
     var me = this;
-    var cursor = new _IDBCursor.IDBCursorWithValue(range, direction, me.objectStore, me, util.escapeIndexNameForKeyColumn(me.name), 'value');
+
+    var _arguments = Array.prototype.slice.call(arguments),
+        range = _arguments[0],
+        direction = _arguments[1];
+
+    var cursor = _IDBCursor.IDBCursorWithValue.__createInstance(range, direction, me.objectStore, me, util.escapeIndexNameForKeyColumn(me.name), 'value');
     me.__objectStore.__cursors.push(cursor);
     return cursor.__req;
 };
@@ -11960,9 +12429,14 @@ IDBIndex.prototype.openCursor = function (range, direction) {
  * @param {string} direction
  * @returns {IDBRequest}
  */
-IDBIndex.prototype.openKeyCursor = function (range, direction) {
+IDBIndex.prototype.openKeyCursor = function () /* range, direction */{
     var me = this;
-    var cursor = new _IDBCursor.IDBCursor(range, direction, me.objectStore, me, util.escapeIndexNameForKeyColumn(me.name), 'key');
+
+    var _arguments2 = Array.prototype.slice.call(arguments),
+        range = _arguments2[0],
+        direction = _arguments2[1];
+
+    var cursor = _IDBCursor.IDBCursor.__createInstance(range, direction, me.objectStore, me, util.escapeIndexNameForKeyColumn(me.name), 'key');
     me.__objectStore.__cursors.push(cursor);
     return cursor.__req;
 };
@@ -11983,16 +12457,25 @@ IDBIndex.prototype.getKey = function (query) {
     return this.__fetchIndexData(query, 'key', true);
 };
 
-IDBIndex.prototype.getAll = function (query, count) {
+IDBIndex.prototype.getAll = function () /* query, count */{
+    var _arguments3 = Array.prototype.slice.call(arguments),
+        query = _arguments3[0],
+        count = _arguments3[1];
+
     return this.__fetchIndexData(query, 'value', false, count);
 };
 
-IDBIndex.prototype.getAllKeys = function (query, count) {
+IDBIndex.prototype.getAllKeys = function () /* query, count */{
+    var _arguments4 = Array.prototype.slice.call(arguments),
+        query = _arguments4[0],
+        count = _arguments4[1];
+
     return this.__fetchIndexData(query, 'key', false, count);
 };
 
-IDBIndex.prototype.count = function (query) {
+IDBIndex.prototype.count = function () /* query */{
     var me = this;
+    var query = arguments[0];
     // With the exception of needing to check whether the index has been
     //  deleted, we could, for greater spec parity (if not accuracy),
     //  just call:
@@ -12001,10 +12484,10 @@ IDBIndex.prototype.count = function (query) {
     // key is optional
     if (util.instanceOf(query, _IDBKeyRange.IDBKeyRange)) {
         if (!query.toString() !== '[object IDBKeyRange]') {
-            query = new _IDBKeyRange.IDBKeyRange(query.lower, query.upper, query.lowerOpen, query.upperOpen);
+            query = _IDBKeyRange.IDBKeyRange.__createInstance(query.lower, query.upper, query.lowerOpen, query.upperOpen);
         }
         // We don't need to add to cursors array since has the count parameter which won't cache
-        return new _IDBCursor.IDBCursorWithValue(query, 'next', me.objectStore, me, util.escapeIndexNameForKeyColumn(me.name), 'value', true).__req;
+        return _IDBCursor.IDBCursorWithValue.__createInstance(query, 'next', me.objectStore, me, util.escapeIndexNameForKeyColumn(me.name), 'value', true).__req;
     }
     return me.__fetchIndexData(query, 'count', false);
 };
@@ -12049,50 +12532,35 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName) {
     });
 };
 
-IDBIndex.prototype[Symbol.toStringTag] = 'IDBIndex';
-
-util.defineReadonlyProperties(IDBIndex.prototype, ['objectStore', 'keyPath', 'multiEntry', 'unique']);
-
 Object.defineProperty(IDBIndex, Symbol.hasInstance, {
     value: function value(obj) {
         return util.isObj(obj) && typeof obj.openCursor === 'function' && typeof obj.multiEntry === 'boolean';
     }
 });
 
+readonlyProperties.forEach(function (prop) {
+    Object.defineProperty(IDBIndex.prototype, prop, {
+        enumerable: true,
+        configurable: true,
+        get: function get() {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+});
 Object.defineProperty(IDBIndex.prototype, 'name', {
-    enumerable: false,
-    configurable: false,
+    enumerable: true,
+    configurable: true,
     get: function get() {
-        return this.__name;
+        throw new TypeError('Illegal invocation');
     },
-    set: function set(newName) {
-        var me = this;
-        var oldName = me.name;
-        _IDBTransaction2.default.__assertVersionChange(me.objectStore.transaction);
-        _IDBTransaction2.default.__assertActive(me.objectStore.transaction);
-        if (me.__deleted) {
-            throw (0, _DOMException.createDOMException)('InvalidStateError', 'This index has been deleted');
-        }
-        if (me.objectStore.__deleted) {
-            throw (0, _DOMException.createDOMException)('InvalidStateError', "This index's object store has been deleted");
-        }
-        if (newName === oldName) {
-            return;
-        }
-        if (me.objectStore.__indexes[newName] && !me.objectStore.__indexes[newName].__deleted) {
-            throw (0, _DOMException.createDOMException)('ConstraintError', 'Index "' + newName + '" already exists on ' + me.objectStore.name);
-        }
-
-        delete me.objectStore.__indexes[me.name];
-        me.objectStore.indexNames.splice(me.objectStore.indexNames.indexOf(me.name), 1);
-        me.objectStore.__indexes[newName] = me;
-        me.objectStore.indexNames.push(newName);
-
-        me.__name = newName;
-        // Todo: Add pending flag to delay queries against this index until renamed in SQLite?
-        var colInfoToPreserveArr = [['key', 'BLOB ' + (me.objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')], ['value', 'BLOB']];
-        me.__renameIndex(me.objectStore, oldName, newName, colInfoToPreserveArr);
+    set: function set(val) {
+        throw new TypeError('Illegal invocation');
     }
+});
+IDBIndex.prototype[Symbol.toStringTag] = 'IDBIndexPrototype';
+
+Object.defineProperty(IDBIndex, 'prototype', {
+    writable: false
 });
 
 function executeFetchIndexData(unboundedDisallowed, count, index, hasKey, encodedKey, opType, multiChecks, sql, sqlValues, tx, args, success, error) {
@@ -12180,7 +12648,7 @@ function fetchIndexData(index, hasRange, range, opType, multiChecks) {
             if (util.instanceOf(range, _IDBKeyRange.IDBKeyRange)) {
                 // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
                 if (!range.toString() !== '[object IDBKeyRange]') {
-                    range = new _IDBKeyRange.IDBKeyRange(range.lower, range.upper, range.lowerOpen, range.upperOpen);
+                    range = _IDBKeyRange.IDBKeyRange.__createInstance(range.lower, range.upper, range.lowerOpen, range.upperOpen);
                 }
             } else {
                 range = _IDBKeyRange.IDBKeyRange.only(range);
@@ -12196,7 +12664,7 @@ exports.executeFetchIndexData = executeFetchIndexData;
 exports.IDBIndex = IDBIndex;
 exports.default = IDBIndex;
 
-},{"./CFG.js":307,"./DOMException.js":308,"./IDBCursor.js":310,"./IDBKeyRange.js":314,"./IDBTransaction.js":317,"./Key.js":318,"./Sca.js":319,"./util.js":322}],314:[function(require,module,exports){
+},{"./CFG":307,"./DOMException":308,"./IDBCursor":311,"./IDBKeyRange":315,"./IDBTransaction":318,"./Key":320,"./Sca":321,"./util":324}],315:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12204,19 +12672,21 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = exports.IDBKeyRange = exports.setSQLForRange = undefined;
 
-var _DOMException = require('./DOMException.js');
+var _DOMException = require('./DOMException');
 
-var _Key = require('./Key.js');
+var _Key = require('./Key');
 
 var _Key2 = _interopRequireDefault(_Key);
 
-var _util = require('./util.js');
+var _util = require('./util');
 
 var util = _interopRequireWildcard(_util);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var readonlyProperties = ['lower', 'upper', 'lowerOpen', 'upperOpen'];
 
 /**
  * The IndexedDB KeyRange object
@@ -12226,28 +12696,41 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @param {Object} lowerOpen
  * @param {Object} upperOpen
  */
-function IDBKeyRange(lower, upper, lowerOpen, upperOpen) {
-    if (lower === undefined && upper === undefined) {
-        throw (0, _DOMException.createDOMException)('DataError', 'Both arguments to the key range method cannot be undefined');
-    }
-    if (lower !== undefined) {
-        _Key2.default.convertValueToKey(lower);
-    }
-    if (upper !== undefined) {
-        _Key2.default.convertValueToKey(upper);
-    }
-    if (lower !== undefined && upper !== undefined && lower !== upper) {
-        if (_Key2.default.encode(lower) > _Key2.default.encode(upper)) {
-            throw (0, _DOMException.createDOMException)('DataError', '`lower` must not be greater than `upper` argument in `bound()` call.');
-        }
-    }
-
-    this.__lower = lower;
-    this.__upper = upper;
-    this.__lowerOpen = !!lowerOpen;
-    this.__upperOpen = !!upperOpen;
+function IDBKeyRange() {
+    throw new TypeError('Illegal constructor');
 }
+var IDBKeyRangeAlias = IDBKeyRange;
+IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
+    function IDBKeyRange() {
+        this[Symbol.toStringTag] = 'IDBKeyRange';
+        if (lower === undefined && upper === undefined) {
+            throw (0, _DOMException.createDOMException)('DataError', 'Both arguments to the key range method cannot be undefined');
+        }
+        if (lower !== undefined) {
+            _Key2.default.convertValueToKey(lower);
+        }
+        if (upper !== undefined) {
+            _Key2.default.convertValueToKey(upper);
+        }
+        if (lower !== undefined && upper !== undefined && lower !== upper) {
+            if (_Key2.default.encode(lower) > _Key2.default.encode(upper)) {
+                throw (0, _DOMException.createDOMException)('DataError', '`lower` must not be greater than `upper` argument in `bound()` call.');
+            }
+        }
+
+        this.__lower = lower;
+        this.__upper = upper;
+        this.__lowerOpen = !!lowerOpen;
+        this.__upperOpen = !!upperOpen;
+    }
+    IDBKeyRange.prototype = IDBKeyRangeAlias.prototype;
+    return new IDBKeyRange();
+};
 IDBKeyRange.prototype.includes = function (key) {
+    // We can't do a regular instanceof check as it will create a loop given our hasInstance implementation
+    if (!util.isObj(this) || typeof this.__lowerOpen !== 'boolean') {
+        throw new TypeError('Illegal invocation');
+    }
     if (!arguments.length) {
         throw new TypeError('IDBKeyRange.includes requires a key argument');
     }
@@ -12259,35 +12742,56 @@ IDBKeyRange.only = function (value) {
     if (!arguments.length) {
         throw new TypeError('IDBKeyRange.only requires a value argument');
     }
-    return new IDBKeyRange(value, value, false, false);
+    return IDBKeyRange.__createInstance(value, value, false, false);
 };
 
-IDBKeyRange.lowerBound = function (value, open) {
+IDBKeyRange.lowerBound = function (value /*, open */) {
     if (!arguments.length) {
         throw new TypeError('IDBKeyRange.lowerBound requires a value argument');
     }
-    return new IDBKeyRange(value, undefined, open, true);
+    return IDBKeyRange.__createInstance(value, undefined, arguments[1], true);
 };
-IDBKeyRange.upperBound = function (value, open) {
+IDBKeyRange.upperBound = function (value /*, open */) {
     if (!arguments.length) {
         throw new TypeError('IDBKeyRange.upperBound requires a value argument');
     }
-    return new IDBKeyRange(undefined, value, true, open);
+    return IDBKeyRange.__createInstance(undefined, value, true, arguments[1]);
 };
-IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
+IDBKeyRange.bound = function (lower, upper /* , lowerOpen, upperOpen */) {
     if (arguments.length <= 1) {
         throw new TypeError('IDBKeyRange.bound requires lower and upper arguments');
     }
-    return new IDBKeyRange(lower, upper, lowerOpen, upperOpen);
+    return IDBKeyRange.__createInstance(lower, upper, arguments[2], arguments[3]);
 };
-IDBKeyRange.prototype[Symbol.toStringTag] = 'IDBKeyRange';
+IDBKeyRange.prototype[Symbol.toStringTag] = 'IDBKeyRangePrototype';
 
-util.defineReadonlyProperties(IDBKeyRange.prototype, ['lower', 'upper', 'lowerOpen', 'upperOpen']);
+readonlyProperties.forEach(function (prop) {
+    Object.defineProperty(IDBKeyRange.prototype, '__' + prop, {
+        enumerable: false,
+        configurable: false,
+        writable: true
+    });
+    Object.defineProperty(IDBKeyRange.prototype, prop, {
+        enumerable: true,
+        configurable: true,
+        get: function get() {
+            // We can't do a regular instanceof check as it will create a loop given our hasInstance implementation
+            if (!util.isObj(this) || typeof this.__lowerOpen !== 'boolean') {
+                throw new TypeError('Illegal invocation');
+            }
+            return this['__' + prop];
+        }
+    });
+});
 
 Object.defineProperty(IDBKeyRange, Symbol.hasInstance, {
     value: function value(obj) {
         return util.isObj(obj) && 'upper' in obj && typeof obj.lowerOpen === 'boolean';
     }
+});
+
+Object.defineProperty(IDBKeyRange, 'prototype', {
+    writable: false
 });
 
 function setSQLForRange(range, quotedKeyColumnName, sql, sqlValues, addAnd, checkCached) {
@@ -12309,7 +12813,7 @@ exports.setSQLForRange = setSQLForRange;
 exports.IDBKeyRange = IDBKeyRange;
 exports.default = IDBKeyRange;
 
-},{"./DOMException.js":308,"./Key.js":318,"./util.js":322}],315:[function(require,module,exports){
+},{"./DOMException":308,"./Key":320,"./util":324}],316:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12318,31 +12822,35 @@ Object.defineProperty(exports, "__esModule", {
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var _DOMException = require('./DOMException.js');
+var _DOMException = require('./DOMException');
 
-var _IDBCursor = require('./IDBCursor.js');
+var _IDBCursor = require('./IDBCursor');
 
-var _IDBKeyRange = require('./IDBKeyRange.js');
+var _IDBKeyRange = require('./IDBKeyRange');
 
-var _util = require('./util.js');
+var _DOMStringList = require('./DOMStringList');
+
+var _DOMStringList2 = _interopRequireDefault(_DOMStringList);
+
+var _util = require('./util');
 
 var util = _interopRequireWildcard(_util);
 
-var _Key = require('./Key.js');
+var _Key = require('./Key');
 
 var _Key2 = _interopRequireDefault(_Key);
 
-var _IDBIndex = require('./IDBIndex.js');
+var _IDBIndex = require('./IDBIndex');
 
-var _IDBTransaction = require('./IDBTransaction.js');
+var _IDBTransaction = require('./IDBTransaction');
 
 var _IDBTransaction2 = _interopRequireDefault(_IDBTransaction);
 
-var _Sca = require('./Sca.js');
+var _Sca = require('./Sca');
 
 var _Sca2 = _interopRequireDefault(_Sca);
 
-var _CFG = require('./CFG.js');
+var _CFG = require('./CFG');
 
 var _CFG2 = _interopRequireDefault(_CFG);
 
@@ -12350,11 +12858,13 @@ var _syncPromise = require('sync-promise');
 
 var _syncPromise2 = _interopRequireDefault(_syncPromise);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+var readonlyProperties = ['keyPath', 'indexNames', 'transaction', 'autoIncrement'];
 
 /**
  * IndexedDB Object Store
@@ -12363,31 +12873,78 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
  * @param {IDBTransaction} transaction
  * @constructor
  */
-function IDBObjectStore(storeProperties, transaction) {
-    var me = this;
-    me.__name = me.__originalName = storeProperties.name;
-    me.__keyPath = Array.isArray(storeProperties.keyPath) ? storeProperties.keyPath.slice() : storeProperties.keyPath;
-    me.__transaction = transaction;
-    me.__idbdb = storeProperties.idbdb;
-    me.__cursors = storeProperties.cursors || [];
+function IDBObjectStore() {
+    throw new TypeError('Illegal constructor');
+}
+var IDBObjectStoreAlias = IDBObjectStore;
+IDBObjectStore.__createInstance = function (storeProperties, transaction) {
+    function IDBObjectStore() {
+        var me = this;
+        me[Symbol.toStringTag] = 'IDBObjectStore';
+        util.defineReadonlyProperties(this, readonlyProperties);
+        me.__name = me.__originalName = storeProperties.name;
+        me.__keyPath = Array.isArray(storeProperties.keyPath) ? storeProperties.keyPath.slice() : storeProperties.keyPath;
+        me.__transaction = transaction;
+        me.__idbdb = storeProperties.idbdb;
+        me.__cursors = storeProperties.cursors || [];
 
-    // autoInc is numeric (0/1) on WinPhone
-    me.__autoIncrement = !!storeProperties.autoInc;
+        // autoInc is numeric (0/1) on WinPhone
+        me.__autoIncrement = !!storeProperties.autoInc;
 
-    me.__indexes = {};
-    me.__indexNames = util.DOMStringList.__createInstance();
-    var indexList = storeProperties.indexList;
-    for (var indexName in indexList) {
-        if (indexList.hasOwnProperty(indexName)) {
-            var index = new _IDBIndex.IDBIndex(me, indexList[indexName]);
-            me.__indexes[index.name] = index;
-            if (!index.__deleted) {
-                me.indexNames.push(index.name);
+        me.__indexes = {};
+        me.__indexNames = _DOMStringList2.default.__createInstance();
+        var indexList = storeProperties.indexList;
+        for (var indexName in indexList) {
+            if (indexList.hasOwnProperty(indexName)) {
+                var index = _IDBIndex.IDBIndex.__createInstance(me, indexList[indexName]);
+                me.__indexes[index.name] = index;
+                if (!index.__deleted) {
+                    me.indexNames.push(index.name);
+                }
             }
         }
+        me.__oldIndexNames = me.indexNames.clone();
+        Object.defineProperty(this, 'name', {
+            enumerable: false,
+            configurable: false,
+            get: function get() {
+                return this.__name;
+            },
+            set: function set(name) {
+                var me = this;
+                if (me.__deleted) {
+                    throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
+                }
+                _IDBTransaction2.default.__assertVersionChange(me.transaction);
+                _IDBTransaction2.default.__assertActive(me.transaction);
+                if (me.name === name) {
+                    return;
+                }
+                if (me.__idbdb.__objectStores[name]) {
+                    throw (0, _DOMException.createDOMException)('ConstraintError', 'Object store "' + name + '" already exists in ' + me.__idbdb.name);
+                }
+
+                delete me.__idbdb.__objectStores[me.name];
+                me.__idbdb.objectStoreNames.splice(me.__idbdb.objectStoreNames.indexOf(me.name), 1);
+                me.__idbdb.__objectStores[name] = me;
+                me.__idbdb.objectStoreNames.push(name);
+                me.__name = name;
+                // Todo: Add pending flag to delay queries against this store until renamed in SQLite
+
+                var sql = 'ALTER TABLE ' + util.escapeStoreNameForSQL(me.name) + ' RENAME TO ' + util.escapeStoreNameForSQL(name);
+                me.transaction.__addNonRequestToTransactionQueue(function objectStoreClear(tx, args, success, error) {
+                    tx.executeSql(sql, [], function (tx, data) {
+                        success();
+                    }, function (tx, err) {
+                        error(err);
+                    });
+                });
+            }
+        });
     }
-    me.__oldIndexNames = me.indexNames.clone();
-}
+    IDBObjectStore.prototype = IDBObjectStoreAlias.prototype;
+    return new IDBObjectStore();
+};
 
 /**
  * Clones an IDBObjectStore instance for a different IDBTransaction instance.
@@ -12396,7 +12953,7 @@ function IDBObjectStore(storeProperties, transaction) {
  * @protected
  */
 IDBObjectStore.__clone = function (store, transaction) {
-    var newStore = new IDBObjectStore({
+    var newStore = IDBObjectStore.__createInstance({
         name: store.name,
         keyPath: Array.isArray(store.keyPath) ? store.keyPath.slice() : store.keyPath,
         autoInc: store.autoIncrement,
@@ -12459,7 +13016,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
 
     var storeClone = db.__versionTransaction.__storeClones[store.name];
     if (storeClone) {
-        storeClone.__indexNames = util.DOMStringList.__createInstance();
+        storeClone.__indexNames = _DOMStringList2.default.__createInstance();
         storeClone.__indexes = {};
         storeClone.__deleted = true;
     }
@@ -12718,8 +13275,12 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
     });
 };
 
-IDBObjectStore.prototype.add = function (value, key) {
+IDBObjectStore.prototype.add = function (value /* , key */) {
     var me = this;
+    var key = arguments[1];
+    if (!(me instanceof IDBObjectStore)) {
+        throw new TypeError('Illegal invocation');
+    }
     if (arguments.length === 0) {
         throw new TypeError('No value was specified');
     }
@@ -12749,8 +13310,12 @@ IDBObjectStore.prototype.add = function (value, key) {
     return request;
 };
 
-IDBObjectStore.prototype.put = function (value, key) {
+IDBObjectStore.prototype.put = function (value /*, key */) {
     var me = this;
+    var key = arguments[1];
+    if (!(me instanceof IDBObjectStore)) {
+        throw new TypeError('Illegal invocation');
+    }
     if (arguments.length === 0) {
         throw new TypeError('No value was specified');
     }
@@ -12802,7 +13367,7 @@ IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
     if (util.instanceOf(range, _IDBKeyRange.IDBKeyRange)) {
         // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
         if (!range.toString() !== '[object IDBKeyRange]') {
-            range = new _IDBKeyRange.IDBKeyRange(range.lower, range.upper, range.lowerOpen, range.upperOpen);
+            range = _IDBKeyRange.IDBKeyRange.__createInstance(range.lower, range.upper, range.lowerOpen, range.upperOpen);
         }
     } else {
         range = _IDBKeyRange.IDBKeyRange.only(range);
@@ -12871,22 +13436,35 @@ IDBObjectStore.prototype.getKey = function (query) {
     return this.__get(query, true);
 };
 
-IDBObjectStore.prototype.getAll = function (query, count) {
+IDBObjectStore.prototype.getAll = function () /* query, count */{
     if (!arguments.length) {
         throw new TypeError('A parameter was missing for `IDBObjectStore.getAll`.');
     }
+
+    var _arguments = Array.prototype.slice.call(arguments),
+        query = _arguments[0],
+        count = _arguments[1];
+
     return this.__get(query, false, true, count);
 };
 
-IDBObjectStore.prototype.getAllKeys = function (query, count) {
+IDBObjectStore.prototype.getAllKeys = function () /* query, count */{
     if (!arguments.length) {
         throw new TypeError('A parameter was missing for `IDBObjectStore.getAllKeys`.');
     }
+
+    var _arguments2 = Array.prototype.slice.call(arguments),
+        query = _arguments2[0],
+        count = _arguments2[1];
+
     return this.__get(query, true, true, count);
 };
 
 IDBObjectStore.prototype['delete'] = function (range) {
     var me = this;
+    if (!(this instanceof IDBObjectStore)) {
+        throw new TypeError('Illegal invocation');
+    }
     if (!arguments.length) {
         throw new TypeError('A parameter was missing for `IDBObjectStore.delete`.');
     }
@@ -12904,7 +13482,7 @@ IDBObjectStore.prototype['delete'] = function (range) {
     if (util.instanceOf(range, _IDBKeyRange.IDBKeyRange)) {
         // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
         if (!range.toString() !== '[object IDBKeyRange]') {
-            range = new _IDBKeyRange.IDBKeyRange(range.lower, range.upper, range.lowerOpen, range.upperOpen);
+            range = _IDBKeyRange.IDBKeyRange.__createInstance(range.lower, range.upper, range.lowerOpen, range.upperOpen);
         }
     } else {
         range = _IDBKeyRange.IDBKeyRange.only(range);
@@ -12931,6 +13509,9 @@ IDBObjectStore.prototype['delete'] = function (range) {
 
 IDBObjectStore.prototype.clear = function () {
     var me = this;
+    if (!(this instanceof IDBObjectStore)) {
+        throw new TypeError('Illegal invocation');
+    }
     if (me.__deleted) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
@@ -12950,8 +13531,12 @@ IDBObjectStore.prototype.clear = function () {
     }, undefined, me);
 };
 
-IDBObjectStore.prototype.count = function (key) {
+IDBObjectStore.prototype.count = function () /* key */{
     var me = this;
+    var key = arguments[0];
+    if (!(me instanceof IDBObjectStore)) {
+        throw new TypeError('Illegal invocation');
+    }
     if (me.__deleted) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
@@ -12959,10 +13544,10 @@ IDBObjectStore.prototype.count = function (key) {
     if (util.instanceOf(key, _IDBKeyRange.IDBKeyRange)) {
         // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
         if (!key.toString() !== '[object IDBKeyRange]') {
-            key = new _IDBKeyRange.IDBKeyRange(key.lower, key.upper, key.lowerOpen, key.upperOpen);
+            key = _IDBKeyRange.IDBKeyRange.__createInstance(key.lower, key.upper, key.lowerOpen, key.upperOpen);
         }
         // We don't need to add to cursors array since has the count parameter which won't cache
-        return new _IDBCursor.IDBCursorWithValue(key, 'next', me, me, 'key', 'value', true).__req;
+        return _IDBCursor.IDBCursorWithValue.__createInstance(key, 'next', me, me, 'key', 'value', true).__req;
     } else {
         var _ret2 = function () {
             var hasKey = key != null;
@@ -12990,28 +13575,47 @@ IDBObjectStore.prototype.count = function (key) {
     }
 };
 
-IDBObjectStore.prototype.openCursor = function (range, direction) {
+IDBObjectStore.prototype.openCursor = function () /* range, direction */{
     var me = this;
+
+    var _arguments3 = Array.prototype.slice.call(arguments),
+        range = _arguments3[0],
+        direction = _arguments3[1];
+
+    if (!(me instanceof IDBObjectStore)) {
+        throw new TypeError('Illegal invocation');
+    }
     if (me.__deleted) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
-    var cursor = new _IDBCursor.IDBCursorWithValue(range, direction, me, me, 'key', 'value');
+    var cursor = _IDBCursor.IDBCursorWithValue.__createInstance(range, direction, me, me, 'key', 'value');
     me.__cursors.push(cursor);
     return cursor.__req;
 };
 
-IDBObjectStore.prototype.openKeyCursor = function (range, direction) {
+IDBObjectStore.prototype.openKeyCursor = function () /* range, direction */{
     var me = this;
+    if (!(me instanceof IDBObjectStore)) {
+        throw new TypeError('Illegal invocation');
+    }
     if (me.__deleted) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
-    var cursor = new _IDBCursor.IDBCursor(range, direction, me, me, 'key', 'key');
+
+    var _arguments4 = Array.prototype.slice.call(arguments),
+        range = _arguments4[0],
+        direction = _arguments4[1];
+
+    var cursor = _IDBCursor.IDBCursor.__createInstance(range, direction, me, me, 'key', 'key');
     me.__cursors.push(cursor);
     return cursor.__req;
 };
 
 IDBObjectStore.prototype.index = function (indexName) {
     var me = this;
+    if (!(me instanceof IDBObjectStore)) {
+        throw new TypeError('Illegal invocation');
+    }
     if (arguments.length === 0) {
         throw new TypeError('No index name was specified');
     }
@@ -13047,8 +13651,12 @@ IDBObjectStore.prototype.index = function (indexName) {
  * @param {object} optionalParameters
  * @returns {IDBIndex}
  */
-IDBObjectStore.prototype.createIndex = function (indexName, keyPath, optionalParameters) {
+IDBObjectStore.prototype.createIndex = function (indexName, keyPath /* , optionalParameters */) {
     var me = this;
+    var optionalParameters = arguments[2];
+    if (!(me instanceof IDBObjectStore)) {
+        throw new TypeError('Illegal invocation');
+    }
     indexName = String(indexName); // W3C test within IDBObjectStore.js seems to accept string conversion
     if (arguments.length === 0) {
         throw new TypeError('No index name was specified');
@@ -13081,13 +13689,16 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath, optionalPar
             multiEntry: !!optionalParameters.multiEntry
         }
     };
-    var index = new _IDBIndex.IDBIndex(me, indexProperties);
+    var index = _IDBIndex.IDBIndex.__createInstance(me, indexProperties);
     _IDBIndex.IDBIndex.__createIndex(me, index);
     return index;
 };
 
 IDBObjectStore.prototype.deleteIndex = function (indexName) {
     var me = this;
+    if (!(me instanceof IDBObjectStore)) {
+        throw new TypeError('Illegal invocation');
+    }
     if (arguments.length === 0) {
         throw new TypeError('No index name was specified');
     }
@@ -13104,52 +13715,36 @@ IDBObjectStore.prototype.deleteIndex = function (indexName) {
     _IDBIndex.IDBIndex.__deleteIndex(me, index);
 };
 
-IDBObjectStore.prototype[Symbol.toStringTag] = 'IDBObjectStore';
-
-util.defineReadonlyProperties(IDBObjectStore.prototype, ['keyPath', 'indexNames', 'transaction', 'autoIncrement']);
-
+readonlyProperties.forEach(function (prop) {
+    Object.defineProperty(IDBObjectStore.prototype, prop, {
+        enumerable: true,
+        configurable: true,
+        get: function get() {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+});
 Object.defineProperty(IDBObjectStore.prototype, 'name', {
-    enumerable: false,
-    configurable: false,
+    enumerable: true,
+    configurable: true,
     get: function get() {
-        return this.__name;
+        throw new TypeError('Illegal invocation');
     },
-    set: function set(name) {
-        var me = this;
-        if (me.__deleted) {
-            throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
-        }
-        _IDBTransaction2.default.__assertVersionChange(me.transaction);
-        _IDBTransaction2.default.__assertActive(me.transaction);
-        if (me.name === name) {
-            return;
-        }
-        if (me.__idbdb.__objectStores[name]) {
-            throw (0, _DOMException.createDOMException)('ConstraintError', 'Object store "' + name + '" already exists in ' + me.__idbdb.name);
-        }
-
-        delete me.__idbdb.__objectStores[me.name];
-        me.__idbdb.objectStoreNames.splice(me.__idbdb.objectStoreNames.indexOf(me.name), 1);
-        me.__idbdb.__objectStores[name] = me;
-        me.__idbdb.objectStoreNames.push(name);
-        me.__name = name;
-        // Todo: Add pending flag to delay queries against this store until renamed in SQLite
-
-        var sql = 'ALTER TABLE ' + util.escapeStoreNameForSQL(me.name) + ' RENAME TO ' + util.escapeStoreNameForSQL(name);
-        me.transaction.__addNonRequestToTransactionQueue(function objectStoreClear(tx, args, success, error) {
-            tx.executeSql(sql, [], function (tx, data) {
-                success();
-            }, function (tx, err) {
-                error(err);
-            });
-        });
+    set: function set(val) {
+        throw new TypeError('Illegal invocation');
     }
+});
+
+IDBObjectStore.prototype[Symbol.toStringTag] = 'IDBObjectStorePrototype';
+
+Object.defineProperty(IDBObjectStore, 'prototype', {
+    writable: false
 });
 
 exports.default = IDBObjectStore;
 module.exports = exports['default'];
 
-},{"./CFG.js":307,"./DOMException.js":308,"./IDBCursor.js":310,"./IDBIndex.js":313,"./IDBKeyRange.js":314,"./IDBTransaction.js":317,"./Key.js":318,"./Sca.js":319,"./util.js":322,"sync-promise":305}],316:[function(require,module,exports){
+},{"./CFG":307,"./DOMException":308,"./DOMStringList":309,"./IDBCursor":311,"./IDBIndex":314,"./IDBKeyRange":315,"./IDBTransaction":318,"./Key":320,"./Sca":321,"./util":324,"sync-promise":305}],317:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13157,19 +13752,13 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.IDBOpenDBRequest = exports.IDBRequest = undefined;
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _DOMException = require('./DOMException.js');
-
-var _util = require('./util.js');
-
-var util = _interopRequireWildcard(_util);
+var _DOMException = require('./DOMException');
 
 var _eventtarget = require('eventtarget');
 
-var _eventtarget2 = _interopRequireDefault(_eventtarget);
+var _util = require('./util');
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+var util = _interopRequireWildcard(_util);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
@@ -13179,61 +13768,123 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+var listeners = ['onsuccess', 'onerror'];
+var readonlyProperties = ['source', 'transaction', 'readyState'];
+var doneFlagGetters = ['result', 'error'];
+
 /**
  * The IDBRequest Object that is returns for all async calls
  * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#request-api
  */
-var IDBRequest = function () {
-    function IDBRequest() {
-        _classCallCheck(this, IDBRequest);
 
-        this.onsuccess = this.onerror = null;
-        this.__result = undefined;
-        this.__error = this.__source = this.__transaction = null;
-        this.__readyState = 'pending';
-        this.__setOptions({ extraProperties: ['debug'] }); // Ensure EventTarget preserves our properties
-    }
+var IDBRequest = function IDBRequest() {
+    _classCallCheck(this, IDBRequest);
 
-    _createClass(IDBRequest, [{
-        key: '__getParent',
-        value: function __getParent() {
-            if (this.toString() === '[object IDBOpenDBRequest]') {
-                return null;
+    throw new TypeError('Illegal constructor');
+};
+
+IDBRequest.__super = function IDBRequest() {
+    var _this = this;
+
+    this[Symbol.toStringTag] = 'IDBRequest';
+    doneFlagGetters.forEach(function (prop) {
+        Object.defineProperty(this, '__' + prop, {
+            enumerable: false,
+            configurable: false,
+            writable: true
+        });
+        Object.defineProperty(this, prop, {
+            enumerable: true,
+            configurable: true,
+            get: function get() {
+                if (this.__readyState !== 'done') {
+                    throw (0, _DOMException.createDOMException)('InvalidStateError', 'The request is still pending.');
+                }
+                return this['__' + prop];
             }
-            return this.__transaction;
-        }
-    }, {
-        key: Symbol.toStringTag,
-        get: function get() {
-            return 'IDBRequest';
-        }
-    }]);
-
-    return IDBRequest;
-}();
-
-util.defineReadonlyProperties(IDBRequest.prototype, ['source', 'transaction', 'readyState']);
-
-['result', 'error'].forEach(function (prop) {
-    var obj = IDBRequest.prototype;
-    Object.defineProperty(obj, '__' + prop, {
-        enumerable: false,
-        configurable: false,
-        writable: true
+        });
+    }, this);
+    util.defineReadonlyProperties(this, readonlyProperties);
+    listeners.forEach(function (listener) {
+        Object.defineProperty(_this, listener, {
+            configurable: true, // Needed by support.js in W3C IndexedDB tests
+            get: function get() {
+                return this['__' + listener];
+            },
+            set: function set(val) {
+                this['__' + listener] = val;
+            }
+        });
+    }, this);
+    listeners.forEach(function (l) {
+        _this[l] = null;
     });
-    Object.defineProperty(obj, prop, {
+    this.__result = undefined;
+    this.__error = this.__source = this.__transaction = null;
+    this.__readyState = 'pending';
+};
+
+IDBRequest.__createInstance = function () {
+    return new IDBRequest.__super();
+};
+
+IDBRequest.prototype = _eventtarget.EventTargetFactory.createInstance({ extraProperties: ['debug'] });
+IDBRequest.prototype[Symbol.toStringTag] = 'IDBRequestPrototype';
+
+IDBRequest.prototype.__getParent = function () {
+    if (this.toString() === '[object IDBOpenDBRequest]') {
+        return null;
+    }
+    return this.__transaction;
+};
+
+// Illegal invocations
+readonlyProperties.forEach(function (prop) {
+    Object.defineProperty(IDBRequest.prototype, prop, {
         enumerable: true,
         configurable: true,
         get: function get() {
-            if (this.__readyState !== 'done') {
-                throw (0, _DOMException.createDOMException)('InvalidStateError', 'The request is still pending.');
-            }
-            return this['__' + prop];
+            throw new TypeError('Illegal invocation');
         }
     });
 });
 
-Object.assign(IDBRequest.prototype, _eventtarget2.default.prototype);
+doneFlagGetters.forEach(function (prop) {
+    Object.defineProperty(IDBRequest.prototype, prop, {
+        enumerable: true,
+        configurable: true,
+        get: function get() {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+});
+
+listeners.forEach(function (listener) {
+    Object.defineProperty(IDBRequest.prototype, listener, {
+        enumerable: true,
+        configurable: true,
+        get: function get() {
+            throw new TypeError('Illegal invocation');
+        },
+        set: function set(val) {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+});
+
+Object.defineProperty(IDBRequest.prototype, 'constructor', {
+    enumerable: false,
+    writable: true,
+    configurable: true,
+    value: IDBRequest
+});
+IDBRequest.__super.prototype = IDBRequest.prototype;
+
+Object.defineProperty(IDBRequest, 'prototype', {
+    writable: false
+});
+
+var openListeners = ['onblocked', 'onupgradeneeded'];
 
 /**
  * The IDBOpenDBRequest called when a database is opened
@@ -13245,54 +13896,97 @@ var IDBOpenDBRequest = function (_IDBRequest) {
     function IDBOpenDBRequest() {
         _classCallCheck(this, IDBOpenDBRequest);
 
-        var _this = _possibleConstructorReturn(this, (IDBOpenDBRequest.__proto__ || Object.getPrototypeOf(IDBOpenDBRequest)).call(this));
-
-        _this.__setOptions({ extraProperties: ['oldVersion', 'newVersion', 'debug'] }); // Ensure EventTarget preserves our properties
-        _this.onblocked = _this.onupgradeneeded = null;
-        return _this;
+        return _possibleConstructorReturn(this, (IDBOpenDBRequest.__proto__ || Object.getPrototypeOf(IDBOpenDBRequest)).apply(this, arguments));
     }
-
-    _createClass(IDBOpenDBRequest, [{
-        key: Symbol.toStringTag,
-        get: function get() {
-            return 'IDBOpenDBRequest';
-        }
-    }]);
 
     return IDBOpenDBRequest;
 }(IDBRequest);
 
+IDBOpenDBRequest.prototype = Object.create(IDBRequest.prototype);
+
+Object.defineProperty(IDBOpenDBRequest.prototype, 'constructor', {
+    enumerable: false,
+    writable: true,
+    configurable: true,
+    value: IDBOpenDBRequest
+});
+
+var IDBOpenDBRequestAlias = IDBOpenDBRequest;
+IDBOpenDBRequest.__createInstance = function () {
+    function IDBOpenDBRequest() {
+        var _this3 = this;
+
+        IDBRequest.__super.call(this);
+
+        this[Symbol.toStringTag] = 'IDBOpenDBRequest';
+        this.__setOptions({ extraProperties: ['oldVersion', 'newVersion', 'debug'] }); // Ensure EventTarget preserves our properties
+        openListeners.forEach(function (listener) {
+            Object.defineProperty(_this3, listener, {
+                configurable: true, // Needed by support.js in W3C IndexedDB tests
+                get: function get() {
+                    return this['__' + listener];
+                },
+                set: function set(val) {
+                    this['__' + listener] = val;
+                }
+            });
+        }, this);
+        openListeners.forEach(function (l) {
+            _this3[l] = null;
+        });
+    }
+    IDBOpenDBRequest.prototype = IDBOpenDBRequestAlias.prototype;
+    return new IDBOpenDBRequest();
+};
+
+openListeners.forEach(function (listener) {
+    Object.defineProperty(IDBOpenDBRequest.prototype, listener, {
+        enumerable: true,
+        configurable: true,
+        get: function get() {
+            throw new TypeError('Illegal invocation');
+        },
+        set: function set(val) {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+});
+
+IDBOpenDBRequest.prototype[Symbol.toStringTag] = 'IDBOpenDBRequestPrototype';
+
+Object.defineProperty(IDBOpenDBRequest, 'prototype', {
+    writable: false
+});
+
 exports.IDBRequest = IDBRequest;
 exports.IDBOpenDBRequest = IDBOpenDBRequest;
 
-},{"./DOMException.js":308,"./util.js":322,"eventtarget":301}],317:[function(require,module,exports){
+},{"./DOMException":308,"./util":324,"eventtarget":301}],318:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _Event = require('./Event.js');
+var _Event = require('./Event');
 
-var _DOMException = require('./DOMException.js');
+var _DOMException = require('./DOMException');
 
-var _IDBRequest = require('./IDBRequest.js');
+var _IDBRequest = require('./IDBRequest');
 
-var _util = require('./util.js');
+var _util = require('./util');
 
 var util = _interopRequireWildcard(_util);
 
-var _IDBObjectStore = require('./IDBObjectStore.js');
+var _IDBObjectStore = require('./IDBObjectStore');
 
 var _IDBObjectStore2 = _interopRequireDefault(_IDBObjectStore);
 
-var _CFG = require('./CFG.js');
+var _CFG = require('./CFG');
 
 var _CFG2 = _interopRequireDefault(_CFG);
 
 var _eventtarget = require('eventtarget');
-
-var _eventtarget2 = _interopRequireDefault(_eventtarget);
 
 var _syncPromise = require('sync-promise');
 
@@ -13303,6 +13997,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 var uniqueID = 0;
+var listeners = ['onabort', 'oncomplete', 'onerror'];
+var readonlyProperties = ['objectStoreNames', 'mode', 'db', 'error'];
 
 /**
  * The IndexedDB Transaction
@@ -13312,28 +14008,60 @@ var uniqueID = 0;
  * @param {string} mode
  * @constructor
  */
-function IDBTransaction(db, storeNames, mode) {
-    var me = this;
-    me.__id = ++uniqueID; // for debugging simultaneous transactions
-    me.__active = true;
-    me.__running = false;
-    me.__errored = false;
-    me.__requests = [];
-    me.__objectStoreNames = storeNames;
-    me.__mode = mode;
-    me.__db = db;
-    me.__error = null;
-    me.__internal = false;
-    me.onabort = me.onerror = me.oncomplete = null;
-    me.__storeClones = {};
-    me.__setOptions({ defaultSync: true, extraProperties: ['complete'] }); // Ensure EventTarget preserves our properties
-
-    // Kick off the transaction as soon as all synchronous code is done
-    setTimeout(function () {
-        me.__executeRequests();
-    }, 0);
+function IDBTransaction() {
+    throw new TypeError('Illegal constructor');
 }
+var IDBTransactionAlias = IDBTransaction;
+IDBTransaction.__createInstance = function (db, storeNames, mode) {
+    function IDBTransaction() {
+        var _this = this;
 
+        var me = this;
+        me[Symbol.toStringTag] = 'IDBTransaction';
+        util.defineReadonlyProperties(me, readonlyProperties);
+        me.__id = ++uniqueID; // for debugging simultaneous transactions
+        me.__active = true;
+        me.__running = false;
+        me.__errored = false;
+        me.__requests = [];
+        me.__objectStoreNames = storeNames;
+        me.__mode = mode;
+        me.__db = db;
+        me.__error = null;
+        me.__internal = false;
+
+        readonlyProperties.forEach(function (readonlyProp) {
+            Object.defineProperty(_this, readonlyProp, {
+                configurable: true
+            });
+        });
+        listeners.forEach(function (listener) {
+            Object.defineProperty(_this, listener, {
+                enumerable: true,
+                configurable: true,
+                get: function get() {
+                    return this['__' + listener];
+                },
+                set: function set(val) {
+                    this['__' + listener] = val;
+                }
+            });
+        });
+        listeners.forEach(function (l) {
+            _this[l] = null;
+        });
+        me.__storeClones = {};
+
+        // Kick off the transaction as soon as all synchronous code is done
+        setTimeout(function () {
+            me.__executeRequests();
+        }, 0);
+    }
+    IDBTransaction.prototype = IDBTransactionAlias.prototype;
+    return new IDBTransaction();
+};
+
+IDBTransaction.prototype = _eventtarget.EventTargetFactory.createInstance({ defaultSync: true, extraProperties: ['complete'] }); // Ensure EventTarget preserves our properties
 IDBTransaction.prototype.__transFinishedCb = function (err, cb) {
     if (err) {
         cb(true);
@@ -13341,7 +14069,6 @@ IDBTransaction.prototype.__transFinishedCb = function (err, cb) {
     }
     cb();
 };
-
 IDBTransaction.prototype.__executeRequests = function () {
     var me = this;
     if (me.__running) {
@@ -13560,7 +14287,7 @@ IDBTransaction.prototype.__executeRequests = function () {
  */
 IDBTransaction.prototype.__createRequest = function (source) {
     var me = this;
-    var request = new _IDBRequest.IDBRequest();
+    var request = _IDBRequest.IDBRequest.__createInstance();
     request.__source = source !== undefined ? source : me.db;
     request.__transaction = me;
     return request;
@@ -13629,6 +14356,9 @@ IDBTransaction.prototype.__assertVersionChange = function () {
  */
 IDBTransaction.prototype.objectStore = function (objectStoreName) {
     var me = this;
+    if (!(me instanceof IDBTransaction)) {
+        throw new TypeError('Illegal invocation');
+    }
     if (arguments.length === 0) {
         throw new TypeError('No object store name was specified');
     }
@@ -13744,13 +14474,16 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
 
 IDBTransaction.prototype.abort = function () {
     var me = this;
+    if (!(me instanceof IDBTransaction)) {
+        throw new TypeError('Illegal invocation');
+    }
     _CFG2.default.DEBUG && console.log('The transaction was aborted', me);
     if (!me.__active) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
     me.__abortTransaction(null);
 };
-IDBTransaction.prototype[Symbol.toStringTag] = 'IDBTransaction';
+IDBTransaction.prototype[Symbol.toStringTag] = 'IDBTransactionPrototype';
 
 IDBTransaction.__assertVersionChange = function (tx) {
     if (!tx || tx.mode !== 'versionchange') {
@@ -13786,14 +14519,110 @@ IDBTransaction.prototype.__userErrorEventHandler = function (error, triggerGloba
     triggerGlobalErrorEvent();
 };
 
-util.defineReadonlyProperties(IDBTransaction.prototype, ['objectStoreNames', 'mode', 'db', 'error']);
+listeners.forEach(function (listener) {
+    Object.defineProperty(IDBTransaction.prototype, listener, {
+        enumerable: true,
+        configurable: true,
+        get: function get() {
+            throw new TypeError('Illegal invocation');
+        },
+        set: function set(val) {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+});
 
-Object.assign(IDBTransaction.prototype, _eventtarget2.default.prototype);
+// Illegal invocations
+readonlyProperties.forEach(function (prop) {
+    Object.defineProperty(IDBTransaction.prototype, prop, {
+        enumerable: true,
+        configurable: true,
+        get: function get() {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+});
+
+Object.defineProperty(IDBTransaction.prototype, 'constructor', {
+    enumerable: false,
+    writable: true,
+    configurable: true,
+    value: IDBTransaction
+});
+
+Object.defineProperty(IDBTransaction, 'prototype', {
+    writable: false
+});
 
 exports.default = IDBTransaction;
 module.exports = exports['default'];
 
-},{"./CFG.js":307,"./DOMException.js":308,"./Event.js":309,"./IDBObjectStore.js":315,"./IDBRequest.js":316,"./util.js":322,"eventtarget":301,"sync-promise":305}],318:[function(require,module,exports){
+},{"./CFG":307,"./DOMException":308,"./Event":310,"./IDBObjectStore":316,"./IDBRequest":317,"./util":324,"eventtarget":301,"sync-promise":305}],319:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _Event = require('./Event');
+
+var _util = require('./util');
+
+var util = _interopRequireWildcard(_util);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+var readonlyProperties = ['oldVersion', 'newVersion'];
+
+// Babel apparently having a problem adding `hasInstance` to a class, so we are redefining as a function
+function IDBVersionChangeEvent(type /* , eventInitDict */) {
+    // eventInitDict is a IDBVersionChangeEventInit (but is not defined as a global)
+    _Event.ShimEvent.call(this, type);
+    this[Symbol.toStringTag] = 'IDBVersionChangeEvent';
+    this.toString = function () {
+        return '[object IDBVersionChangeEvent]';
+    };
+    this.__eventInitDict = arguments[1] || {};
+}
+
+IDBVersionChangeEvent.prototype = Object.create(_Event.ShimEvent.prototype);
+
+IDBVersionChangeEvent.prototype[Symbol.toStringTag] = 'IDBVersionChangeEventPrototype';
+
+readonlyProperties.forEach(function (prop) {
+    Object.defineProperty(IDBVersionChangeEvent.prototype, prop, {
+        enumerable: true,
+        configurable: true,
+        get: function get() {
+            if (!(this instanceof IDBVersionChangeEvent)) {
+                throw new TypeError('Illegal invocation');
+            }
+            return this.__eventInitDict && this.__eventInitDict[prop] || (prop === 'oldVersion' ? 0 : null);
+        }
+    });
+});
+
+Object.defineProperty(IDBVersionChangeEvent, Symbol.hasInstance, {
+    value: function value(obj) {
+        return util.isObj(obj) && 'oldVersion' in obj && typeof obj.defaultPrevented === 'boolean';
+    }
+});
+
+Object.defineProperty(IDBVersionChangeEvent.prototype, 'constructor', {
+    enumerable: false,
+    writable: true,
+    configurable: true,
+    value: IDBVersionChangeEvent
+});
+
+Object.defineProperty(IDBVersionChangeEvent, 'prototype', {
+    writable: false
+});
+
+exports.default = IDBVersionChangeEvent;
+module.exports = exports['default'];
+
+},{"./Event":310,"./util":324}],320:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13803,9 +14632,9 @@ exports.default = exports.findMultiEntryMatches = exports.isKeyInRange = exports
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var _DOMException = require('./DOMException.js');
+var _DOMException = require('./DOMException');
 
-var _util = require('./util.js');
+var _util = require('./util');
 
 var util = _interopRequireWildcard(_util);
 
@@ -14330,7 +15159,7 @@ exports.isKeyInRange = isKeyInRange;
 exports.findMultiEntryMatches = findMultiEntryMatches;
 exports.default = Key;
 
-},{"./DOMException.js":308,"./util.js":322}],319:[function(require,module,exports){
+},{"./DOMException":308,"./util":324}],321:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14350,7 +15179,7 @@ var _w3cBlob = require('w3c-blob');
 
 var _w3cBlob2 = _interopRequireDefault(_w3cBlob);
 
-var _util = require('./util.js');
+var _util = require('./util');
 
 var util = _interopRequireWildcard(_util);
 
@@ -14703,7 +15532,7 @@ exports.encode = encode;
 exports.decode = decode;
 exports.default = Sca;
 
-},{"./util.js":322,"atob":1,"w3c-blob":306}],320:[function(require,module,exports){
+},{"./util":324,"atob":1,"w3c-blob":306}],322:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14712,9 +15541,9 @@ Object.defineProperty(exports, "__esModule", {
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var _DOMException = require('./DOMException.js');
+var _DOMException = require('./DOMException');
 
-var _Key = require('./Key.js');
+var _Key = require('./Key');
 
 var _Key2 = _interopRequireDefault(_Key);
 
@@ -15059,7 +15888,7 @@ function validateKeyLength(key) {
 exports.default = polyfill;
 module.exports = exports['default'];
 
-},{"./DOMException.js":308,"./Key.js":318}],321:[function(require,module,exports){
+},{"./DOMException":308,"./Key":320}],323:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -15067,97 +15896,55 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; // Object.assign in EventTarget, etc.
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; // `Object.assign` including within `EventTarget`, generator functions, `Array.from`, etc.; see https://babeljs.io/docs/usage/polyfill/
 
 
 require('babel-polyfill');
 
-var _Event = require('./Event.js');
+var _IDBVersionChangeEvent = require('./IDBVersionChangeEvent');
 
-var _IDBCursor = require('./IDBCursor.js');
+var _IDBVersionChangeEvent2 = _interopRequireDefault(_IDBVersionChangeEvent);
 
-var _IDBRequest = require('./IDBRequest.js');
+var _IDBCursor = require('./IDBCursor');
 
-var _IDBFactory = require('./IDBFactory.js');
+var _IDBRequest = require('./IDBRequest');
 
-var _IDBKeyRange = require('./IDBKeyRange.js');
+var _IDBFactory = require('./IDBFactory');
+
+var _IDBKeyRange = require('./IDBKeyRange');
 
 var _IDBKeyRange2 = _interopRequireDefault(_IDBKeyRange);
 
-var _IDBObjectStore = require('./IDBObjectStore.js');
+var _IDBObjectStore = require('./IDBObjectStore');
 
 var _IDBObjectStore2 = _interopRequireDefault(_IDBObjectStore);
 
-var _IDBIndex = require('./IDBIndex.js');
+var _IDBIndex = require('./IDBIndex');
 
 var _IDBIndex2 = _interopRequireDefault(_IDBIndex);
 
-var _IDBTransaction = require('./IDBTransaction.js');
+var _IDBTransaction = require('./IDBTransaction');
 
 var _IDBTransaction2 = _interopRequireDefault(_IDBTransaction);
 
-var _IDBDatabase = require('./IDBDatabase.js');
+var _IDBDatabase = require('./IDBDatabase');
 
 var _IDBDatabase2 = _interopRequireDefault(_IDBDatabase);
 
-var _polyfill = require('./polyfill.js');
+var _polyfill = require('./polyfill');
 
 var _polyfill2 = _interopRequireDefault(_polyfill);
 
-var _CFG = require('./CFG.js');
+var _CFG = require('./CFG');
 
 var _CFG2 = _interopRequireDefault(_CFG);
-
-var _util = require('./util.js');
-
-var util = _interopRequireWildcard(_util);
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var glob = typeof global !== 'undefined' ? global : typeof window !== 'undefined' ? window : self;
 glob._babelPolyfill = false; // http://stackoverflow.com/questions/31282702/conflicting-use-of-babel-register
-
-var IDB = void 0;
-
-function shim(name, value, propDesc) {
-    if (!propDesc || !Object.defineProperty) {
-        try {
-            // Try setting the property. This will fail if the property is read-only.
-            IDB[name] = value;
-        } catch (e) {
-            console.log(e);
-        }
-    }
-    if (IDB[name] !== value && Object.defineProperty) {
-        // Setting a read-only property failed, so try re-defining the property
-        try {
-            var desc = propDesc || {};
-            if (name === 'indexedDB') {
-                desc.value = value;
-                desc.writable = false; // Make explicit for Babel
-            } else {
-                // `enumerable` was staying as `true` in Node when
-                //    `writable`/`value` was set instead
-                /*
-                desc.value = value;
-                */
-                desc.get = function () {
-                    return value;
-                };
-            }
-            Object.defineProperty(IDB, name, desc);
-        } catch (e) {
-            // With `indexedDB`, PhantomJS fails here and below but
-            //  not above, while Chrome is reverse (and Firefox doesn't
-            //  get here since no WebSQL to use for shimming)
-        }
-    }
-    if (IDB[name] !== value) {
-        typeof console !== 'undefined' && console.warn && console.warn('Unable to shim ' + name);
-    }
-}
 
 function setConfig(prop, val) {
     if (prop && (typeof prop === 'undefined' ? 'undefined' : _typeof(prop)) === 'object') {
@@ -15176,36 +15963,92 @@ function setGlobalVars(idb, initialConfig) {
     if (initialConfig) {
         setConfig(initialConfig);
     }
-    IDB = idb || (typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {});
-    shim('shimIndexedDB', _IDBFactory.shimIndexedDB);
+    var IDB = idb || (typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {});
+    function shim(name, value, propDesc) {
+        if (!propDesc || !Object.defineProperty) {
+            try {
+                // Try setting the property. This will fail if the property is read-only.
+                IDB[name] = value;
+            } catch (e) {
+                console.log(e);
+            }
+        }
+        if (IDB[name] !== value && Object.defineProperty) {
+            // Setting a read-only property failed, so try re-defining the property
+            try {
+                var desc = propDesc || {};
+                // `enumerable` was staying as `true` in Node when
+                //    `writable`/`value` was set instead
+                /*
+                desc.value = value;
+                */
+                desc.get = function () {
+                    return value;
+                };
+                Object.defineProperty(IDB, name, desc);
+                // console.log(Object.getOwnPropertyDescriptor(IDB, name)); // Why aren't we getting `get`????
+                if (name === 'indexedDB') {
+                    // console.log(desc);
+                    // console.log(Object.getOwnPropertyDescriptor(IDB, 'indexedDB'));
+                }
+            } catch (e) {
+                // With `indexedDB`, PhantomJS fails here and below but
+                //  not above, while Chrome is reverse (and Firefox doesn't
+                //  get here since no WebSQL to use for shimming)
+            }
+        }
+        if (IDB[name] !== value) {
+            typeof console !== 'undefined' && console.warn && console.warn('Unable to shim ' + name);
+        }
+    }
+    shim('shimIndexedDB', _IDBFactory.shimIndexedDB, {
+        enumerable: false,
+        configurable: true
+    });
     if (IDB.shimIndexedDB) {
         IDB.shimIndexedDB.__useShim = function () {
             // Todo: Accept argument to set DOMException, DOMStringList, Event
+            var shimIDBFactory = IDB.shimIndexedDB.modules.IDBFactory;
             if (_CFG2.default.win.openDatabase !== undefined) {
                 // Polyfill ALL of IndexedDB, using WebSQL
-                shim('indexedDB', _IDBFactory.shimIndexedDB);
-                shim('IDBFactory', _IDBFactory.IDBFactory);
-                shim('IDBDatabase', _IDBDatabase2.default);
-                shim('IDBObjectStore', _IDBObjectStore2.default);
-                shim('IDBIndex', _IDBIndex2.default);
-                shim('IDBTransaction', _IDBTransaction2.default);
-                shim('IDBCursor', _IDBCursor.IDBCursor);
-                shim('IDBCursorWithValue', _IDBCursor.IDBCursorWithValue);
-                shim('IDBKeyRange', _IDBKeyRange2.default);
-                shim('IDBRequest', _IDBRequest.IDBRequest);
-                shim('IDBOpenDBRequest', _IDBRequest.IDBOpenDBRequest);
-                shim('IDBVersionChangeEvent', _Event.IDBVersionChangeEvent);
-                if (_CFG2.default.addNonIDBGlobals && IDB.indexedDB && IDB.indexedDB.modules) {
-                    shim('DOMStringList', util.DOMStringList, {
+                if (_CFG2.default.fullIDLSupport) {
+                    // Slow per MDN so off by default! Though apparently needed for WebIDL: http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
+                    var ShimEvent = IDB.shimIndexedDB.modules.ShimEvent;
+                    var ShimEventTarget = IDB.shimIndexedDB.modules.ShimEventTarget;
+                    Object.setPrototypeOf(_IDBDatabase2.default, ShimEventTarget);
+                    Object.setPrototypeOf(_IDBRequest.IDBRequest, ShimEventTarget);
+                    Object.setPrototypeOf(_IDBTransaction2.default, ShimEventTarget);
+                    Object.setPrototypeOf(_IDBVersionChangeEvent2.default, ShimEvent);
+                }
+                [['indexedDB', _IDBFactory.shimIndexedDB], ['IDBFactory', shimIDBFactory], ['IDBDatabase', _IDBDatabase2.default], ['IDBObjectStore', _IDBObjectStore2.default], ['IDBIndex', _IDBIndex2.default], ['IDBTransaction', _IDBTransaction2.default], ['IDBCursor', _IDBCursor.IDBCursor], ['IDBCursorWithValue', _IDBCursor.IDBCursorWithValue], ['IDBKeyRange', _IDBKeyRange2.default], ['IDBRequest', _IDBRequest.IDBRequest], ['IDBOpenDBRequest', _IDBRequest.IDBOpenDBRequest], ['IDBVersionChangeEvent', _IDBVersionChangeEvent2.default]].forEach(function (_ref) {
+                    var _ref2 = _slicedToArray(_ref, 2),
+                        prop = _ref2[0],
+                        obj = _ref2[1];
+
+                    shim(prop, obj, {
                         enumerable: false,
                         configurable: true
                     });
-                    shim('Event', IDB.indexedDB.modules.Event);
-                    shim('DOMException', IDB.indexedDB.modules.DOMException);
+                });
+                if (_CFG2.default.addNonIDBGlobals && IDB.indexedDB && IDB.indexedDB.modules) {
+                    // As `DOMStringList` exists per IDL (and Chrome) in the global
+                    //   thread (but not in workers), we prefix the name to avoid
+                    //   shadowing or conflicts
+                    // Todo: We could provide an option to shim directly as
+                    //   `DOMStringList` and thereby get the `enumerable` and readonly
+                    //   settings out of the box
+                    shim('ShimDOMStringList', IDB.indexedDB.modules.ShimDOMStringList, {
+                        enumerable: false,
+                        configurable: true
+                    });
+                    shim('ShimEvent', IDB.indexedDB.modules.ShimEvent);
+                    shim('ShimCustomEvent', IDB.indexedDB.modules.ShimCustomEvent);
+                    shim('ShimEventTarget', IDB.indexedDB.modules.ShimEventTarget);
+                    shim('ShimDOMException', IDB.indexedDB.modules.ShimDOMException);
                 }
             } else if (_typeof(IDB.indexedDB) === 'object') {
                 // Polyfill the missing IndexedDB features (no need for IDBEnvironment, the window containing indexedDB itself))
-                (0, _polyfill2.default)(_IDBCursor.IDBCursor, _IDBCursor.IDBCursorWithValue, _IDBDatabase2.default, _IDBFactory.IDBFactory, _IDBIndex2.default, _IDBKeyRange2.default, _IDBObjectStore2.default, _IDBRequest.IDBRequest, _IDBTransaction2.default);
+                (0, _polyfill2.default)(_IDBCursor.IDBCursor, _IDBCursor.IDBCursorWithValue, _IDBDatabase2.default, shimIDBFactory, _IDBIndex2.default, _IDBKeyRange2.default, _IDBObjectStore2.default, _IDBRequest.IDBRequest, _IDBTransaction2.default);
             }
         };
 
@@ -15228,7 +16071,8 @@ function setGlobalVars(idb, initialConfig) {
     }
 
     // Workaround to prevent an error in Firefox
-    if (!('indexedDB' in IDB)) {
+    if (!('indexedDB' in IDB) && typeof window !== 'undefined') {
+        // 2nd condition avoids problems in Node
         IDB.indexedDB = IDB.indexedDB || IDB.webkitIndexedDB || IDB.mozIndexedDB || IDB.oIndexedDB || IDB.msIndexedDB;
     }
 
@@ -15252,8 +16096,7 @@ function setGlobalVars(idb, initialConfig) {
         // https://github.com/axemclion/IndexedDBShim/issues/115
         typeof navigator !== 'undefined' && navigator.userAgent.indexOf('Safari') > -1 && navigator.userAgent.indexOf('Chrome') === -1 ? 25 : 4) * 1024 * 1024;
     }
-
-    if ((IDB.indexedDB === undefined || !IDB.indexedDB || poorIndexedDbSupport) && _CFG2.default.win.openDatabase !== undefined) {
+    if ((!IDB.indexedDB || poorIndexedDbSupport) && _CFG2.default.win.openDatabase !== undefined) {
         IDB.shimIndexedDB.__useShim();
     } else {
         IDB.IDBDatabase = IDB.IDBDatabase || IDB.webkitIDBDatabase;
@@ -15268,21 +16111,19 @@ exports.default = setGlobalVars;
 module.exports = exports['default'];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./CFG.js":307,"./Event.js":309,"./IDBCursor.js":310,"./IDBDatabase.js":311,"./IDBFactory.js":312,"./IDBIndex.js":313,"./IDBKeyRange.js":314,"./IDBObjectStore.js":315,"./IDBRequest.js":316,"./IDBTransaction.js":317,"./polyfill.js":320,"./util.js":322,"babel-polyfill":2}],322:[function(require,module,exports){
+},{"./CFG":307,"./IDBCursor":311,"./IDBDatabase":312,"./IDBFactory":313,"./IDBIndex":314,"./IDBKeyRange":315,"./IDBObjectStore":316,"./IDBRequest":317,"./IDBTransaction":318,"./IDBVersionChangeEvent":319,"./polyfill":322,"babel-polyfill":2}],324:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.isValidKeyPath = exports.defineReadonlyProperties = exports.throwIfNotClonable = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlLIKEEscape = exports.escapeIndexNameForKeyColumn = exports.escapeIndexNameForSQL = exports.escapeStoreNameForSQL = exports.unescapeDatabaseNameForSQLAndFiles = exports.escapeDatabaseNameForSQLAndFiles = exports.quote = exports.unescapeSQLiteResponse = exports.escapeSQLiteStatement = exports.DOMStringList = undefined;
+exports.isValidKeyPath = exports.defineReadonlyProperties = exports.throwIfNotClonable = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlLIKEEscape = exports.escapeIndexNameForKeyColumn = exports.escapeIndexNameForSQL = exports.escapeStoreNameForSQL = exports.unescapeDatabaseNameForSQLAndFiles = exports.escapeDatabaseNameForSQLAndFiles = exports.quote = exports.unescapeSQLiteResponse = exports.escapeSQLiteStatement = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var _DOMStringList$protot;
+var _DOMException = require('./DOMException');
 
-var _DOMException = require('./DOMException.js');
-
-var _CFG = require('./CFG.js');
+var _CFG = require('./CFG');
 
 var _CFG2 = _interopRequireDefault(_CFG);
 
@@ -15291,179 +16132,6 @@ var _cyclonejs = require('cyclonejs');
 var _cyclonejs2 = _interopRequireDefault(_cyclonejs);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-var cleanInterface = false;
-
-var testObject = { test: true };
-// Test whether Object.defineProperty really works.
-if (Object.defineProperty) {
-    try {
-        Object.defineProperty(testObject, 'test', { enumerable: false });
-        if (testObject.test) {
-            cleanInterface = true;
-        }
-    } catch (e) {
-        // Object.defineProperty does not work as intended.
-    }
-}
-
-/**
- * Shim the DOMStringList object.
- *
- */
-var DOMStringList = function DOMStringList() {
-    throw new TypeError('Illegal constructor');
-};
-DOMStringList.prototype = (_DOMStringList$protot = {
-    constructor: DOMStringList,
-    // Interface.
-    length: 0,
-    contains: function contains(str) {
-        if (!arguments.length) {
-            throw new TypeError('DOMStringList.contains must be supplied a value');
-        }
-        return this._items.includes(str);
-    },
-    item: function item(key) {
-        if (!arguments.length) {
-            throw new TypeError('DOMStringList.item must be supplied a value');
-        }
-        if (key < 0 || key >= this.length || !Number.isInteger(key)) {
-            return null;
-        }
-        return this._items[key];
-    },
-
-    // Helpers. Should only be used internally.
-    clone: function clone() {
-        var stringList = DOMStringList.__createInstance();
-        stringList._items = this._items.slice();
-        stringList._length = this.length;
-        stringList.addIndexes();
-        return stringList;
-    },
-    addIndexes: function addIndexes() {
-        for (var i = 0; i < this._items.length; i++) {
-            this[i] = this._items[i];
-        }
-    },
-    sortList: function sortList() {
-        // http://w3c.github.io/IndexedDB/#sorted-list
-        // https://tc39.github.io/ecma262/#sec-abstract-relational-comparison
-        this._items.sort();
-        this.addIndexes();
-        return this._items;
-    },
-    forEach: function forEach(cb, thisArg) {
-        this._items.forEach(cb, thisArg);
-    },
-    map: function map(cb, thisArg) {
-        return this._items.map(cb, thisArg);
-    },
-    indexOf: function indexOf(str) {
-        return this._items.indexOf(str);
-    },
-    push: function push(item) {
-        this._items.push(item);
-        this._length++;
-        this.sortList();
-    },
-    splice: function splice() /* index, howmany, item1, ..., itemX */{
-        var _items;
-
-        (_items = this._items).splice.apply(_items, arguments);
-        this._length = this._items.length;
-        for (var i in this) {
-            if (i === String(parseInt(i, 10))) {
-                delete this[i];
-            }
-        }
-        this.sortList();
-    }
-}, _defineProperty(_DOMStringList$protot, Symbol.toStringTag, 'DOMStringListPrototype'), _defineProperty(_DOMStringList$protot, Symbol.iterator, regeneratorRuntime.mark(function _callee() {
-    var i;
-    return regeneratorRuntime.wrap(function _callee$(_context) {
-        while (1) {
-            switch (_context.prev = _context.next) {
-                case 0:
-                    i = 0;
-
-                case 1:
-                    if (!(i < this._items.length)) {
-                        _context.next = 6;
-                        break;
-                    }
-
-                    _context.next = 4;
-                    return this._items[i++];
-
-                case 4:
-                    _context.next = 1;
-                    break;
-
-                case 6:
-                case 'end':
-                    return _context.stop();
-            }
-        }
-    }, _callee, this);
-})), _DOMStringList$protot);
-Object.defineProperty(DOMStringList, Symbol.hasInstance, {
-    value: function value(obj) {
-        return {}.toString.call(obj) === 'DOMStringListPrototype';
-    }
-});
-var DOMStringListAlias = DOMStringList;
-Object.defineProperty(DOMStringList, '__createInstance', {
-    value: function value() {
-        var DOMStringList = function DOMStringList() {
-            // Internal functions on the prototype have been made non-enumerable below.
-            Object.defineProperties(this, {
-                'length': {
-                    enumerable: true,
-                    get: function get() {
-                        return this._length;
-                    }
-                }
-            });
-            this._items = [];
-            this._length = 0;
-        };
-        DOMStringList.prototype = DOMStringListAlias.prototype;
-        return new DOMStringList();
-    }
-});
-
-if (cleanInterface) {
-    Object.defineProperty(DOMStringList, 'prototype', {
-        writable: false
-    });
-
-    var nonenumerableReadonly = ['addIndexes', 'sortList', 'forEach', 'map', 'indexOf', 'push', 'splice', 'constructor', '__createInstance'];
-    nonenumerableReadonly.forEach(function (nonenumerableReadonly) {
-        Object.defineProperty(DOMStringList.prototype, nonenumerableReadonly, {
-            enumerable: false
-        });
-    });
-
-    // Illegal invocations
-    Object.defineProperty(DOMStringList.prototype, 'length', {
-        enumerable: true,
-        get: function get() {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-
-    var nonenumerableWritable = ['_items', '_length'];
-    nonenumerableWritable.forEach(function (nonenumerableWritable) {
-        Object.defineProperty(DOMStringList.prototype, nonenumerableWritable, {
-            enumerable: false,
-            writable: true
-        });
-    });
-}
 
 function escapeNameForSQLiteIdentifier(arg) {
     // http://stackoverflow.com/a/6701665/271577
@@ -15669,7 +16337,6 @@ function isValidKeyPath(keyPath) {
     });
 }
 
-exports.DOMStringList = DOMStringList;
 exports.escapeSQLiteStatement = escapeSQLiteStatement;
 exports.unescapeSQLiteResponse = unescapeSQLiteResponse;
 exports.quote = quote;
@@ -15689,4 +16356,4 @@ exports.throwIfNotClonable = throwIfNotClonable;
 exports.defineReadonlyProperties = defineReadonlyProperties;
 exports.isValidKeyPath = isValidKeyPath;
 
-},{"./CFG.js":307,"./DOMException.js":308,"cyclonejs":300}]},{},[321]);
+},{"./CFG":307,"./DOMException":308,"cyclonejs":300}]},{},[323]);

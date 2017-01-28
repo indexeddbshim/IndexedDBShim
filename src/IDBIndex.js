@@ -1,11 +1,13 @@
-import {createDOMException} from './DOMException.js';
-import {IDBCursor, IDBCursorWithValue} from './IDBCursor.js';
-import * as util from './util.js';
-import Key from './Key.js';
-import {setSQLForRange, IDBKeyRange} from './IDBKeyRange.js';
-import IDBTransaction from './IDBTransaction.js';
-import Sca from './Sca.js';
-import CFG from './CFG.js';
+import {createDOMException} from './DOMException';
+import {IDBCursor, IDBCursorWithValue} from './IDBCursor';
+import * as util from './util';
+import Key from './Key';
+import {setSQLForRange, IDBKeyRange} from './IDBKeyRange';
+import IDBTransaction from './IDBTransaction';
+import Sca from './Sca';
+import CFG from './CFG';
+
+const readonlyProperties = ['objectStore', 'keyPath', 'multiEntry', 'unique'];
 
 /**
  * IDB Index
@@ -14,17 +16,65 @@ import CFG from './CFG.js';
  * @param {IDBIndexProperties} indexProperties
  * @constructor
  */
-function IDBIndex (store, indexProperties) {
-    const me = this;
-    me.__objectStore = store;
-    me.__name = me.__originalName = indexProperties.columnName;
-    me.__keyPath = Array.isArray(indexProperties.keyPath) ? indexProperties.keyPath.slice() : indexProperties.keyPath;
-    const optionalParams = indexProperties.optionalParams;
-    me.__multiEntry = !!(optionalParams && optionalParams.multiEntry);
-    me.__unique = !!(optionalParams && optionalParams.unique);
-    me.__deleted = !!indexProperties.__deleted;
-    me.__objectStore.__cursors = indexProperties.cursors || [];
+function IDBIndex () {
+    throw new TypeError('Illegal constructor');
 }
+const IDBIndexAlias = IDBIndex;
+IDBIndex.__createInstance = function (store, indexProperties) {
+    function IDBIndex () {
+        const me = this;
+        me[Symbol.toStringTag] = 'IDBIndex';
+        util.defineReadonlyProperties(me, readonlyProperties);
+        me.__objectStore = store;
+        me.__name = me.__originalName = indexProperties.columnName;
+        me.__keyPath = Array.isArray(indexProperties.keyPath) ? indexProperties.keyPath.slice() : indexProperties.keyPath;
+        const optionalParams = indexProperties.optionalParams;
+        me.__multiEntry = !!(optionalParams && optionalParams.multiEntry);
+        me.__unique = !!(optionalParams && optionalParams.unique);
+        me.__deleted = !!indexProperties.__deleted;
+        me.__objectStore.__cursors = indexProperties.cursors || [];
+        Object.defineProperty(me, 'name', {
+            enumerable: false,
+            configurable: false,
+            get: function () {
+                return this.__name;
+            },
+            set: function (newName) {
+                const me = this;
+                const oldName = me.name;
+                IDBTransaction.__assertVersionChange(me.objectStore.transaction);
+                IDBTransaction.__assertActive(me.objectStore.transaction);
+                if (me.__deleted) {
+                    throw createDOMException('InvalidStateError', 'This index has been deleted');
+                }
+                if (me.objectStore.__deleted) {
+                    throw createDOMException('InvalidStateError', "This index's object store has been deleted");
+                }
+                if (newName === oldName) {
+                    return;
+                }
+                if (me.objectStore.__indexes[newName] && !me.objectStore.__indexes[newName].__deleted) {
+                    throw createDOMException('ConstraintError', 'Index "' + newName + '" already exists on ' + me.objectStore.name);
+                }
+
+                delete me.objectStore.__indexes[me.name];
+                me.objectStore.indexNames.splice(me.objectStore.indexNames.indexOf(me.name), 1);
+                me.objectStore.__indexes[newName] = me;
+                me.objectStore.indexNames.push(newName);
+
+                me.__name = newName;
+                // Todo: Add pending flag to delay queries against this index until renamed in SQLite?
+                const colInfoToPreserveArr = [
+                    ['key', 'BLOB ' + (me.objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')],
+                    ['value', 'BLOB']
+                ];
+                me.__renameIndex(me.objectStore, oldName, newName, colInfoToPreserveArr);
+            }
+        });
+    }
+    IDBIndex.prototype = IDBIndexAlias.prototype;
+    return new IDBIndex();
+};
 
 /**
  * Clones an IDBIndex instance for a different IDBObjectStore instance.
@@ -33,7 +83,7 @@ function IDBIndex (store, indexProperties) {
  * @protected
  */
 IDBIndex.__clone = function (index, store) {
-    const idx = new IDBIndex(store, {
+    const idx = IDBIndex.__createInstance(store, {
         columnName: index.name,
         keyPath: index.keyPath,
         optionalParams: {
@@ -219,9 +269,10 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
  * @param {string} direction
  * @returns {IDBRequest}
  */
-IDBIndex.prototype.openCursor = function (range, direction) {
+IDBIndex.prototype.openCursor = function (/* range, direction */) {
     const me = this;
-    const cursor = new IDBCursorWithValue(range, direction, me.objectStore, me, util.escapeIndexNameForKeyColumn(me.name), 'value');
+    const [range, direction] = arguments;
+    const cursor = IDBCursorWithValue.__createInstance(range, direction, me.objectStore, me, util.escapeIndexNameForKeyColumn(me.name), 'value');
     me.__objectStore.__cursors.push(cursor);
     return cursor.__req;
 };
@@ -232,9 +283,10 @@ IDBIndex.prototype.openCursor = function (range, direction) {
  * @param {string} direction
  * @returns {IDBRequest}
  */
-IDBIndex.prototype.openKeyCursor = function (range, direction) {
+IDBIndex.prototype.openKeyCursor = function (/* range, direction */) {
     const me = this;
-    const cursor = new IDBCursor(range, direction, me.objectStore, me, util.escapeIndexNameForKeyColumn(me.name), 'key');
+    const [range, direction] = arguments;
+    const cursor = IDBCursor.__createInstance(range, direction, me.objectStore, me, util.escapeIndexNameForKeyColumn(me.name), 'key');
     me.__objectStore.__cursors.push(cursor);
     return cursor.__req;
 };
@@ -253,16 +305,19 @@ IDBIndex.prototype.getKey = function (query) {
     return this.__fetchIndexData(query, 'key', true);
 };
 
-IDBIndex.prototype.getAll = function (query, count) {
+IDBIndex.prototype.getAll = function (/* query, count */) {
+    const [query, count] = arguments;
     return this.__fetchIndexData(query, 'value', false, count);
 };
 
-IDBIndex.prototype.getAllKeys = function (query, count) {
+IDBIndex.prototype.getAllKeys = function (/* query, count */) {
+    const [query, count] = arguments;
     return this.__fetchIndexData(query, 'key', false, count);
 };
 
-IDBIndex.prototype.count = function (query) {
+IDBIndex.prototype.count = function (/* query */) {
     const me = this;
+    let query = arguments[0];
     // With the exception of needing to check whether the index has been
     //  deleted, we could, for greater spec parity (if not accuracy),
     //  just call:
@@ -271,10 +326,10 @@ IDBIndex.prototype.count = function (query) {
     // key is optional
     if (util.instanceOf(query, IDBKeyRange)) {
         if (!query.toString() !== '[object IDBKeyRange]') {
-            query = new IDBKeyRange(query.lower, query.upper, query.lowerOpen, query.upperOpen);
+            query = IDBKeyRange.__createInstance(query.lower, query.upper, query.lowerOpen, query.upperOpen);
         }
         // We don't need to add to cursors array since has the count parameter which won't cache
-        return new IDBCursorWithValue(query, 'next', me.objectStore, me, util.escapeIndexNameForKeyColumn(me.name), 'value', true).__req;
+        return IDBCursorWithValue.__createInstance(query, 'next', me.objectStore, me, util.escapeIndexNameForKeyColumn(me.name), 'value', true).__req;
     }
     return me.__fetchIndexData(query, 'count', false);
 };
@@ -316,51 +371,33 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
     });
 };
 
-IDBIndex.prototype[Symbol.toStringTag] = 'IDBIndex';
-
-util.defineReadonlyProperties(IDBIndex.prototype, ['objectStore', 'keyPath', 'multiEntry', 'unique']);
-
 Object.defineProperty(IDBIndex, Symbol.hasInstance, {
     value: obj => util.isObj(obj) && typeof obj.openCursor === 'function' && typeof obj.multiEntry === 'boolean'
 });
 
+readonlyProperties.forEach((prop) => {
+    Object.defineProperty(IDBIndex.prototype, prop, {
+        enumerable: true,
+        configurable: true,
+        get: function () {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+});
 Object.defineProperty(IDBIndex.prototype, 'name', {
-    enumerable: false,
-    configurable: false,
+    enumerable: true,
+    configurable: true,
     get: function () {
-        return this.__name;
+        throw new TypeError('Illegal invocation');
     },
-    set: function (newName) {
-        const me = this;
-        const oldName = me.name;
-        IDBTransaction.__assertVersionChange(me.objectStore.transaction);
-        IDBTransaction.__assertActive(me.objectStore.transaction);
-        if (me.__deleted) {
-            throw createDOMException('InvalidStateError', 'This index has been deleted');
-        }
-        if (me.objectStore.__deleted) {
-            throw createDOMException('InvalidStateError', "This index's object store has been deleted");
-        }
-        if (newName === oldName) {
-            return;
-        }
-        if (me.objectStore.__indexes[newName] && !me.objectStore.__indexes[newName].__deleted) {
-            throw createDOMException('ConstraintError', 'Index "' + newName + '" already exists on ' + me.objectStore.name);
-        }
-
-        delete me.objectStore.__indexes[me.name];
-        me.objectStore.indexNames.splice(me.objectStore.indexNames.indexOf(me.name), 1);
-        me.objectStore.__indexes[newName] = me;
-        me.objectStore.indexNames.push(newName);
-
-        me.__name = newName;
-        // Todo: Add pending flag to delay queries against this index until renamed in SQLite?
-        const colInfoToPreserveArr = [
-            ['key', 'BLOB ' + (me.objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')],
-            ['value', 'BLOB']
-        ];
-        me.__renameIndex(me.objectStore, oldName, newName, colInfoToPreserveArr);
+    set: function (val) {
+        throw new TypeError('Illegal invocation');
     }
+});
+IDBIndex.prototype[Symbol.toStringTag] = 'IDBIndexPrototype';
+
+Object.defineProperty(IDBIndex, 'prototype', {
+    writable: false
 });
 
 function executeFetchIndexData (unboundedDisallowed, count, index, hasKey, encodedKey, opType, multiChecks, sql, sqlValues, tx, args, success, error) {
@@ -443,7 +480,7 @@ function fetchIndexData (index, hasRange, range, opType, multiChecks) {
             if (util.instanceOf(range, IDBKeyRange)) {
                 // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
                 if (!range.toString() !== '[object IDBKeyRange]') {
-                    range = new IDBKeyRange(range.lower, range.upper, range.lowerOpen, range.upperOpen);
+                    range = IDBKeyRange.__createInstance(range.lower, range.upper, range.lowerOpen, range.upperOpen);
                 }
             } else {
                 range = IDBKeyRange.only(range);

@@ -6,7 +6,7 @@ const setGlobalVars = require('../dist/indexeddbshim-UnicodeIdentifiers-node');
 setGlobalVars();
 // shimIndexedDB.__debug(true);
 
-window.DOMException = indexedDB.modules.DOMException;
+window.DOMException = indexedDB.modules.ShimDOMException;
 window.Event = indexedDB.modules.ShimEvent;
 
 module.exports = global.indexedDB;

@@ -1,5 +1,5 @@
-import {createDOMException} from './DOMException.js';
-import * as util from './util.js';
+import {createDOMException} from './DOMException';
+import * as util from './util';
 
 let Key = {};
 

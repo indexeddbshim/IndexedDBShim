@@ -135,8 +135,15 @@ on Internet Explorer, this will add support for compound keys.
 
 If `CFG.addNonIDBGlobals` has been set (e.g., on the `initialConfig` argument
 of `setGlobalVars`), the other non-IndexedDB shims necessitated by this
-library will be polyfilled as possible on the chosen "global" (i.e., `Event`,
-`DOMException`, and `DOMStringList`). Mostly useful for testing.
+library will be polyfilled as possible on the chosen "global" (i.e.,
+`ShimEvent`, `ShimCustomEvent`, `ShimEventTarget`, `ShimDOMException`,
+and `ShimDOMStringList`). Mostly useful for testing.
+
+If `CFG.fullIDLSupport` has been set, the slow-performing
+`Object.setPrototypeOf` calls required for full WebIDL compliance will
+be used. Probably only needed for testing or environments where full
+introspection on class relationships is required.
+See this [SO topic](http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements)
 
 ### shimIndexedDB.\__forceClose(connIdx, msg)
 
@@ -232,9 +239,15 @@ browser, particularly if one changes the defaults.
 
 - __addNonIDBGlobals__ - If set to `true` will polyfill the "global" with
     non-IndexedDB shims created by and sometimes returned publicly by
-    the library. These include `Event`, `DOMException`, and
-    `DOMStringList`. Mostly useful for debugging (and in Node where these
+    the library. These include `ShimEvent`, `ShimCustomEvent`,
+    `ShimEventTarget`, `ShimDOMException`, and `ShimDOMStringList`.
+    Mostly useful for debugging (and in Node where these
     are not available by default).
+- __fullIDLSupport__ - If set to `true`, the slow-performing
+    `Object.setPrototypeOf` calls required for full WebIDL compliance will
+    be used. Probably only needed for testing or environments where full
+    introspection on class relationships is required.
+    See this [SO topic](http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements)
 - __escapeDatabaseName__ - Due to the Node implementation's reliance on
     `node-websql`/`node-sqlite3` which create files for each database
     (and the fact that we haven't provided an option to map filename-safe

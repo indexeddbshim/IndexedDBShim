@@ -1,46 +1,77 @@
-import {createDOMException} from './DOMException.js';
-import {createEvent} from './Event.js';
-import * as util from './util.js';
-import IDBObjectStore from './IDBObjectStore.js';
-import IDBTransaction from './IDBTransaction.js';
-import Sca from './Sca.js';
-import CFG from './CFG.js';
-import EventTarget from 'eventtarget';
+import {createDOMException} from './DOMException';
+import {createEvent} from './Event';
+import * as util from './util';
+import DOMStringList from './DOMStringList';
+import IDBObjectStore from './IDBObjectStore';
+import IDBTransaction from './IDBTransaction';
+import Sca from './Sca';
+import CFG from './CFG';
+import {EventTargetFactory} from 'eventtarget';
+
+const listeners = ['onabort', 'onclose', 'onerror', 'onversionchange'];
+const readonlyProperties = ['name', 'version', 'objectStoreNames'];
 
 /**
  * IDB Database Object
  * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
  * @constructor
  */
-function IDBDatabase (db, name, oldVersion, version, storeProperties) {
-    this.__db = db;
-    this.__closed = false;
-    this.__oldVersion = oldVersion;
-    this.__version = version;
-    this.__name = name;
-    this.onabort = this.onclose = this.onerror = this.onversionchange = null;
-
-    this.__transactions = [];
-    this.__objectStores = {};
-    this.__objectStoreNames = util.DOMStringList.__createInstance();
-    const itemCopy = {};
-    for (let i = 0; i < storeProperties.rows.length; i++) {
-        const item = storeProperties.rows.item(i);
-        // Safari implements `item` getter return object's properties
-        //  as readonly, so we copy all its properties (except our
-        //  custom `currNum` which we don't need) onto a new object
-        itemCopy.name = item.name;
-        itemCopy.keyPath = Sca.decode(item.keyPath);
-        ['autoInc', 'indexList'].forEach(function (prop) {
-            itemCopy[prop] = JSON.parse(item[prop]);
-        });
-        itemCopy.idbdb = this;
-        const store = new IDBObjectStore(itemCopy);
-        this.__objectStores[store.name] = store;
-        this.objectStoreNames.push(store.name);
-    }
-    this.__oldObjectStoreNames = this.objectStoreNames.clone();
+function IDBDatabase () {
+    throw new TypeError('Illegal constructor');
 }
+const IDBDatabaseAlias = IDBDatabase;
+IDBDatabase.__createInstance = function (db, name, oldVersion, version, storeProperties) {
+    function IDBDatabase () {
+        this[Symbol.toStringTag] = 'IDBDatabase';
+        util.defineReadonlyProperties(this, readonlyProperties);
+        this.__db = db;
+        this.__closed = false;
+        this.__oldVersion = oldVersion;
+        this.__version = version;
+        this.__name = name;
+        listeners.forEach((listener) => {
+            Object.defineProperty(this, listener, {
+                enumerable: true,
+                configurable: true,
+                get: function () {
+                    return this['__' + listener];
+                },
+                set: function (val) {
+                    this['__' + listener] = val;
+                }
+            });
+        });
+        listeners.forEach((l) => {
+            this[l] = null;
+        });
+
+        this.__transactions = [];
+        this.__objectStores = {};
+        this.__objectStoreNames = DOMStringList.__createInstance();
+        const itemCopy = {};
+        for (let i = 0; i < storeProperties.rows.length; i++) {
+            const item = storeProperties.rows.item(i);
+            // Safari implements `item` getter return object's properties
+            //  as readonly, so we copy all its properties (except our
+            //  custom `currNum` which we don't need) onto a new object
+            itemCopy.name = item.name;
+            itemCopy.keyPath = Sca.decode(item.keyPath);
+            ['autoInc', 'indexList'].forEach(function (prop) {
+                itemCopy[prop] = JSON.parse(item[prop]);
+            });
+            itemCopy.idbdb = this;
+            const store = IDBObjectStore.__createInstance(itemCopy);
+            this.__objectStores[store.name] = store;
+            this.objectStoreNames.push(store.name);
+        }
+        this.__oldObjectStoreNames = this.objectStoreNames.clone();
+    }
+    IDBDatabase.prototype = IDBDatabaseAlias.prototype;
+    return new IDBDatabase();
+};
+
+IDBDatabase.prototype = EventTargetFactory.createInstance();
+IDBDatabase.prototype[Symbol.toStringTag] = 'IDBDatabasePrototype';
 
 /**
  * Creates a new object store.
@@ -48,8 +79,12 @@ function IDBDatabase (db, name, oldVersion, version, storeProperties) {
  * @param {object} [createOptions]
  * @returns {IDBObjectStore}
  */
-IDBDatabase.prototype.createObjectStore = function (storeName, createOptions) {
+IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions */) {
+    let createOptions = arguments[1];
     storeName = String(storeName); // W3C test within IDBObjectStore.js seems to accept string conversion
+    if (!(this instanceof IDBDatabase)) {
+        throw new TypeError('Illegal invocation');
+    }
     if (arguments.length === 0) {
         throw new TypeError('No object store name was specified');
     }
@@ -81,7 +116,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName, createOptions) {
         indexList: {},
         idbdb: this
     };
-    const store = new IDBObjectStore(storeProperties, this.__versionTransaction);
+    const store = IDBObjectStore.__createInstance(storeProperties, this.__versionTransaction);
     IDBObjectStore.__createObjectStore(this, store);
     return store;
 };
@@ -91,6 +126,9 @@ IDBDatabase.prototype.createObjectStore = function (storeName, createOptions) {
  * @param {string} storeName
  */
 IDBDatabase.prototype.deleteObjectStore = function (storeName) {
+    if (!(this instanceof IDBDatabase)) {
+        throw new TypeError('Illegal invocation');
+    }
     if (arguments.length === 0) {
         throw new TypeError('No object store name was specified');
     }
@@ -106,6 +144,9 @@ IDBDatabase.prototype.deleteObjectStore = function (storeName) {
 };
 
 IDBDatabase.prototype.close = function () {
+    if (!(this instanceof IDBDatabase)) {
+        throw new TypeError('Illegal invocation');
+    }
     this.__closed = true;
 };
 
@@ -115,7 +156,8 @@ IDBDatabase.prototype.close = function () {
  * @param {string} mode
  * @returns {IDBTransaction}
  */
-IDBDatabase.prototype.transaction = function (storeNames, mode) {
+IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
+    let mode = arguments[1];
     storeNames = typeof storeNames === 'string'
         ? [storeNames]
         : (util.isObj(storeNames) && typeof storeNames[Symbol.iterator] === 'function'
@@ -161,7 +203,7 @@ IDBDatabase.prototype.transaction = function (storeNames, mode) {
         }
     });
     // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
-    const trans = new IDBTransaction(this, storeNames, mode);
+    const trans = IDBTransaction.__createInstance(this, storeNames, mode);
     this.__transactions.push(trans);
     return trans;
 };
@@ -186,10 +228,38 @@ IDBDatabase.prototype.__forceClose = function (msg) {
     });
 };
 
-IDBDatabase.prototype[Symbol.toStringTag] = 'IDBDatabase';
+listeners.forEach((listener) => {
+    Object.defineProperty(IDBDatabase.prototype, listener, {
+        enumerable: true,
+        configurable: true,
+        get: function () {
+            throw new TypeError('Illegal invocation');
+        },
+        set: function (val) {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+});
 
-util.defineReadonlyProperties(IDBDatabase.prototype, ['name', 'version', 'objectStoreNames']);
+readonlyProperties.forEach((prop) => {
+    Object.defineProperty(IDBDatabase.prototype, prop, {
+        enumerable: true,
+        configurable: true,
+        get: function () {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+});
 
-Object.assign(IDBDatabase.prototype, EventTarget.prototype);
+Object.defineProperty(IDBDatabase.prototype, 'constructor', {
+    enumerable: false,
+    writable: true,
+    configurable: true,
+    value: IDBDatabase
+});
+
+Object.defineProperty(IDBDatabase, 'prototype', {
+    writable: false
+});
 
 export default IDBDatabase;

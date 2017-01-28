@@ -1,4 +1,4 @@
-import CFG from './CFG.js';
+import CFG from './CFG';
 
 /**
  * Creates a native DOMException, for browsers that support it
@@ -142,19 +142,19 @@ try {
     }
 } catch (e) {}
 
-let createDOMException, shimDOMException;
+let createDOMException, ShimDOMException;
 if (useNativeDOMException) {
-    shimDOMException = DOMException;
+    ShimDOMException = DOMException;
     createDOMException = function (name, message, error) {
         logError(name, message, error);
         return createNativeDOMException(name, message);
     };
 } else {
-    shimDOMException = Error;
+    ShimDOMException = Error;
     createDOMException = function (name, message, error) {
         logError(name, message, error);
         return createError(name, message);
     };
 }
 
-export {logError, findError, shimDOMException as DOMException, createDOMException, webSQLErrback};
+export {logError, findError, ShimDOMException, createDOMException, webSQLErrback};

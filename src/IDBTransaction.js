@@ -1,13 +1,15 @@
-import {createEvent} from './Event.js';
-import {logError, findError, webSQLErrback, createDOMException} from './DOMException.js';
-import {IDBRequest} from './IDBRequest.js';
-import * as util from './util.js';
-import IDBObjectStore from './IDBObjectStore.js';
-import CFG from './CFG.js';
-import EventTarget from 'eventtarget';
+import {createEvent} from './Event';
+import {logError, findError, webSQLErrback, createDOMException} from './DOMException';
+import {IDBRequest} from './IDBRequest';
+import * as util from './util';
+import IDBObjectStore from './IDBObjectStore';
+import CFG from './CFG';
+import {EventTargetFactory} from 'eventtarget';
 import SyncPromise from 'sync-promise';
 
 let uniqueID = 0;
+const listeners = ['onabort', 'oncomplete', 'onerror'];
+const readonlyProperties = ['objectStoreNames', 'mode', 'db', 'error'];
 
 /**
  * The IndexedDB Transaction
@@ -17,26 +19,56 @@ let uniqueID = 0;
  * @param {string} mode
  * @constructor
  */
-function IDBTransaction (db, storeNames, mode) {
-    const me = this;
-    me.__id = ++uniqueID; // for debugging simultaneous transactions
-    me.__active = true;
-    me.__running = false;
-    me.__errored = false;
-    me.__requests = [];
-    me.__objectStoreNames = storeNames;
-    me.__mode = mode;
-    me.__db = db;
-    me.__error = null;
-    me.__internal = false;
-    me.onabort = me.onerror = me.oncomplete = null;
-    me.__storeClones = {};
-    me.__setOptions({defaultSync: true, extraProperties: ['complete']}); // Ensure EventTarget preserves our properties
-
-    // Kick off the transaction as soon as all synchronous code is done
-    setTimeout(() => { me.__executeRequests(); }, 0);
+function IDBTransaction () {
+    throw new TypeError('Illegal constructor');
 }
+const IDBTransactionAlias = IDBTransaction;
+IDBTransaction.__createInstance = function (db, storeNames, mode) {
+    function IDBTransaction () {
+        const me = this;
+        me[Symbol.toStringTag] = 'IDBTransaction';
+        util.defineReadonlyProperties(me, readonlyProperties);
+        me.__id = ++uniqueID; // for debugging simultaneous transactions
+        me.__active = true;
+        me.__running = false;
+        me.__errored = false;
+        me.__requests = [];
+        me.__objectStoreNames = storeNames;
+        me.__mode = mode;
+        me.__db = db;
+        me.__error = null;
+        me.__internal = false;
 
+        readonlyProperties.forEach((readonlyProp) => {
+            Object.defineProperty(this, readonlyProp, {
+                configurable: true
+            });
+        });
+        listeners.forEach((listener) => {
+            Object.defineProperty(this, listener, {
+                enumerable: true,
+                configurable: true,
+                get: function () {
+                    return this['__' + listener];
+                },
+                set: function (val) {
+                    this['__' + listener] = val;
+                }
+            });
+        });
+        listeners.forEach((l) => {
+            this[l] = null;
+        });
+        me.__storeClones = {};
+
+        // Kick off the transaction as soon as all synchronous code is done
+        setTimeout(() => { me.__executeRequests(); }, 0);
+    }
+    IDBTransaction.prototype = IDBTransactionAlias.prototype;
+    return new IDBTransaction();
+};
+
+IDBTransaction.prototype = EventTargetFactory.createInstance({defaultSync: true, extraProperties: ['complete']}); // Ensure EventTarget preserves our properties
 IDBTransaction.prototype.__transFinishedCb = function (err, cb) {
     if (err) {
         cb(true);
@@ -44,7 +76,6 @@ IDBTransaction.prototype.__transFinishedCb = function (err, cb) {
     }
     cb();
 };
-
 IDBTransaction.prototype.__executeRequests = function () {
     const me = this;
     if (me.__running) {
@@ -254,7 +285,7 @@ IDBTransaction.prototype.__executeRequests = function () {
  */
 IDBTransaction.prototype.__createRequest = function (source) {
     const me = this;
-    const request = new IDBRequest();
+    const request = IDBRequest.__createInstance();
     request.__source = source !== undefined ? source : me.db;
     request.__transaction = me;
     return request;
@@ -323,6 +354,9 @@ IDBTransaction.prototype.__assertVersionChange = function () {
  */
 IDBTransaction.prototype.objectStore = function (objectStoreName) {
     const me = this;
+    if (!(me instanceof IDBTransaction)) {
+        throw new TypeError('Illegal invocation');
+    }
     if (arguments.length === 0) {
         throw new TypeError('No object store name was specified');
     }
@@ -435,13 +469,16 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
 
 IDBTransaction.prototype.abort = function () {
     const me = this;
+    if (!(me instanceof IDBTransaction)) {
+        throw new TypeError('Illegal invocation');
+    }
     CFG.DEBUG && console.log('The transaction was aborted', me);
     if (!me.__active) {
         throw createDOMException('InvalidStateError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
     me.__abortTransaction(null);
 };
-IDBTransaction.prototype[Symbol.toStringTag] = 'IDBTransaction';
+IDBTransaction.prototype[Symbol.toStringTag] = 'IDBTransactionPrototype';
 
 IDBTransaction.__assertVersionChange = function (tx) {
     if (!tx || tx.mode !== 'versionchange') {
@@ -477,8 +514,39 @@ IDBTransaction.prototype.__userErrorEventHandler = function (error, triggerGloba
     triggerGlobalErrorEvent();
 };
 
-util.defineReadonlyProperties(IDBTransaction.prototype, ['objectStoreNames', 'mode', 'db', 'error']);
+listeners.forEach((listener) => {
+    Object.defineProperty(IDBTransaction.prototype, listener, {
+        enumerable: true,
+        configurable: true,
+        get: function () {
+            throw new TypeError('Illegal invocation');
+        },
+        set: function (val) {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+});
 
-Object.assign(IDBTransaction.prototype, EventTarget.prototype);
+// Illegal invocations
+readonlyProperties.forEach((prop) => {
+    Object.defineProperty(IDBTransaction.prototype, prop, {
+        enumerable: true,
+        configurable: true,
+        get: function () {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+});
+
+Object.defineProperty(IDBTransaction.prototype, 'constructor', {
+    enumerable: false,
+    writable: true,
+    configurable: true,
+    value: IDBTransaction
+});
+
+Object.defineProperty(IDBTransaction, 'prototype', {
+    writable: false
+});
 
 export default IDBTransaction;

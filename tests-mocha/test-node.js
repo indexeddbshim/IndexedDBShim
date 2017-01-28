@@ -18,7 +18,7 @@ window.onerror = function () {
 
 (function () {
     const setGlobalVars = require('../dist/indexeddbshim-node.js');
-    setGlobalVars();
+    setGlobalVars(window, {addNonIDBGlobals: true});
 
     require('./test-environment.js');
     require('./test-utils.js');

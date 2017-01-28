@@ -1,11 +1,13 @@
-import {createEvent, ShimEvent, IDBVersionChangeEvent} from './Event.js';
-import {webSQLErrback, createDOMException, DOMException} from './DOMException.js';
-import {IDBOpenDBRequest, IDBRequest} from './IDBRequest.js';
-import * as util from './util.js';
-import Key from './Key.js';
-import IDBTransaction from './IDBTransaction.js';
-import IDBDatabase from './IDBDatabase.js';
-import CFG from './CFG.js';
+import {createEvent, ShimEvent, ShimCustomEvent, ShimEventTarget} from './Event';
+import IDBVersionChangeEvent from './IDBVersionChangeEvent';
+import {webSQLErrback, createDOMException, ShimDOMException} from './DOMException';
+import {IDBOpenDBRequest, IDBRequest} from './IDBRequest';
+import ShimDOMStringList from './DOMStringList';
+import * as util from './util';
+import Key from './Key';
+import IDBTransaction from './IDBTransaction';
+import IDBDatabase from './IDBDatabase';
+import CFG from './CFG';
 
 let sysdb;
 
@@ -35,25 +37,40 @@ function createSysDB (success, failure) {
  * @constructor
  */
 function IDBFactory () {
-    this.modules = { // Export other shims (especially for testing)
-        Event: typeof Event !== 'undefined' ? Event : ShimEvent,
-        ShimEvent,
-        DOMException,
-        DOMStringList: util.DOMStringList,
-        IDBFactory
-    };
-    this.utils = {createDOMException}; // Expose for ease in simulating such exception during testing
-    this.__connections = [];
+    throw new TypeError('Illegal constructor');
 }
+const IDBFactoryAlias = IDBFactory;
+IDBFactory.__createInstance = function () {
+    function IDBFactory () {
+        this[Symbol.toStringTag] = 'IDBFactory';
+        this.modules = { // Export other shims (especially for testing)
+            Event: typeof Event !== 'undefined' ? Event : ShimEvent,
+            ShimEvent,
+            ShimCustomEvent,
+            ShimEventTarget,
+            ShimDOMException,
+            ShimDOMStringList,
+            IDBFactory
+        };
+        this.utils = {createDOMException}; // Expose for ease in simulating such exception during testing
+        this.__connections = [];
+    }
+    IDBFactory.prototype = IDBFactoryAlias.prototype;
+    return new IDBFactory();
+};
 
 /**
  * The IndexedDB Method to create a new database and return the DB
  * @param {string} name
  * @param {number} version
  */
-IDBFactory.prototype.open = function (name, version) {
+IDBFactory.prototype.open = function (name /* , version */) {
     const me = this;
-    const req = new IDBOpenDBRequest();
+    if (!(me instanceof IDBFactory)) {
+        throw new TypeError('Illegal invocation');
+    }
+    let version = arguments[1];
+    const req = IDBOpenDBRequest.__createInstance();
     let calledDbCreateError = false;
 
     if (arguments.length === 0) {
@@ -105,7 +122,7 @@ IDBFactory.prototype.open = function (name, version) {
         db.transaction(function (tx) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS __sys__ (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB, currNum INTEGER)', [], function () {
                 tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList", "currNum" FROM __sys__', [], function (tx, data) {
-                    req.__result = new IDBDatabase(db, name, oldVersion, version, data);
+                    req.__result = IDBDatabase.__createInstance(db, name, oldVersion, version, data);
                     me.__connections.push(req.result);
                     if (oldVersion < version) {
                         // DB Upgrade in progress
@@ -135,7 +152,7 @@ IDBFactory.prototype.open = function (name, version) {
                         sysdb.transaction(function (systx) {
                             function versionSet () {
                                 const e = new IDBVersionChangeEvent('upgradeneeded', {oldVersion, newVersion: version});
-                                req.__transaction = req.result.__versionTransaction = new IDBTransaction(req.result, req.result.objectStoreNames, 'versionchange');
+                                req.__transaction = req.result.__versionTransaction = IDBTransaction.__createInstance(req.result, req.result.objectStoreNames, 'versionchange');
                                 req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded (tx, args, finished, error) {
                                     req.dispatchEvent(e);
                                     finished();
@@ -231,7 +248,10 @@ IDBFactory.prototype.open = function (name, version) {
  * @returns {IDBOpenDBRequest}
  */
 IDBFactory.prototype.deleteDatabase = function (name) {
-    const req = new IDBOpenDBRequest();
+    if (!(this instanceof IDBFactory)) {
+        throw new TypeError('Illegal invocation');
+    }
+    const req = IDBOpenDBRequest.__createInstance();
     let calledDBError = false;
     let version = 0;
 
@@ -354,10 +374,6 @@ IDBFactory.prototype.deleteDatabase = function (name) {
  * @returns {number}
  */
 function cmp (key1, key2) {
-    if (arguments.length < 2) {
-        throw new TypeError('You must provide two keys to be compared');
-    }
-
     Key.convertValueToKey(key1);
     Key.convertValueToKey(key2);
     const encodedKey1 = Key.encode(key1);
@@ -389,7 +405,15 @@ function cmp (key1, key2) {
     return result;
 }
 
-IDBFactory.prototype.cmp = cmp;
+IDBFactory.prototype.cmp = function (key1, key2) {
+    if (!(this instanceof IDBFactory)) {
+        throw new TypeError('Illegal invocation');
+    }
+    if (arguments.length < 2) {
+        throw new TypeError('You must provide two keys to be compared');
+    }
+    return cmp(key1, key2);
+};
 
 /**
 * NON-STANDARD!! (Also may return outdated information if a database has since been deleted)
@@ -410,11 +434,11 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
         req.__result = undefined;
         req.dispatchEvent(evt);
     }
-    const req = new IDBRequest();
+    const req = IDBRequest.__createInstance();
     createSysDB(function () {
         sysdb.readTransaction(function (sysReadTx) {
             sysReadTx.executeSql('SELECT "name" FROM dbVersions', [], function (sysReadTx, data) {
-                const dbNames = util.DOMStringList.__createInstance();
+                const dbNames = ShimDOMStringList.__createInstance();
                 for (let i = 0; i < data.rows.length; i++) {
                     dbNames.push(util.unescapeSQLiteResponse(data.rows.item(i).name));
                 }
@@ -451,7 +475,11 @@ IDBFactory.prototype.__forceClose = function (connIdx, msg) {
     }
 };
 
-IDBFactory.prototype[Symbol.toStringTag] = 'IDBFactory';
+IDBFactory.prototype[Symbol.toStringTag] = 'IDBFactoryPrototype';
 
-const shimIndexedDB = new IDBFactory();
+Object.defineProperty(IDBFactory, 'prototype', {
+    writable: false
+});
+
+const shimIndexedDB = IDBFactory.__createInstance();
 export {IDBFactory, cmp, shimIndexedDB};

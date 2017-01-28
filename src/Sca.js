@@ -1,7 +1,7 @@
 /* eslint-disable no-eval */
 import atob from 'atob';
 import Blob from 'w3c-blob'; // Needed by Node; uses native if available (browser)
-import * as util from './util.js';
+import * as util from './util';
 
 /**
  * Implementation of the Structured Cloning Algorithm.  Supports the

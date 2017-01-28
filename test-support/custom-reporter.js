@@ -1,7 +1,7 @@
 /* globals shimNS, add_completion_callback */
 // Now set-up our mechanism to report results back
 (function () {
-    // Although we needed a few of these in environment.js, we cannot set there as some are exposed by the test framework
+    // Although we needed a few of these in environment.js, we cannot set there as some are only exposed after including the test framework
     /* shimIndexedDB,indexedDB,IDBFactory,IDBDatabase,IDBObjectStore,IDBIndex,IDBTransaction,IDBCursor,IDBCursorWithValue,IDBKeyRange,IDBRequest,IDBOpenDBRequest,IDBVersionChangeEvent
 
     ,_core,_globalProxy,__timers,_top,_parent,_frameElement,_document,_sessionHistory,_currentSessionHistoryEntryIndex,_length,_virtualConsole,
@@ -14,7 +14,7 @@
     focus,moveBy,moveTo,open,print,prompt,resizeBy,resizeTo,scroll,scrollBy,scrollTo,toString,
     log,
     URL, URLSearchParams, Worker
-    DOMStringList, DOMException, Event
+    DOMException, Event
     */
     Object.keys(shimNS.window).forEach(function (prop) {
         if (prop[0] === '_' || // One type added by jsdom
@@ -59,11 +59,11 @@
         shimNS.write(msg);
     }
 
+    const fileName = shimNS.fileName;
     function reportResults (tests, harnessStatus) {
         // Todo: Look instead on `id=log` and possibly `id=summary` or
         //      `id=metadata_cache` if we add one (and `id=metadata_cache`?)
         // Insert our own reporting to be ready once tests evaluate
-        const fileName = shimNS.fileName;
         const trs = [...document.querySelectorAll('table#results > tbody > tr')];
         const jsonOutput = {
             test: '/indexeddb/' + fileName.replace(/\.js$/, '.htm'),

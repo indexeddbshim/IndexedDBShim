@@ -22,12 +22,11 @@ const wwutil = require('./webworker-util');
 // Had problems with npm and the following when requiring `webworkers`
 //   as a separate repository (due to indirect circular dependency?);
 // const indexeddbshim = require('indexeddbshim');
-const indexeddbshim = require('../../'); // '../../dist/indexeddbshim-UnicodeIdentifiers-node.js');
+const indexeddbshim = require('../../dist/indexeddbshim-UnicodeIdentifiers-node'); // require('../../');
 const XMLHttpRequest = require('xmlhttprequest');
 const Worker = require('./webworker');
-const EventTarget = require('eventtarget');
-const CustomEvent = EventTarget.CustomEventPolyfill;
 const URL = require('js-polyfills/url');
+// const isDateObject = require('is-date-object'); // Not needed in worker tests as in main thread tests
 
 /*
 const permittedProtocols;
@@ -206,7 +205,7 @@ if (workerConfig.node) {
     workerCtx.__filename = scriptLoc.pathname;
     workerCtx.__dirname = path.dirname(scriptLoc.pathname);
 }
-// XXX: There must be a better way to do this.
+
 workerCtx.console = console;
 ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'].forEach((prop) => {
     workerCtx[prop] = global[prop];
@@ -216,17 +215,12 @@ workerCtx.console = console;
 workerCtx.postMessage = function (msg) {
     ms.send([wwutil.MSGTYPE_USER, msg]);
 };
-workerCtx.self = workerCtx;
 workerCtx.WorkerGlobalScope = workerCtx;
 
 // Todo: In place of this, allow conditionally `SharedWorkerGlobalScope`, or `ServiceWorkerGlobalScope`
 workerCtx.DedicatedWorkerGlobalScope = workerCtx;
 // This was needed for testharness' `instanceof` check which requires it to be callable: `self instanceof DedicatedWorkerGlobalScope`
 workerCtx.DedicatedWorkerGlobalScope[Symbol.hasInstance] = function (inst) { return inst.WorkerGlobalScope && !inst.SharedWorkerGlobalScope && !inst.ServiceWorkerGlobalScope; };
-// We will otherwise miss these tests (though not sure this is the best solution):
-//   see test_primary_interface_of in idlharness.js
-workerCtx.Object = Object;
-workerCtx.Object[Symbol.hasInstance] = function (inst) { return inst && typeof inst === 'object'; };
 
 workerCtx.location = scriptLoc;
 workerCtx.closing = false;
@@ -274,12 +268,24 @@ workerCtx.importScripts = function () {
 };
 
 // Other Objects
-indexeddbshim(workerCtx, {addNonIDBGlobals: true}); // Add indexedDB globals (and non-IndexedDB ones that it uses like DOMStringList)
+
+// Add indexedDB globals; we also add non-IndexedDB ones that are not normally "exposed" to workers
+if ([/interfaces\.js$/, /interfaces.worker\.js$/].some((interfaceFileRegex) => interfaceFileRegex.test(workerURL))) {
+    // Only the second regex will ever be used, but just listing the files that should get fullIDLSupport
+    indexeddbshim(workerCtx, {addNonIDBGlobals: true, fullIDLSupport: true});
+} else {
+    indexeddbshim(workerCtx, {addNonIDBGlobals: true});
+}
+// We don't expose workerCtx.ShimDOMStringList as not supposed to be per IDL tests for workers (though IDL (and Chrome) currently expose it in the main thread)
+workerCtx.Event = workerCtx.ShimEvent;
+workerCtx.CustomEvent = workerCtx.ShimCustomEvent;
+workerCtx.EventTarget = workerCtx.ShimEventTarget;
+workerCtx.DOMException = workerCtx.ShimDOMException;
+
 workerCtx.XMLHttpRequest = XMLHttpRequest({basePath: workerConfig.basePath});
-workerCtx.EventTarget = EventTarget;
-workerCtx.CustomEvent = CustomEvent;
 workerCtx.URL = URL.URL;
 workerCtx.URLSearchParams = URL.URLSearchParams;
+
 workerCtx.Worker = Worker({
     relativePathType: 'file', // Todo: We need to change this to "url" when implemented
     // Todo: We might auto-detect this by looking at window.location
@@ -287,6 +293,13 @@ workerCtx.Worker = Worker({
     // basePath: path.join(__dirname, 'js')
     rootPath: workerConfig.rootPath
 });
+
+// We will otherwise miss these tests (though not sure this is the best solution):
+//   see test_primary_interface_of in idlharness.js
+workerCtx.Object = Object;
+workerCtx.Object[Symbol.hasInstance] = function (inst) { return inst && typeof inst === 'object'; };
+
+workerCtx.Function = Function; // interfaces.js with check for `DOMStringList`'s prototype being the same Function.prototype
 
 // Todo: A good Worker polyfill would implement these as possible and
 //   if exposing we should do so; for W3C IndexedDB or IndexedDB-related tests,
@@ -297,6 +310,7 @@ workerCtx.Worker = Worker({
         throw new Error(prop + ' not implemented');
     };
 });
+workerCtx.self = workerCtx;
 
 // Context object for vm script api
 workerCtxObj = vm.createContext(workerCtx);

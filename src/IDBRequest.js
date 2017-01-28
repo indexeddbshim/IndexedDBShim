@@ -1,6 +1,10 @@
-import {createDOMException} from './DOMException.js';
-import * as util from './util.js';
-import EventTarget from 'eventtarget';
+import {createDOMException} from './DOMException';
+import {EventTargetFactory} from 'eventtarget';
+import * as util from './util';
+
+const listeners = ['onsuccess', 'onerror'];
+const readonlyProperties = ['source', 'transaction', 'readyState'];
+const doneFlagGetters = ['result', 'error'];
 
 /**
  * The IDBRequest Object that is returns for all async calls
@@ -8,54 +12,167 @@ import EventTarget from 'eventtarget';
  */
 class IDBRequest {
     constructor () {
-        this.onsuccess = this.onerror = null;
-        this.__result = undefined;
-        this.__error = this.__source = this.__transaction = null;
-        this.__readyState = 'pending';
-        this.__setOptions({extraProperties: ['debug']}); // Ensure EventTarget preserves our properties
-    }
-    get [Symbol.toStringTag] () { return 'IDBRequest'; }
-    __getParent () {
-        if (this.toString() === '[object IDBOpenDBRequest]') {
-            return null;
-        }
-        return this.__transaction;
+        throw new TypeError('Illegal constructor');
     }
 }
-
-util.defineReadonlyProperties(IDBRequest.prototype, ['source', 'transaction', 'readyState']);
-
-['result', 'error'].forEach(function (prop) {
-    const obj = IDBRequest.prototype;
-    Object.defineProperty(obj, '__' + prop, {
-        enumerable: false,
-        configurable: false,
-        writable: true
+IDBRequest.__super = function IDBRequest () {
+    this[Symbol.toStringTag] = 'IDBRequest';
+    doneFlagGetters.forEach(function (prop) {
+        Object.defineProperty(this, '__' + prop, {
+            enumerable: false,
+            configurable: false,
+            writable: true
+        });
+        Object.defineProperty(this, prop, {
+            enumerable: true,
+            configurable: true,
+            get: function () {
+                if (this.__readyState !== 'done') {
+                    throw createDOMException('InvalidStateError', 'The request is still pending.');
+                }
+                return this['__' + prop];
+            }
+        });
+    }, this);
+    util.defineReadonlyProperties(this, readonlyProperties);
+    listeners.forEach((listener) => {
+        Object.defineProperty(this, listener, {
+            configurable: true, // Needed by support.js in W3C IndexedDB tests
+            get: function () {
+                return this['__' + listener];
+            },
+            set: function (val) {
+                this['__' + listener] = val;
+            }
+        });
+    }, this);
+    listeners.forEach((l) => {
+        this[l] = null;
     });
-    Object.defineProperty(obj, prop, {
+    this.__result = undefined;
+    this.__error = this.__source = this.__transaction = null;
+    this.__readyState = 'pending';
+};
+
+IDBRequest.__createInstance = function () {
+    return new IDBRequest.__super();
+};
+
+IDBRequest.prototype = EventTargetFactory.createInstance({extraProperties: ['debug']});
+IDBRequest.prototype[Symbol.toStringTag] = 'IDBRequestPrototype';
+
+IDBRequest.prototype.__getParent = function () {
+    if (this.toString() === '[object IDBOpenDBRequest]') {
+        return null;
+    }
+    return this.__transaction;
+};
+
+// Illegal invocations
+readonlyProperties.forEach((prop) => {
+    Object.defineProperty(IDBRequest.prototype, prop, {
         enumerable: true,
         configurable: true,
         get: function () {
-            if (this.__readyState !== 'done') {
-                throw createDOMException('InvalidStateError', 'The request is still pending.');
-            }
-            return this['__' + prop];
+            throw new TypeError('Illegal invocation');
         }
     });
 });
 
-Object.assign(IDBRequest.prototype, EventTarget.prototype);
+doneFlagGetters.forEach(function (prop) {
+    Object.defineProperty(IDBRequest.prototype, prop, {
+        enumerable: true,
+        configurable: true,
+        get: function () {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+});
+
+listeners.forEach((listener) => {
+    Object.defineProperty(IDBRequest.prototype, listener, {
+        enumerable: true,
+        configurable: true,
+        get: function () {
+            throw new TypeError('Illegal invocation');
+        },
+        set: function (val) {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+});
+
+Object.defineProperty(IDBRequest.prototype, 'constructor', {
+    enumerable: false,
+    writable: true,
+    configurable: true,
+    value: IDBRequest
+});
+IDBRequest.__super.prototype = IDBRequest.prototype;
+
+Object.defineProperty(IDBRequest, 'prototype', {
+    writable: false
+});
+
+const openListeners = ['onblocked', 'onupgradeneeded'];
 
 /**
  * The IDBOpenDBRequest called when a database is opened
  */
 class IDBOpenDBRequest extends IDBRequest {
-    constructor () {
-        super();
-        this.__setOptions({extraProperties: ['oldVersion', 'newVersion', 'debug']}); // Ensure EventTarget preserves our properties
-        this.onblocked = this.onupgradeneeded = null;
-    }
-    get [Symbol.toStringTag] () { return 'IDBOpenDBRequest'; }
 }
+IDBOpenDBRequest.prototype = Object.create(IDBRequest.prototype);
+
+Object.defineProperty(IDBOpenDBRequest.prototype, 'constructor', {
+    enumerable: false,
+    writable: true,
+    configurable: true,
+    value: IDBOpenDBRequest
+});
+
+const IDBOpenDBRequestAlias = IDBOpenDBRequest;
+IDBOpenDBRequest.__createInstance = function () {
+    function IDBOpenDBRequest () {
+        IDBRequest.__super.call(this);
+
+        this[Symbol.toStringTag] = 'IDBOpenDBRequest';
+        this.__setOptions({extraProperties: ['oldVersion', 'newVersion', 'debug']}); // Ensure EventTarget preserves our properties
+        openListeners.forEach((listener) => {
+            Object.defineProperty(this, listener, {
+                configurable: true, // Needed by support.js in W3C IndexedDB tests
+                get: function () {
+                    return this['__' + listener];
+                },
+                set: function (val) {
+                    this['__' + listener] = val;
+                }
+            });
+        }, this);
+        openListeners.forEach((l) => {
+            this[l] = null;
+        });
+    }
+    IDBOpenDBRequest.prototype = IDBOpenDBRequestAlias.prototype;
+    return new IDBOpenDBRequest();
+};
+
+openListeners.forEach((listener) => {
+    Object.defineProperty(IDBOpenDBRequest.prototype, listener, {
+        enumerable: true,
+        configurable: true,
+        get: function () {
+            throw new TypeError('Illegal invocation');
+        },
+        set: function (val) {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+});
+
+IDBOpenDBRequest.prototype[Symbol.toStringTag] = 'IDBOpenDBRequestPrototype';
+
+Object.defineProperty(IDBOpenDBRequest, 'prototype', {
+    writable: false
+});
 
 export {IDBRequest, IDBOpenDBRequest};

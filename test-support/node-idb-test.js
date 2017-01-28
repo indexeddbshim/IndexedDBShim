@@ -216,11 +216,34 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                             const doc = jsdom.jsdom('<div id="log"></div>', {});
                             const window = doc.defaultView; // eslint-disable-line no-var
 
+                            // Todo: We are failing one W3C interfaces test (and possibly obscuring bugs in other tests) because
+                            //    jsdom is apparently having problems with `Object.defineProperty` and accessor descriptors (or
+                            //    with `Object.getOwnPropertyDescriptor` when retrieving them); see https://github.com/tmpvar/jsdom/issues/1720
+                            //    Thus, `indexedDB`, despite being set in `setGlobalVars`with a getter, is not retained as such when checked by the test.
+
                             // Todo: We might switch based on file to normally try non-Unicode version or otherwise exclude properties as
                             //   some of these do incur a significant performance cost which could speed up the testing process if avoided,
                             //   though it could also make the tests more fragile to changes
                             // indexeddbshimNonUnicode(window);
-                            indexeddbshim(window, {addNonIDBGlobals: true});
+                            if (['interfaces.js', 'interfaces.worker.js'].includes(shimNS.fileName)) {
+                                indexeddbshim(window, {addNonIDBGlobals: true, fullIDLSupport: true});
+                            } else {
+                                indexeddbshim(window, {addNonIDBGlobals: true});
+                            }
+
+                            // Though we could expose `DOMStringList` through the shim, we want to avoid automatically shadowing it in case it may exist already in the browser
+                            Object.defineProperty(window, 'DOMStringList', {
+                                enumerable: false,
+                                configurable: true,
+                                get: function () {
+                                    return window.ShimDOMStringList;
+                                }
+                            });
+                            window.Event = window.ShimEvent;
+                            window.CustomEvent = window.ShimCustomEvent;
+                            window.EventTarget = window.ShimEventTarget;
+                            window.DOMException = window.ShimDOMException;
+
                             // window.XMLHttpRequest = XMLHttpRequest({basePath: 'http://localhost:8000/IndexedDB/'}); // Todo: We should support this too
                             window.XMLHttpRequest = XMLHttpRequest({basePath});
                             window.URL = URL.URL;
@@ -271,6 +294,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                                 timeout: vmTimeout
                             });
                         } catch (err) {
+                            console.log(err);
                             // If there is an issue, save the last erring test along with our
                             // custom test environment and the harness bundle; avoid some of our
                             //  ESLint rules on this joined file to better notice any other
@@ -331,6 +355,10 @@ case 'bad':
     break;
 case 'notRunning':
     readAndEvaluateFiles(null, notRunning);
+    break;
+case 'events': case 'event':
+    // Tests `EventTarget` shim
+    readAndEvaluateFiles(null, ['../non-indexedDB/__event.js']);
     break;
 case 'workers': case 'worker':
     fs.readdir(dirPath, function (err, jsFiles) {

@@ -12,7 +12,8 @@
 - `idbobjectstore_openKeyCursor.js` - seems to have its last test in a
     race condition or such to cause pass/fail results to vary
 
-- `interfaces.worker.js`: Sometimes actually times out
+- `interfaces.js`: Has one failing test due to a bug in Node: https://github.com/tmpvar/jsdom/issues/1720
+- `interfaces.worker.js`: Has one failing test due to a bug in Node: https://github.com/tmpvar/jsdom/issues/1720
 
 // Passing no argument to `node-idb-test.js` will test all of the IndexedDB
 //   tests including some worker tests, but only those within the
@@ -20,8 +21,8 @@
 
 IndexedDB Test counts: 284 files (including 1 domstringlist file):  251 good, 33 bad
 Current IndexedDB (and domstringlist) test statuses with 0 files excluded (vmTimeout = 40000):
-  'Pass': 697, (including 4 domstringlist tests)
-  'Fail': 277,
+  'Pass': 912, (including 4 domstringlist tests)
+  'Fail': 62,
   'Timeout': 0,
   'Not Run': 22,
   'Total tests': 996 (including 4 domstringlist tests)
@@ -48,6 +49,19 @@ Current worker test statuses with 2 files excluded:
   'Fail': 1,
   'Not Run': 0,
   'Total tests': 96
+
+// Passing the "events" argument to `node-idb-test.js` will run the event
+//   tests. These are relevant for IndexedDB in that we are implementing and
+//   passing events. These are not present in the IndexedDB folder.
+//   Unlike the other tests, this test is hard-coded. It could be conceivably
+//   live-updated from `web-platform-tests/html/dom/interfaces.html` (where
+//   the contents were originally obtained), but any partial inclusion might
+//   be fragile.
+  'Pass': 45,
+  'Fail': 0,
+  'Timeout': 0,
+  'Not Run': 0,
+  'Total tests': 45
 */
 const goodBad = {
     notRunning: [

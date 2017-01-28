@@ -85,16 +85,18 @@ they were actually changes since a more recent version on `master`.
     invocation of multiple listeners as by `addEventListener` (not
     yet treating bubbling or `preventDefault`); change `ShimEvent` to utilize
     polyfill from `eventtarget`
-- Enhancement: Expose `DOMStringList` on `indexedDB.modules` for
+- Enhancement: Expose `ShimDOMStringList` on `indexedDB.modules` for
      sake of tests (the former also renamed internally for interfaces
      testing); we may deprecate `indexedDB.modules` however, as
      `CFG.addNonIDBGlobals` is now allowing export
 - Enhancement: Add new `CFG` property, `addNonIDBGlobals`, to allow
      polyfilling non-IndexedDB interfaces used internally (and needed
-     potentially for testing); `DOMStringList`, `DOMException`, and
-     `Event`
+     potentially for testing); `ShimDOMStringList`, `ShimDOMException`,
+     `ShimEvent`, `ShimCustomEvent`, and `ShimEventTarget`
 - Enhancement: Add non-standard `sqlError` property to `DOMException`
     for facilitating debugging
+- Enhancement: Export `ShimCustomEvent` and `ShimEventTarget` shims we
+    are using on `IDBFactory.modules` for sake of testing checks
 - Missing API: Add `IDBCursor.continuePrimaryKey` (untested)
 - Missing API: Implement `IDBObjectStore.getKey` (untested)
 - Missing APIs: Implement `IDBIndex.getAll/getAllKeys` (untested)
@@ -378,6 +380,20 @@ they were actually changes since a more recent version on `master`.
 - Fix: Make `DOMStringList` non-enumerable but configurable
 - Fix: Interface changes for `DOMStringList`: illegal constructor, length
    enumerable, `instanceof` override
+- Fix: WebIDL-based changes, including:
+   1) new `CFG` option `fullIDLSupport` to avoid expensive
+       `setPrototypeOf` by default;
+   2) Illegal constructor and `prototype` invocation (while allowing
+       normal access)
+   3) Make `prototype` non-writable as appropriate
+   4) Ensure `constructor` set on `prototype` as appropriate
+   5) Proper `Symbol.toStringTag` and `toString` exposure on
+       classes and prototypes
+   6) Use `arguments` object in place of some function parameters
+       to get proper function lengths
+   7) Set properties to appropriate `enumerable`/`configurable`
+   8) Set proper inheritance hierarchy, including to `EventTarget` or
+       `Event`
 - Fix: Properly report global shimming errors when setting a readonly
    failed and `Object.defineProperty` is not present
 - Repo files: Rename test folders for ease in distinguishing
@@ -429,6 +445,8 @@ they were actually changes since a more recent version on `master`.
     alter its readonly `target`, `currentTarget`, etc. properties
 - Refactoring: Throw count 0 error differently from negative count in
     `IDBCursor.advance`
+- Refactoring: Put `DOMStringList` and `IDBVersionChangeEvent` into own
+    files
 - Updating: Bump various `devDependency` min versions
 - Docs: List known issues on README
 - Docs: Notice on deprecation for transaction mode constants
@@ -467,6 +485,8 @@ they were actually changes since a more recent version on `master`.
 - Test scaffolding (W3C Old): Fix test ok condition, typo
 - Test scaffolding (W3C Old): Fix assertions
 - Testing (W3C): Add new preliminary testing framework (mostly complete)
+- Testing (W3C): Add separate tests for events and workers; also
+    incorporate test for `DOMStringList`
 - (Testing:
     From tests-mocha and tests-qunit (Node and browser), all tests
         are now passing

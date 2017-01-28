@@ -1,14 +1,14 @@
 
-import {IDBRequest} from './IDBRequest.js';
-import {createDOMException} from './DOMException.js';
-import {setSQLForRange, IDBKeyRange} from './IDBKeyRange.js';
-import {cmp} from './IDBFactory.js';
-import * as util from './util.js';
-import IDBTransaction from './IDBTransaction.js';
-import Key from './Key.js';
-import Sca from './Sca.js';
-import IDBIndex from './IDBIndex.js';
-import CFG from './CFG.js';
+import {IDBRequest} from './IDBRequest';
+import {createDOMException} from './DOMException';
+import {setSQLForRange, IDBKeyRange} from './IDBKeyRange';
+import {cmp} from './IDBFactory';
+import * as util from './util';
+import IDBTransaction from './IDBTransaction';
+import Key from './Key';
+import Sca from './Sca';
+import IDBIndex from './IDBIndex';
+import CFG from './CFG';
 
 /**
  * The IndexedDB Cursor Object
@@ -21,7 +21,13 @@ import CFG from './CFG.js';
  * @param {string} valueColumnName
  * @param {boolean} count
  */
-function IDBCursor (range, direction, store, source, keyColumnName, valueColumnName, count) {
+function IDBCursor () {
+    throw new TypeError('Illegal constructor');
+}
+const IDBCursorAlias = IDBCursor;
+IDBCursor.__super = function IDBCursor (range, direction, store, source, keyColumnName, valueColumnName, count) {
+    this[Symbol.toStringTag] = 'IDBCursor';
+    util.defineReadonlyProperties(this, ['key', 'primaryKey']);
     // Calling openCursor on an index or objectstore with null is allowed but we treat it as undefined internally
     IDBTransaction.__assertActive(store.transaction);
     if (range === null) {
@@ -30,10 +36,10 @@ function IDBCursor (range, direction, store, source, keyColumnName, valueColumnN
     if (util.instanceOf(range, IDBKeyRange)) {
         // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
         if (!range.toString() !== '[object IDBKeyRange]') {
-            range = new IDBKeyRange(range.lower, range.upper, range.lowerOpen, range.upperOpen);
+            range = IDBKeyRange.__createInstance(range.lower, range.upper, range.lowerOpen, range.upperOpen);
         }
     } else if (range !== undefined) {
-        range = new IDBKeyRange(range, range, false, false);
+        range = IDBKeyRange.__createInstance(range, range, false, false);
     }
     if (direction !== undefined && !(['next', 'prev', 'nextunique', 'prevunique'].includes(direction))) {
         throw new TypeError(direction + 'is not a valid cursor direction');
@@ -49,7 +55,7 @@ function IDBCursor (range, direction, store, source, keyColumnName, valueColumnN
 
     this.__store = store;
     this.__range = range;
-    this.__req = new IDBRequest();
+    this.__req = IDBRequest.__createInstance();
     this.__req.__source = source;
     this.__req.__transaction = this.__store.transaction;
     this.__keyColumnName = keyColumnName;
@@ -70,7 +76,13 @@ function IDBCursor (range, direction, store, source, keyColumnName, valueColumnN
     }
     this.__gotValue = true;
     this['continue']();
-}
+};
+
+IDBCursor.__createInstance = function (...args) {
+    const IDBCursor = IDBCursorAlias.__super;
+    IDBCursor.prototype = IDBCursorAlias.prototype;
+    return new IDBCursor(...args);
+};
 
 IDBCursor.prototype.__find = function (...args /* key, tx, success, error, recordsToLoad */) {
     if (this.__multiEntryIndex) {
@@ -415,8 +427,8 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
     });
 };
 
-IDBCursor.prototype['continue'] = function (key) {
-    this.__continue(key);
+IDBCursor.prototype['continue'] = function (/* key */) {
+    this.__continue(arguments[0]);
 };
 
 IDBCursor.prototype.continuePrimaryKey = function (key, primaryKey) {
@@ -559,14 +571,45 @@ IDBCursor.prototype['delete'] = function () {
     }, undefined, me);
 };
 
-IDBCursor.prototype[Symbol.toStringTag] = 'IDBCursor';
+IDBCursor.prototype[Symbol.toStringTag] = 'IDBCursorPrototype';
 
-util.defineReadonlyProperties(IDBCursor.prototype, ['key', 'primaryKey']);
+['source', 'direction', 'key', 'primaryKey'].forEach((prop) => {
+    Object.defineProperty(IDBCursor.prototype, prop, {
+        enumerable: true,
+        configurable: true,
+        get: function () {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+});
+Object.defineProperty(IDBCursor, 'prototype', {
+    writable: false
+});
 
-class IDBCursorWithValue extends IDBCursor {
-    get [Symbol.toStringTag] () { return 'IDBCursorWithValue'; }
-}
+class IDBCursorWithValue extends IDBCursor {}
+const IDBCursorWithValueAlias = IDBCursorWithValue;
+IDBCursorWithValue.__createInstance = function (...args) {
+    function IDBCursorWithValue () {
+        IDBCursor.__super.call(this, ...args);
+        this[Symbol.toStringTag] = 'IDBCursorWithValue';
+        util.defineReadonlyProperties(this, 'value');
+    }
+    IDBCursorWithValue.prototype = IDBCursorWithValueAlias.prototype;
+    return new IDBCursorWithValue();
+};
 
-util.defineReadonlyProperties(IDBCursorWithValue.prototype, 'value');
+Object.defineProperty(IDBCursorWithValue.prototype, 'value', {
+    enumerable: true,
+    configurable: true,
+    get: function () {
+        throw new TypeError('Illegal invocation');
+    }
+});
+
+IDBCursorWithValue.prototype[Symbol.toStringTag] = 'IDBCursorWithValuePrototype';
+
+Object.defineProperty(IDBCursorWithValue, 'prototype', {
+    writable: false
+});
 
 export {IDBCursor, IDBCursorWithValue};

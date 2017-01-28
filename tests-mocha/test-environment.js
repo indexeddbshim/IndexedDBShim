@@ -59,8 +59,8 @@
          * IndexedDBShim can't always use these native classes, because some browsers don't allow us to instantiate them.
          * It's also not safe to shim these classes on the global scope, because it could break other stuff.
          */
-        Event: window.Event,
-        DOMException: window.DOMException,
+        Event: window.ShimEvent,
+        DOMException: window.ShimDOMException,
 
         /**
          * Safe duration by which transaction should have expired
@@ -109,7 +109,7 @@
             if (env.isShimmed) {
                 // Use the shimmed Error & Event classes instead of the native ones
                 env.Event = shimIndexedDB.modules.ShimEvent;
-                env.DOMException = shimIndexedDB.modules.DOMException;
+                env.DOMException = shimIndexedDB.modules.ShimDOMException;
             }
 
             if (env.nativeIndexedDB) {

@@ -6,9 +6,15 @@ const CFG = {};
     'DEBUG', // Effectively defaults to false (ignored unless true)
 
     // Used when setting global shims to determine whether to try to add
-    //   other globals shimmed by the library (`DOMException`, `DOMStringList`,
-    //   `Event`)
+    //   other globals shimmed by the library (`ShimDOMException`, `ShimDOMStringList`,
+    //   `ShimEvent`, `ShimCustomEvent`, `ShimEventTarget`)
     'addNonIDBGlobals', // Effectively defaults to false (ignored unless true)
+
+    // Determines whether the slow-performing `Object.setPrototypeOf` calls required
+    //    for full WebIDL compliance will be used. Probably only needed for testing
+    //    or environments where full introspection on class relationships is required;
+    //    see http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
+    'fullIDLSupport', // Effectively defaults to false (ignored unless true)
 
     // Used by `IDBCursor` continue methods for number of records to cache;
     'cursorPreloadPackSize', //  Defaults to 100

@@ -1,5 +1,5 @@
-import {createDOMException} from './DOMException.js';
-import Key from './Key.js';
+import {createDOMException} from './DOMException';
+import Key from './Key';
 
 // Todo: polyfill IDBVersionChangeEvent, IDBOpenDBRequest?
 
