@@ -1,7 +1,7 @@
 // Todo: Reuse any relevant portions in this file or `node-buildjs.js` for adapting tests for browser shimming
 const fs = require('fs');
 const path = require('path');
-const {goodFiles, badFiles, notRunning} = require('./node-good-bad-files');
+const {goodFiles, badFiles, notRunning, timeout} = require('./node-good-bad-files');
 const vm = require('vm');
 const jsdom = require('jsdom');
 const CY = require('cyclonejs');
@@ -141,7 +141,11 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
     // Exclude those currently breaking the tests
     // Todo: Replace with `uncaughtException` handlers above?
     const testingAllWorkers = workers && jsFiles.length > 1;
-    const excluded = testingAllWorkers ? ['_interface-objects-003.js', '_interface-objects-004.js'] : [];
+    const excluded = [ // Keep this array even if made empty for sake of any new breaking W3C tests
+        'bindings-inject-key.js',
+        'keypath-exceptions.js',
+        'keypath-special-identifiers.js'
+    ].concat(testingAllWorkers ? ['_interface-objects-003.js', '_interface-objects-004.js'] : []);
     if (excluded.includes(shimNS.fileName) || (!workers && workerFileRegex.test(shimNS.fileName))) {
         excludedCount++;
         shimNS.finished();
@@ -352,6 +356,9 @@ case 'good':
     break;
 case 'bad':
     readAndEvaluateFiles(null, badFiles);
+    break;
+case 'timeout':
+    readAndEvaluateFiles(null, timeout);
     break;
 case 'notRunning':
     readAndEvaluateFiles(null, notRunning);
