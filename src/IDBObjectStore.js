@@ -510,7 +510,7 @@ IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
         throw createDOMException('InvalidStateError', 'This store has been deleted');
     }
     IDBTransaction.__assertActive(me.transaction);
-    if (range == null) {
+    if (!getAll && range == null) {
         throw createDOMException('DataError', 'No key or range was specified');
     }
 
@@ -519,14 +519,17 @@ IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
         if (!range.toString() !== '[object IDBKeyRange]') {
             range = IDBKeyRange.__createInstance(range.lower, range.upper, range.lowerOpen, range.upperOpen);
         }
-    } else {
+    } else if (range != null) {
         range = IDBKeyRange.only(range);
     }
 
     const col = getKey ? 'key' : 'value';
-    let sql = ['SELECT ' + util.quote(col) + ' FROM ', util.escapeStoreNameForSQL(me.name), ' WHERE '];
+    let sql = ['SELECT ' + util.quote(col) + ' FROM ', util.escapeStoreNameForSQL(me.name)];
     const sqlValues = [];
-    setSQLForRange(range, util.quote('key'), sql, sqlValues);
+    if (range != null) {
+        sql.push('WHERE');
+        setSQLForRange(range, util.quote('key'), sql, sqlValues);
+    }
     if (!getAll) {
         count = 1;
     }
@@ -545,7 +548,7 @@ IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
             try {
                 // Opera can't deal with the try-catch here.
                 if (data.rows.length === 0) {
-                    return success();
+                    return getAll ? success([]) : success();
                 }
                 ret = [];
                 if (getKey) {
@@ -558,7 +561,7 @@ IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
                 } else {
                     for (let i = 0; i < data.rows.length; i++) {
                         ret.push(
-                            Sca.decode(util.unescapeSQLiteResponse(data.rows.item(0).value))
+                            Sca.decode(util.unescapeSQLiteResponse(data.rows.item(i).value))
                         );
                     }
                 }

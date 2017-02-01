@@ -95,10 +95,10 @@ they were actually changes since a more recent version on `master`.
 - Enhancement: Export `ShimCustomEvent` and `ShimEventTarget` shims we
     are using on `IDBFactory.modules` for sake of testing checks
 - Missing API: Add `IDBCursor.continuePrimaryKey` (untested)
-- Missing API: Implement `IDBObjectStore.getKey` (untested)
-- Missing APIs: Implement `IDBIndex.getAll/getAllKeys` (untested)
+- Missing API: Implement `IDBObjectStore.getKey` (incompletely tested)
+- Missing APIs: Implement `IDBIndex.getAll/getAllKeys` (incompletely tested)
 - Missing APIs: Implement `IDBObjectStore.getAll`,
-      `IDBObjectStore.getAllKeys` (untested)
+      `IDBObjectStore.getAllKeys` (incompletely tested)
 - Fix: Avoid `continue` errors upon multiEntry checks with open-ended ranges
 - Fix: Ensure `deleteDatabase` SQLite execution errors (not only
      its transaction errors) are properly surfaced (probably shouldn't

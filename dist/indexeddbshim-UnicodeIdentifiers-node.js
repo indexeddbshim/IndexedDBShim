@@ -20324,7 +20324,7 @@ IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
     _IDBTransaction2.default.__assertActive(me.transaction);
-    if (range == null) {
+    if (!getAll && range == null) {
         throw (0, _DOMException.createDOMException)('DataError', 'No key or range was specified');
     }
 
@@ -20333,14 +20333,17 @@ IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
         if (!range.toString() !== '[object IDBKeyRange]') {
             range = _IDBKeyRange.IDBKeyRange.__createInstance(range.lower, range.upper, range.lowerOpen, range.upperOpen);
         }
-    } else {
+    } else if (range != null) {
         range = _IDBKeyRange.IDBKeyRange.only(range);
     }
 
     var col = getKey ? 'key' : 'value';
-    var sql = ['SELECT ' + util.quote(col) + ' FROM ', util.escapeStoreNameForSQL(me.name), ' WHERE '];
+    var sql = ['SELECT ' + util.quote(col) + ' FROM ', util.escapeStoreNameForSQL(me.name)];
     var sqlValues = [];
-    (0, _IDBKeyRange.setSQLForRange)(range, util.quote('key'), sql, sqlValues);
+    if (range != null) {
+        sql.push('WHERE');
+        (0, _IDBKeyRange.setSQLForRange)(range, util.quote('key'), sql, sqlValues);
+    }
     if (!getAll) {
         count = 1;
     }
@@ -20359,7 +20362,7 @@ IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
             try {
                 // Opera can't deal with the try-catch here.
                 if (data.rows.length === 0) {
-                    return success();
+                    return getAll ? success([]) : success();
                 }
                 ret = [];
                 if (getKey) {
@@ -20369,7 +20372,7 @@ IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
                     }
                 } else {
                     for (var _i = 0; _i < data.rows.length; _i++) {
-                        ret.push(_Sca2.default.decode(util.unescapeSQLiteResponse(data.rows.item(0).value)));
+                        ret.push(_Sca2.default.decode(util.unescapeSQLiteResponse(data.rows.item(_i).value)));
                     }
                 }
                 if (!getAll) {
