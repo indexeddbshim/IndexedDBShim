@@ -412,13 +412,13 @@ function executeFetchIndexData (unboundedDisallowed, count, index, hasKey, encod
         const records = [];
         let recordCount = 0;
         let record = null;
-        const decode = opType === 'count' ? () => {} : opType === 'key' ? (record) => {
+        const decode = opType === 'count' ? () => {} : (opType === 'key' ? (record) => {
             // Key.convertValueToKey(record.key); // Already validated before storage
             return Key.decode(util.unescapeSQLiteResponse(record.key));
         } : (record) => { // when opType is value
             return Sca.decode(util.unescapeSQLiteResponse(record.value));
-        };
-        if (index.multiEntry) {
+        });
+        if (unboundedDisallowed && index.multiEntry) {
             const escapedIndexNameForKeyCol = util.escapeIndexNameForKeyColumn(index.name);
             for (let i = 0; i < data.rows.length; i++) {
                 const row = data.rows.item(i);

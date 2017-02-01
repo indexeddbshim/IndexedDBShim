@@ -12582,7 +12582,7 @@ function executeFetchIndexData(unboundedDisallowed, count, index, hasKey, encode
             // when opType is value
             return _Sca2.default.decode(util.unescapeSQLiteResponse(record.value));
         };
-        if (index.multiEntry) {
+        if (unboundedDisallowed && index.multiEntry) {
             var escapedIndexNameForKeyCol = util.escapeIndexNameForKeyColumn(index.name);
 
             var _loop = function _loop(i) {
