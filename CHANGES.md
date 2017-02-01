@@ -95,10 +95,10 @@ they were actually changes since a more recent version on `master`.
 - Enhancement: Export `ShimCustomEvent` and `ShimEventTarget` shims we
     are using on `IDBFactory.modules` for sake of testing checks
 - Missing API: Add `IDBCursor.continuePrimaryKey` (untested)
-- Missing API: Implement `IDBObjectStore.getKey` (incompletely tested)
-- Missing APIs: Implement `IDBIndex.getAll/getAllKeys` (incompletely tested)
+- Missing API: Implement `IDBObjectStore.getKey`
+- Missing APIs: Implement `IDBIndex.getAll/getAllKeys`
 - Missing APIs: Implement `IDBObjectStore.getAll`,
-      `IDBObjectStore.getAllKeys` (incompletely tested)
+      `IDBObjectStore.getAllKeys`
 - Fix: Avoid `continue` errors upon multiEntry checks with open-ended ranges
 - Fix: Ensure `deleteDatabase` SQLite execution errors (not only
      its transaction errors) are properly surfaced (probably shouldn't
@@ -391,6 +391,10 @@ they were actually changes since a more recent version on `master`.
        `Event`
 - Fix: Properly report global shimming errors when setting a readonly
    failed and `Object.defineProperty` is not present
+- Fix: As per spec, check whether transaction is finished for
+  `IDBDatabase` (`createObjectStore`, `deleteObjectStore`),
+   `IDBObjectStore.index`, `IDBTransaction` (`objectStore`, `abort`),
+   and not merely whether it is active
 - Repo files: Rename test folders for ease in distinguishing
 - Optimize: Only retrieve required SQLite columns for `IDBIndex`
       get operations

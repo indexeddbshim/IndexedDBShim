@@ -89,6 +89,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
         throw new TypeError('No object store name was specified');
     }
     IDBTransaction.__assertVersionChange(this.__versionTransaction); // this.__versionTransaction may not exist if called mistakenly by user in onsuccess
+    IDBTransaction.__assertNotFinished(this.__versionTransaction);
     IDBTransaction.__assertActive(this.__versionTransaction);
     if (this.__objectStores[storeName]) {
         throw createDOMException('ConstraintError', 'Object store "' + storeName + '" already exists in ' + this.name);
@@ -133,6 +134,7 @@ IDBDatabase.prototype.deleteObjectStore = function (storeName) {
         throw new TypeError('No object store name was specified');
     }
     IDBTransaction.__assertVersionChange(this.__versionTransaction);
+    IDBTransaction.__assertNotFinished(this.__versionTransaction);
     IDBTransaction.__assertActive(this.__versionTransaction);
 
     const store = this.__objectStores[storeName];

@@ -371,6 +371,9 @@ case 'timeout':
 case 'notRunning':
     readAndEvaluateFiles(null, notRunning);
     break;
+case 'domstringlist':
+    readAndEvaluateFiles(null, ['domstringlist.js']);
+    break;
 case 'events': case 'event':
     // Tests `EventTarget` shim
     readAndEvaluateFiles(null, ['../non-indexedDB/__event.js']);

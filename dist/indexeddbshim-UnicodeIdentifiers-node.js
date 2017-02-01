@@ -18379,6 +18379,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
         throw new TypeError('No object store name was specified');
     }
     _IDBTransaction2.default.__assertVersionChange(this.__versionTransaction); // this.__versionTransaction may not exist if called mistakenly by user in onsuccess
+    _IDBTransaction2.default.__assertNotFinished(this.__versionTransaction);
     _IDBTransaction2.default.__assertActive(this.__versionTransaction);
     if (this.__objectStores[storeName]) {
         throw (0, _DOMException.createDOMException)('ConstraintError', 'Object store "' + storeName + '" already exists in ' + this.name);
@@ -18423,6 +18424,7 @@ IDBDatabase.prototype.deleteObjectStore = function (storeName) {
         throw new TypeError('No object store name was specified');
     }
     _IDBTransaction2.default.__assertVersionChange(this.__versionTransaction);
+    _IDBTransaction2.default.__assertNotFinished(this.__versionTransaction);
     _IDBTransaction2.default.__assertActive(this.__versionTransaction);
 
     var store = this.__objectStores[storeName];
@@ -20596,7 +20598,7 @@ IDBObjectStore.prototype.index = function (indexName) {
     if (me.__deleted) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
-    _IDBTransaction2.default.__assertActive(me.transaction);
+    _IDBTransaction2.default.__assertNotFinished(me.transaction);
     var index = me.__indexes[indexName];
     if (!index || index.__deleted) {
         throw (0, _DOMException.createDOMException)('NotFoundError', 'Index "' + indexName + '" does not exist on ' + me.name);
@@ -21336,9 +21338,7 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
     if (arguments.length === 0) {
         throw new TypeError('No object store name was specified');
     }
-    if (!me.__active) {
-        throw (0, _DOMException.createDOMException)('InvalidStateError', 'A request was placed against a transaction which is currently not active, or which is finished');
-    }
+    IDBTransaction.__assertNotFinished(me);
     if (me.__objectStoreNames.indexOf(objectStoreName) === -1) {
         throw (0, _DOMException.createDOMException)('NotFoundError', objectStoreName + ' is not participating in this transaction');
     }
@@ -21454,9 +21454,7 @@ IDBTransaction.prototype.abort = function () {
         throw new TypeError('Illegal invocation');
     }
     _CFG2.default.DEBUG && console.log('The transaction was aborted', me);
-    if (!me.__active) {
-        throw (0, _DOMException.createDOMException)('InvalidStateError', 'A request was placed against a transaction which is currently not active, or which is finished');
-    }
+    IDBTransaction.__assertNotFinished(me);
     me.__abortTransaction(null);
 };
 IDBTransaction.prototype[Symbol.toStringTag] = 'IDBTransactionPrototype';
@@ -21469,6 +21467,12 @@ IDBTransaction.__assertVersionChange = function (tx) {
 IDBTransaction.__assertNotVersionChange = function (tx) {
     if (tx && tx.mode === 'versionchange') {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'Cannot be called during a version transaction');
+    }
+};
+
+IDBTransaction.__assertNotFinished = function (tx) {
+    if (!tx || tx.__completed || tx.__errored) {
+        throw (0, _DOMException.createDOMException)('InvalidStateError', 'Transaction is completed or errored');
     }
 };
 

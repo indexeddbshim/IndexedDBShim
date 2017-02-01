@@ -83,8 +83,8 @@ IndexedDB Test counts:
 
 Current IndexedDB (and domstringlist) test statuses (vmTimeout = 40000):
 
-  'Pass': 1013, (including 4 domstringlist tests but avoiding exclusions)
-  'Fail': 83,
+  'Pass': 1014, (including 4 domstringlist tests but avoiding exclusions)
+  'Fail': 82,
   'Timeout': 1,
   'Not Run': 0,
   'Total tests': 1097 (including 4 domstringlist tests but avoiding exclusions)

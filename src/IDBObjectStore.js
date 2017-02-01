@@ -760,7 +760,7 @@ IDBObjectStore.prototype.index = function (indexName) {
     if (me.__deleted) {
         throw createDOMException('InvalidStateError', 'This store has been deleted');
     }
-    IDBTransaction.__assertActive(me.transaction);
+    IDBTransaction.__assertNotFinished(me.transaction);
     const index = me.__indexes[indexName];
     if (!index || index.__deleted) {
         throw createDOMException('NotFoundError', 'Index "' + indexName + '" does not exist on ' + me.name);
