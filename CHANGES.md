@@ -164,8 +164,6 @@ they were actually changes since a more recent version on `master`.
     `createObjectStore`/`deleteObjectStore`/`createIndex`/`deleteIndex`
     and store/index renaming
 - Fix: Avoid firing multiple `success` events with `IDBFactory.open`
-- Fix: Fire abort event synchronously (otherwise transaction
-    apparently timing out)
 - Fix: Return appropriate IndexedDB error object instead of WebSQL error
     object; fixes #27
 - Fix: For `IDBCursor`, move from SQL offsets to utilization of last key as
@@ -530,6 +528,8 @@ they were actually changes since a more recent version on `master`.
     or Node testing, supporting node-qunit for Node testing
 - Testing (QUnit): Upgrade to QUnit 2.0 API, lint test files
 - Testing (QUnit): Add local copies of QUnit files
+- Testing (QUnit): Allow `noanalytics=true` string in QUnit URL
+   (slows down testing in China where Google is blocked)
 - Testing (Mocha): Conditionally check for `indexedDB.modules` in case we
     are running tests without shim
 - Testing improvement: Shim `Event` in Unicode test for parity (even

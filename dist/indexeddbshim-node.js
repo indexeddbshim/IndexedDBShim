@@ -21410,9 +21410,11 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         }, _syncPromise2.default.resolve()).then(function () {
             // Also works when there are no pending requests
             var evt = (0, _Event.createEvent)('abort', err, { bubbles: true, cancelable: false });
-            me.dispatchEvent(evt);
-            me.__storeClones = {};
-            me.dispatchEvent((0, _Event.createEvent)('__abort'));
+            setTimeout(function () {
+                me.dispatchEvent(evt);
+                me.__storeClones = {};
+                me.dispatchEvent((0, _Event.createEvent)('__abort'));
+            });
         });
     }
 

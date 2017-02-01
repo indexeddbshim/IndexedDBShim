@@ -442,9 +442,11 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
             });
         }, SyncPromise.resolve()).then(function () { // Also works when there are no pending requests
             const evt = createEvent('abort', err, {bubbles: true, cancelable: false});
-            me.dispatchEvent(evt);
-            me.__storeClones = {};
-            me.dispatchEvent(createEvent('__abort'));
+            setTimeout(() => {
+                me.dispatchEvent(evt);
+                me.__storeClones = {};
+                me.dispatchEvent(createEvent('__abort'));
+            });
         });
     }
 
