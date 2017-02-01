@@ -407,48 +407,52 @@ function executeFetchIndexData (unboundedDisallowed, count, index, hasKey, encod
     if (count) {
         sql.push('LIMIT', count);
     }
+    const isCount = opType === 'count';
     CFG.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
     tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
         const records = [];
         let recordCount = 0;
-        let record = null;
-        const decode = opType === 'count' ? () => {} : (opType === 'key' ? (record) => {
+        const decode = isCount ? () => {} : (opType === 'key' ? (record) => {
             // Key.convertValueToKey(record.key); // Already validated before storage
             return Key.decode(util.unescapeSQLiteResponse(record.key));
         } : (record) => { // when opType is value
             return Sca.decode(util.unescapeSQLiteResponse(record.value));
         });
-        if (unboundedDisallowed && index.multiEntry) {
+        if (index.multiEntry) {
             const escapedIndexNameForKeyCol = util.escapeIndexNameForKeyColumn(index.name);
             for (let i = 0; i < data.rows.length; i++) {
                 const row = data.rows.item(i);
                 const rowKey = Key.decode(row[escapedIndexNameForKeyCol]);
+                let record;
                 if (hasKey && (
                     (multiChecks && encodedKey.some((check) => rowKey.includes(check))) || // More precise than our SQL
                     Key.isMultiEntryMatch(encodedKey, row[escapedIndexNameForKeyCol])
                 )) {
                     recordCount++;
-                    record = record || row;
+                    record = row;
                 } else if (!hasKey && !multiChecks) {
                     if (rowKey !== undefined) {
                         recordCount += (Array.isArray(rowKey) ? rowKey.length : 1);
-                        record = record || row;
+                        record = row;
                     }
                 }
                 if (record) {
                     records.push(decode(record));
+                    if (unboundedDisallowed) {
+                        break;
+                    }
                 }
             }
         } else {
             for (let i = 0; i < data.rows.length; i++) {
-                record = data.rows.item(i);
+                const record = data.rows.item(i);
                 if (record) {
                     records.push(decode(record));
                 }
             }
             recordCount = records.length;
         }
-        if (opType === 'count') {
+        if (isCount) {
             success(recordCount);
         } else if (recordCount === 0) {
             success(unboundedDisallowed ? undefined : []);

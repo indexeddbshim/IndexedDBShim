@@ -19534,54 +19534,60 @@ function executeFetchIndexData(unboundedDisallowed, count, index, hasKey, encode
     if (count) {
         sql.push('LIMIT', count);
     }
+    var isCount = opType === 'count';
     _CFG2.default.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
     tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
         var records = [];
         var recordCount = 0;
-        var record = null;
-        var decode = opType === 'count' ? function () {} : opType === 'key' ? function (record) {
+        var decode = isCount ? function () {} : opType === 'key' ? function (record) {
             // Key.convertValueToKey(record.key); // Already validated before storage
             return _Key2.default.decode(util.unescapeSQLiteResponse(record.key));
         } : function (record) {
             // when opType is value
             return _Sca2.default.decode(util.unescapeSQLiteResponse(record.value));
         };
-        if (unboundedDisallowed && index.multiEntry) {
+        if (index.multiEntry) {
             var escapedIndexNameForKeyCol = util.escapeIndexNameForKeyColumn(index.name);
 
             var _loop = function _loop(i) {
                 var row = data.rows.item(i);
                 var rowKey = _Key2.default.decode(row[escapedIndexNameForKeyCol]);
+                var record = void 0;
                 if (hasKey && (multiChecks && encodedKey.some(function (check) {
                     return rowKey.includes(check);
                 }) || // More precise than our SQL
                 _Key2.default.isMultiEntryMatch(encodedKey, row[escapedIndexNameForKeyCol]))) {
                     recordCount++;
-                    record = record || row;
+                    record = row;
                 } else if (!hasKey && !multiChecks) {
                     if (rowKey !== undefined) {
                         recordCount += Array.isArray(rowKey) ? rowKey.length : 1;
-                        record = record || row;
+                        record = row;
                     }
                 }
                 if (record) {
                     records.push(decode(record));
+                    if (unboundedDisallowed) {
+                        return 'break';
+                    }
                 }
             };
 
             for (var i = 0; i < data.rows.length; i++) {
-                _loop(i);
+                var _ret = _loop(i);
+
+                if (_ret === 'break') break;
             }
         } else {
             for (var i = 0; i < data.rows.length; i++) {
-                record = data.rows.item(i);
-                if (record) {
-                    records.push(decode(record));
+                var _record = data.rows.item(i);
+                if (_record) {
+                    records.push(decode(_record));
                 }
             }
             recordCount = records.length;
         }
-        if (opType === 'count') {
+        if (isCount) {
             success(recordCount);
         } else if (recordCount === 0) {
             success(unboundedDisallowed ? undefined : []);
