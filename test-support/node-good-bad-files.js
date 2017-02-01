@@ -1,18 +1,44 @@
 /*
 // Outstanding or known issues on tests (should give particular priority
 //   to 'Not Run' tests in case they are our own test environment problems)
+
+- `idbcursor-source.js`: seems to have its last test in a
+    race condition or such to cause pass/fail results to vary
+- `idbobjectstore_openKeyCursor.js`: seems to have its last test in a
+    race condition or such to cause pass/fail results to vary
+
 - `idbdatabase_close.js`: Requires blocking (issue #2)
 - `idbdatabase_close2.js`: Requires blocking (issue #2)
+- `transaction-lifetime-blocked.js`: Requires blocking (issue #2)
+- `transaction-lifetime.js`: `versionchange` event (handling with issue #2)
+
 - `idbfactory_cmp3.js`: Requires binary (issue #228)
 - `idbfactory_cmp4.js`: Requires binary (issue #228)
-
-- `idbcursor-source.js` - seems to have its last test in a
-    race condition or such to cause pass/fail results to vary
-- `idbobjectstore_openKeyCursor.js` - seems to have its last test in a
-    race condition or such to cause pass/fail results to vary
+- `idb_binary_key_conversion.js`: Requires binary (issue #228)
 
 - `interfaces.js`: Has one failing test due to a bug in Node: https://github.com/tmpvar/jsdom/issues/1720
 - `interfaces.worker.js`: Has one failing test due to a bug in Node: https://github.com/tmpvar/jsdom/issues/1720
+
+- `idbindex_get8.js`: Ensure for sake of error precedence, aborted upgrade transaction flags so attempts to get a store/index will fail as deleted
+- `idbindex_getKey8.js`: Ensure for sake of error precedence, aborted upgrade transaction flags so attempts to get a store/index will fail as deleted
+- `idbindex_openCursor3.js`: Ensure for sake of error precedence, aborted upgrade transaction flags so attempts to get a store/index will fail as deleted
+- `idbindex_openKeyCursor4.js`: Ensure for sake of error precedence, aborted upgrade transaction flags so attempts to get a store/index will fail as deleted
+
+- `upgrade-transaction-lifecycle-backend-aborted.js`: Some kind of transaction error mismatch problem?
+- `upgrade-transaction-lifecycle-user-aborted.js`: Some kind of transaction error mismatch problem?
+
+- `idbobjectstore_getAll.js`: Various problems
+- `idbobjectstore_getAllKeys.js`: Various problems
+
+- `idbindex_getAll.js`: Problem with `multiEntry`
+- `idbindex_getAllKeys.js`: Problem with `multiEntry`
+
+- `idbobjectstore_createIndex4-deleteIndex-event_order.js`: unique index (timing?)
+
+- `idbindex-rename-abort.js`: (Investigate with not-running tests which are primarily rename problems?)
+- `idbindex-rename-errors.js`: (Investigate with not-running tests which are primarily rename problems?)
+- `transaction-abort-multiple-metadata-revert.js`: (Investigate with other not running which include metadata reversions?)
+- See also `notRunning` below
 
 // Passing no argument to `node-idb-test.js` will test all of the IndexedDB
 //   tests including some worker tests, but only those within the

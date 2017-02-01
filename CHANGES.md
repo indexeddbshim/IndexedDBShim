@@ -71,12 +71,9 @@ they were actually changes since a more recent version on `master`.
     property used internally for config and `shimIndexedDB.__getConfig()`
     to read
 - Enhancement: Expose `__setUnicodeIdentifiers()` for setting Unicode
-    regular expression strings
+    regular expression strings for full key path validation compliance (could
+    slow loading/performance as depends on large regular expressions)
 - Enhancement: Implement `IDBTransaction.objectStoreNames`
-- Enhancement: Add `IDB.shimIndexedDB.__setUnicodeIdentifiers` scaffolding for
-    importing and setting Unicode identifier regular expression strings for
-    the sake of full key path validation compliance (may slow
-    loading/performance, requires polyfills, and is untested)
 - Enhancement: Add `IDBObjectStore.name` and `IDBIndex.name` setters (untested)
 - Enhancement: Add various missing lesser event properties (`NONE`,
     `CAPTURING_PHASE`, `AT_TARGET`, `BUBBLING_PHASE`) and initialize readonly
