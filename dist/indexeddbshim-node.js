@@ -18647,9 +18647,9 @@ IDBFactory.__createInstance = function () {
             ShimEventTarget: _Event.ShimEventTarget,
             ShimDOMException: _DOMException.ShimDOMException,
             ShimDOMStringList: _DOMStringList2.default,
-            IDBFactory: IDBFactory
+            IDBFactory: IDBFactoryAlias
         };
-        this.utils = { createDOMException: _DOMException.createDOMException }; // Expose for ease in simulating such exception during testing
+        this.utils = { createDOMException: _DOMException.createDOMException }; // Expose for ease in simulating such exceptions during testing
         this.__connections = [];
     }
     IDBFactory.prototype = IDBFactoryAlias.prototype;
