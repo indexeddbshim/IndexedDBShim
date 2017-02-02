@@ -140,16 +140,22 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
 
     // Exclude those currently breaking the tests
     // Todo: Replace with `uncaughtException` handlers above?
-    const testingAllWorkers = workers && jsFiles.length > 1;
-    const excluded = [ // Keep this array even if made empty for sake of any new breaking W3C tests
-        'bindings-inject-key.js',
-        'keypath-exceptions.js',
-        'keypath-special-identifiers.js'
-    ].concat(testingAllWorkers ? ['_interface-objects-003.js', '_interface-objects-004.js'] : []);
-    if (excluded.includes(shimNS.fileName) || (!workers && workerFileRegex.test(shimNS.fileName))) {
-        excludedCount++;
-        shimNS.finished();
-        return;
+    let excluded = [];
+    if (jsFiles.length > 1) {
+        excluded = workers
+            // Keep these arrays even if made empty for sake of any new breaking W3C tests
+            ? [
+                '_interface-objects-003.js',
+                '_interface-objects-004.js'
+            ] : [
+                'bindings-inject-key.js',
+                'keypath-exceptions.js'
+            ];
+        if (excluded.includes(shimNS.fileName) || (!workers && workerFileRegex.test(shimNS.fileName))) {
+            excludedCount++;
+            shimNS.finished();
+            return;
+        }
     }
 
     fs.readFile(path.join(dirPath, shimNS.fileName), 'utf8', function (err, content) {

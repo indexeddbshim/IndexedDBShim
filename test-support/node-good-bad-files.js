@@ -5,7 +5,7 @@
 
 0. UNASSESSED (NEED TO CATEGORIZE)
 
-- `bindings-inject-key.js`, `keypath-exceptions`, `keypath-special-identifiers`: (Uncaught exceptions has required their complete exclusion for now)
+- `bindings-inject-key.js`, `keypath-exceptions.js`: (Uncaught exceptions has required their complete exclusion for now)
 - `open-request-queue.js`: (Timing out)
 - See `?` below
 
@@ -83,8 +83,8 @@
 IndexedDB Test counts:
     308 normal files (including 1 domstringlist file):
         268 are all good, 39 have at least some bad, 1 times out
-    3 excluded files (uncaught exceptions during testing):
-        `bindings-inject-key.js`, `keypath-exceptions`, `keypath-special-identifiers`
+    2 excluded files (uncaught exceptions during testing):
+        `bindings-inject-key.js`, `keypath-exceptions`
 
 Current IndexedDB (and domstringlist) test statuses (vmTimeout = 40000):
 

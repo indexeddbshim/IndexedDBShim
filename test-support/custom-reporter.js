@@ -2,21 +2,23 @@
 // Now set-up our mechanism to report results back
 (function () {
     // Although we needed a few of these in environment.js, we cannot set there as some are only exposed after including the test framework
-    /* shimIndexedDB,indexedDB,IDBFactory,IDBDatabase,IDBObjectStore,IDBIndex,IDBTransaction,IDBCursor,IDBCursorWithValue,IDBKeyRange,IDBRequest,IDBOpenDBRequest,IDBVersionChangeEvent
-
-    ,_core,_globalProxy,__timers,_top,_parent,_frameElement,_document,_sessionHistory,_currentSessionHistoryEntryIndex,_length,_virtualConsole,
+    /*
+    ShimEvent, ShimCustomEvent, ShimEventTarget, ShimDOMException,
+    Event, CustomEvent, EventTarget, DOMException,
+    XMLHttpRequest, URL, URLSearchParams, postMessage, Worker,
+    _core,_globalProxy,__timers,_top,_parent,_frameElement,_document,_sessionHistory,_currentSessionHistoryEntryIndex,_length,_virtualConsole,
     length,window,frameElement,frames,self,parent,top,document,location,history,navigator,addEventListener,removeEventListener,dispatchEvent,setTimeout,setInterval,clearInterval,clearTimeout,
     __stopAllTimers,
-    postMessage,atob,btoa,FileReader,XMLHttpRequest,ArrayBuffer,Int8Array,Uint8Array,Uint8ClampedArray,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,stop,close,getComputedStyle,console,name,innerWidth,innerHeight,outerWidth,outerHeight,pageXOffset,pageYOffset,screenX,screenY,screenLeft,screenTop,scrollX,scrollY,
+    atob,btoa,FileReader,ArrayBuffer,Int8Array,Uint8Array,Uint8ClampedArray,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,stop,close,getComputedStyle,console,name,innerWidth,innerHeight,outerWidth,outerHeight,pageXOffset,pageYOffset,screenX,screenY,screenLeft,screenTop,scrollX,scrollY,
     scrollTop,scrollLeft,
     screen,alert,blur,confirm,
     createPopup,
     focus,moveBy,moveTo,open,print,prompt,resizeBy,resizeTo,scroll,scrollBy,scrollTo,toString,
     log,
-    URL, URLSearchParams, Worker
-    DOMException, Event
+    Object, Function
     */
-    Object.keys(shimNS.window).forEach(function (prop) {
+    const nonEnumerables = ['Blob', 'File']; // These are needed by IndexedDB tests
+    nonEnumerables.concat(Object.keys(shimNS.window)).forEach(function (prop) {
         if (prop[0] === '_' || // One type added by jsdom
             [
                 // Already added
