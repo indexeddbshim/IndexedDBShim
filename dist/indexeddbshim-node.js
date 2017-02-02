@@ -23016,20 +23016,19 @@ function setGlobalVars(idb, initialConfig) {
             // Setting a read-only property failed, so try re-defining the property
             try {
                 var desc = propDesc || {};
-                // `enumerable` was staying as `true` in Node when
-                //    `writable`/`value` was set instead
-                /*
-                desc.value = value;
-                */
                 desc.get = function () {
                     return value;
                 };
                 Object.defineProperty(IDB, name, desc);
-                // console.log(Object.getOwnPropertyDescriptor(IDB, name)); // Why aren't we getting `get`????
+                /*
+                // Due to <https://github.com/axemclion/IndexedDBShim/issues/280>,
+                //   there are problems for us to retain the descriptor
+                //   and thus the fact that indexedDB is to be implemented
+                //   as a getter (as expected in interface tests).
                 if (name === 'indexedDB') {
-                    // console.log(desc);
-                    // console.log(Object.getOwnPropertyDescriptor(IDB, 'indexedDB'));
+                    console.log(Object.getOwnPropertyDescriptor(IDB, name));
                 }
+                */
             } catch (e) {
                 // With `indexedDB`, PhantomJS fails here and below but
                 //  not above, while Chrome is reverse (and Firefox doesn't

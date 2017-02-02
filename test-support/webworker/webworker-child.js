@@ -267,15 +267,25 @@ workerCtx.importScripts = function () {
     }
 };
 
+workerCtx.prototype = Object.create(workerCtx); // Must have a prototype per WebIDL tests when checking on `WorkerGlobalScope`
+Object.defineProperty(workerCtx.prototype, 'indexedDB', {
+    enumerable: true,
+    configurable: true,
+    get: function () {
+        throw new TypeError('Illegal invocation');
+    }
+});
+
 // Other Objects
 
 // Add indexedDB globals; we also add non-IndexedDB ones that are not normally "exposed" to workers
+// Only the second regex will ever be used, but just listing the files that should get fullIDLSupport
 if ([/interfaces\.js$/, /interfaces.worker\.js$/].some((interfaceFileRegex) => interfaceFileRegex.test(workerURL))) {
-    // Only the second regex will ever be used, but just listing the files that should get fullIDLSupport
     indexeddbshim(workerCtx, {addNonIDBGlobals: true, fullIDLSupport: true});
 } else {
     indexeddbshim(workerCtx, {addNonIDBGlobals: true});
 }
+
 // We don't expose workerCtx.ShimDOMStringList as not supposed to be per IDL tests for workers (though IDL (and Chrome) currently expose it in the main thread)
 workerCtx.Event = workerCtx.ShimEvent;
 workerCtx.CustomEvent = workerCtx.ShimCustomEvent;

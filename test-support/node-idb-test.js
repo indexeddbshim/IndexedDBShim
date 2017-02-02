@@ -242,6 +242,8 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                             }
 
                             // Though we could expose `DOMStringList` through the shim, we want to avoid automatically shadowing it in case it may exist already in the browser
+                            // Due to <https://github.com/axemclion/IndexedDBShim/issues/280>, this gets converted to a data
+                            //   descriptor, but unlike `indexedDB`, this is of no consequence to testing
                             Object.defineProperty(window, 'DOMStringList', {
                                 enumerable: false,
                                 configurable: true,
