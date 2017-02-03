@@ -110,7 +110,7 @@ Current IndexedDB (and domstringlist) test statuses (vmTimeout = 40000):
 //   test and those features would need to be properly shimmed as possible
 //   as well.
 
-Worker Test counts: 5 files (2 good, 1 bad, 2 shared workers test excluded
+Worker Test counts: 5 files (2 good, 1 bad, 2 shared workers tests excluded
     as not executing at all given failure at lack of support)
 Current worker test statuses with 2 files excluded:
   'Pass': 95
