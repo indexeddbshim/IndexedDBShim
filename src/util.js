@@ -225,6 +225,8 @@ function enforceRange (number, type) {
         min = 0;
         break;
     }
+    default:
+        throw new Error('Unrecognized type supplied to enforceRange');
     }
     if (isNaN(number) || !isFinite(number) ||
         number > max ||
