@@ -18093,11 +18093,9 @@ IDBCursor.prototype.continuePrimaryKey = function (key, primaryKey) {
 
 IDBCursor.prototype.advance = function (count) {
     var me = this;
+    count = util.enforceRange(count, 'unsigned long');
     if (count === 0) {
         throw new TypeError('Calling advance() with count argument 0');
-    }
-    if (!Number.isFinite(count) || count < 0) {
-        throw new TypeError('Count is invalid - non-finite or negative: ' + count);
     }
     if (me.__gotValue) {
         // Only set the count if not running in error (otherwise will override earlier good advance calls)
@@ -18674,13 +18672,10 @@ IDBFactory.prototype.open = function (name /* , version */) {
         throw new TypeError('Database name is required');
     }
     if (version !== undefined) {
-        version = Number(version);
-        if (isNaN(version) || !isFinite(version) || version >= 0x20000000000000 || // 2 ** 53
-        version < 1) {
-            // The spec only mentions version==0 as throwing, but W3C tests fail with these
-            throw new TypeError('Invalid database version: ' + version);
+        version = util.enforceRange(version, 'unsigned long long');
+        if (version === 0) {
+            throw new TypeError('Version cannot be 0');
         }
-        version = Math.floor(version);
     }
     name = String(name); // cast to a string
     var sqlSafeName = util.escapeSQLiteStatement(name);
@@ -19345,6 +19340,9 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
  */
 IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, count) {
     var me = this;
+    if (count !== undefined) {
+        count = util.enforceRange(count, 'unsigned long');
+    }
     var hasUnboundedRange = !nullDisallowed && range == null;
 
     if (me.__deleted) {
@@ -20326,6 +20324,9 @@ IDBObjectStore.prototype.put = function (value /*, key */) {
 
 IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
     var me = this;
+    if (count !== undefined) {
+        count = util.enforceRange(count, 'unsigned long');
+    }
     if (me.__deleted) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
@@ -23184,7 +23185,7 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.isValidKeyPath = exports.defineReadonlyProperties = exports.throwIfNotClonable = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlLIKEEscape = exports.escapeIndexNameForKeyColumn = exports.escapeIndexNameForSQL = exports.escapeStoreNameForSQL = exports.unescapeDatabaseNameForSQLAndFiles = exports.escapeDatabaseNameForSQLAndFiles = exports.quote = exports.unescapeSQLiteResponse = exports.escapeSQLiteStatement = undefined;
+exports.enforceRange = exports.isValidKeyPath = exports.defineReadonlyProperties = exports.throwIfNotClonable = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlLIKEEscape = exports.escapeIndexNameForKeyColumn = exports.escapeIndexNameForSQL = exports.escapeStoreNameForSQL = exports.unescapeDatabaseNameForSQLAndFiles = exports.escapeDatabaseNameForSQLAndFiles = exports.quote = exports.unescapeSQLiteResponse = exports.escapeSQLiteStatement = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
@@ -23404,6 +23405,30 @@ function isValidKeyPath(keyPath) {
     });
 }
 
+function enforceRange(number, type) {
+    number = Math.floor(Number(number));
+    var max = void 0,
+        min = void 0;
+    switch (type) {
+        case 'unsigned long long':
+            {
+                max = 0x10000000000000000;
+                min = 0;
+                break;
+            }
+        case 'unsigned long':
+            {
+                max = 0xFFFFFFFF;
+                min = 0;
+                break;
+            }
+    }
+    if (isNaN(number) || !isFinite(number) || number > max || number < min) {
+        throw new TypeError('Invalid range: ' + number);
+    }
+    return number;
+}
+
 exports.escapeSQLiteStatement = escapeSQLiteStatement;
 exports.unescapeSQLiteResponse = unescapeSQLiteResponse;
 exports.quote = quote;
@@ -23422,6 +23447,7 @@ exports.isFile = isFile;
 exports.throwIfNotClonable = throwIfNotClonable;
 exports.defineReadonlyProperties = defineReadonlyProperties;
 exports.isValidKeyPath = isValidKeyPath;
+exports.enforceRange = enforceRange;
 
 },{"./CFG":381,"./DOMException":382,"cyclonejs":299}]},{},[397])(397)
 });

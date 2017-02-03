@@ -506,6 +506,9 @@ IDBObjectStore.prototype.put = function (value /*, key */) {
 
 IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
     const me = this;
+    if (count !== undefined) {
+        count = util.enforceRange(count, 'unsigned long');
+    }
     if (me.__deleted) {
         throw createDOMException('InvalidStateError', 'This store has been deleted');
     }

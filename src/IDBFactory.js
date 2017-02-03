@@ -77,13 +77,10 @@ IDBFactory.prototype.open = function (name /* , version */) {
         throw new TypeError('Database name is required');
     }
     if (version !== undefined) {
-        version = Number(version);
-        if (isNaN(version) || !isFinite(version) ||
-            version >= 0x20000000000000 || // 2 ** 53
-            version < 1) { // The spec only mentions version==0 as throwing, but W3C tests fail with these
-            throw new TypeError('Invalid database version: ' + version);
+        version = util.enforceRange(version, 'unsigned long long');
+        if (version === 0) {
+            throw new TypeError('Version cannot be 0');
         }
-        version = Math.floor(version);
     }
     name = String(name); // cast to a string
     const sqlSafeName = util.escapeSQLiteStatement(name);

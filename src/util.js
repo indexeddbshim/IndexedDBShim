@@ -211,9 +211,32 @@ function isValidKeyPath (keyPath) {
     );
 }
 
+function enforceRange (number, type) {
+    number = Math.floor(Number(number));
+    let max, min;
+    switch (type) {
+    case 'unsigned long long': {
+        max = 0x10000000000000000;
+        min = 0;
+        break;
+    }
+    case 'unsigned long': {
+        max = 0xFFFFFFFF;
+        min = 0;
+        break;
+    }
+    }
+    if (isNaN(number) || !isFinite(number) ||
+        number > max ||
+        number < min) {
+        throw new TypeError('Invalid range: ' + number);
+    }
+    return number;
+}
+
 export {escapeSQLiteStatement, unescapeSQLiteResponse, quote,
     escapeDatabaseNameForSQLAndFiles, unescapeDatabaseNameForSQLAndFiles,
     escapeStoreNameForSQL, escapeIndexNameForSQL, escapeIndexNameForKeyColumn,
     sqlLIKEEscape, instanceOf,
     isObj, isDate, isBlob, isRegExp, isFile, throwIfNotClonable,
-    defineReadonlyProperties, isValidKeyPath};
+    defineReadonlyProperties, isValidKeyPath, enforceRange};

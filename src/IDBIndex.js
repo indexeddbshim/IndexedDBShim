@@ -243,6 +243,9 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
  */
 IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, count) {
     const me = this;
+    if (count !== undefined) {
+        count = util.enforceRange(count, 'unsigned long');
+    }
     const hasUnboundedRange = !nullDisallowed && range == null;
 
     if (me.__deleted) {
