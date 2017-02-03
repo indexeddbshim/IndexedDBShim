@@ -190,7 +190,7 @@ they were actually changes since a more recent version on `master`.
     (sort by keyPath-indicated value then primary key)
 - Fix: Allow empty string keyPath for index to return value as is (for
     handling non-object values as keys)
-- Fix: Throw error upon non-finite `IDBCursor.advance` count
+- Fix: For `IDBCursor.advance`, better range enforcement
 - Fix: Ensure the error thrown for a count `<=0` to `advance()` is a genuine
     `TypeError`
 - Fix: Ensure other bad counts passed to `advance()` (non-numbers or non-finite
@@ -356,7 +356,7 @@ they were actually changes since a more recent version on `master`.
    prevent execution of the `oncomplete` handler (though an `AbortError`
    will subsequently occur)
 - Fix: Allow `IDBFactory.open()` to accept explicit `undefined` version
-- Fix: Round down version in `IDBFactory.open()` (when `> 1`)
+- Fix: Round down version in `IDBFactory.open()`
 - Fix: Ensure store names passed into `IDBDatabase.transaction` are stored
     as unique names and are sorted
 - Fix: Add `Symbol.toStringTag` (or `toString`) to `IDB*` classes for proper
