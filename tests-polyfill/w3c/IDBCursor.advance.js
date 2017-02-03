@@ -455,7 +455,7 @@ describe('W3C IDBCursor.advance Tests', function () {
                     var cursor = e.target.result;
 
                     assert.throws(
-                        function() { cursor.advance(true); }, TypeError);
+                        function() { cursor.advance(window.document); }, TypeError);
 
                     assert.throws(
                         function() { cursor.advance({}); }, TypeError);
@@ -646,7 +646,7 @@ describe('W3C IDBCursor.advance Tests', function () {
 
                     assert(cursor != null, "cursor exist");
                     assert.throws(
-                        function() { cursor.advance(true); }, TypeError);
+                        function() { cursor.advance(window.document); }, TypeError);
 
                     done();
                 };

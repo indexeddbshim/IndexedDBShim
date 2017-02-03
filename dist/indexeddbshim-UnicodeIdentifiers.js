@@ -16405,7 +16405,7 @@ function enforceRange(number, type) {
     switch (type) {
         case 'unsigned long long':
             {
-                max = 0x10000000000000000;
+                max = 0x1FFFFFFFFFFFFF;
                 min = 0;
                 break;
             }

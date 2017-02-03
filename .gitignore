@@ -23,9 +23,7 @@ D_webworker*
 D_dbName*
 D_about*
 D_^I*
-D_test.sqlite
 D_TestDatabase*
-D_testdb-*
 D_blank*
 D_database_name*
 D_idbtransaction*
@@ -33,4 +31,3 @@ D_indexeddbshim_test_database*
 D_db.sqlite*
 D_test*
 D_db*
-D_test-db*
