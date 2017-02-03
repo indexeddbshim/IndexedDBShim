@@ -16405,13 +16405,13 @@ function enforceRange(number, type) {
     switch (type) {
         case 'unsigned long long':
             {
-                max = 0x1FFFFFFFFFFFFF;
+                max = 0x1FFFFFFFFFFFFF; // 2^53 - 1
                 min = 0;
                 break;
             }
         case 'unsigned long':
             {
-                max = 0xFFFFFFFF;
+                max = 0xFFFFFFFF; // 2^32 - 1
                 min = 0;
                 break;
             }
