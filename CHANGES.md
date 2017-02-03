@@ -94,7 +94,7 @@ they were actually changes since a more recent version on `master`.
     for facilitating debugging
 - Enhancement: Export `ShimCustomEvent` and `ShimEventTarget` shims we
     are using on `IDBFactory.modules` for sake of testing checks
-- Missing API: Add `IDBCursor.continuePrimaryKey` (untested)
+- Missing API: Add `IDBCursor.continuePrimaryKey`
 - Missing API: Implement `IDBObjectStore.getKey`
 - Missing APIs: Implement `IDBIndex.getAll/getAllKeys`
 - Missing APIs: Implement `IDBObjectStore.getAll`,
@@ -237,7 +237,7 @@ they were actually changes since a more recent version on `master`.
 - Fix: Throw `TypeError` if call to `update()` has no arguments
 - Fix: Allow empty string key path to be utilized when validating
     `add`/`put` input
-- Fix: Avoid iterating duplicate values for unique iterations
+- Fix: Avoid iterating duplicate key values for unique iterations
 - Fix: Ensure `IDBRequest.error` returns `null` rather than `undefined` upon
     success event
 - Fix: Readonly

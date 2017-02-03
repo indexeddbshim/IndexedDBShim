@@ -320,20 +320,31 @@ IDBCursor.prototype.__onsuccess = function (success) {
 };
 
 IDBCursor.prototype.__decode = function (rowItem, callback) {
-    if (this.__multiEntryIndex && this.__unique) {
-        if (!this.__matchedKeys) {
-            this.__matchedKeys = {};
+    const me = this;
+    if (me.__multiEntryIndex && me.__unique) {
+        if (!me.__matchedKeys) {
+            me.__matchedKeys = {};
         }
-        if (this.__matchedKeys[rowItem.matchingKey]) {
+        if (me.__matchedKeys[rowItem.matchingKey]) {
             callback(undefined, undefined, undefined);
             return;
         }
-        this.__matchedKeys[rowItem.matchingKey] = true;
+        me.__matchedKeys[rowItem.matchingKey] = true;
     }
-    const key = Key.decode(util.unescapeSQLiteResponse(this.__multiEntryIndex ? rowItem.matchingKey : rowItem[this.__keyColumnName]), this.__multiEntryIndex);
-    const val = this.__valueDecoder.decode(util.unescapeSQLiteResponse(rowItem[this.__valueColumnName]));
-    const primaryKey = Key.decode(util.unescapeSQLiteResponse(rowItem.key));
-    callback(key, val, primaryKey);
+    const encKey = util.unescapeSQLiteResponse(me.__multiEntryIndex
+        ? rowItem.matchingKey
+        : rowItem[me.__keyColumnName]
+    );
+    const encVal = util.unescapeSQLiteResponse(rowItem[me.__valueColumnName]);
+    const encPrimaryKey = util.unescapeSQLiteResponse(rowItem.key);
+
+    const key = Key.decode(
+        encKey,
+        me.__multiEntryIndex
+    );
+    const val = me.__valueDecoder.decode(encVal);
+    const primaryKey = Key.decode(encPrimaryKey);
+    callback(key, val, primaryKey, encKey /*, encVal, encPrimaryKey */);
 };
 
 IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
@@ -393,24 +404,22 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
             // We have pre-loaded data for the cursor
             me.__prefetchedIndex++;
             if (me.__prefetchedIndex < me.__prefetchedData.length) {
-                me.__decode(me.__prefetchedData.item(me.__prefetchedIndex), function (k, val, primKey) {
+                me.__decode(me.__prefetchedData.item(me.__prefetchedIndex), function (k, val, primKey, encKey) {
                     function checkKey () {
-                        if (key !== undefined && k !== key && (primaryKey === undefined || primaryKey !== primKey)) {
-                            cursorContinue(tx, args, success, error);
+                        const cmpResult = key === undefined || cmp(k, key);
+                        if (cmpResult > 0 || (
+                            cmpResult === 0 && (
+                                me.__unique || primaryKey === undefined || cmp(primKey, primaryKey) >= 0
+                            )
+                        )) {
+                            triggerSuccess(k, val, primKey);
                             return;
                         }
-                        triggerSuccess(k, val, primKey);
+                        cursorContinue(tx, args, success, error);
                     }
-                    if (me.__unique && !me.__multiEntryIndex) {
-                        Sca.encode(val, function (encVal) {
-                            Sca.encode(me.value, function (encMeVal) {
-                                if (encVal === encMeVal) {
-                                    cursorContinue(tx, args, success, error);
-                                    return;
-                                }
-                                checkKey();
-                            });
-                        });
+                    if (me.__unique && !me.__multiEntryIndex &&
+                        encKey === Key.encode(me.key, me.__multiEntryIndex)) {
+                        cursorContinue(tx, args, success, error);
                         return;
                     }
                     checkKey();
