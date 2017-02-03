@@ -9,6 +9,13 @@
 - See `?` below
 
 0. RACE CONDITIONS
+(If these are unsolvable due to checks using timeouts and our
+own extra time needed for a transaction, we might at least override
+`setTimeout` to extend its length (at least for Node where we are
+extending the transaction time (and unlike the browser, able to do
+so) so as to make rollbacks possible). This would at least let us
+check whether there are other more serious errors we are missing.)
+
 - `idbcursor-source.js`: seems to have its last test in a
     race condition or such to cause pass/fail results to vary
 - `idbobjectstore_openKeyCursor.js`: seems to have its last test in a
