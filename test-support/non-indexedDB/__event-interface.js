@@ -1,3 +1,5 @@
+// Out of web-platform-tests/dom/interfaces.html
+
 /*beginscript::/resources/testharness.js::endscript*/
 /*beginscript::/resources/testharnessreport.js::endscript*/
 /*beginscript::/resources/WebIDLParser.js::endscript*/

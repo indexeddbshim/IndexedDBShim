@@ -4,7 +4,7 @@ import * as util from './util';
 import DOMStringList from './DOMStringList';
 import IDBObjectStore from './IDBObjectStore';
 import IDBTransaction from './IDBTransaction';
-import Sca from './Sca';
+import * as Sca from './Sca';
 import CFG from './CFG';
 import {EventTargetFactory} from 'eventtarget';
 
@@ -95,16 +95,14 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
         throw createDOMException('ConstraintError', 'Object store "' + storeName + '" already exists in ' + this.name);
     }
     createOptions = Object.assign({}, createOptions);
-    if (createOptions.keyPath === undefined) {
-        createOptions.keyPath = null;
-    }
 
-    const keyPath = createOptions.keyPath;
-    const autoIncrement = createOptions.autoIncrement;
-
+    let keyPath = createOptions.keyPath;
+    keyPath = keyPath === undefined ? null : keyPath = util.convertToSequenceDOMString(keyPath);
     if (keyPath !== null && !util.isValidKeyPath(keyPath)) {
         throw createDOMException('SyntaxError', 'The keyPath argument contains an invalid key path.');
     }
+
+    const autoIncrement = createOptions.autoIncrement;
     if (autoIncrement && (keyPath === '' || Array.isArray(keyPath))) {
         throw createDOMException('InvalidAccessError', 'With autoIncrement set, the keyPath argument must not be an array or empty string.');
     }
@@ -162,15 +160,14 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
     let mode = arguments[1];
     storeNames = typeof storeNames === 'string'
         ? [storeNames]
-        : (util.isObj(storeNames) && typeof storeNames[Symbol.iterator] === 'function'
-            ? [...new Set(storeNames)].map((storeName) => {
-                if (typeof storeName !== 'string') {
-                    throw new TypeError('Each store name must be a string');
-                }
-                return storeName;
-            }).sort() // unique and sorted
+        : (util.isIterable(storeNames)
+            ? [ // Creating new array also ensures sequence is passed by value: https://heycam.github.io/webidl/#idl-sequence
+                ...new Set( // to be unique
+                    util.convertToSequenceDOMString(storeNames) // iterables have `ToString` applied (and we convert to array for convenience)
+                )
+            ].sort() // must be sorted
             : (function () {
-                throw new TypeError('You must supply storeNames to IDBDatabase.transaction');
+                throw new TypeError('You must supply a valid `storeNames` to `IDBDatabase.transaction`');
             }()));
     if (storeNames.length === 0) {
         throw createDOMException('InvalidAccessError', 'No valid object store names were specified');
@@ -185,7 +182,7 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
     //   we're not currently actually running the SQL requests in parallel.
     if (typeof mode === 'number') {
         mode = mode === 1 ? 'readwrite' : 'readonly';
-        CFG.DEBUG && console.log('Mode should be a string, but was specified as ', mode); // Todo: Remove this option as no longer in spec
+        CFG.DEBUG && console.log('Mode should be a string, but was specified as ', mode); // Todo Deprecated: Remove this option as no longer in spec
     } else {
         mode = mode || 'readonly';
     }
@@ -210,7 +207,7 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
     return trans;
 };
 
-// Todo: Test
+// Todo __forceClose: Add tests for `__forceClose`
 IDBDatabase.prototype.__forceClose = function (msg) {
     const me = this;
     me.close();
@@ -219,7 +216,7 @@ IDBDatabase.prototype.__forceClose = function (msg) {
         trans.on__abort = function () {
             ct++;
             if (ct === me.__transactions.length) {
-                // Todo: unblock any pending `upgradeneeded` or `deleteDatabase` calls
+                // Todo __forceClose: unblock any pending `upgradeneeded` or `deleteDatabase` calls
                 const evt = createEvent('close');
                 setTimeout(() => {
                     me.dispatchEvent(evt);

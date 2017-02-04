@@ -17,7 +17,7 @@
     log,
     Object, Function
     */
-    const nonEnumerables = ['Blob', 'File']; // These are needed by IndexedDB tests
+    const nonEnumerables = ['Blob', 'File', 'DOMException', 'Error', 'Event']; // These are needed by IndexedDB tests
     nonEnumerables.concat(Object.keys(shimNS.window)).forEach(function (prop) {
         if (prop[0] === '_' || // One type added by jsdom
             [

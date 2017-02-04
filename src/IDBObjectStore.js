@@ -1,12 +1,12 @@
 import {createDOMException} from './DOMException';
 import {IDBCursor, IDBCursorWithValue} from './IDBCursor';
-import {setSQLForRange, IDBKeyRange} from './IDBKeyRange';
+import {setSQLForKeyRange, convertValueToKeyRange} from './IDBKeyRange';
 import DOMStringList from './DOMStringList';
 import * as util from './util';
-import Key from './Key';
-import {executeFetchIndexData, fetchIndexData, IDBIndex} from './IDBIndex';
+import * as Key from './Key';
+import {executeFetchIndexData, buildFetchIndexDataSQL, IDBIndex} from './IDBIndex';
 import IDBTransaction from './IDBTransaction';
-import Sca from './Sca';
+import * as Sca from './Sca';
 import CFG from './CFG';
 import SyncPromise from 'sync-promise';
 
@@ -177,10 +177,10 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
             failure(createDOMException('UnknownError', 'Could not delete ObjectStore', err));
         }
 
-        tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList", "currNum" FROM __sys__ WHERE name = ?', [util.escapeSQLiteStatement(store.name)], function (tx, data) {
+        tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList", "currNum" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.name)], function (tx, data) {
             if (data.rows.length > 0) {
                 tx.executeSql('DROP TABLE ' + util.escapeStoreNameForSQL(store.name), [], function () {
-                    tx.executeSql('DELETE FROM __sys__ WHERE name = ?', [util.escapeSQLiteStatement(store.name)], function () {
+                    tx.executeSql('DELETE FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.name)], function () {
                         success();
                     }, error);
                 }, error);
@@ -189,45 +189,61 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
     });
 };
 
+// Todo: Although we may end up needing to do cloning genuinely asynchronously (for Blobs and FileLists),
+//   and we'll want to ensure the queue starts up synchronously, we nevertheless do the cloning
+//   before entering the queue and its callback since the encoding we do is preceded by validation
+//   which we must do synchronously anyways. If we reimplement Blobs and FileLists asynchronously,
+//   we can detect these types (though validating synchronously as possible) and once entering the
+//   queue callback, ensure they load before triggering success or failure (perhaps by returning and
+//   a `SyncPromise` from the `Sca.clone` operation and later detecting and ensuring it is resolved
+//   before continuing).
 /**
  * Determines whether the given inline or out-of-line key is valid, according to the object store's schema.
  * @param {*} value     Used for inline keys
  * @param {*} key       Used for out-of-line keys
  * @private
  */
-IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
+IDBObjectStore.prototype.__validateKeyAndValueAndClone = function (value, key, cursorUpdate) {
     const me = this;
     if (me.keyPath !== null) {
         if (key !== undefined) {
             throw createDOMException('DataError', 'The object store uses in-line keys and the key parameter was provided', me);
         }
-        util.throwIfNotClonable(value, 'The data to be stored could not be cloned by the internal structured cloning algorithm.');
-        key = Key.evaluateKeyPathOnValue(value, me.keyPath);
-        if (key === undefined) {
-            if (me.autoIncrement) {
-                // Todo: Check whether this next check is a problem coming from `IDBCursor.update()`
-                if (!util.isObj(value)) { // Although steps for storing will detect this, we want to throw synchronously for `add`/`put`
-                    throw createDOMException('DataError', 'KeyPath was specified, but value was not an object');
+        // Todo Binary: Avoid blobs loading async to ensure cloning (and errors therein)
+        //   occurs sync; then can make cloning and this method without callbacks (except where ok
+        //   to be async)
+        const clonedValue = Sca.clone(value);
+        key = Key.extractKeyValueDecodedFromValueUsingKeyPath(clonedValue, me.keyPath); // May throw so "rethrow"
+        if (key.invalid) {
+            throw createDOMException('DataError', 'KeyPath was specified, but key was invalid.');
+        }
+        if (key.failure) {
+            if (!cursorUpdate) {
+                if (!me.autoIncrement) {
+                    throw createDOMException('DataError', 'Could not evaluate a key from keyPath and there is no key generator');
+                }
+                if (!Key.checkKeyCouldBeInjectedIntoValue(clonedValue, me.keyPath)) {
+                    throw createDOMException('DataError', 'A key could not be injected into a value');
                 }
                 // A key will be generated
-                return undefined;
+                return [undefined, clonedValue];
             }
             throw createDOMException('DataError', 'Could not evaluate a key from keyPath');
         }
-        Key.convertValueToKey(key);
-    } else {
-        if (key === undefined) {
-            if (me.autoIncrement) {
-                // A key will be generated
-                return undefined;
-            }
-            throw createDOMException('DataError', 'The object store uses out-of-line keys and has no key generator and the key parameter was not provided. ', me);
-        }
-        Key.convertValueToKey(key);
-        util.throwIfNotClonable(value, 'The data to be stored could not be cloned by the internal structured cloning algorithm.');
+        // An `IDBCursor.update` call will also throw if not equal to the cursor’s effective key
+        return [key.value, clonedValue];
     }
-
-    return key;
+    if (key === undefined) {
+        if (!me.autoIncrement) {
+            throw createDOMException('DataError', 'The object store uses out-of-line keys and has no key generator and the key parameter was not provided.', me);
+        }
+        // A key will be generated
+        key = undefined;
+    } else {
+        Key.convertValueToKeyRethrowingAndIfInvalid(key);
+    }
+    const clonedValue = Sca.clone(value);
+    return [key, clonedValue];
 };
 
 /**
@@ -243,8 +259,16 @@ IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
 IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failure) {
     const me = this;
 
+    // Only run if cloning is needed
+    function keyCloneThenSuccess () {
+        Sca.encode(key, function (key) {
+            key = Sca.decode(key);
+            success(key);
+        });
+    }
+
     function getCurrentNumber (callback) {
-        tx.executeSql('SELECT currNum FROM __sys__ WHERE name = ?', [util.escapeSQLiteStatement(me.name)], function (tx, data) {
+        tx.executeSql('SELECT "currNum" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(me.name)], function (tx, data) {
             if (data.rows.length !== 1) {
                 callback(1);
             } else {
@@ -255,41 +279,82 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
         });
     }
 
-    // This variable determines against which key comparisons should be made
-    //   when determining whether to update the current number
-    let keyToCheck = key;
-    const hasKeyPath = me.keyPath !== null;
-    if (hasKeyPath) {
-        keyToCheck = Key.evaluateKeyPathOnValue(value, me.keyPath);
+    // Bump up the auto-inc counter if the key path-resolved value is valid (greater than old value and >=1) OR
+    //  if a manually passed in key is valid (numeric and >= 1) and >= any primaryKey
+    function setCurrentNumber () {
+        const sql = 'UPDATE __sys__ SET "currNum" = ? WHERE "name" = ?';
+        const sqlValues = [
+            Math.floor(key) + 1, util.escapeSQLiteStatement(me.name)
+        ];
+        CFG.DEBUG && console.log(sql, sqlValues);
+        tx.executeSql(sql, sqlValues, function (tx, data) {
+            keyCloneThenSuccess();
+        }, function (tx, err) {
+            failure(createDOMException('UnknownError', 'Could not set the auto increment value for key', err));
+        });
     }
-    // If auto-increment and no valid primaryKey found on the keyPath, get and set the new value, and use
-    if (me.autoIncrement && keyToCheck === undefined) {
-        getCurrentNumber(function (cn) {
-            if (hasKeyPath) {
-                try {
-                    // Update the value with the new key
-                    Key.setValue(value, me.keyPath, cn);
-                } catch (e) {
-                    failure(createDOMException('DataError', 'Could not assign a generated value to the keyPath', e));
-                }
-            }
+    // Increment current number by 1 (we cannot leverage SQLite's
+    //  autoincrement (and decrement when not needed), as decrementing
+    //  will be overwritten/ignored upon the next insert)
+    function incrementCurrentNumber (cn, cb) {
+        const sql = 'UPDATE __sys__ SET "currNum" = "currNum" + 1 WHERE "name" = ?';
+        const sqlValues = [util.escapeSQLiteStatement(me.name)];
+        CFG.DEBUG && console.log(sql, sqlValues);
+        tx.executeSql(sql, sqlValues, function (tx, data) {
+            cb();
             success(cn);
+        }, function (tx, err) {
+            failure(createDOMException('UnknownError', 'Could not set the auto increment value for key', err));
         });
-    // If auto-increment and the keyPath item is a valid numeric key, get the old auto-increment to compare if the new is higher
-    //  to determine which to use and whether to update the current number
-    } else if (me.autoIncrement && Number.isFinite(keyToCheck) && keyToCheck >= 1) {
-        getCurrentNumber(function (cn) {
-            const useNewForAutoInc = keyToCheck >= cn;
-            success(keyToCheck, useNewForAutoInc);
-        });
-    // Not auto-increment or auto-increment with a bad (non-numeric or < 1) keyPath key
+    }
+
+    // We don't begin with in-line steps to "extract a key from a value using a key path"
+    //   as already run and already treating any (acceptable) failures as `undefined`
+
+    if (me.autoIncrement) {
+        // If auto-increment and no valid primaryKey found on the keyPath, get and set the new value, and use
+        if (key === undefined) {
+            getCurrentNumber(function (cn) {
+                if (cn > 9007199254740992) { // 2 ^ 53 (See <https://github.com/w3c/IndexedDB/issues/147>)
+                    failure(createDOMException('ConstraintError', 'The key generator\'s current number has reached the maximum safe integer limit'));
+                    return;
+                }
+                incrementCurrentNumber(cn, function () {
+                    if (me.keyPath !== null) {
+                        try {
+                            Key.injectKeyIntoValueUsingKeyPath(value, cn, me.keyPath);
+                        } catch (e) {
+                            failure(createDOMException('DataError', 'Could not assign a generated value to the keyPath', e));
+                        }
+                    }
+                });
+            });
+        } else if (!Number.isFinite(key) || key < 1) { // Optimize with no need to get the current number
+            // Auto-increment attempted with a bad (non-numeric/non-finite or < 1) key;
+            //   the steps don't mention failure but we are not to change the current number
+            keyCloneThenSuccess();
+        } else {
+            // If auto-increment and the keyPath item is a valid numeric key, get the old auto-increment to compare if the new is higher
+            //  to determine which to use and whether to update the current number
+            getCurrentNumber(function (cn) {
+                const useNewKeyForAutoInc = key >= cn;
+                if (useNewKeyForAutoInc) {
+                    setCurrentNumber();
+                } else {
+                    keyCloneThenSuccess();
+                }
+            });
+        }
+    // Not auto-increment
     } else {
-        success(keyToCheck);
+        keyCloneThenSuccess();
     }
 };
 
-IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey, passedKey, useNewForAutoInc, success, error) {
+IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey, success, error) {
     const me = this;
+    // The `ConstraintError` to occur for `add` upon a duplicate will occur naturally in attempting an insert
+    // We process the index information first as it will stored in the same table as the store
     const paramMap = {};
     const indexPromises = me.indexNames.map((indexName) => {
         // While this may sometimes resolve sync and sometimes async, the
@@ -304,11 +369,15 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             }
             let indexKey;
             try {
-                indexKey = Key.extractKeyFromValueUsingKeyPath(value, index.keyPath, index.multiEntry); // Add as necessary to this and skip past this index if exceptions here)
+                indexKey = Key.extractKeyValueDecodedFromValueUsingKeyPath(value, index.keyPath, index.multiEntry); // Add as necessary to this and skip past this index if exceptions here)
+                if (indexKey.invalid || indexKey.failure) {
+                    throw new Error('Go to catch');
+                }
             } catch (err) {
                 resolve();
                 return;
             }
+            indexKey = indexKey.value;
             function setIndexInfo (index) {
                 if (indexKey === undefined) {
                     return;
@@ -317,8 +386,8 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             }
             if (index.unique) {
                 const multiCheck = index.multiEntry && Array.isArray(indexKey);
-                const fetchArgs = fetchIndexData(index, true, indexKey, 'key', multiCheck);
-                executeFetchIndexData(true, null, ...fetchArgs, tx, null, function success (key) {
+                const fetchArgs = buildFetchIndexDataSQL(true, index, indexKey, 'key', multiCheck);
+                executeFetchIndexData(null, ...fetchArgs, tx, null, function success (key) {
                     if (key === undefined) {
                         setIndexInfo(index);
                         resolve();
@@ -338,12 +407,12 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         });
     });
     SyncPromise.all(indexPromises).then(() => {
-        const sqlStart = ['INSERT INTO ', util.escapeStoreNameForSQL(me.name), '('];
+        const sqlStart = ['INSERT INTO', util.escapeStoreNameForSQL(me.name), '('];
         const sqlEnd = [' VALUES ('];
         const insertSqlValues = [];
         if (primaryKey !== undefined) {
-            Key.convertValueToKey(primaryKey);
-            sqlStart.push(util.quote('key'), ',');
+            // Key.convertValueToKey(primaryKey); // Already run
+            sqlStart.push(util.sqlQuote('key'), ',');
             sqlEnd.push('?,');
             insertSqlValues.push(util.escapeSQLiteStatement(Key.encode(primaryKey)));
         }
@@ -353,72 +422,18 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             insertSqlValues.push(util.escapeSQLiteStatement(paramMap[key]));
         }
         // removing the trailing comma
-        sqlStart.push(util.quote('value') + ' )');
+        sqlStart.push(util.sqlQuote('value') + ' )');
         sqlEnd.push('?)');
         insertSqlValues.push(util.escapeSQLiteStatement(encoded));
 
         const insertSql = sqlStart.join(' ') + sqlEnd.join(' ');
         CFG.DEBUG && console.log('SQL for adding', insertSql, insertSqlValues);
 
-        const insert = function (result) {
-            let cb;
-            if (typeof result === 'function') {
-                cb = result;
-                result = undefined;
-            }
-            tx.executeSql(insertSql, insertSqlValues, function (tx, data) {
-                if (cb) {
-                    cb();
-                } else success(result);
-            }, function (tx, err) {
-                error(createDOMException('ConstraintError', err.message, err));
-            });
-        };
-
-        // Need for a clone here?
-        Sca.encode(primaryKey, function (primaryKey) {
-            primaryKey = Sca.decode(primaryKey);
-            if (!me.autoIncrement) {
-                insert(primaryKey);
-                return;
-            }
-
-            // Bump up the auto-inc counter if the key path-resolved value is valid (greater than old value and >=1) OR
-            //  if a manually passed in key is valid (numeric and >= 1) and >= any primaryKey
-            // Todo: If primaryKey is not a number, we should be checking the value of any previous "current number" and compare with that
-            if (useNewForAutoInc) {
-                insert(function () {
-                    const sql = 'UPDATE __sys__ SET currNum = ? WHERE name = ?';
-                    const sqlValues = [
-                        Math.floor(primaryKey) + 1, util.escapeSQLiteStatement(me.name)
-                    ];
-                    CFG.DEBUG && console.log(sql, sqlValues);
-                    tx.executeSql(sql, sqlValues, function (tx, data) {
-                        success(primaryKey);
-                    }, function (tx, err) {
-                        error(createDOMException('UnknownError', 'Could not set the auto increment value for key', err));
-                    });
-                });
-            // If the key path-resolved value is invalid (not numeric or < 1) or
-            //    if a manually passed in key is invalid (non-numeric or < 1),
-            //    then we don't need to modify the current number
-            } else if (useNewForAutoInc === false || !Number.isFinite(primaryKey) || primaryKey < 1) {
-                insert(primaryKey);
-            // Increment current number by 1 (we cannot leverage SQLite's
-            //  autoincrement (and decrement when not needed), as decrementing
-            //  will be overwritten/ignored upon the next insert)
-            } else {
-                insert(function () {
-                    const sql = 'UPDATE __sys__ SET currNum = currNum + 1 WHERE name = ?';
-                    const sqlValues = [util.escapeSQLiteStatement(me.name)];
-                    CFG.DEBUG && console.log(sql, sqlValues);
-                    tx.executeSql(sql, sqlValues, function (tx, data) {
-                        success(primaryKey);
-                    }, function (tx, err) {
-                        error(createDOMException('UnknownError', 'Could not set the auto increment value for key', err));
-                    });
-                });
-            }
+        tx.executeSql(insertSql, insertSqlValues, function (tx, data) {
+            success(primaryKey);
+        }, function (tx, err) {
+            // Should occur for `add` operation
+            error(createDOMException('ConstraintError', err.message, err));
         });
     }).catch(function (err) {
         error(err);
@@ -439,24 +454,10 @@ IDBObjectStore.prototype.add = function (value /* , key */) {
     }
     IDBTransaction.__assertActive(me.transaction);
     me.transaction.__assertWritable();
-    this.__validateKeyAndValue(value, key);
 
     const request = me.transaction.__createRequest(me);
-    me.transaction.__pushToQueue(request, function objectStoreAdd (tx, args, success, error) {
-        Sca.encode(value, function (encoded) {
-            value = Sca.decode(encoded);
-            me.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
-                Sca.encode(value, function (encoded) {
-                    me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, function (...args) {
-                        me.__cursors.forEach((cursor) => {
-                            cursor.__invalidateCache(); // Add
-                        });
-                        success(...args);
-                    }, error);
-                });
-            }, error);
-        });
-    });
+    const [ky, clonedValue] = me.__validateKeyAndValueAndClone(value, key, false);
+    IDBObjectStore.__stepsStoringRecordObjectStore(request, me, clonedValue, true, ky);
     return request;
 };
 
@@ -474,37 +475,51 @@ IDBObjectStore.prototype.put = function (value /*, key */) {
     }
     IDBTransaction.__assertActive(me.transaction);
     me.transaction.__assertWritable();
-    me.__validateKeyAndValue(value, key);
 
     const request = me.transaction.__createRequest(me);
-    me.transaction.__pushToQueue(request, function objectStorePut (tx, args, success, error) {
-        Sca.encode(value, function (encoded) {
-            value = Sca.decode(encoded);
-            me.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
-                Sca.encode(value, function (encoded) {
-                    // First try to delete if the record exists
-                    Key.convertValueToKey(primaryKey);
-                    const sql = 'DELETE FROM ' + util.escapeStoreNameForSQL(me.name) + ' WHERE key = ?';
-                    const encodedPrimaryKey = Key.encode(primaryKey);
-                    tx.executeSql(sql, [util.escapeSQLiteStatement(encodedPrimaryKey)], function (tx, data) {
-                        CFG.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
-                        me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, function (...args) {
-                            me.__cursors.forEach((cursor) => {
-                                cursor.__invalidateCache(); // Add
-                            });
-                            success(...args);
-                        }, error);
-                    }, function (tx, err) {
-                        error(err);
-                    });
-                });
-            }, error);
-        });
-    });
+    const [ky, clonedValue] = me.__validateKeyAndValueAndClone(value, key, false);
+    IDBObjectStore.__stepsStoringRecordObjectStore(request, me, clonedValue, false, ky);
     return request;
 };
 
-IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
+IDBObjectStore.prototype.__overwrite = function (tx, primaryKey, cb, error) {
+    const me = this;
+    // First try to delete if the record exists
+    // Key.convertValueToKey(primaryKey); // Already run
+    const sql = 'DELETE FROM ' + util.escapeStoreNameForSQL(me.name) + ' WHERE "key" = ?';
+    const encodedPrimaryKey = Key.encode(primaryKey);
+    tx.executeSql(sql, [util.escapeSQLiteStatement(encodedPrimaryKey)], function (tx, data) {
+        CFG.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
+        cb(tx);
+    }, function (tx, err) {
+        error(err);
+    });
+};
+
+IDBObjectStore.__stepsStoringRecordObjectStore = function (request, store, value, noOverwrite /* , key */) {
+    const key = arguments[4];
+    store.transaction.__pushToQueue(request, function (tx, args, success, error) {
+        store.__deriveKey(tx, value, key, function (primaryKey) {
+            Sca.encode(value, function (encoded) {
+                function insert (tx) {
+                    store.__insertData(tx, encoded, value, primaryKey, function (...args) {
+                        store.__cursors.forEach((cursor) => {
+                            cursor.__invalidateCache();
+                        });
+                        success(...args);
+                    }, error);
+                }
+                if (!noOverwrite) {
+                    store.__overwrite(tx, primaryKey, insert, error);
+                    return;
+                }
+                insert(tx);
+            });
+        }, error);
+    });
+};
+
+IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
     const me = this;
     if (count !== undefined) {
         count = util.enforceRange(count, 'unsigned long');
@@ -513,25 +528,15 @@ IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
         throw createDOMException('InvalidStateError', 'This store has been deleted');
     }
     IDBTransaction.__assertActive(me.transaction);
-    if (!getAll && range == null) {
-        throw createDOMException('DataError', 'No key or range was specified');
-    }
 
-    if (util.instanceOf(range, IDBKeyRange)) {
-        // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
-        if (!range.toString() !== '[object IDBKeyRange]') {
-            range = IDBKeyRange.__createInstance(range.lower, range.upper, range.lowerOpen, range.upperOpen);
-        }
-    } else if (range != null) {
-        range = IDBKeyRange.only(range);
-    }
+    const range = convertValueToKeyRange(query, !getAll);
 
     const col = getKey ? 'key' : 'value';
-    let sql = ['SELECT ' + util.quote(col) + ' FROM ', util.escapeStoreNameForSQL(me.name)];
+    let sql = ['SELECT', util.sqlQuote(col), 'FROM', util.escapeStoreNameForSQL(me.name)];
     const sqlValues = [];
-    if (range != null) {
+    if (range !== undefined) {
         sql.push('WHERE');
-        setSQLForRange(range, util.quote('key'), sql, sqlValues);
+        setSQLForKeyRange(range, util.sqlQuote('key'), sql, sqlValues);
     }
     if (!getAll) {
         count = 1;
@@ -612,7 +617,7 @@ IDBObjectStore.prototype.getAllKeys = function (/* query, count */) {
     return this.__get(query, true, true, count);
 };
 
-IDBObjectStore.prototype['delete'] = function (range) {
+IDBObjectStore.prototype['delete'] = function (query) {
     const me = this;
     if (!(this instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
@@ -627,22 +632,11 @@ IDBObjectStore.prototype['delete'] = function (range) {
     IDBTransaction.__assertActive(me.transaction);
     me.transaction.__assertWritable();
 
-    if (range == null) {
-        throw createDOMException('DataError', 'No key or range was specified');
-    }
+    const range = convertValueToKeyRange(query, true);
 
-    if (util.instanceOf(range, IDBKeyRange)) {
-        // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
-        if (!range.toString() !== '[object IDBKeyRange]') {
-            range = IDBKeyRange.__createInstance(range.lower, range.upper, range.lowerOpen, range.upperOpen);
-        }
-    } else {
-        range = IDBKeyRange.only(range);
-    }
-
-    const sqlArr = ['DELETE FROM ', util.escapeStoreNameForSQL(me.name), ' WHERE '];
+    const sqlArr = ['DELETE FROM', util.escapeStoreNameForSQL(me.name), 'WHERE'];
     const sqlValues = [];
-    setSQLForRange(range, util.quote('key'), sqlArr, sqlValues);
+    setSQLForKeyRange(range, util.sqlQuote('key'), sqlArr, sqlValues);
     const sql = sqlArr.join(' ');
 
     return me.transaction.__addToTransactionQueue(function objectStoreDelete (tx, args, success, error) {
@@ -683,9 +677,9 @@ IDBObjectStore.prototype.clear = function () {
     }, undefined, me);
 };
 
-IDBObjectStore.prototype.count = function (/* key */) {
+IDBObjectStore.prototype.count = function (/* query */) {
     const me = this;
-    let key = arguments[0];
+    const query = arguments[0];
     if (!(me instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
     }
@@ -693,49 +687,26 @@ IDBObjectStore.prototype.count = function (/* key */) {
         throw createDOMException('InvalidStateError', 'This store has been deleted');
     }
     IDBTransaction.__assertActive(me.transaction);
-    if (util.instanceOf(key, IDBKeyRange)) {
-        // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
-        if (!key.toString() !== '[object IDBKeyRange]') {
-            key = IDBKeyRange.__createInstance(key.lower, key.upper, key.lowerOpen, key.upperOpen);
-        }
-        // We don't need to add to cursors array since has the count parameter which won't cache
-        return IDBCursorWithValue.__createInstance(key, 'next', me, me, 'key', 'value', true).__req;
-    } else {
-        const hasKey = key != null;
 
-        // key is optional
-        if (hasKey) {
-            Key.convertValueToKey(key);
-        }
-
-        return me.transaction.__addToTransactionQueue(function objectStoreCount (tx, args, success, error) {
-            const sql = 'SELECT * FROM ' + util.escapeStoreNameForSQL(me.name) + (hasKey ? ' WHERE key = ?' : '');
-            const sqlValues = [];
-            hasKey && sqlValues.push(util.escapeSQLiteStatement(Key.encode(key)));
-            tx.executeSql(sql, sqlValues, function (tx, data) {
-                success(data.rows.length);
-            }, function (tx, err) {
-                error(err);
-            });
-        }, undefined, me);
-    }
+    // We don't need to add to cursors array since has the count parameter which won't cache
+    return IDBCursorWithValue.__createInstance(query, 'next', me, me, 'key', 'value', true).__req;
 };
 
-IDBObjectStore.prototype.openCursor = function (/* range, direction */) {
+IDBObjectStore.prototype.openCursor = function (/* query, direction */) {
     const me = this;
-    const [range, direction] = arguments;
+    const [query, direction] = arguments;
     if (!(me instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
     }
     if (me.__deleted) {
         throw createDOMException('InvalidStateError', 'This store has been deleted');
     }
-    const cursor = IDBCursorWithValue.__createInstance(range, direction, me, me, 'key', 'value');
+    const cursor = IDBCursorWithValue.__createInstance(query, direction, me, me, 'key', 'value');
     me.__cursors.push(cursor);
     return cursor.__req;
 };
 
-IDBObjectStore.prototype.openKeyCursor = function (/* range, direction */) {
+IDBObjectStore.prototype.openKeyCursor = function (/* query, direction */) {
     const me = this;
     if (!(me instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
@@ -743,8 +714,8 @@ IDBObjectStore.prototype.openKeyCursor = function (/* range, direction */) {
     if (me.__deleted) {
         throw createDOMException('InvalidStateError', 'This store has been deleted');
     }
-    const [range, direction] = arguments;
-    const cursor = IDBCursor.__createInstance(range, direction, me, me, 'key', 'key');
+    const [query, direction] = arguments;
+    const cursor = IDBCursor.__createInstance(query, direction, me, me, 'key', 'key');
     me.__cursors.push(cursor);
     return cursor.__req;
 };
@@ -811,6 +782,8 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath /* , optiona
     if (me.__indexes[indexName] && !me.__indexes[indexName].__deleted) {
         throw createDOMException('ConstraintError', 'Index "' + indexName + '" already exists on ' + me.name);
     }
+
+    keyPath = util.convertToSequenceDOMString(keyPath);
     if (!util.isValidKeyPath(keyPath)) {
         throw createDOMException('SyntaxError', 'A valid keyPath must be supplied');
     }

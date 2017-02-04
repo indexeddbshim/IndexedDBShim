@@ -2,6 +2,7 @@ import 'babel-polyfill'; // `Object.assign` including within `EventTarget`, gene
 import shimIDBVersionChangeEvent from './IDBVersionChangeEvent';
 import {IDBCursor as shimIDBCursor, IDBCursorWithValue as shimIDBCursorWithValue} from './IDBCursor';
 import {IDBRequest as shimIDBRequest, IDBOpenDBRequest as shimIDBOpenDBRequest} from './IDBRequest';
+import {ShimDOMException} from './DOMException';
 import {shimIndexedDB} from './IDBFactory';
 import shimIDBKeyRange from './IDBKeyRange';
 import shimIDBObjectStore from './IDBObjectStore';
@@ -85,6 +86,8 @@ function setGlobalVars (idb, initialConfig) {
                     Object.setPrototypeOf(shimIDBRequest, ShimEventTarget);
                     Object.setPrototypeOf(shimIDBTransaction, ShimEventTarget);
                     Object.setPrototypeOf(shimIDBVersionChangeEvent, ShimEvent);
+                    Object.setPrototypeOf(ShimDOMException, Error);
+                    Object.setPrototypeOf(ShimDOMException.prototype, Error.prototype);
                 }
                 [
                     ['indexedDB', shimIndexedDB],

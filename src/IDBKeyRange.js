@@ -1,5 +1,5 @@
 import {createDOMException} from './DOMException';
-import Key from './Key';
+import * as Key from './Key';
 import * as util from './util';
 
 const readonlyProperties = ['lower', 'upper', 'lowerOpen', 'upperOpen'];
@@ -23,10 +23,10 @@ IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
             throw createDOMException('DataError', 'Both arguments to the key range method cannot be undefined');
         }
         if (lower !== undefined) {
-            Key.convertValueToKey(lower);
+            Key.convertValueToKeyRethrowingAndIfInvalid(lower);
         }
         if (upper !== undefined) {
-            Key.convertValueToKey(upper);
+            Key.convertValueToKeyRethrowingAndIfInvalid(upper);
         }
         if (lower !== undefined && upper !== undefined && lower !== upper) {
             if (Key.encode(lower) > Key.encode(upper)) {
@@ -50,7 +50,7 @@ IDBKeyRange.prototype.includes = function (key) {
     if (!arguments.length) {
         throw new TypeError('IDBKeyRange.includes requires a key argument');
     }
-    Key.convertValueToKey(key);
+    Key.convertValueToKeyRethrowingAndIfInvalid(key);
     return Key.isKeyInRange(key, this);
 };
 
@@ -108,7 +108,7 @@ Object.defineProperty(IDBKeyRange, 'prototype', {
     writable: false
 });
 
-function setSQLForRange (range, quotedKeyColumnName, sql, sqlValues, addAnd, checkCached) {
+function setSQLForKeyRange (range, quotedKeyColumnName, sql, sqlValues, addAnd, checkCached) {
     if (range && (range.lower !== undefined || range.upper !== undefined)) {
         if (addAnd) sql.push('AND');
         if (range.lower !== undefined) {
@@ -123,4 +123,22 @@ function setSQLForRange (range, quotedKeyColumnName, sql, sqlValues, addAnd, che
     }
 }
 
-export {setSQLForRange, IDBKeyRange, IDBKeyRange as default};
+function convertValueToKeyRange (value, nullDisallowed) {
+    if (util.instanceOf(value, IDBKeyRange)) {
+        // We still need to validate IDBKeyRange-like objects (the above check is based on loose duck-typing)
+        if (!value.toString() !== '[object IDBKeyRange]') {
+            return IDBKeyRange.__createInstance(value.lower, value.upper, value.lowerOpen, value.upperOpen);
+        }
+        return value;
+    }
+    if (value == null) {
+        if (nullDisallowed) {
+            throw createDOMException('DataError', 'No key or range was specified');
+        }
+        return undefined; // Represents unbounded
+    }
+    Key.convertValueToKeyRethrowingAndIfInvalid(value);
+    return IDBKeyRange.only(value);
+}
+
+export {setSQLForKeyRange, IDBKeyRange, convertValueToKeyRange, IDBKeyRange as default};

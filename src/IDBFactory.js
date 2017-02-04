@@ -4,7 +4,7 @@ import {webSQLErrback, createDOMException, ShimDOMException} from './DOMExceptio
 import {IDBOpenDBRequest, IDBRequest} from './IDBRequest';
 import ShimDOMStringList from './DOMStringList';
 import * as util from './util';
-import Key from './Key';
+import * as Key from './Key';
 import IDBTransaction from './IDBTransaction';
 import IDBDatabase from './IDBDatabase';
 import CFG from './CFG';
@@ -45,6 +45,7 @@ IDBFactory.__createInstance = function () {
         this[Symbol.toStringTag] = 'IDBFactory';
         this.modules = { // Export other shims (especially for testing)
             Event: typeof Event !== 'undefined' ? Event : ShimEvent,
+            Error, // For test comparisons
             ShimEvent,
             ShimCustomEvent,
             ShimEventTarget,
@@ -128,7 +129,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                 try {
                                     systx.executeSql('ROLLBACK', [], cb, cb);
                                     return;
-                                } catch (err) { // Browser may fail with expired transaction above so
+                                } catch (er) { // Browser may fail with expired transaction above so
                                                 // no choice but to manually revert
                                     sysdb.transaction(function (systx) {
                                         function reportError () {
@@ -136,9 +137,9 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                         }
                                         // Attempt to revert
                                         if (oldVersion === 0) {
-                                            systx.executeSql('DELETE FROM dbVersions WHERE name = ?', [sqlSafeName], cb, reportError);
+                                            systx.executeSql('DELETE FROM dbVersions WHERE "name" = ?', [sqlSafeName], cb, reportError);
                                         } else {
-                                            systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [oldVersion, sqlSafeName], cb, reportError);
+                                            systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [oldVersion, sqlSafeName], cb, reportError);
                                         }
                                     });
                                     return;
@@ -199,7 +200,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                             if (oldVersion === 0) {
                                 systx.executeSql('INSERT INTO dbVersions VALUES (?,?)', [sqlSafeName, version], versionSet, dbCreateError);
                             } else {
-                                systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [version, sqlSafeName], versionSet, dbCreateError);
+                                systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [version, sqlSafeName], versionSet, dbCreateError);
                             }
                         }, dbCreateError, null, function (currentTask, err, done, rollback, commit) {
                             if (currentTask.readOnly || err) {
@@ -225,7 +226,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
     createSysDB(function () {
         sysdb.readTransaction(function (sysReadTx) {
-            sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE name = ?', [sqlSafeName], function (sysReadTx, data) {
+            sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE "name" = ?', [sqlSafeName], function (sysReadTx, data) {
                 if (data.rows.length === 0) {
                     // Database with this name does not exist
                     openDB(0);
@@ -297,7 +298,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
             });
         }
         sysdb.readTransaction(function (sysReadTx) {
-            sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE name = ?', [sqlSafeName], function (sysReadTx, data) {
+            sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE "name" = ?', [sqlSafeName], function (sysReadTx, data) {
                 if (data.rows.length === 0) {
                     req.__result = undefined;
                     const e = new IDBVersionChangeEvent('success', {oldVersion: version, newVersion: null});
@@ -313,8 +314,8 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                 //  avoid committing anyways until all deletions are made and rollback the
                 //  `dbVersions` change if they fail
                 sysdb.transaction(function (systx) {
-                    systx.executeSql('DELETE FROM dbVersions WHERE name = ? ', [sqlSafeName], function () {
-                        // Todo: Give config option to Node to delete the entire database file
+                    systx.executeSql('DELETE FROM dbVersions WHERE "name" = ? ', [sqlSafeName], function () {
+                        // Todo Node Config: Give config option to Node to delete the entire database file
                         const db = CFG.win.openDatabase(escapedDatabaseName, 1, name, CFG.DEFAULT_DB_SIZE);
                         db.transaction(function (tx) {
                             tx.executeSql('SELECT "name" FROM __sys__', [], function (tx, data) {
@@ -370,32 +371,30 @@ IDBFactory.prototype.deleteDatabase = function (name) {
  * @param key2
  * @returns {number}
  */
-function cmp (key1, key2) {
-    Key.convertValueToKey(key1);
-    Key.convertValueToKey(key2);
-    const encodedKey1 = Key.encode(key1);
-    const encodedKey2 = Key.encode(key2);
+function cmp (first, second) {
+    const encodedKey1 = Key.encode(first);
+    const encodedKey2 = Key.encode(second);
     const result = encodedKey1 > encodedKey2 ? 1 : encodedKey1 === encodedKey2 ? 0 : -1;
 
     if (CFG.DEBUG) {
         // verify that the keys encoded correctly
         let decodedKey1 = Key.decode(encodedKey1);
         let decodedKey2 = Key.decode(encodedKey2);
-        if (typeof key1 === 'object') {
-            key1 = JSON.stringify(key1);
+        if (typeof first === 'object') {
+            first = JSON.stringify(first);
             decodedKey1 = JSON.stringify(decodedKey1);
         }
-        if (typeof key2 === 'object') {
-            key2 = JSON.stringify(key2);
+        if (typeof second === 'object') {
+            second = JSON.stringify(second);
             decodedKey2 = JSON.stringify(decodedKey2);
         }
 
         // encoding/decoding mismatches are usually due to a loss of floating-point precision
-        if (decodedKey1 !== key1) {
-            console.warn(key1 + ' was incorrectly encoded as ' + decodedKey1);
+        if (decodedKey1 !== first) {
+            console.warn(first + ' was incorrectly encoded as ' + decodedKey1);
         }
-        if (decodedKey2 !== key2) {
-            console.warn(key2 + ' was incorrectly encoded as ' + decodedKey2);
+        if (decodedKey2 !== second) {
+            console.warn(second + ' was incorrectly encoded as ' + decodedKey2);
         }
     }
 
@@ -409,6 +408,10 @@ IDBFactory.prototype.cmp = function (key1, key2) {
     if (arguments.length < 2) {
         throw new TypeError('You must provide two keys to be compared');
     }
+    // We use encoding facilities already built for proper sorting;
+    //   the following "conversions" are for validation only
+    Key.convertValueToKeyRethrowingAndIfInvalid(key1);
+    Key.convertValueToKeyRethrowingAndIfInvalid(key2);
     return cmp(key1, key2);
 };
 
@@ -418,6 +421,9 @@ IDBFactory.prototype.cmp = function (key1, key2) {
 * @link http://lists.w3.org/Archives/Public/public-webapps/2011JulSep/1537.html
 */
 IDBFactory.prototype.webkitGetDatabaseNames = function () {
+    if (!(this instanceof IDBFactory)) {
+        throw new TypeError('Illegal invocation');
+    }
     let calledDbCreateError = false;
     function dbGetDatabaseNamesError (tx, err) {
         if (calledDbCreateError) {
@@ -450,7 +456,7 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
 };
 
 /**
-* @Todo: Test
+* @Todo __forceClose: Test
 * This is provided to facilitate unit-testing of the
 *  closing of a database connection with a forced flag:
 * <http://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>

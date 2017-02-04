@@ -1,346 +1,44 @@
-/* eslint-disable no-eval */
-import atob from 'atob';
-import Blob from 'w3c-blob'; // Needed by Node; uses native if available (browser)
-import * as util from './util';
+import Typeson from 'typeson';
+import StructuredCloning from 'typeson-registry/presets/structured-cloning-throwing';
+// import Blob from 'w3c-blob'; // Needed by Node; uses native if available (browser)
 
-/**
- * Implementation of the Structured Cloning Algorithm.  Supports the
- * following object types:
- * - Blob
- * - Boolean
- * - Date object
- * - File object (deserialized as Blob object).
- * - Number object
- * - RegExp object
- * - String object
- * This is accomplished by doing the following:
- * 1) Using the cycle/decycle functions from:
- *    https://github.com/douglascrockford/JSON-js/blob/master/cycle.js
- * 2) Serializing/deserializing objects to/from string that don't work with
- *    JSON.stringify and JSON.parse by using object specific logic (eg use
- *    the FileReader API to convert a Blob or File object to a data URL.
- * 3) JSON.stringify and JSON.parse do the final conversion to/from string.
- */
-function decycle (object, callback) {
-    // From: https://github.com/douglascrockford/JSON-js/blob/master/cycle.js
-    // Contains additional logic to convert the following object types to string
-    // so that they can properly be encoded using JSON.stringify:
-    //  *Boolean
-    //  *Date
-    //  *File
-    //  *Blob
-    //  *Number
-    //  *Regex
-    // Make a deep copy of an object or array, assuring that there is at most
-    // one instance of each object or array in the resulting structure. The
-    // duplicate references (which might be forming cycles) are replaced with
-    // an object of the form
-    //      {$ref: PATH}
-    // where the PATH is a JSONPath string that locates the first occurance.
-    // So,
-    //      var a = [];
-    //      a[0] = a;
-    //      return JSON.stringify(JSON.decycle(a));
-    // produces the string '[{"$ref":"$"}]'.
+import {createDOMException, ShimDOMException} from './DOMException';
 
-    // JSONPath is used to locate the unique object. $ indicates the top level of
-    // the object or array. [NUMBER] or [STRING] indicates a child member or
-    // property.
+// Todo: Register `ImageBitmap` and add `Blob`/`File`/`FileList`
+// Todo: add a proper polyfill for `ImageData` using node-canvas
+// See also: http://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
 
-    const objects = [];   // Keep a reference to each unique object or array
-    const paths = [];     // Keep the path to each unique object or array
-    const queuedObjects = [];
-    const returnCallback = callback;
-    let derezObj; // eslint-disable-line prefer-const
+const typeson = new Typeson().register(StructuredCloning);
 
-    /**
-     * Check the queue to see if all objects have been processed.
-     * if they have, call the callback with the converted object.
-     */
-    function checkForCompletion () {
-        if (queuedObjects.length === 0) {
-            returnCallback(derezObj);
+// We are keeping the callback approach for now in case we wish to reexpose Blob, File, FileList
+function encode (obj, cb) {
+    let ret;
+    try {
+        ret = typeson.stringify(obj);
+    } catch (err) {
+        // SCA in typeson-registry using `DOMException` which is not defined (e.g., in Node)
+        if (Typeson.hasConstructorOf(err, ReferenceError) ||
+            // SCA in typeson-registry threw a cloning error and we are in a
+            //   supporting environment (e.g., the browser) where `ShimDOMException` is
+            //   an alias for `DOMException`; if typeson-registry ever uses our shim
+            //   to throw, we can use this condition alone.
+            Typeson.hasConstructorOf(err, ShimDOMException)) {
+            throw createDOMException('DataCloneError', 'The object cannot be cloned.');
         }
+        throw err; // We should rethrow non-cloning exceptions like from
+                   //  throwing getters (as in the W3C test, key-conversion-exceptions.htm)
     }
-
-    /**
-     * Convert a blob to a data URL.
-     * @param {Blob} blob to convert.
-     * @param {String} path of blob in object being encoded.
-     */
-    function readBlobAsDataURL (blob, path) {
-        const reader = new FileReader();
-        reader.onloadend = function (loadedEvent) {
-            const dataURL = loadedEvent.target.result;
-            const blobtype = 'Blob';
-            if (util.isFile(blob)) {
-                // blobtype = 'File';
-            }
-            updateEncodedBlob(dataURL, path, blobtype);
-        };
-        reader.readAsDataURL(blob);
-    }
-
-    /**
-     * Async handler to update a blob object to a data URL for encoding.
-     * @param {String} dataURL
-     * @param {String} path
-     * @param {String} blobtype - file if the blob is a file; blob otherwise
-     */
-    function updateEncodedBlob (dataURL, path, blobtype) {
-        const encoded = queuedObjects.indexOf(path);
-        path = path.replace('$', 'derezObj');
-        eval(path + '.$enc="' + dataURL + '"');
-        eval(path + '.$type="' + blobtype + '"');
-        queuedObjects.splice(encoded, 1);
-        checkForCompletion();
-    }
-
-    function derez (value, path) {
-        // The derez recurses through the object, producing the deep copy.
-
-        let i,          // The loop counter
-            name,       // Property name
-            nu;         // The new object or array
-
-        // typeof null === 'object', so go on if this value is really an object but not
-        // one of the weird builtin objects.
-
-        const isObj = util.isObj(value);
-        const valOfType = isObj && typeof value.valueOf();
-        if (isObj &&
-            !(['boolean', 'number', 'string'].includes(valOfType)) &&
-            !(util.isDate(value)) &&
-            !(util.isRegExp(value)) &&
-            !(util.isBlob(Blob))
-        ) {
-            // If the value is an object or array, look to see if we have already
-            // encountered it. If so, return a $ref/path object. This is a hard way,
-            // linear search that will get slower as the number of unique objects grows.
-
-            for (i = 0; i < objects.length; i += 1) {
-                if (objects[i] === value) {
-                    return {$ref: paths[i]};
-                }
-            }
-
-            // Otherwise, accumulate the unique value and its path.
-
-            objects.push(value);
-            paths.push(path);
-
-            // If it is an array, replicate the array.
-
-            if (Array.isArray(value)) {
-                nu = [];
-                for (i = 0; i < value.length; i += 1) {
-                    nu[i] = derez(value[i], path + '[' + i + ']');
-                }
-            } else {
-                // If it is an object, replicate the object.
-                nu = {};
-                for (name in value) {
-                    if (Object.prototype.hasOwnProperty.call(value, name)) {
-                        nu[name] = derez(value[name],
-                         path + '[' + JSON.stringify(name) + ']');
-                    }
-                }
-            }
-
-            return nu;
-        } else if (util.isBlob(value)) {
-            // Queue blob for conversion
-            queuedObjects.push(path);
-            readBlobAsDataURL(value, path);
-        } else if (valOfType === 'boolean') {
-            value = {
-                '$type': 'Boolean',
-                '$enc': value.toString()
-            };
-        } else if (util.isDate(value)) {
-            value = {
-                '$type': 'Date',
-                '$enc': value.getTime()
-            };
-        } else if (valOfType === 'number') {
-            value = {
-                '$type': 'Number',
-                '$enc': value.toString()
-            };
-        } else if (util.isRegExp(value)) {
-            value = {
-                '$type': 'RegExp',
-                '$enc': value.toString()
-            };
-        } else if (typeof value === 'number') {
-            value = {
-                '$type': 'number',
-                '$enc': value + ''  // handles NaN, Infinity, Negative Infinity
-            };
-        } else if (value === undefined) {
-            value = {
-                '$type': 'undefined'
-            };
-        }
-        return value;
-    }
-    derezObj = derez(object, '$');
-    checkForCompletion();
+    if (cb) cb(ret);
+    return ret;
 }
 
-function retrocycle ($) {
-    // From: https://github.com/douglascrockford/JSON-js/blob/master/cycle.js
-    // Contains additional logic to convert strings to the following object types
-    // so that they can properly be decoded:
-    //  *Boolean
-    //  *Date
-    //  *File
-    //  *Blob
-    //  *Number
-    //  *Regex
-    // Restore an object that was reduced by decycle. Members whose values are
-    // objects of the form
-    //      {$ref: PATH}
-    // are replaced with references to the value found by the PATH. This will
-    // restore cycles. The object will be mutated.
-
-    // The eval function is used to locate the values described by a PATH. The
-    // root object is kept in a $ variable. A regular expression is used to
-    // assure that the PATH is extremely well formed. The regexp contains nested
-    // * quantifiers. That has been known to have extremely bad performance
-    // problems on some browsers for very long strings. A PATH is expected to be
-    // reasonably short. A PATH is allowed to belong to a very restricted subset of
-    // Goessner's JSONPath.
-
-    // So,
-    //      var s = '[{"$ref":"$"}]';
-    //      return JSON.retrocycle(JSON.parse(s));
-    // produces an array containing a single element which is the array itself.
-
-    const px = /^\$(?:\[(?:\d+|"(?:[^\\"\u0000-\u001f]|\\([\\"/bfnrt]|u[0-9a-zA-Z]{4}))*")])*$/;
-
-    /**
-     * Converts the specified data URL to a Blob object
-     * @param {String} dataURL to convert to a Blob
-     * @returns {Blob} the converted Blob object
-     */
-    function dataURLToBlob (dataURL) {
-        const BASE64_MARKER = ';base64,';
-        let contentType,
-            parts,
-            raw;
-        if (!dataURL.includes(BASE64_MARKER)) {
-            parts = dataURL.split(',');
-            contentType = parts[0].split(':')[1];
-            raw = parts[1];
-
-            return new Blob([raw], {type: contentType});
-        }
-
-        parts = dataURL.split(BASE64_MARKER);
-        contentType = parts[0].split(':')[1];
-        raw = atob(parts[1]);
-        const rawLength = raw.length;
-        const uInt8Array = new Uint8Array(rawLength);
-
-        for (let i = 0; i < rawLength; ++i) {
-            uInt8Array[i] = raw.charCodeAt(i);
-        }
-        return new Blob([uInt8Array.buffer], {type: contentType});
-    }
-
-    function rez (value) {
-        // The rez function walks recursively through the object looking for $ref
-        // properties. When it finds one that has a value that is a path, then it
-        // replaces the $ref object with a reference to the value that is found by
-        // the path.
-
-        let i, item, name, path;
-
-        if (util.isObj(value)) {
-            if (Array.isArray(value)) {
-                for (i = 0; i < value.length; i += 1) {
-                    item = value[i];
-                    if (util.isObj(item)) {
-                        path = item.$ref;
-                        if (typeof path === 'string' && px.test(path)) {
-                            value[i] = eval(path);
-                        } else {
-                            value[i] = rez(item);
-                        }
-                    }
-                }
-            } else {
-                if (value.$type !== undefined) {
-                    switch (value.$type) {
-                    case 'Blob':
-                    case 'File':
-                        value = dataURLToBlob(value.$enc);
-                        break;
-                    case 'Boolean':
-                        value = Boolean(value.$enc === 'true');
-                        break;
-                    case 'Date':
-                        value = new Date(value.$enc);
-                        break;
-                    case 'Number':
-                        value = Number(value.$enc);
-                        break;
-                    case 'RegExp':
-                        value = eval(value.$enc);
-                        break;
-                    case 'number':
-                        value = parseFloat(value.$enc);
-                        break;
-                    case 'undefined':
-                        value = undefined;
-                        break;
-                    }
-                } else {
-                    for (name in value) {
-                        if (typeof value[name] === 'object') {
-                            item = value[name];
-                            if (item) {
-                                path = item.$ref;
-                                if (typeof path === 'string' && px.test(path)) {
-                                    value[name] = eval(path);
-                                } else {
-                                    value[name] = rez(item);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return value;
-    }
-    return rez($);
+function decode (obj) {
+    return typeson.parse(obj);
 }
 
-/**
- * Encode the specified object as a string.  Because of the asynchronus
- * conversion of Blob/File to string, the encode function requires
- * a callback
- * @param {Object} val the value to convert.
- * @param {function} callback the function to call once conversion is
- * complete.  The callback gets called with the converted value.
- */
-function encode (val, callback) {
-    function finishEncode (val) {
-        callback(JSON.stringify(val));
-    }
-    decycle(val, finishEncode);
+function clone (val) {
+    // We don't return the intermediate `encode` as we'll need to reencode the clone as it may differ
+    return decode(encode(val));
 }
 
-/**
- * Deserialize the specified string to an object
- * @param {String} val the serialized string
- * @returns {Object} the deserialized object
- */
-function decode (val) {
-    return retrocycle(JSON.parse(val));
-}
-
-const Sca = {decycle, retrocycle, encode, decode};
-export {decycle, retrocycle, encode, decode, Sca as default};
+export {encode, decode, clone};

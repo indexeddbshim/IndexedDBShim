@@ -30,6 +30,16 @@ they were actually changes since a more recent version on `master`.
 - Breaking change: If you were overriding/monkey-patching globals, these are
     no longer available with a shift to ES6 modules (see below). The `CFG.js`
     module can be imported in its place to change the default values, however.
+- Known regression: In switching Sca implementation (avoiding `eval`
+   and other improvements), removed (async) capability for
+   representing `Blob`s (and `File`/`FileList`?) in values; should
+   revisit when fixing other known binary issues; per spec, will need to
+   report errors synchronously as possible, so either use deprecated
+   sync XHR and disparaged `readFileSync` or give caveat of not
+   catching errors for such types on time.
+- Breaking fix for existing data: Cause comparisons/storage of arrays to anticipate
+     their higher priority over binary (arrays already existing in storage
+     will not benefit from this until re-encoded)
 - Breaking change (minor): Change "modules" property of `IDBFactory` to only
     expose `DOMException`, `Event`, and `IDBFactory` (replacing the former
     use of `idbModules` with ES6 modules and a CFG module for the globals:
@@ -395,6 +405,36 @@ they were actually changes since a more recent version on `master`.
   `IDBDatabase` (`createObjectStore`, `deleteObjectStore`),
    `IDBObjectStore.index`, `IDBTransaction` (`objectStore`, `abort`),
    and not merely whether it is active
+- Fix: Improve evaluate key path splitting of identifier algorithm
+- Fix: Ensure extraction of key value from value using key path algorithm
+  is applied during ignoring of bad indexes of storage and during
+  checks for storing operations
+- Fix: Better `IDBIndex` (`openCursor`, `openKeyCursor`, `count`,
+    `get*`) range validation
+- Fix: Disallow invocation of `webkitGetDatabaseNames` on
+    `IDBFactory.prototype`
+- Fix: Throw synchronously if won't be able to inject into a value (thereby
+   avoiding the need to check during the injection); assumes
+   PR https://github.com/w3c/IndexedDB/pull/146
+- Fix: Make `DataError` message more accurate for cursor key path
+    resolution failures
+- Fix: Ensure non-numeric/non-finite or `< 1` keys can be stored as
+    per spec even though not changing the current number
+- Fix: Allow iterables where `sequence<DOMString>` is accepted
+   (`IDBDatabase.createObjectStore`, `IDBObjectStore.createIndex`,
+   `IDBDatabase.transaction`)
+- Fix: Avoid modifying the supplied `createObjectStore` `createOptions`
+   object when `keyPath` is `undefined`
+- Fix: For `IDBDatabase.transaction`, allow `ToString` to occur on
+   iterables
+- Fix: Tighten up `DOMException` shim to support legacy constants per
+  W3C tests and better follow W3C interface expectations
+- Fix: Improve precision of `util.isFile` and have
+   `util.isBlob` fail with files but support non-file Blobs
+- Fix: Clone before checking against key path (`IDBObjectStore`
+   (`put`, `add`) and `IDBCursor.update`)
+- Fix: Avoid `eval()` in cloning (issue #211, #236)
+- Fix: Support cyclic values via typeson/typeson-registry (#267)
 - Repo files: Rename test folders for ease in distinguishing
 - Optimize: Only retrieve required SQLite columns for `IDBIndex`
       get operations
@@ -405,6 +445,8 @@ they were actually changes since a more recent version on `master`.
 - Optimize: Avoid caching and other processing in `IDBCursor` multiEntry
     finds (used by `IDBObjectStore` or `IDBIndex` `count` with key range)
 - Optimize: Switch to `SyncPromise` for faster execution
+- Optimize: Avoid redundant key->value checks and redundant cloning
+- Optimize: Avoid cloning key when already a primitive
 - Refactoring: Replace Node-deprecated `GLOBAL` with `global`
 - Refactoring: Rename internal escaping/unescaping functions to semantic
      names and add further documentation
@@ -420,23 +462,29 @@ they were actually changes since a more recent version on `master`.
     add as ESLint rules, other minor changes
 - Refactoring (ESLint): Move from JSHint to ESLint and to "standard" config,
     with a few exceptions
-- Refactoring: upper-case SQL keywords for greater visual distinction
+- Refactoring (spec parity): Use same naming/return of methods in spec
+- Refactoring (spec parity): Implement `convertKeyToValue` (not in use internally)
+- Refactoring (spec parity): Extract steps for storing a record (affecting
+     `IDBCursor.update` and `IDBObjectStore`'s `put`/`add`)
+- Refactoring (spec parity): Perform auto-increment in spec order (should be of
+    no consequence to the user, however)
+- Refactoring (spec parity): Rename `Key.getValue` to `Key.evaluateKeyPathOnValue`
+- Refactoring (spec parity): Rename and repurpose `Key.validate` to
+    `Key.convertValueToKey` (also paralleling terminology in the spec),
+    also supporting multiEntry argument
+- Refactoring (SQL): Quoting columns consistently for SQLite
+- Refactoring (SQL): Make SQL-relationship clearer for method names (escaping)
+- Refactoring (SQL): upper-case SQL keywords for greater visual distinction
 - Refactoring: Where safe, switch from `typeof ... === 'undefined'` to
     check against undefined (safe for strict mode implicit in modules)
 - Refactoring: Use spread operator in place of `arguments` where named
     args not needed (also may be more future-proof)
 - Refactoring: Have `setSQLForRange` handle key encoding
 - Refactoring: `isObj` utility, further use of `Array.isArray()`
-- Refactoring: Rename `Key.getValue` to `Key.evaluateKeyPathOnValue`
-    (greater spec parity).
-- Refactoring: Key value retrieval: Avoid `eval()` (in Key--still used
-    in Sca.js)
+- Refactoring: Key value retrieval: Avoid `eval()` (#211, #236)
 - Refactoring: Use ES6 classes for cleaner inheritance
 - Refactoring: Avoid JSON methods upon each `objectStore`/`createObjectStore`
     call in favor of one-time in `IDBDatabase`
-- Refactoring: Rename and repurpose `Key.validate` to
-    `Key.convertValueToKey` (also paralleling terminology in the spec),
-    also supporting multiEntry argument
 - Refactoring: Replace SQLite auto-increment with our own table since
     SQLite's own apparently cannot be decremented successfully;
     also rename to spec "current number"
@@ -485,7 +533,7 @@ they were actually changes since a more recent version on `master`.
 - Test scaffolding (W3C Old): Fix assertions
 - Testing (W3C): Add new preliminary testing framework (mostly complete)
 - Testing (W3C): Add separate tests for events and workers; also
-    incorporate test for `DOMStringList`
+    incorporate tests for `DOMStringList` and `DOMException`
 - (Testing:
     From tests-mocha and tests-qunit (Node and browser), all tests
         are now passing

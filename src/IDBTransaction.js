@@ -460,7 +460,13 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
                 me.__transactionEndCallback = abort;
                 return;
             }
-            me.__tx.executeSql('ROLLBACK', [], abort, abort); // Not working in some circumstances, even in Node
+            try {
+                me.__tx.executeSql('ROLLBACK', [], abort, abort); // Not working in some circumstances, even in Node
+            } catch (err) {
+                // Browser errs when transaction has ended and since it most likely already erred here,
+                //   we call to abort
+                abort();
+            }
         } else {
             abort(null, {code: 0});
         }

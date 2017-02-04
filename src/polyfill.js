@@ -1,7 +1,7 @@
 import {createDOMException} from './DOMException';
-import Key from './Key';
+import * as Key from './Key';
 
-// Todo: polyfill IDBVersionChangeEvent, IDBOpenDBRequest?
+// Todo Browser: polyfill IDBVersionChangeEvent, IDBOpenDBRequest?
 
 /**
  * Polyfills missing features in the browser's native IndexedDB implementation.
@@ -89,7 +89,10 @@ function compoundKeyPolyfill (IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFac
         if (typeof value === 'object') {
             // inline key
             if (isCompoundKey(this.keyPath)) {
-                setInlineCompoundKey(value, this.keyPath);
+                const erred = setInlineCompoundKey(value, this.keyPath);
+                if (erred) {
+                    throw createDOMException('DataError', 'keyPath error');
+                }
             }
 
             // inline indexes
@@ -283,8 +286,11 @@ function decodeCompoundKeyPath (keyPath) {
 function setInlineCompoundKey (value, encodedKeyPath, multiEntry) {
     // Encode the key
     const keyPath = decodeCompoundKeyPath(encodedKeyPath);
-    const key = Key.evaluateKeyPathOnValue(value, keyPath, multiEntry);
-    const encodedKey = encodeCompoundKey(key);
+    const key = Key.extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry);
+    if (key.failure || key.invalid) {
+        return true;
+    }
+    const encodedKey = encodeCompoundKey(key.value);
 
     // Store the encoded key inline
     encodedKeyPath = encodedKeyPath.substr(compoundKeysPropertyName.length + 1);
@@ -303,7 +309,7 @@ function removeInlineCompoundKey (value) {
 
 function encodeCompoundKey (key) {
     // Validate and encode the key
-    Key.convertValueToKey(key);
+    Key.convertValueToKeyRethrowingAndIfInvalid(key);
     key = Key.encode(key);
 
     // Prepend the "__$$compoundKey." prefix

@@ -1,12 +1,11 @@
 import {createDOMException} from './DOMException';
 import * as util from './util';
-
-let Key = {};
+import {cmp} from './IDBFactory';
 
 /**
  * Encodes the keys based on their types. This is required to maintain collations
  */
-const collations = ['undefined', 'number', 'date', 'string', 'array'];
+const collations = ['invalid', 'number', 'date', 'string', 'binary', 'array'];
 
 /**
  * The sign values for numbers, ordered from least to greatest.
@@ -19,12 +18,10 @@ const collations = ['undefined', 'number', 'date', 'string', 'array'];
  */
 const signValues = ['negativeInfinity', 'bigNegative', 'smallNegative', 'smallPositive', 'bigPositive', 'positiveInfinity'];
 
-// Todo: Support `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
 const types = {
-    // Undefined is not a valid key type.  It's only used when there is no key.
-    undefined: {
+    invalid: {
         encode: function (key) {
-            return collations.indexOf('undefined') + '-';
+            return collations.indexOf('invalid') + '-';
         },
         decode: function (key) {
             return undefined;
@@ -54,7 +51,7 @@ const types = {
             const significantDigitIndex = key32.search(/[^0]/);
             // Truncate leading zeros.
             key32 = key32.slice(significantDigitIndex);
-            let sign, exponent = zeros(2), mantissa = zeros(11);
+            let sign, exponent, mantissa;
 
             // Finite cases:
             if (isFinite(key)) {
@@ -91,6 +88,8 @@ const types = {
                 }
             // Infinite cases:
             } else {
+                exponent = zeros(2);
+                mantissa = zeros(11);
                 sign = signValues.indexOf(
                     key > 0 ? 'positiveInfinity' : 'negativeInfinity'
                 );
@@ -132,7 +131,7 @@ const types = {
 
     // Strings are encoded as JSON strings (with quotes and unicode characters escaped).
     //
-    // IF the strings are in an array, then some extra encoding is done to make sorting work correctly:
+    // If the strings are in an array, then some extra encoding is done to make sorting work correctly:
     // Since we can't force all strings to be the same length, we need to ensure that characters line-up properly
     // for sorting, while also accounting for the extra characters that are added when the array itself is encoded as JSON.
     // To do this, each character of the string is prepended with a dash ("-"), and a space is added to the end of the string.
@@ -188,6 +187,16 @@ const types = {
         },
         decode: function (key) {
             return new Date(key.slice(2));
+        }
+    },
+
+    binary: { // Todo Binary: Support `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
+        encode: function (key) {
+            // collations.indexOf('binary') + '-' + ...;
+            throw new Error('Not yet implemented');
+        },
+        decode: function (key) {
+            throw new Error('Not yet implemented');
         }
     }
 };
@@ -269,11 +278,7 @@ function roundToPrecision (num, precision) {
  * @return {string}
  */
 function zeros (n) {
-    let result = '';
-    while (n--) {
-        result = result + '0';
-    }
-    return result;
+    return '0'.repeat(n);
 }
 
 /**
@@ -286,147 +291,231 @@ function negate (s) {
 }
 
 /**
- * Returns the string "number", "date", "string", or "array".
+ * Returns the string "number", "date", "string", or "array" (or "binary" when implemented).
  */
-function getType (key) {
+function getKeyType (key) {
     if (Array.isArray(key)) return 'array';
     if (util.isDate(key)) return 'date';
-    // if (util.isArrayBufferOrView(key)) return 'ArrayBuffer'; // Todo: Uncomment when supported
-    return typeof key;
+    // if (util.isBinary(key)) return 'binary'; // Todo Binary: Uncomment when supported
+    const keyType = typeof key;
+    return ['string', 'number'].includes(keyType) ? keyType : 'invalid';
 }
 
 /**
  * Keys must be strings, numbers (besides NaN), Dates (if value is not NaN),
- *   Arrays (or, once supported, ArrayBuffer) objects
- * @todo Currently this is being used in code for validation but for greater
- *   spec parity if nothing else, ought to probably instead be returning a
- *   key object with {type, value}
+ *   Arrays (or, once supported, binary) objects
+ * @param input The key input
+ * @param seen An array of already seen keys
  */
-function convertValueToKey (key, arrayRefs, multiEntry) {
-    const type = getType(key);
+function convertValueToKey (input, seen) {
+    return convertValueToKeyValueDecoded(input, seen, false, true);
+}
+
+/**
+* Currently not in use
+*/
+function convertValueToMultiEntryKey (input) {
+    // Todo Spec Question: Should the second step of the spec indicate rethrowing
+    //   too (e.g., so "extract a key from a value using a key path"
+    //   can rethrow them)?
+    return convertValueToKeyValueDecoded(input, null, true, true);
+}
+
+/**
+* Shortcut utility to avoid returning full keys from `convertValueToKey`
+*   and subsequent need to process in calling code
+*/
+function convertValueToKeyValueDecoded (input, seen, multiEntry, fullKeys) {
+    seen = seen || [];
+    if (seen.includes(input)) return {type: 'array', invalid: true, message: 'An array key cannot be circular'};
+    const type = getKeyType(input);
+    const ret = {type, value: input};
     switch (type) {
-    case 'ArrayBuffer': // Copy bytes once implemented (not a supported type yet)
-        return key;
-    case 'array':
-        arrayRefs = arrayRefs || [];
-        arrayRefs.push(key);
-        const newKeys = [];
-        for (let i = 0; i < key.length; i++) { // We cannot iterate here with array extras as we must ensure sparse arrays are invalidated
-            const item = key[i];
-            if (arrayRefs.includes(item)) throw createDOMException('DataError', 'An array key cannot be circular');
-            let newKey;
+    case 'number': {
+        if (Number.isNaN(input)) {
+            return {type: 'NaN', invalid: true}; // List as 'NaN' type for convenience of consumers in reporting errors
+        }
+        return ret;
+    } case 'string': {
+        return ret;
+    } case 'binary': { // Copy bytes once implemented (not a supported type yet)
+        // May throw
+        return ret;
+    } case 'array': { // May throw once binary is implemented
+        const len = input.length;
+        seen.push(input);
+        const keys = [];
+        for (let i = 0; i < len; i++) { // We cannot iterate here with array extras as we must ensure sparse arrays are invalidated
+            if (!multiEntry && !Object.prototype.hasOwnProperty.call(input, i)) {
+                return {type, invalid: true, message: 'Does not have own index property'};
+            }
             try {
-                newKey = convertValueToKey(item, arrayRefs);
+                const entry = input[i];
+                const key = convertValueToKeyValueDecoded(entry, seen, false, fullKeys); // Though steps do not list rethrowing, the next is returnifabrupt when not multiEntry
+                if (key.invalid) {
+                    if (multiEntry) {
+                        continue;
+                    }
+                    return {type, invalid: true, message: 'Bad array entry value-to-key conversion'};
+                }
+                if (!multiEntry ||
+                    (!fullKeys && keys.every((k) => cmp(k, key.value) !== 0)) ||
+                    (fullKeys && keys.every((k) => cmp(k, key) !== 0))
+                ) {
+                    keys.push(fullKeys ? key : key.value);
+                }
             } catch (err) {
                 if (!multiEntry) {
                     throw err;
                 }
             }
-            if (!multiEntry || !newKeys.includes(newKey)) {
-                newKeys.push(newKey);
-            }
         }
-        return newKeys;
-    case 'date':
-        if (!Number.isNaN(key.getTime())) {
-            return new Date(key.getTime());
+        return {type, value: keys};
+    } case 'date': {
+        if (!Number.isNaN(input.getTime())) {
+            return fullKeys ? {type, value: input.getTime()} : {type, value: new Date(input.getTime())};
         }
+        return {type, invalid: true, message: 'Not a valid date'};
         // Falls through
-    default:
-        // allow for strings, numbers instead of first part of this check:
+    } case 'invalid': default: {
         // Other `typeof` types which are not valid keys:
-        //    'undefined', 'boolean', 'object' (including `null`), 'symbol', 'function'
-        if (!['string', 'number'].includes(type) || Number.isNaN(key)) {
-            throw createDOMException('DataError', 'Not a valid key');
-        }
-        return key;
+        //    'undefined', 'boolean', 'object' (including `null`), 'symbol', 'function
+        const type = input === null ? 'null' : typeof input; // Convert `null` for convenience of consumers in reporting errors
+        return {type, invalid: true, message: 'Not a valid key; type ' + type};
+    }
     }
 }
-
-function convertValueToKeyMultiEntry (key) {
-    return convertValueToKey(key, null, true);
-}
-
-function extractKeyFromValueUsingKeyPath (value, keyPath, multiEntry) {
-    const key = evaluateKeyPathOnValue(value, keyPath, multiEntry);
-    if (!multiEntry) {
-        return convertValueToKey(key);
-    }
-    return convertValueToKeyMultiEntry(key);
+function convertValueToMultiEntryKeyDecoded (key, fullKeys) {
+    return convertValueToKeyValueDecoded(key, null, true, fullKeys);
 }
 
 /**
- * Returns the value of an inline key based on a key path
+* An internal utility
+*/
+function convertValueToKeyRethrowingAndIfInvalid (input, seen) {
+    const key = convertValueToKey(input, seen);
+    if (key.invalid) {
+        throw createDOMException('DataError', key.message || 'Not a valid key; type: ' + key.type);
+    }
+    return key;
+}
+
+function extractKeyFromValueUsingKeyPath (value, keyPath, multiEntry) {
+    return extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry, true);
+}
+/**
+* Not currently in use
+*/
+function evaluateKeyPathOnValue (value, keyPath, multiEntry) {
+    return evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, true);
+}
+
+/**
+* May throw, return `{failure: true}` (e.g., non-object on keyPath resolution)
+*    or `{invalid: true}` (e.g., `NaN`)
+*/
+function extractKeyValueDecodedFromValueUsingKeyPath (value, keyPath, multiEntry, fullKeys) {
+    const r = evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKeys);
+    // Todo Spec Question: Should there not also be a spec check here in case `invalid` on array item (or
+    //   does pre-cloning prevent)?
+    if (r.failure) {
+        return r;
+    }
+    if (!multiEntry) {
+        return convertValueToKeyValueDecoded(r.value, null, false, fullKeys);
+    }
+    return convertValueToMultiEntryKeyDecoded(r.value, fullKeys);
+}
+
+/**
+ * Returns the value of an inline key based on a key path (wrapped in an object with key `value`)
+ *   or `{failure: true}`
  * @param {object} value
  * @param {string|array} keyPath
  * @param {boolean} multiEntry
  * @returns {undefined|array|string}
  */
-function evaluateKeyPathOnValue (value, keyPath, multiEntry) {
+function evaluateKeyPathOnValueToDecodedValue (value, keyPath, multiEntry, fullKeys) {
     if (Array.isArray(keyPath)) {
-        const arrayValue = [];
-        return keyPath.some((kpPart) => {
-            // Todo: Confirm as per W3C tests that sequence<DOMString> implies `toString()`
-            // See also https://heycam.github.io/webidl/#idl-DOMString
-            // and http://stackoverflow.com/questions/38164752/should-a-call-to-db-close-within-upgradeneeded-inevitably-prevent-onsuccess
-            kpPart = util.isObj(kpPart) ? kpPart.toString() : kpPart;
-            let key = extractKeyFromValueUsingKeyPath(value, kpPart, multiEntry);
-            try {
-                key = convertValueToKey(key);
-            } catch (err) {
+        const result = [];
+        return keyPath.some((item) => {
+            const key = extractKeyValueDecodedFromValueUsingKeyPath(value, item, multiEntry, fullKeys);
+            // Todo Spec Question: Should `invalid` not also be handled?
+            if (key.failure) {
                 return true;
             }
-            arrayValue.push(key);
-        }, []) ? undefined : arrayValue;
+            result.push(key.value);
+        }, []) ? {failure: true} : {value: result};
     }
     if (keyPath === '') {
-        return value;
+        return {value};
     }
     const identifiers = keyPath.split('.');
-    identifiers.some((idntfr, i) => {
-        if (idntfr === 'length' && typeof value === 'string' && i === identifiers.length - 1) {
+    return identifiers.some((idntfr, i) => {
+        if (idntfr === 'length' && (
+            typeof value === 'string' || Array.isArray(value)
+        )) {
             value = value.length;
+        } else if (util.isBlob(value)) {
+            switch (idntfr) {
+            case 'size': case 'type':
+                value = value[idntfr];
+                return;
+            }
+        } else if (util.isFile(value)) {
+            switch (idntfr) {
+            case 'name': case 'lastModified':
+                value = value[idntfr];
+                return;
+            case 'lastModifiedDate':
+                value = new Date(value.lastModified);
+                return;
+            }
+        } else if (!util.isObj(value) || !Object.prototype.hasOwnProperty.call(value, idntfr)) {
             return true;
+        } else {
+            value = value[idntfr];
+            return value === undefined;
         }
-        if (!util.isObj(value)) {
-            value = undefined;
-            return true;
-        }
-        value = value[idntfr];
-        return value === undefined;
-    });
-    return value;
+    }) ? {failure: true} : {value};
 }
 
 /**
  * Sets the inline key value
- * @param {object} source
+ * @param {object} value
+ * @param {*} key
  * @param {string} keyPath
- * @param {*} value
  */
-function setValue (source, keyPath, value) {
-    const props = keyPath.split('.');
-    for (let i = 0; i < props.length - 1; i++) {
-        const prop = props[i];
-        source = source[prop] = source[prop] || {};
+function injectKeyIntoValueUsingKeyPath (value, key, keyPath) {
+    const identifiers = keyPath.split('.');
+    const last = identifiers.pop();
+    for (let i = 0; i < identifiers.length; i++) {
+        const identifier = identifiers[i];
+        const hop = Object.prototype.hasOwnProperty.call(value, identifier);
+        if (!hop) {
+            value[identifier] = {};
+        }
+        value = value[identifier];
     }
-    source[props[props.length - 1]] = value;
+    value[last] = key; // key is already a `keyValue` in our processing so no need to convert
 }
 
-/**
- * Determines whether an index entry matches a multi-entry key value.
- * @param {string} encodedEntry     The entry value (already encoded)
- * @param {string} encodedKey       The full index key (already encoded)
- * @returns {boolean}
- */
-function isMultiEntryMatch (encodedEntry, encodedKey) {
-    const keyType = collations[encodedKey.substring(0, 1)];
-
-    if (keyType === 'array') {
-        return encodedKey.indexOf(encodedEntry) > 1;
-    } else {
-        return encodedKey === encodedEntry;
+// See https://github.com/w3c/IndexedDB/pull/146
+function checkKeyCouldBeInjectedIntoValue (value, keyPath) {
+    const identifiers = keyPath.split('.');
+    identifiers.pop();
+    for (let i = 0; i < identifiers.length; i++) {
+        if (!util.isObj(value)) {
+            return false;
+        }
+        const identifier = identifiers[i];
+        const hop = Object.prototype.hasOwnProperty.call(value, identifier);
+        if (!hop) {
+            return true;
+        }
+        value = value[identifier];
     }
+    return util.isObj(value);
 }
 
 function isKeyInRange (key, range, checkCached) {
@@ -454,6 +543,22 @@ function isKeyInRange (key, range, checkCached) {
     }
 
     return lowerMatch && upperMatch;
+}
+
+/**
+ * Determines whether an index entry matches a multi-entry key value.
+ * @param {string} encodedEntry     The entry value (already encoded)
+ * @param {string} encodedKey       The full index key (already encoded)
+ * @returns {boolean}
+ */
+function isMultiEntryMatch (encodedEntry, encodedKey) {
+    const keyType = collations[encodedKey.slice(0, 1)];
+
+    if (keyType === 'array') {
+        return encodedKey.indexOf(encodedEntry) > 1;
+    } else {
+        return encodedKey === encodedEntry;
+    }
 }
 
 function findMultiEntryMatches (keyEntry, range) {
@@ -490,20 +595,55 @@ function findMultiEntryMatches (keyEntry, range) {
     return matches;
 }
 
+/**
+* Not currently in use but keeping for spec parity
+*/
+function convertKeyToValue (key) {
+    const type = key.type;
+    const value = key.value;
+    switch (type) {
+    case 'number': case 'string':
+        return value;
+    case 'array':
+        const array = [];
+        const len = value.length;
+        let index = 0;
+        while (index < len) {
+            const entry = convertKeyToValue(value[index]);
+            array[index] = entry;
+            index++;
+        }
+        return array;
+    case 'date':
+        return new Date(value);
+    case 'binary': // Todo Binary: Not implemented
+        // eslint-disable-line no-fallthrough
+    case 'invalid':
+    default:
+        throw new Error('Bad key');
+    }
+}
+
 function encode (key, inArray) {
     // Bad keys like `null`, `object`, `boolean`, 'function', 'symbol' should not be passed here due to prior validation
     if (key === undefined) {
         return null;
     }
-    // Currently has array, date, number, string
-    return types[getType(key)].encode(key, inArray);
+    // Currently has array, date, number, string and should support "binary"
+    return types[getKeyType(key)].encode(key, inArray);
 }
 function decode (key, inArray) {
     if (typeof key !== 'string') {
         return undefined;
     }
-    return types[collations[key.substring(0, 1)]].decode(key, inArray);
+    return types[collations[key.slice(0, 1)]].decode(key, inArray);
 }
 
-Key = {encode, decode, convertValueToKey, convertValueToKeyMultiEntry, extractKeyFromValueUsingKeyPath, evaluateKeyPathOnValue, setValue, isMultiEntryMatch, isKeyInRange, findMultiEntryMatches};
-export {encode, decode, convertValueToKey, convertValueToKeyMultiEntry, extractKeyFromValueUsingKeyPath, evaluateKeyPathOnValue, setValue, isMultiEntryMatch, isKeyInRange, findMultiEntryMatches, Key as default};
+/* eslint-disable object-property-newline */
+export {encode, decode, convertKeyToValue, convertValueToKeyValueDecoded,
+    convertValueToMultiEntryKeyDecoded,
+    convertValueToKey,
+    convertValueToMultiEntryKey, convertValueToKeyRethrowingAndIfInvalid,
+    extractKeyFromValueUsingKeyPath, evaluateKeyPathOnValue,
+    extractKeyValueDecodedFromValueUsingKeyPath, injectKeyIntoValueUsingKeyPath, checkKeyCouldBeInjectedIntoValue,
+    isMultiEntryMatch, isKeyInRange, findMultiEntryMatches};

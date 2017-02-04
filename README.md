@@ -332,14 +332,13 @@ please [let us know about it](https://github.com/axemclion/IndexedDBShim/issues)
 Or better yet, [send us a fix](https://github.com/axemclion/IndexedDBShim/pulls)!
 Please make sure someone else hasn't already reported the same bug though.
 
-Here is a summary of known issues to resolve:
+Here is a summary of main known issues to resolve:
 
 1. `blocked` and `versionchange` `IDBVersionChangeEvent` event support
-2. Structured Cloning Algorithm
-    1. `eval` is currently in use (in `src/Sca.js`)
-    1. Support cyclic objects
-3. Add new Binary/`ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
-    support
+2. Add binary/`ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
+    support including for keys following sorting rules, etc.
+3. `Blob`/`File`/`FileList`/`ImageBitmap` cloning and `ImageData` in Node
+    through [typeson-registry](https://github.com/dfahlander/typeson-registry)
 
 There are a few bugs that are outside of our power to fix.  Namely:
 

@@ -137,6 +137,7 @@
 
                     // Only the instance properties should have been saved, not prototype properties
                     // The `dob` property should still be a Date class
+                    console.log(allData);
                     expect(allData).to.have.same.deep.members([
                         {primaryKey: 1, key: 1, value: {name: 'John Doe'}},
                         {primaryKey: 2, key: 2, value: {name: 'Bob Smith', dob: new Date(2000, 5, 20), age: 30, isMarried: true}}

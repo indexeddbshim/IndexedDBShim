@@ -1,10 +1,10 @@
 import {createDOMException} from './DOMException';
 import {IDBCursor, IDBCursorWithValue} from './IDBCursor';
 import * as util from './util';
-import Key from './Key';
-import {setSQLForRange, IDBKeyRange} from './IDBKeyRange';
+import * as Key from './Key';
+import {setSQLForKeyRange, IDBKeyRange, convertValueToKeyRange} from './IDBKeyRange';
 import IDBTransaction from './IDBTransaction';
-import Sca from './Sca';
+import * as Sca from './Sca';
 import CFG from './CFG';
 
 const readonlyProperties = ['objectStore', 'keyPath', 'multiEntry', 'unique'];
@@ -132,8 +132,11 @@ IDBIndex.__createIndex = function (store, index) {
                         if (i < data.rows.length) {
                             try {
                                 const value = Sca.decode(util.unescapeSQLiteResponse(data.rows.item(i).value));
-                                let indexKey = Key.evaluateKeyPathOnValue(value, index.keyPath, index.multiEntry);
-                                indexKey = Key.encode(indexKey, index.multiEntry);
+                                let indexKey = Key.extractKeyValueDecodedFromValueUsingKeyPath(value, index.keyPath, index.multiEntry); // Todo: Do we need this stricter error checking?
+                                if (indexKey.invalid || indexKey.failure) { // Todo: Do we need invalid checks and should we instead treat these as being duplicates?
+                                    throw new Error('Go to catch; ignore bad indexKey');
+                                }
+                                indexKey = Key.encode(indexKey.value, index.multiEntry);
                                 if (index.unique) {
                                     if (indexValues[indexKey]) {
                                         indexValues = {};
@@ -148,7 +151,7 @@ IDBIndex.__createIndex = function (store, index) {
 
                                 tx.executeSql(
                                     'UPDATE ' + util.escapeStoreNameForSQL(store.name) + ' SET ' +
-                                        util.escapeIndexNameForSQL(index.name) + ' = ? WHERE key = ?',
+                                        util.escapeIndexNameForSQL(index.name) + ' = ? WHERE "key" = ?',
                                     [util.escapeSQLiteStatement(indexKey), data.rows.item(i).key],
                                     function (tx, data) {
                                         addIndexEntry(i + 1);
@@ -227,7 +230,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
     }
 
     CFG.DEBUG && console.log('Updating the index list for ' + store.name, indexList);
-    tx.executeSql('UPDATE __sys__ SET indexList = ? WHERE name = ?', [JSON.stringify(indexList), util.escapeSQLiteStatement(store.name)], function () {
+    tx.executeSql('UPDATE __sys__ SET "indexList" = ? WHERE "name" = ?', [JSON.stringify(indexList), util.escapeSQLiteStatement(store.name)], function () {
         success(store);
     }, failure);
 };
@@ -246,7 +249,6 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
     if (count !== undefined) {
         count = util.enforceRange(count, 'unsigned long');
     }
-    const hasUnboundedRange = !nullDisallowed && range == null;
 
     if (me.__deleted) {
         throw createDOMException('InvalidStateError', 'This index has been deleted');
@@ -260,36 +262,36 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
         throw createDOMException('DataError', 'No key or range was specified');
     }
 
-    const fetchArgs = fetchIndexData(me, !hasUnboundedRange, range, opType, false);
+    const fetchArgs = buildFetchIndexDataSQL(nullDisallowed, me, range, opType, false);
     return me.objectStore.transaction.__addToTransactionQueue(function (...args) {
-        executeFetchIndexData(nullDisallowed, count, ...fetchArgs, ...args);
+        executeFetchIndexData(count, ...fetchArgs, ...args);
     }, undefined, me);
 };
 
 /**
  * Opens a cursor over the given key range.
- * @param {IDBKeyRange} range
+ * @param {*|IDBKeyRange} query
  * @param {string} direction
  * @returns {IDBRequest}
  */
-IDBIndex.prototype.openCursor = function (/* range, direction */) {
+IDBIndex.prototype.openCursor = function (/* query, direction */) {
     const me = this;
-    const [range, direction] = arguments;
-    const cursor = IDBCursorWithValue.__createInstance(range, direction, me.objectStore, me, util.escapeIndexNameForKeyColumn(me.name), 'value');
+    const [query, direction] = arguments;
+    const cursor = IDBCursorWithValue.__createInstance(query, direction, me.objectStore, me, util.escapeIndexNameForSQLKeyColumn(me.name), 'value');
     me.__objectStore.__cursors.push(cursor);
     return cursor.__req;
 };
 
 /**
  * Opens a cursor over the given key range.  The cursor only includes key values, not data.
- * @param {IDBKeyRange} range
+ * @param {*|IDBKeyRange} query
  * @param {string} direction
  * @returns {IDBRequest}
  */
-IDBIndex.prototype.openKeyCursor = function (/* range, direction */) {
+IDBIndex.prototype.openKeyCursor = function (/* query, direction */) {
     const me = this;
-    const [range, direction] = arguments;
-    const cursor = IDBCursor.__createInstance(range, direction, me.objectStore, me, util.escapeIndexNameForKeyColumn(me.name), 'key');
+    const [query, direction] = arguments;
+    const cursor = IDBCursor.__createInstance(query, direction, me.objectStore, me, util.escapeIndexNameForSQLKeyColumn(me.name), 'key');
     me.__objectStore.__cursors.push(cursor);
     return cursor.__req;
 };
@@ -320,19 +322,15 @@ IDBIndex.prototype.getAllKeys = function (/* query, count */) {
 
 IDBIndex.prototype.count = function (/* query */) {
     const me = this;
-    let query = arguments[0];
+    const query = arguments[0];
     // With the exception of needing to check whether the index has been
     //  deleted, we could, for greater spec parity (if not accuracy),
     //  just call:
     //  `return me.__objectStore.count(query);`
 
-    // key is optional
-    if (util.instanceOf(query, IDBKeyRange)) {
-        if (!query.toString() !== '[object IDBKeyRange]') {
-            query = IDBKeyRange.__createInstance(query.lower, query.upper, query.lowerOpen, query.upperOpen);
-        }
+    if (util.instanceOf(query, IDBKeyRange)) { // Todo: Do we need this block?
         // We don't need to add to cursors array since has the count parameter which won't cache
-        return IDBCursorWithValue.__createInstance(query, 'next', me.objectStore, me, util.escapeIndexNameForKeyColumn(me.name), 'value', true).__req;
+        return IDBCursorWithValue.__createInstance(query, 'next', me.objectStore, me, util.escapeIndexNameForSQLKeyColumn(me.name), 'value', true).__req;
     }
     return me.__fetchIndexData(query, 'count', false);
 };
@@ -403,7 +401,7 @@ Object.defineProperty(IDBIndex, 'prototype', {
     writable: false
 });
 
-function executeFetchIndexData (unboundedDisallowed, count, index, hasKey, encodedKey, opType, multiChecks, sql, sqlValues, tx, args, success, error) {
+function executeFetchIndexData (count, unboundedDisallowed, index, hasKey, range, opType, multiChecks, sql, sqlValues, tx, args, success, error) {
     if (unboundedDisallowed) {
         count = 1;
     }
@@ -422,13 +420,14 @@ function executeFetchIndexData (unboundedDisallowed, count, index, hasKey, encod
             return Sca.decode(util.unescapeSQLiteResponse(record.value));
         });
         if (index.multiEntry) {
-            const escapedIndexNameForKeyCol = util.escapeIndexNameForKeyColumn(index.name);
+            const escapedIndexNameForKeyCol = util.escapeIndexNameForSQLKeyColumn(index.name);
+            const encodedKey = Key.encode(range, index.multiEntry);
             for (let i = 0; i < data.rows.length; i++) {
                 const row = data.rows.item(i);
                 const rowKey = Key.decode(row[escapedIndexNameForKeyCol]);
                 let record;
                 if (hasKey && (
-                    (multiChecks && encodedKey.some((check) => rowKey.includes(check))) || // More precise than our SQL
+                    (multiChecks && range.some((check) => rowKey.includes(check))) || // More precise than our SQL
                     Key.isMultiEntryMatch(encodedKey, row[escapedIndexNameForKeyCol])
                 )) {
                     recordCount++;
@@ -465,10 +464,16 @@ function executeFetchIndexData (unboundedDisallowed, count, index, hasKey, encod
     }, error);
 }
 
-function fetchIndexData (index, hasRange, range, opType, multiChecks) {
+function buildFetchIndexDataSQL (nullDisallowed, index, range, opType, multiChecks) {
+    const hasRange = nullDisallowed || range != null;
     const col = opType === 'count' ? 'key' : opType; // It doesn't matter which column we use for 'count' as long as it is valid
-    const sql = ['SELECT ' + util.quote(col) + (index.multiEntry ? ', ' + util.escapeIndexNameForSQL(index.name) : '') +
-        ' FROM', util.escapeStoreNameForSQL(index.objectStore.name), 'WHERE', util.escapeIndexNameForSQL(index.name), 'NOT NULL'];
+    const sql = [
+        'SELECT', util.sqlQuote(col) + (
+            index.multiEntry ? ', ' + util.escapeIndexNameForSQL(index.name) : ''
+        ),
+        'FROM', util.escapeStoreNameForSQL(index.objectStore.name),
+        'WHERE', util.escapeIndexNameForSQL(index.name), 'NOT NULL'
+    ];
     const sqlValues = [];
     if (hasRange) {
         if (multiChecks) {
@@ -481,21 +486,13 @@ function fetchIndexData (index, hasRange, range, opType, multiChecks) {
             sql.push(')');
         } else if (index.multiEntry) {
             sql.push('AND', util.escapeIndexNameForSQL(index.name), "LIKE ? ESCAPE '^'");
-            range = Key.encode(range, index.multiEntry);
-            sqlValues.push('%' + util.sqlLIKEEscape(range) + '%');
+            sqlValues.push('%' + util.sqlLIKEEscape(Key.encode(range, index.multiEntry)) + '%');
         } else {
-            if (util.instanceOf(range, IDBKeyRange)) {
-                // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
-                if (!range.toString() !== '[object IDBKeyRange]') {
-                    range = IDBKeyRange.__createInstance(range.lower, range.upper, range.lowerOpen, range.upperOpen);
-                }
-            } else {
-                range = IDBKeyRange.only(range);
-            }
-            setSQLForRange(range, util.escapeIndexNameForSQL(index.name), sql, sqlValues, true, false);
+            const convertedRange = convertValueToKeyRange(range, nullDisallowed);
+            setSQLForKeyRange(convertedRange, util.escapeIndexNameForSQL(index.name), sql, sqlValues, true, false);
         }
     }
-    return [index, hasRange, range, opType, multiChecks, sql, sqlValues];
+    return [nullDisallowed, index, hasRange, range, opType, multiChecks, sql, sqlValues];
 }
 
-export {fetchIndexData, executeFetchIndexData, IDBIndex, IDBIndex as default};
+export {buildFetchIndexDataSQL, executeFetchIndexData, IDBIndex, IDBIndex as default};

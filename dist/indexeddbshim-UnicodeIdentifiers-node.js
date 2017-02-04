@@ -19,17 +19,6 @@ function argsArray(fun) {
   };
 }
 },{}],2:[function(require,module,exports){
-(function (Buffer){
-"use strict";
-
-function atob(str) {
-  return new Buffer(str, 'base64').toString('binary');
-}
-
-module.exports = atob.atob = atob;
-
-}).call(this,require("buffer").Buffer)
-},{"buffer":undefined}],3:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -60,7 +49,7 @@ define(String.prototype, "padRight", "".padEnd);
   [][key] && define(Array, key, Function.call.bind([][key]));
 });
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"core-js/fn/regexp/escape":5,"core-js/shim":298,"regenerator-runtime/runtime":4}],4:[function(require,module,exports){
+},{"core-js/fn/regexp/escape":5,"core-js/shim":298,"regenerator-runtime/runtime":3}],3:[function(require,module,exports){
 (function (global){
 /**
  * Copyright (c) 2014, Facebook, Inc.
@@ -747,6 +736,75 @@ define(String.prototype, "padRight", "".padEnd);
 );
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],4:[function(require,module,exports){
+/*
+ * base64-arraybuffer
+ * https://github.com/niklasvh/base64-arraybuffer
+ *
+ * Copyright (c) 2012 Niklas von Hertzen
+ * Licensed under the MIT license.
+ */
+(function(){
+  "use strict";
+
+  var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+  // Use a lookup table to find the index.
+  var lookup = new Uint8Array(256);
+  for (var i = 0; i < chars.length; i++) {
+    lookup[chars.charCodeAt(i)] = i;
+  }
+
+  exports.encode = function(arraybuffer) {
+    var bytes = new Uint8Array(arraybuffer),
+    i, len = bytes.length, base64 = "";
+
+    for (i = 0; i < len; i+=3) {
+      base64 += chars[bytes[i] >> 2];
+      base64 += chars[((bytes[i] & 3) << 4) | (bytes[i + 1] >> 4)];
+      base64 += chars[((bytes[i + 1] & 15) << 2) | (bytes[i + 2] >> 6)];
+      base64 += chars[bytes[i + 2] & 63];
+    }
+
+    if ((len % 3) === 2) {
+      base64 = base64.substring(0, base64.length - 1) + "=";
+    } else if (len % 3 === 1) {
+      base64 = base64.substring(0, base64.length - 2) + "==";
+    }
+
+    return base64;
+  };
+
+  exports.decode =  function(base64) {
+    var bufferLength = base64.length * 0.75,
+    len = base64.length, i, p = 0,
+    encoded1, encoded2, encoded3, encoded4;
+
+    if (base64[base64.length - 1] === "=") {
+      bufferLength--;
+      if (base64[base64.length - 2] === "=") {
+        bufferLength--;
+      }
+    }
+
+    var arraybuffer = new ArrayBuffer(bufferLength),
+    bytes = new Uint8Array(arraybuffer);
+
+    for (i = 0; i < len; i+=4) {
+      encoded1 = lookup[base64.charCodeAt(i)];
+      encoded2 = lookup[base64.charCodeAt(i+1)];
+      encoded3 = lookup[base64.charCodeAt(i+2)];
+      encoded4 = lookup[base64.charCodeAt(i+3)];
+
+      bytes[p++] = (encoded1 << 2) | (encoded2 >> 4);
+      bytes[p++] = ((encoded2 & 15) << 4) | (encoded3 >> 2);
+      bytes[p++] = ((encoded3 & 3) << 6) | (encoded4 & 63);
+    }
+
+    return arraybuffer;
+  };
+})();
+
 },{}],5:[function(require,module,exports){
 require('../../modules/core.regexp.escape');
 module.exports = require('../../modules/_core').RegExp.escape;
@@ -6802,374 +6860,6 @@ require('./modules/web.immediate');
 require('./modules/web.dom.iterable');
 module.exports = require('./modules/_core');
 },{"./modules/_core":26,"./modules/es6.array.copy-within":123,"./modules/es6.array.every":124,"./modules/es6.array.fill":125,"./modules/es6.array.filter":126,"./modules/es6.array.find":128,"./modules/es6.array.find-index":127,"./modules/es6.array.for-each":129,"./modules/es6.array.from":130,"./modules/es6.array.index-of":131,"./modules/es6.array.is-array":132,"./modules/es6.array.iterator":133,"./modules/es6.array.join":134,"./modules/es6.array.last-index-of":135,"./modules/es6.array.map":136,"./modules/es6.array.of":137,"./modules/es6.array.reduce":139,"./modules/es6.array.reduce-right":138,"./modules/es6.array.slice":140,"./modules/es6.array.some":141,"./modules/es6.array.sort":142,"./modules/es6.array.species":143,"./modules/es6.date.now":144,"./modules/es6.date.to-iso-string":145,"./modules/es6.date.to-json":146,"./modules/es6.date.to-primitive":147,"./modules/es6.date.to-string":148,"./modules/es6.function.bind":149,"./modules/es6.function.has-instance":150,"./modules/es6.function.name":151,"./modules/es6.map":152,"./modules/es6.math.acosh":153,"./modules/es6.math.asinh":154,"./modules/es6.math.atanh":155,"./modules/es6.math.cbrt":156,"./modules/es6.math.clz32":157,"./modules/es6.math.cosh":158,"./modules/es6.math.expm1":159,"./modules/es6.math.fround":160,"./modules/es6.math.hypot":161,"./modules/es6.math.imul":162,"./modules/es6.math.log10":163,"./modules/es6.math.log1p":164,"./modules/es6.math.log2":165,"./modules/es6.math.sign":166,"./modules/es6.math.sinh":167,"./modules/es6.math.tanh":168,"./modules/es6.math.trunc":169,"./modules/es6.number.constructor":170,"./modules/es6.number.epsilon":171,"./modules/es6.number.is-finite":172,"./modules/es6.number.is-integer":173,"./modules/es6.number.is-nan":174,"./modules/es6.number.is-safe-integer":175,"./modules/es6.number.max-safe-integer":176,"./modules/es6.number.min-safe-integer":177,"./modules/es6.number.parse-float":178,"./modules/es6.number.parse-int":179,"./modules/es6.number.to-fixed":180,"./modules/es6.number.to-precision":181,"./modules/es6.object.assign":182,"./modules/es6.object.create":183,"./modules/es6.object.define-properties":184,"./modules/es6.object.define-property":185,"./modules/es6.object.freeze":186,"./modules/es6.object.get-own-property-descriptor":187,"./modules/es6.object.get-own-property-names":188,"./modules/es6.object.get-prototype-of":189,"./modules/es6.object.is":193,"./modules/es6.object.is-extensible":190,"./modules/es6.object.is-frozen":191,"./modules/es6.object.is-sealed":192,"./modules/es6.object.keys":194,"./modules/es6.object.prevent-extensions":195,"./modules/es6.object.seal":196,"./modules/es6.object.set-prototype-of":197,"./modules/es6.object.to-string":198,"./modules/es6.parse-float":199,"./modules/es6.parse-int":200,"./modules/es6.promise":201,"./modules/es6.reflect.apply":202,"./modules/es6.reflect.construct":203,"./modules/es6.reflect.define-property":204,"./modules/es6.reflect.delete-property":205,"./modules/es6.reflect.enumerate":206,"./modules/es6.reflect.get":209,"./modules/es6.reflect.get-own-property-descriptor":207,"./modules/es6.reflect.get-prototype-of":208,"./modules/es6.reflect.has":210,"./modules/es6.reflect.is-extensible":211,"./modules/es6.reflect.own-keys":212,"./modules/es6.reflect.prevent-extensions":213,"./modules/es6.reflect.set":215,"./modules/es6.reflect.set-prototype-of":214,"./modules/es6.regexp.constructor":216,"./modules/es6.regexp.flags":217,"./modules/es6.regexp.match":218,"./modules/es6.regexp.replace":219,"./modules/es6.regexp.search":220,"./modules/es6.regexp.split":221,"./modules/es6.regexp.to-string":222,"./modules/es6.set":223,"./modules/es6.string.anchor":224,"./modules/es6.string.big":225,"./modules/es6.string.blink":226,"./modules/es6.string.bold":227,"./modules/es6.string.code-point-at":228,"./modules/es6.string.ends-with":229,"./modules/es6.string.fixed":230,"./modules/es6.string.fontcolor":231,"./modules/es6.string.fontsize":232,"./modules/es6.string.from-code-point":233,"./modules/es6.string.includes":234,"./modules/es6.string.italics":235,"./modules/es6.string.iterator":236,"./modules/es6.string.link":237,"./modules/es6.string.raw":238,"./modules/es6.string.repeat":239,"./modules/es6.string.small":240,"./modules/es6.string.starts-with":241,"./modules/es6.string.strike":242,"./modules/es6.string.sub":243,"./modules/es6.string.sup":244,"./modules/es6.string.trim":245,"./modules/es6.symbol":246,"./modules/es6.typed.array-buffer":247,"./modules/es6.typed.data-view":248,"./modules/es6.typed.float32-array":249,"./modules/es6.typed.float64-array":250,"./modules/es6.typed.int16-array":251,"./modules/es6.typed.int32-array":252,"./modules/es6.typed.int8-array":253,"./modules/es6.typed.uint16-array":254,"./modules/es6.typed.uint32-array":255,"./modules/es6.typed.uint8-array":256,"./modules/es6.typed.uint8-clamped-array":257,"./modules/es6.weak-map":258,"./modules/es6.weak-set":259,"./modules/es7.array.includes":260,"./modules/es7.asap":261,"./modules/es7.error.is-error":262,"./modules/es7.map.to-json":263,"./modules/es7.math.iaddh":264,"./modules/es7.math.imulh":265,"./modules/es7.math.isubh":266,"./modules/es7.math.umulh":267,"./modules/es7.object.define-getter":268,"./modules/es7.object.define-setter":269,"./modules/es7.object.entries":270,"./modules/es7.object.get-own-property-descriptors":271,"./modules/es7.object.lookup-getter":272,"./modules/es7.object.lookup-setter":273,"./modules/es7.object.values":274,"./modules/es7.observable":275,"./modules/es7.reflect.define-metadata":276,"./modules/es7.reflect.delete-metadata":277,"./modules/es7.reflect.get-metadata":279,"./modules/es7.reflect.get-metadata-keys":278,"./modules/es7.reflect.get-own-metadata":281,"./modules/es7.reflect.get-own-metadata-keys":280,"./modules/es7.reflect.has-metadata":282,"./modules/es7.reflect.has-own-metadata":283,"./modules/es7.reflect.metadata":284,"./modules/es7.set.to-json":285,"./modules/es7.string.at":286,"./modules/es7.string.match-all":287,"./modules/es7.string.pad-end":288,"./modules/es7.string.pad-start":289,"./modules/es7.string.trim-left":290,"./modules/es7.string.trim-right":291,"./modules/es7.symbol.async-iterator":292,"./modules/es7.symbol.observable":293,"./modules/es7.system.global":294,"./modules/web.dom.iterable":295,"./modules/web.immediate":296,"./modules/web.timers":297}],299:[function(require,module,exports){
-/**
- * Cyclone.js: An Adaptation of the HTML5 structured cloning alogrithm.
- * @author Travis Kaufman <travis.kaufman@gmail.com>
- * @license MIT.
- */
-
-// This module can recursively clone objects, including those containing
-// number, boolean, string, date, and regex objects. It can also clone objects
-// which include cyclic references to itself, including nested cyclic
-// references. It is tested in all ES5-compatible environments.
-(function(root) {
-  'use strict';
-
-  var _hasOwn = Object.prototype.hasOwnProperty;
-  var _toString = Object.prototype.toString;
-  var _slice = Array.prototype.slice;
-
-  function _isFunc(obj) {
-    return (typeof obj === 'function');
-  }
-
-  // Quick and dirty shallow-copy functionality for options hash
-  function _mergeParams(src/*, target1, ..., targetN*/) {
-    return _slice.call(arguments, 1).reduce(function(target, mixin) {
-      for (var key in mixin) {
-        if (_hasOwn.call(mixin, key) && !_hasOwn.call(target, key)) {
-          target[key] = mixin[key];
-        }
-      }
-      return target;
-    }, src);
-  }
-
-  // We shim ES6's Map here if it's not in the environment already. Although
-  // it would be better to use WeakMaps here, this is impossible to do with ES5
-  // since references to objects won't be garbage collected if they're still
-  // in the map, so it's better to keep the implementation consistent.
-  // We can ignore coverage of the following ternary statement.
-  /* istanbul ignore next */
-  var Map = _isFunc(root.Map) ? root.Map : function Map() {
-    Object.defineProperties(this, {
-      inputs: {
-        value: [],
-        enumerable: false
-      },
-      outputs: {
-        value: [],
-        enumerable: false
-      }
-    });
-  };
-
-  // All we need are the `get` and `set` public-facing methods so we shim just
-  // them.
-
-  // Ignoring this and the subsequent if statement since we don't need to cover
-  // shim conditionals.
-  /* istanbul ignore next */
-  if (!_isFunc(Map.prototype.set)) {
-    // Map a given `input` object to a given `output` object. Relatively
-    // straightforward.
-    Map.prototype.set = function(input, output) {
-      // Note that here for our purposes we *never* have to assert that
-      // we're re-assigning since clones will always map 1:1 and never be
-      // overridden by another clone in one go. Therefore that conditional logic
-      // is omitted.
-      this.inputs.push(input);
-      this.outputs.push(output);
-
-      // As per the specification, return the Map object
-      return this;
-    };
-  }
-
-  /* istanbul ignore next */
-  if (!_isFunc(Map.prototype.get)) {
-    // Retrieve the object that's mapped to `input`, or null if input is not
-    // found within the transfer map.
-    Map.prototype.get = function(input) {
-      var idx = this.inputs.indexOf(input);
-      var output;
-
-      if (idx > -1) {
-        output = this.outputs[idx];
-      }
-
-      return output;
-    };
-  }
-
-  // Any custom cloning procedures defined by the client will be stored here.
-  var _customCloneProcedures = [];
-
-  // Performs the "internal structured clone" portion of the structured cloning
-  // algorithm. `input` is any valid object, and `mMap` is a(n empty)
-  // Map instance. `options` is the same as it is for `clone`
-  function _iSClone(input, mMap, options) {
-
-    if (input === null) {
-      return null;
-    }
-
-    if (Object(input) === input) {
-      return _handleObjectClone(input, mMap, options);
-    }
-
-    // If the value is a primitive, simply return it.
-    return input;
-  }
-
-  // Here lies the meat and potatoes of the algorithm. `_handleObjectClone`
-  // is responsible for creating deep copies of complex objects. Its parameters
-  // are the same as for `_isClone`.
-  function _handleObjectClone(input, mMap, options) {
-    // First we make sure that we aren't dealing with a circular reference.
-    var _selfRef = mMap.get(input);
-    if (_selfRef !== undefined) {
-      return _selfRef;
-    }
-
-    // We also check up front to make sure that a client-defined custom
-    // procedure has not been registered for this type of object. If it has,
-    // it takes priority over any of the implementations below.
-    var _cloneAttempt = _attemptCustomClone(input);
-    if (typeof _cloneAttempt !== 'undefined') {
-      return _cloneAttempt;
-    }
-
-    // Most supported object types can be copied simply by creating a new
-    // instance of the object using its current value, so we save that in this
-    // variable.
-    var val = input.valueOf();
-    var obType = _toString.call(input);
-    var output;
-    // We define a collection as either an array of Objects other than String,
-    // Number, Boolean, Date, or RegExp objects. Basically it's any structure
-    // where recursive cloning may be necessary.
-    var isCollection = false;
-
-    switch (obType) {
-      // These cases follow the W3C's specification for how certain objects
-      // are handled. Note that jshint will complain about using Object
-      // wrappers for primitives (as it should), but we have to handle this
-      // case should the client pass one in.
-
-      /*jshint -W053 */
-      case '[object String]':
-        output = new String(val);
-        break;
-
-      case '[object Number]':
-        output = new Number(val);
-        break;
-
-      case '[object Boolean]':
-        output = new Boolean(val);
-        break;
-
-      case '[object Date]':
-        output = new Date(val);
-        break;
-
-      case '[object RegExp]':
-        output = _handleRegExpClone(val);
-        break;
-
-      case '[object ArrayBuffer]':
-        output = _handleArrayBufferClone(input);
-        break;
-
-      case '[object Array]':
-        output = [];
-        isCollection = true;
-        break;
-
-      case '[object Object]':
-        // Although the spec says to simply create an empty object when
-        // encountered with this scenario, we set up the proper prototype chain
-        // in order to correctly copy objects that may not directly inherit
-        // from Object.prototype.
-        output = Object.create(Object.getPrototypeOf(input));
-        isCollection = true;
-        break;
-
-      default:
-        // If `options.allowFunctions` is set to true, we allow functions to
-        // be passed directly into the copied object.
-        if (_isFunc(input) && (options.allowFunctions === true)) {
-          output = input;
-        } else if (_isTypedArray(input)) {
-          // If it is a typed array, clone it according to the W3C spec
-          output = _handleTypedArrayClone(input);
-        } else {
-          throw new TypeError(
-            'Don\'t know how to clone object of type ' + obType
-          );
-        }
-        break;
-    }
-
-    // Map this specific object to its output in case its cyclically referenced
-    mMap.set(input, output);
-
-    if (isCollection) {
-      _handleCollectionClone(input, output, mMap, options);
-    }
-
-    return output;
-  }
-
-  // Handles the safe cloning of RegExp objects, where we explicitly pass the
-  // regex object, the source, and flags separately, as this prevents bugs
-  // within phantomJS (and possibly other environments as well).
-  function _handleRegExpClone(re) {
-    var flags = '';
-    if (re.global) {
-      flags += 'g';
-    }
-    if (re.ignoreCase) {
-      flags += 'i';
-    }
-    if (re.multiline) {
-      flags += 'm';
-    }
-
-    return new RegExp(re.source, flags);
-  }
-
-  // Handles the recursive portion of structured cloning.
-  function _handleCollectionClone(input, output, mMap, options) {
-    // Note that we use own property names here since we've already
-    // used `Object.create()` to create the duplicate, so we have
-    // already acquired the original object's prototype. Note that the W3C
-    // spec explicitly states that this algorithm does *not* walk the
-    // prototype chain, and therefore all Object prototypes are live
-    // (assigned as a reference).
-    Object.getOwnPropertyNames(input).forEach(function(prop) {
-      var desc = Object.getOwnPropertyDescriptor(input, prop);
-      var isNonAccessor = _hasOwn.call(desc, 'value');
-      var inputVal = isNonAccessor ? desc.value : desc.get();
-      var outputVal = _iSClone(inputVal, mMap, options);
-      // If `options.preserveDescriptors` is true, only then do we preserve
-      // descriptors. Otherwise we simply assign the property. This is in an
-      // effort to adhere to the spec, since this behaviour errs more towards
-      // what developers expect.
-      if (options.preserveDescriptors === true) {
-        // We only clone if the property is a non-accessor. We can't really
-        // clone getters and setters, we can only pass them through.
-        if (desc.value !== undefined) {
-          desc.value = outputVal;
-        }
-        Object.defineProperty(output, prop, desc);
-      } else {
-        output[prop] = outputVal;
-      }
-    });
-  }
-
-  // Handles the cloning of ArrayBuffer objects, as specified in the W3C
-  // spec.
-  function _handleArrayBufferClone(buf) {
-    var dst = new ArrayBuffer(buf.byteLength);
-    for (var i = 0, l = buf.byteLength; i < l; i++) {
-      dst[i] = buf[i];
-    }
-    return dst;
-  }
-
-  function _isTypedArray(obj) {
-    var Ctor = Object.getPrototypeOf(obj).constructor;
-    return /^(?:.+)Array$/.test(Ctor.name);
-  }
-
-  // Handles the cloning of TypedArray objects, as specified in the W3C
-  // spec.
-  function _handleTypedArrayClone(typedArray) {
-    var TypedArray = Object.getPrototypeOf(typedArray).constructor;
-    return new TypedArray(
-      _handleArrayBufferClone(typedArray.buffer),
-      typedArray.byteOffset,
-      typedArray.length
-    );
-  }
-
-  function _attemptCustomClone(obj) {
-    var proc;
-    var copy;
-    var procIdx = _customCloneProcedures.length;
-    // Note that if two procedures passed in detect the same type of object,
-    // the latest procedure will take priority.
-    while (procIdx--) {
-      proc = _customCloneProcedures[procIdx];
-      if (proc.detect(obj)) {
-        copy = proc.copy(obj);
-        break;
-      }
-    }
-
-    return copy;
-  }
-
-  // This is the module that we expose to the rest of the world.
-  // CY.clone...get it? :)
-  var CY = {
-    clone: function(input, options) {
-      var result, map = new Map();
-      options = _mergeParams(((typeof options === 'object') ? options : {}), {
-        // If set to true, this will simply pass a function through to the
-        // copied object instead of throwing.
-        allowFunctions: false,
-        // If set to true, this will stop CY.clone() from throwing *any* errors
-        // at all if it can't clone the object. Instead, it will simply return
-        // `null`. This is useful if you don't want a bad clone to halt program
-        // execution.
-        suppressErrors: false
-      });
-
-      // Don't enter try/catch unless suppressErrors is given.
-      // We want to try to avoid context switches if we can to get the most
-      // performance possible out of this function.
-      if (options.suppressErrors === true) {
-        try {
-          result = _iSClone(input, map, options);
-        } catch (err) {
-          result = null;
-        } finally {
-          return result;
-        }
-      }
-
-      return _iSClone(input, map, options);
-    },
-
-    // Returns true if the procedure is successfullly defined, false otherwise.
-    defineCloneProcedure: function(procObj) {
-      // Make sure we can use this procedure
-      if (typeof procObj === 'object' &&
-          _isFunc(procObj.detect) &&
-          _isFunc(procObj.copy)) {
-
-        _customCloneProcedures.push(procObj);
-        return true;
-      }
-
-      return false;
-    },
-
-    clearCustomCloneProcedures: function() {
-      _customCloneProcedures = [];
-    }
-  };
-
-  // Finally we take care of exporting business. We can ignore coverage of this.
-  /* istanbul ignore next */
-  if (typeof module === 'object' && typeof module.exports === 'object') {
-    // Node
-    module.exports = CY;
-  } else if (typeof define === 'function' && define.amd) {
-    // AMD/RequireJS
-    define([], function() { return CY; });
-  } else {
-    // Browser or some other environment. Simply attach the module to the root
-    // object.
-    root.CY = CY;
-  }
-})(this);
-
-},{}],300:[function(require,module,exports){
 (function () {
   'use strict';
 
@@ -7663,8 +7353,6 @@ module.exports = require('./modules/_core');
       var error = err;
       if (typeof err === 'string') {
         error = new Error('Uncaught exception: ' + err);
-      } else {
-        error.message = 'Uncaught exception: ' + err.message;
       }
 
       var triggerGlobalErrorEvent;
@@ -7735,7 +7423,7 @@ module.exports = require('./modules/_core');
   exportObj.EventTargetFactory = EventTargetFactory;
 }());
 
-},{}],301:[function(require,module,exports){
+},{}],300:[function(require,module,exports){
 'use strict';
 var types = [
   require('./nextTick'),
@@ -7833,7 +7521,7 @@ function immediate(task) {
   }
 }
 
-},{"./messageChannel":302,"./mutation.js":303,"./nextTick":304,"./stateChange":305,"./timeout":306}],302:[function(require,module,exports){
+},{"./messageChannel":301,"./mutation.js":302,"./nextTick":303,"./stateChange":304,"./timeout":305}],301:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -7854,7 +7542,7 @@ exports.install = function (func) {
   };
 };
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],303:[function(require,module,exports){
+},{}],302:[function(require,module,exports){
 (function (global){
 'use strict';
 //based off rsvp https://github.com/tildeio/rsvp.js
@@ -7879,7 +7567,7 @@ exports.install = function (handle) {
   };
 };
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],304:[function(require,module,exports){
+},{}],303:[function(require,module,exports){
 'use strict';
 exports.test = function () {
   // Don't get fooled by e.g. browserify environments.
@@ -7892,7 +7580,7 @@ exports.install = function (func) {
   };
 };
 
-},{}],305:[function(require,module,exports){
+},{}],304:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -7919,7 +7607,7 @@ exports.install = function (handle) {
   };
 };
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],306:[function(require,module,exports){
+},{}],305:[function(require,module,exports){
 'use strict';
 exports.test = function () {
   return true;
@@ -7930,7 +7618,7 @@ exports.install = function (t) {
     setTimeout(t, 0);
   };
 };
-},{}],307:[function(require,module,exports){
+},{}],306:[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -7953,10 +7641,10 @@ function isSlowBuffer (obj) {
   return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
-},{}],308:[function(require,module,exports){
+},{}],307:[function(require,module,exports){
 module.exports = function() {};
 
-},{}],309:[function(require,module,exports){
+},{}],308:[function(require,module,exports){
 (function (__dirname){
 var binary = require('node-pre-gyp');
 var path = require('path');
@@ -8148,7 +7836,7 @@ sqlite3.verbose = function() {
 };
 
 }).call(this,require("path").join(__dirname, "../node_modules/sqlite3/lib"))
-},{"./trace":310,"events":undefined,"node-pre-gyp":311,"path":undefined}],310:[function(require,module,exports){
+},{"./trace":309,"events":undefined,"node-pre-gyp":310,"path":undefined}],309:[function(require,module,exports){
 (function (__filename){
 // Inspired by https://github.com/tlrobinson/long-stack-traces
 var util = require('util');
@@ -8193,7 +7881,7 @@ function filter(error) {
 }
 
 }).call(this,require("path").join(__dirname, "../node_modules/sqlite3/lib/trace.js"))
-},{"path":undefined,"util":undefined}],311:[function(require,module,exports){
+},{"path":undefined,"util":undefined}],310:[function(require,module,exports){
 (function (__dirname){
 "use strict";
 
@@ -8389,7 +8077,7 @@ Object.defineProperty(proto, 'version', {
 
 
 }).call(this,require("path").join(__dirname, "../node_modules/sqlite3/lib"))
-},{"../package":370,"./pre-binding":312,"events":undefined,"nopt":315,"npmlog":317,"path":undefined,"util":undefined}],312:[function(require,module,exports){
+},{"../package":369,"./pre-binding":311,"events":undefined,"nopt":314,"npmlog":316,"path":undefined,"util":undefined}],311:[function(require,module,exports){
 "use strict";
 
 var versioning = require('../lib/util/versioning.js');
@@ -8416,7 +8104,7 @@ exports.find = function(package_json_path,opts) {
    return meta.module;
 };
 
-},{"../lib/util/versioning.js":314,"fs":undefined,"path":undefined}],313:[function(require,module,exports){
+},{"../lib/util/versioning.js":313,"fs":undefined,"path":undefined}],312:[function(require,module,exports){
 module.exports={
   "0.1.14": {
     "node_abi": null,
@@ -9763,7 +9451,7 @@ module.exports={
     "v8": "5.1"
   }
 }
-},{}],314:[function(require,module,exports){
+},{}],313:[function(require,module,exports){
 "use strict";
 
 module.exports = exports;
@@ -10073,7 +9761,7 @@ module.exports.evaluate = function(package_json,options) {
     return opts;
 };
 
-},{"./abi_crosswalk.json":313,"path":undefined,"semver":369,"url":undefined}],315:[function(require,module,exports){
+},{"./abi_crosswalk.json":312,"path":undefined,"semver":368,"url":undefined}],314:[function(require,module,exports){
 // info about each config option.
 
 var debug = process.env.DEBUG_NOPT || process.env.NOPT_DEBUG
@@ -10490,7 +10178,7 @@ function resolveShort (arg, shorthands, shortAbbr, abbrevs) {
   return shorthands[arg]
 }
 
-},{"abbrev":316,"path":undefined,"stream":undefined,"url":undefined}],316:[function(require,module,exports){
+},{"abbrev":315,"path":undefined,"stream":undefined,"url":undefined}],315:[function(require,module,exports){
 
 module.exports = exports = abbrev.abbrev = abbrev
 
@@ -10554,7 +10242,7 @@ function lexSort (a, b) {
   return a === b ? 0 : a > b ? 1 : -1
 }
 
-},{}],317:[function(require,module,exports){
+},{}],316:[function(require,module,exports){
 'use strict'
 var Progress = require('are-we-there-yet')
 var Gauge = require('gauge')
@@ -10857,13 +10545,13 @@ log.addLevel('silent', Infinity)
 // allow 'error' prefix
 log.on('error', function () {})
 
-},{"are-we-there-yet":318,"console-control-strings":339,"events":undefined,"gauge":343,"set-blocking":368,"util":undefined}],318:[function(require,module,exports){
+},{"are-we-there-yet":317,"console-control-strings":338,"events":undefined,"gauge":342,"set-blocking":367,"util":undefined}],317:[function(require,module,exports){
 'use strict'
 exports.TrackerGroup = require('./tracker-group.js')
 exports.Tracker = require('./tracker.js')
 exports.TrackerStream = require('./tracker-stream.js')
 
-},{"./tracker-group.js":336,"./tracker-stream.js":337,"./tracker.js":338}],319:[function(require,module,exports){
+},{"./tracker-group.js":335,"./tracker-stream.js":336,"./tracker.js":337}],318:[function(require,module,exports){
 
 /**
  * Expose `Delegator`.
@@ -10986,7 +10674,7 @@ Delegator.prototype.fluent = function (name) {
   return this;
 };
 
-},{}],320:[function(require,module,exports){
+},{}],319:[function(require,module,exports){
 // a duplex stream is just a stream that is both readable and writable.
 // Since JS doesn't have multiple prototypal inheritance, this class
 // prototypally inherits from Readable, and then parasitically from
@@ -11062,7 +10750,7 @@ function forEach(xs, f) {
     f(xs[i], i);
   }
 }
-},{"./_stream_readable":322,"./_stream_writable":324,"core-util-is":327,"inherits":328,"process-nextick-args":331}],321:[function(require,module,exports){
+},{"./_stream_readable":321,"./_stream_writable":323,"core-util-is":326,"inherits":327,"process-nextick-args":330}],320:[function(require,module,exports){
 // a passthrough stream.
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
@@ -11089,7 +10777,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":323,"core-util-is":327,"inherits":328}],322:[function(require,module,exports){
+},{"./_stream_transform":322,"core-util-is":326,"inherits":327}],321:[function(require,module,exports){
 'use strict';
 
 module.exports = Readable;
@@ -12027,7 +11715,7 @@ function indexOf(xs, x) {
   }
   return -1;
 }
-},{"./_stream_duplex":320,"./internal/streams/BufferList":325,"buffer":undefined,"buffer-shims":326,"core-util-is":327,"events":undefined,"inherits":328,"isarray":330,"process-nextick-args":331,"string_decoder/":332,"util":undefined}],323:[function(require,module,exports){
+},{"./_stream_duplex":319,"./internal/streams/BufferList":324,"buffer":undefined,"buffer-shims":325,"core-util-is":326,"events":undefined,"inherits":327,"isarray":329,"process-nextick-args":330,"string_decoder/":331,"util":undefined}],322:[function(require,module,exports){
 // a transform stream is a readable/writable stream where you do
 // something with the data.  Sometimes it's called a "filter",
 // but that's not a great name for it, since that implies a thing where
@@ -12208,7 +11896,7 @@ function done(stream, er) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":320,"core-util-is":327,"inherits":328}],324:[function(require,module,exports){
+},{"./_stream_duplex":319,"core-util-is":326,"inherits":327}],323:[function(require,module,exports){
 // A bit simpler than readable streams.
 // Implement an async ._write(chunk, encoding, cb), and it'll handle all
 // the drain event emission and buffering.
@@ -12735,7 +12423,7 @@ function CorkedRequest(state) {
     }
   };
 }
-},{"./_stream_duplex":320,"buffer":undefined,"buffer-shims":326,"core-util-is":327,"events":undefined,"inherits":328,"process-nextick-args":331,"util-deprecate":333}],325:[function(require,module,exports){
+},{"./_stream_duplex":319,"buffer":undefined,"buffer-shims":325,"core-util-is":326,"events":undefined,"inherits":327,"process-nextick-args":330,"util-deprecate":332}],324:[function(require,module,exports){
 'use strict';
 
 var Buffer = require('buffer').Buffer;
@@ -12800,7 +12488,7 @@ BufferList.prototype.concat = function (n) {
   }
   return ret;
 };
-},{"buffer":undefined,"buffer-shims":326}],326:[function(require,module,exports){
+},{"buffer":undefined,"buffer-shims":325}],325:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -12912,7 +12600,7 @@ exports.allocUnsafeSlow = function allocUnsafeSlow(size) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"buffer":undefined}],327:[function(require,module,exports){
+},{"buffer":undefined}],326:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -13023,7 +12711,7 @@ function objectToString(o) {
 }
 
 }).call(this,{"isBuffer":require("../../../../../../../../../../../../is-buffer/index.js")})
-},{"../../../../../../../../../../../../is-buffer/index.js":307}],328:[function(require,module,exports){
+},{"../../../../../../../../../../../../is-buffer/index.js":306}],327:[function(require,module,exports){
 try {
   var util = require('util');
   if (typeof util.inherits !== 'function') throw '';
@@ -13032,7 +12720,7 @@ try {
   module.exports = require('./inherits_browser.js');
 }
 
-},{"./inherits_browser.js":329,"util":undefined}],329:[function(require,module,exports){
+},{"./inherits_browser.js":328,"util":undefined}],328:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -13057,14 +12745,14 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],330:[function(require,module,exports){
+},{}],329:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],331:[function(require,module,exports){
+},{}],330:[function(require,module,exports){
 'use strict';
 
 if (!process.version ||
@@ -13109,7 +12797,7 @@ function nextTick(fn, arg1, arg2, arg3) {
   }
 }
 
-},{}],332:[function(require,module,exports){
+},{}],331:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -13332,7 +13020,7 @@ function base64DetectIncompleteChar(buffer) {
   this.charLength = this.charReceived ? 3 : 0;
 }
 
-},{"buffer":undefined}],333:[function(require,module,exports){
+},{"buffer":undefined}],332:[function(require,module,exports){
 
 /**
  * For Node.js, simply re-export the core `util.deprecate` function.
@@ -13340,7 +13028,7 @@ function base64DetectIncompleteChar(buffer) {
 
 module.exports = require('util').deprecate;
 
-},{"util":undefined}],334:[function(require,module,exports){
+},{"util":undefined}],333:[function(require,module,exports){
 var Stream = (function (){
   try {
     return require('st' + 'ream'); // hack to fix a circular dependency issue when used with browserify
@@ -13358,7 +13046,7 @@ if (!process.browser && process.env.READABLE_STREAM === 'disable' && Stream) {
   module.exports = Stream;
 }
 
-},{"./lib/_stream_duplex.js":320,"./lib/_stream_passthrough.js":321,"./lib/_stream_readable.js":322,"./lib/_stream_transform.js":323,"./lib/_stream_writable.js":324}],335:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":319,"./lib/_stream_passthrough.js":320,"./lib/_stream_readable.js":321,"./lib/_stream_transform.js":322,"./lib/_stream_writable.js":323}],334:[function(require,module,exports){
 'use strict'
 var EventEmitter = require('events').EventEmitter
 var util = require('util')
@@ -13371,7 +13059,7 @@ var TrackerBase = module.exports = function (name) {
 }
 util.inherits(TrackerBase, EventEmitter)
 
-},{"events":undefined,"util":undefined}],336:[function(require,module,exports){
+},{"events":undefined,"util":undefined}],335:[function(require,module,exports){
 'use strict'
 var util = require('util')
 var TrackerBase = require('./tracker-base.js')
@@ -13480,7 +13168,7 @@ TrackerGroup.prototype.debug = function (depth) {
   return output
 }
 
-},{"./tracker-base.js":335,"./tracker-stream.js":337,"./tracker.js":338,"util":undefined}],337:[function(require,module,exports){
+},{"./tracker-base.js":334,"./tracker-stream.js":336,"./tracker.js":337,"util":undefined}],336:[function(require,module,exports){
 'use strict'
 var util = require('util')
 var stream = require('readable-stream')
@@ -13517,7 +13205,7 @@ delegate(TrackerStream.prototype, 'tracker')
   .method('completed')
   .method('addWork')
 
-},{"./tracker.js":338,"delegates":319,"readable-stream":334,"util":undefined}],338:[function(require,module,exports){
+},{"./tracker.js":337,"delegates":318,"readable-stream":333,"util":undefined}],337:[function(require,module,exports){
 'use strict'
 var util = require('util')
 var TrackerBase = require('./tracker-base.js')
@@ -13549,7 +13237,7 @@ Tracker.prototype.finish = function () {
   this.emit('change', this.name, 1, this)
 }
 
-},{"./tracker-base.js":335,"util":undefined}],339:[function(require,module,exports){
+},{"./tracker-base.js":334,"util":undefined}],338:[function(require,module,exports){
 'use strict'
 
 // These tables borrowed from `ansi`
@@ -13676,7 +13364,7 @@ function colorNameToCode (color) {
   throw new Error('Unknown color or style name: ' + color)
 }
 
-},{}],340:[function(require,module,exports){
+},{}],339:[function(require,module,exports){
 'use strict'
 var spin = require('./spin.js')
 var progressBar = require('./progress-bar.js')
@@ -13692,7 +13380,7 @@ module.exports = {
   }
 }
 
-},{"./progress-bar.js":359,"./spin.js":363}],341:[function(require,module,exports){
+},{"./progress-bar.js":358,"./spin.js":362}],340:[function(require,module,exports){
 'use strict'
 var util = require('util')
 
@@ -13718,7 +13406,7 @@ exports.Internal = function Internal (msg) {
   return err
 }
 
-},{"util":undefined}],342:[function(require,module,exports){
+},{"util":undefined}],341:[function(require,module,exports){
 'use strict'
 
 module.exports = isWin32() || isColorTerm()
@@ -13732,7 +13420,7 @@ function isColorTerm () {
   return !!process.env.COLORTERM || termHasColor.test(process.env.TERM)
 }
 
-},{}],343:[function(require,module,exports){
+},{}],342:[function(require,module,exports){
 'use strict'
 var Plumbing = require('./plumbing.js')
 var hasUnicode = require('has-unicode')
@@ -13960,7 +13648,7 @@ Gauge.prototype._doRedraw = function () {
   }
 }
 
-},{"./has-color.js":342,"./plumbing.js":357,"./process.js":358,"./set-immediate":361,"./set-interval.js":362,"./themes":366,"has-unicode":345,"signal-exit":347}],344:[function(require,module,exports){
+},{"./has-color.js":341,"./plumbing.js":356,"./process.js":357,"./set-immediate":360,"./set-interval.js":361,"./themes":365,"has-unicode":344,"signal-exit":346}],343:[function(require,module,exports){
 'use strict'
 
 function isArguments (thingy) {
@@ -14024,7 +13712,7 @@ function newException (code, msg) {
   return e
 }
 
-},{}],345:[function(require,module,exports){
+},{}],344:[function(require,module,exports){
 "use strict"
 var os = require("os")
 
@@ -14042,7 +13730,7 @@ var hasUnicode = module.exports = function () {
   return isUTF8.test(ctype)
 }
 
-},{"os":undefined}],346:[function(require,module,exports){
+},{"os":undefined}],345:[function(require,module,exports){
 'use strict';
 /* eslint-disable no-unused-vars */
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -14127,7 +13815,7 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
-},{}],347:[function(require,module,exports){
+},{}],346:[function(require,module,exports){
 // Note: since nyc uses this module to output coverage, any lines
 // that are in the direct sync flow of nyc's outputCoverage are
 // ignored, since we can never get coverage for them.
@@ -14277,7 +13965,7 @@ function processEmit (ev, arg) {
   }
 }
 
-},{"./signals.js":348,"assert":undefined,"events":undefined}],348:[function(require,module,exports){
+},{"./signals.js":347,"assert":undefined,"events":undefined}],347:[function(require,module,exports){
 // This is not the set of all possible signals.
 //
 // It IS, however, the set of all signals that trigger
@@ -14332,7 +14020,7 @@ if (process.platform === 'linux') {
   )
 }
 
-},{}],349:[function(require,module,exports){
+},{}],348:[function(require,module,exports){
 'use strict';
 var stripAnsi = require('strip-ansi');
 var codePointAt = require('code-point-at');
@@ -14371,7 +14059,7 @@ module.exports = function (str) {
 	return width;
 };
 
-},{"code-point-at":350,"is-fullwidth-code-point":352,"strip-ansi":354}],350:[function(require,module,exports){
+},{"code-point-at":349,"is-fullwidth-code-point":351,"strip-ansi":353}],349:[function(require,module,exports){
 'use strict';
 var numberIsNan = require('number-is-nan');
 
@@ -14406,13 +14094,13 @@ module.exports = function (str, pos) {
 	return first;
 };
 
-},{"number-is-nan":351}],351:[function(require,module,exports){
+},{"number-is-nan":350}],350:[function(require,module,exports){
 'use strict';
 module.exports = Number.isNaN || function (x) {
 	return x !== x;
 };
 
-},{}],352:[function(require,module,exports){
+},{}],351:[function(require,module,exports){
 'use strict';
 var numberIsNan = require('number-is-nan');
 
@@ -14460,9 +14148,9 @@ module.exports = function (x) {
 	return false;
 }
 
-},{"number-is-nan":353}],353:[function(require,module,exports){
-arguments[4][351][0].apply(exports,arguments)
-},{"dup":351}],354:[function(require,module,exports){
+},{"number-is-nan":352}],352:[function(require,module,exports){
+arguments[4][350][0].apply(exports,arguments)
+},{"dup":350}],353:[function(require,module,exports){
 'use strict';
 var ansiRegex = require('ansi-regex')();
 
@@ -14470,13 +14158,13 @@ module.exports = function (str) {
 	return typeof str === 'string' ? str.replace(ansiRegex, '') : str;
 };
 
-},{"ansi-regex":355}],355:[function(require,module,exports){
+},{"ansi-regex":354}],354:[function(require,module,exports){
 'use strict';
 module.exports = function () {
 	return /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g;
 };
 
-},{}],356:[function(require,module,exports){
+},{}],355:[function(require,module,exports){
 'use strict'
 var stringWidth = require('string-width')
 
@@ -14543,7 +14231,7 @@ function alignCenter (str, width) {
   return padLeft + trimmed + padRight
 }
 
-},{"string-width":349}],357:[function(require,module,exports){
+},{"string-width":348}],356:[function(require,module,exports){
 'use strict'
 var consoleControl = require('console-control-strings')
 var renderTemplate = require('./render-template.js')
@@ -14592,12 +14280,12 @@ Plumbing.prototype.show = function (status) {
          consoleControl.eraseLine() + consoleControl.gotoSOL()
 }
 
-},{"./render-template.js":360,"aproba":344,"console-control-strings":339}],358:[function(require,module,exports){
+},{"./render-template.js":359,"aproba":343,"console-control-strings":338}],357:[function(require,module,exports){
 'use strict'
 // this exists so we can replace it during testing
 module.exports = process
 
-},{}],359:[function(require,module,exports){
+},{}],358:[function(require,module,exports){
 'use strict'
 var validate = require('aproba')
 var renderTemplate = require('./render-template.js')
@@ -14634,7 +14322,7 @@ function repeat (string, width) {
   return wideTruncate(result, width)
 }
 
-},{"./render-template.js":360,"./wide-truncate":367,"aproba":344,"string-width":349}],360:[function(require,module,exports){
+},{"./render-template.js":359,"./wide-truncate":366,"aproba":343,"string-width":348}],359:[function(require,module,exports){
 'use strict'
 var align = require('wide-align')
 var validate = require('aproba')
@@ -14817,7 +14505,7 @@ function renderValue (item, values) {
   return leftPadding + aligned + rightPadding
 }
 
-},{"./error":341,"./template-item":364,"./wide-truncate":367,"aproba":344,"object-assign":346,"wide-align":356}],361:[function(require,module,exports){
+},{"./error":340,"./template-item":363,"./wide-truncate":366,"aproba":343,"object-assign":345,"wide-align":355}],360:[function(require,module,exports){
 'use strict'
 var process = require('./process')
 try {
@@ -14826,19 +14514,19 @@ try {
   module.exports = process.nextTick
 }
 
-},{"./process":358}],362:[function(require,module,exports){
+},{"./process":357}],361:[function(require,module,exports){
 'use strict'
 // this exists so we can replace it during testing
 module.exports = setInterval
 
-},{}],363:[function(require,module,exports){
+},{}],362:[function(require,module,exports){
 'use strict'
 
 module.exports = function spin (spinstr, spun) {
   return spinstr[spun % spinstr.length]
 }
 
-},{}],364:[function(require,module,exports){
+},{}],363:[function(require,module,exports){
 'use strict'
 var stringWidth = require('string-width')
 
@@ -14913,7 +14601,7 @@ TemplateItem.prototype.getMinLength = function () {
 }
 
 
-},{"string-width":349}],365:[function(require,module,exports){
+},{"string-width":348}],364:[function(require,module,exports){
 'use strict'
 var objectAssign = require('object-assign')
 
@@ -15030,7 +14718,7 @@ ThemeSetProto.newThemeSet = function () {
 }
 
 
-},{"./base-theme.js":340,"object-assign":346}],366:[function(require,module,exports){
+},{"./base-theme.js":339,"object-assign":345}],365:[function(require,module,exports){
 'use strict'
 var consoleControl = require('console-control-strings')
 var ThemeSet = require('./theme-set.js')
@@ -15086,7 +14774,7 @@ themes.setDefault({hasColor: true}, 'colorASCII')
 themes.setDefault({platform: 'darwin', hasUnicode: true}, 'brailleSpinner')
 themes.setDefault({platform: 'darwin', hasUnicode: true, hasColor: true}, 'colorBrailleSpinner')
 
-},{"./theme-set.js":365,"console-control-strings":339}],367:[function(require,module,exports){
+},{"./theme-set.js":364,"console-control-strings":338}],366:[function(require,module,exports){
 'use strict'
 var stringWidth = require('string-width')
 var stripAnsi = require('strip-ansi')
@@ -15113,7 +14801,7 @@ function wideTruncate (str, target) {
   return truncated
 }
 
-},{"string-width":349,"strip-ansi":354}],368:[function(require,module,exports){
+},{"string-width":348,"strip-ansi":353}],367:[function(require,module,exports){
 module.exports = function (blocking) {
   [process.stdout, process.stderr].forEach(function (stream) {
     if (stream._handle && stream.isTTY && typeof stream._handle.setBlocking === 'function') {
@@ -15122,7 +14810,7 @@ module.exports = function (blocking) {
   })
 }
 
-},{}],369:[function(require,module,exports){
+},{}],368:[function(require,module,exports){
 exports = module.exports = SemVer;
 
 // The debug function is excluded entirely from the minified version.
@@ -16327,7 +16015,7 @@ function prerelease(version, loose) {
   return (parsed && parsed.prerelease.length) ? parsed.prerelease : null;
 }
 
-},{}],370:[function(require,module,exports){
+},{}],369:[function(require,module,exports){
 module.exports={
   "_from": "node-pre-gyp@~0.6.31",
   "_id": "node-pre-gyp@0.6.31",
@@ -16403,7 +16091,7 @@ module.exports={
   "version": "0.6.31"
 }
 
-},{}],371:[function(require,module,exports){
+},{}],370:[function(require,module,exports){
 // Since [immediate](https://github.com/calvinmetcalf/immediate) is
 //   not doing the trick for our WebSQL transactions (at least in Node),
 //   we are forced to make the promises run fully synchronously.
@@ -16562,7 +16250,7 @@ SyncPromise.reject = function(val) {
 };
 module.exports = SyncPromise;
 
-},{}],372:[function(require,module,exports){
+},{}],371:[function(require,module,exports){
 'use strict';
 
 // Simple FIFO queue implementation to avoid having to do shift()
@@ -16612,37 +16300,536 @@ Queue.prototype.slice = function (start, end) {
 
 module.exports = Queue;
 
+},{}],372:[function(require,module,exports){
+var keys = Object.keys,
+    isArray = Array.isArray,
+    toString = ({}.toString),
+    getProto = Object.getPrototypeOf,
+    hasOwn = ({}.hasOwnProperty),
+    fnToString = hasOwn.toString;
+
+function toStringTag (val) {
+    return toString.call(val).slice(8, -1);
+}
+
+function hasConstructorOf (a, b) {
+    if (!a) {
+        return false;
+    }
+    var proto = getProto(a);
+    if (!proto) {
+        return false;
+    }
+    var Ctor = hasOwn.call(proto, 'constructor') && proto.constructor;
+    if (typeof Ctor !== 'function') {
+        return b === null;
+    }
+    return typeof Ctor === 'function' && b !== null && fnToString.call(Ctor) === fnToString.call(b);
+}
+
+function isPlainObject (val) { // Mirrors jQuery's
+    if (!val || toStringTag(val) !== 'Object') {
+        return false;
+    }
+
+    var proto = getProto(val);
+    if (!proto) { // `Object.create(null)`
+        return true;
+    }
+
+    return hasConstructorOf(val, Object);
+}
+
+/* Typeson - JSON with types
+    * License: The MIT License (MIT)
+    * Copyright (c) 2016 David Fahlander
+    */
+
+/** An instance of this class can be used to call stringify() and parse().
+ * Typeson resolves cyclic references by default. Can also be extended to
+ * support custom types using the register() method.
+ *
+ * @constructor
+ * @param {{cyclic: boolean}} [options] - if cyclic (default true), cyclic references will be handled gracefully.
+ */
+function Typeson (options) {
+    // Replacers signature: replace (value). Returns falsy if not replacing. Otherwise ["Date", value.getTime()]
+    var replacers = [];
+    // Revivers: map {type => reviver}. Sample: {"Date": value => new Date(value)}
+    var revivers = {};
+
+    /** Types registered via register() */
+    var regTypes = this.types = {};
+
+    /** Seraialize given object to Typeson.
+     *
+     * Arguments works identical to those of JSON.stringify().
+     */
+    this.stringify = function (obj, replacer, space) { // replacer here has nothing to do with our replacers.
+        return JSON.stringify (encapsulate(obj), replacer, space);
+    };
+
+    /** Parse Typeson back into an obejct.
+     *
+     * Arguments works identical to those of JSON.parse().
+     */
+    this.parse = function (text, reviver) {
+        return revive (JSON.parse (text, reviver)); // This reviver has nothing to do with our revivers.
+    };
+
+    /** Encapsulate a complex object into a plain Object by replacing registered types with
+     * plain objects representing the types data.
+     *
+     * This method is used internally by Typeson.stringify().
+     * @param {Object} obj - Object to encapsulate.
+     */
+    var encapsulate = this.encapsulate = function (obj, stateObj) {
+        var types = {},
+            refObjs=[], // For checking cyclic references
+            refKeys=[]; // For checking cyclic references
+        // Clone the object deeply while at the same time replacing any special types or cyclic reference:
+        var cyclic = options && ('cyclic' in options) ? options.cyclic : true;
+        var ret = _encapsulate ('', obj, cyclic, stateObj || {});
+        // Add $types to result only if we ever bumped into a special type
+        if (keys(types).length) {
+            // Special if array (or primitive) was serialized because JSON would ignore custom $types prop on it.
+            if (!ret || !isPlainObject(ret) || ret.$types) return {$:ret, $types: {$: types}};
+            ret.$types = types;
+        }
+        return ret;
+
+        function _encapsulate (keypath, value, cyclic, stateObj) {
+            var $typeof = typeof value;
+            if ($typeof in {string:1, boolean:1, number:1, undefined:1 })
+                return value === undefined || ($typeof === 'number' &&
+                    (isNaN(value) || value === -Infinity || value === Infinity)) ?
+                        replace(keypath, value, stateObj) :
+                        value;
+            if (value === null) return value;
+            if (cyclic) {
+                // Options set to detect cyclic references and be able to rewrite them.
+                var refIndex = refObjs.indexOf(value);
+                if (refIndex < 0) {
+                    if (cyclic === true) {
+                        refObjs.push(value);
+                        refKeys.push(keypath);
+                    }
+                } else {
+                    types[keypath] = "#";
+                    return '#'+refKeys[refIndex];
+                }
+            }
+            var isPlainObj = isPlainObject(value);
+            var replaced = isPlainObj ?
+                value : // Optimization: if plain object, don't try finding a replacer
+                replace(keypath, value, stateObj);
+            if (replaced !== value) return replaced;
+            var clone;
+            var isArr = isArray(value);
+            if (isPlainObj)
+                clone = {};
+            else if (isArr)
+                clone = new Array(value.length);
+            else return value; // Only clone vanilla objects and arrays.
+            // Iterate object or array
+            keys(value).forEach(function (key) {
+                var val = _encapsulate(keypath + (keypath ? '.':'') + key, value[key], cyclic, {ownKeys: true});
+                if (val !== undefined) clone[key] = val;
+            });
+            // Iterate array for non-own properties (we can't replace the prior loop though as it iterates non-integer keys)
+            if (isArr) {
+                for (var i = 0, vl = value.length; i < vl; i++) {
+                    if (!(i in value)) {
+                        var val = _encapsulate(keypath + (keypath ? '.':'') + i, value[i], cyclic, {ownKeys: false});
+                        if (val !== undefined) clone[i] = val;
+                    }
+                }
+            }
+            return clone;
+        }
+
+        function replace (key, value, stateObj) {
+            // Encapsulate registered types
+            var i = replacers.length;
+            while (i--) {
+                if (replacers[i].test(value, stateObj)) {
+                    var type = replacers[i].type;
+                    if (revivers[type]) {
+                        // Record the type only if a corresponding reviver exists.
+                        // This is to support specs where only replacement is done.
+                        // For example ensuring deep cloning of the object, or
+                        // replacing a type to its equivalent without the need to revive it.
+                        var existing = types[key];
+                        // type can comprise an array of types (see test shouldSupportIntermediateTypes)
+                        types[key] = existing ? [type].concat(existing) : type;
+                    }
+                    // Now, also traverse the result in case it contains it own types to replace
+                    return _encapsulate(key, replacers[i].replace(value, stateObj), cyclic && "readonly", stateObj);
+                }
+            }
+            return value;
+        }
+    };
+
+    /** Revive an encapsulated object.
+     * This method is used internally by JSON.parse().
+     * @param {Object} obj - Object to revive. If it has $types member, the properties that are listed there
+     * will be replaced with its true type instead of just plain objects.
+     */
+    var revive = this.revive = function (obj) {
+        var types = obj && obj.$types,
+            ignore$Types = true;
+        if (!types) return obj; // No type info added. Revival not needed.
+        if (types.$ && isPlainObject(types.$)) {
+            // Special when root object is not a trivial Object, it will be encapsulated in $.
+            obj = obj.$;
+            types = types.$;
+            ignore$Types = false;
+        }
+        var ret = _revive ('', obj);
+        return hasConstructorOf(ret, Undefined) ? undefined : ret;
+
+        function _revive (keypath, value, target) {
+            if (ignore$Types && keypath === '$types') return;
+            var type = types[keypath];
+            if (value && (isPlainObject(value) || isArray(value))) {
+                var clone = isArray(value) ? new Array(value.length) : {};
+                // Iterate object or array
+                keys(value).forEach(function (key) {
+                    var val = _revive(keypath + (keypath ? '.':'') + key, value[key], target || clone);
+                    if (hasConstructorOf(val, Undefined)) clone[key] = undefined;
+                    else if (val !== undefined) clone[key] = val;
+                });
+                value = clone;
+            }
+            if (!type) return value;
+            if (type === '#') return getByKeyPath(target, value.substr(1));
+            return [].concat(type).reduce(function(val, type) {
+                var reviver = revivers[type];
+                if (!reviver) throw new Error ("Unregistered type: " + type);
+                return reviver(val);
+            }, value);
+        }
+    };
+
+    /** Register types.
+     * For examples how to use this method, see https://github.com/dfahlander/typeson-registry/tree/master/types
+     * @param {Array.<Object.<string,Function[]>>} typeSpec - Types and their functions [test, encapsulate, revive];
+     */
+    this.register = function (typeSpecSets) {
+        [].concat(typeSpecSets).forEach(function R (typeSpec) {
+            if (isArray(typeSpec)) return typeSpec.map(R); // Allow arrays of arrays of arrays...
+            typeSpec && keys(typeSpec).forEach(function (typeId) {
+                var spec = typeSpec[typeId],
+                    existingReplacer = replacers.filter(function(r){ return r.type === typeId; });
+                if (existingReplacer.length) {
+                    // Remove existing spec and replace with this one.
+                    replacers.splice(replacers.indexOf(existingReplacer[0]), 1);
+                    delete revivers[typeId];
+                    delete regTypes[typeId];
+                }
+                if (spec) {
+                    if (typeof spec === 'function') {
+                        // Support registering just a class without replacer/reviver
+                        var Class = spec;
+                        spec = [
+                            function(x){return x.constructor === Class;},
+                            function(x){return assign({}, x)},
+                            function(x){return assign(Object.create(Class.prototype), x)}
+                        ];
+                    }
+                    replacers.push({
+                        type: typeId,
+                        test: spec[0],
+                        replace: spec[1]
+                    });
+                    if (spec[2]) revivers[typeId] = spec[2];
+                    regTypes[typeId] = spec; // Record to be retrieved via public types property.
+                }
+            });
+        });
+        return this;
+    };
+}
+
+function assign(t,s) {
+    keys(s).map(function(k){t[k]=s[k];});
+    return t;
+}
+
+/** getByKeyPath() utility */
+function getByKeyPath (obj, keyPath) {
+    if (keyPath === '') return obj;
+    var period = keyPath.indexOf('.');
+    if (period !== -1) {
+        var innerObj = obj[keyPath.substr(0, period)];
+        return innerObj === undefined ? undefined : getByKeyPath(innerObj, keyPath.substr(period + 1));
+    }
+    return obj[keyPath];
+}
+
+function Undefined () {}
+Typeson.Undefined = Undefined;
+Typeson.toStringTag = toStringTag;
+Typeson.hasConstructorOf = hasConstructorOf;
+
+module.exports = Typeson;
+
 },{}],373:[function(require,module,exports){
-module.exports = Blob
+module.exports = require('./structured-cloning').concat({checkDataCloneException: [function (val) {
+    // Should also throw with:
+    // 1. `IsDetachedBuffer` (a process not called within the ECMAScript spec)
+    // 2. `IsCallable` (covered by `typeof === 'function'` or a function's `toStringTag`)
+    // 3. internal slots besides [[Prototype]] or [[Extensible]] (e.g., [[PromiseState]] or [[WeakMapData]])
+    // 4. exotic object (e.g., `Proxy`) (which does not have default behavior for one or more of the
+    //      essential internal methods that are limited to the following for non-function objects (we auto-exclude functions): 
+    //      [[GetPrototypeOf]],[[SetPrototypeOf]],[[IsExtensible]],[[PreventExtensions]],[[GetOwnProperty]],
+    //      [[DefineOwnProperty]],[[HasProperty]],[[Get]],[[Set]],[[Delete]],[[OwnPropertyKeys]]);
+    //      except for the standard, built-in exotic objects, we'd need to know whether these methods had distinct behaviors
+    var stringTag = ({}.toString.call(val).slice(8, -1));
+    if ([
+            'symbol', // Symbol's `toStringTag` is only "Symbol" for its initial value, so we check `typeof`
+            'function' // All functions including bound function exotic objects
+        ].includes(typeof val) ||
+        [
+            'Arguments', // A non-array exotic object
+            'Module', // A non-array exotic object
+            'Error', // `Error` and other errors have the [[ErrorData]] internal slot and give "Error"
+            'Proxy', // Proper `toStringTag` not yet implemented in Chrome/Firefox/Node
+            'Promise', // Promise instances have an extra slot ([[PromiseState]]) but not throwing in Chrome `postMessage`
+            'WeakMap', // WeakMap instances have an extra slot ([[WeakMapData]]) but not throwing in Chrome `postMessage`
+            'WeakSet' // WeakSet instances have an extra slot ([[WeakSetData]]) but not throwing in Chrome `postMessage`
+        ].includes(stringTag) ||
+        val === Object.prototype || // A non-array exotic object but not throwing in Chrome `postMessage`
+        (val && typeof val === 'object' && typeof val.nodeType === 'number' && typeof val.insertBefore === 'function') // Duck-type DOM node objects (non-array exotic? objects which cannot be cloned by the SCA)
+    ) {
+        throw new DOMException('The object cannot be cloned.', 'DataCloneError');
+    }
+    return false;
+}]});
 
-var Buffer = require('buffer').Buffer
-  , str = {}.toString.call.bind({}.toString)
+},{"./structured-cloning":374}],374:[function(require,module,exports){
+/* This preset includes types for the Structured Cloning Algorithm. */
+module.exports = [
+    // Todo: Might also register `ImageBitmap` and synchronous `Blob`/`File`/`FileList`
+    // ES5
+    require('../types/user-object'), // Processed last
+    require('../types/undefined'),
+    require('../types/primitive-objects'),
+    require('../types/special-numbers'),
+    require('../types/date'),
+    require('../types/regexp'),
+    // ES2015 (ES6)
+    typeof Map === 'function' && require('../types/map'),
+    typeof Set === 'function' && require('../types/set'),
+    typeof ArrayBuffer === 'function' && require('../types/arraybuffer'),
+    typeof Uint8Array === 'function' && require('../types/typed-arrays'),
+    typeof DataView === 'function' && require('../types/dataview'),
+    typeof Intl !== 'undefined' && require('../types/intl-types'),
+    // Non-built-ins
+    require('../types/imagedata')
+];
 
-function Blob(parts, properties) {
-  properties = properties || {}
-  this.type = properties.type || ''
-  var size = 0
-  for(var i = 0, len = parts.length; i < len; ++i) {
-    size += typeof parts[i] === 'string' ? Buffer.byteLength(parts[i]) :
-            str(parts[i]).indexOf('ArrayBuffer') > -1 ? parts[i].byteLength :
-            parts[i].buffer ? parts[i].buffer.byteLength :
-            parts[i].length
-  }
-  this.size = size
+},{"../types/arraybuffer":375,"../types/dataview":376,"../types/date":377,"../types/imagedata":378,"../types/intl-types":379,"../types/map":380,"../types/primitive-objects":381,"../types/regexp":382,"../types/set":383,"../types/special-numbers":384,"../types/typed-arrays":385,"../types/undefined":386,"../types/user-object":387}],375:[function(require,module,exports){
+var Typeson = require('typeson');
+var B64 = require ('base64-arraybuffer');
+
+exports.ArrayBuffer = [
+    function test (x) { return Typeson.toStringTag(x) === 'ArrayBuffer';},
+    function encapsulate (b) { return B64.encode(b); },
+    function revive (b64) { return B64.decode(b64); }
+];
+// See also typed-arrays!
+
+},{"base64-arraybuffer":4,"typeson":372}],376:[function(require,module,exports){
+var Typeson = require('typeson');
+exports.DataView = [
+    function (x) { return Typeson.toStringTag(x) === 'DataView'; },
+    function (dw) { return { buffer: dw.buffer, byteOffset: dw.byteOffset, byteLength: dw.byteLength }; },
+    function (obj) { return new DataView(obj.buffer, obj.byteOffset, obj.byteLength); }
+];
+
+},{"typeson":372}],377:[function(require,module,exports){
+var Typeson = require('typeson');
+exports.Date = [
+    function (x) { return Typeson.toStringTag(x) === 'Date'; },
+    function (date) { return date.getTime(); },
+    function (time) { return new Date(time); }
+];
+
+},{"typeson":372}],378:[function(require,module,exports){
+/** ImageData is browser / DOM specific.
+ * Requires arraybuffer.js in order for the returned Uint8ClampedArray to be encapsulated as well,
+ * or if use with socket.io, socket.io will take care of that.
+*/
+var Typeson = require('typeson');
+exports.ImageData = [
+    function (x) { return Typeson.toStringTag(x) === 'ImageData'; },
+    function (d) { return {array: d.data, width: d.width, height: d.height}; },
+    function (o) { return new ImageData(o.array, o.width, o.height); }
+];
+
+},{"typeson":372}],379:[function(require,module,exports){
+var Typeson = require('typeson');
+exports["Intl.Collator"] = [
+    function (x) { return Typeson.hasConstructorOf(x, Intl.Collator); },
+    function (c) { return c.resolvedOptions(); },
+    function (options) { return new Intl.Collator(options.locale, options); }
+];
+
+exports["Intl.DateTimeFormat"] = [
+    function (x) { return Typeson.hasConstructorOf(x, Intl.DateTimeFormat); },
+    function (dtf) { return dtf.resolvedOptions(); },
+    function (options) { return new Intl.DateTimeFormat(options.locale, options); }
+];
+
+exports["Intl.NumberFormat"] = [
+    function (x) { return Typeson.hasConstructorOf(x, Intl.NumberFormat); },
+    function (nf) { return nf.resolvedOptions(); },
+    function (options) { return new Intl.NumberFormat(options.locale, options); }
+];
+
+},{"typeson":372}],380:[function(require,module,exports){
+var Typeson = require('typeson');
+var makeArray = require('../utils/array-from-iterator');
+exports.Map = [
+    function (x) { return Typeson.toStringTag(x) === 'Map'; },
+    function (map) { return makeArray(map.entries()); },
+    function (entries) { return new Map(entries); }
+];
+
+},{"../utils/array-from-iterator":388,"typeson":372}],381:[function(require,module,exports){
+// This module is for objectified primitives (such as new Number(3) or
+// new String("foo"))
+var Typeson = require('typeson');
+module.exports = {
+    // String Object (not primitive string which need no type spec)
+    StringObject: [
+        function (x) { return Typeson.toStringTag(x) === 'String' && typeof x === 'object'; },
+        function (s) { return String(s); }, // convert to primitive string
+        function (s) { return new String(s); } // Revive to an objectified string
+    ],
+    // Boolean Object (not primitive boolean which need no type spec)
+    BooleanObject: [
+        function (x) { return Typeson.toStringTag(x) === 'Boolean' && typeof x === 'object'; },
+        function (b) { return Boolean(b); }, // convert to primitive boolean
+        function (b) { return new Boolean(b); } // Revive to an objectified Boolean
+    ],
+    // Number Object (not primitive number which need no type spec)
+    NumberObject: [
+        function (x) { return Typeson.toStringTag(x) === 'Number' && typeof x === 'object'; },
+        function (n) { return Number(n); }, // convert to primitive number
+        function (n) { return new Number(n); } // Revive to an objectified number
+    ]
+};
+
+},{"typeson":372}],382:[function(require,module,exports){
+var Typeson = require('typeson');
+exports.RegExp = [
+    function (x) { return Typeson.toStringTag(x) === 'RegExp'; },
+    function (rexp) {
+        return {
+            source: rexp.source,
+            flags: (rexp.global?'g':'')+(rexp.ignoreCase?'i':'')+(rexp.multiLine?'m':'')
+        };
+    },
+    function (data) { return new RegExp (data.source, data.flags); }
+];
+
+},{"typeson":372}],383:[function(require,module,exports){
+var Typeson = require('typeson');
+var makeArray = require('../utils/array-from-iterator');
+exports.Set = [
+    function (x) { return Typeson.toStringTag(x) === 'Set'; },
+    function (set) { return makeArray(set.values()); },
+    function (values) { return new Set(values); }
+];
+
+},{"../utils/array-from-iterator":388,"typeson":372}],384:[function(require,module,exports){
+exports.SpecialNumber = [
+    function (x) { return typeof x === 'number' && isNaN(x) || x === Infinity || x === -Infinity; },
+    function (n) { return isNaN(n) ? "NaN" : n > 0 ? "Infinity" : "-Infinity" },
+    function (s) { return {NaN: NaN, Infinity: Infinity, "-Infinity": -Infinity}[s];}
+];
+
+},{}],385:[function(require,module,exports){
+(function (global){
+var Typeson = require('typeson');
+var B64 = require ('base64-arraybuffer');
+
+var _global = typeof self === 'undefined' ? global : self;
+
+[
+    "Int8Array",
+    "Uint8Array",
+    "Uint8ClampedArray",
+    "Int16Array",
+    "Uint16Array",
+    "Int32Array",
+    "Uint32Array",
+    "Float32Array",
+    "Float64Array"
+].forEach(function (typeName) {
+    var TypedArray = _global[typeName];
+    if (TypedArray) exports[typeName] = [
+        function test (x) { return Typeson.toStringTag(x) === typeName; },
+        function encapsulate (a) { return B64.encode (a.buffer, a.byteOffset, a.byteLength); },
+        function revive (b64) { return new TypedArray (B64.decode(b64)); }
+    ];
+});
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"base64-arraybuffer":4,"typeson":372}],386:[function(require,module,exports){
+var Typeson = require('typeson');
+module.exports = {
+    undefined: [
+        function (x, stateObj) { return typeof x === 'undefined' && (stateObj.ownKeys || !('ownKeys' in stateObj)); },
+        function (n) { return null; },
+        function (s) { return new Typeson.Undefined();} // Will add `undefined` (returning `undefined` would instead avoid explicitly setting)
+    ],
+    sparseUndefined: [
+        function (x, stateObj) { return typeof x === 'undefined' && stateObj.ownKeys === false; },
+        function (n) { return null; },
+        function (s) { return undefined;} // Will avoid adding anything
+    ]
+};
+
+},{"typeson":372}],387:[function(require,module,exports){
+var Typeson = require('typeson');
+var getProto = Object.getPrototypeOf;
+
+function isUserObject (val) {
+    if (!val || Typeson.toStringTag(val) !== 'Object') {
+        return false;
+    }
+
+    var proto = getProto(val);
+    if (!proto) { // `Object.create(null)`
+        return true;
+    }
+    return Typeson.hasConstructorOf(val, Object) || isUserObject(proto);
 }
 
-var cons = Blob
-  , proto = cons.prototype
+exports.userObjects = [
+    function (x, stateObj) { return isUserObject(x); },
+    function (n) { return Object.assign({}, n); },
+    function (s) { return s;}
+];
 
-proto.slice = function(start, end) {
-  var b = new Blob([], {type: this.type})
-  b.size = (end || this.size) - (start || 0)
-  return b
+},{"typeson":372}],388:[function(require,module,exports){
+module.exports = Array.from || function (iterator) {
+   var res = [];
+   for (var i=iterator.next(); !i.done; i = iterator.next()) {
+      res.push(i.value);
+   }
+   return res;
 }
 
-},{"buffer":undefined}],374:[function(require,module,exports){
+},{}],389:[function(require,module,exports){
+arguments[4][372][0].apply(exports,arguments)
+},{"dup":372}],390:[function(require,module,exports){
 module.exports = require('../lib/custom');
-},{"../lib/custom":375}],375:[function(require,module,exports){
+},{"../lib/custom":391}],391:[function(require,module,exports){
 'use strict';
 
 var immediate = require('immediate');
@@ -16689,7 +16876,7 @@ function customOpenDatabase(SQLiteDatabase, opts) {
 
 module.exports = customOpenDatabase;
 
-},{"./websql/WebSQLDatabase":378,"argsarray":1,"immediate":301}],376:[function(require,module,exports){
+},{"./websql/WebSQLDatabase":394,"argsarray":1,"immediate":300}],392:[function(require,module,exports){
 'use strict';
 
 var sqlite3 = require('sqlite3');
@@ -16789,7 +16976,7 @@ SQLiteDatabase.prototype.exec = function exec(queries, readOnly, callback) {
 
 module.exports = SQLiteDatabase;
 
-},{"./SQLiteResult":377,"sqlite3":309}],377:[function(require,module,exports){
+},{"./SQLiteResult":393,"sqlite3":308}],393:[function(require,module,exports){
 'use strict';
 
 function SQLiteResult(error, insertId, rowsAffected, rows) {
@@ -16800,7 +16987,7 @@ function SQLiteResult(error, insertId, rowsAffected, rows) {
 }
 
 module.exports = SQLiteResult;
-},{}],378:[function(require,module,exports){
+},{}],394:[function(require,module,exports){
 'use strict';
 
 var Queue = require('tiny-queue');
@@ -16929,7 +17116,7 @@ WebSQLDatabase.prototype.readTransaction = function (txnCallback, errorCallback,
 
 module.exports = WebSQLDatabase;
 
-},{"./WebSQLTransaction":380,"immediate":301,"noop-fn":308,"tiny-queue":372}],379:[function(require,module,exports){
+},{"./WebSQLTransaction":396,"immediate":300,"noop-fn":307,"tiny-queue":371}],395:[function(require,module,exports){
 'use strict';
 
 function WebSQLRows(array) {
@@ -16948,7 +17135,7 @@ function WebSQLResultSet(insertId, rowsAffected, rows) {
 }
 
 module.exports = WebSQLResultSet;
-},{}],380:[function(require,module,exports){
+},{}],396:[function(require,module,exports){
 'use strict';
 
 var noop = require('noop-fn');
@@ -17083,7 +17270,7 @@ WebSQLTransaction.prototype._checkDone = function () {
 
 module.exports = WebSQLTransaction;
 
-},{"./WebSQLResultSet":379,"immediate":301,"noop-fn":308,"tiny-queue":372}],381:[function(require,module,exports){
+},{"./WebSQLResultSet":395,"immediate":300,"noop-fn":307,"tiny-queue":371}],397:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17166,7 +17353,7 @@ var CFG = {};
 exports.default = CFG;
 module.exports = exports['default'];
 
-},{}],382:[function(require,module,exports){
+},{}],398:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17190,50 +17377,172 @@ function createNativeDOMException(name, message) {
     return new DOMException.prototype.constructor(message, name || 'DOMException');
 }
 
+var codes = { // From web-platform-tests testharness.js name_code_map (though not in new spec)
+    IndexSizeError: 1,
+    HierarchyRequestError: 3,
+    WrongDocumentError: 4,
+    InvalidCharacterError: 5,
+    NoModificationAllowedError: 7,
+    NotFoundError: 8,
+    NotSupportedError: 9,
+    InUseAttributeError: 10,
+    InvalidStateError: 11,
+    SyntaxError: 12,
+    InvalidModificationError: 13,
+    NamespaceError: 14,
+    InvalidAccessError: 15,
+    TypeMismatchError: 17,
+    SecurityError: 18,
+    NetworkError: 19,
+    AbortError: 20,
+    URLMismatchError: 21,
+    QuotaExceededError: 22,
+    TimeoutError: 23,
+    InvalidNodeTypeError: 24,
+    DataCloneError: 25,
+
+    EncodingError: 0,
+    NotReadableError: 0,
+    UnknownError: 0,
+    ConstraintError: 0,
+    DataError: 0,
+    TransactionInactiveError: 0,
+    ReadOnlyError: 0,
+    VersionError: 0,
+    OperationError: 0,
+    NotAllowedError: 0
+};
+
+var legacyCodes = {
+    INDEX_SIZE_ERR: 1,
+    DOMSTRING_SIZE_ERR: 2,
+    HIERARCHY_REQUEST_ERR: 3,
+    WRONG_DOCUMENT_ERR: 4,
+    INVALID_CHARACTER_ERR: 5,
+    NO_DATA_ALLOWED_ERR: 6,
+    NO_MODIFICATION_ALLOWED_ERR: 7,
+    NOT_FOUND_ERR: 8,
+    NOT_SUPPORTED_ERR: 9,
+    INUSE_ATTRIBUTE_ERR: 10,
+    INVALID_STATE_ERR: 11,
+    SYNTAX_ERR: 12,
+    INVALID_MODIFICATION_ERR: 13,
+    NAMESPACE_ERR: 14,
+    INVALID_ACCESS_ERR: 15,
+    VALIDATION_ERR: 16,
+    TYPE_MISMATCH_ERR: 17,
+    SECURITY_ERR: 18,
+    NETWORK_ERR: 19,
+    ABORT_ERR: 20,
+    URL_MISMATCH_ERR: 21,
+    QUOTA_EXCEEDED_ERR: 22,
+    TIMEOUT_ERR: 23,
+    INVALID_NODE_TYPE_ERR: 24,
+    DATA_CLONE_ERR: 25
+};
+
+function createNonNativeDOMExceptionClass() {
+    function DOMException(message, name) {
+        // const err = Error.prototype.constructor.call(this, message); // Any use to this? Won't set this.message
+        this[Symbol.toStringTag] = 'DOMException';
+        this._code = name in codes ? codes[name] : legacyCodes[name] || 0;
+        this._name = name || 'Error';
+        this._message = message === undefined ? '' : '' + message; // Not String() which converts Symbols
+        Object.defineProperty(this, 'code', {
+            configurable: true,
+            enumerable: true,
+            writable: true,
+            value: this._code
+        });
+        if (name !== undefined) {
+            Object.defineProperty(this, 'name', {
+                configurable: true,
+                enumerable: true,
+                writable: true,
+                value: this._name
+            });
+        }
+        if (message !== undefined) {
+            Object.defineProperty(this, 'message', {
+                configurable: true,
+                enumerable: false,
+                writable: true,
+                value: this._message
+            });
+        }
+    }
+
+    // Necessary for W3C tests which complains if `DOMException` has properties on its "own" prototype
+    var DummyDOMException = function DOMException() {};
+    DummyDOMException.prototype = new Error(); // Intended for subclassing
+    ['name', 'message'].forEach(function (prop) {
+        Object.defineProperty(DummyDOMException.prototype, prop, {
+            enumerable: true,
+            get: function get() {
+                if (!(this instanceof DOMException || this instanceof DummyDOMException || this instanceof Error)) {
+                    throw new TypeError('Illegal invocation');
+                }
+                return this['_' + prop];
+            }
+        });
+    });
+    // DOMException uses the same `toString` as `Error`
+    Object.defineProperty(DummyDOMException.prototype, 'code', {
+        configurable: true,
+        enumerable: true,
+        get: function get() {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+    DOMException.prototype = new DummyDOMException();
+
+    DOMException.prototype[Symbol.toStringTag] = 'DOMExceptionPrototype';
+    Object.defineProperty(DOMException, 'prototype', {
+        writable: false
+    });
+
+    Object.keys(codes).forEach(function (codeName) {
+        Object.defineProperty(DOMException.prototype, codeName, {
+            enumerable: true,
+            configurable: false,
+            value: codes[codeName]
+        });
+        Object.defineProperty(DOMException, codeName, {
+            enumerable: true,
+            configurable: false,
+            value: codes[codeName]
+        });
+    });
+    Object.keys(legacyCodes).forEach(function (codeName) {
+        Object.defineProperty(DOMException.prototype, codeName, {
+            enumerable: true,
+            configurable: false,
+            value: legacyCodes[codeName]
+        });
+        Object.defineProperty(DOMException, codeName, {
+            enumerable: true,
+            configurable: false,
+            value: legacyCodes[codeName]
+        });
+    });
+    Object.defineProperty(DOMException.prototype, 'constructor', {
+        writable: true,
+        configurable: true,
+        enumerable: false,
+        value: DOMException
+    });
+
+    return DOMException;
+}
+
+var ShimNonNativeDOMException = createNonNativeDOMExceptionClass();
+
 /**
  * Creates a generic Error object
  * @returns {Error}
  */
-function createError(name, message) {
-    var e = new Error(message); // DOMException uses the same `toString` as `Error`, so no need to add
-    e.name = name || 'DOMException';
-    e.code = { // From web-platform-tests testharness.js name_code_map (though not in new spec)
-        IndexSizeError: 1,
-        HierarchyRequestError: 3,
-        WrongDocumentError: 4,
-        InvalidCharacterError: 5,
-        NoModificationAllowedError: 7,
-        NotFoundError: 8,
-        NotSupportedError: 9,
-        InUseAttributeError: 10,
-        InvalidStateError: 11,
-        SyntaxError: 12,
-        InvalidModificationError: 13,
-        NamespaceError: 14,
-        InvalidAccessError: 15,
-        TypeMismatchError: 17,
-        SecurityError: 18,
-        NetworkError: 19,
-        AbortError: 20,
-        URLMismatchError: 21,
-        QuotaExceededError: 22,
-        TimeoutError: 23,
-        InvalidNodeTypeError: 24,
-        DataCloneError: 25,
-
-        EncodingError: 0,
-        NotReadableError: 0,
-        UnknownError: 0,
-        ConstraintError: 0,
-        DataError: 0,
-        TransactionInactiveError: 0,
-        ReadOnlyError: 0,
-        VersionError: 0,
-        OperationError: 0,
-        NotAllowedError: 0
-    }[name];
-    e.message = message;
-    return e;
+function createNonNativeDOMException(name, message) {
+    return new ShimNonNativeDOMException(message, name);
 }
 
 /**
@@ -17338,10 +17647,10 @@ if (useNativeDOMException) {
         return createNativeDOMException(name, message);
     };
 } else {
-    exports.ShimDOMException = ShimDOMException = Error;
+    exports.ShimDOMException = ShimDOMException = ShimNonNativeDOMException;
     exports.createDOMException = createDOMException = function createDOMException(name, message, error) {
         logError(name, message, error);
-        return createError(name, message);
+        return createNonNativeDOMException(name, message);
     };
 }
 
@@ -17351,7 +17660,7 @@ exports.ShimDOMException = ShimDOMException;
 exports.createDOMException = createDOMException;
 exports.webSQLErrback = webSQLErrback;
 
-},{"./CFG":381}],383:[function(require,module,exports){
+},{"./CFG":397}],399:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17537,7 +17846,7 @@ if (cleanInterface) {
 exports.default = DOMStringList;
 module.exports = exports['default'];
 
-},{}],384:[function(require,module,exports){
+},{}],400:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17571,7 +17880,7 @@ exports.ShimEvent = _eventtarget.ShimEvent;
 exports.ShimCustomEvent = _eventtarget.ShimCustomEvent;
 exports.ShimEventTarget = _eventtarget.ShimEventTarget;
 
-},{"./util":401,"eventtarget":300}],385:[function(require,module,exports){
+},{"./util":417,"eventtarget":299}],401:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -17579,9 +17888,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.IDBCursorWithValue = exports.IDBCursor = undefined;
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var _IDBRequest = require('./IDBRequest');
+
+var _IDBObjectStore = require('./IDBObjectStore');
+
+var _IDBObjectStore2 = _interopRequireDefault(_IDBObjectStore);
 
 var _DOMException = require('./DOMException');
 
@@ -17599,11 +17914,11 @@ var _IDBTransaction2 = _interopRequireDefault(_IDBTransaction);
 
 var _Key = require('./Key');
 
-var _Key2 = _interopRequireDefault(_Key);
+var Key = _interopRequireWildcard(_Key);
 
 var _Sca = require('./Sca');
 
-var _Sca2 = _interopRequireDefault(_Sca);
+var Sca = _interopRequireWildcard(_Sca);
 
 var _IDBIndex = require('./IDBIndex');
 
@@ -17613,9 +17928,9 @@ var _CFG = require('./CFG');
 
 var _CFG2 = _interopRequireDefault(_CFG);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -17638,22 +17953,11 @@ function IDBCursor() {
     throw new TypeError('Illegal constructor');
 }
 var IDBCursorAlias = IDBCursor;
-IDBCursor.__super = function IDBCursor(range, direction, store, source, keyColumnName, valueColumnName, count) {
+IDBCursor.__super = function IDBCursor(query, direction, store, source, keyColumnName, valueColumnName, count) {
     this[Symbol.toStringTag] = 'IDBCursor';
     util.defineReadonlyProperties(this, ['key', 'primaryKey']);
-    // Calling openCursor on an index or objectstore with null is allowed but we treat it as undefined internally
     _IDBTransaction2.default.__assertActive(store.transaction);
-    if (range === null) {
-        range = undefined;
-    }
-    if (util.instanceOf(range, _IDBKeyRange.IDBKeyRange)) {
-        // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
-        if (!range.toString() !== '[object IDBKeyRange]') {
-            range = _IDBKeyRange.IDBKeyRange.__createInstance(range.lower, range.upper, range.lowerOpen, range.upperOpen);
-        }
-    } else if (range !== undefined) {
-        range = _IDBKeyRange.IDBKeyRange.__createInstance(range, range, false, false);
-    }
+    var range = (0, _IDBKeyRange.convertValueToKeyRange)(query);
     if (direction !== undefined && !['next', 'prev', 'nextunique', 'prevunique'].includes(direction)) {
         throw new TypeError(direction + 'is not a valid cursor direction');
     }
@@ -17674,7 +17978,7 @@ IDBCursor.__super = function IDBCursor(range, direction, store, source, keyColum
     this.__keyColumnName = keyColumnName;
     this.__valueColumnName = valueColumnName;
     this.__keyOnly = valueColumnName === 'key';
-    this.__valueDecoder = this.__keyOnly ? _Key2.default : _Sca2.default;
+    this.__valueDecoder = this.__keyOnly ? Key : Sca;
     this.__count = count;
     this.__prefetchedIndex = -1;
     this.__indexSource = util.instanceOf(source, _IDBIndex2.default);
@@ -17684,8 +17988,8 @@ IDBCursor.__super = function IDBCursor(range, direction, store, source, keyColum
 
     if (range !== undefined) {
         // Encode the key range and cache the encoded values, so we don't have to re-encode them over and over
-        range.__lowerCached = range.lower !== undefined && _Key2.default.encode(range.lower, this.__multiEntryIndex);
-        range.__upperCached = range.upper !== undefined && _Key2.default.encode(range.upper, this.__multiEntryIndex);
+        range.__lowerCached = range.lower !== undefined && Key.encode(range.lower, this.__multiEntryIndex);
+        range.__upperCached = range.upper !== undefined && Key.encode(range.upper, this.__multiEntryIndex);
     }
     this.__gotValue = true;
     this['continue']();
@@ -17715,12 +18019,12 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
     recordsToLoad = recordsToLoad || 1;
 
     var me = this;
-    var quotedKeyColumnName = util.quote(me.__keyColumnName);
-    var quotedKey = util.quote('key');
+    var quotedKeyColumnName = util.sqlQuote(me.__keyColumnName);
+    var quotedKey = util.sqlQuote('key');
     var sql = ['SELECT * FROM', util.escapeStoreNameForSQL(me.__store.name)];
     var sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
-    (0, _IDBKeyRange.setSQLForRange)(me.__range, quotedKeyColumnName, sql, sqlValues, true, true);
+    (0, _IDBKeyRange.setSQLForKeyRange)(me.__range, quotedKeyColumnName, sql, sqlValues, true, true);
 
     // Determine the ORDER BY direction based on the cursor.
     var direction = me.__sqlDirection;
@@ -17729,16 +18033,16 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
     if (primaryKey !== undefined) {
         sql.push('AND', quotedKey, op + '= ?');
         // Key.convertValueToKey(primaryKey); // Already checked by `continuePrimaryKey`
-        sqlValues.push(_Key2.default.encode(primaryKey));
+        sqlValues.push(Key.encode(primaryKey));
     }
     if (key !== undefined) {
         sql.push('AND', quotedKeyColumnName, op + '= ?');
-        _Key2.default.convertValueToKey(key);
-        sqlValues.push(_Key2.default.encode(key));
+        // Key.convertValueToKey(key); // Already checked by `continue` or `continuePrimaryKey`
+        sqlValues.push(Key.encode(key));
     } else if (continueCall && me.__key !== undefined) {
         sql.push('AND', quotedKeyColumnName, op + ' ?');
-        _Key2.default.convertValueToKey(me.__key);
-        sqlValues.push(_Key2.default.encode(me.__key));
+        // Key.convertValueToKey(me.__key); // Already checked when stored
+        sqlValues.push(Key.encode(me.__key));
     }
 
     if (!me.__count) {
@@ -17755,7 +18059,7 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
 
         if (!me.__unique && me.__indexSource) {
             // 4. Sort by object store position (if defined and not unique)
-            sql.push(',', util.quote(me.__valueColumnName), direction);
+            sql.push(',', util.sqlQuote(me.__valueColumnName), direction);
         }
         sql.push('LIMIT', recordsToLoad);
     }
@@ -17791,7 +18095,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
         return;
     }
 
-    var quotedKeyColumnName = util.quote(me.__keyColumnName);
+    var quotedKeyColumnName = util.sqlQuote(me.__keyColumnName);
     var sql = ['SELECT * FROM', util.escapeStoreNameForSQL(me.__store.name)];
     var sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
@@ -17805,21 +18109,21 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
     // Determine the ORDER BY direction based on the cursor.
     var direction = me.__sqlDirection;
     var op = direction === 'ASC' ? '>' : '<';
-    var quotedKey = util.quote('key');
+    var quotedKey = util.sqlQuote('key');
 
     if (primaryKey !== undefined) {
         sql.push('AND', quotedKey, op + '= ?');
         // Key.convertValueToKey(primaryKey); // Already checked by `continuePrimaryKey`
-        sqlValues.push(_Key2.default.encode(primaryKey));
+        sqlValues.push(Key.encode(primaryKey));
     }
     if (key !== undefined) {
         sql.push('AND', quotedKeyColumnName, op + '= ?');
-        _Key2.default.convertValueToKey(key);
-        sqlValues.push(_Key2.default.encode(key));
+        // Key.convertValueToKey(key); // Already checked by `continue` or `continuePrimaryKey`
+        sqlValues.push(Key.encode(key));
     } else if (me.__key !== undefined) {
         sql.push('AND', quotedKeyColumnName, op + ' ?');
-        _Key2.default.convertValueToKey(me.__key);
-        sqlValues.push(_Key2.default.encode(me.__key));
+        // Key.convertValueToKey(me.__key); // Already checked when entered
+        sqlValues.push(Key.encode(me.__key));
     }
 
     if (!me.__count) {
@@ -17829,14 +18133,14 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
         // 2. Sort by primaryKey (if defined and not unique)
         if (!me.__unique && me.__keyColumnName !== 'key') {
             // Avoid adding 'key' twice
-            sql.push(',', util.quote('key'), direction);
+            sql.push(',', util.sqlQuote('key'), direction);
         }
 
         // 3. Sort by position (if defined)
 
         if (!me.__unique && me.__indexSource) {
             // 4. Sort by object store position (if defined and not unique)
-            sql.push(',', util.quote(me.__valueColumnName), direction);
+            sql.push(',', util.sqlQuote(me.__valueColumnName), direction);
         }
     }
     sql = sql.join(' ');
@@ -17850,8 +18154,8 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
                     var ct = 0;
                     for (var i = 0; i < data.rows.length; i++) {
                         var rowItem = data.rows.item(i);
-                        var rowKey = _Key2.default.decode(rowItem[me.__keyColumnName], true);
-                        var matches = _Key2.default.findMultiEntryMatches(rowKey, me.__range);
+                        var rowKey = Key.decode(rowItem[me.__keyColumnName], true);
+                        var matches = Key.findMultiEntryMatches(rowKey, me.__range);
                         ct += matches.length;
                     }
                     success(undefined, ct, undefined);
@@ -17862,13 +18166,13 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
                 var rows = [];
                 for (var _i = 0; _i < data.rows.length; _i++) {
                     var _rowItem = data.rows.item(_i);
-                    var _rowKey = _Key2.default.decode(_rowItem[me.__keyColumnName], true);
-                    var _matches = _Key2.default.findMultiEntryMatches(_rowKey, me.__range);
+                    var _rowKey = Key.decode(_rowItem[me.__keyColumnName], true);
+                    var _matches = Key.findMultiEntryMatches(_rowKey, me.__range);
 
                     for (var j = 0; j < _matches.length; j++) {
                         var matchingKey = _matches[j];
                         var clone = {
-                            matchingKey: _Key2.default.encode(matchingKey, true),
+                            matchingKey: Key.encode(matchingKey, true),
                             key: _rowItem.key
                         };
                         clone[me.__keyColumnName] = _rowItem[me.__keyColumnName];
@@ -17962,9 +18266,9 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
     var encVal = util.unescapeSQLiteResponse(rowItem[me.__valueColumnName]);
     var encPrimaryKey = util.unescapeSQLiteResponse(rowItem.key);
 
-    var key = _Key2.default.decode(encKey, me.__multiEntryIndex);
+    var key = Key.decode(encKey, me.__multiEntryIndex);
     var val = me.__valueDecoder.decode(encVal);
-    var primaryKey = _Key2.default.decode(encPrimaryKey);
+    var primaryKey = Key.decode(encPrimaryKey);
     callback(key, val, primaryKey, encKey /*, encVal, encPrimaryKey */);
 };
 
@@ -17986,9 +18290,8 @@ IDBCursor.prototype.__continue = function (key, advanceContinue) {
     if (!me.__gotValue && !advanceContinue) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'The cursor is being iterated or has iterated past its end.');
     }
-    if (key !== undefined) _Key2.default.convertValueToKey(key);
-
     if (key !== undefined) {
+        Key.convertValueToKeyRethrowingAndIfInvalid(key);
         var cmpResult = (0, _IDBFactory.cmp)(key, me.key);
         if (cmpResult === 0 || me.direction.includes('next') && cmpResult === -1 || me.direction.includes('prev') && cmpResult === 1) {
             throw (0, _DOMException.createDOMException)('DataError', 'Cannot ' + (advanceState ? 'advance' : 'continue') + ' the cursor in an unexpected direction');
@@ -18030,7 +18333,7 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
                         }
                         cursorContinue(tx, args, success, error);
                     }
-                    if (me.__unique && !me.__multiEntryIndex && encKey === _Key2.default.encode(me.key, me.__multiEntryIndex)) {
+                    if (me.__unique && !me.__multiEntryIndex && encKey === Key.encode(me.key, me.__multiEntryIndex)) {
                         cursorContinue(tx, args, success, error);
                         return;
                     }
@@ -18065,8 +18368,8 @@ IDBCursor.prototype.continuePrimaryKey = function (key, primaryKey) {
     if (!me.__gotValue) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'The cursor is being iterated or has iterated past its end.');
     }
-    _Key2.default.convertValueToKey(key);
-    _Key2.default.convertValueToKey(primaryKey);
+    Key.convertValueToKeyRethrowingAndIfInvalid(key);
+    Key.convertValueToKeyRethrowingAndIfInvalid(primaryKey);
 
     var cmpResult = (0, _IDBFactory.cmp)(key, me.key);
     if (me.direction === 'next' && cmpResult === -1 || me.direction === 'prev' && cmpResult === 1) {
@@ -18076,8 +18379,8 @@ IDBCursor.prototype.continuePrimaryKey = function (key, primaryKey) {
         me.__continueFinish(key, primaryKey, false);
     }
     if (cmpResult === 0) {
-        _Sca2.default.encode(primaryKey, function (encPrimaryKey) {
-            _Sca2.default.encode(me.primaryKey, function (encObjectStorePos) {
+        Sca.encode(primaryKey, function (encPrimaryKey) {
+            Sca.encode(me.primaryKey, function (encObjectStorePos) {
                 if (encPrimaryKey === encObjectStorePos || me.direction === 'next' && encPrimaryKey < encObjectStorePos || me.direction === 'prev' && encPrimaryKey > encObjectStorePos) {
                     throw (0, _DOMException.createDOMException)('DataError', 'Cannot continue the cursor in an unexpected direction');
                 }
@@ -18114,43 +18417,26 @@ IDBCursor.prototype.update = function (valueToUpdate) {
     if (me.__keyOnly) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This cursor method cannot be called when the key only flag has been set.');
     }
-    util.throwIfNotClonable(valueToUpdate, 'The data to be updated could not be cloned by the internal structured cloning algorithm.');
+    var request = me.__store.transaction.__createRequest(me);
+    var key = me.primaryKey;
+    function addToQueue(clonedValue) {
+        _IDBObjectStore2.default.__stepsStoringRecordObjectStore(request, me.__store, clonedValue, false, key);
+    }
     if (me.__store.keyPath !== null) {
-        var evaluatedKey = me.__store.__validateKeyAndValue(valueToUpdate);
-        if (me.primaryKey !== evaluatedKey) {
+        var _me$__store$__validat = me.__store.__validateKeyAndValueAndClone(valueToUpdate, undefined, true),
+            _me$__store$__validat2 = _slicedToArray(_me$__store$__validat, 2),
+            evaluatedKey = _me$__store$__validat2[0],
+            clonedValue = _me$__store$__validat2[1];
+
+        if ((0, _IDBFactory.cmp)(me.primaryKey, evaluatedKey) !== 0) {
             throw (0, _DOMException.createDOMException)('DataError', 'The key of the supplied value to `update` is not equal to the cursor\'s effective key');
         }
+        addToQueue(clonedValue);
+    } else {
+        var _clonedValue = Sca.clone(valueToUpdate);
+        addToQueue(_clonedValue);
     }
-    return me.__store.transaction.__addToTransactionQueue(function cursorUpdate(tx, args, success, error) {
-        var key = me.key;
-        var primaryKey = me.primaryKey;
-        var store = me.__store;
-        _Sca2.default.encode(valueToUpdate, function (encoded) {
-            var value = _Sca2.default.decode(encoded);
-            _Sca2.default.encode(value, function (encoded) {
-                // First try to delete if the record exists
-                _Key2.default.convertValueToKey(primaryKey);
-                var sql = 'DELETE FROM ' + util.escapeStoreNameForSQL(store.name) + ' WHERE key = ?';
-                var encodedPrimaryKey = _Key2.default.encode(primaryKey);
-                _CFG2.default.DEBUG && console.log(sql, encoded, key, primaryKey, encodedPrimaryKey);
-
-                tx.executeSql(sql, [util.escapeSQLiteStatement(encodedPrimaryKey)], function (tx, data) {
-                    _CFG2.default.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
-
-                    store.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
-                        store.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, function () {
-                            store.__cursors.forEach(function (cursor) {
-                                cursor.__invalidateCache(); // Delete and add
-                            });
-                            success.apply(undefined, arguments);
-                        }, error);
-                    }, function (tx, err) {
-                        error(err);
-                    });
-                });
-            });
-        });
-    }, undefined, me);
+    return request;
 };
 
 IDBCursor.prototype['delete'] = function () {
@@ -18166,10 +18452,10 @@ IDBCursor.prototype['delete'] = function () {
     }
     return this.__store.transaction.__addToTransactionQueue(function cursorDelete(tx, args, success, error) {
         me.__find(undefined, undefined, tx, function (key, value, primaryKey) {
-            var sql = 'DELETE FROM  ' + util.escapeStoreNameForSQL(me.__store.name) + ' WHERE key = ?';
+            var sql = 'DELETE FROM  ' + util.escapeStoreNameForSQL(me.__store.name) + ' WHERE "key" = ?';
             _CFG2.default.DEBUG && console.log(sql, key, primaryKey);
-            _Key2.default.convertValueToKey(primaryKey);
-            tx.executeSql(sql, [util.escapeSQLiteStatement(_Key2.default.encode(primaryKey))], function (tx, data) {
+            // Key.convertValueToKey(primaryKey); // Already checked when entered
+            tx.executeSql(sql, [util.escapeSQLiteStatement(Key.encode(primaryKey))], function (tx, data) {
                 if (data.rowsAffected === 1) {
                     me.__store.__cursors.forEach(function (cursor) {
                         cursor.__invalidateCache(); // Delete
@@ -18246,7 +18532,7 @@ Object.defineProperty(IDBCursorWithValue, 'prototype', {
 exports.IDBCursor = IDBCursor;
 exports.IDBCursorWithValue = IDBCursorWithValue;
 
-},{"./CFG":381,"./DOMException":382,"./IDBFactory":387,"./IDBIndex":388,"./IDBKeyRange":389,"./IDBRequest":391,"./IDBTransaction":392,"./Key":394,"./Sca":395,"./util":401}],386:[function(require,module,exports){
+},{"./CFG":397,"./DOMException":398,"./IDBFactory":403,"./IDBIndex":404,"./IDBKeyRange":405,"./IDBObjectStore":406,"./IDBRequest":407,"./IDBTransaction":408,"./Key":410,"./Sca":411,"./util":417}],402:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -18275,7 +18561,7 @@ var _IDBTransaction2 = _interopRequireDefault(_IDBTransaction);
 
 var _Sca = require('./Sca');
 
-var _Sca2 = _interopRequireDefault(_Sca);
+var Sca = _interopRequireWildcard(_Sca);
 
 var _CFG = require('./CFG');
 
@@ -18339,7 +18625,7 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
             //  as readonly, so we copy all its properties (except our
             //  custom `currNum` which we don't need) onto a new object
             itemCopy.name = item.name;
-            itemCopy.keyPath = _Sca2.default.decode(item.keyPath);
+            itemCopy.keyPath = Sca.decode(item.keyPath);
             ['autoInc', 'indexList'].forEach(function (prop) {
                 itemCopy[prop] = JSON.parse(item[prop]);
             });
@@ -18383,16 +18669,14 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
         throw (0, _DOMException.createDOMException)('ConstraintError', 'Object store "' + storeName + '" already exists in ' + this.name);
     }
     createOptions = Object.assign({}, createOptions);
-    if (createOptions.keyPath === undefined) {
-        createOptions.keyPath = null;
-    }
 
     var keyPath = createOptions.keyPath;
-    var autoIncrement = createOptions.autoIncrement;
-
+    keyPath = keyPath === undefined ? null : keyPath = util.convertToSequenceDOMString(keyPath);
     if (keyPath !== null && !util.isValidKeyPath(keyPath)) {
         throw (0, _DOMException.createDOMException)('SyntaxError', 'The keyPath argument contains an invalid key path.');
     }
+
+    var autoIncrement = createOptions.autoIncrement;
     if (autoIncrement && (keyPath === '' || Array.isArray(keyPath))) {
         throw (0, _DOMException.createDOMException)('InvalidAccessError', 'With autoIncrement set, the keyPath argument must not be an array or empty string.');
     }
@@ -18450,14 +18734,11 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
     var _this2 = this;
 
     var mode = arguments[1];
-    storeNames = typeof storeNames === 'string' ? [storeNames] : util.isObj(storeNames) && typeof storeNames[Symbol.iterator] === 'function' ? [].concat(_toConsumableArray(new Set(storeNames))).map(function (storeName) {
-        if (typeof storeName !== 'string') {
-            throw new TypeError('Each store name must be a string');
-        }
-        return storeName;
-    }).sort() // unique and sorted
+    storeNames = typeof storeNames === 'string' ? [storeNames] : util.isIterable(storeNames) ? [].concat(_toConsumableArray(new Set( // to be unique
+    util.convertToSequenceDOMString(storeNames) // iterables have `ToString` applied (and we convert to array for convenience)
+    ))).sort() // must be sorted
     : function () {
-        throw new TypeError('You must supply storeNames to IDBDatabase.transaction');
+        throw new TypeError('You must supply a valid `storeNames` to `IDBDatabase.transaction`');
     }();
     if (storeNames.length === 0) {
         throw (0, _DOMException.createDOMException)('InvalidAccessError', 'No valid object store names were specified');
@@ -18472,7 +18753,7 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
     //   we're not currently actually running the SQL requests in parallel.
     if (typeof mode === 'number') {
         mode = mode === 1 ? 'readwrite' : 'readonly';
-        _CFG2.default.DEBUG && console.log('Mode should be a string, but was specified as ', mode); // Todo: Remove this option as no longer in spec
+        _CFG2.default.DEBUG && console.log('Mode should be a string, but was specified as ', mode); // Todo Deprecated: Remove this option as no longer in spec
     } else {
         mode = mode || 'readonly';
     }
@@ -18497,7 +18778,7 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
     return trans;
 };
 
-// Todo: Test
+// Todo __forceClose: Add tests for `__forceClose`
 IDBDatabase.prototype.__forceClose = function (msg) {
     var me = this;
     me.close();
@@ -18507,7 +18788,7 @@ IDBDatabase.prototype.__forceClose = function (msg) {
             ct++;
             if (ct === me.__transactions.length) {
                 (function () {
-                    // Todo: unblock any pending `upgradeneeded` or `deleteDatabase` calls
+                    // Todo __forceClose: unblock any pending `upgradeneeded` or `deleteDatabase` calls
                     var evt = (0, _Event.createEvent)('close');
                     setTimeout(function () {
                         me.dispatchEvent(evt);
@@ -18556,7 +18837,7 @@ Object.defineProperty(IDBDatabase, 'prototype', {
 exports.default = IDBDatabase;
 module.exports = exports['default'];
 
-},{"./CFG":381,"./DOMException":382,"./DOMStringList":383,"./Event":384,"./IDBObjectStore":390,"./IDBTransaction":392,"./Sca":395,"./util":401,"eventtarget":300}],387:[function(require,module,exports){
+},{"./CFG":397,"./DOMException":398,"./DOMStringList":399,"./Event":400,"./IDBObjectStore":406,"./IDBTransaction":408,"./Sca":411,"./util":417,"eventtarget":299}],403:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -18586,7 +18867,7 @@ var util = _interopRequireWildcard(_util);
 
 var _Key = require('./Key');
 
-var _Key2 = _interopRequireDefault(_Key);
+var Key = _interopRequireWildcard(_Key);
 
 var _IDBTransaction = require('./IDBTransaction');
 
@@ -18640,6 +18921,7 @@ IDBFactory.__createInstance = function () {
         this[Symbol.toStringTag] = 'IDBFactory';
         this.modules = { // Export other shims (especially for testing)
             Event: typeof Event !== 'undefined' ? Event : _Event.ShimEvent,
+            Error: Error, // For test comparisons
             ShimEvent: _Event.ShimEvent,
             ShimCustomEvent: _Event.ShimCustomEvent,
             ShimEventTarget: _Event.ShimEventTarget,
@@ -18724,7 +19006,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                     try {
                                         systx.executeSql('ROLLBACK', [], cb, cb);
                                         return;
-                                    } catch (err) {
+                                    } catch (er) {
                                         // Browser may fail with expired transaction above so
                                         // no choice but to manually revert
                                         sysdb.transaction(function (systx) {
@@ -18733,9 +19015,9 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                             }
                                             // Attempt to revert
                                             if (oldVersion === 0) {
-                                                systx.executeSql('DELETE FROM dbVersions WHERE name = ?', [sqlSafeName], cb, reportError);
+                                                systx.executeSql('DELETE FROM dbVersions WHERE "name" = ?', [sqlSafeName], cb, reportError);
                                             } else {
-                                                systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [oldVersion, sqlSafeName], cb, reportError);
+                                                systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [oldVersion, sqlSafeName], cb, reportError);
                                             }
                                         });
                                         return;
@@ -18796,7 +19078,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                 if (oldVersion === 0) {
                                     systx.executeSql('INSERT INTO dbVersions VALUES (?,?)', [sqlSafeName, version], versionSet, dbCreateError);
                                 } else {
-                                    systx.executeSql('UPDATE dbVersions SET version = ? WHERE name = ?', [version, sqlSafeName], versionSet, dbCreateError);
+                                    systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [version, sqlSafeName], versionSet, dbCreateError);
                                 }
                             }, dbCreateError, null, function (currentTask, err, done, rollback, commit) {
                                 if (currentTask.readOnly || err) {
@@ -18823,7 +19105,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
     createSysDB(function () {
         sysdb.readTransaction(function (sysReadTx) {
-            sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE name = ?', [sqlSafeName], function (sysReadTx, data) {
+            sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE "name" = ?', [sqlSafeName], function (sysReadTx, data) {
                 if (data.rows.length === 0) {
                     // Database with this name does not exist
                     openDB(0);
@@ -18895,7 +19177,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
             });
         }
         sysdb.readTransaction(function (sysReadTx) {
-            sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE name = ?', [sqlSafeName], function (sysReadTx, data) {
+            sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE "name" = ?', [sqlSafeName], function (sysReadTx, data) {
                 if (data.rows.length === 0) {
                     req.__result = undefined;
                     var e = new _IDBVersionChangeEvent2.default('success', { oldVersion: version, newVersion: null });
@@ -18911,8 +19193,8 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                 //  avoid committing anyways until all deletions are made and rollback the
                 //  `dbVersions` change if they fail
                 sysdb.transaction(function (systx) {
-                    systx.executeSql('DELETE FROM dbVersions WHERE name = ? ', [sqlSafeName], function () {
-                        // Todo: Give config option to Node to delete the entire database file
+                    systx.executeSql('DELETE FROM dbVersions WHERE "name" = ? ', [sqlSafeName], function () {
+                        // Todo Node Config: Give config option to Node to delete the entire database file
                         var db = _CFG2.default.win.openDatabase(escapedDatabaseName, 1, name, _CFG2.default.DEFAULT_DB_SIZE);
                         db.transaction(function (tx) {
                             tx.executeSql('SELECT "name" FROM __sys__', [], function (tx, data) {
@@ -18965,32 +19247,30 @@ IDBFactory.prototype.deleteDatabase = function (name) {
  * @param key2
  * @returns {number}
  */
-function cmp(key1, key2) {
-    _Key2.default.convertValueToKey(key1);
-    _Key2.default.convertValueToKey(key2);
-    var encodedKey1 = _Key2.default.encode(key1);
-    var encodedKey2 = _Key2.default.encode(key2);
+function cmp(first, second) {
+    var encodedKey1 = Key.encode(first);
+    var encodedKey2 = Key.encode(second);
     var result = encodedKey1 > encodedKey2 ? 1 : encodedKey1 === encodedKey2 ? 0 : -1;
 
     if (_CFG2.default.DEBUG) {
         // verify that the keys encoded correctly
-        var decodedKey1 = _Key2.default.decode(encodedKey1);
-        var decodedKey2 = _Key2.default.decode(encodedKey2);
-        if ((typeof key1 === 'undefined' ? 'undefined' : _typeof(key1)) === 'object') {
-            key1 = JSON.stringify(key1);
+        var decodedKey1 = Key.decode(encodedKey1);
+        var decodedKey2 = Key.decode(encodedKey2);
+        if ((typeof first === 'undefined' ? 'undefined' : _typeof(first)) === 'object') {
+            first = JSON.stringify(first);
             decodedKey1 = JSON.stringify(decodedKey1);
         }
-        if ((typeof key2 === 'undefined' ? 'undefined' : _typeof(key2)) === 'object') {
-            key2 = JSON.stringify(key2);
+        if ((typeof second === 'undefined' ? 'undefined' : _typeof(second)) === 'object') {
+            second = JSON.stringify(second);
             decodedKey2 = JSON.stringify(decodedKey2);
         }
 
         // encoding/decoding mismatches are usually due to a loss of floating-point precision
-        if (decodedKey1 !== key1) {
-            console.warn(key1 + ' was incorrectly encoded as ' + decodedKey1);
+        if (decodedKey1 !== first) {
+            console.warn(first + ' was incorrectly encoded as ' + decodedKey1);
         }
-        if (decodedKey2 !== key2) {
-            console.warn(key2 + ' was incorrectly encoded as ' + decodedKey2);
+        if (decodedKey2 !== second) {
+            console.warn(second + ' was incorrectly encoded as ' + decodedKey2);
         }
     }
 
@@ -19004,6 +19284,10 @@ IDBFactory.prototype.cmp = function (key1, key2) {
     if (arguments.length < 2) {
         throw new TypeError('You must provide two keys to be compared');
     }
+    // We use encoding facilities already built for proper sorting;
+    //   the following "conversions" are for validation only
+    Key.convertValueToKeyRethrowingAndIfInvalid(key1);
+    Key.convertValueToKeyRethrowingAndIfInvalid(key2);
     return cmp(key1, key2);
 };
 
@@ -19013,6 +19297,9 @@ IDBFactory.prototype.cmp = function (key1, key2) {
 * @link http://lists.w3.org/Archives/Public/public-webapps/2011JulSep/1537.html
 */
 IDBFactory.prototype.webkitGetDatabaseNames = function () {
+    if (!(this instanceof IDBFactory)) {
+        throw new TypeError('Illegal invocation');
+    }
     var calledDbCreateError = false;
     function dbGetDatabaseNamesError(tx, err) {
         if (calledDbCreateError) {
@@ -19045,7 +19332,7 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
 };
 
 /**
-* @Todo: Test
+* @Todo __forceClose: Test
 * This is provided to facilitate unit-testing of the
 *  closing of a database connection with a forced flag:
 * <http://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>
@@ -19075,13 +19362,13 @@ exports.IDBFactory = IDBFactory;
 exports.cmp = cmp;
 exports.shimIndexedDB = shimIndexedDB;
 
-},{"./CFG":381,"./DOMException":382,"./DOMStringList":383,"./Event":384,"./IDBDatabase":386,"./IDBRequest":391,"./IDBTransaction":392,"./IDBVersionChangeEvent":393,"./Key":394,"./util":401}],388:[function(require,module,exports){
+},{"./CFG":397,"./DOMException":398,"./DOMStringList":399,"./Event":400,"./IDBDatabase":402,"./IDBRequest":407,"./IDBTransaction":408,"./IDBVersionChangeEvent":409,"./Key":410,"./util":417}],404:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.default = exports.IDBIndex = exports.executeFetchIndexData = exports.fetchIndexData = undefined;
+exports.default = exports.IDBIndex = exports.executeFetchIndexData = exports.buildFetchIndexDataSQL = undefined;
 
 var _DOMException = require('./DOMException');
 
@@ -19093,7 +19380,7 @@ var util = _interopRequireWildcard(_util);
 
 var _Key = require('./Key');
 
-var _Key2 = _interopRequireDefault(_Key);
+var Key = _interopRequireWildcard(_Key);
 
 var _IDBKeyRange = require('./IDBKeyRange');
 
@@ -19103,7 +19390,7 @@ var _IDBTransaction2 = _interopRequireDefault(_IDBTransaction);
 
 var _Sca = require('./Sca');
 
-var _Sca2 = _interopRequireDefault(_Sca);
+var Sca = _interopRequireWildcard(_Sca);
 
 var _CFG = require('./CFG');
 
@@ -19236,9 +19523,13 @@ IDBIndex.__createIndex = function (store, index) {
                     function addIndexEntry(i) {
                         if (i < data.rows.length) {
                             try {
-                                var value = _Sca2.default.decode(util.unescapeSQLiteResponse(data.rows.item(i).value));
-                                var indexKey = _Key2.default.evaluateKeyPathOnValue(value, index.keyPath, index.multiEntry);
-                                indexKey = _Key2.default.encode(indexKey, index.multiEntry);
+                                var value = Sca.decode(util.unescapeSQLiteResponse(data.rows.item(i).value));
+                                var indexKey = Key.extractKeyValueDecodedFromValueUsingKeyPath(value, index.keyPath, index.multiEntry); // Todo: Do we need this stricter error checking?
+                                if (indexKey.invalid || indexKey.failure) {
+                                    // Todo: Do we need invalid checks and should we instead treat these as being duplicates?
+                                    throw new Error('Go to catch; ignore bad indexKey');
+                                }
+                                indexKey = Key.encode(indexKey.value, index.multiEntry);
                                 if (index.unique) {
                                     if (indexValues[indexKey]) {
                                         indexValues = {};
@@ -19248,7 +19539,7 @@ IDBIndex.__createIndex = function (store, index) {
                                     indexValues[indexKey] = true;
                                 }
 
-                                tx.executeSql('UPDATE ' + util.escapeStoreNameForSQL(store.name) + ' SET ' + util.escapeIndexNameForSQL(index.name) + ' = ? WHERE key = ?', [util.escapeSQLiteStatement(indexKey), data.rows.item(i).key], function (tx, data) {
+                                tx.executeSql('UPDATE ' + util.escapeStoreNameForSQL(store.name) + ' SET ' + util.escapeIndexNameForSQL(index.name) + ' = ? WHERE "key" = ?', [util.escapeSQLiteStatement(indexKey), data.rows.item(i).key], function (tx, data) {
                                     addIndexEntry(i + 1);
                                 }, error);
                             } catch (e) {
@@ -19324,7 +19615,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
     }
 
     _CFG2.default.DEBUG && console.log('Updating the index list for ' + store.name, indexList);
-    tx.executeSql('UPDATE __sys__ SET indexList = ? WHERE name = ?', [JSON.stringify(indexList), util.escapeSQLiteStatement(store.name)], function () {
+    tx.executeSql('UPDATE __sys__ SET "indexList" = ? WHERE "name" = ?', [JSON.stringify(indexList), util.escapeSQLiteStatement(store.name)], function () {
         success(store);
     }, failure);
 };
@@ -19343,7 +19634,6 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
     if (count !== undefined) {
         count = util.enforceRange(count, 'unsigned long');
     }
-    var hasUnboundedRange = !nullDisallowed && range == null;
 
     if (me.__deleted) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This index has been deleted');
@@ -19357,48 +19647,48 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
         throw (0, _DOMException.createDOMException)('DataError', 'No key or range was specified');
     }
 
-    var fetchArgs = fetchIndexData(me, !hasUnboundedRange, range, opType, false);
+    var fetchArgs = buildFetchIndexDataSQL(nullDisallowed, me, range, opType, false);
     return me.objectStore.transaction.__addToTransactionQueue(function () {
         for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
             args[_key] = arguments[_key];
         }
 
-        executeFetchIndexData.apply(undefined, [nullDisallowed, count].concat(_toConsumableArray(fetchArgs), args));
+        executeFetchIndexData.apply(undefined, [count].concat(_toConsumableArray(fetchArgs), args));
     }, undefined, me);
 };
 
 /**
  * Opens a cursor over the given key range.
- * @param {IDBKeyRange} range
+ * @param {*|IDBKeyRange} query
  * @param {string} direction
  * @returns {IDBRequest}
  */
-IDBIndex.prototype.openCursor = function () /* range, direction */{
+IDBIndex.prototype.openCursor = function () /* query, direction */{
     var me = this;
 
     var _arguments = Array.prototype.slice.call(arguments),
-        range = _arguments[0],
+        query = _arguments[0],
         direction = _arguments[1];
 
-    var cursor = _IDBCursor.IDBCursorWithValue.__createInstance(range, direction, me.objectStore, me, util.escapeIndexNameForKeyColumn(me.name), 'value');
+    var cursor = _IDBCursor.IDBCursorWithValue.__createInstance(query, direction, me.objectStore, me, util.escapeIndexNameForSQLKeyColumn(me.name), 'value');
     me.__objectStore.__cursors.push(cursor);
     return cursor.__req;
 };
 
 /**
  * Opens a cursor over the given key range.  The cursor only includes key values, not data.
- * @param {IDBKeyRange} range
+ * @param {*|IDBKeyRange} query
  * @param {string} direction
  * @returns {IDBRequest}
  */
-IDBIndex.prototype.openKeyCursor = function () /* range, direction */{
+IDBIndex.prototype.openKeyCursor = function () /* query, direction */{
     var me = this;
 
     var _arguments2 = Array.prototype.slice.call(arguments),
-        range = _arguments2[0],
+        query = _arguments2[0],
         direction = _arguments2[1];
 
-    var cursor = _IDBCursor.IDBCursor.__createInstance(range, direction, me.objectStore, me, util.escapeIndexNameForKeyColumn(me.name), 'key');
+    var cursor = _IDBCursor.IDBCursor.__createInstance(query, direction, me.objectStore, me, util.escapeIndexNameForSQLKeyColumn(me.name), 'key');
     me.__objectStore.__cursors.push(cursor);
     return cursor.__req;
 };
@@ -19443,13 +19733,10 @@ IDBIndex.prototype.count = function () /* query */{
     //  just call:
     //  `return me.__objectStore.count(query);`
 
-    // key is optional
     if (util.instanceOf(query, _IDBKeyRange.IDBKeyRange)) {
-        if (!query.toString() !== '[object IDBKeyRange]') {
-            query = _IDBKeyRange.IDBKeyRange.__createInstance(query.lower, query.upper, query.lowerOpen, query.upperOpen);
-        }
+        // Todo: Do we need this block?
         // We don't need to add to cursors array since has the count parameter which won't cache
-        return _IDBCursor.IDBCursorWithValue.__createInstance(query, 'next', me.objectStore, me, util.escapeIndexNameForKeyColumn(me.name), 'value', true).__req;
+        return _IDBCursor.IDBCursorWithValue.__createInstance(query, 'next', me.objectStore, me, util.escapeIndexNameForSQLKeyColumn(me.name), 'value', true).__req;
     }
     return me.__fetchIndexData(query, 'count', false);
 };
@@ -19525,7 +19812,7 @@ Object.defineProperty(IDBIndex, 'prototype', {
     writable: false
 });
 
-function executeFetchIndexData(unboundedDisallowed, count, index, hasKey, encodedKey, opType, multiChecks, sql, sqlValues, tx, args, success, error) {
+function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range, opType, multiChecks, sql, sqlValues, tx, args, success, error) {
     if (unboundedDisallowed) {
         count = 1;
     }
@@ -19539,22 +19826,23 @@ function executeFetchIndexData(unboundedDisallowed, count, index, hasKey, encode
         var recordCount = 0;
         var decode = isCount ? function () {} : opType === 'key' ? function (record) {
             // Key.convertValueToKey(record.key); // Already validated before storage
-            return _Key2.default.decode(util.unescapeSQLiteResponse(record.key));
+            return Key.decode(util.unescapeSQLiteResponse(record.key));
         } : function (record) {
             // when opType is value
-            return _Sca2.default.decode(util.unescapeSQLiteResponse(record.value));
+            return Sca.decode(util.unescapeSQLiteResponse(record.value));
         };
         if (index.multiEntry) {
-            var escapedIndexNameForKeyCol = util.escapeIndexNameForKeyColumn(index.name);
+            var escapedIndexNameForKeyCol = util.escapeIndexNameForSQLKeyColumn(index.name);
+            var encodedKey = Key.encode(range, index.multiEntry);
 
             var _loop = function _loop(i) {
                 var row = data.rows.item(i);
-                var rowKey = _Key2.default.decode(row[escapedIndexNameForKeyCol]);
+                var rowKey = Key.decode(row[escapedIndexNameForKeyCol]);
                 var record = void 0;
-                if (hasKey && (multiChecks && encodedKey.some(function (check) {
+                if (hasKey && (multiChecks && range.some(function (check) {
                     return rowKey.includes(check);
                 }) || // More precise than our SQL
-                _Key2.default.isMultiEntryMatch(encodedKey, row[escapedIndexNameForKeyCol]))) {
+                Key.isMultiEntryMatch(encodedKey, row[escapedIndexNameForKeyCol]))) {
                     recordCount++;
                     record = row;
                 } else if (!hasKey && !multiChecks) {
@@ -19595,9 +19883,10 @@ function executeFetchIndexData(unboundedDisallowed, count, index, hasKey, encode
     }, error);
 }
 
-function fetchIndexData(index, hasRange, range, opType, multiChecks) {
+function buildFetchIndexDataSQL(nullDisallowed, index, range, opType, multiChecks) {
+    var hasRange = nullDisallowed || range != null;
     var col = opType === 'count' ? 'key' : opType; // It doesn't matter which column we use for 'count' as long as it is valid
-    var sql = ['SELECT ' + util.quote(col) + (index.multiEntry ? ', ' + util.escapeIndexNameForSQL(index.name) : '') + ' FROM', util.escapeStoreNameForSQL(index.objectStore.name), 'WHERE', util.escapeIndexNameForSQL(index.name), 'NOT NULL'];
+    var sql = ['SELECT', util.sqlQuote(col) + (index.multiEntry ? ', ' + util.escapeIndexNameForSQL(index.name) : ''), 'FROM', util.escapeStoreNameForSQL(index.objectStore.name), 'WHERE', util.escapeIndexNameForSQL(index.name), 'NOT NULL'];
     var sqlValues = [];
     if (hasRange) {
         if (multiChecks) {
@@ -19605,54 +19894,44 @@ function fetchIndexData(index, hasRange, range, opType, multiChecks) {
             range.forEach(function (innerKey, i) {
                 if (i > 0) sql.push('OR');
                 sql.push(util.escapeIndexNameForSQL(index.name), "LIKE ? ESCAPE '^' ");
-                sqlValues.push('%' + util.sqlLIKEEscape(_Key2.default.encode(innerKey, index.multiEntry)) + '%');
+                sqlValues.push('%' + util.sqlLIKEEscape(Key.encode(innerKey, index.multiEntry)) + '%');
             });
             sql.push(')');
         } else if (index.multiEntry) {
             sql.push('AND', util.escapeIndexNameForSQL(index.name), "LIKE ? ESCAPE '^'");
-            range = _Key2.default.encode(range, index.multiEntry);
-            sqlValues.push('%' + util.sqlLIKEEscape(range) + '%');
+            sqlValues.push('%' + util.sqlLIKEEscape(Key.encode(range, index.multiEntry)) + '%');
         } else {
-            if (util.instanceOf(range, _IDBKeyRange.IDBKeyRange)) {
-                // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
-                if (!range.toString() !== '[object IDBKeyRange]') {
-                    range = _IDBKeyRange.IDBKeyRange.__createInstance(range.lower, range.upper, range.lowerOpen, range.upperOpen);
-                }
-            } else {
-                range = _IDBKeyRange.IDBKeyRange.only(range);
-            }
-            (0, _IDBKeyRange.setSQLForRange)(range, util.escapeIndexNameForSQL(index.name), sql, sqlValues, true, false);
+            var convertedRange = (0, _IDBKeyRange.convertValueToKeyRange)(range, nullDisallowed);
+            (0, _IDBKeyRange.setSQLForKeyRange)(convertedRange, util.escapeIndexNameForSQL(index.name), sql, sqlValues, true, false);
         }
     }
-    return [index, hasRange, range, opType, multiChecks, sql, sqlValues];
+    return [nullDisallowed, index, hasRange, range, opType, multiChecks, sql, sqlValues];
 }
 
-exports.fetchIndexData = fetchIndexData;
+exports.buildFetchIndexDataSQL = buildFetchIndexDataSQL;
 exports.executeFetchIndexData = executeFetchIndexData;
 exports.IDBIndex = IDBIndex;
 exports.default = IDBIndex;
 
-},{"./CFG":381,"./DOMException":382,"./IDBCursor":385,"./IDBKeyRange":389,"./IDBTransaction":392,"./Key":394,"./Sca":395,"./util":401}],389:[function(require,module,exports){
+},{"./CFG":397,"./DOMException":398,"./IDBCursor":401,"./IDBKeyRange":405,"./IDBTransaction":408,"./Key":410,"./Sca":411,"./util":417}],405:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.default = exports.IDBKeyRange = exports.setSQLForRange = undefined;
+exports.default = exports.convertValueToKeyRange = exports.IDBKeyRange = exports.setSQLForKeyRange = undefined;
 
 var _DOMException = require('./DOMException');
 
 var _Key = require('./Key');
 
-var _Key2 = _interopRequireDefault(_Key);
+var Key = _interopRequireWildcard(_Key);
 
 var _util = require('./util');
 
 var util = _interopRequireWildcard(_util);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var readonlyProperties = ['lower', 'upper', 'lowerOpen', 'upperOpen'];
 
@@ -19675,13 +19954,13 @@ IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
             throw (0, _DOMException.createDOMException)('DataError', 'Both arguments to the key range method cannot be undefined');
         }
         if (lower !== undefined) {
-            _Key2.default.convertValueToKey(lower);
+            Key.convertValueToKeyRethrowingAndIfInvalid(lower);
         }
         if (upper !== undefined) {
-            _Key2.default.convertValueToKey(upper);
+            Key.convertValueToKeyRethrowingAndIfInvalid(upper);
         }
         if (lower !== undefined && upper !== undefined && lower !== upper) {
-            if (_Key2.default.encode(lower) > _Key2.default.encode(upper)) {
+            if (Key.encode(lower) > Key.encode(upper)) {
                 throw (0, _DOMException.createDOMException)('DataError', '`lower` must not be greater than `upper` argument in `bound()` call.');
             }
         }
@@ -19702,8 +19981,8 @@ IDBKeyRange.prototype.includes = function (key) {
     if (!arguments.length) {
         throw new TypeError('IDBKeyRange.includes requires a key argument');
     }
-    _Key2.default.convertValueToKey(key);
-    return _Key2.default.isKeyInRange(key, this);
+    Key.convertValueToKeyRethrowingAndIfInvalid(key);
+    return Key.isKeyInRange(key, this);
 };
 
 IDBKeyRange.only = function (value) {
@@ -19762,33 +20041,52 @@ Object.defineProperty(IDBKeyRange, 'prototype', {
     writable: false
 });
 
-function setSQLForRange(range, quotedKeyColumnName, sql, sqlValues, addAnd, checkCached) {
+function setSQLForKeyRange(range, quotedKeyColumnName, sql, sqlValues, addAnd, checkCached) {
     if (range && (range.lower !== undefined || range.upper !== undefined)) {
         if (addAnd) sql.push('AND');
         if (range.lower !== undefined) {
             sql.push(quotedKeyColumnName, range.lowerOpen ? '>' : '>=', '?');
-            sqlValues.push(util.escapeSQLiteStatement(checkCached ? range.__lowerCached : _Key2.default.encode(range.lower)));
+            sqlValues.push(util.escapeSQLiteStatement(checkCached ? range.__lowerCached : Key.encode(range.lower)));
         }
         range.lower !== undefined && range.upper !== undefined && sql.push('AND');
         if (range.upper !== undefined) {
             sql.push(quotedKeyColumnName, range.upperOpen ? '<' : '<=', '?');
-            sqlValues.push(util.escapeSQLiteStatement(checkCached ? range.__upperCached : _Key2.default.encode(range.upper)));
+            sqlValues.push(util.escapeSQLiteStatement(checkCached ? range.__upperCached : Key.encode(range.upper)));
         }
     }
 }
 
-exports.setSQLForRange = setSQLForRange;
+function convertValueToKeyRange(value, nullDisallowed) {
+    if (util.instanceOf(value, IDBKeyRange)) {
+        // We still need to validate IDBKeyRange-like objects (the above check is based on loose duck-typing)
+        if (!value.toString() !== '[object IDBKeyRange]') {
+            return IDBKeyRange.__createInstance(value.lower, value.upper, value.lowerOpen, value.upperOpen);
+        }
+        return value;
+    }
+    if (value == null) {
+        if (nullDisallowed) {
+            throw (0, _DOMException.createDOMException)('DataError', 'No key or range was specified');
+        }
+        return undefined; // Represents unbounded
+    }
+    Key.convertValueToKeyRethrowingAndIfInvalid(value);
+    return IDBKeyRange.only(value);
+}
+
+exports.setSQLForKeyRange = setSQLForKeyRange;
 exports.IDBKeyRange = IDBKeyRange;
+exports.convertValueToKeyRange = convertValueToKeyRange;
 exports.default = IDBKeyRange;
 
-},{"./DOMException":382,"./Key":394,"./util":401}],390:[function(require,module,exports){
+},{"./DOMException":398,"./Key":410,"./util":417}],406:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
 var _DOMException = require('./DOMException');
 
@@ -19806,7 +20104,7 @@ var util = _interopRequireWildcard(_util);
 
 var _Key = require('./Key');
 
-var _Key2 = _interopRequireDefault(_Key);
+var Key = _interopRequireWildcard(_Key);
 
 var _IDBIndex = require('./IDBIndex');
 
@@ -19816,7 +20114,7 @@ var _IDBTransaction2 = _interopRequireDefault(_IDBTransaction);
 
 var _Sca = require('./Sca');
 
-var _Sca2 = _interopRequireDefault(_Sca);
+var Sca = _interopRequireWildcard(_Sca);
 
 var _CFG = require('./CFG');
 
@@ -19961,7 +20259,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
         var sql = ['CREATE TABLE', util.escapeStoreNameForSQL(store.name), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
         _CFG2.default.DEBUG && console.log(sql);
         tx.executeSql(sql, [], function (tx, data) {
-            _Sca2.default.encode(store.keyPath, function (encodedKeyPath) {
+            Sca.encode(store.keyPath, function (encodedKeyPath) {
                 tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeSQLiteStatement(store.name), encodedKeyPath, store.autoIncrement, '{}', 1], function () {
                     success(store);
                 }, error);
@@ -19999,10 +20297,10 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
             failure((0, _DOMException.createDOMException)('UnknownError', 'Could not delete ObjectStore', err));
         }
 
-        tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList", "currNum" FROM __sys__ WHERE name = ?', [util.escapeSQLiteStatement(store.name)], function (tx, data) {
+        tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList", "currNum" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.name)], function (tx, data) {
             if (data.rows.length > 0) {
                 tx.executeSql('DROP TABLE ' + util.escapeStoreNameForSQL(store.name), [], function () {
-                    tx.executeSql('DELETE FROM __sys__ WHERE name = ?', [util.escapeSQLiteStatement(store.name)], function () {
+                    tx.executeSql('DELETE FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.name)], function () {
                         success();
                     }, error);
                 }, error);
@@ -20011,46 +20309,61 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
     });
 };
 
+// Todo: Although we may end up needing to do cloning genuinely asynchronously (for Blobs and FileLists),
+//   and we'll want to ensure the queue starts up synchronously, we nevertheless do the cloning
+//   before entering the queue and its callback since the encoding we do is preceded by validation
+//   which we must do synchronously anyways. If we reimplement Blobs and FileLists asynchronously,
+//   we can detect these types (though validating synchronously as possible) and once entering the
+//   queue callback, ensure they load before triggering success or failure (perhaps by returning and
+//   a `SyncPromise` from the `Sca.clone` operation and later detecting and ensuring it is resolved
+//   before continuing).
 /**
  * Determines whether the given inline or out-of-line key is valid, according to the object store's schema.
  * @param {*} value     Used for inline keys
  * @param {*} key       Used for out-of-line keys
  * @private
  */
-IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
+IDBObjectStore.prototype.__validateKeyAndValueAndClone = function (value, key, cursorUpdate) {
     var me = this;
     if (me.keyPath !== null) {
         if (key !== undefined) {
             throw (0, _DOMException.createDOMException)('DataError', 'The object store uses in-line keys and the key parameter was provided', me);
         }
-        util.throwIfNotClonable(value, 'The data to be stored could not be cloned by the internal structured cloning algorithm.');
-        key = _Key2.default.evaluateKeyPathOnValue(value, me.keyPath);
-        if (key === undefined) {
-            if (me.autoIncrement) {
-                // Todo: Check whether this next check is a problem coming from `IDBCursor.update()`
-                if (!util.isObj(value)) {
-                    // Although steps for storing will detect this, we want to throw synchronously for `add`/`put`
-                    throw (0, _DOMException.createDOMException)('DataError', 'KeyPath was specified, but value was not an object');
+        // Todo Binary: Avoid blobs loading async to ensure cloning (and errors therein)
+        //   occurs sync; then can make cloning and this method without callbacks (except where ok
+        //   to be async)
+        var _clonedValue = Sca.clone(value);
+        key = Key.extractKeyValueDecodedFromValueUsingKeyPath(_clonedValue, me.keyPath); // May throw so "rethrow"
+        if (key.invalid) {
+            throw (0, _DOMException.createDOMException)('DataError', 'KeyPath was specified, but key was invalid.');
+        }
+        if (key.failure) {
+            if (!cursorUpdate) {
+                if (!me.autoIncrement) {
+                    throw (0, _DOMException.createDOMException)('DataError', 'Could not evaluate a key from keyPath and there is no key generator');
+                }
+                if (!Key.checkKeyCouldBeInjectedIntoValue(_clonedValue, me.keyPath)) {
+                    throw (0, _DOMException.createDOMException)('DataError', 'A key could not be injected into a value');
                 }
                 // A key will be generated
-                return undefined;
+                return [undefined, _clonedValue];
             }
             throw (0, _DOMException.createDOMException)('DataError', 'Could not evaluate a key from keyPath');
         }
-        _Key2.default.convertValueToKey(key);
-    } else {
-        if (key === undefined) {
-            if (me.autoIncrement) {
-                // A key will be generated
-                return undefined;
-            }
-            throw (0, _DOMException.createDOMException)('DataError', 'The object store uses out-of-line keys and has no key generator and the key parameter was not provided. ', me);
-        }
-        _Key2.default.convertValueToKey(key);
-        util.throwIfNotClonable(value, 'The data to be stored could not be cloned by the internal structured cloning algorithm.');
+        // An `IDBCursor.update` call will also throw if not equal to the cursor’s effective key
+        return [key.value, _clonedValue];
     }
-
-    return key;
+    if (key === undefined) {
+        if (!me.autoIncrement) {
+            throw (0, _DOMException.createDOMException)('DataError', 'The object store uses out-of-line keys and has no key generator and the key parameter was not provided.', me);
+        }
+        // A key will be generated
+        key = undefined;
+    } else {
+        Key.convertValueToKeyRethrowingAndIfInvalid(key);
+    }
+    var clonedValue = Sca.clone(value);
+    return [key, clonedValue];
 };
 
 /**
@@ -20066,8 +20379,16 @@ IDBObjectStore.prototype.__validateKeyAndValue = function (value, key) {
 IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failure) {
     var me = this;
 
+    // Only run if cloning is needed
+    function keyCloneThenSuccess() {
+        Sca.encode(key, function (key) {
+            key = Sca.decode(key);
+            success(key);
+        });
+    }
+
     function getCurrentNumber(callback) {
-        tx.executeSql('SELECT currNum FROM __sys__ WHERE name = ?', [util.escapeSQLiteStatement(me.name)], function (tx, data) {
+        tx.executeSql('SELECT "currNum" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(me.name)], function (tx, data) {
             if (data.rows.length !== 1) {
                 callback(1);
             } else {
@@ -20078,41 +20399,82 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
         });
     }
 
-    // This variable determines against which key comparisons should be made
-    //   when determining whether to update the current number
-    var keyToCheck = key;
-    var hasKeyPath = me.keyPath !== null;
-    if (hasKeyPath) {
-        keyToCheck = _Key2.default.evaluateKeyPathOnValue(value, me.keyPath);
+    // Bump up the auto-inc counter if the key path-resolved value is valid (greater than old value and >=1) OR
+    //  if a manually passed in key is valid (numeric and >= 1) and >= any primaryKey
+    function setCurrentNumber() {
+        var sql = 'UPDATE __sys__ SET "currNum" = ? WHERE "name" = ?';
+        var sqlValues = [Math.floor(key) + 1, util.escapeSQLiteStatement(me.name)];
+        _CFG2.default.DEBUG && console.log(sql, sqlValues);
+        tx.executeSql(sql, sqlValues, function (tx, data) {
+            keyCloneThenSuccess();
+        }, function (tx, err) {
+            failure((0, _DOMException.createDOMException)('UnknownError', 'Could not set the auto increment value for key', err));
+        });
     }
-    // If auto-increment and no valid primaryKey found on the keyPath, get and set the new value, and use
-    if (me.autoIncrement && keyToCheck === undefined) {
-        getCurrentNumber(function (cn) {
-            if (hasKeyPath) {
-                try {
-                    // Update the value with the new key
-                    _Key2.default.setValue(value, me.keyPath, cn);
-                } catch (e) {
-                    failure((0, _DOMException.createDOMException)('DataError', 'Could not assign a generated value to the keyPath', e));
-                }
-            }
+    // Increment current number by 1 (we cannot leverage SQLite's
+    //  autoincrement (and decrement when not needed), as decrementing
+    //  will be overwritten/ignored upon the next insert)
+    function incrementCurrentNumber(cn, cb) {
+        var sql = 'UPDATE __sys__ SET "currNum" = "currNum" + 1 WHERE "name" = ?';
+        var sqlValues = [util.escapeSQLiteStatement(me.name)];
+        _CFG2.default.DEBUG && console.log(sql, sqlValues);
+        tx.executeSql(sql, sqlValues, function (tx, data) {
+            cb();
             success(cn);
+        }, function (tx, err) {
+            failure((0, _DOMException.createDOMException)('UnknownError', 'Could not set the auto increment value for key', err));
         });
-        // If auto-increment and the keyPath item is a valid numeric key, get the old auto-increment to compare if the new is higher
-        //  to determine which to use and whether to update the current number
-    } else if (me.autoIncrement && Number.isFinite(keyToCheck) && keyToCheck >= 1) {
-        getCurrentNumber(function (cn) {
-            var useNewForAutoInc = keyToCheck >= cn;
-            success(keyToCheck, useNewForAutoInc);
-        });
-        // Not auto-increment or auto-increment with a bad (non-numeric or < 1) keyPath key
+    }
+
+    // We don't begin with in-line steps to "extract a key from a value using a key path"
+    //   as already run and already treating any (acceptable) failures as `undefined`
+
+    if (me.autoIncrement) {
+        // If auto-increment and no valid primaryKey found on the keyPath, get and set the new value, and use
+        if (key === undefined) {
+            getCurrentNumber(function (cn) {
+                if (cn > 9007199254740992) {
+                    // 2 ^ 53 (See <https://github.com/w3c/IndexedDB/issues/147>)
+                    failure((0, _DOMException.createDOMException)('ConstraintError', 'The key generator\'s current number has reached the maximum safe integer limit'));
+                    return;
+                }
+                incrementCurrentNumber(cn, function () {
+                    if (me.keyPath !== null) {
+                        try {
+                            Key.injectKeyIntoValueUsingKeyPath(value, cn, me.keyPath);
+                        } catch (e) {
+                            failure((0, _DOMException.createDOMException)('DataError', 'Could not assign a generated value to the keyPath', e));
+                        }
+                    }
+                });
+            });
+        } else if (!Number.isFinite(key) || key < 1) {
+            // Optimize with no need to get the current number
+            // Auto-increment attempted with a bad (non-numeric/non-finite or < 1) key;
+            //   the steps don't mention failure but we are not to change the current number
+            keyCloneThenSuccess();
+        } else {
+            // If auto-increment and the keyPath item is a valid numeric key, get the old auto-increment to compare if the new is higher
+            //  to determine which to use and whether to update the current number
+            getCurrentNumber(function (cn) {
+                var useNewKeyForAutoInc = key >= cn;
+                if (useNewKeyForAutoInc) {
+                    setCurrentNumber();
+                } else {
+                    keyCloneThenSuccess();
+                }
+            });
+        }
+        // Not auto-increment
     } else {
-        success(keyToCheck);
+        keyCloneThenSuccess();
     }
 };
 
-IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey, passedKey, useNewForAutoInc, success, error) {
+IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey, success, error) {
     var me = this;
+    // The `ConstraintError` to occur for `add` upon a duplicate will occur naturally in attempting an insert
+    // We process the index information first as it will stored in the same table as the store
     var paramMap = {};
     var indexPromises = me.indexNames.map(function (indexName) {
         // While this may sometimes resolve sync and sometimes async, the
@@ -20127,22 +20489,26 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             }
             var indexKey = void 0;
             try {
-                indexKey = _Key2.default.extractKeyFromValueUsingKeyPath(value, index.keyPath, index.multiEntry); // Add as necessary to this and skip past this index if exceptions here)
+                indexKey = Key.extractKeyValueDecodedFromValueUsingKeyPath(value, index.keyPath, index.multiEntry); // Add as necessary to this and skip past this index if exceptions here)
+                if (indexKey.invalid || indexKey.failure) {
+                    throw new Error('Go to catch');
+                }
             } catch (err) {
                 resolve();
                 return;
             }
+            indexKey = indexKey.value;
             function setIndexInfo(index) {
                 if (indexKey === undefined) {
                     return;
                 }
-                paramMap[index.name] = _Key2.default.encode(indexKey, index.multiEntry);
+                paramMap[index.name] = Key.encode(indexKey, index.multiEntry);
             }
             if (index.unique) {
                 (function () {
                     var multiCheck = index.multiEntry && Array.isArray(indexKey);
-                    var fetchArgs = (0, _IDBIndex.fetchIndexData)(index, true, indexKey, 'key', multiCheck);
-                    _IDBIndex.executeFetchIndexData.apply(undefined, [true, null].concat(_toConsumableArray(fetchArgs), [tx, null, function success(key) {
+                    var fetchArgs = (0, _IDBIndex.buildFetchIndexDataSQL)(true, index, indexKey, 'key', multiCheck);
+                    _IDBIndex.executeFetchIndexData.apply(undefined, [null].concat(_toConsumableArray(fetchArgs), [tx, null, function success(key) {
                         if (key === undefined) {
                             setIndexInfo(index);
                             resolve();
@@ -20158,14 +20524,14 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         });
     });
     _syncPromise2.default.all(indexPromises).then(function () {
-        var sqlStart = ['INSERT INTO ', util.escapeStoreNameForSQL(me.name), '('];
+        var sqlStart = ['INSERT INTO', util.escapeStoreNameForSQL(me.name), '('];
         var sqlEnd = [' VALUES ('];
         var insertSqlValues = [];
         if (primaryKey !== undefined) {
-            _Key2.default.convertValueToKey(primaryKey);
-            sqlStart.push(util.quote('key'), ',');
+            // Key.convertValueToKey(primaryKey); // Already run
+            sqlStart.push(util.sqlQuote('key'), ',');
             sqlEnd.push('?,');
-            insertSqlValues.push(util.escapeSQLiteStatement(_Key2.default.encode(primaryKey)));
+            insertSqlValues.push(util.escapeSQLiteStatement(Key.encode(primaryKey)));
         }
         for (var key in paramMap) {
             sqlStart.push(util.escapeIndexNameForSQL(key) + ',');
@@ -20173,70 +20539,18 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
             insertSqlValues.push(util.escapeSQLiteStatement(paramMap[key]));
         }
         // removing the trailing comma
-        sqlStart.push(util.quote('value') + ' )');
+        sqlStart.push(util.sqlQuote('value') + ' )');
         sqlEnd.push('?)');
         insertSqlValues.push(util.escapeSQLiteStatement(encoded));
 
         var insertSql = sqlStart.join(' ') + sqlEnd.join(' ');
         _CFG2.default.DEBUG && console.log('SQL for adding', insertSql, insertSqlValues);
 
-        var insert = function insert(result) {
-            var cb = void 0;
-            if (typeof result === 'function') {
-                cb = result;
-                result = undefined;
-            }
-            tx.executeSql(insertSql, insertSqlValues, function (tx, data) {
-                if (cb) {
-                    cb();
-                } else success(result);
-            }, function (tx, err) {
-                error((0, _DOMException.createDOMException)('ConstraintError', err.message, err));
-            });
-        };
-
-        // Need for a clone here?
-        _Sca2.default.encode(primaryKey, function (primaryKey) {
-            primaryKey = _Sca2.default.decode(primaryKey);
-            if (!me.autoIncrement) {
-                insert(primaryKey);
-                return;
-            }
-
-            // Bump up the auto-inc counter if the key path-resolved value is valid (greater than old value and >=1) OR
-            //  if a manually passed in key is valid (numeric and >= 1) and >= any primaryKey
-            // Todo: If primaryKey is not a number, we should be checking the value of any previous "current number" and compare with that
-            if (useNewForAutoInc) {
-                insert(function () {
-                    var sql = 'UPDATE __sys__ SET currNum = ? WHERE name = ?';
-                    var sqlValues = [Math.floor(primaryKey) + 1, util.escapeSQLiteStatement(me.name)];
-                    _CFG2.default.DEBUG && console.log(sql, sqlValues);
-                    tx.executeSql(sql, sqlValues, function (tx, data) {
-                        success(primaryKey);
-                    }, function (tx, err) {
-                        error((0, _DOMException.createDOMException)('UnknownError', 'Could not set the auto increment value for key', err));
-                    });
-                });
-                // If the key path-resolved value is invalid (not numeric or < 1) or
-                //    if a manually passed in key is invalid (non-numeric or < 1),
-                //    then we don't need to modify the current number
-            } else if (useNewForAutoInc === false || !Number.isFinite(primaryKey) || primaryKey < 1) {
-                insert(primaryKey);
-                // Increment current number by 1 (we cannot leverage SQLite's
-                //  autoincrement (and decrement when not needed), as decrementing
-                //  will be overwritten/ignored upon the next insert)
-            } else {
-                insert(function () {
-                    var sql = 'UPDATE __sys__ SET currNum = currNum + 1 WHERE name = ?';
-                    var sqlValues = [util.escapeSQLiteStatement(me.name)];
-                    _CFG2.default.DEBUG && console.log(sql, sqlValues);
-                    tx.executeSql(sql, sqlValues, function (tx, data) {
-                        success(primaryKey);
-                    }, function (tx, err) {
-                        error((0, _DOMException.createDOMException)('UnknownError', 'Could not set the auto increment value for key', err));
-                    });
-                });
-            }
+        tx.executeSql(insertSql, insertSqlValues, function (tx, data) {
+            success(primaryKey);
+        }, function (tx, err) {
+            // Should occur for `add` operation
+            error((0, _DOMException.createDOMException)('ConstraintError', err.message, err));
         });
     }).catch(function (err) {
         error(err);
@@ -20257,24 +20571,15 @@ IDBObjectStore.prototype.add = function (value /* , key */) {
     }
     _IDBTransaction2.default.__assertActive(me.transaction);
     me.transaction.__assertWritable();
-    this.__validateKeyAndValue(value, key);
 
     var request = me.transaction.__createRequest(me);
-    me.transaction.__pushToQueue(request, function objectStoreAdd(tx, args, success, error) {
-        _Sca2.default.encode(value, function (encoded) {
-            value = _Sca2.default.decode(encoded);
-            me.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
-                _Sca2.default.encode(value, function (encoded) {
-                    me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, function () {
-                        me.__cursors.forEach(function (cursor) {
-                            cursor.__invalidateCache(); // Add
-                        });
-                        success.apply(undefined, arguments);
-                    }, error);
-                });
-            }, error);
-        });
-    });
+
+    var _me$__validateKeyAndV = me.__validateKeyAndValueAndClone(value, key, false),
+        _me$__validateKeyAndV2 = _slicedToArray(_me$__validateKeyAndV, 2),
+        ky = _me$__validateKeyAndV2[0],
+        clonedValue = _me$__validateKeyAndV2[1];
+
+    IDBObjectStore.__stepsStoringRecordObjectStore(request, me, clonedValue, true, ky);
     return request;
 };
 
@@ -20292,37 +20597,56 @@ IDBObjectStore.prototype.put = function (value /*, key */) {
     }
     _IDBTransaction2.default.__assertActive(me.transaction);
     me.transaction.__assertWritable();
-    me.__validateKeyAndValue(value, key);
 
     var request = me.transaction.__createRequest(me);
-    me.transaction.__pushToQueue(request, function objectStorePut(tx, args, success, error) {
-        _Sca2.default.encode(value, function (encoded) {
-            value = _Sca2.default.decode(encoded);
-            me.__deriveKey(tx, value, key, function (primaryKey, useNewForAutoInc) {
-                _Sca2.default.encode(value, function (encoded) {
-                    // First try to delete if the record exists
-                    _Key2.default.convertValueToKey(primaryKey);
-                    var sql = 'DELETE FROM ' + util.escapeStoreNameForSQL(me.name) + ' WHERE key = ?';
-                    var encodedPrimaryKey = _Key2.default.encode(primaryKey);
-                    tx.executeSql(sql, [util.escapeSQLiteStatement(encodedPrimaryKey)], function (tx, data) {
-                        _CFG2.default.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
-                        me.__insertData(tx, encoded, value, primaryKey, key, useNewForAutoInc, function () {
-                            me.__cursors.forEach(function (cursor) {
-                                cursor.__invalidateCache(); // Add
-                            });
-                            success.apply(undefined, arguments);
-                        }, error);
-                    }, function (tx, err) {
-                        error(err);
-                    });
-                });
-            }, error);
-        });
-    });
+
+    var _me$__validateKeyAndV3 = me.__validateKeyAndValueAndClone(value, key, false),
+        _me$__validateKeyAndV4 = _slicedToArray(_me$__validateKeyAndV3, 2),
+        ky = _me$__validateKeyAndV4[0],
+        clonedValue = _me$__validateKeyAndV4[1];
+
+    IDBObjectStore.__stepsStoringRecordObjectStore(request, me, clonedValue, false, ky);
     return request;
 };
 
-IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
+IDBObjectStore.prototype.__overwrite = function (tx, primaryKey, cb, error) {
+    var me = this;
+    // First try to delete if the record exists
+    // Key.convertValueToKey(primaryKey); // Already run
+    var sql = 'DELETE FROM ' + util.escapeStoreNameForSQL(me.name) + ' WHERE "key" = ?';
+    var encodedPrimaryKey = Key.encode(primaryKey);
+    tx.executeSql(sql, [util.escapeSQLiteStatement(encodedPrimaryKey)], function (tx, data) {
+        _CFG2.default.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
+        cb(tx);
+    }, function (tx, err) {
+        error(err);
+    });
+};
+
+IDBObjectStore.__stepsStoringRecordObjectStore = function (request, store, value, noOverwrite /* , key */) {
+    var key = arguments[4];
+    store.transaction.__pushToQueue(request, function (tx, args, success, error) {
+        store.__deriveKey(tx, value, key, function (primaryKey) {
+            Sca.encode(value, function (encoded) {
+                function insert(tx) {
+                    store.__insertData(tx, encoded, value, primaryKey, function () {
+                        store.__cursors.forEach(function (cursor) {
+                            cursor.__invalidateCache();
+                        });
+                        success.apply(undefined, arguments);
+                    }, error);
+                }
+                if (!noOverwrite) {
+                    store.__overwrite(tx, primaryKey, insert, error);
+                    return;
+                }
+                insert(tx);
+            });
+        }, error);
+    });
+};
+
+IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
     var me = this;
     if (count !== undefined) {
         count = util.enforceRange(count, 'unsigned long');
@@ -20331,25 +20655,15 @@ IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
     _IDBTransaction2.default.__assertActive(me.transaction);
-    if (!getAll && range == null) {
-        throw (0, _DOMException.createDOMException)('DataError', 'No key or range was specified');
-    }
 
-    if (util.instanceOf(range, _IDBKeyRange.IDBKeyRange)) {
-        // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
-        if (!range.toString() !== '[object IDBKeyRange]') {
-            range = _IDBKeyRange.IDBKeyRange.__createInstance(range.lower, range.upper, range.lowerOpen, range.upperOpen);
-        }
-    } else if (range != null) {
-        range = _IDBKeyRange.IDBKeyRange.only(range);
-    }
+    var range = (0, _IDBKeyRange.convertValueToKeyRange)(query, !getAll);
 
     var col = getKey ? 'key' : 'value';
-    var sql = ['SELECT ' + util.quote(col) + ' FROM ', util.escapeStoreNameForSQL(me.name)];
+    var sql = ['SELECT', util.sqlQuote(col), 'FROM', util.escapeStoreNameForSQL(me.name)];
     var sqlValues = [];
-    if (range != null) {
+    if (range !== undefined) {
         sql.push('WHERE');
-        (0, _IDBKeyRange.setSQLForRange)(range, util.quote('key'), sql, sqlValues);
+        (0, _IDBKeyRange.setSQLForKeyRange)(range, util.sqlQuote('key'), sql, sqlValues);
     }
     if (!getAll) {
         count = 1;
@@ -20375,11 +20689,11 @@ IDBObjectStore.prototype.__get = function (range, getKey, getAll, count) {
                 if (getKey) {
                     for (var i = 0; i < data.rows.length; i++) {
                         // Key.convertValueToKey(data.rows.item(i).key); // Already validated before storage
-                        ret.push(_Key2.default.decode(util.unescapeSQLiteResponse(data.rows.item(i).key), false));
+                        ret.push(Key.decode(util.unescapeSQLiteResponse(data.rows.item(i).key), false));
                     }
                 } else {
                     for (var _i = 0; _i < data.rows.length; _i++) {
-                        ret.push(_Sca2.default.decode(util.unescapeSQLiteResponse(data.rows.item(_i).value)));
+                        ret.push(Sca.decode(util.unescapeSQLiteResponse(data.rows.item(_i).value)));
                     }
                 }
                 if (!getAll) {
@@ -20434,7 +20748,7 @@ IDBObjectStore.prototype.getAllKeys = function () /* query, count */{
     return this.__get(query, true, true, count);
 };
 
-IDBObjectStore.prototype['delete'] = function (range) {
+IDBObjectStore.prototype['delete'] = function (query) {
     var me = this;
     if (!(this instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
@@ -20449,22 +20763,11 @@ IDBObjectStore.prototype['delete'] = function (range) {
     _IDBTransaction2.default.__assertActive(me.transaction);
     me.transaction.__assertWritable();
 
-    if (range == null) {
-        throw (0, _DOMException.createDOMException)('DataError', 'No key or range was specified');
-    }
+    var range = (0, _IDBKeyRange.convertValueToKeyRange)(query, true);
 
-    if (util.instanceOf(range, _IDBKeyRange.IDBKeyRange)) {
-        // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
-        if (!range.toString() !== '[object IDBKeyRange]') {
-            range = _IDBKeyRange.IDBKeyRange.__createInstance(range.lower, range.upper, range.lowerOpen, range.upperOpen);
-        }
-    } else {
-        range = _IDBKeyRange.IDBKeyRange.only(range);
-    }
-
-    var sqlArr = ['DELETE FROM ', util.escapeStoreNameForSQL(me.name), ' WHERE '];
+    var sqlArr = ['DELETE FROM', util.escapeStoreNameForSQL(me.name), 'WHERE'];
     var sqlValues = [];
-    (0, _IDBKeyRange.setSQLForRange)(range, util.quote('key'), sqlArr, sqlValues);
+    (0, _IDBKeyRange.setSQLForKeyRange)(range, util.sqlQuote('key'), sqlArr, sqlValues);
     var sql = sqlArr.join(' ');
 
     return me.transaction.__addToTransactionQueue(function objectStoreDelete(tx, args, success, error) {
@@ -20505,9 +20808,9 @@ IDBObjectStore.prototype.clear = function () {
     }, undefined, me);
 };
 
-IDBObjectStore.prototype.count = function () /* key */{
+IDBObjectStore.prototype.count = function () /* query */{
     var me = this;
-    var key = arguments[0];
+    var query = arguments[0];
     if (!(me instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
     }
@@ -20515,45 +20818,16 @@ IDBObjectStore.prototype.count = function () /* key */{
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
     _IDBTransaction2.default.__assertActive(me.transaction);
-    if (util.instanceOf(key, _IDBKeyRange.IDBKeyRange)) {
-        // We still need to validate IDBKeyRange-like objects (the above check is based on duck-typing)
-        if (!key.toString() !== '[object IDBKeyRange]') {
-            key = _IDBKeyRange.IDBKeyRange.__createInstance(key.lower, key.upper, key.lowerOpen, key.upperOpen);
-        }
-        // We don't need to add to cursors array since has the count parameter which won't cache
-        return _IDBCursor.IDBCursorWithValue.__createInstance(key, 'next', me, me, 'key', 'value', true).__req;
-    } else {
-        var _ret2 = function () {
-            var hasKey = key != null;
 
-            // key is optional
-            if (hasKey) {
-                _Key2.default.convertValueToKey(key);
-            }
-
-            return {
-                v: me.transaction.__addToTransactionQueue(function objectStoreCount(tx, args, success, error) {
-                    var sql = 'SELECT * FROM ' + util.escapeStoreNameForSQL(me.name) + (hasKey ? ' WHERE key = ?' : '');
-                    var sqlValues = [];
-                    hasKey && sqlValues.push(util.escapeSQLiteStatement(_Key2.default.encode(key)));
-                    tx.executeSql(sql, sqlValues, function (tx, data) {
-                        success(data.rows.length);
-                    }, function (tx, err) {
-                        error(err);
-                    });
-                }, undefined, me)
-            };
-        }();
-
-        if ((typeof _ret2 === 'undefined' ? 'undefined' : _typeof(_ret2)) === "object") return _ret2.v;
-    }
+    // We don't need to add to cursors array since has the count parameter which won't cache
+    return _IDBCursor.IDBCursorWithValue.__createInstance(query, 'next', me, me, 'key', 'value', true).__req;
 };
 
-IDBObjectStore.prototype.openCursor = function () /* range, direction */{
+IDBObjectStore.prototype.openCursor = function () /* query, direction */{
     var me = this;
 
     var _arguments3 = Array.prototype.slice.call(arguments),
-        range = _arguments3[0],
+        query = _arguments3[0],
         direction = _arguments3[1];
 
     if (!(me instanceof IDBObjectStore)) {
@@ -20562,12 +20836,12 @@ IDBObjectStore.prototype.openCursor = function () /* range, direction */{
     if (me.__deleted) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
-    var cursor = _IDBCursor.IDBCursorWithValue.__createInstance(range, direction, me, me, 'key', 'value');
+    var cursor = _IDBCursor.IDBCursorWithValue.__createInstance(query, direction, me, me, 'key', 'value');
     me.__cursors.push(cursor);
     return cursor.__req;
 };
 
-IDBObjectStore.prototype.openKeyCursor = function () /* range, direction */{
+IDBObjectStore.prototype.openKeyCursor = function () /* query, direction */{
     var me = this;
     if (!(me instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
@@ -20577,10 +20851,10 @@ IDBObjectStore.prototype.openKeyCursor = function () /* range, direction */{
     }
 
     var _arguments4 = Array.prototype.slice.call(arguments),
-        range = _arguments4[0],
+        query = _arguments4[0],
         direction = _arguments4[1];
 
-    var cursor = _IDBCursor.IDBCursor.__createInstance(range, direction, me, me, 'key', 'key');
+    var cursor = _IDBCursor.IDBCursor.__createInstance(query, direction, me, me, 'key', 'key');
     me.__cursors.push(cursor);
     return cursor.__req;
 };
@@ -20646,6 +20920,8 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath /* , optiona
     if (me.__indexes[indexName] && !me.__indexes[indexName].__deleted) {
         throw (0, _DOMException.createDOMException)('ConstraintError', 'Index "' + indexName + '" already exists on ' + me.name);
     }
+
+    keyPath = util.convertToSequenceDOMString(keyPath);
     if (!util.isValidKeyPath(keyPath)) {
         throw (0, _DOMException.createDOMException)('SyntaxError', 'A valid keyPath must be supplied');
     }
@@ -20718,7 +20994,7 @@ Object.defineProperty(IDBObjectStore, 'prototype', {
 exports.default = IDBObjectStore;
 module.exports = exports['default'];
 
-},{"./CFG":381,"./DOMException":382,"./DOMStringList":383,"./IDBCursor":385,"./IDBIndex":388,"./IDBKeyRange":389,"./IDBTransaction":392,"./Key":394,"./Sca":395,"./util":401,"sync-promise":371}],391:[function(require,module,exports){
+},{"./CFG":397,"./DOMException":398,"./DOMStringList":399,"./IDBCursor":401,"./IDBIndex":404,"./IDBKeyRange":405,"./IDBTransaction":408,"./Key":410,"./Sca":411,"./util":417,"sync-promise":370}],407:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -20935,7 +21211,7 @@ Object.defineProperty(IDBOpenDBRequest, 'prototype', {
 exports.IDBRequest = IDBRequest;
 exports.IDBOpenDBRequest = IDBOpenDBRequest;
 
-},{"./DOMException":382,"./util":401,"eventtarget":300}],392:[function(require,module,exports){
+},{"./DOMException":398,"./util":417,"eventtarget":299}],408:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -21439,7 +21715,13 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
                 me.__transactionEndCallback = abort;
                 return;
             }
-            me.__tx.executeSql('ROLLBACK', [], abort, abort); // Not working in some circumstances, even in Node
+            try {
+                me.__tx.executeSql('ROLLBACK', [], abort, abort); // Not working in some circumstances, even in Node
+            } catch (err) {
+                // Browser errs when transaction has ended and since it most likely already erred here,
+                //   we call to abort
+                abort();
+            }
         } else {
             abort(null, { code: 0 });
         }
@@ -21535,7 +21817,7 @@ Object.defineProperty(IDBTransaction, 'prototype', {
 exports.default = IDBTransaction;
 module.exports = exports['default'];
 
-},{"./CFG":381,"./DOMException":382,"./Event":384,"./IDBObjectStore":390,"./IDBRequest":391,"./util":401,"eventtarget":300,"sync-promise":371}],393:[function(require,module,exports){
+},{"./CFG":397,"./DOMException":398,"./Event":400,"./IDBObjectStore":406,"./IDBRequest":407,"./util":417,"eventtarget":299,"sync-promise":370}],409:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -21600,13 +21882,13 @@ Object.defineProperty(IDBVersionChangeEvent, 'prototype', {
 exports.default = IDBVersionChangeEvent;
 module.exports = exports['default'];
 
-},{"./Event":384,"./util":401}],394:[function(require,module,exports){
+},{"./Event":400,"./util":417}],410:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.default = exports.findMultiEntryMatches = exports.isKeyInRange = exports.isMultiEntryMatch = exports.setValue = exports.evaluateKeyPathOnValue = exports.extractKeyFromValueUsingKeyPath = exports.convertValueToKeyMultiEntry = exports.convertValueToKey = exports.decode = exports.encode = undefined;
+exports.findMultiEntryMatches = exports.isKeyInRange = exports.isMultiEntryMatch = exports.checkKeyCouldBeInjectedIntoValue = exports.injectKeyIntoValueUsingKeyPath = exports.extractKeyValueDecodedFromValueUsingKeyPath = exports.evaluateKeyPathOnValue = exports.extractKeyFromValueUsingKeyPath = exports.convertValueToKeyRethrowingAndIfInvalid = exports.convertValueToMultiEntryKey = exports.convertValueToKey = exports.convertValueToMultiEntryKeyDecoded = exports.convertValueToKeyValueDecoded = exports.convertKeyToValue = exports.decode = exports.encode = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
@@ -21616,14 +21898,14 @@ var _util = require('./util');
 
 var util = _interopRequireWildcard(_util);
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+var _IDBFactory = require('./IDBFactory');
 
-var Key = {};
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 /**
  * Encodes the keys based on their types. This is required to maintain collations
  */
-var collations = ['undefined', 'number', 'date', 'string', 'array'];
+var collations = ['invalid', 'number', 'date', 'string', 'binary', 'array'];
 
 /**
  * The sign values for numbers, ordered from least to greatest.
@@ -21636,12 +21918,10 @@ var collations = ['undefined', 'number', 'date', 'string', 'array'];
  */
 var signValues = ['negativeInfinity', 'bigNegative', 'smallNegative', 'smallPositive', 'bigPositive', 'positiveInfinity'];
 
-// Todo: Support `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
 var types = {
-    // Undefined is not a valid key type.  It's only used when there is no key.
-    undefined: {
+    invalid: {
         encode: function encode(key) {
-            return collations.indexOf('undefined') + '-';
+            return collations.indexOf('invalid') + '-';
         },
         decode: function decode(key) {
             return undefined;
@@ -21672,8 +21952,8 @@ var types = {
             // Truncate leading zeros.
             key32 = key32.slice(significantDigitIndex);
             var sign = void 0,
-                exponent = zeros(2),
-                mantissa = zeros(11);
+                exponent = void 0,
+                mantissa = void 0;
 
             // Finite cases:
             if (isFinite(key)) {
@@ -21706,6 +21986,8 @@ var types = {
                 }
                 // Infinite cases:
             } else {
+                exponent = zeros(2);
+                mantissa = zeros(11);
                 sign = signValues.indexOf(key > 0 ? 'positiveInfinity' : 'negativeInfinity');
             }
 
@@ -21745,7 +22027,7 @@ var types = {
 
     // Strings are encoded as JSON strings (with quotes and unicode characters escaped).
     //
-    // IF the strings are in an array, then some extra encoding is done to make sorting work correctly:
+    // If the strings are in an array, then some extra encoding is done to make sorting work correctly:
     // Since we can't force all strings to be the same length, we need to ensure that characters line-up properly
     // for sorting, while also accounting for the extra characters that are added when the array itself is encoded as JSON.
     // To do this, each character of the string is prepended with a dash ("-"), and a space is added to the end of the string.
@@ -21801,6 +22083,16 @@ var types = {
         },
         decode: function decode(key) {
             return new Date(key.slice(2));
+        }
+    },
+
+    binary: { // Todo Binary: Support `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
+        encode: function encode(key) {
+            // collations.indexOf('binary') + '-' + ...;
+            throw new Error('Not yet implemented');
+        },
+        decode: function decode(key) {
+            throw new Error('Not yet implemented');
         }
     }
 };
@@ -21880,11 +22172,7 @@ function roundToPrecision(num, precision) {
  * @return {string}
  */
 function zeros(n) {
-    var result = '';
-    while (n--) {
-        result = result + '0';
-    }
-    return result;
+    return '0'.repeat(n);
 }
 
 /**
@@ -21897,155 +22185,257 @@ function negate(s) {
 }
 
 /**
- * Returns the string "number", "date", "string", or "array".
+ * Returns the string "number", "date", "string", or "array" (or "binary" when implemented).
  */
-function getType(key) {
+function getKeyType(key) {
     if (Array.isArray(key)) return 'array';
     if (util.isDate(key)) return 'date';
-    // if (util.isArrayBufferOrView(key)) return 'ArrayBuffer'; // Todo: Uncomment when supported
-    return typeof key === 'undefined' ? 'undefined' : _typeof(key);
+    // if (util.isBinary(key)) return 'binary'; // Todo Binary: Uncomment when supported
+    var keyType = typeof key === 'undefined' ? 'undefined' : _typeof(key);
+    return ['string', 'number'].includes(keyType) ? keyType : 'invalid';
 }
 
 /**
  * Keys must be strings, numbers (besides NaN), Dates (if value is not NaN),
- *   Arrays (or, once supported, ArrayBuffer) objects
- * @todo Currently this is being used in code for validation but for greater
- *   spec parity if nothing else, ought to probably instead be returning a
- *   key object with {type, value}
+ *   Arrays (or, once supported, binary) objects
+ * @param input The key input
+ * @param seen An array of already seen keys
  */
-function convertValueToKey(key, arrayRefs, multiEntry) {
-    var type = getType(key);
-    switch (type) {
-        case 'ArrayBuffer':
-            // Copy bytes once implemented (not a supported type yet)
-            return key;
-        case 'array':
-            arrayRefs = arrayRefs || [];
-            arrayRefs.push(key);
-            var newKeys = [];
-            for (var i = 0; i < key.length; i++) {
-                // We cannot iterate here with array extras as we must ensure sparse arrays are invalidated
-                var item = key[i];
-                if (arrayRefs.includes(item)) throw (0, _DOMException.createDOMException)('DataError', 'An array key cannot be circular');
-                var newKey = void 0;
-                try {
-                    newKey = convertValueToKey(item, arrayRefs);
-                } catch (err) {
-                    if (!multiEntry) {
-                        throw err;
-                    }
-                }
-                if (!multiEntry || !newKeys.includes(newKey)) {
-                    newKeys.push(newKey);
-                }
-            }
-            return newKeys;
-        case 'date':
-            if (!Number.isNaN(key.getTime())) {
-                return new Date(key.getTime());
-            }
-        // Falls through
-        default:
-            // allow for strings, numbers instead of first part of this check:
-            // Other `typeof` types which are not valid keys:
-            //    'undefined', 'boolean', 'object' (including `null`), 'symbol', 'function'
-            if (!['string', 'number'].includes(type) || Number.isNaN(key)) {
-                throw (0, _DOMException.createDOMException)('DataError', 'Not a valid key');
-            }
-            return key;
-    }
-}
-
-function convertValueToKeyMultiEntry(key) {
-    return convertValueToKey(key, null, true);
-}
-
-function extractKeyFromValueUsingKeyPath(value, keyPath, multiEntry) {
-    var key = evaluateKeyPathOnValue(value, keyPath, multiEntry);
-    if (!multiEntry) {
-        return convertValueToKey(key);
-    }
-    return convertValueToKeyMultiEntry(key);
+function convertValueToKey(input, seen) {
+    return convertValueToKeyValueDecoded(input, seen, false, true);
 }
 
 /**
- * Returns the value of an inline key based on a key path
+* Currently not in use
+*/
+function convertValueToMultiEntryKey(input) {
+    // Todo Spec Question: Should the second step of the spec indicate rethrowing
+    //   too (e.g., so "extract a key from a value using a key path"
+    //   can rethrow them)?
+    return convertValueToKeyValueDecoded(input, null, true, true);
+}
+
+/**
+* Shortcut utility to avoid returning full keys from `convertValueToKey`
+*   and subsequent need to process in calling code
+*/
+function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
+    seen = seen || [];
+    if (seen.includes(input)) return { type: 'array', invalid: true, message: 'An array key cannot be circular' };
+    var type = getKeyType(input);
+    var ret = { type: type, value: input };
+    switch (type) {
+        case 'number':
+            {
+                if (Number.isNaN(input)) {
+                    return { type: 'NaN', invalid: true }; // List as 'NaN' type for convenience of consumers in reporting errors
+                }
+                return ret;
+            }case 'string':
+            {
+                return ret;
+            }case 'binary':
+            {
+                // Copy bytes once implemented (not a supported type yet)
+                // May throw
+                return ret;
+            }case 'array':
+            {
+                // May throw once binary is implemented
+                var len = input.length;
+                seen.push(input);
+                var keys = [];
+                for (var i = 0; i < len; i++) {
+                    // We cannot iterate here with array extras as we must ensure sparse arrays are invalidated
+                    if (!multiEntry && !Object.prototype.hasOwnProperty.call(input, i)) {
+                        return { type: type, invalid: true, message: 'Does not have own index property' };
+                    }
+                    try {
+                        var _ret = function () {
+                            var entry = input[i];
+                            var key = convertValueToKeyValueDecoded(entry, seen, false, fullKeys); // Though steps do not list rethrowing, the next is returnifabrupt when not multiEntry
+                            if (key.invalid) {
+                                if (multiEntry) {
+                                    return 'continue';
+                                }
+                                return {
+                                    v: { type: type, invalid: true, message: 'Bad array entry value-to-key conversion' }
+                                };
+                            }
+                            if (!multiEntry || !fullKeys && keys.every(function (k) {
+                                return (0, _IDBFactory.cmp)(k, key.value) !== 0;
+                            }) || fullKeys && keys.every(function (k) {
+                                return (0, _IDBFactory.cmp)(k, key) !== 0;
+                            })) {
+                                keys.push(fullKeys ? key : key.value);
+                            }
+                        }();
+
+                        switch (_ret) {
+                            case 'continue':
+                                continue;
+
+                            default:
+                                if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+                        }
+                    } catch (err) {
+                        if (!multiEntry) {
+                            throw err;
+                        }
+                    }
+                }
+                return { type: type, value: keys };
+            }case 'date':
+            {
+                if (!Number.isNaN(input.getTime())) {
+                    return fullKeys ? { type: type, value: input.getTime() } : { type: type, value: new Date(input.getTime()) };
+                }
+                return { type: type, invalid: true, message: 'Not a valid date' };
+                // Falls through
+            }case 'invalid':default:
+            {
+                // Other `typeof` types which are not valid keys:
+                //    'undefined', 'boolean', 'object' (including `null`), 'symbol', 'function
+                var _type = input === null ? 'null' : typeof input === 'undefined' ? 'undefined' : _typeof(input); // Convert `null` for convenience of consumers in reporting errors
+                return { type: _type, invalid: true, message: 'Not a valid key; type ' + _type };
+            }
+    }
+}
+function convertValueToMultiEntryKeyDecoded(key, fullKeys) {
+    return convertValueToKeyValueDecoded(key, null, true, fullKeys);
+}
+
+/**
+* An internal utility
+*/
+function convertValueToKeyRethrowingAndIfInvalid(input, seen) {
+    var key = convertValueToKey(input, seen);
+    if (key.invalid) {
+        throw (0, _DOMException.createDOMException)('DataError', key.message || 'Not a valid key; type: ' + key.type);
+    }
+    return key;
+}
+
+function extractKeyFromValueUsingKeyPath(value, keyPath, multiEntry) {
+    return extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry, true);
+}
+/**
+* Not currently in use
+*/
+function evaluateKeyPathOnValue(value, keyPath, multiEntry) {
+    return evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, true);
+}
+
+/**
+* May throw, return `{failure: true}` (e.g., non-object on keyPath resolution)
+*    or `{invalid: true}` (e.g., `NaN`)
+*/
+function extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry, fullKeys) {
+    var r = evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKeys);
+    // Todo Spec Question: Should there not also be a spec check here in case `invalid` on array item (or
+    //   does pre-cloning prevent)?
+    if (r.failure) {
+        return r;
+    }
+    if (!multiEntry) {
+        return convertValueToKeyValueDecoded(r.value, null, false, fullKeys);
+    }
+    return convertValueToMultiEntryKeyDecoded(r.value, fullKeys);
+}
+
+/**
+ * Returns the value of an inline key based on a key path (wrapped in an object with key `value`)
+ *   or `{failure: true}`
  * @param {object} value
  * @param {string|array} keyPath
  * @param {boolean} multiEntry
  * @returns {undefined|array|string}
  */
-function evaluateKeyPathOnValue(value, keyPath, multiEntry) {
+function evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKeys) {
     if (Array.isArray(keyPath)) {
-        var _ret = function () {
-            var arrayValue = [];
+        var _ret2 = function () {
+            var result = [];
             return {
-                v: keyPath.some(function (kpPart) {
-                    // Todo: Confirm as per W3C tests that sequence<DOMString> implies `toString()`
-                    // See also https://heycam.github.io/webidl/#idl-DOMString
-                    // and http://stackoverflow.com/questions/38164752/should-a-call-to-db-close-within-upgradeneeded-inevitably-prevent-onsuccess
-                    kpPart = util.isObj(kpPart) ? kpPart.toString() : kpPart;
-                    var key = extractKeyFromValueUsingKeyPath(value, kpPart, multiEntry);
-                    try {
-                        key = convertValueToKey(key);
-                    } catch (err) {
+                v: keyPath.some(function (item) {
+                    var key = extractKeyValueDecodedFromValueUsingKeyPath(value, item, multiEntry, fullKeys);
+                    // Todo Spec Question: Should `invalid` not also be handled?
+                    if (key.failure) {
                         return true;
                     }
-                    arrayValue.push(key);
-                }, []) ? undefined : arrayValue
+                    result.push(key.value);
+                }, []) ? { failure: true } : { value: result }
             };
         }();
 
-        if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+        if ((typeof _ret2 === 'undefined' ? 'undefined' : _typeof(_ret2)) === "object") return _ret2.v;
     }
     if (keyPath === '') {
-        return value;
+        return { value: value };
     }
     var identifiers = keyPath.split('.');
-    identifiers.some(function (idntfr, i) {
-        if (idntfr === 'length' && typeof value === 'string' && i === identifiers.length - 1) {
+    return identifiers.some(function (idntfr, i) {
+        if (idntfr === 'length' && (typeof value === 'string' || Array.isArray(value))) {
             value = value.length;
+        } else if (util.isBlob(value)) {
+            switch (idntfr) {
+                case 'size':case 'type':
+                    value = value[idntfr];
+                    return;
+            }
+        } else if (util.isFile(value)) {
+            switch (idntfr) {
+                case 'name':case 'lastModified':
+                    value = value[idntfr];
+                    return;
+                case 'lastModifiedDate':
+                    value = new Date(value.lastModified);
+                    return;
+            }
+        } else if (!util.isObj(value) || !Object.prototype.hasOwnProperty.call(value, idntfr)) {
             return true;
+        } else {
+            value = value[idntfr];
+            return value === undefined;
         }
-        if (!util.isObj(value)) {
-            value = undefined;
-            return true;
-        }
-        value = value[idntfr];
-        return value === undefined;
-    });
-    return value;
+    }) ? { failure: true } : { value: value };
 }
 
 /**
  * Sets the inline key value
- * @param {object} source
+ * @param {object} value
+ * @param {*} key
  * @param {string} keyPath
- * @param {*} value
  */
-function setValue(source, keyPath, value) {
-    var props = keyPath.split('.');
-    for (var i = 0; i < props.length - 1; i++) {
-        var prop = props[i];
-        source = source[prop] = source[prop] || {};
+function injectKeyIntoValueUsingKeyPath(value, key, keyPath) {
+    var identifiers = keyPath.split('.');
+    var last = identifiers.pop();
+    for (var i = 0; i < identifiers.length; i++) {
+        var identifier = identifiers[i];
+        var hop = Object.prototype.hasOwnProperty.call(value, identifier);
+        if (!hop) {
+            value[identifier] = {};
+        }
+        value = value[identifier];
     }
-    source[props[props.length - 1]] = value;
+    value[last] = key; // key is already a `keyValue` in our processing so no need to convert
 }
 
-/**
- * Determines whether an index entry matches a multi-entry key value.
- * @param {string} encodedEntry     The entry value (already encoded)
- * @param {string} encodedKey       The full index key (already encoded)
- * @returns {boolean}
- */
-function isMultiEntryMatch(encodedEntry, encodedKey) {
-    var keyType = collations[encodedKey.substring(0, 1)];
-
-    if (keyType === 'array') {
-        return encodedKey.indexOf(encodedEntry) > 1;
-    } else {
-        return encodedKey === encodedEntry;
+// See https://github.com/w3c/IndexedDB/pull/146
+function checkKeyCouldBeInjectedIntoValue(value, keyPath) {
+    var identifiers = keyPath.split('.');
+    identifiers.pop();
+    for (var i = 0; i < identifiers.length; i++) {
+        if (!util.isObj(value)) {
+            return false;
+        }
+        var identifier = identifiers[i];
+        var hop = Object.prototype.hasOwnProperty.call(value, identifier);
+        if (!hop) {
+            return true;
+        }
+        value = value[identifier];
     }
+    return util.isObj(value);
 }
 
 function isKeyInRange(key, range, checkCached) {
@@ -22073,6 +22463,22 @@ function isKeyInRange(key, range, checkCached) {
     }
 
     return lowerMatch && upperMatch;
+}
+
+/**
+ * Determines whether an index entry matches a multi-entry key value.
+ * @param {string} encodedEntry     The entry value (already encoded)
+ * @param {string} encodedKey       The full index key (already encoded)
+ * @returns {boolean}
+ */
+function isMultiEntryMatch(encodedEntry, encodedKey) {
+    var keyType = collations[encodedKey.slice(0, 1)];
+
+    if (keyType === 'array') {
+        return encodedKey.indexOf(encodedEntry) > 1;
+    } else {
+        return encodedKey === encodedEntry;
+    }
 }
 
 function findMultiEntryMatches(keyEntry, range) {
@@ -22109,408 +22515,133 @@ function findMultiEntryMatches(keyEntry, range) {
     return matches;
 }
 
+/**
+* Not currently in use but keeping for spec parity
+*/
+function convertKeyToValue(key) {
+    var type = key.type;
+    var value = key.value;
+    switch (type) {
+        case 'number':case 'string':
+            return value;
+        case 'array':
+            var array = [];
+            var len = value.length;
+            var index = 0;
+            while (index < len) {
+                var entry = convertKeyToValue(value[index]);
+                array[index] = entry;
+                index++;
+            }
+            return array;
+        case 'date':
+            return new Date(value);
+        case 'binary': // Todo Binary: Not implemented
+        // eslint-disable-line no-fallthrough
+        case 'invalid':
+        default:
+            throw new Error('Bad key');
+    }
+}
+
 function _encode(key, inArray) {
     // Bad keys like `null`, `object`, `boolean`, 'function', 'symbol' should not be passed here due to prior validation
     if (key === undefined) {
         return null;
     }
-    // Currently has array, date, number, string
-    return types[getType(key)].encode(key, inArray);
+    // Currently has array, date, number, string and should support "binary"
+    return types[getKeyType(key)].encode(key, inArray);
 }
 function _decode(key, inArray) {
     if (typeof key !== 'string') {
         return undefined;
     }
-    return types[collations[key.substring(0, 1)]].decode(key, inArray);
+    return types[collations[key.slice(0, 1)]].decode(key, inArray);
 }
 
-exports.default = Key = { encode: _encode, decode: _decode, convertValueToKey: convertValueToKey, convertValueToKeyMultiEntry: convertValueToKeyMultiEntry, extractKeyFromValueUsingKeyPath: extractKeyFromValueUsingKeyPath, evaluateKeyPathOnValue: evaluateKeyPathOnValue, setValue: setValue, isMultiEntryMatch: isMultiEntryMatch, isKeyInRange: isKeyInRange, findMultiEntryMatches: findMultiEntryMatches };
+/* eslint-disable object-property-newline */
 exports.encode = _encode;
 exports.decode = _decode;
+exports.convertKeyToValue = convertKeyToValue;
+exports.convertValueToKeyValueDecoded = convertValueToKeyValueDecoded;
+exports.convertValueToMultiEntryKeyDecoded = convertValueToMultiEntryKeyDecoded;
 exports.convertValueToKey = convertValueToKey;
-exports.convertValueToKeyMultiEntry = convertValueToKeyMultiEntry;
+exports.convertValueToMultiEntryKey = convertValueToMultiEntryKey;
+exports.convertValueToKeyRethrowingAndIfInvalid = convertValueToKeyRethrowingAndIfInvalid;
 exports.extractKeyFromValueUsingKeyPath = extractKeyFromValueUsingKeyPath;
 exports.evaluateKeyPathOnValue = evaluateKeyPathOnValue;
-exports.setValue = setValue;
+exports.extractKeyValueDecodedFromValueUsingKeyPath = extractKeyValueDecodedFromValueUsingKeyPath;
+exports.injectKeyIntoValueUsingKeyPath = injectKeyIntoValueUsingKeyPath;
+exports.checkKeyCouldBeInjectedIntoValue = checkKeyCouldBeInjectedIntoValue;
 exports.isMultiEntryMatch = isMultiEntryMatch;
 exports.isKeyInRange = isKeyInRange;
 exports.findMultiEntryMatches = findMultiEntryMatches;
-exports.default = Key;
 
-},{"./DOMException":382,"./util":401}],395:[function(require,module,exports){
+},{"./DOMException":398,"./IDBFactory":403,"./util":417}],411:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.default = exports.decode = exports.encode = exports.retrocycle = exports.decycle = undefined;
+exports.clone = exports.decode = exports.encode = undefined;
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; /* eslint-disable no-eval */
-// Needed by Node; uses native if available (browser)
+var _typeson = require('typeson');
 
+var _typeson2 = _interopRequireDefault(_typeson);
 
-var _atob = require('atob');
+var _structuredCloningThrowing = require('typeson-registry/presets/structured-cloning-throwing');
 
-var _atob2 = _interopRequireDefault(_atob);
+var _structuredCloningThrowing2 = _interopRequireDefault(_structuredCloningThrowing);
 
-var _w3cBlob = require('w3c-blob');
-
-var _w3cBlob2 = _interopRequireDefault(_w3cBlob);
-
-var _util = require('./util');
-
-var util = _interopRequireWildcard(_util);
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+var _DOMException = require('./DOMException');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-/**
- * Implementation of the Structured Cloning Algorithm.  Supports the
- * following object types:
- * - Blob
- * - Boolean
- * - Date object
- * - File object (deserialized as Blob object).
- * - Number object
- * - RegExp object
- * - String object
- * This is accomplished by doing the following:
- * 1) Using the cycle/decycle functions from:
- *    https://github.com/douglascrockford/JSON-js/blob/master/cycle.js
- * 2) Serializing/deserializing objects to/from string that don't work with
- *    JSON.stringify and JSON.parse by using object specific logic (eg use
- *    the FileReader API to convert a Blob or File object to a data URL.
- * 3) JSON.stringify and JSON.parse do the final conversion to/from string.
- */
-function decycle(object, callback) {
-    // From: https://github.com/douglascrockford/JSON-js/blob/master/cycle.js
-    // Contains additional logic to convert the following object types to string
-    // so that they can properly be encoded using JSON.stringify:
-    //  *Boolean
-    //  *Date
-    //  *File
-    //  *Blob
-    //  *Number
-    //  *Regex
-    // Make a deep copy of an object or array, assuring that there is at most
-    // one instance of each object or array in the resulting structure. The
-    // duplicate references (which might be forming cycles) are replaced with
-    // an object of the form
-    //      {$ref: PATH}
-    // where the PATH is a JSONPath string that locates the first occurance.
-    // So,
-    //      var a = [];
-    //      a[0] = a;
-    //      return JSON.stringify(JSON.decycle(a));
-    // produces the string '[{"$ref":"$"}]'.
+// Todo: Register `ImageBitmap` and add `Blob`/`File`/`FileList`
+// Todo: add a proper polyfill for `ImageData` using node-canvas
+// See also: http://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
 
-    // JSONPath is used to locate the unique object. $ indicates the top level of
-    // the object or array. [NUMBER] or [STRING] indicates a child member or
-    // property.
+var typeson = new _typeson2.default().register(_structuredCloningThrowing2.default);
 
-    var objects = []; // Keep a reference to each unique object or array
-    var paths = []; // Keep the path to each unique object or array
-    var queuedObjects = [];
-    var returnCallback = callback;
-    var derezObj = void 0; // eslint-disable-line prefer-const
+// We are keeping the callback approach for now in case we wish to reexpose Blob, File, FileList
 
-    /**
-     * Check the queue to see if all objects have been processed.
-     * if they have, call the callback with the converted object.
-     */
-    function checkForCompletion() {
-        if (queuedObjects.length === 0) {
-            returnCallback(derezObj);
+// import Blob from 'w3c-blob'; // Needed by Node; uses native if available (browser)
+
+function encode(obj, cb) {
+    var ret = void 0;
+    try {
+        ret = typeson.stringify(obj);
+    } catch (err) {
+        // SCA in typeson-registry using `DOMException` which is not defined (e.g., in Node)
+        if (_typeson2.default.hasConstructorOf(err, ReferenceError) ||
+        // SCA in typeson-registry threw a cloning error and we are in a
+        //   supporting environment (e.g., the browser) where `ShimDOMException` is
+        //   an alias for `DOMException`; if typeson-registry ever uses our shim
+        //   to throw, we can use this condition alone.
+        _typeson2.default.hasConstructorOf(err, _DOMException.ShimDOMException)) {
+            throw (0, _DOMException.createDOMException)('DataCloneError', 'The object cannot be cloned.');
         }
+        throw err; // We should rethrow non-cloning exceptions like from
+        //  throwing getters (as in the W3C test, key-conversion-exceptions.htm)
     }
-
-    /**
-     * Convert a blob to a data URL.
-     * @param {Blob} blob to convert.
-     * @param {String} path of blob in object being encoded.
-     */
-    function readBlobAsDataURL(blob, path) {
-        var reader = new FileReader();
-        reader.onloadend = function (loadedEvent) {
-            var dataURL = loadedEvent.target.result;
-            var blobtype = 'Blob';
-            if (util.isFile(blob)) {
-                // blobtype = 'File';
-            }
-            updateEncodedBlob(dataURL, path, blobtype);
-        };
-        reader.readAsDataURL(blob);
-    }
-
-    /**
-     * Async handler to update a blob object to a data URL for encoding.
-     * @param {String} dataURL
-     * @param {String} path
-     * @param {String} blobtype - file if the blob is a file; blob otherwise
-     */
-    function updateEncodedBlob(dataURL, path, blobtype) {
-        var encoded = queuedObjects.indexOf(path);
-        path = path.replace('$', 'derezObj');
-        eval(path + '.$enc="' + dataURL + '"');
-        eval(path + '.$type="' + blobtype + '"');
-        queuedObjects.splice(encoded, 1);
-        checkForCompletion();
-    }
-
-    function derez(value, path) {
-        // The derez recurses through the object, producing the deep copy.
-
-        var i = void 0,
-            // The loop counter
-        name = void 0,
-            // Property name
-        nu = void 0; // The new object or array
-
-        // typeof null === 'object', so go on if this value is really an object but not
-        // one of the weird builtin objects.
-
-        var isObj = util.isObj(value);
-        var valOfType = isObj && _typeof(value.valueOf());
-        if (isObj && !['boolean', 'number', 'string'].includes(valOfType) && !util.isDate(value) && !util.isRegExp(value) && !util.isBlob(_w3cBlob2.default)) {
-            // If the value is an object or array, look to see if we have already
-            // encountered it. If so, return a $ref/path object. This is a hard way,
-            // linear search that will get slower as the number of unique objects grows.
-
-            for (i = 0; i < objects.length; i += 1) {
-                if (objects[i] === value) {
-                    return { $ref: paths[i] };
-                }
-            }
-
-            // Otherwise, accumulate the unique value and its path.
-
-            objects.push(value);
-            paths.push(path);
-
-            // If it is an array, replicate the array.
-
-            if (Array.isArray(value)) {
-                nu = [];
-                for (i = 0; i < value.length; i += 1) {
-                    nu[i] = derez(value[i], path + '[' + i + ']');
-                }
-            } else {
-                // If it is an object, replicate the object.
-                nu = {};
-                for (name in value) {
-                    if (Object.prototype.hasOwnProperty.call(value, name)) {
-                        nu[name] = derez(value[name], path + '[' + JSON.stringify(name) + ']');
-                    }
-                }
-            }
-
-            return nu;
-        } else if (util.isBlob(value)) {
-            // Queue blob for conversion
-            queuedObjects.push(path);
-            readBlobAsDataURL(value, path);
-        } else if (valOfType === 'boolean') {
-            value = {
-                '$type': 'Boolean',
-                '$enc': value.toString()
-            };
-        } else if (util.isDate(value)) {
-            value = {
-                '$type': 'Date',
-                '$enc': value.getTime()
-            };
-        } else if (valOfType === 'number') {
-            value = {
-                '$type': 'Number',
-                '$enc': value.toString()
-            };
-        } else if (util.isRegExp(value)) {
-            value = {
-                '$type': 'RegExp',
-                '$enc': value.toString()
-            };
-        } else if (typeof value === 'number') {
-            value = {
-                '$type': 'number',
-                '$enc': value + '' // handles NaN, Infinity, Negative Infinity
-            };
-        } else if (value === undefined) {
-            value = {
-                '$type': 'undefined'
-            };
-        }
-        return value;
-    }
-    derezObj = derez(object, '$');
-    checkForCompletion();
+    if (cb) cb(ret);
+    return ret;
 }
 
-function retrocycle($) {
-    // From: https://github.com/douglascrockford/JSON-js/blob/master/cycle.js
-    // Contains additional logic to convert strings to the following object types
-    // so that they can properly be decoded:
-    //  *Boolean
-    //  *Date
-    //  *File
-    //  *Blob
-    //  *Number
-    //  *Regex
-    // Restore an object that was reduced by decycle. Members whose values are
-    // objects of the form
-    //      {$ref: PATH}
-    // are replaced with references to the value found by the PATH. This will
-    // restore cycles. The object will be mutated.
-
-    // The eval function is used to locate the values described by a PATH. The
-    // root object is kept in a $ variable. A regular expression is used to
-    // assure that the PATH is extremely well formed. The regexp contains nested
-    // * quantifiers. That has been known to have extremely bad performance
-    // problems on some browsers for very long strings. A PATH is expected to be
-    // reasonably short. A PATH is allowed to belong to a very restricted subset of
-    // Goessner's JSONPath.
-
-    // So,
-    //      var s = '[{"$ref":"$"}]';
-    //      return JSON.retrocycle(JSON.parse(s));
-    // produces an array containing a single element which is the array itself.
-
-    var px = /^\$(?:\[(?:\d+|"(?:[^\\"\u0000-\u001f]|\\([\\"/bfnrt]|u[0-9a-zA-Z]{4}))*")])*$/;
-
-    /**
-     * Converts the specified data URL to a Blob object
-     * @param {String} dataURL to convert to a Blob
-     * @returns {Blob} the converted Blob object
-     */
-    function dataURLToBlob(dataURL) {
-        var BASE64_MARKER = ';base64,';
-        var contentType = void 0,
-            parts = void 0,
-            raw = void 0;
-        if (!dataURL.includes(BASE64_MARKER)) {
-            parts = dataURL.split(',');
-            contentType = parts[0].split(':')[1];
-            raw = parts[1];
-
-            return new _w3cBlob2.default([raw], { type: contentType });
-        }
-
-        parts = dataURL.split(BASE64_MARKER);
-        contentType = parts[0].split(':')[1];
-        raw = (0, _atob2.default)(parts[1]);
-        var rawLength = raw.length;
-        var uInt8Array = new Uint8Array(rawLength);
-
-        for (var i = 0; i < rawLength; ++i) {
-            uInt8Array[i] = raw.charCodeAt(i);
-        }
-        return new _w3cBlob2.default([uInt8Array.buffer], { type: contentType });
-    }
-
-    function rez(value) {
-        // The rez function walks recursively through the object looking for $ref
-        // properties. When it finds one that has a value that is a path, then it
-        // replaces the $ref object with a reference to the value that is found by
-        // the path.
-
-        var i = void 0,
-            item = void 0,
-            name = void 0,
-            path = void 0;
-
-        if (util.isObj(value)) {
-            if (Array.isArray(value)) {
-                for (i = 0; i < value.length; i += 1) {
-                    item = value[i];
-                    if (util.isObj(item)) {
-                        path = item.$ref;
-                        if (typeof path === 'string' && px.test(path)) {
-                            value[i] = eval(path);
-                        } else {
-                            value[i] = rez(item);
-                        }
-                    }
-                }
-            } else {
-                if (value.$type !== undefined) {
-                    switch (value.$type) {
-                        case 'Blob':
-                        case 'File':
-                            value = dataURLToBlob(value.$enc);
-                            break;
-                        case 'Boolean':
-                            value = Boolean(value.$enc === 'true');
-                            break;
-                        case 'Date':
-                            value = new Date(value.$enc);
-                            break;
-                        case 'Number':
-                            value = Number(value.$enc);
-                            break;
-                        case 'RegExp':
-                            value = eval(value.$enc);
-                            break;
-                        case 'number':
-                            value = parseFloat(value.$enc);
-                            break;
-                        case 'undefined':
-                            value = undefined;
-                            break;
-                    }
-                } else {
-                    for (name in value) {
-                        if (_typeof(value[name]) === 'object') {
-                            item = value[name];
-                            if (item) {
-                                path = item.$ref;
-                                if (typeof path === 'string' && px.test(path)) {
-                                    value[name] = eval(path);
-                                } else {
-                                    value[name] = rez(item);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return value;
-    }
-    return rez($);
+function decode(obj) {
+    return typeson.parse(obj);
 }
 
-/**
- * Encode the specified object as a string.  Because of the asynchronus
- * conversion of Blob/File to string, the encode function requires
- * a callback
- * @param {Object} val the value to convert.
- * @param {function} callback the function to call once conversion is
- * complete.  The callback gets called with the converted value.
- */
-function encode(val, callback) {
-    function finishEncode(val) {
-        callback(JSON.stringify(val));
-    }
-    decycle(val, finishEncode);
+function clone(val) {
+    // We don't return the intermediate `encode` as we'll need to reencode the clone as it may differ
+    return decode(encode(val));
 }
 
-/**
- * Deserialize the specified string to an object
- * @param {String} val the serialized string
- * @returns {Object} the deserialized object
- */
-function decode(val) {
-    return retrocycle(JSON.parse(val));
-}
-
-var Sca = { decycle: decycle, retrocycle: retrocycle, encode: encode, decode: decode };
-exports.decycle = decycle;
-exports.retrocycle = retrocycle;
 exports.encode = encode;
 exports.decode = decode;
-exports.default = Sca;
+exports.clone = clone;
 
-},{"./util":401,"atob":2,"w3c-blob":373}],396:[function(require,module,exports){
+},{"./DOMException":398,"typeson":389,"typeson-registry/presets/structured-cloning-throwing":373}],412:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -22525,7 +22656,7 @@ var UnicodeIDContinue = '(?:[$0-9A-Z_a-z\\xAA\\xB5\\xB7\\xBA\\xC0-\\xD6\\xD8-\\x
 exports.UnicodeIDStart = UnicodeIDStart;
 exports.UnicodeIDContinue = UnicodeIDContinue;
 
-},{}],397:[function(require,module,exports){
+},{}],413:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -22564,7 +22695,7 @@ var __setGlobalVars = function __setGlobalVars(idb, initialConfig) {
 exports.default = __setGlobalVars;
 module.exports = exports['default'];
 
-},{"./CFG":381,"./UnicodeIdentifiers":396,"./nodeWebSQL":398,"./setGlobalVars":400}],398:[function(require,module,exports){
+},{"./CFG":397,"./UnicodeIdentifiers":412,"./nodeWebSQL":414,"./setGlobalVars":416}],414:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -22575,7 +22706,7 @@ var _custom = require('websql/custom');
 
 var _custom2 = _interopRequireDefault(_custom);
 
-var _SQLiteDatabase = require('../node_modules/websql/lib/sqlite/SQLiteDatabase');
+var _SQLiteDatabase = require('websql/lib/sqlite/SQLiteDatabase');
 
 var _SQLiteDatabase2 = _interopRequireDefault(_SQLiteDatabase);
 
@@ -22603,7 +22734,7 @@ var nodeWebSQL = (0, _custom2.default)(wrappedSQLiteDatabase);
 exports.default = nodeWebSQL;
 module.exports = exports['default'];
 
-},{"../node_modules/websql/lib/sqlite/SQLiteDatabase":376,"./CFG":381,"websql/custom":374}],399:[function(require,module,exports){
+},{"./CFG":397,"websql/custom":390,"websql/lib/sqlite/SQLiteDatabase":392}],415:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -22616,11 +22747,11 @@ var _DOMException = require('./DOMException');
 
 var _Key = require('./Key');
 
-var _Key2 = _interopRequireDefault(_Key);
+var Key = _interopRequireWildcard(_Key);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-// Todo: polyfill IDBVersionChangeEvent, IDBOpenDBRequest?
+// Todo Browser: polyfill IDBVersionChangeEvent, IDBOpenDBRequest?
 
 /**
  * Polyfills missing features in the browser's native IndexedDB implementation.
@@ -22714,7 +22845,10 @@ function compoundKeyPolyfill(IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFact
         if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object') {
             // inline key
             if (isCompoundKey(this.keyPath)) {
-                setInlineCompoundKey(value, this.keyPath);
+                var erred = setInlineCompoundKey(value, this.keyPath);
+                if (erred) {
+                    throw (0, _DOMException.createDOMException)('DataError', 'keyPath error');
+                }
             }
 
             // inline indexes
@@ -22908,8 +23042,11 @@ function decodeCompoundKeyPath(keyPath) {
 function setInlineCompoundKey(value, encodedKeyPath, multiEntry) {
     // Encode the key
     var keyPath = decodeCompoundKeyPath(encodedKeyPath);
-    var key = _Key2.default.evaluateKeyPathOnValue(value, keyPath, multiEntry);
-    var encodedKey = encodeCompoundKey(key);
+    var key = Key.extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry);
+    if (key.failure || key.invalid) {
+        return true;
+    }
+    var encodedKey = encodeCompoundKey(key.value);
 
     // Store the encoded key inline
     encodedKeyPath = encodedKeyPath.substr(compoundKeysPropertyName.length + 1);
@@ -22928,8 +23065,8 @@ function removeInlineCompoundKey(value) {
 
 function encodeCompoundKey(key) {
     // Validate and encode the key
-    _Key2.default.convertValueToKey(key);
-    key = _Key2.default.encode(key);
+    Key.convertValueToKeyRethrowingAndIfInvalid(key);
+    key = Key.encode(key);
 
     // Prepend the "__$$compoundKey." prefix
     key = compoundKeysPropertyName + '.' + key;
@@ -22945,7 +23082,7 @@ function decodeCompoundKey(key) {
     key = key.substr(compoundKeysPropertyName.length + 1);
 
     // Decode the key
-    key = _Key2.default.decode(key);
+    key = Key.decode(key);
     return key;
 }
 
@@ -22959,7 +23096,7 @@ function validateKeyLength(key) {
 exports.default = polyfill;
 module.exports = exports['default'];
 
-},{"./DOMException":382,"./Key":394}],400:[function(require,module,exports){
+},{"./DOMException":398,"./Key":410}],416:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -22981,6 +23118,8 @@ var _IDBVersionChangeEvent2 = _interopRequireDefault(_IDBVersionChangeEvent);
 var _IDBCursor = require('./IDBCursor');
 
 var _IDBRequest = require('./IDBRequest');
+
+var _DOMException = require('./DOMException');
 
 var _IDBFactory = require('./IDBFactory');
 
@@ -23089,6 +23228,8 @@ function setGlobalVars(idb, initialConfig) {
                     Object.setPrototypeOf(_IDBRequest.IDBRequest, ShimEventTarget);
                     Object.setPrototypeOf(_IDBTransaction2.default, ShimEventTarget);
                     Object.setPrototypeOf(_IDBVersionChangeEvent2.default, ShimEvent);
+                    Object.setPrototypeOf(_DOMException.ShimDOMException, Error);
+                    Object.setPrototypeOf(_DOMException.ShimDOMException.prototype, Error.prototype);
                 }
                 [['indexedDB', _IDBFactory.shimIndexedDB], ['IDBFactory', shimIDBFactory], ['IDBDatabase', _IDBDatabase2.default], ['IDBObjectStore', _IDBObjectStore2.default], ['IDBIndex', _IDBIndex2.default], ['IDBTransaction', _IDBTransaction2.default], ['IDBCursor', _IDBCursor.IDBCursor], ['IDBCursorWithValue', _IDBCursor.IDBCursorWithValue], ['IDBKeyRange', _IDBKeyRange2.default], ['IDBRequest', _IDBRequest.IDBRequest], ['IDBOpenDBRequest', _IDBRequest.IDBOpenDBRequest], ['IDBVersionChangeEvent', _IDBVersionChangeEvent2.default]].forEach(function (_ref) {
                     var _ref2 = _slicedToArray(_ref, 2),
@@ -23181,25 +23322,19 @@ exports.default = setGlobalVars;
 module.exports = exports['default'];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./CFG":381,"./IDBCursor":385,"./IDBDatabase":386,"./IDBFactory":387,"./IDBIndex":388,"./IDBKeyRange":389,"./IDBObjectStore":390,"./IDBRequest":391,"./IDBTransaction":392,"./IDBVersionChangeEvent":393,"./polyfill":399,"babel-polyfill":3}],401:[function(require,module,exports){
+},{"./CFG":397,"./DOMException":398,"./IDBCursor":401,"./IDBDatabase":402,"./IDBFactory":403,"./IDBIndex":404,"./IDBKeyRange":405,"./IDBObjectStore":406,"./IDBRequest":407,"./IDBTransaction":408,"./IDBVersionChangeEvent":409,"./polyfill":415,"babel-polyfill":2}],417:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.enforceRange = exports.isValidKeyPath = exports.defineReadonlyProperties = exports.throwIfNotClonable = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlLIKEEscape = exports.escapeIndexNameForKeyColumn = exports.escapeIndexNameForSQL = exports.escapeStoreNameForSQL = exports.unescapeDatabaseNameForSQLAndFiles = exports.escapeDatabaseNameForSQLAndFiles = exports.quote = exports.unescapeSQLiteResponse = exports.escapeSQLiteStatement = undefined;
+exports.convertToSequenceDOMString = exports.enforceRange = exports.isValidKeyPath = exports.defineReadonlyProperties = exports.isIterable = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlQuote = exports.sqlLIKEEscape = exports.escapeIndexNameForSQLKeyColumn = exports.escapeIndexNameForSQL = exports.escapeStoreNameForSQL = exports.unescapeDatabaseNameForSQLAndFiles = exports.escapeDatabaseNameForSQLAndFiles = exports.unescapeSQLiteResponse = exports.escapeSQLiteStatement = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-var _DOMException = require('./DOMException');
 
 var _CFG = require('./CFG');
 
 var _CFG2 = _interopRequireDefault(_CFG);
-
-var _cyclonejs = require('cyclonejs');
-
-var _cyclonejs2 = _interopRequireDefault(_cyclonejs);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -23226,7 +23361,7 @@ function escapeSQLiteStatement(arg) {
     return arg.replace(/\^/g, '^^').replace(/\0/g, '^0');
 }
 function unescapeSQLiteResponse(arg) {
-    return arg.replace(/^0/g, '\0').replace(/\^\^/g, '^');
+    return arg.replace(/\^0/g, '\0').replace(/\^\^/g, '^');
 }
 
 function sqlEscape(arg) {
@@ -23238,7 +23373,7 @@ function sqlEscape(arg) {
     return arg.replace(/"/g, '""');
 }
 
-function quote(arg) {
+function sqlQuote(arg) {
     return '"' + sqlEscape(arg) + '"';
 }
 
@@ -23288,14 +23423,14 @@ function unescapeDatabaseNameForSQLAndFiles(db) {
 }
 
 function escapeStoreNameForSQL(store) {
-    return quote('S' + escapeNameForSQLiteIdentifier(store));
+    return sqlQuote('S' + escapeNameForSQLiteIdentifier(store));
 }
 
 function escapeIndexNameForSQL(index) {
-    return quote('I' + escapeNameForSQLiteIdentifier(index));
+    return sqlQuote('I' + escapeNameForSQLiteIdentifier(index));
 }
 
-function escapeIndexNameForKeyColumn(index) {
+function escapeIndexNameForSQLKeyColumn(index) {
     return 'I' + escapeNameForSQLiteIdentifier(index);
 }
 
@@ -23318,7 +23453,7 @@ function isDate(obj) {
 }
 
 function isBlob(obj) {
-    return isObj(obj) && typeof obj.size === 'number' && typeof obj.slice === 'function';
+    return isObj(obj) && typeof obj.size === 'number' && typeof obj.slice === 'function' && !('lastModified' in obj);
 }
 
 function isRegExp(obj) {
@@ -23326,12 +23461,12 @@ function isRegExp(obj) {
 }
 
 function isFile(obj) {
-    return isObj(obj) && typeof obj.name === 'string' && isBlob(obj);
+    return isObj(obj) && typeof obj.name === 'string' && typeof obj.slice === 'function' && 'lastModified' in obj;
 }
 
 /*
-// Todo: Uncomment and use with ArrayBuffer encoding/decoding when ready
-function isArrayBufferOrView (obj) {
+// Todo Binary: Uncomment and use with ArrayBuffer encoding/decoding when ready
+function isBinary (obj) {
     return isObj(obj) && typeof obj.byteLength === 'number' && (
         typeof obj.slice === 'function' || // `TypedArray` (view on buffer) or `ArrayBuffer`
         typeof obj.getFloat64 === 'function' // `DataView` (view on buffer)
@@ -23339,19 +23474,8 @@ function isArrayBufferOrView (obj) {
 }
 */
 
-function isNotClonable(value) {
-    try {
-        _cyclonejs2.default.clone(value);
-        return false;
-    } catch (err) {
-        return true;
-    }
-}
-
-function throwIfNotClonable(value, errMsg) {
-    if (isNotClonable(value)) {
-        throw (0, _DOMException.createDOMException)('DataCloneError', errMsg);
-    }
+function isIterable(obj) {
+    return isObj(obj) && typeof obj[Symbol.iterator] === 'function';
 }
 
 function defineReadonlyProperties(obj, props) {
@@ -23401,9 +23525,8 @@ function isValidKeyPath(keyPath) {
     return isValidKeyPathString(keyPath) || Array.isArray(keyPath) && keyPath.length &&
     // Convert array from sparse to dense http://www.2ality.com/2012/06/dense-arrays.html
     Array.apply(null, keyPath).every(function (kpp) {
-        // Todo: Confirm as per W3C tests that sequence<DOMString> implies `toString()`
         // See also https://heycam.github.io/webidl/#idl-DOMString
-        return isValidKeyPathString(kpp.toString());
+        return isValidKeyPathString(kpp); // Should already be converted to string by here
     });
 }
 
@@ -23433,25 +23556,40 @@ function enforceRange(number, type) {
     return number;
 }
 
+function ToString(o) {
+    return '' + o; // `String()` will not throw with Symbols
+}
+
+function convertToSequenceDOMString(val) {
+    // Per <https://heycam.github.io/webidl/#idl-sequence>, converting to a sequence works with iterables
+    if (isIterable(val)) {
+        // We don't want `Array.from` to convert primitives
+        // Per <https://heycam.github.io/webidl/#es-DOMString>, converting to a `DOMString` to be via `ToString`: https://tc39.github.io/ecma262/#sec-tostring
+        return Array.from(val).map(ToString);
+    }
+    return val;
+}
+
 exports.escapeSQLiteStatement = escapeSQLiteStatement;
 exports.unescapeSQLiteResponse = unescapeSQLiteResponse;
-exports.quote = quote;
 exports.escapeDatabaseNameForSQLAndFiles = escapeDatabaseNameForSQLAndFiles;
 exports.unescapeDatabaseNameForSQLAndFiles = unescapeDatabaseNameForSQLAndFiles;
 exports.escapeStoreNameForSQL = escapeStoreNameForSQL;
 exports.escapeIndexNameForSQL = escapeIndexNameForSQL;
-exports.escapeIndexNameForKeyColumn = escapeIndexNameForKeyColumn;
+exports.escapeIndexNameForSQLKeyColumn = escapeIndexNameForSQLKeyColumn;
 exports.sqlLIKEEscape = sqlLIKEEscape;
+exports.sqlQuote = sqlQuote;
 exports.instanceOf = instanceOf;
 exports.isObj = isObj;
 exports.isDate = isDate;
 exports.isBlob = isBlob;
 exports.isRegExp = isRegExp;
 exports.isFile = isFile;
-exports.throwIfNotClonable = throwIfNotClonable;
+exports.isIterable = isIterable;
 exports.defineReadonlyProperties = defineReadonlyProperties;
 exports.isValidKeyPath = isValidKeyPath;
 exports.enforceRange = enforceRange;
+exports.convertToSequenceDOMString = convertToSequenceDOMString;
 
-},{"./CFG":381,"./DOMException":382,"cyclonejs":299}]},{},[397])(397)
+},{"./CFG":397}]},{},[413])(413)
 });

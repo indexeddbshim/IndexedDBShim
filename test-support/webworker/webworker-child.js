@@ -27,6 +27,7 @@ const XMLHttpRequest = require('xmlhttprequest');
 const Worker = require('./webworker');
 const URL = require('js-polyfills/url');
 // const isDateObject = require('is-date-object'); // Not needed in worker tests as in main thread tests
+const Blob = require('w3c-blob'); // Needed by Node; uses native if available (browser)
 
 /*
 const permittedProtocols;
@@ -311,11 +312,13 @@ workerCtx.Object[Symbol.hasInstance] = function (inst) { return inst && typeof i
 
 workerCtx.Function = Function; // interfaces.js with check for `DOMStringList`'s prototype being the same Function.prototype
 
+workerCtx.Blob = Blob;
+
 // Todo: A good Worker polyfill would implement these as possible and
 //   if exposing we should do so; for W3C IndexedDB or IndexedDB-related tests,
 //   however, they do not currently require a working implementation except to
 //   check that they exist
-['SharedWorker', 'MessagePort', 'MessageEvent', 'WorkerNavigator', 'MessageChannel', 'WorkerLocation', 'ImageData', 'ImageBitmap', 'CanvasPath', 'Path2D', 'PromiseRejectionEvent', 'EventSource', 'WebSocket', 'CloseEvent', 'BroadcastChannel', 'XMLHttpRequestEventTarget', 'XMLHttpRequestUpload', 'ProgressEvent', 'FormData', 'File', 'Blob', 'FileList', 'FileReader', 'FileReaderSync', 'ErrorEvent', 'ReadableStream', 'WritableStream', 'ByteLengthQueuingStrategy', 'CountQueuingStrategy'].forEach((prop) => {
+['SharedWorker', 'MessagePort', 'MessageEvent', 'WorkerNavigator', 'MessageChannel', 'WorkerLocation', 'ImageData', 'ImageBitmap', 'CanvasPath', 'Path2D', 'PromiseRejectionEvent', 'EventSource', 'WebSocket', 'CloseEvent', 'BroadcastChannel', 'XMLHttpRequestEventTarget', 'XMLHttpRequestUpload', 'ProgressEvent', 'FormData', 'File', 'FileList', 'FileReader', 'FileReaderSync', 'ErrorEvent', 'ReadableStream', 'WritableStream', 'ByteLengthQueuingStrategy', 'CountQueuingStrategy'].forEach((prop) => {
     workerCtx[prop] = function () {
         throw new Error(prop + ' not implemented');
     };

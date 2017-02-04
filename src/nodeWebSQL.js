@@ -1,5 +1,5 @@
 import customOpenDatabase from 'websql/custom';
-import SQLiteDatabase from '../node_modules/websql/lib/sqlite/SQLiteDatabase';
+import SQLiteDatabase from 'websql/lib/sqlite/SQLiteDatabase';
 import CFG from './CFG';
 
 function wrappedSQLiteDatabase (name) {

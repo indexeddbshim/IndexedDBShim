@@ -1,6 +1,4 @@
-import {createDOMException} from './DOMException';
 import CFG from './CFG';
-import CY from 'cyclonejs';
 
 function escapeNameForSQLiteIdentifier (arg) {
     // http://stackoverflow.com/a/6701665/271577
@@ -25,7 +23,7 @@ function escapeSQLiteStatement (arg) {
     return arg.replace(/\^/g, '^^').replace(/\0/g, '^0');
 }
 function unescapeSQLiteResponse (arg) {
-    return arg.replace(/^0/g, '\0').replace(/\^\^/g, '^');
+    return arg.replace(/\^0/g, '\0').replace(/\^\^/g, '^');
 }
 
 function sqlEscape (arg) {
@@ -37,7 +35,7 @@ function sqlEscape (arg) {
     return arg.replace(/"/g, '""');
 }
 
-function quote (arg) {
+function sqlQuote (arg) {
     return '"' + sqlEscape(arg) + '"';
 }
 
@@ -89,14 +87,14 @@ function unescapeDatabaseNameForSQLAndFiles (db) {
 }
 
 function escapeStoreNameForSQL (store) {
-    return quote('S' + escapeNameForSQLiteIdentifier(store));
+    return sqlQuote('S' + escapeNameForSQLiteIdentifier(store));
 }
 
 function escapeIndexNameForSQL (index) {
-    return quote('I' + escapeNameForSQLiteIdentifier(index));
+    return sqlQuote('I' + escapeNameForSQLiteIdentifier(index));
 }
 
-function escapeIndexNameForKeyColumn (index) {
+function escapeIndexNameForSQLKeyColumn (index) {
     return 'I' + escapeNameForSQLiteIdentifier(index);
 }
 
@@ -119,7 +117,7 @@ function isDate (obj) {
 }
 
 function isBlob (obj) {
-    return isObj(obj) && typeof obj.size === 'number' && typeof obj.slice === 'function';
+    return isObj(obj) && typeof obj.size === 'number' && typeof obj.slice === 'function' && !('lastModified' in obj);
 }
 
 function isRegExp (obj) {
@@ -127,12 +125,12 @@ function isRegExp (obj) {
 }
 
 function isFile (obj) {
-    return isObj(obj) && typeof obj.name === 'string' && isBlob(obj);
+    return isObj(obj) && typeof obj.name === 'string' && typeof obj.slice === 'function' && 'lastModified' in obj;
 }
 
 /*
-// Todo: Uncomment and use with ArrayBuffer encoding/decoding when ready
-function isArrayBufferOrView (obj) {
+// Todo Binary: Uncomment and use with ArrayBuffer encoding/decoding when ready
+function isBinary (obj) {
     return isObj(obj) && typeof obj.byteLength === 'number' && (
         typeof obj.slice === 'function' || // `TypedArray` (view on buffer) or `ArrayBuffer`
         typeof obj.getFloat64 === 'function' // `DataView` (view on buffer)
@@ -140,19 +138,8 @@ function isArrayBufferOrView (obj) {
 }
 */
 
-function isNotClonable (value) {
-    try {
-        CY.clone(value);
-        return false;
-    } catch (err) {
-        return true;
-    }
-}
-
-function throwIfNotClonable (value, errMsg) {
-    if (isNotClonable(value)) {
-        throw createDOMException('DataCloneError', errMsg);
-    }
+function isIterable (obj) {
+    return isObj(obj) && typeof obj[Symbol.iterator] === 'function';
 }
 
 function defineReadonlyProperties (obj, props) {
@@ -204,9 +191,8 @@ function isValidKeyPath (keyPath) {
         Array.isArray(keyPath) && keyPath.length &&
             // Convert array from sparse to dense http://www.2ality.com/2012/06/dense-arrays.html
             Array.apply(null, keyPath).every(function (kpp) {
-                // Todo: Confirm as per W3C tests that sequence<DOMString> implies `toString()`
                 // See also https://heycam.github.io/webidl/#idl-DOMString
-                return isValidKeyPathString(kpp.toString());
+                return isValidKeyPathString(kpp); // Should already be converted to string by here
             })
     );
 }
@@ -236,9 +222,23 @@ function enforceRange (number, type) {
     return number;
 }
 
-export {escapeSQLiteStatement, unescapeSQLiteResponse, quote,
+function ToString (o) {
+    return '' + o; // `String()` will not throw with Symbols
+}
+
+function convertToSequenceDOMString (val) {
+    // Per <https://heycam.github.io/webidl/#idl-sequence>, converting to a sequence works with iterables
+    if (isIterable(val)) { // We don't want `Array.from` to convert primitives
+        // Per <https://heycam.github.io/webidl/#es-DOMString>, converting to a `DOMString` to be via `ToString`: https://tc39.github.io/ecma262/#sec-tostring
+        return Array.from(val).map(ToString);
+    }
+    return val;
+}
+
+export {escapeSQLiteStatement, unescapeSQLiteResponse,
     escapeDatabaseNameForSQLAndFiles, unescapeDatabaseNameForSQLAndFiles,
-    escapeStoreNameForSQL, escapeIndexNameForSQL, escapeIndexNameForKeyColumn,
-    sqlLIKEEscape, instanceOf,
-    isObj, isDate, isBlob, isRegExp, isFile, throwIfNotClonable,
-    defineReadonlyProperties, isValidKeyPath, enforceRange};
+    escapeStoreNameForSQL, escapeIndexNameForSQL, escapeIndexNameForSQLKeyColumn,
+    sqlLIKEEscape, sqlQuote,
+    instanceOf,
+    isObj, isDate, isBlob, isRegExp, isFile, isIterable,
+    defineReadonlyProperties, isValidKeyPath, enforceRange, convertToSequenceDOMString};

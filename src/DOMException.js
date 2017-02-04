@@ -8,50 +8,174 @@ function createNativeDOMException (name, message) {
     return new DOMException.prototype.constructor(message, name || 'DOMException');
 }
 
+const codes = { // From web-platform-tests testharness.js name_code_map (though not in new spec)
+    IndexSizeError: 1,
+    HierarchyRequestError: 3,
+    WrongDocumentError: 4,
+    InvalidCharacterError: 5,
+    NoModificationAllowedError: 7,
+    NotFoundError: 8,
+    NotSupportedError: 9,
+    InUseAttributeError: 10,
+    InvalidStateError: 11,
+    SyntaxError: 12,
+    InvalidModificationError: 13,
+    NamespaceError: 14,
+    InvalidAccessError: 15,
+    TypeMismatchError: 17,
+    SecurityError: 18,
+    NetworkError: 19,
+    AbortError: 20,
+    URLMismatchError: 21,
+    QuotaExceededError: 22,
+    TimeoutError: 23,
+    InvalidNodeTypeError: 24,
+    DataCloneError: 25,
+
+    EncodingError: 0,
+    NotReadableError: 0,
+    UnknownError: 0,
+    ConstraintError: 0,
+    DataError: 0,
+    TransactionInactiveError: 0,
+    ReadOnlyError: 0,
+    VersionError: 0,
+    OperationError: 0,
+    NotAllowedError: 0
+};
+
+const legacyCodes = {
+    INDEX_SIZE_ERR: 1,
+    DOMSTRING_SIZE_ERR: 2,
+    HIERARCHY_REQUEST_ERR: 3,
+    WRONG_DOCUMENT_ERR: 4,
+    INVALID_CHARACTER_ERR: 5,
+    NO_DATA_ALLOWED_ERR: 6,
+    NO_MODIFICATION_ALLOWED_ERR: 7,
+    NOT_FOUND_ERR: 8,
+    NOT_SUPPORTED_ERR: 9,
+    INUSE_ATTRIBUTE_ERR: 10,
+    INVALID_STATE_ERR: 11,
+    SYNTAX_ERR: 12,
+    INVALID_MODIFICATION_ERR: 13,
+    NAMESPACE_ERR: 14,
+    INVALID_ACCESS_ERR: 15,
+    VALIDATION_ERR: 16,
+    TYPE_MISMATCH_ERR: 17,
+    SECURITY_ERR: 18,
+    NETWORK_ERR: 19,
+    ABORT_ERR: 20,
+    URL_MISMATCH_ERR: 21,
+    QUOTA_EXCEEDED_ERR: 22,
+    TIMEOUT_ERR: 23,
+    INVALID_NODE_TYPE_ERR: 24,
+    DATA_CLONE_ERR: 25
+};
+
+function createNonNativeDOMExceptionClass () {
+    function DOMException (message, name) {
+        // const err = Error.prototype.constructor.call(this, message); // Any use to this? Won't set this.message
+        this[Symbol.toStringTag] = 'DOMException';
+        this._code = name in codes ? codes[name] : (legacyCodes[name] || 0);
+        this._name = name || 'Error';
+        this._message = message === undefined ? '' : ('' + message); // Not String() which converts Symbols
+        Object.defineProperty(this, 'code', {
+            configurable: true,
+            enumerable: true,
+            writable: true,
+            value: this._code
+        });
+        if (name !== undefined) {
+            Object.defineProperty(this, 'name', {
+                configurable: true,
+                enumerable: true,
+                writable: true,
+                value: this._name
+            });
+        }
+        if (message !== undefined) {
+            Object.defineProperty(this, 'message', {
+                configurable: true,
+                enumerable: false,
+                writable: true,
+                value: this._message
+            });
+        }
+    }
+
+    // Necessary for W3C tests which complains if `DOMException` has properties on its "own" prototype
+    const DummyDOMException = function DOMException () {};
+    DummyDOMException.prototype = new Error(); // Intended for subclassing
+    ['name', 'message'].forEach((prop) => {
+        Object.defineProperty(DummyDOMException.prototype, prop, {
+            enumerable: true,
+            get: function () {
+                if (!(this instanceof DOMException ||
+                    this instanceof DummyDOMException ||
+                    this instanceof Error)) {
+                    throw new TypeError('Illegal invocation');
+                }
+                return this['_' + prop];
+            }
+        });
+    });
+    // DOMException uses the same `toString` as `Error`
+    Object.defineProperty(DummyDOMException.prototype, 'code', {
+        configurable: true,
+        enumerable: true,
+        get: function () {
+            throw new TypeError('Illegal invocation');
+        }
+    });
+    DOMException.prototype = new DummyDOMException();
+
+    DOMException.prototype[Symbol.toStringTag] = 'DOMExceptionPrototype';
+    Object.defineProperty(DOMException, 'prototype', {
+        writable: false
+    });
+
+    Object.keys(codes).forEach((codeName) => {
+        Object.defineProperty(DOMException.prototype, codeName, {
+            enumerable: true,
+            configurable: false,
+            value: codes[codeName]
+        });
+        Object.defineProperty(DOMException, codeName, {
+            enumerable: true,
+            configurable: false,
+            value: codes[codeName]
+        });
+    });
+    Object.keys(legacyCodes).forEach((codeName) => {
+        Object.defineProperty(DOMException.prototype, codeName, {
+            enumerable: true,
+            configurable: false,
+            value: legacyCodes[codeName]
+        });
+        Object.defineProperty(DOMException, codeName, {
+            enumerable: true,
+            configurable: false,
+            value: legacyCodes[codeName]
+        });
+    });
+    Object.defineProperty(DOMException.prototype, 'constructor', {
+        writable: true,
+        configurable: true,
+        enumerable: false,
+        value: DOMException
+    });
+
+    return DOMException;
+}
+
+const ShimNonNativeDOMException = createNonNativeDOMExceptionClass();
+
 /**
  * Creates a generic Error object
  * @returns {Error}
  */
-function createError (name, message) {
-    const e = new Error(message); // DOMException uses the same `toString` as `Error`, so no need to add
-    e.name = name || 'DOMException';
-    e.code = { // From web-platform-tests testharness.js name_code_map (though not in new spec)
-        IndexSizeError: 1,
-        HierarchyRequestError: 3,
-        WrongDocumentError: 4,
-        InvalidCharacterError: 5,
-        NoModificationAllowedError: 7,
-        NotFoundError: 8,
-        NotSupportedError: 9,
-        InUseAttributeError: 10,
-        InvalidStateError: 11,
-        SyntaxError: 12,
-        InvalidModificationError: 13,
-        NamespaceError: 14,
-        InvalidAccessError: 15,
-        TypeMismatchError: 17,
-        SecurityError: 18,
-        NetworkError: 19,
-        AbortError: 20,
-        URLMismatchError: 21,
-        QuotaExceededError: 22,
-        TimeoutError: 23,
-        InvalidNodeTypeError: 24,
-        DataCloneError: 25,
-
-        EncodingError: 0,
-        NotReadableError: 0,
-        UnknownError: 0,
-        ConstraintError: 0,
-        DataError: 0,
-        TransactionInactiveError: 0,
-        ReadOnlyError: 0,
-        VersionError: 0,
-        OperationError: 0,
-        NotAllowedError: 0
-    }[name];
-    e.message = message;
-    return e;
+function createNonNativeDOMException (name, message) {
+    return new ShimNonNativeDOMException(message, name);
 }
 
 /**
@@ -150,10 +274,10 @@ if (useNativeDOMException) {
         return createNativeDOMException(name, message);
     };
 } else {
-    ShimDOMException = Error;
+    ShimDOMException = ShimNonNativeDOMException;
     createDOMException = function (name, message, error) {
         logError(name, message, error);
-        return createError(name, message);
+        return createNonNativeDOMException(name, message);
     };
 }
 

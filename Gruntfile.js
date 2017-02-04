@@ -309,6 +309,7 @@ module.exports = function (grunt) {
     grunt.registerTask('build-browser', ['eslint', 'browserify:browser', 'uglify:browser']);
     grunt.registerTask('build-browserNoninvasive', ['eslint', 'browserify:browserNoninvasive', 'uglify:browserNoninvasive']);
     grunt.registerTask('build-node', ['eslint', 'browserify:node', 'uglify:node']);
+    grunt.registerTask('build-unicode', ['eslint', 'browserify:unicode', 'uglify:unicode']);
     grunt.registerTask('build-unicodeNode', ['eslint', 'browserify:unicodeNode', 'uglify:unicodeNode']);
     grunt.registerTask('build', ['eslint', 'browserify', 'uglify']);
 
@@ -342,6 +343,7 @@ module.exports = function (grunt) {
     grunt.registerTask('dev-browser', ['build-browser', 'connect', 'watch:browser']);
     grunt.registerTask('dev-browserNoninvasive', ['build-browserNoninvasive', 'connect', 'watch:browserNoninvasive']);
     grunt.registerTask('dev-node', ['build-node', 'connect', 'watch:node']);
+    grunt.registerTask('dev-unicode', ['build-unicode', 'connect', 'watch:unicode']);
     grunt.registerTask('dev-unicodeNode', ['build-unicodeNode', 'connect', 'watch:unicodeNode']);
 
     grunt.event.on('qunit.error.onError', function (msg, trace) {

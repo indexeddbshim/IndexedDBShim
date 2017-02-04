@@ -4,11 +4,12 @@ const path = require('path');
 const {goodFiles, badFiles, notRunning, timeout} = require('./node-good-bad-files');
 const vm = require('vm');
 const jsdom = require('jsdom');
-const CY = require('cyclonejs');
+const CY = require('cyclonejs'); // Todo: Replace this with Sca (but need to make requireable)
 const Worker = require('./webworker/webworker'); // Todo: We could export this `Worker` publicly for others looking for a Worker polyfill with IDB support
 const XMLHttpRequest = require('xmlhttprequest');
 const URL = require('js-polyfills/url');
 const isDateObject = require('is-date-object');
+const Blob = require('w3c-blob'); // Needed by Node; uses native if available (browser)
 
 // CONFIG
 const vmTimeout = 40000; // Time until we give up on the vm (increasing to 40000 didn't make a difference on coverage in earlier versions)
@@ -62,6 +63,9 @@ process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
 });
 */
+function exit () {
+    process.exit();
+}
 function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, item = 0) {
     shimNS.fileName = jsFiles[item];
     shimNS.finished = () => {
@@ -129,10 +133,10 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                 fs.writeFile(jsonOutputPath, JSON.stringify(shimNS.jsonOutput, null, 2), function (err) {
                     if (err) { console.log(err); return; }
                     console.log('Saved to ' + jsonOutputPath);
-                    process.exit();
+                    exit();
                 });
             } else {
-                process.exit();
+                exit();
             }
         }
         finishedCheck();
@@ -149,7 +153,8 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                 '_interface-objects-004.js'
             ] : [
                 'bindings-inject-key.js',
-                'keypath-exceptions.js'
+                'keypath-exceptions.js',
+                'idb-binary-key-roundtrip.js' // https://github.com/w3c/web-platform-tests/issues/4817
             ];
         if (excluded.includes(shimNS.fileName) || (!workers && workerFileRegex.test(shimNS.fileName))) {
             excludedCount++;
@@ -235,7 +240,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                             //   some of these do incur a significant performance cost which could speed up the testing process if avoided,
                             //   though it could also make the tests more fragile to changes
                             // indexeddbshimNonUnicode(window);
-                            if (['interfaces.js', 'interfaces.worker.js'].includes(shimNS.fileName)) {
+                            if (['interfaces.js', 'interfaces.worker.js', '../non-indexedDB/exceptions.js'].includes(shimNS.fileName)) {
                                 indexeddbshim(window, {addNonIDBGlobals: true, fullIDLSupport: true});
                             } else {
                                 indexeddbshim(window, {addNonIDBGlobals: true});
@@ -244,17 +249,63 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                             // Though we could expose `DOMStringList` through the shim, we want to avoid automatically shadowing it in case it may exist already in the browser
                             // Due to <https://github.com/axemclion/IndexedDBShim/issues/280>, this gets converted to a data
                             //   descriptor, but unlike `indexedDB`, this is of no consequence to testing
-                            Object.defineProperty(window, 'DOMStringList', {
-                                enumerable: false,
-                                configurable: true,
-                                get: function () {
-                                    return window.ShimDOMStringList;
-                                }
+                            // Todo: Should make this possible in `setGlobalVars`
+                            ['DOMStringList'
+                                // 'Event', 'CustomEvent', 'EventTarget' // These have no effect apparently due to https://github.com/tmpvar/jsdom/issues/1720#issuecomment-279665105
+                            ].forEach((prop) => {
+                                Object.defineProperty(window, prop, {
+                                    enumerable: false,
+                                    configurable: true,
+                                    get: function () {
+                                        return window['Shim' + prop];
+                                    }
+                                });
+                                Object.defineProperty(window[prop], 'prototype', {
+                                    writable: false
+                                });
+                                window[prop].prototype[Symbol.toStringTag] = prop + 'Prototype';
                             });
-                            window.Event = window.ShimEvent;
-                            window.CustomEvent = window.ShimCustomEvent;
-                            window.EventTarget = window.ShimEventTarget;
+                            // These overwrite jsdom's objects as needed by test checks
+                            window.EventTarget = window.ShimEventTarget; // Needed by interfaces.js
+                            window.Event = window.ShimEvent; // Needed by idbfactory_open12.js
+                            // window.CustomEvent = window.ShimCustomEvent; // Not needed?
+
+                            Object.defineProperty(window.CustomEvent.prototype, 'constructor', {
+                                enumerable: false
+                            });
+                            Object.setPrototypeOf(window.CustomEvent, window.Event);
                             window.DOMException = window.ShimDOMException;
+
+                            if (['../non-indexedDB/exceptions.js', '../non-indexedDB/constructor-object.js'].includes(shimNS.fileName)) {
+                                // These changes are for exceptions tests
+                                const _appendChild = window.document.documentElement.appendChild.bind(window.document.documentElement);
+                                window.document.documentElement.appendChild = function (...args) {
+                                    if (args[0] === window.document) { // exceptions.js compares the DOMException thrown here with the global DOMException object
+                                        throw new window.ShimDOMException('Hierarchy request error', 'HierarchyRequestError');
+                                    }
+                                    return _appendChild(...args);
+                                };
+                                const _bodyAppendChild = window.document.body.appendChild.bind(window.document.body);
+                                window.document.body.appendChild = function (...args) {
+                                    const el = args[0];
+                                    if (el.localName.toLowerCase() === 'iframe') {
+                                        const _onload = el.onload;
+                                        el.onload = function (e) {
+                                            const _appendChild = el.contentDocument.documentElement.appendChild.bind(el.contentDocument.documentElement);
+                                            el.contentWindow.DOMException = window.ShimDOMException;
+                                            el.contentDocument.documentElement.appendChild = function (...args) {
+                                                if (args[0] === el.contentDocument) {
+                                                    throw new window.ShimDOMException('Hierarchy request error', 'HierarchyRequestError');
+                                                }
+                                                return _appendChild(...args);
+                                            };
+                                            return _onload(e);
+                                        };
+                                    }
+                                    return _bodyAppendChild(...args);
+                                };
+                                window.Error = window.indexedDB.modules.Error; // For comparison of DOMException by constructor-object.js test
+                            }
 
                             // window.XMLHttpRequest = XMLHttpRequest({basePath: 'http://localhost:8000/IndexedDB/'}); // Todo: We should support this too
                             window.XMLHttpRequest = XMLHttpRequest({basePath});
@@ -266,6 +317,15 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                             window.Object[Symbol.hasInstance] = function (inst) { return inst && typeof inst === 'object'; };
 
                             window.Function = Function; // interfaces.js with check for `DOMStringList`'s prototype being the same Function.prototype
+
+                            // Not deleting per https://github.com/tmpvar/jsdom/issues/1720#issuecomment-279665105
+                            // Needed for avoiding test non-completion in '../non-indexedDB/interface-objects.js'
+                            Object.defineProperty(window, 'TreeWalker', {
+                                enumerable: false,
+                                writable: true,
+                                configurable: true,
+                                value: function () {}
+                            });
 
                             // We need to overcome the `value.js` test's `instanceof` checks as our IDB object is injected rather than inline
                             // jsdom didn't like us overriding directly or only operating on them as `window` properties
@@ -299,6 +359,10 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                                 // basePath: path.join(__dirname, 'js')
                                 rootPath
                             });
+
+                            window.Blob = Blob;
+                            window.File = function File () {}; // Avoid test non-completion (but should still fail)
+
                             shimNS.window = window;
 
                             vm.runInNewContext(allContent, sandboxObj, {
@@ -375,8 +439,11 @@ case 'domstringlist':
     readAndEvaluateFiles(null, ['domstringlist.js']);
     break;
 case 'events': case 'event':
-    // Tests `EventTarget` shim
-    readAndEvaluateFiles(null, ['../non-indexedDB/__event.js']);
+    // Tests `EventTarget`, etc. shims
+    readAndEvaluateFiles(null, ['../non-indexedDB/__event-interface.js', '../non-indexedDB/interface-objects.js']);
+    break;
+case 'exceptions': case 'exception': case 'domexception':
+    readAndEvaluateFiles(null, ['../non-indexedDB/DOMException-constructor.js', '../non-indexedDB/DOMException-constants.js', '../non-indexedDB/exceptions.js', '../non-indexedDB/constructor-object.js']);
     break;
 case 'workers': case 'worker':
     fs.readdir(dirPath, function (err, jsFiles) {
