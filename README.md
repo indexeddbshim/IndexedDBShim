@@ -5,8 +5,8 @@
 [![devDependencies](https://img.shields.io/david/dev/axemclion/indexeddbshim.svg)](https://david-dm.org/axemclion/indexeddbshim?type=dev)
 [![npm](http://img.shields.io/npm/v/indexeddbshim.svg)](https://www.npmjs.com/package/indexeddbshim)
 [![Bower](http://img.shields.io/bower/v/IndexedDBShim.svg)](http://bower.io/search/?q=IndexedDBShim)
-[![License](https://img.shields.io/npm/l/indexeddbshim.svg)](LICENSE-APACHE)
 [![CDNJS](https://img.shields.io/cdnjs/v/IndexedDBShim.svg)](https://cdnjs.com/libraries/IndexedDBShim)
+[![License](https://img.shields.io/npm/l/indexeddbshim.svg)](LICENSE-APACHE)
 
 |[Live Demo!](http://nparashuram.com/IndexedDBShim/tests/index.html?useShim=true)
 |------------------------------------------------------------
