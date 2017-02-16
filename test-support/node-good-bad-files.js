@@ -76,8 +76,14 @@ LOWER PRIORITY ISSUES (NEXT RELEASE?)
 - `idb-binary-key-roundtrip.js`
 - `idb-binary-key-detached.js`
 
-2. SHARED AND SERVICE WORKERS
+2. BLOB/FILE
+- `keypath-special-identifiers.js`
+
+3. SHARED AND SERVICE WORKERS
 - Need to implement as Node shims, stop disabling these tests in node-idb-test.js, and run
+
+4. CLONING
+- `keypath-exceptions.js`
 
 // Passing no argument to `node-idb-test.js` will test all of the IndexedDB
 //   tests including some worker tests, but only those within the
