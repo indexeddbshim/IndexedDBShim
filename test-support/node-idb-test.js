@@ -25,6 +25,11 @@ const indexeddbshim = require('../dist/indexeddbshim-UnicodeIdentifiers-node');
 const workerFileRegex = /^(_service-worker-indexeddb\.https\.js|(_interface-objects-)?00\d(\.worker)?\.js)$/;
 // const indexeddbshimNonUnicode = require('../dist/indexeddbshim-node');
 
+// String replacements on code due, e.g., for lagging ES support in Node
+const nodeReplacementHacks = {
+    'idb-binary-key-roundtrip.js': [/(`Binary keys can be supplied using the view type \$\{type\}`),/, '$1'] // https://github.com/w3c/web-platform-tests/issues/4817
+};
+
 const shimNS = {
     colors: require('colors/safe'),
     fileName: '',
@@ -153,8 +158,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                 '_interface-objects-004.js'
             ] : [
                 'bindings-inject-key.js',
-                'keypath-exceptions.js',
-                'idb-binary-key-roundtrip.js' // https://github.com/w3c/web-platform-tests/issues/4817
+                'keypath-exceptions.js'
             ];
         if (excluded.includes(shimNS.fileName) || (!workers && workerFileRegex.test(shimNS.fileName))) {
             excludedCount++;
@@ -165,6 +169,10 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
 
     fs.readFile(path.join(dirPath, shimNS.fileName), 'utf8', function (err, content) {
         if (err) { return console.log(err); }
+
+        if (nodeReplacementHacks[shimNS.fileName]) {
+            content = content.replace(...nodeReplacementHacks[shimNS.fileName]);
+        }
 
         const scripts = [];
         const supported = [

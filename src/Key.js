@@ -189,14 +189,17 @@ const types = {
             return new Date(key.slice(2));
         }
     },
-
-    binary: { // Todo Binary: Support `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
+    binary: { // `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
         encode: function (key) {
-            // collations.indexOf('binary') + '-' + ...;
-            throw new Error('Not yet implemented');
+            return collations.indexOf('binary') + '-' + getCopyBytesHeldByBufferSource(key); // e.g., '255,5,254,0,1,33'
         },
         decode: function (key) {
-            throw new Error('Not yet implemented');
+            // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
+            const arr = JSON.parse('[' + key.slice(2) + ']');
+            const buffer = new ArrayBuffer(arr.length);
+            const uint8 = new Uint8Array(buffer);
+            uint8.set(arr);
+            return buffer;
         }
     }
 };
@@ -291,19 +294,19 @@ function negate (s) {
 }
 
 /**
- * Returns the string "number", "date", "string", or "array" (or "binary" when implemented).
+ * Returns the string "number", "date", "string", "binary", or "array"
  */
 function getKeyType (key) {
     if (Array.isArray(key)) return 'array';
     if (util.isDate(key)) return 'date';
-    // if (util.isBinary(key)) return 'binary'; // Todo Binary: Uncomment when supported
+    if (util.isBinary(key)) return 'binary';
     const keyType = typeof key;
     return ['string', 'number'].includes(keyType) ? keyType : 'invalid';
 }
 
 /**
  * Keys must be strings, numbers (besides NaN), Dates (if value is not NaN),
- *   Arrays (or, once supported, binary) objects
+ *   binary objects or Arrays
  * @param input The key input
  * @param seen An array of already seen keys
  */
@@ -321,9 +324,29 @@ function convertValueToMultiEntryKey (input) {
     return convertValueToKeyValueDecoded(input, null, true, true);
 }
 
+// https://heycam.github.io/webidl/#ref-for-dfn-get-buffer-source-copy-2
+function getCopyBytesHeldByBufferSource (O) {
+    let offset = 0;
+    let length = 0;
+    if (ArrayBuffer.isView(O)) { // Has [[ViewedArrayBuffer]] internal slot
+        const arrayBuffer = O.buffer;
+        if (arrayBuffer === undefined) {
+            throw new TypeError('Could not copy the bytes held by a buffer source as the buffer was undefined.');
+        }
+        offset = O.byteOffset; // [[ByteOffset]] (will also throw as desired if detached)
+        length = O.byteLength; // [[ByteLength]] (will also throw as desired if detached)
+    } else {
+        length = O.byteLength; // [[ArrayBufferByteLength]] on ArrayBuffer (will also throw as desired if detached)
+    }
+    // const octets = new Uint8Array(input);
+    // const octets = types.binary.decode(types.binary.encode(input));
+    return new Uint8Array(O.buffer || O, offset, length);
+}
+
 /**
 * Shortcut utility to avoid returning full keys from `convertValueToKey`
-*   and subsequent need to process in calling code
+*   and subsequent need to process in calling code unless `fullKeys` is
+*   set; may throw
 */
 function convertValueToKeyValueDecoded (input, seen, multiEntry, fullKeys) {
     seen = seen || [];
@@ -338,10 +361,12 @@ function convertValueToKeyValueDecoded (input, seen, multiEntry, fullKeys) {
         return ret;
     } case 'string': {
         return ret;
-    } case 'binary': { // Copy bytes once implemented (not a supported type yet)
-        // May throw
-        return ret;
-    } case 'array': { // May throw once binary is implemented
+    } case 'binary': { // May throw (if detached)
+        // Get a copy of the bytes held by the buffer source
+        // https://heycam.github.io/webidl/#ref-for-dfn-get-buffer-source-copy-2
+        const octets = getCopyBytesHeldByBufferSource(input);
+        return {type: 'binary', value: octets};
+    } case 'array': { // May throw (from binary)
         const len = input.length;
         seen.push(input);
         const keys = [];
@@ -602,9 +627,9 @@ function convertKeyToValue (key) {
     const type = key.type;
     const value = key.value;
     switch (type) {
-    case 'number': case 'string':
+    case 'number': case 'string': {
         return value;
-    case 'array':
+    } case 'array': {
         const array = [];
         const len = value.length;
         let index = 0;
@@ -614,12 +639,16 @@ function convertKeyToValue (key) {
             index++;
         }
         return array;
-    case 'date':
+    } case 'date': {
         return new Date(value);
-    case 'binary': // Todo Binary: Not implemented
-        // eslint-disable-line no-fallthrough
-    case 'invalid':
-    default:
+    } case 'binary': {
+        const len = value.length;
+        const buffer = new ArrayBuffer(len);
+        // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
+        const uint8 = new Uint8Array(buffer, value.byteOffset || 0, value.byteLength);
+        uint8.set(value);
+        return buffer;
+    } case 'invalid': default:
         throw new Error('Bad key');
     }
 }
@@ -629,7 +658,7 @@ function encode (key, inArray) {
     if (key === undefined) {
         return null;
     }
-    // Currently has array, date, number, string and should support "binary"
+    // array, date, number, string, binary (should already have detected "invalid")
     return types[getKeyType(key)].encode(key, inArray);
 }
 function decode (key, inArray) {
@@ -639,8 +668,12 @@ function decode (key, inArray) {
     return types[collations[key.slice(0, 1)]].decode(key, inArray);
 }
 
+function roundTrip (key, inArray) {
+    return decode(encode(key, inArray), inArray);
+}
+
 /* eslint-disable object-property-newline */
-export {encode, decode, convertKeyToValue, convertValueToKeyValueDecoded,
+export {encode, decode, roundTrip, convertKeyToValue, convertValueToKeyValueDecoded,
     convertValueToMultiEntryKeyDecoded,
     convertValueToKey,
     convertValueToMultiEntryKey, convertValueToKeyRethrowingAndIfInvalid,

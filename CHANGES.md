@@ -37,9 +37,9 @@ they were actually changes since a more recent version on `master`.
    report errors synchronously as possible, so either use deprecated
    sync XHR and disparaged `readFileSync` or give caveat of not
    catching errors for such types on time.
-- Breaking fix for existing data: Cause comparisons/storage of arrays to anticipate
-     their higher priority over binary (arrays already existing in storage
-     will not benefit from this until re-encoded)
+- Breaking fix for existing data: Give comparisons/storage of arrays
+     higher priority over binary (arrays already existing in storage
+     will not benefit from this until re-encoded, however)
 - Breaking change (minor): Change "modules" property of `IDBFactory` to only
     expose `DOMException`, `Event`, and `IDBFactory` (replacing the former
     use of `idbModules` with ES6 modules and a CFG module for the globals:
@@ -104,11 +104,15 @@ they were actually changes since a more recent version on `master`.
     for facilitating debugging
 - Enhancement: Export `ShimCustomEvent` and `ShimEventTarget` shims we
     are using on `IDBFactory.modules` for sake of testing checks
-- Missing API: Add `IDBCursor.continuePrimaryKey`
-- Missing API: Implement `IDBObjectStore.getKey`
-- Missing APIs: Implement `IDBIndex.getAll/getAllKeys`
-- Missing APIs: Implement `IDBObjectStore.getAll`,
+- Add missing API: Add `IDBCursor.continuePrimaryKey`
+- Add missing API: Implement `IDBObjectStore.getKey`
+- Add missing APIs: Implement `IDBIndex.getAll/getAllKeys`
+- Add missing APIs: Implement `IDBObjectStore.getAll`,
       `IDBObjectStore.getAllKeys`
+- Add missing API: Binary keys
+- Fix: Ensure `IDBKeyRange`'s `lower` and `upper` get round-tripped
+   key-encoded (e.g., to ensure a `DataView` gets converted into
+   an `ArrayBuffer`)
 - Fix: Avoid `continue` errors upon multiEntry checks with open-ended ranges
 - Fix: Ensure `deleteDatabase` SQLite execution errors (not only
      its transaction errors) are properly surfaced (probably shouldn't

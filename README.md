@@ -335,10 +335,9 @@ Please make sure someone else hasn't already reported the same bug though.
 Here is a summary of main known issues to resolve:
 
 1. `blocked` and `versionchange` `IDBVersionChangeEvent` event support
-2. Add binary/`ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
-    support including for keys following sorting rules, etc.
-3. `Blob`/`File`/`FileList`/`ImageBitmap` cloning and `ImageData` in Node
-    through [typeson-registry](https://github.com/dfahlander/typeson-registry)
+2. `Blob`/`File`/`FileList`/`ImageBitmap` cloning through
+    [typeson-registry](https://github.com/dfahlander/typeson-registry)
+    and test `ImageData` in Node through [node-canvas](https://github.com/Automattic/node-canvas)
 
 There are a few bugs that are outside of our power to fix.  Namely:
 

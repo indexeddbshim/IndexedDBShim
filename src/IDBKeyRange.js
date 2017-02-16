@@ -22,10 +22,13 @@ IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
         if (lower === undefined && upper === undefined) {
             throw createDOMException('DataError', 'Both arguments to the key range method cannot be undefined');
         }
+        let lowerConverted, upperConverted;
         if (lower !== undefined) {
+            lowerConverted = Key.roundTrip(lower); // Todo: does this make the "conversions" redundant
             Key.convertValueToKeyRethrowingAndIfInvalid(lower);
         }
         if (upper !== undefined) {
+            upperConverted = Key.roundTrip(upper); // Todo: does this make the "conversions" redundant
             Key.convertValueToKeyRethrowingAndIfInvalid(upper);
         }
         if (lower !== undefined && upper !== undefined && lower !== upper) {
@@ -34,8 +37,8 @@ IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
             }
         }
 
-        this.__lower = lower;
-        this.__upper = upper;
+        this.__lower = lowerConverted;
+        this.__upper = upperConverted;
         this.__lowerOpen = !!lowerOpen;
         this.__upperOpen = !!upperOpen;
     }
@@ -111,14 +114,27 @@ Object.defineProperty(IDBKeyRange, 'prototype', {
 function setSQLForKeyRange (range, quotedKeyColumnName, sql, sqlValues, addAnd, checkCached) {
     if (range && (range.lower !== undefined || range.upper !== undefined)) {
         if (addAnd) sql.push('AND');
-        if (range.lower !== undefined) {
-            sql.push(quotedKeyColumnName, (range.lowerOpen ? '>' : '>='), '?');
-            sqlValues.push(util.escapeSQLiteStatement(checkCached ? range.__lowerCached : Key.encode(range.lower)));
+        let encodedLowerKey, encodedUpperKey;
+        const hasLower = range.lower !== undefined;
+        const hasUpper = range.upper !== undefined;
+        if (hasLower) {
+            encodedLowerKey = checkCached ? range.__lowerCached : Key.encode(range.lower);
         }
-        (range.lower !== undefined && range.upper !== undefined) && sql.push('AND');
-        if (range.upper !== undefined) {
+        if (hasUpper) {
+            encodedUpperKey = checkCached ? range.__upperCached : Key.encode(range.upper);
+        }
+        if (hasLower) {
+            sqlValues.push(util.escapeSQLiteStatement(encodedLowerKey));
+            if (hasUpper && encodedLowerKey === encodedUpperKey && !range.lowerOpen && !range.upperOpen) {
+                sql.push(quotedKeyColumnName, '=', '?');
+                return;
+            }
+            sql.push(quotedKeyColumnName, (range.lowerOpen ? '>' : '>='), '?');
+        }
+        (hasLower && hasUpper) && sql.push('AND');
+        if (hasUpper) {
             sql.push(quotedKeyColumnName, (range.upperOpen ? '<' : '<='), '?');
-            sqlValues.push(util.escapeSQLiteStatement(checkCached ? range.__upperCached : Key.encode(range.upper)));
+            sqlValues.push(util.escapeSQLiteStatement(encodedUpperKey));
         }
     }
 }

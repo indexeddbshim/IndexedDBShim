@@ -755,8 +755,8 @@ define(String.prototype, "padRight", "".padEnd);
     lookup[chars.charCodeAt(i)] = i;
   }
 
-  exports.encode = function(arraybuffer) {
-    var bytes = new Uint8Array(arraybuffer),
+  exports.encode = function(arraybuffer, offset, length) {
+    var bytes = new Uint8Array(arraybuffer, offset || 0, length !== undefined ? length : arraybuffer.byteLength),
     i, len = bytes.length, base64 = "";
 
     for (i = 0; i < len; i+=3) {
@@ -19953,10 +19953,14 @@ IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
         if (lower === undefined && upper === undefined) {
             throw (0, _DOMException.createDOMException)('DataError', 'Both arguments to the key range method cannot be undefined');
         }
+        var lowerConverted = void 0,
+            upperConverted = void 0;
         if (lower !== undefined) {
+            lowerConverted = Key.roundTrip(lower); // Todo: does this make the "conversions" redundant
             Key.convertValueToKeyRethrowingAndIfInvalid(lower);
         }
         if (upper !== undefined) {
+            upperConverted = Key.roundTrip(upper); // Todo: does this make the "conversions" redundant
             Key.convertValueToKeyRethrowingAndIfInvalid(upper);
         }
         if (lower !== undefined && upper !== undefined && lower !== upper) {
@@ -19965,8 +19969,8 @@ IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
             }
         }
 
-        this.__lower = lower;
-        this.__upper = upper;
+        this.__lower = lowerConverted;
+        this.__upper = upperConverted;
         this.__lowerOpen = !!lowerOpen;
         this.__upperOpen = !!upperOpen;
     }
@@ -20044,14 +20048,28 @@ Object.defineProperty(IDBKeyRange, 'prototype', {
 function setSQLForKeyRange(range, quotedKeyColumnName, sql, sqlValues, addAnd, checkCached) {
     if (range && (range.lower !== undefined || range.upper !== undefined)) {
         if (addAnd) sql.push('AND');
-        if (range.lower !== undefined) {
-            sql.push(quotedKeyColumnName, range.lowerOpen ? '>' : '>=', '?');
-            sqlValues.push(util.escapeSQLiteStatement(checkCached ? range.__lowerCached : Key.encode(range.lower)));
+        var encodedLowerKey = void 0,
+            encodedUpperKey = void 0;
+        var hasLower = range.lower !== undefined;
+        var hasUpper = range.upper !== undefined;
+        if (hasLower) {
+            encodedLowerKey = checkCached ? range.__lowerCached : Key.encode(range.lower);
         }
-        range.lower !== undefined && range.upper !== undefined && sql.push('AND');
-        if (range.upper !== undefined) {
+        if (hasUpper) {
+            encodedUpperKey = checkCached ? range.__upperCached : Key.encode(range.upper);
+        }
+        if (hasLower) {
+            sqlValues.push(util.escapeSQLiteStatement(encodedLowerKey));
+            if (hasUpper && encodedLowerKey === encodedUpperKey && !range.lowerOpen && !range.upperOpen) {
+                sql.push(quotedKeyColumnName, '=', '?');
+                return;
+            }
+            sql.push(quotedKeyColumnName, range.lowerOpen ? '>' : '>=', '?');
+        }
+        hasLower && hasUpper && sql.push('AND');
+        if (hasUpper) {
             sql.push(quotedKeyColumnName, range.upperOpen ? '<' : '<=', '?');
-            sqlValues.push(util.escapeSQLiteStatement(checkCached ? range.__upperCached : Key.encode(range.upper)));
+            sqlValues.push(util.escapeSQLiteStatement(encodedUpperKey));
         }
     }
 }
@@ -21888,7 +21906,7 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.findMultiEntryMatches = exports.isKeyInRange = exports.isMultiEntryMatch = exports.checkKeyCouldBeInjectedIntoValue = exports.injectKeyIntoValueUsingKeyPath = exports.extractKeyValueDecodedFromValueUsingKeyPath = exports.evaluateKeyPathOnValue = exports.extractKeyFromValueUsingKeyPath = exports.convertValueToKeyRethrowingAndIfInvalid = exports.convertValueToMultiEntryKey = exports.convertValueToKey = exports.convertValueToMultiEntryKeyDecoded = exports.convertValueToKeyValueDecoded = exports.convertKeyToValue = exports.decode = exports.encode = undefined;
+exports.findMultiEntryMatches = exports.isKeyInRange = exports.isMultiEntryMatch = exports.checkKeyCouldBeInjectedIntoValue = exports.injectKeyIntoValueUsingKeyPath = exports.extractKeyValueDecodedFromValueUsingKeyPath = exports.evaluateKeyPathOnValue = exports.extractKeyFromValueUsingKeyPath = exports.convertValueToKeyRethrowingAndIfInvalid = exports.convertValueToMultiEntryKey = exports.convertValueToKey = exports.convertValueToMultiEntryKeyDecoded = exports.convertValueToKeyValueDecoded = exports.convertKeyToValue = exports.roundTrip = exports.decode = exports.encode = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
@@ -22085,14 +22103,17 @@ var types = {
             return new Date(key.slice(2));
         }
     },
-
-    binary: { // Todo Binary: Support `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
+    binary: { // `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
         encode: function encode(key) {
-            // collations.indexOf('binary') + '-' + ...;
-            throw new Error('Not yet implemented');
+            return collations.indexOf('binary') + '-' + getCopyBytesHeldByBufferSource(key); // e.g., '255,5,254,0,1,33'
         },
         decode: function decode(key) {
-            throw new Error('Not yet implemented');
+            // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
+            var arr = JSON.parse('[' + key.slice(2) + ']');
+            var buffer = new ArrayBuffer(arr.length);
+            var uint8 = new Uint8Array(buffer);
+            uint8.set(arr);
+            return buffer;
         }
     }
 };
@@ -22185,19 +22206,19 @@ function negate(s) {
 }
 
 /**
- * Returns the string "number", "date", "string", or "array" (or "binary" when implemented).
+ * Returns the string "number", "date", "string", "binary", or "array"
  */
 function getKeyType(key) {
     if (Array.isArray(key)) return 'array';
     if (util.isDate(key)) return 'date';
-    // if (util.isBinary(key)) return 'binary'; // Todo Binary: Uncomment when supported
+    if (util.isBinary(key)) return 'binary';
     var keyType = typeof key === 'undefined' ? 'undefined' : _typeof(key);
     return ['string', 'number'].includes(keyType) ? keyType : 'invalid';
 }
 
 /**
  * Keys must be strings, numbers (besides NaN), Dates (if value is not NaN),
- *   Arrays (or, once supported, binary) objects
+ *   binary objects or Arrays
  * @param input The key input
  * @param seen An array of already seen keys
  */
@@ -22215,9 +22236,30 @@ function convertValueToMultiEntryKey(input) {
     return convertValueToKeyValueDecoded(input, null, true, true);
 }
 
+// https://heycam.github.io/webidl/#ref-for-dfn-get-buffer-source-copy-2
+function getCopyBytesHeldByBufferSource(O) {
+    var offset = 0;
+    var length = 0;
+    if (ArrayBuffer.isView(O)) {
+        // Has [[ViewedArrayBuffer]] internal slot
+        var arrayBuffer = O.buffer;
+        if (arrayBuffer === undefined) {
+            throw new TypeError('Could not copy the bytes held by a buffer source as the buffer was undefined.');
+        }
+        offset = O.byteOffset; // [[ByteOffset]] (will also throw as desired if detached)
+        length = O.byteLength; // [[ByteLength]] (will also throw as desired if detached)
+    } else {
+        length = O.byteLength; // [[ArrayBufferByteLength]] on ArrayBuffer (will also throw as desired if detached)
+    }
+    // const octets = new Uint8Array(input);
+    // const octets = types.binary.decode(types.binary.encode(input));
+    return new Uint8Array(O.buffer || O, offset, length);
+}
+
 /**
 * Shortcut utility to avoid returning full keys from `convertValueToKey`
-*   and subsequent need to process in calling code
+*   and subsequent need to process in calling code unless `fullKeys` is
+*   set; may throw
 */
 function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
     seen = seen || [];
@@ -22236,12 +22278,14 @@ function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
                 return ret;
             }case 'binary':
             {
-                // Copy bytes once implemented (not a supported type yet)
-                // May throw
-                return ret;
+                // May throw (if detached)
+                // Get a copy of the bytes held by the buffer source
+                // https://heycam.github.io/webidl/#ref-for-dfn-get-buffer-source-copy-2
+                var octets = getCopyBytesHeldByBufferSource(input);
+                return { type: 'binary', value: octets };
             }case 'array':
             {
-                // May throw once binary is implemented
+                // May throw (from binary)
                 var len = input.length;
                 seen.push(input);
                 var keys = [];
@@ -22523,23 +22567,31 @@ function convertKeyToValue(key) {
     var value = key.value;
     switch (type) {
         case 'number':case 'string':
-            return value;
-        case 'array':
-            var array = [];
-            var len = value.length;
-            var index = 0;
-            while (index < len) {
-                var entry = convertKeyToValue(value[index]);
-                array[index] = entry;
-                index++;
-            }
-            return array;
-        case 'date':
-            return new Date(value);
-        case 'binary': // Todo Binary: Not implemented
-        // eslint-disable-line no-fallthrough
-        case 'invalid':
-        default:
+            {
+                return value;
+            }case 'array':
+            {
+                var array = [];
+                var len = value.length;
+                var index = 0;
+                while (index < len) {
+                    var entry = convertKeyToValue(value[index]);
+                    array[index] = entry;
+                    index++;
+                }
+                return array;
+            }case 'date':
+            {
+                return new Date(value);
+            }case 'binary':
+            {
+                var _len = value.length;
+                var buffer = new ArrayBuffer(_len);
+                // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
+                var uint8 = new Uint8Array(buffer, value.byteOffset || 0, value.byteLength);
+                uint8.set(value);
+                return buffer;
+            }case 'invalid':default:
             throw new Error('Bad key');
     }
 }
@@ -22549,7 +22601,7 @@ function _encode(key, inArray) {
     if (key === undefined) {
         return null;
     }
-    // Currently has array, date, number, string and should support "binary"
+    // array, date, number, string, binary (should already have detected "invalid")
     return types[getKeyType(key)].encode(key, inArray);
 }
 function _decode(key, inArray) {
@@ -22559,9 +22611,14 @@ function _decode(key, inArray) {
     return types[collations[key.slice(0, 1)]].decode(key, inArray);
 }
 
+function roundTrip(key, inArray) {
+    return _decode(_encode(key, inArray), inArray);
+}
+
 /* eslint-disable object-property-newline */
 exports.encode = _encode;
 exports.decode = _decode;
+exports.roundTrip = roundTrip;
 exports.convertKeyToValue = convertKeyToValue;
 exports.convertValueToKeyValueDecoded = convertValueToKeyValueDecoded;
 exports.convertValueToMultiEntryKeyDecoded = convertValueToMultiEntryKeyDecoded;
@@ -23299,7 +23356,7 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.convertToSequenceDOMString = exports.enforceRange = exports.isValidKeyPath = exports.defineReadonlyProperties = exports.isIterable = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlQuote = exports.sqlLIKEEscape = exports.escapeIndexNameForSQLKeyColumn = exports.escapeIndexNameForSQL = exports.escapeStoreNameForSQL = exports.unescapeDatabaseNameForSQLAndFiles = exports.escapeDatabaseNameForSQLAndFiles = exports.unescapeSQLiteResponse = exports.escapeSQLiteStatement = undefined;
+exports.convertToSequenceDOMString = exports.enforceRange = exports.isValidKeyPath = exports.defineReadonlyProperties = exports.isIterable = exports.isBinary = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlQuote = exports.sqlLIKEEscape = exports.escapeIndexNameForSQLKeyColumn = exports.escapeIndexNameForSQL = exports.escapeStoreNameForSQL = exports.unescapeDatabaseNameForSQLAndFiles = exports.escapeDatabaseNameForSQLAndFiles = exports.unescapeSQLiteResponse = exports.escapeSQLiteStatement = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
@@ -23435,15 +23492,11 @@ function isFile(obj) {
     return isObj(obj) && typeof obj.name === 'string' && typeof obj.slice === 'function' && 'lastModified' in obj;
 }
 
-/*
-// Todo Binary: Uncomment and use with ArrayBuffer encoding/decoding when ready
-function isBinary (obj) {
-    return isObj(obj) && typeof obj.byteLength === 'number' && (
-        typeof obj.slice === 'function' || // `TypedArray` (view on buffer) or `ArrayBuffer`
-        typeof obj.getFloat64 === 'function' // `DataView` (view on buffer)
+function isBinary(obj) {
+    return isObj(obj) && typeof obj.byteLength === 'number' && (typeof obj.slice === 'function' || // `TypedArray` (view on buffer) or `ArrayBuffer`
+    typeof obj.getFloat64 === 'function' // `DataView` (view on buffer)
     );
 }
-*/
 
 function isIterable(obj) {
     return isObj(obj) && typeof obj[Symbol.iterator] === 'function';
@@ -23557,6 +23610,7 @@ exports.isDate = isDate;
 exports.isBlob = isBlob;
 exports.isRegExp = isRegExp;
 exports.isFile = isFile;
+exports.isBinary = isBinary;
 exports.isIterable = isIterable;
 exports.defineReadonlyProperties = defineReadonlyProperties;
 exports.isValidKeyPath = isValidKeyPath;

@@ -128,15 +128,12 @@ function isFile (obj) {
     return isObj(obj) && typeof obj.name === 'string' && typeof obj.slice === 'function' && 'lastModified' in obj;
 }
 
-/*
-// Todo Binary: Uncomment and use with ArrayBuffer encoding/decoding when ready
 function isBinary (obj) {
     return isObj(obj) && typeof obj.byteLength === 'number' && (
         typeof obj.slice === 'function' || // `TypedArray` (view on buffer) or `ArrayBuffer`
         typeof obj.getFloat64 === 'function' // `DataView` (view on buffer)
     );
 }
-*/
 
 function isIterable (obj) {
     return isObj(obj) && typeof obj[Symbol.iterator] === 'function';
@@ -240,5 +237,5 @@ export {escapeSQLiteStatement, unescapeSQLiteResponse,
     escapeStoreNameForSQL, escapeIndexNameForSQL, escapeIndexNameForSQLKeyColumn,
     sqlLIKEEscape, sqlQuote,
     instanceOf,
-    isObj, isDate, isBlob, isRegExp, isFile, isIterable,
+    isObj, isDate, isBlob, isRegExp, isFile, isBinary, isIterable,
     defineReadonlyProperties, isValidKeyPath, enforceRange, convertToSequenceDOMString};
