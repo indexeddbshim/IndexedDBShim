@@ -82,8 +82,9 @@ LOWER PRIORITY ISSUES (NEXT RELEASE?)
 3. SHARED AND SERVICE WORKERS
 - Need to implement as Node shims, stop disabling these tests in node-idb-test.js, and run
 
-4. CLONING
+4. CLONING/PROTOTYPE CHAIN
 - `keypath-exceptions.js`
+- `bindings-inject-key.js`
 
 // Passing no argument to `node-idb-test.js` will test all of the IndexedDB
 //   tests including some worker tests, but only those within the
