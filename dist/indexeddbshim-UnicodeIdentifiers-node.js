@@ -22429,7 +22429,7 @@ function evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKe
             var result = [];
             return {
                 v: keyPath.some(function (item) {
-                    var key = extractKeyValueDecodedFromValueUsingKeyPath(value, item, multiEntry, fullKeys);
+                    var key = evaluateKeyPathOnValueToDecodedValue(value, item, multiEntry, fullKeys);
                     // Todo Spec Question: Should `invalid` not also be handled?
                     if (key.failure) {
                         return true;

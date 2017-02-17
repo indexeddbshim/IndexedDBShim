@@ -448,8 +448,6 @@ function evaluateKeyPathOnValue (value, keyPath, multiEntry) {
 */
 function extractKeyValueDecodedFromValueUsingKeyPath (value, keyPath, multiEntry, fullKeys) {
     const r = evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKeys);
-    // Todo Spec Question: Should there not also be a spec check here in case `invalid` on array item (or
-    //   does pre-cloning prevent)?
     if (r.failure) {
         return r;
     }
@@ -471,8 +469,7 @@ function evaluateKeyPathOnValueToDecodedValue (value, keyPath, multiEntry, fullK
     if (Array.isArray(keyPath)) {
         const result = [];
         return keyPath.some((item) => {
-            const key = extractKeyValueDecodedFromValueUsingKeyPath(value, item, multiEntry, fullKeys);
-            // Todo Spec Question: Should `invalid` not also be handled?
+            const key = evaluateKeyPathOnValueToDecodedValue(value, item, multiEntry, fullKeys);
             if (key.failure) {
                 return true;
             }
