@@ -22258,9 +22258,6 @@ function convertValueToKey(input, seen) {
 * Currently not in use
 */
 function convertValueToMultiEntryKey(input) {
-    // Todo Spec Question: Should the second step of the spec indicate rethrowing
-    //   too (e.g., so "extract a key from a value using a key path"
-    //   can rethrow them)?
     return convertValueToKeyValueDecoded(input, null, true, true);
 }
 
@@ -22404,8 +22401,6 @@ function evaluateKeyPathOnValue(value, keyPath, multiEntry) {
 */
 function extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry, fullKeys) {
     var r = evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKeys);
-    // Todo Spec Question: Should there not also be a spec check here in case `invalid` on array item (or
-    //   does pre-cloning prevent)?
     if (r.failure) {
         return r;
     }
@@ -22430,7 +22425,6 @@ function evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKe
             return {
                 v: keyPath.some(function (item) {
                     var key = evaluateKeyPathOnValueToDecodedValue(value, item, multiEntry, fullKeys);
-                    // Todo Spec Question: Should `invalid` not also be handled?
                     if (key.failure) {
                         return true;
                     }

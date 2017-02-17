@@ -325,9 +325,6 @@ function convertValueToKey (input, seen) {
 * Currently not in use
 */
 function convertValueToMultiEntryKey (input) {
-    // Todo Spec Question: Should the second step of the spec indicate rethrowing
-    //   too (e.g., so "extract a key from a value using a key path"
-    //   can rethrow them)?
     return convertValueToKeyValueDecoded(input, null, true, true);
 }
 
