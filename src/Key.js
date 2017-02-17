@@ -33,7 +33,7 @@ const types = {
     //
     // sign: takes a value between zero and five, inclusive. Represents infinite cases
     //     and the signs of both the exponent and the fractional part of the number.
-    // exponent: paded to two base-32 digits, represented by the 32's compliment in the
+    // exponent: padded to two base-32 digits, represented by the 32's compliment in the
     //     "smallPositive" and "bigNegative" cases to ensure proper lexical sorting.
     // mantissa: also called the fractional part. Normed 11-digit base-32 representation.
     //     Represented by the 32's compliment in the "smallNegative" and "bigNegative"
@@ -191,11 +191,14 @@ const types = {
     },
     binary: { // `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
         encode: function (key) {
-            return collations.indexOf('binary') + '-' + getCopyBytesHeldByBufferSource(key); // e.g., '255,5,254,0,1,33'
+            return collations.indexOf('binary') + '-' + (key.byteLength
+                ? Array.from(getCopyBytesHeldByBufferSource(key)).map((b) => padStart(b, 3, '0')) // e.g., '255,005,254,000,001,033'
+                : '');
         },
         decode: function (key) {
             // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
-            const arr = JSON.parse('[' + key.slice(2) + ']');
+            const k = key.slice(2);
+            const arr = k.length ? k.split(',').map((s) => parseInt(s, 10)) : [];
             const buffer = new ArrayBuffer(arr.length);
             const uint8 = new Uint8Array(buffer);
             uint8.set(arr);
@@ -203,6 +206,10 @@ const types = {
         }
     }
 };
+
+function padStart (str, ct, fill) {
+    return new Array(ct - (String(str)).length + 1).join(fill) + str;
+}
 
 /**
  * Return a padded base-32 exponent value.

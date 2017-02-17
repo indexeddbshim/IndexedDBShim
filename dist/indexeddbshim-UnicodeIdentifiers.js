@@ -297,11 +297,15 @@ define(String.prototype, "padRight", "".padEnd);
         return doneResult();
       }
 
+      context.method = method;
+      context.arg = arg;
+
       while (true) {
         var delegate = context.delegate;
         if (delegate) {
-          if (method === "return" ||
-              (method === "throw" && delegate.iterator[method] === undefined)) {
+          if (context.method === "return" ||
+              (context.method === "throw" &&
+               delegate.iterator[context.method] === undefined)) {
             // A return or throw (when the delegate iterator has no throw
             // method) always terminates the yield* loop.
             context.delegate = null;
@@ -310,17 +314,22 @@ define(String.prototype, "padRight", "".padEnd);
             // chance to clean up.
             var returnMethod = delegate.iterator["return"];
             if (returnMethod) {
-              var record = tryCatch(returnMethod, delegate.iterator, arg);
+              var record = tryCatch(
+                returnMethod,
+                delegate.iterator,
+                context.arg
+              );
+
               if (record.type === "throw") {
                 // If the return method threw an exception, let that
                 // exception prevail over the original return or throw.
-                method = "throw";
-                arg = record.arg;
+                context.method = "throw";
+                context.arg = record.arg;
                 continue;
               }
             }
 
-            if (method === "return") {
+            if (context.method === "return") {
               // Continue with the outer return, now that the delegate
               // iterator has been terminated.
               continue;
@@ -328,9 +337,9 @@ define(String.prototype, "padRight", "".padEnd);
           }
 
           var record = tryCatch(
-            delegate.iterator[method],
+            delegate.iterator[context.method],
             delegate.iterator,
-            arg
+            context.arg
           );
 
           if (record.type === "throw") {
@@ -338,16 +347,16 @@ define(String.prototype, "padRight", "".padEnd);
 
             // Like returning generator.throw(uncaught), but without the
             // overhead of an extra function call.
-            method = "throw";
-            arg = record.arg;
+            context.method = "throw";
+            context.arg = record.arg;
             continue;
           }
 
           // Delegate generator ran and handled its own exceptions so
           // regardless of what the method was, we continue as if it is
           // "next" with an undefined arg.
-          method = "next";
-          arg = undefined;
+          context.method = "next";
+          context.arg = undefined;
 
           var info = record.arg;
           if (info.done) {
@@ -361,26 +370,21 @@ define(String.prototype, "padRight", "".padEnd);
           context.delegate = null;
         }
 
-        if (method === "next") {
+        if (context.method === "next") {
           // Setting context._sent for legacy support of Babel's
           // function.sent implementation.
-          context.sent = context._sent = arg;
+          context.sent = context._sent = context.arg;
 
-        } else if (method === "throw") {
+        } else if (context.method === "throw") {
           if (state === GenStateSuspendedStart) {
             state = GenStateCompleted;
-            throw arg;
+            throw context.arg;
           }
 
-          if (context.dispatchException(arg)) {
-            // If the dispatched exception was caught by a catch block,
-            // then let that catch block handle the exception normally.
-            method = "next";
-            arg = undefined;
-          }
+          context.dispatchException(context.arg);
 
-        } else if (method === "return") {
-          context.abrupt("return", arg);
+        } else if (context.method === "return") {
+          context.abrupt("return", context.arg);
         }
 
         state = GenStateExecuting;
@@ -393,27 +397,21 @@ define(String.prototype, "padRight", "".padEnd);
             ? GenStateCompleted
             : GenStateSuspendedYield;
 
-          var info = {
+          if (record.arg === ContinueSentinel) {
+            continue;
+          }
+
+          return {
             value: record.arg,
             done: context.done
           };
 
-          if (record.arg === ContinueSentinel) {
-            if (context.delegate && method === "next") {
-              // Deliberately forget the last sent value so that we don't
-              // accidentally pass it on to the delegate.
-              arg = undefined;
-            }
-          } else {
-            return info;
-          }
-
         } else if (record.type === "throw") {
           state = GenStateCompleted;
           // Dispatch the exception by looping back around to the
-          // context.dispatchException(arg) call above.
-          method = "throw";
-          arg = record.arg;
+          // context.dispatchException(context.arg) call above.
+          context.method = "throw";
+          context.arg = record.arg;
         }
       }
     };
@@ -539,6 +537,9 @@ define(String.prototype, "padRight", "".padEnd);
       this.done = false;
       this.delegate = null;
 
+      this.method = "next";
+      this.arg = undefined;
+
       this.tryEntries.forEach(resetTryEntry);
 
       if (!skipTempReset) {
@@ -575,7 +576,15 @@ define(String.prototype, "padRight", "".padEnd);
         record.type = "throw";
         record.arg = exception;
         context.next = loc;
-        return !!caught;
+
+        if (caught) {
+          // If the dispatched exception was caught by a catch block,
+          // then let that catch block handle the exception normally.
+          context.method = "next";
+          context.arg = undefined;
+        }
+
+        return !! caught;
       }
 
       for (var i = this.tryEntries.length - 1; i >= 0; --i) {
@@ -643,12 +652,12 @@ define(String.prototype, "padRight", "".padEnd);
       record.arg = arg;
 
       if (finallyEntry) {
+        this.method = "next";
         this.next = finallyEntry.finallyLoc;
-      } else {
-        this.complete(record);
+        return ContinueSentinel;
       }
 
-      return ContinueSentinel;
+      return this.complete(record);
     },
 
     complete: function(record, afterLoc) {
@@ -660,11 +669,14 @@ define(String.prototype, "padRight", "".padEnd);
           record.type === "continue") {
         this.next = record.arg;
       } else if (record.type === "return") {
-        this.rval = record.arg;
+        this.rval = this.arg = record.arg;
+        this.method = "return";
         this.next = "end";
       } else if (record.type === "normal" && afterLoc) {
         this.next = afterLoc;
       }
+
+      return ContinueSentinel;
     },
 
     finish: function(finallyLoc) {
@@ -702,6 +714,12 @@ define(String.prototype, "padRight", "".padEnd);
         resultName: resultName,
         nextLoc: nextLoc
       };
+
+      if (this.method === "next") {
+        // Deliberately forget the last sent value so that we don't
+        // accidentally pass it on to the delegate.
+        this.arg = undefined;
+      }
 
       return ContinueSentinel;
     }
@@ -12952,7 +12970,7 @@ var types = {
     //
     // sign: takes a value between zero and five, inclusive. Represents infinite cases
     //     and the signs of both the exponent and the fractional part of the number.
-    // exponent: paded to two base-32 digits, represented by the 32's compliment in the
+    // exponent: padded to two base-32 digits, represented by the 32's compliment in the
     //     "smallPositive" and "bigNegative" cases to ensure proper lexical sorting.
     // mantissa: also called the fractional part. Normed 11-digit base-32 representation.
     //     Represented by the 32's compliment in the "smallNegative" and "bigNegative"
@@ -13106,11 +13124,17 @@ var types = {
     },
     binary: { // `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
         encode: function encode(key) {
-            return collations.indexOf('binary') + '-' + getCopyBytesHeldByBufferSource(key); // e.g., '255,5,254,0,1,33'
+            return collations.indexOf('binary') + '-' + (key.byteLength ? Array.from(getCopyBytesHeldByBufferSource(key)).map(function (b) {
+                return padStart(b, 3, '0');
+            }) // e.g., '255,005,254,000,001,033'
+            : '');
         },
         decode: function decode(key) {
             // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
-            var arr = JSON.parse('[' + key.slice(2) + ']');
+            var k = key.slice(2);
+            var arr = k.length ? k.split(',').map(function (s) {
+                return parseInt(s, 10);
+            }) : [];
             var buffer = new ArrayBuffer(arr.length);
             var uint8 = new Uint8Array(buffer);
             uint8.set(arr);
@@ -13118,6 +13142,10 @@ var types = {
         }
     }
 };
+
+function padStart(str, ct, fill) {
+    return new Array(ct - String(str).length + 1).join(fill) + str;
+}
 
 /**
  * Return a padded base-32 exponent value.
