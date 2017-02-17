@@ -502,7 +502,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
         IDBObjectStore.__stepsStoringRecordObjectStore(request, me.__store, clonedValue, false, key);
     }
     if (me.__store.keyPath !== null) {
-        const [evaluatedKey, clonedValue] = me.__store.__validateKeyAndValueAndClone(valueToUpdate, undefined, true);
+        const [evaluatedKey, clonedValue] = me.__store.__validateKeyAndValueAndCloneValue(valueToUpdate, undefined, true);
         if (cmp(me.primaryKey, evaluatedKey) !== 0) {
             throw createDOMException('DataError', 'The key of the supplied value to `update` is not equal to the cursor\'s effective key');
         }

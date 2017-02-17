@@ -18423,7 +18423,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
         _IDBObjectStore2.default.__stepsStoringRecordObjectStore(request, me.__store, clonedValue, false, key);
     }
     if (me.__store.keyPath !== null) {
-        var _me$__store$__validat = me.__store.__validateKeyAndValueAndClone(valueToUpdate, undefined, true),
+        var _me$__store$__validat = me.__store.__validateKeyAndValueAndCloneValue(valueToUpdate, undefined, true),
             _me$__store$__validat2 = _slicedToArray(_me$__store$__validat, 2),
             evaluatedKey = _me$__store$__validat2[0],
             clonedValue = _me$__store$__validat2[1];
@@ -20323,7 +20323,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
  * @param {*} key       Used for out-of-line keys
  * @private
  */
-IDBObjectStore.prototype.__validateKeyAndValueAndClone = function (value, key, cursorUpdate) {
+IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, key, cursorUpdate) {
     var me = this;
     if (me.keyPath !== null) {
         if (key !== undefined) {
@@ -20471,7 +20471,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
     }
 };
 
-IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey, success, error) {
+IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyOrCurrentNumber, success, error) {
     var me = this;
     // The `ConstraintError` to occur for `add` upon a duplicate will occur naturally in attempting an insert
     // We process the index information first as it will stored in the same table as the store
@@ -20527,11 +20527,11 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         var sqlStart = ['INSERT INTO', util.escapeStoreNameForSQL(me.name), '('];
         var sqlEnd = [' VALUES ('];
         var insertSqlValues = [];
-        if (primaryKey !== undefined) {
+        if (clonedKeyOrCurrentNumber !== undefined) {
             // Key.convertValueToKey(primaryKey); // Already run
             sqlStart.push(util.sqlQuote('key'), ',');
             sqlEnd.push('?,');
-            insertSqlValues.push(util.escapeSQLiteStatement(Key.encode(primaryKey)));
+            insertSqlValues.push(util.escapeSQLiteStatement(Key.encode(clonedKeyOrCurrentNumber)));
         }
         for (var key in paramMap) {
             sqlStart.push(util.escapeIndexNameForSQL(key) + ',');
@@ -20547,7 +20547,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         _CFG2.default.DEBUG && console.log('SQL for adding', insertSql, insertSqlValues);
 
         tx.executeSql(insertSql, insertSqlValues, function (tx, data) {
-            success(primaryKey);
+            success(clonedKeyOrCurrentNumber);
         }, function (tx, err) {
             // Should occur for `add` operation
             error((0, _DOMException.createDOMException)('ConstraintError', err.message, err));
@@ -20574,7 +20574,7 @@ IDBObjectStore.prototype.add = function (value /* , key */) {
 
     var request = me.transaction.__createRequest(me);
 
-    var _me$__validateKeyAndV = me.__validateKeyAndValueAndClone(value, key, false),
+    var _me$__validateKeyAndV = me.__validateKeyAndValueAndCloneValue(value, key, false),
         _me$__validateKeyAndV2 = _slicedToArray(_me$__validateKeyAndV, 2),
         ky = _me$__validateKeyAndV2[0],
         clonedValue = _me$__validateKeyAndV2[1];
@@ -20600,7 +20600,7 @@ IDBObjectStore.prototype.put = function (value /*, key */) {
 
     var request = me.transaction.__createRequest(me);
 
-    var _me$__validateKeyAndV3 = me.__validateKeyAndValueAndClone(value, key, false),
+    var _me$__validateKeyAndV3 = me.__validateKeyAndValueAndCloneValue(value, key, false),
         _me$__validateKeyAndV4 = _slicedToArray(_me$__validateKeyAndV3, 2),
         ky = _me$__validateKeyAndV4[0],
         clonedValue = _me$__validateKeyAndV4[1];
@@ -20609,14 +20609,14 @@ IDBObjectStore.prototype.put = function (value /*, key */) {
     return request;
 };
 
-IDBObjectStore.prototype.__overwrite = function (tx, primaryKey, cb, error) {
+IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
     var me = this;
     // First try to delete if the record exists
-    // Key.convertValueToKey(primaryKey); // Already run
+    // Key.convertValueToKey(key); // Already run
     var sql = 'DELETE FROM ' + util.escapeStoreNameForSQL(me.name) + ' WHERE "key" = ?';
-    var encodedPrimaryKey = Key.encode(primaryKey);
-    tx.executeSql(sql, [util.escapeSQLiteStatement(encodedPrimaryKey)], function (tx, data) {
-        _CFG2.default.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
+    var encodedKey = Key.encode(key);
+    tx.executeSql(sql, [util.escapeSQLiteStatement(encodedKey)], function (tx, data) {
+        _CFG2.default.DEBUG && console.log('Did the row with the', key, 'exist? ', data.rowsAffected);
         cb(tx);
     }, function (tx, err) {
         error(err);
@@ -20626,10 +20626,10 @@ IDBObjectStore.prototype.__overwrite = function (tx, primaryKey, cb, error) {
 IDBObjectStore.__stepsStoringRecordObjectStore = function (request, store, value, noOverwrite /* , key */) {
     var key = arguments[4];
     store.transaction.__pushToQueue(request, function (tx, args, success, error) {
-        store.__deriveKey(tx, value, key, function (primaryKey) {
+        store.__deriveKey(tx, value, key, function (clonedKeyOrCurrentNumber) {
             Sca.encode(value, function (encoded) {
                 function insert(tx) {
-                    store.__insertData(tx, encoded, value, primaryKey, function () {
+                    store.__insertData(tx, encoded, value, clonedKeyOrCurrentNumber, function () {
                         store.__cursors.forEach(function (cursor) {
                             cursor.__invalidateCache();
                         });
@@ -20637,7 +20637,7 @@ IDBObjectStore.__stepsStoringRecordObjectStore = function (request, store, value
                     }, error);
                 }
                 if (!noOverwrite) {
-                    store.__overwrite(tx, primaryKey, insert, error);
+                    store.__overwrite(tx, clonedKeyOrCurrentNumber, insert, error);
                     return;
                 }
                 insert(tx);

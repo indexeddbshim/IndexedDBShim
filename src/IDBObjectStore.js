@@ -203,7 +203,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
  * @param {*} key       Used for out-of-line keys
  * @private
  */
-IDBObjectStore.prototype.__validateKeyAndValueAndClone = function (value, key, cursorUpdate) {
+IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, key, cursorUpdate) {
     const me = this;
     if (me.keyPath !== null) {
         if (key !== undefined) {
@@ -351,7 +351,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failur
     }
 };
 
-IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey, success, error) {
+IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyOrCurrentNumber, success, error) {
     const me = this;
     // The `ConstraintError` to occur for `add` upon a duplicate will occur naturally in attempting an insert
     // We process the index information first as it will stored in the same table as the store
@@ -410,11 +410,11 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         const sqlStart = ['INSERT INTO', util.escapeStoreNameForSQL(me.name), '('];
         const sqlEnd = [' VALUES ('];
         const insertSqlValues = [];
-        if (primaryKey !== undefined) {
+        if (clonedKeyOrCurrentNumber !== undefined) {
             // Key.convertValueToKey(primaryKey); // Already run
             sqlStart.push(util.sqlQuote('key'), ',');
             sqlEnd.push('?,');
-            insertSqlValues.push(util.escapeSQLiteStatement(Key.encode(primaryKey)));
+            insertSqlValues.push(util.escapeSQLiteStatement(Key.encode(clonedKeyOrCurrentNumber)));
         }
         for (const key in paramMap) {
             sqlStart.push(util.escapeIndexNameForSQL(key) + ',');
@@ -430,7 +430,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, primaryKey
         CFG.DEBUG && console.log('SQL for adding', insertSql, insertSqlValues);
 
         tx.executeSql(insertSql, insertSqlValues, function (tx, data) {
-            success(primaryKey);
+            success(clonedKeyOrCurrentNumber);
         }, function (tx, err) {
             // Should occur for `add` operation
             error(createDOMException('ConstraintError', err.message, err));
@@ -456,7 +456,7 @@ IDBObjectStore.prototype.add = function (value /* , key */) {
     me.transaction.__assertWritable();
 
     const request = me.transaction.__createRequest(me);
-    const [ky, clonedValue] = me.__validateKeyAndValueAndClone(value, key, false);
+    const [ky, clonedValue] = me.__validateKeyAndValueAndCloneValue(value, key, false);
     IDBObjectStore.__stepsStoringRecordObjectStore(request, me, clonedValue, true, ky);
     return request;
 };
@@ -477,19 +477,19 @@ IDBObjectStore.prototype.put = function (value /*, key */) {
     me.transaction.__assertWritable();
 
     const request = me.transaction.__createRequest(me);
-    const [ky, clonedValue] = me.__validateKeyAndValueAndClone(value, key, false);
+    const [ky, clonedValue] = me.__validateKeyAndValueAndCloneValue(value, key, false);
     IDBObjectStore.__stepsStoringRecordObjectStore(request, me, clonedValue, false, ky);
     return request;
 };
 
-IDBObjectStore.prototype.__overwrite = function (tx, primaryKey, cb, error) {
+IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
     const me = this;
     // First try to delete if the record exists
-    // Key.convertValueToKey(primaryKey); // Already run
+    // Key.convertValueToKey(key); // Already run
     const sql = 'DELETE FROM ' + util.escapeStoreNameForSQL(me.name) + ' WHERE "key" = ?';
-    const encodedPrimaryKey = Key.encode(primaryKey);
-    tx.executeSql(sql, [util.escapeSQLiteStatement(encodedPrimaryKey)], function (tx, data) {
-        CFG.DEBUG && console.log('Did the row with the', primaryKey, 'exist? ', data.rowsAffected);
+    const encodedKey = Key.encode(key);
+    tx.executeSql(sql, [util.escapeSQLiteStatement(encodedKey)], function (tx, data) {
+        CFG.DEBUG && console.log('Did the row with the', key, 'exist? ', data.rowsAffected);
         cb(tx);
     }, function (tx, err) {
         error(err);
@@ -499,10 +499,10 @@ IDBObjectStore.prototype.__overwrite = function (tx, primaryKey, cb, error) {
 IDBObjectStore.__stepsStoringRecordObjectStore = function (request, store, value, noOverwrite /* , key */) {
     const key = arguments[4];
     store.transaction.__pushToQueue(request, function (tx, args, success, error) {
-        store.__deriveKey(tx, value, key, function (primaryKey) {
+        store.__deriveKey(tx, value, key, function (clonedKeyOrCurrentNumber) {
             Sca.encode(value, function (encoded) {
                 function insert (tx) {
-                    store.__insertData(tx, encoded, value, primaryKey, function (...args) {
+                    store.__insertData(tx, encoded, value, clonedKeyOrCurrentNumber, function (...args) {
                         store.__cursors.forEach((cursor) => {
                             cursor.__invalidateCache();
                         });
@@ -510,7 +510,7 @@ IDBObjectStore.__stepsStoringRecordObjectStore = function (request, store, value
                     }, error);
                 }
                 if (!noOverwrite) {
-                    store.__overwrite(tx, primaryKey, insert, error);
+                    store.__overwrite(tx, clonedKeyOrCurrentNumber, insert, error);
                     return;
                 }
                 insert(tx);
