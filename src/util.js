@@ -222,7 +222,7 @@ function enforceRange (number, type) {
     return number;
 }
 
-function ToString (o) {
+function ToString (o) { // Todo: See `es-abstract/es7`
     return '' + o; // `String()` will not throw with Symbols
 }
 

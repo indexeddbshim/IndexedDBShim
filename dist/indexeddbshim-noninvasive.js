@@ -13062,7 +13062,7 @@ var types = {
                 var encodedItem = _encode(item, true); // encode the array item
                 encoded[i] = encodedItem;
             }
-            encoded.push(collations.indexOf('undefined') + '-'); // append an extra item, so empty arrays sort correctly
+            encoded.push(collations.indexOf('invalid') + '-'); // append an extra item, so empty arrays sort correctly
             return collations.indexOf('array') + '-' + JSON.stringify(encoded);
         },
         decode: function decode(key) {
@@ -14465,6 +14465,7 @@ function enforceRange(number, type) {
 }
 
 function ToString(o) {
+    // Todo: See `es-abstract/es7`
     return '' + o; // `String()` will not throw with Symbols
 }
 

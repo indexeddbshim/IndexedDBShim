@@ -165,7 +165,7 @@ const types = {
                 const encodedItem = encode(item, true);        // encode the array item
                 encoded[i] = encodedItem;
             }
-            encoded.push(collations.indexOf('undefined') + '-');            // append an extra item, so empty arrays sort correctly
+            encoded.push(collations.indexOf('invalid') + '-');            // append an extra item, so empty arrays sort correctly
             return collations.indexOf('array') + '-' + JSON.stringify(encoded);
         },
         decode: function (key) {
