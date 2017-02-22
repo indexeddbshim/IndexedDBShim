@@ -32,7 +32,7 @@ function setGlobalVars (idb, initialConfig) {
     if (initialConfig) {
         setConfig(initialConfig);
     }
-    const IDB = idb || (typeof window !== 'undefined' ? window : (typeof self !== 'undefined' ? self : {}));
+    const IDB = idb || (typeof window !== 'undefined' ? window : (typeof self !== 'undefined' ? self : (typeof global !== 'undefined' ? global : {})));
     function shim (name, value, propDesc) {
         if (!propDesc || !Object.defineProperty) {
             try {
@@ -125,7 +125,7 @@ function setGlobalVars (idb, initialConfig) {
                     shim('ShimDOMException', IDB.indexedDB.modules.ShimDOMException);
                 }
             } else if (typeof IDB.indexedDB === 'object') {
-                // Polyfill the missing IndexedDB features (no need for IDBEnvironment, the window containing indexedDB itself))
+                // Polyfill the missing IndexedDB features (no need for the window containing indexedDB itself))
                 polyfill(shimIDBCursor, shimIDBCursorWithValue, shimIDBDatabase, shimIDBFactory, shimIDBIndex, shimIDBKeyRange, shimIDBObjectStore, shimIDBRequest, shimIDBTransaction);
             }
         };

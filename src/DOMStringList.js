@@ -89,7 +89,7 @@ DOMStringList.prototype = {
     //    and particularly as some methods, e.g., `IDBDatabase.transaction`
     //    expect such sequence<DOMString> (or DOMString), we need an iterator (some of
     //    the Mocha tests rely on these)
-    [Symbol.iterator]: function* () {
+    [Symbol.iterator]: function * () {
         let i = 0;
         while (i < this._items.length) {
             yield this._items[i++];

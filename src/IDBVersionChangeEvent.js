@@ -25,7 +25,7 @@ readonlyProperties.forEach((prop) => {
             if (!(this instanceof IDBVersionChangeEvent)) {
                 throw new TypeError('Illegal invocation');
             }
-            return this.__eventInitDict && this.__eventInitDict[prop] || (prop === 'oldVersion' ? 0 : null);
+            return (this.__eventInitDict && this.__eventInitDict[prop]) || (prop === 'oldVersion' ? 0 : null);
         }
     });
 });

@@ -339,7 +339,7 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
 
 IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
     if (!this.__store.transaction.db.objectStoreNames.contains(this.__store.name) ||
-        this.__indexSource && !this.__store.indexNames.contains(this.source.name)) {
+        (this.__indexSource && !this.__store.indexNames.contains(this.source.name))) {
         throw createDOMException('InvalidStateError', 'The cursor\'s source or effective object store has been deleted');
     }
 };
@@ -499,7 +499,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
     const request = me.__store.transaction.__createRequest(me);
     const key = me.primaryKey;
     function addToQueue (clonedValue) {
-        IDBObjectStore.__stepsStoringRecordObjectStore(request, me.__store, clonedValue, false, key);
+        IDBObjectStore.__storingRecordObjectStore(request, me.__store, clonedValue, false, key);
     }
     if (me.__store.keyPath !== null) {
         const [evaluatedKey, clonedValue] = me.__store.__validateKeyAndValueAndCloneValue(valueToUpdate, undefined, true);

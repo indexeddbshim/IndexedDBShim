@@ -85,7 +85,7 @@ describe('W3C IDBDatabase.createObjectStore Tests', function () {
 
             db.createObjectStore("My cool object store name")
             assert(
-                db.objectStoreNames.indexOf("My cool object store name") >= 0,
+                db.objectStoreNames.contains("My cool object store name"),
                 'objectStoreNames.contains')
         }
 
@@ -93,7 +93,7 @@ describe('W3C IDBDatabase.createObjectStore Tests', function () {
             var db = e.target.result
 
             assert(
-                db.objectStoreNames.indexOf("My cool object store name") >= 0,
+                db.objectStoreNames.contains("My cool object store name"),
                 'objectStoreNames.contains (in success)')
             done()
         }

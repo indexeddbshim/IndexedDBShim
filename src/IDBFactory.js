@@ -98,7 +98,8 @@ IDBFactory.prototype.open = function (name /* , version */) {
         }
         err = err ? webSQLErrback(err) : tx;
         calledDbCreateError = true;
-        const evt = createEvent('error', err, {bubbles: true});
+        // Re: why bubbling here (and how cancelable is only really relevant for `window.onerror`) see: https://github.com/w3c/IndexedDB/issues/86
+        const evt = createEvent('error', err, {bubbles: true, cancelable: true});
         req.__readyState = 'done';
         req.__error = err;
         req.__result = undefined;
@@ -119,7 +120,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
         db.transaction(function (tx) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS __sys__ (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB, currNum INTEGER)', [], function () {
-                tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList", "currNum" FROM __sys__', [], function (tx, data) {
+                tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList" FROM __sys__', [], function (tx, data) {
                     req.__result = IDBDatabase.__createInstance(db, name, oldVersion, version, data);
                     me.__connections.push(req.result);
                     if (oldVersion < version) {
@@ -282,7 +283,8 @@ IDBFactory.prototype.deleteDatabase = function (name) {
             req.__readyState = 'done';
             req.__error = err;
             req.__result = undefined;
-            const e = createEvent('error', err, {bubbles: true});
+            // Re: why bubbling here (and how cancelable is only really relevant for `window.onerror`) see: https://github.com/w3c/IndexedDB/issues/86
+            const e = createEvent('error', err, {bubbles: true, cancelable: true});
             req.dispatchEvent(e);
             calledDBError = true;
         });
@@ -431,6 +433,7 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
         }
         err = err ? webSQLErrback(err) : tx;
         calledDbCreateError = true;
+        // Re: why bubbling here (and how cancelable is only really relevant for `window.onerror`) see: https://github.com/w3c/IndexedDB/issues/86
         const evt = createEvent('error', err, {bubbles: true, cancelable: true}); // http://stackoverflow.com/questions/40165909/to-where-do-idbopendbrequest-error-events-bubble-up/40181108#40181108
         req.__readyState = 'done';
         req.__error = err;

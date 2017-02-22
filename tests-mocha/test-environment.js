@@ -59,8 +59,8 @@
          * IndexedDBShim can't always use these native classes, because some browsers don't allow us to instantiate them.
          * It's also not safe to shim these classes on the global scope, because it could break other stuff.
          */
-        Event: window.ShimEvent,
-        DOMException: window.ShimDOMException,
+        Event: window.ShimEvent || window.Event,
+        DOMException: window.ShimDOMException || window.DOMException,
 
         /**
          * Safe duration by which transaction should have expired

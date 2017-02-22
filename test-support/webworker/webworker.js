@@ -81,7 +81,7 @@ module.exports = function (workerConfig) {
         if (urlObj.host !== null) {
             const protocol = urlObj.protocol;
             if (!(workerConfig.permittedProtocols || ['http', 'https']).map((p) => p + ':').includes(protocol)) {
-                throw new TypeError('This worker is not configured to support the protocol of the supplied Worker source argument.');
+                throw new TypeError('This worker is not configured to support the protocol of the supplied Worker source argument (' + protocol + ').');
             }
         } else if (urlObj.pathname && (/^[\\/]/).test(urlObj.pathname)) {
             if (workerConfig.rootPath === false) {
@@ -344,7 +344,13 @@ module.exports = function (workerConfig) {
         };
 
         // Post a message to the worker
-        self.postMessage = function (msg) {
+        self.postMessage = function (msg, xfers) {
+            if (Array.isArray(xfers)) { // Todo: Currently only handling detached buffers, not yet exposing the transfer
+                xfers.forEach(function (xfer) {
+                    // Assumes this currently non-standard method gets implemented for Node
+                    if (typeof ArrayBuffer.transfer === 'function') { ArrayBuffer.transfer(xfer, 0); }
+                });
+            }
             postMessageImpl(wwutil.MSGTYPE_USER, msg);
         };
 

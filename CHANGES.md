@@ -327,6 +327,12 @@ they were actually changes since a more recent version on `master`.
     and also how implemented in Chrome)
 - Fix: Error checking for `DOMStringList` methods
 - Fix: Prevent non-numeric and `<= 1` keys from auto-incrementing current number
+- Fix: For generators, as per new requirements, ensure numbers
+    higher than the max (including non-finite) have the effect of
+    setting the current number to the max
+- Fix: For generators, handle numbers just beyond the max allowed by
+    ES since confusable if only incrementing by one
+- Fix: Default to `global` for IDB exports where no `window` or `self` is defined
 - Fix: Prevent incrementing if nevertheless valid key is lower than current
     number
 - Fix: Ensure sorting of `StringList` (for `IDBDatabase.objectStoreNames`,
@@ -440,8 +446,7 @@ they were actually changes since a more recent version on `master`.
 - Fix: Avoid `eval()` in cloning (issue #211, #236)
 - Fix: Support cyclic values via typeson/typeson-registry (#267)
 - Repo files: Rename test folders for ease in distinguishing
-- Optimize: Only retrieve required SQLite columns for `IDBIndex`
-      get operations
+- Optimize: Only retrieve required SQLite columns
 - Optimize: Have `IDBObjectStore` and `IDBIndex`'s `get` and
       `getKey` only retrieve one record from SQLite
 - Optimize: use WebSQL `readTransaction` as possible/when in `readonly` mode
@@ -476,6 +481,10 @@ they were actually changes since a more recent version on `master`.
 - Refactoring (spec parity): Rename and repurpose `Key.validate` to
     `Key.convertValueToKey` (also paralleling terminology in the spec),
     also supporting multiEntry argument
+- Refactoring (spec parity): Make current number retrieval routines more closely
+   parallel spec
+- Refactoring (spec parity): Mirror recent minor spec changes re:
+   bubbling/cancelable `IDBFactory` error events
 - Refactoring (SQL): Quoting columns consistently for SQLite
 - Refactoring (SQL): Make SQL-relationship clearer for method names (escaping)
 - Refactoring (SQL): upper-case SQL keywords for greater visual distinction
@@ -510,6 +519,7 @@ they were actually changes since a more recent version on `master`.
 - Testing: Work on Node tests and for Firefox (including increasing timeouts
     as needed)
 - Testing: Rely on `node_modules` paths for testing framework files
+- Testing (browser index): Update links to test cases
 - Testing (ESLint): Add compat plugin for browser feature testing
 - Testing (fakeIndexedDB.js): Comment out non-standard property checks
 - Testing (mock): Update IndexedDBMock tests
@@ -538,6 +548,7 @@ they were actually changes since a more recent version on `master`.
 - Testing (W3C): Add new preliminary testing framework (mostly complete)
 - Testing (W3C): Add separate tests for events and workers; also
     incorporate tests for `DOMStringList` and `DOMException`
+- Testing (W3C Old): Fix `DOMStringList` API usage (failing on Safari)
 - (Testing:
     From tests-mocha and tests-qunit (Node and browser), all tests
         are now passing
@@ -571,8 +582,9 @@ they were actually changes since a more recent version on `master`.
 - Testing (Grunt): Update grunt-node-qunit to support latest QUnit
 - Testing (Grunt): Get Saucelabs working (for Chrome and most of Firefox)
 - Testing (Grunt): Log Saucelabs results
+- Testing (Grunt): Work toward fixing source maps
 - Testing (PhantomJS): Deal with PhantomJS error
-- Testing (npm): Streamline test names
+- Testing (npm): Streamline test names; add convenience scripts
 - Testing (QUnit): Upgrade QUnit refs
 - Testing (QUnit): Minimize chances for QUnit random integer failure
 - Testing (QUnit): Allow QUnit tests to pass when "Check for globals" enabled
@@ -589,13 +601,17 @@ they were actually changes since a more recent version on `master`.
     if not needed in current tests)
 - Testing (Mocha): Add missing `IDBKeyRange/includes-spec.js` to browser
     tests
-- Testing (Mocha): Add mocha tests to grunt (along with clean-up) and add
+- Testing (Mocha): Add Mocha tests to Grunt (along with clean-up) and add
     node-qunit for Node mocha testing
 - Testing (Mocha): Allow passing in specific test files to mocha tests
 - Testing (Mocha): Add test to ensure unique index checks are safely ignored
     with bad index keys
 - Testing (Mocha): Rename test sets for distinguishing
 - Testing (Mocha): Change fakeIndexedDB and indexedDBmock to Mocha tests
-- Testing (Mocha): Increase default Mocha timeout to 5000ms (Chrome failing some
-    at 2000ms as was Node occasionally); tweak as needed
+- Testing (Mocha): Increase default Mocha timeout to 5000ms (Chrome failing
+    some at 2000ms as was Node occasionally); tweak as needed
+- Testing (Mocha): Safari currently problematic with (old) Sinon code; avoid on
+    error checks for Safari too
+- Testing (Mocha): Fall back to genuine `Event`/`DOMException` when shims not
+    present (if testing native)
 - Testing (Cordova): Update Cordova testing (untested)

@@ -187,7 +187,7 @@ const workerConfig = {
 // Construct the Script object to host the worker's code
 switch (scriptLoc.protocol) {
 case 'file':
-    scriptSource = fs.readFileSync(scriptLoc.pathname);
+    scriptSource = fs.readFileSync(scriptLoc.pathname.replace(/\/$/, '')); // Latter replace needed on Mac but not Windows
     break;
 
 default:

@@ -177,7 +177,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
             failure(createDOMException('UnknownError', 'Could not delete ObjectStore', err));
         }
 
-        tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList", "currNum" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.name)], function (tx, data) {
+        tx.executeSql('SELECT "name" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.name)], function (tx, data) {
             if (data.rows.length > 0) {
                 tx.executeSql('DROP TABLE ' + util.escapeStoreNameForSQL(store.name), [], function () {
                     tx.executeSql('DELETE FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.name)], function () {
@@ -256,94 +256,33 @@ IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, k
  * @param {function} success
  * @param {function} failure
  */
-IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failure) {
+IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb) {
     const me = this;
 
     // Only run if cloning is needed
-    function keyCloneThenSuccess () {
+    function keyCloneThenSuccess () { // We want to return the original key, so we don't need to accept an argument here
         Sca.encode(key, function (key) {
             key = Sca.decode(key);
             success(key);
         });
     }
 
-    function getCurrentNumber (callback) {
-        tx.executeSql('SELECT "currNum" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(me.name)], function (tx, data) {
-            if (data.rows.length !== 1) {
-                callback(1);
-            } else {
-                callback(data.rows.item(0).currNum);
-            }
-        }, function (tx, error) {
-            failure(createDOMException('DataError', 'Could not get the auto increment value for key', error));
-        });
-    }
-
-    // Bump up the auto-inc counter if the key path-resolved value is valid (greater than old value and >=1) OR
-    //  if a manually passed in key is valid (numeric and >= 1) and >= any primaryKey
-    function setCurrentNumber () {
-        const sql = 'UPDATE __sys__ SET "currNum" = ? WHERE "name" = ?';
-        const sqlValues = [
-            Math.floor(key) + 1, util.escapeSQLiteStatement(me.name)
-        ];
-        CFG.DEBUG && console.log(sql, sqlValues);
-        tx.executeSql(sql, sqlValues, function (tx, data) {
-            keyCloneThenSuccess();
-        }, function (tx, err) {
-            failure(createDOMException('UnknownError', 'Could not set the auto increment value for key', err));
-        });
-    }
-    // Increment current number by 1 (we cannot leverage SQLite's
-    //  autoincrement (and decrement when not needed), as decrementing
-    //  will be overwritten/ignored upon the next insert)
-    function incrementCurrentNumber (cn, cb) {
-        const sql = 'UPDATE __sys__ SET "currNum" = "currNum" + 1 WHERE "name" = ?';
-        const sqlValues = [util.escapeSQLiteStatement(me.name)];
-        CFG.DEBUG && console.log(sql, sqlValues);
-        tx.executeSql(sql, sqlValues, function (tx, data) {
-            cb();
-            success(cn);
-        }, function (tx, err) {
-            failure(createDOMException('UnknownError', 'Could not set the auto increment value for key', err));
-        });
-    }
-
-    // We don't begin with in-line steps to "extract a key from a value using a key path"
-    //   as already run and already treating any (acceptable) failures as `undefined`
-
     if (me.autoIncrement) {
         // If auto-increment and no valid primaryKey found on the keyPath, get and set the new value, and use
         if (key === undefined) {
-            getCurrentNumber(function (cn) {
-                if (cn > 9007199254740992) { // 2 ^ 53 (See <https://github.com/w3c/IndexedDB/issues/147>)
-                    failure(createDOMException('ConstraintError', 'The key generator\'s current number has reached the maximum safe integer limit'));
+            Key.generateKeyForStore(tx, me, function (failure, key) {
+                if (failure) {
+                    failCb(createDOMException('ConstraintError', 'The key generator\'s current number has reached the maximum safe integer limit'));
                     return;
                 }
-                incrementCurrentNumber(cn, function () {
-                    if (me.keyPath !== null) {
-                        try {
-                            Key.injectKeyIntoValueUsingKeyPath(value, cn, me.keyPath);
-                        } catch (e) {
-                            failure(createDOMException('DataError', 'Could not assign a generated value to the keyPath', e));
-                        }
-                    }
-                });
-            });
-        } else if (!Number.isFinite(key) || key < 1) { // Optimize with no need to get the current number
-            // Auto-increment attempted with a bad (non-numeric/non-finite or < 1) key;
-            //   the steps don't mention failure but we are not to change the current number
-            keyCloneThenSuccess();
-        } else {
-            // If auto-increment and the keyPath item is a valid numeric key, get the old auto-increment to compare if the new is higher
-            //  to determine which to use and whether to update the current number
-            getCurrentNumber(function (cn) {
-                const useNewKeyForAutoInc = key >= cn;
-                if (useNewKeyForAutoInc) {
-                    setCurrentNumber();
-                } else {
-                    keyCloneThenSuccess();
+                if (me.keyPath !== null) {
+                    // Should not throw now as checked earlier
+                    Key.injectKeyIntoValueUsingKeyPath(value, key, me.keyPath);
                 }
-            });
+                success(key);
+            }, failCb);
+        } else {
+            Key.possiblyUpdateKeyGenerator(tx, me, key, keyCloneThenSuccess, failCb);
         }
     // Not auto-increment
     } else {
@@ -457,7 +396,7 @@ IDBObjectStore.prototype.add = function (value /* , key */) {
 
     const request = me.transaction.__createRequest(me);
     const [ky, clonedValue] = me.__validateKeyAndValueAndCloneValue(value, key, false);
-    IDBObjectStore.__stepsStoringRecordObjectStore(request, me, clonedValue, true, ky);
+    IDBObjectStore.__storingRecordObjectStore(request, me, clonedValue, true, ky);
     return request;
 };
 
@@ -478,7 +417,7 @@ IDBObjectStore.prototype.put = function (value /*, key */) {
 
     const request = me.transaction.__createRequest(me);
     const [ky, clonedValue] = me.__validateKeyAndValueAndCloneValue(value, key, false);
-    IDBObjectStore.__stepsStoringRecordObjectStore(request, me, clonedValue, false, ky);
+    IDBObjectStore.__storingRecordObjectStore(request, me, clonedValue, false, ky);
     return request;
 };
 
@@ -496,7 +435,7 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
     });
 };
 
-IDBObjectStore.__stepsStoringRecordObjectStore = function (request, store, value, noOverwrite /* , key */) {
+IDBObjectStore.__storingRecordObjectStore = function (request, store, value, noOverwrite /* , key */) {
     const key = arguments[4];
     store.transaction.__pushToQueue(request, function (tx, args, success, error) {
         store.__deriveKey(tx, value, key, function (clonedKeyOrCurrentNumber) {
@@ -806,7 +745,7 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath /* , optiona
     return index;
 };
 
-IDBObjectStore.prototype.deleteIndex = function (indexName) {
+IDBObjectStore.prototype.deleteIndex = function (name) {
     const me = this;
     if (!(me instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
@@ -819,9 +758,9 @@ IDBObjectStore.prototype.deleteIndex = function (indexName) {
         throw createDOMException('InvalidStateError', 'This store has been deleted');
     }
     IDBTransaction.__assertActive(me.transaction);
-    const index = me.__indexes[indexName];
+    const index = me.__indexes[name];
     if (!index) {
-        throw createDOMException('NotFoundError', 'Index "' + indexName + '" does not exist on ' + me.name);
+        throw createDOMException('NotFoundError', 'Index "' + name + '" does not exist on ' + me.name);
     }
 
     IDBIndex.__deleteIndex(me, index);

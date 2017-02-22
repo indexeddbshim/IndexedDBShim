@@ -1,6 +1,7 @@
 import {createDOMException} from './DOMException';
 import * as util from './util';
 import {cmp} from './IDBFactory';
+import CFG from './CFG';
 
 /**
  * Encodes the keys based on their types. This is required to maintain collations
@@ -486,16 +487,16 @@ function evaluateKeyPathOnValueToDecodedValue (value, keyPath, multiEntry, fullK
             switch (idntfr) {
             case 'size': case 'type':
                 value = value[idntfr];
-                return;
+                break;
             }
         } else if (util.isFile(value)) {
             switch (idntfr) {
             case 'name': case 'lastModified':
                 value = value[idntfr];
-                return;
+                break;
             case 'lastModifiedDate':
                 value = new Date(value.lastModified);
-                return;
+                break;
             }
         } else if (!util.isObj(value) || !Object.prototype.hasOwnProperty.call(value, idntfr)) {
             return true;
@@ -673,6 +674,83 @@ function roundTrip (key, inArray) {
     return decode(encode(key, inArray), inArray);
 }
 
+const MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `Number.MAX_SAFE_INTEGER + 1`)
+
+function getCurrentNumber (tx, store, callback, sqlFailCb) {
+    tx.executeSql('SELECT "currNum" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.name)], function (tx, data) {
+        if (data.rows.length !== 1) {
+            callback(1);
+        } else {
+            callback(data.rows.item(0).currNum);
+        }
+    }, function (tx, error) {
+        sqlFailCb(createDOMException('DataError', 'Could not get the auto increment value for key', error));
+    });
+}
+
+// Bump up the auto-inc counter if the key path-resolved value is valid (greater than old value and >=1) OR
+//  if a manually passed in key is valid (numeric and >= 1) and >= any primaryKey
+function setCurrentNumber (tx, store, num, successCb, failCb) {
+    const sql = 'UPDATE __sys__ SET "currNum" = ? WHERE "name" = ?';
+    num = num === MAX_ALLOWED_CURRENT_NUMBER
+        ? num + 2 // Since incrementing by one will have no effect in JavaScript on this unsafe max, we represent the max as a number incremented by two. The getting of the current number is never returned to the user and is only used in safe comparisons, so it is safe for us to represent it in this manner
+        : num + 1;
+    const sqlValues = [num, util.escapeSQLiteStatement(store.name)];
+    CFG.DEBUG && console.log(sql, sqlValues);
+    tx.executeSql(sql, sqlValues, function (tx, data) {
+        successCb(num);
+    }, function (tx, err) {
+        failCb(createDOMException('UnknownError', 'Could not set the auto increment value for key', err));
+    });
+}
+
+function generateKeyForStore (tx, store, cb, sqlFailCb) {
+    getCurrentNumber(tx, store, function (key) {
+        if (key > MAX_ALLOWED_CURRENT_NUMBER) { // 2 ^ 53 (See <https://github.com/w3c/IndexedDB/issues/147>)
+            return cb('failure');
+        }
+        // Increment current number by 1 (we cannot leverage SQLite's
+        //  autoincrement (and decrement when not needed), as decrementing
+        //  will be overwritten/ignored upon the next insert)
+        setCurrentNumber(tx, store, key,
+            function () {
+                cb(null, key);
+            },
+            sqlFailCb
+        );
+    }, sqlFailCb);
+}
+
+// Fractional or numbers exceeding the max do not get changed in the result
+//     per https://github.com/w3c/IndexedDB/issues/147
+//     so we do not return a key
+function possiblyUpdateKeyGenerator (tx, store, key, successCb, sqlFailCb) {
+    // Per https://github.com/w3c/IndexedDB/issues/147 , non-finite numbers
+    //   (or numbers larger than the max) are now to have the explicit effect of
+    //   setting the current number (up to the max), so we do not optimize them
+    //   out here
+    if (typeof key !== 'number' || key < 1) { // Optimize with no need to get the current number
+        // Auto-increment attempted with a bad key;
+        //   we are not to change the current number, but the steps don't call for failure
+        // Numbers < 1 are optimized out as they will never be greater than the current number which must be at least 1
+        successCb();
+    } else {
+        // If auto-increment and the keyPath item is a valid numeric key, get the old auto-increment to compare if the new is higher
+        //  to determine which to use and whether to update the current number
+        getCurrentNumber(tx, store, function (cn) {
+            const value = Math.floor(
+                Math.min(key, MAX_ALLOWED_CURRENT_NUMBER)
+            );
+            const useNewKeyForAutoInc = value >= cn;
+            if (useNewKeyForAutoInc) {
+                setCurrentNumber(tx, store, value, successCb, sqlFailCb);
+            } else { // Not updated
+                successCb();
+            }
+        }, sqlFailCb);
+    }
+}
+
 /* eslint-disable object-property-newline */
 export {encode, decode, roundTrip, convertKeyToValue, convertValueToKeyValueDecoded,
     convertValueToMultiEntryKeyDecoded,
@@ -680,4 +758,5 @@ export {encode, decode, roundTrip, convertKeyToValue, convertValueToKeyValueDeco
     convertValueToMultiEntryKey, convertValueToKeyRethrowingAndIfInvalid,
     extractKeyFromValueUsingKeyPath, evaluateKeyPathOnValue,
     extractKeyValueDecodedFromValueUsingKeyPath, injectKeyIntoValueUsingKeyPath, checkKeyCouldBeInjectedIntoValue,
-    isMultiEntryMatch, isKeyInRange, findMultiEntryMatches};
+    isMultiEntryMatch, isKeyInRange, findMultiEntryMatches,
+    generateKeyForStore, possiblyUpdateKeyGenerator};

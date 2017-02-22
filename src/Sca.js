@@ -14,7 +14,7 @@ const typeson = new Typeson().register(StructuredCloning);
 function encode (obj, cb) {
     let ret;
     try {
-        ret = typeson.stringify(obj);
+        ret = typeson.stringifySync(obj);
     } catch (err) {
         // SCA in typeson-registry using `DOMException` which is not defined (e.g., in Node)
         if (Typeson.hasConstructorOf(err, ReferenceError) ||

@@ -7,12 +7,12 @@ const jsdom = require('jsdom');
 const CY = require('cyclonejs'); // Todo: Replace this with Sca (but need to make requireable)
 const Worker = require('./webworker/webworker'); // Todo: We could export this `Worker` publicly for others looking for a Worker polyfill with IDB support
 const XMLHttpRequest = require('xmlhttprequest');
-const URL = require('js-polyfills/url');
 const isDateObject = require('is-date-object');
-const Blob = require('w3c-blob'); // Needed by Node; uses native if available (browser)
+// const grunt = require('grunt');
+// require('../Gruntfile')(grunt);
 
 // CONFIG
-const vmTimeout = 40000; // Time until we give up on the vm (increasing to 40000 didn't make a difference on coverage in earlier versions)
+const vmTimeout = 90000; // Time until we give up on the vm (increasing to 40000 didn't make a difference on coverage in earlier versions)
 // const intervalSpacing = 1; // Time delay after test before running next
 
 // SET-UP
@@ -88,6 +88,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                 //   in the tests (more tests do pass with these timeouts);
                 //   the timeout, however, does not even seem to be necessary.
                 // setTimeout(() => {
+                // grunt.task.run('clean-w3c');
                 readAndEvaluate(jsFiles, initial, ending, workers, ++item);
                 // }, intervalSpacing);
                 return;
@@ -158,7 +159,12 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                 '_interface-objects-004.js'
             ] : [
                 'bindings-inject-key.js',
-                'keypath-exceptions.js'
+                'keypath-exceptions.js',
+                'event-dispatch-active-flag.js',
+                'fire-error-event-exception.js',
+                'fire-success-event-exception.js',
+                'fire-upgradeneeded-event-exception.js',
+                'upgrade-transaction-deactivation-timing.js'
             ];
         if (excluded.includes(shimNS.fileName) || (!workers && workerFileRegex.test(shimNS.fileName))) {
             excludedCount++;
@@ -258,8 +264,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                             // Due to <https://github.com/axemclion/IndexedDBShim/issues/280>, this gets converted to a data
                             //   descriptor, but unlike `indexedDB`, this is of no consequence to testing
                             // Todo: Should make this possible in `setGlobalVars`
-                            ['DOMStringList'
-                                // 'Event', 'CustomEvent', 'EventTarget' // These have no effect apparently due to https://github.com/tmpvar/jsdom/issues/1720#issuecomment-279665105
+                            ['DOMStringList', 'Event', 'CustomEvent', 'EventTarget' // These were having no effect due to https://github.com/tmpvar/jsdom/issues/1720#issuecomment-279665105
                             ].forEach((prop) => {
                                 Object.defineProperty(window, prop, {
                                     enumerable: false,
@@ -276,7 +281,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                             // These overwrite jsdom's objects as needed by test checks
                             window.EventTarget = window.ShimEventTarget; // Needed by interfaces.js
                             window.Event = window.ShimEvent; // Needed by idbfactory_open12.js
-                            // window.CustomEvent = window.ShimCustomEvent; // Not needed?
+                            window.CustomEvent = window.ShimCustomEvent; // Used in events tests
 
                             Object.defineProperty(window.CustomEvent.prototype, 'constructor', {
                                 enumerable: false
@@ -317,8 +322,30 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
 
                             // window.XMLHttpRequest = XMLHttpRequest({basePath: 'http://localhost:8000/IndexedDB/'}); // Todo: We should support this too
                             window.XMLHttpRequest = XMLHttpRequest({basePath});
-                            window.URL = URL.URL;
-                            window.URLSearchParams = URL.URLSearchParams;
+
+                            const _xhropen = window.XMLHttpRequest.prototype.open;
+                            window.XMLHttpRequest.prototype.open = function (method, url, async) {
+                                const match = url.match(/data:(.*);base64,/);
+                                if (match) { // Data URLs not handled by node-XMLHttpRequest
+                                    this.status = 200;
+                                    this.send = function () {};
+                                    this.responseType = match[1] || '';
+                                    this.responseText = Buffer.from(url.slice(match[0].length), 'base64').toString('utf8');
+                                    return;
+                                }
+                                return _xhropen.call(this, method, url, async);
+                            };
+
+                            global.XMLHttpRequest = window.XMLHttpRequest;
+                            // Expose the following to the `createObjectURL` polyfill
+                            delete window.URL.createObjectURL;
+                            global.URL = window.URL;
+                            global.location = window.location;
+                            require('../node_modules/typeson-registry/test/createObjectURL'); // Polyfill enough for our tests
+                            delete require.cache[ // eslint-disable-line standard/computed-property-even-spacing
+                                Object.keys(require.cache).filter((path) => path.includes('createObjectURL'))[0]
+                            ];
+
                             // We will otherwise miss these tests (though not sure this is the best solution):
                             //   see test_primary_interface_of in idlharness.js
                             window.Object = Object;
@@ -365,11 +392,23 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                                 // Todo: We might auto-detect this by looking at window.location
                                 basePath, // Todo: We need to change this to our server's base URL when implemented
                                 // basePath: path.join(__dirname, 'js')
-                                rootPath
+                                rootPath,
+                                permittedProtocols: ['http', 'https', 'blob']
                             });
+                            window.Blob.prototype[Symbol.toStringTag] = 'Blob';
+                            window.File.prototype[Symbol.toStringTag] = 'File';
+                            window.FileList.prototype[Symbol.toStringTag] = 'FileList';
 
-                            window.Blob = Blob;
-                            window.File = function File () {}; // Avoid test non-completion (but should still fail)
+                            // Needed by typeson-registry to revive clones
+                            global.Blob = window.Blob;
+                            global.File = window.File;
+                            // keypath-special-identifiers.htm still relies on this property
+                            Object.defineProperty(global.File.prototype, 'lastModifiedDate', {
+                                configurable: true,
+                                get: function () {
+                                    return new Date(this.lastModified);
+                                }
+                            });
 
                             shimNS.window = window;
 

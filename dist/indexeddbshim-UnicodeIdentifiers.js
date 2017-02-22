@@ -7785,279 +7785,25 @@ SyncPromise.reject = function(val) {
 module.exports = SyncPromise;
 
 },{}],301:[function(require,module,exports){
-var keys = Object.keys,
-    isArray = Array.isArray,
-    toString = ({}.toString),
-    getProto = Object.getPrototypeOf,
-    hasOwn = ({}.hasOwnProperty),
-    fnToString = hasOwn.toString;
-
-function toStringTag (val) {
-    return toString.call(val).slice(8, -1);
-}
-
-function hasConstructorOf (a, b) {
-    if (!a) {
-        return false;
-    }
-    var proto = getProto(a);
-    if (!proto) {
-        return false;
-    }
-    var Ctor = hasOwn.call(proto, 'constructor') && proto.constructor;
-    if (typeof Ctor !== 'function') {
-        return b === null;
-    }
-    return typeof Ctor === 'function' && b !== null && fnToString.call(Ctor) === fnToString.call(b);
-}
-
-function isPlainObject (val) { // Mirrors jQuery's
-    if (!val || toStringTag(val) !== 'Object') {
-        return false;
-    }
-
-    var proto = getProto(val);
-    if (!proto) { // `Object.create(null)`
-        return true;
-    }
-
-    return hasConstructorOf(val, Object);
-}
-
-/* Typeson - JSON with types
-    * License: The MIT License (MIT)
-    * Copyright (c) 2016 David Fahlander
-    */
-
-/** An instance of this class can be used to call stringify() and parse().
- * Typeson resolves cyclic references by default. Can also be extended to
- * support custom types using the register() method.
- *
- * @constructor
- * @param {{cyclic: boolean}} [options] - if cyclic (default true), cyclic references will be handled gracefully.
- */
-function Typeson (options) {
-    // Replacers signature: replace (value). Returns falsy if not replacing. Otherwise ["Date", value.getTime()]
-    var replacers = [];
-    // Revivers: map {type => reviver}. Sample: {"Date": value => new Date(value)}
-    var revivers = {};
-
-    /** Types registered via register() */
-    var regTypes = this.types = {};
-
-    /** Seraialize given object to Typeson.
-     *
-     * Arguments works identical to those of JSON.stringify().
-     */
-    this.stringify = function (obj, replacer, space) { // replacer here has nothing to do with our replacers.
-        return JSON.stringify (encapsulate(obj), replacer, space);
-    };
-
-    /** Parse Typeson back into an obejct.
-     *
-     * Arguments works identical to those of JSON.parse().
-     */
-    this.parse = function (text, reviver) {
-        return revive (JSON.parse (text, reviver)); // This reviver has nothing to do with our revivers.
-    };
-
-    /** Encapsulate a complex object into a plain Object by replacing registered types with
-     * plain objects representing the types data.
-     *
-     * This method is used internally by Typeson.stringify().
-     * @param {Object} obj - Object to encapsulate.
-     */
-    var encapsulate = this.encapsulate = function (obj, stateObj) {
-        var types = {},
-            refObjs=[], // For checking cyclic references
-            refKeys=[]; // For checking cyclic references
-        // Clone the object deeply while at the same time replacing any special types or cyclic reference:
-        var cyclic = options && ('cyclic' in options) ? options.cyclic : true;
-        var ret = _encapsulate ('', obj, cyclic, stateObj || {});
-        // Add $types to result only if we ever bumped into a special type
-        if (keys(types).length) {
-            // Special if array (or primitive) was serialized because JSON would ignore custom $types prop on it.
-            if (!ret || !isPlainObject(ret) || ret.$types) return {$:ret, $types: {$: types}};
-            ret.$types = types;
-        }
-        return ret;
-
-        function _encapsulate (keypath, value, cyclic, stateObj) {
-            var $typeof = typeof value;
-            if ($typeof in {string:1, boolean:1, number:1, undefined:1 })
-                return value === undefined || ($typeof === 'number' &&
-                    (isNaN(value) || value === -Infinity || value === Infinity)) ?
-                        replace(keypath, value, stateObj) :
-                        value;
-            if (value === null) return value;
-            if (cyclic) {
-                // Options set to detect cyclic references and be able to rewrite them.
-                var refIndex = refObjs.indexOf(value);
-                if (refIndex < 0) {
-                    if (cyclic === true) {
-                        refObjs.push(value);
-                        refKeys.push(keypath);
-                    }
-                } else {
-                    types[keypath] = "#";
-                    return '#'+refKeys[refIndex];
-                }
+module.exports = [
+    {
+        sparseArrays: {
+            testPlainObjects: true,
+            test: function (x) {return Array.isArray(x);},
+            replace: function (a, stateObj) {
+                stateObj.iterateUnsetNumeric = true;
+                return a;
             }
-            var isPlainObj = isPlainObject(value);
-            var replaced = isPlainObj ?
-                value : // Optimization: if plain object, don't try finding a replacer
-                replace(keypath, value, stateObj);
-            if (replaced !== value) return replaced;
-            var clone;
-            var isArr = isArray(value);
-            if (isPlainObj)
-                clone = {};
-            else if (isArr)
-                clone = new Array(value.length);
-            else return value; // Only clone vanilla objects and arrays.
-            // Iterate object or array
-            keys(value).forEach(function (key) {
-                var val = _encapsulate(keypath + (keypath ? '.':'') + key, value[key], cyclic, {ownKeys: true});
-                if (val !== undefined) clone[key] = val;
-            });
-            // Iterate array for non-own properties (we can't replace the prior loop though as it iterates non-integer keys)
-            if (isArr) {
-                for (var i = 0, vl = value.length; i < vl; i++) {
-                    if (!(i in value)) {
-                        var val = _encapsulate(keypath + (keypath ? '.':'') + i, value[i], cyclic, {ownKeys: false});
-                        if (val !== undefined) clone[i] = val;
-                    }
-                }
-            }
-            return clone;
         }
-
-        function replace (key, value, stateObj) {
-            // Encapsulate registered types
-            var i = replacers.length;
-            while (i--) {
-                if (replacers[i].test(value, stateObj)) {
-                    var type = replacers[i].type;
-                    if (revivers[type]) {
-                        // Record the type only if a corresponding reviver exists.
-                        // This is to support specs where only replacement is done.
-                        // For example ensuring deep cloning of the object, or
-                        // replacing a type to its equivalent without the need to revive it.
-                        var existing = types[key];
-                        // type can comprise an array of types (see test shouldSupportIntermediateTypes)
-                        types[key] = existing ? [type].concat(existing) : type;
-                    }
-                    // Now, also traverse the result in case it contains it own types to replace
-                    return _encapsulate(key, replacers[i].replace(value, stateObj), cyclic && "readonly", stateObj);
-                }
-            }
-            return value;
+    },
+    {
+        sparseUndefined: {
+            test: function (x, stateObj) { return typeof x === 'undefined' && stateObj.ownKeys === false; },
+            replace: function (n) { return null; },
+            revive: function (s) { return undefined;} // Will avoid adding anything
         }
-    };
-
-    /** Revive an encapsulated object.
-     * This method is used internally by JSON.parse().
-     * @param {Object} obj - Object to revive. If it has $types member, the properties that are listed there
-     * will be replaced with its true type instead of just plain objects.
-     */
-    var revive = this.revive = function (obj) {
-        var types = obj && obj.$types,
-            ignore$Types = true;
-        if (!types) return obj; // No type info added. Revival not needed.
-        if (types.$ && isPlainObject(types.$)) {
-            // Special when root object is not a trivial Object, it will be encapsulated in $.
-            obj = obj.$;
-            types = types.$;
-            ignore$Types = false;
-        }
-        var ret = _revive ('', obj);
-        return hasConstructorOf(ret, Undefined) ? undefined : ret;
-
-        function _revive (keypath, value, target) {
-            if (ignore$Types && keypath === '$types') return;
-            var type = types[keypath];
-            if (value && (isPlainObject(value) || isArray(value))) {
-                var clone = isArray(value) ? new Array(value.length) : {};
-                // Iterate object or array
-                keys(value).forEach(function (key) {
-                    var val = _revive(keypath + (keypath ? '.':'') + key, value[key], target || clone);
-                    if (hasConstructorOf(val, Undefined)) clone[key] = undefined;
-                    else if (val !== undefined) clone[key] = val;
-                });
-                value = clone;
-            }
-            if (!type) return value;
-            if (type === '#') return getByKeyPath(target, value.substr(1));
-            return [].concat(type).reduce(function(val, type) {
-                var reviver = revivers[type];
-                if (!reviver) throw new Error ("Unregistered type: " + type);
-                return reviver(val);
-            }, value);
-        }
-    };
-
-    /** Register types.
-     * For examples how to use this method, see https://github.com/dfahlander/typeson-registry/tree/master/types
-     * @param {Array.<Object.<string,Function[]>>} typeSpec - Types and their functions [test, encapsulate, revive];
-     */
-    this.register = function (typeSpecSets) {
-        [].concat(typeSpecSets).forEach(function R (typeSpec) {
-            if (isArray(typeSpec)) return typeSpec.map(R); // Allow arrays of arrays of arrays...
-            typeSpec && keys(typeSpec).forEach(function (typeId) {
-                var spec = typeSpec[typeId],
-                    existingReplacer = replacers.filter(function(r){ return r.type === typeId; });
-                if (existingReplacer.length) {
-                    // Remove existing spec and replace with this one.
-                    replacers.splice(replacers.indexOf(existingReplacer[0]), 1);
-                    delete revivers[typeId];
-                    delete regTypes[typeId];
-                }
-                if (spec) {
-                    if (typeof spec === 'function') {
-                        // Support registering just a class without replacer/reviver
-                        var Class = spec;
-                        spec = [
-                            function(x){return x.constructor === Class;},
-                            function(x){return assign({}, x)},
-                            function(x){return assign(Object.create(Class.prototype), x)}
-                        ];
-                    }
-                    replacers.push({
-                        type: typeId,
-                        test: spec[0],
-                        replace: spec[1]
-                    });
-                    if (spec[2]) revivers[typeId] = spec[2];
-                    regTypes[typeId] = spec; // Record to be retrieved via public types property.
-                }
-            });
-        });
-        return this;
-    };
-}
-
-function assign(t,s) {
-    keys(s).map(function(k){t[k]=s[k];});
-    return t;
-}
-
-/** getByKeyPath() utility */
-function getByKeyPath (obj, keyPath) {
-    if (keyPath === '') return obj;
-    var period = keyPath.indexOf('.');
-    if (period !== -1) {
-        var innerObj = obj[keyPath.substr(0, period)];
-        return innerObj === undefined ? undefined : getByKeyPath(innerObj, keyPath.substr(period + 1));
     }
-    return obj[keyPath];
-}
-
-function Undefined () {}
-Typeson.Undefined = Undefined;
-Typeson.toStringTag = toStringTag;
-Typeson.hasConstructorOf = hasConstructorOf;
-
-module.exports = Typeson;
+];
 
 },{}],302:[function(require,module,exports){
 module.exports = require('./structured-cloning').concat({checkDataCloneException: [function (val) {
@@ -8066,10 +7812,11 @@ module.exports = require('./structured-cloning').concat({checkDataCloneException
     // 2. `IsCallable` (covered by `typeof === 'function'` or a function's `toStringTag`)
     // 3. internal slots besides [[Prototype]] or [[Extensible]] (e.g., [[PromiseState]] or [[WeakMapData]])
     // 4. exotic object (e.g., `Proxy`) (which does not have default behavior for one or more of the
-    //      essential internal methods that are limited to the following for non-function objects (we auto-exclude functions): 
+    //      essential internal methods that are limited to the following for non-function objects (we auto-exclude functions):
     //      [[GetPrototypeOf]],[[SetPrototypeOf]],[[IsExtensible]],[[PreventExtensions]],[[GetOwnProperty]],
     //      [[DefineOwnProperty]],[[HasProperty]],[[Get]],[[Set]],[[Delete]],[[OwnPropertyKeys]]);
     //      except for the standard, built-in exotic objects, we'd need to know whether these methods had distinct behaviors
+    // Note: There is no apparent way for us to detect a `Proxy` and reject (Chrome at least is not rejecting anyways)
     var stringTag = ({}.toString.call(val).slice(8, -1));
     if ([
             'symbol', // Symbol's `toStringTag` is only "Symbol" for its initial value, so we check `typeof`
@@ -8079,12 +7826,12 @@ module.exports = require('./structured-cloning').concat({checkDataCloneException
             'Arguments', // A non-array exotic object
             'Module', // A non-array exotic object
             'Error', // `Error` and other errors have the [[ErrorData]] internal slot and give "Error"
-            'Proxy', // Proper `toStringTag` not yet implemented in Chrome/Firefox/Node
             'Promise', // Promise instances have an extra slot ([[PromiseState]]) but not throwing in Chrome `postMessage`
             'WeakMap', // WeakMap instances have an extra slot ([[WeakMapData]]) but not throwing in Chrome `postMessage`
             'WeakSet' // WeakSet instances have an extra slot ([[WeakSetData]]) but not throwing in Chrome `postMessage`
         ].includes(stringTag) ||
         val === Object.prototype || // A non-array exotic object but not throwing in Chrome `postMessage`
+        ((stringTag === 'Blob' || stringTag === 'File') && val.isClosed) ||
         (val && typeof val === 'object' && typeof val.nodeType === 'number' && typeof val.insertBefore === 'function') // Duck-type DOM node objects (non-array exotic? objects which cannot be cloned by the SCA)
     ) {
         throw new DOMException('The object cannot be cloned.', 'DataCloneError');
@@ -8098,7 +7845,7 @@ module.exports = [
     // Todo: Might also register `ImageBitmap` and synchronous `Blob`/`File`/`FileList`
     // ES5
     require('../types/user-object'), // Processed last
-    require('../types/undefined'),
+    require('../presets/undefined'),
     require('../types/primitive-objects'),
     require('../types/special-numbers'),
     require('../types/date'),
@@ -8111,10 +7858,20 @@ module.exports = [
     typeof DataView === 'function' && require('../types/dataview'),
     typeof Intl !== 'undefined' && require('../types/intl-types'),
     // Non-built-ins
-    require('../types/imagedata')
+    require('../types/imagedata'),
+    require('../types/imagebitmap'), // Async return
+    require('../types/file'),
+    require('../types/filelist'),
+    require('../types/blob')
 ];
 
-},{"../types/arraybuffer":304,"../types/dataview":305,"../types/date":306,"../types/imagedata":307,"../types/intl-types":308,"../types/map":309,"../types/primitive-objects":310,"../types/regexp":311,"../types/set":312,"../types/special-numbers":313,"../types/typed-arrays":314,"../types/undefined":315,"../types/user-object":316}],304:[function(require,module,exports){
+},{"../presets/undefined":304,"../types/arraybuffer":305,"../types/blob":306,"../types/dataview":307,"../types/date":308,"../types/file":309,"../types/filelist":310,"../types/imagebitmap":311,"../types/imagedata":312,"../types/intl-types":313,"../types/map":314,"../types/primitive-objects":315,"../types/regexp":316,"../types/set":317,"../types/special-numbers":318,"../types/typed-arrays":319,"../types/user-object":321}],304:[function(require,module,exports){
+module.exports = [
+    require('../presets/sparse-undefined'),
+    require('../types/undefined')
+];
+
+},{"../presets/sparse-undefined":301,"../types/undefined":320}],305:[function(require,module,exports){
 var Typeson = require('typeson');
 var B64 = require ('base64-arraybuffer');
 
@@ -8125,7 +7882,45 @@ exports.ArrayBuffer = [
 ];
 // See also typed-arrays!
 
-},{"base64-arraybuffer":2,"typeson":301}],305:[function(require,module,exports){
+},{"base64-arraybuffer":2,"typeson":323}],306:[function(require,module,exports){
+var Typeson = require('typeson');
+exports.Blob = {
+    test: function (x) { return Typeson.toStringTag(x) === 'Blob'; },
+    replace: function encapsulate (b) { // Sync
+        var req = new XMLHttpRequest();
+        req.open('GET', URL.createObjectURL(b), false); // Sync
+        if (req.status !== 200 && req.status !== 0) throw new Error('Bad Blob access: ' + req.status);
+        req.send();
+        return {
+            type: b.type,
+            stringContents: req.responseText
+        };
+    },
+    revive: function (o) {return new Blob([o.stringContents], {
+        type: o.type
+    });},
+    replaceAsync: function encapsulateAsync (b) {
+        return new Typeson.Promise(function (resolve, reject) {
+            if (b.isClosed) { // On MDN, but not in https://w3c.github.io/FileAPI/#dfn-Blob
+                reject(new Error('The Blob is closed'));
+                return;
+            }
+            var reader = new FileReader();
+            reader.addEventListener('load', function () {
+                resolve({
+                    type: b.type,
+                    stringContents: reader.result
+                });
+            });
+            reader.addEventListener('error', function () {
+                reject(reader.error);
+            });
+            reader.readAsText(b);
+        });
+    }
+};
+
+},{"typeson":323}],307:[function(require,module,exports){
 var Typeson = require('typeson');
 var B64 = require ('base64-arraybuffer');
 exports.DataView = [
@@ -8134,7 +7929,7 @@ exports.DataView = [
     function (obj) { return new DataView(B64.decode(obj.buffer), obj.byteOffset, obj.byteLength); }
 ];
 
-},{"base64-arraybuffer":2,"typeson":301}],306:[function(require,module,exports){
+},{"base64-arraybuffer":2,"typeson":323}],308:[function(require,module,exports){
 var Typeson = require('typeson');
 exports.Date = [
     function (x) { return Typeson.toStringTag(x) === 'Date'; },
@@ -8142,10 +7937,123 @@ exports.Date = [
     function (time) { return new Date(time); }
 ];
 
-},{"typeson":301}],307:[function(require,module,exports){
-/** ImageData is browser / DOM specific.
- * Requires arraybuffer.js in order for the returned Uint8ClampedArray to be encapsulated as well,
- * or if use with socket.io, socket.io will take care of that.
+},{"typeson":323}],309:[function(require,module,exports){
+var Typeson = require('typeson');
+exports.File = {
+    test: function (x) { return Typeson.toStringTag(x) === 'File'; },
+    replace: function encapsulate (f) { // Sync
+        var req = new XMLHttpRequest();
+        req.open('GET', URL.createObjectURL(f), false); // Sync
+        if (req.status !== 200 && req.status !== 0) throw new Error('Bad Blob access: ' + req.status);
+        req.send();
+        return {
+            type: f.type,
+            stringContents: req.responseText,
+            name: f.name,
+            lastModified: f.lastModified
+        };
+    },
+    revive: function (o) {return new File([o.stringContents], o.name, {
+        type: o.type,
+        lastModified: o.lastModified
+    });},
+    replaceAsync: function encapsulateAsync (f) {
+        return new Typeson.Promise(function (resolve, reject) {
+            if (f.isClosed) { // On MDN, but not in https://w3c.github.io/FileAPI/#dfn-Blob
+                reject(new Error('The File is closed'));
+                return;
+            }
+            var reader = new FileReader();
+            reader.addEventListener('load', function () {
+                resolve({
+                    type: f.type,
+                    stringContents: reader.result,
+                    name: f.name,
+                    lastModified: f.lastModified
+                });
+            });
+            reader.addEventListener('error', function () {
+                reject(reader.error);
+            });
+            reader.readAsText(f);
+        });
+    }
+};
+
+},{"typeson":323}],310:[function(require,module,exports){
+var Typeson = require('typeson');
+exports.File = require('./file').File;
+exports.FileList = {
+    test: function (x) { return Typeson.toStringTag(x) === 'FileList'; },
+    replace: function (fl) {
+        var arr = [];
+        for (var i = 0; i < fl.length; i++) {
+            arr[i] = fl.item(i);
+        }
+        return arr;
+    },
+    revive: function (o) {
+        function FileList () {
+            this._files = arguments[0];
+            this.length = this._files.length;
+        }
+        FileList.prototype.item = function (index) {
+            return this._files[index];
+        };
+        FileList.prototype[Symbol.toStringTag] = 'FileList';
+        return new FileList(o);
+    }
+};
+
+},{"./file":309,"typeson":323}],311:[function(require,module,exports){
+/** ImageBitmap is browser / DOM specific. It also can only work same-domain (or CORS)
+*/
+var Typeson = require('typeson');
+exports.ImageBitmap = {
+    test: function (x) { return Typeson.toStringTag(x) === 'ImageBitmap'; },
+    replace: function (bm) {
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(bm, 0, 0);
+        // Although `width` and `height` are part of `ImageBitMap`, these will
+        //   be auto-created for us when reviving with the data URL (and they are
+        //   not settable even if they weren't)
+        // return {width: bm.width, height: bm.height, dataURL: canvas.toDataURL()};
+        return canvas.toDataURL();
+    },
+    revive: function (o) {
+        /*
+        var req = new XMLHttpRequest();
+        req.open('GET', o, false); // Sync
+        if (req.status !== 200 && req.status !== 0) throw new Error('Bad ImageBitmap access: ' + req.status);
+        req.send();
+        return req.responseText;
+        */
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d');
+        var img = document.createElement('img');
+        // The onload is needed by some browsers per http://stackoverflow.com/a/4776378/271577
+        img.onload = function () {
+            ctx.drawImage(img, 0, 0);
+        };
+        img.src = o;
+        return canvas; // Works in contexts allowing an ImageBitmap (We might use `OffscreenCanvas.transferToBitmap` when supported)
+    },
+    reviveAsync: function reviveAsync (o) {
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d');
+        var img = document.createElement('img');
+        // The onload is needed by some browsers per http://stackoverflow.com/a/4776378/271577
+        img.onload = function () {
+            ctx.drawImage(img, 0, 0);
+        };
+        img.src = o; // o.dataURL;
+        return createImageBitmap(canvas); // Returns a promise
+    }
+};
+
+},{"typeson":323}],312:[function(require,module,exports){
+/** ImageData is browser / DOM specific (though `node-canvas` has it available on `Canvas`).
 */
 var Typeson = require('typeson');
 exports.ImageData = [
@@ -8160,7 +8068,7 @@ exports.ImageData = [
     function (o) {return new ImageData(new Uint8ClampedArray(o.array), o.width, o.height);}
 ];
 
-},{"typeson":301}],308:[function(require,module,exports){
+},{"typeson":323}],313:[function(require,module,exports){
 var Typeson = require('typeson');
 exports["Intl.Collator"] = [
     function (x) { return Typeson.hasConstructorOf(x, Intl.Collator); },
@@ -8180,7 +8088,7 @@ exports["Intl.NumberFormat"] = [
     function (options) { return new Intl.NumberFormat(options.locale, options); }
 ];
 
-},{"typeson":301}],309:[function(require,module,exports){
+},{"typeson":323}],314:[function(require,module,exports){
 var Typeson = require('typeson');
 var makeArray = require('../utils/array-from-iterator');
 exports.Map = [
@@ -8189,7 +8097,7 @@ exports.Map = [
     function (entries) { return new Map(entries); }
 ];
 
-},{"../utils/array-from-iterator":317,"typeson":301}],310:[function(require,module,exports){
+},{"../utils/array-from-iterator":322,"typeson":323}],315:[function(require,module,exports){
 // This module is for objectified primitives (such as new Number(3) or
 // new String("foo"))
 var Typeson = require('typeson');
@@ -8214,20 +8122,20 @@ module.exports = {
     ]
 };
 
-},{"typeson":301}],311:[function(require,module,exports){
+},{"typeson":323}],316:[function(require,module,exports){
 var Typeson = require('typeson');
 exports.RegExp = [
     function (x) { return Typeson.toStringTag(x) === 'RegExp'; },
     function (rexp) {
         return {
             source: rexp.source,
-            flags: (rexp.global?'g':'')+(rexp.ignoreCase?'i':'')+(rexp.multiline?'m':'')
+            flags: (rexp.global?'g':'')+(rexp.ignoreCase?'i':'')+(rexp.multiline?'m':'')+(rexp.sticky?'y':'')+(rexp.unicode?'u':'')
         };
     },
     function (data) { return new RegExp (data.source, data.flags); }
 ];
 
-},{"typeson":301}],312:[function(require,module,exports){
+},{"typeson":323}],317:[function(require,module,exports){
 var Typeson = require('typeson');
 var makeArray = require('../utils/array-from-iterator');
 exports.Set = [
@@ -8236,14 +8144,14 @@ exports.Set = [
     function (values) { return new Set(values); }
 ];
 
-},{"../utils/array-from-iterator":317,"typeson":301}],313:[function(require,module,exports){
+},{"../utils/array-from-iterator":322,"typeson":323}],318:[function(require,module,exports){
 exports.SpecialNumber = [
     function (x) { return typeof x === 'number' && (isNaN(x) || x === Infinity || x === -Infinity); },
     function (n) { return isNaN(n) ? "NaN" : n > 0 ? "Infinity" : "-Infinity" },
     function (s) { return {NaN: NaN, Infinity: Infinity, "-Infinity": -Infinity}[s];}
 ];
 
-},{}],314:[function(require,module,exports){
+},{}],319:[function(require,module,exports){
 (function (global){
 var Typeson = require('typeson');
 var B64 = require ('base64-arraybuffer');
@@ -8270,44 +8178,26 @@ var _global = typeof self === 'undefined' ? global : self;
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"base64-arraybuffer":2,"typeson":301}],315:[function(require,module,exports){
+},{"base64-arraybuffer":2,"typeson":323}],320:[function(require,module,exports){
+// This does not preserve `undefined` in sparse arrays; see the `undefined` or `sparse-undefined` preset
 var Typeson = require('typeson');
 module.exports = {
     undefined: [
         function (x, stateObj) { return typeof x === 'undefined' && (stateObj.ownKeys || !('ownKeys' in stateObj)); },
         function (n) { return null; },
         function (s) { return new Typeson.Undefined();} // Will add `undefined` (returning `undefined` would instead avoid explicitly setting)
-    ],
-    sparseUndefined: [
-        function (x, stateObj) { return typeof x === 'undefined' && stateObj.ownKeys === false; },
-        function (n) { return null; },
-        function (s) { return undefined;} // Will avoid adding anything
     ]
 };
 
-},{"typeson":301}],316:[function(require,module,exports){
+},{"typeson":323}],321:[function(require,module,exports){
 var Typeson = require('typeson');
-var getProto = Object.getPrototypeOf;
-
-function isUserObject (val) {
-    if (!val || Typeson.toStringTag(val) !== 'Object') {
-        return false;
-    }
-
-    var proto = getProto(val);
-    if (!proto) { // `Object.create(null)`
-        return true;
-    }
-    return Typeson.hasConstructorOf(val, Object) || isUserObject(proto);
-}
-
 exports.userObjects = [
-    function (x, stateObj) { return isUserObject(x); },
+    function (x, stateObj) { return Typeson.isUserObject(x); },
     function (n) { return Object.assign({}, n); },
     function (s) { return s;}
 ];
 
-},{"typeson":301}],317:[function(require,module,exports){
+},{"typeson":323}],322:[function(require,module,exports){
 module.exports = Array.from || function (iterator) {
    var res = [];
    for (var i=iterator.next(); !i.done; i = iterator.next()) {
@@ -8316,9 +8206,549 @@ module.exports = Array.from || function (iterator) {
    return res;
 }
 
-},{}],318:[function(require,module,exports){
-arguments[4][301][0].apply(exports,arguments)
-},{"dup":301}],319:[function(require,module,exports){
+},{}],323:[function(require,module,exports){
+var keys = Object.keys,
+    isArray = Array.isArray,
+    toString = ({}.toString),
+    getProto = Object.getPrototypeOf,
+    hasOwn = ({}.hasOwnProperty),
+    fnToString = hasOwn.toString;
+
+function isThenable (v, catchCheck) {
+    return Typeson.isObject(v) && typeof v.then === 'function' && (!catchCheck || typeof v.catch === 'function');
+}
+
+function toStringTag (val) {
+    return toString.call(val).slice(8, -1);
+}
+
+function hasConstructorOf (a, b) {
+    if (!a || typeof a !== 'object') {
+        return false;
+    }
+    var proto = getProto(a);
+    if (!proto) {
+        return false;
+    }
+    var Ctor = hasOwn.call(proto, 'constructor') && proto.constructor;
+    if (typeof Ctor !== 'function') {
+        return b === null;
+    }
+    return typeof Ctor === 'function' && b !== null && fnToString.call(Ctor) === fnToString.call(b);
+}
+
+function isPlainObject (val) { // Mirrors jQuery's
+    if (!val || toStringTag(val) !== 'Object') {
+        return false;
+    }
+
+    var proto = getProto(val);
+    if (!proto) { // `Object.create(null)`
+        return true;
+    }
+
+    return hasConstructorOf(val, Object);
+}
+
+function isUserObject (val) {
+    if (!val || toStringTag(val) !== 'Object') {
+        return false;
+    }
+
+    var proto = getProto(val);
+    if (!proto) { // `Object.create(null)`
+        return true;
+    }
+    return hasConstructorOf(val, Object) || isUserObject(proto);
+}
+
+function isObject (v) {
+    return v && typeof v === 'object'
+}
+
+/* Typeson - JSON with types
+    * License: The MIT License (MIT)
+    * Copyright (c) 2016 David Fahlander
+    */
+
+/** An instance of this class can be used to call stringify() and parse().
+ * Typeson resolves cyclic references by default. Can also be extended to
+ * support custom types using the register() method.
+ *
+ * @constructor
+ * @param {{cyclic: boolean}} [options] - if cyclic (default true), cyclic references will be handled gracefully.
+ */
+function Typeson (options) {
+    // Replacers signature: replace (value). Returns falsy if not replacing. Otherwise ['Date', value.getTime()]
+    var plainObjectReplacers = [];
+    var nonplainObjectReplacers = [];
+    // Revivers: map {type => reviver}. Sample: {'Date': value => new Date(value)}
+    var revivers = {};
+
+    /** Types registered via register() */
+    var regTypes = this.types = {};
+
+    /** Serialize given object to Typeson.
+     *
+     * Arguments works identical to those of JSON.stringify().
+     */
+    var stringify = this.stringify = function (obj, replacer, space, opts) { // replacer here has nothing to do with our replacers.
+        opts = Object.assign({}, options, opts, {stringification: true});
+        var encapsulated = encapsulate(obj, null, opts);
+        if (isArray(encapsulated)) {
+            return JSON.stringify(encapsulated[0], replacer, space);
+        }
+        return encapsulated.then(function (res) {
+            return JSON.stringify(res, replacer, space);
+        });
+    };
+
+    // Also sync but throws on non-sync result
+    this.stringifySync = function (obj, replacer, space, opts) {
+        return stringify(obj, replacer, space, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: true}));
+    };
+    this.stringifyAsync = function (obj, replacer, space, opts) {
+        return stringify(obj, replacer, space, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: false}));
+    };
+
+    /** Parse Typeson back into an obejct.
+     *
+     * Arguments works identical to those of JSON.parse().
+     */
+    var parse = this.parse = function (text, reviver, opts) {
+        opts = Object.assign({}, options, opts, {parse: true});
+        return revive(JSON.parse(text, reviver), opts); // This reviver has nothing to do with our revivers.
+    };
+
+    // Also sync but throws on non-sync result
+    this.parseSync = function (text, reviver, opts) {
+        return parse(text, reviver, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: true})); // This reviver has nothing to do with our revivers.
+    };
+    this.parseAsync = function (text, reviver, opts) {
+        return parse(text, reviver, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: false})); // This reviver has nothing to do with our revivers.
+    };
+
+    /** Encapsulate a complex object into a plain Object by replacing registered types with
+     * plain objects representing the types data.
+     *
+     * This method is used internally by Typeson.stringify().
+     * @param {Object} obj - Object to encapsulate.
+     */
+    var encapsulate = this.encapsulate = function (obj, stateObj, opts) {
+        opts = Object.assign({sync: true}, options, opts);
+        var sync = opts.sync;
+        var types = {},
+            refObjs = [], // For checking cyclic references
+            refKeys = [], // For checking cyclic references
+            promisesDataRoot = [];
+        // Clone the object deeply while at the same time replacing any special types or cyclic reference:
+        var cyclic = opts && ('cyclic' in opts) ? opts.cyclic : true;
+        var ret = _encapsulate('', obj, cyclic, stateObj || {}, promisesDataRoot);
+        function finish (ret) {
+            // Add $types to result only if we ever bumped into a special type (or special case where object has own `$types`)
+            if (keys(types).length) {
+                if (!ret || !isPlainObject(ret) || // Special if array (or a primitive) was serialized because JSON would ignore custom `$types` prop on it
+                    ret.hasOwnProperty('$types') // Also need to handle if this is an object with its own `$types` property (to avoid ambiguity)
+                ) ret = {$: ret, $types: {$: types}};
+                else ret.$types = types;
+            } else if (isObject(ret) && ret.hasOwnProperty('$types')) {
+                ret = {$: ret, $types: true};
+            }
+            return ret;
+        }
+        function checkPromises (ret, promisesData) {
+            return Promise.all(
+                promisesData.map(function (pd) {return pd[1].p;})
+            ).then(function (promResults) {
+                return Promise.all(
+                    promResults.map(function (promResult) {
+                        var newPromisesData = [];
+                        var prData = promisesData.splice(0, 1)[0];
+                        // var [keypath, , cyclic, stateObj, parentObj, key] = prData;
+                        var keyPath = prData[0];
+                        var cyclic = prData[2];
+                        var stateObj = prData[3];
+                        var parentObj = prData[4];
+                        var key = prData[5];
+                        var encaps = _encapsulate(keyPath, promResult, cyclic, stateObj, newPromisesData);
+                        var isTypesonPromise = hasConstructorOf(encaps, TypesonPromise);
+                        if (keyPath && isTypesonPromise) { // Handle case where an embedded custom type itself returns a `Typeson.Promise`
+                            return encaps.p.then(function (encaps2) {
+                                parentObj[key] = encaps2;
+                                return checkPromises(ret, newPromisesData);
+                            });
+                        }
+                        if (keyPath) parentObj[key] = encaps;
+                        else if (isTypesonPromise) { ret = encaps.p; }
+                        else ret = encaps; // If this is itself a `Typeson.Promise` (because the original value supplied was a promise or because the supplied custom type value resolved to one), returning it below will be fine since a promise is expected anyways given current config (and if not a promise, it will be ready as the resolve value)
+                        return checkPromises(ret, newPromisesData);
+                    })
+                );
+            }).then(function () {
+                return ret;
+            });
+        };
+        return promisesDataRoot.length
+            ? sync && opts.throwOnBadSyncType
+                ? (function () {
+                    throw new TypeError("Sync method requested but async result obtained");
+                }())
+                : Promise.resolve(checkPromises(ret, promisesDataRoot)).then(finish)
+            : !sync && opts.throwOnBadSyncType
+                ? (function () {
+                    throw new TypeError("Async method requested but sync result obtained");
+                }())
+                : (opts.stringification && sync // If this is a synchronous request for stringification, yet a promise is the result, we don't want to resolve leading to an async result, so we return an array to avoid ambiguity
+                    ? [finish(ret)]
+                    : (sync
+                        ? finish(ret)
+                        : Promise.resolve(finish(ret))
+                    ));
+
+        function _encapsulate (keypath, value, cyclic, stateObj, promisesData) {
+            var $typeof = typeof value;
+            if ($typeof in {string: 1, boolean: 1, number: 1, undefined: 1 })
+                return value === undefined || ($typeof === 'number' &&
+                    (isNaN(value) || value === -Infinity || value === Infinity)) ?
+                        replace(keypath, value, stateObj, promisesData) :
+                        value;
+            if (value === null) return value;
+            if (cyclic && !stateObj.iterateIn && !stateObj.iterateUnsetNumeric) {
+                // Options set to detect cyclic references and be able to rewrite them.
+                var refIndex = refObjs.indexOf(value);
+                if (refIndex < 0) {
+                    if (cyclic === true) {
+                        refObjs.push(value);
+                        refKeys.push(keypath);
+                    }
+                } else {
+                    types[keypath] = '#';
+                    return '#' + refKeys[refIndex];
+                }
+            }
+            var isPlainObj = isPlainObject(value);
+            var isArr = isArray(value);
+            var replaced = (
+                ((isPlainObj || isArr) && (!plainObjectReplacers.length || stateObj.replaced)) ||
+                stateObj.iterateIn // Running replace will cause infinite loop as will test positive again
+            )
+                // Optimization: if plain object and no plain-object replacers, don't try finding a replacer
+                ? value
+                : replace(keypath, value, stateObj, promisesData, isPlainObj || isArr);
+            if (replaced !== value) return replaced;
+            var clone;
+            if (isArr || stateObj.iterateIn === 'array')
+                clone = new Array(value.length);
+            else if (isPlainObj || stateObj.iterateIn === 'object')
+                clone = {};
+            else if (keypath === '' && hasConstructorOf(value, TypesonPromise)) {
+                promisesData.push([keypath, value, cyclic, stateObj]);
+                return value;
+            }
+            else return value; // Only clone vanilla objects and arrays
+
+            // Iterate object or array
+            if (stateObj.iterateIn) {
+                for (var key in value) {
+                    var ownKeysObj = {ownKeys: value.hasOwnProperty(key)};
+                    var kp = keypath + (keypath ? '.' : '') + key;
+                    var val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData);
+                    if (hasConstructorOf(val, TypesonPromise)) {
+                        promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, key]);
+                    } else if (val !== undefined) clone[key] = val;
+                }
+            } else { // Note: Non-indexes on arrays won't survive stringify so somewhat wasteful for arrays, but so too is iterating all numeric indexes on sparse arrays when not wanted or filtering own keys for positive integers
+                keys(value).forEach(function (key) {
+                    var kp = keypath + (keypath ? '.' : '') + key;
+                    var val = _encapsulate(kp, value[key], !!cyclic, {ownKeys: true}, promisesData);
+                    if (hasConstructorOf(val, TypesonPromise)) {
+                        promisesData.push([kp, val, !!cyclic, {ownKeys: true}, clone, key]);
+                    } else if (val !== undefined) clone[key] = val;
+                });
+            }
+            // Iterate array for non-own numeric properties (we can't replace the prior loop though as it iterates non-integer keys)
+            if (stateObj.iterateUnsetNumeric) {
+                for (var i = 0, vl = value.length; i < vl; i++) {
+                    if (!(i in value)) {
+                        var kp = keypath + (keypath ? '.' : '') + i;
+                        var val = _encapsulate(kp, undefined, !!cyclic, {ownKeys: false}, promisesData);
+                        if (hasConstructorOf(val, TypesonPromise)) {
+                            promisesData.push([kp, val, !!cyclic, {ownKeys: false}, clone, i]);
+                        } else if (val !== undefined) clone[i] = val;
+                    }
+                }
+            }
+            return clone;
+        }
+
+        function replace (key, value, stateObj, promisesData, plainObject) {
+            // Encapsulate registered types
+            var replacers = plainObject ? plainObjectReplacers : nonplainObjectReplacers;
+            var i = replacers.length;
+            while (i--) {
+                if (replacers[i].test(value, stateObj)) {
+                    var type = replacers[i].type;
+                    if (revivers[type]) {
+                        // Record the type only if a corresponding reviver exists.
+                        // This is to support specs where only replacement is done.
+                        // For example ensuring deep cloning of the object, or
+                        // replacing a type to its equivalent without the need to revive it.
+                        var existing = types[key];
+                        // type can comprise an array of types (see test shouldSupportIntermediateTypes)
+                        types[key] = existing ? [type].concat(existing) : type;
+                    }
+                    // Now, also traverse the result in case it contains it own types to replace
+                    stateObj = Object.assign(stateObj, {replaced: true});
+                    if ((sync || !replacers[i].replaceAsync) && !replacers[i].replace) {
+                        return _encapsulate(key, value, cyclic && 'readonly', stateObj, promisesData);
+                    }
+
+                    var replaceMethod = sync || !replacers[i].replaceAsync ? 'replace' : 'replaceAsync';
+                    return _encapsulate(key, replacers[i][replaceMethod](value, stateObj), cyclic && 'readonly', stateObj, promisesData);
+                }
+            }
+            return value;
+        }
+    };
+
+    // Also sync but throws on non-sync result
+    this.encapsulateSync = function (obj, stateObj, opts) {
+        return encapsulate(obj, stateObj, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: true}));
+    };
+    this.encapsulateAsync = function (obj, stateObj, opts) {
+        return encapsulate(obj, stateObj, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: false}));
+    };
+
+    /** Revive an encapsulated object.
+     * This method is used internally by JSON.parse().
+     * @param {Object} obj - Object to revive. If it has $types member, the properties that are listed there
+     * will be replaced with its true type instead of just plain objects.
+     */
+    var revive = this.revive = function (obj, opts) {
+        opts = Object.assign({sync: true}, options, opts);
+        var sync = opts.sync;
+        var types = obj && obj.$types,
+            ignore$Types = true;
+        if (!types) return obj; // No type info added. Revival not needed.
+        if (types === true) return obj.$; // Object happened to have own `$types` property but with no actual types, so we unescape and return that object
+        if (types.$ && isPlainObject(types.$)) {
+            // Special when root object is not a trivial Object, it will be encapsulated in $. It will also be encapsulated in $ if it has its own `$` property to avoid ambiguity
+            obj = obj.$;
+            types = types.$;
+            ignore$Types = false;
+        }
+        var keyPathResolutions = [];
+        var ret = _revive('', obj, null, opts);
+        ret = hasConstructorOf(ret, Undefined) ? undefined : ret;
+        return isThenable(ret)
+            ? sync && opts.throwOnBadSyncType
+                ? (function () {
+                    throw new TypeError("Sync method requested but async result obtained");
+                }())
+                : ret
+            : !sync && opts.throwOnBadSyncType
+                ? (function () {
+                    throw new TypeError("Async method requested but sync result obtained");
+                }())
+                : sync
+                    ? ret
+                    : Promise.resolve(ret);
+
+        function _revive (keypath, value, target, opts, clone, key) {
+            if (ignore$Types && keypath === '$types') return;
+            var type = types[keypath];
+            if (isArray(value) || isPlainObject(value)) {
+                var clone = isArray(value) ? new Array(value.length) : {};
+                // Iterate object or array
+                keys(value).forEach(function (key) {
+                    var val = _revive(keypath + (keypath ? '.' : '') + key, value[key], target || clone, opts, clone, key);
+                    if (hasConstructorOf(val, Undefined)) clone[key] = undefined;
+                    else if (val !== undefined) clone[key] = val;
+                });
+                value = clone;
+                while (keyPathResolutions.length) { // Try to resolve cyclic reference as soon as available
+                    var kpr = keyPathResolutions[0];
+                    var target = kpr[0];
+                    var keyPath = kpr[1];
+                    var clone = kpr[2];
+                    var key = kpr[3];
+                    var val = getByKeyPath(target, keyPath);
+                    if (hasConstructorOf(val, Undefined)) clone[key] = undefined;
+                    else if (val !== undefined) clone[key] = val;
+                    else break;
+                    keyPathResolutions.splice(0, 1);
+                }
+            }
+            if (!type) return value;
+            if (type === '#') {
+                var ret = getByKeyPath(target, value.substr(1));
+                if (ret === undefined) { // Cyclic reference not yet available
+                    keyPathResolutions.push([target, value.substr(1), clone, key]);
+                }
+                return ret;
+            }
+            var sync = opts.sync;
+            return [].concat(type).reduce(function (val, type) {
+                var reviver = revivers[type];
+                if (!reviver) throw new Error ('Unregistered type: ' + type);
+                return reviver[
+                    sync && reviver.revive
+                        ? 'revive'
+                        : !sync && reviver.reviveAsync
+                            ? 'reviveAsync'
+                            : 'revive'
+                ](val);
+            }, value);
+        }
+    };
+
+    // Also sync but throws on non-sync result
+    this.reviveSync = function (obj, opts) {
+        return revive(obj, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: true}));
+    };
+    this.reviveAsync = function (obj, opts) {
+        return revive(obj, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: false}));
+    };
+
+    /** Register types.
+     * For examples how to use this method, see https://github.com/dfahlander/typeson-registry/tree/master/types
+     * @param {Array.<Object.<string,Function[]>>} typeSpec - Types and their functions [test, encapsulate, revive];
+     */
+    this.register = function (typeSpecSets, opts) {
+        opts = opts || {};
+        [].concat(typeSpecSets).forEach(function R (typeSpec) {
+            if (isArray(typeSpec)) return typeSpec.map(R); // Allow arrays of arrays of arrays...
+            typeSpec && keys(typeSpec).forEach(function (typeId) {
+                if (typeId === '#') {
+                    throw new TypeError('# cannot be used as a type name as it is reserved for cyclic objects');
+                }
+                var spec = typeSpec[typeId];
+                var replacers = spec.testPlainObjects ? plainObjectReplacers : nonplainObjectReplacers;
+                var existingReplacer = replacers.filter(function(r){ return r.type === typeId; });
+                if (existingReplacer.length) {
+                    // Remove existing spec and replace with this one.
+                    replacers.splice(replacers.indexOf(existingReplacer[0]), 1);
+                    delete revivers[typeId];
+                    delete regTypes[typeId];
+                }
+                if (spec) {
+                    if (typeof spec === 'function') {
+                        // Support registering just a class without replacer/reviver
+                        var Class = spec;
+                        spec = {
+                            test: function (x) { return x.constructor === Class; },
+                            replace: function (x) { return assign({}, x); },
+                            revive: function (x) { return assign(Object.create(Class.prototype), x); }
+                        };
+                    } else if (isArray(spec)) {
+                        spec = {
+                            test: spec[0],
+                            replace: spec[1],
+                            revive: spec[2]
+                        };
+                    }
+                    var replacerObj = {
+                        type: typeId,
+                        test: spec.test.bind(spec)
+                    };
+                    if (spec.replace) {
+                        replacerObj.replace = spec.replace.bind(spec);
+                    }
+                    if (spec.replaceAsync) {
+                        replacerObj.replaceAsync = spec.replaceAsync.bind(spec);
+                    }
+                    var start = typeof opts.fallback === 'number' ? opts.fallback : (opts.fallback ? 0 : Infinity);
+                    if (spec.testPlainObjects) {
+                        plainObjectReplacers.splice(start, 0, replacerObj);
+                    } else {
+                        nonplainObjectReplacers.splice(start, 0, replacerObj);
+                    }
+                    // Todo: We might consider a testAsync type
+                    if (spec.revive || spec.reviveAsync) {
+                        var reviverObj = {};
+                        if (spec.revive) reviverObj.revive = spec.revive.bind(spec);
+                        if (spec.reviveAsync) reviverObj.reviveAsync = spec.reviveAsync.bind(spec);
+                        revivers[typeId] = reviverObj;
+                    }
+
+                    regTypes[typeId] = spec; // Record to be retrieved via public types property.
+                }
+            });
+        });
+        return this;
+    };
+}
+
+function assign(t,s) {
+    keys(s).map(function (k) { t[k] = s[k]; });
+    return t;
+}
+
+/** getByKeyPath() utility */
+function getByKeyPath (obj, keyPath) {
+    if (keyPath === '') return obj;
+    var period = keyPath.indexOf('.');
+    if (period !== -1) {
+        var innerObj = obj[keyPath.substr(0, period)];
+        return innerObj === undefined ? undefined : getByKeyPath(innerObj, keyPath.substr(period + 1));
+    }
+    return obj[keyPath];
+}
+
+function Undefined () {}
+
+// With ES6 classes, we may be able to simply use `class TypesonPromise extends Promise` and add a string tag for detection
+function TypesonPromise (f) {
+    this.p = new Promise(f);
+};
+TypesonPromise.prototype.then = function (onFulfilled, onRejected) {
+    var that = this;
+    return new TypesonPromise(function (typesonResolve, typesonReject) {
+        that.p.then(function (res) {
+            typesonResolve(onFulfilled ? onFulfilled(res) : res);
+        }, function (r) {
+            that.p['catch'](function (res) {
+                return onRejected ? onRejected(res) : Promise.reject(res);
+            }).then(typesonResolve, typesonReject);
+        });
+    });
+};
+TypesonPromise.prototype['catch'] = function (onRejected) {
+    return this.then(null, onRejected);
+};
+TypesonPromise.resolve = function (v) {
+    return new TypesonPromise(function (typesonResolve) {
+        typesonResolve(v);
+    });
+};
+TypesonPromise.reject = function (v) {
+    return new TypesonPromise(function (typesonResolve, typesonReject) {
+        typesonReject(v);
+    });
+};
+['all', 'race'].map(function (meth) {
+    TypesonPromise[meth] = function (promArr) {
+        return new TypesonPromise(function (typesonResolve, typesonReject) {
+            Promise[meth](promArr.map(function (prom) {return prom.p;})).then(typesonResolve, typesonReject);
+        });
+    };
+});
+
+// The following provide classes meant to avoid clashes with other values
+Typeson.Undefined = Undefined; // To insist `undefined` should be added
+Typeson.Promise = TypesonPromise; // To support async encapsulation/stringification
+
+// Some fundamental type-checking utilities
+Typeson.isThenable = isThenable;
+Typeson.toStringTag = toStringTag;
+Typeson.hasConstructorOf = hasConstructorOf;
+Typeson.isObject = isObject;
+Typeson.isPlainObject = isPlainObject;
+Typeson.isUserObject = isUserObject;
+
+module.exports = Typeson;
+
+},{}],324:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -8401,7 +8831,7 @@ var CFG = {};
 exports.default = CFG;
 module.exports = exports['default'];
 
-},{}],320:[function(require,module,exports){
+},{}],325:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -8708,7 +9138,7 @@ exports.ShimDOMException = ShimDOMException;
 exports.createDOMException = createDOMException;
 exports.webSQLErrback = webSQLErrback;
 
-},{"./CFG":319}],321:[function(require,module,exports){
+},{"./CFG":324}],326:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -8894,7 +9324,7 @@ if (cleanInterface) {
 exports.default = DOMStringList;
 module.exports = exports['default'];
 
-},{}],322:[function(require,module,exports){
+},{}],327:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -8928,7 +9358,7 @@ exports.ShimEvent = _eventtarget.ShimEvent;
 exports.ShimCustomEvent = _eventtarget.ShimCustomEvent;
 exports.ShimEventTarget = _eventtarget.ShimEventTarget;
 
-},{"./util":338,"eventtarget":297}],323:[function(require,module,exports){
+},{"./util":343,"eventtarget":297}],328:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9460,7 +9890,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
     var request = me.__store.transaction.__createRequest(me);
     var key = me.primaryKey;
     function addToQueue(clonedValue) {
-        _IDBObjectStore2.default.__stepsStoringRecordObjectStore(request, me.__store, clonedValue, false, key);
+        _IDBObjectStore2.default.__storingRecordObjectStore(request, me.__store, clonedValue, false, key);
     }
     if (me.__store.keyPath !== null) {
         var _me$__store$__validat = me.__store.__validateKeyAndValueAndCloneValue(valueToUpdate, undefined, true),
@@ -9572,7 +10002,7 @@ Object.defineProperty(IDBCursorWithValue, 'prototype', {
 exports.IDBCursor = IDBCursor;
 exports.IDBCursorWithValue = IDBCursorWithValue;
 
-},{"./CFG":319,"./DOMException":320,"./IDBFactory":325,"./IDBIndex":326,"./IDBKeyRange":327,"./IDBObjectStore":328,"./IDBRequest":329,"./IDBTransaction":330,"./Key":332,"./Sca":333,"./util":338}],324:[function(require,module,exports){
+},{"./CFG":324,"./DOMException":325,"./IDBFactory":330,"./IDBIndex":331,"./IDBKeyRange":332,"./IDBObjectStore":333,"./IDBRequest":334,"./IDBTransaction":335,"./Key":337,"./Sca":338,"./util":343}],329:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9875,7 +10305,7 @@ Object.defineProperty(IDBDatabase, 'prototype', {
 exports.default = IDBDatabase;
 module.exports = exports['default'];
 
-},{"./CFG":319,"./DOMException":320,"./DOMStringList":321,"./Event":322,"./IDBObjectStore":328,"./IDBTransaction":330,"./Sca":333,"./util":338,"eventtarget":297}],325:[function(require,module,exports){
+},{"./CFG":324,"./DOMException":325,"./DOMStringList":326,"./Event":327,"./IDBObjectStore":333,"./IDBTransaction":335,"./Sca":338,"./util":343,"eventtarget":297}],330:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10012,7 +10442,8 @@ IDBFactory.prototype.open = function (name /* , version */) {
         }
         err = err ? (0, _DOMException.webSQLErrback)(err) : tx;
         calledDbCreateError = true;
-        var evt = (0, _Event.createEvent)('error', err, { bubbles: true });
+        // Re: why bubbling here (and how cancelable is only really relevant for `window.onerror`) see: https://github.com/w3c/IndexedDB/issues/86
+        var evt = (0, _Event.createEvent)('error', err, { bubbles: true, cancelable: true });
         req.__readyState = 'done';
         req.__error = err;
         req.__result = undefined;
@@ -10033,7 +10464,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
         db.transaction(function (tx) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS __sys__ (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB, currNum INTEGER)', [], function () {
-                tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList", "currNum" FROM __sys__', [], function (tx, data) {
+                tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList" FROM __sys__', [], function (tx, data) {
                     req.__result = _IDBDatabase2.default.__createInstance(db, name, oldVersion, version, data);
                     me.__connections.push(req.result);
                     if (oldVersion < version) {
@@ -10197,7 +10628,8 @@ IDBFactory.prototype.deleteDatabase = function (name) {
             req.__readyState = 'done';
             req.__error = err;
             req.__result = undefined;
-            var e = (0, _Event.createEvent)('error', err, { bubbles: true });
+            // Re: why bubbling here (and how cancelable is only really relevant for `window.onerror`) see: https://github.com/w3c/IndexedDB/issues/86
+            var e = (0, _Event.createEvent)('error', err, { bubbles: true, cancelable: true });
             req.dispatchEvent(e);
             calledDBError = true;
         });
@@ -10343,6 +10775,7 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
         }
         err = err ? (0, _DOMException.webSQLErrback)(err) : tx;
         calledDbCreateError = true;
+        // Re: why bubbling here (and how cancelable is only really relevant for `window.onerror`) see: https://github.com/w3c/IndexedDB/issues/86
         var evt = (0, _Event.createEvent)('error', err, { bubbles: true, cancelable: true }); // http://stackoverflow.com/questions/40165909/to-where-do-idbopendbrequest-error-events-bubble-up/40181108#40181108
         req.__readyState = 'done';
         req.__error = err;
@@ -10398,7 +10831,7 @@ exports.IDBFactory = IDBFactory;
 exports.cmp = cmp;
 exports.shimIndexedDB = shimIndexedDB;
 
-},{"./CFG":319,"./DOMException":320,"./DOMStringList":321,"./Event":322,"./IDBDatabase":324,"./IDBRequest":329,"./IDBTransaction":330,"./IDBVersionChangeEvent":331,"./Key":332,"./util":338}],326:[function(require,module,exports){
+},{"./CFG":324,"./DOMException":325,"./DOMStringList":326,"./Event":327,"./IDBDatabase":329,"./IDBRequest":334,"./IDBTransaction":335,"./IDBVersionChangeEvent":336,"./Key":337,"./util":343}],331:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10949,7 +11382,7 @@ exports.executeFetchIndexData = executeFetchIndexData;
 exports.IDBIndex = IDBIndex;
 exports.default = IDBIndex;
 
-},{"./CFG":319,"./DOMException":320,"./IDBCursor":323,"./IDBKeyRange":327,"./IDBTransaction":330,"./Key":332,"./Sca":333,"./util":338}],327:[function(require,module,exports){
+},{"./CFG":324,"./DOMException":325,"./IDBCursor":328,"./IDBKeyRange":332,"./IDBTransaction":335,"./Key":337,"./Sca":338,"./util":343}],332:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -11133,7 +11566,7 @@ exports.IDBKeyRange = IDBKeyRange;
 exports.convertValueToKeyRange = convertValueToKeyRange;
 exports.default = IDBKeyRange;
 
-},{"./DOMException":320,"./Key":332,"./util":338}],328:[function(require,module,exports){
+},{"./DOMException":325,"./Key":337,"./util":343}],333:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -11351,7 +11784,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
             failure((0, _DOMException.createDOMException)('UnknownError', 'Could not delete ObjectStore', err));
         }
 
-        tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList", "currNum" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.name)], function (tx, data) {
+        tx.executeSql('SELECT "name" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.name)], function (tx, data) {
             if (data.rows.length > 0) {
                 tx.executeSql('DROP TABLE ' + util.escapeStoreNameForSQL(store.name), [], function () {
                     tx.executeSql('DELETE FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.name)], function () {
@@ -11430,94 +11863,34 @@ IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, k
  * @param {function} success
  * @param {function} failure
  */
-IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failure) {
+IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb) {
     var me = this;
 
     // Only run if cloning is needed
     function keyCloneThenSuccess() {
+        // We want to return the original key, so we don't need to accept an argument here
         Sca.encode(key, function (key) {
             key = Sca.decode(key);
             success(key);
         });
     }
 
-    function getCurrentNumber(callback) {
-        tx.executeSql('SELECT "currNum" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(me.name)], function (tx, data) {
-            if (data.rows.length !== 1) {
-                callback(1);
-            } else {
-                callback(data.rows.item(0).currNum);
-            }
-        }, function (tx, error) {
-            failure((0, _DOMException.createDOMException)('DataError', 'Could not get the auto increment value for key', error));
-        });
-    }
-
-    // Bump up the auto-inc counter if the key path-resolved value is valid (greater than old value and >=1) OR
-    //  if a manually passed in key is valid (numeric and >= 1) and >= any primaryKey
-    function setCurrentNumber() {
-        var sql = 'UPDATE __sys__ SET "currNum" = ? WHERE "name" = ?';
-        var sqlValues = [Math.floor(key) + 1, util.escapeSQLiteStatement(me.name)];
-        _CFG2.default.DEBUG && console.log(sql, sqlValues);
-        tx.executeSql(sql, sqlValues, function (tx, data) {
-            keyCloneThenSuccess();
-        }, function (tx, err) {
-            failure((0, _DOMException.createDOMException)('UnknownError', 'Could not set the auto increment value for key', err));
-        });
-    }
-    // Increment current number by 1 (we cannot leverage SQLite's
-    //  autoincrement (and decrement when not needed), as decrementing
-    //  will be overwritten/ignored upon the next insert)
-    function incrementCurrentNumber(cn, cb) {
-        var sql = 'UPDATE __sys__ SET "currNum" = "currNum" + 1 WHERE "name" = ?';
-        var sqlValues = [util.escapeSQLiteStatement(me.name)];
-        _CFG2.default.DEBUG && console.log(sql, sqlValues);
-        tx.executeSql(sql, sqlValues, function (tx, data) {
-            cb();
-            success(cn);
-        }, function (tx, err) {
-            failure((0, _DOMException.createDOMException)('UnknownError', 'Could not set the auto increment value for key', err));
-        });
-    }
-
-    // We don't begin with in-line steps to "extract a key from a value using a key path"
-    //   as already run and already treating any (acceptable) failures as `undefined`
-
     if (me.autoIncrement) {
         // If auto-increment and no valid primaryKey found on the keyPath, get and set the new value, and use
         if (key === undefined) {
-            getCurrentNumber(function (cn) {
-                if (cn > 9007199254740992) {
-                    // 2 ^ 53 (See <https://github.com/w3c/IndexedDB/issues/147>)
-                    failure((0, _DOMException.createDOMException)('ConstraintError', 'The key generator\'s current number has reached the maximum safe integer limit'));
+            Key.generateKeyForStore(tx, me, function (failure, key) {
+                if (failure) {
+                    failCb((0, _DOMException.createDOMException)('ConstraintError', 'The key generator\'s current number has reached the maximum safe integer limit'));
                     return;
                 }
-                incrementCurrentNumber(cn, function () {
-                    if (me.keyPath !== null) {
-                        try {
-                            Key.injectKeyIntoValueUsingKeyPath(value, cn, me.keyPath);
-                        } catch (e) {
-                            failure((0, _DOMException.createDOMException)('DataError', 'Could not assign a generated value to the keyPath', e));
-                        }
-                    }
-                });
-            });
-        } else if (!Number.isFinite(key) || key < 1) {
-            // Optimize with no need to get the current number
-            // Auto-increment attempted with a bad (non-numeric/non-finite or < 1) key;
-            //   the steps don't mention failure but we are not to change the current number
-            keyCloneThenSuccess();
-        } else {
-            // If auto-increment and the keyPath item is a valid numeric key, get the old auto-increment to compare if the new is higher
-            //  to determine which to use and whether to update the current number
-            getCurrentNumber(function (cn) {
-                var useNewKeyForAutoInc = key >= cn;
-                if (useNewKeyForAutoInc) {
-                    setCurrentNumber();
-                } else {
-                    keyCloneThenSuccess();
+                if (me.keyPath !== null) {
+                    // Should not throw now as checked earlier
+                    Key.injectKeyIntoValueUsingKeyPath(value, key, me.keyPath);
                 }
-            });
+                success(key);
+            }, failCb);
+        } else {
+            Key.possiblyUpdateKeyGenerator(tx, me, key, keyCloneThenSuccess, failCb);
         }
         // Not auto-increment
     } else {
@@ -11631,7 +12004,7 @@ IDBObjectStore.prototype.add = function (value /* , key */) {
         ky = _me$__validateKeyAndV2[0],
         clonedValue = _me$__validateKeyAndV2[1];
 
-    IDBObjectStore.__stepsStoringRecordObjectStore(request, me, clonedValue, true, ky);
+    IDBObjectStore.__storingRecordObjectStore(request, me, clonedValue, true, ky);
     return request;
 };
 
@@ -11657,7 +12030,7 @@ IDBObjectStore.prototype.put = function (value /*, key */) {
         ky = _me$__validateKeyAndV4[0],
         clonedValue = _me$__validateKeyAndV4[1];
 
-    IDBObjectStore.__stepsStoringRecordObjectStore(request, me, clonedValue, false, ky);
+    IDBObjectStore.__storingRecordObjectStore(request, me, clonedValue, false, ky);
     return request;
 };
 
@@ -11675,7 +12048,7 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
     });
 };
 
-IDBObjectStore.__stepsStoringRecordObjectStore = function (request, store, value, noOverwrite /* , key */) {
+IDBObjectStore.__storingRecordObjectStore = function (request, store, value, noOverwrite /* , key */) {
     var key = arguments[4];
     store.transaction.__pushToQueue(request, function (tx, args, success, error) {
         store.__deriveKey(tx, value, key, function (clonedKeyOrCurrentNumber) {
@@ -11996,7 +12369,7 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath /* , optiona
     return index;
 };
 
-IDBObjectStore.prototype.deleteIndex = function (indexName) {
+IDBObjectStore.prototype.deleteIndex = function (name) {
     var me = this;
     if (!(me instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
@@ -12009,9 +12382,9 @@ IDBObjectStore.prototype.deleteIndex = function (indexName) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
     _IDBTransaction2.default.__assertActive(me.transaction);
-    var index = me.__indexes[indexName];
+    var index = me.__indexes[name];
     if (!index) {
-        throw (0, _DOMException.createDOMException)('NotFoundError', 'Index "' + indexName + '" does not exist on ' + me.name);
+        throw (0, _DOMException.createDOMException)('NotFoundError', 'Index "' + name + '" does not exist on ' + me.name);
     }
 
     _IDBIndex.IDBIndex.__deleteIndex(me, index);
@@ -12046,7 +12419,7 @@ Object.defineProperty(IDBObjectStore, 'prototype', {
 exports.default = IDBObjectStore;
 module.exports = exports['default'];
 
-},{"./CFG":319,"./DOMException":320,"./DOMStringList":321,"./IDBCursor":323,"./IDBIndex":326,"./IDBKeyRange":327,"./IDBTransaction":330,"./Key":332,"./Sca":333,"./util":338,"sync-promise":300}],329:[function(require,module,exports){
+},{"./CFG":324,"./DOMException":325,"./DOMStringList":326,"./IDBCursor":328,"./IDBIndex":331,"./IDBKeyRange":332,"./IDBTransaction":335,"./Key":337,"./Sca":338,"./util":343,"sync-promise":300}],334:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12263,7 +12636,7 @@ Object.defineProperty(IDBOpenDBRequest, 'prototype', {
 exports.IDBRequest = IDBRequest;
 exports.IDBOpenDBRequest = IDBOpenDBRequest;
 
-},{"./DOMException":320,"./util":338,"eventtarget":297}],330:[function(require,module,exports){
+},{"./DOMException":325,"./util":343,"eventtarget":297}],335:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12869,7 +13242,7 @@ Object.defineProperty(IDBTransaction, 'prototype', {
 exports.default = IDBTransaction;
 module.exports = exports['default'];
 
-},{"./CFG":319,"./DOMException":320,"./Event":322,"./IDBObjectStore":328,"./IDBRequest":329,"./util":338,"eventtarget":297,"sync-promise":300}],331:[function(require,module,exports){
+},{"./CFG":324,"./DOMException":325,"./Event":327,"./IDBObjectStore":333,"./IDBRequest":334,"./util":343,"eventtarget":297,"sync-promise":300}],336:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12934,13 +13307,13 @@ Object.defineProperty(IDBVersionChangeEvent, 'prototype', {
 exports.default = IDBVersionChangeEvent;
 module.exports = exports['default'];
 
-},{"./Event":322,"./util":338}],332:[function(require,module,exports){
+},{"./Event":327,"./util":343}],337:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.findMultiEntryMatches = exports.isKeyInRange = exports.isMultiEntryMatch = exports.checkKeyCouldBeInjectedIntoValue = exports.injectKeyIntoValueUsingKeyPath = exports.extractKeyValueDecodedFromValueUsingKeyPath = exports.evaluateKeyPathOnValue = exports.extractKeyFromValueUsingKeyPath = exports.convertValueToKeyRethrowingAndIfInvalid = exports.convertValueToMultiEntryKey = exports.convertValueToKey = exports.convertValueToMultiEntryKeyDecoded = exports.convertValueToKeyValueDecoded = exports.convertKeyToValue = exports.roundTrip = exports.decode = exports.encode = undefined;
+exports.possiblyUpdateKeyGenerator = exports.generateKeyForStore = exports.findMultiEntryMatches = exports.isKeyInRange = exports.isMultiEntryMatch = exports.checkKeyCouldBeInjectedIntoValue = exports.injectKeyIntoValueUsingKeyPath = exports.extractKeyValueDecodedFromValueUsingKeyPath = exports.evaluateKeyPathOnValue = exports.extractKeyFromValueUsingKeyPath = exports.convertValueToKeyRethrowingAndIfInvalid = exports.convertValueToMultiEntryKey = exports.convertValueToKey = exports.convertValueToMultiEntryKeyDecoded = exports.convertValueToKeyValueDecoded = exports.convertKeyToValue = exports.roundTrip = exports.decode = exports.encode = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
@@ -12951,6 +13324,12 @@ var _util = require('./util');
 var util = _interopRequireWildcard(_util);
 
 var _IDBFactory = require('./IDBFactory');
+
+var _CFG = require('./CFG');
+
+var _CFG2 = _interopRequireDefault(_CFG);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
@@ -13456,16 +13835,16 @@ function evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKe
             switch (idntfr) {
                 case 'size':case 'type':
                     value = value[idntfr];
-                    return;
+                    break;
             }
         } else if (util.isFile(value)) {
             switch (idntfr) {
                 case 'name':case 'lastModified':
                     value = value[idntfr];
-                    return;
+                    break;
                 case 'lastModifiedDate':
                     value = new Date(value.lastModified);
-                    return;
+                    break;
             }
         } else if (!util.isObj(value) || !Object.prototype.hasOwnProperty.call(value, idntfr)) {
             return true;
@@ -13647,6 +14026,80 @@ function roundTrip(key, inArray) {
     return _decode(_encode(key, inArray), inArray);
 }
 
+var MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `Number.MAX_SAFE_INTEGER + 1`)
+
+function getCurrentNumber(tx, store, callback, sqlFailCb) {
+    tx.executeSql('SELECT "currNum" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.name)], function (tx, data) {
+        if (data.rows.length !== 1) {
+            callback(1);
+        } else {
+            callback(data.rows.item(0).currNum);
+        }
+    }, function (tx, error) {
+        sqlFailCb((0, _DOMException.createDOMException)('DataError', 'Could not get the auto increment value for key', error));
+    });
+}
+
+// Bump up the auto-inc counter if the key path-resolved value is valid (greater than old value and >=1) OR
+//  if a manually passed in key is valid (numeric and >= 1) and >= any primaryKey
+function setCurrentNumber(tx, store, num, successCb, failCb) {
+    var sql = 'UPDATE __sys__ SET "currNum" = ? WHERE "name" = ?';
+    num = num === MAX_ALLOWED_CURRENT_NUMBER ? num + 2 // Since incrementing by one will have no effect in JavaScript on this unsafe max, we represent the max as a number incremented by two. The getting of the current number is never returned to the user and is only used in safe comparisons, so it is safe for us to represent it in this manner
+    : num + 1;
+    var sqlValues = [num, util.escapeSQLiteStatement(store.name)];
+    _CFG2.default.DEBUG && console.log(sql, sqlValues);
+    tx.executeSql(sql, sqlValues, function (tx, data) {
+        successCb(num);
+    }, function (tx, err) {
+        failCb((0, _DOMException.createDOMException)('UnknownError', 'Could not set the auto increment value for key', err));
+    });
+}
+
+function generateKeyForStore(tx, store, cb, sqlFailCb) {
+    getCurrentNumber(tx, store, function (key) {
+        if (key > MAX_ALLOWED_CURRENT_NUMBER) {
+            // 2 ^ 53 (See <https://github.com/w3c/IndexedDB/issues/147>)
+            return cb('failure');
+        }
+        // Increment current number by 1 (we cannot leverage SQLite's
+        //  autoincrement (and decrement when not needed), as decrementing
+        //  will be overwritten/ignored upon the next insert)
+        setCurrentNumber(tx, store, key, function () {
+            cb(null, key);
+        }, sqlFailCb);
+    }, sqlFailCb);
+}
+
+// Fractional or numbers exceeding the max do not get changed in the result
+//     per https://github.com/w3c/IndexedDB/issues/147
+//     so we do not return a key
+function possiblyUpdateKeyGenerator(tx, store, key, successCb, sqlFailCb) {
+    // Per https://github.com/w3c/IndexedDB/issues/147 , non-finite numbers
+    //   (or numbers larger than the max) are now to have the explicit effect of
+    //   setting the current number (up to the max), so we do not optimize them
+    //   out here
+    if (typeof key !== 'number' || key < 1) {
+        // Optimize with no need to get the current number
+        // Auto-increment attempted with a bad key;
+        //   we are not to change the current number, but the steps don't call for failure
+        // Numbers < 1 are optimized out as they will never be greater than the current number which must be at least 1
+        successCb();
+    } else {
+        // If auto-increment and the keyPath item is a valid numeric key, get the old auto-increment to compare if the new is higher
+        //  to determine which to use and whether to update the current number
+        getCurrentNumber(tx, store, function (cn) {
+            var value = Math.floor(Math.min(key, MAX_ALLOWED_CURRENT_NUMBER));
+            var useNewKeyForAutoInc = value >= cn;
+            if (useNewKeyForAutoInc) {
+                setCurrentNumber(tx, store, value, successCb, sqlFailCb);
+            } else {
+                // Not updated
+                successCb();
+            }
+        }, sqlFailCb);
+    }
+}
+
 /* eslint-disable object-property-newline */
 exports.encode = _encode;
 exports.decode = _decode;
@@ -13665,8 +14118,10 @@ exports.checkKeyCouldBeInjectedIntoValue = checkKeyCouldBeInjectedIntoValue;
 exports.isMultiEntryMatch = isMultiEntryMatch;
 exports.isKeyInRange = isKeyInRange;
 exports.findMultiEntryMatches = findMultiEntryMatches;
+exports.generateKeyForStore = generateKeyForStore;
+exports.possiblyUpdateKeyGenerator = possiblyUpdateKeyGenerator;
 
-},{"./DOMException":320,"./IDBFactory":325,"./util":338}],333:[function(require,module,exports){
+},{"./CFG":324,"./DOMException":325,"./IDBFactory":330,"./util":343}],338:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13699,7 +14154,7 @@ var typeson = new _typeson2.default().register(_structuredCloningThrowing2.defau
 function encode(obj, cb) {
     var ret = void 0;
     try {
-        ret = typeson.stringify(obj);
+        ret = typeson.stringifySync(obj);
     } catch (err) {
         // SCA in typeson-registry using `DOMException` which is not defined (e.g., in Node)
         if (_typeson2.default.hasConstructorOf(err, ReferenceError) ||
@@ -13730,7 +14185,7 @@ exports.encode = encode;
 exports.decode = decode;
 exports.clone = clone;
 
-},{"./DOMException":320,"typeson":318,"typeson-registry/presets/structured-cloning-throwing":302}],334:[function(require,module,exports){
+},{"./DOMException":325,"typeson":323,"typeson-registry/presets/structured-cloning-throwing":302}],339:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13745,7 +14200,7 @@ var UnicodeIDContinue = '(?:[$0-9A-Z_a-z\\xAA\\xB5\\xB7\\xBA\\xC0-\\xD6\\xD8-\\x
 exports.UnicodeIDStart = UnicodeIDStart;
 exports.UnicodeIDContinue = UnicodeIDContinue;
 
-},{}],335:[function(require,module,exports){
+},{}],340:[function(require,module,exports){
 'use strict';
 
 var _UnicodeIdentifiers = require('./UnicodeIdentifiers');
@@ -13778,7 +14233,7 @@ shimIndexedDB.__setUnicodeIdentifiers = function () {
 
 shimIndexedDB.__setUnicodeIdentifiers();
 
-},{"./CFG":319,"./UnicodeIdentifiers":334,"./setGlobalVars":337}],336:[function(require,module,exports){
+},{"./CFG":324,"./UnicodeIdentifiers":339,"./setGlobalVars":342}],341:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14140,7 +14595,7 @@ function validateKeyLength(key) {
 exports.default = polyfill;
 module.exports = exports['default'];
 
-},{"./DOMException":320,"./Key":332}],337:[function(require,module,exports){
+},{"./DOMException":325,"./Key":337}],342:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -14217,7 +14672,7 @@ function setGlobalVars(idb, initialConfig) {
     if (initialConfig) {
         setConfig(initialConfig);
     }
-    var IDB = idb || (typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : {});
+    var IDB = idb || (typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : typeof global !== 'undefined' ? global : {});
     function shim(name, value, propDesc) {
         if (!propDesc || !Object.defineProperty) {
             try {
@@ -14302,7 +14757,7 @@ function setGlobalVars(idb, initialConfig) {
                     shim('ShimDOMException', IDB.indexedDB.modules.ShimDOMException);
                 }
             } else if (_typeof(IDB.indexedDB) === 'object') {
-                // Polyfill the missing IndexedDB features (no need for IDBEnvironment, the window containing indexedDB itself))
+                // Polyfill the missing IndexedDB features (no need for the window containing indexedDB itself))
                 (0, _polyfill2.default)(_IDBCursor.IDBCursor, _IDBCursor.IDBCursorWithValue, _IDBDatabase2.default, shimIDBFactory, _IDBIndex2.default, _IDBKeyRange2.default, _IDBObjectStore2.default, _IDBRequest.IDBRequest, _IDBTransaction2.default);
             }
         };
@@ -14366,7 +14821,7 @@ exports.default = setGlobalVars;
 module.exports = exports['default'];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./CFG":319,"./DOMException":320,"./IDBCursor":323,"./IDBDatabase":324,"./IDBFactory":325,"./IDBIndex":326,"./IDBKeyRange":327,"./IDBObjectStore":328,"./IDBRequest":329,"./IDBTransaction":330,"./IDBVersionChangeEvent":331,"./polyfill":336,"babel-polyfill":1}],338:[function(require,module,exports){
+},{"./CFG":324,"./DOMException":325,"./IDBCursor":328,"./IDBDatabase":329,"./IDBFactory":330,"./IDBIndex":331,"./IDBKeyRange":332,"./IDBObjectStore":333,"./IDBRequest":334,"./IDBTransaction":335,"./IDBVersionChangeEvent":336,"./polyfill":341,"babel-polyfill":1}],343:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14633,4 +15088,4 @@ exports.isValidKeyPath = isValidKeyPath;
 exports.enforceRange = enforceRange;
 exports.convertToSequenceDOMString = convertToSequenceDOMString;
 
-},{"./CFG":319}]},{},[335]);
+},{"./CFG":324}]},{},[340]);

@@ -1,4 +1,4 @@
-/* eslint-disable no-var */
+/* eslint-disable no-var, no-unused-expressions */
 describe('IDBObjectStore.add (only)', function () {
     'use strict';
 

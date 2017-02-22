@@ -45,6 +45,11 @@ Please note that the version currently in `master` is the only one which
 supports Node.js (and has a number of fixes), but we are not yet ready
 for release.
 
+For Mac, you may need to have [CMake](https://cmake.org/download/) installed
+for the SQLite3 install to work (See `Tools->How to Install For Command Line Use`)
+as well as build SQLite3 from source via `npm install --build-from-source`
+in the `node-sqlite3` directory. Also make sure Python (2.7) is installed.
+
 ### Bower
 
 ````bash
@@ -109,7 +114,8 @@ one of the following objects in order of precedence:
 1. The passed in `winObj` object if defined
 2. `window` (for Node, define `global.window = global;`)
 3. `self` (for web workers)
-4. A new object
+4. `global` (for Node)
+5. A new empty object
 
 The `initialConfig` argument, if present, should be an object whose keys
 are the config properties to set and its values are the config values (see
@@ -332,26 +338,51 @@ please [let us know about it](https://github.com/axemclion/IndexedDBShim/issues)
 Or better yet, [send us a fix](https://github.com/axemclion/IndexedDBShim/pulls)!
 Please make sure someone else hasn't already reported the same bug though.
 
-Here is a summary of main known issues to resolve:
+Here is a summary of main [known issues](https://github.com/axemclion/IndexedDBShim/issues/262#issuecomment-254413002)
+to resolve:
 
-1. `blocked` and `versionchange` `IDBVersionChangeEvent` event support
+1. `blocked` and `versionchange` `IDBVersionChangeEvent` event support ([#2](https://github.com/axemclion/IndexedDBShim/issues/2) and [#273](https://github.com/axemclion/IndexedDBShim/issues/273))
 2. `Blob`/`File`/`FileList`/`ImageBitmap` cloning through
     [typeson-registry](https://github.com/dfahlander/typeson-registry)
-    and test `ImageData` in Node through [node-canvas](https://github.com/Automattic/node-canvas)
+    (issues [#285](https://github.com/axemclion/IndexedDBShim/issues/285) and [#286](https://github.com/axemclion/IndexedDBShim/issues/286))
 
 There are a few bugs that are outside of our power to fix.  Namely:
 
 ### Browser rollback
 
 While we do try to rollback the database version in the browser when
-called for, we are not able to prolong WebSQL transactions so as to
-be able to benefit from the auto-rollback they perform upon encountering
-an error nor does WebSQL permit manual ROLLBACK commands so that we
-could undo the various WebSQL calls we need to make up IndexedDB
-transactions.
+called for, and Safari is passing all such tests, as we are not able to
+prolong WebSQL transactions to benefit from the auto-rollback they
+perform upon encountering an error (nor does WebSQL permit manual
+ROLLBACK commands so that we could undo the various WebSQL calls
+we need to make up IndexedDB transactions), we are not able to
+provide safe rollbacks in the browser (e.g., in Chrome).
 
 The special build of `websql` that we use does allow such
 IndexedDB-spec-compliant (and data-integrity-friendly!) rollback behavior.
+
+### [Structured Cloning Algorithm](https://html.spec.whatwg.org/multipage/infrastructure.html#safe-passing-of-structured-data)
+
+Due to [certain challenges](http://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm)
+in detecting cloneable objects from within JavaScript, there are certain limitations regarding cloning:
+
+1. We cannot properly detect `Proxy` to throw upon encountering such non-cloneable objects
+2. Our reliance on `Object.prototype.toString` to detect uncloneable objects can fail
+    if that method is overridden or if `Symbol.toStringTag` is used to change the
+    default reporting of a given "class".
+3. Although they are currently working, we were only able to resolve `Blob`, `File`, and `FileList` objects synchronously (as [required per spec](https://github.com/axemclion/IndexedDBShim/issues/285))
+    using the now-deprecated XMLHttpRequest synchronous API.
+4. Without a means of transferring `ArrayBuffer` objects in Node, we cannot meet the
+    requirement to fail upon encountering detached binary objects.
+5. They may be other subtleties we have not been able to work around.
+
+We have, however, overcome some cloning issues still faced by browser implementations, e.g., in Chrome (issue [#698564](https://bugs.chromium.org/p/chromium/issues/detail?id=698564))
+(re: not failing on `WeakMap`, `WeakSet`, `Promise`, and `Object.prototype`).
+
+We also have limitations in creating certain objects synchronously, namely, the one method
+for creating an image bitmap, `createImageBitmap`, returns a `Promise`, so we cannot clone
+a bona fide image bitmap synchronously so as to obtain any errors synchronously as expected
+by the IndexedDB methods involving cloning.
 
 ### iOS
 
@@ -477,7 +508,7 @@ To run the Node tests, run the following:
     `git submodule update --init --recursive` (possibly without
     [init](http://stackoverflow.com/a/10168693/271577) too if using
     an older version of Git), `git submodule foreach --recursive git fetch`,
-    and `git submodule foreach git merge origin master` or
+    and `git submodule foreach git merge origin master` or within Windows
     `git submodule foreach git pull --ff-only origin master`). Note that some
     of these tests may not be passing because of the test environment not
     being completely configured for Node. We are working on fixing this.
@@ -485,6 +516,9 @@ To run the Node tests, run the following:
     with `npm run w3c-old`, but the goal is to remove these once
     the new ones are configured properly and working in the browser
     as do the old tests.
+
+If you need to rebuild SQLite, you can run `npm install` inside of the
+`node_modules/sqlite3` directory.
 
 To run a specific Mocha test (which includes the `tests-polyfill`
 tests), run `npm --test=... run mocha`.
