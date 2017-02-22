@@ -2,8 +2,8 @@
 'use strict';
 
 module.exports = function (grunt) {
-    const sauceuser = typeof process.env.SAUCE_USERNAME !== 'undefined' ? process.env.SAUCE_USERNAME : 'indexeddbshim';
-    const saucekey = typeof process.env.SAUCE_ACCESS_KEY !== 'undefined' ? process.env.SAUCE_ACCESS_KEY : null;
+    const sauceuser = process.env.SAUCE_USERNAME !== undefined ? process.env.SAUCE_USERNAME : 'indexeddbshim';
+    const saucekey = process.env.SAUCE_ACCESS_KEY !== undefined ? process.env.SAUCE_ACCESS_KEY : null;
 
     const pkg = require('./package.json');
     bumpVersion(pkg);
@@ -21,6 +21,7 @@ module.exports = function (grunt) {
             unicodeNode: {
                 options: {
                     transform: [['babelify']],
+                    exclude: ['websql/custom', 'websql/lib/sqlite/SQLiteDatabase'],
                     // Avoid `window` checking
                     browserifyOptions: {
                         standalone: 'dummyPlaceholder',
@@ -31,12 +32,6 @@ module.exports = function (grunt) {
                         insertGlobalVars: {
                             process: function () {
                                 return;
-                            },
-                            __filename: function () { // Thankfully, the only __filename
-                                return 'require("path").join(__dirname, "../node_modules/sqlite3/lib/trace.js")';
-                            },
-                            __dirname: function () { // Though two different __dirnames exist, thankfully, the second is of no consequence
-                                return 'require("path").join(__dirname, "../node_modules/sqlite3/lib")';
                             }
                         }
                     }
@@ -64,6 +59,7 @@ module.exports = function (grunt) {
             node: {
                 options: {
                     transform: [['babelify', {sourceMaps: true}]],
+                    exclude: ['websql/custom', 'websql/lib/sqlite/SQLiteDatabase'],
                     // Avoid `window` checking
                     browserifyOptions: {
                         standalone: 'dummyPlaceholder',
@@ -74,12 +70,6 @@ module.exports = function (grunt) {
                         insertGlobalVars: {
                             process: function () {
                                 return;
-                            },
-                            __filename: function () { // Thankfully, the only __filename
-                                return 'require("path").join(__dirname, "../node_modules/sqlite3/lib/trace.js")';
-                            },
-                            __dirname: function () { // Though two different __dirnames exist, thankfully, the second is of no consequence
-                                return 'require("path").join(__dirname, "../node_modules/sqlite3/lib")';
                             }
                         }
                     }
