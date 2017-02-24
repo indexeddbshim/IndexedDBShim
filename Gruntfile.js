@@ -25,12 +25,13 @@ module.exports = function (grunt) {
                     // Avoid `window` checking
                     browserifyOptions: {
                         standalone: 'dummyPlaceholder',
+                        builtins: false, // No need to define in Node (if there are any)
+                        commondir: false, // No need in Node to look up to nearest common directory (if there are any)
+                        browserField: false, // Avoid using `browser` entry in package.json
                         // https://github.com/substack/node-browserify/issues/1277#issuecomment-115198436
-                        builtins: false,
-                        commondir: false,
-                        browserField: false, // Avoid `browser` entry in package.json
+                        // One would think this wouldn't be necessary with `builts`: false
                         insertGlobalVars: {
-                            process: function () {
+                            process: function () { // Avoid having a non-Node polyfill added
                                 return;
                             }
                         }
@@ -63,12 +64,13 @@ module.exports = function (grunt) {
                     // Avoid `window` checking
                     browserifyOptions: {
                         standalone: 'dummyPlaceholder',
+                        builtins: false, // No need to define in Node (if there are any)
+                        commondir: false, // No need in Node to look up to nearest common directory (if there are any)
+                        browserField: false, // Avoid using `browser` entry in package.json
                         // https://github.com/substack/node-browserify/issues/1277#issuecomment-115198436
-                        builtins: false,
-                        commondir: false,
-                        browserField: false, // Avoid `browser` entry in package.json
+                        // One would think this wouldn't be necessary with `builts`: false
                         insertGlobalVars: {
-                            process: function () {
+                            process: function () { // Avoid having a non-Node polyfill added
                                 return;
                             }
                         }
@@ -266,27 +268,27 @@ module.exports = function (grunt) {
 
         watch: {
             all: {
-                files: ['src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
+                files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
                 tasks: ['eslint', 'browserify', 'uglify']
             },
             browser: {
-                files: ['src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
+                files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
                 tasks: ['eslint', 'browserify:browser', 'uglify:browser']
             },
             browserNoninvasive: {
-                files: ['src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
+                files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
                 tasks: ['eslint', 'browserify:browserNoninvasive', 'uglify:browserNoninvasive']
             },
             node: {
-                files: ['src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
+                files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
                 tasks: ['eslint', 'browserify:node', 'uglify:node']
             },
             unicode: {
-                files: ['src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
+                files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
                 tasks: ['eslint', 'browserify:unicode', 'uglify:unicode']
             },
             unicodeNode: {
-                files: ['src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
+                files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
                 tasks: ['eslint', 'browserify:unicodeNode', 'uglify:unicodeNode']
             }
         }
