@@ -40,6 +40,9 @@ function sqlQuote (arg) {
 }
 
 function escapeDatabaseNameForSQLAndFiles (db) {
+    if (CFG.useInMemoryDatabases) {
+        return ':memory:';
+    }
     if (CFG.escapeDatabaseName) {
         // We at least ensure NUL is escaped by default, but we need to still
         //   handle empty string and possibly also length (potentially
