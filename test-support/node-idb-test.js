@@ -229,11 +229,15 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                 //    however, we really need to get our own test server running
                 //    to allow URLs to work
                 */
+                // Todo: We should get this working with our test server; should work with `XMLHttpRequest` base
+                // Leverage the W3C server for interfaces test (assuming it is running);
+                //   as we are overriding `XMLHttpRequest` below, we are not really using this at the moment,
+                //   but to set up, see https://github.com/w3c/web-platform-tests
+                // const url = 'http://localhost:9999/web-platform-tests/IndexedDB/interfaces.html',
+                // const url = 'file://' + basePath;
+                const url = 'http://localhost:8000/IndexedDB/interfaces.html';
                 jsdom.env({
-                    // Todo: We should get this working with our test server; should work with `XMLHttpRequest` base
-                    // url: 'http://localhost:9999/web-platform-tests/IndexedDB/interfaces.html',
-                    url: 'http://localhost:8000/IndexedDB/interfaces.html', // Leverage the W3C server for interfaces test (assuming it is running); as we are overriding XMLHttpRequest below, we are not really using this at the moment, but to set up, see https://github.com/w3c/web-platform-tests
-                    // url: 'file://' + basePath,
+                    url,
                     done: function () {
                         try {
                             // Should only pass in safe objects
@@ -244,6 +248,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
 
                             const doc = jsdom.jsdom('<div id="log"></div>', {});
                             const window = doc.defaultView; // eslint-disable-line no-var
+                            jsdom.changeURL(window, url); // Needed for actually setting location/origin
 
                             // Todo: We are failing one W3C interfaces test (and possibly obscuring bugs in other tests) because
                             //    jsdom is apparently having problems with `Object.defineProperty` and accessor descriptors (or
@@ -318,6 +323,37 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                                     return _bodyAppendChild(...args);
                                 };
                                 window.Error = window.indexedDB.modules.Error; // For comparison of DOMException by constructor-object.js test
+                            } else if (['idbfactory-open-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js'].includes(shimNS.fileName)) {
+                                const _createElement = window.document.createElement.bind(window.document);
+                                window.document.createElement = function (...args) {
+                                    const elName = args[0];
+                                    const el = _createElement(...args);
+                                    if (elName === 'iframe') {
+                                        let _onload;
+                                        Object.defineProperties(el, {
+                                            /*
+                                            srcdoc: { // We need to have this run in its own sandbox or something
+                                                set: function () {
+
+                                                }
+                                            },
+                                            */
+                                            onload: {
+                                                set: function (val) {
+                                                    _onload = val;
+                                                },
+                                                get: function () {
+                                                    return function (e) {
+                                                        setTimeout(function () {
+                                                            _onload(e);
+                                                        });
+                                                    };
+                                                }
+                                            }
+                                        });
+                                    }
+                                    return el;
+                                };
                             }
 
                             // window.XMLHttpRequest = XMLHttpRequest({basePath: 'http://localhost:8000/IndexedDB/'}); // Todo: We should support this too
