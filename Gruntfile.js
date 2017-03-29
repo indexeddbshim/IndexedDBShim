@@ -133,7 +133,7 @@ module.exports = function (grunt) {
                 src: ['D_test_database*']
             },
             w3c: {
-                src: ['D_db*', 'D_test*', 'D_about*', 'D_^I^D^B*', 'D_blank*', 'D_database_name*', 'D_idbtransaction*', 'D_x', 'D_y', 'D_webworker*']
+                src: ['D_db*', 'D_test*', 'D_about*', 'D_^I^D^B*', 'D_blank*', 'D_database_name*', 'D_idbtransaction*', 'D_x', 'D_y', 'D_webworker*', 'D_http*']
             },
             w3cOld: {
                 src: ['D_db.sqlite*', 'D_test*', 'D_database_name*', 'D_idbtransaction*']

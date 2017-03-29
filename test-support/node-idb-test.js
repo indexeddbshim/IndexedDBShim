@@ -248,7 +248,6 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
 
                             const doc = jsdom.jsdom('<div id="log"></div>', {});
                             const window = doc.defaultView; // eslint-disable-line no-var
-                            jsdom.changeURL(window, url); // Needed for actually setting location/origin
 
                             // Todo: We are failing one W3C interfaces test (and possibly obscuring bugs in other tests) because
                             //    jsdom is apparently having problems with `Object.defineProperty` and accessor descriptors (or
@@ -324,6 +323,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                                 };
                                 window.Error = window.indexedDB.modules.Error; // For comparison of DOMException by constructor-object.js test
                             } else if (['idbfactory-open-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js'].includes(shimNS.fileName)) {
+                                jsdom.changeURL(window, url); // Needed for actually setting location/origin (it adds to database names and thus URLs, so avoid it normally)
                                 const _createElement = window.document.createElement.bind(window.document);
                                 window.document.createElement = function (...args) {
                                     const elName = args[0];
