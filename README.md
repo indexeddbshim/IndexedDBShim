@@ -216,8 +216,11 @@ shimIndexedDB.__setConfig(property, value);
 The available properties relevant to browser or Node are:
 
 - __DEBUG__ - Boolean (equivalent to calling `shimIndexedDB.__debug(val)`)
-- __cursorPreloadPackSize__ - Number indicating how many records to preload for
-    caching of (non-multiEntry) `IDBCursor.continue` calls. Defaults to 100.
+- __checkOrigin__ - Boolean on whether to perform origin checks in `IDBFactory`
+    methods (`open`, `deleteDatabase`, `webkitGetDatabaseNames`); effectively
+    defaults to true (must be set to `false` to cancel checks); for Node testing,
+    you will either need to define a `location` global from which the origin
+    value can be found or set this property to `false`.
 - __UnicodeIDStart__ and __UnicodeIDContinue__ - Invocation of
     `createObjectStore` and `createIndex` calls for validation of key paths.
     The specification technically allows all
@@ -228,9 +231,16 @@ The available properties relevant to browser or Node are:
     not `RegExp` objects. You can use this configuration to change the default
     to match the spec or as you see fit. In the future we may allow the spec
     behavior via optional dynamic loading of an internal module.
+- __fullIDLSupport__ - If set to `true`, the slow-performing
+    `Object.setPrototypeOf` calls required for full WebIDL compliance will
+    be used. Probably only needed for testing or environments where full
+    introspection on class relationships is required.
+    See this [SO topic](http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements)
 - __win__,  Object on which there may be an `openDatabase` method (if any)
     for WebSQL; Defaults to `window` or `self` in the browser and for Node,
     it is set by default to [`node-websql`](https://github.com/nolanlawson/node-websql).
+- __cursorPreloadPackSize__ - Number indicating how many records to preload for
+    caching of (non-multiEntry) `IDBCursor.continue` calls. Defaults to 100.
 - __DEFAULT_DB_SIZE__ - Used as estimated size argument (in bytes) to
     underlying WebSQL `openDatabase` calls. Defaults to `4 * 1024 * 1024` or
     `25 * 1024 * 1024` in Safari (apparently necessary due to Safari creating
@@ -250,11 +260,6 @@ browser, particularly if one changes the defaults.
     `ShimEventTarget`, `ShimDOMException`, and `ShimDOMStringList`.
     Mostly useful for debugging (and in Node where these
     are not available by default).
-- __fullIDLSupport__ - If set to `true`, the slow-performing
-    `Object.setPrototypeOf` calls required for full WebIDL compliance will
-    be used. Probably only needed for testing or environments where full
-    introspection on class relationships is required.
-    See this [SO topic](http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements)
 - __escapeDatabaseName__ - Due to the Node implementation's reliance on
     `node-websql`/`node-sqlite3` which create files for each database
     (and the fact that we haven't provided an option to map filename-safe

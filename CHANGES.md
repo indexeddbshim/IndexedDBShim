@@ -16,6 +16,13 @@ they were actually changes since a more recent version on `master`.
 - Security fix: Escape/unescape NUL for safety with
     node-websql->node-sqlite3 (part of fix for #274)
 - Security fix: Ensure quoting (for column names) escapes double quotes
+- Security fix: As per new requirements, ensure `IDBFactory` methods `open`,
+     `deleteDatabase` (and we do it for the non-standard
+    `webkitGetDatabaseNames` as well as it could relate to privacy) throw a
+    `SecurityError` `DOMException` if run from a `"null"` origin (unless the
+    new config `checkOrigin` is set to `false`); for Node, requires
+   `location` to be defined globally (could have some applications in Node,
+    too, e.g., if jsdom sets the origin for iframes)
 - Breaking refactoring with consequences for old data: prefix store/index
     names with "S_" instead of "s_" and "I_" instead of "_" (consistent
     with casing of "D_" though SQLite insensitive with ASCII while file

@@ -8766,6 +8766,9 @@ var CFG = {};
 //   `ShimEvent`, `ShimCustomEvent`, `ShimEventTarget`)
 'addNonIDBGlobals', // Effectively defaults to false (ignored unless true)
 
+// Boolean on whether to perform origin checks in `IDBFactory` methods
+'checkOrigin', // Effectively defaults to true (must be set to `false` to cancel checks)
+
 // Determines whether the slow-performing `Object.setPrototypeOf` calls required
 //    for full WebIDL compliance will be used. Probably only needed for testing
 //    or environments where full introspection on class relationships is required;
@@ -10355,6 +10358,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var sysdb = void 0;
 
+function hasNullOrigin() {
+    return _CFG2.default.checkOrigin !== false && ((typeof location === 'undefined' ? 'undefined' : _typeof(location)) !== 'object' || !location || location.origin === 'null');
+}
+
 /**
  * Craetes the sysDB to keep track of version numbers for databases
  **/
@@ -10426,6 +10433,9 @@ IDBFactory.prototype.open = function (name /* , version */) {
         if (version === 0) {
             throw new TypeError('Version cannot be 0');
         }
+    }
+    if (hasNullOrigin()) {
+        throw (0, _DOMException.createDOMException)('SecurityError', 'Cannot open an IndexedDB database from an opaque origin.');
     }
     name = String(name); // cast to a string
     var sqlSafeName = util.escapeSQLiteStatement(name);
@@ -10595,13 +10605,13 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     if (!(this instanceof IDBFactory)) {
         throw new TypeError('Illegal invocation');
     }
-    var req = _IDBRequest.IDBOpenDBRequest.__createInstance();
-    var calledDBError = false;
-    var version = 0;
-
     if (arguments.length === 0) {
         throw new TypeError('Database name is required');
     }
+    if (hasNullOrigin()) {
+        throw (0, _DOMException.createDOMException)('SecurityError', 'Cannot delete an IndexedDB database from an opaque origin.');
+    }
+
     name = String(name); // cast to a string
     var sqlSafeName = util.escapeSQLiteStatement(name);
 
@@ -10611,6 +10621,10 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     } catch (err) {
         throw err; // throw new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
     }
+
+    var req = _IDBRequest.IDBOpenDBRequest.__createInstance();
+    var calledDBError = false;
+    var version = 0;
 
     var sysdbFinishedCbDelete = function sysdbFinishedCbDelete(err, cb) {
         cb(err);
@@ -10768,6 +10782,10 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
     if (!(this instanceof IDBFactory)) {
         throw new TypeError('Illegal invocation');
     }
+    if (hasNullOrigin()) {
+        throw (0, _DOMException.createDOMException)('SecurityError', 'Cannot get IndexedDB database names from an opaque origin.');
+    }
+
     var calledDbCreateError = false;
     function dbGetDatabaseNamesError(tx, err) {
         if (calledDbCreateError) {

@@ -11,6 +11,11 @@ import CFG from './CFG';
 
 let sysdb;
 
+function hasNullOrigin () {
+    return CFG.checkOrigin !== false &&
+        (typeof location !== 'object' || !location || location.origin === 'null');
+}
+
 /**
  * Craetes the sysDB to keep track of version numbers for databases
  **/
@@ -82,6 +87,9 @@ IDBFactory.prototype.open = function (name /* , version */) {
         if (version === 0) {
             throw new TypeError('Version cannot be 0');
         }
+    }
+    if (hasNullOrigin()) {
+        throw createDOMException('SecurityError', 'Cannot open an IndexedDB database from an opaque origin.');
     }
     name = String(name); // cast to a string
     const sqlSafeName = util.escapeSQLiteStatement(name);
@@ -250,13 +258,13 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     if (!(this instanceof IDBFactory)) {
         throw new TypeError('Illegal invocation');
     }
-    const req = IDBOpenDBRequest.__createInstance();
-    let calledDBError = false;
-    let version = 0;
-
     if (arguments.length === 0) {
         throw new TypeError('Database name is required');
     }
+    if (hasNullOrigin()) {
+        throw createDOMException('SecurityError', 'Cannot delete an IndexedDB database from an opaque origin.');
+    }
+
     name = String(name); // cast to a string
     const sqlSafeName = util.escapeSQLiteStatement(name);
 
@@ -266,6 +274,10 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     } catch (err) {
         throw err; // throw new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
     }
+
+    const req = IDBOpenDBRequest.__createInstance();
+    let calledDBError = false;
+    let version = 0;
 
     let sysdbFinishedCbDelete = function (err, cb) {
         cb(err);
@@ -426,6 +438,10 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
     if (!(this instanceof IDBFactory)) {
         throw new TypeError('Illegal invocation');
     }
+    if (hasNullOrigin()) {
+        throw createDOMException('SecurityError', 'Cannot get IndexedDB database names from an opaque origin.');
+    }
+
     let calledDbCreateError = false;
     function dbGetDatabaseNamesError (tx, err) {
         if (calledDbCreateError) {

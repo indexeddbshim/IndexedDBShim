@@ -10,6 +10,9 @@ const CFG = {};
     //   `ShimEvent`, `ShimCustomEvent`, `ShimEventTarget`)
     'addNonIDBGlobals', // Effectively defaults to false (ignored unless true)
 
+    // Boolean on whether to perform origin checks in `IDBFactory` methods
+    'checkOrigin', // Effectively defaults to true (must be set to `false` to cancel checks)
+
     // Determines whether the slow-performing `Object.setPrototypeOf` calls required
     //    for full WebIDL compliance will be used. Probably only needed for testing
     //    or environments where full introspection on class relationships is required;

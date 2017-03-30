@@ -6100,7 +6100,7 @@
     "typeson-registry": {
       "version": "1.0.0-alpha.2",
       "from": "git+https://github.com/dfahlander/typeson-registry.git",
-      "resolved": "git+https://github.com/dfahlander/typeson-registry.git#dd60d77cf257fddfc9dc930f8b114302f6a12911",
+      "resolved": "git+https://github.com/dfahlander/typeson-registry.git#da9ceca5581b8046e7e46b1f4080cee402c80feb",
       "dev": true
     },
     "uglify-js": {

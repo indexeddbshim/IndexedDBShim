@@ -248,6 +248,17 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
 
                             const doc = jsdom.jsdom('<div id="log"></div>', {});
                             const window = doc.defaultView; // eslint-disable-line no-var
+                            const baseCfg = {addNonIDBGlobals: true, checkOrigin: false, databaseNameLengthLimit: 1000};
+                            if (['idbfactory-open-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js'].includes(
+                                shimNS.fileName
+                            )) {
+                                // Needed for actually setting location/origin;
+                                //    it causes long (URL-based) database names and thus
+                                //    filenames to be generated, so only use for origin test
+                                jsdom.changeURL(window, url);
+                                baseCfg.checkOrigin = true;
+                            }
+                            global.location = window.location; // Needed by IDB for origin checks; also needed by `createObjectURL` polyfill
 
                             // Todo: We are failing one W3C interfaces test (and possibly obscuring bugs in other tests) because
                             //    jsdom is apparently having problems with `Object.defineProperty` and accessor descriptors (or
@@ -259,9 +270,9 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                             //   though it could also make the tests more fragile to changes
                             // indexeddbshimNonUnicode(window);
                             if (['interfaces.js', 'interfaces.worker.js', '../non-indexedDB/exceptions.js'].includes(shimNS.fileName)) {
-                                indexeddbshim(window, {addNonIDBGlobals: true, fullIDLSupport: true});
+                                indexeddbshim(window, Object.assign(baseCfg, {fullIDLSupport: true}));
                             } else {
-                                indexeddbshim(window, {addNonIDBGlobals: true});
+                                indexeddbshim(window, baseCfg);
                             }
 
                             // Though we could expose `DOMStringList` through the shim, we want to avoid automatically shadowing it in case it may exist already in the browser
@@ -323,7 +334,6 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                                 };
                                 window.Error = window.indexedDB.modules.Error; // For comparison of DOMException by constructor-object.js test
                             } else if (['idbfactory-open-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js'].includes(shimNS.fileName)) {
-                                jsdom.changeURL(window, url); // Needed for actually setting location/origin (it adds to database names and thus URLs, so avoid it normally)
                                 const _createElement = window.document.createElement.bind(window.document);
                                 window.document.createElement = function (...args) {
                                     const elName = args[0];
@@ -376,7 +386,6 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                             // Expose the following to the `createObjectURL` polyfill
                             delete window.URL.createObjectURL;
                             global.URL = window.URL;
-                            global.location = window.location;
                             require('../node_modules/typeson-registry/test/createObjectURL'); // Polyfill enough for our tests
                             delete require.cache[ // eslint-disable-line standard/computed-property-even-spacing
                                 Object.keys(require.cache).filter((path) => path.includes('createObjectURL'))[0]

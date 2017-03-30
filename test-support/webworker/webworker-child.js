@@ -279,12 +279,14 @@ Object.defineProperty(workerCtx.prototype, 'indexedDB', {
 
 // Other Objects
 
+// Todo: Allow argument to overturn `checkOrigin` when doing opaque origin tests
+const baseCfg = {checkOrigin: false, databaseNameLengthLimit: 1000, addNonIDBGlobals: true};
 // Add indexedDB globals; we also add non-IndexedDB ones that are not normally "exposed" to workers
 // Only the second regex will ever be used, but just listing the files that should get fullIDLSupport
 if ([/interfaces\.js$/, /interfaces.worker\.js$/].some((interfaceFileRegex) => interfaceFileRegex.test(workerURL))) {
-    indexeddbshim(workerCtx, {addNonIDBGlobals: true, fullIDLSupport: true});
+    indexeddbshim(workerCtx, Object.assign(baseCfg, {fullIDLSupport: true}));
 } else {
-    indexeddbshim(workerCtx, {addNonIDBGlobals: true});
+    indexeddbshim(workerCtx, baseCfg);
 }
 
 // We don't expose workerCtx.ShimDOMStringList as not supposed to be per IDL tests for workers (though IDL (and Chrome) currently expose it in the main thread)
