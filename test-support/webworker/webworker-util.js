@@ -128,16 +128,23 @@ exports.makeFileURL = function (workerConfig, dir) {
 const WorkerLocation = function (url) {
     const u = urllib.parse(url);
 
+    // https://url.spec.whatwg.org/#url-miscellaneous
     const portForProto = function (proto) {
         switch (proto) {
-        case 'http':
+        case 'http': case 'ws':
             return 80;
 
-        case 'https':
+        case 'https': case 'wss':
             return 443;
 
         case 'file':
             return undefined;
+
+        case 'ftp':
+            return 21;
+
+        case 'gopher':
+            return 70;
 
         default:
             util.debug(
