@@ -74,6 +74,7 @@ check whether there are other more serious errors we are missing.)
 - `open-request-queue.js`: (Timing out)
 
 4. OPAQUE ORIGINS (see https://github.com/axemclion/IndexedDBShim/issues/283 )
+In order to run, the following require a one-off `srcdoc` implementation or https://github.com/tmpvar/jsdom/issues/1792
 - `idbfactory-deleteDatabase-opaque-origin.js`
 - `idbfactory-open-opaque-origin.js`
 
