@@ -303,6 +303,10 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
         return new SyncPromise((resolve, reject) => {
             const index = me.__indexes[indexName];
             if (index.__pending) {
+                // `createIndex` was called synchronously after the current insertion was added to
+                // the transaction queue so not yet ready to be checked (e.g., if two items with
+                /// the same key were added and then a unique index was created, it should not abort
+                // yet, as we're still handling the insertions)
                 resolve();
                 return;
             }
