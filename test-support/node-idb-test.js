@@ -117,6 +117,15 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
             console.log(
                 cleanJSONOutput(shimNS.statuses, null, 2) + '\n'
             );
+
+            console.log('Unexpected failures:');
+            const failedFiles = shimNS.files.Fail.filter((f) => !badFiles.includes(f) && !['../non-indexedDB/interface-objects.js'].includes(f) && (!workers || !['_service-worker-indexeddb.https.js'].includes(f)));
+            if (failedFiles.length) {
+                console.log(
+                     '  ' + '(' + failedFiles.length + '): [\n    ' + cleanJSONOutput(failedFiles).slice(1, -1) + '\n  ]\n'
+                );
+            } else console.log('(None)');
+
             if (shimNS.fileMap) {
                 console.log(
                     [...shimNS.fileMap].reduce(

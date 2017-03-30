@@ -10926,10 +10926,10 @@ IDBIndex.__createInstance = function (store, indexProperties) {
                 var oldName = me.name;
                 _IDBTransaction2.default.__assertVersionChange(me.objectStore.transaction);
                 _IDBTransaction2.default.__assertActive(me.objectStore.transaction);
-                if (me.__deleted) {
+                if (me.__deleted || me.__pendingDelete) {
                     throw (0, _DOMException.createDOMException)('InvalidStateError', 'This index has been deleted');
                 }
-                if (me.objectStore.__deleted) {
+                if (me.objectStore.__deleted || me.objectStore.__pendingDelete) {
                     throw (0, _DOMException.createDOMException)('InvalidStateError', "This index's object store has been deleted");
                 }
                 if (newName === oldName) {
@@ -10983,20 +10983,21 @@ IDBIndex.__clone = function (index, store) {
  */
 IDBIndex.__createIndex = function (store, index) {
     var idx = store.__indexes[index.name];
-    var columnExists = idx && idx.__deleted;
 
     // Add the index to the IDBObjectStore
-    index.__pending = true;
-    store.__indexes[index.name] = index;
+    index.__pendingCreate = true;
+
     store.indexNames.push(index.name);
+    store.__indexes[index.name] = index; // We add to indexes as needs to be available, e.g., if there is a subsequent deleteIndex call
 
     // Create the index in WebSQL
     var transaction = store.transaction;
     transaction.__addNonRequestToTransactionQueue(function createIndex(tx, args, success, failure) {
+        var columnExists = idx && (idx.__deleted || idx.__recreated); // This check must occur here rather than earlier as properties may not have been set yet otherwise
         var indexValues = {};
 
         function error(tx, err) {
-            failure((0, _DOMException.createDOMException)('UnknownError', 'Could not create index "' + index.name + '"', err));
+            failure((0, _DOMException.createDOMException)('UnknownError', 'Could not create index "' + index.name + '"' + err.code + '::' + err.message, err));
         }
 
         function applyIndex(tx) {
@@ -11034,7 +11035,11 @@ IDBIndex.__createIndex = function (store, index) {
                                 addIndexEntry(i + 1);
                             }
                         } else {
-                            delete index.__pending;
+                            delete index.__pendingCreate;
+                            if (index.__deleted) {
+                                delete index.__deleted;
+                                index.__recreated = true;
+                            }
                             indexValues = {};
                             success(store);
                         }
@@ -11063,7 +11068,9 @@ IDBIndex.__createIndex = function (store, index) {
  */
 IDBIndex.__deleteIndex = function (store, index) {
     // Remove the index from the IDBObjectStore
-    store.__indexes[index.name].__deleted = true;
+    index.__pendingDelete = true;
+    delete store.__indexClones[index.name];
+
     store.indexNames.splice(store.indexNames.indexOf(index.name), 1);
 
     // Remove the index in WebSQL
@@ -11074,7 +11081,12 @@ IDBIndex.__deleteIndex = function (store, index) {
         }
 
         // Update the object store's index list
-        IDBIndex.__updateIndexList(store, tx, success, error);
+        IDBIndex.__updateIndexList(store, tx, function (store) {
+            delete index.__pendingDelete;
+            delete index.__recreated;
+            index.__deleted = true;
+            success(store);
+        }, error);
     }, undefined, store);
 };
 
@@ -11122,7 +11134,7 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
         count = util.enforceRange(count, 'unsigned long');
     }
 
-    if (me.__deleted) {
+    if (me.__deleted || me.__pendingDelete) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This index has been deleted');
     }
     if (me.objectStore.__deleted) {
@@ -11663,6 +11675,7 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
         me.__autoIncrement = !!storeProperties.autoInc;
 
         me.__indexes = {};
+        me.__indexClones = {};
         me.__indexNames = _DOMStringList2.default.__createInstance();
         var indexList = storeProperties.indexList;
         for (var indexName in indexList) {
@@ -11683,7 +11696,7 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
             },
             set: function set(name) {
                 var me = this;
-                if (me.__deleted) {
+                if (me.__deleted || me.__pendingDelete) {
                     throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
                 }
                 _IDBTransaction2.default.__assertVersionChange(me.transaction);
@@ -11747,6 +11760,7 @@ IDBObjectStore.__clone = function (store, transaction) {
  */
 IDBObjectStore.__createObjectStore = function (db, store) {
     // Add the object store to the IDBDatabase
+    store.__pendingCreate = true;
     db.__objectStores[store.name] = store;
     db.objectStoreNames.push(store.name);
 
@@ -11766,6 +11780,8 @@ IDBObjectStore.__createObjectStore = function (db, store) {
         tx.executeSql(sql, [], function (tx, data) {
             Sca.encode(store.keyPath, function (encodedKeyPath) {
                 tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeSQLiteStatement(store.name), encodedKeyPath, store.autoIncrement, '{}', 1], function () {
+                    delete store.__pendingCreate;
+                    delete store.__deleted;
                     success(store);
                 }, error);
             });
@@ -11781,7 +11797,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
  */
 IDBObjectStore.__deleteObjectStore = function (db, store) {
     // Remove the object store from the IDBDatabase
-    store.__deleted = true;
+    store.__pendingDelete = true;
     db.__objectStores[store.name] = undefined;
     db.objectStoreNames.splice(db.objectStoreNames.indexOf(store.name), 1);
 
@@ -11789,7 +11805,8 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
     if (storeClone) {
         storeClone.__indexNames = _DOMStringList2.default.__createInstance();
         storeClone.__indexes = {};
-        storeClone.__deleted = true;
+        storeClone.__indexClones = {};
+        storeClone.__pendingDelete = true;
     }
 
     // Remove the object store from WebSQL
@@ -11806,6 +11823,12 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
             if (data.rows.length > 0) {
                 tx.executeSql('DROP TABLE ' + util.escapeStoreNameForSQL(store.name), [], function () {
                     tx.executeSql('DELETE FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.name)], function () {
+                        delete store.__pendingDelete;
+                        store.__deleted = true;
+                        if (storeClone) {
+                            delete storeClone.__pendingDelete;
+                            storeClone.__deleted = true;
+                        }
                         success();
                     }, error);
                 }, error);
@@ -11921,18 +11944,31 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
     // The `ConstraintError` to occur for `add` upon a duplicate will occur naturally in attempting an insert
     // We process the index information first as it will stored in the same table as the store
     var paramMap = {};
-    var indexPromises = me.indexNames.map(function (indexName) {
+    var indexPromises = Object.keys(
+    // We do not iterate `indexNames` as those can be modified synchronously (e.g.,
+    //   `deleteIndex` could, by its synchronous removal from `indexNames`, prevent
+    //   iteration here of an index though per IndexedDB test
+    //   `idbobjectstore_createIndex4-deleteIndex-event_order.js`, `createIndex`
+    //   should be allowed to first fail even in such a case).
+    me.__indexes).map(function (indexName) {
         // While this may sometimes resolve sync and sometimes async, the
         //   idea is to avoid, where possible, unnecessary delays (and
         //   consuming code ought to only see a difference in the browser
         //   where we can't control the transaction timeout anyways).
         return new _syncPromise2.default(function (resolve, reject) {
             var index = me.__indexes[indexName];
-            if (index.__pending) {
-                // `createIndex` was called synchronously after the current insertion was added to
-                // the transaction queue so not yet ready to be checked (e.g., if two items with
-                /// the same key were added and then a unique index was created, it should not abort
-                // yet, as we're still handling the insertions)
+            if (
+            // `createIndex` was called synchronously after the current insertion was added to
+            //  the transaction queue so although it was added to `__indexes`, it is not yet
+            //  ready to be checked here for the insertion as it will be when running the
+            //  `createIndex` operation (e.g., if two items with the same key were added and
+            //  *then* a unique index was created, it should not continue to err and abort
+            //  yet, as we're still handling the insertions which must be processed (e.g., to
+            //  add duplicates which then cause a unique index to fail))
+            index.__pendingCreate ||
+            // If already deleted (and not just slated for deletion (by `__pendingDelete`
+            //  after this add), we avoid checks
+            index.__deleted) {
                 resolve();
                 return;
             }
@@ -12013,7 +12049,7 @@ IDBObjectStore.prototype.add = function (value /* , key */) {
     if (arguments.length === 0) {
         throw new TypeError('No value was specified');
     }
-    if (me.__deleted) {
+    if (me.__deleted || me.__pendingDelete) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
     _IDBTransaction2.default.__assertActive(me.transaction);
@@ -12039,7 +12075,7 @@ IDBObjectStore.prototype.put = function (value /*, key */) {
     if (arguments.length === 0) {
         throw new TypeError('No value was specified');
     }
-    if (me.__deleted) {
+    if (me.__deleted || me.__pendingDelete) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
     _IDBTransaction2.default.__assertActive(me.transaction);
@@ -12098,7 +12134,7 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
     if (count !== undefined) {
         count = util.enforceRange(count, 'unsigned long');
     }
-    if (me.__deleted) {
+    if (me.__deleted || me.__pendingDelete) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
     _IDBTransaction2.default.__assertActive(me.transaction);
@@ -12204,7 +12240,7 @@ IDBObjectStore.prototype['delete'] = function (query) {
         throw new TypeError('A parameter was missing for `IDBObjectStore.delete`.');
     }
 
-    if (me.__deleted) {
+    if (me.__deleted || me.__pendingDelete) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
     _IDBTransaction2.default.__assertActive(me.transaction);
@@ -12236,7 +12272,7 @@ IDBObjectStore.prototype.clear = function () {
     if (!(this instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
     }
-    if (me.__deleted) {
+    if (me.__deleted || me.__pendingDelete) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
     _IDBTransaction2.default.__assertActive(me.transaction);
@@ -12261,7 +12297,7 @@ IDBObjectStore.prototype.count = function () /* query */{
     if (!(me instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
     }
-    if (me.__deleted) {
+    if (me.__deleted || me.__pendingDelete) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
     _IDBTransaction2.default.__assertActive(me.transaction);
@@ -12280,7 +12316,7 @@ IDBObjectStore.prototype.openCursor = function () /* query, direction */{
     if (!(me instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
     }
-    if (me.__deleted) {
+    if (me.__deleted || me.__pendingDelete) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
     var cursor = _IDBCursor.IDBCursorWithValue.__createInstance(query, direction, me, me, 'key', 'value');
@@ -12293,7 +12329,7 @@ IDBObjectStore.prototype.openKeyCursor = function () /* query, direction */{
     if (!(me instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
     }
-    if (me.__deleted) {
+    if (me.__deleted || me.__pendingDelete) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
 
@@ -12314,7 +12350,7 @@ IDBObjectStore.prototype.index = function (indexName) {
     if (arguments.length === 0) {
         throw new TypeError('No index name was specified');
     }
-    if (me.__deleted) {
+    if (me.__deleted || me.__pendingDelete) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
     _IDBTransaction2.default.__assertNotFinished(me.transaction);
@@ -12322,21 +12358,11 @@ IDBObjectStore.prototype.index = function (indexName) {
     if (!index || index.__deleted) {
         throw (0, _DOMException.createDOMException)('NotFoundError', 'Index "' + indexName + '" does not exist on ' + me.name);
     }
-    /*
-    // const storeClone = me.transaction.objectStore(me.name); // Ensure clone is made if not present
-    // const indexes = storeClone.__indexes;
-    const storeClones = me.transaction.__storeClones;
-    if (!storeClones[me.name] || storeClones[me.name].__deleted) { // The latter condition is to allow store
-                                                         //   recreation to create new clone object
-        storeClones[me.name] = IDBObjectStore.__clone(me, me.transaction);
+
+    if (!me.__indexClones[indexName] || me.__indexes[indexName].__pendingDelete || me.__indexes[indexName].__deleted) {
+        me.__indexClones[indexName] = _IDBIndex.IDBIndex.__clone(index, me);
     }
-     const indexes = storeClones[me.name].__indexes;
-    if (!indexes[indexName]) {
-        indexes[indexName] = IDBIndex.__clone(index, me);
-    }
-    return indexes[indexName];
-    */
-    return _IDBIndex.IDBIndex.__clone(index, me);
+    return me.__indexClones[indexName];
 };
 
 /**
@@ -12360,11 +12386,11 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath /* , optiona
         throw new TypeError('No key path was specified');
     }
     _IDBTransaction2.default.__assertVersionChange(me.transaction);
-    if (me.__deleted) {
+    if (me.__deleted || me.__pendingDelete) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
     _IDBTransaction2.default.__assertActive(me.transaction);
-    if (me.__indexes[indexName] && !me.__indexes[indexName].__deleted) {
+    if (me.__indexes[indexName] && !me.__indexes[indexName].__deleted && !me.__indexes[indexName].__pendingDelete) {
         throw (0, _DOMException.createDOMException)('ConstraintError', 'Index "' + indexName + '" already exists on ' + me.name);
     }
 
@@ -12400,7 +12426,7 @@ IDBObjectStore.prototype.deleteIndex = function (name) {
         throw new TypeError('No index name was specified');
     }
     _IDBTransaction2.default.__assertVersionChange(me.transaction);
-    if (me.__deleted) {
+    if (me.__deleted || me.__pendingDelete) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'This store has been deleted');
     }
     _IDBTransaction2.default.__assertActive(me.transaction);
@@ -12495,7 +12521,7 @@ IDBRequest.__super = function IDBRequest() {
             configurable: true,
             get: function get() {
                 if (this.__readyState !== 'done') {
-                    throw (0, _DOMException.createDOMException)('InvalidStateError', 'The request is still pending.');
+                    throw (0, _DOMException.createDOMException)('InvalidStateError', "Can't get " + prop + '; the request is still pending.');
                 }
                 return this['__' + prop];
             }
@@ -13068,8 +13094,8 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
         throw (0, _DOMException.createDOMException)('NotFoundError', objectStoreName + ' does not exist in ' + me.db.name);
     }
 
-    if (!me.__storeClones[objectStoreName] || me.__storeClones[objectStoreName].__deleted) {
-        // The latter condition is to allow store
+    if (!me.__storeClones[objectStoreName] || me.__storeClones[objectStoreName].__pendingDelete || me.__storeClones[objectStoreName].__deleted) {
+        // The latter conditions are to allow store
         //   recreation to create new clone object
         me.__storeClones[objectStoreName] = _IDBObjectStore2.default.__clone(store, me);
     }

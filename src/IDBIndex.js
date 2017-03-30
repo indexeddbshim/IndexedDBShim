@@ -44,10 +44,10 @@ IDBIndex.__createInstance = function (store, indexProperties) {
                 const oldName = me.name;
                 IDBTransaction.__assertVersionChange(me.objectStore.transaction);
                 IDBTransaction.__assertActive(me.objectStore.transaction);
-                if (me.__deleted) {
+                if (me.__deleted || me.__pendingDelete) {
                     throw createDOMException('InvalidStateError', 'This index has been deleted');
                 }
-                if (me.objectStore.__deleted) {
+                if (me.objectStore.__deleted || me.objectStore.__pendingDelete) {
                     throw createDOMException('InvalidStateError', "This index's object store has been deleted");
                 }
                 if (newName === oldName) {
@@ -104,20 +104,21 @@ IDBIndex.__clone = function (index, store) {
  */
 IDBIndex.__createIndex = function (store, index) {
     const idx = store.__indexes[index.name];
-    const columnExists = idx && idx.__deleted;
 
     // Add the index to the IDBObjectStore
-    index.__pending = true;
-    store.__indexes[index.name] = index;
+    index.__pendingCreate = true;
+
     store.indexNames.push(index.name);
+    store.__indexes[index.name] = index; // We add to indexes as needs to be available, e.g., if there is a subsequent deleteIndex call
 
     // Create the index in WebSQL
     const transaction = store.transaction;
     transaction.__addNonRequestToTransactionQueue(function createIndex (tx, args, success, failure) {
+        const columnExists = idx && (idx.__deleted || idx.__recreated); // This check must occur here rather than earlier as properties may not have been set yet otherwise
         let indexValues = {};
 
         function error (tx, err) {
-            failure(createDOMException('UnknownError', 'Could not create index "' + index.name + '"', err));
+            failure(createDOMException('UnknownError', 'Could not create index "' + index.name + '"' + err.code + '::' + err.message, err));
         }
 
         function applyIndex (tx) {
@@ -162,7 +163,11 @@ IDBIndex.__createIndex = function (store, index) {
                                 addIndexEntry(i + 1);
                             }
                         } else {
-                            delete index.__pending;
+                            delete index.__pendingCreate;
+                            if (index.__deleted) {
+                                delete index.__deleted;
+                                index.__recreated = true;
+                            }
                             indexValues = {};
                             success(store);
                         }
@@ -191,7 +196,9 @@ IDBIndex.__createIndex = function (store, index) {
  */
 IDBIndex.__deleteIndex = function (store, index) {
     // Remove the index from the IDBObjectStore
-    store.__indexes[index.name].__deleted = true;
+    index.__pendingDelete = true;
+    delete store.__indexClones[index.name];
+
     store.indexNames.splice(store.indexNames.indexOf(index.name), 1);
 
     // Remove the index in WebSQL
@@ -202,7 +209,12 @@ IDBIndex.__deleteIndex = function (store, index) {
         }
 
         // Update the object store's index list
-        IDBIndex.__updateIndexList(store, tx, success, error);
+        IDBIndex.__updateIndexList(store, tx, function (store) {
+            delete index.__pendingDelete;
+            delete index.__recreated;
+            index.__deleted = true;
+            success(store);
+        }, error);
     }, undefined, store);
 };
 
@@ -250,7 +262,7 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
         count = util.enforceRange(count, 'unsigned long');
     }
 
-    if (me.__deleted) {
+    if (me.__deleted || me.__pendingDelete) {
         throw createDOMException('InvalidStateError', 'This index has been deleted');
     }
     if (me.objectStore.__deleted) {

@@ -452,6 +452,13 @@ they were actually changes since a more recent version on `master`.
    (`put`, `add`) and `IDBCursor.update`)
 - Fix: Avoid `eval()` in cloning (issue #211, #236)
 - Fix: Support cyclic values via typeson/typeson-registry (#267)
+- Fix: Distinguish deleted and pending deleted stores and indexes;
+    for insertion operations, do index checks independent of
+    `indexNames` in case subsequently deleted by `deleteIndex` (#276)
+- Fix: Ensure same index instance object returned for same store object and
+    index name
+- Fix: Better error reporting for `IDBRequest.error` or `IDBRequest.result`
+    errors.
 - Repo files: Rename test folders for ease in distinguishing
 - Optimize: Only retrieve required SQLite columns
 - Optimize: Have `IDBObjectStore` and `IDBIndex`'s `get` and
@@ -568,7 +575,6 @@ they were actually changes since a more recent version on `master`.
 
     From old W3C (Node and browser), only the following are not passing:
         IDBDatabase.close.js,
-        IDBObjectStore.createIndex.js,
         TransactionBehavior.js
 
     From new W3C (Node but potentially also browser):

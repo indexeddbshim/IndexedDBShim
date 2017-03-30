@@ -40,6 +40,7 @@ function startTests () { // eslint-disable-line no-unused-vars
         window.indexedDB = window.shimIndexedDB;
         window.shimIndexedDB.__useShim();
         window.shimIndexedDB.__debug(true);
+        window.shimIndexedDB.__setConfig({checkOrigin: false});
         console.log('Starting Tests with shimIndexedDB');
     }
     deleteDB(function () {
