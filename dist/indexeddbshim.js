@@ -14236,8 +14236,7 @@ var _CFG2 = _interopRequireDefault(_CFG);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-/* eslnt-env browser, worker */
-/* globals self */
+/* eslint-env browser, worker */
 _CFG2.default.win = typeof window !== 'undefined' ? window : self; // For Web Workers
 (0, _setGlobalVars2.default)();
 

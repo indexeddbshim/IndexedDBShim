@@ -1,5 +1,5 @@
-/* eslnt-env browser, worker */
-/* global shimIndexedDB, self */
+/* eslint-env browser, worker */
+/* global shimIndexedDB */
 import * as UnicodeIdentifiers from './UnicodeIdentifiers';
 
 // BEGIN: Same code as in browser.js
