@@ -37,13 +37,6 @@ they were actually changes since a more recent version on `master`.
 - Breaking change: If you were overriding/monkey-patching globals, these are
     no longer available with a shift to ES6 modules (see below). The `CFG.js`
     module can be imported in its place to change the default values, however.
-- Known regression: In switching Sca implementation (avoiding `eval`
-   and other improvements), removed (async) capability for
-   representing `Blob`s (and `File`/`FileList`?) in values; should
-   revisit when fixing other known binary issues; per spec, will need to
-   report errors synchronously as possible, so either use deprecated
-   sync XHR and disparaged `readFileSync` or give caveat of not
-   catching errors for such types on time.
 - Breaking fix for existing data: Give comparisons/storage of arrays
      higher priority over binary (arrays already existing in storage
      will not benefit from this until re-encoded, however)
