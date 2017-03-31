@@ -59,7 +59,7 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
         listeners.forEach((l) => {
             this[l] = null;
         });
-        me.__storeClones = {};
+        me.__storeHandles = {};
 
         // Kick off the transaction as soon as all synchronous code is done
         setTimeout(() => { me.__executeRequests(); }, 0);
@@ -256,7 +256,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 me.__errored = true;
                 throw e;
             } finally {
-                me.__storeClones = {};
+                me.__storeHandles = {};
             }
         }
         if (me.mode === 'readwrite') {
@@ -369,13 +369,13 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
         throw createDOMException('NotFoundError', objectStoreName + ' does not exist in ' + me.db.name);
     }
 
-    if (!me.__storeClones[objectStoreName] ||
-        me.__storeClones[objectStoreName].__pendingDelete ||
-        me.__storeClones[objectStoreName].__deleted) { // The latter conditions are to allow store
+    if (!me.__storeHandles[objectStoreName] ||
+        me.__storeHandles[objectStoreName].__pendingDelete ||
+        me.__storeHandles[objectStoreName].__deleted) { // The latter conditions are to allow store
                                                          //   recreation to create new clone object
-        me.__storeClones[objectStoreName] = IDBObjectStore.__clone(store, me);
+        me.__storeHandles[objectStoreName] = IDBObjectStore.__clone(store, me);
     }
-    return me.__storeClones[objectStoreName];
+    return me.__storeHandles[objectStoreName];
 };
 
 IDBTransaction.prototype.__abortTransaction = function (err) {
@@ -390,7 +390,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
     if (me.mode === 'versionchange') { // Steps for aborting an upgrade transaction
         me.db.__version = me.db.__oldVersion;
         me.db.__objectStoreNames = me.db.__oldObjectStoreNames;
-        Object.values(me.__storeClones).forEach(function (store) {
+        Object.values(me.__storeHandles).forEach(function (store) {
             store.__name = store.__originalName;
             store.__indexNames = store.__oldIndexNames;
             Object.values(store.__indexes).forEach(function (index) {
@@ -444,7 +444,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
             setTimeout(() => {
                 me.__abortFinished = true;
                 me.dispatchEvent(evt);
-                me.__storeClones = {};
+                me.__storeHandles = {};
                 me.dispatchEvent(createEvent('__abort'));
             });
         });

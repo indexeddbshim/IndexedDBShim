@@ -10982,7 +10982,9 @@ IDBIndex.__clone = function (index, store) {
             unique: index.unique
         }
     });
-    // idx.__deleted = index.__deleted;
+    ['__pendingCreate', '__pendingDelete', 'deleted'].forEach(function (p) {
+        idx[p] = index[p];
+    });
     return idx;
 };
 
@@ -11001,6 +11003,7 @@ IDBIndex.__createIndex = function (store, index) {
 
     store.indexNames.push(index.name);
     store.__indexes[index.name] = index; // We add to indexes as needs to be available, e.g., if there is a subsequent deleteIndex call
+    store.__indexHandles[index.name] = index;
 
     // Create the index in WebSQL
     var transaction = store.transaction;
@@ -11081,7 +11084,10 @@ IDBIndex.__createIndex = function (store, index) {
 IDBIndex.__deleteIndex = function (store, index) {
     // Remove the index from the IDBObjectStore
     index.__pendingDelete = true;
-    delete store.__indexClones[index.name];
+    var indexHandle = store.__indexHandles[index.name];
+    if (indexHandle) {
+        indexHandle.__pendingDelete = true;
+    }
 
     store.indexNames.splice(store.indexNames.indexOf(index.name), 1);
 
@@ -11097,6 +11103,10 @@ IDBIndex.__deleteIndex = function (store, index) {
             delete index.__pendingDelete;
             delete index.__recreated;
             index.__deleted = true;
+            if (indexHandle) {
+                indexHandle.__deleted = true;
+                delete indexHandle.__pendingDelete;
+            }
             success(store);
         }, error);
     }, undefined, store);
@@ -11686,7 +11696,7 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
         me.__autoIncrement = !!storeProperties.autoInc;
 
         me.__indexes = {};
-        me.__indexClones = {};
+        me.__indexHandles = {};
         me.__indexNames = _DOMStringList2.default.__createInstance();
         var indexList = storeProperties.indexList;
         for (var indexName in indexList) {
@@ -11816,12 +11826,12 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
     db.__objectStores[store.name] = undefined;
     db.objectStoreNames.splice(db.objectStoreNames.indexOf(store.name), 1);
 
-    var storeClone = db.__versionTransaction.__storeClones[store.name];
-    if (storeClone) {
-        storeClone.__indexNames = _DOMStringList2.default.__createInstance();
-        storeClone.__indexes = {};
-        storeClone.__indexClones = {};
-        storeClone.__pendingDelete = true;
+    var storeHandle = db.__versionTransaction.__storeHandles[store.name];
+    if (storeHandle) {
+        storeHandle.__indexNames = _DOMStringList2.default.__createInstance();
+        storeHandle.__indexes = {};
+        storeHandle.__indexHandles = {};
+        storeHandle.__pendingDelete = true;
     }
 
     // Remove the object store from WebSQL
@@ -11840,9 +11850,9 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
                     tx.executeSql('DELETE FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.name)], function () {
                         delete store.__pendingDelete;
                         store.__deleted = true;
-                        if (storeClone) {
-                            delete storeClone.__pendingDelete;
-                            storeClone.__deleted = true;
+                        if (storeHandle) {
+                            delete storeHandle.__pendingDelete;
+                            storeHandle.__deleted = true;
                         }
                         success();
                     }, error);
@@ -12356,10 +12366,10 @@ IDBObjectStore.prototype.index = function (indexName) {
         throw (0, _DOMException.createDOMException)('NotFoundError', 'Index "' + indexName + '" does not exist on ' + me.name);
     }
 
-    if (!me.__indexClones[indexName] || me.__indexes[indexName].__pendingDelete || me.__indexes[indexName].__deleted) {
-        me.__indexClones[indexName] = _IDBIndex.IDBIndex.__clone(index, me);
+    if (!me.__indexHandles[indexName] || me.__indexes[indexName].__pendingDelete || me.__indexes[indexName].__deleted) {
+        me.__indexHandles[indexName] = _IDBIndex.IDBIndex.__clone(index, me);
     }
-    return me.__indexClones[indexName];
+    return me.__indexHandles[indexName];
 };
 
 /**
@@ -12766,7 +12776,7 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
         listeners.forEach(function (l) {
             _this[l] = null;
         });
-        me.__storeClones = {};
+        me.__storeHandles = {};
 
         // Kick off the transaction as soon as all synchronous code is done
         setTimeout(function () {
@@ -12974,7 +12984,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 me.__errored = true;
                 throw e;
             } finally {
-                me.__storeClones = {};
+                me.__storeHandles = {};
             }
         }
         if (me.mode === 'readwrite') {
@@ -13087,12 +13097,12 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
         throw (0, _DOMException.createDOMException)('NotFoundError', objectStoreName + ' does not exist in ' + me.db.name);
     }
 
-    if (!me.__storeClones[objectStoreName] || me.__storeClones[objectStoreName].__pendingDelete || me.__storeClones[objectStoreName].__deleted) {
+    if (!me.__storeHandles[objectStoreName] || me.__storeHandles[objectStoreName].__pendingDelete || me.__storeHandles[objectStoreName].__deleted) {
         // The latter conditions are to allow store
         //   recreation to create new clone object
-        me.__storeClones[objectStoreName] = _IDBObjectStore2.default.__clone(store, me);
+        me.__storeHandles[objectStoreName] = _IDBObjectStore2.default.__clone(store, me);
     }
-    return me.__storeClones[objectStoreName];
+    return me.__storeHandles[objectStoreName];
 };
 
 IDBTransaction.prototype.__abortTransaction = function (err) {
@@ -13108,7 +13118,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         // Steps for aborting an upgrade transaction
         me.db.__version = me.db.__oldVersion;
         me.db.__objectStoreNames = me.db.__oldObjectStoreNames;
-        Object.values(me.__storeClones).forEach(function (store) {
+        Object.values(me.__storeHandles).forEach(function (store) {
             store.__name = store.__originalName;
             store.__indexNames = store.__oldIndexNames;
             Object.values(store.__indexes).forEach(function (index) {
@@ -13163,7 +13173,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
             setTimeout(function () {
                 me.__abortFinished = true;
                 me.dispatchEvent(evt);
-                me.__storeClones = {};
+                me.__storeHandles = {};
                 me.dispatchEvent((0, _Event.createEvent)('__abort'));
             });
         });

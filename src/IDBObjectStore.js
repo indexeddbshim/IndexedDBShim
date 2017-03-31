@@ -38,7 +38,7 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
         me.__autoIncrement = !!storeProperties.autoInc;
 
         me.__indexes = {};
-        me.__indexClones = {};
+        me.__indexHandles = {};
         me.__indexNames = DOMStringList.__createInstance();
         const indexList = storeProperties.indexList;
         for (const indexName in indexList) {
@@ -168,12 +168,12 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
     db.__objectStores[store.name] = undefined;
     db.objectStoreNames.splice(db.objectStoreNames.indexOf(store.name), 1);
 
-    const storeClone = db.__versionTransaction.__storeClones[store.name];
-    if (storeClone) {
-        storeClone.__indexNames = DOMStringList.__createInstance();
-        storeClone.__indexes = {};
-        storeClone.__indexClones = {};
-        storeClone.__pendingDelete = true;
+    const storeHandle = db.__versionTransaction.__storeHandles[store.name];
+    if (storeHandle) {
+        storeHandle.__indexNames = DOMStringList.__createInstance();
+        storeHandle.__indexes = {};
+        storeHandle.__indexHandles = {};
+        storeHandle.__pendingDelete = true;
     }
 
     // Remove the object store from WebSQL
@@ -192,9 +192,9 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
                     tx.executeSql('DELETE FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.name)], function () {
                         delete store.__pendingDelete;
                         store.__deleted = true;
-                        if (storeClone) {
-                            delete storeClone.__pendingDelete;
-                            storeClone.__deleted = true;
+                        if (storeHandle) {
+                            delete storeHandle.__pendingDelete;
+                            storeHandle.__deleted = true;
                         }
                         success();
                     }, error);
@@ -692,13 +692,13 @@ IDBObjectStore.prototype.index = function (indexName) {
         throw createDOMException('NotFoundError', 'Index "' + indexName + '" does not exist on ' + me.name);
     }
 
-    if (!me.__indexClones[indexName] ||
+    if (!me.__indexHandles[indexName] ||
         me.__indexes[indexName].__pendingDelete ||
         me.__indexes[indexName].__deleted
     ) {
-        me.__indexClones[indexName] = IDBIndex.__clone(index, me);
+        me.__indexHandles[indexName] = IDBIndex.__clone(index, me);
     }
-    return me.__indexClones[indexName];
+    return me.__indexHandles[indexName];
 };
 
 /**
