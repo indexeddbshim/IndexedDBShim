@@ -52,14 +52,19 @@ describe('W3C IDBIndex.openKeyCursor Tests', function () {
             var store = db.createObjectStore("store", { keyPath: "key" });
             var index = store.createIndex("index", "indexedProperty");
             store.add({ key: 1, indexedProperty: "data" });
+        }
 
-            e.target.transaction.abort();
+        open_rq.onsuccess = function(e) {
+            var tx = db.transaction('store');
+            var index = tx.objectStore('store').index('index');
+            tx.abort();
 
             support.throws(function(){
                 index.openKeyCursor();
             }, 'TransactionInactiveError');
             done();
         }
+
         open_rq.onerror = function () {};
     });
 });

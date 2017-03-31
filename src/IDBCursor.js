@@ -29,6 +29,9 @@ const IDBCursorAlias = IDBCursor;
 IDBCursor.__super = function IDBCursor (query, direction, store, source, keyColumnName, valueColumnName, count) {
     this[Symbol.toStringTag] = 'IDBCursor';
     util.defineReadonlyProperties(this, ['key', 'primaryKey']);
+    IDBObjectStore.__invalidStateIfDeleted(store);
+    this.__indexSource = util.instanceOf(source, IDBIndex);
+    if (this.__indexSource) IDBIndex.__invalidStateIfDeleted(source);
     IDBTransaction.__assertActive(store.transaction);
     const range = convertValueToKeyRange(query);
     if (direction !== undefined && !(['next', 'prev', 'nextunique', 'prevunique'].includes(direction))) {
@@ -54,7 +57,6 @@ IDBCursor.__super = function IDBCursor (query, direction, store, source, keyColu
     this.__valueDecoder = this.__keyOnly ? Key : Sca;
     this.__count = count;
     this.__prefetchedIndex = -1;
-    this.__indexSource = util.instanceOf(source, IDBIndex);
     this.__multiEntryIndex = this.__indexSource ? source.multiEntry : false;
     this.__unique = this.direction.includes('unique');
     this.__sqlDirection = ['prev', 'prevunique'].includes(this.direction) ? 'DESC' : 'ASC';
@@ -338,10 +340,8 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
 };
 
 IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
-    if (!this.__store.transaction.db.objectStoreNames.contains(this.__store.name) ||
-        (this.__indexSource && !this.__store.indexNames.contains(this.source.name))) {
-        throw createDOMException('InvalidStateError', 'The cursor\'s source or effective object store has been deleted');
-    }
+    IDBObjectStore.__invalidStateIfDeleted(this.__store, "The cursor's effective object store has been deleted");
+    if (this.__indexSource) IDBIndex.__invalidStateIfDeleted(this.source, "The cursor's index source has been deleted");
 };
 
 IDBCursor.prototype.__invalidateCache = function () {

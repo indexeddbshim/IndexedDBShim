@@ -452,6 +452,14 @@ they were actually changes since a more recent version on `master`.
     index name
 - Fix: Better error reporting for `IDBRequest.error` or `IDBRequest.result`
     errors.
+- Fix: Throw `InvalidStateError` `DOMException` upon deleted object store or index for:
+    1. cursor-related operations
+    2. index and store name setters
+    3. index and store get or manipulation operations
+    4. index creation, deletion, or retrieval operations
+- Fix: Ensure will throw `InvalidStateError` `DOMException` as with deleted
+    object stores or indexes for access after an aborted transaction when
+    there were pending object stores or indexes to be created
 - Repo files: Rename test folders for ease in distinguishing
 - Optimize: Only retrieve required SQLite columns
 - Optimize: Have `IDBObjectStore` and `IDBIndex`'s `get` and
@@ -549,6 +557,8 @@ they were actually changes since a more recent version on `master`.
 - Testing (W3C Old): Update w3c-old to work with browser
 - Testing (W3C Old): Fix a few globals, increase test timeouts for
     browser, allow array-like properties as per original tests
+- Testing (W3C Old): Update tests per latest behavior as far as throwing
+    `InvalidStateError` for deleted object stores or indexes
 - Test scaffolding (W3C Old): Fix args to `initionalSituation()`
 - Test scaffolding (W3C Old): Fix test ok condition, typo
 - Test scaffolding (W3C Old): Fix assertions

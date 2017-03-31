@@ -6,6 +6,7 @@ import {setSQLForKeyRange, IDBKeyRange, convertValueToKeyRange} from './IDBKeyRa
 import IDBTransaction from './IDBTransaction';
 import * as Sca from './Sca';
 import CFG from './CFG';
+import IDBObjectStore from './IDBObjectStore';
 
 const readonlyProperties = ['objectStore', 'keyPath', 'multiEntry', 'unique'];
 
@@ -44,12 +45,8 @@ IDBIndex.__createInstance = function (store, indexProperties) {
                 const oldName = me.name;
                 IDBTransaction.__assertVersionChange(me.objectStore.transaction);
                 IDBTransaction.__assertActive(me.objectStore.transaction);
-                if (me.__deleted || me.__pendingDelete) {
-                    throw createDOMException('InvalidStateError', 'This index has been deleted');
-                }
-                if (me.objectStore.__deleted || me.objectStore.__pendingDelete) {
-                    throw createDOMException('InvalidStateError', "This index's object store has been deleted");
-                }
+                IDBIndexAlias.__invalidStateIfDeleted(me);
+                IDBObjectStore.__invalidStateIfDeleted(me);
                 if (newName === oldName) {
                     return;
                 }
@@ -74,6 +71,12 @@ IDBIndex.__createInstance = function (store, indexProperties) {
     }
     IDBIndex.prototype = IDBIndexAlias.prototype;
     return new IDBIndex();
+};
+
+IDBIndex.__invalidStateIfDeleted = function (index, msg) {
+    if (index.__deleted || index.__pendingDelete || (index.__pendingCreate && index.objectStore.transaction.__errored)) {
+        throw createDOMException('InvalidStateError', msg || 'This index has been deleted');
+    }
 };
 
 /**
@@ -262,9 +265,8 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
         count = util.enforceRange(count, 'unsigned long');
     }
 
-    if (me.__deleted || me.__pendingDelete) {
-        throw createDOMException('InvalidStateError', 'This index has been deleted');
-    }
+    IDBIndex.__invalidStateIfDeleted(me);
+    IDBObjectStore.__invalidStateIfDeleted(me.objectStore);
     if (me.objectStore.__deleted) {
         throw createDOMException('InvalidStateError', "This index's object store has been deleted");
     }
