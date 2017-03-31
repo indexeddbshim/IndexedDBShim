@@ -1,3 +1,5 @@
+/* eslnt-env browser, worker */
+/* globals self */
 import setGlobalVars from './setGlobalVars';
 import CFG from './CFG';
 

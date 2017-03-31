@@ -1,3 +1,4 @@
+/* globals IDBRequest, IDBCursor, IDBKeyRange  */
 /* eslint-disable no-var, no-unused-expressions */
 describe('IDBIndex.openCursor', function () {
     'use strict';

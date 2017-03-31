@@ -1,3 +1,4 @@
+/* globals IDBKeyRange */
 /* eslint-disable no-var */
 queuedModule('Indexes');
 queuedAsyncTest('Creating Indexes', function (assert) {

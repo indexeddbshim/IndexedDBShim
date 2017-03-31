@@ -1,3 +1,4 @@
+/* globals IDBIndex */
 /* eslint-disable no-var */
 describe('IDBObjectStore.index', function () {
     'use strict';

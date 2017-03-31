@@ -1,3 +1,4 @@
+/* globals self */
 import 'babel-polyfill'; // `Object.assign` including within `EventTarget`, generator functions, `Array.from`, etc.; see https://babeljs.io/docs/usage/polyfill/
 import shimIDBVersionChangeEvent from './IDBVersionChangeEvent';
 import {IDBCursor as shimIDBCursor, IDBCursorWithValue as shimIDBCursorWithValue} from './IDBCursor';

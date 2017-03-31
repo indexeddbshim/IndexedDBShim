@@ -1,3 +1,4 @@
+/* globals IDBObjectStore, IDBTransaction */
 /* eslint-disable no-var */
 describe('IDBDatabase.createObjectStore', function () {
     'use strict';

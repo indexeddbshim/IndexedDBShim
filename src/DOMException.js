@@ -1,3 +1,4 @@
+/* globals DOMException */
 import CFG from './CFG';
 
 /**

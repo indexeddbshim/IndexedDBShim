@@ -1,3 +1,4 @@
+/* globals location, Event */
 import {createEvent, ShimEvent, ShimCustomEvent, ShimEventTarget} from './Event';
 import IDBVersionChangeEvent from './IDBVersionChangeEvent';
 import {webSQLErrback, createDOMException, ShimDOMException} from './DOMException';

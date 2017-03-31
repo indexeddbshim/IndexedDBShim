@@ -1,3 +1,4 @@
+/* globals IDBRequest */
 /* eslint-disable no-var */
 describe('IDBObjectStore.clear', function () {
     'use strict';

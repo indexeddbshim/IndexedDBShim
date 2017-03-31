@@ -1,3 +1,4 @@
+/* globals IDBRequest, IDBKeyRange */
 /* eslint-disable no-var */
 describe('IDBIndex.count', function () {
     'use strict';

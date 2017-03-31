@@ -1,4 +1,4 @@
-/* global shimIndexedDB */
+/* globals shimIndexedDB, location, IDBFactory */
 /* eslint-disable no-var */
 (function () {
     'use strict';

@@ -1,3 +1,4 @@
+/* globals IDBRequest */
 /* eslint-disable no-var, spaced-comment, no-unused-expressions */
 /*********************************************************
  *     This file contains tests that are THE SAME for

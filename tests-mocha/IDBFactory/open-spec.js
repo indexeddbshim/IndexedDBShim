@@ -1,3 +1,4 @@
+/* globals IDBOpenDBRequest, IDBTransaction, IDBVersionChangeEvent, IDBDatabase */
 /* eslint-disable no-var */
 describe('IDBFactory.open', function () {
     'use strict';

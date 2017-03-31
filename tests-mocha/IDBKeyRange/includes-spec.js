@@ -1,3 +1,4 @@
+/* globals IDBKeyRange */
 /* eslint-disable no-var */
 describe('IDBKeyRange', function () {
     'use strict';

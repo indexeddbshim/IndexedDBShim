@@ -1,3 +1,4 @@
+/* globals IDBOpenDBRequest, Event */
 /* eslint-disable no-var */
 describe('IDBFactory.deleteDatabase', function () {
     'use strict';

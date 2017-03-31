@@ -1,3 +1,4 @@
+/* globals IDBRequest */
 /* eslint-disable no-var, no-unused-expressions */
 describe('IDBIndex.get', function () {
     'use strict';
