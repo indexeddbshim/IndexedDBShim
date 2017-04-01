@@ -3,21 +3,27 @@
 //   to 'Timeout' or 'Not Run' tests in case they are our own test environment
 //   problems)
 
-0. KNOWN ISSUES
+A. KNOWN ISSUES
 
-A. Transaction exception order test bug?
+1. Transaction exception order test bug?
 
 - `idbdatabase-transaction-exception-order.js`: Apparently a test bug is the only remaining issue: https://github.com/w3c/web-platform-tests/issues/5313
 
-B. BLOB/FILE
+2. BLOB/FILE
 
 - `idb-binary-key-detached.js` - Requires `ArrayBuffer.transfer` but not available in Node
 
-C. NODE ISSUE-RELATED
+3. NODE ISSUE-RELATED
 
 - `interfaces.js`: Has one failing test due to a bug in Node: https://github.com/axemclion/IndexedDBShim/issues/280
 
-D. Transaction finished timing
+4. OPAQUE ORIGINS (see https://github.com/axemclion/IndexedDBShim/issues/283 )
+
+In order to run, the following require a one-off `srcdoc` implementation or https://github.com/tmpvar/jsdom/issues/1792
+- `idbfactory-deleteDatabase-opaque-origin.js`
+- `idbfactory-open-opaque-origin.js`
+
+5. Transaction finished timing
 
 If we were to ensure transactions finished before the next task, we'd
 mostly need to use synchronous SQLite operations (such as in https://github.com/grumdrig/node-sqlite).
@@ -38,6 +44,8 @@ https://github.com/w3c/web-platform-tests/commit/57aa2ac737eec9526ad6c4ace61e590
 - `idbobjectstore-deleteIndex-exception-order.js`
 - `idbobjectstore-query-exception-order.js`
 
+B. FAILING TESTS TO DEBUG
+
 0. BREAKING TESTS (NEED TO AVOID ERRORING OUT OF TESTS AND CATEGORIZE)
 
 - `bindings-inject-key.js`, `keypath-exceptions.js`: (Uncaught exceptions have required their complete exclusion for now; see "CLONING/PROTOTYPE CHAIN" section below for reasons breaking)
@@ -47,7 +55,7 @@ https://github.com/w3c/web-platform-tests/commit/57aa2ac737eec9526ad6c4ace61e590
 - `fire-upgradeneeded-event-exception.js`
 - `upgrade-transaction-deactivation-timing.js` - Causes subsequent tests to timeout
 
-1. ERROR PRECEDENCE/METADATA REVERSIONS
+1. ERROR PRECEDENCE/METADATA REVERSIONS?
 
 - `transaction-abort-multiple-metadata-revert.js`: ?
 - `transaction-abort-index-metadata-revert.js`: ?
@@ -70,10 +78,9 @@ https://github.com/w3c/web-platform-tests/commit/57aa2ac737eec9526ad6c4ace61e590
 - `transaction-lifetime.js`: `versionchange` event (handling with issue #2)
 - `open-request-queue.js`: (Timing out)
 
-4. OPAQUE ORIGINS (see https://github.com/axemclion/IndexedDBShim/issues/283 )
-In order to run, the following require a one-off `srcdoc` implementation or https://github.com/tmpvar/jsdom/issues/1792
-- `idbfactory-deleteDatabase-opaque-origin.js`
-- `idbfactory-open-opaque-origin.js`
+4. CLONING/PROTOTYPE CHAIN (May not be possible to truly fix in JS)
+- `bindings-inject-key.js`
+- `keypath-exceptions.js`
 
 5. OTHER
 - `interleaved-cursors.js` - Timing out
@@ -83,10 +90,6 @@ LOWER PRIORITY ISSUES (NEXT RELEASE?)
 
 1. SHARED AND SERVICE WORKERS
 - Need to implement as Node shims, stop disabling these tests in node-idb-test.js, and run
-
-2. CLONING/PROTOTYPE CHAIN (May not be possible to truly fix in JS)
-- `bindings-inject-key.js`
-- `keypath-exceptions.js`
 
 // Passing no argument to `node-idb-test.js` will test all of the IndexedDB
 //   tests including some worker tests, but only those within the
