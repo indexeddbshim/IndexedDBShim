@@ -9,21 +9,15 @@ A. KNOWN ISSUES
 
 - `idbdatabase-transaction-exception-order.js`: Apparently a test bug is the only remaining issue: https://github.com/w3c/web-platform-tests/issues/5313
 
-2. BLOB/FILE
-
-- `idb-binary-key-detached.js` - Requires `ArrayBuffer.transfer` but not available in Node
-
-3. NODE ISSUE-RELATED
+2. NODE ISSUE-RELATED
 
 - `interfaces.js`: Has one failing test due to a bug in Node: https://github.com/axemclion/IndexedDBShim/issues/280
 
-4. OPAQUE ORIGINS (see https://github.com/axemclion/IndexedDBShim/issues/283 )
+3. BLOB/FILE
 
-In order to run, the following require a one-off `srcdoc` implementation or https://github.com/tmpvar/jsdom/issues/1792
-- `idbfactory-deleteDatabase-opaque-origin.js`
-- `idbfactory-open-opaque-origin.js`
+- `idb-binary-key-detached.js` - Requires `ArrayBuffer.transfer` but not available in Node
 
-5. Transaction finished timing
+4. Transaction finished timing
 
 If we were to ensure transactions finished before the next task, we'd
 mostly need to use synchronous SQLite operations (such as in https://github.com/grumdrig/node-sqlite).
@@ -91,6 +85,12 @@ LOWER PRIORITY ISSUES (NEXT RELEASE?)
 
 1. SHARED AND SERVICE WORKERS
 - Need to implement as Node shims, stop disabling these tests in node-idb-test.js, and run
+
+2. OPAQUE ORIGINS (see https://github.com/axemclion/IndexedDBShim/issues/283 )
+
+In order to run, the following require a one-off `srcdoc` implementation or https://github.com/tmpvar/jsdom/issues/1792
+- `idbfactory-deleteDatabase-opaque-origin.js`
+- `idbfactory-open-opaque-origin.js`
 
 // Passing no argument to `node-idb-test.js` will test all of the IndexedDB
 //   tests including some worker tests, but only those within the
