@@ -91,15 +91,16 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
     IDBTransaction.__assertVersionChange(this.__versionTransaction); // this.__versionTransaction may not exist if called mistakenly by user in onsuccess
     IDBTransaction.__assertNotFinished(this.__versionTransaction);
     IDBTransaction.__assertActive(this.__versionTransaction);
-    if (this.__objectStores[storeName]) {
-        throw createDOMException('ConstraintError', 'Object store "' + storeName + '" already exists in ' + this.name);
-    }
-    createOptions = Object.assign({}, createOptions);
 
+    createOptions = Object.assign({}, createOptions);
     let keyPath = createOptions.keyPath;
     keyPath = keyPath === undefined ? null : keyPath = util.convertToSequenceDOMString(keyPath);
     if (keyPath !== null && !util.isValidKeyPath(keyPath)) {
         throw createDOMException('SyntaxError', 'The keyPath argument contains an invalid key path.');
+    }
+
+    if (this.__objectStores[storeName]) {
+        throw createDOMException('ConstraintError', 'Object store "' + storeName + '" already exists in ' + this.name);
     }
 
     const autoIncrement = createOptions.autoIncrement;
@@ -169,9 +170,6 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
             : (function () {
                 throw new TypeError('You must supply a valid `storeNames` to `IDBDatabase.transaction`');
             }()));
-    if (storeNames.length === 0) {
-        throw createDOMException('InvalidAccessError', 'No valid object store names were specified');
-    }
 
     // Since SQLite (at least node-websql and definitely WebSQL) requires
     //   locking of the whole database, to allow simultaneous readwrite
@@ -201,6 +199,11 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
             throw createDOMException('NotFoundError', 'The "' + storeName + '" object store does not exist');
         }
     });
+
+    if (storeNames.length === 0) {
+        throw createDOMException('InvalidAccessError', 'No valid object store names were specified');
+    }
+
     // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
     const trans = IDBTransaction.__createInstance(this, storeNames, mode);
     this.__transactions.push(trans);

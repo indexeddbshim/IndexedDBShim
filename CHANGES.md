@@ -460,6 +460,14 @@ they were actually changes since a more recent version on `master`.
 - Fix: Ensure will throw `InvalidStateError` `DOMException` as with deleted
     object stores or indexes for access after an aborted transaction when
     there were pending object stores or indexes to be created
+- Fix: Ensure not finished checks only check for aborts when the abort is
+    complete
+- Fix `IDBDatabase.createObjectStore` exception order fix (object store
+    `ConstraintError` check follows key path `SyntaxError` check)
+- Fix `IDBDatabase.transaction` exception order fix (`InvalidAccessError`
+    follows `TypeError` mode check, `InvalidStateError` version change
+    check, `InvalidStateError` closed check, and `NotFoundError` object
+    store check)
 - Repo files: Rename test folders for ease in distinguishing
 - Optimize: Only retrieve required SQLite columns
 - Optimize: Have `IDBObjectStore` and `IDBIndex`'s `get` and

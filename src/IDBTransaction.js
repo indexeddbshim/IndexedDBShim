@@ -442,6 +442,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         }, SyncPromise.resolve()).then(function () { // Also works when there are no pending requests
             const evt = createEvent('abort', err, {bubbles: true, cancelable: false});
             setTimeout(() => {
+                me.__abortFinished = true;
                 me.dispatchEvent(evt);
                 me.__storeClones = {};
                 me.dispatchEvent(createEvent('__abort'));
@@ -497,8 +498,8 @@ IDBTransaction.__assertNotVersionChange = function (tx) {
 };
 
 IDBTransaction.__assertNotFinished = function (tx) {
-    if (!tx || tx.__completed || tx.__errored) {
-        throw createDOMException('InvalidStateError', 'Transaction is completed or errored');
+    if (!tx || tx.__completed || tx.__abortFinished) {
+        throw createDOMException('InvalidStateError', 'Transaction finished by commit or abort');
     }
 };
 
