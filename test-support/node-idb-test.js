@@ -60,9 +60,9 @@ let excludedCount = 0;
 
 /*
 // Todo: Might use in place of excluded array, but would need to increment, etc.
-process.on('uncaughtException', function(err) {
+process.on('uncaughtException', function (err) {
     // handle the error safely
-    console.log('idbshim uncaught error:' + err)
+    console.log('idbshim uncaught error:' + err);
 });
 process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
