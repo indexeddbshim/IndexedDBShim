@@ -58,16 +58,12 @@ check whether there are other more serious errors we are missing.)
 
 1. ERROR PRECEDENCE/METADATA REVERSIONS
 
-- `upgrade-transaction-lifecycle-user-aborted.js`: Some kind of transaction error mismatch problem?
-
 - `transaction-abort-multiple-metadata-revert.js`: ?
 - `transaction-abort-index-metadata-revert.js`: ?
 - `transaction-abort-object-store-metadata-revert.js`: ?
 
 - `transaction-deactivation-timing.js`: ?
 - `upgrade-transaction-deactivation-timing.js`: ?
-
-- `upgrade-transaction-lifecycle-committed.js`: ?
 
 2. STORE/INDEX RENAME
 - `idbindex-rename-abort.js`: ?
