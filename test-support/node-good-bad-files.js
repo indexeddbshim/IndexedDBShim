@@ -3,22 +3,21 @@
 //   to 'Timeout' or 'Not Run' tests in case they are our own test environment
 //   problems)
 
-0. BREAKING TESTS (NEED TO AVOID ERRORING OUT OF TESTS AND CATEGORIZE)
-
-- `bindings-inject-key.js`, `keypath-exceptions.js`: (Uncaught exceptions have required their complete exclusion for now; see "CLONING/PROTOTYPE CHAIN" section below for reasons breaking)
-- `event-dispatch-active-flag.js`
-- `fire-error-event-exception.js`
-- `fire-success-event-exception.js`
-- `fire-upgradeneeded-event-exception.js`
-- `upgrade-transaction-deactivation-timing.js` - Causes subsequent tests to timeout
-
 0. KNOWN ISSUES
 
 A. Transaction exception order test bug?
 
 - `idbdatabase-transaction-exception-order.js`: Apparently a test bug is the only remaining issue: https://github.com/w3c/web-platform-tests/issues/5313
 
-B. Transaction finished timing
+B. BLOB/FILE
+
+- `idb-binary-key-detached.js` - Requires `ArrayBuffer.transfer` but not available in Node
+
+C. NODE ISSUE-RELATED
+
+- `interfaces.js`: Has one failing test due to a bug in Node: https://github.com/axemclion/IndexedDBShim/issues/280
+
+D. Transaction finished timing
 
 If we were to ensure transactions finished before the next task, we'd
 mostly need to use synchronous SQLite operations (such as in https://github.com/grumdrig/node-sqlite).
@@ -39,22 +38,14 @@ https://github.com/w3c/web-platform-tests/commit/57aa2ac737eec9526ad6c4ace61e590
 - `idbobjectstore-deleteIndex-exception-order.js`
 - `idbobjectstore-query-exception-order.js`
 
-0. RACE CONDITIONS
+0. BREAKING TESTS (NEED TO AVOID ERRORING OUT OF TESTS AND CATEGORIZE)
 
-(If these are unsolvable due to checks using timeouts and our
-own extra time needed for a transaction, we might at least override
-`setTimeout` to extend its length (at least for Node where we are
-extending the transaction time (and unlike the browser, able to do
-so) so as to make rollbacks possible). This would at least let us
-check whether there are other more serious errors we are missing.)
-
-- `idbcursor-continuePrimaryKey-exception-order.js` - a recent regression probably related to handle caching (working on PR)
-
-- `idbcursor-source.js`: seems to have its last test in a
-    race condition or such to cause pass/fail results to vary
-- `idbobjectstore_openKeyCursor.js`: seems to have its last test in a
-    race condition or such to cause pass/fail results to vary
-- The exception order tests seem to have this problem as well
+- `bindings-inject-key.js`, `keypath-exceptions.js`: (Uncaught exceptions have required their complete exclusion for now; see "CLONING/PROTOTYPE CHAIN" section below for reasons breaking)
+- `event-dispatch-active-flag.js`
+- `fire-error-event-exception.js`
+- `fire-success-event-exception.js`
+- `fire-upgradeneeded-event-exception.js`
+- `upgrade-transaction-deactivation-timing.js` - Causes subsequent tests to timeout
 
 1. ERROR PRECEDENCE/METADATA REVERSIONS
 
@@ -86,19 +77,14 @@ In order to run, the following require a one-off `srcdoc` implementation or http
 
 5. OTHER
 - `interleaved-cursors.js` - Timing out
+- `idbcursor-continuePrimaryKey-exception-order.js` - a recent regression probably related to cached object store/index handles (working on PR)
 
 LOWER PRIORITY ISSUES (NEXT RELEASE?)
 
-0. NODE ISSUE-RELATED
-- `interfaces.js`: Has one failing test due to a bug in Node: https://github.com/axemclion/IndexedDBShim/issues/280
-
-1. BLOB/FILE
-- `idb-binary-key-detached.js` - Requires `ArrayBuffer.transfer` but not available in Node
-
-2. SHARED AND SERVICE WORKERS
+1. SHARED AND SERVICE WORKERS
 - Need to implement as Node shims, stop disabling these tests in node-idb-test.js, and run
 
-3. CLONING/PROTOTYPE CHAIN
+2. CLONING/PROTOTYPE CHAIN (May not be possible to truly fix in JS)
 - `bindings-inject-key.js`
 - `keypath-exceptions.js`
 
