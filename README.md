@@ -361,10 +361,26 @@ prolong WebSQL transactions to benefit from the auto-rollback they
 perform upon encountering an error (nor does WebSQL permit manual
 ROLLBACK commands so that we could undo the various WebSQL calls
 we need to make up IndexedDB transactions), we are not able to
-provide safe rollbacks in the browser (e.g., in Chrome).
+provide safe rollbacks in the browser (e.g., in Chrome). The synchronous
+WebSQL API was not apparently well supported, at least it is missing in
+Safari, and it would particularly degrade performance in a Node environment.
 
 The special build of `websql` that we use does allow such
-IndexedDB-spec-compliant (and data-integrity-friendly!) rollback behavior.
+IndexedDB-spec-compliant (and data-integrity-friendly!) rollback behavior
+in Node.
+
+### Task/micro-task timing
+
+Related to the issue responsible to preventing reliable browser
+rollback, but facing Node as well, if we were to ensure transactions
+finished before the next task, as expected in the spec (and in some
+of the [W3C tests](test-support/node-good-bad-files.js)), we'd mostly
+need to use synchronous SQLite operations (such as in
+<https://github.com/grumdrig/node-sqlite>).
+
+However, as mentioned above, this would degrade performance particularly
+on a server (and in the browser, the synchronous WebSQL API on which we
+are relying was not apparently supported in browsers).
 
 ### [Structured Cloning Algorithm](https://html.spec.whatwg.org/multipage/infrastructure.html#safe-passing-of-structured-data)
 
