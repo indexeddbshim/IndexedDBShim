@@ -46,7 +46,7 @@ https://github.com/w3c/web-platform-tests/commit/57aa2ac737eec9526ad6c4ace61e590
 
 B. FAILING TESTS TO DEBUG
 
-0. BREAKING TESTS (NEED TO AVOID ERRORING OUT OF TESTS AND CATEGORIZE)
+0. BREAKING/TIMING OUT TESTS (NEED TO AVOID ERRORING OUT OF TESTS AND CATEGORIZE)
 
 - `bindings-inject-key.js`, `keypath-exceptions.js`: (Uncaught exceptions have required their complete exclusion for now; see "CLONING/PROTOTYPE CHAIN" section below for reasons breaking)
 - `event-dispatch-active-flag.js`
@@ -54,8 +54,13 @@ B. FAILING TESTS TO DEBUG
 - `fire-success-event-exception.js`
 - `fire-upgradeneeded-event-exception.js`
 - `upgrade-transaction-deactivation-timing.js` - Causes subsequent tests to timeout
+- `interleaved-cursors.js` - Timing out
 
-1. ERROR PRECEDENCE/METADATA REVERSIONS?
+1. OBJECT STORE/INDEX HANDLE RECREATION
+
+- `idbcursor-continuePrimaryKey-exception-order.js` - a recent regression probably related to cached object store/index handles (working on PR)
+
+2. ERROR PRECEDENCE/METADATA REVERSIONS?
 
 - `transaction-abort-multiple-metadata-revert.js`: ?
 - `transaction-abort-index-metadata-revert.js`: ?
@@ -64,27 +69,23 @@ B. FAILING TESTS TO DEBUG
 - `transaction-deactivation-timing.js`: ?
 - `upgrade-transaction-deactivation-timing.js`: ?
 
-2. STORE/INDEX RENAME
+3. STORE/INDEX RENAME
 - `idbindex-rename-abort.js`: ?
 - `idbindex-rename-errors.js`: ?
 - `idbindex-rename.js`: ?
 - `idbobjectstore-rename-abort.js`: ?
 - `idbobjectstore-rename-store.js`: ?
 
-3. BLOCKING/VERSIONCHANGE
+4. CLONING/PROTOTYPE CHAIN (May not be possible to truly fix in JS)
+- `bindings-inject-key.js`
+- `keypath-exceptions.js`
+
+5. BLOCKING/VERSIONCHANGE
 - `idbdatabase_close.js`: Requires blocking (issue #2)
 - `idbdatabase_close2.js`: Requires blocking (issue #2)
 - `transaction-lifetime-blocked.js`: Requires blocking (issue #2)
 - `transaction-lifetime.js`: `versionchange` event (handling with issue #2)
 - `open-request-queue.js`: (Timing out)
-
-4. CLONING/PROTOTYPE CHAIN (May not be possible to truly fix in JS)
-- `bindings-inject-key.js`
-- `keypath-exceptions.js`
-
-5. OTHER
-- `interleaved-cursors.js` - Timing out
-- `idbcursor-continuePrimaryKey-exception-order.js` - a recent regression probably related to cached object store/index handles (working on PR)
 
 LOWER PRIORITY ISSUES (NEXT RELEASE?)
 
