@@ -66,6 +66,9 @@ describe('Database', function() {
             request.onupgradeneeded = function(e){
                 assert.ok(false, "Upgrading database");
             };
+            request.onblocked = function(e){
+                assert.ok(false, "Blocked database");
+            };
         }, done, assert);
     });
 
@@ -137,6 +140,9 @@ describe('Database', function() {
                 assert.equal("upgradeneeded", e.type, "Upgrading database");
                 assert.equal(e.oldVersion, 1, "Old version");
                 assert.equal(e.newVersion, version, "New version");
+            };
+            request.onblocked = function(e){
+                assert.ok(false, "Blocked database");
             };
         }, done, assert);
     });

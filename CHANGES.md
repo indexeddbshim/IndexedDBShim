@@ -582,7 +582,9 @@ they were actually changes since a more recent version on `master`.
     From fakeIndexedDB (Browser), only the first test is
         passing (as expected due to rollback limitations);
 
-    From indexedDBmock (Node and browser), only database.js is not passing
+    From indexedDBmock (Node and browser), only database.js is not passing (see
+        https://github.com/kristofdegrave/indexedDBmock/compare/f6cdf451769827e13c746984b820096b0de3ac6d...master
+        for any new changes to add to tests)
 
     From old W3C (Node and browser), only the following are not passing:
         IDBDatabase.close.js,
