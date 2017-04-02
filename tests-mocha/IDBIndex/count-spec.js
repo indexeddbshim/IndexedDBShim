@@ -1,4 +1,5 @@
-/* globals IDBRequest, IDBKeyRange */
+/* eslint-env mocha */
+/* globals expect, sinon, util, env, IDBRequest, IDBKeyRange */
 /* eslint-disable no-var */
 describe('IDBIndex.count', function () {
     'use strict';

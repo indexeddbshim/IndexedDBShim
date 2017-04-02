@@ -15,29 +15,6 @@
     "coverage": true,
     "compiler": "babel"
   },
-  "globals": {
-    "QUnit": false,
-    "_": false,
-    "asyncTest": false,
-    "DB": false,
-    "dbVersion": true,
-    "nextTest": false,
-    "sample": false,
-    "queuedAsyncTest": false,
-    "queuedModule": false,
-
-    "util": false,
-    "env": false,
-    "mocha": false,
-    "beforeEach": false,
-    "afterEach": false,
-    "describe": false,
-    "expect": false,
-    "assert": false,
-    "it": false,
-    "chai": false,
-    "sinon": false
-  },
   "rules": {
     "semi": [2, "always"],
     "indent": ["error", 4],

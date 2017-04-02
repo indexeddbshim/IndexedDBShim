@@ -1,4 +1,5 @@
-/* globals IDBIndex */
+/* eslint-env mocha */
+/* globals expect, util, env, IDBIndex */
 /* eslint-disable no-var */
 describe('IDBObjectStore.index', function () {
     'use strict';

@@ -1,3 +1,5 @@
+/* eslint-env qunit */
+/* globals queuedAsyncTest, DB, _, nextTest, queuedModule */
 /* eslint-disable no-var */
 (function () {
     function openDb (name, callback) {

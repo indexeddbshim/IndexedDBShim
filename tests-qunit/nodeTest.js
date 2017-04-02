@@ -1,3 +1,4 @@
+/* eslint-env qunit */
 /* global testFiles, addTestSuite, startTests */
 
 const setGlobalVars = require('../dist/indexeddbshim-node.min');

@@ -1,3 +1,4 @@
+/* eslint-env qunit */
 /* eslint-disable no-var */
 /**
  * Ideally unit tests should be independent, but there are some cases where you

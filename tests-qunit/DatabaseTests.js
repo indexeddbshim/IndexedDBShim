@@ -1,3 +1,5 @@
+/* eslint-env qunit */
+/* globals queuedAsyncTest, DB, _, nextTest, queuedModule, dbVersion:true */
 /* eslint-disable no-var */
 queuedModule('Database');
 queuedAsyncTest('Opening a Database without version', function (assert) {

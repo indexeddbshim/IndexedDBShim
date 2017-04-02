@@ -1,3 +1,5 @@
+/* eslint-env qunit */
+/* globals sample, queuedAsyncTest, DB, _, nextTest, queuedModule, dbVersion:true */
 /* globals IDBKeyRange */
 /* eslint-disable no-var */
 queuedModule('Indexes');

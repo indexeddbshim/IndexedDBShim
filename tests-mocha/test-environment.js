@@ -1,4 +1,5 @@
-/* globals shimIndexedDB, location, IDBFactory */
+/* eslint-env mocha */
+/* globals chai, shimIndexedDB, location, IDBFactory */
 /* eslint-disable no-var */
 (function () {
     'use strict';

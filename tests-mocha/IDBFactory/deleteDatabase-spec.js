@@ -1,4 +1,5 @@
-/* globals IDBOpenDBRequest, Event */
+/* eslint-env mocha */
+/* globals expect, sinon, util, env, IDBOpenDBRequest, Event */
 /* eslint-disable no-var */
 describe('IDBFactory.deleteDatabase', function () {
     'use strict';

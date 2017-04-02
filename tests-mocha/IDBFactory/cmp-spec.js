@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+/* globals expect, util, env */
 /* eslint-disable no-var */
 describe('IDBFactory.cmp', function () {
     'use strict';

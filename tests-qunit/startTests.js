@@ -1,3 +1,5 @@
+/* eslint-env qunit */
+/* globals DB, nextTest */
 /* global addTest */
 /* eslint-disable no-var */
 var dbVersion = 0; // eslint-disable-line no-unused-vars

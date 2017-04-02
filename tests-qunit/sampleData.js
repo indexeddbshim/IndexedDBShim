@@ -1,3 +1,4 @@
+/* eslint-env qunit */
 /* eslint-disable no-var */
 var DB = { // eslint-disable-line no-unused-vars
     NAME: 'dbname.sqlite',

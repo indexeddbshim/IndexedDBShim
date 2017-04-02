@@ -1,3 +1,5 @@
+/* eslint-env qunit */
+/* globals sample, queuedAsyncTest, DB, _, nextTest, queuedModule */
 /* eslint-disable no-var */
 (function () {
     function onObjectStoreOpen (name, storeName, callback) {

@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+/* globals env */
 /* eslint-disable no-var */
 (function () {
     'use strict';

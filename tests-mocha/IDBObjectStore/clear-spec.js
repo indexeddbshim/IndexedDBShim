@@ -1,4 +1,5 @@
-/* globals IDBRequest */
+/* eslint-env mocha */
+/* globals expect, sinon, util, env, IDBRequest */
 /* eslint-disable no-var */
 describe('IDBObjectStore.clear', function () {
     'use strict';

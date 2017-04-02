@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+/* globals expect, sinon, util, env */
 /* eslint-disable no-var, no-unused-expressions */
 describe('IDBObjectStore.add (only)', function () {
     'use strict';

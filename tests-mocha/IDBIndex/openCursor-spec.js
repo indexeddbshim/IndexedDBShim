@@ -1,4 +1,5 @@
-/* globals IDBRequest, IDBCursor, IDBKeyRange  */
+/* eslint-env mocha */
+/* globals expect, sinon, util, env, IDBRequest, IDBCursor, IDBKeyRange  */
 /* eslint-disable no-var, no-unused-expressions */
 describe('IDBIndex.openCursor', function () {
     'use strict';
