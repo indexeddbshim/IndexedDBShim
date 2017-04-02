@@ -6350,9 +6350,9 @@
       "dev": true
     },
     "ws": {
-      "version": "2.0.3",
-      "from": "ws@2.0.3",
-      "resolved": "https://registry.npmjs.org/ws/-/ws-2.0.3.tgz",
+      "version": "2.2.2",
+      "from": "ws@2.2.2",
+      "resolved": "https://registry.npmjs.org/ws/-/ws-2.2.2.tgz",
       "dev": true
     },
     "xml-name-validator": {
