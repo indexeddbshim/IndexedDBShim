@@ -10231,10 +10231,6 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
         mode = mode || 'readonly';
     }
 
-    if (mode !== 'readonly' && mode !== 'readwrite') {
-        throw new TypeError('Invalid transaction mode: ' + mode);
-    }
-
     _IDBTransaction2.default.__assertNotVersionChange(this.__versionTransaction);
     if (this.__closed) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'An attempt was made to start a new transaction on a database connection that is not open');
@@ -10248,6 +10244,10 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
 
     if (storeNames.length === 0) {
         throw (0, _DOMException.createDOMException)('InvalidAccessError', 'No valid object store names were specified');
+    }
+
+    if (mode !== 'readonly' && mode !== 'readwrite') {
+        throw new TypeError('Invalid transaction mode: ' + mode);
     }
 
     // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87

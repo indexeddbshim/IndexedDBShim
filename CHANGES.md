@@ -464,10 +464,11 @@ they were actually changes since a more recent version on `master`.
     complete
 - Fix `IDBDatabase.createObjectStore` exception order fix (object store
     `ConstraintError` check follows key path `SyntaxError` check)
-- Fix `IDBDatabase.transaction` exception order fix (`InvalidAccessError`
-    follows `TypeError` mode check, `InvalidStateError` version change
-    check, `InvalidStateError` closed check, and `NotFoundError` object
-    store check)
+- Fix `IDBDatabase.transaction` exception order fixes (`InvalidAccessError`
+    follows `InvalidStateError` version change check, `InvalidStateError`
+    closed check, and `NotFoundError` object store check); `TypeError` mode
+    check per newly corrected spec behavior, to follow all other exception
+    checks
 - Repo files: Rename test folders for ease in distinguishing
 - Optimize: Only retrieve required SQLite columns
 - Optimize: Have `IDBObjectStore` and `IDBIndex`'s `get` and
