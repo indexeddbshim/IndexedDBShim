@@ -5,19 +5,15 @@
 
 A. KNOWN ISSUES
 
-1. Transaction exception order test bug?
-
-- `idbdatabase-transaction-exception-order.js`: Apparently a test bug is the only remaining issue: https://github.com/w3c/web-platform-tests/issues/5313
-
-2. NODE ISSUE-RELATED
+1. NODE ISSUE-RELATED
 
 - `interfaces.js`: Has one failing test due to a bug in Node: https://github.com/axemclion/IndexedDBShim/issues/280
 
-3. BLOB/FILE
+2. BLOB/FILE
 
 - `idb-binary-key-detached.js` - Requires `ArrayBuffer.transfer` but not available in Node
 
-4. Transaction finished timing
+3. Transaction finished timing
 
 If we were to ensure transactions finished before the next task, we'd
 mostly need to use synchronous SQLite operations (such as in https://github.com/grumdrig/node-sqlite).
