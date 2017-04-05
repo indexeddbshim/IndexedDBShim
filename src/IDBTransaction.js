@@ -392,11 +392,15 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         me.db.__objectStoreNames = me.db.__oldObjectStoreNames;
         me.__objectStoreNames = me.db.__oldObjectStoreNames;
         Object.values(me.db.__objectStores).concat(Object.values(me.__storeHandles)).forEach(function (store) {
-            store.__name = store.__originalName;
+            if ('__pendingName' in store && me.db.__oldObjectStoreNames.indexOf(store.__pendingName) > -1) { // Store was already created so we restore to name before the rename
+                store.__name = store.__originalName;
+            }
             store.__indexNames = store.__oldIndexNames;
             delete store.__pendingDelete;
             Object.values(store.__indexes).concat(Object.values(store.__indexHandles)).forEach(function (index) {
-                index.__name = index.__originalName;
+                if ('__pendingName' in index && store.__oldIndexNames.indexOf(index.__pendingName) > -1) { // Index was already created so we restore to name before the rename
+                    index.__name = index.__originalName;
+                }
                 delete index.__pendingDelete;
             });
         });

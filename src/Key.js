@@ -677,7 +677,7 @@ function roundTrip (key, inArray) {
 const MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `Number.MAX_SAFE_INTEGER + 1`)
 
 function getCurrentNumber (tx, store, callback, sqlFailCb) {
-    tx.executeSql('SELECT "currNum" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.name)], function (tx, data) {
+    tx.executeSql('SELECT "currNum" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.__currentName)], function (tx, data) {
         if (data.rows.length !== 1) {
             callback(1);
         } else {
@@ -695,7 +695,7 @@ function setCurrentNumber (tx, store, num, successCb, failCb) {
     num = num === MAX_ALLOWED_CURRENT_NUMBER
         ? num + 2 // Since incrementing by one will have no effect in JavaScript on this unsafe max, we represent the max as a number incremented by two. The getting of the current number is never returned to the user and is only used in safe comparisons, so it is safe for us to represent it in this manner
         : num + 1;
-    const sqlValues = [num, util.escapeSQLiteStatement(store.name)];
+    const sqlValues = [num, util.escapeSQLiteStatement(store.__currentName)];
     CFG.DEBUG && console.log(sql, sqlValues);
     tx.executeSql(sql, sqlValues, function (tx, data) {
         successCb(num);

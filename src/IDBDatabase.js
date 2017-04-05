@@ -117,8 +117,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
         idbdb: this
     };
     const store = IDBObjectStore.__createInstance(storeProperties, this.__versionTransaction);
-    IDBObjectStore.__createObjectStore(this, store);
-    return store;
+    return IDBObjectStore.__createObjectStore(this, store);
 };
 
 /**
@@ -190,10 +189,12 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
         throw createDOMException('InvalidStateError', 'An attempt was made to start a new transaction on a database connection that is not open');
     }
 
+    const objectStoreNames = DOMStringList.__createInstance();
     storeNames.forEach((storeName) => {
         if (!this.objectStoreNames.contains(storeName)) {
             throw createDOMException('NotFoundError', 'The "' + storeName + '" object store does not exist');
         }
+        objectStoreNames.push(storeName);
     });
 
     if (storeNames.length === 0) {
@@ -205,7 +206,8 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
     }
 
     // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
-    const trans = IDBTransaction.__createInstance(this, storeNames, mode);
+
+    const trans = IDBTransaction.__createInstance(this, objectStoreNames, mode);
     this.__transactions.push(trans);
     return trans;
 };

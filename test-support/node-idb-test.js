@@ -12,6 +12,7 @@ const isDateObject = require('is-date-object');
 // require('../Gruntfile')(grunt);
 
 // CONFIG
+const DEBUG = false;
 const vmTimeout = 90000; // Time until we give up on the vm (increasing to 40000 didn't make a difference on coverage in earlier versions)
 // const intervalSpacing = 1; // Time delay after test before running next
 
@@ -257,7 +258,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
 
                             const doc = jsdom.jsdom('<div id="log"></div>', {});
                             const window = doc.defaultView; // eslint-disable-line no-var
-                            const baseCfg = {addNonIDBGlobals: true, checkOrigin: false, databaseNameLengthLimit: 1000};
+                            const baseCfg = {addNonIDBGlobals: true, checkOrigin: false, databaseNameLengthLimit: 1000, DEBUG};
                             if (['idbfactory-open-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js'].includes(
                                 shimNS.fileName
                             )) {

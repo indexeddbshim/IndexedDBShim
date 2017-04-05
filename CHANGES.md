@@ -84,7 +84,7 @@ they were actually changes since a more recent version on `master`.
     regular expression strings for full key path validation compliance (could
     slow loading/performance as depends on large regular expressions)
 - Enhancement: Implement `IDBTransaction.objectStoreNames`
-- Enhancement: Add `IDBObjectStore.name` and `IDBIndex.name` setters (untested)
+- Enhancement: Add `IDBObjectStore.name` and `IDBIndex.name` setters
 - Enhancement: Add various missing lesser event properties (`NONE`,
     `CAPTURING_PHASE`, `AT_TARGET`, `BUBBLING_PHASE`) and initialize readonly
     `target`, `currentTarget`, `defaultPrevented`, `isTrusted`.
@@ -366,6 +366,12 @@ they were actually changes since a more recent version on `master`.
 - Fix: Destroy index entries from index set upon store deletion and
     still allow recreation of store handles (but not removing whole
     clone record, allowing its properties to still be examined)
+- Fix: Ensure `createObjectStore`/`createIndex` return same handles as
+    `objectStore`/`index` methods
+- Fix: Avoid resetting store name if the store already existed before an
+    upgrade transaction (per W3C test `idbobjectstore-rename-abort.html`)
+- Fix: Ensure `IDBTransaction.objectStoreNames` is always a `DOMStringList`
+    even when user supplies arrays
 - Fix: As per spec, `DELETE` then `INSERT` rather than `UPDATE` for
     `IDBCursor.update`
 - Fix: Add support for new "closed" event via a custom
@@ -610,6 +616,7 @@ they were actually changes since a more recent version on `master`.
 - Testing (Grunt): Get Saucelabs working (for Chrome and most of Firefox)
 - Testing (Grunt): Log Saucelabs results
 - Testing (Grunt): Work toward fixing source maps
+- Testing (Grunt): Avoid missing grunt-cli message
 - Testing (PhantomJS): Deal with PhantomJS error
 - Testing (npm): Streamline test names; add convenience scripts
 - Testing (QUnit): Upgrade QUnit refs

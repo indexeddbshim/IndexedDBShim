@@ -9503,7 +9503,7 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
     var me = this;
     var quotedKeyColumnName = util.sqlQuote(me.__keyColumnName);
     var quotedKey = util.sqlQuote('key');
-    var sql = ['SELECT * FROM', util.escapeStoreNameForSQL(me.__store.name)];
+    var sql = ['SELECT * FROM', util.escapeStoreNameForSQL(me.__store.__currentName)];
     var sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
     (0, _IDBKeyRange.setSQLForKeyRange)(me.__range, quotedKeyColumnName, sql, sqlValues, true, true);
@@ -9578,7 +9578,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
     }
 
     var quotedKeyColumnName = util.sqlQuote(me.__keyColumnName);
-    var sql = ['SELECT * FROM', util.escapeStoreNameForSQL(me.__store.name)];
+    var sql = ['SELECT * FROM', util.escapeStoreNameForSQL(me.__store.__currentName)];
     var sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
     if (me.__range && me.__range.lower !== undefined && Array.isArray(me.__range.upper)) {
@@ -9927,7 +9927,7 @@ IDBCursor.prototype['delete'] = function () {
     }
     return this.__store.transaction.__addToTransactionQueue(function cursorDelete(tx, args, success, error) {
         me.__find(undefined, undefined, tx, function (key, value, primaryKey) {
-            var sql = 'DELETE FROM  ' + util.escapeStoreNameForSQL(me.__store.name) + ' WHERE "key" = ?';
+            var sql = 'DELETE FROM  ' + util.escapeStoreNameForSQL(me.__store.__currentName) + ' WHERE "key" = ?';
             _CFG2.default.DEBUG && console.log(sql, key, primaryKey);
             // Key.convertValueToKey(primaryKey); // Already checked when entered
             tx.executeSql(sql, [util.escapeSQLiteStatement(Key.encode(primaryKey))], function (tx, data) {
@@ -10166,8 +10166,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
         idbdb: this
     };
     var store = _IDBObjectStore2.default.__createInstance(storeProperties, this.__versionTransaction);
-    _IDBObjectStore2.default.__createObjectStore(this, store);
-    return store;
+    return _IDBObjectStore2.default.__createObjectStore(this, store);
 };
 
 /**
@@ -10236,10 +10235,12 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'An attempt was made to start a new transaction on a database connection that is not open');
     }
 
+    var objectStoreNames = _DOMStringList2.default.__createInstance();
     storeNames.forEach(function (storeName) {
         if (!_this2.objectStoreNames.contains(storeName)) {
             throw (0, _DOMException.createDOMException)('NotFoundError', 'The "' + storeName + '" object store does not exist');
         }
+        objectStoreNames.push(storeName);
     });
 
     if (storeNames.length === 0) {
@@ -10251,7 +10252,8 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
     }
 
     // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
-    var trans = _IDBTransaction2.default.__createInstance(this, storeNames, mode);
+
+    var trans = _IDBTransaction2.default.__createInstance(this, objectStoreNames, mode);
     this.__transactions.push(trans);
     return trans;
 };
@@ -10925,6 +10927,11 @@ IDBIndex.__createInstance = function (store, indexProperties) {
         me.__unique = !!(optionalParams && optionalParams.unique);
         me.__deleted = !!indexProperties.__deleted;
         me.__objectStore.__cursors = indexProperties.cursors || [];
+        Object.defineProperty(me, '__currentName', {
+            get: function get() {
+                return '__pendingName' in me ? me.__pendingName : me.name;
+            }
+        });
         Object.defineProperty(me, 'name', {
             enumerable: false,
             configurable: false,
@@ -10933,6 +10940,7 @@ IDBIndex.__createInstance = function (store, indexProperties) {
             },
             set: function set(newName) {
                 var me = this;
+                newName = util.convertToDOMString(newName);
                 var oldName = me.name;
                 _IDBTransaction2.default.__assertVersionChange(me.objectStore.transaction);
                 _IDBTransaction2.default.__assertActive(me.objectStore.transaction);
@@ -10941,19 +10949,36 @@ IDBIndex.__createInstance = function (store, indexProperties) {
                 if (newName === oldName) {
                     return;
                 }
-                if (me.objectStore.__indexes[newName] && !me.objectStore.__indexes[newName].__deleted) {
-                    throw (0, _DOMException.createDOMException)('ConstraintError', 'Index "' + newName + '" already exists on ' + me.objectStore.name);
+
+                if (me.objectStore.__indexes[newName] && !me.objectStore.__indexes[newName].__deleted && !me.objectStore.__indexes[newName].__pendingDelete) {
+                    throw (0, _DOMException.createDOMException)('ConstraintError', 'Index "' + newName + '" already exists on ' + me.objectStore.__currentName);
                 }
 
-                delete me.objectStore.__indexes[me.name];
-                me.objectStore.indexNames.splice(me.objectStore.indexNames.indexOf(me.name), 1);
-                me.objectStore.__indexes[newName] = me;
-                me.objectStore.indexNames.push(newName);
-
                 me.__name = newName;
-                // Todo: Add pending flag to delay queries against this index until renamed in SQLite?
-                var colInfoToPreserveArr = [['key', 'BLOB ' + (me.objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')], ['value', 'BLOB']];
-                me.__renameIndex(me.objectStore, oldName, newName, colInfoToPreserveArr);
+
+                var objectStore = me.objectStore;
+                delete objectStore.__indexes[oldName];
+                objectStore.__indexes[newName] = me;
+                objectStore.indexNames.splice(objectStore.indexNames.indexOf(oldName), 1, newName);
+
+                var storeHandle = objectStore.transaction.__storeHandles[objectStore.name];
+                var oldIndexHandle = storeHandle.__indexHandles[oldName];
+                oldIndexHandle.__name = newName; // Fix old references
+                storeHandle.__indexHandles[newName] = oldIndexHandle; // Ensure new reference accessible
+                me.__pendingName = oldName;
+
+                var colInfoToPreserveArr = [['key', 'BLOB ' + (objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')], ['value', 'BLOB']].concat(Array.from(objectStore.indexNames).filter(function (indexName) {
+                    return indexName !== newName;
+                }).map(function (indexName) {
+                    return [util.escapeIndexNameForSQL(indexName), 'BLOB'];
+                }));
+
+                me.__renameIndex(objectStore, oldName, newName, colInfoToPreserveArr, function (tx, success) {
+                    IDBIndexAlias.__updateIndexList(store, tx, function (store) {
+                        delete storeHandle.__pendingName;
+                        success(store);
+                    });
+                });
             }
         });
     }
@@ -10962,7 +10987,7 @@ IDBIndex.__createInstance = function (store, indexProperties) {
 };
 
 IDBIndex.__invalidStateIfDeleted = function (index, msg) {
-    if (index.__deleted || index.__pendingDelete || index.__pendingCreate && index.objectStore.transaction.__errored) {
+    if (index.__deleted || index.__pendingDelete || index.__pendingCreate && index.objectStore.transaction && index.objectStore.transaction.__errored) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', msg || 'This index has been deleted');
     }
 };
@@ -10996,14 +11021,20 @@ IDBIndex.__clone = function (index, store) {
  * @protected
  */
 IDBIndex.__createIndex = function (store, index) {
-    var idx = store.__indexes[index.name];
+    var indexName = index.name;
+    var storeName = store.__currentName;
+    var idx = store.__indexes[indexName];
 
-    // Add the index to the IDBObjectStore
     index.__pendingCreate = true;
 
-    store.indexNames.push(index.name);
-    store.__indexes[index.name] = index; // We add to indexes as needs to be available, e.g., if there is a subsequent deleteIndex call
-    store.__indexHandles[index.name] = index;
+    // Add the index to the IDBObjectStore
+    store.indexNames.push(indexName);
+    store.__indexes[indexName] = index; // We add to indexes as needs to be available, e.g., if there is a subsequent deleteIndex call
+
+    var indexHandle = store.__indexHandles[indexName];
+    if (!indexHandle || index.__pendingDelete || index.__deleted || indexHandle.__pendingDelete || indexHandle.__deleted) {
+        indexHandle = store.__indexHandles[indexName] = IDBIndex.__clone(index, store);
+    }
 
     // Create the index in WebSQL
     var transaction = store.transaction;
@@ -11012,15 +11043,15 @@ IDBIndex.__createIndex = function (store, index) {
         var indexValues = {};
 
         function error(tx, err) {
-            failure((0, _DOMException.createDOMException)('UnknownError', 'Could not create index "' + index.name + '"' + err.code + '::' + err.message, err));
+            failure((0, _DOMException.createDOMException)('UnknownError', 'Could not create index "' + indexName + '"' + err.code + '::' + err.message, err));
         }
 
         function applyIndex(tx) {
             // Update the object store's index list
             IDBIndex.__updateIndexList(store, tx, function () {
                 // Add index entries for all existing records
-                tx.executeSql('SELECT "key", "value" FROM ' + util.escapeStoreNameForSQL(store.name), [], function (tx, data) {
-                    _CFG2.default.DEBUG && console.log('Adding existing ' + store.name + ' records to the ' + index.name + ' index');
+                tx.executeSql('SELECT "key", "value" FROM ' + util.escapeStoreNameForSQL(storeName), [], function (tx, data) {
+                    _CFG2.default.DEBUG && console.log('Adding existing ' + storeName + ' records to the ' + indexName + ' index');
                     addIndexEntry(0);
 
                     function addIndexEntry(i) {
@@ -11042,7 +11073,7 @@ IDBIndex.__createIndex = function (store, index) {
                                     indexValues[indexKey] = true;
                                 }
 
-                                tx.executeSql('UPDATE ' + util.escapeStoreNameForSQL(store.name) + ' SET ' + util.escapeIndexNameForSQL(index.name) + ' = ? WHERE "key" = ?', [util.escapeSQLiteStatement(indexKey), data.rows.item(i).key], function (tx, data) {
+                                tx.executeSql('UPDATE ' + util.escapeStoreNameForSQL(storeName) + ' SET ' + util.escapeIndexNameForSQL(indexName) + ' = ? WHERE "key" = ?', [util.escapeSQLiteStatement(indexKey), data.rows.item(i).key], function (tx, data) {
                                     addIndexEntry(i + 1);
                                 }, error);
                             } catch (e) {
@@ -11051,9 +11082,12 @@ IDBIndex.__createIndex = function (store, index) {
                             }
                         } else {
                             delete index.__pendingCreate;
+                            delete indexHandle.__pendingCreate;
                             if (index.__deleted) {
                                 delete index.__deleted;
+                                delete indexHandle.__deleted;
                                 index.__recreated = true;
+                                indexHandle.__recreated = true;
                             }
                             indexValues = {};
                             success(store);
@@ -11068,7 +11102,7 @@ IDBIndex.__createIndex = function (store, index) {
             applyIndex(tx);
         } else {
             // For a new index, add a new column to the object store, then apply the index
-            var sql = ['ALTER TABLE', util.escapeStoreNameForSQL(store.name), 'ADD', util.escapeIndexNameForSQL(index.name), 'BLOB'].join(' ');
+            var sql = ['ALTER TABLE', util.escapeStoreNameForSQL(storeName), 'ADD', util.escapeIndexNameForSQL(index.name), 'BLOB'].join(' ');
             _CFG2.default.DEBUG && console.log(sql);
             tx.executeSql(sql, [], applyIndex, error);
         }
@@ -11135,8 +11169,8 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
         };
     }
 
-    _CFG2.default.DEBUG && console.log('Updating the index list for ' + store.name, indexList);
-    tx.executeSql('UPDATE __sys__ SET "indexList" = ? WHERE "name" = ?', [JSON.stringify(indexList), util.escapeSQLiteStatement(store.name)], function () {
+    _CFG2.default.DEBUG && console.log('Updating the index list for ' + store.__currentName, indexList);
+    tx.executeSql('UPDATE __sys__ SET "indexList" = ? WHERE "name" = ?', [JSON.stringify(indexList), util.escapeSQLiteStatement(store.__currentName)], function () {
         success(store);
     }, failure);
 };
@@ -11263,10 +11297,12 @@ IDBIndex.prototype.count = function () /* query */{
 
 IDBIndex.prototype.__renameIndex = function (store, oldName, newName) {
     var colInfoToPreserveArr = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
+    var cb = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
 
     var newNameType = 'BLOB';
-    var storeName = store.name;
+    var storeName = store.__currentName;
     var escapedStoreNameSQL = util.escapeStoreNameForSQL(storeName);
+    var escapedTmpStoreNameSQL = util.escapeStoreNameForSQL('tmp_' + storeName);
     var colNamesToPreserve = colInfoToPreserveArr.map(function (colInfo) {
         return colInfo[0];
     });
@@ -11279,14 +11315,18 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName) {
     // We could adapt the approach at http://stackoverflow.com/a/8430746/271577
     //    to make the approach reusable without passing column names, but it is a bit fragile
     store.transaction.__addNonRequestToTransactionQueue(function renameIndex(tx, args, success, error) {
-        var sql = 'ALTER TABLE ' + escapedStoreNameSQL + ' RENAME TO tmp_' + escapedStoreNameSQL;
+        var sql = 'ALTER TABLE ' + escapedStoreNameSQL + ' RENAME TO ' + escapedTmpStoreNameSQL;
         tx.executeSql(sql, [], function (tx, data) {
             var sql = 'CREATE TABLE ' + escapedStoreNameSQL + '(' + listColInfoToPreserve + util.escapeIndexNameForSQL(newName) + ' ' + newNameType + ')';
             tx.executeSql(sql, [], function (tx, data) {
-                var sql = 'INSERT INTO ' + escapedStoreNameSQL + '(' + listColsToPreserve + util.escapeIndexNameForSQL(newName) + ') SELECT ' + listColsToPreserve + util.escapeIndexNameForSQL(oldName) + ' FROM tmp_' + escapedStoreNameSQL;
+                var sql = 'INSERT INTO ' + escapedStoreNameSQL + '(' + listColsToPreserve + util.escapeIndexNameForSQL(newName) + ') SELECT ' + listColsToPreserve + util.escapeIndexNameForSQL(oldName) + ' FROM ' + escapedTmpStoreNameSQL;
                 tx.executeSql(sql, [], function (tx, data) {
-                    var sql = 'DROP TABLE tmp_' + escapedStoreNameSQL;
+                    var sql = 'DROP TABLE ' + escapedTmpStoreNameSQL;
                     tx.executeSql(sql, [], function (tx, data) {
+                        if (cb) {
+                            cb(tx, success);
+                            return;
+                        }
                         success();
                     }, function (tx, err) {
                         error(err);
@@ -11406,7 +11446,7 @@ function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range,
 function buildFetchIndexDataSQL(nullDisallowed, index, range, opType, multiChecks) {
     var hasRange = nullDisallowed || range != null;
     var col = opType === 'count' ? 'key' : opType; // It doesn't matter which column we use for 'count' as long as it is valid
-    var sql = ['SELECT', util.sqlQuote(col) + (index.multiEntry ? ', ' + util.escapeIndexNameForSQL(index.name) : ''), 'FROM', util.escapeStoreNameForSQL(index.objectStore.name), 'WHERE', util.escapeIndexNameForSQL(index.name), 'NOT NULL'];
+    var sql = ['SELECT', util.sqlQuote(col) + (index.multiEntry ? ', ' + util.escapeIndexNameForSQL(index.name) : ''), 'FROM', util.escapeStoreNameForSQL(index.objectStore.__currentName), 'WHERE', util.escapeIndexNameForSQL(index.name), 'NOT NULL'];
     var sqlValues = [];
     if (hasRange) {
         if (multiChecks) {
@@ -11709,6 +11749,11 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
             }
         }
         me.__oldIndexNames = me.indexNames.clone();
+        Object.defineProperty(this, '__currentName', {
+            get: function get() {
+                return '__pendingName' in this ? this.__pendingName : this.name;
+            }
+        });
         Object.defineProperty(this, 'name', {
             enumerable: false,
             configurable: false,
@@ -11717,27 +11762,44 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
             },
             set: function set(name) {
                 var me = this;
+                name = util.convertToDOMString(name);
+                var oldName = me.name;
                 IDBObjectStoreAlias.__invalidStateIfDeleted(me);
                 _IDBTransaction2.default.__assertVersionChange(me.transaction);
                 _IDBTransaction2.default.__assertActive(me.transaction);
-                if (me.name === name) {
+                if (oldName === name) {
                     return;
                 }
-                if (me.__idbdb.__objectStores[name]) {
+                if (me.__idbdb.__objectStores[name] && !me.__idbdb.__objectStores[name].__pendingDelete) {
                     throw (0, _DOMException.createDOMException)('ConstraintError', 'Object store "' + name + '" already exists in ' + me.__idbdb.name);
                 }
 
-                delete me.__idbdb.__objectStores[me.name];
-                me.__idbdb.objectStoreNames.splice(me.__idbdb.objectStoreNames.indexOf(me.name), 1);
-                me.__idbdb.__objectStores[name] = me;
-                me.__idbdb.objectStoreNames.push(name);
                 me.__name = name;
-                // Todo: Add pending flag to delay queries against this store until renamed in SQLite
 
-                var sql = 'ALTER TABLE ' + util.escapeStoreNameForSQL(me.name) + ' RENAME TO ' + util.escapeStoreNameForSQL(name);
+                var oldStore = me.__idbdb.__objectStores[oldName];
+                oldStore.__name = name; // Fix old references
+                me.__idbdb.__objectStores[name] = oldStore; // Ensure new reference accessible
+                delete me.__idbdb.__objectStores[oldName]; // Ensure won't be found
+
+                me.__idbdb.objectStoreNames.splice(me.__idbdb.objectStoreNames.indexOf(oldName), 1, name);
+
+                var oldHandle = me.transaction.__storeHandles[oldName];
+                oldHandle.__name = name; // Fix old references
+                me.transaction.__storeHandles[name] = oldHandle; // Ensure new reference accessible
+
+                me.__pendingName = oldName;
+
+                var sql = 'UPDATE __sys__ SET "name" = ? WHERE "name" = ?';
+                var sqlValues = [util.escapeSQLiteStatement(name), util.escapeSQLiteStatement(oldName)];
+                _CFG2.default.DEBUG && console.log(sql, sqlValues);
                 me.transaction.__addNonRequestToTransactionQueue(function objectStoreClear(tx, args, success, error) {
-                    tx.executeSql(sql, [], function (tx, data) {
-                        success();
+                    tx.executeSql(sql, sqlValues, function (tx, data) {
+                        var sql = 'ALTER TABLE ' + util.escapeStoreNameForSQL(oldName) + ' RENAME TO ' + util.escapeStoreNameForSQL(name);
+                        _CFG2.default.DEBUG && console.log(sql);
+                        tx.executeSql(sql, [], function (tx, data) {
+                            delete me.__pendingName;
+                            success();
+                        });
                     }, function (tx, err) {
                         error(err);
                     });
@@ -11757,7 +11819,7 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
  */
 IDBObjectStore.__clone = function (store, transaction) {
     var newStore = IDBObjectStore.__createInstance({
-        name: store.name,
+        name: store.__currentName,
         keyPath: Array.isArray(store.keyPath) ? store.keyPath.slice() : store.keyPath,
         autoInc: store.autoIncrement,
         indexList: {},
@@ -11772,7 +11834,7 @@ IDBObjectStore.__clone = function (store, transaction) {
 };
 
 IDBObjectStore.__invalidStateIfDeleted = function (store, msg) {
-    if (store.__deleted || store.__pendingDelete || store.__pendingCreate && store.transaction.__errored) {
+    if (store.__deleted || store.__pendingDelete || store.__pendingCreate && store.transaction && store.transaction.__errored) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', msg || 'This store has been deleted');
     }
 };
@@ -11785,26 +11847,34 @@ IDBObjectStore.__invalidStateIfDeleted = function (store, msg) {
  */
 IDBObjectStore.__createObjectStore = function (db, store) {
     // Add the object store to the IDBDatabase
+    var storeName = store.__currentName;
     store.__pendingCreate = true;
-    db.__objectStores[store.name] = store;
-    db.objectStoreNames.push(store.name);
+    db.__objectStores[storeName] = store;
+    db.objectStoreNames.push(storeName);
 
     // Add the object store to WebSQL
     var transaction = db.__versionTransaction;
     _IDBTransaction2.default.__assertVersionChange(transaction);
 
+    var storeHandles = transaction.__storeHandles;
+    if (!storeHandles[storeName] || storeHandles[storeName].__pendingDelete || storeHandles[storeName].__deleted) {
+        // The latter conditions are to allow store
+        //   recreation to create new clone object
+        storeHandles[storeName] = IDBObjectStore.__clone(store, transaction);
+    }
+
     transaction.__addNonRequestToTransactionQueue(function createObjectStore(tx, args, success, failure) {
         function error(tx, err) {
             _CFG2.default.DEBUG && console.log(err);
-            failure((0, _DOMException.createDOMException)('UnknownError', 'Could not create object store "' + store.name + '"', err));
+            failure((0, _DOMException.createDOMException)('UnknownError', 'Could not create object store "' + storeName + '"', err));
         }
 
         // key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
-        var sql = ['CREATE TABLE', util.escapeStoreNameForSQL(store.name), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
+        var sql = ['CREATE TABLE', util.escapeStoreNameForSQL(storeName), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
         _CFG2.default.DEBUG && console.log(sql);
         tx.executeSql(sql, [], function (tx, data) {
             Sca.encode(store.keyPath, function (encodedKeyPath) {
-                tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeSQLiteStatement(store.name), encodedKeyPath, store.autoIncrement, '{}', 1], function () {
+                tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeSQLiteStatement(storeName), encodedKeyPath, store.autoIncrement, '{}', 1], function () {
                     delete store.__pendingCreate;
                     delete store.__deleted;
                     success(store);
@@ -11812,6 +11882,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
             });
         }, error);
     });
+    return storeHandles[storeName];
 };
 
 /**
@@ -11826,9 +11897,9 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
     // We don't delete the other index holders in case need reversion
     store.__indexNames = _DOMStringList2.default.__createInstance();
 
-    db.objectStoreNames.splice(db.objectStoreNames.indexOf(store.name), 1);
+    db.objectStoreNames.splice(db.objectStoreNames.indexOf(store.__currentName), 1);
 
-    var storeHandle = db.__versionTransaction.__storeHandles[store.name];
+    var storeHandle = db.__versionTransaction.__storeHandles[store.__currentName];
     if (storeHandle) {
         storeHandle.__indexNames = _DOMStringList2.default.__createInstance();
         storeHandle.__pendingDelete = true;
@@ -11844,10 +11915,10 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
             failure((0, _DOMException.createDOMException)('UnknownError', 'Could not delete ObjectStore', err));
         }
 
-        tx.executeSql('SELECT "name" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.name)], function (tx, data) {
+        tx.executeSql('SELECT "name" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.__currentName)], function (tx, data) {
             if (data.rows.length > 0) {
-                tx.executeSql('DROP TABLE ' + util.escapeStoreNameForSQL(store.name), [], function () {
-                    tx.executeSql('DELETE FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.name)], function () {
+                tx.executeSql('DROP TABLE ' + util.escapeStoreNameForSQL(store.__currentName), [], function () {
+                    tx.executeSql('DELETE FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.__currentName)], function () {
                         delete store.__pendingDelete;
                         store.__deleted = true;
                         if (storeHandle) {
@@ -12012,7 +12083,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
                 if (indexKey === undefined) {
                     return;
                 }
-                paramMap[index.name] = Key.encode(indexKey, index.multiEntry);
+                paramMap[index.__currentName] = Key.encode(indexKey, index.multiEntry);
             }
             if (index.unique) {
                 var multiCheck = index.multiEntry && Array.isArray(indexKey);
@@ -12032,7 +12103,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
         });
     });
     _syncPromise2.default.all(indexPromises).then(function () {
-        var sqlStart = ['INSERT INTO', util.escapeStoreNameForSQL(me.name), '('];
+        var sqlStart = ['INSERT INTO', util.escapeStoreNameForSQL(me.__currentName), '('];
         var sqlEnd = [' VALUES ('];
         var insertSqlValues = [];
         if (clonedKeyOrCurrentNumber !== undefined) {
@@ -12117,7 +12188,7 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
     var me = this;
     // First try to delete if the record exists
     // Key.convertValueToKey(key); // Already run
-    var sql = 'DELETE FROM ' + util.escapeStoreNameForSQL(me.name) + ' WHERE "key" = ?';
+    var sql = 'DELETE FROM ' + util.escapeStoreNameForSQL(me.__currentName) + ' WHERE "key" = ?';
     var encodedKey = Key.encode(key);
     tx.executeSql(sql, [util.escapeSQLiteStatement(encodedKey)], function (tx, data) {
         _CFG2.default.DEBUG && console.log('Did the row with the', key, 'exist? ', data.rowsAffected);
@@ -12161,7 +12232,7 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
     var range = (0, _IDBKeyRange.convertValueToKeyRange)(query, !getAll);
 
     var col = getKey ? 'key' : 'value';
-    var sql = ['SELECT', util.sqlQuote(col), 'FROM', util.escapeStoreNameForSQL(me.name)];
+    var sql = ['SELECT', util.sqlQuote(col), 'FROM', util.escapeStoreNameForSQL(me.__currentName)];
     var sqlValues = [];
     if (range !== undefined) {
         sql.push('WHERE');
@@ -12178,7 +12249,7 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
     }
     sql = sql.join(' ');
     return me.transaction.__addToTransactionQueue(function objectStoreGet(tx, args, success, error) {
-        _CFG2.default.DEBUG && console.log('Fetching', me.name, sqlValues);
+        _CFG2.default.DEBUG && console.log('Fetching', me.__currentName, sqlValues);
         tx.executeSql(sql, sqlValues, function (tx, data) {
             _CFG2.default.DEBUG && console.log('Fetched data', data);
             var ret = void 0;
@@ -12265,13 +12336,13 @@ IDBObjectStore.prototype['delete'] = function (query) {
 
     var range = (0, _IDBKeyRange.convertValueToKeyRange)(query, true);
 
-    var sqlArr = ['DELETE FROM', util.escapeStoreNameForSQL(me.name), 'WHERE'];
+    var sqlArr = ['DELETE FROM', util.escapeStoreNameForSQL(me.__currentName), 'WHERE'];
     var sqlValues = [];
     (0, _IDBKeyRange.setSQLForKeyRange)(range, util.sqlQuote('key'), sqlArr, sqlValues);
     var sql = sqlArr.join(' ');
 
     return me.transaction.__addToTransactionQueue(function objectStoreDelete(tx, args, success, error) {
-        _CFG2.default.DEBUG && console.log('Deleting', me.name, sqlValues);
+        _CFG2.default.DEBUG && console.log('Deleting', me.__currentName, sqlValues);
         tx.executeSql(sql, sqlValues, function (tx, data) {
             _CFG2.default.DEBUG && console.log('Deleted from database', data.rowsAffected);
             me.__cursors.forEach(function (cursor) {
@@ -12294,7 +12365,7 @@ IDBObjectStore.prototype.clear = function () {
     me.transaction.__assertWritable();
 
     return me.transaction.__addToTransactionQueue(function objectStoreClear(tx, args, success, error) {
-        tx.executeSql('DELETE FROM ' + util.escapeStoreNameForSQL(me.name), [], function (tx, data) {
+        tx.executeSql('DELETE FROM ' + util.escapeStoreNameForSQL(me.__currentName), [], function (tx, data) {
             _CFG2.default.DEBUG && console.log('Cleared all records from database', data.rowsAffected);
             me.__cursors.forEach(function (cursor) {
                 cursor.__invalidateCache(); // Clear
@@ -12363,7 +12434,7 @@ IDBObjectStore.prototype.index = function (indexName) {
     _IDBTransaction2.default.__assertNotFinished(me.transaction);
     var index = me.__indexes[indexName];
     if (!index || index.__deleted) {
-        throw (0, _DOMException.createDOMException)('NotFoundError', 'Index "' + indexName + '" does not exist on ' + me.name);
+        throw (0, _DOMException.createDOMException)('NotFoundError', 'Index "' + indexName + '" does not exist on ' + me.__currentName);
     }
 
     if (!me.__indexHandles[indexName] || me.__indexes[indexName].__pendingDelete || me.__indexes[indexName].__deleted) {
@@ -12396,7 +12467,7 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath /* , optiona
     IDBObjectStore.__invalidStateIfDeleted(me);
     _IDBTransaction2.default.__assertActive(me.transaction);
     if (me.__indexes[indexName] && !me.__indexes[indexName].__deleted && !me.__indexes[indexName].__pendingDelete) {
-        throw (0, _DOMException.createDOMException)('ConstraintError', 'Index "' + indexName + '" already exists on ' + me.name);
+        throw (0, _DOMException.createDOMException)('ConstraintError', 'Index "' + indexName + '" already exists on ' + me.__currentName);
     }
 
     keyPath = util.convertToSequenceDOMString(keyPath);
@@ -12435,7 +12506,7 @@ IDBObjectStore.prototype.deleteIndex = function (name) {
     _IDBTransaction2.default.__assertActive(me.transaction);
     var index = me.__indexes[name];
     if (!index) {
-        throw (0, _DOMException.createDOMException)('NotFoundError', 'Index "' + name + '" does not exist on ' + me.name);
+        throw (0, _DOMException.createDOMException)('NotFoundError', 'Index "' + name + '" does not exist on ' + me.__currentName);
     }
 
     _IDBIndex.IDBIndex.__deleteIndex(me, index);
@@ -13120,11 +13191,17 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         me.db.__objectStoreNames = me.db.__oldObjectStoreNames;
         me.__objectStoreNames = me.db.__oldObjectStoreNames;
         Object.values(me.db.__objectStores).concat(Object.values(me.__storeHandles)).forEach(function (store) {
-            store.__name = store.__originalName;
+            if ('__pendingName' in store && me.db.__oldObjectStoreNames.indexOf(store.__pendingName) > -1) {
+                // Store was already created so we restore to name before the rename
+                store.__name = store.__originalName;
+            }
             store.__indexNames = store.__oldIndexNames;
             delete store.__pendingDelete;
             Object.values(store.__indexes).concat(Object.values(store.__indexHandles)).forEach(function (index) {
-                index.__name = index.__originalName;
+                if ('__pendingName' in index && store.__oldIndexNames.indexOf(index.__pendingName) > -1) {
+                    // Index was already created so we restore to name before the rename
+                    index.__name = index.__originalName;
+                }
                 delete index.__pendingDelete;
             });
         });
@@ -14084,7 +14161,7 @@ function roundTrip(key, inArray) {
 var MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `Number.MAX_SAFE_INTEGER + 1`)
 
 function getCurrentNumber(tx, store, callback, sqlFailCb) {
-    tx.executeSql('SELECT "currNum" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.name)], function (tx, data) {
+    tx.executeSql('SELECT "currNum" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.__currentName)], function (tx, data) {
         if (data.rows.length !== 1) {
             callback(1);
         } else {
@@ -14101,7 +14178,7 @@ function setCurrentNumber(tx, store, num, successCb, failCb) {
     var sql = 'UPDATE __sys__ SET "currNum" = ? WHERE "name" = ?';
     num = num === MAX_ALLOWED_CURRENT_NUMBER ? num + 2 // Since incrementing by one will have no effect in JavaScript on this unsafe max, we represent the max as a number incremented by two. The getting of the current number is never returned to the user and is only used in safe comparisons, so it is safe for us to represent it in this manner
     : num + 1;
-    var sqlValues = [num, util.escapeSQLiteStatement(store.name)];
+    var sqlValues = [num, util.escapeSQLiteStatement(store.__currentName)];
     _CFG2.default.DEBUG && console.log(sql, sqlValues);
     tx.executeSql(sql, sqlValues, function (tx, data) {
         successCb(num);
@@ -14852,7 +14929,7 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.convertToSequenceDOMString = exports.enforceRange = exports.isValidKeyPath = exports.defineReadonlyProperties = exports.isIterable = exports.isBinary = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlQuote = exports.sqlLIKEEscape = exports.escapeIndexNameForSQLKeyColumn = exports.escapeIndexNameForSQL = exports.escapeStoreNameForSQL = exports.unescapeDatabaseNameForSQLAndFiles = exports.escapeDatabaseNameForSQLAndFiles = exports.unescapeSQLiteResponse = exports.escapeSQLiteStatement = undefined;
+exports.convertToSequenceDOMString = exports.convertToDOMString = exports.enforceRange = exports.isValidKeyPath = exports.defineReadonlyProperties = exports.isIterable = exports.isBinary = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlQuote = exports.sqlLIKEEscape = exports.escapeIndexNameForSQLKeyColumn = exports.escapeIndexNameForSQL = exports.escapeStoreNameForSQL = exports.unescapeDatabaseNameForSQLAndFiles = exports.escapeDatabaseNameForSQLAndFiles = exports.unescapeSQLiteResponse = exports.escapeSQLiteStatement = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
@@ -15076,6 +15153,10 @@ function enforceRange(number, type) {
     return number;
 }
 
+function convertToDOMString(v, treatNullAs) {
+    return v === null && treatNullAs ? '' : ToString(v);
+}
+
 function ToString(o) {
     // Todo: See `es-abstract/es7`
     return '' + o; // `String()` will not throw with Symbols
@@ -15111,6 +15192,7 @@ exports.isIterable = isIterable;
 exports.defineReadonlyProperties = defineReadonlyProperties;
 exports.isValidKeyPath = isValidKeyPath;
 exports.enforceRange = enforceRange;
+exports.convertToDOMString = convertToDOMString;
 exports.convertToSequenceDOMString = convertToSequenceDOMString;
 
 },{"./CFG":324}]},{},[339]);

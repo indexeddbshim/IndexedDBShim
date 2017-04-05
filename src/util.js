@@ -219,6 +219,10 @@ function enforceRange (number, type) {
     return number;
 }
 
+function convertToDOMString (v, treatNullAs) {
+    return v === null && treatNullAs ? '' : ToString(v);
+}
+
 function ToString (o) { // Todo: See `es-abstract/es7`
     return '' + o; // `String()` will not throw with Symbols
 }
@@ -238,4 +242,4 @@ export {escapeSQLiteStatement, unescapeSQLiteResponse,
     sqlLIKEEscape, sqlQuote,
     instanceOf,
     isObj, isDate, isBlob, isRegExp, isFile, isBinary, isIterable,
-    defineReadonlyProperties, isValidKeyPath, enforceRange, convertToSequenceDOMString};
+    defineReadonlyProperties, isValidKeyPath, enforceRange, convertToDOMString, convertToSequenceDOMString};

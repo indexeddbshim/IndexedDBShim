@@ -51,6 +51,11 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
             }
         }
         me.__oldIndexNames = me.indexNames.clone();
+        Object.defineProperty(this, '__currentName', {
+            get: function () {
+                return '__pendingName' in this ? this.__pendingName : this.name;
+            }
+        });
         Object.defineProperty(this, 'name', {
             enumerable: false,
             configurable: false,
@@ -59,27 +64,44 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
             },
             set: function (name) {
                 const me = this;
+                name = util.convertToDOMString(name);
+                const oldName = me.name;
                 IDBObjectStoreAlias.__invalidStateIfDeleted(me);
                 IDBTransaction.__assertVersionChange(me.transaction);
                 IDBTransaction.__assertActive(me.transaction);
-                if (me.name === name) {
+                if (oldName === name) {
                     return;
                 }
-                if (me.__idbdb.__objectStores[name]) {
+                if (me.__idbdb.__objectStores[name] && !me.__idbdb.__objectStores[name].__pendingDelete) {
                     throw createDOMException('ConstraintError', 'Object store "' + name + '" already exists in ' + me.__idbdb.name);
                 }
 
-                delete me.__idbdb.__objectStores[me.name];
-                me.__idbdb.objectStoreNames.splice(me.__idbdb.objectStoreNames.indexOf(me.name), 1);
-                me.__idbdb.__objectStores[name] = me;
-                me.__idbdb.objectStoreNames.push(name);
                 me.__name = name;
-                // Todo: Add pending flag to delay queries against this store until renamed in SQLite
 
-                const sql = 'ALTER TABLE ' + util.escapeStoreNameForSQL(me.name) + ' RENAME TO ' + util.escapeStoreNameForSQL(name);
+                const oldStore = me.__idbdb.__objectStores[oldName];
+                oldStore.__name = name; // Fix old references
+                me.__idbdb.__objectStores[name] = oldStore; // Ensure new reference accessible
+                delete me.__idbdb.__objectStores[oldName]; // Ensure won't be found
+
+                me.__idbdb.objectStoreNames.splice(me.__idbdb.objectStoreNames.indexOf(oldName), 1, name);
+
+                const oldHandle = me.transaction.__storeHandles[oldName];
+                oldHandle.__name = name; // Fix old references
+                me.transaction.__storeHandles[name] = oldHandle; // Ensure new reference accessible
+
+                me.__pendingName = oldName;
+
+                const sql = 'UPDATE __sys__ SET "name" = ? WHERE "name" = ?';
+                const sqlValues = [util.escapeSQLiteStatement(name), util.escapeSQLiteStatement(oldName)];
+                CFG.DEBUG && console.log(sql, sqlValues);
                 me.transaction.__addNonRequestToTransactionQueue(function objectStoreClear (tx, args, success, error) {
-                    tx.executeSql(sql, [], function (tx, data) {
-                        success();
+                    tx.executeSql(sql, sqlValues, function (tx, data) {
+                        const sql = 'ALTER TABLE ' + util.escapeStoreNameForSQL(oldName) + ' RENAME TO ' + util.escapeStoreNameForSQL(name);
+                        CFG.DEBUG && console.log(sql);
+                        tx.executeSql(sql, [], function (tx, data) {
+                            delete me.__pendingName;
+                            success();
+                        });
                     }, function (tx, err) {
                         error(err);
                     });
@@ -99,7 +121,7 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
  */
 IDBObjectStore.__clone = function (store, transaction) {
     const newStore = IDBObjectStore.__createInstance({
-        name: store.name,
+        name: store.__currentName,
         keyPath: Array.isArray(store.keyPath) ? store.keyPath.slice() : store.keyPath,
         autoInc: store.autoIncrement,
         indexList: {},
@@ -114,7 +136,7 @@ IDBObjectStore.__clone = function (store, transaction) {
 };
 
 IDBObjectStore.__invalidStateIfDeleted = function (store, msg) {
-    if (store.__deleted || store.__pendingDelete || (store.__pendingCreate && store.transaction.__errored)) {
+    if (store.__deleted || store.__pendingDelete || (store.__pendingCreate && (store.transaction && store.transaction.__errored))) {
         throw createDOMException('InvalidStateError', msg || 'This store has been deleted');
     }
 };
@@ -127,26 +149,35 @@ IDBObjectStore.__invalidStateIfDeleted = function (store, msg) {
  */
 IDBObjectStore.__createObjectStore = function (db, store) {
     // Add the object store to the IDBDatabase
+    const storeName = store.__currentName;
     store.__pendingCreate = true;
-    db.__objectStores[store.name] = store;
-    db.objectStoreNames.push(store.name);
+    db.__objectStores[storeName] = store;
+    db.objectStoreNames.push(storeName);
 
     // Add the object store to WebSQL
     const transaction = db.__versionTransaction;
     IDBTransaction.__assertVersionChange(transaction);
 
+    const storeHandles = transaction.__storeHandles;
+    if (!storeHandles[storeName] ||
+        storeHandles[storeName].__pendingDelete ||
+        storeHandles[storeName].__deleted) { // The latter conditions are to allow store
+                                             //   recreation to create new clone object
+        storeHandles[storeName] = IDBObjectStore.__clone(store, transaction);
+    }
+
     transaction.__addNonRequestToTransactionQueue(function createObjectStore (tx, args, success, failure) {
         function error (tx, err) {
             CFG.DEBUG && console.log(err);
-            failure(createDOMException('UnknownError', 'Could not create object store "' + store.name + '"', err));
+            failure(createDOMException('UnknownError', 'Could not create object store "' + storeName + '"', err));
         }
 
         // key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
-        const sql = ['CREATE TABLE', util.escapeStoreNameForSQL(store.name), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
+        const sql = ['CREATE TABLE', util.escapeStoreNameForSQL(storeName), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
         CFG.DEBUG && console.log(sql);
         tx.executeSql(sql, [], function (tx, data) {
             Sca.encode(store.keyPath, function (encodedKeyPath) {
-                tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeSQLiteStatement(store.name), encodedKeyPath, store.autoIncrement, '{}', 1], function () {
+                tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeSQLiteStatement(storeName), encodedKeyPath, store.autoIncrement, '{}', 1], function () {
                     delete store.__pendingCreate;
                     delete store.__deleted;
                     success(store);
@@ -154,6 +185,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
             });
         }, error);
     });
+    return storeHandles[storeName];
 };
 
 /**
@@ -168,9 +200,9 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
     // We don't delete the other index holders in case need reversion
     store.__indexNames = DOMStringList.__createInstance();
 
-    db.objectStoreNames.splice(db.objectStoreNames.indexOf(store.name), 1);
+    db.objectStoreNames.splice(db.objectStoreNames.indexOf(store.__currentName), 1);
 
-    const storeHandle = db.__versionTransaction.__storeHandles[store.name];
+    const storeHandle = db.__versionTransaction.__storeHandles[store.__currentName];
     if (storeHandle) {
         storeHandle.__indexNames = DOMStringList.__createInstance();
         storeHandle.__pendingDelete = true;
@@ -186,10 +218,10 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
             failure(createDOMException('UnknownError', 'Could not delete ObjectStore', err));
         }
 
-        tx.executeSql('SELECT "name" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.name)], function (tx, data) {
+        tx.executeSql('SELECT "name" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.__currentName)], function (tx, data) {
             if (data.rows.length > 0) {
-                tx.executeSql('DROP TABLE ' + util.escapeStoreNameForSQL(store.name), [], function () {
-                    tx.executeSql('DELETE FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.name)], function () {
+                tx.executeSql('DROP TABLE ' + util.escapeStoreNameForSQL(store.__currentName), [], function () {
+                    tx.executeSql('DELETE FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.__currentName)], function () {
                         delete store.__pendingDelete;
                         store.__deleted = true;
                         if (storeHandle) {
@@ -355,7 +387,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
                 if (indexKey === undefined) {
                     return;
                 }
-                paramMap[index.name] = Key.encode(indexKey, index.multiEntry);
+                paramMap[index.__currentName] = Key.encode(indexKey, index.multiEntry);
             }
             if (index.unique) {
                 const multiCheck = index.multiEntry && Array.isArray(indexKey);
@@ -380,7 +412,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
         });
     });
     SyncPromise.all(indexPromises).then(() => {
-        const sqlStart = ['INSERT INTO', util.escapeStoreNameForSQL(me.name), '('];
+        const sqlStart = ['INSERT INTO', util.escapeStoreNameForSQL(me.__currentName), '('];
         const sqlEnd = [' VALUES ('];
         const insertSqlValues = [];
         if (clonedKeyOrCurrentNumber !== undefined) {
@@ -455,7 +487,7 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
     const me = this;
     // First try to delete if the record exists
     // Key.convertValueToKey(key); // Already run
-    const sql = 'DELETE FROM ' + util.escapeStoreNameForSQL(me.name) + ' WHERE "key" = ?';
+    const sql = 'DELETE FROM ' + util.escapeStoreNameForSQL(me.__currentName) + ' WHERE "key" = ?';
     const encodedKey = Key.encode(key);
     tx.executeSql(sql, [util.escapeSQLiteStatement(encodedKey)], function (tx, data) {
         CFG.DEBUG && console.log('Did the row with the', key, 'exist? ', data.rowsAffected);
@@ -499,7 +531,7 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
     const range = convertValueToKeyRange(query, !getAll);
 
     const col = getKey ? 'key' : 'value';
-    let sql = ['SELECT', util.sqlQuote(col), 'FROM', util.escapeStoreNameForSQL(me.name)];
+    let sql = ['SELECT', util.sqlQuote(col), 'FROM', util.escapeStoreNameForSQL(me.__currentName)];
     const sqlValues = [];
     if (range !== undefined) {
         sql.push('WHERE');
@@ -516,7 +548,7 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
     }
     sql = sql.join(' ');
     return me.transaction.__addToTransactionQueue(function objectStoreGet (tx, args, success, error) {
-        CFG.DEBUG && console.log('Fetching', me.name, sqlValues);
+        CFG.DEBUG && console.log('Fetching', me.__currentName, sqlValues);
         tx.executeSql(sql, sqlValues, function (tx, data) {
             CFG.DEBUG && console.log('Fetched data', data);
             let ret;
@@ -599,13 +631,13 @@ IDBObjectStore.prototype['delete'] = function (query) {
 
     const range = convertValueToKeyRange(query, true);
 
-    const sqlArr = ['DELETE FROM', util.escapeStoreNameForSQL(me.name), 'WHERE'];
+    const sqlArr = ['DELETE FROM', util.escapeStoreNameForSQL(me.__currentName), 'WHERE'];
     const sqlValues = [];
     setSQLForKeyRange(range, util.sqlQuote('key'), sqlArr, sqlValues);
     const sql = sqlArr.join(' ');
 
     return me.transaction.__addToTransactionQueue(function objectStoreDelete (tx, args, success, error) {
-        CFG.DEBUG && console.log('Deleting', me.name, sqlValues);
+        CFG.DEBUG && console.log('Deleting', me.__currentName, sqlValues);
         tx.executeSql(sql, sqlValues, function (tx, data) {
             CFG.DEBUG && console.log('Deleted from database', data.rowsAffected);
             me.__cursors.forEach((cursor) => {
@@ -628,7 +660,7 @@ IDBObjectStore.prototype.clear = function () {
     me.transaction.__assertWritable();
 
     return me.transaction.__addToTransactionQueue(function objectStoreClear (tx, args, success, error) {
-        tx.executeSql('DELETE FROM ' + util.escapeStoreNameForSQL(me.name), [], function (tx, data) {
+        tx.executeSql('DELETE FROM ' + util.escapeStoreNameForSQL(me.__currentName), [], function (tx, data) {
             CFG.DEBUG && console.log('Cleared all records from database', data.rowsAffected);
             me.__cursors.forEach((cursor) => {
                 cursor.__invalidateCache(); // Clear
@@ -689,7 +721,7 @@ IDBObjectStore.prototype.index = function (indexName) {
     IDBTransaction.__assertNotFinished(me.transaction);
     const index = me.__indexes[indexName];
     if (!index || index.__deleted) {
-        throw createDOMException('NotFoundError', 'Index "' + indexName + '" does not exist on ' + me.name);
+        throw createDOMException('NotFoundError', 'Index "' + indexName + '" does not exist on ' + me.__currentName);
     }
 
     if (!me.__indexHandles[indexName] ||
@@ -725,7 +757,7 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath /* , optiona
     IDBObjectStore.__invalidStateIfDeleted(me);
     IDBTransaction.__assertActive(me.transaction);
     if (me.__indexes[indexName] && !me.__indexes[indexName].__deleted && !me.__indexes[indexName].__pendingDelete) {
-        throw createDOMException('ConstraintError', 'Index "' + indexName + '" already exists on ' + me.name);
+        throw createDOMException('ConstraintError', 'Index "' + indexName + '" already exists on ' + me.__currentName);
     }
 
     keyPath = util.convertToSequenceDOMString(keyPath);
@@ -764,7 +796,7 @@ IDBObjectStore.prototype.deleteIndex = function (name) {
     IDBTransaction.__assertActive(me.transaction);
     const index = me.__indexes[name];
     if (!index) {
-        throw createDOMException('NotFoundError', 'Index "' + name + '" does not exist on ' + me.name);
+        throw createDOMException('NotFoundError', 'Index "' + name + '" does not exist on ' + me.__currentName);
     }
 
     IDBIndex.__deleteIndex(me, index);

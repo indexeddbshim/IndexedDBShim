@@ -287,20 +287,20 @@ module.exports = function (grunt) {
             },
             unicodeNode: {
                 files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
-                tasks: ['eslint', 'browserify:unicodeNode', 'uglify:unicodeNode']
+                tasks: ['browserify:unicodeNode', 'uglify:unicodeNode']
             }
         }
     });
 
     for (const key in grunt.file.readJSON('package.json').devDependencies) {
-        if (key !== 'grunt' && key.indexOf('grunt') === 0) { grunt.loadNpmTasks(key); }
+        if (key !== 'grunt' && key.indexOf('grunt') === 0 && key !== 'grunt-cli') { grunt.loadNpmTasks(key); }
     }
 
     grunt.registerTask('build-browser', ['eslint', 'browserify:browser', 'uglify:browser']);
     grunt.registerTask('build-browserNoninvasive', ['eslint', 'browserify:browserNoninvasive', 'uglify:browserNoninvasive']);
     grunt.registerTask('build-node', ['eslint', 'browserify:node', 'uglify:node']);
     grunt.registerTask('build-unicode', ['eslint', 'browserify:unicode', 'uglify:unicode']);
-    grunt.registerTask('build-unicodeNode', ['eslint', 'browserify:unicodeNode', 'uglify:unicodeNode']);
+    grunt.registerTask('build-unicodeNode', ['browserify:unicodeNode', 'uglify:unicodeNode']);
     grunt.registerTask('build', ['eslint', 'browserify', 'uglify']);
 
     const testJobs = ['build', 'connect'];

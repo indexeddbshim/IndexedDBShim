@@ -91,7 +91,7 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
     const me = this;
     const quotedKeyColumnName = util.sqlQuote(me.__keyColumnName);
     const quotedKey = util.sqlQuote('key');
-    let sql = ['SELECT * FROM', util.escapeStoreNameForSQL(me.__store.name)];
+    let sql = ['SELECT * FROM', util.escapeStoreNameForSQL(me.__store.__currentName)];
     const sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
     setSQLForKeyRange(me.__range, quotedKeyColumnName, sql, sqlValues, true, true);
@@ -165,7 +165,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
     }
 
     const quotedKeyColumnName = util.sqlQuote(me.__keyColumnName);
-    let sql = ['SELECT * FROM', util.escapeStoreNameForSQL(me.__store.name)];
+    let sql = ['SELECT * FROM', util.escapeStoreNameForSQL(me.__store.__currentName)];
     const sqlValues = [];
     sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
     if (me.__range && (me.__range.lower !== undefined && Array.isArray(me.__range.upper))) {
@@ -527,7 +527,7 @@ IDBCursor.prototype['delete'] = function () {
     }
     return this.__store.transaction.__addToTransactionQueue(function cursorDelete (tx, args, success, error) {
         me.__find(undefined, undefined, tx, function (key, value, primaryKey) {
-            const sql = 'DELETE FROM  ' + util.escapeStoreNameForSQL(me.__store.name) + ' WHERE "key" = ?';
+            const sql = 'DELETE FROM  ' + util.escapeStoreNameForSQL(me.__store.__currentName) + ' WHERE "key" = ?';
             CFG.DEBUG && console.log(sql, key, primaryKey);
             // Key.convertValueToKey(primaryKey); // Already checked when entered
             tx.executeSql(sql, [util.escapeSQLiteStatement(Key.encode(primaryKey))], function (tx, data) {

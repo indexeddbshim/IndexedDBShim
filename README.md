@@ -347,9 +347,8 @@ Here is a summary of main [known issues](https://github.com/axemclion/IndexedDBS
 to resolve:
 
 1. `blocked` and `versionchange` `IDBVersionChangeEvent` event support ([#2](https://github.com/axemclion/IndexedDBShim/issues/2) and [#273](https://github.com/axemclion/IndexedDBShim/issues/273))
-2. `Blob`/`File`/`FileList`/`ImageBitmap` cloning through
-    [typeson-registry](https://github.com/dfahlander/typeson-registry)
-    (issues [#285](https://github.com/axemclion/IndexedDBShim/issues/285) and [#286](https://github.com/axemclion/IndexedDBShim/issues/286))
+2. Some issues related to [task/micro-task timing](https://github.com/axemclion/IndexedDBShim/issues/296)
+in Node (for inherent limitations in the browser, see below).
 
 There are a few bugs that are outside of our power to fix.  Namely:
 
