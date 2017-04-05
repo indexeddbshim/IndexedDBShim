@@ -390,11 +390,14 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
     if (me.mode === 'versionchange') { // Steps for aborting an upgrade transaction
         me.db.__version = me.db.__oldVersion;
         me.db.__objectStoreNames = me.db.__oldObjectStoreNames;
-        Object.values(me.__storeHandles).forEach(function (store) {
+        me.__objectStoreNames = me.db.__oldObjectStoreNames;
+        Object.values(me.db.__objectStores).concat(Object.values(me.__storeHandles)).forEach(function (store) {
             store.__name = store.__originalName;
             store.__indexNames = store.__oldIndexNames;
-            Object.values(store.__indexes).forEach(function (index) {
+            delete store.__pendingDelete;
+            Object.values(store.__indexes).concat(Object.values(store.__indexHandles)).forEach(function (index) {
                 index.__name = index.__originalName;
+                delete index.__pendingDelete;
             });
         });
     }

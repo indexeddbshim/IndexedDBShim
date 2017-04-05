@@ -9966,7 +9966,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
         throw (0, _DOMException.createDOMException)('SyntaxError', 'The keyPath argument contains an invalid key path.');
     }
 
-    if (this.__objectStores[storeName]) {
+    if (this.__objectStores[storeName] && !this.__objectStores[storeName].__pendingDelete) {
         throw (0, _DOMException.createDOMException)('ConstraintError', 'Object store "' + storeName + '" already exists in ' + this.name);
     }
 
@@ -10800,7 +10800,7 @@ IDBIndex.__clone = function (index, store) {
             unique: index.unique
         }
     });
-    ['__pendingCreate', '__pendingDelete', 'deleted'].forEach(function (p) {
+    ['__pendingCreate', '__pendingDelete', '__deleted', '__originalName', '__recreated'].forEach(function (p) {
         idx[p] = index[p];
     });
     return idx;
@@ -11583,9 +11583,9 @@ IDBObjectStore.__clone = function (store, transaction) {
         cursors: store.__cursors
     }, transaction);
 
-    newStore.__indexes = store.__indexes;
-    newStore.__indexNames = store.indexNames;
-    newStore.__oldIndexNames = store.__oldIndexNames;
+    ['__indexes', '__indexNames', '__oldIndexNames', '__deleted', '__pendingDelete', '__pendingCreate', '__originalName'].forEach(function (p) {
+        newStore[p] = store[p];
+    });
     return newStore;
 };
 
@@ -11641,14 +11641,14 @@ IDBObjectStore.__createObjectStore = function (db, store) {
 IDBObjectStore.__deleteObjectStore = function (db, store) {
     // Remove the object store from the IDBDatabase
     store.__pendingDelete = true;
-    db.__objectStores[store.name] = undefined;
+    // We don't delete the other index holders in case need reversion
+    store.__indexNames = _DOMStringList2.default.__createInstance();
+
     db.objectStoreNames.splice(db.objectStoreNames.indexOf(store.name), 1);
 
     var storeHandle = db.__versionTransaction.__storeHandles[store.name];
     if (storeHandle) {
         storeHandle.__indexNames = _DOMStringList2.default.__createInstance();
-        storeHandle.__indexes = {};
-        storeHandle.__indexHandles = {};
         storeHandle.__pendingDelete = true;
     }
 
@@ -12936,11 +12936,14 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         // Steps for aborting an upgrade transaction
         me.db.__version = me.db.__oldVersion;
         me.db.__objectStoreNames = me.db.__oldObjectStoreNames;
-        Object.values(me.__storeHandles).forEach(function (store) {
+        me.__objectStoreNames = me.db.__oldObjectStoreNames;
+        Object.values(me.db.__objectStores).concat(Object.values(me.__storeHandles)).forEach(function (store) {
             store.__name = store.__originalName;
             store.__indexNames = store.__oldIndexNames;
-            Object.values(store.__indexes).forEach(function (index) {
+            delete store.__pendingDelete;
+            Object.values(store.__indexes).concat(Object.values(store.__indexHandles)).forEach(function (index) {
                 index.__name = index.__originalName;
+                delete index.__pendingDelete;
             });
         });
     }

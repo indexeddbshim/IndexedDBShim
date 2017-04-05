@@ -351,9 +351,9 @@ they were actually changes since a more recent version on `master`.
 - Fix: Genuinely rollback version in Node
     - Wrap all possible `openDatabase` operations, including version changes
         into an effectively single transaction;
-    - Revert `IDBDatabase` `version` and `objectStoreNames`, `IDBObjectStore`
-        `name` and `indexNames`, `IDBIndex` `name` properties after aborted
-        transactions;
+    - Revert `IDBDatabase` `version` and `objectStoreNames`; `IDBObjectStore`
+        `name` and `indexNames`; `IDBTransaction` `objectStoreNames`, and
+        `IDBIndex` `name` properties after aborted transactions;
     - Allow `dbVersions` table insert to be undone in one transaction
         (also avoids second query);
     - If connection closed or errs, rollback; otherwise, commit only after

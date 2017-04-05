@@ -107,9 +107,9 @@ IDBObjectStore.__clone = function (store, transaction) {
         cursors: store.__cursors
     }, transaction);
 
-    newStore.__indexes = store.__indexes;
-    newStore.__indexNames = store.indexNames;
-    newStore.__oldIndexNames = store.__oldIndexNames;
+    ['__indexes', '__indexNames', '__oldIndexNames', '__deleted', '__pendingDelete', '__pendingCreate', '__originalName'].forEach((p) => {
+        newStore[p] = store[p];
+    });
     return newStore;
 };
 
@@ -165,14 +165,14 @@ IDBObjectStore.__createObjectStore = function (db, store) {
 IDBObjectStore.__deleteObjectStore = function (db, store) {
     // Remove the object store from the IDBDatabase
     store.__pendingDelete = true;
-    db.__objectStores[store.name] = undefined;
+    // We don't delete the other index holders in case need reversion
+    store.__indexNames = DOMStringList.__createInstance();
+
     db.objectStoreNames.splice(db.objectStoreNames.indexOf(store.name), 1);
 
     const storeHandle = db.__versionTransaction.__storeHandles[store.name];
     if (storeHandle) {
         storeHandle.__indexNames = DOMStringList.__createInstance();
-        storeHandle.__indexes = {};
-        storeHandle.__indexHandles = {};
         storeHandle.__pendingDelete = true;
     }
 

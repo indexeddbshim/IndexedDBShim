@@ -99,7 +99,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
         throw createDOMException('SyntaxError', 'The keyPath argument contains an invalid key path.');
     }
 
-    if (this.__objectStores[storeName]) {
+    if (this.__objectStores[storeName] && !this.__objectStores[storeName].__pendingDelete) {
         throw createDOMException('ConstraintError', 'Object store "' + storeName + '" already exists in ' + this.name);
     }
 

@@ -94,7 +94,7 @@ IDBIndex.__clone = function (index, store) {
             unique: index.unique
         }
     });
-    ['__pendingCreate', '__pendingDelete', 'deleted'].forEach((p) => {
+    ['__pendingCreate', '__pendingDelete', '__deleted', '__originalName', '__recreated'].forEach((p) => {
         idx[p] = index[p];
     });
     return idx;
