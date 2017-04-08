@@ -442,7 +442,7 @@ describe('IDBFactory.open', function () {
                 var err = null;
 
                 try {
-                    indexedDB.open('test.sqlite', version);
+                    indexedDB.open('test', version);
                 } catch (e) {
                     err = e;
                 }

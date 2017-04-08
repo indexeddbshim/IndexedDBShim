@@ -311,6 +311,11 @@ browser, particularly if one changes the defaults.
     the escaped filename exceeds the length of 254 characters (the shortest
     typical modern file length maximum). Provide a number to change the
     limit or supply `false` to disable any length checking.
+- __escapeNFDForDatabaseNames__ - Boolean defaulting to true on whether
+    to escape NFD-escaping characters to avoid clashes on MacOS which
+    performs NFD on files
+- __addSQLiteExtension__ - Boolean on whether to add the `.sqlite` extension
+    to file names; defaults to `true`
 
 The following config items are for Node only and are mostly for development
 debugging.

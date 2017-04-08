@@ -1,5 +1,5 @@
 function getFakeTestName () {
-    return 'test' + Math.random() + '.sqlite';
+    return 'test' + Math.random();
 }
 
 describe('indexedDB Tests', function () {

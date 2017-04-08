@@ -1,5 +1,5 @@
 var dbPrefix = 'testdb-';
-var dbSuffix = '.sqlite';
+var dbSuffix = '';
 
 function getDBName () {
     return dbPrefix + new Date().getTime() + dbSuffix;

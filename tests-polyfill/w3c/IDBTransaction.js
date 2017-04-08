@@ -6,7 +6,7 @@ describe('W3C IDBTransaction Tests', function () {
     // idbtransaction
     it('IDBTransaction', function (done) {
         var db;
-        var open_rq = indexedDB.open("idbtransaction-" + new Date().getTime() + Math.random() + '.sqlite');
+        var open_rq = indexedDB.open("idbtransaction-" + new Date().getTime() + Math.random());
 
         assert.equal(open_rq.transaction, null, "IDBOpenDBRequest.transaction");
         assert.equal(open_rq.source, null, "IDBOpenDBRequest.source");

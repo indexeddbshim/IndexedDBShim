@@ -6148,6 +6148,12 @@
       "resolved": "https://registry.npmjs.org/underscore.string/-/underscore.string-3.2.3.tgz",
       "dev": true
     },
+    "unicode-9.0.0": {
+      "version": "0.7.0",
+      "from": "unicode-9.0.0@0.7.0",
+      "resolved": "https://registry.npmjs.org/unicode-9.0.0/-/unicode-9.0.0-0.7.0.tgz",
+      "dev": true
+    },
     "unpipe": {
       "version": "1.0.0",
       "from": "unpipe@>=1.0.0 <1.1.0",

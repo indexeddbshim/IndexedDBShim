@@ -3,7 +3,7 @@ global.equal = assert.equal
 global.deepEqual = assert.deepEqual
 
 global.KeyRange = IDBKeyRange;
-global.dbName = "test_database.sqlite";
+global.dbName = "test_database";
 global.objectStoreName = "objectStore";
 global.anOtherObjectStoreName = "anOtherObjectStoreName";
 global.indexProperty = "name";

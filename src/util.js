@@ -1,4 +1,5 @@
 import CFG from './CFG';
+import expandsOnNFD from 'unicode-9.0.0/Binary_Property/Expands_On_NFD/regex';
 
 function escapeNameForSQLiteIdentifier (arg) {
     // http://stackoverflow.com/a/6701665/271577
@@ -48,6 +49,12 @@ function escapeDatabaseNameForSQLAndFiles (db) {
         return CFG.escapeDatabaseName(escapeSQLiteStatement(db));
     }
     db = 'D' + escapeNameForSQLiteIdentifier(db);
+    if (CFG.escapeNFDForDatabaseNames !== false) {
+        // ES6 copying of regex with different flags
+        db = db.replace(new RegExp(expandsOnNFD, 'g'), function (expandable) {
+            return '^4' + expandable.codePointAt().toString(16).padStart(6, '0');
+        });
+    }
     if (CFG.databaseCharacterEscapeList !== false) {
         db = db.replace(
             (CFG.databaseCharacterEscapeList
@@ -78,11 +85,15 @@ function unescapeDatabaseNameForSQLAndFiles (db) {
     }
 
     return db.slice(2) // D_
-        .replace(/(\^+)1([0-9a-f]{2})/g, (_, esc, hex) => esc % 2 ? String.fromCharCode(parseInt(hex, 16)) : _) // databaseCharacterEscapeList
-        .replace(/(\^+)3\uD800([\uDC00-\uDFFF])/g, (_, esc, lowSurr) => esc % 2 ? lowSurr : _)
-        .replace(/(\^+)2([\uD800-\uDBFF])\uDC00/g, (_, esc, highSurr) => esc % 2 ? highSurr : _)
-        .replace(/(\^+)([A-Z])/g, (_, esc, upperCase) => esc % 2 ? upperCase : _)
-        .replace(/(\^+)0/g, (_, esc) => esc % 2 ? '\0' : _)
+        // CFG.databaseCharacterEscapeList
+        .replace(/(\^+)1([0-9a-f]{2})/g, (_, esc, hex) => esc.length % 2 ? String.fromCharCode(parseInt(hex, 16)) : _)
+        // CFG.escapeNFDForDatabaseNames
+        .replace(/(\^+)4([0-9a-f]{6})/g, (_, esc, hex) => esc.length % 2 ? String.fromCodePoint(parseInt(hex, 16)) : _)
+        // escapeNameForSQLiteIdentifier
+        .replace(/(\^+)3\uD800([\uDC00-\uDFFF])/g, (_, esc, lowSurr) => esc.length % 2 ? lowSurr : _)
+        .replace(/(\^+)2([\uD800-\uDBFF])\uDC00/g, (_, esc, highSurr) => esc.length % 2 ? highSurr : _)
+        .replace(/(\^+)([A-Z])/g, (_, esc, upperCase) => esc.length % 2 ? upperCase : _)
+        .replace(/(\^+)0/g, (_, esc) => esc.length % 2 ? '\0' : _)
         .replace(/\^\^/g, '^');
 }
 

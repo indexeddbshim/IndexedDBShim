@@ -19,12 +19,12 @@ describe('W3C IDBFactory.open Tests', function () {
 
     // idbfactory_open2
     it("database 'name' and 'version' are correctly set", function (done) {
-        var open_rq = createdb(done, 'database_name.sqlite', 13);
+        var open_rq = createdb(done, 'database_name', 13);
 
         open_rq.onupgradeneeded = function(e) {};
         open_rq.onsuccess = function(e) {
             var db = e.target.result;
-            assert.equal(db.name, 'database_name.sqlite', 'db.name');
+            assert.equal(db.name, 'database_name', 'db.name');
             assert.equal(db.version, 13, 'db.version');
             done();
         }

@@ -345,6 +345,11 @@ they were actually changes since a more recent version on `master`.
     `IDBObjectStore.indexNames`)
 - Fix: Escape upper-case letters as table/column names case-insensitive in
     SQLite, but db/store/index names not case-insensitive in IndexedDB
+- Fix: Add default option `escapeNFDForDatabaseNames` to
+    escape characters that expand on NFD normalization so as to avoid
+    accidental loss of precise Unicode code points and thus potential name
+    clashes on the Mac which does NFD normalization on the file system (user
+    should normalize themselves if they want normalization); part of #278
 - Fix: Stringify calls to `IDBDatabase.createObjectStore` and
     `IDBObjectstore.createIndex` as per W3C tests
 - Fix: Avoid setting `source` for `open` request, as, per new spec, it is
