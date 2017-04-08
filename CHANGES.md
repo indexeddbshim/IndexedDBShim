@@ -104,6 +104,12 @@ they were actually changes since a more recent version on `master`.
     for facilitating debugging
 - Enhancement: Export `ShimCustomEvent` and `ShimEventTarget` shims we
     are using on `IDBFactory.modules` for sake of testing checks
+- Enhancement: Add `addSQLiteExtension` config to add ".sqlite" to user
+    databases, taking it into account when throwing against any file
+    length limits
+- Enhancement: Add `deleteDatabaseFiles` config to allow file itself to
+    be deleted in Node; will throw `UnknownError` if there are any errors
+    removing file (besides a missing file)
 - Add missing API: Add `IDBCursor.continuePrimaryKey`
 - Add missing API: Implement `IDBObjectStore.getKey`
 - Add missing APIs: Implement `IDBIndex.getAll/getAllKeys`

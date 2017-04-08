@@ -18,7 +18,9 @@ node_modules
 dbName*
 __sysdb__*
 D_x
+D_x.sqlite
 D_y
+D_y.sqlite
 D_webworker*
 D_dbName*
 D_about*

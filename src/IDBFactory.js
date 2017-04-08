@@ -330,7 +330,17 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                 //  `dbVersions` change if they fail
                 sysdb.transaction(function (systx) {
                     systx.executeSql('DELETE FROM dbVersions WHERE "name" = ? ', [sqlSafeName], function () {
-                        // Todo Node Config: Give config option to Node to delete the entire database file
+                        if (CFG.deleteDatabaseFiles !== false) {
+                            require('fs').unlink(require('path').resolve(escapedDatabaseName), (err) => {
+                                if (err && err.code !== 'ENOENT') { // Ignore if file is already deleted
+                                    dbError({code: 0, message: 'Error removing database file: ' + escapedDatabaseName + ' ' + err});
+                                    return;
+                                }
+                                databaseDeleted();
+                            });
+                            return;
+                        }
+
                         const db = CFG.win.openDatabase(escapedDatabaseName, 1, name, CFG.DEFAULT_DB_SIZE);
                         db.transaction(function (tx) {
                             tx.executeSql('SELECT "name" FROM __sys__', [], function (tx, data) {

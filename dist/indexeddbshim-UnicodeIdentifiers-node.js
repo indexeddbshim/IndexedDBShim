@@ -8577,21 +8577,21 @@ var CFG = {};
 
 [
 // Boolean for verbose reporting
-'DEBUG', // Effectively defaults to false (ignored unless true)
+'DEBUG', // Effectively defaults to false (ignored unless `true`)
 
 // Used when setting global shims to determine whether to try to add
 //   other globals shimmed by the library (`ShimDOMException`, `ShimDOMStringList`,
 //   `ShimEvent`, `ShimCustomEvent`, `ShimEventTarget`)
-'addNonIDBGlobals', // Effectively defaults to false (ignored unless true)
-
-// Boolean on whether to perform origin checks in `IDBFactory` methods
-'checkOrigin', // Effectively defaults to true (must be set to `false` to cancel checks)
+'addNonIDBGlobals', // Effectively defaults to false (ignored unless `true`)
 
 // Determines whether the slow-performing `Object.setPrototypeOf` calls required
 //    for full WebIDL compliance will be used. Probably only needed for testing
 //    or environments where full introspection on class relationships is required;
 //    see http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
-'fullIDLSupport', // Effectively defaults to false (ignored unless true)
+'fullIDLSupport', // Effectively defaults to false (ignored unless `true`)
+
+// Boolean on whether to perform origin checks in `IDBFactory` methods
+'checkOrigin', // Effectively defaults to `true` (must be set to `false` to cancel checks)
 
 // Used by `IDBCursor` continue methods for number of records to cache;
 'cursorPreloadPackSize', //  Defaults to 100
@@ -8602,6 +8602,14 @@ var CFG = {};
 //    expression strings of `src/UnicodeIdentifiers.js`)
 'UnicodeIDStart', // In the non-Unicode builds, defaults to /[$A-Z_a-z]/
 'UnicodeIDContinue', // In the non-Unicode builds, defaults to /[$0-9A-Z_a-z]/
+
+// NODE-SPECIFIC CONFIG
+// Boolean on whether to delete the database file itself after `deleteDatabase`;
+//   defaults to `true` as the database will be empty
+'deleteDatabaseFiles',
+// Boolean on whether to add the `.sqlite` extension to file names;
+//   defaults to `true`
+'addSQLiteExtension',
 
 // -----------SQL CONFIG----------
 // Object (`window` in the browser) on which there may be an
@@ -10502,7 +10510,18 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                 //  `dbVersions` change if they fail
                 sysdb.transaction(function (systx) {
                     systx.executeSql('DELETE FROM dbVersions WHERE "name" = ? ', [sqlSafeName], function () {
-                        // Todo Node Config: Give config option to Node to delete the entire database file
+                        if (_CFG2.default.deleteDatabaseFiles !== false) {
+                            require('fs').unlink(require('path').resolve(escapedDatabaseName), function (err) {
+                                if (err && err.code !== 'ENOENT') {
+                                    // Ignore if file is already deleted
+                                    dbError({ code: 0, message: 'Error removing database file: ' + escapedDatabaseName + ' ' + err });
+                                    return;
+                                }
+                                databaseDeleted();
+                            });
+                            return;
+                        }
+
                         var db = _CFG2.default.win.openDatabase(escapedDatabaseName, 1, name, _CFG2.default.DEFAULT_DB_SIZE);
                         db.transaction(function (tx) {
                             tx.executeSql('SELECT "name" FROM __sys__', [], function (tx, data) {
@@ -10675,7 +10694,7 @@ exports.IDBFactory = IDBFactory;
 exports.cmp = cmp;
 exports.shimIndexedDB = shimIndexedDB;
 
-},{"./CFG":323,"./DOMException":324,"./DOMStringList":325,"./Event":326,"./IDBDatabase":328,"./IDBRequest":333,"./IDBTransaction":334,"./IDBVersionChangeEvent":335,"./Key":336,"./util":343}],330:[function(require,module,exports){
+},{"./CFG":323,"./DOMException":324,"./DOMStringList":325,"./Event":326,"./IDBDatabase":328,"./IDBRequest":333,"./IDBTransaction":334,"./IDBVersionChangeEvent":335,"./Key":336,"./util":343,"fs":undefined,"path":undefined}],330:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14886,10 +14905,10 @@ function escapeDatabaseNameForSQLAndFiles(db) {
             return '^1' + n0.charCodeAt().toString(16).padStart(2, '0');
         });
     }
-    if (_CFG2.default.databaseNameLengthLimit !== false && db.length >= (_CFG2.default.databaseNameLengthLimit || 254)) {
+    if (_CFG2.default.databaseNameLengthLimit !== false && db.length >= (_CFG2.default.databaseNameLengthLimit || 254) - (_CFG2.default.addSQLiteExtension !== false ? 7 /* '.sqlite'.length */ : 0)) {
         throw new Error('Unexpectedly long database name supplied; length limit required for Node compatibility; passed length: ' + db.length + '; length limit setting: ' + (_CFG2.default.databaseNameLengthLimit || 254) + '.');
     }
-    return db; // Shouldn't have quoting (do we even need NUL/case escaping here?)
+    return db + (_CFG2.default.addSQLiteExtension !== false ? '.sqlite' : ''); // Shouldn't have quoting (do we even need NUL/case escaping here?)
 }
 
 // Not in use internally but supplied for convenience

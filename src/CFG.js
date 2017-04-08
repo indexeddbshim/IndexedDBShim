@@ -3,21 +3,21 @@ const CFG = {};
 
 [
     // Boolean for verbose reporting
-    'DEBUG', // Effectively defaults to false (ignored unless true)
+    'DEBUG', // Effectively defaults to false (ignored unless `true`)
 
     // Used when setting global shims to determine whether to try to add
     //   other globals shimmed by the library (`ShimDOMException`, `ShimDOMStringList`,
     //   `ShimEvent`, `ShimCustomEvent`, `ShimEventTarget`)
-    'addNonIDBGlobals', // Effectively defaults to false (ignored unless true)
-
-    // Boolean on whether to perform origin checks in `IDBFactory` methods
-    'checkOrigin', // Effectively defaults to true (must be set to `false` to cancel checks)
+    'addNonIDBGlobals', // Effectively defaults to false (ignored unless `true`)
 
     // Determines whether the slow-performing `Object.setPrototypeOf` calls required
     //    for full WebIDL compliance will be used. Probably only needed for testing
     //    or environments where full introspection on class relationships is required;
     //    see http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
-    'fullIDLSupport', // Effectively defaults to false (ignored unless true)
+    'fullIDLSupport', // Effectively defaults to false (ignored unless `true`)
+
+    // Boolean on whether to perform origin checks in `IDBFactory` methods
+    'checkOrigin', // Effectively defaults to `true` (must be set to `false` to cancel checks)
 
     // Used by `IDBCursor` continue methods for number of records to cache;
     'cursorPreloadPackSize', //  Defaults to 100
@@ -28,6 +28,14 @@ const CFG = {};
     //    expression strings of `src/UnicodeIdentifiers.js`)
     'UnicodeIDStart', // In the non-Unicode builds, defaults to /[$A-Z_a-z]/
     'UnicodeIDContinue', // In the non-Unicode builds, defaults to /[$0-9A-Z_a-z]/
+
+    // NODE-SPECIFIC CONFIG
+    // Boolean on whether to delete the database file itself after `deleteDatabase`;
+    //   defaults to `true` as the database will be empty
+    'deleteDatabaseFiles',
+    // Boolean on whether to add the `.sqlite` extension to file names;
+    //   defaults to `true`
+    'addSQLiteExtension',
 
     // -----------SQL CONFIG----------
     // Object (`window` in the browser) on which there may be an

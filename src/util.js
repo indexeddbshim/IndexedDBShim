@@ -59,12 +59,12 @@ function escapeDatabaseNameForSQLAndFiles (db) {
         );
     }
     if (CFG.databaseNameLengthLimit !== false &&
-        db.length >= (CFG.databaseNameLengthLimit || 254)) {
+        db.length >= ((CFG.databaseNameLengthLimit || 254) - (CFG.addSQLiteExtension !== false ? 7 /* '.sqlite'.length */ : 0))) {
         throw new Error(
             'Unexpectedly long database name supplied; length limit required for Node compatibility; passed length: ' +
             db.length + '; length limit setting: ' + (CFG.databaseNameLengthLimit || 254) + '.');
     }
-    return db; // Shouldn't have quoting (do we even need NUL/case escaping here?)
+    return db + (CFG.addSQLiteExtension !== false ? '.sqlite' : ''); // Shouldn't have quoting (do we even need NUL/case escaping here?)
 }
 
 // Not in use internally but supplied for convenience
