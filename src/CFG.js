@@ -67,6 +67,9 @@ const CFG = {};
         // (characters nevertheless commonly reserved in modern, Unicode-supporting
         // systems): 0x00-0x1F 0x7F " * / : < > ? \ |
     'databaseNameLengthLimit', // Defaults to 254 (shortest typical modern file length limit)
+    // Forces all databases to be stored in memory;
+    //   eliminates the need for database names
+    'useInMemoryDatabases', // Effectively defaults to false (ignored unless true)
 
     // Optional Node WebSQL config
     'sqlBusyTimeout', // Defaults to 1000

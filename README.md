@@ -311,6 +311,7 @@ browser, particularly if one changes the defaults.
     the escaped filename exceeds the length of 254 characters (the shortest
     typical modern file length maximum). Provide a number to change the
     limit or supply `false` to disable any length checking.
+- __useInMemoryDatabases__ - If set to `true` will only create in-memory instead of file-based databases.
 
 The following config items are for Node only and are mostly for development
 debugging.

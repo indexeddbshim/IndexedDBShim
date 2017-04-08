@@ -30,7 +30,7 @@ function createSysDB (success, failure) {
     if (sysdb) {
         success();
     } else {
-        sysdb = CFG.win.openDatabase('__sysdb__.sqlite', 1, 'System Database', CFG.DEFAULT_DB_SIZE);
+        sysdb = CFG.win.openDatabase(CFG.useInMemoryDatabases ? ':memory:' : '__sysdb__.sqlite', 1, 'System Database', CFG.DEFAULT_DB_SIZE);
         sysdb.transaction(function (systx) {
             systx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);', [], success, sysDbCreateError);
         }, sysDbCreateError);
