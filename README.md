@@ -383,14 +383,14 @@ There are a few bugs that are outside of our power to fix.  Namely:
 ### Browser rollback
 
 While we do try to rollback the database version in the browser when
-called for, and Safari is passing all such tests, as we are not able to
-prolong WebSQL transactions to benefit from the auto-rollback they
-perform upon encountering an error (nor does WebSQL permit manual
-ROLLBACK commands so that we could undo the various WebSQL calls
-we need to make up IndexedDB transactions), we are not able to
-provide safe rollbacks in the browser (e.g., in Chrome). The synchronous
-WebSQL API was not apparently well supported, at least it is missing in
-Safari, and it would particularly degrade performance in a Node environment.
+called for, as we are not able to prolong WebSQL transactions to benefit
+from the auto-rollback they perform upon encountering an error (nor
+does WebSQL permit manual ROLLBACK commands so that we could undo the
+various WebSQL calls we need to make up IndexedDB transactions), we are
+not able to provide safe rollbacks in the browser. The synchronous WebSQL
+API was not apparently well supported, at least it is missing in Safari
+and Chrome, and it would particularly degrade performance in a Node
+environment.
 
 The special build of `websql` that we use does allow such
 IndexedDB-spec-compliant (and data-integrity-friendly!) rollback behavior
