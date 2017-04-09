@@ -324,8 +324,13 @@ browser, particularly if one changes the defaults.
 - __autoName__ - Boolean config to interpret empty string name as a
     cue for creating a database name automatically (introspect on
     `IDBDatabase.name` to get the actual name used); `false` by default
-- __memoryDatabase__ - (Node-only) string config to cause all opening,
-    deleting, and listing to be of SQLite in-memory databases; name supplied
+
+Node-only config:
+
+- __deleteDatabaseFiles__ - Deletes physical database file upon `deleteDatabase`
+    (instead of merely emptying). Defaults to true.
+- __memoryDatabase__ - String config to cause all opening, deleting, and
+    listing to be of SQLite in-memory databases; name supplied
     by user is still used (including to automatically build a cache since
     SQLite does not allow naming of in-memory databases); the name is also
     accessible to `IDBFactory.webkitGetDatabaseNames()`; causes database
@@ -336,8 +341,7 @@ browser, particularly if one changes the defaults.
     See <https://sqlite.org/inmemorydb.html> and <https://sqlite.org/uri.html>
     for more on the function and form of such values
 
-The following config items are for Node only and are mostly for development
-debugging.
+Node config mostly for development debugging:
 
 - __sqlBusyTimeout__ - Integer used by Node WebSQL for
     [SQLite config](https://github.com/mapbox/node-sqlite3/wiki/API#databaseconfigureoption-value)
