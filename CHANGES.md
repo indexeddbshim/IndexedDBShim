@@ -110,6 +110,22 @@ they were actually changes since a more recent version on `master`.
 - Enhancement: Add `deleteDatabaseFiles` config to allow file itself to
     be deleted in Node; will throw `UnknownError` if there are any errors
     removing file (besides a missing file)
+- Enhancement: Make addition of `.sqlite` extension to `__sysdb__` conditional
+    on `CFG.addSQLiteExtension` setting
+- Enhancement: Support `autoName` config to interpret empty string name as a
+    cue for creating a database name automatically (introspect on
+    `IDBDatabase.name` to get the actual name used) (untested)
+- Enhancement: Support `memoryDatabase` config to cause all opening, deleting,
+    and listing to be of SQLite in-memory databases (for Node); name supplied
+    by user is still used (including to automatically build a cache since
+    SQLite does not allow naming of in-memory databases); the name is also
+    accessible to `IDBFactory.webkitGetDatabaseNames()`; causes database
+    name/version tracking to also be within an in-memory database; part of
+    #278 (untested); builds on work by @ThomasGreiner)
+- Enhancement: Support `cacheDatabaseInstances` config to ensure that any
+    repeat `IDBFactory.open` call to the same name and version (assuming
+    no deletes or aborts causing rollbacks) will reuse the same SQLite
+    `openDatabase` instance
 - Add missing API: Add `IDBCursor.continuePrimaryKey`
 - Add missing API: Implement `IDBObjectStore.getKey`
 - Add missing APIs: Implement `IDBIndex.getAll/getAllKeys`

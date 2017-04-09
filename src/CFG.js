@@ -5,6 +5,11 @@ const CFG = {};
     // Boolean for verbose reporting
     'DEBUG', // Effectively defaults to false (ignored unless `true`)
 
+    'cacheDatabaseInstances', // Boolean (effectively defaults to true) on whether to cache WebSQL `openDatabase` instances
+    'autoName', // Boolean on whether to auto-name databases (based on an auto-increment) when
+                //   the empty string is supplied; useful with `memoryDatabase`; defaults to `false`
+                //   which means the empty string will be used as the (valid) database name
+
     // Determines whether the slow-performing `Object.setPrototypeOf` calls required
     //    for full WebIDL compliance will be used. Probably only needed for testing
     //    or environments where full introspection on class relationships is required;
@@ -67,6 +72,11 @@ const CFG = {};
     // Boolean on whether to add the `.sqlite` extension to file names;
     //   defaults to `true`
     'addSQLiteExtension',
+    ['memoryDatabase', (val) => { // Various types of in-memory databases that can auto-delete
+        if ((/^(?::memory:|file::memory:(\?[^#]*)?(#.*)?)?$/).test(val)) {
+            throw new TypeError('`memoryDatabase` must be the empty string, ":memory:", or a "file::memory:[?queryString][#hash] URL".');
+        }
+    }],
 
     // NODE-SPECIFIC CONFIG
     // Boolean on whether to delete the database file itself after `deleteDatabase`;
@@ -78,11 +88,19 @@ const CFG = {};
     'sqlTrace', // Callback not used by default
     'sqlProfile' // Callback not used by default
 ].forEach((prop) => {
+    let validator;
+    if (Array.isArray(prop)) {
+        validator = prop[1];
+        prop = prop[0];
+    }
     Object.defineProperty(CFG, prop, {
         get: function () {
             return map[prop];
         },
         set: function (val) {
+            if (validator) {
+                validator(val);
+            }
             map[prop] = val;
         }
     });

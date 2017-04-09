@@ -216,6 +216,10 @@ shimIndexedDB.__setConfig(property, value);
 The available properties relevant to browser or Node are:
 
 - __DEBUG__ - Boolean (equivalent to calling `shimIndexedDB.__debug(val)`)
+- __cacheDatabaseInstances__ - Config to ensure that any repeat
+    `IDBFactory.open` call to the same name and version (assuming
+    no deletes or aborts causing rollbacks) will reuse the same SQLite
+    `openDatabase` instance.
 - __checkOrigin__ - Boolean on whether to perform origin checks in `IDBFactory`
     methods (`open`, `deleteDatabase`, `webkitGetDatabaseNames`); effectively
     defaults to true (must be set to `false` to cancel checks); for Node testing,
@@ -315,7 +319,22 @@ browser, particularly if one changes the defaults.
     to escape NFD-escaping characters to avoid clashes on MacOS which
     performs NFD on files
 - __addSQLiteExtension__ - Boolean on whether to add the `.sqlite` extension
-    to file names; defaults to `true`
+    to database file names (including `__sysdb__` which tracks versions);
+    defaults to `true`
+- __autoName__ - Boolean config to interpret empty string name as a
+    cue for creating a database name automatically (introspect on
+    `IDBDatabase.name` to get the actual name used); `false` by default
+- __memoryDatabase__ - (Node-only) string config to cause all opening,
+    deleting, and listing to be of SQLite in-memory databases; name supplied
+    by user is still used (including to automatically build a cache since
+    SQLite does not allow naming of in-memory databases); the name is also
+    accessible to `IDBFactory.webkitGetDatabaseNames()`; causes database
+    name/version tracking to also be within an in-memory database; if
+    set in the browser, avoids normal database name escaping meant
+    for Node compatibility; allowable values include the empty string,
+    `":memory:"`, and `file::memory:[?optionalQueryString][#optionalHash]`.
+    See <https://sqlite.org/inmemorydb.html> and <https://sqlite.org/uri.html>
+    for more on the function and form of such values
 
 The following config items are for Node only and are mostly for development
 debugging.

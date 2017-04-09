@@ -428,6 +428,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
             CFG.DEBUG && console.log('Rollback succeeded', me);
         }
 
+        me.dispatchEvent(createEvent('__preabort'));
         me.__requests.filter(function (q) {
             return q.req && q.req.__readyState !== 'done';
         }).reduce(function (promises, q) {
