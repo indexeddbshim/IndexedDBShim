@@ -10622,7 +10622,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                         if (_CFG2.default.cacheDatabaseInstances !== false && name in websqlDBCache) {
                             delete websqlDBCache[name];
                         }
-                        if (_CFG2.default.deleteDatabaseFiles !== false) {
+                        if (_CFG2.default.deleteDatabaseFiles !== false && {}.toString.call(process) === '[object process]') {
                             require('fs').unlink(require('path').resolve(escapedDatabaseName), function (err) {
                                 if (err && err.code !== 'ENOENT') {
                                     // Ignore if file is already deleted

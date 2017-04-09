@@ -10579,6 +10579,7 @@ exports.default = IDBDatabase;
 module.exports = exports['default'];
 
 },{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./Event":330,"./IDBObjectStore":336,"./IDBTransaction":338,"./Sca":341,"./util":346,"eventtarget":298}],333:[function(require,module,exports){
+(function (process){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -11034,7 +11035,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                         if (_CFG2.default.cacheDatabaseInstances !== false && name in websqlDBCache) {
                             delete websqlDBCache[name];
                         }
-                        if (_CFG2.default.deleteDatabaseFiles !== false) {
+                        if (_CFG2.default.deleteDatabaseFiles !== false && {}.toString.call(process) === '[object process]') {
                             require('fs').unlink(require('path').resolve(escapedDatabaseName), function (err) {
                                 if (err && err.code !== 'ENOENT') {
                                     // Ignore if file is already deleted
@@ -11218,7 +11219,8 @@ exports.IDBFactory = IDBFactory;
 exports.cmp = cmp;
 exports.shimIndexedDB = shimIndexedDB;
 
-},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./Event":330,"./IDBDatabase":332,"./IDBRequest":337,"./IDBTransaction":338,"./IDBVersionChangeEvent":339,"./Key":340,"./util":346,"fs":3,"path":299}],334:[function(require,module,exports){
+}).call(this,require('_process'))
+},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./Event":330,"./IDBDatabase":332,"./IDBRequest":337,"./IDBTransaction":338,"./IDBVersionChangeEvent":339,"./Key":340,"./util":346,"_process":300,"fs":3,"path":299}],334:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
