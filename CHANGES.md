@@ -608,25 +608,38 @@ they were actually changes since a more recent version on `master`.
 - Testing (W3C): Add separate tests for events and workers; also
     incorporate tests for `DOMStringList` and `DOMException`
 - Testing (W3C Old): Fix `DOMStringList` API usage (failing on Safari)
-- (Testing:
-    From tests-mocha and tests-qunit (Node and browser), all tests
-        are now passing
+- (Testing)
+    (Unless stated otherwise, "Browser" below refers to Safari 10.1 and
+        Chrome 57.0.2987.133 (64-bit); note that both browsers (especially
+        Safari may require re-running tests or running the tests as individual
+        groups)
 
-    From fakeIndexedDB (Node), all tests now passing;
+    From tests-qunit (Node and browser), all tests are now passing.
+
+    From tests-mocha (Node), all tests are now passing.
+    From tests-mocha (Browser), all tests are now passing except:
+        1. an apparent problem with `window.error` in `IDBTransaction/events-spec.js -> should fire the oncomplete event if a synchronous error occurs`.
+        2.  in Chrome: `IDBFactory.cmp` `simple keys->should compare two numbers` due to an apparent `Number.MIN_VALUE` problem as [described here](http://stackoverflow.com/questions/43305403/number-min-value-and-tostring).
+
+    From fakeIndexedDB (Node), all tests now passing.
     From fakeIndexedDB (Browser), only the first test is
         passing (as expected due to rollback limitations);
 
-    From indexedDBmock (Node and browser), only database.js is not passing (see
-        https://github.com/kristofdegrave/indexedDBmock/compare/f6cdf451769827e13c746984b820096b0de3ac6d...master
-        for any new changes to add to tests)
+    From indexedDBmock (Node and browser), only `database.js` is not passing
+        (see <https://github.com/kristofdegrave/indexedDBmock/compare/f6cdf451769827e13c746984b820096b0de3ac6d...master>
+        for any new changes to add to tests).
 
     From old W3C (Node and browser), only the following are not passing:
         IDBDatabase.close.js,
         TransactionBehavior.js
 
-    From new W3C (Node but potentially also browser):
+    From new W3C (Node):
         See [`/test-support/node-good-bad-files.js`](test-support/node-good-bad-files.js)
             for the current test status on these tests.
+
+    From new W3C (Browser):
+        The test set up is not yet in place to test. See <https://github.com/axemclion/IndexedDBShim/issues/249>
+
 - Testing (Grunt): Force ESLint (since "standard" currently causing a warning)
 - Testing (Grunt): More granular uglification, add build-browser,
     dev-browser, Unicode watching
