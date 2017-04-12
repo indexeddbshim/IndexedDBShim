@@ -29,6 +29,7 @@ define(String.prototype, "padRight", "".padEnd);
   [][key] && define(Array, key, Function.call.bind([][key]));
 });
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{"core-js/fn/regexp/escape":3,"core-js/shim":296,"regenerator-runtime/runtime":298}],2:[function(require,module,exports){
 /*
  * base64-arraybuffer
@@ -7443,6 +7444,7 @@ module.exports = require('./modules/_core');
 );
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{}],299:[function(require,module,exports){
 // Since [immediate](https://github.com/calvinmetcalf/immediate) is
 //   not doing the trick for our WebSQL transactions (at least in Node),
@@ -7996,6 +7998,7 @@ var _global = typeof self === 'undefined' ? global : self;
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{"base64-arraybuffer":2,"typeson":322}],319:[function(require,module,exports){
 // This does not preserve `undefined` in sparse arrays; see the `undefined` or `sparse-undefined` preset
 var Typeson = require('typeson');
@@ -14920,6 +14923,7 @@ exports.default = setGlobalVars;
 module.exports = exports['default'];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{"./CFG":324,"./DOMException":325,"./IDBCursor":328,"./IDBDatabase":329,"./IDBFactory":330,"./IDBIndex":331,"./IDBKeyRange":332,"./IDBObjectStore":333,"./IDBRequest":334,"./IDBTransaction":335,"./IDBVersionChangeEvent":336,"./polyfill":341,"babel-polyfill":1}],343:[function(require,module,exports){
 'use strict';
 
@@ -15210,3 +15214,4 @@ exports.convertToSequenceDOMString = convertToSequenceDOMString;
 
 },{"./CFG":324,"unicode-9.0.0/Binary_Property/Expands_On_NFD/regex":323}]},{},[339])(339)
 });
+//# sourceMappingURL=indexeddbshim-node.js.map

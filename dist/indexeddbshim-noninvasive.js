@@ -29,6 +29,7 @@ define(String.prototype, "padRight", "".padEnd);
   [][key] && define(Array, key, Function.call.bind([][key]));
 });
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{"core-js/fn/regexp/escape":4,"core-js/shim":297,"regenerator-runtime/runtime":301}],2:[function(require,module,exports){
 /*
  * base64-arraybuffer
@@ -6946,6 +6947,7 @@ var substr = 'ab'.substr(-1) === 'b'
 ;
 
 }).call(this,require('_process'))
+
 },{"_process":300}],300:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
@@ -7855,6 +7857,7 @@ process.umask = function() { return 0; };
 );
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{"_process":300}],302:[function(require,module,exports){
 // Since [immediate](https://github.com/calvinmetcalf/immediate) is
 //   not doing the trick for our WebSQL transactions (at least in Node),
@@ -8408,6 +8411,7 @@ var _global = typeof self === 'undefined' ? global : self;
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{"base64-arraybuffer":2,"typeson":325}],322:[function(require,module,exports){
 // This does not preserve `undefined` in sparse arrays; see the `undefined` or `sparse-undefined` preset
 var Typeson = require('typeson');
@@ -11220,6 +11224,7 @@ exports.cmp = cmp;
 exports.shimIndexedDB = shimIndexedDB;
 
 }).call(this,require('_process'))
+
 },{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./Event":330,"./IDBDatabase":332,"./IDBRequest":337,"./IDBTransaction":338,"./IDBVersionChangeEvent":339,"./Key":340,"./util":344,"_process":300,"fs":3,"path":299}],334:[function(require,module,exports){
 'use strict';
 
@@ -15270,6 +15275,7 @@ exports.default = setGlobalVars;
 module.exports = exports['default'];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+
 },{"./CFG":327,"./DOMException":328,"./IDBCursor":331,"./IDBDatabase":332,"./IDBFactory":333,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBRequest":337,"./IDBTransaction":338,"./IDBVersionChangeEvent":339,"./polyfill":342,"babel-polyfill":1}],344:[function(require,module,exports){
 'use strict';
 
@@ -15560,3 +15566,4 @@ exports.convertToSequenceDOMString = convertToSequenceDOMString;
 
 },{"./CFG":327,"unicode-9.0.0/Binary_Property/Expands_On_NFD/regex":326}]},{},[343])(343)
 });
+//# sourceMappingURL=indexeddbshim-noninvasive.js.map

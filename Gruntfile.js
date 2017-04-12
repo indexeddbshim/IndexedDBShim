@@ -1,6 +1,7 @@
 /* global module:false */
 'use strict';
 
+const mapstraction = require('mapstraction');
 module.exports = function (grunt) {
     const sauceuser = process.env.SAUCE_USERNAME !== undefined ? process.env.SAUCE_USERNAME : 'indexeddbshim';
     const saucekey = process.env.SAUCE_ACCESS_KEY !== undefined ? process.env.SAUCE_ACCESS_KEY : null;
@@ -12,7 +13,14 @@ module.exports = function (grunt) {
         browserify: {
             unicode: {
                 options: {
-                    transform: [['babelify']]
+                    transform: [['babelify', {sourceMapsAbsolute: true}]],
+                    browserifyOptions: {
+                        debug: true,
+                        plugin: [function (b, o) {
+                            o._ = ['dist/indexeddbshim-UnicodeIdentifiers.js.map'];
+                            return mapstraction(b, o);
+                        }]
+                    }
                 },
                 files: {
                     'dist/<%= pkg.name%>-UnicodeIdentifiers.js': 'src/browser-UnicodeIdentifiers.js'
@@ -20,10 +28,11 @@ module.exports = function (grunt) {
             },
             unicodeNode: {
                 options: {
-                    transform: [['babelify']],
+                    transform: [['babelify', {sourceMapsAbsolute: true}]],
                     exclude: ['websql/custom', 'websql/lib/sqlite/SQLiteDatabase'],
                     // Avoid `window` checking
                     browserifyOptions: {
+                        debug: true,
                         standalone: 'dummyPlaceholder',
                         basedir: __dirname, // Could try for consistency with any relative paths if still seeing https://github.com/axemclion/IndexedDBShim/issues/291 ; see also http://stackoverflow.com/a/33124979/271577
                         builtins: false, // No need to define in Node (if there are any)
@@ -33,7 +42,11 @@ module.exports = function (grunt) {
                         insertGlobalVars: {
                             process: function () { // Avoid having a non-Node polyfill added
                             }
-                        }
+                        },
+                        plugin: [function (b, o) {
+                            o._ = ['dist/indexeddbshim-UnicodeIdentifiers-node.js.map'];
+                            return mapstraction(b, o);
+                        }]
                     }
                 },
                 files: {
@@ -42,7 +55,14 @@ module.exports = function (grunt) {
             },
             browser: {
                 options: {
-                    transform: [['babelify', {sourceMaps: true}]]
+                    transform: [['babelify', {sourceMapsAbsolute: true}]],
+                    browserifyOptions: {
+                        debug: true,
+                        plugin: [function (b, o) {
+                            o._ = ['dist/indexeddbshim.js.map'];
+                            return mapstraction(b, o);
+                        }]
+                    }
                 },
                 files: {
                     'dist/<%= pkg.name%>.js': 'src/browser.js'
@@ -50,9 +70,14 @@ module.exports = function (grunt) {
             },
             browserNoninvasive: {
                 options: {
-                    transform: [['babelify', {sourceMaps: true}]],
+                    transform: [['babelify', {sourceMapsAbsolute: true}]],
                     browserifyOptions: {
-                        standalone: 'setGlobalVars'
+                        debug: true,
+                        standalone: 'setGlobalVars',
+                        plugin: [function (b, o) {
+                            o._ = ['dist/indexeddbshim-noninvasive.js.map'];
+                            return mapstraction(b, o);
+                        }]
                     }
                 },
                 files: {
@@ -61,10 +86,11 @@ module.exports = function (grunt) {
             },
             node: {
                 options: {
-                    transform: [['babelify', {sourceMaps: true}]],
+                    transform: [['babelify', {sourceMapsAbsolute: true}]],
                     exclude: ['websql/custom', 'websql/lib/sqlite/SQLiteDatabase'],
                     // Avoid `window` checking
                     browserifyOptions: {
+                        debug: true,
                         standalone: 'dummyPlaceholder',
                         basedir: __dirname, // Could try for consistency with any relative paths if still seeing https://github.com/axemclion/IndexedDBShim/issues/291 ; see also http://stackoverflow.com/a/33124979/271577
                         builtins: false, // No need to define in Node (if there are any)
@@ -74,7 +100,11 @@ module.exports = function (grunt) {
                         insertGlobalVars: {
                             process: function () { // Avoid having a non-Node polyfill added
                             }
-                        }
+                        },
+                        plugin: [function (b, o) {
+                            o._ = ['dist/indexeddbshim-node.js.map'];
+                            return mapstraction(b, o);
+                        }]
                     }
                 },
                 files: {
@@ -84,10 +114,24 @@ module.exports = function (grunt) {
         },
         uglify: {
             unicode: {
+                options: {
+                    banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
+                    sourceMap: true,
+                    sourceMapIn: 'dist/<%=pkg.name%>-UnicodeIdentifiers.js.map',
+                    sourceMapName: 'dist/<%=pkg.name%>-UnicodeIdentifiers.min.js.map',
+                    sourceMapRoot: 'http://nparashuram.com/IndexedDBShim/dist/'
+                },
                 src: 'dist/<%= pkg.name%>-UnicodeIdentifiers.js',
                 dest: 'dist/<%= pkg.name%>-UnicodeIdentifiers.min.js'
             },
             unicodeNode: {
+                options: {
+                    banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
+                    sourceMap: true,
+                    sourceMapIn: 'dist/<%=pkg.name%>-UnicodeIdentifiers-node.js.map',
+                    sourceMapName: 'dist/<%=pkg.name%>-UnicodeIdentifiers-node.min.js.map',
+                    sourceMapRoot: 'http://nparashuram.com/IndexedDBShim/dist/'
+                },
                 src: 'dist/<%= pkg.name%>-UnicodeIdentifiers-node.js',
                 dest: 'dist/<%= pkg.name%>-UnicodeIdentifiers-node.min.js'
             },
@@ -95,6 +139,7 @@ module.exports = function (grunt) {
                 options: {
                     banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
                     sourceMap: true,
+                    sourceMapIn: 'dist/<%=pkg.name%>.js.map',
                     sourceMapName: 'dist/<%=pkg.name%>.min.js.map',
                     sourceMapRoot: 'http://nparashuram.com/IndexedDBShim/dist/'
                 },
@@ -105,6 +150,7 @@ module.exports = function (grunt) {
                 options: {
                     banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
                     sourceMap: true,
+                    sourceMapIn: 'dist/<%=pkg.name%>-noninvasive.js.map',
                     sourceMapName: 'dist/<%=pkg.name%>-noninvasive.min.js.map',
                     sourceMapRoot: 'http://nparashuram.com/IndexedDBShim/dist/'
                 },
@@ -115,6 +161,7 @@ module.exports = function (grunt) {
                 options: {
                     banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
                     sourceMap: true,
+                    sourceMapIn: 'dist/<%=pkg.name%>-node.js.map',
                     sourceMapName: 'dist/<%=pkg.name%>-node.min.js.map',
                     sourceMapRoot: 'http://nparashuram.com/IndexedDBShim/dist/'
                 },

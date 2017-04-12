@@ -3939,6 +3939,12 @@
       "resolved": "https://registry.npmjs.org/map-obj/-/map-obj-1.0.1.tgz",
       "dev": true
     },
+    "mapstraction": {
+      "version": "1.0.0",
+      "from": "git+https://github.com/brettz9/mapstraction.git#relativePaths",
+      "resolved": "git+https://github.com/brettz9/mapstraction.git#8cc40fd21d1ca7b341877ab23f032cc1a261636a",
+      "dev": true
+    },
     "maxmin": {
       "version": "1.1.0",
       "from": "maxmin@>=1.1.0 <2.0.0",

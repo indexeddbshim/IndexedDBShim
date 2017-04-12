@@ -19,7 +19,12 @@ if (process.argv[2] === 'remove') {
         });
     });
 } else {
-    fs.writeFileSync(shimLoaderPath, '<script src="http://localhost:9999/dist/indexeddbshim-noninvasive.js"></script>');
+    fs.writeFileSync(shimLoaderPath,
+`<!DOCTYPE html>
+<meta charset="utf-8" />
+<link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon" />
+<script src="http://localhost:9999/dist/indexeddbshim-noninvasive.min.js"></script>
+`);
 
     fs.readdir(indexedDBDir, (err, files) => {
         if (err) {
