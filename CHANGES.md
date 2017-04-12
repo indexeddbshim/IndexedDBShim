@@ -638,7 +638,9 @@ they were actually changes since a more recent version on `master`.
             for the current test status on these tests.
 
     From new W3C (Browser):
-        The test set up is not yet in place to test. See <https://github.com/axemclion/IndexedDBShim/issues/249>
+        Individual tests can be run as per [TESTING](docs/TESTING.md) but no
+        exhaustive account has yet been taken (particularly since the automated
+        test runner is not yet set up).
 
 - Testing (Grunt): Force ESLint (since "standard" currently causing a warning)
 - Testing (Grunt): More granular uglification, add build-browser,

@@ -50,7 +50,10 @@ module.exports = function (grunt) {
             },
             browserNoninvasive: {
                 options: {
-                    transform: [['babelify', {sourceMaps: true}]]
+                    transform: [['babelify', {sourceMaps: true}]],
+                    browserifyOptions: {
+                        standalone: 'setGlobalVars'
+                    }
                 },
                 files: {
                     'dist/<%= pkg.name%>-noninvasive.js': 'src/setGlobalVars.js'
@@ -146,7 +149,17 @@ module.exports = function (grunt) {
             server: {
                 options: {
                     base: '.',
-                    port: 9999
+                    port: 9999,
+                    middleware: function (connect, options, middlewares) {
+                        middlewares.unshift(function (req, res, next) {
+                            // Allow access to this domain from web-platform-tests so we can add the polyfill to its tests
+                            res.setHeader('Access-Control-Allow-Origin', 'http://web-platform.test:8000');
+                            res.setHeader('Access-Control-Allow-Methods', 'GET');
+                            res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+                            next();
+                        });
+                        return middlewares;
+                    }
                 }
             }
         },
@@ -330,6 +343,7 @@ module.exports = function (grunt) {
 
     grunt.registerTask('default', 'build');
     grunt.registerTask('dev', ['build', 'connect', 'watch:all']);
+    grunt.registerTask('connect-watch', ['connect', 'watch:all']);
     grunt.registerTask('dev-browser', ['build-browser', 'connect', 'watch:browser']);
     grunt.registerTask('dev-browserNoninvasive', ['build-browserNoninvasive', 'connect', 'watch:browserNoninvasive']);
     grunt.registerTask('dev-node', ['build-node', 'connect', 'watch:node']);
