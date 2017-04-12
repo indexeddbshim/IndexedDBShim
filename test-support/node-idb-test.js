@@ -501,6 +501,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
 
 function readAndEvaluateFiles (err, jsFiles, workers, recursing) {
     if (err) { return console.log(err); }
+    jsFiles = jsFiles.filter((jsFile) => (/\.js/).test(jsFile));
     if (!recursing && fileIndex) { // Start at a particular file count
         const start = parseInt(fileIndex, 10);
         const end = (endFileCount ? (start + parseInt(endFileCount, 10)) : jsFiles.length);

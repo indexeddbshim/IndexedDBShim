@@ -93,6 +93,7 @@
     "mapstraction": "https://github.com/brettz9/mapstraction#relativePaths",
     "mocha": "3.2.0",
     "sinon": "2.1.0",
+    "source-map-support": "0.4.14",
     "sync-promise": "https://github.com/brettz9/sync-promise#full-sync-missing-promise-features",
     "typeson": "https://github.com/dfahlander/typeson",
     "typeson-registry": "https://github.com/dfahlander/typeson-registry",

@@ -1,5 +1,6 @@
 /* eslint-env qunit */
 /* global testFiles, addTestSuite, startTests */
+require('source-map-support').install();
 
 const setGlobalVars = require('../dist/indexeddbshim-node.min');
 setGlobalVars(global.window);

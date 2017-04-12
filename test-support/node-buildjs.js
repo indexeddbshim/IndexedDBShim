@@ -15,7 +15,7 @@ fs.mkdir(builtJSPath, function () {
     fs.readdir(dirPath, function (err, items) {
         if (err) { return console.log(err); }
         const htmlExt = /\.html?$/;
-        const normalIndexedDBFiles = items.filter((item) => item.match(htmlExt));
+        const normalIndexedDBFiles = items.filter((item) => item.match(htmlExt) && !['_indexeddbshim-loader.html'].includes(item));
         const htmlFiles = normalIndexedDBFiles.map((htmlFile) => ({
             inputFile: path.join(dirPath, htmlFile),
             outputFile: path.join(builtJSPath, htmlFile.replace(htmlExt, '.js'))

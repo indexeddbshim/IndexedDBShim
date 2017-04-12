@@ -228,50 +228,6 @@ module.exports = function (grunt) {
                 }
             }
         },
-
-        mochaTest: {
-            test: {
-                options: {
-                    bail: false,
-                    timeout: 5000,
-                    reporter: 'spec',
-                    quiet: false, // Optionally suppress output to standard out (defaults to false)
-                    clearRequireCache: false // Optionally clear the require cache before running tests (defaults to false)
-                },
-                src: ['tests-mocha/test-node.js']
-            },
-            fake: {
-                options: {
-                    bail: false,
-                    timeout: 5000,
-                    reporter: 'spec',
-                    quiet: false, // Optionally suppress output to standard out (defaults to false)
-                    clearRequireCache: false // Optionally clear the require cache before running tests (defaults to false)
-                },
-                src: ['tests-polyfill/fakeIndexedDB/test-node.js']
-            },
-            mock: {
-                options: {
-                    bail: false,
-                    timeout: 5000,
-                    reporter: 'spec',
-                    quiet: false, // Optionally suppress output to standard out (defaults to false)
-                    clearRequireCache: false // Optionally clear the require cache before running tests (defaults to false)
-                },
-                src: ['tests-polyfill/indexedDBmock/test-node.js']
-            },
-            w3cOld: {
-                options: {
-                    bail: false,
-                    timeout: 5000,
-                    reporter: 'spec',
-                    quiet: false, // Optionally suppress output to standard out (defaults to false)
-                    clearRequireCache: false // Optionally clear the require cache before running tests (defaults to false)
-                },
-                src: ['tests-polyfill/w3c/test-node.js']
-            }
-        },
-
         'saucelabs-qunit': {
             all: {
                 options: {
@@ -314,6 +270,53 @@ module.exports = function (grunt) {
                         version: '12' */
                     }]
                 }
+            }
+        },
+
+        mochaTest: {
+            test: {
+                options: {
+                    bail: false,
+                    require: 'source-map-support/register',
+                    timeout: 5000,
+                    reporter: 'spec',
+                    quiet: false, // Optionally suppress output to standard out (defaults to false)
+                    clearRequireCache: false // Optionally clear the require cache before running tests (defaults to false)
+                },
+                src: ['tests-mocha/test-node.js']
+            },
+            fake: {
+                options: {
+                    bail: false,
+                    require: 'source-map-support/register',
+                    timeout: 5000,
+                    reporter: 'spec',
+                    quiet: false, // Optionally suppress output to standard out (defaults to false)
+                    clearRequireCache: false // Optionally clear the require cache before running tests (defaults to false)
+                },
+                src: ['tests-polyfill/fakeIndexedDB/test-node.js']
+            },
+            mock: {
+                options: {
+                    bail: false,
+                    require: 'source-map-support/register',
+                    timeout: 5000,
+                    reporter: 'spec',
+                    quiet: false, // Optionally suppress output to standard out (defaults to false)
+                    clearRequireCache: false // Optionally clear the require cache before running tests (defaults to false)
+                },
+                src: ['tests-polyfill/indexedDBmock/test-node.js']
+            },
+            w3cOld: {
+                options: {
+                    bail: false,
+                    require: 'source-map-support/register',
+                    timeout: 5000,
+                    reporter: 'spec',
+                    quiet: false, // Optionally suppress output to standard out (defaults to false)
+                    clearRequireCache: false // Optionally clear the require cache before running tests (defaults to false)
+                },
+                src: ['tests-polyfill/w3c/test-node.js']
             }
         },
 
