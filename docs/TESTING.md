@@ -66,16 +66,10 @@ adding ".any.html" to an IndexedDB file, e.g.,
 <http://web-platform.test:8000/IndexedDB/historical.html>
 becomes
 <http://web-platform.test:8000/IndexedDB/historical.html.any.html>.
-Although it is possible to get the runner working via patches, allowing
-tests to be run from the runner without obtrusive changes to the
-repository is not yet refined as per
-<https://github.com/axemclion/IndexedDBShim/issues/249>.
 
-Individual W3C tests can be run by adding ".any.html" to an
-IndexedDB file, e.g.,
-<http://web-platform.test:8000/IndexedDB/historical.html>
-becomes
-<http://web-platform.test:8000/IndexedDB/historical.html.any.html>.
+To do this you must run a `grunt dev` task or another such test that
+connects (to port 9999) and also follow the instructions to install
+and run the server at https://github.com/w3c/web-platform-tests.
 
 ### Node Testing
 
