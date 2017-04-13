@@ -318,7 +318,7 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
             me.__matchedKeys = {};
         }
         if (me.__matchedKeys[rowItem.matchingKey]) {
-            callback(undefined, undefined, undefined);
+            callback(undefined, undefined, undefined); // eslint-disable-line standard/no-callback-literal
             return;
         }
         me.__matchedKeys[rowItem.matchingKey] = true;

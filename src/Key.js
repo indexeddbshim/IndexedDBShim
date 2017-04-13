@@ -679,7 +679,7 @@ const MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `N
 function getCurrentNumber (tx, store, callback, sqlFailCb) {
     tx.executeSql('SELECT "currNum" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.__currentName)], function (tx, data) {
         if (data.rows.length !== 1) {
-            callback(1);
+            callback(1); // eslint-disable-line standard/no-callback-literal
         } else {
             callback(data.rows.item(0).currNum);
         }
@@ -707,7 +707,7 @@ function setCurrentNumber (tx, store, num, successCb, failCb) {
 function generateKeyForStore (tx, store, cb, sqlFailCb) {
     getCurrentNumber(tx, store, function (key) {
         if (key > MAX_ALLOWED_CURRENT_NUMBER) { // 2 ^ 53 (See <https://github.com/w3c/IndexedDB/issues/147>)
-            return cb('failure');
+            return cb('failure'); // eslint-disable-line standard/no-callback-literal
         }
         // Increment current number by 1 (we cannot leverage SQLite's
         //  autoincrement (and decrement when not needed), as decrementing

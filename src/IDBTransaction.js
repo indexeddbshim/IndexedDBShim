@@ -71,7 +71,7 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
 IDBTransaction.prototype = EventTargetFactory.createInstance({defaultSync: true, extraProperties: ['complete']}); // Ensure EventTarget preserves our properties
 IDBTransaction.prototype.__transFinishedCb = function (err, cb) {
     if (err) {
-        cb(true);
+        cb(true); // eslint-disable-line standard/no-callback-literal
         return;
     }
     cb();

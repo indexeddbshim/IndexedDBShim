@@ -147,7 +147,7 @@ const WorkerLocation = function (url) {
             return 70;
 
         default:
-            util.debug(
+            console.error(
                 'Unknown protocol \'' + proto + '\'; returning undefined'
             );
             return undefined;
