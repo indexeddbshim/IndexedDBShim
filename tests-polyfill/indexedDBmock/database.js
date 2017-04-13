@@ -242,7 +242,7 @@ describe('Database', function() {
                 request2.onblocked = function(args){
                     assert.equal("blocked", args.type, "blocked database");
                     assert.equal(args.oldVersion, version, "Old version");
-                    assert.equal(args.newVersion, null, "New version");
+                    assert.equal(args.newVersion, version + 1, "New version");
                     ct += 3;
                     e.target.result.close();
                 };

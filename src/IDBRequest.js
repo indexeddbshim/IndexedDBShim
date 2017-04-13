@@ -27,7 +27,7 @@ IDBRequest.__super = function IDBRequest () {
             enumerable: true,
             configurable: true,
             get: function () {
-                if (this.__readyState !== 'done') {
+                if (this.readyState !== 'done') {
                     throw createDOMException('InvalidStateError', "Can't get " + prop + '; the request is still pending.');
                 }
                 return this['__' + prop];

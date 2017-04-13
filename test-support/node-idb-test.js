@@ -4,14 +4,14 @@ require('source-map-support').install({ // Needed along with sourcemap transform
 });
 const fs = require('fs');
 const path = require('path');
-const {goodFiles, badFiles, notRunning, timeout} = require('./node-good-bad-files');
+const {goodFiles, badFiles, notRunning, timeout, excludedWorkers, excludedNormal} = require('./node-good-bad-files');
 const vm = require('vm');
 const jsdom = require('jsdom');
 const CY = require('cyclonejs'); // Todo: Replace this with Sca (but need to make requireable)
 const Worker = require('./webworker/webworker'); // Todo: We could export this `Worker` publicly for others looking for a Worker polyfill with IDB support
 const XMLHttpRequest = require('xmlhttprequest');
 const isDateObject = require('is-date-object');
-const transformW3CStack = require('./transformW3CStack');
+const transformV8Stack = require('./transformV8Stack');
 
 // const grunt = require('grunt');
 // require('../Gruntfile')(grunt);
@@ -44,7 +44,7 @@ const shimNS = {
         (process && process.stdout && process.stdout.isTTY) ? process.stdout.write(msg) : console.log(msg);
     },
     writeStack: function (msg, stack) {
-        console.log(msg + transformW3CStack(stack));
+        console.log(msg + transformV8Stack(stack));
     },
     writeln: function (msg) {
         console.log(msg);
@@ -172,18 +172,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
     if (jsFiles.length > 1) {
         excluded = workers
             // Keep these arrays even if made empty for sake of any new breaking W3C tests
-            ? [
-                '_interface-objects-003.js',
-                '_interface-objects-004.js'
-            ] : [
-                'bindings-inject-key.js',
-                'keypath-exceptions.js',
-                'event-dispatch-active-flag.js',
-                'fire-error-event-exception.js',
-                'fire-success-event-exception.js',
-                'fire-upgradeneeded-event-exception.js',
-                'upgrade-transaction-deactivation-timing.js'
-            ];
+            ? excludedWorkers : excludedNormal;
         if (excluded.includes(shimNS.fileName) || (!workers && workerFileRegex.test(shimNS.fileName))) {
             excludedCount++;
             shimNS.finished();

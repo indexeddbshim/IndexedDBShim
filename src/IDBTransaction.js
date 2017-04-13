@@ -98,7 +98,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 if (req) {
                     q.req = req; // Need to do this in case of cursors
                 }
-                if (q.req.__readyState === 'done') { // Avoid continuing with aborted requests
+                if (q.req.readyState === 'done') { // Avoid continuing with aborted requests
                     return;
                 }
                 q.req.__readyState = 'done';
@@ -126,7 +126,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                     // We've already called "onerror", "onabort", or thrown within the transaction, so don't do it again.
                     return;
                 }
-                if (q.req && q.req.__readyState === 'done') { // Avoid continuing with aborted requests
+                if (q.req && q.req.readyState === 'done') { // Avoid continuing with aborted requests
                     return;
                 }
                 const err = findError(args);
@@ -183,7 +183,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                             q.op(tx, q.args, executeNextRequest, error);
                             return;
                         }
-                        if (q.req.__readyState === 'done') { // Avoid continuing with aborted requests
+                        if (q.req.readyState === 'done') { // Avoid continuing with aborted requests
                             return;
                         }
                         q.op(tx, q.args, success, error, executeNextRequest);
@@ -430,7 +430,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
 
         me.dispatchEvent(createEvent('__preabort'));
         me.__requests.filter(function (q) {
-            return q.req && q.req.__readyState !== 'done';
+            return q.req && q.req.readyState !== 'done';
         }).reduce(function (promises, q) {
             // We reduce to a chain of promises to be queued in order, so we cannot use `Promise.all`,
             //  and I'm unsure whether `setTimeout` currently behaves first-in-first-out with the same timeout

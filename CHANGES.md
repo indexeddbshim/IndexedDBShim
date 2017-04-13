@@ -132,6 +132,8 @@ they were actually changes since a more recent version on `master`.
 - Add missing APIs: Implement `IDBObjectStore.getAll`,
       `IDBObjectStore.getAllKeys`
 - Add missing API: Binary keys
+- Add missing API: `versionchange` and `blocked` events (currently assumes
+    single process)
 - Fix: Ensure `IDBKeyRange`'s `lower` and `upper` get round-tripped
    key-encoded (e.g., to ensure a `DataView` gets converted into
    an `ArrayBuffer`)
@@ -502,6 +504,9 @@ they were actually changes since a more recent version on `master`.
     closed check, and `NotFoundError` object store check); `TypeError` mode
     check per newly corrected spec behavior, to follow all other exception
     checks
+- Fix: Close connection on abort (setting closed flag)
+- Fix: Have `deleteDatabase` empty relevant `connections` (relevant
+    for `__forceClose` as well as `open`)
 - Repo files: Rename test folders for ease in distinguishing
 - Optimize: Only retrieve required SQLite columns
 - Optimize: Have `IDBObjectStore` and `IDBIndex`'s `get` and
@@ -582,6 +587,8 @@ they were actually changes since a more recent version on `master`.
 - Testing (mock): Update IndexedDBMock tests
 - Testing (mock): Expect `InvalidStateError` instead of `ConstraintError`
     when not in an upgrade transaction calling `createObjectStore`
+- Testing (mock): Fix for `blocked` event's expected `newVersion` (submitted
+    fix as <https://github.com/kristofdegrave/indexedDBmock/pull/2>)
 - Testing (W3C Old): Fix global
 - Testing (W3C Old): Bump timeout for browser key validity tests
 - Testing (W3C Old): `IDBFactory.open` tests to do more flexible
@@ -608,6 +615,8 @@ they were actually changes since a more recent version on `master`.
 - Testing (W3C): Add separate tests for events and workers; also
     incorporate tests for `DOMStringList` and `DOMException`
 - Testing (W3C Old): Fix `DOMStringList` API usage (failing on Safari)
+- Testing (W3C Old): Partly update `TransactionBehavior.js` tests to
+    ensure `objectStoreNames` are compared as arrays
 - (Testing)
     (Unless stated otherwise, "Browser" below refers to Safari 10.1 and
         Chrome 57.0.2987.133 (64-bit); note that both browsers (especially
@@ -625,13 +634,11 @@ they were actually changes since a more recent version on `master`.
     From fakeIndexedDB (Browser), only the first test is
         passing (as expected due to rollback limitations);
 
-    From indexedDBmock (Node and browser), only `database.js` is not passing
+    From indexedDBmock (Node and browser), all tests are now passing.
         (see <https://github.com/kristofdegrave/indexedDBmock/compare/f6cdf451769827e13c746984b820096b0de3ac6d...master>
         for any new changes to add to tests).
 
-    From old W3C (Node and browser), only the following are not passing:
-        IDBDatabase.close.js,
-        TransactionBehavior.js
+    From old W3C (Node and browser), all tests are now passing.
 
     From new W3C (Node):
         See [`/test-support/node-good-bad-files.js`](test-support/node-good-bad-files.js)
@@ -690,4 +697,7 @@ they were actually changes since a more recent version on `master`.
     error checks for Safari too
 - Testing (Mocha): Fall back to genuine `Event`/`DOMException` when shims not
     present (if testing native)
+- Testing (Mocha): For now, make exception for Chrome as with other
+    browsers to `window.onerror` tests in `IDBTransaction/events-spec.js`
+    but keep note in testing list
 - Testing (Cordova): Update Cordova testing (untested)

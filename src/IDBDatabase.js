@@ -148,6 +148,9 @@ IDBDatabase.prototype.close = function () {
         throw new TypeError('Illegal invocation');
     }
     this.__closed = true;
+    if (this.__unblocking) {
+        this.__unblocking.check();
+    }
 };
 
 /**

@@ -152,7 +152,7 @@ be used. Probably only needed for testing or environments where full
 introspection on class relationships is required.
 See this [SO topic](http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements)
 
-### shimIndexedDB.\__forceClose(connIdx, msg)
+### shimIndexedDB.\__forceClose([dbName], [connIdx], [msg])
 
 The spec anticipates the [closing of a database connection with a forced flag](http://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection).
 
@@ -166,14 +166,18 @@ where this may occur:
 Since the latter examples are under the browser's control, this method may
 be more useful on the server or for unit-testing.
 
-If the first argument, `connIdx` is missing (or `null` or `undefined`),
-all connections will be force-closed. It can alternatively be an integer
-representing a 0-based index to indicate a specific connection to close.
+If the first argument, `dbName` is missing (or `null` or `undefined`),
+all connections to all databases will be force-closed.
 
-The second argument `msg` will be appended to the `AbortError` that will be
+If the second argument, `connIdx` is missing (or `null` or `undefined`),
+all connections with the given name will be force-closed. It can
+alternatively be an integer representing a 0-based index to indicate a
+specific connection to close.
+
+The third argument `msg` will be appended to the `AbortError` that will be
 triggered on the transactions of the connection.
 
-Individual `IDBDatabase` database connections can also be force-closed
+Individual `IDBDatabase` database instances can also be force-closed
 with a particular message:
 
 ```js
@@ -374,7 +378,8 @@ Please make sure someone else hasn't already reported the same bug though.
 Here is a summary of main [known issues](https://github.com/axemclion/IndexedDBShim/issues/262#issuecomment-254413002)
 to resolve:
 
-1. `blocked` and `versionchange` `IDBVersionChangeEvent` event support ([#2](https://github.com/axemclion/IndexedDBShim/issues/2) and [#273](https://github.com/axemclion/IndexedDBShim/issues/273))
+1. `blocked` and `versionchange` `IDBVersionChangeEvent` event support ([#2](https://github.com/axemclion/IndexedDBShim/issues/2) and [#273](https://github.com/axemclion/IndexedDBShim/issues/273)) across
+processes/browser windows
 2. Some issues related to [task/micro-task timing](https://github.com/axemclion/IndexedDBShim/issues/296)
 in Node (for inherent limitations in the browser, see below).
 

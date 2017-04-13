@@ -44,7 +44,7 @@ describe('W3C Transaction Behavior Tests', function () {
         function OpenSecond (e) {
             assert.equal(db2, undefined);
             assert(db instanceof FDBDatabase);
-            assert.deepEqual(db.objectStoreNames, [ "store" ]);
+            assert.deepEqual(Array.from(db.objectStoreNames), [ "store" ]);
 
             var openrq2 = indexedDB.open('db', 4);
 
@@ -129,7 +129,7 @@ describe('W3C Transaction Behavior Tests', function () {
         function OpenSecond (e) {
             assert.equal(db2, undefined);
             assert(db instanceof FDBDatabase);
-            assert.deepEqual(db.objectStoreNames, [ "store" ]);
+            assert.deepEqual(Array.from(db.objectStoreNames), [ "store" ]);
 
             var openrq2 = indexedDB.open('db', 4);
 
@@ -195,7 +195,7 @@ describe('W3C Transaction Behavior Tests', function () {
                 os.add({ os: "os" + i });
             }
 
-           assert.deepEqual(db.objectStoreNames, ["os1", "os2", "os3", "os4", "os5" ], "objectStores");
+           assert.deepEqual(Array.from(db.objectStoreNames), ["os1", "os2", "os3", "os4", "os5" ], "objectStores");
         }
 
         open_rq.onsuccess = function(e) {
