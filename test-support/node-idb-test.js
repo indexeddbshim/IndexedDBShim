@@ -11,7 +11,8 @@ const CY = require('cyclonejs'); // Todo: Replace this with Sca (but need to mak
 const Worker = require('./webworker/webworker'); // Todo: We could export this `Worker` publicly for others looking for a Worker polyfill with IDB support
 const XMLHttpRequest = require('xmlhttprequest');
 const isDateObject = require('is-date-object');
-const transformSourceMapString = require('sourcemap-transformer').transformSourceMapString;
+const transformW3CStack = require('./transformW3CStack');
+
 // const grunt = require('grunt');
 // require('../Gruntfile')(grunt);
 
@@ -43,28 +44,7 @@ const shimNS = {
         (process && process.stdout && process.stdout.isTTY) ? process.stdout.write(msg) : console.log(msg);
     },
     writeStack: function (msg, stack) {
-        console.log(msg + transformSourceMapString(stack, {
-            // at /Users/brett/IndexedDBShim/dist/indexeddbshim-UnicodeIdentifiers-node.js:6626:32
-            // at IDBOpenDBRequest.tryCatch (/Users/brett/IndexedDBShim/dist/indexeddbshim-UnicodeIdentifiers-node.js:6641:9)
-            newFileRegex: /(\s*)at (\S+ \()?([^e][^(]*?):(\d+):(\d+)(\))?/,
-            newFilePath (match) {
-                return match[3];
-            },
-            newFileLineNumber (match) {
-                return parseInt(match[4], 10);
-            },
-            newFileColumnNumber: function (match) {
-                return match[5] || '';
-            },
-            originalPositionString: function (formattingSpaces, originalPosition, untransformedOutput, match /*, prev=false */) {
-                const erringFunc = match[2] || '';
-                const endingParenth = match[6] || '';
-                if (originalPosition.source) {
-                    return formattingSpaces + 'at ' + erringFunc + originalPosition.source + ':' + originalPosition.line + ':' + originalPosition.column + endingParenth;
-                }
-                return untransformedOutput;
-            }
-        }));
+        console.log(msg + transformW3CStack(stack));
     },
     writeln: function (msg) {
         console.log(msg);
