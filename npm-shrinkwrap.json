@@ -5323,7 +5323,7 @@
     "sourcemap-transformer": {
       "version": "1.3.1",
       "from": "git+https://github.com/brettz9/sourcemap-transformer.git",
-      "resolved": "git+https://github.com/brettz9/sourcemap-transformer.git#53e2ef543f86539a95ebb30e90bfe62cf84e308a",
+      "resolved": "git+https://github.com/brettz9/sourcemap-transformer.git#b1bc7755a527c3e0b050c9756bb513f64b103fb4",
       "dev": true
     },
     "spdx-correct": {

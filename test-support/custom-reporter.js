@@ -98,7 +98,7 @@
             }
             shimNS.writeln(' (' + fileName + '): ' + test.name);
             if (assertions) shimNS.writeln(assertions);
-            if (test.message && test.stack) shimNS.writeln((test.message || ' ') + test.stack);
+            if (test.message && test.stack) shimNS.writeStack(test.message || ' ', test.stack);
         });
         if (shimNS.jsonOutput) shimNS.jsonOutput.results.push(jsonOutput);
         shimNS.finished();
