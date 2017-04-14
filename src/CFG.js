@@ -82,6 +82,8 @@ const CFG = {};
     // Boolean on whether to delete the database file itself after `deleteDatabase`;
     //   defaults to `true` as the database will be empty
     'deleteDatabaseFiles',
+    'databaseBasePath',
+    'sysDatabaseBasePath',
 
     // NODE-SPECIFIC WEBSQL CONFIG
     'sqlBusyTimeout', // Defaults to 1000

@@ -8660,7 +8660,7 @@ var CFG = {};
 // NODE-SPECIFIC CONFIG
 // Boolean on whether to delete the database file itself after `deleteDatabase`;
 //   defaults to `true` as the database will be empty
-'deleteDatabaseFiles',
+'deleteDatabaseFiles', 'databaseBasePath', 'sysDatabaseBasePath',
 
 // NODE-SPECIFIC WEBSQL CONFIG
 'sqlBusyTimeout', // Defaults to 1000
@@ -10221,6 +10221,10 @@ var _syncPromise = require('sync-promise');
 
 var _syncPromise2 = _interopRequireDefault(_syncPromise);
 
+var _path = require('path');
+
+var _path2 = _interopRequireDefault(_path);
+
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -10358,7 +10362,7 @@ function createSysDB(success, failure) {
     if (sysdb) {
         success();
     } else {
-        sysdb = _CFG2.default.win.openDatabase(typeof _CFG2.default.memoryDatabase === 'string' ? _CFG2.default.memoryDatabase : '__sysdb__' + (_CFG2.default.addSQLiteExtension !== false ? '.sqlite' : ''), 1, 'System Database', _CFG2.default.DEFAULT_DB_SIZE);
+        sysdb = _CFG2.default.win.openDatabase(typeof _CFG2.default.memoryDatabase === 'string' ? _CFG2.default.memoryDatabase : _path2.default.join(typeof _CFG2.default.sysDatabaseBasePath === 'string' ? _CFG2.default.sysDatabaseBasePath : _CFG2.default.databaseBasePath || '', '__sysdb__' + (_CFG2.default.addSQLiteExtension !== false ? '.sqlite' : '')), 1, 'System Database', _CFG2.default.DEFAULT_DB_SIZE);
         sysdb.transaction(function (systx) {
             systx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);', [], success, sysDbCreateError);
         }, sysDbCreateError);
@@ -10457,7 +10461,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
         if ((useMemoryDatabase || useDatabaseCache) && name in websqlDBCache && websqlDBCache[name][version]) {
             db = websqlDBCache[name][version];
         } else {
-            db = _CFG2.default.win.openDatabase(useMemoryDatabase ? _CFG2.default.memoryDatabase : escapedDatabaseName, 1, name, _CFG2.default.DEFAULT_DB_SIZE);
+            db = _CFG2.default.win.openDatabase(useMemoryDatabase ? _CFG2.default.memoryDatabase : _path2.default.join(_CFG2.default.databaseBasePath || '', escapedDatabaseName), 1, name, _CFG2.default.DEFAULT_DB_SIZE);
             if (useDatabaseCache) {
                 websqlDBCache[name][version] = db;
             }
@@ -10772,7 +10776,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                                     return;
                                 }
 
-                                var sqliteDB = _CFG2.default.win.openDatabase(escapedDatabaseName, 1, name, _CFG2.default.DEFAULT_DB_SIZE);
+                                var sqliteDB = _CFG2.default.win.openDatabase(_path2.default.join(_CFG2.default.databaseBasePath || '', escapedDatabaseName), 1, name, _CFG2.default.DEFAULT_DB_SIZE);
                                 sqliteDB.transaction(function (tx) {
                                     tx.executeSql('SELECT "name" FROM __sys__', [], function (tx, data) {
                                         var tables = data.rows;

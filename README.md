@@ -331,6 +331,11 @@ browser, particularly if one changes the defaults.
 
 Node-only config:
 
+- __sysDatabaseBasePath__ - Base path for the `__sysdb__(.sqlite)` database
+    file; defaults to `__databaseBasePath` unless another value (including
+    the empty string) is given; otherwise is the empty string
+- __databaseBasePath__ - Base path for user database files; defaults to the
+    empty string
 - __deleteDatabaseFiles__ - Deletes physical database file upon `deleteDatabase`
     (instead of merely emptying). Defaults to true.
 - __memoryDatabase__ - String config to cause all opening, deleting, and

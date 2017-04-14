@@ -10,6 +10,7 @@ import IDBTransaction from './IDBTransaction';
 import IDBDatabase from './IDBDatabase';
 import CFG from './CFG';
 import SyncPromise from 'sync-promise';
+import path from 'path';
 
 const getOrigin = () => (typeof location !== 'object' || !location) ? 'null' : location.origin;
 const hasNullOrigin = () => CFG.checkOrigin !== false && (getOrigin() === 'null');
@@ -130,7 +131,12 @@ function createSysDB (success, failure) {
         sysdb = CFG.win.openDatabase(
             typeof CFG.memoryDatabase === 'string'
                 ? CFG.memoryDatabase
-                : '__sysdb__' + (CFG.addSQLiteExtension !== false ? '.sqlite' : ''),
+                : path.join(
+                    (typeof CFG.sysDatabaseBasePath === 'string'
+                        ? CFG.sysDatabaseBasePath
+                        : (CFG.databaseBasePath || '')),
+                    '__sysdb__' + (CFG.addSQLiteExtension !== false ? '.sqlite' : '')
+                ),
             1,
             'System Database',
             CFG.DEFAULT_DB_SIZE
@@ -234,7 +240,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
             db = websqlDBCache[name][version];
         } else {
             db = CFG.win.openDatabase(
-                useMemoryDatabase ? CFG.memoryDatabase : escapedDatabaseName,
+                useMemoryDatabase ? CFG.memoryDatabase : path.join(CFG.databaseBasePath || '', escapedDatabaseName),
                 1,
                 name,
                 CFG.DEFAULT_DB_SIZE
@@ -551,7 +557,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                                     return;
                                 }
 
-                                const sqliteDB = CFG.win.openDatabase(escapedDatabaseName, 1, name, CFG.DEFAULT_DB_SIZE);
+                                const sqliteDB = CFG.win.openDatabase(path.join(CFG.databaseBasePath || '', escapedDatabaseName), 1, name, CFG.DEFAULT_DB_SIZE);
                                 sqliteDB.transaction(function (tx) {
                                     tx.executeSql('SELECT "name" FROM __sys__', [], function (tx, data) {
                                         const tables = data.rows;
