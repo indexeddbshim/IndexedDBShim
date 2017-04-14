@@ -72,7 +72,7 @@
     "colors": "1.1.2",
     "cyclonejs": "1.1.4",
     "eslint": "3.19.0",
-    "eslint-config-standard": "10.2.0",
+    "eslint-config-standard": "10.2.1",
     "eslint-plugin-compat": "1.0.2",
     "eslint-plugin-import": "2.2.0",
     "eslint-plugin-node": "4.2.2",
@@ -102,7 +102,7 @@
     "sync-promise": "https://github.com/brettz9/sync-promise#full-sync-missing-promise-features",
     "typeson": "https://github.com/dfahlander/typeson",
     "typeson-registry": "https://github.com/dfahlander/typeson-registry",
-    "unicode-9.0.0": "0.7.3",
+    "unicode-9.0.0": "0.7.4",
     "w3c-blob": "0.0.1",
     "ws": "2.2.3",
     "xmlhttprequest": "https://github.com/brettz9/node-XMLHttpRequest#local-and-prototype"
