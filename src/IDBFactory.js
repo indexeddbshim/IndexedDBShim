@@ -396,19 +396,18 @@ IDBFactory.prototype.open = function (name /* , version */) {
         }, dbCreateError);
     }
 
-    let latestCachedVersion;
-    if (useDatabaseCache) {
-        if (!(name in websqlDBCache)) {
-            websqlDBCache[name] = {};
-        }
-        if (version === undefined) {
-            latestCachedVersion = getLatestCachedWebSQLVersion(name);
-        } else if (websqlDBCache[name][version]) {
-            latestCachedVersion = version;
-        }
-    }
-
     addRequestToConnectionQueue(req, name, /* origin */ undefined, function (req) {
+        let latestCachedVersion;
+        if (useDatabaseCache) {
+            if (!(name in websqlDBCache)) {
+                websqlDBCache[name] = {};
+            }
+            if (version === undefined) {
+                latestCachedVersion = getLatestCachedWebSQLVersion(name);
+            } else if (websqlDBCache[name][version]) {
+                latestCachedVersion = version;
+            }
+        }
         if (latestCachedVersion) {
             openDB(latestCachedVersion);
         } else {
@@ -458,6 +457,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     }
 
     const useMemoryDatabase = typeof CFG.memoryDatabase === 'string';
+    const useDatabaseCache = CFG.cacheDatabaseInstances !== false || useMemoryDatabase;
 
     const req = IDBOpenDBRequest.__createInstance();
     let calledDBError = false;
@@ -493,7 +493,11 @@ IDBFactory.prototype.deleteDatabase = function (name) {
 
             function databaseDeleted () {
                 sysdbFinishedCbDelete(false, function () {
+                    if (useDatabaseCache && name in websqlDBCache) {
+                        delete websqlDBCache[name]; // New calls will treat as though never existed
+                    }
                     delete me.__connections[name];
+
                     req.__result = undefined;
                     req.__readyState = 'done';
                     const e = new IDBVersionChangeEvent('success', {oldVersion: version, newVersion: null});
@@ -527,11 +531,12 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                                     const latestSQLiteDBCached = websqlDBCache[name] ? getLatestCachedWebSQLDB(name) : null;
                                     if (!latestSQLiteDBCached) {
                                         console.warn('Could not find a memory database instance to delete.');
+                                        databaseDeleted();
                                         return;
                                     }
                                     const sqliteDB = latestSQLiteDBCached._db && latestSQLiteDBCached._db._db;
                                     if (!sqliteDB || !sqliteDB.close) {
-                                        console.warn('The `openDatabase` implementation does not have the expected `._db._db.close` method for closing the database');
+                                        console.error('The `openDatabase` implementation does not have the expected `._db._db.close` method for closing the database');
                                         return;
                                     }
                                     sqliteDB.close(function (err) {
@@ -539,12 +544,9 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                                             console.warn('Error closing (destroying) memory database');
                                             return;
                                         }
-                                        delete websqlDBCache[name][version]; // New calls will treat as though never existed
+                                        databaseDeleted();
                                     });
                                     return;
-                                }
-                                if (CFG.cacheDatabaseInstances !== false && name in websqlDBCache) {
-                                    delete websqlDBCache[name][version];
                                 }
                                 if (CFG.deleteDatabaseFiles !== false && ({}.toString.call(process) === '[object process]')) {
                                     require('fs').unlink(require('path').resolve(escapedDatabaseName), (err) => {

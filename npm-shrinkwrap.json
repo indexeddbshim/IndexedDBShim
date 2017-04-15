@@ -1832,9 +1832,9 @@
       "dev": true
     },
     "eslint-config-standard": {
-      "version": "10.2.0",
-      "from": "eslint-config-standard@10.2.0",
-      "resolved": "https://registry.npmjs.org/eslint-config-standard/-/eslint-config-standard-10.2.0.tgz",
+      "version": "10.2.1",
+      "from": "eslint-config-standard@10.2.1",
+      "resolved": "https://registry.npmjs.org/eslint-config-standard/-/eslint-config-standard-10.2.1.tgz",
       "dev": true
     },
     "eslint-import-resolver-node": {
@@ -6531,9 +6531,9 @@
       "dev": true
     },
     "unicode-9.0.0": {
-      "version": "0.7.3",
-      "from": "unicode-9.0.0@0.7.3",
-      "resolved": "https://registry.npmjs.org/unicode-9.0.0/-/unicode-9.0.0-0.7.3.tgz",
+      "version": "0.7.4",
+      "from": "unicode-9.0.0@0.7.4",
+      "resolved": "https://registry.npmjs.org/unicode-9.0.0/-/unicode-9.0.0-0.7.4.tgz",
       "dev": true
     },
     "unpipe": {
