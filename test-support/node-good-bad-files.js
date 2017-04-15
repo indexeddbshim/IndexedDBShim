@@ -12,6 +12,7 @@ In order to run, the following require a one-off `srcdoc` implementation or http
 - `idbfactory-open-opaque-origin.js`
 
 2. SHARED AND SERVICE WORKERS
+
 - Need to implement as Node shims, stop disabling these tests in node-idb-test.js, and run
 
 3. NODE ISSUE-RELATED
