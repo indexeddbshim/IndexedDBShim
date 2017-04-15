@@ -53,7 +53,11 @@ describe('IDBTransaction events', function () {
 
             db.onerror = sinon.spy();
             tx.onerror = sinon.spy();
-            if (!env.browser.isFirefox && !env.browser.isSafari && !env.browser.isChrome) sinon.stub(window, 'onerror').returns(true);
+
+            var windowOnerrorState = {};
+            util.stubWindowOnerror(windowOnerrorState);
+
+            // if (!env.browser.isFirefox) sinon.spy(window, 'onerror').returns(true);
 
             var store = tx.objectStore('inline');
             var errored = false;
@@ -67,7 +71,8 @@ describe('IDBTransaction events', function () {
                 expect(errored).equal(true);
                 sinon.assert.notCalled(db.onerror);             // <-- database.onerror NEVER fires
                 sinon.assert.notCalled(tx.onerror);             // <-- transaction.onerror NEVER fires
-                if (!env.browser.isFirefox && !env.browser.isSafari && !env.browser.isChrome) sinon.assert.notCalled(window.onerror);         // <-- window.onerror NEVER fires
+                expect(windowOnerrorState.erred).equal(false);         // <-- window.onerror NEVER fires
+                // if (!env.browser.isFirefox) sinon.assert.notCalled(window.onerror);
             };
 
             setTimeout(function () {
@@ -75,11 +80,13 @@ describe('IDBTransaction events', function () {
                     expect(errored).equal(true);
                     sinon.assert.notCalled(db.onerror);         // <-- database.onerror NEVER fires
                     sinon.assert.notCalled(tx.onerror);         // <-- transaction.onerror NEVER fires
-                    if (!env.browser.isFirefox && !env.browser.isSafari && !env.browser.isChrome) sinon.assert.notCalled(window.onerror);     // <-- window.onerror NEVER fires
+                    // if (!env.browser.isFirefox) sinon.assert.notCalled(window.onerror);     // <-- window.onerror NEVER fires
+                    expect(windowOnerrorState.erred).equal(false);         // <-- window.onerror NEVER fires
                     db.close();
                     done();
                 } finally {
-                    if (!env.browser.isFirefox && !env.browser.isSafari && !env.browser.isChrome) window.onerror.restore();
+                    // if (!env.browser.isFirefox) window.onerror.restore();
+                    util.restoreWindowOnerror();
                 }
             }, env.transactionDuration);
         });
@@ -95,6 +102,9 @@ describe('IDBTransaction events', function () {
             }
             var tx = db.transaction('inline', 'readwrite');
 
+            var windowOnerrorState = {};
+            util.stubWindowOnerror(windowOnerrorState);
+
             var store = tx.objectStore('inline');
             store.add({id: 1});
             var add = store.add({id: 1});                   // <-- This causes an asynchronous error (duplicate id)
@@ -106,7 +116,8 @@ describe('IDBTransaction events', function () {
                 sinon.assert.notCalled(tx.oncomplete);      // <-- transaction.oncomplete NEVER fires
                 sinon.assert.notCalled(tx.onerror);         // <-- transaction.onerror HAS NOT fired YET
                 sinon.assert.notCalled(db.onerror);         // <-- database.onerror HAS NOT fired YET
-                if (!env.browser.isFirefox && !env.browser.isSafari && !env.browser.isChrome) sinon.assert.notCalled(window.onerror);     // <-- window.onerror HAS NOT fired YET
+                // if (!env.browser.isFirefox) sinon.assert.notCalled(window.onerror);     // <-- window.onerror HAS NOT fired YET
+                expect(windowOnerrorState.erred).equal(false);
             });
 
             // IDBTransaction events
@@ -115,8 +126,9 @@ describe('IDBTransaction events', function () {
                 sinon.assert.notCalled(tx.oncomplete);      // <-- transaction.oncomplete NEVER fires
                 sinon.assert.calledOnce(add.onerror);       // <-- request.onerror HAS fired
                 sinon.assert.notCalled(db.onerror);         // <-- database.onerror HAS NOT fired YET
-                if (!env.browser.isFirefox && !env.browser.isSafari && !env.browser.isChrome) sinon.assert.notCalled(window.onerror);     // <-- window.onerror HAS NOT fired YET
-                else if (env.browser.isFirefox) e.preventDefault(); // Firefox reaches here unless preventDefault() is called (which will also cause our tests to fail)
+                // if (!env.browser.isFirefox) sinon.assert.notCalled(window.onerror);     // <-- window.onerror HAS NOT fired YET
+                if (env.browser.isFirefox) e.preventDefault(); // Firefox reaches here unless preventDefault() is called (which will also cause our tests to fail)
+                else expect(windowOnerrorState.erred).equal(false);
             });
             tx.oncomplete = sinon.spy(function (e) {
                 db.close();
@@ -129,11 +141,12 @@ describe('IDBTransaction events', function () {
                 sinon.assert.notCalled(tx.oncomplete);      // <-- transaction.oncomplete NEVER fires
                 sinon.assert.calledOnce(add.onerror);       // <-- request.onerror HAS fired
                 sinon.assert.calledOnce(tx.onerror);        // <-- transaction.onerror HAS fired
-                if (!env.browser.isFirefox && !env.browser.isSafari && !env.browser.isChrome) sinon.assert.notCalled(window.onerror);     // <-- window.onerror HAS NOT fired YET
+                // if (!env.browser.isFirefox) sinon.assert.notCalled(window.onerror);     // <-- window.onerror HAS NOT fired YET
+                expect(windowOnerrorState.erred).equal(false);
             });
 
             // Window events
-            if (!env.browser.isFirefox && !env.browser.isSafari && !env.browser.isChrome) sinon.stub(window, 'onerror').returns(true);
+            // if (!env.browser.isFirefox) sinon.stub(window, 'onerror').returns(true);
 
             setTimeout(function () {
                 try {
@@ -143,14 +156,14 @@ describe('IDBTransaction events', function () {
                     sinon.assert.calledOnce(tx.onerror);        // <-- transaction.onerror HAS fired
                     sinon.assert.calledOnce(db.onerror);        // <-- database.onerror HAS fired
 
-                    if (!env.browser.isFirefox && !env.browser.isSafari && !env.browser.isChrome) {
-                        // Firefox fires window.onerror.  No other browser does.
-                        sinon.assert.notCalled(window.onerror);
-                    }
+                    // Firefox fires window.onerror.  No other browser does.
+                    // sinon.assert.notCalled(window.onerror);
+                    expect(windowOnerrorState.erred).equal(false);
                     db.close();
                     done();
                 } finally {
-                    if (!env.browser.isFirefox && !env.browser.isSafari && !env.browser.isChrome) window.onerror.restore();
+                    // if (!env.browser.isFirefox) window.onerror.restore();
+                    util.restoreWindowOnerror();
                 }
             }, env.transactionDuration);
         });
@@ -174,6 +187,9 @@ describe('IDBTransaction events', function () {
             var tx = db.transaction('inline', 'readwrite');
             tx.onabort = sinon.spy();
 
+            var windowOnerrorState = {};
+            util.stubWindowOnerror(windowOnerrorState);
+
             db.onerror = tx.onerror = sinon.spy(function () {
                 db.close();
                 done(new Error('The onerror event fired when it should not have'));
@@ -183,19 +199,18 @@ describe('IDBTransaction events', function () {
                 sinon.assert.notCalled(db.onerror);             // <-- database.onerror NEVER fires
                 sinon.assert.notCalled(tx.onerror);             // <-- transaction.onerror NEVER fires
                 sinon.assert.notCalled(tx.onabort);             // <-- transaction.abort NEVER fires
-                if (!env.browser.isFirefox && !env.browser.isSafari && !env.browser.isChrome) sinon.assert.notCalled(window.onerror);         // <-- window.onerror HAS NOT fired YET
-                if (!env.browser.isFirefox && !env.browser.isSafari && !env.browser.isChrome) throw new Error('Test Error');
+                // if (!env.browser.isFirefox) sinon.assert.notCalled(window.onerror);         // <-- window.onerror HAS NOT fired YET
+                expect(windowOnerrorState.erred).equal(false);
+                throw new Error('Test Error');
             });
 
-            if (!env.browser.isFirefox && !env.browser.isSafari && !env.browser.isChrome) {
-                sinon.stub(window, 'onerror', function () {
-                    sinon.assert.calledOnce(tx.oncomplete);         // <-- transaction.oncomplete HAS fired
-                    sinon.assert.notCalled(db.onerror);             // <-- database.onerror NEVER fires
-                    sinon.assert.notCalled(tx.onerror);             // <-- transaction.onerror NEVER fires
-                    sinon.assert.notCalled(tx.onabort);             // <-- transaction.abort NEVER fires
-                    return true;
-                });
-            }
+            util.stubWindowOnerror(windowOnerrorState, function () {
+                sinon.assert.calledOnce(tx.oncomplete);         // <-- transaction.oncomplete HAS fired
+                sinon.assert.notCalled(db.onerror);             // <-- database.onerror NEVER fires
+                sinon.assert.notCalled(tx.onerror);             // <-- transaction.onerror NEVER fires
+                sinon.assert.notCalled(tx.onabort);             // <-- transaction.abort NEVER fires
+                return true;
+            });
 
             window.addEventListener('cordovacallbackerror', function handler () {
                 window.removeEventListener('cordovacallbackerror', handler);
@@ -206,14 +221,17 @@ describe('IDBTransaction events', function () {
             setTimeout(function () {
                 try {
                     sinon.assert.calledOnce(tx.oncomplete);     // <-- transaction.oncomplete HAS fired
-                    if (!env.browser.isFirefox && !env.browser.isSafari && !env.browser.isChrome) sinon.assert.calledOnce(window.onerror);    // <-- window.onerror HAS fired
+                    // if (!env.browser.isFirefox) sinon.assert.calledOnce(window.onerror);    // <-- window.onerror HAS fired
+                    expect(windowOnerrorState.erred).equal(true);
+                    windowOnerrorState.erred = false;
                     sinon.assert.notCalled(db.onerror);         // <-- database.onerror NEVER fires
                     sinon.assert.notCalled(tx.onerror);         // <-- transaction.onerror NEVER fires
                     sinon.assert.notCalled(tx.onabort);         // <-- transaction.abort NEVER fires
                     db.close();
                     done();
                 } finally {
-                    if (!env.browser.isFirefox && !env.browser.isSafari && !env.browser.isChrome) window.onerror.restore();
+                    // if (!env.browser.isFirefox) window.onerror.restore();
+                    util.restoreWindowOnerror();
                 }
             }, env.transactionDuration);
         });
@@ -241,37 +259,40 @@ describe('IDBTransaction events', function () {
             tx.onerror = sinon.spy();
             tx.oncomplete = sinon.spy();
 
+            var windowOnerrorState = {};
+            util.stubWindowOnerror(windowOnerrorState);
+
             tx.onabort = sinon.spy(function () {
                 sinon.assert.notCalled(db.onerror);             // <-- database.onerror NEVER fires
                 sinon.assert.notCalled(tx.onerror);             // <-- transaction.onerror NEVER fires
                 sinon.assert.notCalled(tx.oncomplete);          // <-- transaction.oncomplete NEVER fires
-                if (!env.browser.isFirefox && !env.browser.isSafari && !env.browser.isChrome) sinon.assert.notCalled(window.onerror);         // <-- window.onerror HAS NOT fired YET
-                if (!env.browser.isFirefox && !env.browser.isSafari && !env.browser.isChrome) throw new Error('Test Error');
+                // if (!env.browser.isFirefox) sinon.assert.notCalled(window.onerror);         // <-- window.onerror HAS NOT fired YET
+                expect(windowOnerrorState.erred).equal(false);
+                throw new Error('Test Error');
             });
 
-            if (!env.browser.isFirefox && !env.browser.isSafari && !env.browser.isChrome) {
-                sinon.stub(window, 'onerror', function () {
-                    sinon.assert.calledOnce(tx.onabort);            // <-- transaction.onabort HAS fired
-                    sinon.assert.notCalled(db.onerror);             // <-- database.onerror NEVER fires
-                    sinon.assert.notCalled(tx.onerror);             // <-- transaction.onerror NEVER fires
-                    sinon.assert.notCalled(tx.oncomplete);          // <-- transaction.oncomplete NEVER fires
-                    return true;
-                });
-            }
-
+            util.stubWindowOnerror({}, function () {
+                sinon.assert.calledOnce(tx.onabort);            // <-- transaction.onabort HAS fired
+                sinon.assert.notCalled(db.onerror);             // <-- database.onerror NEVER fires
+                sinon.assert.notCalled(tx.onerror);             // <-- transaction.onerror NEVER fires
+                sinon.assert.notCalled(tx.oncomplete);          // <-- transaction.oncomplete NEVER fires
+                return true;
+            });
             tx.abort();
-
             setTimeout(function () {
                 try {
                     sinon.assert.calledOnce(tx.onabort);        // <-- transaction.onabort HAS fired
-                    if (!env.browser.isFirefox && !env.browser.isSafari && !env.browser.isChrome) sinon.assert.calledOnce(window.onerror);    // <-- window.onerror HAS fired
+                    // if (!env.browser.isFirefox) sinon.assert.calledOnce(window.onerror);    // <-- window.onerror HAS fired
                     sinon.assert.notCalled(db.onerror);         // <-- database.onerror NEVER fires
                     sinon.assert.notCalled(tx.onerror);         // <-- transaction.onerror NEVER fires
                     sinon.assert.notCalled(tx.oncomplete);      // <-- transaction.oncomplete NEVER fires
+                    expect(windowOnerrorState.erred).equal(false);         // <-- window.onerror NEVER fires
+                    // if (!env.browser.isFirefox) sinon.assert.notCalled(window.onerror);     // <-- window.onerror NEVER fires
                     db.close();
                     done();
                 } finally {
-                    if (!env.browser.isFirefox && !env.browser.isSafari && !env.browser.isChrome) window.onerror.restore();
+                    // if (!env.browser.isFirefox) window.onerror.restore();
+                    util.restoreWindowOnerror();
                 }
             }, env.transactionDuration);
         });

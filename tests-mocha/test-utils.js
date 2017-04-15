@@ -250,6 +250,22 @@
                     }, typeof window !== 'undefined' && typeof global === 'undefined' ? 0 : 300);
                 }
             }
+        },
+
+        stubWindowOnerror: function (stateObj, cb) {
+            // As Mocha or Sinon are apparently already using window.onerror, we provide the stubbing ourselves
+            util._onerror = window.onerror;
+            stateObj.erred = false;
+            window.onerror = function () {
+                stateObj.erred = true;
+                if (cb) {
+                    return cb();
+                }
+                util._onerror.apply(window, arguments);
+            };
+        },
+        restoreWindowOnerror: function () {
+            window.onerror = util._onerror;
         }
     };
 
