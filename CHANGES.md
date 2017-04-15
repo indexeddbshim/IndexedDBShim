@@ -627,8 +627,7 @@ they were actually changes since a more recent version on `master`.
 
     From tests-mocha (Node), all tests are now passing.
     From tests-mocha (Browser), all tests are now passing except:
-        1. an apparent problem with `window.error` in `IDBTransaction/events-spec.js -> should fire the oncomplete event if a synchronous error occurs`.
-        2.  in Chrome: `IDBFactory.cmp` `simple keys->should compare two numbers` due to an apparent `Number.MIN_VALUE` problem as [described here](http://stackoverflow.com/questions/43305403/number-min-value-and-tostring).
+        1.  in Chrome: `IDBFactory.cmp` `simple keys->should compare two numbers` due to an apparent `Number.MIN_VALUE` problem as [described here](http://stackoverflow.com/questions/43305403/number-min-value-and-tostring).
 
     From fakeIndexedDB (Node), all tests now passing.
     From fakeIndexedDB (Browser), only the first test is
@@ -697,7 +696,4 @@ they were actually changes since a more recent version on `master`.
     error checks for Safari too
 - Testing (Mocha): Fall back to genuine `Event`/`DOMException` when shims not
     present (if testing native)
-- Testing (Mocha): For now, make exception for Chrome as with other
-    browsers to `window.onerror` tests in `IDBTransaction/events-spec.js`
-    but keep note in testing list
 - Testing (Cordova): Update Cordova testing (untested)
