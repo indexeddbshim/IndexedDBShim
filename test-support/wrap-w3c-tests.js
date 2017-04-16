@@ -60,27 +60,35 @@ var ifr = createIframe('${loaderFile}', window);
 ifr.style.overflow = 'hidden';
 ifr.setAttribute('scrolling', 'no');
 
-var w = ifr.contentWindow;
-w.addEventListener('DOMContentLoaded', function () {
-    var ifr = createIframe('${htmlFile.replace(/'/g, "\\'")}', w);
-    var win = ifr.contentWindow;
+var loaderWin = ifr.contentWindow;
+loaderWin.addEventListener('DOMContentLoaded', function () {
+    var ifr = createIframe('${htmlFile.replace(/'/g, "\\'")}', loaderWin);
+    var testWin = ifr.contentWindow;
 
     var style = document.createElement('style');
     style.textContent = '#log {display: none;}'; // Avoid extra display of log; another way?
     document.head.appendChild(style);
 
-    w.setGlobalVars(win, {
+    ['Date', 'Array'].forEach(function (prop) { // For instanceof checks expecting those in test to match those in IndexedDBShim
+        testWin[prop] = loaderWin[prop];
+    });
+
+    loaderWin.setGlobalVars(testWin, {
         fullIDLSupport: true,
         replaceNonIDBGlobals: true
     });
-    win.shimIndexedDB.__useShim();
+    const _setTimeout = testWin.setTimeout;
+    testWin.setTimeout = function (cb, ms) { // Override to better ensure transaction has expired
+        _setTimeout(cb, ms + 500);
+    };
+    testWin.shimIndexedDB.__useShim();
     /*
     // We can adapt this to apply source maps once we may get sourcemap-transformer working in the browser
-    win.addEventListener('DOMContentLoaded', function () {
-        win.add_completion_callback(function () {
-            var pres = Array.from(win.document.querySelectorAll('pre'));
+    testWin.addEventListener('DOMContentLoaded', function () {
+        testWin.add_completion_callback(function () {
+            var pres = Array.from(testWin.document.querySelectorAll('pre'));
             pres.forEach(function (pre) {
-                w.console.log(pre.textContent);
+                loaderWin.console.log(pre.textContent);
             });
         });
     });
