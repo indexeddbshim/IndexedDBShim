@@ -161,6 +161,17 @@ const goodBad = {
     ]
 };
 
+// Not currently in use programmatically
+goodBad.browser = {
+    // Safari is either too broken or, as appears to be more likely, running too poorly in
+    //   the runner to be able to get a good listing; should try it with each test individually
+    chrome: {
+        timeout: ['event-dispatch-active-flag.html', 'fire-upgradeneeded-event-exception.html', 'idb-binary-key-detached.htm', 'idbcursor-advance-exception-order.html', 'idbtransaction_objectStoreNames.html', 'transaction-lifetime-blocked.htm', 'transaction-lifetime.htm'],
+        notRunning: ['fire-error-event-exception.html', 'fire-success-event-exception.html', 'idbcursor-advance-continue-async.htm', 'idbcursor-advance-invalid.htm', 'interleaved-cursors.html', 'parallel-cursors-upgrade.html'],
+        badFiles: ['error-attributes.html', 'idb-binary-key-roundtrip.htm', 'idb_binary_key_conversion.htm', 'idbcursor-continuePrimaryKey.htm', 'idbcursor-delete-exception-order.htm', 'idbcursor-source.htm', 'idbfactory_deleteDatabase4.htm', 'idbindex-getAll-enforcerange.html', 'idbindex-query-exception-order.html', 'idbobjectstore-add-put-exception-order.html', 'idbobjectstore-clear-exception-order.html', 'idbobjectstore-delete-exception-order.html', 'idbobjectstore-deleteIndex-exception-order.html', 'idbobjectstore-getAll-enforcerange.html', 'idbobjectstore-getAllKeys-enforcerange.html', 'idbobjectstore-query-exception-order.html', 'idbobjectstore_createIndex15-autoincrement.htm', 'idbobjectstore_openKeyCursor.htm', 'idbtransaction-objectStore-exception-order.html', 'idbversionchangeevent.htm', 'interfaces.html', 'interfaces.worker.html', 'transaction-abort-generator-revert.html', 'transaction-abort-request-error.html', 'transaction-deactivation-timing.html', 'transaction-lifetime-empty.html', 'upgrade-transaction-deactivation-timing.html', 'value.htm']
+    }
+};
+
 if (typeof module !== 'undefined') {
     module.exports = goodBad;
 }

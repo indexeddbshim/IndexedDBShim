@@ -69,18 +69,22 @@ w.addEventListener('DOMContentLoaded', function () {
     style.textContent = '#log {display: none;}'; // Avoid extra display of log; another way?
     document.head.appendChild(style);
 
-    // Todo: Add in Unicode config
     w.setGlobalVars(win, {
         fullIDLSupport: true,
-        addNonIDBGlobals: true,
-        win: win
+        replaceNonIDBGlobals: true
     });
     win.shimIndexedDB.__useShim();
-    win.DOMStringList = win.ShimDOMStringList;
-    win.DOMException = win.ShimDOMException;
-    win.Event = win.ShimEvent;
-    win.CustomEvent = win.ShimCustomEvent;
-    win.EventTarget = win.ShimEventTarget;
+    /*
+    // We can adapt this to apply source maps once we may get sourcemap-transformer working in the browser
+    win.addEventListener('DOMContentLoaded', function () {
+        win.add_completion_callback(function () {
+            var pres = Array.from(win.document.querySelectorAll('pre'));
+            pres.forEach(function (pre) {
+                w.console.log(pre.textContent);
+            });
+        });
+    });
+    */
 });
 `;
 
