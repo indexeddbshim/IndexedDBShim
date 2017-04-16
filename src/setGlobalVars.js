@@ -75,7 +75,17 @@ function setGlobalVars (idb, initialConfig) {
         configurable: true
     });
     if (IDB.shimIndexedDB) {
-        IDB.shimIndexedDB.__useShim = function () { // Todo: Accept argument to set DOMException, DOMStringList, Event
+        IDB.shimIndexedDB.__useShim = function () {
+            function setNonIDBGlobals (prefix = '') {
+                shim(prefix + 'DOMException', IDB.indexedDB.modules.ShimDOMException);
+                shim(prefix + 'DOMStringList', IDB.indexedDB.modules.ShimDOMStringList, {
+                    enumerable: false,
+                    configurable: true
+                });
+                shim(prefix + 'Event', IDB.indexedDB.modules.ShimEvent);
+                shim(prefix + 'CustomEvent', IDB.indexedDB.modules.ShimCustomEvent);
+                shim(prefix + 'EventTarget', IDB.indexedDB.modules.ShimEventTarget);
+            }
             const shimIDBFactory = IDB.shimIndexedDB.modules.IDBFactory;
             if (CFG.win.openDatabase !== undefined) {
                 // Polyfill ALL of IndexedDB, using WebSQL
@@ -109,21 +119,16 @@ function setGlobalVars (idb, initialConfig) {
                         configurable: true
                     });
                 });
-                if (CFG.addNonIDBGlobals && IDB.indexedDB && IDB.indexedDB.modules) {
-                    // As `DOMStringList` exists per IDL (and Chrome) in the global
-                    //   thread (but not in workers), we prefix the name to avoid
-                    //   shadowing or conflicts
-                    // Todo: We could provide an option to shim directly as
-                    //   `DOMStringList` and thereby get the `enumerable` and readonly
-                    //   settings out of the box
-                    shim('ShimDOMStringList', IDB.indexedDB.modules.ShimDOMStringList, {
-                        enumerable: false,
-                        configurable: true
-                    });
-                    shim('ShimEvent', IDB.indexedDB.modules.ShimEvent);
-                    shim('ShimCustomEvent', IDB.indexedDB.modules.ShimCustomEvent);
-                    shim('ShimEventTarget', IDB.indexedDB.modules.ShimEventTarget);
-                    shim('ShimDOMException', IDB.indexedDB.modules.ShimDOMException);
+                if (IDB.indexedDB && IDB.indexedDB.modules) {
+                    if (CFG.addNonIDBGlobals) {
+                        // As `DOMStringList` exists per IDL (and Chrome) in the global
+                        //   thread (but not in workers), we prefix the name to avoid
+                        //   shadowing or conflicts
+                        setNonIDBGlobals('Shim');
+                    }
+                    if (CFG.replaceNonIDBGlobals) {
+                        setNonIDBGlobals();
+                    }
                 }
             } else if (typeof IDB.indexedDB === 'object') {
                 // Polyfill the missing IndexedDB features (no need for the window containing indexedDB itself))
@@ -141,11 +146,8 @@ function setGlobalVars (idb, initialConfig) {
             }
             return CFG[prop];
         };
-        IDB.shimIndexedDB.__setUnicodeIdentifiers = function (ui) {
-            setConfig({
-                UnicodeIDStart: ui.UnicodeIDStart,
-                UnicodeIDContinue: ui.UnicodeIDContinue
-            });
+        IDB.shimIndexedDB.__setUnicodeIdentifiers = function ({UnicodeIDStart, UnicodeIDContinue}) {
+            setConfig({UnicodeIDStart, UnicodeIDContinue});
         };
     }
 
@@ -159,12 +161,12 @@ function setGlobalVars (idb, initialConfig) {
     if (typeof navigator !== 'undefined' && ( // Ignore Node or other environments
         (
             // Bad non-Chrome Android support
-            navigator.userAgent.match(/Android (?:2|3|4\.[0-3])/) &&
-            !navigator.userAgent.match(/Chrome/)
+            (/Android (?:2|3|4\.[0-3])/).test(navigator.userAgent) &&
+            !navigator.userAgent.includes('Chrome')
         ) ||
         (
             // Bad non-Safari iOS9 support (see <https://github.com/axemclion/IndexedDBShim/issues/252>)
-            (navigator.userAgent.indexOf('Safari') === -1 || navigator.userAgent.indexOf('Chrome') > -1) && // Exclude genuine Safari: http://stackoverflow.com/a/7768006/271577
+            (!navigator.userAgent.includes('Safari') || navigator.userAgent.includes('Chrome')) && // Exclude genuine Safari: http://stackoverflow.com/a/7768006/271577
             // Detect iOS: http://stackoverflow.com/questions/9038625/detect-if-device-is-ios/9039885#9039885
             // and detect version 9: http://stackoverflow.com/a/26363560/271577
             (/(iPad|iPhone|iPod).* os 9_/i).test(navigator.userAgent) &&
@@ -179,8 +181,8 @@ function setGlobalVars (idb, initialConfig) {
                 // https://github.com/axemclion/IndexedDBShim/issues/41
                 // https://github.com/axemclion/IndexedDBShim/issues/115
                 typeof navigator !== 'undefined' &&
-                navigator.userAgent.indexOf('Safari') > -1 &&
-                navigator.userAgent.indexOf('Chrome') === -1
+                navigator.userAgent.includes('Safari') &&
+                !navigator.userAgent.includes('Chrome')
             ) ? 25 : 4) * 1024 * 1024;
     }
     if ((!IDB.indexedDB || poorIndexedDbSupport) && CFG.win.openDatabase !== undefined) {

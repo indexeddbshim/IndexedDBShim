@@ -146,6 +146,9 @@ library will be polyfilled as possible on the chosen "global" (i.e.,
 `ShimEvent`, `ShimCustomEvent`, `ShimEventTarget`, `ShimDOMException`,
 and `ShimDOMStringList`). Mostly useful for testing.
 
+If `CFG.replaceNonIDBGlobals` is used, it will instead attempt to add,
+or if already present, overwrite these globals.
+
 If `CFG.fullIDLSupport` has been set, the slow-performing
 `Object.setPrototypeOf` calls required for full WebIDL compliance will
 be used. Probably only needed for testing or environments where full
@@ -268,6 +271,9 @@ browser, particularly if one changes the defaults.
     `ShimEventTarget`, `ShimDOMException`, and `ShimDOMStringList`.
     Mostly useful for debugging (and in Node where these
     are not available by default).
+- __replaceNonIDBGlobals__ - Similar to `addNonIDBGlobals` but will attempt
+    to add the values unprefixed and overwrite if possible. Mostly for
+    testing.
 - __escapeDatabaseName__ - Due to the Node implementation's reliance on
     `node-websql`/`node-sqlite3` which create files for each database
     (and the fact that we haven't provided an option to map filename-safe

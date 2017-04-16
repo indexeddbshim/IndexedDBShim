@@ -54,7 +54,11 @@ const CFG = {};
     // Used when setting global shims to determine whether to try to add
     //   other globals shimmed by the library (`ShimDOMException`, `ShimDOMStringList`,
     //   `ShimEvent`, `ShimCustomEvent`, `ShimEventTarget`)
-    'addNonIDBGlobals', // Effectively defaults to false (ignored unless `true`)
+    'addNonIDBGlobals', // Effectively defaults to `false` (ignored unless `true`)
+    // Used when setting global shims to determine whether to try to overwrite
+    //   other globals shimmed by the library (`DOMException`, `DOMStringList`,
+    //   `Event`, `CustomEvent`, `EventTarget`)
+    'replaceNonIDBGlobals', // Effectively defaults to `false` (ignored unless `true`)
 
     // Overcoming limitations with node-sqlite3/storing database name on file systems
     // https://en.wikipedia.org/wiki/Filename#Reserved_characters_and_words

@@ -81,7 +81,7 @@ module.exports = function (grunt) {
                     }
                 },
                 files: {
-                    'dist/<%= pkg.name%>-noninvasive.js': 'src/setGlobalVars.js'
+                    'dist/<%= pkg.name%>-noninvasive.js': 'src/browser-noninvasive.js'
                 }
             },
             node: {

@@ -8633,7 +8633,11 @@ var CFG = {};
 // Used when setting global shims to determine whether to try to add
 //   other globals shimmed by the library (`ShimDOMException`, `ShimDOMStringList`,
 //   `ShimEvent`, `ShimCustomEvent`, `ShimEventTarget`)
-'addNonIDBGlobals', // Effectively defaults to false (ignored unless `true`)
+'addNonIDBGlobals', // Effectively defaults to `false` (ignored unless `true`)
+// Used when setting global shims to determine whether to try to overwrite
+//   other globals shimmed by the library (`DOMException`, `DOMStringList`,
+//   `Event`, `CustomEvent`, `EventTarget`)
+'replaceNonIDBGlobals', // Effectively defaults to `false` (ignored unless `true`)
 
 // Overcoming limitations with node-sqlite3/storing database name on file systems
 // https://en.wikipedia.org/wiki/Filename#Reserved_characters_and_words
@@ -14966,7 +14970,18 @@ function setGlobalVars(idb, initialConfig) {
     });
     if (IDB.shimIndexedDB) {
         IDB.shimIndexedDB.__useShim = function () {
-            // Todo: Accept argument to set DOMException, DOMStringList, Event
+            function setNonIDBGlobals() {
+                var prefix = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+
+                shim(prefix + 'DOMException', IDB.indexedDB.modules.ShimDOMException);
+                shim(prefix + 'DOMStringList', IDB.indexedDB.modules.ShimDOMStringList, {
+                    enumerable: false,
+                    configurable: true
+                });
+                shim(prefix + 'Event', IDB.indexedDB.modules.ShimEvent);
+                shim(prefix + 'CustomEvent', IDB.indexedDB.modules.ShimCustomEvent);
+                shim(prefix + 'EventTarget', IDB.indexedDB.modules.ShimEventTarget);
+            }
             var shimIDBFactory = IDB.shimIndexedDB.modules.IDBFactory;
             if (_CFG2.default.win.openDatabase !== undefined) {
                 // Polyfill ALL of IndexedDB, using WebSQL
@@ -14991,21 +15006,16 @@ function setGlobalVars(idb, initialConfig) {
                         configurable: true
                     });
                 });
-                if (_CFG2.default.addNonIDBGlobals && IDB.indexedDB && IDB.indexedDB.modules) {
-                    // As `DOMStringList` exists per IDL (and Chrome) in the global
-                    //   thread (but not in workers), we prefix the name to avoid
-                    //   shadowing or conflicts
-                    // Todo: We could provide an option to shim directly as
-                    //   `DOMStringList` and thereby get the `enumerable` and readonly
-                    //   settings out of the box
-                    shim('ShimDOMStringList', IDB.indexedDB.modules.ShimDOMStringList, {
-                        enumerable: false,
-                        configurable: true
-                    });
-                    shim('ShimEvent', IDB.indexedDB.modules.ShimEvent);
-                    shim('ShimCustomEvent', IDB.indexedDB.modules.ShimCustomEvent);
-                    shim('ShimEventTarget', IDB.indexedDB.modules.ShimEventTarget);
-                    shim('ShimDOMException', IDB.indexedDB.modules.ShimDOMException);
+                if (IDB.indexedDB && IDB.indexedDB.modules) {
+                    if (_CFG2.default.addNonIDBGlobals) {
+                        // As `DOMStringList` exists per IDL (and Chrome) in the global
+                        //   thread (but not in workers), we prefix the name to avoid
+                        //   shadowing or conflicts
+                        setNonIDBGlobals('Shim');
+                    }
+                    if (_CFG2.default.replaceNonIDBGlobals) {
+                        setNonIDBGlobals();
+                    }
                 }
             } else if (_typeof(IDB.indexedDB) === 'object') {
                 // Polyfill the missing IndexedDB features (no need for the window containing indexedDB itself))
@@ -15023,11 +15033,11 @@ function setGlobalVars(idb, initialConfig) {
             }
             return _CFG2.default[prop];
         };
-        IDB.shimIndexedDB.__setUnicodeIdentifiers = function (ui) {
-            setConfig({
-                UnicodeIDStart: ui.UnicodeIDStart,
-                UnicodeIDContinue: ui.UnicodeIDContinue
-            });
+        IDB.shimIndexedDB.__setUnicodeIdentifiers = function (_ref3) {
+            var UnicodeIDStart = _ref3.UnicodeIDStart,
+                UnicodeIDContinue = _ref3.UnicodeIDContinue;
+
+            setConfig({ UnicodeIDStart: UnicodeIDStart, UnicodeIDContinue: UnicodeIDContinue });
         };
     }
 
@@ -15042,9 +15052,9 @@ function setGlobalVars(idb, initialConfig) {
     if (typeof navigator !== 'undefined' && ( // Ignore Node or other environments
 
     // Bad non-Chrome Android support
-    navigator.userAgent.match(/Android (?:2|3|4\.[0-3])/) && !navigator.userAgent.match(/Chrome/) ||
+    /Android (?:2|3|4\.[0-3])/.test(navigator.userAgent) && !navigator.userAgent.includes('Chrome') ||
     // Bad non-Safari iOS9 support (see <https://github.com/axemclion/IndexedDBShim/issues/252>)
-    (navigator.userAgent.indexOf('Safari') === -1 || navigator.userAgent.indexOf('Chrome') > -1) && // Exclude genuine Safari: http://stackoverflow.com/a/7768006/271577
+    (!navigator.userAgent.includes('Safari') || navigator.userAgent.includes('Chrome')) && // Exclude genuine Safari: http://stackoverflow.com/a/7768006/271577
     // Detect iOS: http://stackoverflow.com/questions/9038625/detect-if-device-is-ios/9039885#9039885
     // and detect version 9: http://stackoverflow.com/a/26363560/271577
     /(iPad|iPhone|iPod).* os 9_/i.test(navigator.userAgent) && !window.MSStream // But avoid IE11
@@ -15055,7 +15065,7 @@ function setGlobalVars(idb, initialConfig) {
         _CFG2.default.DEFAULT_DB_SIZE = ( // Safari currently requires larger size: (We don't need a larger size for Node as node-websql doesn't use this info)
         // https://github.com/axemclion/IndexedDBShim/issues/41
         // https://github.com/axemclion/IndexedDBShim/issues/115
-        typeof navigator !== 'undefined' && navigator.userAgent.indexOf('Safari') > -1 && navigator.userAgent.indexOf('Chrome') === -1 ? 25 : 4) * 1024 * 1024;
+        typeof navigator !== 'undefined' && navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome') ? 25 : 4) * 1024 * 1024;
     }
     if ((!IDB.indexedDB || poorIndexedDbSupport) && _CFG2.default.win.openDatabase !== undefined) {
         IDB.shimIndexedDB.__useShim();
