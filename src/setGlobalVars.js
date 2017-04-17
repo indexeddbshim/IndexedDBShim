@@ -88,6 +88,7 @@ function setGlobalVars (idb, initialConfig) {
             }
             const shimIDBFactory = IDB.shimIndexedDB.modules.IDBFactory;
             if (CFG.win.openDatabase !== undefined) {
+                shimIndexedDB.__openDatabase = CFG.win.openDatabase.bind(CFG.win); // We cache here in case the function is overwritten later as by the IndexedDB support promises tests
                 // Polyfill ALL of IndexedDB, using WebSQL
                 if (CFG.fullIDLSupport) {
                     // Slow per MDN so off by default! Though apparently needed for WebIDL: http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements

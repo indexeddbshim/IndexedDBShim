@@ -37,6 +37,7 @@
     "w3c": "npm run w3c-build && npm run w3c-test",
     "w3c-add-wrap": "node test-support/wrap-w3c-tests",
     "w3c-remove-wrap": "node test-support/wrap-w3c-tests remove",
+    "w3c-wrap": "node test-support/wrap-w3c-tests",
     "w3c-test": "node test-support/node-idb-test && grunt clean-w3c",
     "w3c-good": "npm run w3c-build && node test-support/node-idb-test good && grunt clean-w3c",
     "w3c-bad": "npm run w3c-build && node test-support/node-idb-test bad && grunt clean-w3c",

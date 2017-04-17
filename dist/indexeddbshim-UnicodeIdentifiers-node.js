@@ -10354,9 +10354,9 @@ function getLatestCachedWebSQLDB(name) {
 }
 
 /**
- * Craetes the sysDB to keep track of version numbers for databases
+ * Creates the sysDB to keep track of version numbers for databases
  **/
-function createSysDB(success, failure) {
+function createSysDB(__openDatabase, success, failure) {
     function sysDbCreateError(tx, err) {
         err = (0, _DOMException.webSQLErrback)(err);
         _CFG2.default.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
@@ -10366,7 +10366,7 @@ function createSysDB(success, failure) {
     if (sysdb) {
         success();
     } else {
-        sysdb = _CFG2.default.win.openDatabase(typeof _CFG2.default.memoryDatabase === 'string' ? _CFG2.default.memoryDatabase : _path2.default.join(typeof _CFG2.default.sysDatabaseBasePath === 'string' ? _CFG2.default.sysDatabaseBasePath : _CFG2.default.databaseBasePath || '', '__sysdb__' + (_CFG2.default.addSQLiteExtension !== false ? '.sqlite' : '')), 1, 'System Database', _CFG2.default.DEFAULT_DB_SIZE);
+        sysdb = __openDatabase(typeof _CFG2.default.memoryDatabase === 'string' ? _CFG2.default.memoryDatabase : _path2.default.join(typeof _CFG2.default.sysDatabaseBasePath === 'string' ? _CFG2.default.sysDatabaseBasePath : _CFG2.default.databaseBasePath || '', '__sysdb__' + (_CFG2.default.addSQLiteExtension !== false ? '.sqlite' : '')), 1, 'System Database', _CFG2.default.DEFAULT_DB_SIZE);
         sysdb.transaction(function (systx) {
             systx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);', [], success, sysDbCreateError);
         }, sysDbCreateError);
@@ -10465,7 +10465,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
         if ((useMemoryDatabase || useDatabaseCache) && name in websqlDBCache && websqlDBCache[name][version]) {
             db = websqlDBCache[name][version];
         } else {
-            db = _CFG2.default.win.openDatabase(useMemoryDatabase ? _CFG2.default.memoryDatabase : _path2.default.join(_CFG2.default.databaseBasePath || '', escapedDatabaseName), 1, name, _CFG2.default.DEFAULT_DB_SIZE);
+            db = me.__openDatabase(useMemoryDatabase ? _CFG2.default.memoryDatabase : _path2.default.join(_CFG2.default.databaseBasePath || '', escapedDatabaseName), 1, name, _CFG2.default.DEFAULT_DB_SIZE);
             if (useDatabaseCache) {
                 websqlDBCache[name][version] = db;
             }
@@ -10633,7 +10633,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
         if (latestCachedVersion) {
             openDB(latestCachedVersion);
         } else {
-            createSysDB(function () {
+            createSysDB(me.__openDatabase, function () {
                 sysdb.readTransaction(function (sysReadTx) {
                     sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE "name" = ?', [sqlSafeName], function (sysReadTx, data) {
                         if (data.rows.length === 0) {
@@ -10709,7 +10709,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     }
 
     addRequestToConnectionQueue(req, name, /* origin */undefined, function (req) {
-        createSysDB(function () {
+        createSysDB(me.__openDatabase, function () {
             // function callback (cb) { cb(); }
             // callback(function () {
 
@@ -10782,7 +10782,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                                     return;
                                 }
 
-                                var sqliteDB = _CFG2.default.win.openDatabase(_path2.default.join(_CFG2.default.databaseBasePath || '', escapedDatabaseName), 1, name, _CFG2.default.DEFAULT_DB_SIZE);
+                                var sqliteDB = me.__openDatabase(_path2.default.join(_CFG2.default.databaseBasePath || '', escapedDatabaseName), 1, name, _CFG2.default.DEFAULT_DB_SIZE);
                                 sqliteDB.transaction(function (tx) {
                                     tx.executeSql('SELECT "name" FROM __sys__', [], function (tx, data) {
                                         var tables = data.rows;
@@ -10886,7 +10886,8 @@ IDBFactory.prototype.cmp = function (key1, key2) {
 * @link http://lists.w3.org/Archives/Public/public-webapps/2011JulSep/1537.html
 */
 IDBFactory.prototype.webkitGetDatabaseNames = function () {
-    if (!(this instanceof IDBFactory)) {
+    var me = this;
+    if (!(me instanceof IDBFactory)) {
         throw new TypeError('Illegal invocation');
     }
     if (hasNullOrigin()) {
@@ -10908,7 +10909,7 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
         req.dispatchEvent(evt);
     }
     var req = _IDBRequest.IDBRequest.__createInstance();
-    createSysDB(function () {
+    createSysDB(me.__openDatabase, function () {
         sysdb.readTransaction(function (sysReadTx) {
             sysReadTx.executeSql('SELECT "name" FROM dbVersions', [], function (sysReadTx, data) {
                 var dbNames = _DOMStringList2.default.__createInstance();
@@ -15013,6 +15014,7 @@ function setGlobalVars(idb, initialConfig) {
             }
             var shimIDBFactory = IDB.shimIndexedDB.modules.IDBFactory;
             if (_CFG2.default.win.openDatabase !== undefined) {
+                _IDBFactory.shimIndexedDB.__openDatabase = _CFG2.default.win.openDatabase.bind(_CFG2.default.win); // We cache here in case the function is overwritten later as by the IndexedDB support promises tests
                 // Polyfill ALL of IndexedDB, using WebSQL
                 if (_CFG2.default.fullIDLSupport) {
                     // Slow per MDN so off by default! Though apparently needed for WebIDL: http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements

@@ -116,9 +116,9 @@ function getLatestCachedWebSQLDB (name) {
 }
 
 /**
- * Craetes the sysDB to keep track of version numbers for databases
+ * Creates the sysDB to keep track of version numbers for databases
  **/
-function createSysDB (success, failure) {
+function createSysDB (__openDatabase, success, failure) {
     function sysDbCreateError (tx, err) {
         err = webSQLErrback(err);
         CFG.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
@@ -128,7 +128,7 @@ function createSysDB (success, failure) {
     if (sysdb) {
         success();
     } else {
-        sysdb = CFG.win.openDatabase(
+        sysdb = __openDatabase(
             typeof CFG.memoryDatabase === 'string'
                 ? CFG.memoryDatabase
                 : path.join(
@@ -239,7 +239,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
         if ((useMemoryDatabase || useDatabaseCache) && name in websqlDBCache && websqlDBCache[name][version]) {
             db = websqlDBCache[name][version];
         } else {
-            db = CFG.win.openDatabase(
+            db = me.__openDatabase(
                 useMemoryDatabase ? CFG.memoryDatabase : path.join(CFG.databaseBasePath || '', escapedDatabaseName),
                 1,
                 name,
@@ -411,7 +411,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
         if (latestCachedVersion) {
             openDB(latestCachedVersion);
         } else {
-            createSysDB(function () {
+            createSysDB(me.__openDatabase, function () {
                 sysdb.readTransaction(function (sysReadTx) {
                     sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE "name" = ?', [sqlSafeName], function (sysReadTx, data) {
                         if (data.rows.length === 0) {
@@ -487,7 +487,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     }
 
     addRequestToConnectionQueue(req, name, /* origin */ undefined, function (req) {
-        createSysDB(function () {
+        createSysDB(me.__openDatabase, function () {
             // function callback (cb) { cb(); }
             // callback(function () {
 
@@ -559,7 +559,12 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                                     return;
                                 }
 
-                                const sqliteDB = CFG.win.openDatabase(path.join(CFG.databaseBasePath || '', escapedDatabaseName), 1, name, CFG.DEFAULT_DB_SIZE);
+                                const sqliteDB = me.__openDatabase(
+                                    path.join(CFG.databaseBasePath || '', escapedDatabaseName),
+                                    1,
+                                    name,
+                                    CFG.DEFAULT_DB_SIZE
+                                );
                                 sqliteDB.transaction(function (tx) {
                                     tx.executeSql('SELECT "name" FROM __sys__', [], function (tx, data) {
                                         const tables = data.rows;
@@ -666,7 +671,8 @@ IDBFactory.prototype.cmp = function (key1, key2) {
 * @link http://lists.w3.org/Archives/Public/public-webapps/2011JulSep/1537.html
 */
 IDBFactory.prototype.webkitGetDatabaseNames = function () {
-    if (!(this instanceof IDBFactory)) {
+    const me = this;
+    if (!(me instanceof IDBFactory)) {
         throw new TypeError('Illegal invocation');
     }
     if (hasNullOrigin()) {
@@ -688,7 +694,7 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
         req.dispatchEvent(evt);
     }
     const req = IDBRequest.__createInstance();
-    createSysDB(function () {
+    createSysDB(me.__openDatabase, function () {
         sysdb.readTransaction(function (sysReadTx) {
             sysReadTx.executeSql('SELECT "name" FROM dbVersions', [], function (sysReadTx, data) {
                 const dbNames = ShimDOMStringList.__createInstance();

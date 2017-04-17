@@ -18,7 +18,7 @@ if (process.argv[2] === 'remove') {
             fs.unlinkSync(anyJSPath);
         });
     });
-} else {
+} else if (process.argv[2] === 'add') {
     fs.writeFileSync(shimLoaderPath,
 `<!DOCTYPE html>
 <meta charset="utf-8" />
@@ -73,14 +73,16 @@ loaderWin.addEventListener('DOMContentLoaded', function () {
         testWin[prop] = loaderWin[prop];
     });
 
+    // Override to better ensure transaction has expired
+    const _setTimeout = testWin.setTimeout;
+    testWin.setTimeout = function (cb, ms) {
+        return _setTimeout(cb, ms + 500);
+    };
+
     loaderWin.setGlobalVars(testWin, {
         fullIDLSupport: true,
         replaceNonIDBGlobals: true
     });
-    const _setTimeout = testWin.setTimeout;
-    testWin.setTimeout = function (cb, ms) { // Override to better ensure transaction has expired
-        _setTimeout(cb, ms + 500);
-    };
     testWin.shimIndexedDB.__useShim();
     /*
     // We can adapt this to apply source maps once we may get sourcemap-transformer working in the browser
@@ -97,6 +99,55 @@ loaderWin.addEventListener('DOMContentLoaded', function () {
 `;
 
             fs.writeFileSync(anyJSPath, content);
+        });
+    });
+} else {
+    fs.readdir(indexedDBDir, (err, files) => {
+        if (err) {
+            console.log('err', err);
+            return;
+        }
+
+        const htmlFiles = files.filter((f) => (/\.html?$/).test(f));
+        const polyfillScript = `
+<script src="http://localhost:9999/dist/indexeddbshim-noninvasive.min.js"></script>
+<script>
+    'use strict';
+    // Override to better ensure transaction has expired
+    const _setTimeout = setTimeout;
+    setTimeout = function () {
+        arguments[1] = (arguments[1] || 0) + 500;
+        return _setTimeout.apply(window, arguments);
+    };
+    setGlobalVars(null, {
+        fullIDLSupport: true,
+        replaceNonIDBGlobals: true
+    });
+    shimIndexedDB.__useShim();
+</script>
+`;
+        /*
+        // We can adapt this to apply source maps once we may get sourcemap-transformer working in the browser
+        window.addEventListener('DOMContentLoaded', function () {
+            add_completion_callback(function () {
+                var pres = Array.from(document.querySelectorAll('pre'));
+                pres.forEach(function (pre) {
+                    loaderWin.console.log(pre.textContent);
+                });
+            });
+        });
+        */
+
+        htmlFiles.forEach((htmlFile) => {
+            // Could add these too to avoid warnings
+            // <meta charset="utf-8" />
+            // <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon" />
+            const htmlPath = path.join(indexedDBDir, htmlFile);
+            fs.writeFileSync(
+                htmlPath,
+                String(fs.readFileSync(htmlPath))
+                    .replace(polyfillScript, '') // Replace any preexisting polyfill tag
+                    .replace(/<script/, polyfillScript + '$&'));
         });
     });
 }
