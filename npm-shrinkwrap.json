@@ -1994,7 +1994,7 @@
     "eventtarget": {
       "version": "0.1.0",
       "from": "git+https://github.com/brettz9/eventdispatcher.js.git#early-late-listeners-noproxy-idl",
-      "resolved": "git+https://github.com/brettz9/eventdispatcher.js.git#e302d9d385fbb53d82c0513e33806ca0e73fe450",
+      "resolved": "git+https://github.com/brettz9/eventdispatcher.js.git#3acb382c2954fe900391efef9ef40bf379157141",
       "dev": true
     },
     "evp_bytestokey": {
