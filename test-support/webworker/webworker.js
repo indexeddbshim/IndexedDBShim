@@ -360,6 +360,14 @@ module.exports = function (workerConfig) {
                 eventHandlers[event].push(handler);
             }
         };
+        self.removeEventListener = function (event, handler) {
+            if (event in eventHandlers) {
+                const handlerPos = eventHandlers[event].indexOf(handler);
+                if (handlerPos > -1) {
+                    eventHandlers[event].splice(handlerPos, 1);
+                }
+            }
+        };
 
         // Terminate the worker
         //

@@ -234,6 +234,14 @@ workerCtx.addEventListener = function (event, handler) {
         workerCtx.eventHandlers[event].push(handler);
     }
 };
+workerCtx.removeEventListener = function (event, handler) {
+    if (event in workerCtx.eventHandlers) {
+        const handlerPos = workerCtx.eventHandlers[event].indexOf(handler);
+        if (handlerPos > -1) {
+            workerCtx.eventHandlers[event].splice(handlerPos, 1);
+        }
+    }
+};
 workerCtx.importScripts = function () {
     if (workerOptions.type === 'module') {
         // https://html.spec.whatwg.org/multipage/workers.html#importing-scripts-and-libraries
