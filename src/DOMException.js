@@ -105,8 +105,9 @@ function createNonNativeDOMExceptionClass () {
     }
 
     // Necessary for W3C tests which complains if `DOMException` has properties on its "own" prototype
-    const DummyDOMException = function DOMException () {};
-    DummyDOMException.prototype = new Error(); // Intended for subclassing
+    class DummyDOMException extends Error {};
+    // const DummyDOMException = function DOMException () {};
+    // DummyDOMException.prototype = Object.create(Error.prototype); // Intended for subclassing
     ['name', 'message'].forEach((prop) => {
         Object.defineProperty(DummyDOMException.prototype, prop, {
             enumerable: true,

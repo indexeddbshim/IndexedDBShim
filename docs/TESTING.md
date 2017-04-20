@@ -61,15 +61,26 @@ Note that, for the Mocha tests, you probably wish to
 "Switch to IndexedDBShim" when doing
 the testing since otherwise, it will only test the native implementation.
 
-For the W3C `web-platform-tests` tests, individual tests can be run by
-adding ".any.html" to an IndexedDB file, e.g.,
-<http://web-platform.test:8000/IndexedDB/historical.html>
-becomes
-<http://web-platform.test:8000/IndexedDB/historical.html.any.html>.
+For the W3C `web-platform-tests` tests, individual tests can be run
+in two ways.
 
-To do this you must run a `grunt dev` task or another such test that
-connects (to port 9999) and also follow the instructions to install
-and run the server at https://github.com/w3c/web-platform-tests.
+1. The first way currently adds files within `web-platform-tests` but
+    does not modify files. To do this you must run a `grunt dev` task
+    or another such test that connects (to port 9999) and also follow
+    the instructions to install and run the server at
+    <https://github.com/w3c/web-platform-tests>. If you run
+    `npm run w3c-add-wrap` (or `npm run w3c-remove-wrap` to undo), you
+    will be able to add ".any.html" to an IndexedDB file, e.g.,
+    <http://web-platform.test:8000/IndexedDB/historical.html>
+    becomes
+    <http://web-platform.test:8000/IndexedDB/historical.html.any.html>.
+2. The second way, unlike the first, allows files to be run from the
+    W3C test runner at <http://web-platform.test:8000/tools/runner/index.html>,
+    but it involves modifying files within `web-platform-tests` (you can use
+    `git reset` to undo, however). You can then run `npm run w3c-wrap` and
+    run files in the runner or individually. As above, you must also keep the
+    `grunt dev` task (or the like) running on port 9999 and install
+    `web-platform-tests`.
 
 ### Node Testing
 

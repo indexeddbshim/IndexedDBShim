@@ -12,6 +12,14 @@ window.addEventListener = function (type) {
     console.log('dummy window.addEventListener called');
 };
 
+window.dispatchEvent = function (e) {
+    window.onerror(e);
+};
+
+class ErrorEvent {}
+
+window.ErrorEvent = ErrorEvent;
+
 window.onerror = function () {
     console.log('Node onerror called');
 };

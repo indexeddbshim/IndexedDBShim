@@ -6326,26 +6326,26 @@ module.exports = require('./modules/_core');
   });
 
   var ShimCustomEvent = function CustomEvent (type) {
-    var eventInitDict = arguments[1];
+    var evInit = arguments[1];
     var _ev = arguments[2];
-    ShimEvent.call(this, type, eventInitDict, _ev);
+    ShimEvent.call(this, type, evInit, _ev);
     this[Symbol.toStringTag] = 'CustomEvent';
     this.toString = function () {
       return '[object CustomEvent]';
     };
-    var _evCfg = evCfg.get(this);
-    eventInitDict = eventInitDict || {};
+    // var _evCfg = evCfg.get(this);
+    evInit = evInit || {};
     this.initCustomEvent(type, evInit.bubbles, evInit.cancelable, 'detail' in evInit ? evInit.detail : null);
   };
   Object.defineProperty(ShimCustomEvent.prototype, 'constructor', {
-      enumerable: false,
-      writable: true,
-      configurable: true,
-      value: ShimCustomEvent
+    enumerable: false,
+    writable: true,
+    configurable: true,
+    value: ShimCustomEvent
   });
   ShimCustomEvent.prototype.initCustomEvent = function (type, bubbles, cancelable, detail) {
     if (!(this instanceof ShimCustomEvent)) {
-        throw new TypeError('Illegal invocation');
+      throw new TypeError('Illegal invocation');
     }
     var _evCfg = evCfg.get(this);
     ShimCustomEvent.call(this, type, {bubbles: bubbles, cancelable: cancelable, detail: detail}, arguments[4]);
@@ -6358,9 +6358,9 @@ module.exports = require('./modules/_core');
       _evCfg.detail = detail;
     }
     Object.defineProperty(this, 'detail', {
-        get: function () {
-            return _evCfg.detail;
-        }
+      get: function () {
+        return _evCfg.detail;
+      }
     });
   };
   ShimCustomEvent[Symbol.toStringTag] = 'Function';
@@ -6375,7 +6375,7 @@ module.exports = require('./modules/_core');
   });
   Object.setPrototypeOf(ShimCustomEvent.prototype, ShimEvent.prototype); // TODO: IDL needs but reported as slow!
   Object.defineProperty(ShimCustomEvent, 'prototype', {
-      writable: false
+    writable: false
   });
 
   function copyEvent (ev) {
@@ -6456,7 +6456,11 @@ module.exports = require('./modules/_core');
       customOptions = customOptions || {};
       // Todo: Make into event properties?
       this._defaultSync = customOptions.defaultSync;
-      this._extraProperties = customOptions.extraProperties;
+      this._extraProperties = customOptions.extraProperties || [];
+      if (customOptions.legacyOutputDidListenersThrowFlag) { // IndexedDB
+        this._legacyOutputDidListenersThrowCheck = true;
+        this._extraProperties.push('__legacyOutputDidListenersThrowError');
+      }
     },
     dispatchEvent: function (ev) {
       return this._dispatchEvent(ev, true);
@@ -6478,7 +6482,7 @@ module.exports = require('./modules/_core');
         eventCopy = copyEvent(ev);
         _evCfg = evCfg.get(eventCopy);
         _evCfg._dispatched = true;
-        (this._extraProperties || []).forEach(function (prop) {
+        this._extraProperties.forEach(function (prop) {
           if (prop in ev) {
             eventCopy[prop] = ev[prop]; // Todo: Put internal to `ShimEvent`?
           }
@@ -6596,7 +6600,7 @@ module.exports = require('./modules/_core');
         if (i === dummyIPos && typeof onListener === 'function') {
           // We don't splice this in as could be overwritten; executes here per
           //  https://html.spec.whatwg.org/multipage/webappapis.html#event-handler-attributes:event-handlers-14
-          this.tryCatch(function () {
+          this.tryCatch(eventCopy, function () {
             var ret = onListener.call(eventCopy.currentTarget, eventCopy);
             if (ret === false) {
               eventCopy.preventDefault();
@@ -6614,7 +6618,7 @@ module.exports = require('./modules/_core');
           (!capture && eventCopy.target !== eventCopy.currentTarget && eventCopy.eventPhase === phases.BUBBLING_PHASE))
         ) {
           var listener = listenerObj.listener;
-          this.tryCatch(function () {
+          this.tryCatch(eventCopy, function () {
             listener.call(eventCopy.currentTarget, eventCopy);
           });
           if (once) {
@@ -6622,7 +6626,7 @@ module.exports = require('./modules/_core');
           }
         }
       }, this);
-      this.tryCatch(function () {
+      this.tryCatch(eventCopy, function () {
         var onListener = checkOnListeners ? me['on' + type] : null;
         if (typeof onListener === 'function' && listenersByType.length < 2) {
           var ret = onListener.call(eventCopy.currentTarget, eventCopy); // Won't have executed if too short
@@ -6634,7 +6638,7 @@ module.exports = require('./modules/_core');
 
       return !eventCopy.defaultPrevented;
     },
-    tryCatch: function (cb) {
+    tryCatch: function (ev, cb) {
       try {
         // Per MDN: Exceptions thrown by event handlers are reported
         //  as uncaught exceptions; the event handlers run on a nested
@@ -6642,19 +6646,21 @@ module.exports = require('./modules/_core');
         //  exceptions do not propagate to the caller.
         cb();
       } catch (err) {
-        this.triggerErrorEvent(err);
+        this.triggerErrorEvent(err, ev);
       }
     },
-    triggerErrorEvent: function (err) {
+    triggerErrorEvent: function (err, ev) {
       var error = err;
       if (typeof err === 'string') {
         error = new Error('Uncaught exception: ' + err);
       }
 
       var triggerGlobalErrorEvent;
+      var useNodeImpl = false;
       if (typeof window === 'undefined' || typeof ErrorEvent === 'undefined' || (
           window && typeof window === 'object' && !window.dispatchEvent)
       ) {
+        useNodeImpl = true;
         triggerGlobalErrorEvent = function () {
           setTimeout(function () { // Node won't be able to catch in this way if we throw in the main thread
             // console.log(err); // Should we auto-log for user?
@@ -6673,7 +6679,7 @@ module.exports = require('./modules/_core');
           //    if (window.onerror) window.onerror(error.message, err.fileName, err.lineNumber, error.columnNumber, error);
 
           // `ErrorEvent` properly triggers `window.onerror` and `window.addEventListener('error')` handlers
-          var ev = new ErrorEvent('error', {
+          var errEv = new ErrorEvent('error', {
             error: err,
             message: error.message || '',
             // We can't get the actually useful user's values!
@@ -6681,21 +6687,30 @@ module.exports = require('./modules/_core');
             lineno: error.lineNumber || 0,
             colno: error.columnNumber || 0
           });
-          window.dispatchEvent(ev);
+          window.dispatchEvent(errEv);
           // console.log(err); // Should we auto-log for user?
         };
       }
-      if (this.__userErrorEventHandler) {
-        this.__userErrorEventHandler(error, triggerGlobalErrorEvent);
-      } else {
-        triggerGlobalErrorEvent();
+
+      // Todo: This really should always run here but as we can't set the global
+      //   `window` (e.g., using jsdom) since `setGlobalVars` becomes unable to
+      //   shim `indexedDB` in such a case currently (apparently due to
+      //   <https://github.com/axemclion/IndexedDBShim/issues/280>), we can't
+      //   avoid the above Node implementation (which, while providing some
+      //   fallback mechanism, is unstable)
+      if (!useNodeImpl || !this._legacyOutputDidListenersThrowCheck) triggerGlobalErrorEvent();
+
+      // See https://dom.spec.whatwg.org/#concept-event-listener-inner-invoke and
+      //  https://github.com/w3c/IndexedDB/issues/140 (also https://github.com/w3c/IndexedDB/issues/49 )
+      if (this._legacyOutputDidListenersThrowCheck) {
+        ev.__legacyOutputDidListenersThrowError = error;
       }
     }
   });
   EventTarget.prototype[Symbol.toStringTag] = 'EventTargetPrototype';
 
   Object.defineProperty(EventTarget, 'prototype', {
-      writable: false
+    writable: false
   });
 
   var ShimEventTarget = EventTarget;
@@ -6708,6 +6723,12 @@ module.exports = require('./modules/_core');
       return new EventTarget();
     }
   };
+
+  EventTarget.ShimEvent = ShimEvent;
+  EventTarget.ShimCustomEvent = ShimCustomEvent;
+  EventTarget.ShimDOMException = ShimDOMException;
+  EventTarget.ShimEventTarget = EventTarget;
+  EventTarget.EventTargetFactory = EventTargetFactory;
 
   // Todo: Move to own library (but allowing WeakMaps to be passed in for sharing here)
 
@@ -9113,14 +9134,20 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.webSQLErrback = exports.createDOMException = exports.ShimDOMException = exports.findError = exports.logError = undefined;
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; /* globals DOMException */
-
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var _CFG = require('./CFG');
 
 var _CFG2 = _interopRequireDefault(_CFG);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /* globals DOMException */
+
 
 /**
  * Creates a native DOMException, for browsers that support it
@@ -9226,8 +9253,22 @@ function createNonNativeDOMExceptionClass() {
     }
 
     // Necessary for W3C tests which complains if `DOMException` has properties on its "own" prototype
-    var DummyDOMException = function DOMException() {};
-    DummyDOMException.prototype = new Error(); // Intended for subclassing
+
+    var DummyDOMException = function (_Error) {
+        _inherits(DummyDOMException, _Error);
+
+        function DummyDOMException() {
+            _classCallCheck(this, DummyDOMException);
+
+            return _possibleConstructorReturn(this, (DummyDOMException.__proto__ || Object.getPrototypeOf(DummyDOMException)).apply(this, arguments));
+        }
+
+        return DummyDOMException;
+    }(Error);
+
+    ;
+    // const DummyDOMException = function DOMException () {};
+    // DummyDOMException.prototype = Object.create(Error.prototype); // Intended for subclassing
     ['name', 'message'].forEach(function (prop) {
         Object.defineProperty(DummyDOMException.prototype, prop, {
             enumerable: true,
@@ -10359,6 +10400,9 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
         listeners.forEach(function (l) {
             _this[l] = null;
         });
+        this.__setOptions({
+            legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
+        });
 
         this.__transactions = [];
         this.__objectStores = {};
@@ -10409,7 +10453,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
         throw new TypeError('No object store name was specified');
     }
     _IDBTransaction2.default.__assertVersionChange(this.__versionTransaction); // this.__versionTransaction may not exist if called mistakenly by user in onsuccess
-    _IDBTransaction2.default.__assertNotFinished(this.__versionTransaction);
+    _IDBTransaction2.default.__assertNotFinishedObjectStoreMethod(this.__versionTransaction);
     _IDBTransaction2.default.__assertActive(this.__versionTransaction);
 
     createOptions = Object.assign({}, createOptions);
@@ -10452,7 +10496,7 @@ IDBDatabase.prototype.deleteObjectStore = function (storeName) {
         throw new TypeError('No object store name was specified');
     }
     _IDBTransaction2.default.__assertVersionChange(this.__versionTransaction);
-    _IDBTransaction2.default.__assertNotFinished(this.__versionTransaction);
+    _IDBTransaction2.default.__assertNotFinishedObjectStoreMethod(this.__versionTransaction);
     _IDBTransaction2.default.__assertActive(this.__versionTransaction);
 
     var store = this.__objectStores[storeName];
@@ -10780,7 +10824,7 @@ function createSysDB(__openDatabase, success, failure) {
     if (sysdb) {
         success();
     } else {
-        sysdb = __openDatabase.call(_CFG2.default.win, typeof _CFG2.default.memoryDatabase === 'string' ? _CFG2.default.memoryDatabase : _path2.default.join(typeof _CFG2.default.sysDatabaseBasePath === 'string' ? _CFG2.default.sysDatabaseBasePath : _CFG2.default.databaseBasePath || '', '__sysdb__' + (_CFG2.default.addSQLiteExtension !== false ? '.sqlite' : '')), 1, 'System Database', _CFG2.default.DEFAULT_DB_SIZE);
+        sysdb = __openDatabase(typeof _CFG2.default.memoryDatabase === 'string' ? _CFG2.default.memoryDatabase : _path2.default.join(typeof _CFG2.default.sysDatabaseBasePath === 'string' ? _CFG2.default.sysDatabaseBasePath : _CFG2.default.databaseBasePath || '', '__sysdb__' + (_CFG2.default.addSQLiteExtension !== false ? '.sqlite' : '')), 1, 'System Database', _CFG2.default.DEFAULT_DB_SIZE);
         sysdb.transaction(function (systx) {
             systx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);', [], success, sysDbCreateError);
         }, sysDbCreateError);
@@ -10879,7 +10923,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
         if ((useMemoryDatabase || useDatabaseCache) && name in websqlDBCache && websqlDBCache[name][version]) {
             db = websqlDBCache[name][version];
         } else {
-            db = me.__openDatabase.call(_CFG2.default.win, useMemoryDatabase ? _CFG2.default.memoryDatabase : _path2.default.join(_CFG2.default.databaseBasePath || '', escapedDatabaseName), 1, name, _CFG2.default.DEFAULT_DB_SIZE);
+            db = me.__openDatabase(useMemoryDatabase ? _CFG2.default.memoryDatabase : _path2.default.join(_CFG2.default.databaseBasePath || '', escapedDatabaseName), 1, name, _CFG2.default.DEFAULT_DB_SIZE);
             if (useDatabaseCache) {
                 websqlDBCache[name][version] = db;
             }
@@ -10945,6 +10989,12 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                     req.__transaction = req.result.__versionTransaction = _IDBTransaction2.default.__createInstance(req.result, req.result.objectStoreNames, 'versionchange');
                                     req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded(tx, args, finished, error) {
                                         req.dispatchEvent(e);
+                                        // req.__transaction.__active = req.result.__versionTransaction.__active = false;
+                                        if (e.__legacyOutputDidListenersThrowError) {
+                                            (0, _DOMException.logError)('Error', 'An error occurred in an upgradeneeded handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
+                                            req.transaction.__abortTransaction((0, _DOMException.createDOMException)('AbortError', 'A request was aborted.'));
+                                            return;
+                                        }
                                         finished();
                                     });
                                     req.transaction.on__beforecomplete = function (ev) {
@@ -11196,7 +11246,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                                     return;
                                 }
 
-                                var sqliteDB = me.__openDatabase.call(_CFG2.default.win, _path2.default.join(_CFG2.default.databaseBasePath || '', escapedDatabaseName), 1, name, _CFG2.default.DEFAULT_DB_SIZE);
+                                var sqliteDB = me.__openDatabase(_path2.default.join(_CFG2.default.databaseBasePath || '', escapedDatabaseName), 1, name, _CFG2.default.DEFAULT_DB_SIZE);
                                 sqliteDB.transaction(function (tx) {
                                     tx.executeSql('SELECT "name" FROM __sys__', [], function (tx, data) {
                                         var tables = data.rows;
@@ -13106,6 +13156,9 @@ IDBRequest.__super = function IDBRequest() {
     var _this = this;
 
     this[Symbol.toStringTag] = 'IDBRequest';
+    this.__setOptions({
+        legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
+    });
     doneFlagGetters.forEach(function (prop) {
         Object.defineProperty(this, '__' + prop, {
             enumerable: false,
@@ -13238,7 +13291,10 @@ IDBOpenDBRequest.__createInstance = function () {
         IDBRequest.__super.call(this);
 
         this[Symbol.toStringTag] = 'IDBOpenDBRequest';
-        this.__setOptions({ extraProperties: ['oldVersion', 'newVersion', 'debug'] }); // Ensure EventTarget preserves our properties
+        this.__setOptions({
+            legacyOutputDidListenersThrowFlag: true, // Event hook for IndexedB
+            extraProperties: ['oldVersion', 'newVersion', 'debug']
+        }); // Ensure EventTarget preserves our properties
         openListeners.forEach(function (listener) {
             Object.defineProperty(_this3, listener, {
                 configurable: true, // Needed by support.js in W3C IndexedDB tests
@@ -13347,7 +13403,9 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
         me.__mode = mode;
         me.__db = db;
         me.__error = null;
-        me.__internal = false;
+        me.__setOptions({
+            legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
+        });
 
         readonlyProperties.forEach(function (readonlyProp) {
             Object.defineProperty(_this, readonlyProp, {
@@ -13418,18 +13476,13 @@ IDBTransaction.prototype.__executeRequests = function () {
             q.req.__readyState = 'done';
             q.req.__result = result;
             q.req.__error = null;
+
+            me.__active = true;
             var e = (0, _Event.createEvent)('success');
-            try {
-                // Catching a `dispatchEvent` call is normally not possible for a standard `EventTarget`,
-                // but we are using the `EventTarget` library's `__userErrorEventHandler` to override this
-                // behavior for convenience in our internal calls
-                me.__internal = true;
-                me.__active = true;
-                q.req.dispatchEvent(e);
-                me.__internal = false;
-                // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
-            } catch (err) {
-                me.__internal = false;
+            q.req.dispatchEvent(e);
+            // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
+            if (e.__legacyOutputDidListenersThrowError) {
+                (0, _DOMException.logError)('Error', 'An error occurred in a success handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
                 me.__abortTransaction((0, _DOMException.createDOMException)('AbortError', 'A request was aborted.'));
                 return;
             }
@@ -13460,27 +13513,20 @@ IDBTransaction.prototype.__executeRequests = function () {
             q.req.__error = err;
             q.req.__result = undefined;
             q.req.addLateEventListener('error', function (e) {
-                if (e.cancelable && e.defaultPrevented) {
+                if (e.cancelable && e.defaultPrevented && !e.__legacyOutputDidListenersThrowError) {
                     executeNextRequest();
                 }
             });
             q.req.addDefaultEventListener('error', function () {
                 me.__abortTransaction(q.req.__error);
             });
-            var e = void 0;
-            try {
-                // Catching a `dispatchEvent` call is normally not possible for a standard `EventTarget`,
-                // but we are using the `EventTarget` library's `__userErrorEventHandler` to override this
-                // behavior for convenience in our internal calls
-                me.__internal = true;
-                me.__active = true;
-                e = (0, _Event.createEvent)('error', err, { bubbles: true, cancelable: true });
-                q.req.dispatchEvent(e);
-                me.__internal = false;
-                // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
-            } catch (handlerErr) {
-                me.__internal = false;
-                (0, _DOMException.logError)('Error', 'An error occurred in a handler attached to request chain', handlerErr); // We do nothing else with this `handlerErr` per spec
+
+            me.__active = true;
+            var e = (0, _Event.createEvent)('error', err, { bubbles: true, cancelable: true });
+            q.req.dispatchEvent(e);
+            // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
+            if (e.__legacyOutputDidListenersThrowError) {
+                (0, _DOMException.logError)('Error', 'An error occurred in an error handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
                 e.preventDefault(); // Prevent 'error' default as steps indicate we should abort with `AbortError` even without cancellation
                 me.__abortTransaction((0, _DOMException.createDOMException)('AbortError', 'A request was aborted.'));
             }
@@ -13831,8 +13877,20 @@ IDBTransaction.__assertNotVersionChange = function (tx) {
 };
 
 IDBTransaction.__assertNotFinished = function (tx) {
-    if (!tx || tx.__completed || tx.__abortFinished) {
+    if (!tx || tx.__completed || tx.__abortFinished || tx.__errored) {
         throw (0, _DOMException.createDOMException)('InvalidStateError', 'Transaction finished by commit or abort');
+    }
+};
+
+// object store methods behave differently: see https://github.com/w3c/IndexedDB/issues/192
+IDBTransaction.__assertNotFinishedObjectStoreMethod = function (tx) {
+    try {
+        IDBTransaction.__assertNotFinished(tx);
+    } catch (err) {
+        if (tx && !tx.__completed && !tx.__abortFinished) {
+            throw (0, _DOMException.createDOMException)('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
+        }
+        throw err;
     }
 };
 
@@ -13847,16 +13905,6 @@ IDBTransaction.__assertActive = function (tx) {
 */
 IDBTransaction.prototype.__getParent = function () {
     return this.db;
-};
-/**
-* Used by our EventTarget.prototype library to detect errors in user handlers
-*/
-IDBTransaction.prototype.__userErrorEventHandler = function (error, triggerGlobalErrorEvent) {
-    if (this.__internal) {
-        this.__internal = false;
-        throw error;
-    }
-    triggerGlobalErrorEvent();
 };
 
 listeners.forEach(function (listener) {

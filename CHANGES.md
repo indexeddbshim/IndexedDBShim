@@ -495,8 +495,9 @@ they were actually changes since a more recent version on `master`.
 - Fix: Ensure will throw `InvalidStateError` `DOMException` as with deleted
     object stores or indexes for access after an aborted transaction when
     there were pending object stores or indexes to be created
-- Fix: Ensure not finished checks only check for aborts when the abort is
-    complete
+- Fix: Cause not finished assertions to fire even if at beginning of abort except for
+    `IDBDatabase` `createObjectStore`/`deleteObjectStore` which per corrected
+    spec throw different error upon (incompletely) finished check
 - Fix `IDBDatabase.createObjectStore` exception order fix (object store
     `ConstraintError` check follows key path `SyntaxError` check)
 - Fix `IDBDatabase.transaction` exception order fixes (`InvalidAccessError`
@@ -644,9 +645,9 @@ they were actually changes since a more recent version on `master`.
             for the current test status on these tests.
 
     From new W3C (Browser):
-        Individual tests can be run as per [TESTING](docs/TESTING.md) but no
-        exhaustive account has yet been taken (particularly since the automated
-        test runner is not yet set up).
+        Individual tests can be run as per [TESTING](docs/TESTING.md).
+        See [node-good-bad-files.js](test-support/node-good-bad-files.js)
+            for the current test status on these tests.
 
 - Testing (Grunt): Force ESLint (since "standard" currently causing a warning)
 - Testing (Grunt): More granular uglification, add build-browser,

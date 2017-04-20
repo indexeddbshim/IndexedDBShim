@@ -44,6 +44,9 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
         listeners.forEach((l) => {
             this[l] = null;
         });
+        this.__setOptions({
+            legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
+        });
 
         this.__transactions = [];
         this.__objectStores = {};
@@ -89,7 +92,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
         throw new TypeError('No object store name was specified');
     }
     IDBTransaction.__assertVersionChange(this.__versionTransaction); // this.__versionTransaction may not exist if called mistakenly by user in onsuccess
-    IDBTransaction.__assertNotFinished(this.__versionTransaction);
+    IDBTransaction.__assertNotFinishedObjectStoreMethod(this.__versionTransaction);
     IDBTransaction.__assertActive(this.__versionTransaction);
 
     createOptions = Object.assign({}, createOptions);
@@ -132,7 +135,7 @@ IDBDatabase.prototype.deleteObjectStore = function (storeName) {
         throw new TypeError('No object store name was specified');
     }
     IDBTransaction.__assertVersionChange(this.__versionTransaction);
-    IDBTransaction.__assertNotFinished(this.__versionTransaction);
+    IDBTransaction.__assertNotFinishedObjectStoreMethod(this.__versionTransaction);
     IDBTransaction.__assertActive(this.__versionTransaction);
 
     const store = this.__objectStores[storeName];

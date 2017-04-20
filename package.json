@@ -79,7 +79,7 @@
     "eslint-plugin-node": "4.2.2",
     "eslint-plugin-promise": "3.5.0",
     "eslint-plugin-standard": "3.0.1",
-    "eventtarget": "https://github.com/brettz9/eventdispatcher.js#early-late-listeners-noproxy-idl",
+    "eventtarget": "https://github.com/brettz9/eventdispatcher.js#legacyOutput-window-onerror",
     "grunt": "1.0.1",
     "grunt-browserify": "5.0.0",
     "grunt-cli": "1.2.0",

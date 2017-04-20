@@ -17,6 +17,9 @@ class IDBRequest {
 }
 IDBRequest.__super = function IDBRequest () {
     this[Symbol.toStringTag] = 'IDBRequest';
+    this.__setOptions({
+        legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
+    });
     doneFlagGetters.forEach(function (prop) {
         Object.defineProperty(this, '__' + prop, {
             enumerable: false,
@@ -136,7 +139,10 @@ IDBOpenDBRequest.__createInstance = function () {
         IDBRequest.__super.call(this);
 
         this[Symbol.toStringTag] = 'IDBOpenDBRequest';
-        this.__setOptions({extraProperties: ['oldVersion', 'newVersion', 'debug']}); // Ensure EventTarget preserves our properties
+        this.__setOptions({
+            legacyOutputDidListenersThrowFlag: true, // Event hook for IndexedB
+            extraProperties: ['oldVersion', 'newVersion', 'debug']
+        }); // Ensure EventTarget preserves our properties
         openListeners.forEach((listener) => {
             Object.defineProperty(this, listener, {
                 configurable: true, // Needed by support.js in W3C IndexedDB tests

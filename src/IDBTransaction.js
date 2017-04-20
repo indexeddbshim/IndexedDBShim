@@ -37,7 +37,9 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
         me.__mode = mode;
         me.__db = db;
         me.__error = null;
-        me.__internal = false;
+        me.__setOptions({
+            legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
+        });
 
         readonlyProperties.forEach((readonlyProp) => {
             Object.defineProperty(this, readonlyProp, {
@@ -104,17 +106,13 @@ IDBTransaction.prototype.__executeRequests = function () {
                 q.req.__readyState = 'done';
                 q.req.__result = result;
                 q.req.__error = null;
+
+                me.__active = true;
                 const e = createEvent('success');
-                try { // Catching a `dispatchEvent` call is normally not possible for a standard `EventTarget`,
-                    // but we are using the `EventTarget` library's `__userErrorEventHandler` to override this
-                    // behavior for convenience in our internal calls
-                    me.__internal = true;
-                    me.__active = true;
-                    q.req.dispatchEvent(e);
-                    me.__internal = false;
-                    // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
-                } catch (err) {
-                    me.__internal = false;
+                q.req.dispatchEvent(e);
+                // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
+                if (e.__legacyOutputDidListenersThrowError) {
+                    logError('Error', 'An error occurred in a success handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
                     me.__abortTransaction(createDOMException('AbortError', 'A request was aborted.'));
                     return;
                 }
@@ -139,26 +137,20 @@ IDBTransaction.prototype.__executeRequests = function () {
                 q.req.__error = err;
                 q.req.__result = undefined;
                 q.req.addLateEventListener('error', function (e) {
-                    if (e.cancelable && e.defaultPrevented) {
+                    if (e.cancelable && e.defaultPrevented && !e.__legacyOutputDidListenersThrowError) {
                         executeNextRequest();
                     }
                 });
                 q.req.addDefaultEventListener('error', function () {
                     me.__abortTransaction(q.req.__error);
                 });
-                let e;
-                try { // Catching a `dispatchEvent` call is normally not possible for a standard `EventTarget`,
-                    // but we are using the `EventTarget` library's `__userErrorEventHandler` to override this
-                    // behavior for convenience in our internal calls
-                    me.__internal = true;
-                    me.__active = true;
-                    e = createEvent('error', err, {bubbles: true, cancelable: true});
-                    q.req.dispatchEvent(e);
-                    me.__internal = false;
-                    // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
-                } catch (handlerErr) {
-                    me.__internal = false;
-                    logError('Error', 'An error occurred in a handler attached to request chain', handlerErr); // We do nothing else with this `handlerErr` per spec
+
+                me.__active = true;
+                const e = createEvent('error', err, {bubbles: true, cancelable: true});
+                q.req.dispatchEvent(e);
+                // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
+                if (e.__legacyOutputDidListenersThrowError) {
+                    logError('Error', 'An error occurred in an error handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
                     e.preventDefault(); // Prevent 'error' default as steps indicate we should abort with `AbortError` even without cancellation
                     me.__abortTransaction(createDOMException('AbortError', 'A request was aborted.'));
                 }
@@ -506,8 +498,20 @@ IDBTransaction.__assertNotVersionChange = function (tx) {
 };
 
 IDBTransaction.__assertNotFinished = function (tx) {
-    if (!tx || tx.__completed || tx.__abortFinished) {
+    if (!tx || tx.__completed || tx.__abortFinished || tx.__errored) {
         throw createDOMException('InvalidStateError', 'Transaction finished by commit or abort');
+    }
+};
+
+// object store methods behave differently: see https://github.com/w3c/IndexedDB/issues/192
+IDBTransaction.__assertNotFinishedObjectStoreMethod = function (tx) {
+    try {
+        IDBTransaction.__assertNotFinished(tx);
+    } catch (err) {
+        if (tx && !tx.__completed && !tx.__abortFinished) {
+            throw createDOMException('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
+        }
+        throw err;
     }
 };
 
@@ -522,16 +526,6 @@ IDBTransaction.__assertActive = function (tx) {
 */
 IDBTransaction.prototype.__getParent = function () {
     return this.db;
-};
-/**
-* Used by our EventTarget.prototype library to detect errors in user handlers
-*/
-IDBTransaction.prototype.__userErrorEventHandler = function (error, triggerGlobalErrorEvent) {
-    if (this.__internal) {
-        this.__internal = false;
-        throw error;
-    }
-    triggerGlobalErrorEvent();
 };
 
 listeners.forEach((listener) => {

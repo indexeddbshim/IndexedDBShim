@@ -1,7 +1,7 @@
 /* globals location, Event */
 import {createEvent, ShimEvent, ShimCustomEvent, ShimEventTarget} from './Event';
 import IDBVersionChangeEvent from './IDBVersionChangeEvent';
-import {webSQLErrback, createDOMException, ShimDOMException} from './DOMException';
+import {logError, webSQLErrback, createDOMException, ShimDOMException} from './DOMException';
 import {IDBOpenDBRequest, IDBRequest} from './IDBRequest';
 import ShimDOMStringList from './DOMStringList';
 import * as util from './util';
@@ -309,6 +309,12 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                     req.__transaction = req.result.__versionTransaction = IDBTransaction.__createInstance(req.result, req.result.objectStoreNames, 'versionchange');
                                     req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded (tx, args, finished, error) {
                                         req.dispatchEvent(e);
+                                        // req.__transaction.__active = req.result.__versionTransaction.__active = false;
+                                        if (e.__legacyOutputDidListenersThrowError) {
+                                            logError('Error', 'An error occurred in an upgradeneeded handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
+                                            req.transaction.__abortTransaction(createDOMException('AbortError', 'A request was aborted.'));
+                                            return;
+                                        }
                                         finished();
                                     });
                                     req.transaction.on__beforecomplete = function (ev) {
