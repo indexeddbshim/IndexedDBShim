@@ -250,6 +250,14 @@ The available properties relevant to browser or Node are:
 - __win__,  Object on which there may be an `openDatabase` method (if any)
     for WebSQL; Defaults to `window` or `self` in the browser and for Node,
     it is set by default to [`node-websql`](https://github.com/nolanlawson/node-websql).
+    If you are intending on adding your own `openDatabase` implementation,
+    please note that (for the sake of Node), we rely on supplying an additional
+    non-WebSQL-standard callback argument to *WebSQL* `transaction` or
+    `readTransaction` calls in our `node-websql` fork to allow it to prolong
+    the transaction (to last through our IndexedDB transaction) and to provide
+    rollback functionality. (See
+    <https://github.com/axemclion/IndexedDBShim/issues/296>, however, for
+    a remaining issue this fix does not currently overcome.)
 - __cursorPreloadPackSize__ - Number indicating how many records to preload for
     caching of (non-multiEntry) `IDBCursor.continue` calls. Defaults to 100.
 - __DEFAULT_DB_SIZE__ - Used as estimated size argument (in bytes) to
