@@ -5,6 +5,10 @@
 
 KNOWN TESTING ISSUES
 
+(The following list remaining test failures/blockers for Node; the remaining browser
+failures are listed below but are not categorized. Nevertheless, they probably
+mostly relate to most of the same issues.)
+
 1. TRANSACTION FINISHED TIMING
 
 If we were to ensure transactions finished before the next task, we'd
