@@ -3,27 +3,9 @@
 //   to 'Timeout' or 'Not Run' tests in case they are our own test environment
 //   problems)
 
-A. KNOWN TESTING ISSUES
+KNOWN TESTING ISSUES
 
-1. OPAQUE ORIGINS (see https://github.com/axemclion/IndexedDBShim/issues/283 )
-
-In order to run, the following require a one-off `srcdoc` implementation or https://github.com/tmpvar/jsdom/issues/1792
-- `idbfactory-deleteDatabase-opaque-origin.js`
-- `idbfactory-open-opaque-origin.js`
-
-2. SHARED AND SERVICE WORKERS
-
-- Need to implement as Node shims, stop disabling these tests in node-idb-test.js, and run
-
-3. NODE ISSUE-RELATED
-
-- `interfaces.js`: Has one failing test due to a bug in Node: https://github.com/axemclion/IndexedDBShim/issues/280
-
-4. BLOB/FILE
-
-- `idb-binary-key-detached.js` - Requires `ArrayBuffer.transfer` but not available in Node
-
-5. TRANSACTION FINISHED TIMING
+1. TRANSACTION FINISHED TIMING
 
 If we were to ensure transactions finished before the next task, we'd
 mostly need to use synchronous SQLite operations (such as in https://github.com/grumdrig/node-sqlite).
@@ -49,14 +31,29 @@ These are still failing regardless:
 - `upgrade-transaction-deactivation-timing.js`: ?
 - `event-dispatch-active-flag.js`
 
-6. HEAVY LOADS (?)
+2. HEAVY LOADS (?)
 - `interleaved-cursors.js` - Timing out sometimes
 - `parallel-cursors-upgrade.js` - Timing out sometimes
 
-7. CLONING/PROTOTYPE CHAIN (May not be possible to truly fix in JS; if so, add to known issues)
+3. SHARED AND SERVICE WORKERS
+
+- Need to implement as Node shims, stop disabling these tests in node-idb-test.js, and run
+
+4. OPAQUE ORIGIN TESTING (see https://github.com/axemclion/IndexedDBShim/issues/283 )
+
+In order to run, the following require a one-off `srcdoc` implementation or https://github.com/tmpvar/jsdom/issues/1792
+- `idbfactory-deleteDatabase-opaque-origin.js`
+- `idbfactory-open-opaque-origin.js`
+
+5. CLONING/PROTOTYPE CHAIN (May not be possible to truly fix in JS; if so, add to known issues)
     Uncaught exceptions have required their complete exclusion for now:
     - `bindings-inject-key.js` - Breaks tests
     - `keypath-exceptions.js` - Breaks tests
+
+6. NODE ISSUE-RELATED
+
+- `interfaces.js`: Has one failing test due to a bug in Node: https://github.com/axemclion/IndexedDBShim/issues/280
+- `idb-binary-key-detached.js` - Requires `ArrayBuffer.transfer` but not available in Node
 
 // Passing no argument to `node-idb-test.js` will test all of the IndexedDB
 //   tests including some worker tests, but only those within the
