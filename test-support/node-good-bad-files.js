@@ -161,7 +161,7 @@ goodBad.browser = {
     chrome: {
         timeout: ['idbindex-multientry-big.htm', 'idbtransaction_objectStoreNames.html'],
         notRunning: ['interleaved-cursors.html', 'keypath-exceptions.htm'],
-        badFiles: ['bindings-inject-key.html', 'event-dispatch-active-flag.html', 'idb-binary-key-detached.htm', 'idb-binary-key-roundtrip.htm', 'idbindex-query-exception-order.html', 'idbobjectstore_openKeyCursor.htm', 'idbobjectstore-add-put-exception-order.html', 'idbobjectstore-clear-exception-order.html', 'idbobjectstore-delete-exception-order.html', 'idbobjectstore-query-exception-order.html', 'interfaces.html', 'interfaces.worker.html', 'transaction-abort-generator-revert.html', 'transaction-deactivation-timing.html', 'transaction-lifetime.htm', 'upgrade-transaction-deactivation-timing.html']
+        badFiles: ['bindings-inject-key.html', 'event-dispatch-active-flag.html', 'idb-binary-key-detached.htm', 'idb-binary-key-roundtrip.htm', 'idbindex-query-exception-order.html', 'idbobjectstore-add-put-exception-order.html', 'idbobjectstore-clear-exception-order.html', 'idbobjectstore-delete-exception-order.html', 'idbobjectstore-query-exception-order.html', 'idbobjectstore-rename-store.html', 'interfaces.html', 'interfaces.worker.html', 'transaction-abort-generator-revert.html', 'transaction-deactivation-timing.html', 'transaction-lifetime.htm', 'upgrade-transaction-deactivation-timing.html']
     }
 };
 

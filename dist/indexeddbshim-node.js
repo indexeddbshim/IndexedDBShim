@@ -10397,6 +10397,68 @@ function getLatestCachedWebSQLDB(name) {
     getLatestCachedWebSQLVersion()];
 }
 
+function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, databaseDeleted, dbError) {
+    var useMemoryDatabase = typeof _CFG2.default.memoryDatabase === 'string';
+    if (useMemoryDatabase) {
+        var latestSQLiteDBCached = websqlDBCache[name] ? getLatestCachedWebSQLDB(name) : null;
+        if (!latestSQLiteDBCached) {
+            console.warn('Could not find a memory database instance to delete.');
+            databaseDeleted();
+            return;
+        }
+        var _sqliteDB = latestSQLiteDBCached._db && latestSQLiteDBCached._db._db;
+        if (!_sqliteDB || !_sqliteDB.close) {
+            console.error('The `openDatabase` implementation does not have the expected `._db._db.close` method for closing the database');
+            return;
+        }
+        _sqliteDB.close(function (err) {
+            if (err) {
+                console.warn('Error closing (destroying) memory database');
+                return;
+            }
+            databaseDeleted();
+        });
+        return;
+    }
+    if (_CFG2.default.deleteDatabaseFiles !== false && {}.toString.call(process) === '[object process]') {
+        require('fs').unlink(require('path').resolve(escapedDatabaseName), function (err) {
+            if (err && err.code !== 'ENOENT') {
+                // Ignore if file is already deleted
+                dbError({ code: 0, message: 'Error removing database file: ' + escapedDatabaseName + ' ' + err });
+                return;
+            }
+            databaseDeleted();
+        });
+        return;
+    }
+
+    var sqliteDB = __openDatabase(_path2.default.join(_CFG2.default.databaseBasePath || '', escapedDatabaseName), 1, name, _CFG2.default.DEFAULT_DB_SIZE);
+    sqliteDB.transaction(function (tx) {
+        tx.executeSql('SELECT "name" FROM __sys__', [], function (tx, data) {
+            var tables = data.rows;
+            (function deleteTables(i) {
+                if (i >= tables.length) {
+                    // If all tables are deleted, delete the housekeeping tables
+                    tx.executeSql('DROP TABLE IF EXISTS __sys__', [], function () {
+                        databaseDeleted();
+                    }, dbError);
+                } else {
+                    // Delete all tables in this database, maintained in the sys table
+                    tx.executeSql('DROP TABLE ' + util.escapeStoreNameForSQL(util.unescapeSQLiteResponse( // Avoid double-escaping
+                    tables.item(i).name)), [], function () {
+                        deleteTables(i + 1);
+                    }, function () {
+                        deleteTables(i + 1);
+                    });
+                }
+            })(0);
+        }, function (e) {
+            // __sys__ table does not exist, but that does not mean delete did not happen
+            databaseDeleted();
+        });
+    });
+}
+
 /**
  * Creates the sysDB to keep track of version numbers for databases
  **/
@@ -10412,7 +10474,7 @@ function createSysDB(__openDatabase, success, failure) {
     } else {
         sysdb = __openDatabase(typeof _CFG2.default.memoryDatabase === 'string' ? _CFG2.default.memoryDatabase : _path2.default.join(typeof _CFG2.default.sysDatabaseBasePath === 'string' ? _CFG2.default.sysDatabaseBasePath : _CFG2.default.databaseBasePath || '', '__sysdb__' + (_CFG2.default.addSQLiteExtension !== false ? '.sqlite' : '')), 1, 'System Database', _CFG2.default.DEFAULT_DB_SIZE);
         sysdb.transaction(function (systx) {
-            systx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name VARCHAR(255), version INT);', [], success, sysDbCreateError);
+            systx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name BLOB, version INT);', [], success, sysDbCreateError);
         }, sysDbCreateError);
     }
 }
@@ -10526,7 +10588,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
         }
 
         db.transaction(function (tx) {
-            tx.executeSql('CREATE TABLE IF NOT EXISTS __sys__ (name VARCHAR(255), keyPath VARCHAR(255), autoInc BOOLEAN, indexList BLOB, currNum INTEGER)', [], function () {
+            tx.executeSql('CREATE TABLE IF NOT EXISTS __sys__ (name BLOB, keyPath BLOB, autoInc BOOLEAN, indexList BLOB, currNum INTEGER)', [], function () {
                 tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList" FROM __sys__', [], function (tx, data) {
                     var connection = _IDBDatabase2.default.__createInstance(db, name, oldVersion, version, data);
                     if (!me.__connections[name]) {
@@ -10545,24 +10607,25 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                 if (err) {
                                     try {
                                         systx.executeSql('ROLLBACK', [], cb, cb);
-                                        return;
                                     } catch (er) {
                                         // Browser may fail with expired transaction above so
                                         // no choice but to manually revert
                                         sysdb.transaction(function (systx) {
-                                            function reportError() {
-                                                throw new Error('Unable to roll back upgrade transaction!');
+                                            function reportError(msg) {
+                                                throw new Error('Unable to roll back upgrade transaction!' + (msg || ''));
                                             }
 
                                             // Attempt to revert
                                             if (oldVersion === 0) {
-                                                systx.executeSql('DELETE FROM dbVersions WHERE "name" = ?', [sqlSafeName], cb, reportError);
+                                                systx.executeSql('DELETE FROM dbVersions WHERE "name" = ?', [sqlSafeName], function () {
+                                                    cb(reportError);
+                                                }, reportError);
                                             } else {
                                                 systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [oldVersion, sqlSafeName], cb, reportError);
                                             }
                                         });
-                                        return;
                                     }
+                                    return;
                                 }
                                 cb(); // In browser, should auto-commit
                             };
@@ -10610,7 +10673,11 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                         connection.close();
                                         setTimeout(function () {
                                             var err = (0, _DOMException.createDOMException)('AbortError', 'The upgrade transaction was aborted.');
-                                            sysdbFinishedCb(systx, err, function () {
+                                            sysdbFinishedCb(systx, err, function (reportError) {
+                                                if (oldVersion === 0) {
+                                                    cleanupDatabaseResources(me.__openDatabase, name, escapedDatabaseName, dbCreateError.bind(null, err), reportError || dbCreateError);
+                                                    return;
+                                                }
                                                 dbCreateError(err);
                                             });
                                         });
@@ -10763,6 +10830,13 @@ IDBFactory.prototype.deleteDatabase = function (name) {
             // function callback (cb) { cb(); }
             // callback(function () {
 
+            function completeDatabaseDelete() {
+                req.__result = undefined;
+                req.__readyState = 'done';
+                var e = new _IDBVersionChangeEvent2.default('success', { oldVersion: version, newVersion: null });
+                req.dispatchEvent(e);
+            }
+
             function databaseDeleted() {
                 sysdbFinishedCbDelete(false, function () {
                     if (useDatabaseCache && name in websqlDBCache) {
@@ -10770,18 +10844,13 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                     }
                     delete me.__connections[name];
 
-                    req.__result = undefined;
-                    req.__readyState = 'done';
-                    var e = new _IDBVersionChangeEvent2.default('success', { oldVersion: version, newVersion: null });
-                    req.dispatchEvent(e);
+                    completeDatabaseDelete();
                 });
             }
             sysdb.readTransaction(function (sysReadTx) {
                 sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE "name" = ?', [sqlSafeName], function (sysReadTx, data) {
                     if (data.rows.length === 0) {
-                        req.__result = undefined;
-                        var e = new _IDBVersionChangeEvent2.default('success', { oldVersion: version, newVersion: null });
-                        req.dispatchEvent(e);
+                        completeDatabaseDelete();
                         return;
                     }
                     version = data.rows.item(0).version;
@@ -10799,64 +10868,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                                 // Todo: We should also check whether `dbVersions` is empty and if so, delete upon
                                 //    `deleteDatabaseFiles` config. We also ought to do this when aborting (see
                                 //    above code with `DELETE FROM dbVersions`)
-                                if (useMemoryDatabase) {
-                                    var latestSQLiteDBCached = websqlDBCache[name] ? getLatestCachedWebSQLDB(name) : null;
-                                    if (!latestSQLiteDBCached) {
-                                        console.warn('Could not find a memory database instance to delete.');
-                                        databaseDeleted();
-                                        return;
-                                    }
-                                    var _sqliteDB = latestSQLiteDBCached._db && latestSQLiteDBCached._db._db;
-                                    if (!_sqliteDB || !_sqliteDB.close) {
-                                        console.error('The `openDatabase` implementation does not have the expected `._db._db.close` method for closing the database');
-                                        return;
-                                    }
-                                    _sqliteDB.close(function (err) {
-                                        if (err) {
-                                            console.warn('Error closing (destroying) memory database');
-                                            return;
-                                        }
-                                        databaseDeleted();
-                                    });
-                                    return;
-                                }
-                                if (_CFG2.default.deleteDatabaseFiles !== false && {}.toString.call(process) === '[object process]') {
-                                    require('fs').unlink(require('path').resolve(escapedDatabaseName), function (err) {
-                                        if (err && err.code !== 'ENOENT') {
-                                            // Ignore if file is already deleted
-                                            dbError({ code: 0, message: 'Error removing database file: ' + escapedDatabaseName + ' ' + err });
-                                            return;
-                                        }
-                                        databaseDeleted();
-                                    });
-                                    return;
-                                }
-
-                                var sqliteDB = me.__openDatabase(_path2.default.join(_CFG2.default.databaseBasePath || '', escapedDatabaseName), 1, name, _CFG2.default.DEFAULT_DB_SIZE);
-                                sqliteDB.transaction(function (tx) {
-                                    tx.executeSql('SELECT "name" FROM __sys__', [], function (tx, data) {
-                                        var tables = data.rows;
-                                        (function deleteTables(i) {
-                                            if (i >= tables.length) {
-                                                // If all tables are deleted, delete the housekeeping tables
-                                                tx.executeSql('DROP TABLE IF EXISTS __sys__', [], function () {
-                                                    databaseDeleted();
-                                                }, dbError);
-                                            } else {
-                                                // Delete all tables in this database, maintained in the sys table
-                                                tx.executeSql('DROP TABLE ' + util.escapeStoreNameForSQL(util.unescapeSQLiteResponse( // Avoid double-escaping
-                                                tables.item(i).name)), [], function () {
-                                                    deleteTables(i + 1);
-                                                }, function () {
-                                                    deleteTables(i + 1);
-                                                });
-                                            }
-                                        })(0);
-                                    }, function (e) {
-                                        // __sys__ table does not exist, but that does not mean delete did not happen
-                                        databaseDeleted();
-                                    });
-                                });
+                                cleanupDatabaseResources(me.__openDatabase, name, escapedDatabaseName, databaseDeleted, dbError);
                             }, dbError);
                         }, dbError, null, function (currentTask, err, done, rollback, commit) {
                             if (currentTask.readOnly || err) {

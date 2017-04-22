@@ -102,66 +102,71 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                 // }, intervalSpacing);
                 return;
             }
-            shimNS.files['Files with all tests passing'] = shimNS.files.Pass.filter((p) =>
-                !shimNS.files.Fail.includes(p) &&
-                !shimNS.files.Timeout.includes(p) &&
-                !shimNS.files['Not Run'].includes(p)
-            );
-            console.log('\nTest files by status (may recur):');
-            console.log(
-                // Object.entries(shimNS.files).reduce((_, [status, files]) => { // Sometimes failing in Node 6.9.2
-                Object.keys(shimNS.files).reduce((_, status) => {
-                    const files = shimNS.files[status];
-                    if (!files.length) {
-                        return _ + '  ' + status + ': 0\n';
-                    }
-                    return _ + '  ' + status + ' (' + files.length + '): [\n    ' + cleanJSONOutput(files).slice(1, -1) + '\n  ]\n';
-                }, '\n')
-            );
 
-            console.log('  Number of files processed: ' + (ct - excludedCount));
-
-            console.log('\nNumber of total tests by status:');
-            shimNS.statuses['Total tests'] = Object.values(shimNS.statuses).reduce((ct, statusCt) => ct + statusCt);
-            console.log(
-                cleanJSONOutput(shimNS.statuses, null, 2) + '\n'
-            );
-
-            console.log('Unexpected failures:');
-            const failedFiles = shimNS.files.Fail.filter((f) => !badFiles.includes(f) && !['../non-indexedDB/interface-objects.js'].includes(f) && (!workers || !['_service-worker-indexeddb.https.js'].includes(f)));
-            if (failedFiles.length) {
+            // Ensure time for final clean-up (e.g., deleting databases) and
+            //   logging before reporting results
+            setTimeout(() => {
+                shimNS.files['Files with all tests passing'] = shimNS.files.Pass.filter((p) =>
+                    !shimNS.files.Fail.includes(p) &&
+                    !shimNS.files.Timeout.includes(p) &&
+                    !shimNS.files['Not Run'].includes(p)
+                );
+                console.log('\nTest files by status (may recur):');
                 console.log(
-                     '  ' + '(' + failedFiles.length + '): [\n    ' + cleanJSONOutput(failedFiles).slice(1, -1) + '\n  ]\n'
+                    // Object.entries(shimNS.files).reduce((_, [status, files]) => { // Sometimes failing in Node 6.9.2
+                    Object.keys(shimNS.files).reduce((_, status) => {
+                        const files = shimNS.files[status];
+                        if (!files.length) {
+                            return _ + '  ' + status + ': 0\n';
+                        }
+                        return _ + '  ' + status + ' (' + files.length + '): [\n    ' + cleanJSONOutput(files).slice(1, -1) + '\n  ]\n';
+                    }, '\n')
                 );
-            } else console.log('(None)');
 
-            if (shimNS.fileMap) {
+                console.log('  Number of files processed: ' + (ct - excludedCount));
+
+                console.log('\nNumber of total tests by status:');
+                shimNS.statuses['Total tests'] = Object.values(shimNS.statuses).reduce((ct, statusCt) => ct + statusCt);
                 console.log(
-                    [...shimNS.fileMap].reduce(
-                        (str, [fileName, [passing, total]]) =>
-                            str + fileName + ': ' + passing + '/' + total + '\n',
-                        ''
-                    )
+                    cleanJSONOutput(shimNS.statuses, null, 2) + '\n'
                 );
-                shimNS.fileMap.clear(); // Release memory
-            }
-            if (excluded.length) {
-                console.log('Please note that the following tests are being deliberately excluded as we do not yet have the built-in support for their features (e.g., shared and service workers), and they are not currently allowing the other tests to complete: ' + cleanJSONOutput(excluded));
-            }
-            if (shimNS.jsonOutput) {
-                const jsonOutputPath = path.join(
-                    'test-support', 'json-output' +
-                    // new Date().getTime() +
-                    '.json'
-                );
-                fs.writeFile(jsonOutputPath, JSON.stringify(shimNS.jsonOutput, null, 2), function (err) {
-                    if (err) { console.log(err); return; }
-                    console.log('Saved to ' + jsonOutputPath);
+
+                console.log('Unexpected failures:');
+                const failedFiles = shimNS.files.Fail.filter((f) => !badFiles.includes(f) && !['../non-indexedDB/interface-objects.js'].includes(f) && (!workers || !['_service-worker-indexeddb.https.js'].includes(f)));
+                if (failedFiles.length) {
+                    console.log(
+                         '  ' + '(' + failedFiles.length + '): [\n    ' + cleanJSONOutput(failedFiles).slice(1, -1) + '\n  ]\n'
+                    );
+                } else console.log('(None)');
+
+                if (shimNS.fileMap) {
+                    console.log(
+                        [...shimNS.fileMap].reduce(
+                            (str, [fileName, [passing, total]]) =>
+                                str + fileName + ': ' + passing + '/' + total + '\n',
+                            ''
+                        )
+                    );
+                    shimNS.fileMap.clear(); // Release memory
+                }
+                if (excluded.length) {
+                    console.log('Please note that the following tests are being deliberately excluded as we do not yet have the built-in support for their features (e.g., shared and service workers), and they are not currently allowing the other tests to complete: ' + cleanJSONOutput(excluded));
+                }
+                if (shimNS.jsonOutput) {
+                    const jsonOutputPath = path.join(
+                        'test-support', 'json-output' +
+                        // new Date().getTime() +
+                        '.json'
+                    );
+                    fs.writeFile(jsonOutputPath, JSON.stringify(shimNS.jsonOutput, null, 2), function (err) {
+                        if (err) { console.log(err); return; }
+                        console.log('Saved to ' + jsonOutputPath);
+                        exit();
+                    });
+                } else {
                     exit();
-                });
-            } else {
-                exit();
-            }
+                }
+            }, 1000);
         }
         finishedCheck();
     };

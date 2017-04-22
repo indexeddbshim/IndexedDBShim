@@ -508,6 +508,11 @@ they were actually changes since a more recent version on `master`.
 - Fix: Close connection on abort (setting closed flag)
 - Fix: Have `deleteDatabase` empty relevant `connections` (relevant
     for `__forceClose` as well as `open`)
+- Fix: Change `VARCHAR(255)` to `BLOB` for database and store name
+    fields as may be longer (for db names, if
+    `databaseNameLengthLimit` is higher than default)
+- Fix: Upon upgrade transaction abort, attempt to clean up other resources
+    (remove memory database or remove/empty database file if no prior versions)
 - Repo files: Rename test folders for ease in distinguishing
 - Optimize: Only retrieve required SQLite columns
 - Optimize: Have `IDBObjectStore` and `IDBIndex`'s `get` and
