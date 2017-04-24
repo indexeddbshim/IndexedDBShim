@@ -350,8 +350,11 @@ Node-only config:
     the empty string) is given; otherwise is the empty string
 - __databaseBasePath__ - Base path for user database files; defaults to the
     empty string
-- __deleteDatabaseFiles__ - Deletes physical database file upon `deleteDatabase`
-    (instead of merely emptying). Defaults to true.
+- __deleteDatabaseFiles__ - Deletes physical database file upon
+    `deleteDatabase` (instead of merely emptying). Defaults to `true`.
+    Does not currently delete the database for tracking available
+    databases and versions, `__sys__`, if emptied; see
+    [#278](https://github.com/axemclion/IndexedDBShim/issues/278).
 - __memoryDatabase__ - String config to cause all opening, deleting, and
     listing to be of SQLite in-memory databases; name supplied
     by user is still used (including to automatically build a cache since
