@@ -9134,20 +9134,14 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.webSQLErrback = exports.createDOMException = exports.ShimDOMException = exports.findError = exports.logError = undefined;
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; /* globals DOMException */
+
 
 var _CFG = require('./CFG');
 
 var _CFG2 = _interopRequireDefault(_CFG);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /* globals DOMException */
-
 
 /**
  * Creates a native DOMException, for browsers that support it
@@ -9254,21 +9248,9 @@ function createNonNativeDOMExceptionClass() {
 
     // Necessary for W3C tests which complains if `DOMException` has properties on its "own" prototype
 
-    var DummyDOMException = function (_Error) {
-        _inherits(DummyDOMException, _Error);
-
-        function DummyDOMException() {
-            _classCallCheck(this, DummyDOMException);
-
-            return _possibleConstructorReturn(this, (DummyDOMException.__proto__ || Object.getPrototypeOf(DummyDOMException)).apply(this, arguments));
-        }
-
-        return DummyDOMException;
-    }(Error);
-
-    ;
-    // const DummyDOMException = function DOMException () {};
-    // DummyDOMException.prototype = Object.create(Error.prototype); // Intended for subclassing
+    // class DummyDOMException extends Error {}; // Sometimes causing problems in Node
+    var DummyDOMException = function DOMException() {};
+    DummyDOMException.prototype = Object.create(Error.prototype); // Intended for subclassing
     ['name', 'message'].forEach(function (prop) {
         Object.defineProperty(DummyDOMException.prototype, prop, {
             enumerable: true,
@@ -10990,7 +10972,6 @@ IDBFactory.prototype.open = function (name /* , version */) {
                 websqlDBCache[name][version] = db;
             }
         }
-        req.__readyState = 'done';
 
         if (version === undefined) {
             version = oldVersion || 1;
@@ -11010,6 +10991,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                     }
                     me.__connections[name].push(connection);
                     function addResult() {
+                        req.__readyState = 'done';
                         req.__result = connection;
                     }
 
@@ -11046,13 +11028,13 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
                             sysdb.transaction(function (systx) {
                                 function versionSet() {
-                                    addResult(); // Todo: Per open database step order, this should really occur after the upgrade transaction finishes (replace `req.result` with `connection`)
+                                    addResult(); // Todo: Per open database step order, this should really occur after the upgrade transaction finishes (replace `req.result` with `connection`); also for `readyState`--see https://github.com/w3c/IndexedDB/issues/161
 
                                     var e = new _IDBVersionChangeEvent2.default('upgradeneeded', { oldVersion: oldVersion, newVersion: version });
-                                    req.__transaction = req.result.__versionTransaction = _IDBTransaction2.default.__createInstance(req.result, req.result.objectStoreNames, 'versionchange');
+                                    req.__transaction = req.__result.__versionTransaction = _IDBTransaction2.default.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
                                     req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded(tx, args, finished, error) {
                                         req.dispatchEvent(e);
-                                        // req.__transaction.__active = req.result.__versionTransaction.__active = false;
+                                        // req.__transaction.__active = req.__result.__versionTransaction.__active = false;
                                         if (e.__legacyOutputDidListenersThrowError) {
                                             (0, _DOMException.logError)('Error', 'An error occurred in an upgradeneeded handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
                                             req.transaction.__abortTransaction((0, _DOMException.createDOMException)('AbortError', 'A request was aborted.'));
@@ -11061,7 +11043,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                         finished();
                                     });
                                     req.transaction.on__beforecomplete = function (ev) {
-                                        req.result.__versionTransaction = null;
+                                        req.__result.__versionTransaction = null;
                                         sysdbFinishedCb(systx, false, function () {
                                             req.transaction.__transFinishedCb(false, function () {
                                                 if (useDatabaseCache) {
@@ -11097,7 +11079,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                         });
                                     };
                                     req.transaction.on__complete = function () {
-                                        if (req.result.__closed) {
+                                        if (req.__result.__closed) {
                                             req.__transaction = null;
                                             var _err = (0, _DOMException.createDOMException)('AbortError', 'The connection has been closed.');
                                             dbCreateError(_err);
@@ -13181,7 +13163,7 @@ IDBRequest.__super = function IDBRequest() {
             enumerable: true,
             configurable: true,
             get: function get() {
-                if (this.readyState !== 'done') {
+                if (this.__readyState !== 'done') {
                     throw (0, _DOMException.createDOMException)('InvalidStateError', "Can't get " + prop + '; the request is still pending.');
                 }
                 return this['__' + prop];
@@ -13481,7 +13463,7 @@ IDBTransaction.prototype.__executeRequests = function () {
             if (req) {
                 q.req = req; // Need to do this in case of cursors
             }
-            if (q.req.readyState === 'done') {
+            if (q.req.__readyState === 'done') {
                 // Avoid continuing with aborted requests
                 return;
             }
@@ -13506,7 +13488,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 // We've already called "onerror", "onabort", or thrown within the transaction, so don't do it again.
                 return;
             }
-            if (q.req && q.req.readyState === 'done') {
+            if (q.req && q.req.__readyState === 'done') {
                 // Avoid continuing with aborted requests
                 return;
             }
@@ -13563,7 +13545,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                         q.op(tx, q.args, executeNextRequest, error);
                         return;
                     }
-                    if (q.req.readyState === 'done') {
+                    if (q.req.__readyState === 'done') {
                         // Avoid continuing with aborted requests
                         return;
                     }
@@ -13811,7 +13793,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
 
         me.dispatchEvent((0, _Event.createEvent)('__preabort'));
         me.__requests.filter(function (q) {
-            return q.req && q.req.readyState !== 'done';
+            return q.req && q.req.__readyState !== 'done';
         }).reduce(function (promises, q) {
             // We reduce to a chain of promises to be queued in order, so we cannot use `Promise.all`,
             //  and I'm unsure whether `setTimeout` currently behaves first-in-first-out with the same timeout

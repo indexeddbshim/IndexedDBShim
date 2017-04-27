@@ -318,7 +318,6 @@ IDBFactory.prototype.open = function (name /* , version */) {
                 websqlDBCache[name][version] = db;
             }
         }
-        req.__readyState = 'done';
 
         if (version === undefined) {
             version = oldVersion || 1;
@@ -338,6 +337,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                     }
                     me.__connections[name].push(connection);
                     function addResult () {
+                        req.__readyState = 'done';
                         req.__result = connection;
                     }
 
@@ -373,13 +373,13 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
                             sysdb.transaction(function (systx) {
                                 function versionSet () {
-                                    addResult(); // Todo: Per open database step order, this should really occur after the upgrade transaction finishes (replace `req.result` with `connection`)
+                                    addResult(); // Todo: Per open database step order, this should really occur after the upgrade transaction finishes (replace `req.result` with `connection`); also for `readyState`--see https://github.com/w3c/IndexedDB/issues/161
 
                                     const e = new IDBVersionChangeEvent('upgradeneeded', {oldVersion, newVersion: version});
-                                    req.__transaction = req.result.__versionTransaction = IDBTransaction.__createInstance(req.result, req.result.objectStoreNames, 'versionchange');
+                                    req.__transaction = req.__result.__versionTransaction = IDBTransaction.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
                                     req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded (tx, args, finished, error) {
                                         req.dispatchEvent(e);
-                                        // req.__transaction.__active = req.result.__versionTransaction.__active = false;
+                                        // req.__transaction.__active = req.__result.__versionTransaction.__active = false;
                                         if (e.__legacyOutputDidListenersThrowError) {
                                             logError('Error', 'An error occurred in an upgradeneeded handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
                                             req.transaction.__abortTransaction(createDOMException('AbortError', 'A request was aborted.'));
@@ -388,7 +388,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                         finished();
                                     });
                                     req.transaction.on__beforecomplete = function (ev) {
-                                        req.result.__versionTransaction = null;
+                                        req.__result.__versionTransaction = null;
                                         sysdbFinishedCb(systx, false, function () {
                                             req.transaction.__transFinishedCb(false, function () {
                                                 if (useDatabaseCache) {
@@ -424,7 +424,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                         });
                                     };
                                     req.transaction.on__complete = function () {
-                                        if (req.result.__closed) {
+                                        if (req.__result.__closed) {
                                             req.__transaction = null;
                                             const err = createDOMException('AbortError', 'The connection has been closed.');
                                             dbCreateError(err);
