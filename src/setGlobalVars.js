@@ -1,5 +1,4 @@
 /* globals self */
-import 'babel-polyfill'; // `Object.assign` including within `EventTarget`, generator functions, `Array.from`, etc.; see https://babeljs.io/docs/usage/polyfill/
 import shimIDBVersionChangeEvent from './IDBVersionChangeEvent';
 import {IDBCursor as shimIDBCursor, IDBCursorWithValue as shimIDBCursorWithValue} from './IDBCursor';
 import {IDBRequest as shimIDBRequest, IDBOpenDBRequest as shimIDBOpenDBRequest} from './IDBRequest';
@@ -12,9 +11,6 @@ import shimIDBTransaction from './IDBTransaction';
 import shimIDBDatabase from './IDBDatabase';
 import polyfill from './polyfill';
 import CFG from './CFG';
-
-const glob = typeof global !== 'undefined' ? global : (typeof window !== 'undefined' ? window : self);
-glob._babelPolyfill = false; // http://stackoverflow.com/questions/31282702/conflicting-use-of-babel-register
 
 function setConfig (prop, val) {
     if (prop && typeof prop === 'object') {
