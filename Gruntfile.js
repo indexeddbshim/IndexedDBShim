@@ -1,6 +1,24 @@
 /* global module:false */
 'use strict';
 
+const babelNodeOptions = {
+    sourceMapsAbsolute: true,
+    plugins: ['add-module-exports'],
+    presets: [
+        ['env', {
+            targets: {
+                node: 6.9
+            }
+        }]
+    ]
+};
+
+const babelBrowserOptions = {
+    sourceMapsAbsolute: true,
+    plugins: ['add-module-exports'],
+    presets: ['es2015']
+};
+
 const mapstraction = require('mapstraction');
 module.exports = function (grunt) {
     const sauceuser = process.env.SAUCE_USERNAME !== undefined ? process.env.SAUCE_USERNAME : 'indexeddbshim';
@@ -13,7 +31,7 @@ module.exports = function (grunt) {
         browserify: {
             unicode: {
                 options: {
-                    transform: [['babelify', {sourceMapsAbsolute: true}]],
+                    transform: [['babelify', babelBrowserOptions]],
                     browserifyOptions: {
                         debug: true,
                         plugin: [function (b, o) {
@@ -28,7 +46,7 @@ module.exports = function (grunt) {
             },
             unicodeNode: {
                 options: {
-                    transform: [['babelify', {sourceMapsAbsolute: true}]],
+                    transform: [['babelify', babelNodeOptions]],
                     exclude: ['websql/custom', 'websql/lib/sqlite/SQLiteDatabase'],
                     // Avoid `window` checking
                     browserifyOptions: {
@@ -55,7 +73,7 @@ module.exports = function (grunt) {
             },
             browser: {
                 options: {
-                    transform: [['babelify', {sourceMapsAbsolute: true}]],
+                    transform: [['babelify', babelBrowserOptions]],
                     browserifyOptions: {
                         debug: true,
                         plugin: [function (b, o) {
@@ -70,7 +88,7 @@ module.exports = function (grunt) {
             },
             browserNoninvasive: {
                 options: {
-                    transform: [['babelify', {sourceMapsAbsolute: true}]],
+                    transform: [['babelify', babelBrowserOptions]],
                     browserifyOptions: {
                         debug: true,
                         standalone: 'setGlobalVars',
@@ -86,7 +104,7 @@ module.exports = function (grunt) {
             },
             node: {
                 options: {
-                    transform: [['babelify', {sourceMapsAbsolute: true}]],
+                    transform: [['babelify', babelNodeOptions]],
                     exclude: ['websql/custom', 'websql/lib/sqlite/SQLiteDatabase'],
                     // Avoid `window` checking
                     browserifyOptions: {
@@ -124,17 +142,6 @@ module.exports = function (grunt) {
                 src: 'dist/<%= pkg.name%>-UnicodeIdentifiers.js',
                 dest: 'dist/<%= pkg.name%>-UnicodeIdentifiers.min.js'
             },
-            unicodeNode: {
-                options: {
-                    banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
-                    sourceMap: true,
-                    sourceMapIn: 'dist/<%=pkg.name%>-UnicodeIdentifiers-node.js.map',
-                    sourceMapName: 'dist/<%=pkg.name%>-UnicodeIdentifiers-node.min.js.map',
-                    sourceMapRoot: 'http://nparashuram.com/IndexedDBShim/dist/'
-                },
-                src: 'dist/<%= pkg.name%>-UnicodeIdentifiers-node.js',
-                dest: 'dist/<%= pkg.name%>-UnicodeIdentifiers-node.min.js'
-            },
             browser: {
                 options: {
                     banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
@@ -156,17 +163,6 @@ module.exports = function (grunt) {
                 },
                 src: 'dist/<%= pkg.name%>-noninvasive.js',
                 dest: 'dist/<%=pkg.name%>-noninvasive.min.js'
-            },
-            node: {
-                options: {
-                    banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
-                    sourceMap: true,
-                    sourceMapIn: 'dist/<%=pkg.name%>-node.js.map',
-                    sourceMapName: 'dist/<%=pkg.name%>-node.min.js.map',
-                    sourceMapRoot: 'http://nparashuram.com/IndexedDBShim/dist/'
-                },
-                src: 'dist/<%= pkg.name%>-node.js',
-                dest: 'dist/<%=pkg.name%>-node.min.js'
             }
         },
         clean: {
@@ -342,7 +338,7 @@ module.exports = function (grunt) {
             },
             node: {
                 files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
-                tasks: ['eslint', 'browserify:node', 'uglify:node']
+                tasks: ['eslint', 'browserify:node']
             },
             unicode: {
                 files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
@@ -350,7 +346,7 @@ module.exports = function (grunt) {
             },
             unicodeNode: {
                 files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
-                tasks: ['browserify:unicodeNode', 'uglify:unicodeNode']
+                tasks: ['browserify:unicodeNode']
             }
         }
     });
@@ -361,9 +357,9 @@ module.exports = function (grunt) {
 
     grunt.registerTask('build-browser', ['eslint', 'browserify:browser', 'uglify:browser']);
     grunt.registerTask('build-browserNoninvasive', ['eslint', 'browserify:browserNoninvasive', 'uglify:browserNoninvasive']);
-    grunt.registerTask('build-node', ['eslint', 'browserify:node', 'uglify:node']);
+    grunt.registerTask('build-node', ['eslint', 'browserify:node']);
     grunt.registerTask('build-unicode', ['eslint', 'browserify:unicode', 'uglify:unicode']);
-    grunt.registerTask('build-unicodeNode', ['browserify:unicodeNode', 'uglify:unicodeNode']);
+    grunt.registerTask('build-unicodeNode', ['browserify:unicodeNode']);
     grunt.registerTask('build', ['eslint', 'browserify', 'uglify']);
 
     const testJobs = ['build', 'connect'];

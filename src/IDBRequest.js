@@ -10,10 +10,8 @@ const doneFlagGetters = ['result', 'error'];
  * The IDBRequest Object that is returns for all async calls
  * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#request-api
  */
-class IDBRequest {
-    constructor () {
-        throw new TypeError('Illegal constructor');
-    }
+function IDBRequest () {
+    throw new TypeError('Illegal constructor');
 }
 IDBRequest.__super = function IDBRequest () {
     this[Symbol.toStringTag] = 'IDBRequest';
@@ -122,9 +120,11 @@ const openListeners = ['onblocked', 'onupgradeneeded'];
 /**
  * The IDBOpenDBRequest called when a database is opened
  */
-class IDBOpenDBRequest extends IDBRequest {
+function IDBOpenDBRequest () {
+    throw new Error('Illegal constructor');
 }
 IDBOpenDBRequest.prototype = Object.create(IDBRequest.prototype);
+IDBOpenDBRequest.prototype.constructor = IDBOpenDBRequest;
 
 Object.defineProperty(IDBOpenDBRequest.prototype, 'constructor', {
     enumerable: false,
