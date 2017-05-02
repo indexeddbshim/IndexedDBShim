@@ -77,7 +77,7 @@ const CFG = {};
     //   defaults to `true`
     'addSQLiteExtension',
     ['memoryDatabase', (val) => { // Various types of in-memory databases that can auto-delete
-        if ((/^(?::memory:|file::memory:(\?[^#]*)?(#.*)?)?$/).test(val)) {
+        if (!(/^(?::memory:|file::memory:(\?[^#]*)?(#.*)?)?$/).test(val)) {
             throw new TypeError('`memoryDatabase` must be the empty string, ":memory:", or a "file::memory:[?queryString][#hash] URL".');
         }
     }],
