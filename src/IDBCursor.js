@@ -561,7 +561,13 @@ Object.defineProperty(IDBCursor, 'prototype', {
     writable: false
 });
 
-class IDBCursorWithValue extends IDBCursor {}
+function IDBCursorWithValue () {
+    throw new TypeError('Illegal constructor');
+}
+
+IDBCursorWithValue.prototype = Object.create(IDBCursor.prototype);
+IDBCursorWithValue.prototype.constructor = IDBCursorWithValue;
+
 const IDBCursorWithValueAlias = IDBCursorWithValue;
 IDBCursorWithValue.__createInstance = function (...args) {
     function IDBCursorWithValue () {
