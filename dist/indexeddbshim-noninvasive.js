@@ -9656,7 +9656,7 @@ exports.ShimEvent = _eventtarget.ShimEvent;
 exports.ShimCustomEvent = _eventtarget.ShimCustomEvent;
 exports.ShimEventTarget = _eventtarget.ShimEventTarget;
 
-},{"./util":346,"eventtarget":298}],331:[function(require,module,exports){
+},{"./util":348,"eventtarget":298}],331:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -9705,12 +9705,6 @@ var _CFG2 = _interopRequireDefault(_CFG);
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 /**
  * The IndexedDB Cursor Object
@@ -10255,17 +10249,12 @@ Object.defineProperty(IDBCursor, 'prototype', {
     writable: false
 });
 
-var IDBCursorWithValue = function (_IDBCursor) {
-    _inherits(IDBCursorWithValue, _IDBCursor);
+function IDBCursorWithValue() {
+    throw new TypeError('Illegal constructor');
+}
 
-    function IDBCursorWithValue() {
-        _classCallCheck(this, IDBCursorWithValue);
-
-        return _possibleConstructorReturn(this, (IDBCursorWithValue.__proto__ || Object.getPrototypeOf(IDBCursorWithValue)).apply(this, arguments));
-    }
-
-    return IDBCursorWithValue;
-}(IDBCursor);
+IDBCursorWithValue.prototype = Object.create(IDBCursor.prototype);
+IDBCursorWithValue.prototype.constructor = IDBCursorWithValue;
 
 var IDBCursorWithValueAlias = IDBCursorWithValue;
 IDBCursorWithValue.__createInstance = function () {
@@ -10301,7 +10290,7 @@ Object.defineProperty(IDBCursorWithValue, 'prototype', {
 exports.IDBCursor = IDBCursor;
 exports.IDBCursorWithValue = IDBCursorWithValue;
 
-},{"./CFG":327,"./DOMException":328,"./IDBFactory":333,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBRequest":337,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":346}],332:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./IDBFactory":333,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBRequest":337,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":348}],332:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10615,7 +10604,7 @@ Object.defineProperty(IDBDatabase, 'prototype', {
 exports.default = IDBDatabase;
 module.exports = exports['default'];
 
-},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./Event":330,"./IDBObjectStore":336,"./IDBTransaction":338,"./Sca":341,"./util":346,"eventtarget":298}],333:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./Event":330,"./IDBObjectStore":336,"./IDBTransaction":338,"./Sca":341,"./util":348,"eventtarget":298}],333:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -11436,7 +11425,7 @@ exports.shimIndexedDB = shimIndexedDB;
 
 }).call(this,require('_process'))
 
-},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./Event":330,"./IDBDatabase":332,"./IDBRequest":337,"./IDBTransaction":338,"./IDBVersionChangeEvent":339,"./Key":340,"./util":346,"_process":300,"fs":3,"path":299,"sync-promise":302}],334:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./Event":330,"./IDBDatabase":332,"./IDBRequest":337,"./IDBTransaction":338,"./IDBVersionChangeEvent":339,"./Key":340,"./util":348,"_process":300,"fs":3,"path":299,"sync-promise":302}],334:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12052,7 +12041,7 @@ exports.executeFetchIndexData = executeFetchIndexData;
 exports.IDBIndex = IDBIndex;
 exports.default = IDBIndex;
 
-},{"./CFG":327,"./DOMException":328,"./IDBCursor":331,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":346}],335:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./IDBCursor":331,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":348}],335:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12236,7 +12225,7 @@ exports.IDBKeyRange = IDBKeyRange;
 exports.convertValueToKeyRange = convertValueToKeyRange;
 exports.default = IDBKeyRange;
 
-},{"./DOMException":328,"./Key":340,"./util":346}],336:[function(require,module,exports){
+},{"./DOMException":328,"./Key":340,"./util":348}],336:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13120,7 +13109,7 @@ Object.defineProperty(IDBObjectStore, 'prototype', {
 exports.default = IDBObjectStore;
 module.exports = exports['default'];
 
-},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./IDBCursor":331,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":346,"sync-promise":302}],337:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./IDBCursor":331,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":348,"sync-promise":302}],337:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13138,12 +13127,6 @@ var util = _interopRequireWildcard(_util);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
 var listeners = ['onsuccess', 'onerror'];
 var readonlyProperties = ['source', 'transaction', 'readyState'];
 var doneFlagGetters = ['result', 'error'];
@@ -13152,13 +13135,9 @@ var doneFlagGetters = ['result', 'error'];
  * The IDBRequest Object that is returns for all async calls
  * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#request-api
  */
-
-var IDBRequest = function IDBRequest() {
-    _classCallCheck(this, IDBRequest);
-
+function IDBRequest() {
     throw new TypeError('Illegal constructor');
-};
-
+}
 IDBRequest.__super = function IDBRequest() {
     var _this = this;
 
@@ -13268,20 +13247,11 @@ var openListeners = ['onblocked', 'onupgradeneeded'];
 /**
  * The IDBOpenDBRequest called when a database is opened
  */
-
-var IDBOpenDBRequest = function (_IDBRequest) {
-    _inherits(IDBOpenDBRequest, _IDBRequest);
-
-    function IDBOpenDBRequest() {
-        _classCallCheck(this, IDBOpenDBRequest);
-
-        return _possibleConstructorReturn(this, (IDBOpenDBRequest.__proto__ || Object.getPrototypeOf(IDBOpenDBRequest)).apply(this, arguments));
-    }
-
-    return IDBOpenDBRequest;
-}(IDBRequest);
-
+function IDBOpenDBRequest() {
+    throw new Error('Illegal constructor');
+}
 IDBOpenDBRequest.prototype = Object.create(IDBRequest.prototype);
+IDBOpenDBRequest.prototype.constructor = IDBOpenDBRequest;
 
 Object.defineProperty(IDBOpenDBRequest.prototype, 'constructor', {
     enumerable: false,
@@ -13293,7 +13263,7 @@ Object.defineProperty(IDBOpenDBRequest.prototype, 'constructor', {
 var IDBOpenDBRequestAlias = IDBOpenDBRequest;
 IDBOpenDBRequest.__createInstance = function () {
     function IDBOpenDBRequest() {
-        var _this3 = this;
+        var _this2 = this;
 
         IDBRequest.__super.call(this);
 
@@ -13303,7 +13273,7 @@ IDBOpenDBRequest.__createInstance = function () {
             extraProperties: ['oldVersion', 'newVersion', 'debug']
         }); // Ensure EventTarget preserves our properties
         openListeners.forEach(function (listener) {
-            Object.defineProperty(_this3, listener, {
+            Object.defineProperty(_this2, listener, {
                 configurable: true, // Needed by support.js in W3C IndexedDB tests
                 get: function get() {
                     return this['__' + listener];
@@ -13314,7 +13284,7 @@ IDBOpenDBRequest.__createInstance = function () {
             });
         }, this);
         openListeners.forEach(function (l) {
-            _this3[l] = null;
+            _this2[l] = null;
         });
     }
     IDBOpenDBRequest.prototype = IDBOpenDBRequestAlias.prototype;
@@ -13343,7 +13313,7 @@ Object.defineProperty(IDBOpenDBRequest, 'prototype', {
 exports.IDBRequest = IDBRequest;
 exports.IDBOpenDBRequest = IDBOpenDBRequest;
 
-},{"./DOMException":328,"./util":346,"eventtarget":298}],338:[function(require,module,exports){
+},{"./DOMException":328,"./util":348,"eventtarget":298}],338:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13952,7 +13922,7 @@ Object.defineProperty(IDBTransaction, 'prototype', {
 exports.default = IDBTransaction;
 module.exports = exports['default'];
 
-},{"./CFG":327,"./DOMException":328,"./Event":330,"./IDBObjectStore":336,"./IDBRequest":337,"./util":346,"eventtarget":298,"sync-promise":302}],339:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./Event":330,"./IDBObjectStore":336,"./IDBRequest":337,"./util":348,"eventtarget":298,"sync-promise":302}],339:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14017,7 +13987,7 @@ Object.defineProperty(IDBVersionChangeEvent, 'prototype', {
 exports.default = IDBVersionChangeEvent;
 module.exports = exports['default'];
 
-},{"./Event":330,"./util":346}],340:[function(require,module,exports){
+},{"./Event":330,"./util":348}],340:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14831,7 +14801,7 @@ exports.findMultiEntryMatches = findMultiEntryMatches;
 exports.generateKeyForStore = generateKeyForStore;
 exports.possiblyUpdateKeyGenerator = possiblyUpdateKeyGenerator;
 
-},{"./CFG":327,"./DOMException":328,"./IDBFactory":333,"./util":346}],341:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./IDBFactory":333,"./util":348}],341:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14911,11 +14881,21 @@ exports.UnicodeIDStart = UnicodeIDStart;
 exports.UnicodeIDContinue = UnicodeIDContinue;
 
 },{}],343:[function(require,module,exports){
+"use strict";
+
+},{}],344:[function(require,module,exports){
+'use strict';
+
+require('babel-polyfill');
+
+},{"babel-polyfill":1}],345:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+
+require('./babel-polyfill-before');
 
 var _UnicodeIdentifiers = require('./UnicodeIdentifiers');
 
@@ -14927,12 +14907,14 @@ var _CFG = require('./CFG');
 
 var _CFG2 = _interopRequireDefault(_CFG);
 
+require('./babel-polyfill-after');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// BEGIN: Same code as in browser.js
 _CFG2.default.win = typeof window !== 'undefined' ? window : self; // For Web Workers
 // END: Same code as in browser.js
 
+// BEGIN: Same code as in browser.js
 /* eslint-env browser, worker */
 _CFG2.default.UnicodeIDStart = _UnicodeIdentifiers.UnicodeIDStart;
 _CFG2.default.UnicodeIDContinue = _UnicodeIdentifiers.UnicodeIDContinue;
@@ -14940,7 +14922,7 @@ _CFG2.default.UnicodeIDContinue = _UnicodeIdentifiers.UnicodeIDContinue;
 exports.default = _setGlobalVars2.default;
 module.exports = exports['default'];
 
-},{"./CFG":327,"./UnicodeIdentifiers":342,"./setGlobalVars":345}],344:[function(require,module,exports){
+},{"./CFG":327,"./UnicodeIdentifiers":342,"./babel-polyfill-after":343,"./babel-polyfill-before":344,"./setGlobalVars":347}],346:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15302,7 +15284,7 @@ function validateKeyLength(key) {
 exports.default = polyfill;
 module.exports = exports['default'];
 
-},{"./DOMException":328,"./Key":340}],345:[function(require,module,exports){
+},{"./DOMException":328,"./Key":340}],347:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -15313,10 +15295,7 @@ Object.defineProperty(exports, "__esModule", {
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; /* globals self */
-// `Object.assign` including within `EventTarget`, generator functions, `Array.from`, etc.; see https://babeljs.io/docs/usage/polyfill/
 
-
-require('babel-polyfill');
 
 var _IDBVersionChangeEvent = require('./IDBVersionChangeEvent');
 
@@ -15359,9 +15338,6 @@ var _CFG = require('./CFG');
 var _CFG2 = _interopRequireDefault(_CFG);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var glob = typeof global !== 'undefined' ? global : typeof window !== 'undefined' ? window : self;
-glob._babelPolyfill = false; // http://stackoverflow.com/questions/31282702/conflicting-use-of-babel-register
 
 function setConfig(prop, val) {
     if (prop && (typeof prop === 'undefined' ? 'undefined' : _typeof(prop)) === 'object') {
@@ -15548,7 +15524,7 @@ module.exports = exports['default'];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./CFG":327,"./DOMException":328,"./IDBCursor":331,"./IDBDatabase":332,"./IDBFactory":333,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBRequest":337,"./IDBTransaction":338,"./IDBVersionChangeEvent":339,"./polyfill":344,"babel-polyfill":1}],346:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./IDBCursor":331,"./IDBDatabase":332,"./IDBFactory":333,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBRequest":337,"./IDBTransaction":338,"./IDBVersionChangeEvent":339,"./polyfill":346}],348:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15836,6 +15812,6 @@ exports.enforceRange = enforceRange;
 exports.convertToDOMString = convertToDOMString;
 exports.convertToSequenceDOMString = convertToSequenceDOMString;
 
-},{"./CFG":327,"unicode-9.0.0/Binary_Property/Expands_On_NFD/regex":326}]},{},[343])(343)
+},{"./CFG":327,"unicode-9.0.0/Binary_Property/Expands_On_NFD/regex":326}]},{},[345])(345)
 });
 //# sourceMappingURL=indexeddbshim-noninvasive.js.map
