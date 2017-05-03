@@ -44,6 +44,8 @@ they were actually changes since a more recent version on `master`.
 - Breaking fix for existing data: Give comparisons/storage of arrays
      higher priority over binary (arrays already existing in storage
      will not benefit from this until re-encoded, however)
+- Breaking fix for existing data: Change encoding of key types so any future
+    key types can be fitted into the proper place for sorting precedence
 - Breaking change (minor): Change "modules" property of `IDBFactory` to only
     expose `DOMException`, `Event`, and `IDBFactory` (replacing the former
     use of `idbModules` with ES6 modules and a CFG module for the globals:

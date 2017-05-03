@@ -14019,8 +14019,25 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 /**
  * Encodes the keys based on their types. This is required to maintain collations
+ * We leave space for future keys
  */
-var collations = ['invalid', 'number', 'date', 'string', 'binary', 'array'];
+var keyTypeToEncodedChar = {
+    invalid: 100,
+    number: 200,
+    date: 300,
+    string: 400,
+    binary: 500,
+    array: 600
+};
+var keyTypes = Object.keys(keyTypeToEncodedChar);
+keyTypes.forEach(function (k) {
+    keyTypeToEncodedChar[k] = String.fromCharCode(keyTypeToEncodedChar[k]);
+});
+
+var encodedCharToKeyType = keyTypes.reduce(function (o, k) {
+    o[keyTypeToEncodedChar[k]] = k;
+    return o;
+}, {});
 
 /**
  * The sign values for numbers, ordered from least to greatest.
@@ -14036,7 +14053,7 @@ var signValues = ['negativeInfinity', 'bigNegative', 'smallNegative', 'smallPosi
 var types = {
     invalid: {
         encode: function encode(key) {
-            return collations.indexOf('invalid') + '-';
+            return keyTypeToEncodedChar.invalid + '-';
         },
         decode: function decode(key) {
             return undefined;
@@ -14106,7 +14123,7 @@ var types = {
                 sign = signValues.indexOf(key > 0 ? 'positiveInfinity' : 'negativeInfinity');
             }
 
-            return collations.indexOf('number') + '-' + sign + exponent + mantissa;
+            return keyTypeToEncodedChar.number + '-' + sign + exponent + mantissa;
         },
         // The decode step must interpret the sign, reflip values encoded as the 32's complements,
         // apply signs to the exponent and mantissa, do the base-32 power operation, and return
@@ -14154,7 +14171,7 @@ var types = {
                 // prepend each character with a dash, and append a space to the end
                 key = key.replace(/(.)/g, '-$1') + ' ';
             }
-            return collations.indexOf('string') + '-' + key;
+            return keyTypeToEncodedChar.string + '-' + key;
         },
         decode: function decode(key, inArray) {
             key = key.slice(2);
@@ -14176,8 +14193,8 @@ var types = {
                 var encodedItem = _encode(item, true); // encode the array item
                 encoded[i] = encodedItem;
             }
-            encoded.push(collations.indexOf('invalid') + '-'); // append an extra item, so empty arrays sort correctly
-            return collations.indexOf('array') + '-' + JSON.stringify(encoded);
+            encoded.push(keyTypeToEncodedChar.invalid + '-'); // append an extra item, so empty arrays sort correctly
+            return keyTypeToEncodedChar.array + '-' + JSON.stringify(encoded);
         },
         decode: function decode(key) {
             var decoded = JSON.parse(key.slice(2));
@@ -14194,7 +14211,7 @@ var types = {
     // Dates are encoded as ISO 8601 strings, in UTC time zone.
     date: {
         encode: function encode(key) {
-            return collations.indexOf('date') + '-' + key.toJSON();
+            return keyTypeToEncodedChar.date + '-' + key.toJSON();
         },
         decode: function decode(key) {
             return new Date(key.slice(2));
@@ -14202,7 +14219,7 @@ var types = {
     },
     binary: { // `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
         encode: function encode(key) {
-            return collations.indexOf('binary') + '-' + (key.byteLength ? Array.from(getCopyBytesHeldByBufferSource(key)).map(function (b) {
+            return keyTypeToEncodedChar.binary + '-' + (key.byteLength ? Array.from(getCopyBytesHeldByBufferSource(key)).map(function (b) {
                 return util.padStart(b, 3, '0');
             }) // e.g., '255,005,254,000,001,033'
             : '');
@@ -14607,7 +14624,7 @@ function isKeyInRange(key, range, checkCached) {
  * @returns {boolean}
  */
 function isMultiEntryMatch(encodedEntry, encodedKey) {
-    var keyType = collations[encodedKey.slice(0, 1)];
+    var keyType = encodedCharToKeyType[encodedKey.slice(0, 1)];
 
     if (keyType === 'array') {
         return encodedKey.indexOf(encodedEntry) > 1;
@@ -14699,7 +14716,7 @@ function _decode(key, inArray) {
     if (typeof key !== 'string') {
         return undefined;
     }
-    return types[collations[key.slice(0, 1)]].decode(key, inArray);
+    return types[encodedCharToKeyType[key.slice(0, 1)]].decode(key, inArray);
 }
 
 function roundTrip(key, inArray) {
