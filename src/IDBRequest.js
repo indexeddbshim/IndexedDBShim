@@ -121,10 +121,9 @@ const openListeners = ['onblocked', 'onupgradeneeded'];
  * The IDBOpenDBRequest called when a database is opened
  */
 function IDBOpenDBRequest () {
-    throw new Error('Illegal constructor');
+    throw new TypeError('Illegal constructor');
 }
 IDBOpenDBRequest.prototype = Object.create(IDBRequest.prototype);
-IDBOpenDBRequest.prototype.constructor = IDBOpenDBRequest;
 
 Object.defineProperty(IDBOpenDBRequest.prototype, 'constructor', {
     enumerable: false,

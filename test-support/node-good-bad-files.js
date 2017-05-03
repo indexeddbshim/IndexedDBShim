@@ -61,7 +61,7 @@ In order to run, the following require a one-off `srcdoc` implementation or http
 
 6. NODE ISSUE-RELATED
 
-- `interfaces.js`: Has one failing test due to a bug in Node: https://github.com/axemclion/IndexedDBShim/issues/280
+- `interfaces.js`: Has two failing tests due to an apparent bug in Node: https://github.com/axemclion/IndexedDBShim/issues/280
 - `idb-binary-key-detached.js` - Requires `ArrayBuffer.transfer` but not available in Node
 
 // Passing no argument to `node-idb-test.js` will test all of the IndexedDB
@@ -167,7 +167,7 @@ goodBad.browser = {
     chrome: {
         timeout: ['idbindex-multientry-big.htm', 'idbtransaction_objectStoreNames.html'],
         notRunning: ['interleaved-cursors.html', 'keypath-exceptions.htm'],
-        badFiles: ['bindings-inject-key.html', 'event-dispatch-active-flag.html', 'idb-binary-key-detached.htm', 'idb-binary-key-roundtrip.htm', 'idbindex-query-exception-order.html', 'idbobjectstore-add-put-exception-order.html', 'idbobjectstore-clear-exception-order.html', 'idbobjectstore-delete-exception-order.html', 'idbobjectstore-query-exception-order.html', 'idbobjectstore-rename-store.html', 'interfaces.html', 'interfaces.worker.html', 'transaction-abort-generator-revert.html', 'transaction-deactivation-timing.html', 'transaction-lifetime.htm', 'upgrade-transaction-deactivation-timing.html']
+        badFiles: ['bindings-inject-key.html', 'event-dispatch-active-flag.html', 'idb-binary-key-detached.htm', 'idb-binary-key-roundtrip.htm', 'idbindex-query-exception-order.html', 'idbobjectstore-add-put-exception-order.html', 'idbobjectstore-clear-exception-order.html', 'idbobjectstore-delete-exception-order.html', 'idbobjectstore-query-exception-order.html', 'idbobjectstore-rename-store.html', 'idbobjectstore_openKeyCursor.htm', 'interfaces.html', 'interfaces.worker.html', 'transaction-abort-generator-revert.html', 'transaction-deactivation-timing.html', 'transaction-lifetime.htm', 'upgrade-transaction-deactivation-timing.html']
     }
 };
 

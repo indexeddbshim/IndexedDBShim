@@ -96,17 +96,6 @@ function setGlobalVars (idb, initialConfig) {
             if (CFG.win.openDatabase !== undefined) {
                 shimIndexedDB.__openDatabase = CFG.win.openDatabase.bind(CFG.win); // We cache here in case the function is overwritten later as by the IndexedDB support promises tests
                 // Polyfill ALL of IndexedDB, using WebSQL
-                if (CFG.fullIDLSupport) {
-                    // Slow per MDN so off by default! Though apparently needed for WebIDL: http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
-                    const ShimEvent = IDB.shimIndexedDB.modules.ShimEvent;
-                    const ShimEventTarget = IDB.shimIndexedDB.modules.ShimEventTarget;
-                    Object.setPrototypeOf(shimIDBDatabase, ShimEventTarget);
-                    Object.setPrototypeOf(shimIDBRequest, ShimEventTarget);
-                    Object.setPrototypeOf(shimIDBTransaction, ShimEventTarget);
-                    Object.setPrototypeOf(shimIDBVersionChangeEvent, ShimEvent);
-                    Object.setPrototypeOf(ShimDOMException, Error);
-                    Object.setPrototypeOf(ShimDOMException.prototype, Error.prototype);
-                }
                 [
                     ['indexedDB', shimIndexedDB],
                     ['IDBFactory', shimIDBFactory],
@@ -126,6 +115,20 @@ function setGlobalVars (idb, initialConfig) {
                         configurable: true
                     });
                 });
+                if (CFG.fullIDLSupport) {
+                    // Slow per MDN so off by default! Though apparently needed for WebIDL: http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
+                    Object.setPrototypeOf(IDB.IDBOpenDBRequest, IDB.IDBRequest);
+                    Object.setPrototypeOf(IDB.IDBCursorWithValue, IDB.IDBCursor);
+
+                    const ShimEvent = IDB.shimIndexedDB.modules.ShimEvent;
+                    const ShimEventTarget = IDB.shimIndexedDB.modules.ShimEventTarget;
+                    Object.setPrototypeOf(shimIDBDatabase, ShimEventTarget);
+                    Object.setPrototypeOf(shimIDBRequest, ShimEventTarget);
+                    Object.setPrototypeOf(shimIDBTransaction, ShimEventTarget);
+                    Object.setPrototypeOf(shimIDBVersionChangeEvent, ShimEvent);
+                    Object.setPrototypeOf(ShimDOMException, Error);
+                    Object.setPrototypeOf(ShimDOMException.prototype, Error.prototype);
+                }
                 if (IDB.indexedDB && IDB.indexedDB.modules) {
                     if (CFG.addNonIDBGlobals) {
                         // As `DOMStringList` exists per IDL (and Chrome) in the global

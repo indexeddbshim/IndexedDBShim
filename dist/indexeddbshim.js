@@ -9656,7 +9656,7 @@ exports.ShimEvent = _eventtarget.ShimEvent;
 exports.ShimCustomEvent = _eventtarget.ShimCustomEvent;
 exports.ShimEventTarget = _eventtarget.ShimEventTarget;
 
-},{"./util":347,"eventtarget":298}],331:[function(require,module,exports){
+},{"./util":346,"eventtarget":298}],331:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10254,7 +10254,12 @@ function IDBCursorWithValue() {
 }
 
 IDBCursorWithValue.prototype = Object.create(IDBCursor.prototype);
-IDBCursorWithValue.prototype.constructor = IDBCursorWithValue;
+Object.defineProperty(IDBCursorWithValue.prototype, 'constructor', {
+    enumerable: false,
+    writable: true,
+    configurable: true,
+    value: IDBCursorWithValue
+});
 
 var IDBCursorWithValueAlias = IDBCursorWithValue;
 IDBCursorWithValue.__createInstance = function () {
@@ -10290,7 +10295,7 @@ Object.defineProperty(IDBCursorWithValue, 'prototype', {
 exports.IDBCursor = IDBCursor;
 exports.IDBCursorWithValue = IDBCursorWithValue;
 
-},{"./CFG":327,"./DOMException":328,"./IDBFactory":333,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBRequest":337,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":347}],332:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./IDBFactory":333,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBRequest":337,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":346}],332:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10604,7 +10609,7 @@ Object.defineProperty(IDBDatabase, 'prototype', {
 exports.default = IDBDatabase;
 module.exports = exports['default'];
 
-},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./Event":330,"./IDBObjectStore":336,"./IDBTransaction":338,"./Sca":341,"./util":347,"eventtarget":298}],333:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./Event":330,"./IDBObjectStore":336,"./IDBTransaction":338,"./Sca":341,"./util":346,"eventtarget":298}],333:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -11425,7 +11430,7 @@ exports.shimIndexedDB = shimIndexedDB;
 
 }).call(this,require('_process'))
 
-},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./Event":330,"./IDBDatabase":332,"./IDBRequest":337,"./IDBTransaction":338,"./IDBVersionChangeEvent":339,"./Key":340,"./util":347,"_process":300,"fs":3,"path":299,"sync-promise":302}],334:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./Event":330,"./IDBDatabase":332,"./IDBRequest":337,"./IDBTransaction":338,"./IDBVersionChangeEvent":339,"./Key":340,"./util":346,"_process":300,"fs":3,"path":299,"sync-promise":302}],334:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12041,7 +12046,7 @@ exports.executeFetchIndexData = executeFetchIndexData;
 exports.IDBIndex = IDBIndex;
 exports.default = IDBIndex;
 
-},{"./CFG":327,"./DOMException":328,"./IDBCursor":331,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":347}],335:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./IDBCursor":331,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":346}],335:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12225,7 +12230,7 @@ exports.IDBKeyRange = IDBKeyRange;
 exports.convertValueToKeyRange = convertValueToKeyRange;
 exports.default = IDBKeyRange;
 
-},{"./DOMException":328,"./Key":340,"./util":347}],336:[function(require,module,exports){
+},{"./DOMException":328,"./Key":340,"./util":346}],336:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13109,7 +13114,7 @@ Object.defineProperty(IDBObjectStore, 'prototype', {
 exports.default = IDBObjectStore;
 module.exports = exports['default'];
 
-},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./IDBCursor":331,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":347,"sync-promise":302}],337:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./IDBCursor":331,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":346,"sync-promise":302}],337:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13248,10 +13253,9 @@ var openListeners = ['onblocked', 'onupgradeneeded'];
  * The IDBOpenDBRequest called when a database is opened
  */
 function IDBOpenDBRequest() {
-    throw new Error('Illegal constructor');
+    throw new TypeError('Illegal constructor');
 }
 IDBOpenDBRequest.prototype = Object.create(IDBRequest.prototype);
-IDBOpenDBRequest.prototype.constructor = IDBOpenDBRequest;
 
 Object.defineProperty(IDBOpenDBRequest.prototype, 'constructor', {
     enumerable: false,
@@ -13313,7 +13317,7 @@ Object.defineProperty(IDBOpenDBRequest, 'prototype', {
 exports.IDBRequest = IDBRequest;
 exports.IDBOpenDBRequest = IDBOpenDBRequest;
 
-},{"./DOMException":328,"./util":347,"eventtarget":298}],338:[function(require,module,exports){
+},{"./DOMException":328,"./util":346,"eventtarget":298}],338:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13922,7 +13926,7 @@ Object.defineProperty(IDBTransaction, 'prototype', {
 exports.default = IDBTransaction;
 module.exports = exports['default'];
 
-},{"./CFG":327,"./DOMException":328,"./Event":330,"./IDBObjectStore":336,"./IDBRequest":337,"./util":347,"eventtarget":298,"sync-promise":302}],339:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./Event":330,"./IDBObjectStore":336,"./IDBRequest":337,"./util":346,"eventtarget":298,"sync-promise":302}],339:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13987,7 +13991,7 @@ Object.defineProperty(IDBVersionChangeEvent, 'prototype', {
 exports.default = IDBVersionChangeEvent;
 module.exports = exports['default'];
 
-},{"./Event":330,"./util":347}],340:[function(require,module,exports){
+},{"./Event":330,"./util":346}],340:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14199,7 +14203,7 @@ var types = {
     binary: { // `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
         encode: function encode(key) {
             return collations.indexOf('binary') + '-' + (key.byteLength ? Array.from(getCopyBytesHeldByBufferSource(key)).map(function (b) {
-                return padStart(b, 3, '0');
+                return util.padStart(b, 3, '0');
             }) // e.g., '255,005,254,000,001,033'
             : '');
         },
@@ -14216,10 +14220,6 @@ var types = {
         }
     }
 };
-
-function padStart(str, ct, fill) {
-    return new Array(ct - String(str).length + 1).join(fill) + str;
-}
 
 /**
  * Return a padded base-32 exponent value.
@@ -14801,7 +14801,7 @@ exports.findMultiEntryMatches = findMultiEntryMatches;
 exports.generateKeyForStore = generateKeyForStore;
 exports.possiblyUpdateKeyGenerator = possiblyUpdateKeyGenerator;
 
-},{"./CFG":327,"./DOMException":328,"./IDBFactory":333,"./util":347}],341:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./IDBFactory":333,"./util":346}],341:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14866,14 +14866,11 @@ exports.decode = decode;
 exports.clone = clone;
 
 },{"./DOMException":328,"typeson":325,"typeson-registry/presets/structured-cloning-throwing":304}],342:[function(require,module,exports){
-"use strict";
-
-},{}],343:[function(require,module,exports){
 'use strict';
 
 require('babel-polyfill');
 
-},{"babel-polyfill":1}],344:[function(require,module,exports){
+},{"babel-polyfill":1}],343:[function(require,module,exports){
 'use strict';
 
 require('./babel-polyfill-before');
@@ -14886,15 +14883,13 @@ var _CFG = require('./CFG');
 
 var _CFG2 = _interopRequireDefault(_CFG);
 
-require('./babel-polyfill-after');
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-/* eslint-env browser, worker */
 _CFG2.default.win = typeof window !== 'undefined' ? window : self; // For Web Workers
+/* eslint-env browser, worker */
 (0, _setGlobalVars2.default)();
 
-},{"./CFG":327,"./babel-polyfill-after":342,"./babel-polyfill-before":343,"./setGlobalVars":346}],345:[function(require,module,exports){
+},{"./CFG":327,"./babel-polyfill-before":342,"./setGlobalVars":345}],344:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15256,7 +15251,7 @@ function validateKeyLength(key) {
 exports.default = polyfill;
 module.exports = exports['default'];
 
-},{"./DOMException":328,"./Key":340}],346:[function(require,module,exports){
+},{"./DOMException":328,"./Key":340}],345:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -15397,17 +15392,6 @@ function setGlobalVars(idb, initialConfig) {
             if (_CFG2.default.win.openDatabase !== undefined) {
                 _IDBFactory.shimIndexedDB.__openDatabase = _CFG2.default.win.openDatabase.bind(_CFG2.default.win); // We cache here in case the function is overwritten later as by the IndexedDB support promises tests
                 // Polyfill ALL of IndexedDB, using WebSQL
-                if (_CFG2.default.fullIDLSupport) {
-                    // Slow per MDN so off by default! Though apparently needed for WebIDL: http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
-                    var ShimEvent = IDB.shimIndexedDB.modules.ShimEvent;
-                    var ShimEventTarget = IDB.shimIndexedDB.modules.ShimEventTarget;
-                    Object.setPrototypeOf(_IDBDatabase2.default, ShimEventTarget);
-                    Object.setPrototypeOf(_IDBRequest.IDBRequest, ShimEventTarget);
-                    Object.setPrototypeOf(_IDBTransaction2.default, ShimEventTarget);
-                    Object.setPrototypeOf(_IDBVersionChangeEvent2.default, ShimEvent);
-                    Object.setPrototypeOf(_DOMException.ShimDOMException, Error);
-                    Object.setPrototypeOf(_DOMException.ShimDOMException.prototype, Error.prototype);
-                }
                 [['indexedDB', _IDBFactory.shimIndexedDB], ['IDBFactory', shimIDBFactory], ['IDBDatabase', _IDBDatabase2.default], ['IDBObjectStore', _IDBObjectStore2.default], ['IDBIndex', _IDBIndex2.default], ['IDBTransaction', _IDBTransaction2.default], ['IDBCursor', _IDBCursor.IDBCursor], ['IDBCursorWithValue', _IDBCursor.IDBCursorWithValue], ['IDBKeyRange', _IDBKeyRange2.default], ['IDBRequest', _IDBRequest.IDBRequest], ['IDBOpenDBRequest', _IDBRequest.IDBOpenDBRequest], ['IDBVersionChangeEvent', _IDBVersionChangeEvent2.default]].forEach(function (_ref) {
                     var _ref2 = _slicedToArray(_ref, 2),
                         prop = _ref2[0],
@@ -15418,6 +15402,20 @@ function setGlobalVars(idb, initialConfig) {
                         configurable: true
                     });
                 });
+                if (_CFG2.default.fullIDLSupport) {
+                    // Slow per MDN so off by default! Though apparently needed for WebIDL: http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
+                    Object.setPrototypeOf(IDB.IDBOpenDBRequest, IDB.IDBRequest);
+                    Object.setPrototypeOf(IDB.IDBCursorWithValue, IDB.IDBCursor);
+
+                    var ShimEvent = IDB.shimIndexedDB.modules.ShimEvent;
+                    var ShimEventTarget = IDB.shimIndexedDB.modules.ShimEventTarget;
+                    Object.setPrototypeOf(_IDBDatabase2.default, ShimEventTarget);
+                    Object.setPrototypeOf(_IDBRequest.IDBRequest, ShimEventTarget);
+                    Object.setPrototypeOf(_IDBTransaction2.default, ShimEventTarget);
+                    Object.setPrototypeOf(_IDBVersionChangeEvent2.default, ShimEvent);
+                    Object.setPrototypeOf(_DOMException.ShimDOMException, Error);
+                    Object.setPrototypeOf(_DOMException.ShimDOMException.prototype, Error.prototype);
+                }
                 if (IDB.indexedDB && IDB.indexedDB.modules) {
                     if (_CFG2.default.addNonIDBGlobals) {
                         // As `DOMStringList` exists per IDL (and Chrome) in the global
@@ -15496,13 +15494,13 @@ module.exports = exports['default'];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./CFG":327,"./DOMException":328,"./IDBCursor":331,"./IDBDatabase":332,"./IDBFactory":333,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBRequest":337,"./IDBTransaction":338,"./IDBVersionChangeEvent":339,"./polyfill":345}],347:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./IDBCursor":331,"./IDBDatabase":332,"./IDBFactory":333,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBRequest":337,"./IDBTransaction":338,"./IDBVersionChangeEvent":339,"./polyfill":344}],346:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.convertToSequenceDOMString = exports.convertToDOMString = exports.enforceRange = exports.isValidKeyPath = exports.defineReadonlyProperties = exports.isIterable = exports.isBinary = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlQuote = exports.sqlLIKEEscape = exports.escapeIndexNameForSQLKeyColumn = exports.escapeIndexNameForSQL = exports.escapeStoreNameForSQL = exports.unescapeDatabaseNameForSQLAndFiles = exports.escapeDatabaseNameForSQLAndFiles = exports.unescapeSQLiteResponse = exports.escapeSQLiteStatement = undefined;
+exports.padStart = exports.convertToSequenceDOMString = exports.convertToDOMString = exports.enforceRange = exports.isValidKeyPath = exports.defineReadonlyProperties = exports.isIterable = exports.isBinary = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlQuote = exports.sqlLIKEEscape = exports.escapeIndexNameForSQLKeyColumn = exports.escapeIndexNameForSQL = exports.escapeStoreNameForSQL = exports.unescapeDatabaseNameForSQLAndFiles = exports.escapeDatabaseNameForSQLAndFiles = exports.unescapeSQLiteResponse = exports.escapeSQLiteStatement = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
@@ -15567,12 +15565,12 @@ function escapeDatabaseNameForSQLAndFiles(db) {
     if (_CFG2.default.escapeNFDForDatabaseNames !== false) {
         // ES6 copying of regex with different flags
         db = db.replace(new RegExp(_regex2.default, 'g'), function (expandable) {
-            return '^4' + expandable.codePointAt().toString(16).padStart(6, '0');
+            return '^4' + padStart(expandable.codePointAt().toString(16), 6, '0');
         });
     }
     if (_CFG2.default.databaseCharacterEscapeList !== false) {
         db = db.replace(_CFG2.default.databaseCharacterEscapeList ? new RegExp(_CFG2.default.databaseCharacterEscapeList, 'g') : /[\u0000-\u001F\u007F"*/:<>?\\|]/g, function (n0) {
-            return '^1' + n0.charCodeAt().toString(16).padStart(2, '0');
+            return '^1' + padStart(n0.charCodeAt().toString(16), 2, '0');
         });
     }
     if (_CFG2.default.databaseNameLengthLimit !== false && db.length >= (_CFG2.default.databaseNameLengthLimit || 254) - (_CFG2.default.addSQLiteExtension !== false ? 7 /* '.sqlite'.length */ : 0)) {
@@ -15761,6 +15759,11 @@ function convertToSequenceDOMString(val) {
     return val;
 }
 
+// Todo: Replace with `String.prototype.padStart` when targeting supporting Node version
+function padStart(str, ct, fill) {
+    return new Array(ct - String(str).length + 1).join(fill) + str;
+}
+
 exports.escapeSQLiteStatement = escapeSQLiteStatement;
 exports.unescapeSQLiteResponse = unescapeSQLiteResponse;
 exports.escapeDatabaseNameForSQLAndFiles = escapeDatabaseNameForSQLAndFiles;
@@ -15783,6 +15786,7 @@ exports.isValidKeyPath = isValidKeyPath;
 exports.enforceRange = enforceRange;
 exports.convertToDOMString = convertToDOMString;
 exports.convertToSequenceDOMString = convertToSequenceDOMString;
+exports.padStart = padStart;
 
-},{"./CFG":327,"unicode-9.0.0/Binary_Property/Expands_On_NFD/regex":326}]},{},[344])
+},{"./CFG":327,"unicode-9.0.0/Binary_Property/Expands_On_NFD/regex":326}]},{},[343])
 //# sourceMappingURL=indexeddbshim.js.map

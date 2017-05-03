@@ -52,7 +52,7 @@ function escapeDatabaseNameForSQLAndFiles (db) {
     if (CFG.escapeNFDForDatabaseNames !== false) {
         // ES6 copying of regex with different flags
         db = db.replace(new RegExp(expandsOnNFD, 'g'), function (expandable) {
-            return '^4' + expandable.codePointAt().toString(16).padStart(6, '0');
+            return '^4' + padStart(expandable.codePointAt().toString(16), 6, '0');
         });
     }
     if (CFG.databaseCharacterEscapeList !== false) {
@@ -61,7 +61,7 @@ function escapeDatabaseNameForSQLAndFiles (db) {
                 ? new RegExp(CFG.databaseCharacterEscapeList, 'g')
                 : /[\u0000-\u001F\u007F"*/:<>?\\|]/g),
             function (n0) {
-                return '^1' + n0.charCodeAt().toString(16).padStart(2, '0');
+                return '^1' + padStart(n0.charCodeAt().toString(16), 2, '0');
             }
         );
     }
@@ -247,10 +247,16 @@ function convertToSequenceDOMString (val) {
     return val;
 }
 
+// Todo: Replace with `String.prototype.padStart` when targeting supporting Node version
+function padStart (str, ct, fill) {
+    return new Array(ct - (String(str)).length + 1).join(fill) + str;
+}
+
 export {escapeSQLiteStatement, unescapeSQLiteResponse,
     escapeDatabaseNameForSQLAndFiles, unescapeDatabaseNameForSQLAndFiles,
     escapeStoreNameForSQL, escapeIndexNameForSQL, escapeIndexNameForSQLKeyColumn,
     sqlLIKEEscape, sqlQuote,
     instanceOf,
     isObj, isDate, isBlob, isRegExp, isFile, isBinary, isIterable,
-    defineReadonlyProperties, isValidKeyPath, enforceRange, convertToDOMString, convertToSequenceDOMString};
+    defineReadonlyProperties, isValidKeyPath, enforceRange, convertToDOMString, convertToSequenceDOMString,
+    padStart};

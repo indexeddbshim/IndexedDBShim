@@ -1,9 +1,13 @@
 /* global module:false */
 'use strict';
 
-const babelNodeOptions = {
+const babelBrowserOptions = {
     sourceMapsAbsolute: true,
     plugins: ['add-module-exports'],
+    presets: ['es2015']
+};
+
+const babelNodeOptions = Object.assign({}, babelBrowserOptions, {
     presets: [
         ['env', {
             targets: {
@@ -11,13 +15,7 @@ const babelNodeOptions = {
             }
         }]
     ]
-};
-
-const babelBrowserOptions = {
-    sourceMapsAbsolute: true,
-    plugins: ['add-module-exports'],
-    presets: ['es2015']
-};
+});
 
 const mapstraction = require('mapstraction');
 module.exports = function (grunt) {

@@ -2988,7 +2988,12 @@ function IDBCursorWithValue() {
 }
 
 IDBCursorWithValue.prototype = Object.create(IDBCursor.prototype);
-IDBCursorWithValue.prototype.constructor = IDBCursorWithValue;
+Object.defineProperty(IDBCursorWithValue.prototype, 'constructor', {
+    enumerable: false,
+    writable: true,
+    configurable: true,
+    value: IDBCursorWithValue
+});
 
 const IDBCursorWithValueAlias = IDBCursorWithValue;
 IDBCursorWithValue.__createInstance = function (...args) {
@@ -5861,10 +5866,9 @@ const openListeners = ['onblocked', 'onupgradeneeded'];
  * The IDBOpenDBRequest called when a database is opened
  */
 function IDBOpenDBRequest() {
-    throw new Error('Illegal constructor');
+    throw new TypeError('Illegal constructor');
 }
 IDBOpenDBRequest.prototype = Object.create(IDBRequest.prototype);
-IDBOpenDBRequest.prototype.constructor = IDBOpenDBRequest;
 
 Object.defineProperty(IDBOpenDBRequest.prototype, 'constructor', {
     enumerable: false,
@@ -6796,7 +6800,7 @@ const types = {
     },
     binary: { // `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
         encode: function (key) {
-            return collations.indexOf('binary') + '-' + (key.byteLength ? Array.from(getCopyBytesHeldByBufferSource(key)).map(b => padStart(b, 3, '0')) // e.g., '255,005,254,000,001,033'
+            return collations.indexOf('binary') + '-' + (key.byteLength ? Array.from(getCopyBytesHeldByBufferSource(key)).map(b => util.padStart(b, 3, '0')) // e.g., '255,005,254,000,001,033'
             : '');
         },
         decode: function (key) {
@@ -6810,10 +6814,6 @@ const types = {
         }
     }
 };
-
-function padStart(str, ct, fill) {
-    return new Array(ct - String(str).length + 1).join(fill) + str;
-}
 
 /**
  * Return a padded base-32 exponent value.
@@ -7994,8 +7994,17 @@ function setGlobalVars(idb, initialConfig) {
             if (_CFG2.default.win.openDatabase !== undefined) {
                 _IDBFactory.shimIndexedDB.__openDatabase = _CFG2.default.win.openDatabase.bind(_CFG2.default.win); // We cache here in case the function is overwritten later as by the IndexedDB support promises tests
                 // Polyfill ALL of IndexedDB, using WebSQL
+                [['indexedDB', _IDBFactory.shimIndexedDB], ['IDBFactory', shimIDBFactory], ['IDBDatabase', _IDBDatabase2.default], ['IDBObjectStore', _IDBObjectStore2.default], ['IDBIndex', _IDBIndex2.default], ['IDBTransaction', _IDBTransaction2.default], ['IDBCursor', _IDBCursor.IDBCursor], ['IDBCursorWithValue', _IDBCursor.IDBCursorWithValue], ['IDBKeyRange', _IDBKeyRange2.default], ['IDBRequest', _IDBRequest.IDBRequest], ['IDBOpenDBRequest', _IDBRequest.IDBOpenDBRequest], ['IDBVersionChangeEvent', _IDBVersionChangeEvent2.default]].forEach(([prop, obj]) => {
+                    shim(prop, obj, {
+                        enumerable: false,
+                        configurable: true
+                    });
+                });
                 if (_CFG2.default.fullIDLSupport) {
                     // Slow per MDN so off by default! Though apparently needed for WebIDL: http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
+                    Object.setPrototypeOf(IDB.IDBOpenDBRequest, IDB.IDBRequest);
+                    Object.setPrototypeOf(IDB.IDBCursorWithValue, IDB.IDBCursor);
+
                     const ShimEvent = IDB.shimIndexedDB.modules.ShimEvent;
                     const ShimEventTarget = IDB.shimIndexedDB.modules.ShimEventTarget;
                     Object.setPrototypeOf(_IDBDatabase2.default, ShimEventTarget);
@@ -8005,12 +8014,6 @@ function setGlobalVars(idb, initialConfig) {
                     Object.setPrototypeOf(_DOMException.ShimDOMException, Error);
                     Object.setPrototypeOf(_DOMException.ShimDOMException.prototype, Error.prototype);
                 }
-                [['indexedDB', _IDBFactory.shimIndexedDB], ['IDBFactory', shimIDBFactory], ['IDBDatabase', _IDBDatabase2.default], ['IDBObjectStore', _IDBObjectStore2.default], ['IDBIndex', _IDBIndex2.default], ['IDBTransaction', _IDBTransaction2.default], ['IDBCursor', _IDBCursor.IDBCursor], ['IDBCursorWithValue', _IDBCursor.IDBCursorWithValue], ['IDBKeyRange', _IDBKeyRange2.default], ['IDBRequest', _IDBRequest.IDBRequest], ['IDBOpenDBRequest', _IDBRequest.IDBOpenDBRequest], ['IDBVersionChangeEvent', _IDBVersionChangeEvent2.default]].forEach(([prop, obj]) => {
-                    shim(prop, obj, {
-                        enumerable: false,
-                        configurable: true
-                    });
-                });
                 if (IDB.indexedDB && IDB.indexedDB.modules) {
                     if (_CFG2.default.addNonIDBGlobals) {
                         // As `DOMStringList` exists per IDL (and Chrome) in the global
@@ -8092,7 +8095,7 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.convertToSequenceDOMString = exports.convertToDOMString = exports.enforceRange = exports.isValidKeyPath = exports.defineReadonlyProperties = exports.isIterable = exports.isBinary = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlQuote = exports.sqlLIKEEscape = exports.escapeIndexNameForSQLKeyColumn = exports.escapeIndexNameForSQL = exports.escapeStoreNameForSQL = exports.unescapeDatabaseNameForSQLAndFiles = exports.escapeDatabaseNameForSQLAndFiles = exports.unescapeSQLiteResponse = exports.escapeSQLiteStatement = undefined;
+exports.padStart = exports.convertToSequenceDOMString = exports.convertToDOMString = exports.enforceRange = exports.isValidKeyPath = exports.defineReadonlyProperties = exports.isIterable = exports.isBinary = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlQuote = exports.sqlLIKEEscape = exports.escapeIndexNameForSQLKeyColumn = exports.escapeIndexNameForSQL = exports.escapeStoreNameForSQL = exports.unescapeDatabaseNameForSQLAndFiles = exports.escapeDatabaseNameForSQLAndFiles = exports.unescapeSQLiteResponse = exports.escapeSQLiteStatement = undefined;
 
 var _CFG = require('./CFG');
 
@@ -8155,12 +8158,12 @@ function escapeDatabaseNameForSQLAndFiles(db) {
     if (_CFG2.default.escapeNFDForDatabaseNames !== false) {
         // ES6 copying of regex with different flags
         db = db.replace(new RegExp(_regex2.default, 'g'), function (expandable) {
-            return '^4' + expandable.codePointAt().toString(16).padStart(6, '0');
+            return '^4' + padStart(expandable.codePointAt().toString(16), 6, '0');
         });
     }
     if (_CFG2.default.databaseCharacterEscapeList !== false) {
         db = db.replace(_CFG2.default.databaseCharacterEscapeList ? new RegExp(_CFG2.default.databaseCharacterEscapeList, 'g') : /[\u0000-\u001F\u007F"*/:<>?\\|]/g, function (n0) {
-            return '^1' + n0.charCodeAt().toString(16).padStart(2, '0');
+            return '^1' + padStart(n0.charCodeAt().toString(16), 2, '0');
         });
     }
     if (_CFG2.default.databaseNameLengthLimit !== false && db.length >= (_CFG2.default.databaseNameLengthLimit || 254) - (_CFG2.default.addSQLiteExtension !== false ? 7 /* '.sqlite'.length */ : 0)) {
@@ -8336,6 +8339,11 @@ function convertToSequenceDOMString(val) {
     return val;
 }
 
+// Todo: Replace with `String.prototype.padStart` when targeting supporting Node version
+function padStart(str, ct, fill) {
+    return new Array(ct - String(str).length + 1).join(fill) + str;
+}
+
 exports.escapeSQLiteStatement = escapeSQLiteStatement;
 exports.unescapeSQLiteResponse = unescapeSQLiteResponse;
 exports.escapeDatabaseNameForSQLAndFiles = escapeDatabaseNameForSQLAndFiles;
@@ -8358,6 +8366,7 @@ exports.isValidKeyPath = isValidKeyPath;
 exports.enforceRange = enforceRange;
 exports.convertToDOMString = convertToDOMString;
 exports.convertToSequenceDOMString = convertToSequenceDOMString;
+exports.padStart = padStart;
 
 },{"./CFG":28,"unicode-9.0.0/Binary_Property/Expands_On_NFD/regex":27}]},{},[43])(43)
 });

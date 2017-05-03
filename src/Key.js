@@ -193,7 +193,7 @@ const types = {
     binary: { // `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
         encode: function (key) {
             return collations.indexOf('binary') + '-' + (key.byteLength
-                ? Array.from(getCopyBytesHeldByBufferSource(key)).map((b) => padStart(b, 3, '0')) // e.g., '255,005,254,000,001,033'
+                ? Array.from(getCopyBytesHeldByBufferSource(key)).map((b) => util.padStart(b, 3, '0')) // e.g., '255,005,254,000,001,033'
                 : '');
         },
         decode: function (key) {
@@ -207,10 +207,6 @@ const types = {
         }
     }
 };
-
-function padStart (str, ct, fill) {
-    return new Array(ct - (String(str)).length + 1).join(fill) + str;
-}
 
 /**
  * Return a padded base-32 exponent value.

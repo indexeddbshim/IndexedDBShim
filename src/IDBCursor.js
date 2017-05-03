@@ -566,7 +566,12 @@ function IDBCursorWithValue () {
 }
 
 IDBCursorWithValue.prototype = Object.create(IDBCursor.prototype);
-IDBCursorWithValue.prototype.constructor = IDBCursorWithValue;
+Object.defineProperty(IDBCursorWithValue.prototype, 'constructor', {
+    enumerable: false,
+    writable: true,
+    configurable: true,
+    value: IDBCursorWithValue
+});
 
 const IDBCursorWithValueAlias = IDBCursorWithValue;
 IDBCursorWithValue.__createInstance = function (...args) {
