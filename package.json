@@ -1,6 +1,6 @@
 {
   "name": "indexeddbshim",
-  "version": "2.2.1",
+  "version": "3.0.0-rc.1",
   "author": "Parashuram <code@nparashuram.com>",
   "contributors": [
     "Brett Zamir"

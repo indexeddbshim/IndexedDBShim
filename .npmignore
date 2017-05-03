@@ -1,9 +1,13 @@
+/docs
 /examples
 /ignore
 /src
+/test-support
 /tests-mocha
 /tests-polyfill
 /tests-qunit
-/test-support
 /web-platform-tests
 /.*
+/index.html
+/Gruntfile.js
+/travis.sh

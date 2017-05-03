@@ -9656,7 +9656,7 @@ exports.ShimEvent = _eventtarget.ShimEvent;
 exports.ShimCustomEvent = _eventtarget.ShimCustomEvent;
 exports.ShimEventTarget = _eventtarget.ShimEventTarget;
 
-},{"./util":347,"eventtarget":298}],331:[function(require,module,exports){
+},{"./util":346,"eventtarget":298}],331:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10295,7 +10295,7 @@ Object.defineProperty(IDBCursorWithValue, 'prototype', {
 exports.IDBCursor = IDBCursor;
 exports.IDBCursorWithValue = IDBCursorWithValue;
 
-},{"./CFG":327,"./DOMException":328,"./IDBFactory":333,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBRequest":337,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":347}],332:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./IDBFactory":333,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBRequest":337,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":346}],332:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10609,7 +10609,7 @@ Object.defineProperty(IDBDatabase, 'prototype', {
 exports.default = IDBDatabase;
 module.exports = exports['default'];
 
-},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./Event":330,"./IDBObjectStore":336,"./IDBTransaction":338,"./Sca":341,"./util":347,"eventtarget":298}],333:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./Event":330,"./IDBObjectStore":336,"./IDBTransaction":338,"./Sca":341,"./util":346,"eventtarget":298}],333:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -11430,7 +11430,7 @@ exports.shimIndexedDB = shimIndexedDB;
 
 }).call(this,require('_process'))
 
-},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./Event":330,"./IDBDatabase":332,"./IDBRequest":337,"./IDBTransaction":338,"./IDBVersionChangeEvent":339,"./Key":340,"./util":347,"_process":300,"fs":3,"path":299,"sync-promise":302}],334:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./Event":330,"./IDBDatabase":332,"./IDBRequest":337,"./IDBTransaction":338,"./IDBVersionChangeEvent":339,"./Key":340,"./util":346,"_process":300,"fs":3,"path":299,"sync-promise":302}],334:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12046,7 +12046,7 @@ exports.executeFetchIndexData = executeFetchIndexData;
 exports.IDBIndex = IDBIndex;
 exports.default = IDBIndex;
 
-},{"./CFG":327,"./DOMException":328,"./IDBCursor":331,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":347}],335:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./IDBCursor":331,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":346}],335:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12230,7 +12230,7 @@ exports.IDBKeyRange = IDBKeyRange;
 exports.convertValueToKeyRange = convertValueToKeyRange;
 exports.default = IDBKeyRange;
 
-},{"./DOMException":328,"./Key":340,"./util":347}],336:[function(require,module,exports){
+},{"./DOMException":328,"./Key":340,"./util":346}],336:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13114,7 +13114,7 @@ Object.defineProperty(IDBObjectStore, 'prototype', {
 exports.default = IDBObjectStore;
 module.exports = exports['default'];
 
-},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./IDBCursor":331,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":347,"sync-promise":302}],337:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./IDBCursor":331,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":346,"sync-promise":302}],337:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13317,7 +13317,7 @@ Object.defineProperty(IDBOpenDBRequest, 'prototype', {
 exports.IDBRequest = IDBRequest;
 exports.IDBOpenDBRequest = IDBOpenDBRequest;
 
-},{"./DOMException":328,"./util":347,"eventtarget":298}],338:[function(require,module,exports){
+},{"./DOMException":328,"./util":346,"eventtarget":298}],338:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13926,7 +13926,7 @@ Object.defineProperty(IDBTransaction, 'prototype', {
 exports.default = IDBTransaction;
 module.exports = exports['default'];
 
-},{"./CFG":327,"./DOMException":328,"./Event":330,"./IDBObjectStore":336,"./IDBRequest":337,"./util":347,"eventtarget":298,"sync-promise":302}],339:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./Event":330,"./IDBObjectStore":336,"./IDBRequest":337,"./util":346,"eventtarget":298,"sync-promise":302}],339:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13991,7 +13991,7 @@ Object.defineProperty(IDBVersionChangeEvent, 'prototype', {
 exports.default = IDBVersionChangeEvent;
 module.exports = exports['default'];
 
-},{"./Event":330,"./util":347}],340:[function(require,module,exports){
+},{"./Event":330,"./util":346}],340:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14801,7 +14801,7 @@ exports.findMultiEntryMatches = findMultiEntryMatches;
 exports.generateKeyForStore = generateKeyForStore;
 exports.possiblyUpdateKeyGenerator = possiblyUpdateKeyGenerator;
 
-},{"./CFG":327,"./DOMException":328,"./IDBFactory":333,"./util":347}],341:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./IDBFactory":333,"./util":346}],341:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14917,369 +14917,7 @@ _CFG2.default.UnicodeIDContinue = _UnicodeIdentifiers.UnicodeIDContinue;
 exports.default = _setGlobalVars2.default;
 module.exports = exports['default'];
 
-},{"./CFG":327,"./UnicodeIdentifiers":342,"./babel-polyfill-before":343,"./setGlobalVars":346}],345:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-var _DOMException = require('./DOMException');
-
-var _Key = require('./Key');
-
-var Key = _interopRequireWildcard(_Key);
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-// Todo Browser: polyfill IDBVersionChangeEvent, IDBOpenDBRequest?
-
-/**
- * Polyfills missing features in the browser's native IndexedDB implementation.
- * This is used for browsers that DON'T support WebSQL but DO support IndexedDB
- */
-function polyfill() {
-    if (navigator.userAgent.match(/MSIE/) || navigator.userAgent.match(/Trident/) || navigator.userAgent.match(/Edge/)) {
-        // Internet Explorer's native IndexedDB does not support compound keys
-        compoundKeyPolyfill();
-    }
-}
-
-/**
- * Polyfills support for compound keys
- */
-function compoundKeyPolyfill(IDBCursor, IDBCursorWithValue, IDBDatabase, IDBFactory, IDBIndex, IDBKeyRange, IDBObjectStore, IDBRequest, IDBTransaction) {
-    var cmp = IDBFactory.prototype.cmp;
-    var createObjectStore = IDBDatabase.prototype.createObjectStore;
-    var createIndex = IDBObjectStore.prototype.createIndex;
-    var add = IDBObjectStore.prototype.add;
-    var put = IDBObjectStore.prototype.put;
-    var indexGet = IDBIndex.prototype.get;
-    var indexGetKey = IDBIndex.prototype.getKey;
-    var indexCursor = IDBIndex.prototype.openCursor;
-    var indexKeyCursor = IDBIndex.prototype.openKeyCursor;
-    var storeGet = IDBObjectStore.prototype.get;
-    var storeDelete = IDBObjectStore.prototype.delete;
-    var storeCursor = IDBObjectStore.prototype.openCursor;
-    var storeKeyCursor = IDBObjectStore.prototype.openKeyCursor;
-    var bound = IDBKeyRange.bound;
-    var upperBound = IDBKeyRange.upperBound;
-    var lowerBound = IDBKeyRange.lowerBound;
-    var only = IDBKeyRange.only;
-    var requestResult = Object.getOwnPropertyDescriptor(IDBRequest.prototype, 'result');
-    var cursorPrimaryKey = Object.getOwnPropertyDescriptor(IDBCursor.prototype, 'primaryKey');
-    var cursorKey = Object.getOwnPropertyDescriptor(IDBCursor.prototype, 'key');
-    var cursorValue = Object.getOwnPropertyDescriptor(IDBCursorWithValue.prototype, 'value');
-
-    IDBFactory.prototype.cmp = function (key1, key2) {
-        var args = Array.prototype.slice.call(arguments);
-        if (Array.isArray(key1)) {
-            args[0] = encodeCompoundKey(key1);
-        }
-        if (Array.isArray(key2)) {
-            args[1] = encodeCompoundKey(key2);
-        }
-        return cmp.apply(this, args);
-    };
-
-    IDBDatabase.prototype.createObjectStore = function (name, opts) {
-        if (opts && Array.isArray(opts.keyPath)) {
-            opts.keyPath = encodeCompoundKeyPath(opts.keyPath);
-        }
-        return createObjectStore.apply(this, arguments);
-    };
-
-    IDBObjectStore.prototype.createIndex = function (name, keyPath, opts) {
-        var args = Array.prototype.slice.call(arguments);
-        if (Array.isArray(keyPath)) {
-            args[1] = encodeCompoundKeyPath(keyPath);
-        }
-        return createIndex.apply(this, args);
-    };
-
-    IDBObjectStore.prototype.add = function () /* value, key */{
-        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-            args[_key] = arguments[_key];
-        }
-
-        return this.__insertData(add, args);
-    };
-
-    IDBObjectStore.prototype.put = function () /* value, key */{
-        for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-            args[_key2] = arguments[_key2];
-        }
-
-        return this.__insertData(put, args);
-    };
-
-    IDBObjectStore.prototype.__insertData = function (method, args) {
-        args = Array.prototype.slice.call(args);
-        var value = args[0];
-        var key = args[1];
-
-        // out-of-line key
-        if (Array.isArray(key)) {
-            args[1] = encodeCompoundKey(key);
-        }
-
-        if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object') {
-            // inline key
-            if (isCompoundKey(this.keyPath)) {
-                var erred = setInlineCompoundKey(value, this.keyPath);
-                if (erred) {
-                    throw (0, _DOMException.createDOMException)('DataError', 'keyPath error');
-                }
-            }
-
-            // inline indexes
-            for (var i = 0; i < this.indexNames.length; i++) {
-                var index = this.index(this.indexNames[i]);
-                if (isCompoundKey(index.keyPath)) {
-                    try {
-                        setInlineCompoundKey(value, index.keyPath, index.multiEntry);
-                    } catch (e) {
-                        // The value doesn't have a valid key for this index.
-                    }
-                }
-            }
-        }
-        return method.apply(this, args);
-    };
-
-    IDBIndex.prototype.get = function (key) {
-        var args = Array.prototype.slice.call(arguments);
-        if (Array.isArray(key)) {
-            args[0] = encodeCompoundKey(key);
-        }
-        return indexGet.apply(this, args);
-    };
-
-    IDBIndex.prototype.getKey = function (key) {
-        var args = Array.prototype.slice.call(arguments);
-        if (Array.isArray(key)) {
-            args[0] = encodeCompoundKey(key);
-        }
-        return indexGetKey.apply(this, args);
-    };
-
-    IDBIndex.prototype.openCursor = function (key) {
-        var args = Array.prototype.slice.call(arguments);
-        if (Array.isArray(key)) {
-            args[0] = encodeCompoundKey(key);
-        }
-        return indexCursor.apply(this, args);
-    };
-
-    IDBIndex.prototype.openKeyCursor = function (key) {
-        var args = Array.prototype.slice.call(arguments);
-        if (Array.isArray(key)) {
-            args[0] = encodeCompoundKey(key);
-        }
-        return indexKeyCursor.apply(this, args);
-    };
-
-    IDBObjectStore.prototype.get = function (key) {
-        var args = Array.prototype.slice.call(arguments);
-        if (Array.isArray(key)) {
-            args[0] = encodeCompoundKey(key);
-        }
-        return storeGet.apply(this, args);
-    };
-
-    IDBObjectStore.prototype.delete = function (key) {
-        var args = Array.prototype.slice.call(arguments);
-        if (Array.isArray(key)) {
-            args[0] = encodeCompoundKey(key);
-        }
-        return storeDelete.apply(this, args);
-    };
-
-    IDBObjectStore.prototype.openCursor = function (key) {
-        var args = Array.prototype.slice.call(arguments);
-        if (Array.isArray(key)) {
-            args[0] = encodeCompoundKey(key);
-        }
-        return storeCursor.apply(this, args);
-    };
-
-    IDBObjectStore.prototype.openKeyCursor = function (key) {
-        var args = Array.prototype.slice.call(arguments);
-        if (Array.isArray(key)) {
-            args[0] = encodeCompoundKey(key);
-        }
-        return storeKeyCursor.apply(this, args);
-    };
-
-    IDBKeyRange.bound = function (lower, upper, lowerOpen, upperOpen) {
-        var args = Array.prototype.slice.call(arguments);
-        if (Array.isArray(lower)) {
-            args[0] = encodeCompoundKey(lower);
-        }
-        if (Array.isArray(upper)) {
-            args[1] = encodeCompoundKey(upper);
-        }
-        return bound.apply(IDBKeyRange, args);
-    };
-
-    IDBKeyRange.upperBound = function (key, open) {
-        var args = Array.prototype.slice.call(arguments);
-        if (Array.isArray(key)) {
-            args[0] = encodeCompoundKey(key);
-        }
-        return upperBound.apply(IDBKeyRange, args);
-    };
-
-    IDBKeyRange.lowerBound = function (key, open) {
-        var args = Array.prototype.slice.call(arguments);
-        if (Array.isArray(key)) {
-            args[0] = encodeCompoundKey(key);
-        }
-        return lowerBound.apply(IDBKeyRange, args);
-    };
-
-    IDBKeyRange.only = function (key) {
-        var args = Array.prototype.slice.call(arguments);
-        if (Array.isArray(key)) {
-            args[0] = encodeCompoundKey(key);
-        }
-        return only.apply(IDBKeyRange, args);
-    };
-
-    Object.defineProperty(IDBRequest.prototype, 'result', {
-        enumerable: requestResult.enumerable,
-        configurable: requestResult.configurable,
-        get: function get() {
-            var result = requestResult.get.call(this);
-            return removeInlineCompoundKey(result);
-        }
-    });
-
-    Object.defineProperty(IDBCursor.prototype, 'primaryKey', {
-        enumerable: cursorPrimaryKey.enumerable,
-        configurable: cursorPrimaryKey.configurable,
-        get: function get() {
-            var result = cursorPrimaryKey.get.call(this);
-            return removeInlineCompoundKey(result);
-        }
-    });
-
-    Object.defineProperty(IDBCursor.prototype, 'key', {
-        enumerable: cursorKey.enumerable,
-        configurable: cursorKey.configurable,
-        get: function get() {
-            var result = cursorKey.get.call(this);
-            return removeInlineCompoundKey(result);
-        }
-    });
-
-    Object.defineProperty(IDBCursorWithValue.prototype, 'value', {
-        enumerable: cursorValue.enumerable,
-        configurable: cursorValue.configurable,
-        get: function get() {
-            var result = cursorValue.get.call(this);
-            return removeInlineCompoundKey(result);
-        }
-    });
-}
-
-var compoundKeysPropertyName = '__$$compoundKey';
-var propertySeparatorRegExp = /\$\$/g;
-var propertySeparator = '$$$$'; // "$$" after RegExp escaping
-var keySeparator = '$_$';
-
-function isCompoundKey(keyPath) {
-    return keyPath && keyPath.indexOf(compoundKeysPropertyName + '.') === 0;
-}
-
-function encodeCompoundKeyPath(keyPath) {
-    // Encoded dotted properties
-    // ["name.first", "name.last"] ==> ["name$$first", "name$$last"]
-    for (var i = 0; i < keyPath.length; i++) {
-        keyPath[i] = keyPath[i].replace(/\./g, propertySeparator);
-    }
-
-    // Encode the array as a single property
-    // ["name$$first", "name$$last"] => "__$$compoundKey.name$$first$_$name$$last"
-    return compoundKeysPropertyName + '.' + keyPath.join(keySeparator);
-}
-
-function decodeCompoundKeyPath(keyPath) {
-    // Remove the "__$$compoundKey." prefix
-    keyPath = keyPath.substr(compoundKeysPropertyName.length + 1);
-
-    // Split the properties into an array
-    // "name$$first$_$name$$last" ==> ["name$$first", "name$$last"]
-    keyPath = keyPath.split(keySeparator);
-
-    // Decode dotted properties
-    // ["name$$first", "name$$last"] ==> ["name.first", "name.last"]
-    for (var i = 0; i < keyPath.length; i++) {
-        keyPath[i] = keyPath[i].replace(propertySeparatorRegExp, '.');
-    }
-    return keyPath;
-}
-
-function setInlineCompoundKey(value, encodedKeyPath, multiEntry) {
-    // Encode the key
-    var keyPath = decodeCompoundKeyPath(encodedKeyPath);
-    var key = Key.extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry);
-    if (key.failure || key.invalid) {
-        return true;
-    }
-    var encodedKey = encodeCompoundKey(key.value);
-
-    // Store the encoded key inline
-    encodedKeyPath = encodedKeyPath.substr(compoundKeysPropertyName.length + 1);
-    value[compoundKeysPropertyName] = value[compoundKeysPropertyName] || {};
-    value[compoundKeysPropertyName][encodedKeyPath] = encodedKey;
-}
-
-function removeInlineCompoundKey(value) {
-    if (typeof value === 'string' && isCompoundKey(value)) {
-        return decodeCompoundKey(value);
-    } else if (value && _typeof(value[compoundKeysPropertyName]) === 'object') {
-        delete value[compoundKeysPropertyName];
-    }
-    return value;
-}
-
-function encodeCompoundKey(key) {
-    // Validate and encode the key
-    Key.convertValueToKeyRethrowingAndIfInvalid(key);
-    key = Key.encode(key);
-
-    // Prepend the "__$$compoundKey." prefix
-    key = compoundKeysPropertyName + '.' + key;
-
-    validateKeyLength(key);
-    return key;
-}
-
-function decodeCompoundKey(key) {
-    validateKeyLength(key);
-
-    // Remove the "__$$compoundKey." prefix
-    key = key.substr(compoundKeysPropertyName.length + 1);
-
-    // Decode the key
-    key = Key.decode(key);
-    return key;
-}
-
-function validateKeyLength(key) {
-    // BUG: Internet Explorer truncates string keys at 889 characters
-    if (key.length > 889) {
-        throw (0, _DOMException.createDOMException)('DataError', 'The encoded key is ' + key.length + ' characters long, but IE only allows 889 characters. Consider replacing numeric keys with strings to reduce the encoded length.');
-    }
-}
-
-exports.default = polyfill;
-module.exports = exports['default'];
-
-},{"./DOMException":328,"./Key":340}],346:[function(require,module,exports){
+},{"./CFG":327,"./UnicodeIdentifiers":342,"./babel-polyfill-before":343,"./setGlobalVars":345}],345:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -15323,10 +14961,6 @@ var _IDBTransaction2 = _interopRequireDefault(_IDBTransaction);
 var _IDBDatabase = require('./IDBDatabase');
 
 var _IDBDatabase2 = _interopRequireDefault(_IDBDatabase);
-
-var _polyfill = require('./polyfill');
-
-var _polyfill2 = _interopRequireDefault(_polyfill);
 
 var _CFG = require('./CFG');
 
@@ -15456,9 +15090,6 @@ function setGlobalVars(idb, initialConfig) {
                     }
                 }
                 IDB.shimIndexedDB.__setConnectionQueueOrigin();
-            } else if (_typeof(IDB.indexedDB) === 'object') {
-                // Polyfill the missing IndexedDB features (no need for the window containing indexedDB itself))
-                (0, _polyfill2.default)(_IDBCursor.IDBCursor, _IDBCursor.IDBCursorWithValue, _IDBDatabase2.default, shimIDBFactory, _IDBIndex2.default, _IDBKeyRange2.default, _IDBObjectStore2.default, _IDBRequest.IDBRequest, _IDBTransaction2.default);
             }
         };
 
@@ -15522,7 +15153,7 @@ module.exports = exports['default'];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./CFG":327,"./DOMException":328,"./IDBCursor":331,"./IDBDatabase":332,"./IDBFactory":333,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBRequest":337,"./IDBTransaction":338,"./IDBVersionChangeEvent":339,"./polyfill":345}],347:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./IDBCursor":331,"./IDBDatabase":332,"./IDBFactory":333,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBRequest":337,"./IDBTransaction":338,"./IDBVersionChangeEvent":339}],346:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {

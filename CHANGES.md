@@ -31,6 +31,10 @@ they were actually changes since a more recent version on `master`.
     Sca encoding; breaks all tables but important to fix!
 - Breaking change/Fix: Remove `IDBTransaction` mode constants and tests since
     now being removed from IndexedDB
+- Breaking change: Remove old `polyfill.js` code for incrementally
+    plugging browsers with incomplete support (has not been tested for a long
+    time and had perhaps not been properly kept up to date anyways); one
+    can still use IndexedDBShim to replace the whole implementation, however.
 - Breaking change: Throw if database name is too long, defaulting to 254 (part
     of fix for #274) (enforcing compatibility with Node, given our mapping it to
     file naming on common file systems)

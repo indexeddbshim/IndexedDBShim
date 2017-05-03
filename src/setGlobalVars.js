@@ -9,7 +9,6 @@ import shimIDBObjectStore from './IDBObjectStore';
 import shimIDBIndex from './IDBIndex';
 import shimIDBTransaction from './IDBTransaction';
 import shimIDBDatabase from './IDBDatabase';
-import polyfill from './polyfill';
 import CFG from './CFG';
 
 function setConfig (prop, val) {
@@ -141,9 +140,6 @@ function setGlobalVars (idb, initialConfig) {
                     }
                 }
                 IDB.shimIndexedDB.__setConnectionQueueOrigin();
-            } else if (typeof IDB.indexedDB === 'object') {
-                // Polyfill the missing IndexedDB features (no need for the window containing indexedDB itself))
-                polyfill(shimIDBCursor, shimIDBCursorWithValue, shimIDBDatabase, shimIDBFactory, shimIDBIndex, shimIDBKeyRange, shimIDBObjectStore, shimIDBRequest, shimIDBTransaction);
             }
         };
 
