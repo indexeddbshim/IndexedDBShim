@@ -435,18 +435,40 @@ The special build of `websql` that we use does allow such
 IndexedDB-spec-compliant (and data-integrity-friendly!) rollback behavior
 in Node.
 
+See below on task/micro-task timing for more.
+
 ### Task/micro-task timing
 
-Related to the issue responsible to preventing reliable browser
-rollback, but facing Node as well, if we were to ensure transactions
-finished before the next task, as expected in the spec (and in some
-of the [W3C tests](test-support/node-good-bad-files.js)), we'd mostly
-need to use synchronous SQLite operations (such as in
-<https://github.com/grumdrig/node-sqlite>).
+IndexedDB transactions [will timeout](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB#Adding_data_to_the_database)
+so long as there are no detected active requests.
 
-However, as mentioned above, this would degrade performance particularly
-on a server (and in the browser, the synchronous WebSQL API on which we
-are relying was not apparently supported in browsers).
+While a single promise delay (a "microtask") is not supposed to be
+long enough to cause a transaction timeout (and they do not in Node
+where we have control over extending the transaction), it could possibly
+occur in our browser implementation.
+
+(Note that chaining multiple promises or having a long-resolving
+promise will likely cause a transaction to expire even in compliant
+implementations.)
+
+A `setTimeout` timeout of `0`, on the other hand (a full "task"), ought,
+for compliant implementations, to be long enough of a time to cause a
+time out of the transaction, but in Node where we prolong transactions
+long enough to ensure our full chain of asynchronous SQL needed for the
+transaction operations is run (as well as ensure complete rollback should
+there be an error causing a transaction abort), it may be too short.
+
+We could fix this in Node (where we can have access to a synchronous
+SQLite API such as <https://github.com/grumdrig/node-sqlite> unlike
+on the browser) and ensure transactions finish before the next task
+(though always after a microtask), but as mentioned above, this would
+degrade performance particularly on a server (and in the browser,
+the WebSQL API on which we are relying did not apparently
+gain support in browsers for the synchronous API).
+
+[This test](https://github.com/w3c/web-platform-tests/blob/master/IndexedDB/transaction-deactivation-timing.html) and [this one](https://github.com/w3c/web-platform-tests/blob/master/IndexedDB/upgrade-transaction-deactivation-timing.html)
+demonstrate the *expected* timeout behavior with regard to `setTimeout`
+or promises and transaction expiration.
 
 ### [Structured Cloning Algorithm](https://html.spec.whatwg.org/multipage/infrastructure.html#safe-passing-of-structured-data)
 
