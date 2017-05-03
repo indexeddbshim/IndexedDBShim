@@ -6,7 +6,7 @@ backward-breaking (though standard-compliant) behavioral fixes (see
 also unfortunately cause data stored under version 2 to break. We are not
 able to provide you with an automated upgrade path, so you will need to
 either stick with version 2 or migrate users' data yourself to the new
-SQL storage format (whose changes are considerable; [CHANGES](CHANGES.MD)
+SQL storage format (whose changes are considerable; [CHANGES](CHANGES.md)
 also lists these breaking database format changes). We have attempted to
 anticipate future changes so that for another upgrade, even a major one,
 old data will hopefully continue to work. However, to be safe, if you are
