@@ -1,4 +1,9 @@
 /*
+
+This file indicates still failing tests for the full
+(current) W3C set of tests (web-platform-tests). For expected
+status for other tests in this repo, see CHANGES.md.
+
 // Outstanding or known issues on tests (should give particular priority
 //   to 'Timeout' or 'Not Run' tests in case they are our own test environment
 //   problems)

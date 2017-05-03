@@ -10571,15 +10571,15 @@ IDBFactory.prototype.open = function (name /* , version */) {
         db.transaction(function (tx) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS __sys__ (name BLOB, keyPath BLOB, autoInc BOOLEAN, indexList BLOB, currNum INTEGER)', [], function () {
                 tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList" FROM __sys__', [], function (tx, data) {
+                    function finishRequest() {
+                        req.__readyState = 'done';
+                        req.__result = connection;
+                    }
                     var connection = _IDBDatabase2.default.__createInstance(db, name, oldVersion, version, data);
                     if (!me.__connections[name]) {
                         me.__connections[name] = [];
                     }
                     me.__connections[name].push(connection);
-                    function addResult() {
-                        req.__readyState = 'done';
-                        req.__result = connection;
-                    }
 
                     if (oldVersion < version) {
                         var openConnections = me.__connections[name].slice(0, -1);
@@ -10614,13 +10614,12 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
                             sysdb.transaction(function (systx) {
                                 function versionSet() {
-                                    addResult(); // Todo: Per open database step order, this should really occur after the upgrade transaction finishes (replace `req.result` with `connection`); also for `readyState`--see https://github.com/w3c/IndexedDB/issues/161
-
                                     var e = new _IDBVersionChangeEvent2.default('upgradeneeded', { oldVersion: oldVersion, newVersion: version });
+                                    req.__result = connection;
                                     req.__transaction = req.__result.__versionTransaction = _IDBTransaction2.default.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
+                                    req.__readyState = 'done';
                                     req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded(tx, args, finished, error) {
                                         req.dispatchEvent(e);
-                                        // req.__transaction.__active = req.__result.__versionTransaction.__active = false;
                                         if (e.__legacyOutputDidListenersThrowError) {
                                             (0, _DOMException.logError)('Error', 'An error occurred in an upgradeneeded handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
                                             req.transaction.__abortTransaction((0, _DOMException.createDOMException)('AbortError', 'A request was aborted.'));
@@ -10682,6 +10681,15 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                         //   in `IDBObjectStore.deleteIndex`, "should delete an index that was
                                         //   created in a previous transaction").
                                         // setTimeout(() => {
+
+                                        // Todo: Waiting on confirmation re: positioning here of
+                                        //      `readyState` (and `result`)--see https://github.com/w3c/IndexedDB/issues/161
+                                        //      Note, however, that the readyState and result will be reset anyways
+                                        // req.__readyState = 'pending';
+                                        // req.__result = undefined;
+
+                                        finishRequest();
+
                                         req.__transaction = null;
                                         var e = (0, _Event.createEvent)('success');
                                         req.dispatchEvent(e);
@@ -10708,7 +10716,8 @@ IDBFactory.prototype.open = function (name /* , version */) {
                             });
                         });
                     } else {
-                        addResult();
+                        finishRequest();
+
                         var e = (0, _Event.createEvent)('success');
                         req.dispatchEvent(e);
                     }
