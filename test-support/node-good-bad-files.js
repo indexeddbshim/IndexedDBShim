@@ -79,8 +79,8 @@ IndexedDB Test counts:
         'upgrade-transaction-deactivation-timing.js' (3 tests)
 
 Current IndexedDB (and domstringlist) test statuses (vmTimeout = 40000):
-  'Pass': 1194, (including 4 domstringlist tests but avoiding exclusions)
-  'Fail': 6,
+  'Pass': 1193, (including 4 domstringlist tests but avoiding exclusions)
+  'Fail': 7,
   'Timeout': 4,
   'Not Run': 3,
   'Total tests': 1207 (including 4 domstringlist tests but avoiding exclusions)
@@ -119,11 +119,11 @@ Current worker test statuses with 2 files excluded:
 //   the contents were originally obtained), but any partial inclusion might
 //   be fragile.
 // Todo: We ought to really run all of the web-platform-tests/dom/events tests
-// The failing test is apparently due to https://github.com/tmpvar/jsdom/issues/1720#issuecomment-279665105
+// The failing tests are apparently due to https://github.com/tmpvar/jsdom/issues/1720#issuecomment-279665105
 Event Test counts: 3 files (2 good, 1 bad)
 Current Event test statuses with 0 files excluded:
-  'Pass': 65,
-  'Fail': 1,
+  'Pass': 62,
+  'Fail': 4,
   'Timeout': 0,
   'Not Run': 0,
   'Total tests': 66
@@ -131,14 +131,15 @@ Current Event test statuses with 0 files excluded:
 // Passing the "exception" (or "domexception") argument to `node-idb-test.js`
 //   will run the `DOMException` tests (from web-platform-tests/WebIDL/ecmascript-binding/es-exceptions)
 // As with "events", these tests are also hard-coded
-DOMException Test counts: 4 files (4 good, 0 bad)
+// The failing test is apparently due to https://github.com/tmpvar/jsdom/issues/1720#issuecomment-279665105
+DOMException Test counts: 4 files (3 good, 1 bad)
 Current DOMException test statuses with 0 files excluded:
 {
-  'Pass': 106,
-  'Fail': 0,
+  'Pass': 96,
+  'Fail': 1,
   'Timeout': 0,
   'Not Run': 0,
-  'Total tests': 106
+  'Total tests': 97
 }
 */
 const goodBad = {

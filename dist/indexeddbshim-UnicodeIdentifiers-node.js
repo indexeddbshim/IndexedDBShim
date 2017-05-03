@@ -10259,8 +10259,6 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 var getOrigin = function getOrigin() {
     return (typeof location === 'undefined' ? 'undefined' : _typeof(location)) !== 'object' || !location ? 'null' : location.origin;
 };
@@ -10271,7 +10269,7 @@ var hasNullOrigin = function hasNullOrigin() {
 // Todo: This really should be process and tab-independent so the
 //  origin could vary; in the browser, this might be through a
 //  `SharedWorker`
-var connectionQueue = _defineProperty({}, getOrigin(), {});
+var connectionQueue = {};
 
 function processNextInConnectionQueue(name) {
     var origin = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : getOrigin();
@@ -11003,6 +11001,12 @@ IDBFactory.prototype.__forceClose = function (dbName, connIdx, msg) {
     } else {
         forceClose(me.__connections[dbName][connIdx]);
     }
+};
+
+IDBFactory.prototype.__setConnectionQueueOrigin = function () {
+    var origin = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : getOrigin();
+
+    connectionQueue[origin] = {};
 };
 
 IDBFactory.prototype[Symbol.toStringTag] = 'IDBFactoryPrototype';
@@ -15022,19 +15026,12 @@ function setGlobalVars(idb, initialConfig) {
             // Setting a read-only property failed, so try re-defining the property
             try {
                 var desc = propDesc || {};
-                desc.get = function () {
-                    return value;
-                };
-                Object.defineProperty(IDB, name, desc);
-                /*
-                // Due to <https://github.com/axemclion/IndexedDBShim/issues/280>,
-                //   there are problems for us to retain the descriptor
-                //   and thus the fact that indexedDB is to be implemented
-                //   as a getter (as expected in interface tests).
-                if (name === 'indexedDB') {
-                    console.log(Object.getOwnPropertyDescriptor(IDB, name));
+                if (!('value' in desc)) {
+                    desc.get = function () {
+                        return value;
+                    };
                 }
-                */
+                Object.defineProperty(IDB, name, desc);
             } catch (e) {
                 // With `indexedDB`, PhantomJS fails here and below but
                 //  not above, while Chrome is reverse (and Firefox doesn't
@@ -15057,11 +15054,28 @@ function setGlobalVars(idb, initialConfig) {
                 shim(prefix + 'DOMException', IDB.indexedDB.modules.ShimDOMException);
                 shim(prefix + 'DOMStringList', IDB.indexedDB.modules.ShimDOMStringList, {
                     enumerable: false,
-                    configurable: true
+                    configurable: true,
+                    writable: true,
+                    value: IDB.indexedDB.modules.ShimDOMStringList
                 });
-                shim(prefix + 'Event', IDB.indexedDB.modules.ShimEvent);
-                shim(prefix + 'CustomEvent', IDB.indexedDB.modules.ShimCustomEvent);
-                shim(prefix + 'EventTarget', IDB.indexedDB.modules.ShimEventTarget);
+                shim(prefix + 'Event', IDB.indexedDB.modules.ShimEvent, {
+                    configurable: true,
+                    writable: true,
+                    value: IDB.indexedDB.modules.ShimEvent,
+                    enumerable: false
+                });
+                shim(prefix + 'CustomEvent', IDB.indexedDB.modules.ShimCustomEvent, {
+                    configurable: true,
+                    writable: true,
+                    value: IDB.indexedDB.modules.ShimCustomEvent,
+                    enumerable: false
+                });
+                shim(prefix + 'EventTarget', IDB.indexedDB.modules.ShimEventTarget, {
+                    configurable: true,
+                    writable: true,
+                    value: IDB.indexedDB.modules.ShimEventTarget,
+                    enumerable: false
+                });
             }
             var shimIDBFactory = IDB.shimIndexedDB.modules.IDBFactory;
             if (_CFG2.default.win.openDatabase !== undefined) {
@@ -15099,6 +15113,7 @@ function setGlobalVars(idb, initialConfig) {
                         setNonIDBGlobals();
                     }
                 }
+                IDB.shimIndexedDB.__setConnectionQueueOrigin();
             } else if (_typeof(IDB.indexedDB) === 'object') {
                 // Polyfill the missing IndexedDB features (no need for the window containing indexedDB itself))
                 (0, _polyfill2.default)(_IDBCursor.IDBCursor, _IDBCursor.IDBCursorWithValue, _IDBDatabase2.default, shimIDBFactory, _IDBIndex2.default, _IDBKeyRange2.default, _IDBObjectStore2.default, _IDBRequest.IDBRequest, _IDBTransaction2.default);

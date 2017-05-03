@@ -10,6 +10,7 @@ self.parent = self;
         'clearTimeout', 'setTimeout',
         'addEventListener', 'document'
     ).forEach(function (prop) {
-        this[prop] = shimNS.window[prop];
+        // Isn't working for 'indexedDB' and its getter; see <https://github.com/axemclion/IndexedDBShim/issues/280>
+        Object.defineProperty(this, prop, Object.getOwnPropertyDescriptor(shimNS.window, prop));
     }, this);
 }());

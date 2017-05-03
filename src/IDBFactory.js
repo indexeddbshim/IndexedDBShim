@@ -18,9 +18,7 @@ const hasNullOrigin = () => CFG.checkOrigin !== false && (getOrigin() === 'null'
 // Todo: This really should be process and tab-independent so the
 //  origin could vary; in the browser, this might be through a
 //  `SharedWorker`
-const connectionQueue = {
-    [getOrigin()]: {}
-};
+const connectionQueue = {};
 
 function processNextInConnectionQueue (name, origin = getOrigin()) {
     const queueItems = connectionQueue[origin][name];
@@ -763,6 +761,10 @@ IDBFactory.prototype.__forceClose = function (dbName, connIdx, msg) {
     } else {
         forceClose(me.__connections[dbName][connIdx]);
     }
+};
+
+IDBFactory.prototype.__setConnectionQueueOrigin = function (origin = getOrigin()) {
+    connectionQueue[origin] = {};
 };
 
 IDBFactory.prototype[Symbol.toStringTag] = 'IDBFactoryPrototype';

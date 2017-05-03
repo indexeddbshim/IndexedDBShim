@@ -17,7 +17,10 @@
     log,
     Object, Function
     */
-    const nonEnumerables = ['Blob', 'File', 'DOMException', 'Error', 'Event', 'URL']; // These are needed by IndexedDB tests
+    const nonEnumerables = [
+        'Blob', 'File', 'DOMException', 'Event', 'CustomEvent', 'EventTarget', 'DOMStringList', 'URL',
+        'Window', 'Node', 'Document', 'DOMImplementation', 'DocumentFragment', 'ProcessingInstruction', 'DocumentType', 'Element', 'Attr', 'CharacterData', 'Text', 'Comment', 'NodeIterator', 'TreeWalker', 'NodeFilter', 'NodeList', 'HTMLCollection', 'DOMTokenList'
+    ]; // These are needed by IndexedDB tests
     nonEnumerables.concat(Object.keys(shimNS.window)).forEach(function (prop) {
         if (prop[0] === '_' || // One type added by jsdom
             [
@@ -31,9 +34,21 @@
             ].includes(prop)) {
             return;
         }
-        this[prop] = shimNS.window[prop];
+        // Todo: This doesn't seem to work for Event, EventTarget, CustomEvent, DOMStringList as still enumerable
+        Object.defineProperty(this, prop, Object.getOwnPropertyDescriptor(shimNS.window, prop));
     }, this);
     // shimIndexedDB.__debug(true);
+
+    // We need to overcome the `value.js` test's `instanceof` checks as
+    //   our IDB object is injected rather than inline
+    // jsdom doesn't make them available as `window` properties
+    Object.defineProperty(Array, Symbol.hasInstance, {
+        value: obj => Array.isArray(obj)
+    });
+
+    Object.defineProperty(Date, Symbol.hasInstance, {
+        value: obj => shimNS.isDateObject(obj)
+    });
 
     const colors = shimNS.colors;
     const theme = {

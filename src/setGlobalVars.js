@@ -47,19 +47,12 @@ function setGlobalVars (idb, initialConfig) {
             // Setting a read-only property failed, so try re-defining the property
             try {
                 const desc = propDesc || {};
-                desc.get = function () {
-                    return value;
-                };
-                Object.defineProperty(IDB, name, desc);
-                /*
-                // Due to <https://github.com/axemclion/IndexedDBShim/issues/280>,
-                //   there are problems for us to retain the descriptor
-                //   and thus the fact that indexedDB is to be implemented
-                //   as a getter (as expected in interface tests).
-                if (name === 'indexedDB') {
-                    console.log(Object.getOwnPropertyDescriptor(IDB, name));
+                if (!('value' in desc)) {
+                    desc.get = function () {
+                        return value;
+                    };
                 }
-                */
+                Object.defineProperty(IDB, name, desc);
             } catch (e) {
                 // With `indexedDB`, PhantomJS fails here and below but
                 //  not above, while Chrome is reverse (and Firefox doesn't
@@ -80,11 +73,28 @@ function setGlobalVars (idb, initialConfig) {
                 shim(prefix + 'DOMException', IDB.indexedDB.modules.ShimDOMException);
                 shim(prefix + 'DOMStringList', IDB.indexedDB.modules.ShimDOMStringList, {
                     enumerable: false,
-                    configurable: true
+                    configurable: true,
+                    writable: true,
+                    value: IDB.indexedDB.modules.ShimDOMStringList
                 });
-                shim(prefix + 'Event', IDB.indexedDB.modules.ShimEvent);
-                shim(prefix + 'CustomEvent', IDB.indexedDB.modules.ShimCustomEvent);
-                shim(prefix + 'EventTarget', IDB.indexedDB.modules.ShimEventTarget);
+                shim(prefix + 'Event', IDB.indexedDB.modules.ShimEvent, {
+                    configurable: true,
+                    writable: true,
+                    value: IDB.indexedDB.modules.ShimEvent,
+                    enumerable: false
+                });
+                shim(prefix + 'CustomEvent', IDB.indexedDB.modules.ShimCustomEvent, {
+                    configurable: true,
+                    writable: true,
+                    value: IDB.indexedDB.modules.ShimCustomEvent,
+                    enumerable: false
+                });
+                shim(prefix + 'EventTarget', IDB.indexedDB.modules.ShimEventTarget, {
+                    configurable: true,
+                    writable: true,
+                    value: IDB.indexedDB.modules.ShimEventTarget,
+                    enumerable: false
+                });
             }
             const shimIDBFactory = IDB.shimIndexedDB.modules.IDBFactory;
             if (CFG.win.openDatabase !== undefined) {
@@ -131,6 +141,7 @@ function setGlobalVars (idb, initialConfig) {
                         setNonIDBGlobals();
                     }
                 }
+                IDB.shimIndexedDB.__setConnectionQueueOrigin();
             } else if (typeof IDB.indexedDB === 'object') {
                 // Polyfill the missing IndexedDB features (no need for the window containing indexedDB itself))
                 polyfill(shimIDBCursor, shimIDBCursorWithValue, shimIDBDatabase, shimIDBFactory, shimIDBIndex, shimIDBKeyRange, shimIDBObjectStore, shimIDBRequest, shimIDBTransaction);
