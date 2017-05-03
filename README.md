@@ -1,5 +1,20 @@
 # IndexedDB Polyfill
 
+***Important note to those upgrading from version 2: Besides some
+backward-breaking (though standard-compliant) behavioral fixes (see
+[CHANGES](CHANGES.MD)), there are changes coming in version 3 which will
+also unfortunately cause data stored under version 2 to break. We are not
+able to provide you with an automated upgrade path, so you will need to
+either stick with version 2 or migrate users' data yourself to the new
+SQL storage format (whose changes are considerable; [CHANGES](CHANGES.MD)
+also lists these breaking database format changes). We have attempted to
+anticipate future changes so that for another upgrade, even a major one,
+old data will hopefully continue to work. However, to be safe, if you are
+using npm, be sure to specify semver targets in your dependencies properly
+so as to avoid allowing for automated upgrades to the next major version
+in case another future upgrade may also need to introduce breaking changes
+to the data format, thereby breaking old data.***
+
 [![Build Status](https://img.shields.io/travis/axemclion/IndexedDBShim.svg)](https://travis-ci.org/axemclion/IndexedDBShim)
 [![Dependencies](https://img.shields.io/david/axemclion/indexeddbshim.svg)](https://david-dm.org/axemclion/indexeddbshim)
 [![devDependencies](https://img.shields.io/david/dev/axemclion/indexeddbshim.svg)](https://david-dm.org/axemclion/indexeddbshim?type=dev)
