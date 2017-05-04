@@ -192,7 +192,10 @@ function setGlobalVars (idb, initialConfig) {
                 !navigator.userAgent.includes('Chrome')
             ) ? 25 : 4) * 1024 * 1024;
     }
-    if ((!IDB.indexedDB || poorIndexedDbSupport) && CFG.win.openDatabase !== undefined) {
+    if (!CFG.avoidAutoShim &&
+        (!IDB.indexedDB || poorIndexedDbSupport) &&
+        CFG.win.openDatabase !== undefined
+    ) {
         IDB.shimIndexedDB.__useShim();
     } else {
         IDB.IDBDatabase = IDB.IDBDatabase || IDB.webkitIDBDatabase;

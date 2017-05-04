@@ -132,6 +132,7 @@ they were actually changes since a more recent version on `master`.
     repeat `IDBFactory.open` call to the same name and version (assuming
     no deletes or aborts causing rollbacks) will reuse the same SQLite
     `openDatabase` instance
+- Enhancement: Provide `avoidAutoShim` option (#270)
 - Add missing API: Add `IDBCursor.continuePrimaryKey`
 - Add missing API: Implement `IDBObjectStore.getKey`
 - Add missing APIs: Implement `IDBIndex.getAll/getAllKeys`

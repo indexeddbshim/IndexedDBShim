@@ -281,6 +281,11 @@ The available properties relevant to browser or Node are:
     browser may use this information to suggest the use of this quota to the
     user rather than prompting the user regularly for say incremental 5MB
     permissions).
+- __avoidAutoShim__ - Where WebSQL is detected but where `indexedDB` is
+    missing or poor support is known (non-Chrome Android or
+    non-Safari iOS9), the shim will be auto-applied without
+    `shimIndexedDB.__useShim()`. Set this to `true` to avoid forcing
+    the shim for such cases.
 
 The following config are mostly relevant to Node but has bearing on the
 browser, particularly if one changes the defaults.

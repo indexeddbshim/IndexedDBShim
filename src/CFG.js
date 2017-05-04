@@ -29,6 +29,13 @@ const CFG = {};
     'UnicodeIDStart', // In the non-Unicode builds, defaults to /[$A-Z_a-z]/
     'UnicodeIDContinue', // In the non-Unicode builds, defaults to /[$0-9A-Z_a-z]/
 
+    // BROWSER-SPECIFIC CONFIG
+    'avoidAutoShim', // Where WebSQL is detected but where `indexedDB` is
+    //    missing or poor support is known (non-Chrome Android or
+    //    non-Safari iOS9), the shim will be auto-applied without
+    //   `shimIndexedDB.__useShim()`. Set this to `true` to avoid forcing
+    //    the shim for such cases.
+
     // -----------SQL CONFIG----------
     // Object (`window` in the browser) on which there may be an
     //  `openDatabase` method (if any) for WebSQL. (The browser
