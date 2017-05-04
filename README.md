@@ -517,6 +517,8 @@ will use the variable instead of the `window.indexedDB` property.  For example:
 
 ### Windows Phone
 
+*This information might be outdated. Reports on current support or fixes welcome.*
+
 IndexedDBShim works on Windows Phone via a Cordova/PhoneGap plug-in.  There
 are two plugins available: [cordova-plugin-indexedDB](https://github.com/MSOpenTech/cordova-plugin-indexedDB)
 and [cordova-plugin-indexeddb-async](https://github.com/ABB-Austin/cordova-plugin-indexeddb-async).
