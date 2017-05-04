@@ -1815,6 +1815,13 @@ const CFG = {};
 'UnicodeIDStart', // In the non-Unicode builds, defaults to /[$A-Z_a-z]/
 'UnicodeIDContinue', // In the non-Unicode builds, defaults to /[$0-9A-Z_a-z]/
 
+// BROWSER-SPECIFIC CONFIG
+'avoidAutoShim', // Where WebSQL is detected but where `indexedDB` is
+//    missing or poor support is known (non-Chrome Android or
+//    non-Safari iOS9), the shim will be auto-applied without
+//   `shimIndexedDB.__useShim()`. Set this to `true` to avoid forcing
+//    the shim for such cases.
+
 // -----------SQL CONFIG----------
 // Object (`window` in the browser) on which there may be an
 //  `openDatabase` method (if any) for WebSQL. (The browser
@@ -7760,7 +7767,7 @@ function setGlobalVars(idb, initialConfig) {
         // https://github.com/axemclion/IndexedDBShim/issues/115
         typeof navigator !== 'undefined' && navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome') ? 25 : 4) * 1024 * 1024;
     }
-    if ((!IDB.indexedDB || poorIndexedDbSupport) && _CFG2.default.win.openDatabase !== undefined) {
+    if (!_CFG2.default.avoidAutoShim && (!IDB.indexedDB || poorIndexedDbSupport) && _CFG2.default.win.openDatabase !== undefined) {
         IDB.shimIndexedDB.__useShim();
     } else {
         IDB.IDBDatabase = IDB.IDBDatabase || IDB.webkitIDBDatabase;
