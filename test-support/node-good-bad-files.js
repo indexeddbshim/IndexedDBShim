@@ -167,10 +167,16 @@ const goodBad = {
 goodBad.browser = {
     // Safari is apparently running too poorly in the runner to be able to get a good
     //    listing; need to run each test (or a smaller regex of tests) individually
+    // `keypath-special-identifiers.htm` - Failing due to Safari not having `lastModifiedDate` property on `File`
+    // `idb_webworkers.htm` - Doesn't work because Safari apparently removed its
+    //     support of IndexedDB from workers (as did Chrome) as per
+    //     https://bugs.chromium.org/p/chromium/issues/detail?id=434740
+    //     (Workers in Safari 10 also oddly have issue of older Safari of not being able
+    //        to overwrite IndexedDB, though the problem does not occur in main scripts)
     safari: {
-        timeout: ['event-dispatch-active-flag.html', 'fire-success-event-exception.html'],
-        notRunning: ['idbversionchangeevent.htm', 'interfaces.html', 'interfaces.worker.html', 'interleaved-cursors.html', 'keypath-exceptions.htm', 'name-scopes.html', 'upgrade-transaction-deactivation-timing.html'],
-        badFiles: ['bindings-inject-key.html', 'idb-binary-key-detached.htm', 'idb_webworkers.htm', 'idbindex-query-exception-order.html', 'idbobjectstore-add-put-exception-order.html', 'idbobjectstore-clear-exception-order.html', 'idbobjectstore-delete-exception-order.html', 'idbobjectstore-index-finished.html', 'idbobjectstore-query-exception-order.html', 'keypath-special-identifiers.htm', 'transaction-abort-generator-revert.html', 'transaction-deactivation-timing.html', 'transaction-lifetime.htm']
+        timeout: ['event-dispatch-active-flag.html'],
+        notRunning: ['interfaces.html', 'interfaces.worker.html', 'interleaved-cursors.html', 'keypath-exceptions.htm', 'upgrade-transaction-deactivation-timing.html'],
+        badFiles: ['bindings-inject-key.html', 'idb-binary-key-detached.htm', 'idb_webworkers.htm', 'idbindex-query-exception-order.html', 'idbobjectstore-add-put-exception-order.html', 'idbobjectstore-clear-exception-order.html', 'idbobjectstore-delete-exception-order.html', 'idbobjectstore-query-exception-order.html', 'keypath-special-identifiers.htm', 'transaction-abort-generator-revert.html', 'transaction-deactivation-timing.html', 'transaction-lifetime.htm']
     },
     chrome: {
         timeout: ['idbindex-multientry-big.htm'],

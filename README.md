@@ -199,6 +199,14 @@ with a particular message:
 db.__forceClose(msg);
 ```
 
+### shimIndexedDB.\__setConnectionQueueOrigin(origin = getOrigin())
+
+Establishes a `connectionQueue` for the supplied (or current) origin.
+
+The queue is otherwise only keyed to the detected origin on the
+loading of the IndexedDBShim script, though this is usually the
+desired behavior.
+
 ### shimIndexedDB.\__debug(boolean)
 
 The IndexedDB polyfill has sourcemaps enabled, so the polyfill can be debugged

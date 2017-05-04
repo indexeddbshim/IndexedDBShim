@@ -110,7 +110,7 @@ loaderWin.addEventListener('DOMContentLoaded', function () {
 
         const htmlFiles = files.filter((f) => (/\.html?$/).test(f));
         const polyfillScript = `
-<script src="http://localhost:9999/dist/indexeddbshim-noninvasive.min.js"></script>
+<script src="http://localhost:9999/dist/indexeddbshim-noninvasive.js"></script>
 <script>
     'use strict';
     // Override to better ensure transaction has expired
