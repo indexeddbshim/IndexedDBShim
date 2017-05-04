@@ -30,8 +30,15 @@
         }
         var req = window.indexedDB.webkitGetDatabaseNames();
         req.onsuccess = function () {
-            assert.equal(req.result.length, 1, 'Database list successfully found');
-            assert.equal(req.result.item(0), DB.NAME, 'Database lits successfully matched earlier-added database');
+            assert.ok(req.result.length >= 1, 'Database list successfully found');
+            var found = false;
+            for (var i = 0; i < req.result.length; i++) {
+                if (req.result.item(i) === DB.NAME) {
+                    found = true;
+                    break;
+                }
+            }
+            assert.ok(found, 'Database lits successfully matched earlier-added database');
             _('Database names retrieved');
             db.close();
             nextTest();

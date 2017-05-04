@@ -169,13 +169,13 @@ goodBad.browser = {
     //    listing; need to run each test (or a smaller regex of tests) individually
     safari: {
         timeout: ['event-dispatch-active-flag.html', 'fire-success-event-exception.html'],
-        notRunning: ['idbobjectstore-rename-store.html', 'idbversionchangeevent.htm', 'interfaces.html', 'interfaces.worker.html', 'interleaved-cursors.html', 'keypath-exceptions.htm', 'name-scopes.html', 'upgrade-transaction-deactivation-timing.html'],
+        notRunning: ['idbversionchangeevent.htm', 'interfaces.html', 'interfaces.worker.html', 'interleaved-cursors.html', 'keypath-exceptions.htm', 'name-scopes.html', 'upgrade-transaction-deactivation-timing.html'],
         badFiles: ['bindings-inject-key.html', 'idb-binary-key-detached.htm', 'idb_webworkers.htm', 'idbindex-query-exception-order.html', 'idbobjectstore-add-put-exception-order.html', 'idbobjectstore-clear-exception-order.html', 'idbobjectstore-delete-exception-order.html', 'idbobjectstore-index-finished.html', 'idbobjectstore-query-exception-order.html', 'keypath-special-identifiers.htm', 'transaction-abort-generator-revert.html', 'transaction-deactivation-timing.html', 'transaction-lifetime.htm']
     },
     chrome: {
-        timeout: ['idbindex-multientry-big.htm', 'idbtransaction_objectStoreNames.html'],
+        timeout: ['idbindex-multientry-big.htm'],
         notRunning: ['interleaved-cursors.html', 'keypath-exceptions.htm'],
-        badFiles: ['bindings-inject-key.html', 'event-dispatch-active-flag.html', 'idb-binary-key-detached.htm', 'idb-binary-key-roundtrip.htm', 'idbindex-query-exception-order.html', 'idbobjectstore-add-put-exception-order.html', 'idbobjectstore-clear-exception-order.html', 'idbobjectstore-delete-exception-order.html', 'idbobjectstore-query-exception-order.html', 'idbobjectstore-rename-store.html', 'idbobjectstore_openKeyCursor.htm', 'interfaces.html', 'interfaces.worker.html', 'transaction-abort-generator-revert.html', 'transaction-deactivation-timing.html', 'transaction-lifetime.htm', 'upgrade-transaction-deactivation-timing.html']
+        badFiles: ['bindings-inject-key.html', 'event-dispatch-active-flag.html', 'idb-binary-key-detached.htm', 'idbindex-query-exception-order.html', 'idbobjectstore-add-put-exception-order.html', 'idbobjectstore-clear-exception-order.html', 'idbobjectstore-delete-exception-order.html', 'idbobjectstore-query-exception-order.html', 'idbobjectstore_openKeyCursor.htm', 'interfaces.html', 'interfaces.worker.html', 'transaction-abort-generator-revert.html', 'transaction-deactivation-timing.html', 'transaction-lifetime.htm', 'upgrade-transaction-deactivation-timing.html']
     }
 };
 

@@ -7794,30 +7794,36 @@ var _regex2 = _interopRequireDefault(_regex);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function escapeUnmatchedSurrogates(arg) {
+    // http://stackoverflow.com/a/6701665/271577
+    return arg.replace(/([\uD800-\uDBFF])(?![\uDC00-\uDFFF])|(^|[^\uD800-\uDBFF])([\uDC00-\uDFFF])/g, function (_, unmatchedHighSurrogate, precedingLow, unmatchedLowSurrogate) {
+        // Could add a corresponding surrogate for compatibility with `node-sqlite3`: http://bugs.python.org/issue12569 and http://stackoverflow.com/a/6701665/271577
+        //   but Chrome having problems
+        if (unmatchedHighSurrogate) {
+            return '^2' + padStart(unmatchedHighSurrogate.charCodeAt().toString(16), 4, '0');
+        }
+        return (precedingLow || '') + '^3' + padStart(unmatchedLowSurrogate.charCodeAt().toString(16), 4, '0');
+    });
+}
+
 function escapeNameForSQLiteIdentifier(arg) {
     // http://stackoverflow.com/a/6701665/271577
     return '_' + // Prevent empty string
-    arg.replace(/\^/g, '^^') // Escape our escape
+    escapeUnmatchedSurrogates(arg.replace(/\^/g, '^^') // Escape our escape
     // http://www.sqlite.org/src/tktview?name=57c971fc74
     .replace(/\0/g, '^0')
     // We need to avoid identifiers being treated as duplicates based on SQLite's ASCII-only case-insensitive table and column names
     // (For SQL in general, however, see http://stackoverflow.com/a/17215009/271577
     // See also https://www.sqlite.org/faq.html#q18 re: Unicode (non-ASCII) case-insensitive not working
-    .replace(/([A-Z])/g, '^$1')
-    // http://stackoverflow.com/a/6701665/271577
-    .replace(/([\uD800-\uDBFF])(?![\uDC00-\uDFFF])|(^|[^\uD800-\uDBFF])([\uDC00-\uDFFF])/g, function (_, unmatchedHighSurrogate, unmatchedLowSurrogate) {
-        if (unmatchedHighSurrogate) {
-            return '^2' + unmatchedHighSurrogate + '\uDC00'; // Add a low surrogate for compatibility with `node-sqlite3`: http://bugs.python.org/issue12569 and http://stackoverflow.com/a/6701665/271577
-        }
-        return '^3\uD800' + unmatchedLowSurrogate;
-    });
+    .replace(/([A-Z])/g, '^$1'));
 }
 
+// The escaping of unmatched surrogates was needed by Chrome but not Node
 function escapeSQLiteStatement(arg) {
-    return arg.replace(/\^/g, '^^').replace(/\0/g, '^0');
+    return escapeUnmatchedSurrogates(arg.replace(/\^/g, '^^').replace(/\0/g, '^0'));
 }
 function unescapeSQLiteResponse(arg) {
-    return arg.replace(/\^0/g, '\0').replace(/\^\^/g, '^');
+    return unescapeUnmatchedSurrogates(arg).replace(/\^0/g, '\0').replace(/\^\^/g, '^');
 }
 
 function sqlEscape(arg) {
@@ -7859,6 +7865,10 @@ function escapeDatabaseNameForSQLAndFiles(db) {
     return db + (_CFG2.default.addSQLiteExtension !== false ? '.sqlite' : ''); // Shouldn't have quoting (do we even need NUL/case escaping here?)
 }
 
+function unescapeUnmatchedSurrogates(arg) {
+    return arg.replace(/(\^+)3(d[0-9a-f]{3})/g, (_, esc, lowSurr) => esc.length % 2 ? String.fromCharCode(parseInt(lowSurr, 16)) : _).replace(/(\^+)2(d[0-9a-f]{3})/g, (_, esc, highSurr) => esc.length % 2 ? String.fromCharCode(parseInt(highSurr, 16)) : _);
+}
+
 // Not in use internally but supplied for convenience
 function unescapeDatabaseNameForSQLAndFiles(db) {
     if (_CFG2.default.unescapeDatabaseName) {
@@ -7869,13 +7879,13 @@ function unescapeDatabaseNameForSQLAndFiles(db) {
         return _CFG2.default.unescapeDatabaseName(unescapeSQLiteResponse(db));
     }
 
-    return db.slice(2) // D_
+    return unescapeUnmatchedSurrogates(db.slice(2) // D_
     // CFG.databaseCharacterEscapeList
     .replace(/(\^+)1([0-9a-f]{2})/g, (_, esc, hex) => esc.length % 2 ? String.fromCharCode(parseInt(hex, 16)) : _)
     // CFG.escapeNFDForDatabaseNames
-    .replace(/(\^+)4([0-9a-f]{6})/g, (_, esc, hex) => esc.length % 2 ? String.fromCodePoint(parseInt(hex, 16)) : _)
-    // escapeNameForSQLiteIdentifier
-    .replace(/(\^+)3\uD800([\uDC00-\uDFFF])/g, (_, esc, lowSurr) => esc.length % 2 ? lowSurr : _).replace(/(\^+)2([\uD800-\uDBFF])\uDC00/g, (_, esc, highSurr) => esc.length % 2 ? highSurr : _).replace(/(\^+)([A-Z])/g, (_, esc, upperCase) => esc.length % 2 ? upperCase : _).replace(/(\^+)0/g, (_, esc) => esc.length % 2 ? '\0' : _).replace(/\^\^/g, '^');
+    .replace(/(\^+)4([0-9a-f]{6})/g, (_, esc, hex) => esc.length % 2 ? String.fromCodePoint(parseInt(hex, 16)) : _))
+    // escapeNameForSQLiteIdentifier (including unescapeUnmatchedSurrogates() above)
+    .replace(/(\^+)([A-Z])/g, (_, esc, upperCase) => esc.length % 2 ? upperCase : _).replace(/(\^+)0/g, (_, esc) => esc.length % 2 ? '\0' : _).replace(/\^\^/g, '^');
 }
 
 function escapeStoreNameForSQL(store) {

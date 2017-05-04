@@ -519,6 +519,8 @@ they were actually changes since a more recent version on `master`.
     `databaseNameLengthLimit` is higher than default)
 - Fix: Upon upgrade transaction abort, attempt to clean up other resources
     (remove memory database or remove/empty database file if no prior versions)
+- Fix: Ensure escaping of unmatched surrogates occurs in all SQLite statements
+    as needed by Chrome (but not Node) (noted in failed dropping of tables)
 - Repo files: Rename test folders for ease in distinguishing
 - Optimize: Only retrieve required SQLite columns
 - Optimize: Have `IDBObjectStore` and `IDBIndex`'s `get` and
