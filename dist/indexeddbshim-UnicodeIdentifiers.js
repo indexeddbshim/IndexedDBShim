@@ -9656,7 +9656,7 @@ exports.ShimEvent = _eventtarget.ShimEvent;
 exports.ShimCustomEvent = _eventtarget.ShimCustomEvent;
 exports.ShimEventTarget = _eventtarget.ShimEventTarget;
 
-},{"./util":346,"eventtarget":298}],331:[function(require,module,exports){
+},{"./util":345,"eventtarget":298}],331:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10295,7 +10295,7 @@ Object.defineProperty(IDBCursorWithValue, 'prototype', {
 exports.IDBCursor = IDBCursor;
 exports.IDBCursorWithValue = IDBCursorWithValue;
 
-},{"./CFG":327,"./DOMException":328,"./IDBFactory":333,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBRequest":337,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":346}],332:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./IDBFactory":333,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBRequest":337,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":345}],332:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -10609,7 +10609,7 @@ Object.defineProperty(IDBDatabase, 'prototype', {
 exports.default = IDBDatabase;
 module.exports = exports['default'];
 
-},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./Event":330,"./IDBObjectStore":336,"./IDBTransaction":338,"./Sca":341,"./util":346,"eventtarget":298}],333:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./Event":330,"./IDBObjectStore":336,"./IDBTransaction":338,"./Sca":341,"./util":345,"eventtarget":298}],333:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -11430,7 +11430,7 @@ exports.shimIndexedDB = shimIndexedDB;
 
 }).call(this,require('_process'))
 
-},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./Event":330,"./IDBDatabase":332,"./IDBRequest":337,"./IDBTransaction":338,"./IDBVersionChangeEvent":339,"./Key":340,"./util":346,"_process":300,"fs":3,"path":299,"sync-promise":302}],334:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./Event":330,"./IDBDatabase":332,"./IDBRequest":337,"./IDBTransaction":338,"./IDBVersionChangeEvent":339,"./Key":340,"./util":345,"_process":300,"fs":3,"path":299,"sync-promise":302}],334:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12046,7 +12046,7 @@ exports.executeFetchIndexData = executeFetchIndexData;
 exports.IDBIndex = IDBIndex;
 exports.default = IDBIndex;
 
-},{"./CFG":327,"./DOMException":328,"./IDBCursor":331,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":346}],335:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./IDBCursor":331,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":345}],335:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -12230,7 +12230,7 @@ exports.IDBKeyRange = IDBKeyRange;
 exports.convertValueToKeyRange = convertValueToKeyRange;
 exports.default = IDBKeyRange;
 
-},{"./DOMException":328,"./Key":340,"./util":346}],336:[function(require,module,exports){
+},{"./DOMException":328,"./Key":340,"./util":345}],336:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13114,7 +13114,7 @@ Object.defineProperty(IDBObjectStore, 'prototype', {
 exports.default = IDBObjectStore;
 module.exports = exports['default'];
 
-},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./IDBCursor":331,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":346,"sync-promise":302}],337:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./DOMStringList":329,"./IDBCursor":331,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBTransaction":338,"./Key":340,"./Sca":341,"./util":345,"sync-promise":302}],337:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13317,7 +13317,7 @@ Object.defineProperty(IDBOpenDBRequest, 'prototype', {
 exports.IDBRequest = IDBRequest;
 exports.IDBOpenDBRequest = IDBOpenDBRequest;
 
-},{"./DOMException":328,"./util":346,"eventtarget":298}],338:[function(require,module,exports){
+},{"./DOMException":328,"./util":345,"eventtarget":298}],338:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13926,7 +13926,7 @@ Object.defineProperty(IDBTransaction, 'prototype', {
 exports.default = IDBTransaction;
 module.exports = exports['default'];
 
-},{"./CFG":327,"./DOMException":328,"./Event":330,"./IDBObjectStore":336,"./IDBRequest":337,"./util":346,"eventtarget":298,"sync-promise":302}],339:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./Event":330,"./IDBObjectStore":336,"./IDBRequest":337,"./util":345,"eventtarget":298,"sync-promise":302}],339:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -13991,7 +13991,7 @@ Object.defineProperty(IDBVersionChangeEvent, 'prototype', {
 exports.default = IDBVersionChangeEvent;
 module.exports = exports['default'];
 
-},{"./Event":330,"./util":346}],340:[function(require,module,exports){
+},{"./Event":330,"./util":345}],340:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14818,7 +14818,7 @@ exports.findMultiEntryMatches = findMultiEntryMatches;
 exports.generateKeyForStore = generateKeyForStore;
 exports.possiblyUpdateKeyGenerator = possiblyUpdateKeyGenerator;
 
-},{"./CFG":327,"./DOMException":328,"./IDBFactory":333,"./util":346}],341:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./IDBFactory":333,"./util":345}],341:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -14902,11 +14902,6 @@ exports.UnicodeIDContinue = UnicodeIDContinue;
 
 require('babel-polyfill');
 
-},{"babel-polyfill":1}],344:[function(require,module,exports){
-'use strict';
-
-require('./babel-polyfill-before');
-
 var _UnicodeIdentifiers = require('./UnicodeIdentifiers');
 
 var UnicodeIdentifiers = _interopRequireWildcard(_UnicodeIdentifiers);
@@ -14928,6 +14923,7 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 /* global shimIndexedDB */
 _CFG2.default.win = typeof window !== 'undefined' ? window : self; // For Web Workers
 
+// `Object.assign` including within `EventTarget`, generator functions, `Array.from`, etc.; see https://babeljs.io/docs/usage/polyfill/
 (0, _setGlobalVars2.default)();
 // END: Same code as in browser.js
 
@@ -14938,7 +14934,7 @@ shimIndexedDB.__setUnicodeIdentifiers = function () {
 
 shimIndexedDB.__setUnicodeIdentifiers();
 
-},{"./CFG":327,"./UnicodeIdentifiers":342,"./babel-polyfill-before":343,"./setGlobalVars":345}],345:[function(require,module,exports){
+},{"./CFG":327,"./UnicodeIdentifiers":342,"./setGlobalVars":344,"babel-polyfill":1}],344:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -15174,7 +15170,7 @@ module.exports = exports['default'];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./CFG":327,"./DOMException":328,"./IDBCursor":331,"./IDBDatabase":332,"./IDBFactory":333,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBRequest":337,"./IDBTransaction":338,"./IDBVersionChangeEvent":339}],346:[function(require,module,exports){
+},{"./CFG":327,"./DOMException":328,"./IDBCursor":331,"./IDBDatabase":332,"./IDBFactory":333,"./IDBIndex":334,"./IDBKeyRange":335,"./IDBObjectStore":336,"./IDBRequest":337,"./IDBTransaction":338,"./IDBVersionChangeEvent":339}],345:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -15468,5 +15464,5 @@ exports.convertToDOMString = convertToDOMString;
 exports.convertToSequenceDOMString = convertToSequenceDOMString;
 exports.padStart = padStart;
 
-},{"./CFG":327,"unicode-9.0.0/Binary_Property/Expands_On_NFD/regex":326}]},{},[344])
+},{"./CFG":327,"unicode-9.0.0/Binary_Property/Expands_On_NFD/regex":326}]},{},[343])
 //# sourceMappingURL=indexeddbshim-UnicodeIdentifiers.js.map
