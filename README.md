@@ -23,7 +23,7 @@ to the data format, thereby breaking old data.***
 [![CDNJS](https://img.shields.io/cdnjs/v/IndexedDBShim.svg)](https://cdnjs.com/libraries/IndexedDBShim)
 [![License](https://img.shields.io/npm/l/indexeddbshim.svg)](LICENSE-APACHE)
 
-|[Live Demo!](http://nparashuram.com/IndexedDBShim/tests/index.html?useShim=true)
+|[Live Demo!](https://cdn.rawgit.com/axemclion/IndexedDBShim/v3.0.0-rc.5/index.html)
 |------------------------------------------------------------
 
 __Use a single, indexable, offline storage API across all desktop and mobile

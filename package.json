@@ -1,6 +1,6 @@
 {
   "name": "indexeddbshim",
-  "version": "3.0.0-rc.4",
+  "version": "3.0.0-rc.5",
   "author": "Parashuram <code@nparashuram.com>",
   "contributors": [
     "Brett Zamir"
@@ -23,6 +23,7 @@
     "build-unicodeNode": "grunt build-unicodeNode",
     "clean": "grunt clean",
     "clean-w3c": "grunt clean-w3c",
+    "copy": "grunt -v copy",
     "eslint": "grunt eslint",
     "w3c-build": "grunt clean-w3c && node test-support/node-buildjs",
     "test": "npm run sauce-qunit",
@@ -86,6 +87,7 @@
     "grunt-cli": "1.2.0",
     "grunt-contrib-clean": "1.1.0",
     "grunt-contrib-connect": "1.0.2",
+    "grunt-contrib-copy": "1.0.0",
     "grunt-contrib-qunit": "2.0.0",
     "grunt-contrib-uglify": "2.3.0",
     "grunt-contrib-watch": "1.0.0",

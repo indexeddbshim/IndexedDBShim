@@ -1,6 +1,6 @@
 {
   "name": "indexeddbshim",
-  "version": "2.2.1",
+  "version": "3.0.0-rc.5",
   "dependencies": {
     "abab": {
       "version": "1.0.3",
@@ -2223,6 +2223,12 @@
       "resolved": "https://registry.npmjs.org/file-entry-cache/-/file-entry-cache-2.0.0.tgz",
       "dev": true
     },
+    "file-sync-cmp": {
+      "version": "0.1.1",
+      "from": "file-sync-cmp@>=0.1.0 <0.2.0",
+      "resolved": "https://registry.npmjs.org/file-sync-cmp/-/file-sync-cmp-0.1.1.tgz",
+      "dev": true
+    },
     "filename-regex": {
       "version": "2.0.0",
       "from": "filename-regex@>=2.0.0 <3.0.0",
@@ -3363,6 +3369,12 @@
       "version": "1.0.2",
       "from": "grunt-contrib-connect@1.0.2",
       "resolved": "https://registry.npmjs.org/grunt-contrib-connect/-/grunt-contrib-connect-1.0.2.tgz",
+      "dev": true
+    },
+    "grunt-contrib-copy": {
+      "version": "1.0.0",
+      "from": "grunt-contrib-copy@1.0.0",
+      "resolved": "https://registry.npmjs.org/grunt-contrib-copy/-/grunt-contrib-copy-1.0.0.tgz",
       "dev": true
     },
     "grunt-contrib-qunit": {

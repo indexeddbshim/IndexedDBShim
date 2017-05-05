@@ -2,19 +2,19 @@
 <html>
     <head>
         <title>DB.JS on IndexedDB Shim</title>
-        <script src="/IndexedDBShim/dist/indexeddbshim.min.js"></script>
+        <script src="../dist/indexeddbshim.min.js"></script>
         <script>
             var server;
             window.shimIndexedDB && window.shimIndexedDB.__useShim();
-            function printResult () {
-                write('Executed : ', arguments);
+            function write (msg) {
+                document.querySelector('#log').textContent += msg + '\n';
             }
         </script>
-        <script src="https://raw.github.com/aaronpowell/db.js/master/src/db.js"></script>
+        <script src="https://rawgit.com/aaronpowell/db.js/master/dist/db.js"></script>
     </head>
     <body>
         <div class="splash">
-            <h1><img src="images/trialtool.png" style ="vertical-align:middle; height: 1.5em">PouchDB with IndexedDB Shim</h1>
+            <h1>db.js with IndexedDB Shim</h1>
             <p>
                 <ul>
                     <li>
@@ -27,63 +27,43 @@
             </p>
         </div>
         <ul>
-            <li class="example-set" id="pouchExamples">
-                <a class="example-set-name" href="#">DBJS Examples</a>
-                <ul>
-                    <li class="example" id="createDB">
-                        <a class="example-name" href="#">Create Database</a>
-                        <div class="example-docs"></div>
-                        <script>
-                            db.open({
-                                server: 'my-app',
-                                version: 1,
-                                schema: {
-                                    people: {
-                                        key: {
-                                            keyPath: 'id',
-                                            autoIncrement: true
-                                        }
-                                    }
-                                }
-                            }).done(function(s){
-                                server = s;
-                                write("Server Opened");
-                                /* Code for ${db.open} */
-                            });
-                        </script>
-                    </li>
-                    <li class="example" insertAt="db.open" depends="createDB">
-                        <a class="example-name">Add Item</a>
-                        <div class="example-docs"></div>
-                        <script>
-                            server.people.add({
-                                firstName: 'name',
-                                num: parseInt(Math.random() * 10) % 2
-                            }).done(function(res){
-                                write(res);
-                            });
-                        </script>
-                    </li>
-                    <li class="example" insertAt="db.open" depends="createDB">
-                        <a class="example-name">Remove Item</a>
-                        <div class="example-docs"></div>
-                        <script>
-                            server.people.remove(1).done(function(item){
-                                write(item);
-                            });
-                        </script>
-                    </li>
-                    <li class="example" insertAt="db.open" depends="createDB">
-                        <a class="example-name">Query Item</a>
-                        <div class="example-docs"></div>
-                        <script>
-                            server.people.query('num', '1').execute().done(function(results){
-                                write(results);
-                            });
-                        </script>
-                    </li>
-                </ul>
-            </li>
+            <b>DBJS Examples</b>
+            <script>
+                db.open({
+                    server: 'my-app',
+                    version: 1,
+                    schema: {
+                        people: {
+                            key: {
+                                keyPath: 'id',
+                                autoIncrement: true
+                            },
+                            indexes: {
+                                num: {}
+                            }
+                        }
+                    }
+                }).then(function(s){
+                    server = s;
+                    write("Database created/Server Opened");
+                    /* Code for ${db.open} */
+                }).then(function () {
+                    server.people.add({
+                        firstName: 'name',
+                        num: parseInt(Math.random() * 10) % 2
+                    }).then(function (res) {
+                        write('Add item: ' + JSON.stringify(res));
+                        return server.people.query('num').all().execute();
+                    }).then(function (results) {
+                        console.log(results);
+                        write('Query item: ' + JSON.stringify(results));
+                        return server.people.remove(1);
+                    }).then(function (item) {
+                        write('Remove item: ' + item);
+                    });
+                });
+            </script>
         </ul>
+        <pre id="log"></pre>
     </body>
 </html>
