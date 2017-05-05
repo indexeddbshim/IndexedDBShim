@@ -24,6 +24,7 @@
     "clean": "grunt clean",
     "clean-w3c": "grunt clean-w3c",
     "copy": "grunt -v copy",
+    "connect-watch": "grunt connect-watch",
     "eslint": "grunt eslint",
     "w3c-build": "grunt clean-w3c && node test-support/node-buildjs",
     "test": "npm run sauce-qunit",
