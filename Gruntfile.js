@@ -135,7 +135,7 @@ module.exports = function (grunt) {
                     sourceMap: true,
                     sourceMapIn: 'dist/<%=pkg.name%>-UnicodeIdentifiers.js.map',
                     sourceMapName: 'dist/<%=pkg.name%>-UnicodeIdentifiers.min.js.map',
-                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v3.0.0-rc.5/dist/'
+                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v3.0.0-rc.6/dist/'
                 },
                 src: 'dist/<%= pkg.name%>-UnicodeIdentifiers.js',
                 dest: 'dist/<%= pkg.name%>-UnicodeIdentifiers.min.js'
@@ -146,7 +146,7 @@ module.exports = function (grunt) {
                     sourceMap: true,
                     sourceMapIn: 'dist/<%=pkg.name%>.js.map',
                     sourceMapName: 'dist/<%=pkg.name%>.min.js.map',
-                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v3.0.0-rc.5/dist/'
+                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v3.0.0-rc.6/dist/'
                 },
                 src: 'dist/<%= pkg.name%>.js',
                 dest: 'dist/<%=pkg.name%>.min.js'
@@ -157,7 +157,7 @@ module.exports = function (grunt) {
                     sourceMap: true,
                     sourceMapIn: 'dist/<%=pkg.name%>-noninvasive.js.map',
                     sourceMapName: 'dist/<%=pkg.name%>-noninvasive.min.js.map',
-                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v3.0.0-rc.5/dist/'
+                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v3.0.0-rc.6/dist/'
                 },
                 src: 'dist/<%= pkg.name%>-noninvasive.js',
                 dest: 'dist/<%=pkg.name%>-noninvasive.min.js'
@@ -355,7 +355,7 @@ module.exports = function (grunt) {
                     {src: 'node_modules/mocha/mocha.css', dest: 'test-support/mocha/mocha.css', filter: 'isFile'},
                     {src: 'node_modules/mocha/mocha.js', dest: 'test-support/mocha/mocha.js', filter: 'isFile'},
                     {src: 'node_modules/chai/chai.js', dest: 'test-support/chai/chai.js', filter: 'isFile'},
-                    {src: 'node_modules/sinon/pkg/sinon.js', dest: 'test-support/sinon/pkg/sinon.js', filter: 'isFile'}
+                    {src: 'node_modules/sinon/pkg/sinon-no-sourcemaps.js', dest: 'test-support/sinon/pkg/sinon-no-sourcemaps.js', filter: 'isFile'}
                 ]
             }
         }
