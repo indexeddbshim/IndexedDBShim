@@ -2253,6 +2253,8 @@ var CFG = {};
 //  of the user agent prompting the user for permission to increase the
 //  quota every five megabytes."
 'DEFAULT_DB_SIZE', // Defaults to (4 * 1024 * 1024) or (25 * 1024 * 1024) in Safari
+// Whether to create indexes on SQLite tables (and also whether to try dropping)
+'useSQLiteIndexes', // Effectively defaults to `false` (ignored unless `true`)
 
 // NODE-IMPINGING SETTINGS (created for sake of limitations in Node or desktop file
 //    system implementation but applied by default in browser for parity)
@@ -3012,13 +3014,17 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
         // 1. Sort by key
         sql.push('ORDER BY', quotedKeyColumnName, direction);
 
-        // 2. Sort by primaryKey (if defined and not unique)
-        if (!me.__unique && me.__keyColumnName !== 'key') {
+        if (me.__keyColumnName !== 'key') {
             // Avoid adding 'key' twice
-            sql.push(',', quotedKey, direction);
+            if (!me.__unique) {
+                // 2. Sort by primaryKey (if defined and not unique)
+                // 3. Sort by position (if defined)
+                sql.push(',', quotedKey, direction);
+            } else if (me.direction === 'prevunique') {
+                // Sort by first record with key matching
+                sql.push(',', quotedKey, 'ASC');
+            }
         }
-
-        // 3. Sort by position (if defined)
 
         if (!me.__unique && me.__indexSource) {
             // 4. Sort by object store position (if defined and not unique)
@@ -4045,7 +4051,7 @@ function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, dat
  **/
 function createSysDB(__openDatabase, success, failure) {
     function sysDbCreateError(tx, err) {
-        err = (0, _DOMException.webSQLErrback)(err);
+        err = (0, _DOMException.webSQLErrback)(err || tx);
         _CFG2.default.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
         failure(err);
     }
@@ -4055,7 +4061,13 @@ function createSysDB(__openDatabase, success, failure) {
     } else {
         sysdb = __openDatabase(typeof _CFG2.default.memoryDatabase === 'string' ? _CFG2.default.memoryDatabase : _path2.default.join(typeof _CFG2.default.sysDatabaseBasePath === 'string' ? _CFG2.default.sysDatabaseBasePath : _CFG2.default.databaseBasePath || '', '__sysdb__' + (_CFG2.default.addSQLiteExtension !== false ? '.sqlite' : '')), 1, 'System Database', _CFG2.default.DEFAULT_DB_SIZE);
         sysdb.transaction(function (systx) {
-            systx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name BLOB, version INT);', [], success, sysDbCreateError);
+            systx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name BLOB, version INT);', [], function (systx) {
+                if (!_CFG2.default.useSQLiteIndexes) {
+                    success();
+                    return;
+                }
+                systx.executeSql('CREATE INDEX IF NOT EXISTS dbvname ON dbVersions(name)', [], success, sysDbCreateError);
+            }, sysDbCreateError);
         }, sysDbCreateError);
     }
 }
@@ -4147,6 +4159,161 @@ IDBFactory.prototype.open = function (name /* , version */) {
         req.dispatchEvent(evt);
     }
 
+    function setupDatabase(tx, db, oldVersion) {
+        tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList" FROM __sys__', [], function (tx, data) {
+            function finishRequest() {
+                req.__readyState = 'done';
+                req.__result = connection;
+            }
+            var connection = _IDBDatabase2.default.__createInstance(db, name, oldVersion, version, data);
+            if (!me.__connections[name]) {
+                me.__connections[name] = [];
+            }
+            me.__connections[name].push(connection);
+
+            if (oldVersion < version) {
+                var openConnections = me.__connections[name].slice(0, -1);
+                triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersion, version).then(function () {
+                    // DB Upgrade in progress
+                    var sysdbFinishedCb = function sysdbFinishedCb(systx, err, cb) {
+                        if (err) {
+                            try {
+                                systx.executeSql('ROLLBACK', [], cb, cb);
+                            } catch (er) {
+                                // Browser may fail with expired transaction above so
+                                // no choice but to manually revert
+                                sysdb.transaction(function (systx) {
+                                    function reportError(msg) {
+                                        throw new Error('Unable to roll back upgrade transaction!' + (msg || ''));
+                                    }
+
+                                    // Attempt to revert
+                                    if (oldVersion === 0) {
+                                        systx.executeSql('DELETE FROM dbVersions WHERE "name" = ?', [sqlSafeName], function () {
+                                            cb(reportError);
+                                        }, reportError);
+                                    } else {
+                                        systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [oldVersion, sqlSafeName], cb, reportError);
+                                    }
+                                });
+                            }
+                            return;
+                        }
+                        cb(); // In browser, should auto-commit
+                    };
+
+                    sysdb.transaction(function (systx) {
+                        function versionSet() {
+                            var e = new _IDBVersionChangeEvent2.default('upgradeneeded', { oldVersion: oldVersion, newVersion: version });
+                            req.__result = connection;
+                            req.__transaction = req.__result.__versionTransaction = _IDBTransaction2.default.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
+                            req.__readyState = 'done';
+                            req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded(tx, args, finished, error) {
+                                req.dispatchEvent(e);
+                                if (e.__legacyOutputDidListenersThrowError) {
+                                    (0, _DOMException.logError)('Error', 'An error occurred in an upgradeneeded handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
+                                    req.transaction.__abortTransaction((0, _DOMException.createDOMException)('AbortError', 'A request was aborted.'));
+                                    return;
+                                }
+                                finished();
+                            });
+                            req.transaction.on__beforecomplete = function (ev) {
+                                req.__result.__versionTransaction = null;
+                                sysdbFinishedCb(systx, false, function () {
+                                    req.transaction.__transFinishedCb(false, function () {
+                                        if (useDatabaseCache) {
+                                            if (name in websqlDBCache) {
+                                                delete websqlDBCache[name][version];
+                                            }
+                                        }
+                                        ev.complete();
+                                        req.__transaction = null;
+                                    });
+                                });
+                            };
+                            req.transaction.on__preabort = function () {
+                                // We ensure any cache is deleted before any request error events fire and try to reopen
+                                if (useDatabaseCache) {
+                                    if (name in websqlDBCache) {
+                                        delete websqlDBCache[name][version];
+                                    }
+                                }
+                            };
+                            req.transaction.on__abort = function () {
+                                req.__transaction = null;
+                                connection.close();
+                                setTimeout(function () {
+                                    var err = (0, _DOMException.createDOMException)('AbortError', 'The upgrade transaction was aborted.');
+                                    sysdbFinishedCb(systx, err, function (reportError) {
+                                        if (oldVersion === 0) {
+                                            cleanupDatabaseResources(me.__openDatabase, name, escapedDatabaseName, dbCreateError.bind(null, err), reportError || dbCreateError);
+                                            return;
+                                        }
+                                        dbCreateError(err);
+                                    });
+                                });
+                            };
+                            req.transaction.on__complete = function () {
+                                if (req.__result.__closed) {
+                                    req.__transaction = null;
+                                    var err = (0, _DOMException.createDOMException)('AbortError', 'The connection has been closed.');
+                                    dbCreateError(err);
+                                    return;
+                                }
+                                // Since this is running directly after `IDBTransaction.complete`,
+                                //   there should be a new task. However, while increasing the
+                                //   timeout 1ms in `IDBTransaction.__executeRequests` can allow
+                                //   `IDBOpenDBRequest.onsuccess` to trigger faster than a new
+                                //   transaction as required by "transaction-create_in_versionchange" in
+                                //   w3c/Transaction.js (though still on a timeout separate from this
+                                //   preceding `IDBTransaction.oncomplete`), this causes a race condition
+                                //   somehow with old transactions (e.g., for the Mocha test,
+                                //   in `IDBObjectStore.deleteIndex`, "should delete an index that was
+                                //   created in a previous transaction").
+                                // setTimeout(() => {
+
+                                // Todo: Waiting on confirmation re: positioning here of
+                                //      `readyState` (and `result`)--see https://github.com/w3c/IndexedDB/issues/161
+                                //      Note, however, that the readyState and result will be reset anyways
+                                // req.__readyState = 'pending';
+                                // req.__result = undefined;
+
+                                finishRequest();
+
+                                req.__transaction = null;
+                                var e = (0, _Event.createEvent)('success');
+                                req.dispatchEvent(e);
+                                // });
+                            };
+                        }
+                        if (oldVersion === 0) {
+                            systx.executeSql('INSERT INTO dbVersions VALUES (?,?)', [sqlSafeName, version], versionSet, dbCreateError);
+                        } else {
+                            systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [version, sqlSafeName], versionSet, dbCreateError);
+                        }
+                    }, dbCreateError, null, function (currentTask, err, done, rollback, commit) {
+                        if (currentTask.readOnly || err) {
+                            return true;
+                        }
+                        sysdbFinishedCb = function sysdbFinishedCb(systx, err, cb) {
+                            if (err) {
+                                rollback(err, cb);
+                            } else {
+                                commit(cb);
+                            }
+                        };
+                        return false;
+                    });
+                });
+            } else {
+                finishRequest();
+
+                var e = (0, _Event.createEvent)('success');
+                req.dispatchEvent(e);
+            }
+        }, dbCreateError);
+    }
+
     function openDB(oldVersion) {
         var db = void 0;
         if ((useMemoryDatabase || useDatabaseCache) && name in websqlDBCache && websqlDBCache[name][version]) {
@@ -4169,158 +4336,14 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
         db.transaction(function (tx) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS __sys__ (name BLOB, keyPath BLOB, autoInc BOOLEAN, indexList BLOB, currNum INTEGER)', [], function () {
-                tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList" FROM __sys__', [], function (tx, data) {
-                    function finishRequest() {
-                        req.__readyState = 'done';
-                        req.__result = connection;
-                    }
-                    var connection = _IDBDatabase2.default.__createInstance(db, name, oldVersion, version, data);
-                    if (!me.__connections[name]) {
-                        me.__connections[name] = [];
-                    }
-                    me.__connections[name].push(connection);
-
-                    if (oldVersion < version) {
-                        var openConnections = me.__connections[name].slice(0, -1);
-                        triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersion, version).then(function () {
-                            // DB Upgrade in progress
-                            var sysdbFinishedCb = function sysdbFinishedCb(systx, err, cb) {
-                                if (err) {
-                                    try {
-                                        systx.executeSql('ROLLBACK', [], cb, cb);
-                                    } catch (er) {
-                                        // Browser may fail with expired transaction above so
-                                        // no choice but to manually revert
-                                        sysdb.transaction(function (systx) {
-                                            function reportError(msg) {
-                                                throw new Error('Unable to roll back upgrade transaction!' + (msg || ''));
-                                            }
-
-                                            // Attempt to revert
-                                            if (oldVersion === 0) {
-                                                systx.executeSql('DELETE FROM dbVersions WHERE "name" = ?', [sqlSafeName], function () {
-                                                    cb(reportError);
-                                                }, reportError);
-                                            } else {
-                                                systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [oldVersion, sqlSafeName], cb, reportError);
-                                            }
-                                        });
-                                    }
-                                    return;
-                                }
-                                cb(); // In browser, should auto-commit
-                            };
-
-                            sysdb.transaction(function (systx) {
-                                function versionSet() {
-                                    var e = new _IDBVersionChangeEvent2.default('upgradeneeded', { oldVersion: oldVersion, newVersion: version });
-                                    req.__result = connection;
-                                    req.__transaction = req.__result.__versionTransaction = _IDBTransaction2.default.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
-                                    req.__readyState = 'done';
-                                    req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded(tx, args, finished, error) {
-                                        req.dispatchEvent(e);
-                                        if (e.__legacyOutputDidListenersThrowError) {
-                                            (0, _DOMException.logError)('Error', 'An error occurred in an upgradeneeded handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
-                                            req.transaction.__abortTransaction((0, _DOMException.createDOMException)('AbortError', 'A request was aborted.'));
-                                            return;
-                                        }
-                                        finished();
-                                    });
-                                    req.transaction.on__beforecomplete = function (ev) {
-                                        req.__result.__versionTransaction = null;
-                                        sysdbFinishedCb(systx, false, function () {
-                                            req.transaction.__transFinishedCb(false, function () {
-                                                if (useDatabaseCache) {
-                                                    if (name in websqlDBCache) {
-                                                        delete websqlDBCache[name][version];
-                                                    }
-                                                }
-                                                ev.complete();
-                                                req.__transaction = null;
-                                            });
-                                        });
-                                    };
-                                    req.transaction.on__preabort = function () {
-                                        // We ensure any cache is deleted before any request error events fire and try to reopen
-                                        if (useDatabaseCache) {
-                                            if (name in websqlDBCache) {
-                                                delete websqlDBCache[name][version];
-                                            }
-                                        }
-                                    };
-                                    req.transaction.on__abort = function () {
-                                        req.__transaction = null;
-                                        connection.close();
-                                        setTimeout(function () {
-                                            var err = (0, _DOMException.createDOMException)('AbortError', 'The upgrade transaction was aborted.');
-                                            sysdbFinishedCb(systx, err, function (reportError) {
-                                                if (oldVersion === 0) {
-                                                    cleanupDatabaseResources(me.__openDatabase, name, escapedDatabaseName, dbCreateError.bind(null, err), reportError || dbCreateError);
-                                                    return;
-                                                }
-                                                dbCreateError(err);
-                                            });
-                                        });
-                                    };
-                                    req.transaction.on__complete = function () {
-                                        if (req.__result.__closed) {
-                                            req.__transaction = null;
-                                            var _err = (0, _DOMException.createDOMException)('AbortError', 'The connection has been closed.');
-                                            dbCreateError(_err);
-                                            return;
-                                        }
-                                        // Since this is running directly after `IDBTransaction.complete`,
-                                        //   there should be a new task. However, while increasing the
-                                        //   timeout 1ms in `IDBTransaction.__executeRequests` can allow
-                                        //   `IDBOpenDBRequest.onsuccess` to trigger faster than a new
-                                        //   transaction as required by "transaction-create_in_versionchange" in
-                                        //   w3c/Transaction.js (though still on a timeout separate from this
-                                        //   preceding `IDBTransaction.oncomplete`), this causes a race condition
-                                        //   somehow with old transactions (e.g., for the Mocha test,
-                                        //   in `IDBObjectStore.deleteIndex`, "should delete an index that was
-                                        //   created in a previous transaction").
-                                        // setTimeout(() => {
-
-                                        // Todo: Waiting on confirmation re: positioning here of
-                                        //      `readyState` (and `result`)--see https://github.com/w3c/IndexedDB/issues/161
-                                        //      Note, however, that the readyState and result will be reset anyways
-                                        // req.__readyState = 'pending';
-                                        // req.__result = undefined;
-
-                                        finishRequest();
-
-                                        req.__transaction = null;
-                                        var e = (0, _Event.createEvent)('success');
-                                        req.dispatchEvent(e);
-                                        // });
-                                    };
-                                }
-                                if (oldVersion === 0) {
-                                    systx.executeSql('INSERT INTO dbVersions VALUES (?,?)', [sqlSafeName, version], versionSet, dbCreateError);
-                                } else {
-                                    systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [version, sqlSafeName], versionSet, dbCreateError);
-                                }
-                            }, dbCreateError, null, function (currentTask, err, done, rollback, commit) {
-                                if (currentTask.readOnly || err) {
-                                    return true;
-                                }
-                                sysdbFinishedCb = function sysdbFinishedCb(systx, err, cb) {
-                                    if (err) {
-                                        rollback(err, cb);
-                                    } else {
-                                        commit(cb);
-                                    }
-                                };
-                                return false;
-                            });
-                        });
-                    } else {
-                        finishRequest();
-
-                        var e = (0, _Event.createEvent)('success');
-                        req.dispatchEvent(e);
-                    }
-                }, dbCreateError);
+                function setup() {
+                    setupDatabase(tx, db, oldVersion);
+                }
+                if (!_CFG2.default.createIndexes) {
+                    setup();
+                    return;
+                }
+                tx.executeSql('CREATE INDEX IF NOT EXISTS sysname ON __sys__(name)', [], setup, dbCreateError);
             }, dbCreateError);
         }, dbCreateError);
     }
@@ -4661,6 +4684,10 @@ var _IDBObjectStore = require('./IDBObjectStore');
 
 var _IDBObjectStore2 = _interopRequireDefault(_IDBObjectStore);
 
+var _syncPromise = require('sync-promise');
+
+var _syncPromise2 = _interopRequireDefault(_syncPromise);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
@@ -4863,14 +4890,31 @@ IDBIndex.__createIndex = function (store, index) {
             }, error);
         }
 
+        var escapedStoreNameSQL = util.escapeStoreNameForSQL(storeName);
+        var escapedIndexNameSQL = util.escapeIndexNameForSQL(index.name);
+
+        function addIndexSQL(tx) {
+            if (!_CFG2.default.useSQLiteIndexes) {
+                applyIndex(tx);
+                return;
+            }
+            tx.executeSql('CREATE INDEX IF NOT EXISTS "' +
+            // The escaped index name must be unique among indexes in the whole database;
+            //    so we prefix with store name; as prefixed, will also not conflict with
+            //    index on `key`
+            // Avoid quotes and separate with special escape sequence
+            escapedStoreNameSQL.slice(1, -1) + '^5' + escapedIndexNameSQL.slice(1, -1) + '" ON ' + escapedStoreNameSQL + '(' + escapedIndexNameSQL + ')', [], applyIndex, error);
+        }
+
         if (columnExists) {
-            // For a previously existing index, just update the index entries in the existing column
+            // For a previously existing index, just update the index entries in the existing column;
+            //   no need to add SQLite index to it either as should already exist
             applyIndex(tx);
         } else {
             // For a new index, add a new column to the object store, then apply the index
-            var sql = ['ALTER TABLE', util.escapeStoreNameForSQL(storeName), 'ADD', util.escapeIndexNameForSQL(index.name), 'BLOB'].join(' ');
+            var sql = ['ALTER TABLE', escapedStoreNameSQL, 'ADD', escapedIndexNameSQL, 'BLOB'].join(' ');
             _CFG2.default.DEBUG && console.log(sql);
-            tx.executeSql(sql, [], applyIndex, error);
+            tx.executeSql(sql, [], addIndexSQL, error);
         }
     }, undefined, store);
 };
@@ -4898,17 +4942,25 @@ IDBIndex.__deleteIndex = function (store, index) {
             failure((0, _DOMException.createDOMException)('UnknownError', 'Could not delete index "' + index.name + '"', err));
         }
 
-        // Update the object store's index list
-        IDBIndex.__updateIndexList(store, tx, function (store) {
-            delete index.__pendingDelete;
-            delete index.__recreated;
-            index.__deleted = true;
-            if (indexHandle) {
-                indexHandle.__deleted = true;
-                delete indexHandle.__pendingDelete;
-            }
-            success(store);
-        }, error);
+        function finishDeleteIndex() {
+            // Update the object store's index list
+            IDBIndex.__updateIndexList(store, tx, function (store) {
+                delete index.__pendingDelete;
+                delete index.__recreated;
+                index.__deleted = true;
+                if (indexHandle) {
+                    indexHandle.__deleted = true;
+                    delete indexHandle.__pendingDelete;
+                }
+                success(store);
+            }, error);
+        }
+
+        if (!_CFG2.default.useSQLiteIndexes) {
+            finishDeleteIndex();
+            return;
+        }
+        tx.executeSql('DROP INDEX IF EXISTS ' + util.sqlQuote(util.escapeStoreNameForSQL(store.name).slice(1, -1) + '^5' + util.escapeIndexNameForSQL(index.name).slice(1, -1)), [], finishDeleteIndex, error);
     }, undefined, store);
 };
 
@@ -5068,7 +5120,8 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName) {
     var newNameType = 'BLOB';
     var storeName = store.__currentName;
     var escapedStoreNameSQL = util.escapeStoreNameForSQL(storeName);
-    var escapedTmpStoreNameSQL = util.escapeStoreNameForSQL('tmp_' + storeName);
+    var escapedNewIndexNameSQL = util.escapeIndexNameForSQL(newName);
+    var escapedTmpStoreNameSQL = util.sqlQuote('tmp_' + util.escapeStoreNameForSQL(storeName).slice(1, -1));
     var colNamesToPreserve = colInfoToPreserveArr.map(function (colInfo) {
         return colInfo[0];
     });
@@ -5081,29 +5134,72 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName) {
     // We could adapt the approach at http://stackoverflow.com/a/8430746/271577
     //    to make the approach reusable without passing column names, but it is a bit fragile
     store.transaction.__addNonRequestToTransactionQueue(function renameIndex(tx, args, success, error) {
-        var sql = 'ALTER TABLE ' + escapedStoreNameSQL + ' RENAME TO ' + escapedTmpStoreNameSQL;
-        tx.executeSql(sql, [], function (tx, data) {
-            var sql = 'CREATE TABLE ' + escapedStoreNameSQL + '(' + listColInfoToPreserve + util.escapeIndexNameForSQL(newName) + ' ' + newNameType + ')';
-            tx.executeSql(sql, [], function (tx, data) {
-                var sql = 'INSERT INTO ' + escapedStoreNameSQL + '(' + listColsToPreserve + util.escapeIndexNameForSQL(newName) + ') SELECT ' + listColsToPreserve + util.escapeIndexNameForSQL(oldName) + ' FROM ' + escapedTmpStoreNameSQL;
-                tx.executeSql(sql, [], function (tx, data) {
-                    var sql = 'DROP TABLE ' + escapedTmpStoreNameSQL;
+        function sqlError(tx, err) {
+            error(err);
+        }
+        function finish() {
+            if (cb) {
+                cb(tx, success);
+                return;
+            }
+            success();
+        }
+        // See https://www.sqlite.org/lang_altertable.html#otheralter
+        // We don't query for indexes as we already have the info
+        // This approach has the advantage of auto-deleting indexes via the DROP TABLE
+        var sql = 'CREATE TABLE ' + escapedTmpStoreNameSQL + '(' + listColInfoToPreserve + escapedNewIndexNameSQL + ' ' + newNameType + ')';
+        _CFG2.default.DEBUG && console.log(sql);
+        tx.executeSql(sql, [], function () {
+            var sql = 'INSERT INTO ' + escapedTmpStoreNameSQL + '(' + listColsToPreserve + escapedNewIndexNameSQL + ') SELECT ' + listColsToPreserve + util.escapeIndexNameForSQL(oldName) + ' FROM ' + escapedStoreNameSQL;
+            _CFG2.default.DEBUG && console.log(sql);
+            tx.executeSql(sql, [], function () {
+                var sql = 'DROP TABLE ' + escapedStoreNameSQL;
+                _CFG2.default.DEBUG && console.log(sql);
+                tx.executeSql(sql, [], function () {
+                    var sql = 'ALTER TABLE ' + escapedTmpStoreNameSQL + ' RENAME TO ' + escapedStoreNameSQL;
+                    _CFG2.default.DEBUG && console.log(sql);
                     tx.executeSql(sql, [], function (tx, data) {
-                        if (cb) {
-                            cb(tx, success);
+                        if (!_CFG2.default.useSQLiteIndexes) {
+                            finish();
                             return;
                         }
-                        success();
-                    }, function (tx, err) {
-                        error(err);
-                    });
-                }, function (tx, err) {
-                    error(err);
-                });
-            });
-        }, function (tx, err) {
-            error(err);
-        });
+                        var indexCreations = colNamesToPreserve.slice(2) // Doing `key` separately and no need for index on `value`
+                        .map(function (escapedIndexNameSQL) {
+                            return new _syncPromise2.default(function (resolve, reject) {
+                                var escapedIndexToRecreate = util.sqlQuote(escapedStoreNameSQL.slice(1, -1) + '^5' + escapedIndexNameSQL.slice(1, -1));
+                                // const sql = 'DROP INDEX IF EXISTS ' + escapedIndexToRecreate;
+                                // CFG.DEBUG && console.log(sql);
+                                // tx.executeSql(sql, [], function () {
+                                var sql = 'CREATE INDEX ' + escapedIndexToRecreate + ' ON ' + escapedStoreNameSQL + '(' + escapedIndexNameSQL + ')';
+                                _CFG2.default.DEBUG && console.log(sql);
+                                tx.executeSql(sql, [], resolve, function (tx, err) {
+                                    reject(err);
+                                });
+                                // }, function (tx, err) {
+                                //    reject(err);
+                                // });
+                            });
+                        });
+                        indexCreations.push(new _syncPromise2.default(function (resolve, reject) {
+                            var escapedIndexToRecreate = util.sqlQuote('sk_' + escapedStoreNameSQL.slice(1, -1));
+                            // Chrome erring here if not dropped first; Node does not
+                            var sql = 'DROP INDEX IF EXISTS ' + escapedIndexToRecreate;
+                            _CFG2.default.DEBUG && console.log(sql);
+                            tx.executeSql(sql, [], function () {
+                                var sql = 'CREATE INDEX ' + escapedIndexToRecreate + ' ON ' + escapedStoreNameSQL + '("key")';
+                                _CFG2.default.DEBUG && console.log(sql);
+                                tx.executeSql(sql, [], resolve, function (tx, err) {
+                                    reject(err);
+                                });
+                            }, function (tx, err) {
+                                reject(err);
+                            });
+                        }));
+                        _syncPromise2.default.all(indexCreations).then(finish, error);
+                    }, sqlError);
+                }, sqlError);
+            }, sqlError);
+        }, sqlError);
     });
 };
 
@@ -5239,7 +5335,7 @@ exports.executeFetchIndexData = executeFetchIndexData;
 exports.IDBIndex = IDBIndex;
 exports.default = IDBIndex;
 
-},{"./CFG":31,"./DOMException":32,"./IDBCursor":35,"./IDBKeyRange":39,"./IDBObjectStore":40,"./IDBTransaction":42,"./Key":44,"./Sca":45,"./util":49}],39:[function(require,module,exports){
+},{"./CFG":31,"./DOMException":32,"./IDBCursor":35,"./IDBKeyRange":39,"./IDBObjectStore":40,"./IDBTransaction":42,"./Key":44,"./Sca":45,"./util":49,"sync-promise":6}],39:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5560,6 +5656,7 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
                 _CFG2.default.DEBUG && console.log(sql, sqlValues);
                 me.transaction.__addNonRequestToTransactionQueue(function objectStoreClear(tx, args, success, error) {
                     tx.executeSql(sql, sqlValues, function (tx, data) {
+                        // This SQL preserves indexes per https://www.sqlite.org/lang_altertable.html
                         var sql = 'ALTER TABLE ' + util.escapeStoreNameForSQL(oldName) + ' RENAME TO ' + util.escapeStoreNameForSQL(name);
                         _CFG2.default.DEBUG && console.log(sql);
                         tx.executeSql(sql, [], function (tx, data) {
@@ -5635,17 +5732,25 @@ IDBObjectStore.__createObjectStore = function (db, store) {
             failure((0, _DOMException.createDOMException)('UnknownError', 'Could not create object store "' + storeName + '"', err));
         }
 
+        var escapedStoreNameSQL = util.escapeStoreNameForSQL(storeName);
         // key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
-        var sql = ['CREATE TABLE', util.escapeStoreNameForSQL(storeName), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
+        var sql = ['CREATE TABLE', escapedStoreNameSQL, '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
         _CFG2.default.DEBUG && console.log(sql);
         tx.executeSql(sql, [], function (tx, data) {
-            Sca.encode(store.keyPath, function (encodedKeyPath) {
-                tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeSQLiteStatement(storeName), encodedKeyPath, store.autoIncrement, '{}', 1], function () {
-                    delete store.__pendingCreate;
-                    delete store.__deleted;
-                    success(store);
-                }, error);
-            });
+            function insertStoreInfo() {
+                Sca.encode(store.keyPath, function (encodedKeyPath) {
+                    tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeSQLiteStatement(storeName), encodedKeyPath, store.autoIncrement, '{}', 1], function () {
+                        delete store.__pendingCreate;
+                        delete store.__deleted;
+                        success(store);
+                    }, error);
+                });
+            }
+            if (!_CFG2.default.useSQLiteIndexes) {
+                insertStoreInfo();
+                return;
+            }
+            tx.executeSql('CREATE INDEX IF NOT EXISTS ' + util.sqlQuote('sk_' + escapedStoreNameSQL.slice(1, -1)) + ' ON ' + escapedStoreNameSQL + '("key")', [], insertStoreInfo, error);
         }, error);
     });
     return storeHandles[storeName];

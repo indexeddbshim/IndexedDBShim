@@ -46,7 +46,7 @@
     <script src="../../tests-mocha/test-utils.js"></script>
 
     <!-- IndexedDBShim -->
-    <script src="../../test-support/babel-polyfill/dist/polyfill.min.js"></script>
+    <script src="../../test-support/babel-polyfill/dist/polyfill.js"></script>
     <!--<script src="../../dist/indexeddbshim.js"></script>-->
     <script src="../../dist/indexeddbshim-UnicodeIdentifiers.js"></script>
 
@@ -68,6 +68,7 @@
 
     <script src="support.js"></script>
     <script>
+    shimIndexedDB.__setConfig('useSQLiteIndexes', true);
     // mocha.setup({ui: 'tdd'});
     mocha.setup({globals: ['done']}); // Set in support.js
     var assert = chai.assert;

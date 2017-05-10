@@ -29,8 +29,9 @@ to the data format, thereby breaking old data.***
 __Use a single, indexable, offline storage API across all desktop and mobile
 browsers and Node.js.__
 
-Even if a browser natively supports IndexedDB, you may still want to use this
-shim.  Some native IndexedDB implementations are [very buggy](http://www.raymondcamden.com/2014/9/25/IndexedDB-on-iOS-8--Broken-Bad).
+Even if a browser natively supports [IndexedDB](http://w3c.github.io/IndexedDB/),
+you may still want to use this shim.  Some native IndexedDB implementations are
+[very buggy](http://www.raymondcamden.com/2014/9/25/IndexedDB-on-iOS-8--Broken-Bad).
 Others are [missing certain features](http://codepen.io/cemerick/pen/Itymi).
 There are also many minor inconsistencies between different browser
 implementations of IndexedDB, such as how errors are handled, how transaction
@@ -307,6 +308,8 @@ The available properties relevant to browser or Node are:
     browser may use this information to suggest the use of this quota to the
     user rather than prompting the user regularly for say incremental 5MB
     permissions).
+- __useSQLiteIndexes__ - Whether to create indexes on SQLite tables (and also
+    whether to try dropping). Defaults to `false`.
 - __avoidAutoShim__ - Where WebSQL is detected but where `indexedDB` is
     missing or poor support is known (non-Chrome Android or
     non-Safari iOS9), the shim will be auto-applied without

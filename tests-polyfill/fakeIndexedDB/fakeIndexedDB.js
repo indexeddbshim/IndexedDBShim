@@ -1,6 +1,7 @@
 function getFakeTestName () {
     return 'test' + Math.random();
 }
+shimIndexedDB.__setConfig('useSQLiteIndexes', true);
 
 describe('indexedDB Tests', function () {
     describe('Transaction Lifetime', function () {

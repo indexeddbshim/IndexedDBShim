@@ -351,7 +351,7 @@ module.exports = function (grunt) {
         copy: {
             'test-files': {
                 files: [
-                    {src: 'node_modules/babel-polyfill/dist/polyfill.min.js', dest: 'test-support/babel-polyfill/dist/polyfill.min.js', filter: 'isFile'},
+                    {src: 'node_modules/babel-polyfill/dist/polyfill.js', dest: 'test-support/babel-polyfill/dist/polyfill.js', filter: 'isFile'},
                     {src: 'node_modules/source-map-support/browser-source-map-support.js', dest: 'test-support/source-map-support/browser-source-map-support.js', filter: 'isFile'},
                     {src: 'node_modules/mocha/mocha.css', dest: 'test-support/mocha/mocha.css', filter: 'isFile'},
                     {src: 'node_modules/mocha/mocha.js', dest: 'test-support/mocha/mocha.js', filter: 'isFile'},

@@ -20,6 +20,8 @@ global.addData9 = { test: "addData9", name: "name9", id: 9 };
 global.addData10 = { test: "addData10", name: "name10", id: 10 };
 global.msgCreatingInitialSituationFailed = "Creating initial situation failed";
 
+shimIndexedDB.__setConfig('useSQLiteIndexes', true);
+
 global.initionalSituation = function(callBack, done, assert) {
     var request = indexedDB.deleteDatabase(dbName);
 

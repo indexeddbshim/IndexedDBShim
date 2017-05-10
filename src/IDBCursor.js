@@ -119,12 +119,16 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
         // 1. Sort by key
         sql.push('ORDER BY', quotedKeyColumnName, direction);
 
-        // 2. Sort by primaryKey (if defined and not unique)
-        if (!me.__unique && me.__keyColumnName !== 'key') { // Avoid adding 'key' twice
-            sql.push(',', quotedKey, direction);
+        if (me.__keyColumnName !== 'key') { // Avoid adding 'key' twice
+            if (!me.__unique) {
+                // 2. Sort by primaryKey (if defined and not unique)
+                // 3. Sort by position (if defined)
+                sql.push(',', quotedKey, direction);
+            } else if (me.direction === 'prevunique') {
+                // Sort by first record with key matching
+                sql.push(',', quotedKey, 'ASC');
+            }
         }
-
-        // 3. Sort by position (if defined)
 
         if (!me.__unique && me.__indexSource) {
             // 4. Sort by object store position (if defined and not unique)

@@ -98,6 +98,7 @@
         if (useShim || !window.indexedDB || window.indexedDB === window.shimIndexedDB) {
             // Replace the browser's native IndexedDB with the shim
             shimIndexedDB.__useShim();
+            shimIndexedDB.__setConfig('useSQLiteIndexes', true);
             shimIndexedDB.__debug(true);
             env.isNative = false;
             if (IDBFactory === shimIndexedDB.modules.IDBFactory) {

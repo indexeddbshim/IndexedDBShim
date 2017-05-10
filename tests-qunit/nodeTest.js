@@ -2,7 +2,7 @@
 /* global testFiles, addTestSuite, startTests */
 require('source-map-support').install();
 
-const setGlobalVars = require('../dist/indexeddbshim-node.min');
+const setGlobalVars = require('../dist/indexeddbshim-node');
 setGlobalVars(global.window);
 
 function addTest (i) { // eslint-disable-line no-unused-vars

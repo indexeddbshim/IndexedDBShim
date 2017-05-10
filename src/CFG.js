@@ -54,6 +54,8 @@ const CFG = {};
     //  of the user agent prompting the user for permission to increase the
     //  quota every five megabytes."
     'DEFAULT_DB_SIZE', // Defaults to (4 * 1024 * 1024) or (25 * 1024 * 1024) in Safari
+    // Whether to create indexes on SQLite tables (and also whether to try dropping)
+    'useSQLiteIndexes', // Effectively defaults to `false` (ignored unless `true`)
 
     // NODE-IMPINGING SETTINGS (created for sake of limitations in Node or desktop file
     //    system implementation but applied by default in browser for parity)

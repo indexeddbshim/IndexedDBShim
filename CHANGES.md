@@ -132,7 +132,10 @@ they were actually changes since a more recent version on `master`.
     repeat `IDBFactory.open` call to the same name and version (assuming
     no deletes or aborts causing rollbacks) will reuse the same SQLite
     `openDatabase` instance
+- Enhancement: Add `useSQLiteIndexes` option to add (and drop) SQLite
+    indexes where utilized (#210)
 - Enhancement: Provide `avoidAutoShim` option (#270)
+- Enhancement: Provide `shimIndexedDB.__setConnectionQueueOrigin()` utility
 - Add missing API: Add `IDBCursor.continuePrimaryKey`
 - Add missing API: Implement `IDBObjectStore.getKey`
 - Add missing APIs: Implement `IDBIndex.getAll/getAllKeys`

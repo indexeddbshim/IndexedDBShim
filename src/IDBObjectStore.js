@@ -96,6 +96,7 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
                 CFG.DEBUG && console.log(sql, sqlValues);
                 me.transaction.__addNonRequestToTransactionQueue(function objectStoreClear (tx, args, success, error) {
                     tx.executeSql(sql, sqlValues, function (tx, data) {
+                        // This SQL preserves indexes per https://www.sqlite.org/lang_altertable.html
                         const sql = 'ALTER TABLE ' + util.escapeStoreNameForSQL(oldName) + ' RENAME TO ' + util.escapeStoreNameForSQL(name);
                         CFG.DEBUG && console.log(sql);
                         tx.executeSql(sql, [], function (tx, data) {
@@ -172,17 +173,27 @@ IDBObjectStore.__createObjectStore = function (db, store) {
             failure(createDOMException('UnknownError', 'Could not create object store "' + storeName + '"', err));
         }
 
+        const escapedStoreNameSQL = util.escapeStoreNameForSQL(storeName);
         // key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
-        const sql = ['CREATE TABLE', util.escapeStoreNameForSQL(storeName), '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
+        const sql = ['CREATE TABLE', escapedStoreNameSQL, '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
         CFG.DEBUG && console.log(sql);
         tx.executeSql(sql, [], function (tx, data) {
-            Sca.encode(store.keyPath, function (encodedKeyPath) {
-                tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeSQLiteStatement(storeName), encodedKeyPath, store.autoIncrement, '{}', 1], function () {
-                    delete store.__pendingCreate;
-                    delete store.__deleted;
-                    success(store);
-                }, error);
-            });
+            function insertStoreInfo () {
+                Sca.encode(store.keyPath, function (encodedKeyPath) {
+                    tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeSQLiteStatement(storeName), encodedKeyPath, store.autoIncrement, '{}', 1], function () {
+                        delete store.__pendingCreate;
+                        delete store.__deleted;
+                        success(store);
+                    }, error);
+                });
+            }
+            if (!CFG.useSQLiteIndexes) {
+                insertStoreInfo();
+                return;
+            }
+            tx.executeSql('CREATE INDEX IF NOT EXISTS ' + (
+                util.sqlQuote('sk_' + escapedStoreNameSQL.slice(1, -1))
+            ) + ' ON ' + escapedStoreNameSQL + '("key")', [], insertStoreInfo, error);
         }, error);
     });
     return storeHandles[storeName];

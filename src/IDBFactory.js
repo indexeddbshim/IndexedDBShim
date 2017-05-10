@@ -187,7 +187,7 @@ function cleanupDatabaseResources (__openDatabase, name, escapedDatabaseName, da
  **/
 function createSysDB (__openDatabase, success, failure) {
     function sysDbCreateError (tx, err) {
-        err = webSQLErrback(err);
+        err = webSQLErrback(err || tx);
         CFG.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
         failure(err);
     }
@@ -209,7 +209,13 @@ function createSysDB (__openDatabase, success, failure) {
             CFG.DEFAULT_DB_SIZE
         );
         sysdb.transaction(function (systx) {
-            systx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name BLOB, version INT);', [], success, sysDbCreateError);
+            systx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name BLOB, version INT);', [], function (systx) {
+                if (!CFG.useSQLiteIndexes) {
+                    success();
+                    return;
+                }
+                systx.executeSql('CREATE INDEX IF NOT EXISTS dbvname ON dbVersions(name)', [], success, sysDbCreateError);
+            }, sysDbCreateError);
         }, sysDbCreateError);
     }
 }
@@ -301,6 +307,160 @@ IDBFactory.prototype.open = function (name /* , version */) {
         req.dispatchEvent(evt);
     }
 
+    function setupDatabase (tx, db, oldVersion) {
+        tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList" FROM __sys__', [], function (tx, data) {
+            function finishRequest () {
+                req.__readyState = 'done';
+                req.__result = connection;
+            }
+            const connection = IDBDatabase.__createInstance(db, name, oldVersion, version, data);
+            if (!me.__connections[name]) {
+                me.__connections[name] = [];
+            }
+            me.__connections[name].push(connection);
+
+            if (oldVersion < version) {
+                const openConnections = me.__connections[name].slice(0, -1);
+                triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersion, version).then(function () {
+                    // DB Upgrade in progress
+                    let sysdbFinishedCb = function (systx, err, cb) {
+                        if (err) {
+                            try {
+                                systx.executeSql('ROLLBACK', [], cb, cb);
+                            } catch (er) { // Browser may fail with expired transaction above so
+                                            // no choice but to manually revert
+                                sysdb.transaction(function (systx) {
+                                    function reportError (msg) {
+                                        throw new Error('Unable to roll back upgrade transaction!' + (msg || ''));
+                                    }
+
+                                    // Attempt to revert
+                                    if (oldVersion === 0) {
+                                        systx.executeSql('DELETE FROM dbVersions WHERE "name" = ?', [sqlSafeName], function () {
+                                            cb(reportError);
+                                        }, reportError);
+                                    } else {
+                                        systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [oldVersion, sqlSafeName], cb, reportError);
+                                    }
+                                });
+                            }
+                            return;
+                        }
+                        cb(); // In browser, should auto-commit
+                    };
+
+                    sysdb.transaction(function (systx) {
+                        function versionSet () {
+                            const e = new IDBVersionChangeEvent('upgradeneeded', {oldVersion, newVersion: version});
+                            req.__result = connection;
+                            req.__transaction = req.__result.__versionTransaction = IDBTransaction.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
+                            req.__readyState = 'done';
+                            req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded (tx, args, finished, error) {
+                                req.dispatchEvent(e);
+                                if (e.__legacyOutputDidListenersThrowError) {
+                                    logError('Error', 'An error occurred in an upgradeneeded handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
+                                    req.transaction.__abortTransaction(createDOMException('AbortError', 'A request was aborted.'));
+                                    return;
+                                }
+                                finished();
+                            });
+                            req.transaction.on__beforecomplete = function (ev) {
+                                req.__result.__versionTransaction = null;
+                                sysdbFinishedCb(systx, false, function () {
+                                    req.transaction.__transFinishedCb(false, function () {
+                                        if (useDatabaseCache) {
+                                            if (name in websqlDBCache) {
+                                                delete websqlDBCache[name][version];
+                                            }
+                                        }
+                                        ev.complete();
+                                        req.__transaction = null;
+                                    });
+                                });
+                            };
+                            req.transaction.on__preabort = function () {
+                                // We ensure any cache is deleted before any request error events fire and try to reopen
+                                if (useDatabaseCache) {
+                                    if (name in websqlDBCache) {
+                                        delete websqlDBCache[name][version];
+                                    }
+                                }
+                            };
+                            req.transaction.on__abort = function () {
+                                req.__transaction = null;
+                                connection.close();
+                                setTimeout(() => {
+                                    const err = createDOMException('AbortError', 'The upgrade transaction was aborted.');
+                                    sysdbFinishedCb(systx, err, function (reportError) {
+                                        if (oldVersion === 0) {
+                                            cleanupDatabaseResources(me.__openDatabase, name, escapedDatabaseName, dbCreateError.bind(null, err), reportError || dbCreateError);
+                                            return;
+                                        }
+                                        dbCreateError(err);
+                                    });
+                                });
+                            };
+                            req.transaction.on__complete = function () {
+                                if (req.__result.__closed) {
+                                    req.__transaction = null;
+                                    const err = createDOMException('AbortError', 'The connection has been closed.');
+                                    dbCreateError(err);
+                                    return;
+                                }
+                                // Since this is running directly after `IDBTransaction.complete`,
+                                //   there should be a new task. However, while increasing the
+                                //   timeout 1ms in `IDBTransaction.__executeRequests` can allow
+                                //   `IDBOpenDBRequest.onsuccess` to trigger faster than a new
+                                //   transaction as required by "transaction-create_in_versionchange" in
+                                //   w3c/Transaction.js (though still on a timeout separate from this
+                                //   preceding `IDBTransaction.oncomplete`), this causes a race condition
+                                //   somehow with old transactions (e.g., for the Mocha test,
+                                //   in `IDBObjectStore.deleteIndex`, "should delete an index that was
+                                //   created in a previous transaction").
+                                // setTimeout(() => {
+
+                                // Todo: Waiting on confirmation re: positioning here of
+                                //      `readyState` (and `result`)--see https://github.com/w3c/IndexedDB/issues/161
+                                //      Note, however, that the readyState and result will be reset anyways
+                                // req.__readyState = 'pending';
+                                // req.__result = undefined;
+
+                                finishRequest();
+
+                                req.__transaction = null;
+                                const e = createEvent('success');
+                                req.dispatchEvent(e);
+                                // });
+                            };
+                        }
+                        if (oldVersion === 0) {
+                            systx.executeSql('INSERT INTO dbVersions VALUES (?,?)', [sqlSafeName, version], versionSet, dbCreateError);
+                        } else {
+                            systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [version, sqlSafeName], versionSet, dbCreateError);
+                        }
+                    }, dbCreateError, null, function (currentTask, err, done, rollback, commit) {
+                        if (currentTask.readOnly || err) {
+                            return true;
+                        }
+                        sysdbFinishedCb = function (systx, err, cb) {
+                            if (err) {
+                                rollback(err, cb);
+                            } else {
+                                commit(cb);
+                            }
+                        };
+                        return false;
+                    });
+                });
+            } else {
+                finishRequest();
+
+                const e = createEvent('success');
+                req.dispatchEvent(e);
+            }
+        }, dbCreateError);
+    }
+
     function openDB (oldVersion) {
         let db;
         if ((useMemoryDatabase || useDatabaseCache) && name in websqlDBCache && websqlDBCache[name][version]) {
@@ -328,157 +488,14 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
         db.transaction(function (tx) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS __sys__ (name BLOB, keyPath BLOB, autoInc BOOLEAN, indexList BLOB, currNum INTEGER)', [], function () {
-                tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList" FROM __sys__', [], function (tx, data) {
-                    function finishRequest () {
-                        req.__readyState = 'done';
-                        req.__result = connection;
-                    }
-                    const connection = IDBDatabase.__createInstance(db, name, oldVersion, version, data);
-                    if (!me.__connections[name]) {
-                        me.__connections[name] = [];
-                    }
-                    me.__connections[name].push(connection);
-
-                    if (oldVersion < version) {
-                        const openConnections = me.__connections[name].slice(0, -1);
-                        triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersion, version).then(function () {
-                            // DB Upgrade in progress
-                            let sysdbFinishedCb = function (systx, err, cb) {
-                                if (err) {
-                                    try {
-                                        systx.executeSql('ROLLBACK', [], cb, cb);
-                                    } catch (er) { // Browser may fail with expired transaction above so
-                                                    // no choice but to manually revert
-                                        sysdb.transaction(function (systx) {
-                                            function reportError (msg) {
-                                                throw new Error('Unable to roll back upgrade transaction!' + (msg || ''));
-                                            }
-
-                                            // Attempt to revert
-                                            if (oldVersion === 0) {
-                                                systx.executeSql('DELETE FROM dbVersions WHERE "name" = ?', [sqlSafeName], function () {
-                                                    cb(reportError);
-                                                }, reportError);
-                                            } else {
-                                                systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [oldVersion, sqlSafeName], cb, reportError);
-                                            }
-                                        });
-                                    }
-                                    return;
-                                }
-                                cb(); // In browser, should auto-commit
-                            };
-
-                            sysdb.transaction(function (systx) {
-                                function versionSet () {
-                                    const e = new IDBVersionChangeEvent('upgradeneeded', {oldVersion, newVersion: version});
-                                    req.__result = connection;
-                                    req.__transaction = req.__result.__versionTransaction = IDBTransaction.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
-                                    req.__readyState = 'done';
-                                    req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded (tx, args, finished, error) {
-                                        req.dispatchEvent(e);
-                                        if (e.__legacyOutputDidListenersThrowError) {
-                                            logError('Error', 'An error occurred in an upgradeneeded handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
-                                            req.transaction.__abortTransaction(createDOMException('AbortError', 'A request was aborted.'));
-                                            return;
-                                        }
-                                        finished();
-                                    });
-                                    req.transaction.on__beforecomplete = function (ev) {
-                                        req.__result.__versionTransaction = null;
-                                        sysdbFinishedCb(systx, false, function () {
-                                            req.transaction.__transFinishedCb(false, function () {
-                                                if (useDatabaseCache) {
-                                                    if (name in websqlDBCache) {
-                                                        delete websqlDBCache[name][version];
-                                                    }
-                                                }
-                                                ev.complete();
-                                                req.__transaction = null;
-                                            });
-                                        });
-                                    };
-                                    req.transaction.on__preabort = function () {
-                                        // We ensure any cache is deleted before any request error events fire and try to reopen
-                                        if (useDatabaseCache) {
-                                            if (name in websqlDBCache) {
-                                                delete websqlDBCache[name][version];
-                                            }
-                                        }
-                                    };
-                                    req.transaction.on__abort = function () {
-                                        req.__transaction = null;
-                                        connection.close();
-                                        setTimeout(() => {
-                                            const err = createDOMException('AbortError', 'The upgrade transaction was aborted.');
-                                            sysdbFinishedCb(systx, err, function (reportError) {
-                                                if (oldVersion === 0) {
-                                                    cleanupDatabaseResources(me.__openDatabase, name, escapedDatabaseName, dbCreateError.bind(null, err), reportError || dbCreateError);
-                                                    return;
-                                                }
-                                                dbCreateError(err);
-                                            });
-                                        });
-                                    };
-                                    req.transaction.on__complete = function () {
-                                        if (req.__result.__closed) {
-                                            req.__transaction = null;
-                                            const err = createDOMException('AbortError', 'The connection has been closed.');
-                                            dbCreateError(err);
-                                            return;
-                                        }
-                                        // Since this is running directly after `IDBTransaction.complete`,
-                                        //   there should be a new task. However, while increasing the
-                                        //   timeout 1ms in `IDBTransaction.__executeRequests` can allow
-                                        //   `IDBOpenDBRequest.onsuccess` to trigger faster than a new
-                                        //   transaction as required by "transaction-create_in_versionchange" in
-                                        //   w3c/Transaction.js (though still on a timeout separate from this
-                                        //   preceding `IDBTransaction.oncomplete`), this causes a race condition
-                                        //   somehow with old transactions (e.g., for the Mocha test,
-                                        //   in `IDBObjectStore.deleteIndex`, "should delete an index that was
-                                        //   created in a previous transaction").
-                                        // setTimeout(() => {
-
-                                        // Todo: Waiting on confirmation re: positioning here of
-                                        //      `readyState` (and `result`)--see https://github.com/w3c/IndexedDB/issues/161
-                                        //      Note, however, that the readyState and result will be reset anyways
-                                        // req.__readyState = 'pending';
-                                        // req.__result = undefined;
-
-                                        finishRequest();
-
-                                        req.__transaction = null;
-                                        const e = createEvent('success');
-                                        req.dispatchEvent(e);
-                                        // });
-                                    };
-                                }
-                                if (oldVersion === 0) {
-                                    systx.executeSql('INSERT INTO dbVersions VALUES (?,?)', [sqlSafeName, version], versionSet, dbCreateError);
-                                } else {
-                                    systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [version, sqlSafeName], versionSet, dbCreateError);
-                                }
-                            }, dbCreateError, null, function (currentTask, err, done, rollback, commit) {
-                                if (currentTask.readOnly || err) {
-                                    return true;
-                                }
-                                sysdbFinishedCb = function (systx, err, cb) {
-                                    if (err) {
-                                        rollback(err, cb);
-                                    } else {
-                                        commit(cb);
-                                    }
-                                };
-                                return false;
-                            });
-                        });
-                    } else {
-                        finishRequest();
-
-                        const e = createEvent('success');
-                        req.dispatchEvent(e);
-                    }
-                }, dbCreateError);
+                function setup () {
+                    setupDatabase(tx, db, oldVersion);
+                }
+                if (!CFG.createIndexes) {
+                    setup();
+                    return;
+                }
+                tx.executeSql('CREATE INDEX IF NOT EXISTS sysname ON __sys__(name)', [], setup, dbCreateError);
             }, dbCreateError);
         }, dbCreateError);
     }

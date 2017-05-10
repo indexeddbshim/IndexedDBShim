@@ -74,6 +74,7 @@ window.onerror = function () {
     //    var base = '../test-helper';
     tests.forEach(function (path) {
         var indexedDB = require(base);
+        indexedDB.__setConfig('useSQLiteIndexes', true);
         require('./' + path);
     });
 }());

@@ -258,7 +258,13 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                             shimNS
                         };
 
-                        const baseCfg = {replaceNonIDBGlobals: true, checkOrigin: false, databaseNameLengthLimit: 1000, DEBUG};
+                        const baseCfg = {
+                            replaceNonIDBGlobals: true,
+                            checkOrigin: false,
+                            databaseNameLengthLimit: 1000,
+                            useSQLiteIndexes: true,
+                            DEBUG
+                        };
                         if (['idbfactory-open-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js'].includes(
                             shimNS.fileName
                         )) {

@@ -7,6 +7,7 @@ import IDBTransaction from './IDBTransaction';
 import * as Sca from './Sca';
 import CFG from './CFG';
 import IDBObjectStore from './IDBObjectStore';
+import SyncPromise from 'sync-promise';
 
 const readonlyProperties = ['objectStore', 'keyPath', 'multiEntry', 'unique'];
 
@@ -222,14 +223,37 @@ IDBIndex.__createIndex = function (store, index) {
             }, error);
         }
 
+        const escapedStoreNameSQL = util.escapeStoreNameForSQL(storeName);
+        const escapedIndexNameSQL = util.escapeIndexNameForSQL(index.name);
+
+        function addIndexSQL (tx) {
+            if (!CFG.useSQLiteIndexes) {
+                applyIndex(tx);
+                return;
+            }
+            tx.executeSql(
+                'CREATE INDEX IF NOT EXISTS "' +
+                    // The escaped index name must be unique among indexes in the whole database;
+                    //    so we prefix with store name; as prefixed, will also not conflict with
+                    //    index on `key`
+                    // Avoid quotes and separate with special escape sequence
+                    escapedStoreNameSQL.slice(1, -1) + '^5' + escapedIndexNameSQL.slice(1, -1) +
+                    '" ON ' + escapedStoreNameSQL + '(' + escapedIndexNameSQL + ')',
+                [],
+                applyIndex,
+                error
+            );
+        }
+
         if (columnExists) {
-            // For a previously existing index, just update the index entries in the existing column
+            // For a previously existing index, just update the index entries in the existing column;
+            //   no need to add SQLite index to it either as should already exist
             applyIndex(tx);
         } else {
             // For a new index, add a new column to the object store, then apply the index
-            const sql = ['ALTER TABLE', util.escapeStoreNameForSQL(storeName), 'ADD', util.escapeIndexNameForSQL(index.name), 'BLOB'].join(' ');
+            const sql = ['ALTER TABLE', escapedStoreNameSQL, 'ADD', escapedIndexNameSQL, 'BLOB'].join(' ');
             CFG.DEBUG && console.log(sql);
-            tx.executeSql(sql, [], applyIndex, error);
+            tx.executeSql(sql, [], addIndexSQL, error);
         }
     }, undefined, store);
 };
@@ -257,17 +281,34 @@ IDBIndex.__deleteIndex = function (store, index) {
             failure(createDOMException('UnknownError', 'Could not delete index "' + index.name + '"', err));
         }
 
-        // Update the object store's index list
-        IDBIndex.__updateIndexList(store, tx, function (store) {
-            delete index.__pendingDelete;
-            delete index.__recreated;
-            index.__deleted = true;
-            if (indexHandle) {
-                indexHandle.__deleted = true;
-                delete indexHandle.__pendingDelete;
-            }
-            success(store);
-        }, error);
+        function finishDeleteIndex () {
+            // Update the object store's index list
+            IDBIndex.__updateIndexList(store, tx, function (store) {
+                delete index.__pendingDelete;
+                delete index.__recreated;
+                index.__deleted = true;
+                if (indexHandle) {
+                    indexHandle.__deleted = true;
+                    delete indexHandle.__pendingDelete;
+                }
+                success(store);
+            }, error);
+        }
+
+        if (!CFG.useSQLiteIndexes) {
+            finishDeleteIndex();
+            return;
+        }
+        tx.executeSql(
+            'DROP INDEX IF EXISTS ' +
+                util.sqlQuote(
+                    util.escapeStoreNameForSQL(store.name).slice(1, -1) + '^5' +
+                    util.escapeIndexNameForSQL(index.name).slice(1, -1)
+                ),
+            [],
+            finishDeleteIndex,
+            error
+        );
     }, undefined, store);
 };
 
@@ -403,7 +444,8 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
     const newNameType = 'BLOB';
     const storeName = store.__currentName;
     const escapedStoreNameSQL = util.escapeStoreNameForSQL(storeName);
-    const escapedTmpStoreNameSQL = util.escapeStoreNameForSQL('tmp_' + storeName);
+    const escapedNewIndexNameSQL = util.escapeIndexNameForSQL(newName);
+    const escapedTmpStoreNameSQL = util.sqlQuote('tmp_' + util.escapeStoreNameForSQL(storeName).slice(1, -1));
     const colNamesToPreserve = colInfoToPreserveArr.map((colInfo) => colInfo[0]);
     const colInfoToPreserve = colInfoToPreserveArr.map((colInfo) => colInfo.join(' '));
     const listColInfoToPreserve = (colInfoToPreserve.length ? (colInfoToPreserve.join(', ') + ', ') : '');
@@ -412,32 +454,81 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
     // We could adapt the approach at http://stackoverflow.com/a/8430746/271577
     //    to make the approach reusable without passing column names, but it is a bit fragile
     store.transaction.__addNonRequestToTransactionQueue(function renameIndex (tx, args, success, error) {
-        const sql = 'ALTER TABLE ' + escapedStoreNameSQL + ' RENAME TO ' + escapedTmpStoreNameSQL;
-        tx.executeSql(sql, [], function (tx, data) {
-            const sql = 'CREATE TABLE ' + escapedStoreNameSQL + '(' + listColInfoToPreserve + util.escapeIndexNameForSQL(newName) + ' ' + newNameType + ')';
-            tx.executeSql(sql, [], function (tx, data) {
-                const sql = 'INSERT INTO ' + escapedStoreNameSQL + '(' +
-                    listColsToPreserve +
-                    util.escapeIndexNameForSQL(newName) +
-                    ') SELECT ' + listColsToPreserve + util.escapeIndexNameForSQL(oldName) + ' FROM ' + escapedTmpStoreNameSQL;
-                tx.executeSql(sql, [], function (tx, data) {
-                    const sql = 'DROP TABLE ' + escapedTmpStoreNameSQL;
+        function sqlError (tx, err) {
+            error(err);
+        }
+        function finish () {
+            if (cb) {
+                cb(tx, success);
+                return;
+            }
+            success();
+        }
+        // See https://www.sqlite.org/lang_altertable.html#otheralter
+        // We don't query for indexes as we already have the info
+        // This approach has the advantage of auto-deleting indexes via the DROP TABLE
+        const sql = 'CREATE TABLE ' + escapedTmpStoreNameSQL +
+            '(' + listColInfoToPreserve + escapedNewIndexNameSQL + ' ' + newNameType + ')';
+        CFG.DEBUG && console.log(sql);
+        tx.executeSql(sql, [], function () {
+            const sql = 'INSERT INTO ' + escapedTmpStoreNameSQL + '(' +
+                listColsToPreserve + escapedNewIndexNameSQL +
+                ') SELECT ' + listColsToPreserve + util.escapeIndexNameForSQL(oldName) + ' FROM ' + escapedStoreNameSQL;
+            CFG.DEBUG && console.log(sql);
+            tx.executeSql(sql, [], function () {
+                const sql = 'DROP TABLE ' + escapedStoreNameSQL;
+                CFG.DEBUG && console.log(sql);
+                tx.executeSql(sql, [], function () {
+                    const sql = 'ALTER TABLE ' + escapedTmpStoreNameSQL + ' RENAME TO ' + escapedStoreNameSQL;
+                    CFG.DEBUG && console.log(sql);
                     tx.executeSql(sql, [], function (tx, data) {
-                        if (cb) {
-                            cb(tx, success);
+                        if (!CFG.useSQLiteIndexes) {
+                            finish();
                             return;
                         }
-                        success();
-                    }, function (tx, err) {
-                        error(err);
-                    });
-                }, function (tx, err) {
-                    error(err);
-                });
-            });
-        }, function (tx, err) {
-            error(err);
-        });
+                        const indexCreations = colNamesToPreserve
+                            .slice(2) // Doing `key` separately and no need for index on `value`
+                            .map((escapedIndexNameSQL) => new SyncPromise(function (resolve, reject) {
+                                const escapedIndexToRecreate = util.sqlQuote(
+                                    escapedStoreNameSQL.slice(1, -1) + '^5' + escapedIndexNameSQL.slice(1, -1)
+                                );
+                                // const sql = 'DROP INDEX IF EXISTS ' + escapedIndexToRecreate;
+                                // CFG.DEBUG && console.log(sql);
+                                // tx.executeSql(sql, [], function () {
+                                const sql = 'CREATE INDEX ' +
+                                    escapedIndexToRecreate + ' ON ' + escapedStoreNameSQL + '(' + escapedIndexNameSQL + ')';
+                                CFG.DEBUG && console.log(sql);
+                                tx.executeSql(sql, [], resolve, function (tx, err) {
+                                    reject(err);
+                                });
+                                // }, function (tx, err) {
+                                //    reject(err);
+                                // });
+                            }
+                        ));
+                        indexCreations.push(
+                            new SyncPromise(function (resolve, reject) {
+                                const escapedIndexToRecreate = util.sqlQuote('sk_' + escapedStoreNameSQL.slice(1, -1));
+                                // Chrome erring here if not dropped first; Node does not
+                                const sql = 'DROP INDEX IF EXISTS ' + escapedIndexToRecreate;
+                                CFG.DEBUG && console.log(sql);
+                                tx.executeSql(sql, [], function () {
+                                    const sql = 'CREATE INDEX ' + escapedIndexToRecreate +
+                                        ' ON ' + escapedStoreNameSQL + '("key")';
+                                    CFG.DEBUG && console.log(sql);
+                                    tx.executeSql(sql, [], resolve, function (tx, err) {
+                                        reject(err);
+                                    });
+                                }, function (tx, err) {
+                                    reject(err);
+                                });
+                            })
+                        );
+                        SyncPromise.all(indexCreations).then(finish, error);
+                    }, sqlError);
+                }, sqlError);
+            }, sqlError);
+        }, sqlError);
     });
 };
 
