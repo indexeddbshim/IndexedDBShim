@@ -254,9 +254,9 @@ function ToString (o) { // Todo: See `es-abstract/es7`
 
 function convertToSequenceDOMString (val) {
     // Per <https://heycam.github.io/webidl/#idl-sequence>, converting to a sequence works with iterables
-    if (isIterable(val)) { // We don't want `Array.from` to convert primitives
+    if (isIterable(val)) { // We don't want conversion to array to convert primitives
         // Per <https://heycam.github.io/webidl/#es-DOMString>, converting to a `DOMString` to be via `ToString`: https://tc39.github.io/ecma262/#sec-tostring
-        return Array.from(val).map(ToString);
+        return [...val].map(ToString);
     }
     return val;
 }

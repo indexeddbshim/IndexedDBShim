@@ -4236,7 +4236,7 @@ IDBIndex.__createInstance = function (store, indexProperties) {
                 storeHandle.__indexHandles[newName] = oldIndexHandle; // Ensure new reference accessible
                 me.__pendingName = oldName;
 
-                const colInfoToPreserveArr = [['key', 'BLOB ' + (objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')], ['value', 'BLOB']].concat(Array.from(objectStore.indexNames).filter(indexName => indexName !== newName).map(indexName => [util.escapeIndexNameForSQL(indexName), 'BLOB']));
+                const colInfoToPreserveArr = [['key', 'BLOB ' + (objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')], ['value', 'BLOB']].concat([...objectStore.indexNames].filter(indexName => indexName !== newName).map(indexName => [util.escapeIndexNameForSQL(indexName), 'BLOB']));
 
                 me.__renameIndex(objectStore, oldName, newName, colInfoToPreserveArr, function (tx, success) {
                     IDBIndexAlias.__updateIndexList(store, tx, function (store) {
@@ -6824,7 +6824,7 @@ const types = {
     },
     binary: { // `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
         encode: function (key) {
-            return keyTypeToEncodedChar.binary + '-' + (key.byteLength ? Array.from(getCopyBytesHeldByBufferSource(key)).map(b => util.padStart(b, 3, '0')) // e.g., '255,005,254,000,001,033'
+            return keyTypeToEncodedChar.binary + '-' + (key.byteLength ? [...getCopyBytesHeldByBufferSource(key)].map(b => util.padStart(b, 3, '0')) // e.g., '255,005,254,000,001,033'
             : '');
         },
         decode: function (key) {
@@ -8036,9 +8036,9 @@ function ToString(o) {
 function convertToSequenceDOMString(val) {
     // Per <https://heycam.github.io/webidl/#idl-sequence>, converting to a sequence works with iterables
     if (isIterable(val)) {
-        // We don't want `Array.from` to convert primitives
+        // We don't want conversion to array to convert primitives
         // Per <https://heycam.github.io/webidl/#es-DOMString>, converting to a `DOMString` to be via `ToString`: https://tc39.github.io/ecma262/#sec-tostring
-        return Array.from(val).map(ToString);
+        return [...val].map(ToString);
     }
     return val;
 }

@@ -1,6 +1,5 @@
 /* eslint-env browser, worker */
 /* global shimIndexedDB */
-import 'babel-polyfill'; // `Object.assign` including within `EventTarget`, generator functions, `Array.from`, etc.; see https://babeljs.io/docs/usage/polyfill/
 import * as UnicodeIdentifiers from './UnicodeIdentifiers';
 
 // BEGIN: Same code as in browser.js

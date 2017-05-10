@@ -23,7 +23,7 @@ to the data format, thereby breaking old data.***
 [![CDNJS](https://img.shields.io/cdnjs/v/IndexedDBShim.svg)](https://cdnjs.com/libraries/IndexedDBShim)
 [![License](https://img.shields.io/npm/l/indexeddbshim.svg)](LICENSE-APACHE)
 
-|[Live Demo!](https://cdn.rawgit.com/axemclion/IndexedDBShim/v3.0.0-rc.6/index.html)
+|[Live Demo!](https://cdn.rawgit.com/axemclion/IndexedDBShim/v3.0.0-rc.7/index.html)
 |------------------------------------------------------------
 
 __Use a single, indexable, offline storage API across all desktop and mobile
@@ -76,9 +76,25 @@ npm install indexeddbshim
 
 ## Browser set-up
 
-Add the following script to your page:
+Add the following scripts to your page:
 
 ```html
+<!--
+If you omit the first script, you will need to ensure that each of your target
+    browsers supports the necessary features or for which you have supplied
+    polyfills. Our code currently relies on at least the following:
+
+- `Array.prototype.includes`
+- `Object.assign` (including within the `eventtarget` dependency),
+- `Object.values`
+- `Object.setPrototypeOf` (called if config set)
+- `Set`
+- `String.fromCodePoint`
+- `String.prototype.codePointAt`
+- `Symbol`
+- Typed Arrays (if used; part of typeson-registry dependency)
+-->
+<script src="node_modules/babel-polyfill/dist/polyfill.min.js"></script>
 <script src="dist/indexeddbshim.min.js"></script>
 ```
 

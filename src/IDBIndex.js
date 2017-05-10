@@ -79,7 +79,7 @@ IDBIndex.__createInstance = function (store, indexProperties) {
                     ['key', 'BLOB ' + (objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')],
                     ['value', 'BLOB']
                 ].concat(
-                    Array.from(objectStore.indexNames)
+                    [...objectStore.indexNames]
                         .filter((indexName) => indexName !== newName)
                         .map((indexName) => [util.escapeIndexNameForSQL(indexName), 'BLOB'])
                 );

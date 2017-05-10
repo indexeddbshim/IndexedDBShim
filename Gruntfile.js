@@ -135,7 +135,7 @@ module.exports = function (grunt) {
                     sourceMap: true,
                     sourceMapIn: 'dist/<%=pkg.name%>-UnicodeIdentifiers.js.map',
                     sourceMapName: 'dist/<%=pkg.name%>-UnicodeIdentifiers.min.js.map',
-                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v3.0.0-rc.6/dist/'
+                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v3.0.0-rc.7/dist/'
                 },
                 src: 'dist/<%= pkg.name%>-UnicodeIdentifiers.js',
                 dest: 'dist/<%= pkg.name%>-UnicodeIdentifiers.min.js'
@@ -146,7 +146,7 @@ module.exports = function (grunt) {
                     sourceMap: true,
                     sourceMapIn: 'dist/<%=pkg.name%>.js.map',
                     sourceMapName: 'dist/<%=pkg.name%>.min.js.map',
-                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v3.0.0-rc.6/dist/'
+                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v3.0.0-rc.7/dist/'
                 },
                 src: 'dist/<%= pkg.name%>.js',
                 dest: 'dist/<%=pkg.name%>.min.js'
@@ -157,7 +157,7 @@ module.exports = function (grunt) {
                     sourceMap: true,
                     sourceMapIn: 'dist/<%=pkg.name%>-noninvasive.js.map',
                     sourceMapName: 'dist/<%=pkg.name%>-noninvasive.min.js.map',
-                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v3.0.0-rc.6/dist/'
+                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v3.0.0-rc.7/dist/'
                 },
                 src: 'dist/<%= pkg.name%>-noninvasive.js',
                 dest: 'dist/<%=pkg.name%>-noninvasive.min.js'
@@ -351,6 +351,7 @@ module.exports = function (grunt) {
         copy: {
             'test-files': {
                 files: [
+                    {src: 'node_modules/babel-polyfill/dist/polyfill.min.js', dest: 'test-support/babel-polyfill/dist/polyfill.min.js', filter: 'isFile'},
                     {src: 'node_modules/source-map-support/browser-source-map-support.js', dest: 'test-support/source-map-support/browser-source-map-support.js', filter: 'isFile'},
                     {src: 'node_modules/mocha/mocha.css', dest: 'test-support/mocha/mocha.css', filter: 'isFile'},
                     {src: 'node_modules/mocha/mocha.js', dest: 'test-support/mocha/mocha.js', filter: 'isFile'},

@@ -1,6 +1,6 @@
 {
   "name": "indexeddbshim",
-  "version": "3.0.0-rc.6",
+  "version": "3.0.0-rc.7",
   "dependencies": {
     "abab": {
       "version": "1.0.3",
@@ -901,8 +901,7 @@
     "babel-polyfill": {
       "version": "6.23.0",
       "from": "babel-polyfill@6.23.0",
-      "resolved": "https://registry.npmjs.org/babel-polyfill/-/babel-polyfill-6.23.0.tgz",
-      "dev": true
+      "resolved": "https://registry.npmjs.org/babel-polyfill/-/babel-polyfill-6.23.0.tgz"
     },
     "babel-preset-env": {
       "version": "1.4.0",
@@ -925,8 +924,7 @@
     "babel-runtime": {
       "version": "6.23.0",
       "from": "babel-runtime@>=6.22.0 <7.0.0",
-      "resolved": "https://registry.npmjs.org/babel-runtime/-/babel-runtime-6.23.0.tgz",
-      "dev": true
+      "resolved": "https://registry.npmjs.org/babel-runtime/-/babel-runtime-6.23.0.tgz"
     },
     "babel-template": {
       "version": "6.23.0",
@@ -1452,8 +1450,7 @@
     "core-js": {
       "version": "2.4.1",
       "from": "core-js@>=2.4.0 <3.0.0",
-      "resolved": "https://registry.npmjs.org/core-js/-/core-js-2.4.1.tgz",
-      "dev": true
+      "resolved": "https://registry.npmjs.org/core-js/-/core-js-2.4.1.tgz"
     },
     "core-util-is": {
       "version": "1.0.2",
@@ -5099,8 +5096,7 @@
     "regenerator-runtime": {
       "version": "0.10.3",
       "from": "regenerator-runtime@>=0.10.0 <0.11.0",
-      "resolved": "https://registry.npmjs.org/regenerator-runtime/-/regenerator-runtime-0.10.3.tgz",
-      "dev": true
+      "resolved": "https://registry.npmjs.org/regenerator-runtime/-/regenerator-runtime-0.10.3.tgz"
     },
     "regenerator-transform": {
       "version": "0.9.11",
