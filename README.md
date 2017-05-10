@@ -103,8 +103,10 @@ non-alphanumeric identifiers in store and index names),
 use the following instead:
 
 ```html
+<script src="node_modules/babel-polyfill/dist/polyfill.min.js"></script>
 <script src="dist/indexeddbshim-UnicodeIdentifiers.min.js"></script>
 ```
+
 ## Node set-up
 
 ```js
