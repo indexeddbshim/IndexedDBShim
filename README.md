@@ -309,7 +309,9 @@ The available properties relevant to browser or Node are:
     user rather than prompting the user regularly for say incremental 5MB
     permissions).
 - __useSQLiteIndexes__ - Whether to create indexes on SQLite tables (and also
-    whether to try dropping). Defaults to `false`.
+    whether to try dropping). Indexes can increase file size and slow
+    performance on tables involving many write operations, but can speed
+    performance for retrieval. Defaults to `false`.
 - __avoidAutoShim__ - Where WebSQL is detected but where `indexedDB` is
     missing or poor support is known (non-Chrome Android or
     non-Safari iOS9), the shim will be auto-applied without
