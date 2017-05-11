@@ -8297,10 +8297,12 @@ function setGlobalVars(idb, initialConfig) {
             typeof console !== 'undefined' && console.warn && console.warn('Unable to shim ' + name);
         }
     }
-    shim('shimIndexedDB', _IDBFactory.shimIndexedDB, {
-        enumerable: false,
-        configurable: true
-    });
+    if (_CFG2.default.win.openDatabase !== undefined) {
+        shim('shimIndexedDB', _IDBFactory.shimIndexedDB, {
+            enumerable: false,
+            configurable: true
+        });
+    }
     if (IDB.shimIndexedDB) {
         IDB.shimIndexedDB.__useShim = function () {
             function setNonIDBGlobals() {
@@ -8391,6 +8393,21 @@ function setGlobalVars(idb, initialConfig) {
 
             setConfig({ UnicodeIDStart: UnicodeIDStart, UnicodeIDContinue: UnicodeIDContinue });
         };
+    } else {
+        // We no-op the harmless set-up properties and methods with a warning; the `IDBFactory` methods,
+        //    however (including our non-standard methods), are not stubbed as they ought
+        //    to fail earlier rather than potentially having side effects.
+        IDB.shimIndexedDB = {
+            modules: ['DOMException', 'DOMStringList', 'Event', 'CustomEvent', 'EventTarget'].reduce(function (o, prop) {
+                o['Shim' + prop] = IDB[prop]; // Just alias
+                return o;
+            }, {})
+        };
+        ['__useShim', '__debug', '__setConfig', '__getConfig', '__setUnicodeIdentifiers'].forEach(function (prop) {
+            IDB.shimIndexedDB[prop] = function () {
+                console.warn('This browser does not have WebSQL to shim.');
+            };
+        });
     }
 
     // Workaround to prevent an error in Firefox
@@ -8399,7 +8416,7 @@ function setGlobalVars(idb, initialConfig) {
         IDB.indexedDB = IDB.indexedDB || IDB.webkitIndexedDB || IDB.mozIndexedDB || IDB.oIndexedDB || IDB.msIndexedDB;
     }
 
-    // Detect browsers with known IndexedDb issues (e.g. Android pre-4.4)
+    // Detect browsers with known IndexedDB issues (e.g. Android pre-4.4)
     var poorIndexedDbSupport = false;
     if (typeof navigator !== 'undefined' && ( // Ignore Node or other environments
 

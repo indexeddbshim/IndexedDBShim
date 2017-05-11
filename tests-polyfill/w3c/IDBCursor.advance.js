@@ -940,9 +940,7 @@ describe('W3C IDBCursor.advance Tests', function () {
             var db,
                 records = [{ pKey: "primaryKey_0"},
                            { pKey: "primaryKey_1"}];
-console.log('aaaa0');
             var open_rq = createdb(done);
-console.log('aaaa00');
             open_rq.onupgradeneeded = function (event) {
                 db = event.target.result;
                 var objStore = db.createObjectStore("store", {keyPath:"pKey"});
@@ -952,14 +950,11 @@ console.log('aaaa00');
             }
 
             open_rq.onsuccess = function (event) {
-console.log('aaaa111');
                 var txn = db.transaction("store", "readwrite");
                 var rq = txn.objectStore("store").openCursor();
                 rq.onsuccess = function(event) {
                     var cursor = event.target.result;
-console.log('aaaa0');
                     assert(cursor instanceof FDBCursor);
-console.log('aaaa1');
                     event.target.transaction.abort();
                     support.throws(function() {
                         cursor.advance(1);

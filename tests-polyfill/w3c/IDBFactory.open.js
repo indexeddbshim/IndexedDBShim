@@ -1,6 +1,6 @@
 describe('W3C IDBFactory.open Tests', function () {
     var FDBVersionChangeEvent = IDBVersionChangeEvent;
-    var Event = indexedDB.modules.ShimEvent;
+    var Event = shimIndexedDB.modules.ShimEvent;
     //var FDBTransaction = IDBTransaction;
     var assert_unreached = support.assert_unreached;
     var createdb = support.createdb;
@@ -220,8 +220,8 @@ describe('W3C IDBFactory.open Tests', function () {
             st.createIndex("index", "i");
 
             assert.equal(db.version, 9, "first db.version");
-            assert(db.objectStoreNames.indexOf("store") >= 0, "objectStoreNames contains store");
-            assert(st.indexNames.indexOf("index") >= 0, "indexNames contains index");
+            assert(db.objectStoreNames.contains("store"), "objectStoreNames contains store");
+            assert(st.indexNames.contains("index"), "indexNames contains index");
 
             st.add({i: "Joshua"}, 1);
             st.add({i: "Jonas"}, 2);
@@ -239,10 +239,10 @@ describe('W3C IDBFactory.open Tests', function () {
 
                 assert.equal(db2.version, 10, "db2.version");
 
-                assert(db2.objectStoreNames.indexOf("store") >= 0, "second objectStoreNames contains store");
-                assert(db2.objectStoreNames.indexOf("store2") >= 0, "second objectStoreNames contains store2");
-                assert(store.indexNames.indexOf("index") >= 0, "second indexNames contains index");
-                assert(store.indexNames.indexOf("index2") >= 0, "second indexNames contains index2");
+                assert(db2.objectStoreNames.contains("store"), "second objectStoreNames contains store");
+                assert(db2.objectStoreNames.contains("store2"), "second objectStoreNames contains store2");
+                assert(store.indexNames.contains("index"), "second indexNames contains index");
+                assert(store.indexNames.contains("index2"), "second indexNames contains index2");
 
                 store.add({i: "Odin"}, 3);
                 store.put({i: "Sicking"}, 2);
@@ -251,22 +251,22 @@ describe('W3C IDBFactory.open Tests', function () {
             };
             open_rq2.onerror = function(e) {
                 assert.equal(db2.version, 9, "db2.version after error");
-                assert(db2.objectStoreNames.indexOf("store") >= 0, "objectStoreNames contains store after error");
-                assert(db2.objectStoreNames.indexOf("store2") < 0, "objectStoreNames not contains store2 after error");
+                assert(db2.objectStoreNames.contains("store"), "objectStoreNames contains store after error");
+                assert(!db2.objectStoreNames.contains("store2"), "objectStoreNames not contains store2 after error");
 
                 var open_rq3 = indexedDB.open(db.name);
                 open_rq3.onsuccess = function(e) {
                     var db3 = e.target.result;
 
-                    assert(db3.objectStoreNames.indexOf("store") >= 0, "third objectStoreNames contains store");
-                    assert(db3.objectStoreNames.indexOf("store2") < 0, "third objectStoreNames contains store2");
+                    assert(db3.objectStoreNames.contains("store"), "third objectStoreNames contains store");
+                    assert(!db3.objectStoreNames.contains("store2"), "third objectStoreNames contains store2");
 
                     var st = db3.transaction("store").objectStore("store");
 
                     assert.equal(db3.version, 9, "db3.version");
 
-                    assert(st.indexNames.indexOf("index") >= 0, "third indexNames contains index");
-                    assert(st.indexNames.indexOf("index2") < 0, "third indexNames contains index2");
+                    assert(st.indexNames.contains("index"), "third indexNames contains index");
+                    assert(!st.indexNames.contains("index2"), "third indexNames contains index2");
 
                     st.openCursor(null, "prev").onsuccess = function(e) {
                         assert.equal(e.target.result.key, 2, "opencursor(prev) key");
@@ -302,7 +302,7 @@ describe('W3C IDBFactory.open Tests', function () {
             db = e.target.result;
 
             db.createObjectStore("store");
-            assert(db.objectStoreNames.indexOf("store") >= 0, "objectStoreNames contains store");
+            assert(db.objectStoreNames.contains("store"), "objectStoreNames contains store");
 
             var store = e.target.transaction.objectStore("store");
             assert.equal(store.name, "store", "store.name");
@@ -328,7 +328,7 @@ describe('W3C IDBFactory.open Tests', function () {
             var open_rq2 = indexedDB.open(db.name, 10);
             open_rq2.onupgradeneeded = function(e) {
                 var db2 = e.target.result;
-                assert(db2.objectStoreNames.indexOf("store") >= 0, "objectStoreNames contains store");
+                assert(db2.objectStoreNames.contains("store"), "objectStoreNames contains store");
                 var store = open_rq2.transaction.objectStore("store");
                 assert.equal(store.name, "store", "store.name");
 
