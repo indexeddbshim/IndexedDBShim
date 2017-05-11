@@ -135,7 +135,7 @@ module.exports = function (grunt) {
                     sourceMap: true,
                     sourceMapIn: 'dist/<%=pkg.name%>-UnicodeIdentifiers.js.map',
                     sourceMapName: 'dist/<%=pkg.name%>-UnicodeIdentifiers.min.js.map',
-                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v3.0.0-rc.7/dist/'
+                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v' + pkg.version + '/dist/'
                 },
                 src: 'dist/<%= pkg.name%>-UnicodeIdentifiers.js',
                 dest: 'dist/<%= pkg.name%>-UnicodeIdentifiers.min.js'
@@ -146,7 +146,7 @@ module.exports = function (grunt) {
                     sourceMap: true,
                     sourceMapIn: 'dist/<%=pkg.name%>.js.map',
                     sourceMapName: 'dist/<%=pkg.name%>.min.js.map',
-                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v3.0.0-rc.7/dist/'
+                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v' + pkg.version + '/dist/'
                 },
                 src: 'dist/<%= pkg.name%>.js',
                 dest: 'dist/<%=pkg.name%>.min.js'
@@ -157,7 +157,7 @@ module.exports = function (grunt) {
                     sourceMap: true,
                     sourceMapIn: 'dist/<%=pkg.name%>-noninvasive.js.map',
                     sourceMapName: 'dist/<%=pkg.name%>-noninvasive.min.js.map',
-                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v3.0.0-rc.7/dist/'
+                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v' + pkg.version + '/dist/'
                 },
                 src: 'dist/<%= pkg.name%>-noninvasive.js',
                 dest: 'dist/<%=pkg.name%>-noninvasive.min.js'
