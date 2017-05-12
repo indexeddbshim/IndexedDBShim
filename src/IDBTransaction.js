@@ -135,7 +135,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 // Fire an error event for the current IDBRequest
                 q.req.__readyState = 'done';
                 q.req.__error = err;
-                q.req.__result = undefined;
+                q.req.__result = undefined; // Must be undefined if an error per `result` getter
                 q.req.addLateEventListener('error', function (e) {
                     if (e.cancelable && e.defaultPrevented && !e.__legacyOutputDidListenersThrowError) {
                         executeNextRequest();

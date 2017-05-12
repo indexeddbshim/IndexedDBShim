@@ -3674,15 +3674,15 @@ IDBFactory.prototype.open = function (name /* , version */) {
         const evt = (0, _Event.createEvent)('error', err, { bubbles: true, cancelable: true });
         req.__readyState = 'done';
         req.__error = err;
-        req.__result = undefined;
+        req.__result = undefined; // Must be undefined if an error per `result` getter
         req.dispatchEvent(evt);
     }
 
     function setupDatabase(tx, db, oldVersion) {
         tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList" FROM __sys__', [], function (tx, data) {
             function finishRequest() {
-                req.__readyState = 'done';
                 req.__result = connection;
+                req.__readyState = 'done'; // https://github.com/w3c/IndexedDB/pull/202
             }
             const connection = _IDBDatabase2.default.__createInstance(db, name, oldVersion, version, data);
             if (!me.__connections[name]) {
@@ -3762,6 +3762,12 @@ IDBFactory.prototype.open = function (name /* , version */) {
                             };
                             req.transaction.on__abort = function () {
                                 req.__transaction = null;
+                                // `readyState` and `result` will be reset anyways by `dbCreateError` but we follow spec:
+                                //    see https://github.com/w3c/IndexedDB/issues/161 and
+                                //    https://github.com/w3c/IndexedDB/pull/202
+                                req.__result = undefined;
+                                req.__readyState = 'pending';
+
                                 connection.close();
                                 setTimeout(() => {
                                     const err = (0, _DOMException.createDOMException)('AbortError', 'The upgrade transaction was aborted.');
@@ -3792,12 +3798,6 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                 //   in `IDBObjectStore.deleteIndex`, "should delete an index that was
                                 //   created in a previous transaction").
                                 // setTimeout(() => {
-
-                                // Todo: Waiting on confirmation re: positioning here of
-                                //      `readyState` (and `result`)--see https://github.com/w3c/IndexedDB/issues/161
-                                //      Note, however, that the readyState and result will be reset anyways
-                                // req.__readyState = 'pending';
-                                // req.__result = undefined;
 
                                 finishRequest();
 
@@ -3951,7 +3951,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         sysdbFinishedCbDelete(true, function () {
             req.__readyState = 'done';
             req.__error = err;
-            req.__result = undefined;
+            req.__result = undefined; // Must be undefined if an error per `result` getter
             // Re: why bubbling here (and how cancelable is only really relevant for `window.onerror`) see: https://github.com/w3c/IndexedDB/issues/86
             const e = (0, _Event.createEvent)('error', err, { bubbles: true, cancelable: true });
             req.dispatchEvent(e);
@@ -3966,7 +3966,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
 
             function completeDatabaseDelete() {
                 req.__result = undefined;
-                req.__readyState = 'done';
+                req.__readyState = 'done'; // https://github.com/w3c/IndexedDB/pull/202
                 const e = new _IDBVersionChangeEvent2.default('success', { oldVersion: version, newVersion: null });
                 req.dispatchEvent(e);
             }
@@ -4101,7 +4101,7 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
         const evt = (0, _Event.createEvent)('error', err, { bubbles: true, cancelable: true }); // http://stackoverflow.com/questions/40165909/to-where-do-idbopendbrequest-error-events-bubble-up/40181108#40181108
         req.__readyState = 'done';
         req.__error = err;
-        req.__result = undefined;
+        req.__result = undefined; // Must be undefined if an error per `result` getter
         req.dispatchEvent(evt);
     }
     const req = _IDBRequest.IDBRequest.__createInstance();
@@ -4113,7 +4113,7 @@ IDBFactory.prototype.webkitGetDatabaseNames = function () {
                     dbNames.push(util.unescapeSQLiteResponse(data.rows.item(i).name));
                 }
                 req.__result = dbNames;
-                req.__readyState = 'done';
+                req.__readyState = 'done'; // https://github.com/w3c/IndexedDB/pull/202
                 const e = (0, _Event.createEvent)('success'); // http://stackoverflow.com/questions/40165909/to-where-do-idbopendbrequest-error-events-bubble-up/40181108#40181108
                 req.dispatchEvent(e);
             }, dbGetDatabaseNamesError);
@@ -6213,7 +6213,7 @@ IDBTransaction.prototype.__executeRequests = function () {
             // Fire an error event for the current IDBRequest
             q.req.__readyState = 'done';
             q.req.__error = err;
-            q.req.__result = undefined;
+            q.req.__result = undefined; // Must be undefined if an error per `result` getter
             q.req.addLateEventListener('error', function (e) {
                 if (e.cancelable && e.defaultPrevented && !e.__legacyOutputDidListenersThrowError) {
                     executeNextRequest();
