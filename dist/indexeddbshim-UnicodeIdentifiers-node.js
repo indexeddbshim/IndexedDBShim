@@ -3098,6 +3098,7 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
         this.__oldVersion = oldVersion;
         this.__version = version;
         this.__name = name;
+        this.__upgradeTransaction = null;
         listeners.forEach(listener => {
             Object.defineProperty(this, listener, {
                 enumerable: true,
@@ -3161,7 +3162,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
         throw new TypeError('No object store name was specified');
     }
     _IDBTransaction2.default.__assertVersionChange(this.__versionTransaction); // this.__versionTransaction may not exist if called mistakenly by user in onsuccess
-    _IDBTransaction2.default.__assertNotFinishedObjectStoreMethod(this.__versionTransaction);
+    this.throwIfUpgradeTransactionNull();
     _IDBTransaction2.default.__assertActive(this.__versionTransaction);
 
     createOptions = Object.assign({}, createOptions);
@@ -3204,7 +3205,7 @@ IDBDatabase.prototype.deleteObjectStore = function (storeName) {
         throw new TypeError('No object store name was specified');
     }
     _IDBTransaction2.default.__assertVersionChange(this.__versionTransaction);
-    _IDBTransaction2.default.__assertNotFinishedObjectStoreMethod(this.__versionTransaction);
+    this.throwIfUpgradeTransactionNull();
     _IDBTransaction2.default.__assertActive(this.__versionTransaction);
 
     const store = this.__objectStores[storeName];
@@ -3281,6 +3282,13 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
     const trans = _IDBTransaction2.default.__createInstance(this, objectStoreNames, mode);
     this.__transactions.push(trans);
     return trans;
+};
+
+// See https://github.com/w3c/IndexedDB/issues/192
+IDBDatabase.prototype.throwIfUpgradeTransactionNull = function () {
+    if (this.__upgradeTransaction === null) {
+        throw (0, _DOMException.createDOMException)('InvalidStateError', 'No upgrade transaction associated with database.');
+    }
 };
 
 // Todo __forceClose: Add tests for `__forceClose`
@@ -3717,7 +3725,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                         function versionSet() {
                             const e = new _IDBVersionChangeEvent2.default('upgradeneeded', { oldVersion, newVersion: version });
                             req.__result = connection;
-                            req.__transaction = req.__result.__versionTransaction = _IDBTransaction2.default.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
+                            connection.__upgradeTransaction = req.__transaction = req.__result.__versionTransaction = _IDBTransaction2.default.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
                             req.__readyState = 'done';
                             req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded(tx, args, finished, error) {
                                 req.dispatchEvent(e);
@@ -3729,6 +3737,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                 finished();
                             });
                             req.transaction.on__beforecomplete = function (ev) {
+                                connection.__upgradeTransaction = null;
                                 req.__result.__versionTransaction = null;
                                 sysdbFinishedCb(systx, false, function () {
                                     req.transaction.__transFinishedCb(false, function () {
@@ -3743,6 +3752,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                 });
                             };
                             req.transaction.on__preabort = function () {
+                                connection.__upgradeTransaction = null;
                                 // We ensure any cache is deleted before any request error events fire and try to reopen
                                 if (useDatabaseCache) {
                                     if (name in websqlDBCache) {
@@ -5170,7 +5180,6 @@ IDBObjectStore.__createObjectStore = function (db, store) {
 
     // Add the object store to WebSQL
     const transaction = db.__versionTransaction;
-    _IDBTransaction2.default.__assertVersionChange(transaction);
 
     const storeHandles = transaction.__storeHandles;
     if (!storeHandles[storeName] || storeHandles[storeName].__pendingDelete || storeHandles[storeName].__deleted) {
@@ -5231,8 +5240,6 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
 
     // Remove the object store from WebSQL
     const transaction = db.__versionTransaction;
-    _IDBTransaction2.default.__assertVersionChange(transaction);
-
     transaction.__addNonRequestToTransactionQueue(function deleteObjectStore(tx, args, success, failure) {
         function error(tx, err) {
             _CFG2.default.DEBUG && console.log(err);

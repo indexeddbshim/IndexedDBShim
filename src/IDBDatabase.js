@@ -29,6 +29,7 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
         this.__oldVersion = oldVersion;
         this.__version = version;
         this.__name = name;
+        this.__upgradeTransaction = null;
         listeners.forEach((listener) => {
             Object.defineProperty(this, listener, {
                 enumerable: true,
@@ -92,7 +93,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
         throw new TypeError('No object store name was specified');
     }
     IDBTransaction.__assertVersionChange(this.__versionTransaction); // this.__versionTransaction may not exist if called mistakenly by user in onsuccess
-    IDBTransaction.__assertNotFinishedObjectStoreMethod(this.__versionTransaction);
+    this.throwIfUpgradeTransactionNull();
     IDBTransaction.__assertActive(this.__versionTransaction);
 
     createOptions = Object.assign({}, createOptions);
@@ -135,7 +136,7 @@ IDBDatabase.prototype.deleteObjectStore = function (storeName) {
         throw new TypeError('No object store name was specified');
     }
     IDBTransaction.__assertVersionChange(this.__versionTransaction);
-    IDBTransaction.__assertNotFinishedObjectStoreMethod(this.__versionTransaction);
+    this.throwIfUpgradeTransactionNull();
     IDBTransaction.__assertActive(this.__versionTransaction);
 
     const store = this.__objectStores[storeName];
@@ -216,6 +217,13 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
     const trans = IDBTransaction.__createInstance(this, objectStoreNames, mode);
     this.__transactions.push(trans);
     return trans;
+};
+
+// See https://github.com/w3c/IndexedDB/issues/192
+IDBDatabase.prototype.throwIfUpgradeTransactionNull = function () {
+    if (this.__upgradeTransaction === null) {
+        throw createDOMException('InvalidStateError', 'No upgrade transaction associated with database.');
+    }
 };
 
 // Todo __forceClose: Add tests for `__forceClose`

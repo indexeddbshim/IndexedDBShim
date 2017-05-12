@@ -157,7 +157,6 @@ IDBObjectStore.__createObjectStore = function (db, store) {
 
     // Add the object store to WebSQL
     const transaction = db.__versionTransaction;
-    IDBTransaction.__assertVersionChange(transaction);
 
     const storeHandles = transaction.__storeHandles;
     if (!storeHandles[storeName] ||
@@ -221,8 +220,6 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
 
     // Remove the object store from WebSQL
     const transaction = db.__versionTransaction;
-    IDBTransaction.__assertVersionChange(transaction);
-
     transaction.__addNonRequestToTransactionQueue(function deleteObjectStore (tx, args, success, failure) {
         function error (tx, err) {
             CFG.DEBUG && console.log(err);

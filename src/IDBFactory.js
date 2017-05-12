@@ -353,7 +353,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                         function versionSet () {
                             const e = new IDBVersionChangeEvent('upgradeneeded', {oldVersion, newVersion: version});
                             req.__result = connection;
-                            req.__transaction = req.__result.__versionTransaction = IDBTransaction.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
+                            connection.__upgradeTransaction = req.__transaction = req.__result.__versionTransaction = IDBTransaction.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
                             req.__readyState = 'done';
                             req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded (tx, args, finished, error) {
                                 req.dispatchEvent(e);
@@ -365,6 +365,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                 finished();
                             });
                             req.transaction.on__beforecomplete = function (ev) {
+                                connection.__upgradeTransaction = null;
                                 req.__result.__versionTransaction = null;
                                 sysdbFinishedCb(systx, false, function () {
                                     req.transaction.__transFinishedCb(false, function () {
@@ -379,6 +380,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                 });
                             };
                             req.transaction.on__preabort = function () {
+                                connection.__upgradeTransaction = null;
                                 // We ensure any cache is deleted before any request error events fire and try to reopen
                                 if (useDatabaseCache) {
                                     if (name in websqlDBCache) {
