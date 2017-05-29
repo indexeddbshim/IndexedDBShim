@@ -1272,18 +1272,10 @@
       "dev": true
     },
     "cheerio": {
-      "version": "1.0.0-rc.1",
-      "from": "cheerio@1.0.0-rc.1",
-      "resolved": "https://registry.npmjs.org/cheerio/-/cheerio-1.0.0-rc.1.tgz",
-      "dev": true,
-      "dependencies": {
-        "parse5": {
-          "version": "3.0.2",
-          "from": "parse5@>=3.0.1 <4.0.0",
-          "resolved": "https://registry.npmjs.org/parse5/-/parse5-3.0.2.tgz",
-          "dev": true
-        }
-      }
+      "version": "0.22.0",
+      "from": "cheerio@0.22.0",
+      "resolved": "https://registry.npmjs.org/cheerio/-/cheerio-0.22.0.tgz",
+      "dev": true
     },
     "chokidar": {
       "version": "1.6.1",
@@ -4290,6 +4282,18 @@
       "resolved": "https://registry.npmjs.org/lodash._isiterateecall/-/lodash._isiterateecall-3.0.9.tgz",
       "dev": true
     },
+    "lodash.assignin": {
+      "version": "4.2.0",
+      "from": "lodash.assignin@>=4.0.9 <5.0.0",
+      "resolved": "https://registry.npmjs.org/lodash.assignin/-/lodash.assignin-4.2.0.tgz",
+      "dev": true
+    },
+    "lodash.bind": {
+      "version": "4.2.1",
+      "from": "lodash.bind@>=4.1.4 <5.0.0",
+      "resolved": "https://registry.npmjs.org/lodash.bind/-/lodash.bind-4.2.1.tgz",
+      "dev": true
+    },
     "lodash.cond": {
       "version": "4.5.2",
       "from": "lodash.cond@>=4.3.0 <5.0.0",
@@ -4300,6 +4304,30 @@
       "version": "3.1.1",
       "from": "lodash.create@3.1.1",
       "resolved": "https://registry.npmjs.org/lodash.create/-/lodash.create-3.1.1.tgz",
+      "dev": true
+    },
+    "lodash.defaults": {
+      "version": "4.2.0",
+      "from": "lodash.defaults@>=4.0.1 <5.0.0",
+      "resolved": "https://registry.npmjs.org/lodash.defaults/-/lodash.defaults-4.2.0.tgz",
+      "dev": true
+    },
+    "lodash.filter": {
+      "version": "4.6.0",
+      "from": "lodash.filter@>=4.4.0 <5.0.0",
+      "resolved": "https://registry.npmjs.org/lodash.filter/-/lodash.filter-4.6.0.tgz",
+      "dev": true
+    },
+    "lodash.flatten": {
+      "version": "4.4.0",
+      "from": "lodash.flatten@>=4.2.0 <5.0.0",
+      "resolved": "https://registry.npmjs.org/lodash.flatten/-/lodash.flatten-4.4.0.tgz",
+      "dev": true
+    },
+    "lodash.foreach": {
+      "version": "4.5.0",
+      "from": "lodash.foreach@>=4.3.0 <5.0.0",
+      "resolved": "https://registry.npmjs.org/lodash.foreach/-/lodash.foreach-4.5.0.tgz",
       "dev": true
     },
     "lodash.isarguments": {
@@ -4320,10 +4348,46 @@
       "resolved": "https://registry.npmjs.org/lodash.keys/-/lodash.keys-3.1.2.tgz",
       "dev": true
     },
+    "lodash.map": {
+      "version": "4.6.0",
+      "from": "lodash.map@>=4.4.0 <5.0.0",
+      "resolved": "https://registry.npmjs.org/lodash.map/-/lodash.map-4.6.0.tgz",
+      "dev": true
+    },
     "lodash.memoize": {
       "version": "3.0.4",
       "from": "lodash.memoize@>=3.0.3 <3.1.0",
       "resolved": "https://registry.npmjs.org/lodash.memoize/-/lodash.memoize-3.0.4.tgz",
+      "dev": true
+    },
+    "lodash.merge": {
+      "version": "4.6.0",
+      "from": "lodash.merge@>=4.4.0 <5.0.0",
+      "resolved": "https://registry.npmjs.org/lodash.merge/-/lodash.merge-4.6.0.tgz",
+      "dev": true
+    },
+    "lodash.pick": {
+      "version": "4.4.0",
+      "from": "lodash.pick@>=4.2.1 <5.0.0",
+      "resolved": "https://registry.npmjs.org/lodash.pick/-/lodash.pick-4.4.0.tgz",
+      "dev": true
+    },
+    "lodash.reduce": {
+      "version": "4.6.0",
+      "from": "lodash.reduce@>=4.4.0 <5.0.0",
+      "resolved": "https://registry.npmjs.org/lodash.reduce/-/lodash.reduce-4.6.0.tgz",
+      "dev": true
+    },
+    "lodash.reject": {
+      "version": "4.6.0",
+      "from": "lodash.reject@>=4.4.0 <5.0.0",
+      "resolved": "https://registry.npmjs.org/lodash.reject/-/lodash.reject-4.6.0.tgz",
+      "dev": true
+    },
+    "lodash.some": {
+      "version": "4.6.0",
+      "from": "lodash.some@>=4.4.0 <5.0.0",
+      "resolved": "https://registry.npmjs.org/lodash.some/-/lodash.some-4.6.0.tgz",
       "dev": true
     },
     "lolex": {

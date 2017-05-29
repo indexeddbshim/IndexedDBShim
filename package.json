@@ -72,7 +72,7 @@
     "babelify": "7.3.0",
     "bson": "1.0.4",
     "chai": "4.0.0",
-    "cheerio": "1.0.0-rc.1",
+    "cheerio": "0.22.0",
     "colors": "1.1.2",
     "cyclonejs": "1.1.4",
     "eslint": "3.19.0",
