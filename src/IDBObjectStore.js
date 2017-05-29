@@ -315,17 +315,17 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb
     const me = this;
 
     // Only run if cloning is needed
-    function keyCloneThenSuccess () { // We want to return the original key, so we don't need to accept an argument here
+    function keyCloneThenSuccess (oldCn) { // We want to return the original key, so we don't need to accept an argument here
         Sca.encode(key, function (key) {
             key = Sca.decode(key);
-            success(key);
+            success(key, oldCn);
         });
     }
 
     if (me.autoIncrement) {
         // If auto-increment and no valid primaryKey found on the keyPath, get and set the new value, and use
         if (key === undefined) {
-            Key.generateKeyForStore(tx, me, function (failure, key) {
+            Key.generateKeyForStore(tx, me, function (failure, key, oldCn) {
                 if (failure) {
                     failCb(createDOMException('ConstraintError', 'The key generator\'s current number has reached the maximum safe integer limit'));
                     return;
@@ -334,7 +334,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb
                     // Should not throw now as checked earlier
                     Key.injectKeyIntoValueUsingKeyPath(value, key, me.keyPath);
                 }
-                success(key);
+                success(key, oldCn);
             }, failCb);
         } else {
             Key.possiblyUpdateKeyGenerator(tx, me, key, keyCloneThenSuccess, failCb);
@@ -345,7 +345,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb
     }
 };
 
-IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyOrCurrentNumber, success, error) {
+IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyOrCurrentNumber, oldCn, success, error) {
     const me = this;
     // The `ConstraintError` to occur for `add` upon a duplicate will occur naturally in attempting an insert
     // We process the index information first as it will stored in the same table as the store
@@ -449,7 +449,15 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
             error(createDOMException('ConstraintError', err.message, err));
         });
     }).catch(function (err) {
-        error(err);
+        function fail () {
+            // Todo: Add a different error object here if `assignCurrentNumber` fails in reverting?
+            error(err);
+        }
+        if (typeof oldCn === 'number') {
+            Key.assignCurrentNumber(tx, me, oldCn, fail, fail);
+            return;
+        }
+        fail();
     });
 };
 
@@ -508,10 +516,10 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
 IDBObjectStore.__storingRecordObjectStore = function (request, store, value, noOverwrite /* , key */) {
     const key = arguments[4];
     store.transaction.__pushToQueue(request, function (tx, args, success, error) {
-        store.__deriveKey(tx, value, key, function (clonedKeyOrCurrentNumber) {
+        store.__deriveKey(tx, value, key, function (clonedKeyOrCurrentNumber, oldCn) {
             Sca.encode(value, function (encoded) {
                 function insert (tx) {
-                    store.__insertData(tx, encoded, value, clonedKeyOrCurrentNumber, function (...args) {
+                    store.__insertData(tx, encoded, value, clonedKeyOrCurrentNumber, oldCn, function (...args) {
                         store.__cursors.forEach((cursor) => {
                             cursor.__invalidateCache();
                         });
@@ -609,17 +617,11 @@ IDBObjectStore.prototype.getKey = function (query) {
 };
 
 IDBObjectStore.prototype.getAll = function (/* query, count */) {
-    if (!arguments.length) {
-        throw new TypeError('A parameter was missing for `IDBObjectStore.getAll`.');
-    }
     const [query, count] = arguments;
     return this.__get(query, false, true, count);
 };
 
 IDBObjectStore.prototype.getAllKeys = function (/* query, count */) {
-    if (!arguments.length) {
-        throw new TypeError('A parameter was missing for `IDBObjectStore.getAllKeys`.');
-    }
     const [query, count] = arguments;
     return this.__get(query, true, true, count);
 };

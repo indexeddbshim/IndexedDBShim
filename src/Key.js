@@ -701,13 +701,8 @@ function getCurrentNumber (tx, store, callback, sqlFailCb) {
     });
 }
 
-// Bump up the auto-inc counter if the key path-resolved value is valid (greater than old value and >=1) OR
-//  if a manually passed in key is valid (numeric and >= 1) and >= any primaryKey
-function setCurrentNumber (tx, store, num, successCb, failCb) {
+function assignCurrentNumber (tx, store, num, successCb, failCb) {
     const sql = 'UPDATE __sys__ SET "currNum" = ? WHERE "name" = ?';
-    num = num === MAX_ALLOWED_CURRENT_NUMBER
-        ? num + 2 // Since incrementing by one will have no effect in JavaScript on this unsafe max, we represent the max as a number incremented by two. The getting of the current number is never returned to the user and is only used in safe comparisons, so it is safe for us to represent it in this manner
-        : num + 1;
     const sqlValues = [num, util.escapeSQLiteStatement(store.__currentName)];
     CFG.DEBUG && console.log(sql, sqlValues);
     tx.executeSql(sql, sqlValues, function (tx, data) {
@@ -715,6 +710,15 @@ function setCurrentNumber (tx, store, num, successCb, failCb) {
     }, function (tx, err) {
         failCb(createDOMException('UnknownError', 'Could not set the auto increment value for key', err));
     });
+}
+
+// Bump up the auto-inc counter if the key path-resolved value is valid (greater than old value and >=1) OR
+//  if a manually passed in key is valid (numeric and >= 1) and >= any primaryKey
+function setCurrentNumber (tx, store, num, successCb, failCb) {
+    num = num === MAX_ALLOWED_CURRENT_NUMBER
+        ? num + 2 // Since incrementing by one will have no effect in JavaScript on this unsafe max, we represent the max as a number incremented by two. The getting of the current number is never returned to the user and is only used in safe comparisons, so it is safe for us to represent it in this manner
+        : num + 1;
+    return assignCurrentNumber(tx, store, num, successCb, failCb);
 }
 
 function generateKeyForStore (tx, store, cb, sqlFailCb) {
@@ -727,7 +731,7 @@ function generateKeyForStore (tx, store, cb, sqlFailCb) {
         //  will be overwritten/ignored upon the next insert)
         setCurrentNumber(tx, store, key,
             function () {
-                cb(null, key);
+                cb(null, key, key);
             },
             sqlFailCb
         );
@@ -756,7 +760,9 @@ function possiblyUpdateKeyGenerator (tx, store, key, successCb, sqlFailCb) {
             );
             const useNewKeyForAutoInc = value >= cn;
             if (useNewKeyForAutoInc) {
-                setCurrentNumber(tx, store, value, successCb, sqlFailCb);
+                setCurrentNumber(tx, store, value, function () {
+                    successCb(cn); // Supply old current number in case needs to be reverted
+                }, sqlFailCb);
             } else { // Not updated
                 successCb();
             }
@@ -772,4 +778,5 @@ export {encode, decode, roundTrip, convertKeyToValue, convertValueToKeyValueDeco
     extractKeyFromValueUsingKeyPath, evaluateKeyPathOnValue,
     extractKeyValueDecodedFromValueUsingKeyPath, injectKeyIntoValueUsingKeyPath, checkKeyCouldBeInjectedIntoValue,
     isMultiEntryMatch, isKeyInRange, findMultiEntryMatches,
+    assignCurrentNumber,
     generateKeyForStore, possiblyUpdateKeyGenerator};
