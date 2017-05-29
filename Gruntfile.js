@@ -11,7 +11,7 @@ const babelNodeOptions = Object.assign({}, babelBrowserOptions, {
     presets: [
         ['env', {
             targets: {
-                node: 6.9
+                node: '6.9'
             }
         }]
     ]

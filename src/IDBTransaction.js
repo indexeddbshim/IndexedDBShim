@@ -113,7 +113,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
                 if (e.__legacyOutputDidListenersThrowError) {
                     logError('Error', 'An error occurred in a success handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
-                    me.__abortTransaction(createDOMException('AbortError', 'A request was aborted.'));
+                    me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after success).'));
                     return;
                 }
                 executeNextRequest();
@@ -152,7 +152,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 if (e.__legacyOutputDidListenersThrowError) {
                     logError('Error', 'An error occurred in an error handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
                     e.preventDefault(); // Prevent 'error' default as steps indicate we should abort with `AbortError` even without cancellation
-                    me.__abortTransaction(createDOMException('AbortError', 'A request was aborted.'));
+                    me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after error).'));
                 }
             }
 
@@ -421,8 +421,10 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         }
 
         me.dispatchEvent(createEvent('__preabort'));
-        me.__requests.filter(function (q) {
-            return q.req && q.req.__readyState !== 'done';
+        me.__requests.filter(function (q, i, arr) {
+            return q.req && q.req.__readyState !== 'done' && [i, -1].includes(
+                arr.map((q) => q.req).lastIndexOf(q.req)
+            );
         }).reduce(function (promises, q) {
             // We reduce to a chain of promises to be queued in order, so we cannot use `Promise.all`,
             //  and I'm unsure whether `setTimeout` currently behaves first-in-first-out with the same timeout
@@ -430,7 +432,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
             return promises.then(function () {
                 q.req.__readyState = 'done';
                 q.req.__result = undefined;
-                q.req.__error = createDOMException('AbortError', 'A request was aborted.');
+                q.req.__error = createDOMException('AbortError', 'A request was aborted (an unfinished request).');
                 const reqEvt = createEvent('error', q.req.__error, {bubbles: true, cancelable: true});
                 return new SyncPromise(function (resolve) {
                     setTimeout(() => {

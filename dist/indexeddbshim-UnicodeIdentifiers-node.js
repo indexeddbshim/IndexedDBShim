@@ -5335,18 +5335,18 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb
     const me = this;
 
     // Only run if cloning is needed
-    function keyCloneThenSuccess() {
+    function keyCloneThenSuccess(oldCn) {
         // We want to return the original key, so we don't need to accept an argument here
         Sca.encode(key, function (key) {
             key = Sca.decode(key);
-            success(key);
+            success(key, oldCn);
         });
     }
 
     if (me.autoIncrement) {
         // If auto-increment and no valid primaryKey found on the keyPath, get and set the new value, and use
         if (key === undefined) {
-            Key.generateKeyForStore(tx, me, function (failure, key) {
+            Key.generateKeyForStore(tx, me, function (failure, key, oldCn) {
                 if (failure) {
                     failCb((0, _DOMException.createDOMException)('ConstraintError', 'The key generator\'s current number has reached the maximum safe integer limit'));
                     return;
@@ -5355,7 +5355,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb
                     // Should not throw now as checked earlier
                     Key.injectKeyIntoValueUsingKeyPath(value, key, me.keyPath);
                 }
-                success(key);
+                success(key, oldCn);
             }, failCb);
         } else {
             Key.possiblyUpdateKeyGenerator(tx, me, key, keyCloneThenSuccess, failCb);
@@ -5366,7 +5366,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb
     }
 };
 
-IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyOrCurrentNumber, success, error) {
+IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyOrCurrentNumber, oldCn, success, error) {
     const me = this;
     // The `ConstraintError` to occur for `add` upon a duplicate will occur naturally in attempting an insert
     // We process the index information first as it will stored in the same table as the store
@@ -5463,7 +5463,15 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
             error((0, _DOMException.createDOMException)('ConstraintError', err.message, err));
         });
     }).catch(function (err) {
-        error(err);
+        function fail() {
+            // Todo: Add a different error object here if `assignCurrentNumber` fails in reverting?
+            error(err);
+        }
+        if (typeof oldCn === 'number') {
+            Key.assignCurrentNumber(tx, me, oldCn, fail, fail);
+            return;
+        }
+        fail();
     });
 };
 
@@ -5522,10 +5530,10 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
 IDBObjectStore.__storingRecordObjectStore = function (request, store, value, noOverwrite /* , key */) {
     const key = arguments[4];
     store.transaction.__pushToQueue(request, function (tx, args, success, error) {
-        store.__deriveKey(tx, value, key, function (clonedKeyOrCurrentNumber) {
+        store.__deriveKey(tx, value, key, function (clonedKeyOrCurrentNumber, oldCn) {
             Sca.encode(value, function (encoded) {
                 function insert(tx) {
-                    store.__insertData(tx, encoded, value, clonedKeyOrCurrentNumber, function (...args) {
+                    store.__insertData(tx, encoded, value, clonedKeyOrCurrentNumber, oldCn, function (...args) {
                         store.__cursors.forEach(cursor => {
                             cursor.__invalidateCache();
                         });
@@ -5619,17 +5627,11 @@ IDBObjectStore.prototype.getKey = function (query) {
 };
 
 IDBObjectStore.prototype.getAll = function () /* query, count */{
-    if (!arguments.length) {
-        throw new TypeError('A parameter was missing for `IDBObjectStore.getAll`.');
-    }
     const [query, count] = arguments;
     return this.__get(query, false, true, count);
 };
 
 IDBObjectStore.prototype.getAllKeys = function () /* query, count */{
-    if (!arguments.length) {
-        throw new TypeError('A parameter was missing for `IDBObjectStore.getAllKeys`.');
-    }
     const [query, count] = arguments;
     return this.__get(query, true, true, count);
 };
@@ -6190,7 +6192,7 @@ IDBTransaction.prototype.__executeRequests = function () {
             // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
             if (e.__legacyOutputDidListenersThrowError) {
                 (0, _DOMException.logError)('Error', 'An error occurred in a success handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
-                me.__abortTransaction((0, _DOMException.createDOMException)('AbortError', 'A request was aborted.'));
+                me.__abortTransaction((0, _DOMException.createDOMException)('AbortError', 'A request was aborted (in user handler after success).'));
                 return;
             }
             executeNextRequest();
@@ -6230,7 +6232,7 @@ IDBTransaction.prototype.__executeRequests = function () {
             if (e.__legacyOutputDidListenersThrowError) {
                 (0, _DOMException.logError)('Error', 'An error occurred in an error handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
                 e.preventDefault(); // Prevent 'error' default as steps indicate we should abort with `AbortError` even without cancellation
-                me.__abortTransaction((0, _DOMException.createDOMException)('AbortError', 'A request was aborted.'));
+                me.__abortTransaction((0, _DOMException.createDOMException)('AbortError', 'A request was aborted (in user handler after error).'));
             }
         }
 
@@ -6500,8 +6502,8 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         }
 
         me.dispatchEvent((0, _Event.createEvent)('__preabort'));
-        me.__requests.filter(function (q) {
-            return q.req && q.req.__readyState !== 'done';
+        me.__requests.filter(function (q, i, arr) {
+            return q.req && q.req.__readyState !== 'done' && [i, -1].includes(arr.map(q => q.req).lastIndexOf(q.req));
         }).reduce(function (promises, q) {
             // We reduce to a chain of promises to be queued in order, so we cannot use `Promise.all`,
             //  and I'm unsure whether `setTimeout` currently behaves first-in-first-out with the same timeout
@@ -6509,7 +6511,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
             return promises.then(function () {
                 q.req.__readyState = 'done';
                 q.req.__result = undefined;
-                q.req.__error = (0, _DOMException.createDOMException)('AbortError', 'A request was aborted.');
+                q.req.__error = (0, _DOMException.createDOMException)('AbortError', 'A request was aborted (an unfinished request).');
                 const reqEvt = (0, _Event.createEvent)('error', q.req.__error, { bubbles: true, cancelable: true });
                 return new _syncPromise2.default(function (resolve) {
                     setTimeout(() => {
@@ -6716,7 +6718,7 @@ module.exports = exports['default'];
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.possiblyUpdateKeyGenerator = exports.generateKeyForStore = exports.findMultiEntryMatches = exports.isKeyInRange = exports.isMultiEntryMatch = exports.checkKeyCouldBeInjectedIntoValue = exports.injectKeyIntoValueUsingKeyPath = exports.extractKeyValueDecodedFromValueUsingKeyPath = exports.evaluateKeyPathOnValue = exports.extractKeyFromValueUsingKeyPath = exports.convertValueToKeyRethrowingAndIfInvalid = exports.convertValueToMultiEntryKey = exports.convertValueToKey = exports.convertValueToMultiEntryKeyDecoded = exports.convertValueToKeyValueDecoded = exports.convertKeyToValue = exports.roundTrip = exports.decode = exports.encode = undefined;
+exports.possiblyUpdateKeyGenerator = exports.generateKeyForStore = exports.assignCurrentNumber = exports.findMultiEntryMatches = exports.isKeyInRange = exports.isMultiEntryMatch = exports.checkKeyCouldBeInjectedIntoValue = exports.injectKeyIntoValueUsingKeyPath = exports.extractKeyValueDecodedFromValueUsingKeyPath = exports.evaluateKeyPathOnValue = exports.extractKeyFromValueUsingKeyPath = exports.convertValueToKeyRethrowingAndIfInvalid = exports.convertValueToMultiEntryKey = exports.convertValueToKey = exports.convertValueToMultiEntryKeyDecoded = exports.convertValueToKeyValueDecoded = exports.convertKeyToValue = exports.roundTrip = exports.decode = exports.encode = undefined;
 
 var _DOMException = require('./DOMException');
 
@@ -7432,12 +7434,8 @@ function getCurrentNumber(tx, store, callback, sqlFailCb) {
     });
 }
 
-// Bump up the auto-inc counter if the key path-resolved value is valid (greater than old value and >=1) OR
-//  if a manually passed in key is valid (numeric and >= 1) and >= any primaryKey
-function setCurrentNumber(tx, store, num, successCb, failCb) {
+function assignCurrentNumber(tx, store, num, successCb, failCb) {
     const sql = 'UPDATE __sys__ SET "currNum" = ? WHERE "name" = ?';
-    num = num === MAX_ALLOWED_CURRENT_NUMBER ? num + 2 // Since incrementing by one will have no effect in JavaScript on this unsafe max, we represent the max as a number incremented by two. The getting of the current number is never returned to the user and is only used in safe comparisons, so it is safe for us to represent it in this manner
-    : num + 1;
     const sqlValues = [num, util.escapeSQLiteStatement(store.__currentName)];
     _CFG2.default.DEBUG && console.log(sql, sqlValues);
     tx.executeSql(sql, sqlValues, function (tx, data) {
@@ -7445,6 +7443,14 @@ function setCurrentNumber(tx, store, num, successCb, failCb) {
     }, function (tx, err) {
         failCb((0, _DOMException.createDOMException)('UnknownError', 'Could not set the auto increment value for key', err));
     });
+}
+
+// Bump up the auto-inc counter if the key path-resolved value is valid (greater than old value and >=1) OR
+//  if a manually passed in key is valid (numeric and >= 1) and >= any primaryKey
+function setCurrentNumber(tx, store, num, successCb, failCb) {
+    num = num === MAX_ALLOWED_CURRENT_NUMBER ? num + 2 // Since incrementing by one will have no effect in JavaScript on this unsafe max, we represent the max as a number incremented by two. The getting of the current number is never returned to the user and is only used in safe comparisons, so it is safe for us to represent it in this manner
+    : num + 1;
+    return assignCurrentNumber(tx, store, num, successCb, failCb);
 }
 
 function generateKeyForStore(tx, store, cb, sqlFailCb) {
@@ -7457,7 +7463,7 @@ function generateKeyForStore(tx, store, cb, sqlFailCb) {
         //  autoincrement (and decrement when not needed), as decrementing
         //  will be overwritten/ignored upon the next insert)
         setCurrentNumber(tx, store, key, function () {
-            cb(null, key);
+            cb(null, key, key);
         }, sqlFailCb);
     }, sqlFailCb);
 }
@@ -7483,7 +7489,9 @@ function possiblyUpdateKeyGenerator(tx, store, key, successCb, sqlFailCb) {
             const value = Math.floor(Math.min(key, MAX_ALLOWED_CURRENT_NUMBER));
             const useNewKeyForAutoInc = value >= cn;
             if (useNewKeyForAutoInc) {
-                setCurrentNumber(tx, store, value, successCb, sqlFailCb);
+                setCurrentNumber(tx, store, value, function () {
+                    successCb(cn); // Supply old current number in case needs to be reverted
+                }, sqlFailCb);
             } else {
                 // Not updated
                 successCb();
@@ -7510,6 +7518,7 @@ exports.checkKeyCouldBeInjectedIntoValue = checkKeyCouldBeInjectedIntoValue;
 exports.isMultiEntryMatch = isMultiEntryMatch;
 exports.isKeyInRange = isKeyInRange;
 exports.findMultiEntryMatches = findMultiEntryMatches;
+exports.assignCurrentNumber = assignCurrentNumber;
 exports.generateKeyForStore = generateKeyForStore;
 exports.possiblyUpdateKeyGenerator = possiblyUpdateKeyGenerator;
 

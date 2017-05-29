@@ -525,6 +525,10 @@ they were actually changes since a more recent version on `master`.
     (remove memory database or remove/empty database file if no prior versions)
 - Fix: Ensure escaping of unmatched surrogates occurs in all SQLite statements
     as needed by Chrome (but not Node) (noted in failed dropping of tables)
+- Fix: Revert current number if operation fails (even if not aborting)
+- Fix: Avoid reporting abort errors on duplicates of same request in
+    transaction queue (ensures subsequent unsetting of cursor request done
+    flag does not return additional error results in an abort error)
 - Repo files: Rename test folders for ease in distinguishing
 - Optimize: Only retrieve required SQLite columns
 - Optimize: Have `IDBObjectStore` and `IDBIndex`'s `get` and
