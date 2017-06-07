@@ -1,6 +1,14 @@
 # IndexedDBShim changes
 
-## Version 3.0.0 (Unreleased)
+## Version 3.0.1
+
+- Update in case lagging `npm shrinkwrap` version causing any issues
+- Docs (README): Update version number and remove completed to-do
+- Testing: Update copies of Mocha/Chai/Sinon (for rawgit.com)
+- Testing (Grunt): Comment out cumbersome minified version updater
+- Testing (W3C): Revert from apparently problematic `cheerio` RC
+
+## Version 3.0.0
 
 Though we have tried to keep this accurate, some changes listed below might
 have been mistakenly ascribed to changes since the previous release whereas
