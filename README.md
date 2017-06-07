@@ -362,10 +362,7 @@ browser, particularly if one changes the defaults.
     realize the string `":memory:"` will, if unescaped, have a special
     meaning with `node-sqlite3`. You can make the escaping more lax,
     e.g., if your file system is case-sensitive, or you could make it more
-    stringent (e.g., escaping other case-sensitive Unicode characters--a
-    PR would incidentally be welcome, as well as one to optionally support
-    `node-sqlite3`'s interpretation of the empty string and `":memory:"` types
-    for creating temporary databases).
+    stringent.
 - __unescapeDatabaseName__ - Not used internally; usable as a convenience method for
     unescaping strings formatted per our default escaping conventions
 - __databaseCharacterEscapeList__ - When this property and
