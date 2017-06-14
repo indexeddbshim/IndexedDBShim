@@ -2,7 +2,7 @@
 
 ***Important note to those upgrading from version 2: Besides some
 backward-breaking (though standard-compliant) behavioral fixes (see
-[CHANGES](CHANGES.MD)), there are changes coming in version 3 which will
+[CHANGES](CHANGES.md)), there are changes coming in version 3 which will
 also unfortunately cause data stored under version 2 to break. We are not
 able to provide you with an automated upgrade path, so you will need to
 either stick with version 2 or migrate users' data yourself to the new
