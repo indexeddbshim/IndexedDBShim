@@ -160,9 +160,10 @@ IDBObjectStore.__createObjectStore = function (db, store) {
 
     const storeHandles = transaction.__storeHandles;
     if (!storeHandles[storeName] ||
+        // These latter conditions are to allow store
+        //   recreation to create new clone object
         storeHandles[storeName].__pendingDelete ||
-        storeHandles[storeName].__deleted) { // The latter conditions are to allow store
-                                             //   recreation to create new clone object
+        storeHandles[storeName].__deleted) {
         storeHandles[storeName] = IDBObjectStore.__clone(store, transaction);
     }
 

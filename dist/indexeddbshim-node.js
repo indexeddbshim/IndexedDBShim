@@ -1371,6 +1371,7 @@ function Typeson (options) {
             promisesDataRoot = [];
         // Clone the object deeply while at the same time replacing any special types or cyclic reference:
         var cyclic = opts && ('cyclic' in opts) ? opts.cyclic : true;
+        var encapsulateObserver = opts.encapsulateObserver;
         var ret = _encapsulate('', obj, cyclic, stateObj || {}, promisesDataRoot);
         function finish (ret) {
             // Add $types to result only if we ever bumped into a special type (or special case where object has own `$types`)
@@ -1398,7 +1399,9 @@ function Typeson (options) {
                         var stateObj = prData[3];
                         var parentObj = prData[4];
                         var key = prData[5];
-                        var encaps = _encapsulate(keyPath, promResult, cyclic, stateObj, newPromisesData);
+                        var detectedType = prData[6];
+
+                        var encaps = _encapsulate(keyPath, promResult, cyclic, stateObj, newPromisesData, true, detectedType);
                         var isTypesonPromise = hasConstructorOf(encaps, TypesonPromise);
                         if (keyPath && isTypesonPromise) { // Handle case where an embedded custom type itself returns a `Typeson.Promise`
                             return encaps.p.then(function (encaps2) {
@@ -1433,14 +1436,41 @@ function Typeson (options) {
                         : Promise.resolve(finish(ret))
                     ));
 
-        function _encapsulate (keypath, value, cyclic, stateObj, promisesData) {
+        function _encapsulate (keypath, value, cyclic, stateObj, promisesData, resolvingTypesonPromise, detectedType) {
+            var ret, observerData = {};
+            var runObserver = encapsulateObserver ? function (obj) {
+                if (!encapsulateObserver) {
+                    return;
+                }
+                var type = detectedType || stateObj.type;
+                encapsulateObserver(Object.assign(obj || observerData, {
+                    keypath: keypath,
+                    value: value,
+                    cyclic: cyclic,
+                    stateObj: stateObj,
+                    promisesData: promisesData,
+                    resolvingTypesonPromise: resolvingTypesonPromise,
+                    awaitingTypesonPromise: hasConstructorOf(value, TypesonPromise)
+                }, type !== undefined ? {type: type} : {}));
+            } : null;
             var $typeof = typeof value;
-            if ($typeof in {string: 1, boolean: 1, number: 1, undefined: 1 })
-                return value === undefined || ($typeof === 'number' &&
-                    (isNaN(value) || value === -Infinity || value === Infinity)) ?
-                        replace(keypath, value, stateObj, promisesData) :
-                        value;
-            if (value === null) return value;
+            if ($typeof in {string: 1, boolean: 1, number: 1, undefined: 1 }) {
+                if (value === undefined || ($typeof === 'number' &&
+                    (isNaN(value) || value === -Infinity || value === Infinity))) {
+                    ret = replace(keypath, value, stateObj, promisesData, false, resolvingTypesonPromise);
+                    if (ret !== value) {
+                        observerData = {replaced: ret};
+                    }
+                } else {
+                    ret = value;
+                }
+                if (runObserver) runObserver();
+                return ret;
+            }
+            if (value === null) {
+                if (runObserver) runObserver();
+                return value;
+            }
             if (cyclic && !stateObj.iterateIn && !stateObj.iterateUnsetNumeric) {
                 // Options set to detect cyclic references and be able to rewrite them.
                 var refIndex = refObjs.indexOf(value);
@@ -1451,6 +1481,9 @@ function Typeson (options) {
                     }
                 } else {
                     types[keypath] = '#';
+                    if (runObserver) runObserver({
+                        cyclicKeypath: refKeys[refIndex]
+                    });
                     return '#' + refKeys[refIndex];
                 }
             }
@@ -1463,76 +1496,93 @@ function Typeson (options) {
                 // Optimization: if plain object and no plain-object replacers, don't try finding a replacer
                 ? value
                 : replace(keypath, value, stateObj, promisesData, isPlainObj || isArr);
-            if (replaced !== value) return replaced;
             var clone;
-            if (isArr || stateObj.iterateIn === 'array')
-                clone = new Array(value.length);
-            else if (isPlainObj || stateObj.iterateIn === 'object')
-                clone = {};
-            else if (keypath === '' && hasConstructorOf(value, TypesonPromise)) {
-                promisesData.push([keypath, value, cyclic, stateObj]);
-                return value;
+            if (replaced !== value) {
+                ret = replaced;
+                observerData = {replaced: replaced};
+            } else {
+                if (isArr || stateObj.iterateIn === 'array') {
+                    clone = new Array(value.length);
+                    observerData = {clone: clone};
+                } else if (isPlainObj || stateObj.iterateIn === 'object') {
+                    clone = {};
+                    observerData = {clone: clone};
+                } else if (keypath === '' && hasConstructorOf(value, TypesonPromise)) {
+                    promisesData.push([keypath, value, cyclic, stateObj, undefined, undefined, stateObj.type]);
+                    ret = value;
+                } else {
+                    ret = value; // Only clone vanilla objects and arrays
+                }
             }
-            else return value; // Only clone vanilla objects and arrays
+            if (runObserver) runObserver();
+            if (!clone) {
+                return ret;
+            }
 
             // Iterate object or array
             if (stateObj.iterateIn) {
                 for (var key in value) {
                     var ownKeysObj = {ownKeys: value.hasOwnProperty(key)};
-                    var kp = keypath + (keypath ? '.' : '') + key;
-                    var val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData);
+                    var kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
+                    var val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
                     if (hasConstructorOf(val, TypesonPromise)) {
-                        promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, key]);
+                        promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, key, ownKeysObj.type]);
                     } else if (val !== undefined) clone[key] = val;
                 }
+                if (runObserver) runObserver({endIterateIn: true, end: true});
             } else { // Note: Non-indexes on arrays won't survive stringify so somewhat wasteful for arrays, but so too is iterating all numeric indexes on sparse arrays when not wanted or filtering own keys for positive integers
                 keys(value).forEach(function (key) {
-                    var kp = keypath + (keypath ? '.' : '') + key;
-                    var val = _encapsulate(kp, value[key], !!cyclic, {ownKeys: true}, promisesData);
+                    var kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
+                    var ownKeysObj = {ownKeys: true};
+                    var val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
                     if (hasConstructorOf(val, TypesonPromise)) {
-                        promisesData.push([kp, val, !!cyclic, {ownKeys: true}, clone, key]);
+                        promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, key, ownKeysObj.type]);
                     } else if (val !== undefined) clone[key] = val;
                 });
+                if (runObserver) runObserver({endIterateOwn: true, end: true});
             }
             // Iterate array for non-own numeric properties (we can't replace the prior loop though as it iterates non-integer keys)
             if (stateObj.iterateUnsetNumeric) {
                 for (var i = 0, vl = value.length; i < vl; i++) {
                     if (!(i in value)) {
-                        var kp = keypath + (keypath ? '.' : '') + i;
-                        var val = _encapsulate(kp, undefined, !!cyclic, {ownKeys: false}, promisesData);
+                        var kp = keypath + (keypath ? '.' : '') + i; // No need to escape numeric
+                        var ownKeysObj = {ownKeys: false};
+                        var val = _encapsulate(kp, undefined, !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
                         if (hasConstructorOf(val, TypesonPromise)) {
-                            promisesData.push([kp, val, !!cyclic, {ownKeys: false}, clone, i]);
+                            promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, i, ownKeysObj.type]);
                         } else if (val !== undefined) clone[i] = val;
                     }
                 }
+                if (runObserver) runObserver({endIterateUnsetNumeric: true, end: true});
             }
             return clone;
         }
 
-        function replace (key, value, stateObj, promisesData, plainObject) {
+        function replace (keypath, value, stateObj, promisesData, plainObject, resolvingTypesonPromise) {
             // Encapsulate registered types
             var replacers = plainObject ? plainObjectReplacers : nonplainObjectReplacers;
             var i = replacers.length;
             while (i--) {
-                if (replacers[i].test(value, stateObj)) {
-                    var type = replacers[i].type;
+                var replacer = replacers[i];
+                if (replacer.test(value, stateObj)) {
+                    var type = replacer.type;
                     if (revivers[type]) {
                         // Record the type only if a corresponding reviver exists.
                         // This is to support specs where only replacement is done.
                         // For example ensuring deep cloning of the object, or
                         // replacing a type to its equivalent without the need to revive it.
-                        var existing = types[key];
+                        var existing = types[keypath];
                         // type can comprise an array of types (see test shouldSupportIntermediateTypes)
-                        types[key] = existing ? [type].concat(existing) : type;
+                        types[keypath] = existing ? [type].concat(existing) : type;
                     }
-                    // Now, also traverse the result in case it contains it own types to replace
-                    stateObj = Object.assign(stateObj, {replaced: true});
-                    if ((sync || !replacers[i].replaceAsync) && !replacers[i].replace) {
-                        return _encapsulate(key, value, cyclic && 'readonly', stateObj, promisesData);
+                    // Now, also traverse the result in case it contains its own types to replace
+                    stateObj = Object.assign(stateObj, {replaced: true, type: type});
+                    if ((sync || !replacer.replaceAsync) && !replacer.replace) {
+                        return _encapsulate(keypath, value, cyclic && 'readonly', stateObj, promisesData, resolvingTypesonPromise, type);
                     }
 
-                    var replaceMethod = sync || !replacers[i].replaceAsync ? 'replace' : 'replaceAsync';
-                    return _encapsulate(key, replacers[i][replaceMethod](value, stateObj), cyclic && 'readonly', stateObj, promisesData);
+                    var replaceMethod = sync || !replacer.replaceAsync ? 'replace' : 'replaceAsync';
+                    return _encapsulate(keypath, replacer[replaceMethod](value, stateObj), cyclic && 'readonly', stateObj, promisesData, resolvingTypesonPromise, type);
                 }
             }
             return value;
@@ -1589,7 +1639,7 @@ function Typeson (options) {
                 var clone = isArray(value) ? new Array(value.length) : {};
                 // Iterate object or array
                 keys(value).forEach(function (key) {
-                    var val = _revive(keypath + (keypath ? '.' : '') + key, value[key], target || clone, opts, clone, key);
+                    var val = _revive(keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key), value[key], target || clone, opts, clone, key);
                     if (hasConstructorOf(val, Undefined)) clone[key] = undefined;
                     else if (val !== undefined) clone[key] = val;
                 });
@@ -1664,7 +1714,7 @@ function Typeson (options) {
                         // Support registering just a class without replacer/reviver
                         var Class = spec;
                         spec = {
-                            test: function (x) { return x.constructor === Class; },
+                            test: function (x) { return x && x.constructor === Class; },
                             replace: function (x) { return assign({}, x); },
                             revive: function (x) { return assign(Object.create(Class.prototype), x); }
                         };
@@ -1712,15 +1762,25 @@ function assign(t,s) {
     return t;
 }
 
+/** escapeKeyPathComponent() utility */
+function escapeKeyPathComponent (keyPathComponent) {
+    return keyPathComponent.replace(/~/g, '~0').replace(/\./g, '~1');
+}
+
+/** unescapeKeyPathComponent() utility */
+function unescapeKeyPathComponent (keyPathComponent) {
+    return keyPathComponent.replace(/~1/g, '.').replace(/~0/g, '~');
+}
+
 /** getByKeyPath() utility */
 function getByKeyPath (obj, keyPath) {
     if (keyPath === '') return obj;
     var period = keyPath.indexOf('.');
-    if (period !== -1) {
-        var innerObj = obj[keyPath.substr(0, period)];
+    if (period > -1) {
+        var innerObj = obj[unescapeKeyPathComponent(keyPath.substr(0, period))];
         return innerObj === undefined ? undefined : getByKeyPath(innerObj, keyPath.substr(period + 1));
     }
-    return obj[keyPath];
+    return obj[unescapeKeyPathComponent(keyPath)];
 }
 
 function Undefined () {}
@@ -1774,6 +1834,10 @@ Typeson.isObject = isObject;
 Typeson.isPlainObject = isPlainObject;
 Typeson.isUserObject = isUserObject;
 
+Typeson.escapeKeyPathComponent = escapeKeyPathComponent;
+Typeson.unescapeKeyPathComponent = unescapeKeyPathComponent;
+Typeson.getByKeyPath = getByKeyPath;
+
 module.exports = Typeson;
 
 },{}],27:[function(require,module,exports){
@@ -1792,9 +1856,11 @@ const CFG = {};
 'DEBUG', // Effectively defaults to false (ignored unless `true`)
 
 'cacheDatabaseInstances', // Boolean (effectively defaults to true) on whether to cache WebSQL `openDatabase` instances
-'autoName', // Boolean on whether to auto-name databases (based on an auto-increment) when
+
+// Boolean on whether to auto-name databases (based on an auto-increment) when
 //   the empty string is supplied; useful with `memoryDatabase`; defaults to `false`
 //   which means the empty string will be used as the (valid) database name
+'autoName',
 
 // Determines whether the slow-performing `Object.setPrototypeOf` calls required
 //    for full WebIDL compliance will be used. Probably only needed for testing
@@ -1827,9 +1893,10 @@ const CFG = {};
 //  `openDatabase` method (if any) for WebSQL. (The browser
 //  throws if attempting to call `openDatabase` without the window
 //  so this is why the config doesn't just allow the function.)
-'win', // Defaults to `window` or `self` in browser builds or
-// a singleton object with the `openDatabase` method set to
-// the "websql" package in Node.
+// Defaults to `window` or `self` in browser builds or
+//  a singleton object with the `openDatabase` method set to
+//  the "websql" package in Node.
+'win',
 
 // For internal `openDatabase` calls made by `IDBFactory` methods;
 //  per the WebSQL spec, "User agents are expected to use the display name
@@ -1857,17 +1924,21 @@ const CFG = {};
 
 // Overcoming limitations with node-sqlite3/storing database name on file systems
 // https://en.wikipedia.org/wiki/Filename#Reserved_characters_and_words
-'escapeDatabaseName', // Defaults to prefixing database with `D_`, escaping
+// Defaults to prefixing database with `D_`, escaping
 //   `databaseCharacterEscapeList`, escaping NUL, and
 //   escaping upper case letters, as well as enforcing
 //   `databaseNameLengthLimit`
-'unescapeDatabaseName', // Not used internally; usable as a convenience method
-'databaseCharacterEscapeList', // Defaults to global regex representing the following
-// (characters nevertheless commonly reserved in modern, Unicode-supporting
-// systems): 0x00-0x1F 0x7F " * / : < > ? \ |
-'databaseNameLengthLimit', // Defaults to 254 (shortest typical modern file length limit)
-'escapeNFDForDatabaseNames', // Boolean defaulting to true on whether to escape NFD-escaping
-// characters to avoid clashes on MacOS which performs NFD on files
+'escapeDatabaseName', 'unescapeDatabaseName', // Not used internally; usable as a convenience method
+
+// Defaults to global regex representing the following
+//   (characters nevertheless commonly reserved in modern, Unicode-supporting
+//   systems): 0x00-0x1F 0x7F " * / : < > ? \ |
+'databaseCharacterEscapeList', 'databaseNameLengthLimit', // Defaults to 254 (shortest typical modern file length limit)
+
+// Boolean defaulting to true on whether to escape NFD-escaping
+//   characters to avoid clashes on MacOS which performs NFD on files
+'escapeNFDForDatabaseNames',
+
 // Boolean on whether to add the `.sqlite` extension to file names;
 //   defaults to `true`
 'addSQLiteExtension', ['memoryDatabase', val => {
@@ -3700,7 +3771,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                 systx.executeSql('ROLLBACK', [], cb, cb);
                             } catch (er) {
                                 // Browser may fail with expired transaction above so
-                                // no choice but to manually revert
+                                //     no choice but to manually revert
                                 sysdb.transaction(function (systx) {
                                     function reportError(msg) {
                                         throw new Error('Unable to roll back upgrade transaction!' + (msg || ''));
@@ -5182,9 +5253,10 @@ IDBObjectStore.__createObjectStore = function (db, store) {
     const transaction = db.__versionTransaction;
 
     const storeHandles = transaction.__storeHandles;
-    if (!storeHandles[storeName] || storeHandles[storeName].__pendingDelete || storeHandles[storeName].__deleted) {
-        // The latter conditions are to allow store
-        //   recreation to create new clone object
+    if (!storeHandles[storeName] ||
+    // These latter conditions are to allow store
+    //   recreation to create new clone object
+    storeHandles[storeName].__pendingDelete || storeHandles[storeName].__deleted) {
         storeHandles[storeName] = IDBObjectStore.__clone(store, transaction);
     }
 
@@ -6440,9 +6512,10 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
         throw (0, _DOMException.createDOMException)('NotFoundError', objectStoreName + ' does not exist in ' + me.db.name);
     }
 
-    if (!me.__storeHandles[objectStoreName] || me.__storeHandles[objectStoreName].__pendingDelete || me.__storeHandles[objectStoreName].__deleted) {
-        // The latter conditions are to allow store
-        //   recreation to create new clone object
+    if (!me.__storeHandles[objectStoreName] ||
+    // These latter conditions are to allow store
+    //   recreation to create new clone object
+    me.__storeHandles[objectStoreName].__pendingDelete || me.__storeHandles[objectStoreName].__deleted) {
         me.__storeHandles[objectStoreName] = _IDBObjectStore2.default.__clone(store, me);
     }
     return me.__storeHandles[objectStoreName];
@@ -7566,8 +7639,9 @@ function encode(obj, cb) {
         _typeson2.default.hasConstructorOf(err, _DOMException.ShimDOMException)) {
             throw (0, _DOMException.createDOMException)('DataCloneError', 'The object cannot be cloned.');
         }
-        throw err; // We should rethrow non-cloning exceptions like from
+        // We should rethrow non-cloning exceptions like from
         //  throwing getters (as in the W3C test, key-conversion-exceptions.htm)
+        throw err;
     }
     if (cb) cb(ret);
     return ret;

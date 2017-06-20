@@ -103,7 +103,8 @@ To run the Node tests, run the following:
     There are some older and less complete W3C tests that can be run
     with `npm run w3c-old`, but the goal is to remove these once
     the new ones are configured properly and working in the browser
-    as do the old tests.
+    as do the old tests. The W3C Python browser server also ought to be
+    running due to requirements with the URL having permissions.
 
 If you need to rebuild SQLite, you can run `npm install` inside of the
 `node_modules/sqlite3` directory.

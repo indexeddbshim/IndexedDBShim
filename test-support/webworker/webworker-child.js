@@ -51,12 +51,18 @@ const workerOptions = {
     credentials: process.argv[5] // "omit" (if type=module), "include", "same-origin"
 };
 const workerConfig = {
-    node: process.argv[6] === 'true', // Whether to add basic Node globals and require capability to worker
-    relativePathType: process.argv[7], // "file", "url" - determines Worker `src` argument interpretation; defaults to "url"
-                                        //       relative paths will be relative to `basePath`; absolute paths will be relative to `rootPath`
-    basePath: process.argv[8] === 'false' ? false : process.argv[8], // The base path for pathType="url" defaults to `localhost`; the base path for pathType="file"; defaults to the current working directory; if `false`, will throw upon relative paths
+    // Whether to add basic Node globals and require capability to worker
+    node: process.argv[6] === 'true',
+
+    // "file", "url" - determines Worker `src` argument interpretation; defaults to "url"
+    //       relative paths will be relative to `basePath`; absolute paths will be relative to `rootPath`
+    relativePathType: process.argv[7],
+
+    // The base path for pathType="url" defaults to `localhost`; the base path for pathType="file"; defaults to the current working directory; if `false`, will throw upon relative paths
+    basePath: process.argv[8] === 'false' ? false : process.argv[8],
     rootPath: process.argv[9],
-    origin: process.argv[10] // Used for the `Origin` header (may be `null`); if `*` will cause cross-origin restrictions to be ignored
+    // Used for the `Origin` header (may be `null`); if `*` will cause cross-origin restrictions to be ignored
+    origin: process.argv[10]
 };
 
 // Catch exceptions
@@ -251,8 +257,8 @@ workerCtx.importScripts = function () {
     for (let i = 0; i < arguments.length; i++) {
         // Todo: Handle pathType="url" (defaults to `localhost`) and if basePath is `false` with it
         const currentPath = (/^[\\/]/).test(arguments[i]) // Root
-                    ? workerConfig.pathType === 'file' && workerConfig.rootPath === false ? process.cwd() : workerConfig.rootPath
-                    : workerConfig.pathType === 'file' && workerConfig.basePath === false ? process.cwd() : workerConfig.basePath;
+            ? workerConfig.pathType === 'file' && workerConfig.rootPath === false ? process.cwd() : workerConfig.rootPath
+            : workerConfig.pathType === 'file' && workerConfig.basePath === false ? process.cwd() : workerConfig.basePath;
         /*
         console.log(path.join(
             currentPath,

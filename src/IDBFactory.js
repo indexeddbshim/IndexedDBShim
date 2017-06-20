@@ -327,8 +327,9 @@ IDBFactory.prototype.open = function (name /* , version */) {
                         if (err) {
                             try {
                                 systx.executeSql('ROLLBACK', [], cb, cb);
-                            } catch (er) { // Browser may fail with expired transaction above so
-                                            // no choice but to manually revert
+                            } catch (er) {
+                                // Browser may fail with expired transaction above so
+                                //     no choice but to manually revert
                                 sysdb.transaction(function (systx) {
                                     function reportError (msg) {
                                         throw new Error('Unable to roll back upgrade transaction!' + (msg || ''));

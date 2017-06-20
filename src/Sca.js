@@ -25,8 +25,9 @@ function encode (obj, cb) {
             Typeson.hasConstructorOf(err, ShimDOMException)) {
             throw createDOMException('DataCloneError', 'The object cannot be cloned.');
         }
-        throw err; // We should rethrow non-cloning exceptions like from
-                   //  throwing getters (as in the W3C test, key-conversion-exceptions.htm)
+        // We should rethrow non-cloning exceptions like from
+        //  throwing getters (as in the W3C test, key-conversion-exceptions.htm)
+        throw err;
     }
     if (cb) cb(ret);
     return ret;

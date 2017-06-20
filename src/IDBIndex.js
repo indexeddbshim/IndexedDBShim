@@ -504,8 +504,7 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                                 // }, function (tx, err) {
                                 //    reject(err);
                                 // });
-                            }
-                        ));
+                            }));
                         indexCreations.push(
                             new SyncPromise(function (resolve, reject) {
                                 const escapedIndexToRecreate = util.sqlQuote('sk_' + escapedStoreNameSQL.slice(1, -1));

@@ -18,12 +18,12 @@ function escapeNameForSQLiteIdentifier (arg) {
     return '_' + // Prevent empty string
         escapeUnmatchedSurrogates(
             arg.replace(/\^/g, '^^') // Escape our escape
-            // http://www.sqlite.org/src/tktview?name=57c971fc74
-            .replace(/\0/g, '^0')
-            // We need to avoid identifiers being treated as duplicates based on SQLite's ASCII-only case-insensitive table and column names
-            // (For SQL in general, however, see http://stackoverflow.com/a/17215009/271577
-            // See also https://www.sqlite.org/faq.html#q18 re: Unicode (non-ASCII) case-insensitive not working
-            .replace(/([A-Z])/g, '^$1')
+                // http://www.sqlite.org/src/tktview?name=57c971fc74
+                .replace(/\0/g, '^0')
+                // We need to avoid identifiers being treated as duplicates based on SQLite's ASCII-only case-insensitive table and column names
+                // (For SQL in general, however, see http://stackoverflow.com/a/17215009/271577
+                // See also https://www.sqlite.org/faq.html#q18 re: Unicode (non-ASCII) case-insensitive not working
+                .replace(/([A-Z])/g, '^$1')
         );
 }
 
@@ -98,13 +98,12 @@ function unescapeDatabaseNameForSQLAndFiles (db) {
         return CFG.unescapeDatabaseName(unescapeSQLiteResponse(db));
     }
 
-    return unescapeUnmatchedSurrogates(
-            db.slice(2) // D_
-                // CFG.databaseCharacterEscapeList
-                .replace(/(\^+)1([0-9a-f]{2})/g, (_, esc, hex) => esc.length % 2 ? String.fromCharCode(parseInt(hex, 16)) : _)
-                // CFG.escapeNFDForDatabaseNames
-                .replace(/(\^+)4([0-9a-f]{6})/g, (_, esc, hex) => esc.length % 2 ? String.fromCodePoint(parseInt(hex, 16)) : _)
-        )
+    return unescapeUnmatchedSurrogates(db.slice(2) // D_
+        // CFG.databaseCharacterEscapeList
+        .replace(/(\^+)1([0-9a-f]{2})/g, (_, esc, hex) => esc.length % 2 ? String.fromCharCode(parseInt(hex, 16)) : _)
+        // CFG.escapeNFDForDatabaseNames
+        .replace(/(\^+)4([0-9a-f]{6})/g, (_, esc, hex) => esc.length % 2 ? String.fromCodePoint(parseInt(hex, 16)) : _)
+    )
         // escapeNameForSQLiteIdentifier (including unescapeUnmatchedSurrogates() above)
         .replace(/(\^+)([A-Z])/g, (_, esc, upperCase) => esc.length % 2 ? upperCase : _)
         .replace(/(\^+)0/g, (_, esc) => esc.length % 2 ? '\0' : _)

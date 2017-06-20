@@ -6,9 +6,11 @@ const CFG = {};
     'DEBUG', // Effectively defaults to false (ignored unless `true`)
 
     'cacheDatabaseInstances', // Boolean (effectively defaults to true) on whether to cache WebSQL `openDatabase` instances
-    'autoName', // Boolean on whether to auto-name databases (based on an auto-increment) when
-                //   the empty string is supplied; useful with `memoryDatabase`; defaults to `false`
-                //   which means the empty string will be used as the (valid) database name
+
+    // Boolean on whether to auto-name databases (based on an auto-increment) when
+    //   the empty string is supplied; useful with `memoryDatabase`; defaults to `false`
+    //   which means the empty string will be used as the (valid) database name
+    'autoName',
 
     // Determines whether the slow-performing `Object.setPrototypeOf` calls required
     //    for full WebIDL compliance will be used. Probably only needed for testing
@@ -41,9 +43,10 @@ const CFG = {};
     //  `openDatabase` method (if any) for WebSQL. (The browser
     //  throws if attempting to call `openDatabase` without the window
     //  so this is why the config doesn't just allow the function.)
-    'win', // Defaults to `window` or `self` in browser builds or
-           // a singleton object with the `openDatabase` method set to
-           // the "websql" package in Node.
+    // Defaults to `window` or `self` in browser builds or
+    //  a singleton object with the `openDatabase` method set to
+    //  the "websql" package in Node.
+    'win',
 
     // For internal `openDatabase` calls made by `IDBFactory` methods;
     //  per the WebSQL spec, "User agents are expected to use the display name
@@ -71,17 +74,23 @@ const CFG = {};
 
     // Overcoming limitations with node-sqlite3/storing database name on file systems
     // https://en.wikipedia.org/wiki/Filename#Reserved_characters_and_words
-    'escapeDatabaseName', // Defaults to prefixing database with `D_`, escaping
-                          //   `databaseCharacterEscapeList`, escaping NUL, and
-                          //   escaping upper case letters, as well as enforcing
-                          //   `databaseNameLengthLimit`
+    // Defaults to prefixing database with `D_`, escaping
+    //   `databaseCharacterEscapeList`, escaping NUL, and
+    //   escaping upper case letters, as well as enforcing
+    //   `databaseNameLengthLimit`
+    'escapeDatabaseName',
     'unescapeDatabaseName', // Not used internally; usable as a convenience method
-    'databaseCharacterEscapeList', // Defaults to global regex representing the following
-        // (characters nevertheless commonly reserved in modern, Unicode-supporting
-        // systems): 0x00-0x1F 0x7F " * / : < > ? \ |
+
+    // Defaults to global regex representing the following
+    //   (characters nevertheless commonly reserved in modern, Unicode-supporting
+    //   systems): 0x00-0x1F 0x7F " * / : < > ? \ |
+    'databaseCharacterEscapeList',
     'databaseNameLengthLimit', // Defaults to 254 (shortest typical modern file length limit)
-    'escapeNFDForDatabaseNames', // Boolean defaulting to true on whether to escape NFD-escaping
-                                // characters to avoid clashes on MacOS which performs NFD on files
+
+    // Boolean defaulting to true on whether to escape NFD-escaping
+    //   characters to avoid clashes on MacOS which performs NFD on files
+    'escapeNFDForDatabaseNames',
+
     // Boolean on whether to add the `.sqlite` extension to file names;
     //   defaults to `true`
     'addSQLiteExtension',

@@ -362,9 +362,10 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
     }
 
     if (!me.__storeHandles[objectStoreName] ||
+        // These latter conditions are to allow store
+        //   recreation to create new clone object
         me.__storeHandles[objectStoreName].__pendingDelete ||
-        me.__storeHandles[objectStoreName].__deleted) { // The latter conditions are to allow store
-                                                         //   recreation to create new clone object
+        me.__storeHandles[objectStoreName].__deleted) {
         me.__storeHandles[objectStoreName] = IDBObjectStore.__clone(store, me);
     }
     return me.__storeHandles[objectStoreName];

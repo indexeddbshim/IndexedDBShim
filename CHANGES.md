@@ -1,5 +1,22 @@
 # IndexedDBShim changes
 
+## Version 3.0.2
+
+- Fix: Incorporate `typeson` library fix for periods within
+    property names; could create cloning issues
+- Linting: Update per linting software updates (indents)
+    though avoid `no-mulit-spaces` reporting (frequent in tests)
+- Linting: Update and apply ESLint compat plugin linting
+- npm: Update dev deps
+- npm: Avoid shrinkwrap for now, pending
+    <https://github.com/benmosher/eslint-plugin-import/pull/871>
+- Testing (W3C): Update `web-platform-tests`
+- Testing (W3C): Exclude new `large-nesting-cloning.js` file as preventing
+    some other tests from running; also remove `parallel-cursors.uprade.js`
+    from good tests as in timeouts (since it sometimes times out)
+- Docs (Testing): Update note on running W3C Node tests
+- Docs (README): Fixed first hyperlink not working (courtesy @Erwin)
+
 ## Version 3.0.1
 
 - Update in case lagging `npm shrinkwrap` version causing any issues
