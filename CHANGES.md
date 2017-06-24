@@ -1,5 +1,13 @@
 # IndexedDBShim changes
 
+## Version 3.0.3
+
+- Fix: Avoid allowing (open-ended) escaped Unicode escape sequences
+    for key paths (JavaScript handles the escape sequences!).
+- Fix: Avoid double-escaping zero-width joiners/non-joiner in key
+    path check.
+- npm: Update dev deps
+
 ## Version 3.0.2
 
 - Fix: Incorporate `typeson` library fix for periods within

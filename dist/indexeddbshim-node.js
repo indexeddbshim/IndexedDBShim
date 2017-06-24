@@ -8146,14 +8146,6 @@ function defineReadonlyProperties(obj, props) {
     });
 }
 
-const HexDigit = '[0-9a-fA-F]';
-// The commented out line below is technically the grammar, with a SyntaxError
-//   to occur if larger than U+10FFFF, but we will prevent the error by
-//   establishing the limit in regular expressions
-// const HexDigits = HexDigit + HexDigit + '*';
-const HexDigits = '0*(?:' + HexDigit + '{1,5}|10' + HexDigit + '{4})*';
-const UnicodeEscapeSequence = '(?:u' + HexDigit + '{4}|u{' + HexDigits + '})';
-
 function isIdentifier(item) {
     // For load-time and run-time performance, we don't provide the complete regular
     //   expression for identifiers, but these can be passed in, using the expressions
@@ -8162,8 +8154,8 @@ function isIdentifier(item) {
     const UnicodeIDStart = _CFG2.default.UnicodeIDStart || '[$A-Z_a-z]';
     // ID_Continue (includes Other_ID_Continue)
     const UnicodeIDContinue = _CFG2.default.UnicodeIDContinue || '[$0-9A-Z_a-z]';
-    const IdentifierStart = '(?:' + UnicodeIDStart + '|[$_]|\\\\' + UnicodeEscapeSequence + ')';
-    const IdentifierPart = '(?:' + UnicodeIDContinue + '|[$_]|\\\\' + UnicodeEscapeSequence + '|\\u200C|\\u200D)';
+    const IdentifierStart = '(?:' + UnicodeIDStart + '|[$_])';
+    const IdentifierPart = '(?:' + UnicodeIDContinue + '|[$_\u200C\u200D])';
     return new RegExp('^' + IdentifierStart + IdentifierPart + '*$').test(item);
 }
 
