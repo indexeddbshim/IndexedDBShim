@@ -1,4 +1,4 @@
-/* Sinon.JS 2.3.2, 2017-05-26, @license BSD-3 */(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.sinon = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/* Sinon.JS 2.3.6, 2017-06-28, @license BSD-3 */(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.sinon = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
 
 var match = require("./sinon/match");
@@ -806,7 +806,13 @@ var collection = {
     },
 
     resetHistory: function resetHistory() {
-        each(this, "resetHistory");
+        getFakes(this).forEach(function (fake) {
+            var method = fake.resetHistory || fake.reset;
+
+            if (method) {
+                method.call(fake);
+            }
+        });
     },
 
     verifyAndRestore: function verifyAndRestore() {
@@ -913,6 +919,9 @@ exports.green = function (str) {
 }).call(this,require('_process'))
 },{"_process":68}],9:[function(require,module,exports){
 "use strict";
+
+var getPropertyDescriptor = require("./util/core/get-property-descriptor");
+
 var slice = [].slice;
 var useLeftMostCallback = -1;
 var useRightMostCallback = -2;
@@ -926,6 +935,12 @@ function throwsException(fake, error, message) {
     } else {
         fake.exception = error;
     }
+}
+
+function isPropertyConfigurable(obj, propName) {
+    var propertyDescriptor = getPropertyDescriptor(obj, propName);
+
+    return propertyDescriptor ? propertyDescriptor.configurable : true;
 }
 
 module.exports = {
@@ -1095,7 +1110,7 @@ module.exports = {
 
         Object.defineProperty(rootStub.rootObj, rootStub.propName, {
             get: getterFunction,
-            configurable: true
+            configurable: isPropertyConfigurable(rootStub.rootObj, rootStub.propName)
         });
 
         return fake;
@@ -1106,7 +1121,7 @@ module.exports = {
 
         Object.defineProperty(rootStub.rootObj, rootStub.propName, { // eslint-disable-line accessor-pairs
             set: setterFunction,
-            configurable: true
+            configurable: isPropertyConfigurable(rootStub.rootObj, rootStub.propName)
         });
 
         return fake;
@@ -1118,7 +1133,7 @@ module.exports = {
         Object.defineProperty(rootStub.rootObj, rootStub.propName, {
             value: newVal,
             enumerable: true,
-            configurable: true
+            configurable: isPropertyConfigurable(rootStub.rootObj, rootStub.propName)
         });
 
         return fake;
@@ -1141,7 +1156,7 @@ Object.keys(module.exports).forEach(function (method) {
     }
 });
 
-},{}],10:[function(require,module,exports){
+},{"./util/core/get-property-descriptor":32}],10:[function(require,module,exports){
 "use strict";
 
 var deepEqual = require("./util/core/deep-equal").use(match); // eslint-disable-line no-use-before-define
@@ -1933,8 +1948,8 @@ function sandboxStub(object, property/*, value*/) {
     deprecated.printWarning(
       "sandbox.stub(obj, 'meth', val) is deprecated and will be removed from " +
       "the public API in a future version of sinon." +
-      "\n Use sandbox(obj, 'meth').callsFake(fn) instead in order to stub a function." +
-      "\n Use sandbox(obj, 'meth').value(fn) instead in order to stub a non-function value."
+      "\n Use sandbox.stub(obj, 'meth').callsFake(fn) instead in order to stub a function." +
+      "\n Use sandbox.stub(obj, 'meth').value(fn) instead in order to stub a non-function value."
     );
 
     throwOnFalsyObject.apply(null, arguments);
@@ -2270,18 +2285,6 @@ function spy(object, property, types) {
     return wrapMethod(object, property, descriptor);
 }
 
-function matchingFake(fakes, args, strict) {
-    if (!fakes) {
-        return undefined;
-    }
-
-    var matchingFakes = fakes.filter(function (fake) {
-        return fake.matches(args, strict);
-    });
-
-    return matchingFakes.pop();
-}
-
 function incrementCallCount() {
     this.called = true;
     this.callCount += 1;
@@ -2403,13 +2406,20 @@ var spyApi = {
     },
 
     invoke: function invoke(func, thisValue, args) {
-        var matching = matchingFake(this.fakes, args);
+        var matchings = this.matchingFakes(args);
+        var currentCallId = callId++;
         var exception, returnValue;
 
         incrementCallCount.call(this);
         push.call(this.thisValues, thisValue);
         push.call(this.args, args);
-        push.call(this.callIds, callId++);
+        push.call(this.callIds, currentCallId);
+        matchings.forEach(function (matching) {
+            incrementCallCount.call(matching);
+            push.call(matching.thisValues, thisValue);
+            push.call(matching.args, args);
+            push.call(matching.callIds, currentCallId);
+        });
 
         // Make call properties available from within the spied function:
         createCallProperties.call(this);
@@ -2417,11 +2427,7 @@ var spyApi = {
         try {
             this.invoking = true;
 
-            if (matching) {
-                returnValue = matching.invoke(func, thisValue, args);
-            } else {
-                returnValue = (this.func || func).apply(thisValue, args);
-            }
+            returnValue = (this.func || func).apply(thisValue, args);
 
             var thisCall = this.getCall(this.callCount - 1);
             if (thisCall.calledWithNew() && typeof returnValue !== "object") {
@@ -2435,14 +2441,22 @@ var spyApi = {
 
         push.call(this.exceptions, exception);
         push.call(this.returnValues, returnValue);
+        matchings.forEach(function (matching) {
+            push.call(matching.exceptions, exception);
+            push.call(matching.returnValues, returnValue);
+        });
+
         var err = new ErrorConstructor();
-        // 1. Please do not get stack at this point. It's may be so very slow, and not actually used
+        // 1. Please do not get stack at this point. It may be so very slow, and not actually used
         // 2. PhantomJS does not serialize the stack trace until the error has been thrown:
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/Stack
         try {
             throw err;
         } catch (e) {/* empty */}
         push.call(this.errorsWithCallStack, err);
+        matchings.forEach(function (matching) {
+            push.call(matching.errorsWithCallStack, err);
+        });
 
         // Make return value and exception available in the calls:
         createCallProperties.call(this);
@@ -2520,10 +2534,10 @@ var spyApi = {
         var args = slice.call(arguments);
 
         if (this.fakes) {
-            var match = matchingFake(this.fakes, args, true);
+            var matching = this.matchingFakes(args, true).pop();
 
-            if (match) {
-                return match;
+            if (matching) {
+                return matching;
             }
         } else {
             this.fakes = [];
@@ -2555,6 +2569,12 @@ var spyApi = {
         createCallProperties.call(fake);
 
         return fake;
+    },
+
+    matchingFakes: function (args, strict) {
+        return (this.fakes || []).filter(function (fake) {
+            return fake.matches(args, strict);
+        });
     },
 
     matches: function (args, strict) {
@@ -2772,6 +2792,8 @@ var stubEntireObject = require("./stub-entire-object");
 var stubDescriptor = require("./stub-descriptor");
 var throwOnFalsyObject = require("./throw-on-falsy-object");
 
+var slice = Array.prototype.slice;
+
 function stub(object, property, descriptor) {
     throwOnFalsyObject.apply(null, arguments);
 
@@ -2779,7 +2801,7 @@ function stub(object, property, descriptor) {
     var isStubbingEntireObject = typeof property === "undefined" && typeof object === "object";
     var isCreatingNewStub = !object && typeof property === "undefined";
     var isStubbingDescriptor = object && property && Boolean(descriptor);
-    var isStubbingNonFuncProperty = typeof object === "object"
+    var isStubbingNonFuncProperty = (typeof object === "object" || typeof object === "function")
                                     && typeof property !== "undefined"
                                     && (typeof actualDescriptor === "undefined"
                                     || typeof actualDescriptor.value !== "function")
@@ -2846,7 +2868,13 @@ var uuid = 0;
 var proto = {
     create: function create(stubLength) {
         var functionStub = function () {
-            return getCurrentBehavior(functionStub).invoke(this, arguments);
+            var args = slice.call(arguments);
+            var matchings = functionStub.matchingFakes(args);
+
+            var fnStub = matchings.sort(function (a, b) {
+                return a.matchingArguments.length - b.matchingArguments.length;
+            }).pop() || functionStub;
+            return getCurrentBehavior(fnStub).invoke(this, arguments);
         };
 
         functionStub.id = "stub#" + uuid++;
@@ -7573,6 +7601,10 @@ process.off = noop;
 process.removeListener = noop;
 process.removeAllListeners = noop;
 process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
 
 process.binding = function (name) {
     throw new Error('process.binding is not supported');
@@ -11399,6 +11431,7 @@ module.exports = {
 },{"./encoding-indexes.js":71}],73:[function(require,module,exports){
 (function (global){
 'use strict';
+
 /* !
  * type-detect
  * Copyright(c) 2013 jake luer <jake@alogicalparadox.com>
@@ -11421,7 +11454,7 @@ var setIteratorPrototype = setEntriesExists && Object.getPrototypeOf(new Set().e
 var mapIteratorPrototype = mapEntriesExists && Object.getPrototypeOf(new Map().entries());
 var arrayIteratorExists = symbolIteratorExists && typeof Array.prototype[Symbol.iterator] === 'function';
 var arrayIteratorPrototype = arrayIteratorExists && Object.getPrototypeOf([][Symbol.iterator]());
-var stringIteratorExists = symbolIteratorExists && typeof Array.prototype[Symbol.iterator] === 'function';
+var stringIteratorExists = symbolIteratorExists && typeof String.prototype[Symbol.iterator] === 'function';
 var stringIteratorPrototype = stringIteratorExists && Object.getPrototypeOf(''[Symbol.iterator]());
 var toStringLeftSliceLength = 8;
 var toStringRightSliceLength = -1;
@@ -11491,7 +11524,10 @@ module.exports = function typeDetect(obj) {
    * Post:
    *   array literal      x 22,479,650 ops/sec ±0.96% (81 runs sampled)
    */
-  if (Array.isArray(obj)) {
+  if (
+    Array.isArray(obj) &&
+    (symbolToStringTagExists === false || !(Symbol.toStringTag in obj))
+  ) {
     return 'Array';
   }
 

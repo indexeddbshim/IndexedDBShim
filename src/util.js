@@ -249,7 +249,7 @@ function convertToSequenceDOMString (val) {
         // Per <https://heycam.github.io/webidl/#es-DOMString>, converting to a `DOMString` to be via `ToString`: https://tc39.github.io/ecma262/#sec-tostring
         return [...val].map(ToString);
     }
-    return val;
+    return ToString(val);
 }
 
 // Todo: Replace with `String.prototype.padStart` when targeting supporting Node version
@@ -263,5 +263,6 @@ export {escapeSQLiteStatement, unescapeSQLiteResponse,
     sqlLIKEEscape, sqlQuote,
     instanceOf,
     isObj, isDate, isBlob, isRegExp, isFile, isBinary, isIterable,
-    defineReadonlyProperties, isValidKeyPath, enforceRange, convertToDOMString, convertToSequenceDOMString,
+    defineReadonlyProperties, isValidKeyPath, enforceRange,
+    convertToDOMString, convertToSequenceDOMString,
     padStart};

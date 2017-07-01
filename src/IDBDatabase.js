@@ -4,7 +4,6 @@ import * as util from './util';
 import DOMStringList from './DOMStringList';
 import IDBObjectStore from './IDBObjectStore';
 import IDBTransaction from './IDBTransaction';
-import * as Sca from './Sca';
 import CFG from './CFG';
 import {EventTargetFactory} from 'eventtarget';
 
@@ -59,7 +58,7 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
             //  as readonly, so we copy all its properties (except our
             //  custom `currNum` which we don't need) onto a new object
             itemCopy.name = item.name;
-            itemCopy.keyPath = Sca.decode(item.keyPath);
+            itemCopy.keyPath = JSON.parse(item.keyPath);
             ['autoInc', 'indexList'].forEach(function (prop) {
                 itemCopy[prop] = JSON.parse(item[prop]);
             });
@@ -107,16 +106,16 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
         throw createDOMException('ConstraintError', 'Object store "' + storeName + '" already exists in ' + this.name);
     }
 
-    const autoIncrement = createOptions.autoIncrement;
-    if (autoIncrement && (keyPath === '' || Array.isArray(keyPath))) {
+    const autoInc = createOptions.autoIncrement;
+    if (autoInc && (keyPath === '' || Array.isArray(keyPath))) {
         throw createDOMException('InvalidAccessError', 'With autoIncrement set, the keyPath argument must not be an array or empty string.');
     }
 
     /** @name IDBObjectStoreProperties **/
     const storeProperties = {
         name: storeName,
-        keyPath: keyPath,
-        autoInc: autoIncrement,
+        keyPath,
+        autoInc,
         indexList: {},
         idbdb: this
     };
@@ -164,18 +163,21 @@ IDBDatabase.prototype.close = function () {
  * @returns {IDBTransaction}
  */
 IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
+    if (arguments.length === 0) {
+        throw new TypeError('You must supply a valid `storeNames` to `IDBDatabase.transaction`');
+    }
     let mode = arguments[1];
-    storeNames = typeof storeNames === 'string'
-        ? [storeNames]
-        : (util.isIterable(storeNames)
-            ? [ // Creating new array also ensures sequence is passed by value: https://heycam.github.io/webidl/#idl-sequence
-                ...new Set( // to be unique
-                    util.convertToSequenceDOMString(storeNames) // iterables have `ToString` applied (and we convert to array for convenience)
-                )
-            ].sort() // must be sorted
-            : (function () {
-                throw new TypeError('You must supply a valid `storeNames` to `IDBDatabase.transaction`');
-            }()));
+    storeNames = util.isIterable(storeNames)
+        ? [ // Creating new array also ensures sequence is passed by value: https://heycam.github.io/webidl/#idl-sequence
+            ...new Set( // to be unique
+                util.convertToSequenceDOMString(storeNames) // iterables have `ToString` applied (and we convert to array for convenience)
+            )
+        ].sort() // must be sorted
+        : [util.convertToDOMString(storeNames)];
+
+    /* (function () {
+        throw new TypeError('You must supply a valid `storeNames` to `IDBDatabase.transaction`');
+    }())); */
 
     // Since SQLite (at least node-websql and definitely WebSQL) requires
     //   locking of the whole database, to allow simultaneous readwrite

@@ -179,13 +179,12 @@ IDBObjectStore.__createObjectStore = function (db, store) {
         CFG.DEBUG && console.log(sql);
         tx.executeSql(sql, [], function (tx, data) {
             function insertStoreInfo () {
-                Sca.encode(store.keyPath, function (encodedKeyPath) {
-                    tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeSQLiteStatement(storeName), encodedKeyPath, store.autoIncrement, '{}', 1], function () {
-                        delete store.__pendingCreate;
-                        delete store.__deleted;
-                        success(store);
-                    }, error);
-                });
+                const encodedKeyPath = JSON.stringify(store.keyPath);
+                tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeSQLiteStatement(storeName), encodedKeyPath, store.autoIncrement, '{}', 1], function () {
+                    delete store.__pendingCreate;
+                    delete store.__deleted;
+                    success(store);
+                }, error);
             }
             if (!CFG.useSQLiteIndexes) {
                 insertStoreInfo();
@@ -783,7 +782,7 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath /* , optiona
     /** @name IDBIndexProperties **/
     const indexProperties = {
         columnName: indexName,
-        keyPath: keyPath,
+        keyPath,
         optionalParams: {
             unique: !!optionalParameters.unique,
             multiEntry: !!optionalParameters.multiEntry

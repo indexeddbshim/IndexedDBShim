@@ -3134,10 +3134,6 @@ var _IDBTransaction = require('./IDBTransaction');
 
 var _IDBTransaction2 = _interopRequireDefault(_IDBTransaction);
 
-var _Sca = require('./Sca');
-
-var Sca = _interopRequireWildcard(_Sca);
-
 var _CFG = require('./CFG');
 
 var _CFG2 = _interopRequireDefault(_CFG);
@@ -3199,7 +3195,7 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
             //  as readonly, so we copy all its properties (except our
             //  custom `currNum` which we don't need) onto a new object
             itemCopy.name = item.name;
-            itemCopy.keyPath = Sca.decode(item.keyPath);
+            itemCopy.keyPath = JSON.parse(item.keyPath);
             ['autoInc', 'indexList'].forEach(function (prop) {
                 itemCopy[prop] = JSON.parse(item[prop]);
             });
@@ -3247,16 +3243,16 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
         throw (0, _DOMException.createDOMException)('ConstraintError', 'Object store "' + storeName + '" already exists in ' + this.name);
     }
 
-    const autoIncrement = createOptions.autoIncrement;
-    if (autoIncrement && (keyPath === '' || Array.isArray(keyPath))) {
+    const autoInc = createOptions.autoIncrement;
+    if (autoInc && (keyPath === '' || Array.isArray(keyPath))) {
         throw (0, _DOMException.createDOMException)('InvalidAccessError', 'With autoIncrement set, the keyPath argument must not be an array or empty string.');
     }
 
     /** @name IDBObjectStoreProperties **/
     const storeProperties = {
         name: storeName,
-        keyPath: keyPath,
-        autoInc: autoIncrement,
+        keyPath,
+        autoInc,
         indexList: {},
         idbdb: this
     };
@@ -3304,14 +3300,19 @@ IDBDatabase.prototype.close = function () {
  * @returns {IDBTransaction}
  */
 IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
+    if (arguments.length === 0) {
+        throw new TypeError('You must supply a valid `storeNames` to `IDBDatabase.transaction`');
+    }
     let mode = arguments[1];
-    storeNames = typeof storeNames === 'string' ? [storeNames] : util.isIterable(storeNames) ? [// Creating new array also ensures sequence is passed by value: https://heycam.github.io/webidl/#idl-sequence
+    storeNames = util.isIterable(storeNames) ? [// Creating new array also ensures sequence is passed by value: https://heycam.github.io/webidl/#idl-sequence
     ...new Set( // to be unique
     util.convertToSequenceDOMString(storeNames) // iterables have `ToString` applied (and we convert to array for convenience)
     )].sort() // must be sorted
-    : function () {
+    : [util.convertToDOMString(storeNames)];
+
+    /* (function () {
         throw new TypeError('You must supply a valid `storeNames` to `IDBDatabase.transaction`');
-    }();
+    }())); */
 
     // Since SQLite (at least node-websql and definitely WebSQL) requires
     //   locking of the whole database, to allow simultaneous readwrite
@@ -3419,7 +3420,7 @@ Object.defineProperty(IDBDatabase, 'prototype', {
 exports.default = IDBDatabase;
 module.exports = exports['default'];
 
-},{"./CFG":28,"./DOMException":29,"./DOMStringList":30,"./Event":31,"./IDBObjectStore":37,"./IDBTransaction":39,"./Sca":42,"./util":46,"eventtarget":2}],34:[function(require,module,exports){
+},{"./CFG":28,"./DOMException":29,"./DOMStringList":30,"./Event":31,"./IDBObjectStore":37,"./IDBTransaction":39,"./util":46,"eventtarget":2}],34:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5272,13 +5273,12 @@ IDBObjectStore.__createObjectStore = function (db, store) {
         _CFG2.default.DEBUG && console.log(sql);
         tx.executeSql(sql, [], function (tx, data) {
             function insertStoreInfo() {
-                Sca.encode(store.keyPath, function (encodedKeyPath) {
-                    tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeSQLiteStatement(storeName), encodedKeyPath, store.autoIncrement, '{}', 1], function () {
-                        delete store.__pendingCreate;
-                        delete store.__deleted;
-                        success(store);
-                    }, error);
-                });
+                const encodedKeyPath = JSON.stringify(store.keyPath);
+                tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeSQLiteStatement(storeName), encodedKeyPath, store.autoIncrement, '{}', 1], function () {
+                    delete store.__pendingCreate;
+                    delete store.__deleted;
+                    success(store);
+                }, error);
             }
             if (!_CFG2.default.useSQLiteIndexes) {
                 insertStoreInfo();
@@ -5861,7 +5861,7 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath /* , optiona
     /** @name IDBIndexProperties **/
     const indexProperties = {
         columnName: indexName,
-        keyPath: keyPath,
+        keyPath,
         optionalParams: {
             unique: !!optionalParameters.unique,
             multiEntry: !!optionalParameters.multiEntry
@@ -8213,7 +8213,7 @@ function convertToSequenceDOMString(val) {
         // Per <https://heycam.github.io/webidl/#es-DOMString>, converting to a `DOMString` to be via `ToString`: https://tc39.github.io/ecma262/#sec-tostring
         return [...val].map(ToString);
     }
-    return val;
+    return ToString(val);
 }
 
 // Todo: Replace with `String.prototype.padStart` when targeting supporting Node version

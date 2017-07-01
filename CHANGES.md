@@ -1,5 +1,21 @@
 # IndexedDBShim changes
 
+## Version 3.0.4
+
+- Fix (Edge case): For `IDBDatabase.transaction()` (`storeNames` arg),
+    `IDBDatabase.createObjectStore` (`keyPath` parameter), and
+    `IDBObjectStore.createIndex` (`keyPath` argument), ensure
+    conversion to DOMString (`ToString`) is being called per WebIDL
+    (e.g., passing `true` would produce a valid `"true"`) while still
+    throwing upon missing argument
+- Optimize: We didn't actually need structured cloning for keypaths as
+    keypaths are valid JSON (but we did need the edge cases handled
+    per the accompanying fix and the Typeson encoded as of 3.0.0 should
+    remain compatible with this reversion to JSON)
+- Refactoring (minor): Use ES6 object property name shorthand
+- npm: Update dev deps
+- Demo: Update copies of test files
+
 ## Version 3.0.3
 
 - Fix: Avoid allowing (open-ended) escaped Unicode escape sequences
@@ -61,7 +77,10 @@ they were actually changes since a more recent version on `master`.
     with casing of "D_" though SQLite insensitive with ASCII while file
     systems may be sensitive; more future-compatible)
 - Breaking change: Avoid encoding `keyPath` internally as JSON--needs
-    Sca encoding; breaks all tables but important to fix!
+    Sca encoding; ~breaks all tables but important to fix!~
+    _Shouldn't have broken tables as supplied keypaths should only have
+    produced Typeson that is JSON; other breaking db changes were needed
+    in this version, however_
 - Breaking change/Fix: Remove `IDBTransaction` mode constants and tests since
     now being removed from IndexedDB
 - Breaking change: Remove old `polyfill.js` code for incrementally
