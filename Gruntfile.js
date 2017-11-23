@@ -6,6 +6,15 @@ const babelBrowserOptions = {
     plugins: ['add-module-exports'],
     presets: ['es2015']
 };
+const babelES6BrowserOptions = Object.assign({}, babelBrowserOptions, {
+    presets: [
+        ['env', {
+            targets: {
+                chrome: '62'
+            }
+        }]
+    ]
+});
 
 const babelNodeOptions = Object.assign({}, babelBrowserOptions, {
     presets: [
@@ -27,6 +36,22 @@ module.exports = function (grunt) {
     grunt.initConfig({
         pkg: pkg,
         browserify: {
+            key: {
+                options: {
+                    transform: [['babelify', babelES6BrowserOptions]],
+                    browserifyOptions: {
+                        debug: true,
+                        standalone: 'IDBKeyUtils',
+                        plugin: [function (b, o) {
+                            o._ = ['dist/indexeddbshim-Key.js.map'];
+                            return mapstraction(b, o);
+                        }]
+                    }
+                },
+                files: {
+                    'dist/<%= pkg.name%>-Key.js': 'src/Key.js'
+                }
+            },
             unicode: {
                 options: {
                     transform: [['babelify', babelBrowserOptions]],
@@ -129,6 +154,17 @@ module.exports = function (grunt) {
             }
         },
         uglify: {
+            key: {
+                options: {
+                    banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
+                    sourceMap: true,
+                    sourceMapIn: 'dist/<%=pkg.name%>-Key.js.map',
+                    sourceMapName: 'dist/<%=pkg.name%>-Key.min.js.map',
+                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v' + pkg.version + '/dist/'
+                },
+                src: 'dist/<%= pkg.name%>-Key.js',
+                dest: 'dist/<%= pkg.name%>-Key.min.js'
+            },
             unicode: {
                 options: {
                     banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
@@ -371,6 +407,7 @@ module.exports = function (grunt) {
     grunt.registerTask('build-node', ['eslint', 'browserify:node']);
     grunt.registerTask('build-unicode', ['eslint', 'browserify:unicode', 'uglify:unicode']);
     grunt.registerTask('build-unicodeNode', ['browserify:unicodeNode']);
+    grunt.registerTask('build-key', ['eslint', 'browserify:key', 'uglify:key']);
     grunt.registerTask('build', ['eslint', 'browserify', 'uglify']);
 
     const testJobs = ['build', 'connect'];

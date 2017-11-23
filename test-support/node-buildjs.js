@@ -4,7 +4,7 @@ const path = require('path');
 
 // Known scripts
 const testHarnessScripts = ['/resources/testharness.js', '/resources/testharnessreport.js'];
-const supportScripts = ['support.js', 'support-promises.js'];
+const supportScripts = ['support.js', 'support-promises.js', 'nested-cloning-common.js'];
 const webIDLScripts = ['/resources/WebIDLParser.js', '/resources/idlharness.js'];
 const serviceWorkerScripts = ['resources/test-helpers.sub.js'];
 const knownScripts = testHarnessScripts.concat(supportScripts, webIDLScripts, serviceWorkerScripts);

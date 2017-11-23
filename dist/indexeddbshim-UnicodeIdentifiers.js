@@ -1054,6 +1054,10 @@ process.off = noop;
 process.removeListener = noop;
 process.removeAllListeners = noop;
 process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
 
 process.binding = function (name) {
     throw new Error('process.binding is not supported');
@@ -2922,7 +2926,7 @@ exports.ShimEvent = _eventtarget.ShimEvent;
 exports.ShimCustomEvent = _eventtarget.ShimCustomEvent;
 exports.ShimEventTarget = _eventtarget.ShimEventTarget;
 
-},{"./util":49,"eventtarget":3}],35:[function(require,module,exports){
+},{"./util":50,"eventtarget":3}],35:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3453,7 +3457,8 @@ IDBCursor.prototype.update = function (valueToUpdate) {
     var request = me.__store.transaction.__createRequest(me);
     var key = me.primaryKey;
     function addToQueue(clonedValue) {
-        _IDBObjectStore2.default.__storingRecordObjectStore(request, me.__store, clonedValue, false, key);
+        // We set the `invalidateCache` argument to `false` since the old value shouldn't be accessed
+        _IDBObjectStore2.default.__storingRecordObjectStore(request, me.__store, false, clonedValue, false, key);
     }
     if (me.__store.keyPath !== null) {
         var _me$__store$__validat = me.__store.__validateKeyAndValueAndCloneValue(valueToUpdate, undefined, true),
@@ -3490,9 +3495,8 @@ IDBCursor.prototype['delete'] = function () {
             // Key.convertValueToKey(primaryKey); // Already checked when entered
             tx.executeSql(sql, [util.escapeSQLiteStatement(Key.encode(primaryKey))], function (tx, data) {
                 if (data.rowsAffected === 1) {
-                    me.__store.__cursors.forEach(function (cursor) {
-                        cursor.__invalidateCache(); // Delete
-                    });
+                    // We don't invalidate the cache (as we don't access it anymore
+                    //    and it will set the index off)
                     success(undefined);
                 } else {
                     error('No rows with key found' + key);
@@ -3565,7 +3569,7 @@ Object.defineProperty(IDBCursorWithValue, 'prototype', {
 exports.IDBCursor = IDBCursor;
 exports.IDBCursorWithValue = IDBCursorWithValue;
 
-},{"./CFG":31,"./DOMException":32,"./IDBFactory":37,"./IDBIndex":38,"./IDBKeyRange":39,"./IDBObjectStore":40,"./IDBRequest":41,"./IDBTransaction":42,"./Key":44,"./Sca":45,"./util":49}],36:[function(require,module,exports){
+},{"./CFG":31,"./DOMException":32,"./IDBFactory":37,"./IDBIndex":38,"./IDBKeyRange":39,"./IDBObjectStore":40,"./IDBRequest":41,"./IDBTransaction":42,"./Key":44,"./Sca":45,"./util":50}],36:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3888,7 +3892,7 @@ Object.defineProperty(IDBDatabase, 'prototype', {
 exports.default = IDBDatabase;
 module.exports = exports['default'];
 
-},{"./CFG":31,"./DOMException":32,"./DOMStringList":33,"./Event":34,"./IDBObjectStore":40,"./IDBTransaction":42,"./util":49,"eventtarget":3}],37:[function(require,module,exports){
+},{"./CFG":31,"./DOMException":32,"./DOMStringList":33,"./Event":34,"./IDBObjectStore":40,"./IDBTransaction":42,"./util":50,"eventtarget":3}],37:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -3909,6 +3913,10 @@ var _IDBVersionChangeEvent2 = _interopRequireDefault(_IDBVersionChangeEvent);
 var _DOMException = require('./DOMException');
 
 var _IDBRequest = require('./IDBRequest');
+
+var _cmp = require('./cmp');
+
+var _cmp2 = _interopRequireDefault(_cmp);
 
 var _DOMStringList = require('./DOMStringList');
 
@@ -4587,42 +4595,6 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     return req;
 };
 
-/**
- * Compares two keys
- * @param key1
- * @param key2
- * @returns {number}
- */
-function cmp(first, second) {
-    var encodedKey1 = Key.encode(first);
-    var encodedKey2 = Key.encode(second);
-    var result = encodedKey1 > encodedKey2 ? 1 : encodedKey1 === encodedKey2 ? 0 : -1;
-
-    if (_CFG2.default.DEBUG) {
-        // verify that the keys encoded correctly
-        var decodedKey1 = Key.decode(encodedKey1);
-        var decodedKey2 = Key.decode(encodedKey2);
-        if ((typeof first === 'undefined' ? 'undefined' : _typeof(first)) === 'object') {
-            first = JSON.stringify(first);
-            decodedKey1 = JSON.stringify(decodedKey1);
-        }
-        if ((typeof second === 'undefined' ? 'undefined' : _typeof(second)) === 'object') {
-            second = JSON.stringify(second);
-            decodedKey2 = JSON.stringify(decodedKey2);
-        }
-
-        // encoding/decoding mismatches are usually due to a loss of floating-point precision
-        if (decodedKey1 !== first) {
-            console.warn(first + ' was incorrectly encoded as ' + decodedKey1);
-        }
-        if (decodedKey2 !== second) {
-            console.warn(second + ' was incorrectly encoded as ' + decodedKey2);
-        }
-    }
-
-    return result;
-}
-
 IDBFactory.prototype.cmp = function (key1, key2) {
     if (!(this instanceof IDBFactory)) {
         throw new TypeError('Illegal invocation');
@@ -4634,7 +4606,7 @@ IDBFactory.prototype.cmp = function (key1, key2) {
     //   the following "conversions" are for validation only
     Key.convertValueToKeyRethrowingAndIfInvalid(key1);
     Key.convertValueToKeyRethrowingAndIfInvalid(key2);
-    return cmp(key1, key2);
+    return (0, _cmp2.default)(key1, key2);
 };
 
 /**
@@ -4723,12 +4695,12 @@ Object.defineProperty(IDBFactory, 'prototype', {
 
 var shimIndexedDB = IDBFactory.__createInstance();
 exports.IDBFactory = IDBFactory;
-exports.cmp = cmp;
+exports.cmp = _cmp2.default;
 exports.shimIndexedDB = shimIndexedDB;
 
 }).call(this,require('_process'))
 
-},{"./CFG":31,"./DOMException":32,"./DOMStringList":33,"./Event":34,"./IDBDatabase":36,"./IDBRequest":41,"./IDBTransaction":42,"./IDBVersionChangeEvent":43,"./Key":44,"./util":49,"_process":5,"fs":2,"path":4,"sync-promise":6}],38:[function(require,module,exports){
+},{"./CFG":31,"./DOMException":32,"./DOMStringList":33,"./Event":34,"./IDBDatabase":36,"./IDBRequest":41,"./IDBTransaction":42,"./IDBVersionChangeEvent":43,"./Key":44,"./cmp":48,"./util":50,"_process":5,"fs":2,"path":4,"sync-promise":6}],38:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5417,7 +5389,7 @@ exports.executeFetchIndexData = executeFetchIndexData;
 exports.IDBIndex = IDBIndex;
 exports.default = IDBIndex;
 
-},{"./CFG":31,"./DOMException":32,"./IDBCursor":35,"./IDBKeyRange":39,"./IDBObjectStore":40,"./IDBTransaction":42,"./Key":44,"./Sca":45,"./util":49,"sync-promise":6}],39:[function(require,module,exports){
+},{"./CFG":31,"./DOMException":32,"./IDBCursor":35,"./IDBKeyRange":39,"./IDBObjectStore":40,"./IDBTransaction":42,"./Key":44,"./Sca":45,"./util":50,"sync-promise":6}],39:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5601,7 +5573,7 @@ exports.IDBKeyRange = IDBKeyRange;
 exports.convertValueToKeyRange = convertValueToKeyRange;
 exports.default = IDBKeyRange;
 
-},{"./DOMException":32,"./Key":44,"./util":49}],40:[function(require,module,exports){
+},{"./DOMException":32,"./Key":44,"./util":50}],40:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -6114,7 +6086,7 @@ IDBObjectStore.prototype.add = function (value /* , key */) {
         ky = _me$__validateKeyAndV2[0],
         clonedValue = _me$__validateKeyAndV2[1];
 
-    IDBObjectStore.__storingRecordObjectStore(request, me, clonedValue, true, ky);
+    IDBObjectStore.__storingRecordObjectStore(request, me, true, clonedValue, true, ky);
     return request;
 };
 
@@ -6138,7 +6110,7 @@ IDBObjectStore.prototype.put = function (value /*, key */) {
         ky = _me$__validateKeyAndV4[0],
         clonedValue = _me$__validateKeyAndV4[1];
 
-    IDBObjectStore.__storingRecordObjectStore(request, me, clonedValue, false, ky);
+    IDBObjectStore.__storingRecordObjectStore(request, me, true, clonedValue, false, ky);
     return request;
 };
 
@@ -6156,16 +6128,18 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
     });
 };
 
-IDBObjectStore.__storingRecordObjectStore = function (request, store, value, noOverwrite /* , key */) {
-    var key = arguments[4];
+IDBObjectStore.__storingRecordObjectStore = function (request, store, invalidateCache, value, noOverwrite /* , key */) {
+    var key = arguments[5];
     store.transaction.__pushToQueue(request, function (tx, args, success, error) {
         store.__deriveKey(tx, value, key, function (clonedKeyOrCurrentNumber, oldCn) {
             Sca.encode(value, function (encoded) {
                 function insert(tx) {
                     store.__insertData(tx, encoded, value, clonedKeyOrCurrentNumber, oldCn, function () {
-                        store.__cursors.forEach(function (cursor) {
-                            cursor.__invalidateCache();
-                        });
+                        if (invalidateCache) {
+                            store.__cursors.forEach(function (cursor) {
+                                cursor.__invalidateCache();
+                            });
+                        }
                         success.apply(undefined, arguments);
                     }, error);
                 }
@@ -6491,7 +6465,7 @@ Object.defineProperty(IDBObjectStore, 'prototype', {
 exports.default = IDBObjectStore;
 module.exports = exports['default'];
 
-},{"./CFG":31,"./DOMException":32,"./DOMStringList":33,"./IDBCursor":35,"./IDBIndex":38,"./IDBKeyRange":39,"./IDBTransaction":42,"./Key":44,"./Sca":45,"./util":49,"sync-promise":6}],41:[function(require,module,exports){
+},{"./CFG":31,"./DOMException":32,"./DOMStringList":33,"./IDBCursor":35,"./IDBIndex":38,"./IDBKeyRange":39,"./IDBTransaction":42,"./Key":44,"./Sca":45,"./util":50,"sync-promise":6}],41:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -6694,7 +6668,7 @@ Object.defineProperty(IDBOpenDBRequest, 'prototype', {
 exports.IDBRequest = IDBRequest;
 exports.IDBOpenDBRequest = IDBOpenDBRequest;
 
-},{"./DOMException":32,"./util":49,"eventtarget":3}],42:[function(require,module,exports){
+},{"./DOMException":32,"./util":50,"eventtarget":3}],42:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -7306,7 +7280,7 @@ Object.defineProperty(IDBTransaction, 'prototype', {
 exports.default = IDBTransaction;
 module.exports = exports['default'];
 
-},{"./CFG":31,"./DOMException":32,"./Event":34,"./IDBObjectStore":40,"./IDBRequest":41,"./util":49,"eventtarget":3,"sync-promise":6}],43:[function(require,module,exports){
+},{"./CFG":31,"./DOMException":32,"./Event":34,"./IDBObjectStore":40,"./IDBRequest":41,"./util":50,"eventtarget":3,"sync-promise":6}],43:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -7371,7 +7345,7 @@ Object.defineProperty(IDBVersionChangeEvent, 'prototype', {
 exports.default = IDBVersionChangeEvent;
 module.exports = exports['default'];
 
-},{"./Event":34,"./util":49}],44:[function(require,module,exports){
+},{"./Event":34,"./util":50}],44:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -7387,7 +7361,9 @@ var _util = require('./util');
 
 var util = _interopRequireWildcard(_util);
 
-var _IDBFactory = require('./IDBFactory');
+var _cmp = require('./cmp');
+
+var _cmp2 = _interopRequireDefault(_cmp);
 
 var _CFG = require('./CFG');
 
@@ -7806,9 +7782,9 @@ function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
                                 };
                             }
                             if (!multiEntry || !fullKeys && keys.every(function (k) {
-                                return (0, _IDBFactory.cmp)(k, key.value) !== 0;
+                                return (0, _cmp2.default)(k, key.value) !== 0;
                             }) || fullKeys && keys.every(function (k) {
-                                return (0, _IDBFactory.cmp)(k, key) !== 0;
+                                return (0, _cmp2.default)(k, key) !== 0;
                             })) {
                                 keys.push(fullKeys ? key : key.value);
                             }
@@ -8207,7 +8183,7 @@ exports.assignCurrentNumber = assignCurrentNumber;
 exports.generateKeyForStore = generateKeyForStore;
 exports.possiblyUpdateKeyGenerator = possiblyUpdateKeyGenerator;
 
-},{"./CFG":31,"./DOMException":32,"./IDBFactory":37,"./util":49}],45:[function(require,module,exports){
+},{"./CFG":31,"./DOMException":32,"./cmp":48,"./util":50}],45:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -8321,7 +8297,63 @@ shimIndexedDB.__setUnicodeIdentifiers = function () {
 
 shimIndexedDB.__setUnicodeIdentifiers();
 
-},{"./CFG":31,"./UnicodeIdentifiers":46,"./setGlobalVars":48}],48:[function(require,module,exports){
+},{"./CFG":31,"./UnicodeIdentifiers":46,"./setGlobalVars":49}],48:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _CFG = require('./CFG');
+
+var _CFG2 = _interopRequireDefault(_CFG);
+
+var _Key = require('./Key');
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/**
+ * Compares two keys
+ * @param key1
+ * @param key2
+ * @returns {number}
+ */
+function cmp(first, second) {
+    var encodedKey1 = (0, _Key.encode)(first);
+    var encodedKey2 = (0, _Key.encode)(second);
+    var result = encodedKey1 > encodedKey2 ? 1 : encodedKey1 === encodedKey2 ? 0 : -1;
+
+    if (_CFG2.default.DEBUG) {
+        // verify that the keys encoded correctly
+        var decodedKey1 = (0, _Key.decode)(encodedKey1);
+        var decodedKey2 = (0, _Key.decode)(encodedKey2);
+        if ((typeof first === 'undefined' ? 'undefined' : _typeof(first)) === 'object') {
+            first = JSON.stringify(first);
+            decodedKey1 = JSON.stringify(decodedKey1);
+        }
+        if ((typeof second === 'undefined' ? 'undefined' : _typeof(second)) === 'object') {
+            second = JSON.stringify(second);
+            decodedKey2 = JSON.stringify(decodedKey2);
+        }
+
+        // encoding/decoding mismatches are usually due to a loss of floating-point precision
+        if (decodedKey1 !== first) {
+            console.warn(first + ' was incorrectly encoded as ' + decodedKey1);
+        }
+        if (decodedKey2 !== second) {
+            console.warn(second + ' was incorrectly encoded as ' + decodedKey2);
+        }
+    }
+
+    return result;
+}
+
+exports.default = cmp;
+module.exports = exports['default'];
+
+},{"./CFG":31,"./Key":44}],49:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -8574,7 +8606,7 @@ module.exports = exports['default'];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./CFG":31,"./DOMException":32,"./IDBCursor":35,"./IDBDatabase":36,"./IDBFactory":37,"./IDBIndex":38,"./IDBKeyRange":39,"./IDBObjectStore":40,"./IDBRequest":41,"./IDBTransaction":42,"./IDBVersionChangeEvent":43}],49:[function(require,module,exports){
+},{"./CFG":31,"./DOMException":32,"./IDBCursor":35,"./IDBDatabase":36,"./IDBFactory":37,"./IDBIndex":38,"./IDBKeyRange":39,"./IDBObjectStore":40,"./IDBRequest":41,"./IDBTransaction":42,"./IDBVersionChangeEvent":43}],50:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {

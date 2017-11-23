@@ -96,7 +96,7 @@ To run the Node tests, run the following:
     `git submodule update --init --recursive` (possibly without
     [init](http://stackoverflow.com/a/10168693/271577) too if using
     an older version of Git), `git submodule foreach --recursive git fetch`,
-    and `git submodule foreach git merge origin master` or within Windows
+    and `git submodule foreach git merge origin master` or possibly
     `git submodule foreach git pull --ff-only origin master`). Note that some
     of these tests may not be passing because of the test environment not
     being completely configured for Node. We are working on fixing this.

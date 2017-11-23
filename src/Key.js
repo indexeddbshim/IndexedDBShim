@@ -1,6 +1,6 @@
 import {createDOMException} from './DOMException';
 import * as util from './util';
-import {cmp} from './IDBFactory';
+import cmp from './cmp';
 import CFG from './CFG';
 
 /**

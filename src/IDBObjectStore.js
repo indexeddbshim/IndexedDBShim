@@ -476,7 +476,7 @@ IDBObjectStore.prototype.add = function (value /* , key */) {
 
     const request = me.transaction.__createRequest(me);
     const [ky, clonedValue] = me.__validateKeyAndValueAndCloneValue(value, key, false);
-    IDBObjectStore.__storingRecordObjectStore(request, me, clonedValue, true, ky);
+    IDBObjectStore.__storingRecordObjectStore(request, me, true, clonedValue, true, ky);
     return request;
 };
 
@@ -495,7 +495,7 @@ IDBObjectStore.prototype.put = function (value /*, key */) {
 
     const request = me.transaction.__createRequest(me);
     const [ky, clonedValue] = me.__validateKeyAndValueAndCloneValue(value, key, false);
-    IDBObjectStore.__storingRecordObjectStore(request, me, clonedValue, false, ky);
+    IDBObjectStore.__storingRecordObjectStore(request, me, true, clonedValue, false, ky);
     return request;
 };
 
@@ -513,16 +513,18 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
     });
 };
 
-IDBObjectStore.__storingRecordObjectStore = function (request, store, value, noOverwrite /* , key */) {
-    const key = arguments[4];
+IDBObjectStore.__storingRecordObjectStore = function (request, store, invalidateCache, value, noOverwrite /* , key */) {
+    const key = arguments[5];
     store.transaction.__pushToQueue(request, function (tx, args, success, error) {
         store.__deriveKey(tx, value, key, function (clonedKeyOrCurrentNumber, oldCn) {
             Sca.encode(value, function (encoded) {
                 function insert (tx) {
                     store.__insertData(tx, encoded, value, clonedKeyOrCurrentNumber, oldCn, function (...args) {
-                        store.__cursors.forEach((cursor) => {
-                            cursor.__invalidateCache();
-                        });
+                        if (invalidateCache) {
+                            store.__cursors.forEach((cursor) => {
+                                cursor.__invalidateCache();
+                            });
+                        }
                         success(...args);
                     }, error);
                 }

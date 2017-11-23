@@ -503,7 +503,8 @@ IDBCursor.prototype.update = function (valueToUpdate) {
     const request = me.__store.transaction.__createRequest(me);
     const key = me.primaryKey;
     function addToQueue (clonedValue) {
-        IDBObjectStore.__storingRecordObjectStore(request, me.__store, clonedValue, false, key);
+        // We set the `invalidateCache` argument to `false` since the old value shouldn't be accessed
+        IDBObjectStore.__storingRecordObjectStore(request, me.__store, false, clonedValue, false, key);
     }
     if (me.__store.keyPath !== null) {
         const [evaluatedKey, clonedValue] = me.__store.__validateKeyAndValueAndCloneValue(valueToUpdate, undefined, true);
@@ -536,9 +537,8 @@ IDBCursor.prototype['delete'] = function () {
             // Key.convertValueToKey(primaryKey); // Already checked when entered
             tx.executeSql(sql, [util.escapeSQLiteStatement(Key.encode(primaryKey))], function (tx, data) {
                 if (data.rowsAffected === 1) {
-                    me.__store.__cursors.forEach((cursor) => {
-                        cursor.__invalidateCache(); // Delete
-                    });
+                    // We don't invalidate the cache (as we don't access it anymore
+                    //    and it will set the index off)
                     success(undefined);
                 } else {
                     error('No rows with key found' + key);

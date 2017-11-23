@@ -1,5 +1,18 @@
 # IndexedDBShim changes
 
+## Version 3.1.0
+
+- Fix: `update` and `delete` were invalidating the cache and thus
+    mistakenly incrementing cursor index; no longer invalidating the
+    (read-only) cache
+- Enhancement: As part of #283 on export improvements, provide build
+    process for `Key.js` file to function as standalone file (currently
+    targeted for Chrome)
+- Refactoring: In order to minimize build size for standalone `Key.js`,
+    move `cmp` out of `IDBFactory` and reference it.
+- npm: Update dev deps (including using harmony branch of
+    grunt-contrib-uglify for correct ES6 support)
+
 ## Version 3.0.4
 
 - Fix (Edge case): For `IDBDatabase.transaction()` (`storeNames` arg),
