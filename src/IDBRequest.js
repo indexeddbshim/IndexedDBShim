@@ -1,5 +1,5 @@
 import {createDOMException} from './DOMException';
-import {EventTargetFactory} from 'eventtarget';
+import {EventTargetFactory} from 'eventtargeter';
 import * as util from './util';
 
 const listeners = ['onsuccess', 'onerror'];

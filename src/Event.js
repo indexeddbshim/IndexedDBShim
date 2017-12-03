@@ -1,4 +1,4 @@
-import {ShimEventTarget, ShimEvent, ShimCustomEvent} from 'eventtarget';
+import {ShimEventTarget, ShimEvent, ShimCustomEvent} from 'eventtargeter';
 import * as util from './util';
 
 function createEvent (type, debug, evInit) {

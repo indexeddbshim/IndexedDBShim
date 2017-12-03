@@ -296,7 +296,7 @@ module.exports = function (workerConfig) {
             case wwutil.MSGTYPE_ERROR:
                 if (self.onerror) {
                     const err = msg[1];
-                    // Prevent error by testharness.js; if we need more support later, we could invoke [EventTarget](https://github.com/brettz9/eventdispatcher.js#early-late-listeners-noproxy)'s Event polyfill
+                    // Prevent error by testharness.js; if we need more support later, we could invoke eventtargeter's Event polyfill
                     // console.log(err.stack);
                     err.preventDefault = function () {};
                     self.onerror(err);

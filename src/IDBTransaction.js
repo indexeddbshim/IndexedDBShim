@@ -4,7 +4,7 @@ import {IDBRequest} from './IDBRequest';
 import * as util from './util';
 import IDBObjectStore from './IDBObjectStore';
 import CFG from './CFG';
-import {EventTargetFactory} from 'eventtarget';
+import {EventTargetFactory} from 'eventtargeter';
 import SyncPromise from 'sync-promise';
 
 let uniqueID = 0;

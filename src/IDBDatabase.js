@@ -5,7 +5,7 @@ import DOMStringList from './DOMStringList';
 import IDBObjectStore from './IDBObjectStore';
 import IDBTransaction from './IDBTransaction';
 import CFG from './CFG';
-import {EventTargetFactory} from 'eventtarget';
+import {EventTargetFactory} from 'eventtargeter';
 
 const listeners = ['onabort', 'onclose', 'onerror', 'onversionchange'];
 const readonlyProperties = ['name', 'version', 'objectStoreNames'];
