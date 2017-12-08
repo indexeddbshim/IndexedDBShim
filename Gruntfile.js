@@ -4,7 +4,7 @@
 const babelBrowserOptions = {
     sourceMapsAbsolute: true,
     plugins: ['add-module-exports'],
-    presets: ['es2015']
+    presets: ['env']
 };
 const babelES6BrowserOptions = Object.assign({}, babelBrowserOptions, {
     presets: [

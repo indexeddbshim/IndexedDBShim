@@ -107,7 +107,8 @@ To run the Node tests, run the following:
     running due to requirements with the URL having permissions.
 
 If you need to rebuild SQLite, you can run `npm install` inside of the
-`node_modules/sqlite3` directory.
+`node_modules/sqlite3` directory or run the IndexedDBShim `sqlite-rebuild`
+script.
 
 To run a specific Mocha test (which includes the `tests-polyfill`
 tests), run `npm --test=... run mocha`.

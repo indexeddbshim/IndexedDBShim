@@ -1,5 +1,26 @@
 # IndexedDBShim changes
 
+## Version 3.2.0
+
+- Fix: Deal with issue with Chrome/Node and `Number.MIN_VALUE` converting
+    to string
+- npm: Add `module` to `package.json` for potential use by Webpack/Rollup
+- npm: Limit engines to exclude Node 8.9.3 as having problems with Mocha
+    IDBIndex/openCursor-spec.js test
+    "should query multi-entry indexes with hundreds of records"; may be
+   other problematic versions but 7.7.4 and 9.2.1 are ok
+- npm (Build): Update devDeps including versioned `eventtargeter`, `typeson`,
+    and `typeson-registry`
+- npm (Build/Testing): Add missing `babel-core` devDep
+- npm (Build): Preserve LICENSE info in `npmignore` (and avoid redundant items)
+- npm (Testing): Add `web-platform-tests` and `sqlite-rebuild` scripts
+- npm (Testing): Update W3C test script to clean before beginning as well
+- Build: For Babel, use env over deprecated es2015; rebuild
+- Build: Add `yarn.lock`
+- Docs: Remove outdated polyfill info in README (babel-polyfill should cover)
+- Demo: Add example of IDBKeyUtils usage (not documented yet)
+- License: Rename files to include file extensions for Windows
+
 ## Version 3.1.0
 
 - Fix: `update` and `delete` were invalidating the cache and thus

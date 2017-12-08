@@ -8,6 +8,5 @@
 /tests-qunit
 /web-platform-tests
 /.*
-/index.html
-/Gruntfile.js
-/travis.sh
+!LICENSE-MIT.txt
+!LICENSE-APACHE.txt

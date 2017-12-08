@@ -10,7 +10,7 @@ const jsdom = require('jsdom');
 const {JSDOM} = jsdom;
 const CY = require('cyclonejs'); // Todo: Replace this with Sca (but need to make requireable)
 const Worker = require('./webworker/webworker'); // Todo: We could export this `Worker` publicly for others looking for a Worker polyfill with IDB support
-const XMLHttpRequest = require('xmlhttprequest');
+const XMLHttpRequestConstr = require('xmlhttprequest');
 const isDateObject = require('is-date-object');
 const transformV8Stack = require('./transformV8Stack');
 
@@ -375,7 +375,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                         }
 
                         // window.XMLHttpRequest = XMLHttpRequest({basePath: 'http://localhost:8000/IndexedDB/'}); // Todo: We should support this too
-                        window.XMLHttpRequest = XMLHttpRequest({basePath});
+                        window.XMLHttpRequest = XMLHttpRequestConstr({basePath});
 
                         const _xhropen = window.XMLHttpRequest.prototype.open;
                         window.XMLHttpRequest.prototype.open = function (method, url, async) {
@@ -394,7 +394,10 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                         // Expose the following to the `createObjectURL` polyfill
                         delete window.URL.createObjectURL;
                         global.URL = window.URL;
-                        require('../node_modules/typeson-registry/test/createObjectURL'); // Polyfill enough for our tests
+                        const cou = require('../node_modules/typeson-registry/polyfills/createObjectURL-polyglot'); // Polyfill enough for our tests
+                        global.URL.createObjectURL = cou.createObjectURL;
+                        global.XMLHttpRequest.prototype.open = cou.xmlHttpRequestOpen;
+
                         delete require.cache[ // eslint-disable-line standard/computed-property-even-spacing
                             Object.keys(require.cache).filter((path) => path.includes('createObjectURL'))[0]
                         ];

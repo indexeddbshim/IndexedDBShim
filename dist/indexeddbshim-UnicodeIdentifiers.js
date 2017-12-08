@@ -1,123 +1,65 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-/*
- * base64-arraybuffer
- * https://github.com/niklasvh/base64-arraybuffer
- *
- * Copyright (c) 2012 Niklas von Hertzen
- * Licensed under the MIT license.
- */
-(function(){
-  "use strict";
-
-  var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-  // Use a lookup table to find the index.
-  var lookup = new Uint8Array(256);
-  for (var i = 0; i < chars.length; i++) {
-    lookup[chars.charCodeAt(i)] = i;
-  }
-
-  exports.encode = function(arraybuffer, offset, length) {
-    var bytes = new Uint8Array(arraybuffer, offset || 0, length !== undefined ? length : arraybuffer.byteLength),
-    i, len = bytes.length, base64 = "";
-
-    for (i = 0; i < len; i+=3) {
-      base64 += chars[bytes[i] >> 2];
-      base64 += chars[((bytes[i] & 3) << 4) | (bytes[i + 1] >> 4)];
-      base64 += chars[((bytes[i + 1] & 15) << 2) | (bytes[i + 2] >> 6)];
-      base64 += chars[bytes[i + 2] & 63];
-    }
-
-    if ((len % 3) === 2) {
-      base64 = base64.substring(0, base64.length - 1) + "=";
-    } else if (len % 3 === 1) {
-      base64 = base64.substring(0, base64.length - 2) + "==";
-    }
-
-    return base64;
-  };
-
-  exports.decode =  function(base64) {
-    var bufferLength = base64.length * 0.75,
-    len = base64.length, i, p = 0,
-    encoded1, encoded2, encoded3, encoded4;
-
-    if (base64[base64.length - 1] === "=") {
-      bufferLength--;
-      if (base64[base64.length - 2] === "=") {
-        bufferLength--;
-      }
-    }
-
-    var arraybuffer = new ArrayBuffer(bufferLength),
-    bytes = new Uint8Array(arraybuffer);
-
-    for (i = 0; i < len; i+=4) {
-      encoded1 = lookup[base64.charCodeAt(i)];
-      encoded2 = lookup[base64.charCodeAt(i+1)];
-      encoded3 = lookup[base64.charCodeAt(i+2)];
-      encoded4 = lookup[base64.charCodeAt(i+3)];
-
-      bytes[p++] = (encoded1 << 2) | (encoded2 >> 4);
-      bytes[p++] = ((encoded2 & 15) << 4) | (encoded3 >> 2);
-      bytes[p++] = ((encoded3 & 3) << 6) | (encoded4 & 63);
-    }
-
-    return arraybuffer;
-  };
-})();
 
 },{}],2:[function(require,module,exports){
+(function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+	typeof define === 'function' && define.amd ? define(['exports'], factory) :
+	(factory((global.EventTargeter = {})));
+}(this, (function (exports) { 'use strict';
 
-},{}],3:[function(require,module,exports){
-(function () {
-  'use strict';
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+  return typeof obj;
+} : function (obj) {
+  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+};
 
-  var ShimDOMException;
-  var phases = {
+exports.ShimDOMException = void 0;
+var phases = {
     NONE: 0,
     CAPTURING_PHASE: 1,
     AT_TARGET: 2,
     BUBBLING_PHASE: 3
-  };
+};
 
-  if (typeof DOMException === 'undefined') {
+if (typeof DOMException === 'undefined') {
     // Todo: Better polyfill (if even needed here)
-    ShimDOMException = function DOMException (msg, name) { // No need for `toString` as same as for `Error`
-      var err = new Error(msg);
-      err.name = name;
-      return err;
+    exports.ShimDOMException = function DOMException(msg, name) {
+        // No need for `toString` as same as for `Error`
+        var err = new Error(msg);
+        err.name = name;
+        return err;
     };
-  } else {
-    ShimDOMException = DOMException;
-  }
+} else {
+    exports.ShimDOMException = DOMException;
+}
 
-  var ev = new WeakMap();
-  var evCfg = new WeakMap();
+var ev = new WeakMap();
+var evCfg = new WeakMap();
 
-  // Todo: Set _ev argument outside of this function
-  /**
-  * We use an adapter class rather than a proxy not only for compatibility but also since we have to clone
-  * native event properties anyways in order to properly set `target`, etc.
-  * @note The regular DOM method `dispatchEvent` won't work with this polyfill as it expects a native event
-  */
-  var ShimEvent = function Event (type) { // eslint-disable-line no-native-reassign
+// Todo: Set _ev argument outside of this function
+/**
+* We use an adapter class rather than a proxy not only for compatibility but also since we have to clone
+* native event properties anyways in order to properly set `target`, etc.
+* @note The regular DOM method `dispatchEvent` won't work with this polyfill as it expects a native event
+*/
+var ShimEvent = function Event(type) {
+    // eslint-disable-line no-native-reassign
     // For WebIDL checks of function's `length`, we check `arguments` for the optional arguments
     this[Symbol.toStringTag] = 'Event';
     this.toString = function () {
-      return '[object Event]';
+        return '[object Event]';
     };
     var evInit = arguments[1];
     var _ev = arguments[2];
     if (!arguments.length) {
-      throw new TypeError("Failed to construct 'Event': 1 argument required, but only 0 present.");
+        throw new TypeError("Failed to construct 'Event': 1 argument required, but only 0 present.");
     }
     evInit = evInit || {};
     _ev = _ev || {};
 
     var _evCfg = {};
     if ('composed' in evInit) {
-      _evCfg.composed = evInit.composed;
+        _evCfg.composed = evInit.composed;
     }
 
     // _evCfg.isTrusted = true; // We are not always using this for user-created events
@@ -126,535 +68,541 @@
     ev.set(this, _ev);
     evCfg.set(this, _evCfg);
     this.initEvent(type, evInit.bubbles, evInit.cancelable);
-    Object.defineProperties(this,
-      ['target', 'currentTarget', 'eventPhase', 'defaultPrevented'].reduce(function (obj, prop) {
+    Object.defineProperties(this, ['target', 'currentTarget', 'eventPhase', 'defaultPrevented'].reduce(function (obj, prop) {
         obj[prop] = {
-          get: function () {
-            return (/* prop in _evCfg && */ _evCfg[prop] !== undefined) ? _evCfg[prop] : (
-              prop in _ev ? _ev[prop] : (
-                // Defaults
-                prop === 'eventPhase' ? 0 : (prop === 'defaultPrevented' ? false : null)
-              )
-            );
-          }
+            get: function get$$1() {
+                return (/* prop in _evCfg && */_evCfg[prop] !== undefined ? _evCfg[prop] : prop in _ev ? _ev[prop] :
+                    // Defaults
+                    prop === 'eventPhase' ? 0 : prop === 'defaultPrevented' ? false : null
+                );
+            }
         };
         return obj;
-      }, {})
-    );
+    }, {}));
     var props = [
-      // Event
-      'type',
-      'bubbles', 'cancelable', // Defaults to false
-      'isTrusted', 'timeStamp',
-      'initEvent',
-      // Other event properties (not used by our code)
-      'composedPath', 'composed'
-    ];
+    // Event
+    'type', 'bubbles', 'cancelable', // Defaults to false
+    'isTrusted', 'timeStamp', 'initEvent',
+    // Other event properties (not used by our code)
+    'composedPath', 'composed'];
     if (this.toString() === '[object CustomEvent]') {
-      props.push('detail', 'initCustomEvent');
+        props.push('detail', 'initCustomEvent');
     }
 
     Object.defineProperties(this, props.reduce(function (obj, prop) {
-      obj[prop] = {
-        get: function () {
-          return prop in _evCfg ? _evCfg[prop] : (prop in _ev ? _ev[prop] : (
-            ['bubbles', 'cancelable', 'composed'].indexOf(prop) > -1 ? false : undefined
-          ));
-        }
-      };
-      return obj;
+        obj[prop] = {
+            get: function get$$1() {
+                return prop in _evCfg ? _evCfg[prop] : prop in _ev ? _ev[prop] : ['bubbles', 'cancelable', 'composed'].includes(prop) ? false : undefined;
+            }
+        };
+        return obj;
     }, {}));
-  };
+};
 
-  ShimEvent.prototype.preventDefault = function () {
+ShimEvent.prototype.preventDefault = function () {
     if (!(this instanceof ShimEvent)) {
-      throw new TypeError('Illegal invocation');
+        throw new TypeError('Illegal invocation');
     }
     var _ev = ev.get(this);
     var _evCfg = evCfg.get(this);
     if (this.cancelable && !_evCfg._passive) {
-      _evCfg.defaultPrevented = true;
-      if (typeof _ev.preventDefault === 'function') { // Prevent any predefined defaults
-        _ev.preventDefault();
-      }
-    };
-  };
-  ShimEvent.prototype.stopImmediatePropagation = function () {
+        _evCfg.defaultPrevented = true;
+        if (typeof _ev.preventDefault === 'function') {
+            // Prevent any predefined defaults
+            _ev.preventDefault();
+        }
+    }
+};
+ShimEvent.prototype.stopImmediatePropagation = function () {
     var _evCfg = evCfg.get(this);
     _evCfg._stopImmediatePropagation = true;
-  };
-  ShimEvent.prototype.stopPropagation = function () {
+};
+ShimEvent.prototype.stopPropagation = function () {
     var _evCfg = evCfg.get(this);
     _evCfg._stopPropagation = true;
-  };
-  ShimEvent.prototype.initEvent = function (type, bubbles, cancelable) {  // Chrome currently has function length 1 only but WebIDL says 3
-    // var bubbles = arguments[1];
-    // var cancelable = arguments[2];
+};
+ShimEvent.prototype.initEvent = function (type, bubbles, cancelable) {
+    // Chrome currently has function length 1 only but WebIDL says 3
+    // const bubbles = arguments[1];
+    // const cancelable = arguments[2];
     var _evCfg = evCfg.get(this);
 
     if (_evCfg._dispatched) {
-      return;
+        return;
     }
 
     _evCfg.type = type;
     if (bubbles !== undefined) {
-      _evCfg.bubbles = bubbles;
+        _evCfg.bubbles = bubbles;
     }
     if (cancelable !== undefined) {
-      _evCfg.cancelable = cancelable;
+        _evCfg.cancelable = cancelable;
     }
-  };
-  ['type', 'target', 'currentTarget'].forEach(function (prop) {
+};
+['type', 'target', 'currentTarget'].forEach(function (prop) {
     Object.defineProperty(ShimEvent.prototype, prop, {
-      enumerable: true,
-      configurable: true,
-      get: function () {
-        throw new TypeError('Illegal invocation');
-      }
+        enumerable: true,
+        configurable: true,
+        get: function get$$1() {
+            throw new TypeError('Illegal invocation');
+        }
     });
-  });
-  ['eventPhase', 'defaultPrevented', 'bubbles', 'cancelable', 'timeStamp'].forEach(function (prop) {
+});
+['eventPhase', 'defaultPrevented', 'bubbles', 'cancelable', 'timeStamp'].forEach(function (prop) {
     Object.defineProperty(ShimEvent.prototype, prop, {
-      enumerable: true,
-      configurable: true,
-      get: function () {
-        throw new TypeError('Illegal invocation');
-      }
+        enumerable: true,
+        configurable: true,
+        get: function get$$1() {
+            throw new TypeError('Illegal invocation');
+        }
     });
-  });
-  ['NONE', 'CAPTURING_PHASE', 'AT_TARGET', 'BUBBLING_PHASE'].forEach(function (prop, i) {
+});
+['NONE', 'CAPTURING_PHASE', 'AT_TARGET', 'BUBBLING_PHASE'].forEach(function (prop, i) {
     Object.defineProperty(ShimEvent, prop, {
-      enumerable: true,
-      writable: false,
-      value: i
+        enumerable: true,
+        writable: false,
+        value: i
     });
     Object.defineProperty(ShimEvent.prototype, prop, {
-      writable: false,
-      value: i
+        writable: false,
+        value: i
     });
-  });
-  ShimEvent[Symbol.toStringTag] = 'Function';
-  ShimEvent.prototype[Symbol.toStringTag] = 'EventPrototype';
-  Object.defineProperty(ShimEvent, 'prototype', {
+});
+ShimEvent[Symbol.toStringTag] = 'Function';
+ShimEvent.prototype[Symbol.toStringTag] = 'EventPrototype';
+Object.defineProperty(ShimEvent, 'prototype', {
     writable: false
-  });
+});
 
-  var ShimCustomEvent = function CustomEvent (type) {
+var ShimCustomEvent = function CustomEvent(type) {
     var evInit = arguments[1];
     var _ev = arguments[2];
     ShimEvent.call(this, type, evInit, _ev);
     this[Symbol.toStringTag] = 'CustomEvent';
     this.toString = function () {
-      return '[object CustomEvent]';
+        return '[object CustomEvent]';
     };
     // var _evCfg = evCfg.get(this);
     evInit = evInit || {};
     this.initCustomEvent(type, evInit.bubbles, evInit.cancelable, 'detail' in evInit ? evInit.detail : null);
-  };
-  Object.defineProperty(ShimCustomEvent.prototype, 'constructor', {
+};
+Object.defineProperty(ShimCustomEvent.prototype, 'constructor', {
     enumerable: false,
     writable: true,
     configurable: true,
     value: ShimCustomEvent
-  });
-  ShimCustomEvent.prototype.initCustomEvent = function (type, bubbles, cancelable, detail) {
+});
+ShimCustomEvent.prototype.initCustomEvent = function (type, bubbles, cancelable, detail) {
     if (!(this instanceof ShimCustomEvent)) {
-      throw new TypeError('Illegal invocation');
+        throw new TypeError('Illegal invocation');
     }
     var _evCfg = evCfg.get(this);
-    ShimCustomEvent.call(this, type, {bubbles: bubbles, cancelable: cancelable, detail: detail}, arguments[4]);
+    ShimCustomEvent.call(this, type, {
+        bubbles: bubbles, cancelable: cancelable, detail: detail
+    }, arguments[4]);
 
     if (_evCfg._dispatched) {
-      return;
+        return;
     }
 
     if (detail !== undefined) {
-      _evCfg.detail = detail;
+        _evCfg.detail = detail;
     }
     Object.defineProperty(this, 'detail', {
-      get: function () {
-        return _evCfg.detail;
-      }
+        get: function get$$1() {
+            return _evCfg.detail;
+        }
     });
-  };
-  ShimCustomEvent[Symbol.toStringTag] = 'Function';
-  ShimCustomEvent.prototype[Symbol.toStringTag] = 'CustomEventPrototype';
-  Object.setPrototypeOf(ShimCustomEvent, ShimEvent); // TODO: IDL needs but reported as slow!
-  Object.defineProperty(ShimCustomEvent.prototype, 'detail', {
+};
+ShimCustomEvent[Symbol.toStringTag] = 'Function';
+ShimCustomEvent.prototype[Symbol.toStringTag] = 'CustomEventPrototype';
+Object.setPrototypeOf(ShimCustomEvent, ShimEvent); // TODO: IDL needs but reported as slow!
+Object.defineProperty(ShimCustomEvent.prototype, 'detail', {
     enumerable: true,
     configurable: true,
-    get: function () {
-      throw new TypeError('Illegal invocation');
+    get: function get$$1() {
+        throw new TypeError('Illegal invocation');
     }
-  });
-  Object.setPrototypeOf(ShimCustomEvent.prototype, ShimEvent.prototype); // TODO: IDL needs but reported as slow!
-  Object.defineProperty(ShimCustomEvent, 'prototype', {
+});
+Object.setPrototypeOf(ShimCustomEvent.prototype, ShimEvent.prototype); // TODO: IDL needs but reported as slow!
+Object.defineProperty(ShimCustomEvent, 'prototype', {
     writable: false
-  });
+});
 
-  function copyEvent (ev) {
+function copyEvent(ev) {
     if ('detail' in ev) {
-      return new ShimCustomEvent(ev.type, {bubbles: ev.bubbles, cancelable: ev.cancelable, detail: ev.detail}, ev);
+        return new ShimCustomEvent(ev.type, { bubbles: ev.bubbles, cancelable: ev.cancelable, detail: ev.detail }, ev);
     }
-    return new ShimEvent(ev.type, {bubbles: ev.bubbles, cancelable: ev.cancelable}, ev);
-  }
+    return new ShimEvent(ev.type, { bubbles: ev.bubbles, cancelable: ev.cancelable }, ev);
+}
 
-  function getListenersOptions (listeners, type, options) {
+function getListenersOptions(listeners, type, options) {
     var listenersByType = listeners[type];
     if (listenersByType === undefined) listeners[type] = listenersByType = [];
-    options = typeof options === 'boolean' ? {capture: options} : (options || {});
+    options = typeof options === 'boolean' ? { capture: options } : options || {};
     var stringifiedOptions = JSON.stringify(options);
     var listenersByTypeOptions = listenersByType.filter(function (obj) {
-      return stringifiedOptions === JSON.stringify(obj.options);
+        return stringifiedOptions === JSON.stringify(obj.options);
     });
-    return {listenersByTypeOptions: listenersByTypeOptions, options: options, listenersByType: listenersByType};
-  }
+    return { listenersByTypeOptions: listenersByTypeOptions, options: options, listenersByType: listenersByType };
+}
 
-  var methods = {
-    addListener: function addListener (listeners, listener, type, options) {
-      var listenerOptions = getListenersOptions(listeners, type, options);
-      var listenersByTypeOptions = listenerOptions.listenersByTypeOptions;
-      options = listenerOptions.options;
-      var listenersByType = listenerOptions.listenersByType;
+var methods = {
+    addListener: function addListener(listeners, listener, type, options) {
+        var listenerOptions = getListenersOptions(listeners, type, options);
+        var listenersByTypeOptions = listenerOptions.listenersByTypeOptions;
+        options = listenerOptions.options;
+        var listenersByType = listenerOptions.listenersByType;
 
-      if (listenersByTypeOptions.some(function (l) {
-        return l.listener === listener;
-      })) return;
-      listenersByType.push({listener: listener, options: options});
+        if (listenersByTypeOptions.some(function (l) {
+            return l.listener === listener;
+        })) return;
+        listenersByType.push({ listener: listener, options: options });
     },
+    removeListener: function removeListener(listeners, listener, type, options) {
+        var listenerOptions = getListenersOptions(listeners, type, options);
+        var listenersByType = listenerOptions.listenersByType;
+        var stringifiedOptions = JSON.stringify(listenerOptions.options);
 
-    removeListener: function removeListener (listeners, listener, type, options) {
-      var listenerOptions = getListenersOptions(listeners, type, options);
-      var listenersByType = listenerOptions.listenersByType;
-      var stringifiedOptions = JSON.stringify(listenerOptions.options);
-
-      listenersByType.some(function (l, i) {
-        if (l.listener === listener && stringifiedOptions === JSON.stringify(l.options)) {
-          listenersByType.splice(i, 1);
-          if (!listenersByType.length) delete listeners[type];
-          return true;
-        }
-      });
+        listenersByType.some(function (l, i) {
+            if (l.listener === listener && stringifiedOptions === JSON.stringify(l.options)) {
+                listenersByType.splice(i, 1);
+                if (!listenersByType.length) delete listeners[type];
+                return true;
+            }
+        });
     },
-
-    hasListener: function hasListener (listeners, listener, type, options) {
-      var listenerOptions = getListenersOptions(listeners, type, options);
-      var listenersByTypeOptions = listenerOptions.listenersByTypeOptions;
-      return listenersByTypeOptions.some(function (l) {
-        return l.listener === listener;
-      });
+    hasListener: function hasListener(listeners, listener, type, options) {
+        var listenerOptions = getListenersOptions(listeners, type, options);
+        var listenersByTypeOptions = listenerOptions.listenersByTypeOptions;
+        return listenersByTypeOptions.some(function (l) {
+            return l.listener === listener;
+        });
     }
-  };
+};
 
-  function EventTarget () {
+function EventTarget() {
     throw new TypeError('Illegal constructor');
-  }
+}
 
-  Object.assign(EventTarget.prototype, ['Early', '', 'Late', 'Default'].reduce(function (obj, listenerType) {
+Object.assign(EventTarget.prototype, ['Early', '', 'Late', 'Default'].reduce(function (obj, listenerType) {
     ['add', 'remove', 'has'].forEach(function (method) {
-      obj[method + listenerType + 'EventListener'] = function (type, listener) {
-        var options = arguments[2]; // We keep the listener `length` as per WebIDL
-        if (arguments.length < 2) throw new TypeError('2 or more arguments required');
-        if (typeof type !== 'string') throw new ShimDOMException('UNSPECIFIED_EVENT_TYPE_ERR', 'UNSPECIFIED_EVENT_TYPE_ERR'); // eslint-disable-line eqeqeq
-        if (listener.handleEvent) { listener = listener.handleEvent.bind(listener); }
-        var arrStr = '_' + listenerType.toLowerCase() + (listenerType === '' ? 'l' : 'L') + 'isteners';
-        if (!this[arrStr]) Object.defineProperty(this, arrStr, {value: {}});
-        return methods[method + 'Listener'](this[arrStr], listener, type, options);
-      };
+        obj[method + listenerType + 'EventListener'] = function (type, listener) {
+            var options = arguments[2]; // We keep the listener `length` as per WebIDL
+            if (arguments.length < 2) throw new TypeError('2 or more arguments required');
+            if (typeof type !== 'string') {
+                throw new exports.ShimDOMException('UNSPECIFIED_EVENT_TYPE_ERR', 'UNSPECIFIED_EVENT_TYPE_ERR');
+            }
+            if (listener.handleEvent) {
+                listener = listener.handleEvent.bind(listener);
+            }
+            var arrStr = '_' + listenerType.toLowerCase() + (listenerType === '' ? 'l' : 'L') + 'isteners';
+            if (!this[arrStr]) {
+                Object.defineProperty(this, arrStr, { value: {} });
+            }
+            return methods[method + 'Listener'](this[arrStr], listener, type, options);
+        };
     });
     return obj;
-  }, {}));
+}, {}));
 
-  Object.assign(EventTarget.prototype, {
-    __setOptions: function (customOptions) {
-      customOptions = customOptions || {};
-      // Todo: Make into event properties?
-      this._defaultSync = customOptions.defaultSync;
-      this._extraProperties = customOptions.extraProperties || [];
-      if (customOptions.legacyOutputDidListenersThrowFlag) { // IndexedDB
-        this._legacyOutputDidListenersThrowCheck = true;
-        this._extraProperties.push('__legacyOutputDidListenersThrowError');
-      }
+Object.assign(EventTarget.prototype, {
+    __setOptions: function __setOptions(customOptions) {
+        customOptions = customOptions || {};
+        // Todo: Make into event properties?
+        this._defaultSync = customOptions.defaultSync;
+        this._extraProperties = customOptions.extraProperties || [];
+        if (customOptions.legacyOutputDidListenersThrowFlag) {
+            // IndexedDB
+            this._legacyOutputDidListenersThrowCheck = true;
+            this._extraProperties.push('__legacyOutputDidListenersThrowError');
+        }
     },
-    dispatchEvent: function (ev) {
-      return this._dispatchEvent(ev, true);
+    dispatchEvent: function dispatchEvent(ev) {
+        return this._dispatchEvent(ev, true);
     },
-    _dispatchEvent: function (ev, setTarget) {
-      var me = this;
-      ['early', '', 'late', 'default'].forEach(function (listenerType) {
-        var arrStr = '_' + listenerType + (listenerType === '' ? 'l' : 'L') + 'isteners';
-        if (!this[arrStr]) Object.defineProperty(this, arrStr, {value: {}});
-      }, this);
+    _dispatchEvent: function _dispatchEvent(ev, setTarget) {
+        var _this = this;
 
-      var _evCfg = evCfg.get(ev);
-      if (_evCfg && setTarget && _evCfg._dispatched) throw new ShimDOMException('The object is in an invalid state.', 'InvalidStateError');
-
-      var eventCopy;
-      if (_evCfg) {
-        eventCopy = ev;
-      } else {
-        eventCopy = copyEvent(ev);
-        _evCfg = evCfg.get(eventCopy);
-        _evCfg._dispatched = true;
-        this._extraProperties.forEach(function (prop) {
-          if (prop in ev) {
-            eventCopy[prop] = ev[prop]; // Todo: Put internal to `ShimEvent`?
-          }
+        ['early', '', 'late', 'default'].forEach(function (listenerType) {
+            var arrStr = '_' + listenerType + (listenerType === '' ? 'l' : 'L') + 'isteners';
+            if (!_this[arrStr]) {
+                Object.defineProperty(_this, arrStr, { value: {} });
+            }
         });
-      }
-      var type = eventCopy.type;
 
-      function finishEventDispatch () {
-        _evCfg.eventPhase = phases.NONE;
-        _evCfg.currentTarget = null;
-        delete _evCfg._children;
-      }
-      function invokeDefaults () {
-        // Ignore stopPropagation from defaults
-        _evCfg._stopImmediatePropagation = undefined;
-        _evCfg._stopPropagation = undefined;
-        // We check here for whether we should invoke since may have changed since timeout (if late listener prevented default)
-        if (!eventCopy.defaultPrevented || !_evCfg.cancelable) { // 2nd check should be redundant
-          _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke default listeners
-          eventCopy.target.invokeCurrentListeners(eventCopy.target._defaultListeners, eventCopy, type);
+        var _evCfg = evCfg.get(ev);
+        if (_evCfg && setTarget && _evCfg._dispatched) {
+            throw new exports.ShimDOMException('The object is in an invalid state.', 'InvalidStateError');
         }
-        finishEventDispatch();
-      }
-      function continueEventDispatch () {
-        // Ignore stop propagation of user now
-        _evCfg._stopImmediatePropagation = undefined;
-        _evCfg._stopPropagation = undefined;
-        if (!me._defaultSync) {
-          setTimeout(invokeDefaults, 0);
-        } else invokeDefaults();
 
-        _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke late listeners
-        // Sync default might have stopped
-        if (!_evCfg._stopPropagation) {
-          _evCfg._stopImmediatePropagation = undefined;
-          _evCfg._stopPropagation = undefined;
-          // We could allow stopPropagation by only executing upon (_evCfg._stopPropagation)
-          eventCopy.target.invokeCurrentListeners(eventCopy.target._lateListeners, eventCopy, type);
+        var eventCopy = void 0;
+        if (_evCfg) {
+            eventCopy = ev;
+        } else {
+            eventCopy = copyEvent(ev);
+            _evCfg = evCfg.get(eventCopy);
+            _evCfg._dispatched = true;
+            this._extraProperties.forEach(function (prop) {
+                if (prop in ev) {
+                    eventCopy[prop] = ev[prop]; // Todo: Put internal to `ShimEvent`?
+                }
+            });
         }
-        finishEventDispatch();
+        var _eventCopy = eventCopy,
+            type = _eventCopy.type;
+
+
+        function finishEventDispatch() {
+            _evCfg.eventPhase = phases.NONE;
+            _evCfg.currentTarget = null;
+            delete _evCfg._children;
+        }
+        function invokeDefaults() {
+            // Ignore stopPropagation from defaults
+            _evCfg._stopImmediatePropagation = undefined;
+            _evCfg._stopPropagation = undefined;
+            // We check here for whether we should invoke since may have changed since timeout (if late listener prevented default)
+            if (!eventCopy.defaultPrevented || !_evCfg.cancelable) {
+                // 2nd check should be redundant
+                _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke default listeners
+                eventCopy.target.invokeCurrentListeners(eventCopy.target._defaultListeners, eventCopy, type);
+            }
+            finishEventDispatch();
+        }
+        var continueEventDispatch = function continueEventDispatch() {
+            // Ignore stop propagation of user now
+            _evCfg._stopImmediatePropagation = undefined;
+            _evCfg._stopPropagation = undefined;
+            if (!_this._defaultSync) {
+                setTimeout(invokeDefaults, 0);
+            } else invokeDefaults();
+
+            _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke late listeners
+            // Sync default might have stopped
+            if (!_evCfg._stopPropagation) {
+                _evCfg._stopImmediatePropagation = undefined;
+                _evCfg._stopPropagation = undefined;
+                // We could allow stopPropagation by only executing upon (_evCfg._stopPropagation)
+                eventCopy.target.invokeCurrentListeners(eventCopy.target._lateListeners, eventCopy, type);
+            }
+            finishEventDispatch();
+
+            return !eventCopy.defaultPrevented;
+        };
+
+        if (setTarget) _evCfg.target = this;
+
+        switch (eventCopy.eventPhase) {
+            default:case phases.NONE:
+
+                _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke early listeners
+                this.invokeCurrentListeners(this._earlyListeners, eventCopy, type);
+                if (!this.__getParent) {
+                    _evCfg.eventPhase = phases.AT_TARGET;
+                    return this._dispatchEvent(eventCopy, false);
+                }
+
+                var par = this;
+                var root = this;
+                while (par.__getParent && (par = par.__getParent()) !== null) {
+                    if (!_evCfg._children) {
+                        _evCfg._children = [];
+                    }
+                    _evCfg._children.push(root);
+                    root = par;
+                }
+                root._defaultSync = this._defaultSync;
+                _evCfg.eventPhase = phases.CAPTURING_PHASE;
+                return root._dispatchEvent(eventCopy, false);
+            case phases.CAPTURING_PHASE:
+                if (_evCfg._stopPropagation) {
+                    return continueEventDispatch();
+                }
+                this.invokeCurrentListeners(this._listeners, eventCopy, type);
+                var child = _evCfg._children && _evCfg._children.length && _evCfg._children.pop();
+                if (!child || child === eventCopy.target) {
+                    _evCfg.eventPhase = phases.AT_TARGET;
+                }
+                if (child) child._defaultSync = this._defaultSync;
+                return (child || this)._dispatchEvent(eventCopy, false);
+            case phases.AT_TARGET:
+                if (_evCfg._stopPropagation) {
+                    return continueEventDispatch();
+                }
+                this.invokeCurrentListeners(this._listeners, eventCopy, type, true);
+                if (!_evCfg.bubbles) {
+                    return continueEventDispatch();
+                }
+                _evCfg.eventPhase = phases.BUBBLING_PHASE;
+                return this._dispatchEvent(eventCopy, false);
+            case phases.BUBBLING_PHASE:
+                if (_evCfg._stopPropagation) {
+                    return continueEventDispatch();
+                }
+                var parent = this.__getParent && this.__getParent();
+                if (!parent) {
+                    return continueEventDispatch();
+                }
+                parent.invokeCurrentListeners(parent._listeners, eventCopy, type, true);
+                parent._defaultSync = this._defaultSync;
+                return parent._dispatchEvent(eventCopy, false);
+        }
+    },
+    invokeCurrentListeners: function invokeCurrentListeners(listeners, eventCopy, type, checkOnListeners) {
+        var _this2 = this;
+
+        var _evCfg = evCfg.get(eventCopy);
+        _evCfg.currentTarget = this;
+
+        var listOpts = getListenersOptions(listeners, type, {});
+        var listenersByType = listOpts.listenersByType.concat();
+        var dummyIPos = listenersByType.length ? 1 : 0;
+
+        listenersByType.some(function (listenerObj, i) {
+            var onListener = checkOnListeners ? _this2['on' + type] : null;
+            if (_evCfg._stopImmediatePropagation) return true;
+            if (i === dummyIPos && typeof onListener === 'function') {
+                // We don't splice this in as could be overwritten; executes here per
+                //    https://html.spec.whatwg.org/multipage/webappapis.html#event-handler-attributes:event-handlers-14
+                _this2.tryCatch(eventCopy, function () {
+                    var ret = onListener.call(eventCopy.currentTarget, eventCopy);
+                    if (ret === false) {
+                        eventCopy.preventDefault();
+                    }
+                });
+            }
+            var options = listenerObj.options;
+            var once = options.once,
+                passive = options.passive,
+                capture = options.capture;
+
+
+            _evCfg._passive = passive;
+
+            if (capture && eventCopy.target !== eventCopy.currentTarget && eventCopy.eventPhase === phases.CAPTURING_PHASE || eventCopy.eventPhase === phases.AT_TARGET || !capture && eventCopy.target !== eventCopy.currentTarget && eventCopy.eventPhase === phases.BUBBLING_PHASE) {
+                var listener = listenerObj.listener;
+                _this2.tryCatch(eventCopy, function () {
+                    listener.call(eventCopy.currentTarget, eventCopy);
+                });
+                if (once) {
+                    _this2.removeEventListener(type, listener, options);
+                }
+            }
+        });
+        this.tryCatch(eventCopy, function () {
+            var onListener = checkOnListeners ? _this2['on' + type] : null;
+            if (typeof onListener === 'function' && listenersByType.length < 2) {
+                var ret = onListener.call(eventCopy.currentTarget, eventCopy); // Won't have executed if too short
+                if (ret === false) {
+                    eventCopy.preventDefault();
+                }
+            }
+        });
 
         return !eventCopy.defaultPrevented;
-      }
-
-      if (setTarget) _evCfg.target = this;
-
-      switch (eventCopy.eventPhase) {
-        default: case phases.NONE:
-
-          _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke early listeners
-          this.invokeCurrentListeners(this._earlyListeners, eventCopy, type);
-          if (!this.__getParent) {
-            _evCfg.eventPhase = phases.AT_TARGET;
-            return this._dispatchEvent(eventCopy, false);
-          }
-
-          var par = this;
-          var root = this;
-          while (par.__getParent && (par = par.__getParent()) !== null) {
-            if (!_evCfg._children) {
-              _evCfg._children = [];
-            }
-            _evCfg._children.push(root);
-            root = par;
-          }
-          root._defaultSync = me._defaultSync;
-          _evCfg.eventPhase = phases.CAPTURING_PHASE;
-          return root._dispatchEvent(eventCopy, false);
-        case phases.CAPTURING_PHASE:
-          if (_evCfg._stopPropagation) {
-            return continueEventDispatch();
-          }
-          this.invokeCurrentListeners(this._listeners, eventCopy, type);
-          var child = _evCfg._children && _evCfg._children.length && _evCfg._children.pop();
-          if (!child || child === eventCopy.target) {
-            _evCfg.eventPhase = phases.AT_TARGET;
-          }
-          if (child) child._defaultSync = me._defaultSync;
-          return (child || this)._dispatchEvent(eventCopy, false);
-        case phases.AT_TARGET:
-          if (_evCfg._stopPropagation) {
-            return continueEventDispatch();
-          }
-          this.invokeCurrentListeners(this._listeners, eventCopy, type, true);
-          if (!_evCfg.bubbles) {
-            return continueEventDispatch();
-          }
-          _evCfg.eventPhase = phases.BUBBLING_PHASE;
-          return this._dispatchEvent(eventCopy, false);
-        case phases.BUBBLING_PHASE:
-          if (_evCfg._stopPropagation) {
-            return continueEventDispatch();
-          }
-          var parent = this.__getParent && this.__getParent();
-          if (!parent) {
-            return continueEventDispatch();
-          }
-          parent.invokeCurrentListeners(parent._listeners, eventCopy, type, true);
-          parent._defaultSync = me._defaultSync;
-          return parent._dispatchEvent(eventCopy, false);
-      }
     },
-    invokeCurrentListeners: function (listeners, eventCopy, type, checkOnListeners) {
-      var _evCfg = evCfg.get(eventCopy);
-      var me = this;
-      _evCfg.currentTarget = this;
-
-      var listOpts = getListenersOptions(listeners, type, {});
-      var listenersByType = listOpts.listenersByType.concat();
-      var dummyIPos = listenersByType.length ? 1 : 0;
-
-      listenersByType.some(function (listenerObj, i) {
-        var onListener = checkOnListeners ? me['on' + type] : null;
-        if (_evCfg._stopImmediatePropagation) return true;
-        if (i === dummyIPos && typeof onListener === 'function') {
-          // We don't splice this in as could be overwritten; executes here per
-          //  https://html.spec.whatwg.org/multipage/webappapis.html#event-handler-attributes:event-handlers-14
-          this.tryCatch(eventCopy, function () {
-            var ret = onListener.call(eventCopy.currentTarget, eventCopy);
-            if (ret === false) {
-              eventCopy.preventDefault();
-            }
-          });
+    tryCatch: function tryCatch(ev, cb) {
+        try {
+            // Per MDN: Exceptions thrown by event handlers are reported
+            //    as uncaught exceptions; the event handlers run on a nested
+            //    callstack: they block the caller until they complete, but
+            //    exceptions do not propagate to the caller.
+            cb();
+        } catch (err) {
+            this.triggerErrorEvent(err, ev);
         }
-        var options = listenerObj.options;
-        var once = options.once; // Remove listener after invoking once
-        var passive = options.passive; // Don't allow `preventDefault`
-        var capture = options.capture; // Use `_children` and set `eventPhase`
-        _evCfg._passive = passive;
-
-        if ((capture && eventCopy.target !== eventCopy.currentTarget && eventCopy.eventPhase === phases.CAPTURING_PHASE) ||
-          (eventCopy.eventPhase === phases.AT_TARGET ||
-          (!capture && eventCopy.target !== eventCopy.currentTarget && eventCopy.eventPhase === phases.BUBBLING_PHASE))
-        ) {
-          var listener = listenerObj.listener;
-          this.tryCatch(eventCopy, function () {
-            listener.call(eventCopy.currentTarget, eventCopy);
-          });
-          if (once) {
-            this.removeEventListener(type, listener, options);
-          }
-        }
-      }, this);
-      this.tryCatch(eventCopy, function () {
-        var onListener = checkOnListeners ? me['on' + type] : null;
-        if (typeof onListener === 'function' && listenersByType.length < 2) {
-          var ret = onListener.call(eventCopy.currentTarget, eventCopy); // Won't have executed if too short
-          if (ret === false) {
-            eventCopy.preventDefault();
-          }
-        }
-      });
-
-      return !eventCopy.defaultPrevented;
     },
-    tryCatch: function (ev, cb) {
-      try {
-        // Per MDN: Exceptions thrown by event handlers are reported
-        //  as uncaught exceptions; the event handlers run on a nested
-        //  callstack: they block the caller until they complete, but
-        //  exceptions do not propagate to the caller.
-        cb();
-      } catch (err) {
-        this.triggerErrorEvent(err, ev);
-      }
-    },
-    triggerErrorEvent: function (err, ev) {
-      var error = err;
-      if (typeof err === 'string') {
-        error = new Error('Uncaught exception: ' + err);
-      }
+    triggerErrorEvent: function triggerErrorEvent(err, ev) {
+        var error = err;
+        if (typeof err === 'string') {
+            error = new Error('Uncaught exception: ' + err);
+        }
 
-      var triggerGlobalErrorEvent;
-      var useNodeImpl = false;
-      if (typeof window === 'undefined' || typeof ErrorEvent === 'undefined' || (
-          window && typeof window === 'object' && !window.dispatchEvent)
-      ) {
-        useNodeImpl = true;
-        triggerGlobalErrorEvent = function () {
-          setTimeout(function () { // Node won't be able to catch in this way if we throw in the main thread
-            // console.log(err); // Should we auto-log for user?
-            throw error; // Let user listen to `process.on('uncaughtException', function(err) {});`
-          });
-        };
-      } else {
-        triggerGlobalErrorEvent = function () {
-          // See https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onerror
-          //   and https://github.com/w3c/IndexedDB/issues/49
+        var triggerGlobalErrorEvent = void 0;
+        var useNodeImpl = false;
+        if (typeof window === 'undefined' || typeof ErrorEvent === 'undefined' || window && (typeof window === 'undefined' ? 'undefined' : _typeof(window)) === 'object' && !window.dispatchEvent) {
+            useNodeImpl = true;
+            triggerGlobalErrorEvent = function triggerGlobalErrorEvent() {
+                setTimeout(function () {
+                    // Node won't be able to catch in this way if we throw in the main thread
+                    // console.log(err); // Should we auto-log for user?
+                    throw error; // Let user listen to `process.on('uncaughtException', (err) => {});`
+                });
+            };
+        } else {
+            triggerGlobalErrorEvent = function triggerGlobalErrorEvent() {
+                // See https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onerror
+                //     and https://github.com/w3c/IndexedDB/issues/49
 
-          // Note that a regular Event will properly trigger
-          //   `window.addEventListener('error')` handlers, but it will not trigger
-          //   `window.onerror` as per https://html.spec.whatwg.org/multipage/webappapis.html#handler-onerror
-          // Note also that the following line won't handle `window.addEventListener` handlers
-          //    if (window.onerror) window.onerror(error.message, err.fileName, err.lineNumber, error.columnNumber, error);
+                // Note that a regular Event will properly trigger
+                //     `window.addEventListener('error')` handlers, but it will not trigger
+                //     `window.onerror` as per https://html.spec.whatwg.org/multipage/webappapis.html#handler-onerror
+                // Note also that the following line won't handle `window.addEventListener` handlers
+                //        if (window.onerror) window.onerror(error.message, err.fileName, err.lineNumber, error.columnNumber, error);
 
-          // `ErrorEvent` properly triggers `window.onerror` and `window.addEventListener('error')` handlers
-          var errEv = new ErrorEvent('error', {
-            error: err,
-            message: error.message || '',
-            // We can't get the actually useful user's values!
-            filename: error.fileName || '',
-            lineno: error.lineNumber || 0,
-            colno: error.columnNumber || 0
-          });
-          window.dispatchEvent(errEv);
-          // console.log(err); // Should we auto-log for user?
-        };
-      }
+                // `ErrorEvent` properly triggers `window.onerror` and `window.addEventListener('error')` handlers
+                var errEv = new ErrorEvent('error', {
+                    error: err,
+                    message: error.message || '',
+                    // We can't get the actually useful user's values!
+                    filename: error.fileName || '',
+                    lineno: error.lineNumber || 0,
+                    colno: error.columnNumber || 0
+                });
+                window.dispatchEvent(errEv);
+                // console.log(err); // Should we auto-log for user?
+            };
+        }
 
-      // Todo: This really should always run here but as we can't set the global
-      //   `window` (e.g., using jsdom) since `setGlobalVars` becomes unable to
-      //   shim `indexedDB` in such a case currently (apparently due to
-      //   <https://github.com/axemclion/IndexedDBShim/issues/280>), we can't
-      //   avoid the above Node implementation (which, while providing some
-      //   fallback mechanism, is unstable)
-      if (!useNodeImpl || !this._legacyOutputDidListenersThrowCheck) triggerGlobalErrorEvent();
+        // Todo: This really should always run here but as we can't set the global
+        //     `window` (e.g., using jsdom) since `setGlobalVars` becomes unable to
+        //     shim `indexedDB` in such a case currently (apparently due to
+        //     <https://github.com/axemclion/IndexedDBShim/issues/280>), we can't
+        //     avoid the above Node implementation (which, while providing some
+        //     fallback mechanism, is unstable)
+        if (!useNodeImpl || !this._legacyOutputDidListenersThrowCheck) triggerGlobalErrorEvent();
 
-      // See https://dom.spec.whatwg.org/#concept-event-listener-inner-invoke and
-      //  https://github.com/w3c/IndexedDB/issues/140 (also https://github.com/w3c/IndexedDB/issues/49 )
-      if (this._legacyOutputDidListenersThrowCheck) {
-        ev.__legacyOutputDidListenersThrowError = error;
-      }
+        // See https://dom.spec.whatwg.org/#concept-event-listener-inner-invoke and
+        //    https://github.com/w3c/IndexedDB/issues/140 (also https://github.com/w3c/IndexedDB/issues/49 )
+        if (this._legacyOutputDidListenersThrowCheck) {
+            ev.__legacyOutputDidListenersThrowError = error;
+        }
     }
-  });
-  EventTarget.prototype[Symbol.toStringTag] = 'EventTargetPrototype';
+});
+EventTarget.prototype[Symbol.toStringTag] = 'EventTargetPrototype';
 
-  Object.defineProperty(EventTarget, 'prototype', {
+Object.defineProperty(EventTarget, 'prototype', {
     writable: false
-  });
+});
 
-  var ShimEventTarget = EventTarget;
-  var EventTargetFactory = {
-    createInstance: function (customOptions) {
-      function EventTarget () {
-        this.__setOptions(customOptions);
-      }
-      EventTarget.prototype = ShimEventTarget.prototype;
-      return new EventTarget();
+var ShimEventTarget = EventTarget;
+var EventTargetFactory = {
+    createInstance: function createInstance(customOptions) {
+        function EventTarget() {
+            this.__setOptions(customOptions);
+        }
+        EventTarget.prototype = ShimEventTarget.prototype;
+        return new EventTarget();
     }
-  };
+};
 
-  EventTarget.ShimEvent = ShimEvent;
-  EventTarget.ShimCustomEvent = ShimCustomEvent;
-  EventTarget.ShimDOMException = ShimDOMException;
-  EventTarget.ShimEventTarget = EventTarget;
-  EventTarget.EventTargetFactory = EventTargetFactory;
+EventTarget.ShimEvent = ShimEvent;
+EventTarget.ShimCustomEvent = ShimCustomEvent;
+EventTarget.ShimDOMException = exports.ShimDOMException;
+EventTarget.ShimEventTarget = EventTarget;
+EventTarget.EventTargetFactory = EventTargetFactory;
 
-  // Todo: Move to own library (but allowing WeakMaps to be passed in for sharing here)
+exports.EventTargetFactory = EventTargetFactory;
+exports.ShimEventTarget = EventTarget;
+exports.ShimEvent = ShimEvent;
+exports.ShimCustomEvent = ShimCustomEvent;
 
-  var exportObj = (typeof module !== 'undefined' && module.exports) ? exports : window;
-  exportObj.ShimEvent = ShimEvent;
-  exportObj.ShimCustomEvent = ShimCustomEvent;
-  exportObj.ShimDOMException = ShimDOMException;
-  exportObj.ShimEventTarget = EventTarget;
-  exportObj.EventTargetFactory = EventTargetFactory;
-}());
+Object.defineProperty(exports, '__esModule', { value: true });
 
-},{}],4:[function(require,module,exports){
+})));
+
+},{}],3:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -883,7 +831,7 @@ var substr = 'ab'.substr(-1) === 'b'
 
 }).call(this,require('_process'))
 
-},{"_process":5}],5:[function(require,module,exports){
+},{"_process":4}],4:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -1069,7 +1017,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],6:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 // Since [immediate](https://github.com/calvinmetcalf/immediate) is
 //   not doing the trick for our WebSQL transactions (at least in Node),
 //   we are forced to make the promises run fully synchronously.
@@ -1228,1038 +1176,19 @@ SyncPromise.reject = function(val) {
 };
 module.exports = SyncPromise;
 
-},{}],7:[function(require,module,exports){
-module.exports = [
-    {
-        sparseArrays: {
-            testPlainObjects: true,
-            test: function (x) {return Array.isArray(x);},
-            replace: function (a, stateObj) {
-                stateObj.iterateUnsetNumeric = true;
-                return a;
-            }
-        }
-    },
-    {
-        sparseUndefined: {
-            test: function (x, stateObj) { return typeof x === 'undefined' && stateObj.ownKeys === false; },
-            replace: function (n) { return null; },
-            revive: function (s) { return undefined;} // Will avoid adding anything
-        }
-    }
-];
-
-},{}],8:[function(require,module,exports){
-module.exports = require('./structured-cloning').concat({checkDataCloneException: [function (val) {
-    // Should also throw with:
-    // 1. `IsDetachedBuffer` (a process not called within the ECMAScript spec)
-    // 2. `IsCallable` (covered by `typeof === 'function'` or a function's `toStringTag`)
-    // 3. internal slots besides [[Prototype]] or [[Extensible]] (e.g., [[PromiseState]] or [[WeakMapData]])
-    // 4. exotic object (e.g., `Proxy`) (which does not have default behavior for one or more of the
-    //      essential internal methods that are limited to the following for non-function objects (we auto-exclude functions):
-    //      [[GetPrototypeOf]],[[SetPrototypeOf]],[[IsExtensible]],[[PreventExtensions]],[[GetOwnProperty]],
-    //      [[DefineOwnProperty]],[[HasProperty]],[[Get]],[[Set]],[[Delete]],[[OwnPropertyKeys]]);
-    //      except for the standard, built-in exotic objects, we'd need to know whether these methods had distinct behaviors
-    // Note: There is no apparent way for us to detect a `Proxy` and reject (Chrome at least is not rejecting anyways)
-    var stringTag = ({}.toString.call(val).slice(8, -1));
-    if ([
-            'symbol', // Symbol's `toStringTag` is only "Symbol" for its initial value, so we check `typeof`
-            'function' // All functions including bound function exotic objects
-        ].includes(typeof val) ||
-        [
-            'Arguments', // A non-array exotic object
-            'Module', // A non-array exotic object
-            'Error', // `Error` and other errors have the [[ErrorData]] internal slot and give "Error"
-            'Promise', // Promise instances have an extra slot ([[PromiseState]]) but not throwing in Chrome `postMessage`
-            'WeakMap', // WeakMap instances have an extra slot ([[WeakMapData]]) but not throwing in Chrome `postMessage`
-            'WeakSet' // WeakSet instances have an extra slot ([[WeakSetData]]) but not throwing in Chrome `postMessage`
-        ].includes(stringTag) ||
-        val === Object.prototype || // A non-array exotic object but not throwing in Chrome `postMessage`
-        ((stringTag === 'Blob' || stringTag === 'File') && val.isClosed) ||
-        (val && typeof val === 'object' && typeof val.nodeType === 'number' && typeof val.insertBefore === 'function') // Duck-type DOM node objects (non-array exotic? objects which cannot be cloned by the SCA)
-    ) {
-        throw new DOMException('The object cannot be cloned.', 'DataCloneError');
-    }
-    return false;
-}]});
-
-},{"./structured-cloning":9}],9:[function(require,module,exports){
-/* This preset includes types for the Structured Cloning Algorithm. */
-module.exports = [
-    // Todo: Might also register `ImageBitmap` and synchronous `Blob`/`File`/`FileList`
-    // ES5
-    require('../types/user-object'), // Processed last
-    require('../presets/undefined'),
-    require('../types/primitive-objects'),
-    require('../types/special-numbers'),
-    require('../types/date'),
-    require('../types/regexp'),
-    // ES2015 (ES6)
-    typeof Map === 'function' && require('../types/map'),
-    typeof Set === 'function' && require('../types/set'),
-    typeof ArrayBuffer === 'function' && require('../types/arraybuffer'),
-    typeof Uint8Array === 'function' && require('../types/typed-arrays'),
-    typeof DataView === 'function' && require('../types/dataview'),
-    typeof Intl !== 'undefined' && require('../types/intl-types'),
-    // Non-built-ins
-    require('../types/imagedata'),
-    require('../types/imagebitmap'), // Async return
-    require('../types/file'),
-    require('../types/filelist'),
-    require('../types/blob')
-];
-
-},{"../presets/undefined":10,"../types/arraybuffer":11,"../types/blob":12,"../types/dataview":13,"../types/date":14,"../types/file":15,"../types/filelist":16,"../types/imagebitmap":17,"../types/imagedata":18,"../types/intl-types":19,"../types/map":20,"../types/primitive-objects":21,"../types/regexp":22,"../types/set":23,"../types/special-numbers":24,"../types/typed-arrays":25,"../types/user-object":27}],10:[function(require,module,exports){
-module.exports = [
-    require('../presets/sparse-undefined'),
-    require('../types/undefined')
-];
-
-},{"../presets/sparse-undefined":7,"../types/undefined":26}],11:[function(require,module,exports){
-var Typeson = require('typeson');
-var B64 = require ('base64-arraybuffer');
-
-exports.ArrayBuffer = [
-    function test (x) { return Typeson.toStringTag(x) === 'ArrayBuffer';},
-    function encapsulate (b) { return B64.encode(b); },
-    function revive (b64) { return B64.decode(b64); }
-];
-// See also typed-arrays!
-
-},{"base64-arraybuffer":1,"typeson":29}],12:[function(require,module,exports){
-var Typeson = require('typeson');
-exports.Blob = {
-    test: function (x) { return Typeson.toStringTag(x) === 'Blob'; },
-    replace: function encapsulate (b) { // Sync
-        var req = new XMLHttpRequest();
-        req.open('GET', URL.createObjectURL(b), false); // Sync
-        if (req.status !== 200 && req.status !== 0) throw new Error('Bad Blob access: ' + req.status);
-        req.send();
-        return {
-            type: b.type,
-            stringContents: req.responseText
-        };
-    },
-    revive: function (o) {return new Blob([o.stringContents], {
-        type: o.type
-    });},
-    replaceAsync: function encapsulateAsync (b) {
-        return new Typeson.Promise(function (resolve, reject) {
-            if (b.isClosed) { // On MDN, but not in https://w3c.github.io/FileAPI/#dfn-Blob
-                reject(new Error('The Blob is closed'));
-                return;
-            }
-            var reader = new FileReader();
-            reader.addEventListener('load', function () {
-                resolve({
-                    type: b.type,
-                    stringContents: reader.result
-                });
-            });
-            reader.addEventListener('error', function () {
-                reject(reader.error);
-            });
-            reader.readAsText(b);
-        });
-    }
-};
-
-},{"typeson":29}],13:[function(require,module,exports){
-var Typeson = require('typeson');
-var B64 = require ('base64-arraybuffer');
-exports.DataView = [
-    function (x) { return Typeson.toStringTag(x) === 'DataView'; },
-    function (dw) { return { buffer: B64.encode(dw.buffer), byteOffset: dw.byteOffset, byteLength: dw.byteLength }; },
-    function (obj) { return new DataView(B64.decode(obj.buffer), obj.byteOffset, obj.byteLength); }
-];
-
-},{"base64-arraybuffer":1,"typeson":29}],14:[function(require,module,exports){
-var Typeson = require('typeson');
-exports.Date = [
-    function (x) { return Typeson.toStringTag(x) === 'Date'; },
-    function (date) { return date.getTime(); },
-    function (time) { return new Date(time); }
-];
-
-},{"typeson":29}],15:[function(require,module,exports){
-var Typeson = require('typeson');
-exports.File = {
-    test: function (x) { return Typeson.toStringTag(x) === 'File'; },
-    replace: function encapsulate (f) { // Sync
-        var req = new XMLHttpRequest();
-        req.open('GET', URL.createObjectURL(f), false); // Sync
-        if (req.status !== 200 && req.status !== 0) throw new Error('Bad Blob access: ' + req.status);
-        req.send();
-        return {
-            type: f.type,
-            stringContents: req.responseText,
-            name: f.name,
-            lastModified: f.lastModified
-        };
-    },
-    revive: function (o) {return new File([o.stringContents], o.name, {
-        type: o.type,
-        lastModified: o.lastModified
-    });},
-    replaceAsync: function encapsulateAsync (f) {
-        return new Typeson.Promise(function (resolve, reject) {
-            if (f.isClosed) { // On MDN, but not in https://w3c.github.io/FileAPI/#dfn-Blob
-                reject(new Error('The File is closed'));
-                return;
-            }
-            var reader = new FileReader();
-            reader.addEventListener('load', function () {
-                resolve({
-                    type: f.type,
-                    stringContents: reader.result,
-                    name: f.name,
-                    lastModified: f.lastModified
-                });
-            });
-            reader.addEventListener('error', function () {
-                reject(reader.error);
-            });
-            reader.readAsText(f);
-        });
-    }
-};
-
-},{"typeson":29}],16:[function(require,module,exports){
-var Typeson = require('typeson');
-exports.File = require('./file').File;
-exports.FileList = {
-    test: function (x) { return Typeson.toStringTag(x) === 'FileList'; },
-    replace: function (fl) {
-        var arr = [];
-        for (var i = 0; i < fl.length; i++) {
-            arr[i] = fl.item(i);
-        }
-        return arr;
-    },
-    revive: function (o) {
-        function FileList () {
-            this._files = arguments[0];
-            this.length = this._files.length;
-        }
-        FileList.prototype.item = function (index) {
-            return this._files[index];
-        };
-        FileList.prototype[Symbol.toStringTag] = 'FileList';
-        return new FileList(o);
-    }
-};
-
-},{"./file":15,"typeson":29}],17:[function(require,module,exports){
-/** ImageBitmap is browser / DOM specific. It also can only work same-domain (or CORS)
-*/
-var Typeson = require('typeson');
-exports.ImageBitmap = {
-    test: function (x) { return Typeson.toStringTag(x) === 'ImageBitmap'; },
-    replace: function (bm) {
-        var canvas = document.createElement('canvas');
-        var ctx = canvas.getContext('2d');
-        ctx.drawImage(bm, 0, 0);
-        // Although `width` and `height` are part of `ImageBitMap`, these will
-        //   be auto-created for us when reviving with the data URL (and they are
-        //   not settable even if they weren't)
-        // return {width: bm.width, height: bm.height, dataURL: canvas.toDataURL()};
-        return canvas.toDataURL();
-    },
-    revive: function (o) {
-        /*
-        var req = new XMLHttpRequest();
-        req.open('GET', o, false); // Sync
-        if (req.status !== 200 && req.status !== 0) throw new Error('Bad ImageBitmap access: ' + req.status);
-        req.send();
-        return req.responseText;
-        */
-        var canvas = document.createElement('canvas');
-        var ctx = canvas.getContext('2d');
-        var img = document.createElement('img');
-        // The onload is needed by some browsers per http://stackoverflow.com/a/4776378/271577
-        img.onload = function () {
-            ctx.drawImage(img, 0, 0);
-        };
-        img.src = o;
-        return canvas; // Works in contexts allowing an ImageBitmap (We might use `OffscreenCanvas.transferToBitmap` when supported)
-    },
-    reviveAsync: function reviveAsync (o) {
-        var canvas = document.createElement('canvas');
-        var ctx = canvas.getContext('2d');
-        var img = document.createElement('img');
-        // The onload is needed by some browsers per http://stackoverflow.com/a/4776378/271577
-        img.onload = function () {
-            ctx.drawImage(img, 0, 0);
-        };
-        img.src = o; // o.dataURL;
-        return createImageBitmap(canvas); // Returns a promise
-    }
-};
-
-},{"typeson":29}],18:[function(require,module,exports){
-/** ImageData is browser / DOM specific (though `node-canvas` has it available on `Canvas`).
-*/
-var Typeson = require('typeson');
-exports.ImageData = [
-    function (x) { return Typeson.toStringTag(x) === 'ImageData'; },
-    function (d) {
-        return {
-            array: Array.from(d.data), // Ensure `length` gets preserved for revival
-            width: d.width,
-            height: d.height
-        };
-    },
-    function (o) {return new ImageData(new Uint8ClampedArray(o.array), o.width, o.height);}
-];
-
-},{"typeson":29}],19:[function(require,module,exports){
-var Typeson = require('typeson');
-exports["Intl.Collator"] = [
-    function (x) { return Typeson.hasConstructorOf(x, Intl.Collator); },
-    function (c) { return c.resolvedOptions(); },
-    function (options) { return new Intl.Collator(options.locale, options); }
-];
-
-exports["Intl.DateTimeFormat"] = [
-    function (x) { return Typeson.hasConstructorOf(x, Intl.DateTimeFormat); },
-    function (dtf) { return dtf.resolvedOptions(); },
-    function (options) { return new Intl.DateTimeFormat(options.locale, options); }
-];
-
-exports["Intl.NumberFormat"] = [
-    function (x) { return Typeson.hasConstructorOf(x, Intl.NumberFormat); },
-    function (nf) { return nf.resolvedOptions(); },
-    function (options) { return new Intl.NumberFormat(options.locale, options); }
-];
-
-},{"typeson":29}],20:[function(require,module,exports){
-var Typeson = require('typeson');
-var makeArray = require('../utils/array-from-iterator');
-exports.Map = [
-    function (x) { return Typeson.toStringTag(x) === 'Map'; },
-    function (map) { return makeArray(map.entries()); },
-    function (entries) { return new Map(entries); }
-];
-
-},{"../utils/array-from-iterator":28,"typeson":29}],21:[function(require,module,exports){
-// This module is for objectified primitives (such as new Number(3) or
-// new String("foo"))
-var Typeson = require('typeson');
-module.exports = {
-    // String Object (not primitive string which need no type spec)
-    StringObject: [
-        function (x) { return Typeson.toStringTag(x) === 'String' && typeof x === 'object'; },
-        function (s) { return String(s); }, // convert to primitive string
-        function (s) { return new String(s); } // Revive to an objectified string
-    ],
-    // Boolean Object (not primitive boolean which need no type spec)
-    BooleanObject: [
-        function (x) { return Typeson.toStringTag(x) === 'Boolean' && typeof x === 'object'; },
-        function (b) { return Boolean(b); }, // convert to primitive boolean
-        function (b) { return new Boolean(b); } // Revive to an objectified Boolean
-    ],
-    // Number Object (not primitive number which need no type spec)
-    NumberObject: [
-        function (x) { return Typeson.toStringTag(x) === 'Number' && typeof x === 'object'; },
-        function (n) { return Number(n); }, // convert to primitive number
-        function (n) { return new Number(n); } // Revive to an objectified number
-    ]
-};
-
-},{"typeson":29}],22:[function(require,module,exports){
-var Typeson = require('typeson');
-exports.RegExp = [
-    function (x) { return Typeson.toStringTag(x) === 'RegExp'; },
-    function (rexp) {
-        return {
-            source: rexp.source,
-            flags: (rexp.global?'g':'')+(rexp.ignoreCase?'i':'')+(rexp.multiline?'m':'')+(rexp.sticky?'y':'')+(rexp.unicode?'u':'')
-        };
-    },
-    function (data) { return new RegExp (data.source, data.flags); }
-];
-
-},{"typeson":29}],23:[function(require,module,exports){
-var Typeson = require('typeson');
-var makeArray = require('../utils/array-from-iterator');
-exports.Set = [
-    function (x) { return Typeson.toStringTag(x) === 'Set'; },
-    function (set) { return makeArray(set.values()); },
-    function (values) { return new Set(values); }
-];
-
-},{"../utils/array-from-iterator":28,"typeson":29}],24:[function(require,module,exports){
-exports.SpecialNumber = [
-    function (x) { return typeof x === 'number' && (isNaN(x) || x === Infinity || x === -Infinity); },
-    function (n) { return isNaN(n) ? "NaN" : n > 0 ? "Infinity" : "-Infinity" },
-    function (s) { return {NaN: NaN, Infinity: Infinity, "-Infinity": -Infinity}[s];}
-];
-
-},{}],25:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 (function (global){
-var Typeson = require('typeson');
-var B64 = require ('base64-arraybuffer');
+!function(e,t){"object"==typeof exports&&"undefined"!=typeof module?module.exports=t():"function"==typeof define&&define.amd?define(t):(e.Typeson=e.Typeson||{},e.Typeson.presets=e.Typeson.presets||{},e.Typeson.presets.structuredCloningThrowing=t())}(this,function(){"use strict";function isThenable(e,t){return Typeson.isObject(e)&&"function"==typeof e.then&&(!t||"function"==typeof e.catch)}function toStringTag(e){return o.call(e).slice(8,-1)}function hasConstructorOf(t,n){if(!t||"object"!==(void 0===t?"undefined":e(t)))return!1;var r=s(t);if(!r)return!1;var i=a.call(r,"constructor")&&r.constructor;return"function"!=typeof i?null===n:"function"==typeof i&&null!==n&&c.call(i)===c.call(n)}function isPlainObject(e){if(!e||"Object"!==toStringTag(e))return!1;return!s(e)||hasConstructorOf(e,Object)}function isUserObject(e){if(!e||"Object"!==toStringTag(e))return!1;var t=s(e);return!t||(hasConstructorOf(e,Object)||isUserObject(t))}function isObject(t){return t&&"object"===(void 0===t?"undefined":e(t))}function Typeson(o){var s=[],a=[],c={},u=this.types={},f=this.stringify=function(e,t,n,r){r=Object.assign({},o,r,{stringification:!0});var s=l(e,null,r);return i(s)?JSON.stringify(s[0],t,n):s.then(function(e){return JSON.stringify(e,t,n)})};this.stringifySync=function(e,t,n,r){return f(e,t,n,Object.assign({},{throwOnBadSyncType:!0},r,{sync:!0}))},this.stringifyAsync=function(e,t,n,r){return f(e,t,n,Object.assign({},{throwOnBadSyncType:!0},r,{sync:!1}))};var p=this.parse=function(e,t,n){return n=Object.assign({},o,n,{parse:!0}),y(JSON.parse(e,t),n)};this.parseSync=function(e,t,n){return p(e,t,Object.assign({},{throwOnBadSyncType:!0},n,{sync:!0}))},this.parseAsync=function(e,t,n){return p(e,t,Object.assign({},{throwOnBadSyncType:!0},n,{sync:!1}))},this.specialTypeNames=function(e,t){var n=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{};return n.returnTypeNames=!0,this.encapsulate(e,t,n)},this.rootTypeName=function(e,t){var n=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{};return n.iterateNone=!0,this.encapsulate(e,t,n)};var l=this.encapsulate=function(u,f,p){function finish(e){var t=Object.values(y);if(p.iterateNone)return t.length?t[0]:Typeson.getJSONType(e);if(t.length){if(p.returnTypeNames)return[].concat(n(new Set(t)));e&&isPlainObject(e)&&!e.hasOwnProperty("$types")?e.$types=y:e={$:e,$types:{$:y}}}else isObject(e)&&e.hasOwnProperty("$types")&&(e={$:e,$types:!0});return!p.returnTypeNames&&e}function checkPromises(e,n){return Promise.all(n.map(function(e){return e[1].p})).then(function(r){return Promise.all(r.map(function(r){var i=[],o=n.splice(0,1)[0],s=t(o,7),a=s[0],c=s[2],u=s[3],f=s[4],p=s[5],l=s[6],y=_encapsulate(a,r,c,u,i,!0,l),v=hasConstructorOf(y,TypesonPromise);return a&&v?y.p.then(function(t){return f[p]=t,checkPromises(e,i)}):(a?f[p]=y:e=v?y.p:y,checkPromises(e,i))}))}).then(function(){return e})}function _encapsulate(t,n,o,a,c,u,f){var l=void 0,h={},g=void 0===n?"undefined":e(n),b=m?function(e){var r=f||a.type||Typeson.getJSONType(n);m(Object.assign(e||h,{keypath:t,value:n,cyclic:o,stateObj:a,promisesData:c,resolvingTypesonPromise:u,awaitingTypesonPromise:hasConstructorOf(n,TypesonPromise)},void 0!==r?{type:r}:{}))}:null;if(g in{string:1,boolean:1,number:1,undefined:1})return void 0===n||"number"===g&&(isNaN(n)||n===-1/0||n===1/0)?(l=replace(t,n,a,c,!1,u,b))!==n&&(h={replaced:l}):l=n,b&&b(),l;if(null===n)return b&&b(),n;if(o&&!a.iterateIn&&!a.iterateUnsetNumeric){var T=v.indexOf(n);if(!(T<0))return y[t]="#",b&&b({cyclicKeypath:d[T]}),"#"+d[T];!0===o&&(v.push(n),d.push(t))}var O=isPlainObject(n),w=i(n),S=(O||w)&&(!s.length||a.replaced)||a.iterateIn?n:replace(t,n,a,c,O||w,null,b),P=void 0;if(S!==n?(l=S,h={replaced:S}):w||"array"===a.iterateIn?(P=new Array(n.length),h={clone:P}):O||"object"===a.iterateIn?h={clone:P={}}:""===t&&hasConstructorOf(n,TypesonPromise)?(c.push([t,n,o,a,void 0,void 0,a.type]),l=n):l=n,b&&b(),p.iterateNone)return P||l;if(!P)return l;if(a.iterateIn){for(var j in n){var A={ownKeys:n.hasOwnProperty(j)},C=t+(t?".":"")+escapeKeyPathComponent(j),N=_encapsulate(C,n[j],!!o,A,c,u);hasConstructorOf(N,TypesonPromise)?c.push([C,N,!!o,A,P,j,A.type]):void 0!==N&&(P[j]=N)}b&&b({endIterateIn:!0,end:!0})}else r(n).forEach(function(e){var r=t+(t?".":"")+escapeKeyPathComponent(e),i={ownKeys:!0},s=_encapsulate(r,n[e],!!o,i,c,u);hasConstructorOf(s,TypesonPromise)?c.push([r,s,!!o,i,P,e,i.type]):void 0!==s&&(P[e]=s)}),b&&b({endIterateOwn:!0,end:!0});if(a.iterateUnsetNumeric){for(var B=n.length,E=0;E<B;E++)if(!(E in n)){var I=t+(t?".":"")+E,U={ownKeys:!1},K=_encapsulate(I,void 0,!!o,U,c,u);hasConstructorOf(K,TypesonPromise)?c.push([I,K,!!o,U,P,E,U.type]):void 0!==K&&(P[E]=K)}b&&b({endIterateUnsetNumeric:!0,end:!0})}return P}function replace(e,t,n,r,i,o,u){for(var f=i?s:a,p=f.length;p--;){var v=f[p];if(v.test(t,n)){var d=v.type;if(c[d]){var h=y[e];y[e]=h?[d].concat(h):d}if(n=Object.assign(n,{type:d,replaced:!0}),(l||!v.replaceAsync)&&!v.replace)return u&&u({typeDetected:!0}),_encapsulate(e,t,g&&"readonly",n,r,o,d);u&&u({replacing:!0});return _encapsulate(e,v[l||!v.replaceAsync?"replace":"replaceAsync"](t,n),g&&"readonly",n,r,o,d)}}return t}var l=(p=Object.assign({sync:!0},o,p)).sync,y={},v=[],d=[],h=[],g=!(p&&"cyclic"in p)||p.cyclic,m=p.encapsulateObserver,b=_encapsulate("",u,g,f||{},h);return h.length?l&&p.throwOnBadSyncType?function(){throw new TypeError("Sync method requested but async result obtained")}():Promise.resolve(checkPromises(b,h)).then(finish):!l&&p.throwOnBadSyncType?function(){throw new TypeError("Async method requested but sync result obtained")}():p.stringification&&l?[finish(b)]:l?finish(b):Promise.resolve(finish(b))};this.encapsulateSync=function(e,t,n){return l(e,t,Object.assign({},{throwOnBadSyncType:!0},n,{sync:!0}))},this.encapsulateAsync=function(e,t,n){return l(e,t,Object.assign({},{throwOnBadSyncType:!0},n,{sync:!1}))};var y=this.revive=function(e,n){function _revive(e,n,o,s,p,l){if(!u||"$types"!==e){var y=a[e];if(i(n)||isPlainObject(n)){var v=i(n)?new Array(n.length):{};for(r(n).forEach(function(t){var r=_revive(e+(e?".":"")+escapeKeyPathComponent(t),n[t],o||v,s,v,t);hasConstructorOf(r,Undefined)?v[t]=void 0:void 0!==r&&(v[t]=r)}),n=v;f.length;){var d=t(f[0],4),h=d[0],g=d[1],m=d[2],b=d[3],T=getByKeyPath(h,g);if(hasConstructorOf(T,Undefined))m[b]=void 0;else{if(void 0===T)break;m[b]=T}f.splice(0,1)}}if(!y)return n;if("#"===y){var O=getByKeyPath(o,n.substr(1));return void 0===O&&f.push([o,n.substr(1),p,l]),O}var w=s.sync;return[].concat(y).reduce(function(e,t){var n=c[t];if(!n)throw new Error("Unregistered type: "+t);return n[w&&n.revive?"revive":!w&&n.reviveAsync?"reviveAsync":"revive"](e)},n)}}var s=(n=Object.assign({sync:!0},o,n)).sync,a=e&&e.$types,u=!0;if(!a)return e;if(!0===a)return e.$;a.$&&isPlainObject(a.$)&&(e=e.$,a=a.$,u=!1);var f=[],p=_revive("",e,null,n);return p=hasConstructorOf(p,Undefined)?void 0:p,isThenable(p)?s&&n.throwOnBadSyncType?function(){throw new TypeError("Sync method requested but async result obtained")}():p:!s&&n.throwOnBadSyncType?function(){throw new TypeError("Async method requested but sync result obtained")}():s?p:Promise.resolve(p)};this.reviveSync=function(e,t){return y(e,Object.assign({},{throwOnBadSyncType:!0},t,{sync:!0}))},this.reviveAsync=function(e,t){return y(e,Object.assign({},{throwOnBadSyncType:!0},t,{sync:!1}))},this.register=function(e,t){return t=t||{},[].concat(e).forEach(function R(e){if(i(e))return e.map(R);e&&r(e).forEach(function(n){if("#"===n)throw new TypeError("# cannot be used as a type name as it is reserved for cyclic objects");if(Typeson.JSON_TYPES.includes(n))throw new TypeError("Plain JSON object types are reserved as type names");var r=e[n],o=r.testPlainObjects?s:a,f=o.filter(function(e){return e.type===n});if(f.length&&(o.splice(o.indexOf(f[0]),1),delete c[n],delete u[n]),r){if("function"==typeof r){var p=r;r={test:function test(e){return e&&e.constructor===p},replace:function replace(e){return assign({},e)},revive:function revive(e){return assign(Object.create(p.prototype),e)}}}else i(r)&&(r={test:r[0],replace:r[1],revive:r[2]});var l={type:n,test:r.test.bind(r)};r.replace&&(l.replace=r.replace.bind(r)),r.replaceAsync&&(l.replaceAsync=r.replaceAsync.bind(r));var y="number"==typeof t.fallback?t.fallback:t.fallback?0:1/0;if(r.testPlainObjects?s.splice(y,0,l):a.splice(y,0,l),r.revive||r.reviveAsync){var v={};r.revive&&(v.revive=r.revive.bind(r)),r.reviveAsync&&(v.reviveAsync=r.reviveAsync.bind(r)),c[n]=v}u[n]=r}})}),this}}function assign(e,t){return r(t).map(function(n){e[n]=t[n]}),e}function escapeKeyPathComponent(e){return e.replace(/~/g,"~0").replace(/\./g,"~1")}function unescapeKeyPathComponent(e){return e.replace(/~1/g,".").replace(/~0/g,"~")}function getByKeyPath(e,t){if(""===t)return e;var n=t.indexOf(".");if(n>-1){var r=e[unescapeKeyPathComponent(t.substr(0,n))];return void 0===r?void 0:getByKeyPath(r,t.substr(n+1))}return e[unescapeKeyPathComponent(t)]}function Undefined(){}function TypesonPromise(e){this.p=new Promise(e)}var e="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e},t=function(){return function(e,t){if(Array.isArray(e))return e;if(Symbol.iterator in Object(e))return function sliceIterator(e,t){var n=[],r=!0,i=!1,o=void 0;try{for(var s,a=e[Symbol.iterator]();!(r=(s=a.next()).done)&&(n.push(s.value),!t||n.length!==t);r=!0);}catch(e){i=!0,o=e}finally{try{!r&&a.return&&a.return()}finally{if(i)throw o}}return n}(e,t);throw new TypeError("Invalid attempt to destructure non-iterable instance")}}(),n=function(e){if(Array.isArray(e)){for(var t=0,n=Array(e.length);t<e.length;t++)n[t]=e[t];return n}return Array.from(e)},r=Object.keys,i=Array.isArray,o={}.toString,s=Object.getPrototypeOf,a={}.hasOwnProperty,c=a.toString;TypesonPromise.prototype.then=function(e,t){var n=this;return new TypesonPromise(function(r,i){n.p.then(function(t){r(e?e(t):t)},function(e){n.p.catch(function(e){return t?t(e):Promise.reject(e)}).then(r,i)})})},TypesonPromise.prototype.catch=function(e){return this.then(null,e)},TypesonPromise.resolve=function(e){return new TypesonPromise(function(t){t(e)})},TypesonPromise.reject=function(e){return new TypesonPromise(function(t,n){n(e)})},["all","race"].map(function(e){TypesonPromise[e]=function(t){return new TypesonPromise(function(n,r){Promise[e](t.map(function(e){return e.p})).then(n,r)})}}),Typeson.Undefined=Undefined,Typeson.Promise=TypesonPromise,Typeson.isThenable=isThenable,Typeson.toStringTag=toStringTag,Typeson.hasConstructorOf=hasConstructorOf,Typeson.isObject=isObject,Typeson.isPlainObject=isPlainObject,Typeson.isUserObject=isUserObject,Typeson.escapeKeyPathComponent=escapeKeyPathComponent,Typeson.unescapeKeyPathComponent=unescapeKeyPathComponent,Typeson.getByKeyPath=getByKeyPath,Typeson.getJSONType=function(t){return null===t?"null":i(t)?"array":void 0===t?"undefined":e(t)},Typeson.JSON_TYPES=["null","boolean","number","string","array","object"];for(var u={userObject:{test:function test(e,t){return Typeson.isUserObject(e)},replace:function replace(e){return Object.assign({},e)},revive:function revive(e){return e}}},f=[[{sparseArrays:{testPlainObjects:!0,test:function test(e){return Array.isArray(e)},replace:function replace(e,t){return t.iterateUnsetNumeric=!0,e}}},{sparseUndefined:{test:function test(e,t){return void 0===e&&!1===t.ownKeys},replace:function replace(e){return null},revive:function revive(e){}}}],{undef:{test:function test(e,t){return void 0===e&&(t.ownKeys||!("ownKeys"in t))},replace:function replace(e){return null},revive:function revive(e){return new Typeson.Undefined}}}],p={StringObject:{test:function test(t){return"String"===Typeson.toStringTag(t)&&"object"===(void 0===t?"undefined":e(t))},replace:function replace(e){return String(e)},revive:function revive(e){return new String(e)}},BooleanObject:{test:function test(t){return"Boolean"===Typeson.toStringTag(t)&&"object"===(void 0===t?"undefined":e(t))},replace:function replace(e){return Boolean(e)},revive:function revive(e){return new Boolean(e)}},NumberObject:{test:function test(t){return"Number"===Typeson.toStringTag(t)&&"object"===(void 0===t?"undefined":e(t))},replace:function replace(e){return Number(e)},revive:function revive(e){return new Number(e)}}},l=[{nan:{test:function test(e){return"number"==typeof e&&isNaN(e)},replace:function replace(e){return"NaN"},revive:function revive(e){return NaN}}},{infinity:{test:function test(e){return e===1/0},replace:function replace(e){return"Infinity"},revive:function revive(e){return 1/0}}},{negativeInfinity:{test:function test(e){return e===-1/0},replace:function replace(e){return"-Infinity"},revive:function revive(e){return-1/0}}}],y={date:{test:function test(e){return"Date"===Typeson.toStringTag(e)},replace:function replace(e){var t=e.getTime();return isNaN(t)?"NaN":t},revive:function revive(e){return"NaN"===e?new Date(NaN):new Date(e)}}},v={regexp:{test:function test(e){return"RegExp"===Typeson.toStringTag(e)},replace:function replace(e){return{source:e.source,flags:(e.global?"g":"")+(e.ignoreCase?"i":"")+(e.multiline?"m":"")+(e.sticky?"y":"")+(e.unicode?"u":"")}},revive:function revive(e){var t=e.source,n=e.flags;return new RegExp(t,n)}}},d={map:{test:function test(e){return"Map"===Typeson.toStringTag(e)},replace:function replace(e){return Array.from(e.entries())},revive:function revive(e){return new Map(e)}}},h={set:{test:function test(e){return"Set"===Typeson.toStringTag(e)},replace:function replace(e){return Array.from(e.values())},revive:function revive(e){return new Set(e)}}},g="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",m=new Uint8Array(256),b=0;b<g.length;b++)m[g.charCodeAt(b)]=b;var T=function encode(e,t,n){for(var r=new Uint8Array(e,t,n),i=r.length,o="",s=0;s<i;s+=3)o+=g[r[s]>>2],o+=g[(3&r[s])<<4|r[s+1]>>4],o+=g[(15&r[s+1])<<2|r[s+2]>>6],o+=g[63&r[s+2]];return i%3==2?o=o.substring(0,o.length-1)+"=":i%3==1&&(o=o.substring(0,o.length-2)+"=="),o},O=function decode(e){var t=e.length,n=.75*e.length,r=0,i=void 0,o=void 0,s=void 0,a=void 0;"="===e[e.length-1]&&(n--,"="===e[e.length-2]&&n--);for(var c=new ArrayBuffer(n),u=new Uint8Array(c),f=0;f<t;f+=4)i=m[e.charCodeAt(f)],o=m[e.charCodeAt(f+1)],s=m[e.charCodeAt(f+2)],a=m[e.charCodeAt(f+3)],u[r++]=i<<2|o>>4,u[r++]=(15&o)<<4|s>>2,u[r++]=(3&s)<<6|63&a;return c},w={arraybuffer:{test:function test(e){return"ArrayBuffer"===Typeson.toStringTag(e)},replace:function replace(e){return T(e)},revive:function revive(e){return O(e)}}},S="undefined"==typeof self?global:self,P={};["Int8Array","Uint8Array","Uint8ClampedArray","Int16Array","Uint16Array","Int32Array","Uint32Array","Float32Array","Float64Array"].forEach(function(e){var t=e,n=S[t];n&&(P[e.toLowerCase()]={test:function test(e){return Typeson.toStringTag(e)===t},replace:function replace(e){return T(e.buffer,e.byteOffset,e.byteLength)},revive:function revive(e){return new n(O(e))}})});var j={dataview:{test:function test(e){return"DataView"===Typeson.toStringTag(e)},replace:function replace(e){var t=e.buffer,n=e.byteOffset,r=e.byteLength;return{buffer:T(t),byteOffset:n,byteLength:r}},revive:function revive(e){var t=e.buffer,n=e.byteOffset,r=e.byteLength;return new DataView(O(t),n,r)}}},A={IntlCollator:{test:function test(e){return Typeson.hasConstructorOf(e,Intl.Collator)},replace:function replace(e){return e.resolvedOptions()},revive:function revive(e){return new Intl.Collator(e.locale,e)}},IntlDateTimeFormat:{test:function test(e){return Typeson.hasConstructorOf(e,Intl.DateTimeFormat)},replace:function replace(e){return e.resolvedOptions()},revive:function revive(e){return new Intl.DateTimeFormat(e.locale,e)}},IntlNumberFormat:{test:function test(e){return Typeson.hasConstructorOf(e,Intl.NumberFormat)},replace:function replace(e){return e.resolvedOptions()},revive:function revive(e){return new Intl.NumberFormat(e.locale,e)}}},C={file:{test:function test(e){return"File"===Typeson.toStringTag(e)},replace:function replace(e){var t=new XMLHttpRequest;if(t.open("GET",URL.createObjectURL(e),!1),200!==t.status&&0!==t.status)throw new Error("Bad Blob access: "+t.status);return t.send(),{type:e.type,stringContents:t.responseText,name:e.name,lastModified:e.lastModified}},revive:function revive(e){var t=e.name,n=e.type,r=e.stringContents,i=e.lastModified;return new File([r],t,{type:n,lastModified:i})},replaceAsync:function replaceAsync(e){return new Typeson.Promise(function(t,n){if(e.isClosed)n(new Error("The File is closed"));else{var r=new FileReader;r.addEventListener("load",function(){t({type:e.type,stringContents:r.result,name:e.name,lastModified:e.lastModified})}),r.addEventListener("error",function(){n(r.error)}),r.readAsText(e)}})}}};return[u,f,p,l,y,v,{imagedata:{test:function test(e){return"ImageData"===Typeson.toStringTag(e)},replace:function replace(e){return{array:Array.from(e.data),width:e.width,height:e.height}},revive:function revive(e){return new ImageData(new Uint8ClampedArray(e.array),e.width,e.height)}}},{imagebitmap:{test:function test(e){return"ImageBitmap"===Typeson.toStringTag(e)||e&&e.dataset&&"ImageBitmap"===e.dataset.toStringTag},replace:function replace(e){var t=document.createElement("canvas");return t.getContext("2d").drawImage(e,0,0),t.toDataURL()},revive:function revive(e){var t=document.createElement("canvas"),n=t.getContext("2d"),r=document.createElement("img");return r.onload=function(){n.drawImage(r,0,0)},r.src=e,t},reviveAsync:function reviveAsync(e){var t=document.createElement("canvas"),n=t.getContext("2d"),r=document.createElement("img");return r.onload=function(){n.drawImage(r,0,0)},r.src=e,createImageBitmap(t)}}},C,{file:C.file,filelist:{test:function test(e){return"FileList"===Typeson.toStringTag(e)},replace:function replace(e){for(var t=[],n=0;n<e.length;n++)t[n]=e.item(n);return t},revive:function revive(e){function FileList(){this._files=arguments[0],this.length=this._files.length}return FileList.prototype.item=function(e){return this._files[e]},FileList.prototype[Symbol.toStringTag]="FileList",new FileList(e)}}},{blob:{test:function test(e){return"Blob"===Typeson.toStringTag(e)},replace:function replace(e){var t=new XMLHttpRequest;if(t.open("GET",URL.createObjectURL(e),!1),200!==t.status&&0!==t.status)throw new Error("Bad Blob access: "+t.status);return t.send(),{type:e.type,stringContents:t.responseText}},revive:function revive(e){var t=e.type,n=e.stringContents;return new Blob([n],{type:t})},replaceAsync:function replaceAsync(e){return new Typeson.Promise(function(t,n){if(e.isClosed)n(new Error("The Blob is closed"));else{var r=new FileReader;r.addEventListener("load",function(){t({type:e.type,stringContents:r.result})}),r.addEventListener("error",function(){n(r.error)}),r.readAsText(e)}})}}}].concat("function"==typeof Map?d:[],"function"==typeof Set?h:[],"function"==typeof ArrayBuffer?w:[],"function"==typeof Uint8Array?P:[],"function"==typeof DataView?j:[],"undefined"!=typeof Intl?A:[]).concat({checkDataCloneException:[function(t){var n={}.toString.call(t).slice(8,-1);if(["symbol","function"].includes(void 0===t?"undefined":e(t))||["Arguments","Module","Error","Promise","WeakMap","WeakSet"].includes(n)||t===Object.prototype||("Blob"===n||"File"===n)&&t.isClosed||t&&"object"===(void 0===t?"undefined":e(t))&&"number"==typeof t.nodeType&&"function"==typeof t.insertBefore)throw new DOMException("The object cannot be cloned.","DataCloneError");return!1}]})});
 
-var _global = typeof self === 'undefined' ? global : self;
-
-[
-    "Int8Array",
-    "Uint8Array",
-    "Uint8ClampedArray",
-    "Int16Array",
-    "Uint16Array",
-    "Int32Array",
-    "Uint32Array",
-    "Float32Array",
-    "Float64Array"
-].forEach(function (typeName) {
-    var TypedArray = _global[typeName];
-    if (TypedArray) exports[typeName] = [
-        function test (x) { return Typeson.toStringTag(x) === typeName; },
-        function encapsulate (a) { return B64.encode (a.buffer, a.byteOffset, a.byteLength); },
-        function revive (b64) { return new TypedArray (B64.decode(b64)); }
-    ];
-});
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"base64-arraybuffer":1,"typeson":29}],26:[function(require,module,exports){
-// This does not preserve `undefined` in sparse arrays; see the `undefined` or `sparse-undefined` preset
-var Typeson = require('typeson');
-module.exports = {
-    undefined: [
-        function (x, stateObj) { return typeof x === 'undefined' && (stateObj.ownKeys || !('ownKeys' in stateObj)); },
-        function (n) { return null; },
-        function (s) { return new Typeson.Undefined();} // Will add `undefined` (returning `undefined` would instead avoid explicitly setting)
-    ]
-};
+},{}],7:[function(require,module,exports){
+!function(e,n){"object"==typeof exports&&"undefined"!=typeof module?module.exports=n():"function"==typeof define&&define.amd?define(n):e.Typeson=n()}(this,function(){"use strict";function isThenable(e,n){return Typeson.isObject(e)&&"function"==typeof e.then&&(!n||"function"==typeof e.catch)}function toStringTag(e){return o.call(e).slice(8,-1)}function hasConstructorOf(n,t){if(!n||"object"!==(void 0===n?"undefined":e(n)))return!1;var r=s(n);if(!r)return!1;var i=c.call(r,"constructor")&&r.constructor;return"function"!=typeof i?null===t:"function"==typeof i&&null!==t&&a.call(i)===a.call(t)}function isPlainObject(e){if(!e||"Object"!==toStringTag(e))return!1;return!s(e)||hasConstructorOf(e,Object)}function isUserObject(e){if(!e||"Object"!==toStringTag(e))return!1;var n=s(e);return!n||(hasConstructorOf(e,Object)||isUserObject(n))}function isObject(n){return n&&"object"===(void 0===n?"undefined":e(n))}function Typeson(o){var s=[],c=[],a={},u=this.types={},y=this.stringify=function(e,n,t,r){r=Object.assign({},o,r,{stringification:!0});var s=f(e,null,r);return i(s)?JSON.stringify(s[0],n,t):s.then(function(e){return JSON.stringify(e,n,t)})};this.stringifySync=function(e,n,t,r){return y(e,n,t,Object.assign({},{throwOnBadSyncType:!0},r,{sync:!0}))},this.stringifyAsync=function(e,n,t,r){return y(e,n,t,Object.assign({},{throwOnBadSyncType:!0},r,{sync:!1}))};var p=this.parse=function(e,n,t){return t=Object.assign({},o,t,{parse:!0}),l(JSON.parse(e,n),t)};this.parseSync=function(e,n,t){return p(e,n,Object.assign({},{throwOnBadSyncType:!0},t,{sync:!0}))},this.parseAsync=function(e,n,t){return p(e,n,Object.assign({},{throwOnBadSyncType:!0},t,{sync:!1}))},this.specialTypeNames=function(e,n){var t=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{};return t.returnTypeNames=!0,this.encapsulate(e,n,t)},this.rootTypeName=function(e,n){var t=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{};return t.iterateNone=!0,this.encapsulate(e,n,t)};var f=this.encapsulate=function(u,y,p){function finish(e){var n=Object.values(l);if(p.iterateNone)return n.length?n[0]:Typeson.getJSONType(e);if(n.length){if(p.returnTypeNames)return[].concat(t(new Set(n)));e&&isPlainObject(e)&&!e.hasOwnProperty("$types")?e.$types=l:e={$:e,$types:{$:l}}}else isObject(e)&&e.hasOwnProperty("$types")&&(e={$:e,$types:!0});return!p.returnTypeNames&&e}function checkPromises(e,t){return Promise.all(t.map(function(e){return e[1].p})).then(function(r){return Promise.all(r.map(function(r){var i=[],o=t.splice(0,1)[0],s=n(o,7),c=s[0],a=s[2],u=s[3],y=s[4],p=s[5],f=s[6],l=_encapsulate(c,r,a,u,i,!0,f),h=hasConstructorOf(l,TypesonPromise);return c&&h?l.p.then(function(n){return y[p]=n,checkPromises(e,i)}):(c?y[p]=l:e=h?l.p:l,checkPromises(e,i))}))}).then(function(){return e})}function _encapsulate(n,t,o,c,a,u,y){var f=void 0,d={},b=void 0===t?"undefined":e(t),m=O?function(e){var r=y||c.type||Typeson.getJSONType(t);O(Object.assign(e||d,{keypath:n,value:t,cyclic:o,stateObj:c,promisesData:a,resolvingTypesonPromise:u,awaitingTypesonPromise:hasConstructorOf(t,TypesonPromise)},void 0!==r?{type:r}:{}))}:null;if(b in{string:1,boolean:1,number:1,undefined:1})return void 0===t||"number"===b&&(isNaN(t)||t===-1/0||t===1/0)?(f=replace(n,t,c,a,!1,u,m))!==t&&(d={replaced:f}):f=t,m&&m(),f;if(null===t)return m&&m(),t;if(o&&!c.iterateIn&&!c.iterateUnsetNumeric){var T=h.indexOf(t);if(!(T<0))return l[n]="#",m&&m({cyclicKeypath:v[T]}),"#"+v[T];!0===o&&(h.push(t),v.push(n))}var g=isPlainObject(t),P=i(t),j=(g||P)&&(!s.length||c.replaced)||c.iterateIn?t:replace(n,t,c,a,g||P,null,m),w=void 0;if(j!==t?(f=j,d={replaced:j}):P||"array"===c.iterateIn?(w=new Array(t.length),d={clone:w}):g||"object"===c.iterateIn?d={clone:w={}}:""===n&&hasConstructorOf(t,TypesonPromise)?(a.push([n,t,o,c,void 0,void 0,c.type]),f=t):f=t,m&&m(),p.iterateNone)return w||f;if(!w)return f;if(c.iterateIn){for(var S in t){var A={ownKeys:t.hasOwnProperty(S)},C=n+(n?".":"")+escapeKeyPathComponent(S),N=_encapsulate(C,t[S],!!o,A,a,u);hasConstructorOf(N,TypesonPromise)?a.push([C,N,!!o,A,w,S,A.type]):void 0!==N&&(w[S]=N)}m&&m({endIterateIn:!0,end:!0})}else r(t).forEach(function(e){var r=n+(n?".":"")+escapeKeyPathComponent(e),i={ownKeys:!0},s=_encapsulate(r,t[e],!!o,i,a,u);hasConstructorOf(s,TypesonPromise)?a.push([r,s,!!o,i,w,e,i.type]):void 0!==s&&(w[e]=s)}),m&&m({endIterateOwn:!0,end:!0});if(c.iterateUnsetNumeric){for(var K=t.length,B=0;B<K;B++)if(!(B in t)){var $=n+(n?".":"")+B,E={ownKeys:!1},U=_encapsulate($,void 0,!!o,E,a,u);hasConstructorOf(U,TypesonPromise)?a.push([$,U,!!o,E,w,B,E.type]):void 0!==U&&(w[B]=U)}m&&m({endIterateUnsetNumeric:!0,end:!0})}return w}function replace(e,n,t,r,i,o,u){for(var y=i?s:c,p=y.length;p--;){var h=y[p];if(h.test(n,t)){var v=h.type;if(a[v]){var d=l[e];l[e]=d?[v].concat(d):v}if(t=Object.assign(t,{type:v,replaced:!0}),(f||!h.replaceAsync)&&!h.replace)return u&&u({typeDetected:!0}),_encapsulate(e,n,b&&"readonly",t,r,o,v);u&&u({replacing:!0});return _encapsulate(e,h[f||!h.replaceAsync?"replace":"replaceAsync"](n,t),b&&"readonly",t,r,o,v)}}return n}var f=(p=Object.assign({sync:!0},o,p)).sync,l={},h=[],v=[],d=[],b=!(p&&"cyclic"in p)||p.cyclic,O=p.encapsulateObserver,m=_encapsulate("",u,b,y||{},d);return d.length?f&&p.throwOnBadSyncType?function(){throw new TypeError("Sync method requested but async result obtained")}():Promise.resolve(checkPromises(m,d)).then(finish):!f&&p.throwOnBadSyncType?function(){throw new TypeError("Async method requested but sync result obtained")}():p.stringification&&f?[finish(m)]:f?finish(m):Promise.resolve(finish(m))};this.encapsulateSync=function(e,n,t){return f(e,n,Object.assign({},{throwOnBadSyncType:!0},t,{sync:!0}))},this.encapsulateAsync=function(e,n,t){return f(e,n,Object.assign({},{throwOnBadSyncType:!0},t,{sync:!1}))};var l=this.revive=function(e,t){function _revive(e,t,o,s,p,f){if(!u||"$types"!==e){var l=c[e];if(i(t)||isPlainObject(t)){var h=i(t)?new Array(t.length):{};for(r(t).forEach(function(n){var r=_revive(e+(e?".":"")+escapeKeyPathComponent(n),t[n],o||h,s,h,n);hasConstructorOf(r,Undefined)?h[n]=void 0:void 0!==r&&(h[n]=r)}),t=h;y.length;){var v=n(y[0],4),d=v[0],b=v[1],O=v[2],m=v[3],T=getByKeyPath(d,b);if(hasConstructorOf(T,Undefined))O[m]=void 0;else{if(void 0===T)break;O[m]=T}y.splice(0,1)}}if(!l)return t;if("#"===l){var g=getByKeyPath(o,t.substr(1));return void 0===g&&y.push([o,t.substr(1),p,f]),g}var P=s.sync;return[].concat(l).reduce(function(e,n){var t=a[n];if(!t)throw new Error("Unregistered type: "+n);return t[P&&t.revive?"revive":!P&&t.reviveAsync?"reviveAsync":"revive"](e)},t)}}var s=(t=Object.assign({sync:!0},o,t)).sync,c=e&&e.$types,u=!0;if(!c)return e;if(!0===c)return e.$;c.$&&isPlainObject(c.$)&&(e=e.$,c=c.$,u=!1);var y=[],p=_revive("",e,null,t);return p=hasConstructorOf(p,Undefined)?void 0:p,isThenable(p)?s&&t.throwOnBadSyncType?function(){throw new TypeError("Sync method requested but async result obtained")}():p:!s&&t.throwOnBadSyncType?function(){throw new TypeError("Async method requested but sync result obtained")}():s?p:Promise.resolve(p)};this.reviveSync=function(e,n){return l(e,Object.assign({},{throwOnBadSyncType:!0},n,{sync:!0}))},this.reviveAsync=function(e,n){return l(e,Object.assign({},{throwOnBadSyncType:!0},n,{sync:!1}))},this.register=function(e,n){return n=n||{},[].concat(e).forEach(function R(e){if(i(e))return e.map(R);e&&r(e).forEach(function(t){if("#"===t)throw new TypeError("# cannot be used as a type name as it is reserved for cyclic objects");if(Typeson.JSON_TYPES.includes(t))throw new TypeError("Plain JSON object types are reserved as type names");var r=e[t],o=r.testPlainObjects?s:c,y=o.filter(function(e){return e.type===t});if(y.length&&(o.splice(o.indexOf(y[0]),1),delete a[t],delete u[t]),r){if("function"==typeof r){var p=r;r={test:function test(e){return e&&e.constructor===p},replace:function replace(e){return assign({},e)},revive:function revive(e){return assign(Object.create(p.prototype),e)}}}else i(r)&&(r={test:r[0],replace:r[1],revive:r[2]});var f={type:t,test:r.test.bind(r)};r.replace&&(f.replace=r.replace.bind(r)),r.replaceAsync&&(f.replaceAsync=r.replaceAsync.bind(r));var l="number"==typeof n.fallback?n.fallback:n.fallback?0:1/0;if(r.testPlainObjects?s.splice(l,0,f):c.splice(l,0,f),r.revive||r.reviveAsync){var h={};r.revive&&(h.revive=r.revive.bind(r)),r.reviveAsync&&(h.reviveAsync=r.reviveAsync.bind(r)),a[t]=h}u[t]=r}})}),this}}function assign(e,n){return r(n).map(function(t){e[t]=n[t]}),e}function escapeKeyPathComponent(e){return e.replace(/~/g,"~0").replace(/\./g,"~1")}function unescapeKeyPathComponent(e){return e.replace(/~1/g,".").replace(/~0/g,"~")}function getByKeyPath(e,n){if(""===n)return e;var t=n.indexOf(".");if(t>-1){var r=e[unescapeKeyPathComponent(n.substr(0,t))];return void 0===r?void 0:getByKeyPath(r,n.substr(t+1))}return e[unescapeKeyPathComponent(n)]}function Undefined(){}function TypesonPromise(e){this.p=new Promise(e)}var e="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e},n=function(){return function(e,n){if(Array.isArray(e))return e;if(Symbol.iterator in Object(e))return function sliceIterator(e,n){var t=[],r=!0,i=!1,o=void 0;try{for(var s,c=e[Symbol.iterator]();!(r=(s=c.next()).done)&&(t.push(s.value),!n||t.length!==n);r=!0);}catch(e){i=!0,o=e}finally{try{!r&&c.return&&c.return()}finally{if(i)throw o}}return t}(e,n);throw new TypeError("Invalid attempt to destructure non-iterable instance")}}(),t=function(e){if(Array.isArray(e)){for(var n=0,t=Array(e.length);n<e.length;n++)t[n]=e[n];return t}return Array.from(e)},r=Object.keys,i=Array.isArray,o={}.toString,s=Object.getPrototypeOf,c={}.hasOwnProperty,a=c.toString;return TypesonPromise.prototype.then=function(e,n){var t=this;return new TypesonPromise(function(r,i){t.p.then(function(n){r(e?e(n):n)},function(e){t.p.catch(function(e){return n?n(e):Promise.reject(e)}).then(r,i)})})},TypesonPromise.prototype.catch=function(e){return this.then(null,e)},TypesonPromise.resolve=function(e){return new TypesonPromise(function(n){n(e)})},TypesonPromise.reject=function(e){return new TypesonPromise(function(n,t){t(e)})},["all","race"].map(function(e){TypesonPromise[e]=function(n){return new TypesonPromise(function(t,r){Promise[e](n.map(function(e){return e.p})).then(t,r)})}}),Typeson.Undefined=Undefined,Typeson.Promise=TypesonPromise,Typeson.isThenable=isThenable,Typeson.toStringTag=toStringTag,Typeson.hasConstructorOf=hasConstructorOf,Typeson.isObject=isObject,Typeson.isPlainObject=isPlainObject,Typeson.isUserObject=isUserObject,Typeson.escapeKeyPathComponent=escapeKeyPathComponent,Typeson.unescapeKeyPathComponent=unescapeKeyPathComponent,Typeson.getByKeyPath=getByKeyPath,Typeson.getJSONType=function(n){return null===n?"null":i(n)?"array":void 0===n?"undefined":e(n)},Typeson.JSON_TYPES=["null","boolean","number","string","array","object"],Typeson});
 
-},{"typeson":29}],27:[function(require,module,exports){
-var Typeson = require('typeson');
-exports.userObjects = [
-    function (x, stateObj) { return Typeson.isUserObject(x); },
-    function (n) { return Object.assign({}, n); },
-    function (s) { return s;}
-];
-
-},{"typeson":29}],28:[function(require,module,exports){
-module.exports = Array.from || function (iterator) {
-   var res = [];
-   for (var i=iterator.next(); !i.done; i = iterator.next()) {
-      res.push(i.value);
-   }
-   return res;
-}
-
-},{}],29:[function(require,module,exports){
-var keys = Object.keys,
-    isArray = Array.isArray,
-    toString = ({}.toString),
-    getProto = Object.getPrototypeOf,
-    hasOwn = ({}.hasOwnProperty),
-    fnToString = hasOwn.toString;
-
-function isThenable (v, catchCheck) {
-    return Typeson.isObject(v) && typeof v.then === 'function' && (!catchCheck || typeof v.catch === 'function');
-}
-
-function toStringTag (val) {
-    return toString.call(val).slice(8, -1);
-}
-
-function hasConstructorOf (a, b) {
-    if (!a || typeof a !== 'object') {
-        return false;
-    }
-    var proto = getProto(a);
-    if (!proto) {
-        return false;
-    }
-    var Ctor = hasOwn.call(proto, 'constructor') && proto.constructor;
-    if (typeof Ctor !== 'function') {
-        return b === null;
-    }
-    return typeof Ctor === 'function' && b !== null && fnToString.call(Ctor) === fnToString.call(b);
-}
-
-function isPlainObject (val) { // Mirrors jQuery's
-    if (!val || toStringTag(val) !== 'Object') {
-        return false;
-    }
-
-    var proto = getProto(val);
-    if (!proto) { // `Object.create(null)`
-        return true;
-    }
-
-    return hasConstructorOf(val, Object);
-}
-
-function isUserObject (val) {
-    if (!val || toStringTag(val) !== 'Object') {
-        return false;
-    }
-
-    var proto = getProto(val);
-    if (!proto) { // `Object.create(null)`
-        return true;
-    }
-    return hasConstructorOf(val, Object) || isUserObject(proto);
-}
-
-function isObject (v) {
-    return v && typeof v === 'object'
-}
-
-/* Typeson - JSON with types
-    * License: The MIT License (MIT)
-    * Copyright (c) 2016 David Fahlander
-    */
-
-/** An instance of this class can be used to call stringify() and parse().
- * Typeson resolves cyclic references by default. Can also be extended to
- * support custom types using the register() method.
- *
- * @constructor
- * @param {{cyclic: boolean}} [options] - if cyclic (default true), cyclic references will be handled gracefully.
- */
-function Typeson (options) {
-    // Replacers signature: replace (value). Returns falsy if not replacing. Otherwise ['Date', value.getTime()]
-    var plainObjectReplacers = [];
-    var nonplainObjectReplacers = [];
-    // Revivers: map {type => reviver}. Sample: {'Date': value => new Date(value)}
-    var revivers = {};
-
-    /** Types registered via register() */
-    var regTypes = this.types = {};
-
-    /** Serialize given object to Typeson.
-     *
-     * Arguments works identical to those of JSON.stringify().
-     */
-    var stringify = this.stringify = function (obj, replacer, space, opts) { // replacer here has nothing to do with our replacers.
-        opts = Object.assign({}, options, opts, {stringification: true});
-        var encapsulated = encapsulate(obj, null, opts);
-        if (isArray(encapsulated)) {
-            return JSON.stringify(encapsulated[0], replacer, space);
-        }
-        return encapsulated.then(function (res) {
-            return JSON.stringify(res, replacer, space);
-        });
-    };
-
-    // Also sync but throws on non-sync result
-    this.stringifySync = function (obj, replacer, space, opts) {
-        return stringify(obj, replacer, space, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: true}));
-    };
-    this.stringifyAsync = function (obj, replacer, space, opts) {
-        return stringify(obj, replacer, space, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: false}));
-    };
-
-    /** Parse Typeson back into an obejct.
-     *
-     * Arguments works identical to those of JSON.parse().
-     */
-    var parse = this.parse = function (text, reviver, opts) {
-        opts = Object.assign({}, options, opts, {parse: true});
-        return revive(JSON.parse(text, reviver), opts); // This reviver has nothing to do with our revivers.
-    };
-
-    // Also sync but throws on non-sync result
-    this.parseSync = function (text, reviver, opts) {
-        return parse(text, reviver, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: true})); // This reviver has nothing to do with our revivers.
-    };
-    this.parseAsync = function (text, reviver, opts) {
-        return parse(text, reviver, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: false})); // This reviver has nothing to do with our revivers.
-    };
-
-    /** Encapsulate a complex object into a plain Object by replacing registered types with
-     * plain objects representing the types data.
-     *
-     * This method is used internally by Typeson.stringify().
-     * @param {Object} obj - Object to encapsulate.
-     */
-    var encapsulate = this.encapsulate = function (obj, stateObj, opts) {
-        opts = Object.assign({sync: true}, options, opts);
-        var sync = opts.sync;
-        var types = {},
-            refObjs = [], // For checking cyclic references
-            refKeys = [], // For checking cyclic references
-            promisesDataRoot = [];
-        // Clone the object deeply while at the same time replacing any special types or cyclic reference:
-        var cyclic = opts && ('cyclic' in opts) ? opts.cyclic : true;
-        var encapsulateObserver = opts.encapsulateObserver;
-        var ret = _encapsulate('', obj, cyclic, stateObj || {}, promisesDataRoot);
-        function finish (ret) {
-            // Add $types to result only if we ever bumped into a special type (or special case where object has own `$types`)
-            if (keys(types).length) {
-                if (!ret || !isPlainObject(ret) || // Special if array (or a primitive) was serialized because JSON would ignore custom `$types` prop on it
-                    ret.hasOwnProperty('$types') // Also need to handle if this is an object with its own `$types` property (to avoid ambiguity)
-                ) ret = {$: ret, $types: {$: types}};
-                else ret.$types = types;
-            } else if (isObject(ret) && ret.hasOwnProperty('$types')) {
-                ret = {$: ret, $types: true};
-            }
-            return ret;
-        }
-        function checkPromises (ret, promisesData) {
-            return Promise.all(
-                promisesData.map(function (pd) {return pd[1].p;})
-            ).then(function (promResults) {
-                return Promise.all(
-                    promResults.map(function (promResult) {
-                        var newPromisesData = [];
-                        var prData = promisesData.splice(0, 1)[0];
-                        // var [keypath, , cyclic, stateObj, parentObj, key] = prData;
-                        var keyPath = prData[0];
-                        var cyclic = prData[2];
-                        var stateObj = prData[3];
-                        var parentObj = prData[4];
-                        var key = prData[5];
-                        var detectedType = prData[6];
-
-                        var encaps = _encapsulate(keyPath, promResult, cyclic, stateObj, newPromisesData, true, detectedType);
-                        var isTypesonPromise = hasConstructorOf(encaps, TypesonPromise);
-                        if (keyPath && isTypesonPromise) { // Handle case where an embedded custom type itself returns a `Typeson.Promise`
-                            return encaps.p.then(function (encaps2) {
-                                parentObj[key] = encaps2;
-                                return checkPromises(ret, newPromisesData);
-                            });
-                        }
-                        if (keyPath) parentObj[key] = encaps;
-                        else if (isTypesonPromise) { ret = encaps.p; }
-                        else ret = encaps; // If this is itself a `Typeson.Promise` (because the original value supplied was a promise or because the supplied custom type value resolved to one), returning it below will be fine since a promise is expected anyways given current config (and if not a promise, it will be ready as the resolve value)
-                        return checkPromises(ret, newPromisesData);
-                    })
-                );
-            }).then(function () {
-                return ret;
-            });
-        };
-        return promisesDataRoot.length
-            ? sync && opts.throwOnBadSyncType
-                ? (function () {
-                    throw new TypeError("Sync method requested but async result obtained");
-                }())
-                : Promise.resolve(checkPromises(ret, promisesDataRoot)).then(finish)
-            : !sync && opts.throwOnBadSyncType
-                ? (function () {
-                    throw new TypeError("Async method requested but sync result obtained");
-                }())
-                : (opts.stringification && sync // If this is a synchronous request for stringification, yet a promise is the result, we don't want to resolve leading to an async result, so we return an array to avoid ambiguity
-                    ? [finish(ret)]
-                    : (sync
-                        ? finish(ret)
-                        : Promise.resolve(finish(ret))
-                    ));
-
-        function _encapsulate (keypath, value, cyclic, stateObj, promisesData, resolvingTypesonPromise, detectedType) {
-            var ret, observerData = {};
-            var runObserver = encapsulateObserver ? function (obj) {
-                if (!encapsulateObserver) {
-                    return;
-                }
-                var type = detectedType || stateObj.type;
-                encapsulateObserver(Object.assign(obj || observerData, {
-                    keypath: keypath,
-                    value: value,
-                    cyclic: cyclic,
-                    stateObj: stateObj,
-                    promisesData: promisesData,
-                    resolvingTypesonPromise: resolvingTypesonPromise,
-                    awaitingTypesonPromise: hasConstructorOf(value, TypesonPromise)
-                }, type !== undefined ? {type: type} : {}));
-            } : null;
-            var $typeof = typeof value;
-            if ($typeof in {string: 1, boolean: 1, number: 1, undefined: 1 }) {
-                if (value === undefined || ($typeof === 'number' &&
-                    (isNaN(value) || value === -Infinity || value === Infinity))) {
-                    ret = replace(keypath, value, stateObj, promisesData, false, resolvingTypesonPromise);
-                    if (ret !== value) {
-                        observerData = {replaced: ret};
-                    }
-                } else {
-                    ret = value;
-                }
-                if (runObserver) runObserver();
-                return ret;
-            }
-            if (value === null) {
-                if (runObserver) runObserver();
-                return value;
-            }
-            if (cyclic && !stateObj.iterateIn && !stateObj.iterateUnsetNumeric) {
-                // Options set to detect cyclic references and be able to rewrite them.
-                var refIndex = refObjs.indexOf(value);
-                if (refIndex < 0) {
-                    if (cyclic === true) {
-                        refObjs.push(value);
-                        refKeys.push(keypath);
-                    }
-                } else {
-                    types[keypath] = '#';
-                    if (runObserver) runObserver({
-                        cyclicKeypath: refKeys[refIndex]
-                    });
-                    return '#' + refKeys[refIndex];
-                }
-            }
-            var isPlainObj = isPlainObject(value);
-            var isArr = isArray(value);
-            var replaced = (
-                ((isPlainObj || isArr) && (!plainObjectReplacers.length || stateObj.replaced)) ||
-                stateObj.iterateIn // Running replace will cause infinite loop as will test positive again
-            )
-                // Optimization: if plain object and no plain-object replacers, don't try finding a replacer
-                ? value
-                : replace(keypath, value, stateObj, promisesData, isPlainObj || isArr);
-            var clone;
-            if (replaced !== value) {
-                ret = replaced;
-                observerData = {replaced: replaced};
-            } else {
-                if (isArr || stateObj.iterateIn === 'array') {
-                    clone = new Array(value.length);
-                    observerData = {clone: clone};
-                } else if (isPlainObj || stateObj.iterateIn === 'object') {
-                    clone = {};
-                    observerData = {clone: clone};
-                } else if (keypath === '' && hasConstructorOf(value, TypesonPromise)) {
-                    promisesData.push([keypath, value, cyclic, stateObj, undefined, undefined, stateObj.type]);
-                    ret = value;
-                } else {
-                    ret = value; // Only clone vanilla objects and arrays
-                }
-            }
-            if (runObserver) runObserver();
-            if (!clone) {
-                return ret;
-            }
-
-            // Iterate object or array
-            if (stateObj.iterateIn) {
-                for (var key in value) {
-                    var ownKeysObj = {ownKeys: value.hasOwnProperty(key)};
-                    var kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
-                    var val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
-                    if (hasConstructorOf(val, TypesonPromise)) {
-                        promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, key, ownKeysObj.type]);
-                    } else if (val !== undefined) clone[key] = val;
-                }
-                if (runObserver) runObserver({endIterateIn: true, end: true});
-            } else { // Note: Non-indexes on arrays won't survive stringify so somewhat wasteful for arrays, but so too is iterating all numeric indexes on sparse arrays when not wanted or filtering own keys for positive integers
-                keys(value).forEach(function (key) {
-                    var kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
-                    var ownKeysObj = {ownKeys: true};
-                    var val = _encapsulate(kp, value[key], !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
-                    if (hasConstructorOf(val, TypesonPromise)) {
-                        promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, key, ownKeysObj.type]);
-                    } else if (val !== undefined) clone[key] = val;
-                });
-                if (runObserver) runObserver({endIterateOwn: true, end: true});
-            }
-            // Iterate array for non-own numeric properties (we can't replace the prior loop though as it iterates non-integer keys)
-            if (stateObj.iterateUnsetNumeric) {
-                for (var i = 0, vl = value.length; i < vl; i++) {
-                    if (!(i in value)) {
-                        var kp = keypath + (keypath ? '.' : '') + i; // No need to escape numeric
-                        var ownKeysObj = {ownKeys: false};
-                        var val = _encapsulate(kp, undefined, !!cyclic, ownKeysObj, promisesData, resolvingTypesonPromise);
-                        if (hasConstructorOf(val, TypesonPromise)) {
-                            promisesData.push([kp, val, !!cyclic, ownKeysObj, clone, i, ownKeysObj.type]);
-                        } else if (val !== undefined) clone[i] = val;
-                    }
-                }
-                if (runObserver) runObserver({endIterateUnsetNumeric: true, end: true});
-            }
-            return clone;
-        }
-
-        function replace (keypath, value, stateObj, promisesData, plainObject, resolvingTypesonPromise) {
-            // Encapsulate registered types
-            var replacers = plainObject ? plainObjectReplacers : nonplainObjectReplacers;
-            var i = replacers.length;
-            while (i--) {
-                var replacer = replacers[i];
-                if (replacer.test(value, stateObj)) {
-                    var type = replacer.type;
-                    if (revivers[type]) {
-                        // Record the type only if a corresponding reviver exists.
-                        // This is to support specs where only replacement is done.
-                        // For example ensuring deep cloning of the object, or
-                        // replacing a type to its equivalent without the need to revive it.
-                        var existing = types[keypath];
-                        // type can comprise an array of types (see test shouldSupportIntermediateTypes)
-                        types[keypath] = existing ? [type].concat(existing) : type;
-                    }
-                    // Now, also traverse the result in case it contains its own types to replace
-                    stateObj = Object.assign(stateObj, {replaced: true, type: type});
-                    if ((sync || !replacer.replaceAsync) && !replacer.replace) {
-                        return _encapsulate(keypath, value, cyclic && 'readonly', stateObj, promisesData, resolvingTypesonPromise, type);
-                    }
-
-                    var replaceMethod = sync || !replacer.replaceAsync ? 'replace' : 'replaceAsync';
-                    return _encapsulate(keypath, replacer[replaceMethod](value, stateObj), cyclic && 'readonly', stateObj, promisesData, resolvingTypesonPromise, type);
-                }
-            }
-            return value;
-        }
-    };
-
-    // Also sync but throws on non-sync result
-    this.encapsulateSync = function (obj, stateObj, opts) {
-        return encapsulate(obj, stateObj, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: true}));
-    };
-    this.encapsulateAsync = function (obj, stateObj, opts) {
-        return encapsulate(obj, stateObj, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: false}));
-    };
-
-    /** Revive an encapsulated object.
-     * This method is used internally by JSON.parse().
-     * @param {Object} obj - Object to revive. If it has $types member, the properties that are listed there
-     * will be replaced with its true type instead of just plain objects.
-     */
-    var revive = this.revive = function (obj, opts) {
-        opts = Object.assign({sync: true}, options, opts);
-        var sync = opts.sync;
-        var types = obj && obj.$types,
-            ignore$Types = true;
-        if (!types) return obj; // No type info added. Revival not needed.
-        if (types === true) return obj.$; // Object happened to have own `$types` property but with no actual types, so we unescape and return that object
-        if (types.$ && isPlainObject(types.$)) {
-            // Special when root object is not a trivial Object, it will be encapsulated in $. It will also be encapsulated in $ if it has its own `$` property to avoid ambiguity
-            obj = obj.$;
-            types = types.$;
-            ignore$Types = false;
-        }
-        var keyPathResolutions = [];
-        var ret = _revive('', obj, null, opts);
-        ret = hasConstructorOf(ret, Undefined) ? undefined : ret;
-        return isThenable(ret)
-            ? sync && opts.throwOnBadSyncType
-                ? (function () {
-                    throw new TypeError("Sync method requested but async result obtained");
-                }())
-                : ret
-            : !sync && opts.throwOnBadSyncType
-                ? (function () {
-                    throw new TypeError("Async method requested but sync result obtained");
-                }())
-                : sync
-                    ? ret
-                    : Promise.resolve(ret);
-
-        function _revive (keypath, value, target, opts, clone, key) {
-            if (ignore$Types && keypath === '$types') return;
-            var type = types[keypath];
-            if (isArray(value) || isPlainObject(value)) {
-                var clone = isArray(value) ? new Array(value.length) : {};
-                // Iterate object or array
-                keys(value).forEach(function (key) {
-                    var val = _revive(keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key), value[key], target || clone, opts, clone, key);
-                    if (hasConstructorOf(val, Undefined)) clone[key] = undefined;
-                    else if (val !== undefined) clone[key] = val;
-                });
-                value = clone;
-                while (keyPathResolutions.length) { // Try to resolve cyclic reference as soon as available
-                    var kpr = keyPathResolutions[0];
-                    var target = kpr[0];
-                    var keyPath = kpr[1];
-                    var clone = kpr[2];
-                    var key = kpr[3];
-                    var val = getByKeyPath(target, keyPath);
-                    if (hasConstructorOf(val, Undefined)) clone[key] = undefined;
-                    else if (val !== undefined) clone[key] = val;
-                    else break;
-                    keyPathResolutions.splice(0, 1);
-                }
-            }
-            if (!type) return value;
-            if (type === '#') {
-                var ret = getByKeyPath(target, value.substr(1));
-                if (ret === undefined) { // Cyclic reference not yet available
-                    keyPathResolutions.push([target, value.substr(1), clone, key]);
-                }
-                return ret;
-            }
-            var sync = opts.sync;
-            return [].concat(type).reduce(function (val, type) {
-                var reviver = revivers[type];
-                if (!reviver) throw new Error ('Unregistered type: ' + type);
-                return reviver[
-                    sync && reviver.revive
-                        ? 'revive'
-                        : !sync && reviver.reviveAsync
-                            ? 'reviveAsync'
-                            : 'revive'
-                ](val);
-            }, value);
-        }
-    };
-
-    // Also sync but throws on non-sync result
-    this.reviveSync = function (obj, opts) {
-        return revive(obj, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: true}));
-    };
-    this.reviveAsync = function (obj, opts) {
-        return revive(obj, Object.assign({}, {throwOnBadSyncType: true}, opts, {sync: false}));
-    };
-
-    /** Register types.
-     * For examples how to use this method, see https://github.com/dfahlander/typeson-registry/tree/master/types
-     * @param {Array.<Object.<string,Function[]>>} typeSpec - Types and their functions [test, encapsulate, revive];
-     */
-    this.register = function (typeSpecSets, opts) {
-        opts = opts || {};
-        [].concat(typeSpecSets).forEach(function R (typeSpec) {
-            if (isArray(typeSpec)) return typeSpec.map(R); // Allow arrays of arrays of arrays...
-            typeSpec && keys(typeSpec).forEach(function (typeId) {
-                if (typeId === '#') {
-                    throw new TypeError('# cannot be used as a type name as it is reserved for cyclic objects');
-                }
-                var spec = typeSpec[typeId];
-                var replacers = spec.testPlainObjects ? plainObjectReplacers : nonplainObjectReplacers;
-                var existingReplacer = replacers.filter(function(r){ return r.type === typeId; });
-                if (existingReplacer.length) {
-                    // Remove existing spec and replace with this one.
-                    replacers.splice(replacers.indexOf(existingReplacer[0]), 1);
-                    delete revivers[typeId];
-                    delete regTypes[typeId];
-                }
-                if (spec) {
-                    if (typeof spec === 'function') {
-                        // Support registering just a class without replacer/reviver
-                        var Class = spec;
-                        spec = {
-                            test: function (x) { return x && x.constructor === Class; },
-                            replace: function (x) { return assign({}, x); },
-                            revive: function (x) { return assign(Object.create(Class.prototype), x); }
-                        };
-                    } else if (isArray(spec)) {
-                        spec = {
-                            test: spec[0],
-                            replace: spec[1],
-                            revive: spec[2]
-                        };
-                    }
-                    var replacerObj = {
-                        type: typeId,
-                        test: spec.test.bind(spec)
-                    };
-                    if (spec.replace) {
-                        replacerObj.replace = spec.replace.bind(spec);
-                    }
-                    if (spec.replaceAsync) {
-                        replacerObj.replaceAsync = spec.replaceAsync.bind(spec);
-                    }
-                    var start = typeof opts.fallback === 'number' ? opts.fallback : (opts.fallback ? 0 : Infinity);
-                    if (spec.testPlainObjects) {
-                        plainObjectReplacers.splice(start, 0, replacerObj);
-                    } else {
-                        nonplainObjectReplacers.splice(start, 0, replacerObj);
-                    }
-                    // Todo: We might consider a testAsync type
-                    if (spec.revive || spec.reviveAsync) {
-                        var reviverObj = {};
-                        if (spec.revive) reviverObj.revive = spec.revive.bind(spec);
-                        if (spec.reviveAsync) reviverObj.reviveAsync = spec.reviveAsync.bind(spec);
-                        revivers[typeId] = reviverObj;
-                    }
-
-                    regTypes[typeId] = spec; // Record to be retrieved via public types property.
-                }
-            });
-        });
-        return this;
-    };
-}
-
-function assign(t,s) {
-    keys(s).map(function (k) { t[k] = s[k]; });
-    return t;
-}
-
-/** escapeKeyPathComponent() utility */
-function escapeKeyPathComponent (keyPathComponent) {
-    return keyPathComponent.replace(/~/g, '~0').replace(/\./g, '~1');
-}
-
-/** unescapeKeyPathComponent() utility */
-function unescapeKeyPathComponent (keyPathComponent) {
-    return keyPathComponent.replace(/~1/g, '.').replace(/~0/g, '~');
-}
-
-/** getByKeyPath() utility */
-function getByKeyPath (obj, keyPath) {
-    if (keyPath === '') return obj;
-    var period = keyPath.indexOf('.');
-    if (period > -1) {
-        var innerObj = obj[unescapeKeyPathComponent(keyPath.substr(0, period))];
-        return innerObj === undefined ? undefined : getByKeyPath(innerObj, keyPath.substr(period + 1));
-    }
-    return obj[unescapeKeyPathComponent(keyPath)];
-}
-
-function Undefined () {}
-
-// With ES6 classes, we may be able to simply use `class TypesonPromise extends Promise` and add a string tag for detection
-function TypesonPromise (f) {
-    this.p = new Promise(f);
-};
-TypesonPromise.prototype.then = function (onFulfilled, onRejected) {
-    var that = this;
-    return new TypesonPromise(function (typesonResolve, typesonReject) {
-        that.p.then(function (res) {
-            typesonResolve(onFulfilled ? onFulfilled(res) : res);
-        }, function (r) {
-            that.p['catch'](function (res) {
-                return onRejected ? onRejected(res) : Promise.reject(res);
-            }).then(typesonResolve, typesonReject);
-        });
-    });
-};
-TypesonPromise.prototype['catch'] = function (onRejected) {
-    return this.then(null, onRejected);
-};
-TypesonPromise.resolve = function (v) {
-    return new TypesonPromise(function (typesonResolve) {
-        typesonResolve(v);
-    });
-};
-TypesonPromise.reject = function (v) {
-    return new TypesonPromise(function (typesonResolve, typesonReject) {
-        typesonReject(v);
-    });
-};
-['all', 'race'].map(function (meth) {
-    TypesonPromise[meth] = function (promArr) {
-        return new TypesonPromise(function (typesonResolve, typesonReject) {
-            Promise[meth](promArr.map(function (prom) {return prom.p;})).then(typesonResolve, typesonReject);
-        });
-    };
-});
-
-// The following provide classes meant to avoid clashes with other values
-Typeson.Undefined = Undefined; // To insist `undefined` should be added
-Typeson.Promise = TypesonPromise; // To support async encapsulation/stringification
-
-// Some fundamental type-checking utilities
-Typeson.isThenable = isThenable;
-Typeson.toStringTag = toStringTag;
-Typeson.hasConstructorOf = hasConstructorOf;
-Typeson.isObject = isObject;
-Typeson.isPlainObject = isPlainObject;
-Typeson.isUserObject = isUserObject;
-
-Typeson.escapeKeyPathComponent = escapeKeyPathComponent;
-Typeson.unescapeKeyPathComponent = unescapeKeyPathComponent;
-Typeson.getByKeyPath = getByKeyPath;
-
-module.exports = Typeson;
-
-},{}],30:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 module.exports=/[\xC0-\xC5\xC7-\xCF\xD1-\xD6\xD9-\xDD\xE0-\xE5\xE7-\xEF\xF1-\xF6\xF9-\xFD\xFF-\u010F\u0112-\u0125\u0128-\u0130\u0134-\u0137\u0139-\u013E\u0143-\u0148\u014C-\u0151\u0154-\u0165\u0168-\u017E\u01A0\u01A1\u01AF\u01B0\u01CD-\u01DC\u01DE-\u01E3\u01E6-\u01F0\u01F4\u01F5\u01F8-\u021B\u021E\u021F\u0226-\u0233\u0344\u0385\u0386\u0388-\u038A\u038C\u038E-\u0390\u03AA-\u03B0\u03CA-\u03CE\u03D3\u03D4\u0400\u0401\u0403\u0407\u040C-\u040E\u0419\u0439\u0450\u0451\u0453\u0457\u045C-\u045E\u0476\u0477\u04C1\u04C2\u04D0-\u04D3\u04D6\u04D7\u04DA-\u04DF\u04E2-\u04E7\u04EA-\u04F5\u04F8\u04F9\u0622-\u0626\u06C0\u06C2\u06D3\u0929\u0931\u0934\u0958-\u095F\u09CB\u09CC\u09DC\u09DD\u09DF\u0A33\u0A36\u0A59-\u0A5B\u0A5E\u0B48\u0B4B\u0B4C\u0B5C\u0B5D\u0B94\u0BCA-\u0BCC\u0C48\u0CC0\u0CC7\u0CC8\u0CCA\u0CCB\u0D4A-\u0D4C\u0DDA\u0DDC-\u0DDE\u0F43\u0F4D\u0F52\u0F57\u0F5C\u0F69\u0F73\u0F75\u0F76\u0F78\u0F81\u0F93\u0F9D\u0FA2\u0FA7\u0FAC\u0FB9\u1026\u1B06\u1B08\u1B0A\u1B0C\u1B0E\u1B12\u1B3B\u1B3D\u1B40\u1B41\u1B43\u1E00-\u1E99\u1E9B\u1EA0-\u1EF9\u1F00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FC1-\u1FC4\u1FC6-\u1FD3\u1FD6-\u1FDB\u1FDD-\u1FEE\u1FF2-\u1FF4\u1FF6-\u1FFC\u212B\u219A\u219B\u21AE\u21CD-\u21CF\u2204\u2209\u220C\u2224\u2226\u2241\u2244\u2247\u2249\u2260\u2262\u226D-\u2271\u2274\u2275\u2278\u2279\u2280\u2281\u2284\u2285\u2288\u2289\u22AC-\u22AF\u22E0-\u22E3\u22EA-\u22ED\u2ADC\u304C\u304E\u3050\u3052\u3054\u3056\u3058\u305A\u305C\u305E\u3060\u3062\u3065\u3067\u3069\u3070\u3071\u3073\u3074\u3076\u3077\u3079\u307A\u307C\u307D\u3094\u309E\u30AC\u30AE\u30B0\u30B2\u30B4\u30B6\u30B8\u30BA\u30BC\u30BE\u30C0\u30C2\u30C5\u30C7\u30C9\u30D0\u30D1\u30D3\u30D4\u30D6\u30D7\u30D9\u30DA\u30DC\u30DD\u30F4\u30F7-\u30FA\u30FE\uAC00-\uD7A3\uFB1D\uFB1F\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFB4E]|\uD804[\uDC9A\uDC9C\uDCAB\uDD2E\uDD2F\uDF4B\uDF4C]|\uD805[\uDCBB\uDCBC\uDCBE\uDDBA\uDDBB]|\uD834[\uDD5E-\uDD64\uDDBB-\uDDC0]/
-},{}],31:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2396,7 +1325,7 @@ var CFG = {};
 exports.default = CFG;
 module.exports = exports['default'];
 
-},{}],32:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2706,7 +1635,7 @@ exports.ShimDOMException = ShimDOMException;
 exports.createDOMException = createDOMException;
 exports.webSQLErrback = webSQLErrback;
 
-},{"./CFG":31}],33:[function(require,module,exports){
+},{"./CFG":9}],11:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2804,7 +1733,7 @@ DOMStringList.prototype = (_DOMStringList$protot = {
         }
         this.sortList();
     }
-}, _defineProperty(_DOMStringList$protot, Symbol.toStringTag, 'DOMStringListPrototype'), _defineProperty(_DOMStringList$protot, Symbol.iterator, regeneratorRuntime.mark(function _callee() {
+}, _defineProperty(_DOMStringList$protot, Symbol.toStringTag, 'DOMStringListPrototype'), _defineProperty(_DOMStringList$protot, Symbol.iterator, /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
     var i;
     return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
@@ -2892,7 +1821,7 @@ if (cleanInterface) {
 exports.default = DOMStringList;
 module.exports = exports['default'];
 
-},{}],34:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2900,7 +1829,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.ShimEventTarget = exports.ShimCustomEvent = exports.ShimEvent = exports.createEvent = undefined;
 
-var _eventtarget = require('eventtarget');
+var _eventtargeter = require('eventtargeter');
 
 var _util = require('./util');
 
@@ -2909,24 +1838,24 @@ var util = _interopRequireWildcard(_util);
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function createEvent(type, debug, evInit) {
-    var ev = new _eventtarget.ShimEvent(type, evInit);
+    var ev = new _eventtargeter.ShimEvent(type, evInit);
     ev.debug = debug;
     return ev;
 }
 
 // We don't add within polyfill repo as might not always be the desired implementation
-Object.defineProperty(_eventtarget.ShimEvent, Symbol.hasInstance, {
+Object.defineProperty(_eventtargeter.ShimEvent, Symbol.hasInstance, {
     value: function value(obj) {
         return util.isObj(obj) && 'target' in obj && typeof obj.bubbles === 'boolean';
     }
 });
 
 exports.createEvent = createEvent;
-exports.ShimEvent = _eventtarget.ShimEvent;
-exports.ShimCustomEvent = _eventtarget.ShimCustomEvent;
-exports.ShimEventTarget = _eventtarget.ShimEventTarget;
+exports.ShimEvent = _eventtargeter.ShimEvent;
+exports.ShimCustomEvent = _eventtargeter.ShimCustomEvent;
+exports.ShimEventTarget = _eventtargeter.ShimEventTarget;
 
-},{"./util":50,"eventtarget":3}],35:[function(require,module,exports){
+},{"./util":28,"eventtargeter":2}],13:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3569,7 +2498,7 @@ Object.defineProperty(IDBCursorWithValue, 'prototype', {
 exports.IDBCursor = IDBCursor;
 exports.IDBCursorWithValue = IDBCursorWithValue;
 
-},{"./CFG":31,"./DOMException":32,"./IDBFactory":37,"./IDBIndex":38,"./IDBKeyRange":39,"./IDBObjectStore":40,"./IDBRequest":41,"./IDBTransaction":42,"./Key":44,"./Sca":45,"./util":50}],36:[function(require,module,exports){
+},{"./CFG":9,"./DOMException":10,"./IDBFactory":15,"./IDBIndex":16,"./IDBKeyRange":17,"./IDBObjectStore":18,"./IDBRequest":19,"./IDBTransaction":20,"./Key":22,"./Sca":23,"./util":28}],14:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3600,7 +2529,7 @@ var _CFG = require('./CFG');
 
 var _CFG2 = _interopRequireDefault(_CFG);
 
-var _eventtarget = require('eventtarget');
+var _eventtargeter = require('eventtargeter');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -3681,7 +2610,7 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
     return new IDBDatabase();
 };
 
-IDBDatabase.prototype = _eventtarget.EventTargetFactory.createInstance();
+IDBDatabase.prototype = _eventtargeter.EventTargetFactory.createInstance();
 IDBDatabase.prototype[Symbol.toStringTag] = 'IDBDatabasePrototype';
 
 /**
@@ -3892,7 +2821,7 @@ Object.defineProperty(IDBDatabase, 'prototype', {
 exports.default = IDBDatabase;
 module.exports = exports['default'];
 
-},{"./CFG":31,"./DOMException":32,"./DOMStringList":33,"./Event":34,"./IDBObjectStore":40,"./IDBTransaction":42,"./util":50,"eventtarget":3}],37:[function(require,module,exports){
+},{"./CFG":9,"./DOMException":10,"./DOMStringList":11,"./Event":12,"./IDBObjectStore":18,"./IDBTransaction":20,"./util":28,"eventtargeter":2}],15:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -4700,7 +3629,7 @@ exports.shimIndexedDB = shimIndexedDB;
 
 }).call(this,require('_process'))
 
-},{"./CFG":31,"./DOMException":32,"./DOMStringList":33,"./Event":34,"./IDBDatabase":36,"./IDBRequest":41,"./IDBTransaction":42,"./IDBVersionChangeEvent":43,"./Key":44,"./cmp":48,"./util":50,"_process":5,"fs":2,"path":4,"sync-promise":6}],38:[function(require,module,exports){
+},{"./CFG":9,"./DOMException":10,"./DOMStringList":11,"./Event":12,"./IDBDatabase":14,"./IDBRequest":19,"./IDBTransaction":20,"./IDBVersionChangeEvent":21,"./Key":22,"./cmp":26,"./util":28,"_process":4,"fs":1,"path":3,"sync-promise":5}],16:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5389,7 +4318,7 @@ exports.executeFetchIndexData = executeFetchIndexData;
 exports.IDBIndex = IDBIndex;
 exports.default = IDBIndex;
 
-},{"./CFG":31,"./DOMException":32,"./IDBCursor":35,"./IDBKeyRange":39,"./IDBObjectStore":40,"./IDBTransaction":42,"./Key":44,"./Sca":45,"./util":50,"sync-promise":6}],39:[function(require,module,exports){
+},{"./CFG":9,"./DOMException":10,"./IDBCursor":13,"./IDBKeyRange":17,"./IDBObjectStore":18,"./IDBTransaction":20,"./Key":22,"./Sca":23,"./util":28,"sync-promise":5}],17:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -5573,7 +4502,7 @@ exports.IDBKeyRange = IDBKeyRange;
 exports.convertValueToKeyRange = convertValueToKeyRange;
 exports.default = IDBKeyRange;
 
-},{"./DOMException":32,"./Key":44,"./util":50}],40:[function(require,module,exports){
+},{"./DOMException":10,"./Key":22,"./util":28}],18:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -6465,7 +5394,7 @@ Object.defineProperty(IDBObjectStore, 'prototype', {
 exports.default = IDBObjectStore;
 module.exports = exports['default'];
 
-},{"./CFG":31,"./DOMException":32,"./DOMStringList":33,"./IDBCursor":35,"./IDBIndex":38,"./IDBKeyRange":39,"./IDBTransaction":42,"./Key":44,"./Sca":45,"./util":50,"sync-promise":6}],41:[function(require,module,exports){
+},{"./CFG":9,"./DOMException":10,"./DOMStringList":11,"./IDBCursor":13,"./IDBIndex":16,"./IDBKeyRange":17,"./IDBTransaction":20,"./Key":22,"./Sca":23,"./util":28,"sync-promise":5}],19:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -6475,7 +5404,7 @@ exports.IDBOpenDBRequest = exports.IDBRequest = undefined;
 
 var _DOMException = require('./DOMException');
 
-var _eventtarget = require('eventtarget');
+var _eventtargeter = require('eventtargeter');
 
 var _util = require('./util');
 
@@ -6542,7 +5471,7 @@ IDBRequest.__createInstance = function () {
     return new IDBRequest.__super();
 };
 
-IDBRequest.prototype = _eventtarget.EventTargetFactory.createInstance({ extraProperties: ['debug'] });
+IDBRequest.prototype = _eventtargeter.EventTargetFactory.createInstance({ extraProperties: ['debug'] });
 IDBRequest.prototype[Symbol.toStringTag] = 'IDBRequestPrototype';
 
 IDBRequest.prototype.__getParent = function () {
@@ -6668,7 +5597,7 @@ Object.defineProperty(IDBOpenDBRequest, 'prototype', {
 exports.IDBRequest = IDBRequest;
 exports.IDBOpenDBRequest = IDBOpenDBRequest;
 
-},{"./DOMException":32,"./util":50,"eventtarget":3}],42:[function(require,module,exports){
+},{"./DOMException":10,"./util":28,"eventtargeter":2}],20:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -6693,7 +5622,7 @@ var _CFG = require('./CFG');
 
 var _CFG2 = _interopRequireDefault(_CFG);
 
-var _eventtarget = require('eventtarget');
+var _eventtargeter = require('eventtargeter');
 
 var _syncPromise = require('sync-promise');
 
@@ -6770,7 +5699,7 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
     return new IDBTransaction();
 };
 
-IDBTransaction.prototype = _eventtarget.EventTargetFactory.createInstance({ defaultSync: true, extraProperties: ['complete'] }); // Ensure EventTarget preserves our properties
+IDBTransaction.prototype = _eventtargeter.EventTargetFactory.createInstance({ defaultSync: true, extraProperties: ['complete'] }); // Ensure EventTarget preserves our properties
 IDBTransaction.prototype.__transFinishedCb = function (err, cb) {
     if (err) {
         cb(true); // eslint-disable-line standard/no-callback-literal
@@ -7280,7 +6209,7 @@ Object.defineProperty(IDBTransaction, 'prototype', {
 exports.default = IDBTransaction;
 module.exports = exports['default'];
 
-},{"./CFG":31,"./DOMException":32,"./Event":34,"./IDBObjectStore":40,"./IDBRequest":41,"./util":50,"eventtarget":3,"sync-promise":6}],43:[function(require,module,exports){
+},{"./CFG":9,"./DOMException":10,"./Event":12,"./IDBObjectStore":18,"./IDBRequest":19,"./util":28,"eventtargeter":2,"sync-promise":5}],21:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -7345,7 +6274,7 @@ Object.defineProperty(IDBVersionChangeEvent, 'prototype', {
 exports.default = IDBVersionChangeEvent;
 module.exports = exports['default'];
 
-},{"./Event":34,"./util":50}],44:[function(require,module,exports){
+},{"./Event":12,"./util":28}],22:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -7432,7 +6361,12 @@ var types = {
         // The encode step checks for six numeric cases and generates 14-digit encoded
         // sign-exponent-mantissa strings.
         encode: function encode(key) {
-            var key32 = Math.abs(key).toString(32);
+            var key32 = key === Number.MIN_VALUE
+            // Mocha test `IDBFactory/cmp-spec.js` exposed problem for some
+            //   Node (and Chrome) versions with `Number.MIN_VALUE` being treated
+            //   as 0
+            // https://stackoverflow.com/questions/43305403/number-min-value-and-tostring
+            ? '0.' + '0'.repeat(214) + '2' : Math.abs(key).toString(32);
             // Get the index of the decimal.
             var decimalIndex = key32.indexOf('.');
             // Remove the decimal.
@@ -8183,7 +7117,7 @@ exports.assignCurrentNumber = assignCurrentNumber;
 exports.generateKeyForStore = generateKeyForStore;
 exports.possiblyUpdateKeyGenerator = possiblyUpdateKeyGenerator;
 
-},{"./CFG":31,"./DOMException":32,"./cmp":48,"./util":50}],45:[function(require,module,exports){
+},{"./CFG":9,"./DOMException":10,"./cmp":26,"./util":28}],23:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -8191,11 +7125,16 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.clone = exports.decode = exports.encode = undefined;
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+// import Blob from 'w3c-blob'; // Needed by Node; uses native if available (browser)
+
 var _typeson = require('typeson');
 
 var _typeson2 = _interopRequireDefault(_typeson);
 
-var _structuredCloningThrowing = require('typeson-registry/presets/structured-cloning-throwing');
+var _structuredCloningThrowing = require('typeson-registry/dist/presets/structured-cloning-throwing');
 
 var _structuredCloningThrowing2 = _interopRequireDefault(_structuredCloningThrowing);
 
@@ -8207,12 +7146,71 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // Todo: add a proper polyfill for `ImageData` using node-canvas
 // See also: http://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
 
-var typeson = new _typeson2.default().register(_structuredCloningThrowing2.default);
+function traverseMapToRevertToLegacyTypeNames(obj) {
+    if (Array.isArray(obj)) {
+        return obj.forEach(traverseMapToRevertToLegacyTypeNames);
+    }
+    if (obj && (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) === 'object') {
+        // Should be all
+        Object.entries(obj).forEach(function (_ref) {
+            var _ref2 = _slicedToArray(_ref, 2),
+                prop = _ref2[0],
+                val = _ref2[1];
+
+            if (prop in newTypeNamesToLegacy) {
+                var legacyProp = newTypeNamesToLegacy[prop];
+                delete obj[prop];
+                obj[legacyProp] = val;
+            }
+        });
+    }
+}
+
+var structuredCloning = _structuredCloningThrowing2.default;
+var newTypeNamesToLegacy = {
+    IntlCollator: 'Intl.Collator',
+    IntlDateTimeFormat: 'Intl.DateTimeFormat',
+    IntlNumberFormat: 'Intl.NumberFormat',
+    userObject: 'userObjects',
+    undef: 'undefined',
+    negativeInfinity: 'NegativeInfinity',
+    nonbuiltinIgnore: 'nonBuiltInIgnore',
+    arraybuffer: 'ArrayBuffer',
+    blob: 'Blob',
+    dataview: 'DataView',
+    date: 'Date',
+    error: 'Error',
+    file: 'File',
+    filelist: 'FileList',
+    imagebitmap: 'ImageBitmap',
+    imagedata: 'ImageData',
+    infinity: 'Infinity',
+    map: 'Map',
+    nan: 'NaN',
+    regexp: 'RegExp',
+    set: 'Set',
+    int8array: 'Int8Array',
+    uint8array: 'Uint8Array',
+    uint8clampedarray: 'Uint8ClampedArray',
+    int16array: 'Int16Array',
+    uint16array: 'Uint16Array',
+    int32array: 'Int32Array',
+    uint32array: 'Uint32Array',
+    float32array: 'Float32Array',
+    float64array: 'Float64Array'
+};
+
+// Todo: We should make this conditional on CONFIG and deprecate the legacy
+//   names, but for compatibility with data created under this major version,
+//   we need the legacy now
+
+// console.log('StructuredCloning1', JSON.stringify(structuredCloning));
+traverseMapToRevertToLegacyTypeNames(structuredCloning);
+// console.log('StructuredCloning2', JSON.stringify(structuredCloning));
+
+var typeson = new _typeson2.default().register(structuredCloning);
 
 // We are keeping the callback approach for now in case we wish to reexpose Blob, File, FileList
-
-// import Blob from 'w3c-blob'; // Needed by Node; uses native if available (browser)
-
 function encode(obj, cb) {
     var ret = void 0;
     try {
@@ -8248,7 +7246,7 @@ exports.encode = encode;
 exports.decode = decode;
 exports.clone = clone;
 
-},{"./DOMException":32,"typeson":29,"typeson-registry/presets/structured-cloning-throwing":8}],46:[function(require,module,exports){
+},{"./DOMException":10,"typeson":7,"typeson-registry/dist/presets/structured-cloning-throwing":6}],24:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -8263,7 +7261,7 @@ var UnicodeIDContinue = '(?:[$0-9A-Z_a-z\\xAA\\xB5\\xB7\\xBA\\xC0-\\xD6\\xD8-\\x
 exports.UnicodeIDStart = UnicodeIDStart;
 exports.UnicodeIDContinue = UnicodeIDContinue;
 
-},{}],47:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 'use strict';
 
 var _UnicodeIdentifiers = require('./UnicodeIdentifiers');
@@ -8297,7 +7295,7 @@ shimIndexedDB.__setUnicodeIdentifiers = function () {
 
 shimIndexedDB.__setUnicodeIdentifiers();
 
-},{"./CFG":31,"./UnicodeIdentifiers":46,"./setGlobalVars":49}],48:[function(require,module,exports){
+},{"./CFG":9,"./UnicodeIdentifiers":24,"./setGlobalVars":27}],26:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -8353,7 +7351,7 @@ function cmp(first, second) {
 exports.default = cmp;
 module.exports = exports['default'];
 
-},{"./CFG":31,"./Key":44}],49:[function(require,module,exports){
+},{"./CFG":9,"./Key":22}],27:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -8606,7 +7604,7 @@ module.exports = exports['default'];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./CFG":31,"./DOMException":32,"./IDBCursor":35,"./IDBDatabase":36,"./IDBFactory":37,"./IDBIndex":38,"./IDBKeyRange":39,"./IDBObjectStore":40,"./IDBRequest":41,"./IDBTransaction":42,"./IDBVersionChangeEvent":43}],50:[function(require,module,exports){
+},{"./CFG":9,"./DOMException":10,"./IDBCursor":13,"./IDBDatabase":14,"./IDBFactory":15,"./IDBIndex":16,"./IDBKeyRange":17,"./IDBObjectStore":18,"./IDBRequest":19,"./IDBTransaction":20,"./IDBVersionChangeEvent":21}],28:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -8904,5 +7902,5 @@ exports.convertToDOMString = convertToDOMString;
 exports.convertToSequenceDOMString = convertToSequenceDOMString;
 exports.padStart = padStart;
 
-},{"./CFG":31,"unicode-9.0.0/Binary_Property/Expands_On_NFD/regex":30}]},{},[47])
+},{"./CFG":9,"unicode-9.0.0/Binary_Property/Expands_On_NFD/regex":8}]},{},[25])
 //# sourceMappingURL=indexeddbshim-UnicodeIdentifiers.js.map

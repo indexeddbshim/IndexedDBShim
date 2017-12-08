@@ -1,6 +1,6 @@
 {
   "name": "indexeddbshim",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "author": "Parashuram <code@nparashuram.com>",
   "contributors": [
     "Brett Zamir"
@@ -27,6 +27,7 @@
     "copy": "grunt -v copy",
     "connect-watch": "grunt connect-watch",
     "eslint": "grunt eslint",
+    "sqlite-rebuild": "cd node_modules/sqlite3 && npm i",
     "w3c-build": "grunt clean-w3c && node test-support/node-buildjs",
     "test": "npm run sauce-qunit",
     "mocha": "grunt clean-mocha && grunt mocha && grunt clean-mocha",
@@ -37,11 +38,12 @@
     "mock": "grunt clean-mock && grunt mock && grunt clean-mock",
     "w3c-old": "grunt clean-w3c-old && grunt w3c-old && grunt clean-w3c-old",
     "tests-polyfill": "grunt clean-polyfill && npm run fake && npm run mock && npm run w3c-old && browserify-test -t [ babelify --presets es2015 ] tests-polyfill/**/*.js",
+    "web-platform-tests": "./web-platform-tests/wpt serve",
     "w3c": "npm run w3c-build && npm run w3c-test",
     "w3c-add-wrap": "node test-support/wrap-w3c-tests",
     "w3c-remove-wrap": "node test-support/wrap-w3c-tests remove",
     "w3c-wrap": "node test-support/wrap-w3c-tests",
-    "w3c-test": "node test-support/node-idb-test && grunt clean-w3c",
+    "w3c-test": "grunt clean-w3c && node test-support/node-idb-test && grunt clean-w3c",
     "w3c-good": "npm run w3c-build && node test-support/node-idb-test good && grunt clean-w3c",
     "w3c-bad": "npm run w3c-build && node test-support/node-idb-test bad && grunt clean-w3c",
     "w3c-good-test": "node test-support/node-idb-test good && grunt clean-w3c",
@@ -68,23 +70,23 @@
     "websql": "https://github.com/brettz9/node-websql#configurable"
   },
   "devDependencies": {
+    "babel-core": "6.26.0",
     "babel-plugin-add-module-exports": "0.2.1",
     "babel-preset-env": "1.6.1",
-    "babel-preset-es2015": "6.24.1",
     "babelify": "8.0.0",
     "bson": "1.0.4",
     "chai": "4.1.2",
     "cheerio": "0.22.0",
     "colors": "1.1.2",
     "cyclonejs": "1.1.4",
-    "eslint": "4.12.1",
+    "eslint": "4.13.0",
     "eslint-config-standard": "10.2.1",
     "eslint-plugin-compat": "2.1.0",
     "eslint-plugin-import": "2.8.0",
     "eslint-plugin-node": "5.2.1",
     "eslint-plugin-promise": "3.6.0",
     "eslint-plugin-standard": "3.0.1",
-    "eventtargeter": "0.2.2",
+    "eventtargeter": "0.3.1",
     "grunt": "1.0.1",
     "grunt-browserify": "5.2.0",
     "grunt-cli": "1.2.0",
@@ -101,14 +103,14 @@
     "is-date-object": "1.0.1",
     "js-polyfills": "https://github.com/brettz9/polyfill#node",
     "jsdom": "11.5.1",
-    "mapstraction": "1.0.1",
+    "mapstraction": "https://github.com/brettz9/mapstraction#relativePaths",
     "mocha": "4.0.1",
-    "sinon": "4.1.2",
+    "sinon": "4.1.3",
     "source-map-support": "0.5.0",
     "sourcemap-transformer": "https://github.com/brettz9/sourcemap-transformer",
     "sync-promise": "https://github.com/brettz9/sync-promise#full-sync-missing-promise-features",
-    "typeson": "5.2.0",
-    "typeson-registry": "https://github.com/dfahlander/typeson-registry",
+    "typeson": "5.7.1",
+    "typeson-registry": "1.0.0-alpha.18",
     "unicode-9.0.0": "0.7.4",
     "w3c-blob": "0.0.1",
     "ws": "3.3.2",
@@ -117,6 +119,6 @@
   "bundleDependencies": [],
   "license": "(MIT OR Apache-2.0)",
   "engines": {
-    "node": ">=6.9.2"
+    "node": ">=6.9.2 < 8.9.3 || >= 9.0.0"
   }
 }

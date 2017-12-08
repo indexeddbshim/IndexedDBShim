@@ -60,7 +60,13 @@ const types = {
         // The encode step checks for six numeric cases and generates 14-digit encoded
         // sign-exponent-mantissa strings.
         encode: function (key) {
-            let key32 = Math.abs(key).toString(32);
+            let key32 = key === Number.MIN_VALUE
+                // Mocha test `IDBFactory/cmp-spec.js` exposed problem for some
+                //   Node (and Chrome) versions with `Number.MIN_VALUE` being treated
+                //   as 0
+                // https://stackoverflow.com/questions/43305403/number-min-value-and-tostring
+                ? '0.' + '0'.repeat(214) + '2'
+                : Math.abs(key).toString(32);
             // Get the index of the decimal.
             const decimalIndex = key32.indexOf('.');
             // Remove the decimal.

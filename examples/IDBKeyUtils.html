@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Test IDBKeyUtils file</title>
+    </head>
+    <body>
+        <script src="./node_modules/babel-polyfill/browser.js"></script>
+        <script src="./dist/indexeddbshim-Key.min.js"></script>
+        <script>
+// import {extractKeyValueDecodedFromValueUsingKeyPath} from './src/Key.js';
+const value = {abc: {def: 5}};
+const keyPath = 'abc.def';
+const multiEntry = false;
+const fullKeys = true;
+try {
+    const extracted = IDBKeyUtils.extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry, fullKeys);
+    if (extracted.failure || extracted.invalid) {
+        throw extracted;
+    }
+    console.log(
+        extracted.value
+    );
+} catch (err) {
+    console.log('There was a problem extracting key values using a key path');
+}
+        </script>
+    </body>
+</html>
