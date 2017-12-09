@@ -1,5 +1,11 @@
 # IndexedDBShim changes
 
+## Version 3.3.1
+
+- Build: Switch from `devDependencies` to `dependencies` the following which
+    Node or custom rollups may require: eventtargeter, sync-promise,
+    typeson, typeson-registry, unicode-9.0.0
+
 ## Version 3.3.0
 
 - Build: More complete `.npmignore` to exclude more files at root that we

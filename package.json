@@ -1,6 +1,6 @@
 {
   "name": "indexeddbshim",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "author": "Parashuram <code@nparashuram.com>",
   "contributors": [
     "Brett Zamir"
@@ -67,6 +67,11 @@
   ],
   "dependencies": {
     "babel-polyfill": "6.26.0",
+    "eventtargeter": "0.3.1",
+    "sync-promise": "https://github.com/brettz9/sync-promise#full-sync-missing-promise-features",
+    "typeson": "5.7.1",
+    "typeson-registry": "1.0.0-alpha.18",
+    "unicode-9.0.0": "0.7.4",
     "websql": "https://github.com/brettz9/node-websql#configurable"
   },
   "devDependencies": {
@@ -86,7 +91,6 @@
     "eslint-plugin-node": "5.2.1",
     "eslint-plugin-promise": "3.6.0",
     "eslint-plugin-standard": "3.0.1",
-    "eventtargeter": "0.3.1",
     "grunt": "1.0.1",
     "grunt-browserify": "5.2.0",
     "grunt-cli": "1.2.0",
@@ -108,10 +112,6 @@
     "sinon": "4.1.3",
     "source-map-support": "0.5.0",
     "sourcemap-transformer": "https://github.com/brettz9/sourcemap-transformer",
-    "sync-promise": "https://github.com/brettz9/sync-promise#full-sync-missing-promise-features",
-    "typeson": "5.7.1",
-    "typeson-registry": "1.0.0-alpha.18",
-    "unicode-9.0.0": "0.7.4",
     "w3c-blob": "0.0.1",
     "ws": "3.3.2",
     "xmlhttprequest": "https://github.com/brettz9/node-XMLHttpRequest#local-and-prototype"
