@@ -7,6 +7,6 @@
 /tests-polyfill
 /tests-qunit
 /web-platform-tests
-/.*
+/*.*
 !LICENSE-MIT.txt
 !LICENSE-APACHE.txt

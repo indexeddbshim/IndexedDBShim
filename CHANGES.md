@@ -1,5 +1,10 @@
 # IndexedDBShim changes
 
+## Version ?
+
+- Build: More complete `.npmignore` to exclude more files at root that we
+    don't need in distributions
+
 ## Version 3.2.0
 
 - Fix: Deal with issue with Chrome/Node and `Number.MIN_VALUE` converting
