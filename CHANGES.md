@@ -1,9 +1,12 @@
 # IndexedDBShim changes
 
-## Version ?
+## Version 3.3.0
 
 - Build: More complete `.npmignore` to exclude more files at root that we
     don't need in distributions
+- Build: Amend `.npmignore` to allow for `src` inclusion (for those who
+    wish to rollup own (complete or partial) versions)
+- Build: Update file copies out of `node_modules` needed for Rawgit demo
 
 ## Version 3.2.0
 

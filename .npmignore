@@ -1,7 +1,6 @@
 /docs
 /examples
 /ignore
-/src
 /test-support
 /tests-mocha
 /tests-polyfill
