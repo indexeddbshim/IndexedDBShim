@@ -1235,9 +1235,9 @@ commander@2.11.0:
   version "2.11.0"
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.11.0.tgz#157152fd1e7a6c8d98a5b715cf376df928004563"
 
-commander@~2.12.1:
-  version "2.12.2"
-  resolved "https://registry.yarnpkg.com/commander/-/commander-2.12.2.tgz#0f5946c427ed9ec0d91a46bb9def53e54650e555"
+commander@~2.13.0:
+  version "2.13.0"
+  resolved "https://registry.yarnpkg.com/commander/-/commander-2.13.0.tgz#6964bca67685df7c1f1430c584f07d7597885b9c"
 
 concat-map@0.0.1:
   version "0.0.1"
@@ -2297,12 +2297,12 @@ grunt-contrib-qunit@2.0.0:
     grunt-lib-phantomjs "^1.0.0"
 
 "grunt-contrib-uglify@git://github.com/gruntjs/grunt-contrib-uglify.git#harmony":
-  version "3.2.1"
-  resolved "git://github.com/gruntjs/grunt-contrib-uglify.git#9315efca3bf977a35ce2f29ee34b00b14dafa171"
+  version "3.3.0"
+  resolved "git://github.com/gruntjs/grunt-contrib-uglify.git#ccb95a70cad6a4e9e902d3bd5d0e38a4de09a1e1"
   dependencies:
     chalk "^1.0.0"
     maxmin "^1.1.0"
-    uglify-es "~3.2.0"
+    uglify-es "~3.3.0"
     uri-path "^1.0.0"
 
 grunt-contrib-watch@1.0.0:
@@ -4805,11 +4805,11 @@ typeson@5.7.1:
   version "5.7.1"
   resolved "https://registry.yarnpkg.com/typeson/-/typeson-5.7.1.tgz#0f90b3a59568132331b4a3cc6028ee55cb3c4786"
 
-uglify-es@~3.2.0:
-  version "3.2.1"
-  resolved "https://registry.yarnpkg.com/uglify-es/-/uglify-es-3.2.1.tgz#93de0aad8a1bb629c8a316f686351bc4d6ece687"
+uglify-es@~3.3.0:
+  version "3.3.7"
+  resolved "https://registry.yarnpkg.com/uglify-es/-/uglify-es-3.3.7.tgz#d1249af668666aba7cb1163e277455be9eb393cf"
   dependencies:
-    commander "~2.12.1"
+    commander "~2.13.0"
     source-map "~0.6.1"
 
 uglify-js@~2.3:
