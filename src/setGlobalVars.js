@@ -42,10 +42,13 @@ function setGlobalVars (idb, initialConfig) {
             // Setting a read-only property failed, so try re-defining the property
             try {
                 const desc = propDesc || {};
-                if (!('value' in desc)) {
-                    desc.get = function () {
-                        return value;
-                    };
+                if (!('get' in desc)) {
+                    if (!('value' in desc)) {
+                        desc.value = value;
+                    }
+                    if (!('writable' in desc)) {
+                        desc.writable = true;
+                    }
                 }
                 Object.defineProperty(IDB, name, desc);
             } catch (e) {
@@ -97,8 +100,17 @@ function setGlobalVars (idb, initialConfig) {
             if (CFG.win.openDatabase !== undefined) {
                 shimIndexedDB.__openDatabase = CFG.win.openDatabase.bind(CFG.win); // We cache here in case the function is overwritten later as by the IndexedDB support promises tests
                 // Polyfill ALL of IndexedDB, using WebSQL
+                shim('indexedDB', shimIndexedDB, {
+                    enumerable: true,
+                    configurable: true,
+                    get () {
+                        if (this !== IDB && this != null && !this.shimNS) { // Latter is hack for test environment
+                            throw new TypeError('Illegal invocation');
+                        }
+                        return shimIndexedDB;
+                    }
+                });
                 [
-                    ['indexedDB', shimIndexedDB],
                     ['IDBFactory', shimIDBFactory],
                     ['IDBDatabase', shimIDBDatabase],
                     ['IDBObjectStore', shimIDBObjectStore],

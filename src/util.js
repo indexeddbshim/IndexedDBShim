@@ -1,5 +1,5 @@
 import CFG from './CFG';
-import expandsOnNFD from 'unicode-9.0.0/Binary_Property/Expands_On_NFD/regex';
+import expandsOnNFD from 'unicode-10.0.0/Binary_Property/Expands_On_NFD/regex';
 
 function escapeUnmatchedSurrogates (arg) {
     // http://stackoverflow.com/a/6701665/271577

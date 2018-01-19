@@ -1,5 +1,13 @@
 # IndexedDBShim changes
 
+## 3.4.0
+
+- Fix (minor): Return proper `indexedDB` object descriptor
+- npm: Update devDeps
+- npm: Update dep to unicode-10.0.0 (no practical difference)
+- Testing (W3C): Remove need for cheerio in build (use jsdom instead)
+- Testing (W3C): Update `web-platform-tests`
+
 ## Version 3.3.1
 
 - Build: Switch from `devDependencies` to `dependencies` the following which

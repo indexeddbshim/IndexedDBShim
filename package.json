@@ -1,6 +1,6 @@
 {
   "name": "indexeddbshim",
-  "version": "3.3.1",
+  "version": "3.4.0",
   "author": "Parashuram <code@nparashuram.com>",
   "contributors": [
     "Brett Zamir"
@@ -71,7 +71,7 @@
     "sync-promise": "https://github.com/brettz9/sync-promise#full-sync-missing-promise-features",
     "typeson": "5.7.1",
     "typeson-registry": "1.0.0-alpha.18",
-    "unicode-9.0.0": "0.7.4",
+    "unicode-10.0.0": "0.7.4",
     "websql": "https://github.com/brettz9/node-websql#configurable"
   },
   "devDependencies": {
@@ -81,11 +81,10 @@
     "babelify": "8.0.0",
     "bson": "1.0.4",
     "chai": "4.1.2",
-    "cheerio": "0.22.0",
     "colors": "1.1.2",
     "cyclonejs": "1.1.4",
-    "eslint": "4.13.0",
-    "eslint-config-standard": "10.2.1",
+    "eslint": "4.15.0",
+    "eslint-config-standard": "11.0.0-beta.0",
     "eslint-plugin-compat": "2.1.0",
     "eslint-plugin-import": "2.8.0",
     "eslint-plugin-node": "5.2.1",
@@ -98,7 +97,7 @@
     "grunt-contrib-connect": "1.0.2",
     "grunt-contrib-copy": "1.0.0",
     "grunt-contrib-qunit": "2.0.0",
-    "grunt-contrib-uglify": "git://github.com/gruntjs/grunt-contrib-uglify.git#harmony",
+    "grunt-contrib-uglify-es": "git://github.com/gruntjs/grunt-contrib-uglify.git#harmony",
     "grunt-contrib-watch": "1.0.0",
     "grunt-mocha-test": "0.13.3",
     "grunt-node-qunit": "https://github.com/brettz9/grunt-node-qunit",
@@ -108,12 +107,12 @@
     "js-polyfills": "https://github.com/brettz9/polyfill#node",
     "jsdom": "11.5.1",
     "mapstraction": "https://github.com/brettz9/mapstraction#relativePaths",
-    "mocha": "4.0.1",
-    "sinon": "4.1.3",
-    "source-map-support": "0.5.0",
+    "mocha": "5.0.0",
+    "sinon": "4.1.6",
+    "source-map-support": "0.5.1",
     "sourcemap-transformer": "https://github.com/brettz9/sourcemap-transformer",
     "w3c-blob": "0.0.1",
-    "ws": "3.3.2",
+    "ws": "4.0.0",
     "xmlhttprequest": "https://github.com/brettz9/node-XMLHttpRequest#local-and-prototype"
   },
   "bundleDependencies": [],

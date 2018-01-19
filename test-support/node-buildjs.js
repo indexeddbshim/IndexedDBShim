@@ -1,4 +1,4 @@
-const cheerio = require('cheerio');
+const {JSDOM} = require('jsdom');
 const fs = require('fs');
 const path = require('path');
 
@@ -41,26 +41,28 @@ fs.mkdir(builtJSPath, function () {
                 if (err) { return console.log(err); }
 
                 // Extract JavaScript content and save to file
-                const $ = cheerio.load(data);
+                const {document} = (new JSDOM(data)).window;
+                const $ = (sel) => document.querySelector(sel);
+                const $$ = (sel) => [...document.querySelectorAll(sel)];
 
                 // Confirm there are no unexpected elements which should be handled in the test
                 // <(?!/?(script(>| src| type="text/javascript")|div( id="?log"?)?>|link|meta|!|title>|html|http|DOM|head>|body>| |=))
-                $('*').each(function (i, elem) {
-                    if (!['html', 'head', 'body', 'meta', 'title', 'link', 'script', 'div', 'h1'].includes(elem.name)) {
-                        console.log('Unexpected element: ' + elem.name);
+                $$('*').forEach(function (elem, i) {
+                    if (!['html', 'head', 'body', 'meta', 'title', 'link', 'script', 'div', 'h1'].includes(elem.nodeName.toLowerCase())) {
+                        console.log('Unexpected element: ' + elem.nodeName);
                     }
-                    const atts = Object.keys(elem.attribs);
+                    const atts = [...elem.attributes].map((a) => a.name);
                     if (atts.some((att) => {
                         return !['src', 'type', 'id', 'rel', 'charset', 'title', 'href', 'name', 'content'].includes(att);
                     })) {
-                        console.log('Unrecognized attributes: ' + atts + ' on element: ' + elem.name);
+                        console.log('Unrecognized attributes: ' + atts + ' on element: ' + elem.nodeName);
                     }
                 });
 
                 // Build script content
                 let scriptContent = '';
-                $('script[src]').each(function (script, item) {
-                    const src = $(this).attr('src');
+                $$('script[src]').forEach(function (elem) {
+                    const src = elem.getAttribute('src');
                     if (!knownScripts.includes(src)) {
                         console.log('Found non-typical script src: ' + src + ' in: ' + inputFile);
                     }
@@ -71,9 +73,9 @@ fs.mkdir(builtJSPath, function () {
                 });
                 scriptContent +=
                     "document.title = '" +
-                    $('title').text().replace(/'/g, "\\'").replace(/\n|\r/g, ' ') +
+                    $('title').textContent.replace(/'/g, "\\'").replace(/\n|\r/g, ' ') +
                     "';\n" +
-                    $('script').text();
+                    $('script:not([src])').textContent;
 
                 fs.writeFile(outputFile, scriptContent, function (err) {
                     if (err) { return console.log(err); }

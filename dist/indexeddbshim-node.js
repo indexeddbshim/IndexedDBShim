@@ -6818,10 +6818,13 @@ function setGlobalVars(idb, initialConfig) {
             // Setting a read-only property failed, so try re-defining the property
             try {
                 const desc = propDesc || {};
-                if (!('value' in desc)) {
-                    desc.get = function () {
-                        return value;
-                    };
+                if (!('get' in desc)) {
+                    if (!('value' in desc)) {
+                        desc.value = value;
+                    }
+                    if (!('writable' in desc)) {
+                        desc.writable = true;
+                    }
                 }
                 Object.defineProperty(IDB, name, desc);
             } catch (e) {
@@ -6873,7 +6876,18 @@ function setGlobalVars(idb, initialConfig) {
             if (_CFG2.default.win.openDatabase !== undefined) {
                 _IDBFactory.shimIndexedDB.__openDatabase = _CFG2.default.win.openDatabase.bind(_CFG2.default.win); // We cache here in case the function is overwritten later as by the IndexedDB support promises tests
                 // Polyfill ALL of IndexedDB, using WebSQL
-                [['indexedDB', _IDBFactory.shimIndexedDB], ['IDBFactory', shimIDBFactory], ['IDBDatabase', _IDBDatabase2.default], ['IDBObjectStore', _IDBObjectStore2.default], ['IDBIndex', _IDBIndex2.default], ['IDBTransaction', _IDBTransaction2.default], ['IDBCursor', _IDBCursor.IDBCursor], ['IDBCursorWithValue', _IDBCursor.IDBCursorWithValue], ['IDBKeyRange', _IDBKeyRange2.default], ['IDBRequest', _IDBRequest.IDBRequest], ['IDBOpenDBRequest', _IDBRequest.IDBOpenDBRequest], ['IDBVersionChangeEvent', _IDBVersionChangeEvent2.default]].forEach(([prop, obj]) => {
+                shim('indexedDB', _IDBFactory.shimIndexedDB, {
+                    enumerable: true,
+                    configurable: true,
+                    get() {
+                        if (this !== IDB && this != null && !this.shimNS) {
+                            // Latter is hack for test environment
+                            throw new TypeError('Illegal invocation');
+                        }
+                        return _IDBFactory.shimIndexedDB;
+                    }
+                });
+                [['IDBFactory', shimIDBFactory], ['IDBDatabase', _IDBDatabase2.default], ['IDBObjectStore', _IDBObjectStore2.default], ['IDBIndex', _IDBIndex2.default], ['IDBTransaction', _IDBTransaction2.default], ['IDBCursor', _IDBCursor.IDBCursor], ['IDBCursorWithValue', _IDBCursor.IDBCursorWithValue], ['IDBKeyRange', _IDBKeyRange2.default], ['IDBRequest', _IDBRequest.IDBRequest], ['IDBOpenDBRequest', _IDBRequest.IDBOpenDBRequest], ['IDBVersionChangeEvent', _IDBVersionChangeEvent2.default]].forEach(([prop, obj]) => {
                     shim(prop, obj, {
                         enumerable: false,
                         configurable: true
@@ -6992,7 +7006,7 @@ var _CFG = require('./CFG');
 
 var _CFG2 = _interopRequireDefault(_CFG);
 
-var _regex = require('unicode-9.0.0/Binary_Property/Expands_On_NFD/regex');
+var _regex = require('unicode-10.0.0/Binary_Property/Expands_On_NFD/regex');
 
 var _regex2 = _interopRequireDefault(_regex);
 
@@ -7261,6 +7275,6 @@ exports.convertToDOMString = convertToDOMString;
 exports.convertToSequenceDOMString = convertToSequenceDOMString;
 exports.padStart = padStart;
 
-},{"./CFG":6,"unicode-9.0.0/Binary_Property/Expands_On_NFD/regex":5}]},{},[22])(22)
+},{"./CFG":6,"unicode-10.0.0/Binary_Property/Expands_On_NFD/regex":5}]},{},[22])(22)
 });
 //# sourceMappingURL=indexeddbshim-node.js.map

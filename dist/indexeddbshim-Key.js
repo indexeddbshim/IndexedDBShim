@@ -1326,7 +1326,7 @@ var _CFG = require('./CFG');
 
 var _CFG2 = _interopRequireDefault(_CFG);
 
-var _regex = require('unicode-9.0.0/Binary_Property/Expands_On_NFD/regex');
+var _regex = require('unicode-10.0.0/Binary_Property/Expands_On_NFD/regex');
 
 var _regex2 = _interopRequireDefault(_regex);
 
@@ -1595,6 +1595,6 @@ exports.convertToDOMString = convertToDOMString;
 exports.convertToSequenceDOMString = convertToSequenceDOMString;
 exports.padStart = padStart;
 
-},{"./CFG":2,"unicode-9.0.0/Binary_Property/Expands_On_NFD/regex":1}]},{},[4])(4)
+},{"./CFG":2,"unicode-10.0.0/Binary_Property/Expands_On_NFD/regex":1}]},{},[4])(4)
 });
 //# sourceMappingURL=indexeddbshim-Key.js.map

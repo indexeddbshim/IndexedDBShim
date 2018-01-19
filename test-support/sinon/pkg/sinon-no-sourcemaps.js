@@ -1,4 +1,4 @@
-/* Sinon.JS 4.1.3, 2017-12-07, @license BSD-3 */(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.sinon = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/* Sinon.JS 4.1.6, 2018-01-16, @license BSD-3 */(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.sinon = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
 
 exports.assert = require("./sinon/assert");
@@ -42,7 +42,7 @@ exports.addBehavior = function (name, fn) {
 var format = require("./sinon/util/core/format");
 exports.setFormatter = format.setFormatter;
 
-},{"./sinon/assert":2,"./sinon/behavior":3,"./sinon/call":4,"./sinon/collection":6,"./sinon/match":9,"./sinon/mock":11,"./sinon/mock-expectation":10,"./sinon/sandbox":12,"./sinon/spy":14,"./sinon/stub":16,"./sinon/util/core/default-config":20,"./sinon/util/core/format":23,"./sinon/util/fake_timers":34,"nise":51}],2:[function(require,module,exports){
+},{"./sinon/assert":2,"./sinon/behavior":3,"./sinon/call":4,"./sinon/collection":6,"./sinon/match":9,"./sinon/mock":11,"./sinon/mock-expectation":10,"./sinon/sandbox":12,"./sinon/spy":14,"./sinon/stub":16,"./sinon/util/core/default-config":20,"./sinon/util/core/format":24,"./sinon/util/fake_timers":35,"nise":53}],2:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -249,7 +249,7 @@ mirrorPropAsAssertion("alwaysThrew", "%n did not always throw exception%C");
 module.exports = assert;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./match":9,"./util/core/called-in-order":18,"./util/core/format":23,"./util/core/order-by-first-call":28,"./util/core/times-in-words":29}],3:[function(require,module,exports){
+},{"./match":9,"./util/core/called-in-order":18,"./util/core/format":24,"./util/core/order-by-first-call":29,"./util/core/times-in-words":30}],3:[function(require,module,exports){
 (function (process){
 "use strict";
 
@@ -476,7 +476,7 @@ proto.createBehavior = createBehavior;
 module.exports = proto;
 
 }).call(this,require('_process'))
-},{"./util/core/extend":22,"./util/core/function-name":24,"./util/core/value-to-string":31,"_process":55}],4:[function(require,module,exports){
+},{"./util/core/extend":23,"./util/core/function-name":25,"./util/core/value-to-string":32,"_process":56}],4:[function(require,module,exports){
 "use strict";
 
 var sinonMatch = require("./match");
@@ -703,7 +703,7 @@ createSpyCall.toString = callProto.toString; // used by mocks
 
 module.exports = createSpyCall;
 
-},{"./match":9,"./util/core/deep-equal":19,"./util/core/format":23,"./util/core/function-name":24,"./util/core/value-to-string":31}],5:[function(require,module,exports){
+},{"./match":9,"./util/core/deep-equal":19,"./util/core/format":24,"./util/core/function-name":25,"./util/core/value-to-string":32}],5:[function(require,module,exports){
 "use strict";
 
 var walk = require("./util/core/walk");
@@ -729,7 +729,7 @@ function collectOwnMethods(object) {
 
 module.exports = collectOwnMethods;
 
-},{"./util/core/get-property-descriptor":26,"./util/core/walk":32}],6:[function(require,module,exports){
+},{"./util/core/get-property-descriptor":27,"./util/core/walk":33}],6:[function(require,module,exports){
 "use strict";
 
 var sinonSpy = require("./spy");
@@ -875,13 +875,13 @@ var collection = {
 
 module.exports = collection;
 
-},{"./collect-own-methods":5,"./mock":11,"./spy":14,"./stub":16,"./util/core/value-to-string":31}],7:[function(require,module,exports){
+},{"./collect-own-methods":5,"./mock":11,"./spy":14,"./stub":16,"./util/core/value-to-string":32}],7:[function(require,module,exports){
 "use strict";
 
 var supportsColor = require("supports-color");
 
 function colorize(str, color) {
-    if (!supportsColor) {
+    if (supportsColor.stdout === false) {
         return str;
     }
 
@@ -896,7 +896,7 @@ exports.green = function (str) {
     return colorize(str, 32);
 };
 
-},{"supports-color":57}],8:[function(require,module,exports){
+},{"supports-color":58}],8:[function(require,module,exports){
 "use strict";
 
 var getPropertyDescriptor = require("./util/core/get-property-descriptor");
@@ -1158,7 +1158,7 @@ Object.keys(module.exports).forEach(function (method) {
     }
 });
 
-},{"./util/core/get-property-descriptor":26}],9:[function(require,module,exports){
+},{"./util/core/get-property-descriptor":27}],9:[function(require,module,exports){
 "use strict";
 
 var deepEqual = require("./util/core/deep-equal").use(match); // eslint-disable-line no-use-before-define
@@ -1494,7 +1494,7 @@ match.symbol = match.typeOf("symbol");
 
 module.exports = match;
 
-},{"./util/core/deep-equal":19,"./util/core/every":21,"./util/core/function-name":24,"./util/core/iterable-to-string":27,"./util/core/typeOf":30,"./util/core/value-to-string":31,"lodash.get":38}],10:[function(require,module,exports){
+},{"./util/core/deep-equal":19,"./util/core/every":22,"./util/core/function-name":25,"./util/core/iterable-to-string":28,"./util/core/typeOf":31,"./util/core/value-to-string":32,"lodash.get":40}],10:[function(require,module,exports){
 "use strict";
 
 var spyInvoke = require("./spy").invoke;
@@ -1784,7 +1784,7 @@ var mockExpectation = {
 
 module.exports = mockExpectation;
 
-},{"./assert":2,"./call":4,"./match":9,"./spy":14,"./stub":16,"./util/core/deep-equal":19,"./util/core/extend":22,"./util/core/format":23,"./util/core/times-in-words":29,"./util/core/value-to-string":31}],11:[function(require,module,exports){
+},{"./assert":2,"./call":4,"./match":9,"./spy":14,"./stub":16,"./util/core/deep-equal":19,"./util/core/extend":23,"./util/core/format":24,"./util/core/times-in-words":30,"./util/core/value-to-string":32}],11:[function(require,module,exports){
 "use strict";
 
 var mockExpectation = require("./mock-expectation");
@@ -1964,7 +1964,7 @@ extend(mock, {
 
 module.exports = mock;
 
-},{"./call":4,"./match":9,"./mock-expectation":10,"./util/core/deep-equal":19,"./util/core/extend":22,"./util/core/wrap-method":33}],12:[function(require,module,exports){
+},{"./call":4,"./match":9,"./mock-expectation":10,"./util/core/deep-equal":19,"./util/core/extend":23,"./util/core/wrap-method":34}],12:[function(require,module,exports){
 "use strict";
 
 var extend = require("./util/core/extend");
@@ -1974,7 +1974,6 @@ var sinonAssert = require("./assert");
 var sinonClock = require("./util/fake_timers");
 var fakeServer = require("nise").fakeServer;
 var fakeXhr = require("nise").fakeXhr;
-var fakeServerWithClock = require("nise").fakeServerWithClock;
 
 var push = [].push;
 
@@ -2022,7 +2021,7 @@ extend(sinonSandbox, {
         return this.add(this.clock);
     },
 
-    serverPrototype: fakeServerWithClock,
+    serverPrototype: fakeServer,
 
     useFakeServer: function useFakeServer() {
         var proto = this.serverPrototype || fakeServer;
@@ -2118,7 +2117,7 @@ extend(sinonSandbox, {
 
 module.exports = sinonSandbox;
 
-},{"./assert":2,"./collection":6,"./match":9,"./util/core/extend":22,"./util/fake_timers":34,"nise":51}],13:[function(require,module,exports){
+},{"./assert":2,"./collection":6,"./match":9,"./util/core/extend":23,"./util/fake_timers":35,"nise":53}],13:[function(require,module,exports){
 "use strict";
 
 var color = require("./color");
@@ -2220,11 +2219,12 @@ module.exports = {
     }
 };
 
-},{"./color":7,"./match":9,"./util/core/format":23,"./util/core/times-in-words":29,"diff":35}],14:[function(require,module,exports){
+},{"./color":7,"./match":9,"./util/core/format":24,"./util/core/times-in-words":30,"diff":36}],14:[function(require,module,exports){
 "use strict";
 
 var createBehavior = require("./behavior").create;
 var extend = require("./util/core/extend");
+var deprecated = require("./util/core/deprecated");
 var functionName = require("./util/core/function-name");
 var functionToString = require("./util/core/function-to-string");
 var getPropertyDescriptor = require("./util/core/get-property-descriptor");
@@ -2323,7 +2323,7 @@ var uuid = 0;
 var spyApi = {
     formatters: require("./spy-formatters"),
 
-    reset: function () {
+    resetHistory: function () {
         if (this.invoking) {
             var err = new Error("Cannot reset Sinon function while invoking it. " +
                                 "Move the call to .reset outside of the callback.");
@@ -2379,7 +2379,7 @@ var spyApi = {
         delete proxy.create;
         extend(proxy, func);
 
-        proxy.reset();
+        proxy.resetHistory();
         proxy.prototype = func.prototype;
         proxy.displayName = name || "spy";
         proxy.toString = functionToString;
@@ -2418,7 +2418,6 @@ var spyApi = {
 
             if (thisCall.calledWithNew()) {
                 // Call through with `new`
-                // eslint-disable-next-line new-parens
                 returnValue = new (bind.apply(this.func || func, [thisValue].concat(args)))();
 
                 if (typeof returnValue !== "object") {
@@ -2599,7 +2598,7 @@ var spyApi = {
             formatter = spyApi.formatters[specifyer];
 
             if (typeof formatter === "function") {
-                return formatter.call(null, spyInstance, args);
+                return String(formatter.call(null, spyInstance, args));
             } else if (!isNaN(parseInt(specifyer, 10))) {
                 return sinonFormat(args[specifyer - 1]);
             }
@@ -2636,6 +2635,8 @@ function delegateToCalls(method, matchAny, actual, notCalled) {
         return matches === this.callCount;
     };
 }
+
+spyApi.reset = deprecated.wrap(spyApi.resetHistory, deprecated.defaultMsg("reset"));
 
 delegateToCalls("calledOn", true);
 delegateToCalls("alwaysCalledOn", false, "calledOn");
@@ -2689,7 +2690,7 @@ extend(spy, spyApi);
 spy.spyCall = spyCall;
 module.exports = spy;
 
-},{"./behavior":3,"./call":4,"./match":9,"./spy-formatters":13,"./util/core/deep-equal":19,"./util/core/extend":22,"./util/core/format":23,"./util/core/function-name":24,"./util/core/function-to-string":25,"./util/core/get-property-descriptor":26,"./util/core/value-to-string":31,"./util/core/wrap-method":33}],15:[function(require,module,exports){
+},{"./behavior":3,"./call":4,"./match":9,"./spy-formatters":13,"./util/core/deep-equal":19,"./util/core/deprecated":21,"./util/core/extend":23,"./util/core/format":24,"./util/core/function-name":25,"./util/core/function-to-string":26,"./util/core/get-property-descriptor":27,"./util/core/value-to-string":32,"./util/core/wrap-method":34}],15:[function(require,module,exports){
 "use strict";
 
 var getPropertyDescriptor = require("./util/core/get-property-descriptor");
@@ -2713,7 +2714,7 @@ function stubEntireObject(stub, object) {
 
 module.exports = stubEntireObject;
 
-},{"./util/core/get-property-descriptor":26,"./util/core/walk":32}],16:[function(require,module,exports){
+},{"./util/core/get-property-descriptor":27,"./util/core/walk":33}],16:[function(require,module,exports){
 "use strict";
 
 var behavior = require("./behavior");
@@ -2848,7 +2849,7 @@ var proto = {
         });
     },
 
-    resetHistory: spy.reset,
+    resetHistory: spy.resetHistory,
 
     reset: function () {
         this.resetHistory();
@@ -2895,7 +2896,7 @@ Object.keys(behaviors).forEach(function (method) {
 extend(stub, proto);
 module.exports = stub;
 
-},{"./behavior":3,"./default-behaviors":8,"./spy":14,"./stub-entire-object":15,"./throw-on-falsy-object":17,"./util/core/extend":22,"./util/core/function-to-string":25,"./util/core/get-property-descriptor":26,"./util/core/value-to-string":31,"./util/core/wrap-method":33}],17:[function(require,module,exports){
+},{"./behavior":3,"./default-behaviors":8,"./spy":14,"./stub-entire-object":15,"./throw-on-falsy-object":17,"./util/core/extend":23,"./util/core/function-to-string":26,"./util/core/get-property-descriptor":27,"./util/core/value-to-string":32,"./util/core/wrap-method":34}],17:[function(require,module,exports){
 "use strict";
 var valueToString = require("./util/core/value-to-string");
 
@@ -2908,7 +2909,7 @@ function throwOnFalsyObject(object, property) {
 
 module.exports = throwOnFalsyObject;
 
-},{"./util/core/value-to-string":31}],18:[function(require,module,exports){
+},{"./util/core/value-to-string":32}],18:[function(require,module,exports){
 "use strict";
 
 var every = Array.prototype.every;
@@ -3071,6 +3072,40 @@ module.exports = {
 };
 
 },{}],21:[function(require,module,exports){
+/*eslint no-console: 0 */
+"use strict";
+
+// wrap returns a function that will invoke the supplied function and print a deprecation warning to the console each
+// time it is called.
+exports.wrap = function (func, msg) {
+    var wrapped = function () {
+        exports.printWarning(msg);
+        return func.apply(this, arguments);
+    };
+    if (func.prototype) {
+        wrapped.prototype = func.prototype;
+    }
+    return wrapped;
+};
+
+// defaultMsg returns a string which can be supplied to `wrap()` to notify the user that a particular part of the
+// sinon API has been deprecated.
+exports.defaultMsg = function (funcName) {
+    return "sinon." + funcName + " is deprecated and will be removed from the public API in a future version of sinon.";
+};
+
+exports.printWarning = function (msg) {
+    // Watch out for IE7 and below! :(
+    if (typeof console !== "undefined") {
+        if (console.info) {
+            console.info(msg);
+        } else {
+            console.log(msg);
+        }
+    }
+};
+
+},{}],22:[function(require,module,exports){
 "use strict";
 
 // This is an `every` implementation that works for all iterables
@@ -3091,7 +3126,7 @@ module.exports = function every(obj, fn) {
     return pass;
 };
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 "use strict";
 
 // Adapted from https://developer.mozilla.org/en/docs/ECMAScript_DontEnum_attribute#JScript_DontEnum_Bug
@@ -3169,7 +3204,7 @@ module.exports = function extend(target /*, sources */) {
     return target;
 };
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 "use strict";
 
 var formatio = require("formatio");
@@ -3199,7 +3234,7 @@ format.setFormatter = function (aCustomFormatter) {
 
 module.exports = format;
 
-},{"formatio":36}],24:[function(require,module,exports){
+},{"formatio":37}],25:[function(require,module,exports){
 "use strict";
 
 module.exports = function functionName(func) {
@@ -3218,7 +3253,7 @@ module.exports = function functionName(func) {
 };
 
 
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 "use strict";
 
 module.exports = function toString() {
@@ -3240,7 +3275,7 @@ module.exports = function toString() {
     return this.displayName || "sinon fake";
 };
 
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 "use strict";
 
 module.exports = function getPropertyDescriptor(object, property) {
@@ -3253,7 +3288,7 @@ module.exports = function getPropertyDescriptor(object, property) {
     return descriptor;
 };
 
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 "use strict";
 var typeOf = require("./typeOf");
 
@@ -3289,7 +3324,7 @@ module.exports = function iterableToString(obj) {
     return genericIterableToString(obj);
 };
 
-},{"./typeOf":30}],28:[function(require,module,exports){
+},{"./typeOf":31}],29:[function(require,module,exports){
 "use strict";
 
 module.exports = function orderByFirstCall(spies) {
@@ -3304,7 +3339,7 @@ module.exports = function orderByFirstCall(spies) {
     });
 };
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 "use strict";
 
 var array = [null, "once", "twice", "thrice"];
@@ -3313,7 +3348,7 @@ module.exports = function timesInWords(count) {
     return array[count] || (count || 0) + " times";
 };
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 "use strict";
 
 var type = require("type-detect");
@@ -3322,7 +3357,7 @@ module.exports = function typeOf(value) {
     return type(value).toLowerCase();
 };
 
-},{"type-detect":61}],31:[function(require,module,exports){
+},{"type-detect":62}],32:[function(require,module,exports){
 "use strict";
 
 module.exports = function (value) {
@@ -3332,7 +3367,7 @@ module.exports = function (value) {
     return String(value);
 };
 
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 "use strict";
 
 function walkInternal(obj, iterator, context, originalObj, seen) {
@@ -3379,7 +3414,7 @@ module.exports = function walk(obj, iterator, context) {
     return walkInternal(obj, iterator, context, obj, {});
 };
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 "use strict";
 
 var getPropertyDescriptor = require("./get-property-descriptor");
@@ -3532,7 +3567,7 @@ module.exports = function wrapMethod(object, property, method) {
     return method;
 };
 
-},{"./get-property-descriptor":26,"./value-to-string":31}],34:[function(require,module,exports){
+},{"./get-property-descriptor":27,"./value-to-string":32}],35:[function(require,module,exports){
 "use strict";
 
 var llx = require("lolex");
@@ -3579,10 +3614,10 @@ exports.timers = {
     Date: Date
 };
 
-},{"lolex":39}],35:[function(require,module,exports){
+},{"lolex":41}],36:[function(require,module,exports){
 /*!
 
- diff v3.3.1
+ diff v3.4.0
 
 Software License Agreement (BSD License)
 
@@ -3905,7 +3940,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return oldPos;
 	  },
 	  /*istanbul ignore start*/ /*istanbul ignore end*/equals: function equals(left, right) {
-	    return left === right || this.options.ignoreCase && left.toLowerCase() === right.toLowerCase();
+	    if (this.options.comparator) {
+	      return this.options.comparator(left, right);
+	    } else {
+	      return left === right || this.options.ignoreCase && left.toLowerCase() === right.toLowerCase();
+	    }
 	  },
 	  /*istanbul ignore start*/ /*istanbul ignore end*/removeEmpty: function removeEmpty(array) {
 	    var ret = [];
@@ -3968,10 +4007,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  }
 
-	  // Special case handle for when one terminal is ignored. For this case we merge the
-	  // terminal into the prior string and drop the change.
+	  // Special case handle for when one terminal is ignored (i.e. whitespace).
+	  // For this case we merge the terminal into the prior string and drop the change.
+	  // This is only available for string mode.
 	  var lastComponent = components[componentLen - 1];
-	  if (componentLen > 1 && (lastComponent.added || lastComponent.removed) && diff.equals('', lastComponent.value)) {
+	  if (componentLen > 1 && typeof lastComponent.value === 'string' && (lastComponent.added || lastComponent.removed) && diff.equals('', lastComponent.value)) {
 	    components[componentLen - 2].value += lastComponent.value;
 	    components.pop();
 	  }
@@ -4347,6 +4387,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	/*istanbul ignore end*/var arrayDiff = /*istanbul ignore start*/exports. /*istanbul ignore end*/arrayDiff = new /*istanbul ignore start*/_base2['default'] /*istanbul ignore end*/();
 	arrayDiff.tokenize = arrayDiff.join = function (value) {
 	  return value.slice();
+	};
+	arrayDiff.removeEmpty = function (value) {
+	  return value;
 	};
 
 	function diffArrays(oldArr, newArr, callback) {
@@ -4766,27 +4809,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	/*istanbul ignore start*/function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 	/*istanbul ignore end*/function calcLineCount(hunk) {
-	  var conflicted = false;
+	  /*istanbul ignore start*/var _calcOldNewLineCount = /*istanbul ignore end*/calcOldNewLineCount(hunk.lines),
+	      oldLines = _calcOldNewLineCount.oldLines,
+	      newLines = _calcOldNewLineCount.newLines;
 
-	  hunk.oldLines = 0;
-	  hunk.newLines = 0;
-
-	  hunk.lines.forEach(function (line) {
-	    if (typeof line !== 'string') {
-	      conflicted = true;
-	      return;
-	    }
-
-	    if (line[0] === '+' || line[0] === ' ') {
-	      hunk.newLines++;
-	    }
-	    if (line[0] === '-' || line[0] === ' ') {
-	      hunk.oldLines++;
-	    }
-	  });
-
-	  if (conflicted) {
+	  if (oldLines !== undefined) {
+	    hunk.oldLines = oldLines;
+	  } else {
 	    delete hunk.oldLines;
+	  }
+
+	  if (newLines !== undefined) {
+	    hunk.newLines = newLines;
+	  } else {
 	    delete hunk.newLines;
 	  }
 	}
@@ -5118,6 +5153,43 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return true;
 	}
 
+	function calcOldNewLineCount(lines) {
+	  var oldLines = 0;
+	  var newLines = 0;
+
+	  lines.forEach(function (line) {
+	    if (typeof line !== 'string') {
+	      var myCount = calcOldNewLineCount(line.mine);
+	      var theirCount = calcOldNewLineCount(line.theirs);
+
+	      if (oldLines !== undefined) {
+	        if (myCount.oldLines === theirCount.oldLines) {
+	          oldLines += myCount.oldLines;
+	        } else {
+	          oldLines = undefined;
+	        }
+	      }
+
+	      if (newLines !== undefined) {
+	        if (myCount.newLines === theirCount.newLines) {
+	          newLines += myCount.newLines;
+	        } else {
+	          newLines = undefined;
+	        }
+	      }
+	    } else {
+	      if (newLines !== undefined && (line[0] === '+' || line[0] === ' ')) {
+	        newLines++;
+	      }
+	      if (oldLines !== undefined && (line[0] === '-' || line[0] === ' ')) {
+	        oldLines++;
+	      }
+	    }
+	  });
+
+	  return { oldLines: oldLines, newLines: newLines };
+	}
+
 
 
 /***/ }),
@@ -5382,7 +5454,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ ])
 });
 ;
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 (function (global){
 ((typeof define === "function" && define.amd && function (m) {
     define("formatio", ["samsam"], m);
@@ -5615,12 +5687,71 @@ return /******/ (function(modules) { // webpackBootstrap
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"samsam":56}],37:[function(require,module,exports){
+},{"samsam":57}],38:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
+module.exports = extend;
+
+/*
+  var obj = {a: 3, b: 5};
+  extend(obj, {a: 4, c: 8}); // {a: 4, b: 5, c: 8}
+  obj; // {a: 4, b: 5, c: 8}
+
+  var obj = {a: 3, b: 5};
+  extend({}, obj, {a: 4, c: 8}); // {a: 4, b: 5, c: 8}
+  obj; // {a: 3, b: 5}
+
+  var arr = [1, 2, 3];
+  var obj = {a: 3, b: 5};
+  extend(obj, {c: arr}); // {a: 3, b: 5, c: [1, 2, 3]}
+  arr.push(4);
+  obj; // {a: 3, b: 5, c: [1, 2, 3, 4]}
+
+  var arr = [1, 2, 3];
+  var obj = {a: 3, b: 5};
+  extend(true, obj, {c: arr}); // {a: 3, b: 5, c: [1, 2, 3]}
+  arr.push(4);
+  obj; // {a: 3, b: 5, c: [1, 2, 3]}
+
+  extend({a: 4, b: 5}); // {a: 4, b: 5}
+  extend({a: 4, b: 5}, 3); {a: 4, b: 5}
+  extend({a: 4, b: 5}, true); {a: 4, b: 5}
+  extend('hello', {a: 4, b: 5}); // throws
+  extend(3, {a: 4, b: 5}); // throws
+*/
+
+function extend(/* [deep], obj1, obj2, [objn] */) {
+  var args = [].slice.call(arguments);
+  var deep = false;
+  if (typeof args[0] == 'boolean') {
+    deep = args.shift();
+  }
+  var result = args[0];
+  if (!result || (typeof result != 'object' && typeof result != 'function')) {
+    throw new Error('extendee must be an object');
+  }
+  var extenders = args.slice(1);
+  var len = extenders.length;
+  for (var i = 0; i < len; i++) {
+    var extender = extenders[i];
+    for (var key in extender) {
+      // include prototype properties
+      var value = extender[key];
+      if (deep && value && (typeof value == 'object' || typeof value == 'function')) {
+        var base = Array.isArray(value) ? [] : {};
+        result[key] = extend(true, result[key] || base, value);
+      } else {
+        result[key] = value;
+      }
+    }
+  }
+  return result;
+}
+
+},{}],40:[function(require,module,exports){
 (function (global){
 /**
  * lodash (Custom Build) <https://lodash.com/>
@@ -6555,7 +6686,7 @@ function get(object, path, defaultValue) {
 module.exports = get;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],39:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -6590,6 +6721,8 @@ var addTimerReturnsObject = typeof timeoutResult === "object";
 var hrtimePresent = (global.process && typeof global.process.hrtime === "function");
 var nextTickPresent = (global.process && typeof global.process.nextTick === "function");
 var performancePresent = (global.performance && typeof global.performance.now === "function");
+var requestAnimationFramePresent = (global.requestAnimationFrame && typeof global.requestAnimationFrame === "function");
+var cancelAnimationFramePresent = (global.cancelAnimationFrame && typeof global.cancelAnimationFrame === "function");
 
 clearTimeout(timeoutResult);
 
@@ -6951,6 +7084,14 @@ function uninstall(clock, target, config) {
 
     // Prevent multiple executions which will completely remove these props
     clock.methods = [];
+
+    // return pending timers, to enable checking what timers remained on uninstall
+    if (!clock.timers) {
+        return [];
+    }
+    return Object.keys(clock.timers).map(function mapper(key) {
+        return clock.timers[key];
+    });
 }
 
 function hijackMethod(target, method, clock) {
@@ -6987,8 +7128,6 @@ var timers = {
     clearImmediate: global.clearImmediate,
     setInterval: setInterval,
     clearInterval: clearInterval,
-    requestAnimationFrame: global.requestAnimationFrame,
-    cancelAnimationFrame: global.cancelAnimationFrame,
     Date: Date
 };
 
@@ -7002,6 +7141,14 @@ if (nextTickPresent) {
 
 if (performancePresent) {
     timers.performance = global.performance;
+}
+
+if (requestAnimationFramePresent) {
+    timers.requestAnimationFrame = global.requestAnimationFrame;
+}
+
+if (cancelAnimationFramePresent) {
+    timers.cancelAnimationFrame = global.cancelAnimationFrame;
 }
 
 var keys = Object.keys || function (obj) {
@@ -7107,20 +7254,29 @@ function createClock(start, loopLimit) {
         var tickFrom = clock.now;
         var tickTo = clock.now + ms;
         var previous = clock.now;
-        var timer = firstTimerInRange(clock, tickFrom, tickTo);
-        var oldNow, firstException;
+        var timer, firstException, oldNow;
 
         clock.duringTick = true;
-        runJobs(clock);
 
+        // perform process.nextTick()s
+        oldNow = clock.now;
+        runJobs(clock);
+        if (oldNow !== clock.now) {
+            // compensate for any setSystemTime() call during process.nextTick() callback
+            tickFrom += clock.now - oldNow;
+            tickTo += clock.now - oldNow;
+        }
+
+        // perform each timer in the requested range
+        timer = firstTimerInRange(clock, tickFrom, tickTo);
         while (timer && tickFrom <= tickTo) {
             if (clock.timers[timer.id]) {
                 updateHrTime(timer.callAt);
                 tickFrom = timer.callAt;
                 clock.now = timer.callAt;
+                oldNow = clock.now;
                 try {
                     runJobs(clock);
-                    oldNow = clock.now;
                     callTimer(clock, timer);
                 } catch (e) {
                     firstException = firstException || e;
@@ -7138,15 +7294,32 @@ function createClock(start, loopLimit) {
             previous = tickFrom;
         }
 
+        // perform process.nextTick()s again
+        oldNow = clock.now;
         runJobs(clock);
+        if (oldNow !== clock.now) {
+            // compensate for any setSystemTime() call during process.nextTick() callback
+            tickFrom += clock.now - oldNow;
+            tickTo += clock.now - oldNow;
+        }
         clock.duringTick = false;
-        updateHrTime(tickTo);
-        clock.now = tickTo;
 
+        // corner case: during runJobs, new timers were scheduled which could be in the range [clock.now, tickTo]
+        timer = firstTimerInRange(clock, tickFrom, tickTo);
+        if (timer) {
+            try {
+                clock.tick(tickTo - clock.now); // do it all again - for the remainder of the requested range
+            } catch (e) {
+                firstException = firstException || e;
+            }
+        } else {
+            // no timers remaining in the requested range: move the clock all the way to the end
+            updateHrTime(tickTo);
+            clock.now = tickTo;
+        }
         if (firstException) {
             throw firstException;
         }
-
         return clock.now;
     };
 
@@ -7278,7 +7451,7 @@ exports.install = function install(config) {
     var clock = createClock(config.now, config.loopLimit);
 
     clock.uninstall = function () {
-        uninstall(clock, target, config);
+        return uninstall(clock, target, config);
     };
 
     clock.methods = config.toFake || [];
@@ -7313,7 +7486,7 @@ exports.install = function install(config) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],40:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 "use strict";
 
 // cache a reference to setTimeout, so that our reference won't be stubbed out
@@ -7362,7 +7535,7 @@ function configureLogger(config) {
 
 module.exports = configureLogger;
 
-},{}],41:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 "use strict";
 
 var Event = require("./event");
@@ -7378,7 +7551,7 @@ CustomEvent.prototype.constructor = CustomEvent;
 
 module.exports = CustomEvent;
 
-},{"./event":43}],42:[function(require,module,exports){
+},{"./event":45}],44:[function(require,module,exports){
 "use strict";
 
 var push = Array.prototype.push;
@@ -7420,7 +7593,7 @@ var EventTarget = {
 
 module.exports = EventTarget;
 
-},{}],43:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 "use strict";
 
 function Event(type, bubbles, cancelable, target) {
@@ -7444,7 +7617,7 @@ Event.prototype = {
 
 module.exports = Event;
 
-},{}],44:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -7454,7 +7627,7 @@ module.exports = {
     EventTarget: require("./event-target")
 };
 
-},{"./custom-event":41,"./event":43,"./event-target":42,"./progress-event":45}],45:[function(require,module,exports){
+},{"./custom-event":43,"./event":45,"./event-target":44,"./progress-event":47}],47:[function(require,module,exports){
 "use strict";
 
 var Event = require("./event");
@@ -7472,7 +7645,7 @@ ProgressEvent.prototype.constructor = ProgressEvent;
 
 module.exports = ProgressEvent;
 
-},{"./event":43}],46:[function(require,module,exports){
+},{"./event":45}],48:[function(require,module,exports){
 "use strict";
 
 var lolex = require("lolex");
@@ -7540,7 +7713,7 @@ fakeServerWithClock.restore = function restore() {
 
 module.exports = fakeServerWithClock;
 
-},{"./index":48,"lolex":53}],47:[function(require,module,exports){
+},{"./index":50,"lolex":54}],49:[function(require,module,exports){
 "use strict";
 
 var formatio = require("formatio");
@@ -7554,7 +7727,7 @@ module.exports = function format() {
     return formatter.ascii.apply(formatter, arguments);
 };
 
-},{"formatio":36}],48:[function(require,module,exports){
+},{"formatio":37}],50:[function(require,module,exports){
 "use strict";
 
 var fakeXhr = require("../fake-xhr");
@@ -7850,7 +8023,7 @@ var fakeServer = {
 
 module.exports = fakeServer;
 
-},{"../configure-logger":40,"../fake-xhr":50,"./format":47,"path-to-regexp":54}],49:[function(require,module,exports){
+},{"../configure-logger":42,"../fake-xhr":52,"./format":49,"path-to-regexp":55}],51:[function(require,module,exports){
 /*global Blob */
 "use strict";
 
@@ -7862,7 +8035,7 @@ exports.isSupported = (function () {
     }
 }());
 
-},{}],50:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -8576,7 +8749,7 @@ module.exports = {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../configure-logger":40,"../event":44,"./blob":49,"just-extend":52,"text-encoding":58}],51:[function(require,module,exports){
+},{"../configure-logger":42,"../event":46,"./blob":51,"just-extend":39,"text-encoding":59}],53:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -8585,69 +8758,7 @@ module.exports = {
     fakeXhr: require("./fake-xhr")
 };
 
-},{"./fake-server":48,"./fake-server/fake-server-with-clock":46,"./fake-xhr":50}],52:[function(require,module,exports){
-module.exports = extend;
-
-/*
-  var obj = {a: 3, b: 5};
-  extend(obj, {a: 4, c: 8}); // {a: 4, b: 5, c: 8}
-  obj; // {a: 4, b: 5, c: 8}
-
-  var obj = {a: 3, b: 5};
-  extend({}, obj, {a: 4, c: 8}); // {a: 4, b: 5, c: 8}
-  obj; // {a: 3, b: 5}
-
-  var arr = [1, 2, 3];
-  var obj = {a: 3, b: 5};
-  extend(obj, {c: arr}); // {a: 3, b: 5, c: [1, 2, 3]}
-  arr.push(4);
-  obj; // {a: 3, b: 5, c: [1, 2, 3, 4]}
-
-  var arr = [1, 2, 3];
-  var obj = {a: 3, b: 5};
-  extend(true, obj, {c: arr}); // {a: 3, b: 5, c: [1, 2, 3]}
-  arr.push(4);
-  obj; // {a: 3, b: 5, c: [1, 2, 3]}
-
-  extend({a: 4, b: 5}); // {a: 4, b: 5}
-  extend(3, {a: 4, b: 5}); // throws
-  extend({a: 4, b: 5}, 3); // throws
-  extend({a: 4, b: 5}, true); // throws
-*/
-
-function extend(/* [deep], obj1, obj2, [objn] */) {
-  var args = [].slice.call(arguments);
-  var deep = false;
-  if (typeof args[0] == 'boolean') {
-    deep = args.shift();
-  }
-  var arg;
-  var i = args.length;
-  while (((arg = args[i - 1]), i--)) {
-    if (!arg || (typeof arg != 'object' && typeof arg != 'function')) {
-      throw new Error('expected object, got ' + arg);
-    }
-  }
-  var result = args[0];
-  var extenders = args.slice(1);
-  var len = extenders.length;
-  for (var i = 0; i < len; i++) {
-    var extender = extenders[i];
-    for (var key in extender) {
-      // include prototype properties
-      var value = extender[key];
-      if (deep && value && (typeof value == 'object' || typeof value == 'function')) {
-        var base = Array.isArray(value) ? [] : {};
-        result[key] = extend(true, result[key] || base, value);
-      } else {
-        result[key] = value;
-      }
-    }
-  }
-  return result;
-}
-
-},{}],53:[function(require,module,exports){
+},{"./fake-server":50,"./fake-server/fake-server-with-clock":48,"./fake-xhr":52}],54:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -9307,7 +9418,7 @@ exports.install = function install(target, now, toFake, loopLimit) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],54:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 var isarray = require('isarray')
 
 /**
@@ -9735,7 +9846,7 @@ function pathToRegexp (path, keys, options) {
   return stringToRegexp(/** @type {string} */ (path), /** @type {!Array} */ (keys), options)
 }
 
-},{"isarray":37}],55:[function(require,module,exports){
+},{"isarray":38}],56:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -9921,7 +10032,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],56:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 ((typeof define === "function" && define.amd && function (m) { define("samsam", m); }) ||
  (typeof module === "object" &&
       function (m) { module.exports = m(); }) || // Node
@@ -10322,6 +10433,10 @@ process.umask = function() { return 0; };
             return arrayContains(object, matcher, match);
         }
 
+        if (isDate(matcher)) {
+            return isDate(object) && object.getTime() === matcher.getTime();
+        }
+
         if (matcher && typeof matcher === "object") {
             if (matcher === object) {
                 return true;
@@ -10360,11 +10475,14 @@ process.umask = function() { return 0; };
     };
 });
 
-},{}],57:[function(require,module,exports){
-'use strict';
-module.exports = false;
-
 },{}],58:[function(require,module,exports){
+'use strict';
+module.exports = {
+	stdout: false,
+	stderr: false
+};
+
+},{}],59:[function(require,module,exports){
 // This is free and unencumbered software released into the public domain.
 // See LICENSE.md for more information.
 
@@ -10375,7 +10493,7 @@ module.exports = {
   TextDecoder: encoding.TextDecoder,
 };
 
-},{"./lib/encoding.js":60}],59:[function(require,module,exports){
+},{"./lib/encoding.js":61}],60:[function(require,module,exports){
 (function(global) {
   'use strict';
 
@@ -10423,7 +10541,7 @@ module.exports = {
 // For strict environments where `this` inside the global scope
 // is `undefined`, take a pure object instead
 }(this || {}));
-},{}],60:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 // This is free and unencumbered software released into the public domain.
 // See LICENSE.md for more information.
 
@@ -13737,7 +13855,7 @@ module.exports = {
 // For strict environments where `this` inside the global scope
 // is `undefined`, take a pure object instead
 }(this || {}));
-},{"./encoding-indexes.js":59}],61:[function(require,module,exports){
+},{"./encoding-indexes.js":60}],62:[function(require,module,exports){
 (function (global){
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -13754,16 +13872,6 @@ var promiseExists = typeof Promise === 'function';
 
 /* eslint-disable no-undef */
 var globalObject = typeof self === 'object' ? self : global; // eslint-disable-line id-blacklist
-
-/*
- * All of these attributes must be available on the global object for the current environment
- * to be considered a DOM environment (browser)
- */
-var isDom = typeof window === 'object' &&
-  'document' in window &&
-  'navigator' in window &&
-  'HTMLElement' in window;
-/* eslint-enable */
 
 var symbolExists = typeof Symbol !== 'undefined';
 var mapExists = typeof Map !== 'undefined';
@@ -13783,6 +13891,14 @@ var stringIteratorExists = symbolIteratorExists && typeof String.prototype[Symbo
 var stringIteratorPrototype = stringIteratorExists && Object.getPrototypeOf(''[Symbol.iterator]());
 var toStringLeftSliceLength = 8;
 var toStringRightSliceLength = -1;
+var windowExists = typeof window === 'object';
+var windowLocationExists = windowExists && typeof window.location === 'object';
+var windowDocumentExists = windowExists && typeof window.document === 'object';
+var windowNavigatorExists = windowExists && typeof window.navigator === 'object';
+var windowNavigatorMimeTypesExists = windowNavigatorExists && typeof window.navigator.mimeTypes === 'object';
+var windowNavigatorPluginsExists = windowNavigatorExists && typeof window.navigator.plugins === 'object';
+var windowHTMLElementExists = windowExists &&
+  (typeof window.HTMLElement === 'function' || typeof window.HTMLElement === 'object');
 /**
  * ### typeOf (obj)
  *
@@ -13856,7 +13972,7 @@ function typeDetect(obj) {
     return 'Array';
   }
 
-  if (isDom) {
+  if (windowExists) {
     /* ! Spec Conformance
      * (https://html.spec.whatwg.org/multipage/browsers.html#location)
      * WhatWG HTML$7.7.3 - The `Location` interface
@@ -13864,7 +13980,7 @@ function typeDetect(obj) {
      *  - IE <=11 === "[object Object]"
      *  - IE Edge <=13 === "[object Object]"
      */
-    if (obj === globalObject.location) {
+    if (windowLocationExists && obj === window.location) {
       return 'Location';
     }
 
@@ -13887,7 +14003,7 @@ function typeDetect(obj) {
      *  - IE 11 === "[object HTMLDocument]"
      *  - IE Edge <=13 === "[object HTMLDocument]"
      */
-    if (obj === globalObject.document) {
+    if (windowDocumentExists && obj === window.document) {
       return 'Document';
     }
 
@@ -13897,7 +14013,7 @@ function typeDetect(obj) {
      * Test: `Object.prototype.toString.call(navigator.mimeTypes)``
      *  - IE <=10 === "[object MSMimeTypesCollection]"
      */
-    if (obj === (globalObject.navigator || {}).mimeTypes) {
+    if (windowNavigatorMimeTypesExists && obj === window.navigator.mimeTypes) {
       return 'MimeTypeArray';
     }
 
@@ -13907,50 +14023,52 @@ function typeDetect(obj) {
      * Test: `Object.prototype.toString.call(navigator.plugins)``
      *  - IE <=10 === "[object MSPluginsCollection]"
      */
-    if (obj === (globalObject.navigator || {}).plugins) {
+    if (windowNavigatorPluginsExists && obj === window.navigator.plugins) {
       return 'PluginArray';
     }
 
-    /* ! Spec Conformance
-     * (https://html.spec.whatwg.org/multipage/webappapis.html#pluginarray)
-     * WhatWG HTML$4.4.4 - The `blockquote` element - Interface `HTMLQuoteElement`
-     * Test: `Object.prototype.toString.call(document.createElement('blockquote'))``
-     *  - IE <=10 === "[object HTMLBlockElement]"
-     */
-    if (obj instanceof globalObject.HTMLElement && obj.tagName === 'BLOCKQUOTE') {
-      return 'HTMLQuoteElement';
-    }
+    if (windowHTMLElementExists && obj instanceof window.HTMLElement) {
+      /* ! Spec Conformance
+      * (https://html.spec.whatwg.org/multipage/webappapis.html#pluginarray)
+      * WhatWG HTML$4.4.4 - The `blockquote` element - Interface `HTMLQuoteElement`
+      * Test: `Object.prototype.toString.call(document.createElement('blockquote'))``
+      *  - IE <=10 === "[object HTMLBlockElement]"
+      */
+      if (obj.tagName === 'BLOCKQUOTE') {
+        return 'HTMLQuoteElement';
+      }
 
-    /* ! Spec Conformance
-     * (https://html.spec.whatwg.org/#htmltabledatacellelement)
-     * WhatWG HTML$4.9.9 - The `td` element - Interface `HTMLTableDataCellElement`
-     * Note: Most browsers currently adher to the W3C DOM Level 2 spec
-     *       (https://www.w3.org/TR/DOM-Level-2-HTML/html.html#ID-82915075)
-     *       which suggests that browsers should use HTMLTableCellElement for
-     *       both TD and TH elements. WhatWG separates these.
-     * Test: Object.prototype.toString.call(document.createElement('td'))
-     *  - Chrome === "[object HTMLTableCellElement]"
-     *  - Firefox === "[object HTMLTableCellElement]"
-     *  - Safari === "[object HTMLTableCellElement]"
-     */
-    if (obj instanceof globalObject.HTMLElement && obj.tagName === 'TD') {
-      return 'HTMLTableDataCellElement';
-    }
+      /* ! Spec Conformance
+       * (https://html.spec.whatwg.org/#htmltabledatacellelement)
+       * WhatWG HTML$4.9.9 - The `td` element - Interface `HTMLTableDataCellElement`
+       * Note: Most browsers currently adher to the W3C DOM Level 2 spec
+       *       (https://www.w3.org/TR/DOM-Level-2-HTML/html.html#ID-82915075)
+       *       which suggests that browsers should use HTMLTableCellElement for
+       *       both TD and TH elements. WhatWG separates these.
+       * Test: Object.prototype.toString.call(document.createElement('td'))
+       *  - Chrome === "[object HTMLTableCellElement]"
+       *  - Firefox === "[object HTMLTableCellElement]"
+       *  - Safari === "[object HTMLTableCellElement]"
+       */
+      if (obj.tagName === 'TD') {
+        return 'HTMLTableDataCellElement';
+      }
 
-    /* ! Spec Conformance
-     * (https://html.spec.whatwg.org/#htmltableheadercellelement)
-     * WhatWG HTML$4.9.9 - The `td` element - Interface `HTMLTableHeaderCellElement`
-     * Note: Most browsers currently adher to the W3C DOM Level 2 spec
-     *       (https://www.w3.org/TR/DOM-Level-2-HTML/html.html#ID-82915075)
-     *       which suggests that browsers should use HTMLTableCellElement for
-     *       both TD and TH elements. WhatWG separates these.
-     * Test: Object.prototype.toString.call(document.createElement('th'))
-     *  - Chrome === "[object HTMLTableCellElement]"
-     *  - Firefox === "[object HTMLTableCellElement]"
-     *  - Safari === "[object HTMLTableCellElement]"
-     */
-    if (obj instanceof globalObject.HTMLElement && obj.tagName === 'TH') {
-      return 'HTMLTableHeaderCellElement';
+      /* ! Spec Conformance
+       * (https://html.spec.whatwg.org/#htmltableheadercellelement)
+       * WhatWG HTML$4.9.9 - The `td` element - Interface `HTMLTableHeaderCellElement`
+       * Note: Most browsers currently adher to the W3C DOM Level 2 spec
+       *       (https://www.w3.org/TR/DOM-Level-2-HTML/html.html#ID-82915075)
+       *       which suggests that browsers should use HTMLTableCellElement for
+       *       both TD and TH elements. WhatWG separates these.
+       * Test: Object.prototype.toString.call(document.createElement('th'))
+       *  - Chrome === "[object HTMLTableCellElement]"
+       *  - Firefox === "[object HTMLTableCellElement]"
+       *  - Safari === "[object HTMLTableCellElement]"
+       */
+      if (obj.tagName === 'TH') {
+        return 'HTMLTableHeaderCellElement';
+      }
     }
   }
 
