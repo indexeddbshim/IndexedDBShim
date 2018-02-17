@@ -198,7 +198,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
         const supported = [
             'resources/testharness.js', 'resources/testharnessreport.js',
             'resources/idlharness.js', 'resources/WebIDLParser.js',
-            'nested-cloning-common.js',
+            'nested-cloning-common.js', 'interleaved-cursors-common.js',
             'support.js', 'support-promises.js', 'service-workers/service-worker/resources/test-helpers.sub.js'
         ];
         // Use paths set in node-buildjs.js (when extracting <script> tags and joining contents)

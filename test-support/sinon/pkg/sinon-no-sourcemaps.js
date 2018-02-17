@@ -1,4 +1,4 @@
-/* Sinon.JS 4.1.6, 2018-01-16, @license BSD-3 */(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.sinon = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/* Sinon.JS 4.3.0, 2018-02-10, @license BSD-3 */(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.sinon = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
 
 exports.assert = require("./sinon/assert");
@@ -42,7 +42,7 @@ exports.addBehavior = function (name, fn) {
 var format = require("./sinon/util/core/format");
 exports.setFormatter = format.setFormatter;
 
-},{"./sinon/assert":2,"./sinon/behavior":3,"./sinon/call":4,"./sinon/collection":6,"./sinon/match":9,"./sinon/mock":11,"./sinon/mock-expectation":10,"./sinon/sandbox":12,"./sinon/spy":14,"./sinon/stub":16,"./sinon/util/core/default-config":20,"./sinon/util/core/format":24,"./sinon/util/fake_timers":35,"nise":53}],2:[function(require,module,exports){
+},{"./sinon/assert":2,"./sinon/behavior":3,"./sinon/call":4,"./sinon/collection":6,"./sinon/match":9,"./sinon/mock":11,"./sinon/mock-expectation":10,"./sinon/sandbox":12,"./sinon/spy":14,"./sinon/stub":16,"./sinon/util/core/default-config":20,"./sinon/util/core/format":24,"./sinon/util/fake_timers":35,"nise":54}],2:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -476,7 +476,7 @@ proto.createBehavior = createBehavior;
 module.exports = proto;
 
 }).call(this,require('_process'))
-},{"./util/core/extend":23,"./util/core/function-name":25,"./util/core/value-to-string":32,"_process":56}],4:[function(require,module,exports){
+},{"./util/core/extend":23,"./util/core/function-name":25,"./util/core/value-to-string":32,"_process":58}],4:[function(require,module,exports){
 "use strict";
 
 var sinonMatch = require("./match");
@@ -779,12 +779,29 @@ var collection = {
     },
 
     resetHistory: function resetHistory() {
-        getFakes(this).forEach(function (fake) {
-            var method = fake.resetHistory || fake.reset;
-
+        function privateResetHistory(f) {
+            var method = f.resetHistory || f.reset;
             if (method) {
-                method.call(fake);
+                method.call(f);
             }
+        }
+
+        getFakes(this).forEach(function (fake) {
+            if (typeof fake === "function") {
+                privateResetHistory(fake);
+                return;
+            }
+
+            var methods = [];
+            if (fake.get) {
+                methods.push(fake.get);
+            }
+
+            if (fake.set) {
+                methods.push(fake.set);
+            }
+
+            methods.forEach(privateResetHistory);
         });
     },
 
@@ -896,7 +913,7 @@ exports.green = function (str) {
     return colorize(str, 32);
 };
 
-},{"supports-color":58}],8:[function(require,module,exports){
+},{"supports-color":60}],8:[function(require,module,exports){
 "use strict";
 
 var getPropertyDescriptor = require("./util/core/get-property-descriptor");
@@ -1404,6 +1421,42 @@ match.hasNested = function (property, value) {
     }, message);
 };
 
+match.every = function (predicate) {
+    if (!isMatcher(predicate)) {
+        throw new TypeError("Matcher expected");
+    }
+
+    return match(function (actual) {
+        if (typeOf(actual) === "object") {
+            return every(Object.keys(actual), function (key) {
+                return predicate.test(actual[key]);
+            });
+        }
+
+        return !!actual && typeOf(actual.forEach) === "function" && every(actual, function (element) {
+            return predicate.test(element);
+        });
+    }, "every(" + predicate.message + ")");
+};
+
+match.some = function (predicate) {
+    if (!isMatcher(predicate)) {
+        throw new TypeError("Matcher expected");
+    }
+
+    return match(function (actual) {
+        if (typeOf(actual) === "object") {
+            return !every(Object.keys(actual), function (key) {
+                return !predicate.test(actual[key]);
+            });
+        }
+
+        return !!actual && typeOf(actual.forEach) === "function" && !every(actual, function (element) {
+            return !predicate.test(element);
+        });
+    }, "some(" + predicate.message + ")");
+};
+
 match.array = match.typeOf("array");
 
 match.array.deepEquals = function (expectation) {
@@ -1494,7 +1547,7 @@ match.symbol = match.typeOf("symbol");
 
 module.exports = match;
 
-},{"./util/core/deep-equal":19,"./util/core/every":22,"./util/core/function-name":25,"./util/core/iterable-to-string":28,"./util/core/typeOf":31,"./util/core/value-to-string":32,"lodash.get":40}],10:[function(require,module,exports){
+},{"./util/core/deep-equal":19,"./util/core/every":22,"./util/core/function-name":25,"./util/core/iterable-to-string":28,"./util/core/typeOf":31,"./util/core/value-to-string":32,"lodash.get":41}],10:[function(require,module,exports){
 "use strict";
 
 var spyInvoke = require("./spy").invoke;
@@ -2117,7 +2170,7 @@ extend(sinonSandbox, {
 
 module.exports = sinonSandbox;
 
-},{"./assert":2,"./collection":6,"./match":9,"./util/core/extend":23,"./util/fake_timers":35,"nise":53}],13:[function(require,module,exports){
+},{"./assert":2,"./collection":6,"./match":9,"./util/core/extend":23,"./util/fake_timers":35,"nise":54}],13:[function(require,module,exports){
 "use strict";
 
 var color = require("./color");
@@ -2219,7 +2272,7 @@ module.exports = {
     }
 };
 
-},{"./color":7,"./match":9,"./util/core/format":24,"./util/core/times-in-words":30,"diff":36}],14:[function(require,module,exports){
+},{"./color":7,"./match":9,"./util/core/format":24,"./util/core/times-in-words":30,"diff":38}],14:[function(require,module,exports){
 "use strict";
 
 var createBehavior = require("./behavior").create;
@@ -2608,12 +2661,16 @@ var spyApi = {
     }
 };
 
-function delegateToCalls(method, matchAny, actual, notCalled) {
+function delegateToCalls(method, matchAny, actual, notCalled, totalCallCount) {
     spyApi[method] = function () {
         if (!this.called) {
             if (notCalled) {
                 return notCalled.apply(this, arguments);
             }
+            return false;
+        }
+
+        if (totalCallCount !== undefined && this.callCount !== totalCallCount) {
             return false;
         }
 
@@ -2641,10 +2698,12 @@ spyApi.reset = deprecated.wrap(spyApi.resetHistory, deprecated.defaultMsg("reset
 delegateToCalls("calledOn", true);
 delegateToCalls("alwaysCalledOn", false, "calledOn");
 delegateToCalls("calledWith", true);
+delegateToCalls("calledOnceWith", true, "calledWith", undefined, 1);
 delegateToCalls("calledWithMatch", true);
 delegateToCalls("alwaysCalledWith", false, "calledWith");
 delegateToCalls("alwaysCalledWithMatch", false, "calledWithMatch");
 delegateToCalls("calledWithExactly", true);
+delegateToCalls("calledOnceWithExactly", true, "calledWithExactly", undefined, 1);
 delegateToCalls("alwaysCalledWithExactly", false, "calledWithExactly");
 delegateToCalls("neverCalledWith", false, "notCalledWith", function () {
     return true;
@@ -3207,7 +3266,7 @@ module.exports = function extend(target /*, sources */) {
 },{}],24:[function(require,module,exports){
 "use strict";
 
-var formatio = require("formatio");
+var formatio = require("@sinonjs/formatio");
 
 var formatter = formatio.configure({
     quoteStrings: false,
@@ -3234,7 +3293,7 @@ format.setFormatter = function (aCustomFormatter) {
 
 module.exports = format;
 
-},{"formatio":37}],25:[function(require,module,exports){
+},{"@sinonjs/formatio":36}],25:[function(require,module,exports){
 "use strict";
 
 module.exports = function functionName(func) {
@@ -3357,7 +3416,7 @@ module.exports = function typeOf(value) {
     return type(value).toLowerCase();
 };
 
-},{"type-detect":62}],32:[function(require,module,exports){
+},{"type-detect":64}],32:[function(require,module,exports){
 "use strict";
 
 module.exports = function (value) {
@@ -3460,8 +3519,8 @@ module.exports = function wrapMethod(object, property, method) {
         }
 
         if (error) {
-            if (wrappedMethod && wrappedMethod.stackTrace) {
-                error.stack += "\n--------------\n" + wrappedMethod.stackTrace;
+            if (wrappedMethod && wrappedMethod.stackTraceError) {
+                error.stack += "\n--------------\n" + wrappedMethod.stackTraceError.stack;
             }
             throw error;
         }
@@ -3490,8 +3549,8 @@ module.exports = function wrapMethod(object, property, method) {
             error = new TypeError("Attempted to wrap " + property + " which is already wrapped");
         }
         if (error) {
-            if (wrappedMethodDesc && wrappedMethodDesc.stackTrace) {
-                error.stack += "\n--------------\n" + wrappedMethodDesc.stackTrace;
+            if (wrappedMethodDesc && wrappedMethodDesc.stackTraceError) {
+                error.stack += "\n--------------\n" + wrappedMethodDesc.stackTraceError.stack;
             }
             throw error;
         }
@@ -3522,9 +3581,9 @@ module.exports = function wrapMethod(object, property, method) {
 
     method.displayName = property;
 
-    // Set up a stack trace which can be used later to find what line of
+    // Set up an Error object for a stack trace which can be used later to find what line of
     // code the original method was created on.
-    method.stackTrace = (new Error("Stack Trace for original")).stack;
+    method.stackTraceError = (new Error("Stack Trace for original"));
 
     method.restore = function () {
         // For prototype properties try to reset by delete first.
@@ -3614,10 +3673,698 @@ exports.timers = {
     Date: Date
 };
 
-},{"lolex":41}],36:[function(require,module,exports){
+},{"lolex":42}],36:[function(require,module,exports){
+(function (global){
+(function (root, factory) {
+    "use strict";
+
+    if (typeof define === "function" && define.amd) {
+        // AMD. Register as an anonymous module.
+        define(["samsam"], factory);
+    } else if (typeof module === "object" && module.exports) {
+        // Node. Does not work with strict CommonJS, but
+        // only CommonJS-like environments that support module.exports,
+        // like Node.
+        module.exports = factory(require("samsam"));
+    } else {
+        // Browser globals (root is window)
+        root.formatio = factory(root.samsam);
+    }
+}(typeof self !== "undefined" ? self : this, function (samsam) {
+    "use strict";
+
+    var formatio = {
+        excludeConstructors: ["Object", /^.$/],
+        quoteStrings: true,
+        limitChildrenCount: 0
+    };
+
+    var specialObjects = [];
+    if (typeof global !== "undefined") {
+        specialObjects.push({ object: global, value: "[object global]" });
+    }
+    if (typeof document !== "undefined") {
+        specialObjects.push({
+            object: document,
+            value: "[object HTMLDocument]"
+        });
+    }
+    if (typeof window !== "undefined") {
+        specialObjects.push({ object: window, value: "[object Window]" });
+    }
+
+    function functionName(func) {
+        if (!func) { return ""; }
+        if (func.displayName) { return func.displayName; }
+        if (func.name) { return func.name; }
+        var matches = func.toString().match(/function\s+([^\(]+)/m);
+        return (matches && matches[1]) || "";
+    }
+
+    function constructorName(f, object) {
+        var name = functionName(object && object.constructor);
+        var excludes = f.excludeConstructors ||
+                formatio.excludeConstructors || [];
+
+        var i, l;
+        for (i = 0, l = excludes.length; i < l; ++i) {
+            if (typeof excludes[i] === "string" && excludes[i] === name) {
+                return "";
+            } else if (excludes[i].test && excludes[i].test(name)) {
+                return "";
+            }
+        }
+
+        return name;
+    }
+
+    function isCircular(object, objects) {
+        if (typeof object !== "object") { return false; }
+        var i, l;
+        for (i = 0, l = objects.length; i < l; ++i) {
+            if (objects[i] === object) { return true; }
+        }
+        return false;
+    }
+
+    function ascii(f, object, processed, indent) {
+        if (typeof object === "string") {
+            if (object.length === 0) { return "(empty string)"; }
+            var qs = f.quoteStrings;
+            var quote = typeof qs !== "boolean" || qs;
+            return processed || quote ? "\"" + object + "\"" : object;
+        }
+
+        if (typeof object === "function" && !(object instanceof RegExp)) {
+            return ascii.func(object);
+        }
+
+        processed = processed || [];
+
+        if (isCircular(object, processed)) { return "[Circular]"; }
+
+        if (Object.prototype.toString.call(object) === "[object Array]") {
+            return ascii.array.call(f, object, processed);
+        }
+
+        if (!object) { return String((1 / object) === -Infinity ? "-0" : object); }
+        if (samsam.isElement(object)) { return ascii.element(object); }
+
+        if (typeof object.toString === "function" &&
+                object.toString !== Object.prototype.toString) {
+            return object.toString();
+        }
+
+        var i, l;
+        for (i = 0, l = specialObjects.length; i < l; i++) {
+            if (object === specialObjects[i].object) {
+                return specialObjects[i].value;
+            }
+        }
+
+        if (typeof Set !== "undefined" && object instanceof Set) {
+            return ascii.set.call(f, object, processed);
+        }
+
+        return ascii.object.call(f, object, processed, indent);
+    }
+
+    ascii.func = function (func) {
+        return "function " + functionName(func) + "() {}";
+    };
+
+    function delimit(str, delimiters) {
+        delimiters = delimiters || ["[", "]"];
+        return delimiters[0] + str + delimiters[1];
+    }
+
+    ascii.array = function (array, processed, delimiters) {
+        processed = processed || [];
+        processed.push(array);
+        var pieces = [];
+        var i, l;
+        l = (this.limitChildrenCount > 0) ?
+            Math.min(this.limitChildrenCount, array.length) : array.length;
+
+        for (i = 0; i < l; ++i) {
+            pieces.push(ascii(this, array[i], processed));
+        }
+
+        if (l < array.length) {
+            pieces.push("[... " + (array.length - l) + " more elements]");
+        }
+
+        return delimit(pieces.join(", "), delimiters);
+    };
+
+    ascii.set = function (set, processed) {
+        return ascii.array.call(this, Array.from(set), processed, ["Set {", "}"]);
+    };
+
+    ascii.object = function (object, processed, indent) {
+        processed = processed || [];
+        processed.push(object);
+        indent = indent || 0;
+        var pieces = [];
+        var properties = samsam.keys(object).sort();
+        var length = 3;
+        var prop, str, obj, i, k, l;
+        l = (this.limitChildrenCount > 0) ?
+            Math.min(this.limitChildrenCount, properties.length) : properties.length;
+
+        for (i = 0; i < l; ++i) {
+            prop = properties[i];
+            obj = object[prop];
+
+            if (isCircular(obj, processed)) {
+                str = "[Circular]";
+            } else {
+                str = ascii(this, obj, processed, indent + 2);
+            }
+
+            str = (/\s/.test(prop) ? "\"" + prop + "\"" : prop) + ": " + str;
+            length += str.length;
+            pieces.push(str);
+        }
+
+        var cons = constructorName(this, object);
+        var prefix = cons ? "[" + cons + "] " : "";
+        var is = "";
+        for (i = 0, k = indent; i < k; ++i) { is += " "; }
+
+        if (l < properties.length)
+        {pieces.push("[... " + (properties.length - l) + " more elements]");}
+
+        if (length + indent > 80) {
+            return prefix + "{\n  " + is + pieces.join(",\n  " + is) + "\n" +
+                is + "}";
+        }
+        return prefix + "{ " + pieces.join(", ") + " }";
+    };
+
+    ascii.element = function (element) {
+        var tagName = element.tagName.toLowerCase();
+        var attrs = element.attributes;
+        var pairs = [];
+        var attr, attrName, i, l, val;
+
+        for (i = 0, l = attrs.length; i < l; ++i) {
+            attr = attrs.item(i);
+            attrName = attr.nodeName.toLowerCase().replace("html:", "");
+            val = attr.nodeValue;
+            if (attrName !== "contenteditable" || val !== "inherit") {
+                if (val) { pairs.push(attrName + "=\"" + val + "\""); }
+            }
+        }
+
+        var formatted = "<" + tagName + (pairs.length > 0 ? " " : "");
+        // SVG elements have undefined innerHTML
+        var content = element.innerHTML || "";
+
+        if (content.length > 20) {
+            content = content.substr(0, 20) + "[...]";
+        }
+
+        var res = formatted + pairs.join(" ") + ">" + content +
+                "</" + tagName + ">";
+
+        return res.replace(/ contentEditable="inherit"/, "");
+    };
+
+    function Formatio(options) {
+        // eslint-disable-next-line guard-for-in
+        for (var opt in options) {
+            this[opt] = options[opt];
+        }
+    }
+
+    Formatio.prototype = {
+        functionName: functionName,
+
+        configure: function (options) {
+            return new Formatio(options);
+        },
+
+        constructorName: function (object) {
+            return constructorName(this, object);
+        },
+
+        ascii: function (object, processed, indent) {
+            return ascii(this, object, processed, indent);
+        }
+    };
+
+    return Formatio.prototype;
+}));
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"samsam":37}],37:[function(require,module,exports){
+((typeof define === "function" && define.amd && function (m) { define("samsam", m); }) ||
+ (typeof module === "object" &&
+      function (m) { module.exports = m(); }) || // Node
+ function (m) { this.samsam = m(); } // Browser globals
+)(function () {
+    var o = Object.prototype;
+    var div = typeof document !== "undefined" && document.createElement("div");
+
+    function isNaN(value) {
+        // Unlike global isNaN, this avoids type coercion
+        // typeof check avoids IE host object issues, hat tip to
+        // lodash
+        var val = value; // JsLint thinks value !== value is "weird"
+        return typeof value === "number" && value !== val;
+    }
+
+    function getClass(value) {
+        // Returns the internal [[Class]] by calling Object.prototype.toString
+        // with the provided value as this. Return value is a string, naming the
+        // internal class, e.g. "Array"
+        return o.toString.call(value).split(/[ \]]/)[1];
+    }
+
+    /**
+     * @name samsam.isArguments
+     * @param Object object
+     *
+     * Returns ``true`` if ``object`` is an ``arguments`` object,
+     * ``false`` otherwise.
+     */
+    function isArguments(object) {
+        if (getClass(object) === 'Arguments') { return true; }
+        if (typeof object !== "object" || typeof object.length !== "number" ||
+                getClass(object) === "Array") {
+            return false;
+        }
+        if (typeof object.callee == "function") { return true; }
+        try {
+            object[object.length] = 6;
+            delete object[object.length];
+        } catch (e) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @name samsam.isElement
+     * @param Object object
+     *
+     * Returns ``true`` if ``object`` is a DOM element node. Unlike
+     * Underscore.js/lodash, this function will return ``false`` if ``object``
+     * is an *element-like* object, i.e. a regular object with a ``nodeType``
+     * property that holds the value ``1``.
+     */
+    function isElement(object) {
+        if (!object || object.nodeType !== 1 || !div) { return false; }
+        try {
+            object.appendChild(div);
+            object.removeChild(div);
+        } catch (e) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * @name samsam.keys
+     * @param Object object
+     *
+     * Return an array of own property names.
+     */
+    function keys(object) {
+        var ks = [], prop;
+        for (prop in object) {
+            if (o.hasOwnProperty.call(object, prop)) { ks.push(prop); }
+        }
+        return ks;
+    }
+
+    /**
+     * @name samsam.isDate
+     * @param Object value
+     *
+     * Returns true if the object is a ``Date``, or *date-like*. Duck typing
+     * of date objects work by checking that the object has a ``getTime``
+     * function whose return value equals the return value from the object's
+     * ``valueOf``.
+     */
+    function isDate(value) {
+        return typeof value.getTime == "function" &&
+            value.getTime() == value.valueOf();
+    }
+
+    /**
+     * @name samsam.isNegZero
+     * @param Object value
+     *
+     * Returns ``true`` if ``value`` is ``-0``.
+     */
+    function isNegZero(value) {
+        return value === 0 && 1 / value === -Infinity;
+    }
+
+    /**
+     * @name samsam.equal
+     * @param Object obj1
+     * @param Object obj2
+     *
+     * Returns ``true`` if two objects are strictly equal. Compared to
+     * ``===`` there are two exceptions:
+     *
+     *   - NaN is considered equal to NaN
+     *   - -0 and +0 are not considered equal
+     */
+    function identical(obj1, obj2) {
+        if (obj1 === obj2 || (isNaN(obj1) && isNaN(obj2))) {
+            return obj1 !== 0 || isNegZero(obj1) === isNegZero(obj2);
+        }
+    }
+
+    function isSet(val) {
+        if (typeof Set !== 'undefined' && val instanceof Set) {
+            return true;
+        }
+    }
+
+    function isSubset(s1, s2, compare) {
+        var values1 = Array.from(s1);
+        var values2 = Array.from(s2);
+
+        for (var i = 0; i < values1.length; i++) {
+            var includes = false;
+
+            for (var j = 0; j < values2.length; j++) {
+                if (compare(values2[j], values1[i])) {
+                    includes = true;
+                    break;
+                }
+            }
+
+            if (!includes) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @name samsam.deepEqual
+     * @param Object obj1
+     * @param Object obj2
+     *
+     * Deep equal comparison. Two values are "deep equal" if:
+     *
+     *   - They are equal, according to samsam.identical
+     *   - They are both date objects representing the same time
+     *   - They are both arrays containing elements that are all deepEqual
+     *   - They are objects with the same set of properties, and each property
+     *     in ``obj1`` is deepEqual to the corresponding property in ``obj2``
+     *
+     * Supports cyclic objects.
+     */
+    function deepEqualCyclic(obj1, obj2) {
+
+        // used for cyclic comparison
+        // contain already visited objects
+        var objects1 = [],
+            objects2 = [],
+        // contain pathes (position in the object structure)
+        // of the already visited objects
+        // indexes same as in objects arrays
+            paths1 = [],
+            paths2 = [],
+        // contains combinations of already compared objects
+        // in the manner: { "$1['ref']$2['ref']": true }
+            compared = {};
+
+        /**
+         * used to check, if the value of a property is an object
+         * (cyclic logic is only needed for objects)
+         * only needed for cyclic logic
+         */
+        function isObject(value) {
+
+            if (typeof value === 'object' && value !== null &&
+                    !(value instanceof Boolean) &&
+                    !(value instanceof Date)    &&
+                    !(value instanceof Number)  &&
+                    !(value instanceof RegExp)  &&
+                    !(value instanceof String)) {
+
+                return true;
+            }
+
+            return false;
+        }
+
+        /**
+         * returns the index of the given object in the
+         * given objects array, -1 if not contained
+         * only needed for cyclic logic
+         */
+        function getIndex(objects, obj) {
+
+            var i;
+            for (i = 0; i < objects.length; i++) {
+                if (objects[i] === obj) {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        // does the recursion for the deep equal check
+        return (function deepEqual(obj1, obj2, path1, path2) {
+            var type1 = typeof obj1;
+            var type2 = typeof obj2;
+
+            // == null also matches undefined
+            if (obj1 === obj2 ||
+                    isNaN(obj1) || isNaN(obj2) ||
+                    obj1 == null || obj2 == null ||
+                    type1 !== "object" || type2 !== "object") {
+
+                return identical(obj1, obj2);
+            }
+
+            // Elements are only equal if identical(expected, actual)
+            if (isElement(obj1) || isElement(obj2)) { return false; }
+
+            var isDate1 = isDate(obj1), isDate2 = isDate(obj2);
+            if (isDate1 || isDate2) {
+                if (!isDate1 || !isDate2 || obj1.getTime() !== obj2.getTime()) {
+                    return false;
+                }
+            }
+
+            if (obj1 instanceof RegExp && obj2 instanceof RegExp) {
+                if (obj1.toString() !== obj2.toString()) { return false; }
+            }
+
+            var class1 = getClass(obj1);
+            var class2 = getClass(obj2);
+            var keys1 = keys(obj1);
+            var keys2 = keys(obj2);
+
+            if (isArguments(obj1) || isArguments(obj2)) {
+                if (obj1.length !== obj2.length) { return false; }
+            } else {
+                if (type1 !== type2 || class1 !== class2 ||
+                        keys1.length !== keys2.length) {
+                    return false;
+                }
+            }
+
+            if (isSet(obj1) || isSet(obj2)) {
+                if (!isSet(obj1) || !isSet(obj2) || obj1.size !== obj2.size) {
+                    return false;
+                }
+
+                return isSubset(obj1, obj2, deepEqual);
+            }
+
+            var key, i, l,
+                // following vars are used for the cyclic logic
+                value1, value2,
+                isObject1, isObject2,
+                index1, index2,
+                newPath1, newPath2;
+
+            for (i = 0, l = keys1.length; i < l; i++) {
+                key = keys1[i];
+                if (!o.hasOwnProperty.call(obj2, key)) {
+                    return false;
+                }
+
+                // Start of the cyclic logic
+
+                value1 = obj1[key];
+                value2 = obj2[key];
+
+                isObject1 = isObject(value1);
+                isObject2 = isObject(value2);
+
+                // determine, if the objects were already visited
+                // (it's faster to check for isObject first, than to
+                // get -1 from getIndex for non objects)
+                index1 = isObject1 ? getIndex(objects1, value1) : -1;
+                index2 = isObject2 ? getIndex(objects2, value2) : -1;
+
+                // determine the new pathes of the objects
+                // - for non cyclic objects the current path will be extended
+                //   by current property name
+                // - for cyclic objects the stored path is taken
+                newPath1 = index1 !== -1
+                    ? paths1[index1]
+                    : path1 + '[' + JSON.stringify(key) + ']';
+                newPath2 = index2 !== -1
+                    ? paths2[index2]
+                    : path2 + '[' + JSON.stringify(key) + ']';
+
+                // stop recursion if current objects are already compared
+                if (compared[newPath1 + newPath2]) {
+                    return true;
+                }
+
+                // remember the current objects and their pathes
+                if (index1 === -1 && isObject1) {
+                    objects1.push(value1);
+                    paths1.push(newPath1);
+                }
+                if (index2 === -1 && isObject2) {
+                    objects2.push(value2);
+                    paths2.push(newPath2);
+                }
+
+                // remember that the current objects are already compared
+                if (isObject1 && isObject2) {
+                    compared[newPath1 + newPath2] = true;
+                }
+
+                // End of cyclic logic
+
+                // neither value1 nor value2 is a cycle
+                // continue with next level
+                if (!deepEqual(value1, value2, newPath1, newPath2)) {
+                    return false;
+                }
+            }
+
+            return true;
+
+        }(obj1, obj2, '$1', '$2'));
+    }
+
+    function arrayContains(array, subset, compare) {
+        if (subset.length === 0) { return true; }
+        var i, l, j, k;
+        for (i = 0, l = array.length; i < l; ++i) {
+            if (compare(array[i], subset[0])) {
+                for (j = 0, k = subset.length; j < k; ++j) {
+                    if ((i + j) >= l) { return false; }
+                    if (!compare(array[i + j], subset[j])) { return false; }
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @name samsam.match
+     * @param Object object
+     * @param Object matcher
+     *
+     * Compare arbitrary value ``object`` with matcher.
+     */
+    function match(object, matcher) {
+        if (matcher && typeof matcher.test === "function") {
+            return matcher.test(object);
+        }
+
+        if (typeof matcher === "function") {
+            return matcher(object) === true;
+        }
+
+        if (typeof matcher === "string") {
+            matcher = matcher.toLowerCase();
+            var notNull = typeof object === "string" || !!object;
+            return notNull &&
+                (String(object)).toLowerCase().indexOf(matcher) >= 0;
+        }
+
+        if (typeof matcher === "number") {
+            return matcher === object;
+        }
+
+        if (typeof matcher === "boolean") {
+            return matcher === object;
+        }
+
+        if (typeof(matcher) === "undefined") {
+            return typeof(object) === "undefined";
+        }
+
+        if (matcher === null) {
+            return object === null;
+        }
+
+        if (isSet(object)) {
+            return isSubset(matcher, object, match);
+        }
+
+        if (getClass(object) === "Array" && getClass(matcher) === "Array") {
+            return arrayContains(object, matcher, match);
+        }
+
+        if (isDate(matcher)) {
+            return isDate(object) && object.getTime() === matcher.getTime();
+        }
+
+        if (matcher && typeof matcher === "object") {
+            if (matcher === object) {
+                return true;
+            }
+            var prop;
+            for (prop in matcher) {
+                var value = object[prop];
+                if (typeof value === "undefined" &&
+                        typeof object.getAttribute === "function") {
+                    value = object.getAttribute(prop);
+                }
+                if (matcher[prop] === null || typeof matcher[prop] === 'undefined') {
+                    if (value !== matcher[prop]) {
+                        return false;
+                    }
+                } else if (typeof  value === "undefined" || !match(value, matcher[prop])) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        throw new Error("Matcher was not a string, a number, a " +
+                        "function, a boolean or an object");
+    }
+
+    return {
+        isArguments: isArguments,
+        isElement: isElement,
+        isDate: isDate,
+        isNegZero: isNegZero,
+        identical: identical,
+        deepEqual: deepEqualCyclic,
+        match: match,
+        keys: keys
+    };
+});
+
+},{}],38:[function(require,module,exports){
 /*!
 
- diff v3.4.0
+ diff v3.3.1
 
 Software License Agreement (BSD License)
 
@@ -3940,11 +4687,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return oldPos;
 	  },
 	  /*istanbul ignore start*/ /*istanbul ignore end*/equals: function equals(left, right) {
-	    if (this.options.comparator) {
-	      return this.options.comparator(left, right);
-	    } else {
-	      return left === right || this.options.ignoreCase && left.toLowerCase() === right.toLowerCase();
-	    }
+	    return left === right || this.options.ignoreCase && left.toLowerCase() === right.toLowerCase();
 	  },
 	  /*istanbul ignore start*/ /*istanbul ignore end*/removeEmpty: function removeEmpty(array) {
 	    var ret = [];
@@ -4007,11 +4750,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  }
 
-	  // Special case handle for when one terminal is ignored (i.e. whitespace).
-	  // For this case we merge the terminal into the prior string and drop the change.
-	  // This is only available for string mode.
+	  // Special case handle for when one terminal is ignored. For this case we merge the
+	  // terminal into the prior string and drop the change.
 	  var lastComponent = components[componentLen - 1];
-	  if (componentLen > 1 && typeof lastComponent.value === 'string' && (lastComponent.added || lastComponent.removed) && diff.equals('', lastComponent.value)) {
+	  if (componentLen > 1 && (lastComponent.added || lastComponent.removed) && diff.equals('', lastComponent.value)) {
 	    components[componentLen - 2].value += lastComponent.value;
 	    components.pop();
 	  }
@@ -4387,9 +5129,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	/*istanbul ignore end*/var arrayDiff = /*istanbul ignore start*/exports. /*istanbul ignore end*/arrayDiff = new /*istanbul ignore start*/_base2['default'] /*istanbul ignore end*/();
 	arrayDiff.tokenize = arrayDiff.join = function (value) {
 	  return value.slice();
-	};
-	arrayDiff.removeEmpty = function (value) {
-	  return value;
 	};
 
 	function diffArrays(oldArr, newArr, callback) {
@@ -4809,19 +5548,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	/*istanbul ignore start*/function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 	/*istanbul ignore end*/function calcLineCount(hunk) {
-	  /*istanbul ignore start*/var _calcOldNewLineCount = /*istanbul ignore end*/calcOldNewLineCount(hunk.lines),
-	      oldLines = _calcOldNewLineCount.oldLines,
-	      newLines = _calcOldNewLineCount.newLines;
+	  var conflicted = false;
 
-	  if (oldLines !== undefined) {
-	    hunk.oldLines = oldLines;
-	  } else {
+	  hunk.oldLines = 0;
+	  hunk.newLines = 0;
+
+	  hunk.lines.forEach(function (line) {
+	    if (typeof line !== 'string') {
+	      conflicted = true;
+	      return;
+	    }
+
+	    if (line[0] === '+' || line[0] === ' ') {
+	      hunk.newLines++;
+	    }
+	    if (line[0] === '-' || line[0] === ' ') {
+	      hunk.oldLines++;
+	    }
+	  });
+
+	  if (conflicted) {
 	    delete hunk.oldLines;
-	  }
-
-	  if (newLines !== undefined) {
-	    hunk.newLines = newLines;
-	  } else {
 	    delete hunk.newLines;
 	  }
 	}
@@ -5153,43 +5900,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return true;
 	}
 
-	function calcOldNewLineCount(lines) {
-	  var oldLines = 0;
-	  var newLines = 0;
-
-	  lines.forEach(function (line) {
-	    if (typeof line !== 'string') {
-	      var myCount = calcOldNewLineCount(line.mine);
-	      var theirCount = calcOldNewLineCount(line.theirs);
-
-	      if (oldLines !== undefined) {
-	        if (myCount.oldLines === theirCount.oldLines) {
-	          oldLines += myCount.oldLines;
-	        } else {
-	          oldLines = undefined;
-	        }
-	      }
-
-	      if (newLines !== undefined) {
-	        if (myCount.newLines === theirCount.newLines) {
-	          newLines += myCount.newLines;
-	        } else {
-	          newLines = undefined;
-	        }
-	      }
-	    } else {
-	      if (newLines !== undefined && (line[0] === '+' || line[0] === ' ')) {
-	        newLines++;
-	      }
-	      if (oldLines !== undefined && (line[0] === '-' || line[0] === ' ')) {
-	        oldLines++;
-	      }
-	    }
-	  });
-
-	  return { oldLines: oldLines, newLines: newLines };
-	}
-
 
 
 /***/ }),
@@ -5454,7 +6164,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ ])
 });
 ;
-},{}],37:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 (function (global){
 ((typeof define === "function" && define.amd && function (m) {
     define("formatio", ["samsam"], m);
@@ -5687,71 +6397,12 @@ return /******/ (function(modules) { // webpackBootstrap
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"samsam":57}],38:[function(require,module,exports){
+},{"samsam":59}],40:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
-},{}],39:[function(require,module,exports){
-module.exports = extend;
-
-/*
-  var obj = {a: 3, b: 5};
-  extend(obj, {a: 4, c: 8}); // {a: 4, b: 5, c: 8}
-  obj; // {a: 4, b: 5, c: 8}
-
-  var obj = {a: 3, b: 5};
-  extend({}, obj, {a: 4, c: 8}); // {a: 4, b: 5, c: 8}
-  obj; // {a: 3, b: 5}
-
-  var arr = [1, 2, 3];
-  var obj = {a: 3, b: 5};
-  extend(obj, {c: arr}); // {a: 3, b: 5, c: [1, 2, 3]}
-  arr.push(4);
-  obj; // {a: 3, b: 5, c: [1, 2, 3, 4]}
-
-  var arr = [1, 2, 3];
-  var obj = {a: 3, b: 5};
-  extend(true, obj, {c: arr}); // {a: 3, b: 5, c: [1, 2, 3]}
-  arr.push(4);
-  obj; // {a: 3, b: 5, c: [1, 2, 3]}
-
-  extend({a: 4, b: 5}); // {a: 4, b: 5}
-  extend({a: 4, b: 5}, 3); {a: 4, b: 5}
-  extend({a: 4, b: 5}, true); {a: 4, b: 5}
-  extend('hello', {a: 4, b: 5}); // throws
-  extend(3, {a: 4, b: 5}); // throws
-*/
-
-function extend(/* [deep], obj1, obj2, [objn] */) {
-  var args = [].slice.call(arguments);
-  var deep = false;
-  if (typeof args[0] == 'boolean') {
-    deep = args.shift();
-  }
-  var result = args[0];
-  if (!result || (typeof result != 'object' && typeof result != 'function')) {
-    throw new Error('extendee must be an object');
-  }
-  var extenders = args.slice(1);
-  var len = extenders.length;
-  for (var i = 0; i < len; i++) {
-    var extender = extenders[i];
-    for (var key in extender) {
-      // include prototype properties
-      var value = extender[key];
-      if (deep && value && (typeof value == 'object' || typeof value == 'function')) {
-        var base = Array.isArray(value) ? [] : {};
-        result[key] = extend(true, result[key] || base, value);
-      } else {
-        result[key] = value;
-      }
-    }
-  }
-  return result;
-}
-
-},{}],40:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 (function (global){
 /**
  * lodash (Custom Build) <https://lodash.com/>
@@ -6686,7 +7337,7 @@ function get(object, path, defaultValue) {
 module.exports = get;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],41:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -6721,8 +7372,6 @@ var addTimerReturnsObject = typeof timeoutResult === "object";
 var hrtimePresent = (global.process && typeof global.process.hrtime === "function");
 var nextTickPresent = (global.process && typeof global.process.nextTick === "function");
 var performancePresent = (global.performance && typeof global.performance.now === "function");
-var requestAnimationFramePresent = (global.requestAnimationFrame && typeof global.requestAnimationFrame === "function");
-var cancelAnimationFramePresent = (global.cancelAnimationFrame && typeof global.cancelAnimationFrame === "function");
 
 clearTimeout(timeoutResult);
 
@@ -7084,14 +7733,6 @@ function uninstall(clock, target, config) {
 
     // Prevent multiple executions which will completely remove these props
     clock.methods = [];
-
-    // return pending timers, to enable checking what timers remained on uninstall
-    if (!clock.timers) {
-        return [];
-    }
-    return Object.keys(clock.timers).map(function mapper(key) {
-        return clock.timers[key];
-    });
 }
 
 function hijackMethod(target, method, clock) {
@@ -7128,6 +7769,8 @@ var timers = {
     clearImmediate: global.clearImmediate,
     setInterval: setInterval,
     clearInterval: clearInterval,
+    requestAnimationFrame: global.requestAnimationFrame,
+    cancelAnimationFrame: global.cancelAnimationFrame,
     Date: Date
 };
 
@@ -7141,14 +7784,6 @@ if (nextTickPresent) {
 
 if (performancePresent) {
     timers.performance = global.performance;
-}
-
-if (requestAnimationFramePresent) {
-    timers.requestAnimationFrame = global.requestAnimationFrame;
-}
-
-if (cancelAnimationFramePresent) {
-    timers.cancelAnimationFrame = global.cancelAnimationFrame;
 }
 
 var keys = Object.keys || function (obj) {
@@ -7254,29 +7889,20 @@ function createClock(start, loopLimit) {
         var tickFrom = clock.now;
         var tickTo = clock.now + ms;
         var previous = clock.now;
-        var timer, firstException, oldNow;
+        var timer = firstTimerInRange(clock, tickFrom, tickTo);
+        var oldNow, firstException;
 
         clock.duringTick = true;
-
-        // perform process.nextTick()s
-        oldNow = clock.now;
         runJobs(clock);
-        if (oldNow !== clock.now) {
-            // compensate for any setSystemTime() call during process.nextTick() callback
-            tickFrom += clock.now - oldNow;
-            tickTo += clock.now - oldNow;
-        }
 
-        // perform each timer in the requested range
-        timer = firstTimerInRange(clock, tickFrom, tickTo);
         while (timer && tickFrom <= tickTo) {
             if (clock.timers[timer.id]) {
                 updateHrTime(timer.callAt);
                 tickFrom = timer.callAt;
                 clock.now = timer.callAt;
-                oldNow = clock.now;
                 try {
                     runJobs(clock);
+                    oldNow = clock.now;
                     callTimer(clock, timer);
                 } catch (e) {
                     firstException = firstException || e;
@@ -7294,32 +7920,15 @@ function createClock(start, loopLimit) {
             previous = tickFrom;
         }
 
-        // perform process.nextTick()s again
-        oldNow = clock.now;
         runJobs(clock);
-        if (oldNow !== clock.now) {
-            // compensate for any setSystemTime() call during process.nextTick() callback
-            tickFrom += clock.now - oldNow;
-            tickTo += clock.now - oldNow;
-        }
         clock.duringTick = false;
+        updateHrTime(tickTo);
+        clock.now = tickTo;
 
-        // corner case: during runJobs, new timers were scheduled which could be in the range [clock.now, tickTo]
-        timer = firstTimerInRange(clock, tickFrom, tickTo);
-        if (timer) {
-            try {
-                clock.tick(tickTo - clock.now); // do it all again - for the remainder of the requested range
-            } catch (e) {
-                firstException = firstException || e;
-            }
-        } else {
-            // no timers remaining in the requested range: move the clock all the way to the end
-            updateHrTime(tickTo);
-            clock.now = tickTo;
-        }
         if (firstException) {
             throw firstException;
         }
+
         return clock.now;
     };
 
@@ -7451,7 +8060,7 @@ exports.install = function install(config) {
     var clock = createClock(config.now, config.loopLimit);
 
     clock.uninstall = function () {
-        return uninstall(clock, target, config);
+        uninstall(clock, target, config);
     };
 
     clock.methods = config.toFake || [];
@@ -7486,7 +8095,7 @@ exports.install = function install(config) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 "use strict";
 
 // cache a reference to setTimeout, so that our reference won't be stubbed out
@@ -7535,7 +8144,7 @@ function configureLogger(config) {
 
 module.exports = configureLogger;
 
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 "use strict";
 
 var Event = require("./event");
@@ -7551,7 +8160,7 @@ CustomEvent.prototype.constructor = CustomEvent;
 
 module.exports = CustomEvent;
 
-},{"./event":45}],44:[function(require,module,exports){
+},{"./event":46}],45:[function(require,module,exports){
 "use strict";
 
 var push = Array.prototype.push;
@@ -7593,7 +8202,7 @@ var EventTarget = {
 
 module.exports = EventTarget;
 
-},{}],45:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 "use strict";
 
 function Event(type, bubbles, cancelable, target) {
@@ -7617,7 +8226,7 @@ Event.prototype = {
 
 module.exports = Event;
 
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -7627,7 +8236,7 @@ module.exports = {
     EventTarget: require("./event-target")
 };
 
-},{"./custom-event":43,"./event":45,"./event-target":44,"./progress-event":47}],47:[function(require,module,exports){
+},{"./custom-event":44,"./event":46,"./event-target":45,"./progress-event":48}],48:[function(require,module,exports){
 "use strict";
 
 var Event = require("./event");
@@ -7645,7 +8254,7 @@ ProgressEvent.prototype.constructor = ProgressEvent;
 
 module.exports = ProgressEvent;
 
-},{"./event":45}],48:[function(require,module,exports){
+},{"./event":46}],49:[function(require,module,exports){
 "use strict";
 
 var lolex = require("lolex");
@@ -7713,7 +8322,7 @@ fakeServerWithClock.restore = function restore() {
 
 module.exports = fakeServerWithClock;
 
-},{"./index":50,"lolex":54}],49:[function(require,module,exports){
+},{"./index":51,"lolex":56}],50:[function(require,module,exports){
 "use strict";
 
 var formatio = require("formatio");
@@ -7727,7 +8336,7 @@ module.exports = function format() {
     return formatter.ascii.apply(formatter, arguments);
 };
 
-},{"formatio":37}],50:[function(require,module,exports){
+},{"formatio":39}],51:[function(require,module,exports){
 "use strict";
 
 var fakeXhr = require("../fake-xhr");
@@ -8023,7 +8632,7 @@ var fakeServer = {
 
 module.exports = fakeServer;
 
-},{"../configure-logger":42,"../fake-xhr":52,"./format":49,"path-to-regexp":55}],51:[function(require,module,exports){
+},{"../configure-logger":43,"../fake-xhr":53,"./format":50,"path-to-regexp":57}],52:[function(require,module,exports){
 /*global Blob */
 "use strict";
 
@@ -8035,7 +8644,7 @@ exports.isSupported = (function () {
     }
 }());
 
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -8749,7 +9358,7 @@ module.exports = {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../configure-logger":42,"../event":46,"./blob":51,"just-extend":39,"text-encoding":59}],53:[function(require,module,exports){
+},{"../configure-logger":43,"../event":47,"./blob":52,"just-extend":55,"text-encoding":61}],54:[function(require,module,exports){
 "use strict";
 
 module.exports = {
@@ -8758,7 +9367,69 @@ module.exports = {
     fakeXhr: require("./fake-xhr")
 };
 
-},{"./fake-server":50,"./fake-server/fake-server-with-clock":48,"./fake-xhr":52}],54:[function(require,module,exports){
+},{"./fake-server":51,"./fake-server/fake-server-with-clock":49,"./fake-xhr":53}],55:[function(require,module,exports){
+module.exports = extend;
+
+/*
+  var obj = {a: 3, b: 5};
+  extend(obj, {a: 4, c: 8}); // {a: 4, b: 5, c: 8}
+  obj; // {a: 4, b: 5, c: 8}
+
+  var obj = {a: 3, b: 5};
+  extend({}, obj, {a: 4, c: 8}); // {a: 4, b: 5, c: 8}
+  obj; // {a: 3, b: 5}
+
+  var arr = [1, 2, 3];
+  var obj = {a: 3, b: 5};
+  extend(obj, {c: arr}); // {a: 3, b: 5, c: [1, 2, 3]}
+  arr.push(4);
+  obj; // {a: 3, b: 5, c: [1, 2, 3, 4]}
+
+  var arr = [1, 2, 3];
+  var obj = {a: 3, b: 5};
+  extend(true, obj, {c: arr}); // {a: 3, b: 5, c: [1, 2, 3]}
+  arr.push(4);
+  obj; // {a: 3, b: 5, c: [1, 2, 3]}
+
+  extend({a: 4, b: 5}); // {a: 4, b: 5}
+  extend(3, {a: 4, b: 5}); // throws
+  extend({a: 4, b: 5}, 3); // throws
+  extend({a: 4, b: 5}, true); // throws
+*/
+
+function extend(/* [deep], obj1, obj2, [objn] */) {
+  var args = [].slice.call(arguments);
+  var deep = false;
+  if (typeof args[0] == 'boolean') {
+    deep = args.shift();
+  }
+  var arg;
+  var i = args.length;
+  while (((arg = args[i - 1]), i--)) {
+    if (!arg || (typeof arg != 'object' && typeof arg != 'function')) {
+      throw new Error('expected object, got ' + arg);
+    }
+  }
+  var result = args[0];
+  var extenders = args.slice(1);
+  var len = extenders.length;
+  for (var i = 0; i < len; i++) {
+    var extender = extenders[i];
+    for (var key in extender) {
+      // include prototype properties
+      var value = extender[key];
+      if (deep && value && (typeof value == 'object' || typeof value == 'function')) {
+        var base = Array.isArray(value) ? [] : {};
+        result[key] = extend(true, result[key] || base, value);
+      } else {
+        result[key] = value;
+      }
+    }
+  }
+  return result;
+}
+
+},{}],56:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -9418,7 +10089,7 @@ exports.install = function install(target, now, toFake, loopLimit) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],55:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 var isarray = require('isarray')
 
 /**
@@ -9846,7 +10517,7 @@ function pathToRegexp (path, keys, options) {
   return stringToRegexp(/** @type {string} */ (path), /** @type {!Array} */ (keys), options)
 }
 
-},{"isarray":38}],56:[function(require,module,exports){
+},{"isarray":40}],58:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -10032,7 +10703,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],57:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 ((typeof define === "function" && define.amd && function (m) { define("samsam", m); }) ||
  (typeof module === "object" &&
       function (m) { module.exports = m(); }) || // Node
@@ -10433,10 +11104,6 @@ process.umask = function() { return 0; };
             return arrayContains(object, matcher, match);
         }
 
-        if (isDate(matcher)) {
-            return isDate(object) && object.getTime() === matcher.getTime();
-        }
-
         if (matcher && typeof matcher === "object") {
             if (matcher === object) {
                 return true;
@@ -10475,14 +11142,14 @@ process.umask = function() { return 0; };
     };
 });
 
-},{}],58:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 'use strict';
 module.exports = {
 	stdout: false,
 	stderr: false
 };
 
-},{}],59:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 // This is free and unencumbered software released into the public domain.
 // See LICENSE.md for more information.
 
@@ -10493,7 +11160,7 @@ module.exports = {
   TextDecoder: encoding.TextDecoder,
 };
 
-},{"./lib/encoding.js":61}],60:[function(require,module,exports){
+},{"./lib/encoding.js":63}],62:[function(require,module,exports){
 (function(global) {
   'use strict';
 
@@ -10541,7 +11208,7 @@ module.exports = {
 // For strict environments where `this` inside the global scope
 // is `undefined`, take a pure object instead
 }(this || {}));
-},{}],61:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 // This is free and unencumbered software released into the public domain.
 // See LICENSE.md for more information.
 
@@ -13855,7 +14522,7 @@ module.exports = {
 // For strict environments where `this` inside the global scope
 // is `undefined`, take a pure object instead
 }(this || {}));
-},{"./encoding-indexes.js":60}],62:[function(require,module,exports){
+},{"./encoding-indexes.js":62}],64:[function(require,module,exports){
 (function (global){
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -13872,6 +14539,16 @@ var promiseExists = typeof Promise === 'function';
 
 /* eslint-disable no-undef */
 var globalObject = typeof self === 'object' ? self : global; // eslint-disable-line id-blacklist
+
+/*
+ * All of these attributes must be available on the global object for the current environment
+ * to be considered a DOM environment (browser)
+ */
+var isDom = typeof window === 'object' &&
+  'document' in window &&
+  'navigator' in window &&
+  'HTMLElement' in window;
+/* eslint-enable */
 
 var symbolExists = typeof Symbol !== 'undefined';
 var mapExists = typeof Map !== 'undefined';
@@ -13891,14 +14568,6 @@ var stringIteratorExists = symbolIteratorExists && typeof String.prototype[Symbo
 var stringIteratorPrototype = stringIteratorExists && Object.getPrototypeOf(''[Symbol.iterator]());
 var toStringLeftSliceLength = 8;
 var toStringRightSliceLength = -1;
-var windowExists = typeof window === 'object';
-var windowLocationExists = windowExists && typeof window.location === 'object';
-var windowDocumentExists = windowExists && typeof window.document === 'object';
-var windowNavigatorExists = windowExists && typeof window.navigator === 'object';
-var windowNavigatorMimeTypesExists = windowNavigatorExists && typeof window.navigator.mimeTypes === 'object';
-var windowNavigatorPluginsExists = windowNavigatorExists && typeof window.navigator.plugins === 'object';
-var windowHTMLElementExists = windowExists &&
-  (typeof window.HTMLElement === 'function' || typeof window.HTMLElement === 'object');
 /**
  * ### typeOf (obj)
  *
@@ -13972,7 +14641,7 @@ function typeDetect(obj) {
     return 'Array';
   }
 
-  if (windowExists) {
+  if (isDom) {
     /* ! Spec Conformance
      * (https://html.spec.whatwg.org/multipage/browsers.html#location)
      * WhatWG HTML$7.7.3 - The `Location` interface
@@ -13980,7 +14649,7 @@ function typeDetect(obj) {
      *  - IE <=11 === "[object Object]"
      *  - IE Edge <=13 === "[object Object]"
      */
-    if (windowLocationExists && obj === window.location) {
+    if (obj === globalObject.location) {
       return 'Location';
     }
 
@@ -14003,7 +14672,7 @@ function typeDetect(obj) {
      *  - IE 11 === "[object HTMLDocument]"
      *  - IE Edge <=13 === "[object HTMLDocument]"
      */
-    if (windowDocumentExists && obj === window.document) {
+    if (obj === globalObject.document) {
       return 'Document';
     }
 
@@ -14013,7 +14682,7 @@ function typeDetect(obj) {
      * Test: `Object.prototype.toString.call(navigator.mimeTypes)``
      *  - IE <=10 === "[object MSMimeTypesCollection]"
      */
-    if (windowNavigatorMimeTypesExists && obj === window.navigator.mimeTypes) {
+    if (obj === (globalObject.navigator || {}).mimeTypes) {
       return 'MimeTypeArray';
     }
 
@@ -14023,52 +14692,50 @@ function typeDetect(obj) {
      * Test: `Object.prototype.toString.call(navigator.plugins)``
      *  - IE <=10 === "[object MSPluginsCollection]"
      */
-    if (windowNavigatorPluginsExists && obj === window.navigator.plugins) {
+    if (obj === (globalObject.navigator || {}).plugins) {
       return 'PluginArray';
     }
 
-    if (windowHTMLElementExists && obj instanceof window.HTMLElement) {
-      /* ! Spec Conformance
-      * (https://html.spec.whatwg.org/multipage/webappapis.html#pluginarray)
-      * WhatWG HTML$4.4.4 - The `blockquote` element - Interface `HTMLQuoteElement`
-      * Test: `Object.prototype.toString.call(document.createElement('blockquote'))``
-      *  - IE <=10 === "[object HTMLBlockElement]"
-      */
-      if (obj.tagName === 'BLOCKQUOTE') {
-        return 'HTMLQuoteElement';
-      }
+    /* ! Spec Conformance
+     * (https://html.spec.whatwg.org/multipage/webappapis.html#pluginarray)
+     * WhatWG HTML$4.4.4 - The `blockquote` element - Interface `HTMLQuoteElement`
+     * Test: `Object.prototype.toString.call(document.createElement('blockquote'))``
+     *  - IE <=10 === "[object HTMLBlockElement]"
+     */
+    if (obj instanceof globalObject.HTMLElement && obj.tagName === 'BLOCKQUOTE') {
+      return 'HTMLQuoteElement';
+    }
 
-      /* ! Spec Conformance
-       * (https://html.spec.whatwg.org/#htmltabledatacellelement)
-       * WhatWG HTML$4.9.9 - The `td` element - Interface `HTMLTableDataCellElement`
-       * Note: Most browsers currently adher to the W3C DOM Level 2 spec
-       *       (https://www.w3.org/TR/DOM-Level-2-HTML/html.html#ID-82915075)
-       *       which suggests that browsers should use HTMLTableCellElement for
-       *       both TD and TH elements. WhatWG separates these.
-       * Test: Object.prototype.toString.call(document.createElement('td'))
-       *  - Chrome === "[object HTMLTableCellElement]"
-       *  - Firefox === "[object HTMLTableCellElement]"
-       *  - Safari === "[object HTMLTableCellElement]"
-       */
-      if (obj.tagName === 'TD') {
-        return 'HTMLTableDataCellElement';
-      }
+    /* ! Spec Conformance
+     * (https://html.spec.whatwg.org/#htmltabledatacellelement)
+     * WhatWG HTML$4.9.9 - The `td` element - Interface `HTMLTableDataCellElement`
+     * Note: Most browsers currently adher to the W3C DOM Level 2 spec
+     *       (https://www.w3.org/TR/DOM-Level-2-HTML/html.html#ID-82915075)
+     *       which suggests that browsers should use HTMLTableCellElement for
+     *       both TD and TH elements. WhatWG separates these.
+     * Test: Object.prototype.toString.call(document.createElement('td'))
+     *  - Chrome === "[object HTMLTableCellElement]"
+     *  - Firefox === "[object HTMLTableCellElement]"
+     *  - Safari === "[object HTMLTableCellElement]"
+     */
+    if (obj instanceof globalObject.HTMLElement && obj.tagName === 'TD') {
+      return 'HTMLTableDataCellElement';
+    }
 
-      /* ! Spec Conformance
-       * (https://html.spec.whatwg.org/#htmltableheadercellelement)
-       * WhatWG HTML$4.9.9 - The `td` element - Interface `HTMLTableHeaderCellElement`
-       * Note: Most browsers currently adher to the W3C DOM Level 2 spec
-       *       (https://www.w3.org/TR/DOM-Level-2-HTML/html.html#ID-82915075)
-       *       which suggests that browsers should use HTMLTableCellElement for
-       *       both TD and TH elements. WhatWG separates these.
-       * Test: Object.prototype.toString.call(document.createElement('th'))
-       *  - Chrome === "[object HTMLTableCellElement]"
-       *  - Firefox === "[object HTMLTableCellElement]"
-       *  - Safari === "[object HTMLTableCellElement]"
-       */
-      if (obj.tagName === 'TH') {
-        return 'HTMLTableHeaderCellElement';
-      }
+    /* ! Spec Conformance
+     * (https://html.spec.whatwg.org/#htmltableheadercellelement)
+     * WhatWG HTML$4.9.9 - The `td` element - Interface `HTMLTableHeaderCellElement`
+     * Note: Most browsers currently adher to the W3C DOM Level 2 spec
+     *       (https://www.w3.org/TR/DOM-Level-2-HTML/html.html#ID-82915075)
+     *       which suggests that browsers should use HTMLTableCellElement for
+     *       both TD and TH elements. WhatWG separates these.
+     * Test: Object.prototype.toString.call(document.createElement('th'))
+     *  - Chrome === "[object HTMLTableCellElement]"
+     *  - Firefox === "[object HTMLTableCellElement]"
+     *  - Safari === "[object HTMLTableCellElement]"
+     */
+    if (obj instanceof globalObject.HTMLElement && obj.tagName === 'TH') {
+      return 'HTMLTableHeaderCellElement';
     }
   }
 

@@ -1,5 +1,16 @@
 # IndexedDBShim changes
 
+## 3.5.0
+
+- Breaking fix (through npm): Update typeson and typeson-registry
+    (ArrayBuffer, DataView, and typed arrays were not properly
+    preserving entire underlying buffer when only a portion used;
+    were also not restoring when buffers were reused cyclically
+    across an object)
+- npm: Update dev deps
+- Install: Update `yarn.lock`/`package-lock.json`
+- Testing (W3C): Update web-platform-tests
+
 ## 3.4.0
 
 - Fix (minor): Return proper `indexedDB` object descriptor
