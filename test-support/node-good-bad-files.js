@@ -84,9 +84,9 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 //  `IndexedDB` directory
 
 IndexedDB Test counts:
-    346 normal files (including 1 domstringlist file):
+    347 normal files (including 1 domstringlist file):
         337 are all good, 6 have some that are bad,
-        3 have some that time out and 2 have some that do not run
+        4 have some that time out and 2 have some that do not run
     4 excluded files with 24 tests (uncaught exceptions during testing):
         `bindings-inject-key.js` (3 tests),
         `keypath-exceptions.js` (6 tests),
