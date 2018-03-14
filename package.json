@@ -1,6 +1,6 @@
 {
   "name": "indexeddbshim",
-  "version": "3.5.0",
+  "version": "3.5.1",
   "author": "Parashuram <code@nparashuram.com>",
   "contributors": [
     "Brett Zamir"
@@ -118,6 +118,6 @@
   "bundleDependencies": [],
   "license": "(MIT OR Apache-2.0)",
   "engines": {
-    "node": ">=6.9.2 < 8.9.3 || >= 9.0.0"
+    "node": ">=6.9.2"
   }
 }

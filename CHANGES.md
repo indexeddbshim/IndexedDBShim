@@ -1,5 +1,12 @@
 # IndexedDBShim changes
 
+## 3.5.1
+
+- npm: Update `package-lock.json`
+- npm: Resume allowing Node versions 8.93 - 9.0.0
+- Docs: Put message in README about failure of one test as a known
+    issue for the above Node versions
+
 ## 3.5.0
 
 - Breaking fix (through npm): Update typeson and typeson-registry

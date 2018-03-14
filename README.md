@@ -23,7 +23,7 @@ to the data format, thereby breaking old data.***
 [![CDNJS](https://img.shields.io/cdnjs/v/IndexedDBShim.svg)](https://cdnjs.com/libraries/IndexedDBShim)
 [![License](https://img.shields.io/npm/l/indexeddbshim.svg)](LICENSE-APACHE)
 
-|[Live Demo!](https://cdn.rawgit.com/axemclion/IndexedDBShim/v3.5.0/index.html)
+|[Live Demo!](https://cdn.rawgit.com/axemclion/IndexedDBShim/v3.5.1/index.html)
 |------------------------------------------------------------
 
 __Use a single, indexable, offline storage API across all desktop and mobile
@@ -510,6 +510,12 @@ We also have limitations in creating certain objects synchronously, namely, the 
 for creating an image bitmap, `createImageBitmap`, returns a `Promise`, so we cannot clone
 a bona fide image bitmap synchronously so as to obtain any errors synchronously as expected
 by the IndexedDB methods involving cloning.
+
+### Node versions 8.9.3 to 9.0.0
+
+Our Mocha test "query multi-entry indexes with hundreds of records" of
+`IDBIndex/openCursor-spec.js` is failing for these versions. Starting
+with 9.1.0, however, the test passes again.
 
 ### iOS
 
