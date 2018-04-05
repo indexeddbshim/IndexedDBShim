@@ -176,7 +176,7 @@ goodBad.browser = {
     //    listing; need to run each test (or a smaller regex of tests) individually
     // `keypath-special-identifiers.htm` - Failing due to Safari not having `lastModifiedDate` property on `File`
     // `idb_webworkers.htm` - Doesn't work because Safari apparently removed its
-    //     support of IndexedDB from workers (as did Chrome) as per
+    //     support of WebSQL from workers (as did Chrome) as per
     //     https://bugs.chromium.org/p/chromium/issues/detail?id=434740
     //     (Workers in Safari 10 also oddly have issue of older Safari of not being able
     //        to overwrite IndexedDB, though the problem does not occur in main scripts)
