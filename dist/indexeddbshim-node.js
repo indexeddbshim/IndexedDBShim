@@ -214,7 +214,7 @@ ShimCustomEvent.prototype.initCustomEvent = function (type, bubbles, cancelable,
 };
 ShimCustomEvent[Symbol.toStringTag] = 'Function';
 ShimCustomEvent.prototype[Symbol.toStringTag] = 'CustomEventPrototype';
-Object.setPrototypeOf(ShimCustomEvent, ShimEvent); // TODO: IDL needs but reported as slow!
+
 Object.defineProperty(ShimCustomEvent.prototype, 'detail', {
     enumerable: true,
     configurable: true,
@@ -222,7 +222,6 @@ Object.defineProperty(ShimCustomEvent.prototype, 'detail', {
         throw new TypeError('Illegal invocation');
     }
 });
-Object.setPrototypeOf(ShimCustomEvent.prototype, ShimEvent.prototype); // TODO: IDL needs but reported as slow!
 Object.defineProperty(ShimCustomEvent, 'prototype', {
     writable: false
 });
@@ -591,6 +590,13 @@ EventTarget.ShimDOMException = exports.ShimDOMException;
 EventTarget.ShimEventTarget = EventTarget;
 EventTarget.EventTargetFactory = EventTargetFactory;
 
+function setPrototypeOfCustomEvent() {
+    // TODO: IDL needs but reported as slow!
+    Object.setPrototypeOf(ShimCustomEvent, ShimEvent);
+    Object.setPrototypeOf(ShimCustomEvent.prototype, ShimEvent.prototype);
+}
+
+exports.setPrototypeOfCustomEvent = setPrototypeOfCustomEvent;
 exports.EventTargetFactory = EventTargetFactory;
 exports.ShimEventTarget = EventTarget;
 exports.ShimEvent = ShimEvent;
@@ -6748,6 +6754,8 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
+var _eventtargeter = require('eventtargeter');
+
 var _IDBVersionChangeEvent = require('./IDBVersionChangeEvent');
 
 var _IDBVersionChangeEvent2 = _interopRequireDefault(_IDBVersionChangeEvent);
@@ -6786,6 +6794,7 @@ var _CFG2 = _interopRequireDefault(_CFG);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+/* globals self */
 function setConfig(prop, val) {
     if (prop && typeof prop === 'object') {
         for (const p in prop) {
@@ -6797,8 +6806,7 @@ function setConfig(prop, val) {
         throw new Error(prop + ' is not a valid configuration property');
     }
     _CFG2.default[prop] = val;
-} /* globals self */
-
+}
 
 function setGlobalVars(idb, initialConfig) {
     if (initialConfig) {
@@ -6906,6 +6914,7 @@ function setGlobalVars(idb, initialConfig) {
                     Object.setPrototypeOf(_IDBVersionChangeEvent2.default, ShimEvent);
                     Object.setPrototypeOf(_DOMException.ShimDOMException, Error);
                     Object.setPrototypeOf(_DOMException.ShimDOMException.prototype, Error.prototype);
+                    (0, _eventtargeter.setPrototypeOfCustomEvent)();
                 }
                 if (IDB.indexedDB && IDB.indexedDB.modules) {
                     if (_CFG2.default.addNonIDBGlobals) {
@@ -6994,7 +7003,7 @@ module.exports = exports['default'];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./CFG":6,"./DOMException":7,"./IDBCursor":10,"./IDBDatabase":11,"./IDBFactory":12,"./IDBIndex":13,"./IDBKeyRange":14,"./IDBObjectStore":15,"./IDBRequest":16,"./IDBTransaction":17,"./IDBVersionChangeEvent":18}],25:[function(require,module,exports){
+},{"./CFG":6,"./DOMException":7,"./IDBCursor":10,"./IDBDatabase":11,"./IDBFactory":12,"./IDBIndex":13,"./IDBKeyRange":14,"./IDBObjectStore":15,"./IDBRequest":16,"./IDBTransaction":17,"./IDBVersionChangeEvent":18,"eventtargeter":1}],25:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -7068,7 +7077,10 @@ function escapeDatabaseNameForSQLAndFiles(db) {
     db = 'D' + escapeNameForSQLiteIdentifier(db);
     if (_CFG2.default.escapeNFDForDatabaseNames !== false) {
         // ES6 copying of regex with different flags
-        db = db.replace(new RegExp(_regex2.default, 'g'), function (expandable) {
+        // Todo: Remove `.source` when
+        //   https://github.com/babel/babel/issues/5978 completed (see also
+        //   https://github.com/axemclion/IndexedDBShim/issues/311#issuecomment-316090147 )
+        db = db.replace(new RegExp(_regex2.default.source, 'g'), function (expandable) {
             return '^4' + padStart(expandable.codePointAt().toString(16), 6, '0');
         });
     }

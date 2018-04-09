@@ -1,6 +1,6 @@
 {
   "name": "indexeddbshim",
-  "version": "3.5.1",
+  "version": "3.6.0",
   "author": "Parashuram <code@nparashuram.com>",
   "contributors": [
     "Brett Zamir"
@@ -67,7 +67,7 @@
   ],
   "dependencies": {
     "babel-polyfill": "6.26.0",
-    "eventtargeter": "0.3.1",
+    "eventtargeter": "0.4.0",
     "sync-promise": "https://github.com/brettz9/sync-promise#full-sync-missing-promise-features",
     "typeson": "5.8.2",
     "typeson-registry": "1.0.0-alpha.20",
@@ -104,6 +104,7 @@
     "grunt-saucelabs": "9.0.0",
     "gruntify-eslint": "4.0.0",
     "is-date-object": "1.0.1",
+    "isomorphic-fetch": "^2.2.1",
     "js-polyfills": "https://github.com/brettz9/polyfill#node",
     "jsdom": "11.6.2",
     "mapstraction": "https://github.com/brettz9/mapstraction#relativePaths",

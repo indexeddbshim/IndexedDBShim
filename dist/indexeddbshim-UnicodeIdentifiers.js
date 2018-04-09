@@ -216,7 +216,7 @@ ShimCustomEvent.prototype.initCustomEvent = function (type, bubbles, cancelable,
 };
 ShimCustomEvent[Symbol.toStringTag] = 'Function';
 ShimCustomEvent.prototype[Symbol.toStringTag] = 'CustomEventPrototype';
-Object.setPrototypeOf(ShimCustomEvent, ShimEvent); // TODO: IDL needs but reported as slow!
+
 Object.defineProperty(ShimCustomEvent.prototype, 'detail', {
     enumerable: true,
     configurable: true,
@@ -224,7 +224,6 @@ Object.defineProperty(ShimCustomEvent.prototype, 'detail', {
         throw new TypeError('Illegal invocation');
     }
 });
-Object.setPrototypeOf(ShimCustomEvent.prototype, ShimEvent.prototype); // TODO: IDL needs but reported as slow!
 Object.defineProperty(ShimCustomEvent, 'prototype', {
     writable: false
 });
@@ -593,6 +592,13 @@ EventTarget.ShimDOMException = exports.ShimDOMException;
 EventTarget.ShimEventTarget = EventTarget;
 EventTarget.EventTargetFactory = EventTargetFactory;
 
+function setPrototypeOfCustomEvent() {
+    // TODO: IDL needs but reported as slow!
+    Object.setPrototypeOf(ShimCustomEvent, ShimEvent);
+    Object.setPrototypeOf(ShimCustomEvent.prototype, ShimEvent.prototype);
+}
+
+exports.setPrototypeOfCustomEvent = setPrototypeOfCustomEvent;
 exports.EventTargetFactory = EventTargetFactory;
 exports.ShimEventTarget = EventTarget;
 exports.ShimEvent = ShimEvent;
@@ -7364,6 +7370,8 @@ var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = [
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; /* globals self */
 
 
+var _eventtargeter = require('eventtargeter');
+
 var _IDBVersionChangeEvent = require('./IDBVersionChangeEvent');
 
 var _IDBVersionChangeEvent2 = _interopRequireDefault(_IDBVersionChangeEvent);
@@ -7527,6 +7535,7 @@ function setGlobalVars(idb, initialConfig) {
                     Object.setPrototypeOf(_IDBVersionChangeEvent2.default, ShimEvent);
                     Object.setPrototypeOf(_DOMException.ShimDOMException, Error);
                     Object.setPrototypeOf(_DOMException.ShimDOMException.prototype, Error.prototype);
+                    (0, _eventtargeter.setPrototypeOfCustomEvent)();
                 }
                 if (IDB.indexedDB && IDB.indexedDB.modules) {
                     if (_CFG2.default.addNonIDBGlobals) {
@@ -7618,7 +7627,7 @@ module.exports = exports['default'];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./CFG":9,"./DOMException":10,"./IDBCursor":13,"./IDBDatabase":14,"./IDBFactory":15,"./IDBIndex":16,"./IDBKeyRange":17,"./IDBObjectStore":18,"./IDBRequest":19,"./IDBTransaction":20,"./IDBVersionChangeEvent":21}],28:[function(require,module,exports){
+},{"./CFG":9,"./DOMException":10,"./IDBCursor":13,"./IDBDatabase":14,"./IDBFactory":15,"./IDBIndex":16,"./IDBKeyRange":17,"./IDBObjectStore":18,"./IDBRequest":19,"./IDBTransaction":20,"./IDBVersionChangeEvent":21,"eventtargeter":2}],28:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -7696,7 +7705,10 @@ function escapeDatabaseNameForSQLAndFiles(db) {
     db = 'D' + escapeNameForSQLiteIdentifier(db);
     if (_CFG2.default.escapeNFDForDatabaseNames !== false) {
         // ES6 copying of regex with different flags
-        db = db.replace(new RegExp(_regex2.default, 'g'), function (expandable) {
+        // Todo: Remove `.source` when
+        //   https://github.com/babel/babel/issues/5978 completed (see also
+        //   https://github.com/axemclion/IndexedDBShim/issues/311#issuecomment-316090147 )
+        db = db.replace(new RegExp(_regex2.default.source, 'g'), function (expandable) {
             return '^4' + padStart(expandable.codePointAt().toString(16), 6, '0');
         });
     }

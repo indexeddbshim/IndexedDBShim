@@ -1,3 +1,4 @@
+/* eslint-disable compat/compat */
 // Todo: Reuse any relevant portions in this file or `node-buildjs.js` for adapting tests for browser shimming
 require('source-map-support').install({ // Needed along with sourcemap transform
     environment: 'node'
@@ -13,6 +14,7 @@ const Worker = require('./webworker/webworker'); // Todo: We could export this `
 const XMLHttpRequestConstr = require('xmlhttprequest');
 const isDateObject = require('is-date-object');
 const transformV8Stack = require('./transformV8Stack');
+const fetch = require('isomorphic-fetch');
 
 // const grunt = require('grunt');
 // require('../Gruntfile')(grunt);
@@ -198,6 +200,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
         const supported = [
             'resources/testharness.js', 'resources/testharnessreport.js',
             'resources/idlharness.js', 'resources/WebIDLParser.js',
+            'IndexedDB/interfaces.any.js',
             'nested-cloning-common.js', 'interleaved-cursors-common.js',
             'support.js', 'support-promises.js', 'service-workers/service-worker/resources/test-helpers.sub.js'
         ];
@@ -207,7 +210,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
             if (supported.includes(src) || supported.includes(src.replace(/^\//, ''))) {
                 src = src.replace(/^\//, '');
                 scripts.push(path.join(idbTestPath,
-                    // Since the `interfaces.worker.js` Worker script requires this file too,
+                    // Since the `interfaces.any.worker.js` Worker script requires this file too,
                     //    and as our build script is now copying it, we actually don't need this now,
                     //    but keeping comment in case this possibility is later closed
                     // src === 'resources/WebIDLParser.js' // See https://github.com/w3c/testharness.js/issues/231
@@ -217,7 +220,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                     //   testing) we just map it to the source file which appears to be rendered
                     //   unmodified
                     // ? 'resources/webidl2/lib/webidl2.js' : ()
-                    ((/^(service-workers|resources)/).test(src)
+                    ((/^(service-workers|resources|IndexedDB)/).test(src)
                         ? src
                         : 'IndexedDB/' + src)
                 ));
@@ -248,9 +251,9 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                 // Leverage the W3C server for interfaces test (assuming it is running);
                 //   as we are overriding `XMLHttpRequest` below, we are not really using this at the moment,
                 //   but to set up, see https://github.com/w3c/web-platform-tests
-                // const url = 'http://localhost:9999/web-platform-tests/IndexedDB/interfaces.html',
+                // const url = 'http://localhost:9999/web-platform-tests/IndexedDB/interfaces.any.html',
                 // const url = 'file://' + basePath;
-                const url = 'http://localhost:8000/IndexedDB/interfaces.html';
+                const url = 'http://localhost:8000/IndexedDB/interfaces.any.html';
                 JSDOM.fromURL(url).then(function ({window}) {
                     try {
                         // Should only pass in safe objects
@@ -282,7 +285,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                         //   some of these do incur a significant performance cost which could speed up the testing process if avoided,
                         //   though it could also make the tests more fragile to changes
                         // indexeddbshimNonUnicode(window);
-                        if (['interfaces.js', 'interfaces.worker.js', '../non-indexedDB/exceptions.js'].includes(shimNS.fileName)) {
+                        if (['interfaces.any.js', 'interfaces.any.worker.js', '../non-indexedDB/exceptions.js', '../non-indexedDB/__event-interface.js'].includes(shimNS.fileName)) {
                             indexeddbshim(window, Object.assign(baseCfg, {fullIDLSupport: true}));
                         } else {
                             indexeddbshim(window, baseCfg);
@@ -376,6 +379,12 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
 
                         // window.XMLHttpRequest = XMLHttpRequest({basePath: 'http://localhost:8000/IndexedDB/'}); // Todo: We should support this too
                         window.XMLHttpRequest = XMLHttpRequestConstr({basePath});
+                        window.fetch = function (...args) {
+                            if (args[0].startsWith('/')) {
+                                args[0] = 'http://localhost:8000' + args[0];
+                            }
+                            return fetch(...args);
+                        };
 
                         const _xhropen = window.XMLHttpRequest.prototype.open;
                         window.XMLHttpRequest.prototype.open = function (method, url, async) {
@@ -407,7 +416,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                         window.Object = Object;
                         window.Object[Symbol.hasInstance] = function (inst) { return inst && typeof inst === 'object'; };
 
-                        window.Function = Function; // interfaces.js with check for `DOMStringList`'s prototype being the same Function.prototype
+                        window.Function = Function; // interfaces.any.js with check for `DOMStringList`'s prototype being the same Function.prototype
 
                         // Not deleting per https://github.com/tmpvar/jsdom/issues/1720#issuecomment-279665105
                         // Needed for avoiding test non-completion in '../non-indexedDB/interface-objects.js'
@@ -502,7 +511,7 @@ function readAndEvaluateFiles (err, jsFiles, workers, recursing) {
 
         // Hard-coding problematic files for testing
         // jsFiles = ['idbcursor-continuePrimaryKey-exception-order.js'];
-        // jsFiles = ['interfaces.js'];
+        // jsFiles = ['interfaces.any.js'];
         // jsFiles = ['transaction-lifetime-empty.js'];
 
         fs.readFile(path.join('test-support', 'custom-reporter.js'), 'utf8', function (err, ending) {

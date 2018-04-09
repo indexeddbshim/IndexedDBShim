@@ -20,7 +20,7 @@ if (process.argv[2] === 'remove') {
     });
 } else if (process.argv[2] === 'add') {
     fs.writeFileSync(shimLoaderPath,
-`<!DOCTYPE html>
+        `<!DOCTYPE html>
 <meta charset="utf-8" />
 <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon" />
 <script src="http://localhost:9999/node_modules/babel-polyfill/dist/polyfill.js"></script>

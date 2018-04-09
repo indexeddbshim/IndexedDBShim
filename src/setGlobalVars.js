@@ -1,4 +1,5 @@
 /* globals self */
+import {setPrototypeOfCustomEvent} from 'eventtargeter';
 import shimIDBVersionChangeEvent from './IDBVersionChangeEvent';
 import {IDBCursor as shimIDBCursor, IDBCursorWithValue as shimIDBCursorWithValue} from './IDBCursor';
 import {IDBRequest as shimIDBRequest, IDBOpenDBRequest as shimIDBOpenDBRequest} from './IDBRequest';
@@ -141,6 +142,7 @@ function setGlobalVars (idb, initialConfig) {
                     Object.setPrototypeOf(shimIDBVersionChangeEvent, ShimEvent);
                     Object.setPrototypeOf(ShimDOMException, Error);
                     Object.setPrototypeOf(ShimDOMException.prototype, Error.prototype);
+                    setPrototypeOfCustomEvent();
                 }
                 if (IDB.indexedDB && IDB.indexedDB.modules) {
                     if (CFG.addNonIDBGlobals) {

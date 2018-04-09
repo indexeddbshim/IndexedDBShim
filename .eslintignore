@@ -3,5 +3,8 @@ examples
 node_modules
 tests-polyfill
 web-platform-tests
-test-support/**
-!test-support/webworker
+test-support/**/*.js
+!test-support/webworker/*.js
+!test-support/*.js
+test-support/qunit-2.1.1.js
+test-support/latest-erring-bundled.js

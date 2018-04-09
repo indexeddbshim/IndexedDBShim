@@ -1,5 +1,17 @@
 # IndexedDBShim changes
 
+## 3.6.0
+
+- Refactoring/Fix: For default `escapeNFDForDatabaseNames` check, temporarily
+    circumvent current limitations in Babel until
+    <https://github.com/babel/babel/issues/5978> addressed; (see also
+    <https://github.com/axemclion/IndexedDBShim/issues/311#issuecomment-316090147>);
+    fixes #311
+- Linting: Expand ESLint file coverage and apply minor linting fix to test file
+- Testing: Update web-platform-tests and our tests accordingly
+- npm: Update `eventtargeter` to avoid automatic `Object.setPrototypeOf`
+    calls (make conditional on `CFG.fullIDLSupport`); fixes #313
+
 ## 3.5.1
 
 - npm: Update `package-lock.json`

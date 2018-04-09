@@ -59,7 +59,10 @@ function escapeDatabaseNameForSQLAndFiles (db) {
     db = 'D' + escapeNameForSQLiteIdentifier(db);
     if (CFG.escapeNFDForDatabaseNames !== false) {
         // ES6 copying of regex with different flags
-        db = db.replace(new RegExp(expandsOnNFD, 'g'), function (expandable) {
+        // Todo: Remove `.source` when
+        //   https://github.com/babel/babel/issues/5978 completed (see also
+        //   https://github.com/axemclion/IndexedDBShim/issues/311#issuecomment-316090147 )
+        db = db.replace(new RegExp(expandsOnNFD.source, 'g'), function (expandable) {
             return '^4' + padStart(expandable.codePointAt().toString(16), 6, '0');
         });
     }
