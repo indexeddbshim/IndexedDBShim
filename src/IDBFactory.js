@@ -138,7 +138,7 @@ function cleanupDatabaseResources (__openDatabase, name, escapedDatabaseName, da
         return;
     }
     if (CFG.deleteDatabaseFiles !== false && ({}.toString.call(process) === '[object process]')) {
-        require('fs').unlink(require('path').resolve(escapedDatabaseName), (err) => {
+        require('fs').unlink(path.resolve(escapedDatabaseName), (err) => {
             if (err && err.code !== 'ENOENT') { // Ignore if file is already deleted
                 dbError({code: 0, message: 'Error removing database file: ' + escapedDatabaseName + ' ' + err});
                 return;
