@@ -1,5 +1,21 @@
 # IndexedDBShim changes
 
+## 3.6.1
+
+- Critical fix (Please upgrade from any previous 3.0.0 version):
+    Ensure unescaping done in SQL responses (and database names) always adds
+    back any literal `^` sequences. This loss could more easily happen for
+    database names (whenever the name had a sequence of 1 or more literal `^`
+    followed by a single `A` to `Z` (or `[\u0000-\u001F\u007F"*/:<>?\\|]`
+    or characters expanding on NFD normalization), but it could also happen
+    in general SQL responses (or database names) where there was a sequence
+    of 1 or more literal `^` followed by an unmatched surrogate (though this
+    should admittedly be unlikely for most users); this unescaping was meant
+    to build back unmatched surrogates (which are allowed in IndexedDB)
+    and the like which were unsafe for the SQLite engine used internally or
+    for the file system used for Node, but we were failing to add back the
+    `^` escape in such cases (which was used as an escape character).
+
 ## 3.6.0
 
 - Refactoring/Fix: For default `escapeNFDForDatabaseNames` check, temporarily

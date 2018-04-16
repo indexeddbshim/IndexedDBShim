@@ -7693,9 +7693,9 @@ function escapeDatabaseNameForSQLAndFiles(db) {
 
 function unescapeUnmatchedSurrogates(arg) {
     return arg.replace(/(\^+)3(d[0-9a-f]{3})/g, function (_, esc, lowSurr) {
-        return esc.length % 2 ? String.fromCharCode(parseInt(lowSurr, 16)) : _;
+        return esc.length % 2 ? esc.slice(1) + String.fromCharCode(parseInt(lowSurr, 16)) : _;
     }).replace(/(\^+)2(d[0-9a-f]{3})/g, function (_, esc, highSurr) {
-        return esc.length % 2 ? String.fromCharCode(parseInt(highSurr, 16)) : _;
+        return esc.length % 2 ? esc.slice(1) + String.fromCharCode(parseInt(highSurr, 16)) : _;
     });
 }
 
@@ -7712,17 +7712,17 @@ function unescapeDatabaseNameForSQLAndFiles(db) {
     return unescapeUnmatchedSurrogates(db.slice(2) // D_
     // CFG.databaseCharacterEscapeList
     .replace(/(\^+)1([0-9a-f]{2})/g, function (_, esc, hex) {
-        return esc.length % 2 ? String.fromCharCode(parseInt(hex, 16)) : _;
+        return esc.length % 2 ? esc.slice(1) + String.fromCharCode(parseInt(hex, 16)) : _;
     })
     // CFG.escapeNFDForDatabaseNames
     .replace(/(\^+)4([0-9a-f]{6})/g, function (_, esc, hex) {
-        return esc.length % 2 ? String.fromCodePoint(parseInt(hex, 16)) : _;
+        return esc.length % 2 ? esc.slice(1) + String.fromCodePoint(parseInt(hex, 16)) : _;
     }))
     // escapeNameForSQLiteIdentifier (including unescapeUnmatchedSurrogates() above)
     .replace(/(\^+)([A-Z])/g, function (_, esc, upperCase) {
-        return esc.length % 2 ? upperCase : _;
+        return esc.length % 2 ? esc.slice(1) + upperCase : _;
     }).replace(/(\^+)0/g, function (_, esc) {
-        return esc.length % 2 ? '\0' : _;
+        return esc.length % 2 ? esc.slice(1) + '\0' : _;
     }).replace(/\^\^/g, '^');
 }
 

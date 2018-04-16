@@ -1407,7 +1407,7 @@ function escapeDatabaseNameForSQLAndFiles(db) {
 }
 
 function unescapeUnmatchedSurrogates(arg) {
-    return arg.replace(/(\^+)3(d[0-9a-f]{3})/g, (_, esc, lowSurr) => esc.length % 2 ? String.fromCharCode(parseInt(lowSurr, 16)) : _).replace(/(\^+)2(d[0-9a-f]{3})/g, (_, esc, highSurr) => esc.length % 2 ? String.fromCharCode(parseInt(highSurr, 16)) : _);
+    return arg.replace(/(\^+)3(d[0-9a-f]{3})/g, (_, esc, lowSurr) => esc.length % 2 ? esc.slice(1) + String.fromCharCode(parseInt(lowSurr, 16)) : _).replace(/(\^+)2(d[0-9a-f]{3})/g, (_, esc, highSurr) => esc.length % 2 ? esc.slice(1) + String.fromCharCode(parseInt(highSurr, 16)) : _);
 }
 
 // Not in use internally but supplied for convenience
@@ -1422,11 +1422,11 @@ function unescapeDatabaseNameForSQLAndFiles(db) {
 
     return unescapeUnmatchedSurrogates(db.slice(2) // D_
     // CFG.databaseCharacterEscapeList
-    .replace(/(\^+)1([0-9a-f]{2})/g, (_, esc, hex) => esc.length % 2 ? String.fromCharCode(parseInt(hex, 16)) : _)
+    .replace(/(\^+)1([0-9a-f]{2})/g, (_, esc, hex) => esc.length % 2 ? esc.slice(1) + String.fromCharCode(parseInt(hex, 16)) : _)
     // CFG.escapeNFDForDatabaseNames
-    .replace(/(\^+)4([0-9a-f]{6})/g, (_, esc, hex) => esc.length % 2 ? String.fromCodePoint(parseInt(hex, 16)) : _))
+    .replace(/(\^+)4([0-9a-f]{6})/g, (_, esc, hex) => esc.length % 2 ? esc.slice(1) + String.fromCodePoint(parseInt(hex, 16)) : _))
     // escapeNameForSQLiteIdentifier (including unescapeUnmatchedSurrogates() above)
-    .replace(/(\^+)([A-Z])/g, (_, esc, upperCase) => esc.length % 2 ? upperCase : _).replace(/(\^+)0/g, (_, esc) => esc.length % 2 ? '\0' : _).replace(/\^\^/g, '^');
+    .replace(/(\^+)([A-Z])/g, (_, esc, upperCase) => esc.length % 2 ? esc.slice(1) + upperCase : _).replace(/(\^+)0/g, (_, esc) => esc.length % 2 ? esc.slice(1) + '\0' : _).replace(/\^\^/g, '^');
 }
 
 function escapeStoreNameForSQL(store) {
