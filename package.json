@@ -1,6 +1,6 @@
 {
   "name": "indexeddbshim",
-  "version": "3.6.1",
+  "version": "3.6.2",
   "author": "Parashuram <code@nparashuram.com>",
   "contributors": [
     "Brett Zamir"
@@ -38,7 +38,7 @@
     "mock": "grunt clean-mock && grunt mock && grunt clean-mock",
     "w3c-old": "grunt clean-w3c-old && grunt w3c-old && grunt clean-w3c-old",
     "tests-polyfill": "grunt clean-polyfill && npm run fake && npm run mock && npm run w3c-old && browserify-test -t [ babelify --presets es2015 ] tests-polyfill/**/*.js",
-    "web-platform-tests": "./web-platform-tests/wpt serve",
+    "web-platform-tests": "cd web-platform-tests && ./wpt serve",
     "w3c": "npm run w3c-build && npm run w3c-test",
     "w3c-add-wrap": "node test-support/wrap-w3c-tests",
     "w3c-remove-wrap": "node test-support/wrap-w3c-tests remove",

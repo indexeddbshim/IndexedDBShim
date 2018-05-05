@@ -1,5 +1,16 @@
 # IndexedDBShim changes
 
+## 3.6.2
+
+- Fix (Node): Respect the `databaseBasePath` setting for database
+    deletions (#319); test courtesy @mikelehen
+- Fix (Node): Error (and warning) in cleaning up memory database
+    resources (#320); test and fix courtesy @mikelehen
+- Fix/optimization (Node): Don't remove cache after success, but if using
+    cache, ensure getting last version and ensure async before
+    dispatching any version error
+- npm: Fix web-platform-tests script
+
 ## 3.6.1
 
 - Critical fix (Please upgrade from any previous 3.0.0 version):

@@ -3004,7 +3004,7 @@ function getLatestCachedWebSQLVersion(name) {
 
 function getLatestCachedWebSQLDB(name) {
     return websqlDBCache[name] && websqlDBCache[name][// eslint-disable-line standard/computed-property-even-spacing
-    getLatestCachedWebSQLVersion()];
+    getLatestCachedWebSQLVersion(name)];
 }
 
 function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, databaseDeleted, dbError) {
@@ -3031,7 +3031,7 @@ function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, dat
         return;
     }
     if (_CFG2.default.deleteDatabaseFiles !== false && {}.toString.call(process) === '[object process]') {
-        require('fs').unlink(_path2.default.resolve(escapedDatabaseName), function (err) {
+        require('fs').unlink(_path2.default.join(_CFG2.default.databaseBasePath || '', escapedDatabaseName), function (err) {
             if (err && err.code !== 'ENOENT') {
                 // Ignore if file is already deleted
                 dbError({ code: 0, message: 'Error removing database file: ' + escapedDatabaseName + ' ' + err });
@@ -3245,11 +3245,6 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                 req.__result.__versionTransaction = null;
                                 sysdbFinishedCb(systx, false, function () {
                                     req.transaction.__transFinishedCb(false, function () {
-                                        if (useDatabaseCache) {
-                                            if (name in websqlDBCache) {
-                                                delete websqlDBCache[name][version];
-                                            }
-                                        }
                                         ev.complete();
                                         req.__transaction = null;
                                     });
@@ -3355,7 +3350,13 @@ IDBFactory.prototype.open = function (name /* , version */) {
         }
         if (oldVersion > version) {
             var err = (0, _DOMException.createDOMException)('VersionError', 'An attempt was made to open a database using a lower version than the existing version.', version);
-            dbCreateError(err);
+            if (useDatabaseCache) {
+                setTimeout(function () {
+                    dbCreateError(err);
+                });
+            } else {
+                dbCreateError(err);
+            }
             return;
         }
 
@@ -3379,11 +3380,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
             if (!(name in websqlDBCache)) {
                 websqlDBCache[name] = {};
             }
-            if (version === undefined) {
-                latestCachedVersion = getLatestCachedWebSQLVersion(name);
-            } else if (websqlDBCache[name][version]) {
-                latestCachedVersion = version;
-            }
+            latestCachedVersion = getLatestCachedWebSQLVersion(name);
         }
         if (latestCachedVersion) {
             openDB(latestCachedVersion);
