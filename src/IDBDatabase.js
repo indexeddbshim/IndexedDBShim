@@ -33,10 +33,10 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
             Object.defineProperty(this, listener, {
                 enumerable: true,
                 configurable: true,
-                get: function () {
+                get () {
                     return this['__' + listener];
                 },
-                set: function (val) {
+                set (val) {
                     this['__' + listener] = val;
                 }
             });
@@ -252,10 +252,10 @@ listeners.forEach((listener) => {
     Object.defineProperty(IDBDatabase.prototype, listener, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get () {
             throw new TypeError('Illegal invocation');
         },
-        set: function (val) {
+        set (val) {
             throw new TypeError('Illegal invocation');
         }
     });
@@ -265,7 +265,7 @@ readonlyProperties.forEach((prop) => {
     Object.defineProperty(IDBDatabase.prototype, prop, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get () {
             throw new TypeError('Illegal invocation');
         }
     });

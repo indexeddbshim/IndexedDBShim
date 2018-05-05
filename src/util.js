@@ -201,7 +201,7 @@ function defineReadonlyProperties (obj, props) {
         Object.defineProperty(obj, prop, {
             enumerable: true,
             configurable: true,
-            get: function () {
+            get () {
                 return this['__' + prop];
             }
         });

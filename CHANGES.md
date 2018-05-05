@@ -9,6 +9,7 @@
 - Fix/optimization (Node): Don't remove cache after success, but if using
     cache, ensure getting last version and ensure async before
     dispatching any version error
+- Refactoring: Avoid redundant `function` on object literals
 - npm: Fix web-platform-tests script
 
 ## 3.6.1

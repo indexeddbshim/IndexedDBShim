@@ -122,10 +122,10 @@ const CFG = {};
         prop = prop[0];
     }
     Object.defineProperty(CFG, prop, {
-        get: function () {
+        get() {
             return map[prop];
         },
-        set: function (val) {
+        set(val) {
             if (validator) {
                 validator(val);
             }
@@ -263,7 +263,7 @@ function createNonNativeDOMExceptionClass() {
     ['name', 'message'].forEach(prop => {
         Object.defineProperty(DummyDOMException.prototype, prop, {
             enumerable: true,
-            get: function () {
+            get() {
                 if (!(this instanceof DOMException || this instanceof DummyDOMException || this instanceof Error)) {
                     throw new TypeError('Illegal invocation');
                 }
@@ -275,7 +275,7 @@ function createNonNativeDOMExceptionClass() {
     Object.defineProperty(DummyDOMException.prototype, 'code', {
         configurable: true,
         enumerable: true,
-        get: function () {
+        get() {
             throw new TypeError('Illegal invocation');
         }
     });
@@ -504,10 +504,10 @@ const signValues = ['negativeInfinity', 'bigNegative', 'smallNegative', 'smallPo
 
 const types = {
     invalid: {
-        encode: function (key) {
+        encode(key) {
             return keyTypeToEncodedChar.invalid + '-';
         },
-        decode: function (key) {
+        decode(key) {
             return undefined;
         }
     },
@@ -525,7 +525,7 @@ const types = {
     number: {
         // The encode step checks for six numeric cases and generates 14-digit encoded
         // sign-exponent-mantissa strings.
-        encode: function (key) {
+        encode(key) {
             let key32 = key === Number.MIN_VALUE
             // Mocha test `IDBFactory/cmp-spec.js` exposed problem for some
             //   Node (and Chrome) versions with `Number.MIN_VALUE` being treated
@@ -583,7 +583,7 @@ const types = {
         // The decode step must interpret the sign, reflip values encoded as the 32's complements,
         // apply signs to the exponent and mantissa, do the base-32 power operation, and return
         // the original JavaScript number values.
-        decode: function (key) {
+        decode(key) {
             const sign = +key.substr(2, 1);
             let exponent = key.substr(3, 2);
             let mantissa = key.substr(5, 11);
@@ -621,14 +621,14 @@ const types = {
     // This effectively doubles the size of every string, but it ensures that when two arrays of strings are compared,
     // the indexes of each string's characters line up with each other.
     string: {
-        encode: function (key, inArray) {
+        encode(key, inArray) {
             if (inArray) {
                 // prepend each character with a dash, and append a space to the end
                 key = key.replace(/(.)/g, '-$1') + ' ';
             }
             return keyTypeToEncodedChar.string + '-' + key;
         },
-        decode: function (key, inArray) {
+        decode(key, inArray) {
             key = key.slice(2);
             if (inArray) {
                 // remove the space at the end, and the dash before each character
@@ -641,7 +641,7 @@ const types = {
     // Arrays are encoded as JSON strings.
     // An extra, value is added to each array during encoding to make empty arrays sort correctly.
     array: {
-        encode: function (key) {
+        encode(key) {
             const encoded = [];
             for (let i = 0; i < key.length; i++) {
                 const item = key[i];
@@ -651,7 +651,7 @@ const types = {
             encoded.push(keyTypeToEncodedChar.invalid + '-'); // append an extra item, so empty arrays sort correctly
             return keyTypeToEncodedChar.array + '-' + JSON.stringify(encoded);
         },
-        decode: function (key) {
+        decode(key) {
             const decoded = JSON.parse(key.slice(2));
             decoded.pop(); // remove the extra item
             for (let i = 0; i < decoded.length; i++) {
@@ -665,19 +665,19 @@ const types = {
 
     // Dates are encoded as ISO 8601 strings, in UTC time zone.
     date: {
-        encode: function (key) {
+        encode(key) {
             return keyTypeToEncodedChar.date + '-' + key.toJSON();
         },
-        decode: function (key) {
+        decode(key) {
             return new Date(key.slice(2));
         }
     },
     binary: { // `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
-        encode: function (key) {
+        encode(key) {
             return keyTypeToEncodedChar.binary + '-' + (key.byteLength ? [...getCopyBytesHeldByBufferSource(key)].map(b => util.padStart(b, 3, '0')) // e.g., '255,005,254,000,001,033'
             : '');
         },
-        decode: function (key) {
+        decode(key) {
             // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
             const k = key.slice(2);
             const arr = k.length ? k.split(',').map(s => parseInt(s, 10)) : [];
@@ -1492,7 +1492,7 @@ function defineReadonlyProperties(obj, props) {
         Object.defineProperty(obj, prop, {
             enumerable: true,
             configurable: true,
-            get: function () {
+            get() {
                 return this['__' + prop];
             }
         });

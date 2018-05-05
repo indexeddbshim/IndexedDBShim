@@ -177,16 +177,16 @@ describe('W3C IDBFactory.open Tests', function () {
         should_throw(false)
 
         should_throw({
-            toString: function() { assert_unreached("toString should not be called for ToPrimitive [Number]"); },
-            valueOf: function() { return 0; }
+            toString() { assert_unreached("toString should not be called for ToPrimitive [Number]"); },
+            valueOf() { return 0; }
         })
         should_throw({
-            toString: function() { return 0; },
-            valueOf: function() { return {}; }
+            toString() { return 0; },
+            valueOf() { return {}; }
         }, 'object (second)')
         should_throw({
-            toString: function() { return {}; },
-            valueOf: function() { return {}; },
+            toString() { return {}; },
+            valueOf() { return {}; },
         }, 'object (third)')
 
 

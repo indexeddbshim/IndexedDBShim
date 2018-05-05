@@ -10,10 +10,10 @@ function transformW3CStack (stack) {
         newFileLineNumber (match) {
             return parseInt(match[4], 10);
         },
-        newFileColumnNumber: function (match) {
+        newFileColumnNumber (match) {
             return match[5] || '';
         },
-        originalPositionString: function (formattingSpaces, originalPosition, untransformedOutput, match /*, prev=false */) {
+        originalPositionString (formattingSpaces, originalPosition, untransformedOutput, match /*, prev=false */) {
             const erringFunc = match[2] || '';
             const endingParenth = match[6] || '';
             if (originalPosition.source) {

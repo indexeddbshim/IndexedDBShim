@@ -270,7 +270,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
                 me.__prefetchedData = {
                     data: rows,
                     length: rows.length,
-                    item: function (index) {
+                    item (index) {
                         return this.data[index];
                     }
                 };
@@ -556,7 +556,7 @@ IDBCursor.prototype[Symbol.toStringTag] = 'IDBCursorPrototype';
     Object.defineProperty(IDBCursor.prototype, prop, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get () {
             throw new TypeError('Illegal invocation');
         }
     });
@@ -591,7 +591,7 @@ IDBCursorWithValue.__createInstance = function (...args) {
 Object.defineProperty(IDBCursorWithValue.prototype, 'value', {
     enumerable: true,
     configurable: true,
-    get: function () {
+    get () {
         throw new TypeError('Illegal invocation');
     }
 });

@@ -4,7 +4,7 @@ describe('W3C IDBCursor.advance Tests', function () {
     var createdb = support.createdb;
     /*
     Object.defineProperty(global, 'done', {
-        set: function(value) {
+        set (value) {
             throw new Error("Found the leak!");
         }
     });

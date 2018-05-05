@@ -306,7 +306,7 @@ prom.then((scriptSource) => {
     Object.defineProperty(workerCtx.prototype, 'indexedDB', {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get () {
             throw new TypeError('Illegal invocation');
         }
     });

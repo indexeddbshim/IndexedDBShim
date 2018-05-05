@@ -34,7 +34,7 @@ function createdb_for_multiple_tests(dbname, version) {
     // add a .setTest method to the DB object
     Object.defineProperty(rq_open, 'setDone', {
         enumerable: false,
-        value: function(d) {
+        value (d) {
             done = d;
 
             auto_fail("upgradeneeded");

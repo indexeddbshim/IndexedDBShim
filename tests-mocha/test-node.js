@@ -3,7 +3,7 @@ window.location = {search: ''}; // useShim=true // This must go before sinon as 
 
 window.chai = require('chai');
 window.sinon = require('sinon');
-window.mocha = {setup: function () {}, globals: function () {}, checkLeaks: function () {}};
+window.mocha = {setup () {}, globals () {}, checkLeaks () {}};
 
 window.addEventListener = function (type) {
     if (type !== 'cordovacallbackerror') {

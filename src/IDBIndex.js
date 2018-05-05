@@ -36,17 +36,17 @@ IDBIndex.__createInstance = function (store, indexProperties) {
         me.__deleted = !!indexProperties.__deleted;
         me.__objectStore.__cursors = indexProperties.cursors || [];
         Object.defineProperty(me, '__currentName', {
-            get: function () {
+            get () {
                 return '__pendingName' in me ? me.__pendingName : me.name;
             }
         });
         Object.defineProperty(me, 'name', {
             enumerable: false,
             configurable: false,
-            get: function () {
+            get () {
                 return this.__name;
             },
-            set: function (newName) {
+            set (newName) {
                 const me = this;
                 newName = util.convertToDOMString(newName);
                 const oldName = me.name;
@@ -539,7 +539,7 @@ readonlyProperties.forEach((prop) => {
     Object.defineProperty(IDBIndex.prototype, prop, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get () {
             throw new TypeError('Illegal invocation');
         }
     });
@@ -547,10 +547,10 @@ readonlyProperties.forEach((prop) => {
 Object.defineProperty(IDBIndex.prototype, 'name', {
     enumerable: true,
     configurable: true,
-    get: function () {
+    get () {
         throw new TypeError('Illegal invocation');
     },
-    set: function (val) {
+    set (val) {
         throw new TypeError('Illegal invocation');
     }
 });

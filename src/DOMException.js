@@ -112,7 +112,7 @@ function createNonNativeDOMExceptionClass () {
     ['name', 'message'].forEach((prop) => {
         Object.defineProperty(DummyDOMException.prototype, prop, {
             enumerable: true,
-            get: function () {
+            get () {
                 if (!(this instanceof DOMException ||
                     this instanceof DummyDOMException ||
                     this instanceof Error)) {
@@ -126,7 +126,7 @@ function createNonNativeDOMExceptionClass () {
     Object.defineProperty(DummyDOMException.prototype, 'code', {
         configurable: true,
         enumerable: true,
-        get: function () {
+        get () {
             throw new TypeError('Illegal invocation');
         }
     });

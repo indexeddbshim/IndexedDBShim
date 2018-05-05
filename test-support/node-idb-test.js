@@ -42,15 +42,15 @@ const nodeReplacementHacks = {
 const shimNS = {
     colors: require('colors/safe'),
     fileName: '',
-    finished: function () { throw new Error('Finished callback not set'); },
+    finished () { throw new Error('Finished callback not set'); },
     isDateObject,
-    write: function (msg) {
+    write (msg) {
         (process && process.stdout && process.stdout.isTTY) ? process.stdout.write(msg) : console.log(msg);
     },
-    writeStack: function (msg, stack) {
+    writeStack (msg, stack) {
         console.log(msg + transformV8Stack(stack));
     },
-    writeln: function (msg) {
+    writeln (msg) {
         console.log(msg);
     },
     statuses: {
@@ -354,16 +354,16 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                                     Object.defineProperties(el, {
                                         /*
                                         srcdoc: { // We need to have this run in its own sandbox or something
-                                            set: function () {
+                                            set () {
 
                                             }
                                         },
                                         */
                                         onload: {
-                                            set: function (val) {
+                                            set (val) {
                                                 _onload = val;
                                             },
-                                            get: function () {
+                                            get () {
                                                 return function (e) {
                                                     setTimeout(function () {
                                                         _onload(e);
@@ -424,7 +424,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                             enumerable: false,
                             writable: true,
                             configurable: true,
-                            value: function () {}
+                            value () {}
                         });
 
                         // Patch postMessage to throw for SCA (as needed by tests in key_invalid.htm)
@@ -457,7 +457,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                         // keypath-special-identifiers.htm still relies on this property
                         Object.defineProperty(global.File.prototype, 'lastModifiedDate', {
                             configurable: true,
-                            get: function () {
+                            get () {
                                 return new Date(this.lastModified);
                             }
                         });

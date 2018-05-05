@@ -81,7 +81,7 @@ module.exports = function (grunt) {
                         // https://github.com/substack/node-browserify/issues/1277#issuecomment-115198436
                         // One would think this wouldn't be necessary with `builts`: false
                         insertGlobalVars: {
-                            process: function () { // Avoid having a non-Node polyfill added
+                            process () { // Avoid having a non-Node polyfill added
                             }
                         },
                         plugin: [function (b, o) {
@@ -139,7 +139,7 @@ module.exports = function (grunt) {
                         // https://github.com/substack/node-browserify/issues/1277#issuecomment-115198436
                         // One would think this wouldn't be necessary with `builts`: false
                         insertGlobalVars: {
-                            process: function () { // Avoid having a non-Node polyfill added
+                            process () { // Avoid having a non-Node polyfill added
                             }
                         },
                         plugin: [function (b, o) {
@@ -227,7 +227,7 @@ module.exports = function (grunt) {
                 options: {
                     base: '.',
                     port: 9999,
-                    middleware: function (connect, options, middlewares) {
+                    middleware (connect, options, middlewares) {
                         middlewares.unshift(function (req, res, next) {
                             // Allow access to this domain from web-platform-tests so we can add the polyfill to its tests
                             res.setHeader('Access-Control-Allow-Origin', 'http://web-platform.test:8000');
@@ -252,7 +252,7 @@ module.exports = function (grunt) {
                 deps: ['./tests-qunit/node-init.js', './tests-qunit/queuedUnit.js', './tests-qunit/sampleData.js', './tests-qunit/startTests.js'],
                 code: './dist/<%= pkg.name%>-node.js',
                 tests: './tests-qunit/nodeTest.js',
-                callback: function (err, res) { // var doneCb = this.async();
+                callback (err, res) { // var doneCb = this.async();
                     if (err) console.log(err);
                     else console.log(res);
                 }
@@ -262,11 +262,11 @@ module.exports = function (grunt) {
             all: {
                 options: {
                     username: sauceuser,
-                    key: function () { return saucekey; }, // Workaround for https://github.com/axemclion/grunt-saucelabs/issues/215
+                    key () { return saucekey; }, // Workaround for https://github.com/axemclion/grunt-saucelabs/issues/215
                     tags: ['master'],
                     urls: ['http://127.0.0.1:9999/tests-qunit/index.html'],
                     testTimeout: 8000,
-                    onTestComplete: function (result, callback) {
+                    onTestComplete (result, callback) {
                         console.log(result);
                         callback(null);
                     },

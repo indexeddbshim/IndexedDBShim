@@ -52,7 +52,7 @@
          * @param {string} title
          * @param {function} test
          */
-        skipIf: function (condition, title, test) {
+        skipIf (condition, title, test) {
             if (condition) {
                 it.skip(title, test);
             } else {
@@ -66,7 +66,7 @@
          * @param   {...string}     schema      One or more pre-defined schema items. (see {@link createSchemaItem})
          * @param   {function}      done        `function(err, db)`
          */
-        createDatabase: function (schema, done) {
+        createDatabase (schema, done) {
             schema = Array.prototype.slice.call(arguments, 0, arguments.length - 1);
             done = arguments[arguments.length - 1];
 
@@ -105,7 +105,7 @@
          * @param   {IDBObjectStore|IDBIndex}   store   The object store or index
          * @param   {function}                  done    `function(err, data)`
          */
-        getAll: function (store, done) {
+        getAll (store, done) {
             util.query(store, done);
         },
 
@@ -117,7 +117,7 @@
          * @param   {string}                    [direction] The direction of the cursor
          * @param   {function}                  done        `function(err, data)`
          */
-        query: function (store, keyRange, direction, done) {
+        query (store, keyRange, direction, done) {
             if (arguments.length === 2) {
                 done = keyRange;
                 keyRange = undefined;
@@ -174,7 +174,7 @@
          *
          * @param   {function}  done    `function(err, dbName)`
          */
-        generateDatabaseName: function (done) {
+        generateDatabaseName (done) {
             dbNameCounter++;
             var dbName = databaseNamePrefix + dbNameCounter + databaseSuffix;
 
@@ -212,7 +212,7 @@
          * If iterator returns an {@link IDBRequest} or {@link IDBTransaction} object,
          * then `next` will automatically be bound to the `onsuccess`, `onerror`, `onblocked`, and `oncomplete` events.
          */
-        asyncForEach: function (array, done, iterator) {
+        asyncForEach (array, done, iterator) {
             var i = 0;
             next();
 
@@ -252,7 +252,7 @@
             }
         },
 
-        stubWindowOnerror: function (stateObj, cb) {
+        stubWindowOnerror (stateObj, cb) {
             // As Mocha or Sinon are apparently already using window.onerror, we provide the stubbing ourselves
             util._onerror = window.onerror;
             stateObj.erred = false;
@@ -264,7 +264,7 @@
                 util._onerror.apply(window, arguments);
             };
         },
-        restoreWindowOnerror: function () {
+        restoreWindowOnerror () {
             window.onerror = util._onerror;
         }
     };

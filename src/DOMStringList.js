@@ -23,13 +23,13 @@ const DOMStringList = function () {
 DOMStringList.prototype = {
     constructor: DOMStringList,
     // Interface.
-    contains: function (str) {
+    contains (str) {
         if (!arguments.length) {
             throw new TypeError('DOMStringList.contains must be supplied a value');
         }
         return this._items.includes(str);
     },
-    item: function (key) {
+    item (key) {
         if (!arguments.length) {
             throw new TypeError('DOMStringList.item must be supplied a value');
         }
@@ -40,40 +40,40 @@ DOMStringList.prototype = {
     },
 
     // Helpers. Should only be used internally.
-    clone: function () {
+    clone () {
         const stringList = DOMStringList.__createInstance();
         stringList._items = this._items.slice();
         stringList._length = this.length;
         stringList.addIndexes();
         return stringList;
     },
-    addIndexes: function () {
+    addIndexes () {
         for (let i = 0; i < this._items.length; i++) {
             this[i] = this._items[i];
         }
     },
-    sortList: function () {
+    sortList () {
         // http://w3c.github.io/IndexedDB/#sorted-list
         // https://tc39.github.io/ecma262/#sec-abstract-relational-comparison
         this._items.sort();
         this.addIndexes();
         return this._items;
     },
-    forEach: function (cb, thisArg) {
+    forEach (cb, thisArg) {
         this._items.forEach(cb, thisArg);
     },
-    map: function (cb, thisArg) {
+    map (cb, thisArg) {
         return this._items.map(cb, thisArg);
     },
-    indexOf: function (str) {
+    indexOf (str) {
         return this._items.indexOf(str);
     },
-    push: function (item) {
+    push (item) {
         this._items.push(item);
         this._length++;
         this.sortList();
     },
-    splice: function (...args /* index, howmany, item1, ..., itemX */) {
+    splice (...args /* index, howmany, item1, ..., itemX */) {
         this._items.splice(...args);
         this._length = this._items.length;
         for (const i in this) {
@@ -89,7 +89,7 @@ DOMStringList.prototype = {
     //    and particularly as some methods, e.g., `IDBDatabase.transaction`
     //    expect such sequence<DOMString> (or DOMString), we need an iterator (some of
     //    the Mocha tests rely on these)
-    [Symbol.iterator]: function * () {
+    * [Symbol.iterator] () {
         let i = 0;
         while (i < this._items.length) {
             yield this._items[i++];
@@ -97,13 +97,13 @@ DOMStringList.prototype = {
     }
 };
 Object.defineProperty(DOMStringList, Symbol.hasInstance, {
-    value: function (obj) {
+    value (obj) {
         return ({}.toString.call(obj) === 'DOMStringListPrototype');
     }
 });
 const DOMStringListAlias = DOMStringList;
 Object.defineProperty(DOMStringList, '__createInstance', {
-    value: function () {
+    value () {
         const DOMStringList = function DOMStringList () {
             this.toString = function () {
                 return '[object DOMStringList]';
@@ -111,7 +111,7 @@ Object.defineProperty(DOMStringList, '__createInstance', {
             // Internal functions on the prototype have been made non-enumerable below.
             Object.defineProperty(this, 'length', {
                 enumerable: true,
-                get: function () {
+                get () {
                     return this._length;
                 }
             });
@@ -139,7 +139,7 @@ if (cleanInterface) {
     Object.defineProperty(DOMStringList.prototype, 'length', {
         configurable: true,
         enumerable: true,
-        get: function () {
+        get () {
             throw new TypeError('Illegal invocation');
         }
     });

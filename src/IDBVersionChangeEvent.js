@@ -21,7 +21,7 @@ readonlyProperties.forEach((prop) => {
     Object.defineProperty(IDBVersionChangeEvent.prototype, prop, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get () {
             if (!(this instanceof IDBVersionChangeEvent)) {
                 throw new TypeError('Illegal invocation');
             }

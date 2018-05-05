@@ -14,7 +14,7 @@ var DB = { // eslint-disable-line no-unused-vars
 var sample = (function () { // eslint-disable-line no-unused-vars
     var generatedNumbers = {};
     return {
-        obj: function () {
+        obj () {
             return {
                 'String': 'Sample ' + new Date(),
                 'Int': this.integer(),
@@ -22,7 +22,7 @@ var sample = (function () { // eslint-disable-line no-unused-vars
                 'Boolean': true
             };
         },
-        integer: function (arg) {
+        integer (arg) {
             // Ensuring a unique integer everytime, for the sake of index get
             var r;
             do {

@@ -1070,7 +1070,7 @@ describe('Objectstore - Add', function() {
         });
 
     it("Adding data - DataCloneError", function (done) {
-        var data = { test: "test", toString: function () {
+        var data = { test: "test", toString () {
                                                 return true;
                                             }
                     };

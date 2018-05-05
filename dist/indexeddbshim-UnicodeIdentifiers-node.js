@@ -899,10 +899,10 @@ const CFG = {};
         prop = prop[0];
     }
     Object.defineProperty(CFG, prop, {
-        get: function () {
+        get() {
             return map[prop];
         },
-        set: function (val) {
+        set(val) {
             if (validator) {
                 validator(val);
             }
@@ -1040,7 +1040,7 @@ function createNonNativeDOMExceptionClass() {
     ['name', 'message'].forEach(prop => {
         Object.defineProperty(DummyDOMException.prototype, prop, {
             enumerable: true,
-            get: function () {
+            get() {
                 if (!(this instanceof DOMException || this instanceof DummyDOMException || this instanceof Error)) {
                     throw new TypeError('Illegal invocation');
                 }
@@ -1052,7 +1052,7 @@ function createNonNativeDOMExceptionClass() {
     Object.defineProperty(DummyDOMException.prototype, 'code', {
         configurable: true,
         enumerable: true,
-        get: function () {
+        get() {
             throw new TypeError('Illegal invocation');
         }
     });
@@ -1251,13 +1251,13 @@ const DOMStringList = function () {
 DOMStringList.prototype = {
     constructor: DOMStringList,
     // Interface.
-    contains: function (str) {
+    contains(str) {
         if (!arguments.length) {
             throw new TypeError('DOMStringList.contains must be supplied a value');
         }
         return this._items.includes(str);
     },
-    item: function (key) {
+    item(key) {
         if (!arguments.length) {
             throw new TypeError('DOMStringList.item must be supplied a value');
         }
@@ -1268,40 +1268,40 @@ DOMStringList.prototype = {
     },
 
     // Helpers. Should only be used internally.
-    clone: function () {
+    clone() {
         const stringList = DOMStringList.__createInstance();
         stringList._items = this._items.slice();
         stringList._length = this.length;
         stringList.addIndexes();
         return stringList;
     },
-    addIndexes: function () {
+    addIndexes() {
         for (let i = 0; i < this._items.length; i++) {
             this[i] = this._items[i];
         }
     },
-    sortList: function () {
+    sortList() {
         // http://w3c.github.io/IndexedDB/#sorted-list
         // https://tc39.github.io/ecma262/#sec-abstract-relational-comparison
         this._items.sort();
         this.addIndexes();
         return this._items;
     },
-    forEach: function (cb, thisArg) {
+    forEach(cb, thisArg) {
         this._items.forEach(cb, thisArg);
     },
-    map: function (cb, thisArg) {
+    map(cb, thisArg) {
         return this._items.map(cb, thisArg);
     },
-    indexOf: function (str) {
+    indexOf(str) {
         return this._items.indexOf(str);
     },
-    push: function (item) {
+    push(item) {
         this._items.push(item);
         this._length++;
         this.sortList();
     },
-    splice: function (...args /* index, howmany, item1, ..., itemX */) {
+    splice(...args /* index, howmany, item1, ..., itemX */) {
         this._items.splice(...args);
         this._length = this._items.length;
         for (const i in this) {
@@ -1317,7 +1317,7 @@ DOMStringList.prototype = {
     //    and particularly as some methods, e.g., `IDBDatabase.transaction`
     //    expect such sequence<DOMString> (or DOMString), we need an iterator (some of
     //    the Mocha tests rely on these)
-    [Symbol.iterator]: function* () {
+    *[Symbol.iterator]() {
         let i = 0;
         while (i < this._items.length) {
             yield this._items[i++];
@@ -1325,13 +1325,13 @@ DOMStringList.prototype = {
     }
 };
 Object.defineProperty(DOMStringList, Symbol.hasInstance, {
-    value: function (obj) {
+    value(obj) {
         return {}.toString.call(obj) === 'DOMStringListPrototype';
     }
 });
 const DOMStringListAlias = DOMStringList;
 Object.defineProperty(DOMStringList, '__createInstance', {
-    value: function () {
+    value() {
         const DOMStringList = function DOMStringList() {
             this.toString = function () {
                 return '[object DOMStringList]';
@@ -1339,7 +1339,7 @@ Object.defineProperty(DOMStringList, '__createInstance', {
             // Internal functions on the prototype have been made non-enumerable below.
             Object.defineProperty(this, 'length', {
                 enumerable: true,
-                get: function () {
+                get() {
                     return this._length;
                 }
             });
@@ -1367,7 +1367,7 @@ if (cleanInterface) {
     Object.defineProperty(DOMStringList.prototype, 'length', {
         configurable: true,
         enumerable: true,
-        get: function () {
+        get() {
             throw new TypeError('Illegal invocation');
         }
     });
@@ -1726,7 +1726,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
                 me.__prefetchedData = {
                     data: rows,
                     length: rows.length,
-                    item: function (index) {
+                    item(index) {
                         return this.data[index];
                     }
                 };
@@ -1993,7 +1993,7 @@ IDBCursor.prototype[Symbol.toStringTag] = 'IDBCursorPrototype';
     Object.defineProperty(IDBCursor.prototype, prop, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get() {
             throw new TypeError('Illegal invocation');
         }
     });
@@ -2028,7 +2028,7 @@ IDBCursorWithValue.__createInstance = function (...args) {
 Object.defineProperty(IDBCursorWithValue.prototype, 'value', {
     enumerable: true,
     configurable: true,
-    get: function () {
+    get() {
         throw new TypeError('Illegal invocation');
     }
 });
@@ -2105,10 +2105,10 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
             Object.defineProperty(this, listener, {
                 enumerable: true,
                 configurable: true,
-                get: function () {
+                get() {
                     return this['__' + listener];
                 },
-                set: function (val) {
+                set(val) {
                     this['__' + listener] = val;
                 }
             });
@@ -2322,10 +2322,10 @@ listeners.forEach(listener => {
     Object.defineProperty(IDBDatabase.prototype, listener, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get() {
             throw new TypeError('Illegal invocation');
         },
-        set: function (val) {
+        set(val) {
             throw new TypeError('Illegal invocation');
         }
     });
@@ -2335,7 +2335,7 @@ readonlyProperties.forEach(prop => {
     Object.defineProperty(IDBDatabase.prototype, prop, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get() {
             throw new TypeError('Illegal invocation');
         }
     });
@@ -2477,7 +2477,7 @@ function triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersio
         if (!connectionsClosed()) {
             return new _syncPromise2.default(function (resolve) {
                 const unblocking = {
-                    check: function check() {
+                    check() {
                         if (connectionsClosed()) {
                             resolve();
                         }
@@ -3206,17 +3206,17 @@ IDBIndex.__createInstance = function (store, indexProperties) {
         me.__deleted = !!indexProperties.__deleted;
         me.__objectStore.__cursors = indexProperties.cursors || [];
         Object.defineProperty(me, '__currentName', {
-            get: function () {
+            get() {
                 return '__pendingName' in me ? me.__pendingName : me.name;
             }
         });
         Object.defineProperty(me, 'name', {
             enumerable: false,
             configurable: false,
-            get: function () {
+            get() {
                 return this.__name;
             },
-            set: function (newName) {
+            set(newName) {
                 const me = this;
                 newName = util.convertToDOMString(newName);
                 const oldName = me.name;
@@ -3665,7 +3665,7 @@ readonlyProperties.forEach(prop => {
     Object.defineProperty(IDBIndex.prototype, prop, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get() {
             throw new TypeError('Illegal invocation');
         }
     });
@@ -3673,10 +3673,10 @@ readonlyProperties.forEach(prop => {
 Object.defineProperty(IDBIndex.prototype, 'name', {
     enumerable: true,
     configurable: true,
-    get: function () {
+    get() {
         throw new TypeError('Illegal invocation');
     },
-    set: function (val) {
+    set(val) {
         throw new TypeError('Illegal invocation');
     }
 });
@@ -3889,7 +3889,7 @@ readonlyProperties.forEach(prop => {
     Object.defineProperty(IDBKeyRange.prototype, prop, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get() {
             // We can't do a regular instanceof check as it will create a loop given our hasInstance implementation
             if (!util.isObj(this) || typeof this.__lowerOpen !== 'boolean') {
                 throw new TypeError('Illegal invocation');
@@ -4047,17 +4047,17 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
         }
         me.__oldIndexNames = me.indexNames.clone();
         Object.defineProperty(this, '__currentName', {
-            get: function () {
+            get() {
                 return '__pendingName' in this ? this.__pendingName : this.name;
             }
         });
         Object.defineProperty(this, 'name', {
             enumerable: false,
             configurable: false,
-            get: function () {
+            get() {
                 return this.__name;
             },
-            set: function (name) {
+            set(name) {
                 const me = this;
                 name = util.convertToDOMString(name);
                 const oldName = me.name;
@@ -4797,7 +4797,7 @@ readonlyProperties.forEach(prop => {
     Object.defineProperty(IDBObjectStore.prototype, prop, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get() {
             throw new TypeError('Illegal invocation');
         }
     });
@@ -4805,10 +4805,10 @@ readonlyProperties.forEach(prop => {
 Object.defineProperty(IDBObjectStore.prototype, 'name', {
     enumerable: true,
     configurable: true,
-    get: function () {
+    get() {
         throw new TypeError('Illegal invocation');
     },
-    set: function (val) {
+    set(val) {
         throw new TypeError('Illegal invocation');
     }
 });
@@ -4865,7 +4865,7 @@ IDBRequest.__super = function IDBRequest() {
         Object.defineProperty(this, prop, {
             enumerable: true,
             configurable: true,
-            get: function () {
+            get() {
                 if (this.__readyState !== 'done') {
                     throw (0, _DOMException.createDOMException)('InvalidStateError', "Can't get " + prop + '; the request is still pending.');
                 }
@@ -4877,10 +4877,10 @@ IDBRequest.__super = function IDBRequest() {
     listeners.forEach(listener => {
         Object.defineProperty(this, listener, {
             configurable: true, // Needed by support.js in W3C IndexedDB tests
-            get: function () {
+            get() {
                 return this['__' + listener];
             },
-            set: function (val) {
+            set(val) {
                 this['__' + listener] = val;
             }
         });
@@ -4912,7 +4912,7 @@ readonlyProperties.forEach(prop => {
     Object.defineProperty(IDBRequest.prototype, prop, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get() {
             throw new TypeError('Illegal invocation');
         }
     });
@@ -4922,7 +4922,7 @@ doneFlagGetters.forEach(function (prop) {
     Object.defineProperty(IDBRequest.prototype, prop, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get() {
             throw new TypeError('Illegal invocation');
         }
     });
@@ -4932,10 +4932,10 @@ listeners.forEach(listener => {
     Object.defineProperty(IDBRequest.prototype, listener, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get() {
             throw new TypeError('Illegal invocation');
         },
-        set: function (val) {
+        set(val) {
             throw new TypeError('Illegal invocation');
         }
     });
@@ -4983,10 +4983,10 @@ IDBOpenDBRequest.__createInstance = function () {
         openListeners.forEach(listener => {
             Object.defineProperty(this, listener, {
                 configurable: true, // Needed by support.js in W3C IndexedDB tests
-                get: function () {
+                get() {
                     return this['__' + listener];
                 },
-                set: function (val) {
+                set(val) {
                     this['__' + listener] = val;
                 }
             });
@@ -5003,10 +5003,10 @@ openListeners.forEach(listener => {
     Object.defineProperty(IDBOpenDBRequest.prototype, listener, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get() {
             throw new TypeError('Illegal invocation');
         },
-        set: function (val) {
+        set(val) {
             throw new TypeError('Illegal invocation');
         }
     });
@@ -5099,10 +5099,10 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
             Object.defineProperty(this, listener, {
                 enumerable: true,
                 configurable: true,
-                get: function () {
+                get() {
                     return this['__' + listener];
                 },
-                set: function (val) {
+                set(val) {
                     this['__' + listener] = val;
                 }
             });
@@ -5590,10 +5590,10 @@ listeners.forEach(listener => {
     Object.defineProperty(IDBTransaction.prototype, listener, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get() {
             throw new TypeError('Illegal invocation');
         },
-        set: function (val) {
+        set(val) {
             throw new TypeError('Illegal invocation');
         }
     });
@@ -5604,7 +5604,7 @@ readonlyProperties.forEach(prop => {
     Object.defineProperty(IDBTransaction.prototype, prop, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get() {
             throw new TypeError('Illegal invocation');
         }
     });
@@ -5660,7 +5660,7 @@ readonlyProperties.forEach(prop => {
     Object.defineProperty(IDBVersionChangeEvent.prototype, prop, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get() {
             if (!(this instanceof IDBVersionChangeEvent)) {
                 throw new TypeError('Illegal invocation');
             }
@@ -5748,10 +5748,10 @@ const signValues = ['negativeInfinity', 'bigNegative', 'smallNegative', 'smallPo
 
 const types = {
     invalid: {
-        encode: function (key) {
+        encode(key) {
             return keyTypeToEncodedChar.invalid + '-';
         },
-        decode: function (key) {
+        decode(key) {
             return undefined;
         }
     },
@@ -5769,7 +5769,7 @@ const types = {
     number: {
         // The encode step checks for six numeric cases and generates 14-digit encoded
         // sign-exponent-mantissa strings.
-        encode: function (key) {
+        encode(key) {
             let key32 = key === Number.MIN_VALUE
             // Mocha test `IDBFactory/cmp-spec.js` exposed problem for some
             //   Node (and Chrome) versions with `Number.MIN_VALUE` being treated
@@ -5827,7 +5827,7 @@ const types = {
         // The decode step must interpret the sign, reflip values encoded as the 32's complements,
         // apply signs to the exponent and mantissa, do the base-32 power operation, and return
         // the original JavaScript number values.
-        decode: function (key) {
+        decode(key) {
             const sign = +key.substr(2, 1);
             let exponent = key.substr(3, 2);
             let mantissa = key.substr(5, 11);
@@ -5865,14 +5865,14 @@ const types = {
     // This effectively doubles the size of every string, but it ensures that when two arrays of strings are compared,
     // the indexes of each string's characters line up with each other.
     string: {
-        encode: function (key, inArray) {
+        encode(key, inArray) {
             if (inArray) {
                 // prepend each character with a dash, and append a space to the end
                 key = key.replace(/(.)/g, '-$1') + ' ';
             }
             return keyTypeToEncodedChar.string + '-' + key;
         },
-        decode: function (key, inArray) {
+        decode(key, inArray) {
             key = key.slice(2);
             if (inArray) {
                 // remove the space at the end, and the dash before each character
@@ -5885,7 +5885,7 @@ const types = {
     // Arrays are encoded as JSON strings.
     // An extra, value is added to each array during encoding to make empty arrays sort correctly.
     array: {
-        encode: function (key) {
+        encode(key) {
             const encoded = [];
             for (let i = 0; i < key.length; i++) {
                 const item = key[i];
@@ -5895,7 +5895,7 @@ const types = {
             encoded.push(keyTypeToEncodedChar.invalid + '-'); // append an extra item, so empty arrays sort correctly
             return keyTypeToEncodedChar.array + '-' + JSON.stringify(encoded);
         },
-        decode: function (key) {
+        decode(key) {
             const decoded = JSON.parse(key.slice(2));
             decoded.pop(); // remove the extra item
             for (let i = 0; i < decoded.length; i++) {
@@ -5909,19 +5909,19 @@ const types = {
 
     // Dates are encoded as ISO 8601 strings, in UTC time zone.
     date: {
-        encode: function (key) {
+        encode(key) {
             return keyTypeToEncodedChar.date + '-' + key.toJSON();
         },
-        decode: function (key) {
+        decode(key) {
             return new Date(key.slice(2));
         }
     },
     binary: { // `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
-        encode: function (key) {
+        encode(key) {
             return keyTypeToEncodedChar.binary + '-' + (key.byteLength ? [...getCopyBytesHeldByBufferSource(key)].map(b => util.padStart(b, 3, '0')) // e.g., '255,005,254,000,001,033'
             : '');
         },
-        decode: function (key) {
+        decode(key) {
             // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
             const k = key.slice(2);
             const arr = k.length ? k.split(',').map(s => parseInt(s, 10)) : [];
@@ -7207,7 +7207,7 @@ function defineReadonlyProperties(obj, props) {
         Object.defineProperty(obj, prop, {
             enumerable: true,
             configurable: true,
-            get: function () {
+            get() {
                 return this['__' + prop];
             }
         });

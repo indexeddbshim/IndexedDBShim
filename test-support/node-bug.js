@@ -6,7 +6,7 @@ const {JSDOM} = jsdom;
 const {window} = new JSDOM();
 Object.defineProperty(window, 'testVar', {
     enumerable: true,
-    get: function () {
+    get () {
         return 'test';
     }
 });

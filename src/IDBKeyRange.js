@@ -93,7 +93,7 @@ readonlyProperties.forEach((prop) => {
     Object.defineProperty(IDBKeyRange.prototype, prop, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get () {
             // We can't do a regular instanceof check as it will create a loop given our hasInstance implementation
             if (!util.isObj(this) || typeof this.__lowerOpen !== 'boolean') {
                 throw new TypeError('Illegal invocation');

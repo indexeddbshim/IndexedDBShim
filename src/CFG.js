@@ -118,10 +118,10 @@ const CFG = {};
         prop = prop[0];
     }
     Object.defineProperty(CFG, prop, {
-        get: function () {
+        get () {
             return map[prop];
         },
-        set: function (val) {
+        set (val) {
             if (validator) {
                 validator(val);
             }

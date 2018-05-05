@@ -74,7 +74,7 @@ function triggerAnyVersionChangeAndBlockedEvents (openConnections, req, oldVersi
         if (!connectionsClosed()) {
             return new SyncPromise(function (resolve) {
                 const unblocking = {
-                    check: function check () {
+                    check () {
                         if (connectionsClosed()) {
                             resolve();
                         }

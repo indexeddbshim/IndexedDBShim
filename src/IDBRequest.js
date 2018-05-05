@@ -27,7 +27,7 @@ IDBRequest.__super = function IDBRequest () {
         Object.defineProperty(this, prop, {
             enumerable: true,
             configurable: true,
-            get: function () {
+            get () {
                 if (this.__readyState !== 'done') {
                     throw createDOMException('InvalidStateError', "Can't get " + prop + '; the request is still pending.');
                 }
@@ -39,10 +39,10 @@ IDBRequest.__super = function IDBRequest () {
     listeners.forEach((listener) => {
         Object.defineProperty(this, listener, {
             configurable: true, // Needed by support.js in W3C IndexedDB tests
-            get: function () {
+            get () {
                 return this['__' + listener];
             },
-            set: function (val) {
+            set (val) {
                 this['__' + listener] = val;
             }
         });
@@ -74,7 +74,7 @@ readonlyProperties.forEach((prop) => {
     Object.defineProperty(IDBRequest.prototype, prop, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get () {
             throw new TypeError('Illegal invocation');
         }
     });
@@ -84,7 +84,7 @@ doneFlagGetters.forEach(function (prop) {
     Object.defineProperty(IDBRequest.prototype, prop, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get () {
             throw new TypeError('Illegal invocation');
         }
     });
@@ -94,10 +94,10 @@ listeners.forEach((listener) => {
     Object.defineProperty(IDBRequest.prototype, listener, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get () {
             throw new TypeError('Illegal invocation');
         },
-        set: function (val) {
+        set (val) {
             throw new TypeError('Illegal invocation');
         }
     });
@@ -145,10 +145,10 @@ IDBOpenDBRequest.__createInstance = function () {
         openListeners.forEach((listener) => {
             Object.defineProperty(this, listener, {
                 configurable: true, // Needed by support.js in W3C IndexedDB tests
-                get: function () {
+                get () {
                     return this['__' + listener];
                 },
-                set: function (val) {
+                set (val) {
                     this['__' + listener] = val;
                 }
             });
@@ -165,10 +165,10 @@ openListeners.forEach((listener) => {
     Object.defineProperty(IDBOpenDBRequest.prototype, listener, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get () {
             throw new TypeError('Illegal invocation');
         },
-        set: function (val) {
+        set (val) {
             throw new TypeError('Illegal invocation');
         }
     });

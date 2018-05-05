@@ -1693,6 +1693,7 @@ DOMStringList.prototype = (_DOMStringList$protot = {
         return this._items[key];
     },
 
+
     // Helpers. Should only be used internally.
     clone: function clone() {
         var stringList = DOMStringList.__createInstance();
@@ -6420,6 +6421,7 @@ var types = {
 
             return keyTypeToEncodedChar.number + '-' + sign + exponent + mantissa;
         },
+
         // The decode step must interpret the sign, reflip values encoded as the 32's complements,
         // apply signs to the exponent and mantissa, do the base-32 power operation, and return
         // the original JavaScript number values.
@@ -6512,7 +6514,8 @@ var types = {
             return new Date(key.slice(2));
         }
     },
-    binary: { // `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
+    binary: {
+        // `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
         encode: function encode(key) {
             return keyTypeToEncodedChar.binary + '-' + (key.byteLength ? [].concat(_toConsumableArray(getCopyBytesHeldByBufferSource(key))).map(function (b) {
                 return util.padStart(b, 3, '0');

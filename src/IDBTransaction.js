@@ -50,10 +50,10 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
             Object.defineProperty(this, listener, {
                 enumerable: true,
                 configurable: true,
-                get: function () {
+                get () {
                     return this['__' + listener];
                 },
-                set: function (val) {
+                set (val) {
                     this['__' + listener] = val;
                 }
             });
@@ -535,10 +535,10 @@ listeners.forEach((listener) => {
     Object.defineProperty(IDBTransaction.prototype, listener, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get () {
             throw new TypeError('Illegal invocation');
         },
-        set: function (val) {
+        set (val) {
             throw new TypeError('Illegal invocation');
         }
     });
@@ -549,7 +549,7 @@ readonlyProperties.forEach((prop) => {
     Object.defineProperty(IDBTransaction.prototype, prop, {
         enumerable: true,
         configurable: true,
-        get: function () {
+        get () {
             throw new TypeError('Illegal invocation');
         }
     });
