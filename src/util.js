@@ -70,7 +70,7 @@ function escapeDatabaseNameForSQLAndFiles (db) {
         db = db.replace(
             (CFG.databaseCharacterEscapeList
                 ? new RegExp(CFG.databaseCharacterEscapeList, 'g')
-                : /[\u0000-\u001F\u007F"*/:<>?\\|]/g),
+                : /[\u0000-\u001F\u007F"*/:<>?\\|]/g), // eslint-disable-line no-control-regex
             function (n0) {
                 return '^1' + padStart(n0.charCodeAt().toString(16), 2, '0');
             }
