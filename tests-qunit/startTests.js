@@ -1,6 +1,5 @@
 /* eslint-env qunit */
-/* globals DB, nextTest */
-/* global addTest */
+/* globals nextTest, addTest */
 /* eslint-disable no-var */
 var dbVersion = 0; // eslint-disable-line no-unused-vars
 var testNames = ['Database', 'ObjectStore', 'ObjectStoreCrud', 'Cursor', 'Index', 'Factory']; // eslint-disable-line no-unused-vars
@@ -9,6 +8,42 @@ var testFiles = testNames.map(function (testName) { return testName + 'Tests.js'
 function _ (msg) { // eslint-disable-line no-unused-vars
     console.log('[' + QUnit.config.current.testName + ']', msg, arguments.callee.caller ? arguments.callee.caller.arguments : ' -- '); // eslint-disable-line no-caller
 }
+
+// Sample data (phantom-qunit had issues with this in external file for QUnit 2.0)
+var DB = {
+    NAME: 'dbname',
+    OBJECT_STORE_1: 'objectStore1',
+    OBJECT_STORE_2: 'objectStore2',
+    OBJECT_STORE_3: 'objectStore3',
+    OBJECT_STORE_4: 'objectStore4',
+    OBJECT_STORE_5: 'objectStore5',
+    INDEX1_ON_OBJECT_STORE_1: 'Index1_ObjectStore1',
+    INDEX1_ON_OBJECT_STORE_2: 'Index1_ObjectStore2'
+};
+
+var sample = (function () {
+    var generatedNumbers = {};
+    return {
+        obj: function () {
+            return {
+                'String': 'Sample ' + new Date(),
+                'Int': this.integer(),
+                'Float': Math.random(),
+                'Boolean': true
+            };
+        },
+        integer: function (arg) {
+            // Ensuring a unique integer everytime, for the sake of index get
+            var r;
+            do {
+                r = parseInt(Math.random() * (arg || 100000), 10);
+            }
+            while (generatedNumbers[r]);
+            generatedNumbers[r] = true;
+            return r;
+        }
+    };
+}());
 
 function addTestSuite (i) {
     if (i >= testNames.length) {
@@ -51,10 +86,15 @@ function startTests () { // eslint-disable-line no-unused-vars
     });
 }
 
-if (typeof global !== 'undefined') {
-    global.startTests = startTests;
-    global.testFiles = testFiles;
-    global.dbVersion = dbVersion;
-    global.addTestSuite = addTestSuite;
-    global._ = _;
-}
+(function () {
+    var glob = typeof global === 'undefined'
+        ? window
+        : global;
+    glob.DB = DB;
+    glob.sample = sample;
+    glob.startTests = startTests;
+    glob.testFiles = testFiles;
+    glob.dbVersion = dbVersion;
+    glob.addTestSuite = addTestSuite;
+    glob._ = _;
+})();

@@ -1,5 +1,21 @@
 # IndexedDBShim changes
 
+## 3.7.0
+
+- npm: Update websql fork dep. (which updates sqlite3 to 4.0.0)
+- npm: Switch unicode-10.0.0 to devDep (with copy routine);
+    Fixes #323
+- npm: Update devDeps and `package-lock.json` (surface dependency
+    security fixes) (Temporary fix for #321 until Grunt
+    and node-pre-gyp->sqlite3(->websql) update)
+- Refactoring: Remove unnecessary `type=text/css`
+- Testing (Grunt): Fix clean-polyfill task (fixes #322)
+- Testing (Grunt): Replace phantom-qunit with puppeteer-qunit
+- Testing (QUnit): Fix issue with QUnit 2 (move sample data into test
+    starting file); see https://stackoverflow.com/a/38791824/271577
+    (fixes #324)
+- Testing: Update `web-platform-tests`
+
 ## 3.6.2
 
 - Fix (Node): Respect the `databaseBasePath` setting for database

@@ -240,16 +240,32 @@ module.exports = function (grunt) {
                 }
             }
         },
-        qunit: {
-            all: {
+        qunit_puppeteer: {
+            test: {
                 options: {
-                    urls: ['http://localhost:9999/tests-qunit/index.html']
+                    headless: true,
+                    traceSettings: {
+                        outputConsole: false,
+                        outputAllAssertions: false
+                    },
+                    /*
+                    viewport: {
+                        width: 1920,
+                        height: 1080
+                    },
+                    mobile: {
+                        emulate: false,
+                        landscape: true,
+                        tablet: false
+                    },
+                    */
+                    qunitPage: 'http://localhost:9999/tests-qunit/index.html'
                 }
             }
         },
         'node-qunit': {
             all: {
-                deps: ['./tests-qunit/node-init.js', './tests-qunit/queuedUnit.js', './tests-qunit/sampleData.js', './tests-qunit/startTests.js'],
+                deps: ['./tests-qunit/node-init.js', './tests-qunit/queuedUnit.js', './tests-qunit/startTests.js'],
                 code: './dist/<%= pkg.name%>-node.js',
                 tests: './tests-qunit/nodeTest.js',
                 callback (err, res) { // var doneCb = this.async();
@@ -351,7 +367,7 @@ module.exports = function (grunt) {
         },
 
         eslint: {
-            files: ['src/**/*.js', 'tests-qunit/**/*.js', 'tests-mocha/**/*.js', 'test-support/*.js', 'test-support/webworker/*.js', 'Gruntfile.js', '!test-support/qunit-2.1.1.js', '!test-support/latest-erring-bundled.js'],
+            files: ['src/**/*.js', 'tests-qunit/**/*.js', 'tests-mocha/**/*.js', 'test-support/*.js', 'test-support/webworker/*.js', 'Gruntfile.js', '!test-support/qunit-2.1.1.js', '!test-support/latest-erring-bundled.js', '!src/unicode-regex.js'],
             options: {
                 configFile: '.eslintrc'
             }
@@ -394,6 +410,11 @@ module.exports = function (grunt) {
                     {src: 'node_modules/chai/chai.js', dest: 'test-support/chai/chai.js', filter: 'isFile'},
                     {src: 'node_modules/sinon/pkg/sinon-no-sourcemaps.js', dest: 'test-support/sinon/pkg/sinon-no-sourcemaps.js', filter: 'isFile'}
                 ]
+            },
+            regex: {
+                files: [
+                    {src: 'node_modules/unicode-10.0.0/Binary_Property/Expands_On_NFD/regex.js', dest: 'src/unicode-regex.js', filter: 'isFile'}
+                ]
             }
         }
     });
@@ -414,12 +435,11 @@ module.exports = function (grunt) {
 
     const testJobs = ['build', 'connect'];
     grunt.registerTask('nodequnit', 'node-qunit');
+    grunt.registerTask('puppeteer-qunit', 'qunit_puppeteer');
     grunt.registerTask('mocha', ['mochaTest:test']); // clean:mochaTests isn't working here as locked (even with force:true on it or grunt-wait) so we do in package.json
     grunt.registerTask('fake', ['mochaTest:fake']);
     grunt.registerTask('mock', ['mochaTest:mock']);
     grunt.registerTask('w3c-old', ['mochaTest:w3cOld']);
-
-    grunt.registerTask('phantom-qunit', ['connect', 'qunit']);
 
     if (saucekey !== null) {
         testJobs.push('saucelabs-qunit');
@@ -431,7 +451,7 @@ module.exports = function (grunt) {
 
     grunt.registerTask('clean-mocha', ['clean:mochaTests', 'clean:sysDB']);
     grunt.registerTask('clean-qunit', ['clean:qunitTests', 'clean:sysDB']);
-    grunt.registerTask('clean-polyfill', ['clean:fake', 'clean:mock', 'clean:w3c-old', 'clean:sysDB']);
+    grunt.registerTask('clean-polyfill', ['clean:fake', 'clean:mock', 'clean:w3cOld', 'clean:sysDB']);
     grunt.registerTask('clean-fake', ['clean:fake', 'clean:sysDB']);
     grunt.registerTask('clean-mock', ['clean:mock', 'clean:sysDB']);
     grunt.registerTask('clean-w3c', ['clean:w3c', 'clean:sysDB']);

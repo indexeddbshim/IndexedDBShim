@@ -1,4 +1,5 @@
 dist
+src/unicode-regex.js
 examples
 node_modules
 tests-polyfill

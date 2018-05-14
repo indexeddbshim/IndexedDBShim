@@ -4,8 +4,8 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="chrome=1">
         <title>Testing IndexedDB Shim</title>
-        <link rel="stylesheet" href="../test-support/qunit-2.1.1.css" type="text/css" media="screen" />
-        <link rel="stylesheet" href="index.css" type="text/css" media="screen" />
+        <link rel="stylesheet" href="../test-support/qunit-2.1.1.css" media="screen" />
+        <link rel="stylesheet" href="index.css" media="screen" />
 
         <script src="../test-support/source-map-support/browser-source-map-support.js"></script>
         <script>sourceMapSupport.install();</script>
@@ -16,13 +16,15 @@
         <script src="../dist/indexeddbshim.js"></script>
 
         <script src="queuedUnit.js"></script>
-        <script src="sampleData.js"></script>
         <script src="startTests.js"></script>
         <script>
+            window.onload = function () {
+                startTests();
+            };
             // Prevent `QUnit` from running tests
             //  Used in combination with QUnit.start() below;
             // The timing happens to work in the browser
-            //   without manual start, but the timing of grunt-contrib-qunit
+            //   without manual start, but the timing of grunt-qunit-puppeteer
             //   necessitates this asynchronous approach (which should be
             //   safer anyways).
             QUnit.config.autostart = false;
@@ -48,7 +50,7 @@
             }
         </script>
     </head>
-    <body onload ="startTests()">
+    <body>
         <h1 id="qunit-header">IndexedDB Shim on WebSql</h1>
         <div class="browser" id="browser"></div>
         <div class="runOption">

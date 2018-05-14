@@ -40,9 +40,9 @@
     function queuedAsyncTest (name) {
         if (filteredTests.length === 0 || filteredTests.indexOf(currentModule + ': ' + name) !== -1) {
             testQueue.push({
-                'name': name,
-                'module': currentModule,
-                'args': arguments
+                name: name,
+                module: currentModule,
+                args: arguments
             });
         }
     }
