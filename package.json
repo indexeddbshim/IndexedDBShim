@@ -72,7 +72,7 @@
     "typeson": "5.8.2",
     "typeson-registry": "1.0.0-alpha.20",
     "unicode-10.0.0": "0.7.5",
-    "websql": "git+https://github.com/brettz9/node-websql.git#configurable"
+    "websql": "git+https://github.com/brettz9/node-websql.git#configurable-secure"
   },
   "devDependencies": {
     "babel-core": "6.26.3",
@@ -100,7 +100,7 @@
     "grunt-contrib-uglify-es": "git://github.com/gruntjs/grunt-contrib-uglify.git#harmony",
     "grunt-contrib-watch": "1.1.0",
     "grunt-mocha-test": "0.13.3",
-    "grunt-node-qunit": "git+https://github.com/brettz9/grunt-node-qunit.git#fullpath",
+    "grunt-node-qunit": "git+https://github.com/brettz9/grunt-node-qunit.git#grunt1",
     "grunt-saucelabs": "git+https://github.com/brettz9/grunt-saucelabs.git#secure-saucelabs",
     "gruntify-eslint": "4.0.0",
     "is-date-object": "1.0.1",
