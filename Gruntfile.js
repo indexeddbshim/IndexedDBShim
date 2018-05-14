@@ -34,7 +34,7 @@ module.exports = function (grunt) {
     const pkg = require('./package.json');
     // bumpVersion(pkg);
     grunt.initConfig({
-        pkg: pkg,
+        pkg,
         browserify: {
             key: {
                 options: {
@@ -228,7 +228,7 @@ module.exports = function (grunt) {
                     base: '.',
                     port: 9999,
                     middleware (connect, options, middlewares) {
-                        middlewares.unshift(function (req, res, next) {
+                        middlewares.unshift((req, res, next) => {
                             // Allow access to this domain from web-platform-tests so we can add the polyfill to its tests
                             res.setHeader('Access-Control-Allow-Origin', 'http://web-platform.test:8000');
                             res.setHeader('Access-Control-Allow-Methods', 'GET');
@@ -399,7 +399,9 @@ module.exports = function (grunt) {
     });
 
     for (const key in grunt.file.readJSON('package.json').devDependencies) {
-        if (key !== 'grunt' && key.indexOf('grunt') === 0 && key !== 'grunt-cli') { grunt.loadNpmTasks(key); }
+        if (key !== 'grunt' && key.indexOf('grunt') === 0 && key !== 'grunt-cli') {
+            grunt.loadNpmTasks(key);
+        }
     }
 
     grunt.registerTask('build-browser', ['eslint', 'browserify:browser', 'uglify:browser']);
@@ -444,7 +446,7 @@ module.exports = function (grunt) {
     grunt.registerTask('dev-unicode', ['build-unicode', 'connect', 'watch:unicode']);
     grunt.registerTask('dev-unicodeNode', ['build-unicodeNode', 'connect', 'watch:unicodeNode']);
 
-    grunt.event.on('qunit.error.onError', function (msg, trace) {
+    grunt.event.on('qunit.error.onError', (msg, trace) => {
         grunt.log.ok('Grunt qunit: ' + msg + '::' + JSON.stringify(trace));
     });
 };
