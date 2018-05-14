@@ -101,7 +101,7 @@
     "grunt-contrib-watch": "1.1.0",
     "grunt-mocha-test": "0.13.3",
     "grunt-node-qunit": "git+https://github.com/brettz9/grunt-node-qunit.git#fullpath",
-    "grunt-saucelabs": "git+https://github.com/brettz9/grunt-saucelabs.git#secure-lodash",
+    "grunt-saucelabs": "git+https://github.com/brettz9/grunt-saucelabs.git#secure-saucelabs",
     "gruntify-eslint": "4.0.0",
     "is-date-object": "1.0.1",
     "isomorphic-fetch": "^2.2.1",
