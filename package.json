@@ -71,7 +71,6 @@
     "sync-promise": "git+https://github.com/brettz9/sync-promise.git#full-sync-missing-promise-features",
     "typeson": "5.8.2",
     "typeson-registry": "1.0.0-alpha.20",
-    "unicode-10.0.0": "0.7.5",
     "websql": "git+https://github.com/brettz9/node-websql.git#configurable-secure"
   },
   "devDependencies": {
