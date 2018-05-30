@@ -651,6 +651,9 @@ function buildFetchIndexDataSQL (nullDisallowed, index, range, opType, multiChec
             setSQLForKeyRange(convertedRange, util.escapeIndexNameForSQL(index.name), sql, sqlValues, true, false);
         }
     }
+    if (opType !== 'count') {
+        sql.push('ORDER BY ', util.escapeIndexNameForSQL(index.name));
+    }
     return [nullDisallowed, index, hasRange, range, opType, multiChecks, sql, sqlValues];
 }
 
