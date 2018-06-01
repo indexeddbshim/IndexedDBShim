@@ -27,18 +27,13 @@ a [problem in Firefox](https://github.com/axemclion/IndexedDBShim/issues/250).
 #### Automated browser unit testing
 
 Follow all of the steps above to build the project, then run `npm test`
-or `npm run sauce-qunit` (or `npm run phantom-qunit` or
-`grunt phantom-qunit` to avoid using Saucelabs when you have
+or `npm run sauce-qunit` (or `npm run puppeteer-qunit` or
+`grunt puppeteer-qunit` to avoid using Saucelabs when you have
 credentials set up as environmental variables) to run the unit tests.
 
 Note that when not running Saucelabs, the tests are run in
-[PhantomJS](http://phantomjs.org/), which is a headless WebKit browser.
-
-The older PhantomJS version has problems with two tests, however:
-`index.openCursor(range)` and
-`IDBObjectStore.openKeyCursor` due apparently to
-a bug with the WebKit browser used in the older PhantomJS implementation
-(but the tests themselves report as having such problems).
+[grunt-qunit-puppeteer](https://github.com/timostark/qunit-puppeteer),
+which uses headless Chromium.
 
 Although it is possible to get the W3C `web-platform-tests` runner
 working via patches as per
@@ -92,7 +87,8 @@ To run the Node tests, run the following:
 3. `npm run tests-polyfill` (or its components `npm run fake`,
     `npm run mock`, `npm run w3c-old`). Note that only `fake` is
     currently passing in full, however.
-4. `npm run w3c` (you must first run
+4. `npm run web-platform-tests` and in a separate terminal window,
+    `npm run w3c` (you must first run
     `git submodule update --init --recursive` (possibly without
     [init](http://stackoverflow.com/a/10168693/271577) too if using
     an older version of Git), `git submodule foreach --recursive git fetch`,
