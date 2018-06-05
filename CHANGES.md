@@ -1,5 +1,12 @@
 # IndexedDBShim changes
 
+## (Waiting on sqlite3 dep)
+
+- npm: Update bson devDep
+- npm: Bump Grunt, removing need for hard-coding its util deps to
+    avoid security issues (for #321)
+- yarn: Update `yarn.lock`
+
 ## 3.7.0
 
 - npm: Update websql fork dep. (which updates sqlite3 to 4.0.0)
