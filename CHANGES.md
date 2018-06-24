@@ -1,11 +1,12 @@
 # IndexedDBShim changes
 
-## (Waiting on sqlite3 dep)
+## 3.8.0
 
-- npm: Update bson devDep
-- npm: Bump Grunt, removing need for hard-coding its util deps to
-    avoid security issues (for #321)
+- npm: Update devDeps
+- npm: With updates to node-pre-gyp, rebuild `package-lock.json`; fixes #321
 - yarn: Update `yarn.lock`
+- Testing: Update `web-platform-tests`
+- Demo site: Update sinon version to work on rawgit.com
 
 ## 3.7.0
 
