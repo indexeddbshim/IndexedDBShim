@@ -355,7 +355,7 @@ describe('IDBObjectStore.createIndex', function () {
                     var store = db.createObjectStore('My Store');
 
                     try {
-                        store.createIndex('My Index', ['id', 'Name'], { multiEntry: true });
+                        store.createIndex('My Index', ['id', 'Name'], {multiEntry: true});
                     } catch (e) {
                         err = e;
                     }

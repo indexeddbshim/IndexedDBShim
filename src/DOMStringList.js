@@ -4,7 +4,7 @@ const testObject = {test: true};
 // Test whether Object.defineProperty really works.
 if (Object.defineProperty) {
     try {
-        Object.defineProperty(testObject, 'test', { enumerable: false });
+        Object.defineProperty(testObject, 'test', {enumerable: false});
         if (testObject.test) {
             cleanInterface = true;
         }

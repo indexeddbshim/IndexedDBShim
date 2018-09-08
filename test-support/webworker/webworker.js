@@ -156,11 +156,11 @@ module.exports = function (workerConfig) {
         // Doesn't begin listening until start() is called.
 
         const httpServer = http.createServer();
-        const wsSrv = new WebSocketServer({ server: httpServer });
+        const wsSrv = new WebSocketServer({server: httpServer});
         let handleMessage; // eslint-disable-line prefer-const
         wsSrv.addListener('connection', function (s) {
-            assert.equal(stream, undefined);
-            assert.equal(msgStream, undefined);
+            assert.strictEqual(stream, undefined);
+            assert.strictEqual(msgStream, undefined);
 
             stream = s;
             msgStream = new wwutil.MsgStream(s);
@@ -305,7 +305,7 @@ module.exports = function (workerConfig) {
 
             case wwutil.MSGTYPE_USER:
                 if (self.onmessage || eventHandlers['message'].length > 0) {
-                    const e = { data: msg[1] };
+                    const e = {data: msg[1]};
 
                     if (fd) {
                         e.fd = fd;
@@ -375,7 +375,7 @@ module.exports = function (workerConfig) {
         // not shut down gracefully on its own. By default, this timeout is
         // 5 seconds. A value of 0 indicates infinite timeout.
         self.terminate = function (timeout) {
-            assert.notEqual(pid, undefined);
+            assert.notStrictEqual(pid, undefined);
             assert.ok(cp.pid === pid || !cp.pid);
 
             timeout = (timeout === undefined) ? 5000 : timeout;

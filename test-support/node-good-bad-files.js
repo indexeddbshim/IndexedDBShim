@@ -83,22 +83,27 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 //   tests including some worker tests, but only those within the
 //  `IndexedDB` directory
 
+8. BigInt
+
+- bigint_value.js
+
 IndexedDB Test counts:
     347 normal files (including 1 domstringlist file):
-        337 are all good, 6 have some that are bad,
-        4 have some that time out and 2 have some that do not run
-    4 excluded files with 24 tests (uncaught exceptions during testing):
+        336 are all good, 6 have some that are bad,
+        5 have some that time out and 2 have some that do not run
+    5 excluded files with 30 tests (uncaught exceptions during testing):
+        `bigint_value.js` (6 tests)
         `bindings-inject-key.js` (3 tests),
         `keypath-exceptions.js` (6 tests),
         'event-dispatch-active-flag.js' (4 tests),
         'upgrade-transaction-deactivation-timing.js' (3 tests)
 
 Current IndexedDB (and domstringlist) test statuses (vmTimeout = 40000):
-  'Pass': 1441, (including 4 domstringlist tests but avoiding exclusions)
+  'Pass': 1445, (including 4 domstringlist tests but avoiding exclusions)
   'Fail': 23,
   'Timeout': 5,
   'Not Run': 2,
-  'Total tests': 1471 (including 4 domstringlist tests but avoiding exclusions)
+  'Total tests': 1475 (including 4 domstringlist tests but avoiding exclusions)
 
 // Passing the "workers" argument to `node-idb-test.js` will run the worker
 //   tests with relevance for IndexedDB (e.g., checking that the IndexedDB
@@ -157,7 +162,7 @@ Current DOMException test statuses with 0 files excluded:
 }
 */
 const goodBad = {
-    excludedNormal: ['bindings-inject-key.js', 'event-dispatch-active-flag.js', 'keypath-exceptions.js', 'upgrade-transaction-deactivation-timing.js'],
+    excludedNormal: ['bigint_value.js', 'bindings-inject-key.js', 'event-dispatch-active-flag.js', 'keypath-exceptions.js', 'upgrade-transaction-deactivation-timing.js'],
     excludedWorkers: ['_interface-objects-003.js', '_interface-objects-004.js'],
     notRunning: ['idbfactory-deleteDatabase-opaque-origin.js', 'idbfactory-open-opaque-origin.js'],
     timeout: ['idbfactory-deleteDatabase-opaque-origin.js', 'idbfactory-open-opaque-origin.js', 'interleaved-cursors-large.js', 'interleaved-cursors-small.js', 'parallel-cursors-upgrade.js'],

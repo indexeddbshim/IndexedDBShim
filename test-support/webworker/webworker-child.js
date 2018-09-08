@@ -188,7 +188,7 @@ prom.then((scriptSource) => {
             // XXX: I have no idea what the event object here should really look
             //      like. I do know that it needs a 'data' elements, though.
             if (workerCtx.onmessage || workerCtx.eventHandlers['message'].length > 0) {
-                const e = { data: msg[1] };
+                const e = {data: msg[1]};
 
                 if (fd) {
                     e.fd = fd;
