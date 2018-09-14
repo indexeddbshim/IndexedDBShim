@@ -22,6 +22,8 @@ to the data format, thereby breaking old data.***
 [![Bower](http://img.shields.io/bower/v/IndexedDBShim.svg)](http://bower.io/search/?q=IndexedDBShim)
 [![CDNJS](https://img.shields.io/cdnjs/v/IndexedDBShim.svg)](https://cdnjs.com/libraries/IndexedDBShim)
 [![License](https://img.shields.io/npm/l/indexeddbshim.svg)](LICENSE-APACHE)
+[![Code Quality: Javascript](https://img.shields.io/lgtm/grade/javascript/g/axemclion/IndexedDBShim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/axemclion/IndexedDBShim/context:javascript)
+[![Total Alerts](https://img.shields.io/lgtm/alerts/g/axemclion/IndexedDBShim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/axemclion/IndexedDBShim/alerts)
 
 |[Live Demo!](https://cdn.rawgit.com/axemclion/IndexedDBShim/v3.8.0/index.html)
 |------------------------------------------------------------
