@@ -645,8 +645,7 @@ function findMultiEntryMatches (keyEntry, range) {
 * Not currently in use but keeping for spec parity
 */
 function convertKeyToValue (key) {
-    const type = key.type;
-    const value = key.value;
+    const {type, value} = key;
     switch (type) {
     case 'number': case 'string': {
         return value;

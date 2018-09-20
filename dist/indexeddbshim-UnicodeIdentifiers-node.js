@@ -910,7 +910,7 @@ const CFG = {};
 });
 
 exports.default = CFG;
-module.exports = exports['default'];
+module.exports = exports.default;
 
 },{}],6:[function(require,module,exports){
 'use strict';
@@ -1380,7 +1380,7 @@ if (cleanInterface) {
 }
 
 exports.default = DOMStringList;
-module.exports = exports['default'];
+module.exports = exports.default;
 
 },{}],8:[function(require,module,exports){
 'use strict';
@@ -2166,8 +2166,8 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
     _IDBTransaction2.default.__assertActive(this.__versionTransaction);
 
     createOptions = Object.assign({}, createOptions);
-    let keyPath = createOptions.keyPath;
-    keyPath = keyPath === undefined ? null : keyPath = util.convertToSequenceDOMString(keyPath);
+    let { keyPath } = createOptions;
+    keyPath = keyPath === undefined ? null : util.convertToSequenceDOMString(keyPath);
     if (keyPath !== null && !util.isValidKeyPath(keyPath)) {
         throw (0, _DOMException.createDOMException)('SyntaxError', 'The keyPath argument contains an invalid key path.');
     }
@@ -2351,7 +2351,7 @@ Object.defineProperty(IDBDatabase, 'prototype', {
 });
 
 exports.default = IDBDatabase;
-module.exports = exports['default'];
+module.exports = exports.default;
 
 },{"./CFG":5,"./DOMException":6,"./DOMStringList":7,"./Event":8,"./IDBObjectStore":14,"./IDBTransaction":16,"./util":26,"eventtargeter":1}],11:[function(require,module,exports){
 'use strict';
@@ -3198,7 +3198,7 @@ IDBIndex.__createInstance = function (store, indexProperties) {
         me.__objectStore = store;
         me.__name = me.__originalName = indexProperties.columnName;
         me.__keyPath = Array.isArray(indexProperties.keyPath) ? indexProperties.keyPath.slice() : indexProperties.keyPath;
-        const optionalParams = indexProperties.optionalParams;
+        const { optionalParams } = indexProperties;
         me.__multiEntry = !!(optionalParams && optionalParams.multiEntry);
         me.__unique = !!(optionalParams && optionalParams.unique);
         me.__deleted = !!indexProperties.__deleted;
@@ -3232,7 +3232,7 @@ IDBIndex.__createInstance = function (store, indexProperties) {
 
                 me.__name = newName;
 
-                const objectStore = me.objectStore;
+                const { objectStore } = me;
                 delete objectStore.__indexes[oldName];
                 objectStore.__indexes[newName] = me;
                 objectStore.indexNames.splice(objectStore.indexNames.indexOf(oldName), 1, newName);
@@ -3309,7 +3309,7 @@ IDBIndex.__createIndex = function (store, index) {
     }
 
     // Create the index in WebSQL
-    const transaction = store.transaction;
+    const { transaction } = store;
     transaction.__addNonRequestToTransactionQueue(function createIndex(tx, args, success, failure) {
         const columnExists = idx && (idx.__deleted || idx.__recreated); // This check must occur here rather than earlier as properties may not have been set yet otherwise
         let indexValues = {};
@@ -3415,7 +3415,7 @@ IDBIndex.__deleteIndex = function (store, index) {
     store.indexNames.splice(store.indexNames.indexOf(index.name), 1);
 
     // Remove the index in WebSQL
-    const transaction = store.transaction;
+    const { transaction } = store;
     transaction.__addNonRequestToTransactionQueue(function deleteIndex(tx, args, success, failure) {
         function error(tx, err) {
             failure((0, _DOMException.createDOMException)('UnknownError', 'Could not delete index "' + index.name + '"', err));
@@ -3936,7 +3936,7 @@ function setSQLForKeyRange(range, quotedKeyColumnName, sql, sqlValues, addAnd, c
 function convertValueToKeyRange(value, nullDisallowed) {
     if (util.instanceOf(value, IDBKeyRange)) {
         // We still need to validate IDBKeyRange-like objects (the above check is based on loose duck-typing)
-        if (!value.toString() !== '[object IDBKeyRange]') {
+        if (value.toString() !== '[object IDBKeyRange]') {
             return IDBKeyRange.__createInstance(value.lower, value.upper, value.lowerOpen, value.upperOpen);
         }
         return value;
@@ -4033,7 +4033,7 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
         me.__indexes = {};
         me.__indexHandles = {};
         me.__indexNames = _DOMStringList2.default.__createInstance();
-        const indexList = storeProperties.indexList;
+        const { indexList } = storeProperties;
         for (const indexName in indexList) {
             if (indexList.hasOwnProperty(indexName)) {
                 const index = _IDBIndex.IDBIndex.__createInstance(me, indexList[indexName]);
@@ -4818,7 +4818,7 @@ Object.defineProperty(IDBObjectStore, 'prototype', {
 });
 
 exports.default = IDBObjectStore;
-module.exports = exports['default'];
+module.exports = exports.default;
 
 },{"./CFG":5,"./DOMException":6,"./DOMStringList":7,"./IDBCursor":9,"./IDBIndex":12,"./IDBKeyRange":13,"./IDBTransaction":16,"./Key":18,"./Sca":19,"./util":26,"sync-promise":2}],15:[function(require,module,exports){
 'use strict';
@@ -5620,7 +5620,7 @@ Object.defineProperty(IDBTransaction, 'prototype', {
 });
 
 exports.default = IDBTransaction;
-module.exports = exports['default'];
+module.exports = exports.default;
 
 },{"./CFG":5,"./DOMException":6,"./Event":8,"./IDBObjectStore":14,"./IDBRequest":15,"./util":26,"eventtargeter":1,"sync-promise":2}],17:[function(require,module,exports){
 'use strict';
@@ -5683,7 +5683,7 @@ Object.defineProperty(IDBVersionChangeEvent, 'prototype', {
 });
 
 exports.default = IDBVersionChangeEvent;
-module.exports = exports['default'];
+module.exports = exports.default;
 
 },{"./Event":8,"./util":26}],18:[function(require,module,exports){
 'use strict';
@@ -6348,8 +6348,7 @@ function findMultiEntryMatches(keyEntry, range) {
 * Not currently in use but keeping for spec parity
 */
 function convertKeyToValue(key) {
-    const type = key.type;
-    const value = key.value;
+    const { type, value } = key;
     switch (type) {
         case 'number':case 'string':
             {
@@ -6690,7 +6689,7 @@ function cmp(first, second) {
 }
 
 exports.default = cmp;
-module.exports = exports['default'];
+module.exports = exports.default;
 
 },{"./CFG":5,"./Key":18}],22:[function(require,module,exports){
 'use strict';
@@ -6729,7 +6728,7 @@ const __setGlobalVars = function (idb, initialConfig) {
 };
 
 exports.default = __setGlobalVars;
-module.exports = exports['default'];
+module.exports = exports.default;
 
 },{"./CFG":5,"./UnicodeIdentifiers":20,"./nodeWebSQL":23,"./setGlobalVars":24}],23:[function(require,module,exports){
 'use strict';
@@ -6768,7 +6767,7 @@ function wrappedSQLiteDatabase(name) {
 
 const nodeWebSQL = (0, _custom2.default)(wrappedSQLiteDatabase);
 exports.default = nodeWebSQL;
-module.exports = exports['default'];
+module.exports = exports.default;
 
 },{"./CFG":5,"websql/custom":undefined,"websql/lib/sqlite/SQLiteDatabase":undefined}],24:[function(require,module,exports){
 (function (global){
@@ -6930,8 +6929,8 @@ function setGlobalVars(idb, initialConfig) {
                     Object.setPrototypeOf(IDB.IDBOpenDBRequest, IDB.IDBRequest);
                     Object.setPrototypeOf(IDB.IDBCursorWithValue, IDB.IDBCursor);
 
-                    const ShimEvent = IDB.shimIndexedDB.modules.ShimEvent;
-                    const ShimEventTarget = IDB.shimIndexedDB.modules.ShimEventTarget;
+                    const { ShimEvent } = IDB.shimIndexedDB.modules;
+                    const { ShimEventTarget } = IDB.shimIndexedDB.modules;
                     Object.setPrototypeOf(_IDBDatabase2.default, ShimEventTarget);
                     Object.setPrototypeOf(_IDBRequest.IDBRequest, ShimEventTarget);
                     Object.setPrototypeOf(_IDBTransaction2.default, ShimEventTarget);
@@ -7023,7 +7022,7 @@ function setGlobalVars(idb, initialConfig) {
 }
 
 exports.default = setGlobalVars;
-module.exports = exports['default'];
+module.exports = exports.default;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 

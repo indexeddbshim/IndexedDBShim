@@ -50,7 +50,7 @@
         value: obj => shimNS.isDateObject(obj)
     });
 
-    const colors = shimNS.colors;
+    const {colors} = shimNS;
     const theme = {
         pass: 'green',
         fail: 'red',
@@ -76,7 +76,7 @@
         shimNS.write(msg);
     }
 
-    const fileName = shimNS.fileName;
+    const {fileName} = shimNS;
     function reportResults (tests, harnessStatus) {
         // Todo: Look instead on `id=log` and possibly `id=summary` or
         //      `id=metadata_cache` if we add one (and `id=metadata_cache`?)

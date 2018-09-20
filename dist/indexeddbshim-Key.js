@@ -133,7 +133,7 @@ const CFG = {};
 });
 
 exports.default = CFG;
-module.exports = exports['default'];
+module.exports = exports.default;
 
 },{}],2:[function(require,module,exports){
 'use strict';
@@ -1104,8 +1104,7 @@ function findMultiEntryMatches(keyEntry, range) {
 * Not currently in use but keeping for spec parity
 */
 function convertKeyToValue(key) {
-    const type = key.type;
-    const value = key.value;
+    const { type, value } = key;
     switch (type) {
         case 'number':case 'string':
             {
@@ -1310,7 +1309,7 @@ function cmp(first, second) {
 }
 
 exports.default = cmp;
-module.exports = exports['default'];
+module.exports = exports.default;
 
 },{"./CFG":1,"./Key":3}],5:[function(require,module,exports){
 "use strict";

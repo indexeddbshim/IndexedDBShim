@@ -30,7 +30,7 @@ IDBIndex.__createInstance = function (store, indexProperties) {
         me.__objectStore = store;
         me.__name = me.__originalName = indexProperties.columnName;
         me.__keyPath = Array.isArray(indexProperties.keyPath) ? indexProperties.keyPath.slice() : indexProperties.keyPath;
-        const optionalParams = indexProperties.optionalParams;
+        const {optionalParams} = indexProperties;
         me.__multiEntry = !!(optionalParams && optionalParams.multiEntry);
         me.__unique = !!(optionalParams && optionalParams.unique);
         me.__deleted = !!indexProperties.__deleted;
@@ -65,7 +65,7 @@ IDBIndex.__createInstance = function (store, indexProperties) {
 
                 me.__name = newName;
 
-                const objectStore = me.objectStore;
+                const {objectStore} = me;
                 delete objectStore.__indexes[oldName];
                 objectStore.__indexes[newName] = me;
                 objectStore.indexNames.splice(objectStore.indexNames.indexOf(oldName), 1, newName);
@@ -156,7 +156,7 @@ IDBIndex.__createIndex = function (store, index) {
     }
 
     // Create the index in WebSQL
-    const transaction = store.transaction;
+    const {transaction} = store;
     transaction.__addNonRequestToTransactionQueue(function createIndex (tx, args, success, failure) {
         const columnExists = idx && (idx.__deleted || idx.__recreated); // This check must occur here rather than earlier as properties may not have been set yet otherwise
         let indexValues = {};
@@ -275,7 +275,7 @@ IDBIndex.__deleteIndex = function (store, index) {
     store.indexNames.splice(store.indexNames.indexOf(index.name), 1);
 
     // Remove the index in WebSQL
-    const transaction = store.transaction;
+    const {transaction} = store;
     transaction.__addNonRequestToTransactionQueue(function deleteIndex (tx, args, success, failure) {
         function error (tx, err) {
             failure(createDOMException('UnknownError', 'Could not delete index "' + index.name + '"', err));

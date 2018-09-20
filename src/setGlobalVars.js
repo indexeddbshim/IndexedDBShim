@@ -134,8 +134,8 @@ function setGlobalVars (idb, initialConfig) {
                     Object.setPrototypeOf(IDB.IDBOpenDBRequest, IDB.IDBRequest);
                     Object.setPrototypeOf(IDB.IDBCursorWithValue, IDB.IDBCursor);
 
-                    const ShimEvent = IDB.shimIndexedDB.modules.ShimEvent;
-                    const ShimEventTarget = IDB.shimIndexedDB.modules.ShimEventTarget;
+                    const {ShimEvent} = IDB.shimIndexedDB.modules;
+                    const {ShimEventTarget} = IDB.shimIndexedDB.modules;
                     Object.setPrototypeOf(shimIDBDatabase, ShimEventTarget);
                     Object.setPrototypeOf(shimIDBRequest, ShimEventTarget);
                     Object.setPrototypeOf(shimIDBTransaction, ShimEventTarget);

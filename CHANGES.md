@@ -1,7 +1,11 @@
 # IndexedDBShim changes
 
-## ?
+## 3.9.0
 
+- Fix: Upon converting value to key range, avoid creating new
+    `IDBKeyRange` instance when already existing (flagged by LGTM.com)
+- Refactoring: Avoid useless assignment (flagged by LGTM.com); object
+    destructuring
 - npm: Update devDeps
 - Linting (ESLint): Override new "standard" ESLint to prevent spacing
     around object curly quotes; deprecated assert APIs

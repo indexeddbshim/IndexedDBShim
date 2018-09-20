@@ -79,7 +79,7 @@ module.exports = function (workerConfig) {
         let basePath;
         const urlObj = url.parse(src);
         if (urlObj.host !== null) {
-            const protocol = urlObj.protocol;
+            const {protocol} = urlObj;
             if (!(workerConfig.permittedProtocols || ['http', 'https']).map((p) => p + ':').includes(protocol)) {
                 throw new TypeError('This worker is not configured to support the protocol of the supplied Worker source argument (' + protocol + ').');
             }
@@ -87,7 +87,7 @@ module.exports = function (workerConfig) {
             if (workerConfig.rootPath === false) {
                 throw new TypeError('Absolute paths are not allowed when `rootPath` is `false`');
             }
-            const rootPath = workerConfig.rootPath;
+            const {rootPath} = workerConfig;
             basePath = 'http://localhost';
             if (rootPath !== false) {
                 if (workerConfig.relativePathType === 'file') {

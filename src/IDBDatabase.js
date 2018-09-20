@@ -96,8 +96,8 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
     IDBTransaction.__assertActive(this.__versionTransaction);
 
     createOptions = Object.assign({}, createOptions);
-    let keyPath = createOptions.keyPath;
-    keyPath = keyPath === undefined ? null : keyPath = util.convertToSequenceDOMString(keyPath);
+    let {keyPath} = createOptions;
+    keyPath = keyPath === undefined ? null : util.convertToSequenceDOMString(keyPath);
     if (keyPath !== null && !util.isValidKeyPath(keyPath)) {
         throw createDOMException('SyntaxError', 'The keyPath argument contains an invalid key path.');
     }

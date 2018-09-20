@@ -40,7 +40,7 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
         me.__indexes = {};
         me.__indexHandles = {};
         me.__indexNames = DOMStringList.__createInstance();
-        const indexList = storeProperties.indexList;
+        const {indexList} = storeProperties;
         for (const indexName in indexList) {
             if (indexList.hasOwnProperty(indexName)) {
                 const index = IDBIndex.__createInstance(me, indexList[indexName]);

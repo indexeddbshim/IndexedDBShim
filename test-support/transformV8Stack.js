@@ -1,4 +1,4 @@
-const transformSourceMapString = require('sourcemap-transformer').transformSourceMapString;
+const {transformSourceMapString} = require('sourcemap-transformer');
 function transformW3CStack (stack) {
     return transformSourceMapString(stack, {
         // at /Users/brett/IndexedDBShim/dist/indexeddbshim-UnicodeIdentifiers-node.js:6626:32
