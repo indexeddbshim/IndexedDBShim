@@ -7,7 +7,7 @@ const http = require('http');
 // Known scripts
 const testHarnessScripts = ['/resources/testharness.js', '/resources/testharnessreport.js'];
 const supportScripts = ['support.js', 'support-promises.js', 'nested-cloning-common.js', 'interleaved-cursors-common.js'];
-const webIDLScripts = ['/resources/WebIDLParser.js', '/resources/idlharness.js', '/IndexedDB/interfaces.any.js'];
+const webIDLScripts = ['/resources/WebIDLParser.js', '/resources/idlharness.js', '/IndexedDB/idlharness.any.js'];
 const serviceWorkerScripts = ['resources/test-helpers.sub.js'];
 const knownScripts = testHarnessScripts.concat(supportScripts, webIDLScripts, serviceWorkerScripts);
 
@@ -35,8 +35,8 @@ fs.mkdir(builtJSPath, function () {
             inputFile: 'web-platform-tests/service-workers/service-worker/indexeddb.https.html',
             outputFile: path.join(builtJSPath, '_service-worker-indexeddb.https.js')
         }, {
-            inputFile: 'http://web-platform.test:8000/IndexedDB/interfaces.any.html',
-            outputFile: path.join(builtJSPath, 'interfaces.any.js'),
+            inputFile: 'http://web-platform.test:8000/IndexedDB/idlharness.any.html',
+            outputFile: path.join(builtJSPath, 'idlharness.any.js'),
             web: true
         });
         let ct = 0;
@@ -104,7 +104,9 @@ fs.mkdir(builtJSPath, function () {
                         ? $('title').textContent
                         : inputFile).replace(/'/g, "\\'").replace(/\n|\r/g, ' ') +
                     "';\n" +
-                    $('script:not([src])').textContent;
+                    ($('script:not([src])')
+                        ? $('script:not([src])').textContent
+                        : '');
 
                 fs.writeFile(outputFile, scriptContent, function (err) {
                     if (err) { return console.log(err); }
@@ -122,7 +124,6 @@ fs.mkdir(builtJSPath, function () {
                             '/resources/testharnessreport.js'
                         ].reduce(reducer, '');
                         const scripts = [
-                            {inputFile: 'interfaces.any.worker.js', outputFile: path.join(builtJSPath, 'interfaces.any.worker.js')}, // There is no name conflict as this will be attempting to load from inside web-platform-tests/IndexedDB/
                             {inputFile: '/workers/semantics/interface-objects/001.worker.js', outputFile: path.join(builtJSPath, '_interface-objects-001.worker.js')},
                             {inputFile: '/workers/semantics/interface-objects/002.worker.js', outputFile: path.join(builtJSPath, '_interface-objects-002.worker.js')}
                         ];

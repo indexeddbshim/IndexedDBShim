@@ -346,7 +346,7 @@ prom.then((scriptSource) => {
     workerCtx.Object = Object;
     workerCtx.Object[Symbol.hasInstance] = function (inst) { return inst && typeof inst === 'object'; };
 
-    workerCtx.Function = Function; // interfaces.any.js with check for `DOMStringList`'s prototype being the same Function.prototype
+    workerCtx.Function = Function; // idlharness.any.js with check for `DOMStringList`'s prototype being the same Function.prototype (still true?)
 
     workerCtx.Blob = Blob;
     workerCtx.fetch = function (...args) {

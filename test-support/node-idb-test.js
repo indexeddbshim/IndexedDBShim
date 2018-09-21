@@ -204,7 +204,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
         const supported = [
             'resources/testharness.js', 'resources/testharnessreport.js',
             'resources/idlharness.js', 'resources/WebIDLParser.js',
-            'IndexedDB/interfaces.any.js',
+            'IndexedDB/idlharness.any.js',
             'nested-cloning-common.js', 'interleaved-cursors-common.js',
             'support.js', 'support-promises.js', 'service-workers/service-worker/resources/test-helpers.sub.js'
         ];
@@ -214,8 +214,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
             if (supported.includes(src) || supported.includes(src.replace(/^\//, ''))) {
                 src = src.replace(/^\//, '');
                 scripts.push(path.join(idbTestPath,
-                    // Since the `interfaces.any.worker.js` Worker script requires this file too,
-                    //    and as our build script is now copying it, we actually don't need this now,
+                    // Since our build script is now copying it, we actually don't need this now,
                     //    but keeping comment in case this possibility is later closed
                     // src === 'resources/WebIDLParser.js' // See https://github.com/w3c/testharness.js/issues/231
                     // This file should be rewritten by `web-platform-tests/tools/serve/serve`,
@@ -255,9 +254,9 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                 // Leverage the W3C server for interfaces test (assuming it is running);
                 //   as we are overriding `XMLHttpRequest` below, we are not really using this at the moment,
                 //   but to set up, see https://github.com/w3c/web-platform-tests
-                // const url = 'http://localhost:9999/web-platform-tests/IndexedDB/interfaces.any.html',
+                // const url = 'http://localhost:9999/web-platform-tests/IndexedDB/idlharness.any.html',
                 // const url = 'file://' + basePath;
-                const url = 'http://localhost:8000/IndexedDB/interfaces.any.html';
+                const url = 'http://localhost:8000/IndexedDB/idlharness.any.html';
                 JSDOM.fromURL(url).then(function ({window}) {
                     try {
                         // Should only pass in safe objects
@@ -289,7 +288,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                         //   some of these do incur a significant performance cost which could speed up the testing process if avoided,
                         //   though it could also make the tests more fragile to changes
                         // indexeddbshimNonUnicode(window);
-                        if (['interfaces.any.js', 'interfaces.any.worker.js', '../non-indexedDB/exceptions.js', '../non-indexedDB/__event-interface.js'].includes(shimNS.fileName)) {
+                        if (['idlharness.any.js', '../non-indexedDB/exceptions.js', '../non-indexedDB/__event-interface.js'].includes(shimNS.fileName)) {
                             indexeddbshim(window, Object.assign(baseCfg, {fullIDLSupport: true}));
                         } else {
                             indexeddbshim(window, baseCfg);
@@ -420,7 +419,7 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                         window.Object = Object;
                         window.Object[Symbol.hasInstance] = function (inst) { return inst && typeof inst === 'object'; };
 
-                        window.Function = Function; // interfaces.any.js with check for `DOMStringList`'s prototype being the same Function.prototype
+                        window.Function = Function; // idlharness.any.js with check for `DOMStringList`'s prototype being the same Function.prototype (still true?)
 
                         // Not deleting per https://github.com/tmpvar/jsdom/issues/1720#issuecomment-279665105
                         // Needed for avoiding test non-completion in '../non-indexedDB/interface-objects.js'
@@ -515,7 +514,7 @@ function readAndEvaluateFiles (err, jsFiles, workers, recursing) {
 
         // Hard-coding problematic files for testing
         // jsFiles = ['idbcursor-continuePrimaryKey-exception-order.js'];
-        // jsFiles = ['interfaces.any.js'];
+        // jsFiles = ['idlharness.any.js'];
         // jsFiles = ['transaction-lifetime-empty.js'];
 
         fs.readFile(path.join('test-support', 'custom-reporter.js'), 'utf8', function (err, ending) {
