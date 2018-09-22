@@ -159,6 +159,8 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
     });
 };
 
+const leftBracketRegex = /\[/g;
+
 IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, error) {
     const me = this;
 
@@ -250,10 +252,10 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
             }
             const reverse = me.direction.indexOf('prev') === 0;
             rows.sort(function (a, b) {
-                if (a.matchingKey.replace('[', 'z') < b.matchingKey.replace('[', 'z')) {
+                if (a.matchingKey.replace(leftBracketRegex, 'z') < b.matchingKey.replace(leftBracketRegex, 'z')) {
                     return reverse ? 1 : -1;
                 }
-                if (a.matchingKey.replace('[', 'z') > b.matchingKey.replace('[', 'z')) {
+                if (a.matchingKey.replace(leftBracketRegex, 'z') > b.matchingKey.replace(leftBracketRegex, 'z')) {
                     return reverse ? -1 : 1;
                 }
                 if (a.key < b.key) {

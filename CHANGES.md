@@ -2,11 +2,12 @@
 
 ## ?
 
+- Fix: Ensure sorts address possibility of nested array keys (Courtesy lgtm)
 - Fix: For interface tests, ensure properties are getter based
 - Refactoring: Factor out common interface code (making
     `IDBRequest` and `IDBOpenRequest` listeners `enumerable` too)
 - Testing (W3C): Update web-platform-tests (including repo location)
-- Testing (W3C): Use new idlharness.any.html over interfaces.any.html
+- Testing (W3C): Use new `idlharness.any.html` over `interfaces.any.html`
 - Travis: Update Node version (having issues with Yarn)
 - Docs: Remove Bower badge
 
