@@ -552,15 +552,10 @@ IDBCursor.prototype['delete'] = function () {
 
 IDBCursor.prototype[Symbol.toStringTag] = 'IDBCursorPrototype';
 
-['source', 'direction', 'key', 'primaryKey'].forEach((prop) => {
-    Object.defineProperty(IDBCursor.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get () {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
+util.defineReadonlyOuterInterface(
+    IDBCursor.prototype,
+    ['source', 'direction', 'key', 'primaryKey']
+);
 Object.defineProperty(IDBCursor, 'prototype', {
     writable: false
 });
@@ -588,13 +583,7 @@ IDBCursorWithValue.__createInstance = function (...args) {
     return new IDBCursorWithValue();
 };
 
-Object.defineProperty(IDBCursorWithValue.prototype, 'value', {
-    enumerable: true,
-    configurable: true,
-    get () {
-        throw new TypeError('Illegal invocation');
-    }
-});
+util.defineReadonlyOuterInterface(IDBCursorWithValue.prototype, ['value']);
 
 IDBCursorWithValue.prototype[Symbol.toStringTag] = 'IDBCursorWithValuePrototype';
 

@@ -46,21 +46,7 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
                 configurable: true
             });
         });
-        listeners.forEach((listener) => {
-            Object.defineProperty(this, listener, {
-                enumerable: true,
-                configurable: true,
-                get () {
-                    return this['__' + listener];
-                },
-                set (val) {
-                    this['__' + listener] = val;
-                }
-            });
-        });
-        listeners.forEach((l) => {
-            this[l] = null;
-        });
+        util.defineListenerProperties(this, listeners);
         me.__storeHandles = {};
 
         // Kick off the transaction as soon as all synchronous code is done
@@ -531,29 +517,8 @@ IDBTransaction.prototype.__getParent = function () {
     return this.db;
 };
 
-listeners.forEach((listener) => {
-    Object.defineProperty(IDBTransaction.prototype, listener, {
-        enumerable: true,
-        configurable: true,
-        get () {
-            throw new TypeError('Illegal invocation');
-        },
-        set (val) {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
-
-// Illegal invocations
-readonlyProperties.forEach((prop) => {
-    Object.defineProperty(IDBTransaction.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get () {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
+util.defineOuterInterface(IDBTransaction.prototype, listeners);
+util.defineReadonlyOuterInterface(IDBTransaction.prototype, readonlyProperties);
 
 Object.defineProperty(IDBTransaction.prototype, 'constructor', {
     enumerable: false,

@@ -814,25 +814,8 @@ IDBObjectStore.prototype.deleteIndex = function (name) {
     IDBIndex.__deleteIndex(me, index);
 };
 
-readonlyProperties.forEach((prop) => {
-    Object.defineProperty(IDBObjectStore.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get () {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
-Object.defineProperty(IDBObjectStore.prototype, 'name', {
-    enumerable: true,
-    configurable: true,
-    get () {
-        throw new TypeError('Illegal invocation');
-    },
-    set (val) {
-        throw new TypeError('Illegal invocation');
-    }
-});
+util.defineReadonlyOuterInterface(IDBObjectStore.prototype, readonlyProperties);
+util.defineOuterInterface(IDBObjectStore.prototype, ['name']);
 
 IDBObjectStore.prototype[Symbol.toStringTag] = 'IDBObjectStorePrototype';
 

@@ -1987,15 +1987,7 @@ IDBCursor.prototype['delete'] = function () {
 
 IDBCursor.prototype[Symbol.toStringTag] = 'IDBCursorPrototype';
 
-['source', 'direction', 'key', 'primaryKey'].forEach(prop => {
-    Object.defineProperty(IDBCursor.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get() {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
+util.defineReadonlyOuterInterface(IDBCursor.prototype, ['source', 'direction', 'key', 'primaryKey']);
 Object.defineProperty(IDBCursor, 'prototype', {
     writable: false
 });
@@ -2023,13 +2015,7 @@ IDBCursorWithValue.__createInstance = function (...args) {
     return new IDBCursorWithValue();
 };
 
-Object.defineProperty(IDBCursorWithValue.prototype, 'value', {
-    enumerable: true,
-    configurable: true,
-    get() {
-        throw new TypeError('Illegal invocation');
-    }
-});
+util.defineReadonlyOuterInterface(IDBCursorWithValue.prototype, ['value']);
 
 IDBCursorWithValue.prototype[Symbol.toStringTag] = 'IDBCursorWithValuePrototype';
 
@@ -2099,21 +2085,7 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
         this.__version = version;
         this.__name = name;
         this.__upgradeTransaction = null;
-        listeners.forEach(listener => {
-            Object.defineProperty(this, listener, {
-                enumerable: true,
-                configurable: true,
-                get() {
-                    return this['__' + listener];
-                },
-                set(val) {
-                    this['__' + listener] = val;
-                }
-            });
-        });
-        listeners.forEach(l => {
-            this[l] = null;
-        });
+        util.defineListenerProperties(this, listeners);
         this.__setOptions({
             legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
         });
@@ -2316,28 +2288,8 @@ IDBDatabase.prototype.__forceClose = function (msg) {
     });
 };
 
-listeners.forEach(listener => {
-    Object.defineProperty(IDBDatabase.prototype, listener, {
-        enumerable: true,
-        configurable: true,
-        get() {
-            throw new TypeError('Illegal invocation');
-        },
-        set(val) {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
-
-readonlyProperties.forEach(prop => {
-    Object.defineProperty(IDBDatabase.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get() {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
+util.defineOuterInterface(IDBDatabase.prototype, listeners);
+util.defineReadonlyOuterInterface(IDBDatabase.prototype, readonlyProperties);
 
 Object.defineProperty(IDBDatabase.prototype, 'constructor', {
     enumerable: false,
@@ -3659,25 +3611,9 @@ Object.defineProperty(IDBIndex, Symbol.hasInstance, {
     value: obj => util.isObj(obj) && typeof obj.openCursor === 'function' && typeof obj.multiEntry === 'boolean'
 });
 
-readonlyProperties.forEach(prop => {
-    Object.defineProperty(IDBIndex.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get() {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
-Object.defineProperty(IDBIndex.prototype, 'name', {
-    enumerable: true,
-    configurable: true,
-    get() {
-        throw new TypeError('Illegal invocation');
-    },
-    set(val) {
-        throw new TypeError('Illegal invocation');
-    }
-});
+util.defineReadonlyOuterInterface(IDBIndex.prototype, readonlyProperties);
+util.defineOuterInterface(IDBIndex.prototype, ['name']);
+
 IDBIndex.prototype[Symbol.toStringTag] = 'IDBIndexPrototype';
 
 Object.defineProperty(IDBIndex, 'prototype', {
@@ -3884,17 +3820,20 @@ readonlyProperties.forEach(prop => {
         configurable: false,
         writable: true
     });
-    Object.defineProperty(IDBKeyRange.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get() {
+    // Ensure for proper interface testing that "get <name>" is the function name
+    const o = {
+        get [prop]() {
             // We can't do a regular instanceof check as it will create a loop given our hasInstance implementation
             if (!util.isObj(this) || typeof this.__lowerOpen !== 'boolean') {
                 throw new TypeError('Illegal invocation');
             }
             return this['__' + prop];
         }
-    });
+    };
+    const desc = Object.getOwnPropertyDescriptor(o, prop);
+    // desc.enumerable = true; // Default
+    // desc.configurable = true; // Default
+    Object.defineProperty(IDBKeyRange.prototype, prop, desc);
 });
 
 Object.defineProperty(IDBKeyRange, Symbol.hasInstance, {
@@ -4791,25 +4730,8 @@ IDBObjectStore.prototype.deleteIndex = function (name) {
     _IDBIndex.IDBIndex.__deleteIndex(me, index);
 };
 
-readonlyProperties.forEach(prop => {
-    Object.defineProperty(IDBObjectStore.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get() {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
-Object.defineProperty(IDBObjectStore.prototype, 'name', {
-    enumerable: true,
-    configurable: true,
-    get() {
-        throw new TypeError('Illegal invocation');
-    },
-    set(val) {
-        throw new TypeError('Illegal invocation');
-    }
-});
+util.defineReadonlyOuterInterface(IDBObjectStore.prototype, readonlyProperties);
+util.defineOuterInterface(IDBObjectStore.prototype, ['name']);
 
 IDBObjectStore.prototype[Symbol.toStringTag] = 'IDBObjectStorePrototype';
 
@@ -4872,20 +4794,8 @@ IDBRequest.__super = function IDBRequest() {
         });
     }, this);
     util.defineReadonlyProperties(this, readonlyProperties);
-    listeners.forEach(listener => {
-        Object.defineProperty(this, listener, {
-            configurable: true, // Needed by support.js in W3C IndexedDB tests
-            get() {
-                return this['__' + listener];
-            },
-            set(val) {
-                this['__' + listener] = val;
-            }
-        });
-    }, this);
-    listeners.forEach(l => {
-        this[l] = null;
-    });
+    util.defineListenerProperties(this, listeners);
+
     this.__result = undefined;
     this.__error = this.__source = this.__transaction = null;
     this.__readyState = 'pending';
@@ -4906,38 +4816,10 @@ IDBRequest.prototype.__getParent = function () {
 };
 
 // Illegal invocations
-readonlyProperties.forEach(prop => {
-    Object.defineProperty(IDBRequest.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get() {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
+util.defineReadonlyOuterInterface(IDBRequest.prototype, readonlyProperties);
+util.defineReadonlyOuterInterface(IDBRequest.prototype, doneFlagGetters);
 
-doneFlagGetters.forEach(function (prop) {
-    Object.defineProperty(IDBRequest.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get() {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
-
-listeners.forEach(listener => {
-    Object.defineProperty(IDBRequest.prototype, listener, {
-        enumerable: true,
-        configurable: true,
-        get() {
-            throw new TypeError('Illegal invocation');
-        },
-        set(val) {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
+util.defineOuterInterface(IDBRequest.prototype, listeners);
 
 Object.defineProperty(IDBRequest.prototype, 'constructor', {
     enumerable: false,
@@ -4978,37 +4860,13 @@ IDBOpenDBRequest.__createInstance = function () {
             legacyOutputDidListenersThrowFlag: true, // Event hook for IndexedB
             extraProperties: ['oldVersion', 'newVersion', 'debug']
         }); // Ensure EventTarget preserves our properties
-        openListeners.forEach(listener => {
-            Object.defineProperty(this, listener, {
-                configurable: true, // Needed by support.js in W3C IndexedDB tests
-                get() {
-                    return this['__' + listener];
-                },
-                set(val) {
-                    this['__' + listener] = val;
-                }
-            });
-        }, this);
-        openListeners.forEach(l => {
-            this[l] = null;
-        });
+        util.defineListenerProperties(this, openListeners);
     }
     IDBOpenDBRequest.prototype = IDBOpenDBRequestAlias.prototype;
     return new IDBOpenDBRequest();
 };
 
-openListeners.forEach(listener => {
-    Object.defineProperty(IDBOpenDBRequest.prototype, listener, {
-        enumerable: true,
-        configurable: true,
-        get() {
-            throw new TypeError('Illegal invocation');
-        },
-        set(val) {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
+util.defineOuterInterface(IDBOpenDBRequest.prototype, openListeners);
 
 IDBOpenDBRequest.prototype[Symbol.toStringTag] = 'IDBOpenDBRequestPrototype';
 
@@ -5093,21 +4951,7 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
                 configurable: true
             });
         });
-        listeners.forEach(listener => {
-            Object.defineProperty(this, listener, {
-                enumerable: true,
-                configurable: true,
-                get() {
-                    return this['__' + listener];
-                },
-                set(val) {
-                    this['__' + listener] = val;
-                }
-            });
-        });
-        listeners.forEach(l => {
-            this[l] = null;
-        });
+        util.defineListenerProperties(this, listeners);
         me.__storeHandles = {};
 
         // Kick off the transaction as soon as all synchronous code is done
@@ -5584,29 +5428,8 @@ IDBTransaction.prototype.__getParent = function () {
     return this.db;
 };
 
-listeners.forEach(listener => {
-    Object.defineProperty(IDBTransaction.prototype, listener, {
-        enumerable: true,
-        configurable: true,
-        get() {
-            throw new TypeError('Illegal invocation');
-        },
-        set(val) {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
-
-// Illegal invocations
-readonlyProperties.forEach(prop => {
-    Object.defineProperty(IDBTransaction.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get() {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
+util.defineOuterInterface(IDBTransaction.prototype, listeners);
+util.defineReadonlyOuterInterface(IDBTransaction.prototype, readonlyProperties);
 
 Object.defineProperty(IDBTransaction.prototype, 'constructor', {
     enumerable: false,
@@ -5655,16 +5478,19 @@ IDBVersionChangeEvent.prototype = Object.create(_Event.ShimEvent.prototype);
 IDBVersionChangeEvent.prototype[Symbol.toStringTag] = 'IDBVersionChangeEventPrototype';
 
 readonlyProperties.forEach(prop => {
-    Object.defineProperty(IDBVersionChangeEvent.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get() {
+    // Ensure for proper interface testing that "get <name>" is the function name
+    const o = {
+        get [prop]() {
             if (!(this instanceof IDBVersionChangeEvent)) {
                 throw new TypeError('Illegal invocation');
             }
             return this.__eventInitDict && this.__eventInitDict[prop] || (prop === 'oldVersion' ? 0 : null);
         }
-    });
+    };
+    const desc = Object.getOwnPropertyDescriptor(o, prop);
+    // desc.enumerable = true; // Default
+    // desc.configurable = true; // Default
+    Object.defineProperty(IDBVersionChangeEvent.prototype, prop, desc);
 });
 
 Object.defineProperty(IDBVersionChangeEvent, Symbol.hasInstance, {
@@ -6819,7 +6645,7 @@ function setGlobalVars(idb, initialConfig) {
         if (IDB[name] !== value && Object.defineProperty) {
             // Setting a read-only property failed, so try re-defining the property
             try {
-                const desc = propDesc || {};
+                let desc = propDesc || {};
                 if (!('get' in desc)) {
                     if (!('value' in desc)) {
                         desc.value = value;
@@ -6827,6 +6653,13 @@ function setGlobalVars(idb, initialConfig) {
                     if (!('writable' in desc)) {
                         desc.writable = true;
                     }
+                } else {
+                    const o = {
+                        get [name]() {
+                            return propDesc.get.call(this);
+                        }
+                    };
+                    desc = Object.getOwnPropertyDescriptor(o, name);
                 }
                 Object.defineProperty(IDB, name, desc);
             } catch (e) {
@@ -7008,7 +6841,7 @@ module.exports = /[\xC0-\xC5\xC7-\xCF\xD1-\xD6\xD9-\xDD\xE0-\xE5\xE7-\xEF\xF1-\x
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.padStart = exports.convertToSequenceDOMString = exports.convertToDOMString = exports.enforceRange = exports.isValidKeyPath = exports.defineReadonlyProperties = exports.isIterable = exports.isBinary = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlQuote = exports.sqlLIKEEscape = exports.escapeIndexNameForSQLKeyColumn = exports.escapeIndexNameForSQL = exports.escapeStoreNameForSQL = exports.unescapeDatabaseNameForSQLAndFiles = exports.escapeDatabaseNameForSQLAndFiles = exports.unescapeSQLiteResponse = exports.escapeSQLiteStatement = undefined;
+exports.padStart = exports.convertToSequenceDOMString = exports.convertToDOMString = exports.enforceRange = exports.isValidKeyPath = exports.defineReadonlyProperties = exports.defineListenerProperties = exports.defineReadonlyOuterInterface = exports.defineOuterInterface = exports.isIterable = exports.isBinary = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlQuote = exports.sqlLIKEEscape = exports.escapeIndexNameForSQLKeyColumn = exports.escapeIndexNameForSQL = exports.escapeStoreNameForSQL = exports.unescapeDatabaseNameForSQLAndFiles = exports.escapeDatabaseNameForSQLAndFiles = exports.unescapeSQLiteResponse = exports.escapeSQLiteStatement = undefined;
 
 var _CFG = require('./CFG');
 
@@ -7170,6 +7003,54 @@ function isIterable(obj) {
     return isObj(obj) && typeof obj[Symbol.iterator] === 'function';
 }
 
+function defineOuterInterface(obj, props) {
+    props.forEach(prop => {
+        const o = {
+            get [prop]() {
+                throw new TypeError('Illegal invocation');
+            },
+            set [prop](val) {
+                throw new TypeError('Illegal invocation');
+            }
+        };
+        const desc = Object.getOwnPropertyDescriptor(o, prop);
+        Object.defineProperty(obj, prop, desc);
+    });
+}
+
+function defineReadonlyOuterInterface(obj, props) {
+    props.forEach(prop => {
+        const o = {
+            get [prop]() {
+                throw new TypeError('Illegal invocation');
+            }
+        };
+        const desc = Object.getOwnPropertyDescriptor(o, prop);
+        Object.defineProperty(obj, prop, desc);
+    });
+}
+
+function defineListenerProperties(obj, listeners) {
+    listeners = typeof listeners === 'string' ? [listeners] : listeners;
+    listeners.forEach(listener => {
+        const o = {
+            get [listener]() {
+                return obj['__' + listener];
+            },
+            set [listener](val) {
+                obj['__' + listener] = val;
+            }
+        };
+        const desc = Object.getOwnPropertyDescriptor(o, listener);
+        // desc.enumerable = true; // Default
+        // desc.configurable = true; // Default // Needed by support.js in W3C IndexedDB tests (for openListeners)
+        Object.defineProperty(obj, listener, desc);
+    });
+    listeners.forEach(l => {
+        obj[l] = null;
+    });
+}
+
 function defineReadonlyProperties(obj, props) {
     props = typeof props === 'string' ? [props] : props;
     props.forEach(function (prop) {
@@ -7178,13 +7059,18 @@ function defineReadonlyProperties(obj, props) {
             configurable: false,
             writable: true
         });
-        Object.defineProperty(obj, prop, {
-            enumerable: true,
-            configurable: true,
-            get() {
+
+        // We must resort to this to get "get <name>" as
+        //   the function `name` for proper IDL
+        const o = {
+            get [prop]() {
                 return this['__' + prop];
             }
-        });
+        };
+        const desc = Object.getOwnPropertyDescriptor(o, prop);
+        // desc.enumerable = true; // Default
+        // desc.configurable = true; // Default
+        Object.defineProperty(obj, prop, desc);
     });
 }
 
@@ -7280,6 +7166,9 @@ exports.isRegExp = isRegExp;
 exports.isFile = isFile;
 exports.isBinary = isBinary;
 exports.isIterable = isIterable;
+exports.defineOuterInterface = defineOuterInterface;
+exports.defineReadonlyOuterInterface = defineReadonlyOuterInterface;
+exports.defineListenerProperties = defineListenerProperties;
 exports.defineReadonlyProperties = defineReadonlyProperties;
 exports.isValidKeyPath = isValidKeyPath;
 exports.enforceRange = enforceRange;

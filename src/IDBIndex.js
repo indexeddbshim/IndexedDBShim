@@ -535,25 +535,9 @@ Object.defineProperty(IDBIndex, Symbol.hasInstance, {
     value: obj => util.isObj(obj) && typeof obj.openCursor === 'function' && typeof obj.multiEntry === 'boolean'
 });
 
-readonlyProperties.forEach((prop) => {
-    Object.defineProperty(IDBIndex.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get () {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
-Object.defineProperty(IDBIndex.prototype, 'name', {
-    enumerable: true,
-    configurable: true,
-    get () {
-        throw new TypeError('Illegal invocation');
-    },
-    set (val) {
-        throw new TypeError('Illegal invocation');
-    }
-});
+util.defineReadonlyOuterInterface(IDBIndex.prototype, readonlyProperties);
+util.defineOuterInterface(IDBIndex.prototype, ['name']);
+
 IDBIndex.prototype[Symbol.toStringTag] = 'IDBIndexPrototype';
 
 Object.defineProperty(IDBIndex, 'prototype', {

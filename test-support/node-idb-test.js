@@ -279,11 +279,6 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                         }
                         global.location = window.location; // Needed by IDB for origin checks; also needed by `createObjectURL` polyfill
 
-                        // Todo: We are failing one W3C interfaces test (and possibly obscuring bugs in other tests) because
-                        //    jsdom is apparently having problems with `Object.defineProperty` and accessor descriptors (or
-                        //    with `Object.getOwnPropertyDescriptor` when retrieving them); see https://github.com/tmpvar/jsdom/issues/1720
-                        //    Thus, `indexedDB`, despite being set in `setGlobalVars`with a getter, is not retained as such when checked by the test.
-
                         // Todo: We might switch based on file to normally try non-Unicode version or otherwise exclude properties as
                         //   some of these do incur a significant performance cost which could speed up the testing process if avoided,
                         //   though it could also make the tests more fragile to changes

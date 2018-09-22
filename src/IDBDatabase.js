@@ -29,21 +29,7 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
         this.__version = version;
         this.__name = name;
         this.__upgradeTransaction = null;
-        listeners.forEach((listener) => {
-            Object.defineProperty(this, listener, {
-                enumerable: true,
-                configurable: true,
-                get () {
-                    return this['__' + listener];
-                },
-                set (val) {
-                    this['__' + listener] = val;
-                }
-            });
-        });
-        listeners.forEach((l) => {
-            this[l] = null;
-        });
+        util.defineListenerProperties(this, listeners);
         this.__setOptions({
             legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
         });
@@ -248,28 +234,8 @@ IDBDatabase.prototype.__forceClose = function (msg) {
     });
 };
 
-listeners.forEach((listener) => {
-    Object.defineProperty(IDBDatabase.prototype, listener, {
-        enumerable: true,
-        configurable: true,
-        get () {
-            throw new TypeError('Illegal invocation');
-        },
-        set (val) {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
-
-readonlyProperties.forEach((prop) => {
-    Object.defineProperty(IDBDatabase.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get () {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
+util.defineOuterInterface(IDBDatabase.prototype, listeners);
+util.defineReadonlyOuterInterface(IDBDatabase.prototype, readonlyProperties);
 
 Object.defineProperty(IDBDatabase.prototype, 'constructor', {
     enumerable: false,

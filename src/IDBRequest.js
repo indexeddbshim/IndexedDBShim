@@ -36,20 +36,8 @@ IDBRequest.__super = function IDBRequest () {
         });
     }, this);
     util.defineReadonlyProperties(this, readonlyProperties);
-    listeners.forEach((listener) => {
-        Object.defineProperty(this, listener, {
-            configurable: true, // Needed by support.js in W3C IndexedDB tests
-            get () {
-                return this['__' + listener];
-            },
-            set (val) {
-                this['__' + listener] = val;
-            }
-        });
-    }, this);
-    listeners.forEach((l) => {
-        this[l] = null;
-    });
+    util.defineListenerProperties(this, listeners);
+
     this.__result = undefined;
     this.__error = this.__source = this.__transaction = null;
     this.__readyState = 'pending';
@@ -70,38 +58,10 @@ IDBRequest.prototype.__getParent = function () {
 };
 
 // Illegal invocations
-readonlyProperties.forEach((prop) => {
-    Object.defineProperty(IDBRequest.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get () {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
+util.defineReadonlyOuterInterface(IDBRequest.prototype, readonlyProperties);
+util.defineReadonlyOuterInterface(IDBRequest.prototype, doneFlagGetters);
 
-doneFlagGetters.forEach(function (prop) {
-    Object.defineProperty(IDBRequest.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get () {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
-
-listeners.forEach((listener) => {
-    Object.defineProperty(IDBRequest.prototype, listener, {
-        enumerable: true,
-        configurable: true,
-        get () {
-            throw new TypeError('Illegal invocation');
-        },
-        set (val) {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
+util.defineOuterInterface(IDBRequest.prototype, listeners);
 
 Object.defineProperty(IDBRequest.prototype, 'constructor', {
     enumerable: false,
@@ -142,37 +102,13 @@ IDBOpenDBRequest.__createInstance = function () {
             legacyOutputDidListenersThrowFlag: true, // Event hook for IndexedB
             extraProperties: ['oldVersion', 'newVersion', 'debug']
         }); // Ensure EventTarget preserves our properties
-        openListeners.forEach((listener) => {
-            Object.defineProperty(this, listener, {
-                configurable: true, // Needed by support.js in W3C IndexedDB tests
-                get () {
-                    return this['__' + listener];
-                },
-                set (val) {
-                    this['__' + listener] = val;
-                }
-            });
-        }, this);
-        openListeners.forEach((l) => {
-            this[l] = null;
-        });
+        util.defineListenerProperties(this, openListeners);
     }
     IDBOpenDBRequest.prototype = IDBOpenDBRequestAlias.prototype;
     return new IDBOpenDBRequest();
 };
 
-openListeners.forEach((listener) => {
-    Object.defineProperty(IDBOpenDBRequest.prototype, listener, {
-        enumerable: true,
-        configurable: true,
-        get () {
-            throw new TypeError('Illegal invocation');
-        },
-        set (val) {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
+util.defineOuterInterface(IDBOpenDBRequest.prototype, openListeners);
 
 IDBOpenDBRequest.prototype[Symbol.toStringTag] = 'IDBOpenDBRequestPrototype';
 

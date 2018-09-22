@@ -190,6 +190,54 @@ function isIterable (obj) {
     return isObj(obj) && typeof obj[Symbol.iterator] === 'function';
 }
 
+function defineOuterInterface (obj, props) {
+    props.forEach((prop) => {
+        const o = {
+            get [prop] () {
+                throw new TypeError('Illegal invocation');
+            },
+            set [prop] (val) {
+                throw new TypeError('Illegal invocation');
+            }
+        };
+        const desc = Object.getOwnPropertyDescriptor(o, prop);
+        Object.defineProperty(obj, prop, desc);
+    });
+}
+
+function defineReadonlyOuterInterface (obj, props) {
+    props.forEach((prop) => {
+        const o = {
+            get [prop] () {
+                throw new TypeError('Illegal invocation');
+            }
+        };
+        const desc = Object.getOwnPropertyDescriptor(o, prop);
+        Object.defineProperty(obj, prop, desc);
+    });
+}
+
+function defineListenerProperties (obj, listeners) {
+    listeners = typeof listeners === 'string' ? [listeners] : listeners;
+    listeners.forEach((listener) => {
+        const o = {
+            get [listener] () {
+                return obj['__' + listener];
+            },
+            set [listener] (val) {
+                obj['__' + listener] = val;
+            }
+        };
+        const desc = Object.getOwnPropertyDescriptor(o, listener);
+        // desc.enumerable = true; // Default
+        // desc.configurable = true; // Default // Needed by support.js in W3C IndexedDB tests (for openListeners)
+        Object.defineProperty(obj, listener, desc);
+    });
+    listeners.forEach((l) => {
+        obj[l] = null;
+    });
+}
+
 function defineReadonlyProperties (obj, props) {
     props = typeof props === 'string' ? [props] : props;
     props.forEach(function (prop) {
@@ -198,13 +246,18 @@ function defineReadonlyProperties (obj, props) {
             configurable: false,
             writable: true
         });
-        Object.defineProperty(obj, prop, {
-            enumerable: true,
-            configurable: true,
-            get () {
+
+        // We must resort to this to get "get <name>" as
+        //   the function `name` for proper IDL
+        const o = {
+            get [prop] () {
                 return this['__' + prop];
             }
-        });
+        };
+        const desc = Object.getOwnPropertyDescriptor(o, prop);
+        // desc.enumerable = true; // Default
+        // desc.configurable = true; // Default
+        Object.defineProperty(obj, prop, desc);
     });
 }
 
@@ -290,6 +343,8 @@ export {escapeSQLiteStatement, unescapeSQLiteResponse,
     sqlLIKEEscape, sqlQuote,
     instanceOf,
     isObj, isDate, isBlob, isRegExp, isFile, isBinary, isIterable,
-    defineReadonlyProperties, isValidKeyPath, enforceRange,
+    defineOuterInterface, defineReadonlyOuterInterface,
+    defineListenerProperties, defineReadonlyProperties,
+    isValidKeyPath, enforceRange,
     convertToDOMString, convertToSequenceDOMString,
     padStart};

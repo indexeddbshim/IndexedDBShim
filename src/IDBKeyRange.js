@@ -90,17 +90,20 @@ readonlyProperties.forEach((prop) => {
         configurable: false,
         writable: true
     });
-    Object.defineProperty(IDBKeyRange.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get () {
+    // Ensure for proper interface testing that "get <name>" is the function name
+    const o = {
+        get [prop] () {
             // We can't do a regular instanceof check as it will create a loop given our hasInstance implementation
             if (!util.isObj(this) || typeof this.__lowerOpen !== 'boolean') {
                 throw new TypeError('Illegal invocation');
             }
             return this['__' + prop];
         }
-    });
+    };
+    const desc = Object.getOwnPropertyDescriptor(o, prop);
+    // desc.enumerable = true; // Default
+    // desc.configurable = true; // Default
+    Object.defineProperty(IDBKeyRange.prototype, prop, desc);
 });
 
 Object.defineProperty(IDBKeyRange, Symbol.hasInstance, {

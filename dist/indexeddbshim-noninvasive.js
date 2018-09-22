@@ -2522,15 +2522,7 @@ IDBCursor.prototype['delete'] = function () {
 
 IDBCursor.prototype[Symbol.toStringTag] = 'IDBCursorPrototype';
 
-['source', 'direction', 'key', 'primaryKey'].forEach(function (prop) {
-    Object.defineProperty(IDBCursor.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get: function get() {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
+util.defineReadonlyOuterInterface(IDBCursor.prototype, ['source', 'direction', 'key', 'primaryKey']);
 Object.defineProperty(IDBCursor, 'prototype', {
     writable: false
 });
@@ -2564,13 +2556,7 @@ IDBCursorWithValue.__createInstance = function () {
     return new IDBCursorWithValue();
 };
 
-Object.defineProperty(IDBCursorWithValue.prototype, 'value', {
-    enumerable: true,
-    configurable: true,
-    get: function get() {
-        throw new TypeError('Illegal invocation');
-    }
-});
+util.defineReadonlyOuterInterface(IDBCursorWithValue.prototype, ['value']);
 
 IDBCursorWithValue.prototype[Symbol.toStringTag] = 'IDBCursorWithValuePrototype';
 
@@ -2644,21 +2630,7 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
         this.__version = version;
         this.__name = name;
         this.__upgradeTransaction = null;
-        listeners.forEach(function (listener) {
-            Object.defineProperty(_this, listener, {
-                enumerable: true,
-                configurable: true,
-                get: function get() {
-                    return this['__' + listener];
-                },
-                set: function set(val) {
-                    this['__' + listener] = val;
-                }
-            });
-        });
-        listeners.forEach(function (l) {
-            _this[l] = null;
-        });
+        util.defineListenerProperties(this, listeners);
         this.__setOptions({
             legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
         });
@@ -2869,28 +2841,8 @@ IDBDatabase.prototype.__forceClose = function (msg) {
     });
 };
 
-listeners.forEach(function (listener) {
-    Object.defineProperty(IDBDatabase.prototype, listener, {
-        enumerable: true,
-        configurable: true,
-        get: function get() {
-            throw new TypeError('Illegal invocation');
-        },
-        set: function set(val) {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
-
-readonlyProperties.forEach(function (prop) {
-    Object.defineProperty(IDBDatabase.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get: function get() {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
+util.defineOuterInterface(IDBDatabase.prototype, listeners);
+util.defineReadonlyOuterInterface(IDBDatabase.prototype, readonlyProperties);
 
 Object.defineProperty(IDBDatabase.prototype, 'constructor', {
     enumerable: false,
@@ -4278,25 +4230,9 @@ Object.defineProperty(IDBIndex, Symbol.hasInstance, {
     }
 });
 
-readonlyProperties.forEach(function (prop) {
-    Object.defineProperty(IDBIndex.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get: function get() {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
-Object.defineProperty(IDBIndex.prototype, 'name', {
-    enumerable: true,
-    configurable: true,
-    get: function get() {
-        throw new TypeError('Illegal invocation');
-    },
-    set: function set(val) {
-        throw new TypeError('Illegal invocation');
-    }
-});
+util.defineReadonlyOuterInterface(IDBIndex.prototype, readonlyProperties);
+util.defineOuterInterface(IDBIndex.prototype, ['name']);
+
 IDBIndex.prototype[Symbol.toStringTag] = 'IDBIndexPrototype';
 
 Object.defineProperty(IDBIndex, 'prototype', {
@@ -4424,6 +4360,8 @@ var util = _interopRequireWildcard(_util);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
+function _defineEnumerableProperties(obj, descs) { for (var key in descs) { var desc = descs[key]; desc.configurable = desc.enumerable = true; if ("value" in desc) desc.writable = true; Object.defineProperty(obj, key, desc); } return obj; }
+
 var readonlyProperties = ['lower', 'upper', 'lowerOpen', 'upperOpen'];
 
 /**
@@ -4508,22 +4446,25 @@ IDBKeyRange.bound = function (lower, upper /* , lowerOpen, upperOpen */) {
 IDBKeyRange.prototype[Symbol.toStringTag] = 'IDBKeyRangePrototype';
 
 readonlyProperties.forEach(function (prop) {
+    var _o, _mutatorMap;
+
     Object.defineProperty(IDBKeyRange.prototype, '__' + prop, {
         enumerable: false,
         configurable: false,
         writable: true
     });
-    Object.defineProperty(IDBKeyRange.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get: function get() {
-            // We can't do a regular instanceof check as it will create a loop given our hasInstance implementation
-            if (!util.isObj(this) || typeof this.__lowerOpen !== 'boolean') {
-                throw new TypeError('Illegal invocation');
-            }
-            return this['__' + prop];
+    // Ensure for proper interface testing that "get <name>" is the function name
+    var o = (_o = {}, _mutatorMap = {}, _mutatorMap[prop] = _mutatorMap[prop] || {}, _mutatorMap[prop].get = function () {
+        // We can't do a regular instanceof check as it will create a loop given our hasInstance implementation
+        if (!util.isObj(this) || typeof this.__lowerOpen !== 'boolean') {
+            throw new TypeError('Illegal invocation');
         }
-    });
+        return this['__' + prop];
+    }, _defineEnumerableProperties(_o, _mutatorMap), _o);
+    var desc = Object.getOwnPropertyDescriptor(o, prop);
+    // desc.enumerable = true; // Default
+    // desc.configurable = true; // Default
+    Object.defineProperty(IDBKeyRange.prototype, prop, desc);
 });
 
 Object.defineProperty(IDBKeyRange, Symbol.hasInstance, {
@@ -5452,25 +5393,8 @@ IDBObjectStore.prototype.deleteIndex = function (name) {
     _IDBIndex.IDBIndex.__deleteIndex(me, index);
 };
 
-readonlyProperties.forEach(function (prop) {
-    Object.defineProperty(IDBObjectStore.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get: function get() {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
-Object.defineProperty(IDBObjectStore.prototype, 'name', {
-    enumerable: true,
-    configurable: true,
-    get: function get() {
-        throw new TypeError('Illegal invocation');
-    },
-    set: function set(val) {
-        throw new TypeError('Illegal invocation');
-    }
-});
+util.defineReadonlyOuterInterface(IDBObjectStore.prototype, readonlyProperties);
+util.defineOuterInterface(IDBObjectStore.prototype, ['name']);
 
 IDBObjectStore.prototype[Symbol.toStringTag] = 'IDBObjectStorePrototype';
 
@@ -5511,8 +5435,6 @@ function IDBRequest() {
     throw new TypeError('Illegal constructor');
 }
 IDBRequest.__super = function IDBRequest() {
-    var _this = this;
-
     this[Symbol.toStringTag] = 'IDBRequest';
     this.__setOptions({
         legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
@@ -5535,20 +5457,8 @@ IDBRequest.__super = function IDBRequest() {
         });
     }, this);
     util.defineReadonlyProperties(this, readonlyProperties);
-    listeners.forEach(function (listener) {
-        Object.defineProperty(_this, listener, {
-            configurable: true, // Needed by support.js in W3C IndexedDB tests
-            get: function get() {
-                return this['__' + listener];
-            },
-            set: function set(val) {
-                this['__' + listener] = val;
-            }
-        });
-    }, this);
-    listeners.forEach(function (l) {
-        _this[l] = null;
-    });
+    util.defineListenerProperties(this, listeners);
+
     this.__result = undefined;
     this.__error = this.__source = this.__transaction = null;
     this.__readyState = 'pending';
@@ -5569,38 +5479,10 @@ IDBRequest.prototype.__getParent = function () {
 };
 
 // Illegal invocations
-readonlyProperties.forEach(function (prop) {
-    Object.defineProperty(IDBRequest.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get: function get() {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
+util.defineReadonlyOuterInterface(IDBRequest.prototype, readonlyProperties);
+util.defineReadonlyOuterInterface(IDBRequest.prototype, doneFlagGetters);
 
-doneFlagGetters.forEach(function (prop) {
-    Object.defineProperty(IDBRequest.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get: function get() {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
-
-listeners.forEach(function (listener) {
-    Object.defineProperty(IDBRequest.prototype, listener, {
-        enumerable: true,
-        configurable: true,
-        get: function get() {
-            throw new TypeError('Illegal invocation');
-        },
-        set: function set(val) {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
+util.defineOuterInterface(IDBRequest.prototype, listeners);
 
 Object.defineProperty(IDBRequest.prototype, 'constructor', {
     enumerable: false,
@@ -5634,8 +5516,6 @@ Object.defineProperty(IDBOpenDBRequest.prototype, 'constructor', {
 var IDBOpenDBRequestAlias = IDBOpenDBRequest;
 IDBOpenDBRequest.__createInstance = function () {
     function IDBOpenDBRequest() {
-        var _this2 = this;
-
         IDBRequest.__super.call(this);
 
         this[Symbol.toStringTag] = 'IDBOpenDBRequest';
@@ -5643,37 +5523,13 @@ IDBOpenDBRequest.__createInstance = function () {
             legacyOutputDidListenersThrowFlag: true, // Event hook for IndexedB
             extraProperties: ['oldVersion', 'newVersion', 'debug']
         }); // Ensure EventTarget preserves our properties
-        openListeners.forEach(function (listener) {
-            Object.defineProperty(_this2, listener, {
-                configurable: true, // Needed by support.js in W3C IndexedDB tests
-                get: function get() {
-                    return this['__' + listener];
-                },
-                set: function set(val) {
-                    this['__' + listener] = val;
-                }
-            });
-        }, this);
-        openListeners.forEach(function (l) {
-            _this2[l] = null;
-        });
+        util.defineListenerProperties(this, openListeners);
     }
     IDBOpenDBRequest.prototype = IDBOpenDBRequestAlias.prototype;
     return new IDBOpenDBRequest();
 };
 
-openListeners.forEach(function (listener) {
-    Object.defineProperty(IDBOpenDBRequest.prototype, listener, {
-        enumerable: true,
-        configurable: true,
-        get: function get() {
-            throw new TypeError('Illegal invocation');
-        },
-        set: function set(val) {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
+util.defineOuterInterface(IDBOpenDBRequest.prototype, openListeners);
 
 IDBOpenDBRequest.prototype[Symbol.toStringTag] = 'IDBOpenDBRequestPrototype';
 
@@ -5760,21 +5616,7 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
                 configurable: true
             });
         });
-        listeners.forEach(function (listener) {
-            Object.defineProperty(_this, listener, {
-                enumerable: true,
-                configurable: true,
-                get: function get() {
-                    return this['__' + listener];
-                },
-                set: function set(val) {
-                    this['__' + listener] = val;
-                }
-            });
-        });
-        listeners.forEach(function (l) {
-            _this[l] = null;
-        });
+        util.defineListenerProperties(this, listeners);
         me.__storeHandles = {};
 
         // Kick off the transaction as soon as all synchronous code is done
@@ -6258,29 +6100,8 @@ IDBTransaction.prototype.__getParent = function () {
     return this.db;
 };
 
-listeners.forEach(function (listener) {
-    Object.defineProperty(IDBTransaction.prototype, listener, {
-        enumerable: true,
-        configurable: true,
-        get: function get() {
-            throw new TypeError('Illegal invocation');
-        },
-        set: function set(val) {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
-
-// Illegal invocations
-readonlyProperties.forEach(function (prop) {
-    Object.defineProperty(IDBTransaction.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get: function get() {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
+util.defineOuterInterface(IDBTransaction.prototype, listeners);
+util.defineReadonlyOuterInterface(IDBTransaction.prototype, readonlyProperties);
 
 Object.defineProperty(IDBTransaction.prototype, 'constructor', {
     enumerable: false,
@@ -6311,6 +6132,8 @@ var util = _interopRequireWildcard(_util);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
+function _defineEnumerableProperties(obj, descs) { for (var key in descs) { var desc = descs[key]; desc.configurable = desc.enumerable = true; if ("value" in desc) desc.writable = true; Object.defineProperty(obj, key, desc); } return obj; }
+
 var readonlyProperties = ['oldVersion', 'newVersion'];
 
 // Babel apparently having a problem adding `hasInstance` to a class, so we are redefining as a function
@@ -6329,16 +6152,19 @@ IDBVersionChangeEvent.prototype = Object.create(_Event.ShimEvent.prototype);
 IDBVersionChangeEvent.prototype[Symbol.toStringTag] = 'IDBVersionChangeEventPrototype';
 
 readonlyProperties.forEach(function (prop) {
-    Object.defineProperty(IDBVersionChangeEvent.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get: function get() {
-            if (!(this instanceof IDBVersionChangeEvent)) {
-                throw new TypeError('Illegal invocation');
-            }
-            return this.__eventInitDict && this.__eventInitDict[prop] || (prop === 'oldVersion' ? 0 : null);
+    var _o, _mutatorMap;
+
+    // Ensure for proper interface testing that "get <name>" is the function name
+    var o = (_o = {}, _mutatorMap = {}, _mutatorMap[prop] = _mutatorMap[prop] || {}, _mutatorMap[prop].get = function () {
+        if (!(this instanceof IDBVersionChangeEvent)) {
+            throw new TypeError('Illegal invocation');
         }
-    });
+        return this.__eventInitDict && this.__eventInitDict[prop] || (prop === 'oldVersion' ? 0 : null);
+    }, _defineEnumerableProperties(_o, _mutatorMap), _o);
+    var desc = Object.getOwnPropertyDescriptor(o, prop);
+    // desc.enumerable = true; // Default
+    // desc.configurable = true; // Default
+    Object.defineProperty(IDBVersionChangeEvent.prototype, prop, desc);
 });
 
 Object.defineProperty(IDBVersionChangeEvent, Symbol.hasInstance, {
@@ -7490,6 +7316,8 @@ var _CFG2 = _interopRequireDefault(_CFG);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _defineEnumerableProperties(obj, descs) { for (var key in descs) { var desc = descs[key]; desc.configurable = desc.enumerable = true; if ("value" in desc) desc.writable = true; Object.defineProperty(obj, key, desc); } return obj; }
+
 function setConfig(prop, val) {
     if (prop && (typeof prop === 'undefined' ? 'undefined' : _typeof(prop)) === 'object') {
         for (var p in prop) {
@@ -7528,6 +7356,13 @@ function setGlobalVars(idb, initialConfig) {
                     if (!('writable' in desc)) {
                         desc.writable = true;
                     }
+                } else {
+                    var _o, _mutatorMap;
+
+                    var o = (_o = {}, _mutatorMap = {}, _mutatorMap[name] = _mutatorMap[name] || {}, _mutatorMap[name].get = function () {
+                        return propDesc.get.call(this);
+                    }, _defineEnumerableProperties(_o, _mutatorMap), _o);
+                    desc = Object.getOwnPropertyDescriptor(o, name);
                 }
                 Object.defineProperty(IDB, name, desc);
             } catch (e) {
@@ -7719,7 +7554,7 @@ module.exports = /[\xC0-\xC5\xC7-\xCF\xD1-\xD6\xD9-\xDD\xE0-\xE5\xE7-\xEF\xF1-\x
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.padStart = exports.convertToSequenceDOMString = exports.convertToDOMString = exports.enforceRange = exports.isValidKeyPath = exports.defineReadonlyProperties = exports.isIterable = exports.isBinary = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlQuote = exports.sqlLIKEEscape = exports.escapeIndexNameForSQLKeyColumn = exports.escapeIndexNameForSQL = exports.escapeStoreNameForSQL = exports.unescapeDatabaseNameForSQLAndFiles = exports.escapeDatabaseNameForSQLAndFiles = exports.unescapeSQLiteResponse = exports.escapeSQLiteStatement = undefined;
+exports.padStart = exports.convertToSequenceDOMString = exports.convertToDOMString = exports.enforceRange = exports.isValidKeyPath = exports.defineReadonlyProperties = exports.defineListenerProperties = exports.defineReadonlyOuterInterface = exports.defineOuterInterface = exports.isIterable = exports.isBinary = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlQuote = exports.sqlLIKEEscape = exports.escapeIndexNameForSQLKeyColumn = exports.escapeIndexNameForSQL = exports.escapeStoreNameForSQL = exports.unescapeDatabaseNameForSQLAndFiles = exports.escapeDatabaseNameForSQLAndFiles = exports.unescapeSQLiteResponse = exports.escapeSQLiteStatement = undefined;
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
@@ -7734,6 +7569,8 @@ var _unicodeRegex2 = _interopRequireDefault(_unicodeRegex);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _defineEnumerableProperties(obj, descs) { for (var key in descs) { var desc = descs[key]; desc.configurable = desc.enumerable = true; if ("value" in desc) desc.writable = true; Object.defineProperty(obj, key, desc); } return obj; }
 
 function escapeUnmatchedSurrogates(arg) {
     // http://stackoverflow.com/a/6701665/271577
@@ -7897,21 +7734,72 @@ function isIterable(obj) {
     return isObj(obj) && typeof obj[Symbol.iterator] === 'function';
 }
 
+function defineOuterInterface(obj, props) {
+    props.forEach(function (prop) {
+        var _o, _mutatorMap;
+
+        var o = (_o = {}, _mutatorMap = {}, _mutatorMap[prop] = _mutatorMap[prop] || {}, _mutatorMap[prop].get = function () {
+            throw new TypeError('Illegal invocation');
+        }, _mutatorMap[prop] = _mutatorMap[prop] || {}, _mutatorMap[prop].set = function (val) {
+            throw new TypeError('Illegal invocation');
+        }, _defineEnumerableProperties(_o, _mutatorMap), _o);
+        var desc = Object.getOwnPropertyDescriptor(o, prop);
+        Object.defineProperty(obj, prop, desc);
+    });
+}
+
+function defineReadonlyOuterInterface(obj, props) {
+    props.forEach(function (prop) {
+        var _o2, _mutatorMap2;
+
+        var o = (_o2 = {}, _mutatorMap2 = {}, _mutatorMap2[prop] = _mutatorMap2[prop] || {}, _mutatorMap2[prop].get = function () {
+            throw new TypeError('Illegal invocation');
+        }, _defineEnumerableProperties(_o2, _mutatorMap2), _o2);
+        var desc = Object.getOwnPropertyDescriptor(o, prop);
+        Object.defineProperty(obj, prop, desc);
+    });
+}
+
+function defineListenerProperties(obj, listeners) {
+    listeners = typeof listeners === 'string' ? [listeners] : listeners;
+    listeners.forEach(function (listener) {
+        var _o3, _mutatorMap3;
+
+        var o = (_o3 = {}, _mutatorMap3 = {}, _mutatorMap3[listener] = _mutatorMap3[listener] || {}, _mutatorMap3[listener].get = function () {
+            return obj['__' + listener];
+        }, _mutatorMap3[listener] = _mutatorMap3[listener] || {}, _mutatorMap3[listener].set = function (val) {
+            obj['__' + listener] = val;
+        }, _defineEnumerableProperties(_o3, _mutatorMap3), _o3);
+        var desc = Object.getOwnPropertyDescriptor(o, listener);
+        // desc.enumerable = true; // Default
+        // desc.configurable = true; // Default // Needed by support.js in W3C IndexedDB tests (for openListeners)
+        Object.defineProperty(obj, listener, desc);
+    });
+    listeners.forEach(function (l) {
+        obj[l] = null;
+    });
+}
+
 function defineReadonlyProperties(obj, props) {
     props = typeof props === 'string' ? [props] : props;
     props.forEach(function (prop) {
+        var _o4, _mutatorMap4;
+
         Object.defineProperty(obj, '__' + prop, {
             enumerable: false,
             configurable: false,
             writable: true
         });
-        Object.defineProperty(obj, prop, {
-            enumerable: true,
-            configurable: true,
-            get: function get() {
-                return this['__' + prop];
-            }
-        });
+
+        // We must resort to this to get "get <name>" as
+        //   the function `name` for proper IDL
+        var o = (_o4 = {}, _mutatorMap4 = {}, _mutatorMap4[prop] = _mutatorMap4[prop] || {}, _mutatorMap4[prop].get = function () {
+            return this['__' + prop];
+        }, _defineEnumerableProperties(_o4, _mutatorMap4), _o4);
+        var desc = Object.getOwnPropertyDescriptor(o, prop);
+        // desc.enumerable = true; // Default
+        // desc.configurable = true; // Default
+        Object.defineProperty(obj, prop, desc);
     });
 }
 
@@ -8008,6 +7896,9 @@ exports.isRegExp = isRegExp;
 exports.isFile = isFile;
 exports.isBinary = isBinary;
 exports.isIterable = isIterable;
+exports.defineOuterInterface = defineOuterInterface;
+exports.defineReadonlyOuterInterface = defineReadonlyOuterInterface;
+exports.defineListenerProperties = defineListenerProperties;
 exports.defineReadonlyProperties = defineReadonlyProperties;
 exports.isValidKeyPath = isValidKeyPath;
 exports.enforceRange = enforceRange;

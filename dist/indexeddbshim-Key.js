@@ -1322,7 +1322,7 @@ module.exports = /[\xC0-\xC5\xC7-\xCF\xD1-\xD6\xD9-\xDD\xE0-\xE5\xE7-\xEF\xF1-\x
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.padStart = exports.convertToSequenceDOMString = exports.convertToDOMString = exports.enforceRange = exports.isValidKeyPath = exports.defineReadonlyProperties = exports.isIterable = exports.isBinary = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlQuote = exports.sqlLIKEEscape = exports.escapeIndexNameForSQLKeyColumn = exports.escapeIndexNameForSQL = exports.escapeStoreNameForSQL = exports.unescapeDatabaseNameForSQLAndFiles = exports.escapeDatabaseNameForSQLAndFiles = exports.unescapeSQLiteResponse = exports.escapeSQLiteStatement = undefined;
+exports.padStart = exports.convertToSequenceDOMString = exports.convertToDOMString = exports.enforceRange = exports.isValidKeyPath = exports.defineReadonlyProperties = exports.defineListenerProperties = exports.defineReadonlyOuterInterface = exports.defineOuterInterface = exports.isIterable = exports.isBinary = exports.isFile = exports.isRegExp = exports.isBlob = exports.isDate = exports.isObj = exports.instanceOf = exports.sqlQuote = exports.sqlLIKEEscape = exports.escapeIndexNameForSQLKeyColumn = exports.escapeIndexNameForSQL = exports.escapeStoreNameForSQL = exports.unescapeDatabaseNameForSQLAndFiles = exports.escapeDatabaseNameForSQLAndFiles = exports.unescapeSQLiteResponse = exports.escapeSQLiteStatement = undefined;
 
 var _CFG = require('./CFG');
 
@@ -1484,6 +1484,54 @@ function isIterable(obj) {
     return isObj(obj) && typeof obj[Symbol.iterator] === 'function';
 }
 
+function defineOuterInterface(obj, props) {
+    props.forEach(prop => {
+        const o = {
+            get [prop]() {
+                throw new TypeError('Illegal invocation');
+            },
+            set [prop](val) {
+                throw new TypeError('Illegal invocation');
+            }
+        };
+        const desc = Object.getOwnPropertyDescriptor(o, prop);
+        Object.defineProperty(obj, prop, desc);
+    });
+}
+
+function defineReadonlyOuterInterface(obj, props) {
+    props.forEach(prop => {
+        const o = {
+            get [prop]() {
+                throw new TypeError('Illegal invocation');
+            }
+        };
+        const desc = Object.getOwnPropertyDescriptor(o, prop);
+        Object.defineProperty(obj, prop, desc);
+    });
+}
+
+function defineListenerProperties(obj, listeners) {
+    listeners = typeof listeners === 'string' ? [listeners] : listeners;
+    listeners.forEach(listener => {
+        const o = {
+            get [listener]() {
+                return obj['__' + listener];
+            },
+            set [listener](val) {
+                obj['__' + listener] = val;
+            }
+        };
+        const desc = Object.getOwnPropertyDescriptor(o, listener);
+        // desc.enumerable = true; // Default
+        // desc.configurable = true; // Default // Needed by support.js in W3C IndexedDB tests (for openListeners)
+        Object.defineProperty(obj, listener, desc);
+    });
+    listeners.forEach(l => {
+        obj[l] = null;
+    });
+}
+
 function defineReadonlyProperties(obj, props) {
     props = typeof props === 'string' ? [props] : props;
     props.forEach(function (prop) {
@@ -1492,13 +1540,18 @@ function defineReadonlyProperties(obj, props) {
             configurable: false,
             writable: true
         });
-        Object.defineProperty(obj, prop, {
-            enumerable: true,
-            configurable: true,
-            get() {
+
+        // We must resort to this to get "get <name>" as
+        //   the function `name` for proper IDL
+        const o = {
+            get [prop]() {
                 return this['__' + prop];
             }
-        });
+        };
+        const desc = Object.getOwnPropertyDescriptor(o, prop);
+        // desc.enumerable = true; // Default
+        // desc.configurable = true; // Default
+        Object.defineProperty(obj, prop, desc);
     });
 }
 
@@ -1594,6 +1647,9 @@ exports.isRegExp = isRegExp;
 exports.isFile = isFile;
 exports.isBinary = isBinary;
 exports.isIterable = isIterable;
+exports.defineOuterInterface = defineOuterInterface;
+exports.defineReadonlyOuterInterface = defineReadonlyOuterInterface;
+exports.defineListenerProperties = defineListenerProperties;
 exports.defineReadonlyProperties = defineReadonlyProperties;
 exports.isValidKeyPath = isValidKeyPath;
 exports.enforceRange = enforceRange;

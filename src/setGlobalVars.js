@@ -42,7 +42,7 @@ function setGlobalVars (idb, initialConfig) {
         if (IDB[name] !== value && Object.defineProperty) {
             // Setting a read-only property failed, so try re-defining the property
             try {
-                const desc = propDesc || {};
+                let desc = propDesc || {};
                 if (!('get' in desc)) {
                     if (!('value' in desc)) {
                         desc.value = value;
@@ -50,6 +50,13 @@ function setGlobalVars (idb, initialConfig) {
                     if (!('writable' in desc)) {
                         desc.writable = true;
                     }
+                } else {
+                    const o = {
+                        get [name] () {
+                            return propDesc.get.call(this);
+                        }
+                    };
+                    desc = Object.getOwnPropertyDescriptor(o, name);
                 }
                 Object.defineProperty(IDB, name, desc);
             } catch (e) {
