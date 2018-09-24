@@ -1,8 +1,9 @@
 # IndexedDBShim changes
 
-## ?
+## 3.10.0
 
-- Fix: Ensure sorts address possibility of nested array keys (Courtesy lgtm)
+- Fix: Ensure multiEntry sorts address possibility of nested array
+    keys (Courtesy lgtm)
 - Fix: For interface tests, ensure properties are getter based
 - Refactoring: Factor out common interface code (making
     `IDBRequest` and `IDBOpenRequest` listeners `enumerable` too)
