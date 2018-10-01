@@ -24,7 +24,7 @@ const wwutil = require('./webworker-util');
 //   as a separate repository (due to indirect circular dependency?);
 // const indexeddbshim = require('indexeddbshim');
 const indexeddbshim = require('../../dist/indexeddbshim-UnicodeIdentifiers-node'); // require('../../');
-const XMLHttpRequest = require('xmlhttprequest');
+const XMLHttpRequest = require('local-xmlhttprequest');
 const Worker = require('./webworker');
 const URL = require('js-polyfills/url');
 // const isDateObject = require('is-date-object'); // Not needed in worker tests as in main thread tests
