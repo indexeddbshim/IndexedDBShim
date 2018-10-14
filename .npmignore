@@ -1,5 +1,4 @@
 /docs
-/examples
 /ignore
 /test-support
 /tests-mocha
@@ -7,5 +6,6 @@
 /tests-qunit
 /web-platform-tests
 /*.*
+!index.html
 !LICENSE-MIT.txt
 !LICENSE-APACHE.txt

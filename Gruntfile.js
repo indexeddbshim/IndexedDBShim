@@ -160,7 +160,7 @@ module.exports = function (grunt) {
                     sourceMap: true,
                     sourceMapIn: 'dist/<%=pkg.name%>-Key.js.map',
                     sourceMapName: 'dist/<%=pkg.name%>-Key.min.js.map',
-                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v' + pkg.version + '/dist/'
+                    sourceMapRoot: 'https://raw.githack.com/axemclion/IndexedDBShim/v' + pkg.version + '/dist/'
                 },
                 src: 'dist/<%= pkg.name%>-Key.js',
                 dest: 'dist/<%= pkg.name%>-Key.min.js'
@@ -171,7 +171,7 @@ module.exports = function (grunt) {
                     sourceMap: true,
                     sourceMapIn: 'dist/<%=pkg.name%>-UnicodeIdentifiers.js.map',
                     sourceMapName: 'dist/<%=pkg.name%>-UnicodeIdentifiers.min.js.map',
-                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v' + pkg.version + '/dist/'
+                    sourceMapRoot: 'https://raw.githack.com/axemclion/IndexedDBShim/v' + pkg.version + '/dist/'
                 },
                 src: 'dist/<%= pkg.name%>-UnicodeIdentifiers.js',
                 dest: 'dist/<%= pkg.name%>-UnicodeIdentifiers.min.js'
