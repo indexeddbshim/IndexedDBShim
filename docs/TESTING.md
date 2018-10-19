@@ -69,7 +69,7 @@ in two ways.
     <http://web-platform.test:8000/IndexedDB/historical.html>
     becomes
     <http://web-platform.test:8000/IndexedDB/historical.html.any.html>.
-2. The second way, unlike the first, allows files to be run from the
+1. The second way, unlike the first, allows files to be run from the
     W3C test runner at <http://web-platform.test:8000/tools/runner/index.html>,
     but it involves modifying files within `web-platform-tests` (you can use
     `git reset` to undo, however). You can then run `npm run w3c-wrap` and
@@ -83,11 +83,11 @@ To run the Node tests, run the following:
 
 1. `npm run node-qunit` - The full test suite sometimes
     [does not complete execution](https://github.com/axemclion/IndexedDBShim/issues/251).
-2. `npm run mocha`
-3. `npm run tests-polyfill` (or its components `npm run fake`,
+1. `npm run mocha`
+1. `npm run tests-polyfill` (or its components `npm run fake`,
     `npm run mock`, `npm run w3c-old`). Note that only `fake` is
     currently passing in full, however.
-4. `npm run web-platform-tests` and in a separate terminal window,
+1. `npm run web-platform-tests` and in a separate terminal window,
     `npm run w3c` (you must first run
     `git submodule update --init --recursive` (possibly without
     [init](http://stackoverflow.com/a/10168693/271577) too if using

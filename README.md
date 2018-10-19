@@ -113,10 +113,10 @@ This function defines `shimIndexedDB`, `indexedDB`, `IDBFactory`, etc. on
 one of the following objects in order of precedence:
 
 1. The passed in `winObj` object if defined
-2. `window` (for Node, define `global.window = global;`)
-3. `self` (for web workers)
-4. `global` (for Node)
-5. A new empty object
+1. `window` (for Node, define `global.window = global;`)
+1. `self` (for web workers)
+1. `global` (for Node)
+1. A new empty object
 
 The `initialConfig` argument, if present, should be an object whose keys
 are the config properties to set and its values are the config values (see
@@ -417,7 +417,7 @@ to resolve:
 
 1. `blocked` and `versionchange` `IDBVersionChangeEvent` event support ([#2](https://github.com/axemclion/IndexedDBShim/issues/2) and [#273](https://github.com/axemclion/IndexedDBShim/issues/273)) across
 processes/browser windows
-2. Some issues related to [task/micro-task timing](https://github.com/axemclion/IndexedDBShim/issues/296)
+1. Some issues related to [task/micro-task timing](https://github.com/axemclion/IndexedDBShim/issues/296)
 in Node (for inherent limitations in the browser, see below).
 
 There are a few bugs that are outside of our power to fix.  Namely:
@@ -479,14 +479,14 @@ Due to [certain challenges](http://stackoverflow.com/questions/42170826/categori
 in detecting cloneable objects from within JavaScript, there are certain limitations regarding cloning:
 
 1. We cannot properly detect `Proxy` to throw upon encountering such non-cloneable objects
-2. Our reliance on `Object.prototype.toString` to detect uncloneable objects can fail
+1. Our reliance on `Object.prototype.toString` to detect uncloneable objects can fail
     if that method is overridden or if `Symbol.toStringTag` is used to change the
     default reporting of a given "class".
-3. Although they are currently working, we were only able to resolve `Blob`, `File`, and `FileList` objects synchronously (as [required per spec](https://github.com/axemclion/IndexedDBShim/issues/285))
+1. Although they are currently working, we were only able to resolve `Blob`, `File`, and `FileList` objects synchronously (as [required per spec](https://github.com/axemclion/IndexedDBShim/issues/285))
     using the now-deprecated XMLHttpRequest synchronous API.
-4. Without a means of transferring `ArrayBuffer` objects in Node, we cannot meet the
+1. Without a means of transferring `ArrayBuffer` objects in Node, we cannot meet the
     requirement to fail upon encountering detached binary objects.
-5. They may be other subtleties we have not been able to work around.
+1. They may be other subtleties we have not been able to work around.
 
 We have, however, overcome some cloning issues still faced by browser implementations, e.g., in Chrome (issue [#698564](https://bugs.chromium.org/p/chromium/issues/detail?id=698564))
 (re: not failing on `WeakMap`, `WeakSet`, `Promise`, and `Object.prototype`).
@@ -509,7 +509,7 @@ Due to a [bug in WebKit](https://bugs.webkit.org/show_bug.cgi?id=137034), the
 IndexedDBShim.  There are two possible workarounds for this:
 
 1. Use `window.shimIndexedDB` instead of `window.indexedDB`
-2. Create an `indexedDB` variable in your closure
+1. Create an `indexedDB` variable in your closure
 
 By creating a variable named `indexedDB`, all the code within that closure
 will use the variable instead of the `window.indexedDB` property.  For example:
@@ -548,13 +548,13 @@ unfortunately loads all W3C tests into the "web-platform-tests"
 subdirectory rather than just the IndexedDB ones). Otherwise, just use
 `git clone https://github.com/axemclion/IndexedDBShim.git`
 
-2. __Install dev dependencies (and websql for Node)__
+1. __Install dev dependencies (and websql for Node)__
 `npm install`
 
-3. __Run the build script__
+1. __Run the build script__
 `npm start`
 
-4. __Done__
+1. __Done__
 
 The output files will be generated in the `dist` directory
 

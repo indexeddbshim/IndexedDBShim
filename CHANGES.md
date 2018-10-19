@@ -711,9 +711,9 @@ they were actually changes since a more recent version on `master`.
     errors.
 - Fix: Throw `InvalidStateError` `DOMException` upon deleted object store or index for:
     1. cursor-related operations
-    2. index and store name setters
-    3. index and store get or manipulation operations
-    4. index creation, deletion, or retrieval operations
+    1. index and store name setters
+    1. index and store get or manipulation operations
+    1. index creation, deletion, or retrieval operations
 - Fix: Ensure will throw `InvalidStateError` `DOMException` as with deleted
     object stores or indexes for access after an aborted transaction when
     there were pending object stores or indexes to be created
