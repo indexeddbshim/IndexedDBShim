@@ -4,7 +4,6 @@ import * as util from './util';
 import DOMStringList from './DOMStringList';
 import IDBObjectStore from './IDBObjectStore';
 import IDBTransaction from './IDBTransaction';
-import CFG from './CFG';
 import {EventTargetFactory} from 'eventtargeter';
 
 const listeners = ['onabort', 'onclose', 'onerror', 'onversionchange'];
@@ -172,12 +171,7 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
     //   prioritizing readonly but not starving readwrite).
     // Even for readonly transactions, due to [issue 17](https://github.com/nolanlawson/node-websql/issues/17),
     //   we're not currently actually running the SQL requests in parallel.
-    if (typeof mode === 'number') {
-        mode = mode === 1 ? 'readwrite' : 'readonly';
-        CFG.DEBUG && console.log('Mode should be a string, but was specified as ', mode); // Todo Deprecated: Remove this option as no longer in spec
-    } else {
-        mode = mode || 'readonly';
-    }
+    mode = mode || 'readonly';
 
     IDBTransaction.__assertNotVersionChange(this.__versionTransaction);
     if (this.__closed) {

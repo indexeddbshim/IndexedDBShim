@@ -1,5 +1,18 @@
 # IndexedDBShim changes
 
+## 4.0.0
+
+- Breaking change: Switch from `babel-polyfill` to `@babel/polyfill`
+    (script tag paths for polyfill will need to be updated)
+- Breaking change: Remove support for previously deprecated numeric
+    constants as second arguments to `IDBDatabase.prototype.transaction`
+    (to use `readonly`/`readwrite` instead).
+- Linting (ESLint): Switch Node-11-deprecated url methods
+- Docs: Add "versions" section for migration info; note in code on
+    deprecating old typeson names
+- npm: Update devDeps (and their local copies); avoid `js-polyfills`
+    in favor of Node `URL`/`URLSearchParams`
+
 ## 3.10.0
 
 - Fix: Ensure multiEntry sorts address possibility of nested array

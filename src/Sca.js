@@ -57,9 +57,9 @@ const newTypeNamesToLegacy = {
     float64array: 'Float64Array'
 };
 
-// Todo: We should make this conditional on CONFIG and deprecate the legacy
-//   names, but for compatibility with data created under this major version,
-//   we need the legacy now
+// Todo (deprecated): We should make this conditional on CONFIG and deprecate
+//   the legacy names, but for compatibility with data created under this
+//   major version, we need the legacy now
 
 // console.log('StructuredCloning1', JSON.stringify(structuredCloning));
 traverseMapToRevertToLegacyTypeNames(structuredCloning);

@@ -23,7 +23,7 @@ if (process.argv[2] === 'remove') {
         `<!DOCTYPE html>
 <meta charset="utf-8" />
 <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon" />
-<script src="http://localhost:9999/node_modules/babel-polyfill/dist/polyfill.js"></script>
+<script src="http://localhost:9999/node_modules/@babel/polyfill/dist/polyfill.js"></script>
 <script src="http://localhost:9999/dist/indexeddbshim-noninvasive.min.js"></script>
 `);
 
@@ -112,7 +112,7 @@ loaderWin.addEventListener('DOMContentLoaded', function () {
 
         const htmlFiles = files.filter((f) => (/\.html?$/).test(f));
         const polyfillScript = `
-<script src="http://localhost:9999/node_modules/babel-polyfill/dist/polyfill.js"></script>
+<script src="http://localhost:9999/node_modules/@babel/polyfill/dist/polyfill.js"></script>
 <script src="http://localhost:9999/dist/indexeddbshim-noninvasive.js"></script>
 <script>
     'use strict';

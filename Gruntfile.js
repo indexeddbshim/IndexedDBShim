@@ -4,11 +4,11 @@
 const babelBrowserOptions = {
     sourceMapsAbsolute: true,
     plugins: ['add-module-exports'],
-    presets: ['env']
+    presets: ['@babel/env']
 };
 const babelES6BrowserOptions = Object.assign({}, babelBrowserOptions, {
     presets: [
-        ['env', {
+        ['@babel/env', {
             targets: {
                 chrome: '62'
             }
@@ -18,7 +18,7 @@ const babelES6BrowserOptions = Object.assign({}, babelBrowserOptions, {
 
 const babelNodeOptions = Object.assign({}, babelBrowserOptions, {
     presets: [
-        ['env', {
+        ['@babel/env', {
             targets: {
                 node: '6.9'
             }
@@ -403,7 +403,7 @@ module.exports = function (grunt) {
         copy: {
             'test-files': {
                 files: [
-                    {src: 'node_modules/babel-polyfill/dist/polyfill.js', dest: 'test-support/babel-polyfill/dist/polyfill.js', filter: 'isFile'},
+                    {src: 'node_modules/@babel/polyfill/dist/polyfill.js', dest: 'test-support/@babel/polyfill/dist/polyfill.js', filter: 'isFile'},
                     {src: 'node_modules/source-map-support/browser-source-map-support.js', dest: 'test-support/source-map-support/browser-source-map-support.js', filter: 'isFile'},
                     {src: 'node_modules/mocha/mocha.css', dest: 'test-support/mocha/mocha.css', filter: 'isFile'},
                     {src: 'node_modules/mocha/mocha.js', dest: 'test-support/mocha/mocha.js', filter: 'isFile'},

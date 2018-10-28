@@ -65,7 +65,7 @@ npm install indexeddbshim
 Add the following scripts to your page:
 
 ```html
-<script src="node_modules/babel-polyfill/dist/polyfill.min.js"></script>
+<script src="node_modules/@babel/polyfill/dist/polyfill.min.js"></script>
 <script src="dist/indexeddbshim.min.js"></script>
 ```
 
@@ -74,7 +74,7 @@ non-alphanumeric identifiers in store and index names),
 use the following instead:
 
 ```html
-<script src="node_modules/babel-polyfill/dist/polyfill.min.js"></script>
+<script src="node_modules/@babel/polyfill/dist/polyfill.min.js"></script>
 <script src="dist/indexeddbshim-UnicodeIdentifiers.min.js"></script>
 ```
 
@@ -558,22 +558,9 @@ subdirectory rather than just the IndexedDB ones). Otherwise, just use
 
 The output files will be generated in the `dist` directory
 
-## Upgrading from version 2.*
+## Upgrading from previous versions
 
-Besides some backward-breaking (though standard-compliant) behavioral fixes
-(see [CHANGES](CHANGES.md)), there are changes in version 3 which also
-unfortunately cause data stored under version 2 to break. We are not
-able to provide you with an automated upgrade path, so you will need to
-either stick with version 2 or migrate users' data yourself to the new
-SQL storage format (whose changes are considerable; [CHANGES](CHANGES.md)
-also lists these breaking database format changes).
-
-We have attempted to anticipate future changes so that for another upgrade,
-even a major one, old data will hopefully continue to work. However, to be
-safe, if you are using npm, be sure to specify semver targets in your
-dependencies properly so as to avoid allowing for automated upgrades to
-the next major version in case another future upgrade may also need to
-introduce breaking changes to the data format, thereby breaking old data.***
+See [Versions](docs/versions/) for migration information.
 
 ## Testing
 

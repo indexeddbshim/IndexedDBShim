@@ -5,7 +5,7 @@ const BSON = require('bson');
 const events = require('events');
 const path = require('path');
 const util = require('util');
-const urllib = require('url');
+const {URL} = require('url');
 
 const bson = new BSON();
 
@@ -126,7 +126,7 @@ exports.makeFileURL = function (workerConfig, dir) {
 //   Leverage URL/URLSearchParams polyfill?
 // XXX: None of these properties are readonly as required by the spec.
 const WorkerLocation = function (url) {
-    const u = urllib.parse(url);
+    const u = new URL(url); // eslint-disable-line compat/compat
 
     // https://url.spec.whatwg.org/#url-miscellaneous
     const portForProto = function (proto) {

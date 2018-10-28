@@ -1,3 +1,4 @@
+/* eslint-disable compat/compat */
 // Todo: SharedWorker/ServiceWorker/MessageChannel polyfills
 // WebWorkers implementation.
 //
@@ -40,6 +41,7 @@ const WebSocketServer = require('ws').Server;
 const os = require('os');
 const url = require('url');
 const isWin = /^win/.test(os.platform());
+const {URL} = url;
 
 // Directory for our UNIX domain sockets
 const SOCK_DIR_PATH = path.join(os.tmpdir(), 'node-webworker-' + process.pid);
@@ -77,7 +79,9 @@ module.exports = function (workerConfig) {
         opts = opts || {};
 
         let basePath;
-        const urlObj = url.parse(src);
+        // We don't use `new URL` as we need `url.parse` relative URL behavior; see
+        //   https://github.com/nodejs/node/issues/12682
+        const urlObj = url.parse(src); // eslint-disable-line node/no-deprecated-api
         if (urlObj.host !== null) {
             const {protocol} = urlObj;
             if (!(workerConfig.permittedProtocols || ['http', 'https']).map((p) => p + ':').includes(protocol)) {
@@ -95,7 +99,7 @@ module.exports = function (workerConfig) {
                     src = wwutil.makeFileURL(workerConfig, basePath);
                 } else {
                     // basePath = wwutil.makeFileURL(workerConfig, process.cwd());
-                    src = url.resolve(basePath, src);
+                    src = new URL(src, basePath);
                 }
             }
         } else {
@@ -107,7 +111,7 @@ module.exports = function (workerConfig) {
                 basePath = wwutil.makeFileURL(workerConfig, basePath);
             }
             basePath = basePath || wwutil.makeFileURL(workerConfig, process.cwd()) || 'http://localhost';
-            src = url.resolve(basePath, src);
+            src = new URL(src, basePath);
             // const urlObj = url.parse(src);
         }
 

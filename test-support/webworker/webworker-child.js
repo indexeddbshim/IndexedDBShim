@@ -26,7 +26,7 @@ const wwutil = require('./webworker-util');
 const indexeddbshim = require('../../dist/indexeddbshim-UnicodeIdentifiers-node'); // require('../../');
 const XMLHttpRequest = require('local-xmlhttprequest');
 const Worker = require('./webworker');
-const URL = require('js-polyfills/url');
+const {URL, URLSearchParams} = require('url');
 // const isDateObject = require('is-date-object'); // Not needed in worker tests as in main thread tests
 const Blob = require('w3c-blob'); // Needed by Node; uses native if available (browser)
 const http = require('http');
@@ -330,8 +330,8 @@ prom.then((scriptSource) => {
     workerCtx.DOMException = workerCtx.ShimDOMException;
 
     workerCtx.XMLHttpRequest = XMLHttpRequest({basePath: workerConfig.basePath});
-    workerCtx.URL = URL.URL;
-    workerCtx.URLSearchParams = URL.URLSearchParams;
+    workerCtx.URL = URL;
+    workerCtx.URLSearchParams = URLSearchParams;
 
     workerCtx.Worker = Worker({
         relativePathType: 'file', // Todo: We need to change this to "url" when implemented
