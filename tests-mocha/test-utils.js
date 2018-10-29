@@ -214,7 +214,7 @@
          */
         asyncForEach (array, done, iterator) {
             var i = 0;
-            next();
+            return next();
 
             function next (err) {
                 if (err) {
@@ -230,8 +230,9 @@
                         var request = iterator(item, i - 1, function (err) {
                             if (!nextCalled) {
                                 nextCalled = true;
-                                next(err);
+                                return next(err);
                             }
+                            return undefined;
                         });
 
                         // If it returned an IDBRequest or IDBTransaction, then bind to its events
@@ -243,8 +244,9 @@
                                     try {
                                         err = request.error;
                                     } catch (e) { /* Some browsers throw an error when accessing the error property */ }
-                                    next(err);
+                                    return next(err);
                                 }
+                                return undefined;
                             };
                         }
                     }, typeof window !== 'undefined' && typeof global === 'undefined' ? 0 : 300);
@@ -259,7 +261,8 @@
             window.onerror = function () {
                 stateObj.erred = true;
                 if (cb) {
-                    return cb();
+                    cb();
+                    return;
                 }
                 util._onerror.apply(window, arguments);
             };

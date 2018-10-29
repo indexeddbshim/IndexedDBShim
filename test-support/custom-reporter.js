@@ -43,11 +43,11 @@
     //   our IDB object is injected rather than inline
     // jsdom doesn't make them available as `window` properties
     Object.defineProperty(Array, Symbol.hasInstance, {
-        value: obj => Array.isArray(obj)
+        value: (obj) => Array.isArray(obj)
     });
 
     Object.defineProperty(Date, Symbol.hasInstance, {
-        value: obj => shimNS.isDateObject(obj)
+        value: (obj) => shimNS.isDateObject(obj)
     });
 
     const {colors} = shimNS;
@@ -83,7 +83,7 @@
         // Insert our own reporting to be ready once tests evaluate
         const trs = [...document.querySelectorAll('table#results > tbody > tr')];
         const jsonOutput = {
-            test: '/indexeddb/' + fileName.replace(/\.js$/, '.htm'),
+            test: '/indexeddb/' + fileName.replace(/\.js$/u, '.htm'),
             subtests: [],
             status: 'OK', // When does the status at this level change?
             message: null // When does the message at this level change?

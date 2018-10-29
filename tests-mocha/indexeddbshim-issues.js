@@ -2,11 +2,13 @@
 /* eslint-disable no-unused-expressions */
 global.window = global;
 window.chai = require('chai');
+const fs = require('fs');
+
 const {expect, assert} = window.chai;
 
 describe('database config', function () {
     it('should not err in cleaning up memory database resources', function (done) {
-        const setGlobalVars = require('../dist/indexeddbshim-node.js');
+        const setGlobalVars = require('../dist/indexeddbshim-node.js'); // eslint-disable-line global-require
 
         setGlobalVars(null, {
             DEBUG: false,
@@ -32,9 +34,7 @@ describe('database config', function () {
     });
 
     it('should respect the `databaseBasePath` setting for deletions', function (done) {
-        const fs = require('fs');
-
-        const setGlobalVars = require('../dist/indexeddbshim-node.js');
+        const setGlobalVars = require('../dist/indexeddbshim-node.js'); // eslint-disable-line global-require
 
         if (!fs.existsSync('foo')) {
             fs.mkdirSync('foo');

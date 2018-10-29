@@ -1,19 +1,23 @@
 /* globals location, Event */
-import {createEvent, ShimEvent, ShimCustomEvent, ShimEventTarget} from './Event';
+import path from 'path';
+import SyncPromise from 'sync-promise';
+
+import {createEvent} from './Event';
 import IDBVersionChangeEvent from './IDBVersionChangeEvent';
-import {logError, webSQLErrback, createDOMException, ShimDOMException} from './DOMException';
-import {IDBOpenDBRequest, IDBRequest} from './IDBRequest';
+import {logError, webSQLErrback, createDOMException} from './DOMException';
+import {IDBOpenDBRequest} from './IDBRequest';
 import cmp from './cmp';
-import ShimDOMStringList from './DOMStringList';
 import * as util from './util';
 import * as Key from './Key';
 import IDBTransaction from './IDBTransaction';
 import IDBDatabase from './IDBDatabase';
 import CFG from './CFG';
-import SyncPromise from 'sync-promise';
-import path from 'path';
 
-const getOrigin = () => (typeof location !== 'object' || !location) ? 'null' : location.origin;
+const fs = ({}.toString.call(process) === '[object process]') ? require('fs') : null;
+
+const getOrigin = () => {
+    return (typeof location !== 'object' || !location) ? 'null' : location.origin;
+};
 const hasNullOrigin = () => CFG.checkOrigin !== false && (getOrigin() === 'null');
 
 // Todo: This really should be process and tab-independent so the
@@ -60,7 +64,7 @@ function triggerAnyVersionChangeAndBlockedEvents (openConnections, req, oldVersi
         return promises.then(function () {
             if (connectionIsClosed(entry)) {
                 // Prior onversionchange must have caused this connection to be closed
-                return;
+                return undefined;
             }
             const e = new IDBVersionChangeEvent('versionchange', {oldVersion, newVersion});
             return new SyncPromise(function (resolve) {
@@ -71,30 +75,31 @@ function triggerAnyVersionChangeAndBlockedEvents (openConnections, req, oldVersi
             });
         });
     }, SyncPromise.resolve()).then(function () {
-        if (!connectionsClosed()) {
-            return new SyncPromise(function (resolve) {
-                const unblocking = {
-                    check () {
-                        if (connectionsClosed()) {
-                            resolve();
-                        }
-                    }
-                };
-                const e = new IDBVersionChangeEvent('blocked', {oldVersion, newVersion});
-                setTimeout(() => {
-                    req.dispatchEvent(e); // No need to catch errors
-                    if (!connectionsClosed()) {
-                        openConnections.forEach((connection) => {
-                            if (!connectionIsClosed(connection)) {
-                                connection.__unblocking = unblocking;
-                            }
-                        });
-                    } else {
+        if (connectionsClosed()) {
+            return undefined;
+        }
+        return new SyncPromise(function (resolve) {
+            const unblocking = {
+                check () {
+                    if (connectionsClosed()) {
                         resolve();
                     }
-                });
+                }
+            };
+            const e = new IDBVersionChangeEvent('blocked', {oldVersion, newVersion});
+            setTimeout(() => {
+                req.dispatchEvent(e); // No need to catch errors
+                if (!connectionsClosed()) {
+                    openConnections.forEach((connection) => {
+                        if (!connectionIsClosed(connection)) {
+                            connection.__unblocking = unblocking;
+                        }
+                    });
+                } else {
+                    resolve();
+                }
             });
-        }
+        });
     });
 }
 
@@ -104,7 +109,9 @@ let nameCounter = 0;
 
 function getLatestCachedWebSQLVersion (name) {
     return Object.keys(websqlDBCache[name]).map(Number).reduce(
-        (prev, curr) => curr > prev ? curr : prev, 0
+        (prev, curr) => {
+            return curr > prev ? curr : prev;
+        }, 0
     );
 }
 
@@ -137,10 +144,13 @@ function cleanupDatabaseResources (__openDatabase, name, escapedDatabaseName, da
         });
         return;
     }
-    if (CFG.deleteDatabaseFiles !== false && ({}.toString.call(process) === '[object process]')) {
-        require('fs').unlink(path.join(CFG.databaseBasePath || '', escapedDatabaseName), (err) => {
+    if (fs && CFG.deleteDatabaseFiles !== false) {
+        fs.unlink(path.join(CFG.databaseBasePath || '', escapedDatabaseName), (err) => {
             if (err && err.code !== 'ENOENT') { // Ignore if file is already deleted
-                dbError({code: 0, message: 'Error removing database file: ' + escapedDatabaseName + ' ' + err});
+                dbError({
+                    code: 0,
+                    message: 'Error removing database file: ' + escapedDatabaseName + ' ' + err
+                });
                 return;
             }
             databaseDeleted();
@@ -224,7 +234,7 @@ function createSysDB (__openDatabase, success, failure) {
 /**
  * IDBFactory Class
  * https://w3c.github.io/IndexedDB/#idl-def-IDBFactory
- * @constructor
+ * @class
  */
 function IDBFactory () {
     throw new TypeError('Illegal constructor');
@@ -233,17 +243,6 @@ const IDBFactoryAlias = IDBFactory;
 IDBFactory.__createInstance = function () {
     function IDBFactory () {
         this[Symbol.toStringTag] = 'IDBFactory';
-        this.modules = { // Export other shims (especially for testing)
-            Event: typeof Event !== 'undefined' ? Event : ShimEvent,
-            Error, // For test comparisons
-            ShimEvent,
-            ShimCustomEvent,
-            ShimEventTarget,
-            ShimDOMException,
-            ShimDOMStringList,
-            IDBFactory: IDBFactoryAlias
-        };
-        this.utils = {createDOMException}; // Expose for ease in simulating such exceptions during testing
         this.__connections = {};
     }
     IDBFactory.prototype = IDBFactoryAlias.prototype;
@@ -339,7 +338,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                     // Attempt to revert
                                     if (oldVersion === 0) {
                                         systx.executeSql('DELETE FROM dbVersions WHERE "name" = ?', [sqlSafeName], function () {
-                                            cb(reportError);
+                                            cb(reportError); // eslint-disable-line promise/no-callback-in-promise
                                         }, reportError);
                                     } else {
                                         systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [oldVersion, sqlSafeName], cb, reportError);
@@ -348,7 +347,8 @@ IDBFactory.prototype.open = function (name /* , version */) {
                             }
                             return;
                         }
-                        cb(); // In browser, should auto-commit
+                        // In browser, should auto-commit
+                        cb();  // eslint-disable-line promise/no-callback-in-promise
                     };
 
                     sysdb.transaction(function (systx) {
@@ -450,6 +450,10 @@ IDBFactory.prototype.open = function (name /* , version */) {
                         };
                         return false;
                     });
+                    return undefined;
+                }).catch((err) => {
+                    console.log('Error within `triggerAnyVersionChangeAndBlockedEvents`');
+                    throw err;
                 });
             } else {
                 finishRequest();
@@ -617,16 +621,16 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                 sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE "name" = ?', [sqlSafeName], function (sysReadTx, data) {
                     if (data.rows.length === 0) {
                         completeDatabaseDelete();
-                        return;
+                        return undefined;
                     }
-                    version = data.rows.item(0).version;
+                    ({version} = data.rows.item(0));
 
                     const openConnections = me.__connections[name] || [];
-                    triggerAnyVersionChangeAndBlockedEvents(openConnections, req, version, null).then(function () {
+                    triggerAnyVersionChangeAndBlockedEvents(openConnections, req, version, null).then(function () { // eslint-disable-line promise/catch-or-return
                         // Since we need two databases which can't be in a single transaction, we
                         //  do this deleting from `dbVersions` first since the `__sys__` deleting
                         //  only impacts file memory whereas this one is critical for avoiding it
-                        //  being found via `open` or `webkitGetDatabaseNames`; however, we will
+                        //  being found via `open` or `databases`; however, we will
                         //  avoid committing anyways until all deletions are made and rollback the
                         //  `dbVersions` change if they fail
                         sysdb.transaction(function (systx) {
@@ -649,7 +653,9 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                             };
                             return false;
                         });
+                        return undefined;
                     }, dbError);
+                    return undefined;
                 }, dbError);
             });
         }, dbError);
@@ -673,53 +679,47 @@ IDBFactory.prototype.cmp = function (key1, key2) {
 };
 
 /**
-* NON-STANDARD!! (Also may return outdated information if a database has since been deleted)
-* @link https://www.w3.org/Bugs/Public/show_bug.cgi?id=16137
-* @link http://lists.w3.org/Archives/Public/public-webapps/2011JulSep/1537.html
+* May return outdated information if a database has since been deleted
+* @see https://github.com/w3c/IndexedDB/pull/240/files
 */
-IDBFactory.prototype.webkitGetDatabaseNames = function () {
+IDBFactory.prototype.databases = function () {
     const me = this;
-    if (!(me instanceof IDBFactory)) {
-        throw new TypeError('Illegal invocation');
-    }
-    if (hasNullOrigin()) {
-        throw createDOMException('SecurityError', 'Cannot get IndexedDB database names from an opaque origin.');
-    }
-
     let calledDbCreateError = false;
-    function dbGetDatabaseNamesError (tx, err) {
-        if (calledDbCreateError) {
-            return;
+    return new Promise(function (resolve, reject) { // eslint-disable-line promise/avoid-new
+        if (!(me instanceof IDBFactory)) {
+            throw new TypeError('Illegal invocation');
         }
-        err = err ? webSQLErrback(err) : tx;
-        calledDbCreateError = true;
-        // Re: why bubbling here (and how cancelable is only really relevant for `window.onerror`) see: https://github.com/w3c/IndexedDB/issues/86
-        const evt = createEvent('error', err, {bubbles: true, cancelable: true}); // http://stackoverflow.com/questions/40165909/to-where-do-idbopendbrequest-error-events-bubble-up/40181108#40181108
-        req.__readyState = 'done';
-        req.__error = err;
-        req.__result = undefined; // Must be undefined if an error per `result` getter
-        req.dispatchEvent(evt);
-    }
-    const req = IDBRequest.__createInstance();
-    createSysDB(me.__openDatabase, function () {
-        sysdb.readTransaction(function (sysReadTx) {
-            sysReadTx.executeSql('SELECT "name" FROM dbVersions', [], function (sysReadTx, data) {
-                const dbNames = ShimDOMStringList.__createInstance();
-                for (let i = 0; i < data.rows.length; i++) {
-                    dbNames.push(util.unescapeSQLiteResponse(data.rows.item(i).name));
-                }
-                req.__result = dbNames;
-                req.__readyState = 'done'; // https://github.com/w3c/IndexedDB/pull/202
-                const e = createEvent('success'); // http://stackoverflow.com/questions/40165909/to-where-do-idbopendbrequest-error-events-bubble-up/40181108#40181108
-                req.dispatchEvent(e);
+        if (hasNullOrigin()) {
+            throw createDOMException('SecurityError', 'Cannot get IndexedDB database names from an opaque origin.');
+        }
+        function dbGetDatabaseNamesError (tx, err) {
+            if (calledDbCreateError) {
+                return;
+            }
+            err = err ? webSQLErrback(err) : tx;
+            calledDbCreateError = true;
+            reject(err);
+        }
+        createSysDB(me.__openDatabase, function () {
+            sysdb.readTransaction(function (sysReadTx) {
+                sysReadTx.executeSql('SELECT "name", "version" FROM dbVersions', [], function (sysReadTx, data) {
+                    const dbNames = [];
+                    for (let i = 0; i < data.rows.length; i++) {
+                        const {name, version} = data.rows.item(i);
+                        dbNames.push({
+                            name: util.unescapeSQLiteResponse(name),
+                            version
+                        });
+                    }
+                    resolve(dbNames);
+                }, dbGetDatabaseNamesError);
             }, dbGetDatabaseNamesError);
         }, dbGetDatabaseNamesError);
-    }, dbGetDatabaseNamesError);
-    return req;
+    });
 };
 
 /**
-* @Todo __forceClose: Test
+* @todo __forceClose: Test
 * This is provided to facilitate unit-testing of the
 *  closing of a database connection with a forced flag:
 * <http://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>
@@ -729,11 +729,11 @@ IDBFactory.prototype.__forceClose = function (dbName, connIdx, msg) {
     function forceClose (conn) {
         conn.__forceClose(msg);
     }
-    if (dbName == null) {
+    if (util.isNullish(dbName)) {
         Object.values(me.__connections).forEach((conn) => conn.forEach(forceClose));
     } else if (!me.__connections[dbName]) {
         console.log('No database connections with that name to force close');
-    } else if (connIdx == null) {
+    } else if (util.isNullish(connIdx)) {
         me.__connections[dbName].forEach(forceClose);
     } else if (!Number.isInteger(connIdx) || connIdx < 0 || connIdx > me.__connections[dbName].length - 1) {
         throw new TypeError(

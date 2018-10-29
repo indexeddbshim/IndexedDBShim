@@ -72,7 +72,7 @@ const types = {
             // Remove the decimal.
             key32 = (decimalIndex !== -1) ? key32.replace('.', '') : key32;
             // Get the index of the first significant digit.
-            const significantDigitIndex = key32.search(/[^0]/);
+            const significantDigitIndex = key32.search(/[^0]/u);
             // Truncate leading zeros.
             key32 = key32.slice(significantDigitIndex);
             let sign, exponent, mantissa;
@@ -95,20 +95,18 @@ const types = {
                         mantissa = flipBase32(padBase32Mantissa(key32));
                     }
                 // Non-negative cases:
+                // Negative exponent case:
+                } else if (key < 1) {
+                    sign = signValues.indexOf('smallPositive');
+                    exponent = flipBase32(padBase32Exponent(significantDigitIndex));
+                    mantissa = padBase32Mantissa(key32);
+                // Non-negative exponent case:
                 } else {
-                    // Negative exponent case:
-                    if (key < 1) {
-                        sign = signValues.indexOf('smallPositive');
-                        exponent = flipBase32(padBase32Exponent(significantDigitIndex));
-                        mantissa = padBase32Mantissa(key32);
-                    // Non-negative exponent case:
-                    } else {
-                        sign = signValues.indexOf('bigPositive');
-                        exponent = padBase32Exponent(
-                            (decimalIndex !== -1) ? decimalIndex : key32.length
-                        );
-                        mantissa = padBase32Mantissa(key32);
-                    }
+                    sign = signValues.indexOf('bigPositive');
+                    exponent = padBase32Exponent(
+                        (decimalIndex !== -1) ? decimalIndex : key32.length
+                    );
+                    mantissa = padBase32Mantissa(key32);
                 }
             // Infinite cases:
             } else {
@@ -125,7 +123,7 @@ const types = {
         // apply signs to the exponent and mantissa, do the base-32 power operation, and return
         // the original JavaScript number values.
         decode (key) {
-            const sign = +key.substr(2, 1);
+            const sign = Number(key.substr(2, 1));
             let exponent = key.substr(3, 2);
             let mantissa = key.substr(5, 11);
 
@@ -165,7 +163,7 @@ const types = {
         encode (key, inArray) {
             if (inArray) {
                 // prepend each character with a dash, and append a space to the end
-                key = key.replace(/(.)/g, '-$1') + ' ';
+                key = key.replace(/(.)/gu, '-$1') + ' ';
             }
             return keyTypeToEncodedChar.string + '-' + key;
         },
@@ -173,7 +171,7 @@ const types = {
             key = key.slice(2);
             if (inArray) {
                 // remove the space at the end, and the dash before each character
-                key = key.substr(0, key.length - 1).replace(/-(.)/g, '$1');
+                key = key.substr(0, key.length - 1).replace(/-(.)/gu, '$1');
             }
             return key;
         }
@@ -186,18 +184,18 @@ const types = {
             const encoded = [];
             for (let i = 0; i < key.length; i++) {
                 const item = key[i];
-                const encodedItem = encode(item, true);        // encode the array item
+                const encodedItem = encode(item, true); // encode the array item
                 encoded[i] = encodedItem;
             }
-            encoded.push(keyTypeToEncodedChar.invalid + '-');            // append an extra item, so empty arrays sort correctly
+            encoded.push(keyTypeToEncodedChar.invalid + '-'); // append an extra item, so empty arrays sort correctly
             return keyTypeToEncodedChar.array + '-' + JSON.stringify(encoded);
         },
         decode (key) {
             const decoded = JSON.parse(key.slice(2));
-            decoded.pop();                                                  // remove the extra item
+            decoded.pop(); // remove the extra item
             for (let i = 0; i < decoded.length; i++) {
                 const item = decoded[i];
-                const decodedItem = decode(item, true);        // decode the item
+                const decodedItem = decode(item, true); // decode the item
                 decoded[i] = decodedItem;
             }
             return decoded;
@@ -222,7 +220,7 @@ const types = {
         decode (key) {
             // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
             const k = key.slice(2);
-            const arr = k.length ? k.split(',').map((s) => parseInt(s, 10)) : [];
+            const arr = k.length ? k.split(',').map((s) => parseInt(s)) : [];
             const buffer = new ArrayBuffer(arr.length);
             const uint8 = new Uint8Array(buffer);
             uint8.set(arr);
@@ -233,8 +231,8 @@ const types = {
 
 /**
  * Return a padded base-32 exponent value.
- * @param {number}
- * @return {string}
+ * @param {number} n
+ * @returns {string}
  */
 function padBase32Exponent (n) {
     n = n.toString(32);
@@ -243,8 +241,8 @@ function padBase32Exponent (n) {
 
 /**
  * Return a padded base-32 mantissa.
- * @param {string}
- * @return {string}
+ * @param {string} s
+ * @returns {string}
  */
 function padBase32Mantissa (s) {
     return (s + zeros(11)).slice(0, 11);
@@ -270,28 +268,26 @@ function flipBase32 (encoded) {
  * Someone may have already figured out a good way to store JavaScript floats as
  * binary strings and convert back. Barring a better method, however, one route
  * may be to generate decimal strings that `parseFloat` decodes predictably.
- * @param {string}
- * @param {string}
- * @return {number}
+ * @param {string} mantissa
+ * @param {string} exponent
+ * @returns {number}
  */
 function pow32 (mantissa, exponent) {
     exponent = parseInt(exponent, 32);
     if (exponent < 0) {
         return roundToPrecision(
-            parseInt(mantissa, 32) * Math.pow(32, exponent - 10)
+            parseInt(mantissa, 32) * (32 ** (exponent - 10))
         );
-    } else {
-        if (exponent < 11) {
-            let whole = mantissa.slice(0, exponent);
-            whole = parseInt(whole, 32);
-            let fraction = mantissa.slice(exponent);
-            fraction = parseInt(fraction, 32) * Math.pow(32, exponent - 11);
-            return roundToPrecision(whole + fraction);
-        } else {
-            const expansion = mantissa + zeros(exponent - 11);
-            return parseInt(expansion, 32);
-        }
     }
+    if (exponent < 11) {
+        let whole = mantissa.slice(0, exponent);
+        whole = parseInt(whole, 32);
+        let fraction = mantissa.slice(exponent);
+        fraction = parseInt(fraction, 32) * (32 ** (exponent - 11));
+        return roundToPrecision(whole + fraction);
+    }
+    const expansion = mantissa + zeros(exponent - 11);
+    return parseInt(expansion, 32);
 }
 
 /**
@@ -304,8 +300,8 @@ function roundToPrecision (num, precision) {
 
 /**
  * Returns a string of n zeros.
- * @param {number}
- * @return {string}
+ * @param {number} n
+ * @returns {string}
  */
 function zeros (n) {
     return '0'.repeat(n);
@@ -313,8 +309,8 @@ function zeros (n) {
 
 /**
  * Negates numeric strings.
- * @param {string}
- * @return {string}
+ * @param {string} s
+ * @returns {string}
  */
 function negate (s) {
     return '-' + s;
@@ -372,7 +368,7 @@ function getCopyBytesHeldByBufferSource (O) {
 *   and subsequent need to process in calling code unless `fullKeys` is
 *   set; may throw
 */
-function convertValueToKeyValueDecoded (input, seen, multiEntry, fullKeys) {
+function convertValueToKeyValueDecoded (input, seen, multiEntry, fullKeys) { // eslint-disable-line complexity
     seen = seen || [];
     if (seen.includes(input)) return {type: 'array', invalid: true, message: 'An array key cannot be circular'};
     const type = getKeyType(input);
@@ -491,6 +487,7 @@ function evaluateKeyPathOnValueToDecodedValue (value, keyPath, multiEntry, fullK
                 return true;
             }
             result.push(key.value);
+            return false;
         }, []) ? {failure: true} : {value: result};
     }
     if (keyPath === '') {
@@ -523,6 +520,7 @@ function evaluateKeyPathOnValueToDecodedValue (value, keyPath, multiEntry, fullK
             value = value[idntfr];
             return value === undefined;
         }
+        return false;
     }) ? {failure: true} : {value};
 }
 
@@ -535,14 +533,13 @@ function evaluateKeyPathOnValueToDecodedValue (value, keyPath, multiEntry, fullK
 function injectKeyIntoValueUsingKeyPath (value, key, keyPath) {
     const identifiers = keyPath.split('.');
     const last = identifiers.pop();
-    for (let i = 0; i < identifiers.length; i++) {
-        const identifier = identifiers[i];
+    identifiers.forEach((identifier) => {
         const hop = Object.prototype.hasOwnProperty.call(value, identifier);
         if (!hop) {
             value[identifier] = {};
         }
         value = value[identifier];
-    }
+    });
     value[last] = key; // key is already a `keyValue` in our processing so no need to convert
 }
 
@@ -602,9 +599,8 @@ function isMultiEntryMatch (encodedEntry, encodedKey) {
 
     if (keyType === 'array') {
         return encodedKey.indexOf(encodedEntry) > 1;
-    } else {
-        return encodedKey === encodedEntry;
     }
+    return encodedKey === encodedEntry;
 }
 
 function findMultiEntryMatches (keyEntry, range) {
@@ -629,14 +625,12 @@ function findMultiEntryMatches (keyEntry, range) {
                 }
             }
 
-            if (range == null || isKeyInRange(key, range, true)) {
+            if (util.isNullish(range) || isKeyInRange(key, range, true)) {
                 matches.push(key);
             }
         }
-    } else {
-        if (range == null || isKeyInRange(keyEntry, range, true)) {
-            matches.push(keyEntry);
-        }
+    } else if (util.isNullish(range) || isKeyInRange(keyEntry, range, true)) {
+        matches.push(keyEntry);
     }
     return matches;
 }
@@ -694,12 +688,12 @@ function roundTrip (key, inArray) {
 
 const MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `Number.MAX_SAFE_INTEGER + 1`)
 
-function getCurrentNumber (tx, store, callback, sqlFailCb) {
+function getCurrentNumber (tx, store, func, sqlFailCb) {
     tx.executeSql('SELECT "currNum" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.__currentName)], function (tx, data) {
         if (data.rows.length !== 1) {
-            callback(1); // eslint-disable-line standard/no-callback-literal
+            func(1);
         } else {
-            callback(data.rows.item(0).currNum);
+            func(data.rows.item(0).currNum);
         }
     }, function (tx, error) {
         sqlFailCb(createDOMException('DataError', 'Could not get the auto increment value for key', error));
@@ -729,12 +723,14 @@ function setCurrentNumber (tx, store, num, successCb, failCb) {
 function generateKeyForStore (tx, store, cb, sqlFailCb) {
     getCurrentNumber(tx, store, function (key) {
         if (key > MAX_ALLOWED_CURRENT_NUMBER) { // 2 ^ 53 (See <https://github.com/w3c/IndexedDB/issues/147>)
-            return cb('failure'); // eslint-disable-line standard/no-callback-literal
+            cb('failure'); // eslint-disable-line standard/no-callback-literal
+            return;
         }
         // Increment current number by 1 (we cannot leverage SQLite's
         //  autoincrement (and decrement when not needed), as decrementing
         //  will be overwritten/ignored upon the next insert)
-        setCurrentNumber(tx, store, key,
+        setCurrentNumber(
+            tx, store, key,
             function () {
                 cb(null, key, key);
             },

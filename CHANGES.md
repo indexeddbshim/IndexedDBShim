@@ -2,16 +2,66 @@
 
 ## 4.0.0
 
+- Breaking change: **WARNING**: If you need 4.0.0 to work with data stored
+    under 3.\*, you need to add a callback as the value of the new
+    `CFG.registerSCA` config with a value set to the function exported from
+    [typeson-registry-sca-reverter](https://github.com/brettz9/typeson-registry-sca-reverter),
+    and do so before you make your `indexedDB` calls. This code was part of
+    IndexedDBShim, but is no longer bundled with it, as IndexedDBShim, as of
+    version 4.0.0 is now using the new typeson-registry Structured Cloning
+    Algorithm format by default for representing cloneable data as JSON.
+- Breaking fix: Representation of Arrays to allow storage of non-index
+    properties (courtesy of updated typeson-registry)
+- Breaking fix: Representation of Blobs as binary to avoid UTF16 representation
+    dropping unpaired surrogates (courtesy of updated typeson-registry); also assumes
+    XHR has `overrideMimeType`
+- Breaking change: `webkitGetDatabaseNames` removed in favor of now-standard
+    `databases` (see <https://github.com/w3c/IndexedDB/pull/240/files>)
+- Breaking change; Remove Bower completely (service was deprecated);
+    use npm or yarn
 - Breaking change: Switch from `babel-polyfill` to `@babel/polyfill`
     (script tag paths for polyfill will need to be updated)
 - Breaking change: Remove support for previously deprecated numeric
     constants as second arguments to `IDBDatabase.prototype.transaction`
     (to use `readonly`/`readwrite` instead).
+- Breaking change: Remove our non-standard `IDBFactory.modules`
+    (non-IDB shims or polyfills available through `CFG.addNonIDBGlobals`
+    or `CFG.replaceNonIDBGlobals`, respectively, with shims prefixing
+    class names with "Shim")
+- Breaking change: Remove our non-standard `IDBFactory.utils` and move its
+    test utility `createDOMException` to named export of `setGlobalVars.js`
+- Fix: If stored data had an even number of caret characters (`^`) followed
+    by a `0`, the final caret would mistakenly be interpreted with the
+    `0` as a NUL character as part of unescaping (which could in turn cause
+    errors)
+- Fix: Compile to target 100% coverage (including e.g., iOS)
+- Enhancement: Support `BigInt()` and `Object(BigInt())`
+- Optimization: Import all of single typeson-registry to reduce file size
+    from two versions
+- Refactoring: Add empty favicon to avoid extra console messages; load after
+    title
 - Linting (ESLint): Switch Node-11-deprecated url methods
+- Linting (ESLint): Add and apply eslint-plugin-qunit-recommended rules; add
+    checks for browser support using eslint-plugin-compat; apply
+    `eslint-config-ash-nazg` rules; use `.js` for linting file
+- Testing (W3C): Instructions and results for using `wpt run`; wrap
+    dynamic files
+- Testing (W3C): Update worker BSON per new BSON API; use new
+    `XMLHttpRequest` partial polyfill; update wpt
+- Testing (Puppeteer QUnit): Avoid build step
+- Testing (QUnit): Ensure deleting database before testing version
+- Demo: Update copy of sinon
+- Docs: Max-length
 - Docs: Add "versions" section for migration info; note in code on
     deprecating old typeson names
+- npm: Add `yarn` to `prepublishOnly` script
+- npm: Add "wpt" as alias script for "web-platform-tests"; add "lint"
+    script to test non-Grunt eslint
+- npm: Update eventtargeter and typeson/typeson-registry deps and devDeps
 - npm: Update devDeps (and their local copies); avoid `js-polyfills`
     in favor of Node `URL`/`URLSearchParams`
+
+[typeson-registry-sca-reverter](https://github.com/brettz9/typeson-registry-sca-reverter)
 
 ## 3.10.0
 
@@ -875,6 +925,7 @@ they were actually changes since a more recent version on `master`.
     From tests-mocha (Node), all tests are now passing.
     From tests-mocha (Browser), all tests are now passing except:
         1.  in Chrome: `IDBFactory.cmp` `simple keys->should compare two numbers` due to an apparent `Number.MIN_VALUE` problem as [described here](http://stackoverflow.com/questions/43305403/number-min-value-and-tostring).
+        (Note: This is no longer occurring at least as of Chrome 69.)
 
     From fakeIndexedDB (Node), all tests now passing.
     From fakeIndexedDB (Browser), only the first test is

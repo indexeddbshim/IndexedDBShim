@@ -26,17 +26,17 @@ var sample = (function () {
     return {
         obj: function () {
             return {
-                'String': 'Sample ' + new Date(),
-                'Int': this.integer(),
-                'Float': Math.random(),
-                'Boolean': true
+                String: 'Sample ' + new Date(),
+                Int: this.integer(),
+                Float: Math.random(),
+                Boolean: true
             };
         },
         integer: function (arg) {
             // Ensuring a unique integer everytime, for the sake of index get
             var r;
             do {
-                r = parseInt(Math.random() * (arg || 100000), 10);
+                r = parseInt(Math.random() * (arg || 100000));
             }
             while (generatedNumbers[r]);
             generatedNumbers[r] = true;

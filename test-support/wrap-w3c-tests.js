@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const rp = require('request-promise-native');
 
 const indexedDBDir = path.join(__dirname, '../web-platform-tests/IndexedDB/');
 const loaderFile = '_indexeddbshim-loader.html';
@@ -12,7 +13,7 @@ if (process.argv[2] === 'remove') {
             console.log('err', err);
             return;
         }
-        const anyJSFiles = files.filter((f) => (/\.html?\.any\.js$/).test(f));
+        const anyJSFiles = files.filter((f) => (/\.html?\.any\.js$/u).test(f));
         anyJSFiles.forEach((anyJS) => {
             const anyJSPath = path.join(indexedDBDir, anyJS);
             fs.unlinkSync(anyJSPath);
@@ -33,7 +34,7 @@ if (process.argv[2] === 'remove') {
             return;
         }
 
-        const htmlFiles = files.filter((f) => (/\.html?$/).test(f) && !(/indexeddbshim-loader\.html$/).test(f));
+        const htmlFiles = files.filter((f) => (/\.html?$/u).test(f) && !(/indexeddbshim-loader\.html$/u).test(f));
         htmlFiles.forEach((htmlFile) => {
             const anyJS = /* '_' + */ htmlFile + '.any.js';
             const anyJSPath = path.join(indexedDBDir, anyJS);
@@ -63,7 +64,7 @@ ifr.setAttribute('scrolling', 'no');
 
 var loaderWin = ifr.contentWindow;
 loaderWin.addEventListener('DOMContentLoaded', function () {
-    var ifr = createIframe('${htmlFile.replace(/'/g, "\\'")}', loaderWin);
+    var ifr = createIframe('${htmlFile.replace(/'/gu, "\\'")}', loaderWin);
     var testWin = ifr.contentWindow;
 
     var style = document.createElement('style');
@@ -110,7 +111,7 @@ loaderWin.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        const htmlFiles = files.filter((f) => (/\.html?$/).test(f));
+        const htmlFiles = files.filter((f) => (/\.html?$/u).test(f));
         const polyfillScript = `
 <script src="http://localhost:9999/node_modules/@babel/polyfill/dist/polyfill.js"></script>
 <script src="http://localhost:9999/dist/indexeddbshim-noninvasive.js"></script>
@@ -142,16 +143,42 @@ loaderWin.addEventListener('DOMContentLoaded', function () {
         });
         */
 
+        const replace = (htmlPath, fileContents, append) => {
+            fs.writeFileSync(
+                append ? htmlPath.replace(/.html?$/, '2$&') : htmlPath,
+                String(fileContents)
+                    .replace(polyfillScript, '') // Replace any preexisting polyfill tag
+                    .replace(/<script/u, polyfillScript + '$&')
+            );
+        };
         htmlFiles.forEach((htmlFile) => {
             // Could add these too to avoid warnings
             // <meta charset="utf-8" />
             // <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon" />
             const htmlPath = path.join(indexedDBDir, htmlFile);
-            fs.writeFileSync(
-                htmlPath,
-                String(fs.readFileSync(htmlPath))
-                    .replace(polyfillScript, '') // Replace any preexisting polyfill tag
-                    .replace(/<script/, polyfillScript + '$&'));
+            const fileContents = fs.readFileSync(htmlPath);
+            replace(htmlPath, fileContents);
+        });
+        // Dynamic HTML
+        [
+            'get-databases.any.html',
+            'get-databases.any.worker.html',
+            'idb-explicit-commit-throw.any.html',
+            'idb-explicit-commit-throw.any.worker.html',
+            'idb-explicit-commit.any.html',
+            'idb-explicit-commit.any.worker.html',
+            'idlharness.any.html',
+            'idlharness.any.worker.html',
+            'idlharness.any.serviceworker.html',
+            'idlharness.any.sharedworker.html'
+        ].forEach(async (htmlFile) => {
+            const htmlPath = path.join(indexedDBDir, htmlFile);
+            const urlPath = new URL( // eslint-disable-line compat/compat
+                htmlFile,
+                'http://web-platform.test:8000/IndexedDB/'
+            );
+            const fileContents = await rp(urlPath.href);
+            replace(htmlPath, fileContents, true);
         });
     });
 }

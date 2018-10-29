@@ -1,6 +1,7 @@
 dist
 src/unicode-regex.js
 examples
+ignore
 node_modules
 tests-polyfill
 web-platform-tests

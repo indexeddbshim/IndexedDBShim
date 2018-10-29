@@ -6,6 +6,7 @@
     <meta name="viewport" content="user-scalable=no, initial-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi"/>
     <title>Testing IndexedDB Shim</title>
 
+    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon" />
     <link rel="stylesheet" href="../test-support/mocha/mocha.css"/>
     <link rel="stylesheet" href="styles.css"/>
   </head>
@@ -47,7 +48,12 @@
 
     <!-- IndexedDBShim -->
     <script src="../test-support/@babel/polyfill/dist/polyfill.js"></script>
-    <script src="../dist/indexeddbshim.js"></script>
+    <script src="../dist/indexeddbshim-noninvasive.js"></script>
+    <script>
+    setGlobalVars(null, {
+        addNonIDBGlobals: true
+    });
+    </script>
     <!--<script src="../src/Init.js"></script>-->
     <!--<script src="../src/util.js"></script>-->
     <!--<script src="../src/polyfill.js"></script>-->

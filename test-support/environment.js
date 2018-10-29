@@ -1,6 +1,6 @@
 /* globals shimNS */
-var window = this; // eslint-disable-line no-var, no-unused-vars
-var self = this; // eslint-disable-line no-var
+var window = this; // eslint-disable-line no-var, no-unused-vars, consistent-this
+var self = this; // eslint-disable-line no-var, consistent-this
 self.parent = self;
 
 (function () {

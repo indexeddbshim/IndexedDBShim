@@ -186,7 +186,7 @@
         };
     });
     onObjectStoreOpen('Delete data in Object Store', DB.OBJECT_STORE_1, function (objectStore, assert, done) {
-        var req = objectStore['delete'](key);
+        var req = objectStore.delete(key);
         req.onsuccess = function (e) {
             _('Data deleted from object store');
             assert.deepEqual(req.result, undefined, 'Data deleted from Object Store');

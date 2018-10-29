@@ -2,14 +2,20 @@
 import CFG from './CFG';
 
 /**
- * Creates a native DOMException, for browsers that support it
+ * Creates a native DOMException, for browsers that support it.
+ * @param {string} name
+ * @param {string} message
  * @returns {DOMException}
  */
 function createNativeDOMException (name, message) {
-    return new DOMException.prototype.constructor(message, name || 'DOMException');
+    return new DOMException.prototype.constructor(
+        message,
+        name || 'DOMException'
+    );
 }
 
-const codes = { // From web-platform-tests testharness.js name_code_map (though not in new spec)
+// From web-platform-tests testharness.js name_code_map (though not in new spec)
+const codes = {
     IndexSizeError: 1,
     HierarchyRequestError: 3,
     WrongDocumentError: 4,
@@ -73,13 +79,18 @@ const legacyCodes = {
     DATA_CLONE_ERR: 25
 };
 
+/**
+ *
+ * @returns {DOMException}
+ */
 function createNonNativeDOMExceptionClass () {
     function DOMException (message, name) {
         // const err = Error.prototype.constructor.call(this, message); // Any use to this? Won't set this.message
         this[Symbol.toStringTag] = 'DOMException';
         this._code = name in codes ? codes[name] : (legacyCodes[name] || 0);
         this._name = name || 'Error';
-        this._message = message === undefined ? '' : ('' + message); // Not String() which converts Symbols
+        // We avoid `String()` in this next line as it converts Symbols
+        this._message = message === undefined ? '' : ('' + message); // eslint-disable-line no-implicit-coercion
         Object.defineProperty(this, 'code', {
             configurable: true,
             enumerable: true,
@@ -107,7 +118,7 @@ function createNonNativeDOMExceptionClass () {
     // Necessary for W3C tests which complains if `DOMException` has properties on its "own" prototype
 
     // class DummyDOMException extends Error {}; // Sometimes causing problems in Node
-    const DummyDOMException = function DOMException () {};
+    const DummyDOMException = function DOMException () { /* */ };
     DummyDOMException.prototype = Object.create(Error.prototype); // Intended for subclassing
     ['name', 'message'].forEach((prop) => {
         Object.defineProperty(DummyDOMException.prototype, prop, {
@@ -206,8 +217,9 @@ function isErrorOrDOMErrorOrDOMException (obj) {
 
 /**
  * Finds the error argument.  This is useful because some WebSQL callbacks
- * pass the error as the first argument, and some pass it as the second argument.
- * @param {array} args
+ * pass the error as the first argument, and some pass it as the second
+ * argument.
+ * @param {Array} args
  * @returns {Error|DOMException|undefined}
  */
 function findError (args) {
@@ -229,12 +241,19 @@ function findError (args) {
     return err;
 }
 
+/**
+ *
+ * @param {external:WebSQLError} webSQLErr
+ * @returns {DOMException}
+ */
 function webSQLErrback (webSQLErr) {
     let name, message;
     switch (webSQLErr.code) {
     case 4: { // SQLError.QUOTA_ERR
         name = 'QuotaExceededError';
-        message = 'The operation failed because there was not enough remaining storage space, or the storage quota was reached and the user declined to give more space to the database.';
+        message = 'The operation failed because there was not enough ' +
+            'remaining storage space, or the storage quota was reached ' +
+            'and the user declined to give more space to the database.';
         break;
     }
     /*

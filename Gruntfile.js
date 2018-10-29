@@ -1,22 +1,23 @@
-/* global module:false */
+/* eslint-env node */
 'use strict';
+
+const mapstraction = require('mapstraction');
+const pkg = require('./package.json');
 
 const babelBrowserOptions = {
     sourceMapsAbsolute: true,
     plugins: ['add-module-exports'],
     presets: ['@babel/env']
 };
-const babelES6BrowserOptions = Object.assign({}, babelBrowserOptions, {
+const babelES6BrowserOptions = {...babelBrowserOptions,
     presets: [
         ['@babel/env', {
-            targets: {
-                chrome: '62'
-            }
+            targets: pkg.browserslist[0] // cover 100%
         }]
     ]
-});
+};
 
-const babelNodeOptions = Object.assign({}, babelBrowserOptions, {
+const babelNodeOptions = {...babelBrowserOptions,
     presets: [
         ['@babel/env', {
             targets: {
@@ -24,14 +25,12 @@ const babelNodeOptions = Object.assign({}, babelBrowserOptions, {
             }
         }]
     ]
-});
+};
 
-const mapstraction = require('mapstraction');
 module.exports = function (grunt) {
-    const sauceuser = process.env.SAUCE_USERNAME !== undefined ? process.env.SAUCE_USERNAME : 'indexeddbshim';
-    const saucekey = process.env.SAUCE_ACCESS_KEY !== undefined ? process.env.SAUCE_ACCESS_KEY : null;
+    const sauceuser = process.env.SAUCE_USERNAME !== undefined ? process.env.SAUCE_USERNAME : 'indexeddbshim'; // eslint-disable-line no-process-env
+    const saucekey = process.env.SAUCE_ACCESS_KEY !== undefined ? process.env.SAUCE_ACCESS_KEY : null; // eslint-disable-line no-process-env
 
-    const pkg = require('./package.json');
     // bumpVersion(pkg);
     grunt.initConfig({
         pkg,
@@ -367,9 +366,18 @@ module.exports = function (grunt) {
         },
 
         eslint: {
-            files: ['src/**/*.js', 'tests-qunit/**/*.js', 'tests-mocha/**/*.js', 'test-support/*.js', 'test-support/webworker/*.js', 'Gruntfile.js', '!test-support/qunit-2.1.1.js', '!test-support/latest-erring-bundled.js', '!src/unicode-regex.js'],
+            files: ['**/*.md', 'src/**/*.js', 'tests-qunit/**/*.js', 'tests-mocha/**/*.js', 'test-support/*.js', 'test-support/webworker/*.js', 'Gruntfile.js', '!test-support/qunit-2.1.1.js', '!test-support/latest-erring-bundled.js', '!src/unicode-regex.js', '!web-platform-tests/**', '!node_modules/**', '!tests-polyfill/**'],
+            /*
+            // Didn't work for some reason
+            // https://github.com/sindresorhus/grunt-eslint/issues/119#issuecomment-343716068
+            files: [
+                '**'
+            ].concat(grunt.file.read('.eslintignore').split('\n')
+                .map(e => e.split('#', 1)[0].trim()).filter(e => e !== '')
+                .map(e => e.startsWith('!') ? e.slice(1) : `!${e}`)),
+            */
             options: {
-                configFile: '.eslintrc'
+                configFile: '.eslintrc.js'
             }
         },
 
@@ -435,7 +443,7 @@ module.exports = function (grunt) {
 
     const testJobs = ['build', 'connect'];
     grunt.registerTask('nodequnit', 'node-qunit');
-    grunt.registerTask('puppeteer-qunit', [...testJobs, 'qunit_puppeteer']);
+    grunt.registerTask('puppeteer-qunit', ['connect', 'qunit_puppeteer']);
     grunt.registerTask('mocha', ['mochaTest:test']); // clean:mochaTests isn't working here as locked (even with force:true on it or grunt-wait) so we do in package.json
     grunt.registerTask('fake', ['mochaTest:fake']);
     grunt.registerTask('mock', ['mochaTest:mock']);

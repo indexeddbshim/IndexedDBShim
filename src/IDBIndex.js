@@ -1,3 +1,4 @@
+import SyncPromise from 'sync-promise';
 import {createDOMException} from './DOMException';
 import {IDBCursor, IDBCursorWithValue} from './IDBCursor';
 import * as util from './util';
@@ -7,7 +8,6 @@ import IDBTransaction from './IDBTransaction';
 import * as Sca from './Sca';
 import CFG from './CFG';
 import IDBObjectStore from './IDBObjectStore';
-import SyncPromise from 'sync-promise';
 
 const readonlyProperties = ['objectStore', 'keyPath', 'multiEntry', 'unique'];
 
@@ -16,7 +16,7 @@ const readonlyProperties = ['objectStore', 'keyPath', 'multiEntry', 'unique'];
  * http://www.w3.org/TR/IndexedDB/#idl-def-IDBIndex
  * @param {IDBObjectStore} store
  * @param {IDBIndexProperties} indexProperties
- * @constructor
+ * @class
  */
 function IDBIndex () {
     throw new TypeError('Illegal constructor');
@@ -31,9 +31,9 @@ IDBIndex.__createInstance = function (store, indexProperties) {
         me.__name = me.__originalName = indexProperties.columnName;
         me.__keyPath = Array.isArray(indexProperties.keyPath) ? indexProperties.keyPath.slice() : indexProperties.keyPath;
         const {optionalParams} = indexProperties;
-        me.__multiEntry = !!(optionalParams && optionalParams.multiEntry);
-        me.__unique = !!(optionalParams && optionalParams.unique);
-        me.__deleted = !!indexProperties.__deleted;
+        me.__multiEntry = Boolean(optionalParams && optionalParams.multiEntry);
+        me.__unique = Boolean(optionalParams && optionalParams.unique);
+        me.__deleted = Boolean(indexProperties.__deleted);
         me.__objectStore.__cursors = indexProperties.cursors || [];
         Object.defineProperty(me, '__currentName', {
             get () {
@@ -331,7 +331,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
                 unique: idx.unique,
                 multiEntry: idx.multiEntry
             },
-            deleted: !!idx.deleted
+            deleted: Boolean(idx.deleted)
         };
     }
 
@@ -363,7 +363,7 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
     }
     IDBTransaction.__assertActive(me.objectStore.transaction);
 
-    if (nullDisallowed && range == null) {
+    if (nullDisallowed && util.isNullish(range)) {
         throw createDOMException('DataError', 'No key or range was specified');
     }
 
@@ -523,7 +523,10 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                                 });
                             })
                         );
-                        SyncPromise.all(indexCreations).then(finish, error);
+                        SyncPromise.all(indexCreations).then(finish, error).catch((err) => {
+                            console.log('Index rename error');
+                            throw err;
+                        });
                     }, sqlError);
                 }, sqlError);
             }, sqlError);
@@ -532,7 +535,7 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
 };
 
 Object.defineProperty(IDBIndex, Symbol.hasInstance, {
-    value: obj => util.isObj(obj) && typeof obj.openCursor === 'function' && typeof obj.multiEntry === 'boolean'
+    value: (obj) => util.isObj(obj) && typeof obj.openCursor === 'function' && typeof obj.multiEntry === 'boolean'
 });
 
 util.defineReadonlyOuterInterface(IDBIndex.prototype, readonlyProperties);
@@ -553,10 +556,10 @@ function executeFetchIndexData (count, unboundedDisallowed, index, hasKey, range
     }
     const isCount = opType === 'count';
     CFG.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
-    tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
+    tx.executeSql(sql.join(' '), sqlValues, function (tx, data) { // eslint-disable-line complexity
         const records = [];
         let recordCount = 0;
-        const decode = isCount ? () => {} : (opType === 'key' ? (record) => {
+        const decode = isCount ? () => { /* */ } : (opType === 'key' ? (record) => {
             // Key.convertValueToKey(record.key); // Already validated before storage
             return Key.decode(util.unescapeSQLiteResponse(record.key));
         } : (record) => { // when opType is value
@@ -608,7 +611,7 @@ function executeFetchIndexData (count, unboundedDisallowed, index, hasKey, range
 }
 
 function buildFetchIndexDataSQL (nullDisallowed, index, range, opType, multiChecks) {
-    const hasRange = nullDisallowed || range != null;
+    const hasRange = nullDisallowed || !util.isNullish(range);
     const col = opType === 'count' ? 'key' : opType; // It doesn't matter which column we use for 'count' as long as it is valid
     const sql = [
         'SELECT', util.sqlQuote(col) + (

@@ -8,13 +8,17 @@ import * as util from './util';
 import IDBTransaction from './IDBTransaction';
 import * as Key from './Key';
 import * as Sca from './Sca';
-import IDBIndex from './IDBIndex';
+import IDBIndex from './IDBIndex'; // eslint-disable-line import/no-named-as-default
 import CFG from './CFG';
 
+function IDBCursor () {
+    throw new TypeError('Illegal constructor');
+}
+const IDBCursorAlias = IDBCursor;
 /**
  * The IndexedDB Cursor Object
  * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBCursor
- * @param {IDBKeyRange} range
+ * @param {IDBKeyRange} query
  * @param {string} direction
  * @param {IDBObjectStore} store
  * @param {IDBObjectStore|IDBIndex} source
@@ -22,10 +26,6 @@ import CFG from './CFG';
  * @param {string} valueColumnName
  * @param {boolean} count
  */
-function IDBCursor () {
-    throw new TypeError('Illegal constructor');
-}
-const IDBCursorAlias = IDBCursor;
 IDBCursor.__super = function IDBCursor (query, direction, store, source, keyColumnName, valueColumnName, count) {
     this[Symbol.toStringTag] = 'IDBCursor';
     util.defineReadonlyProperties(this, ['key', 'primaryKey']);
@@ -67,7 +67,7 @@ IDBCursor.__super = function IDBCursor (query, direction, store, source, keyColu
         range.__upperCached = range.upper !== undefined && Key.encode(range.upper, this.__multiEntryIndex);
     }
     this.__gotValue = true;
-    this['continue']();
+    this.continue();
 };
 
 IDBCursor.__createInstance = function (...args) {
@@ -159,7 +159,7 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
     });
 };
 
-const leftBracketRegex = /\[/g;
+const leftBracketRegex = /\[/gu;
 
 IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, error) {
     const me = this;
@@ -329,9 +329,10 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
         }
         me.__matchedKeys[rowItem.matchingKey] = true;
     }
-    const encKey = util.unescapeSQLiteResponse(me.__multiEntryIndex
-        ? rowItem.matchingKey
-        : rowItem[me.__keyColumnName]
+    const encKey = util.unescapeSQLiteResponse(
+        me.__multiEntryIndex
+            ? rowItem.matchingKey
+            : rowItem[me.__keyColumnName]
     );
     const encVal = util.unescapeSQLiteResponse(rowItem[me.__valueColumnName]);
     const encPrimaryKey = util.unescapeSQLiteResponse(rowItem.key);
@@ -431,7 +432,7 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
     });
 };
 
-IDBCursor.prototype['continue'] = function (/* key */) {
+IDBCursor.prototype.continue = function (/* key */) {
     this.__continue(arguments[0]);
 };
 
@@ -521,7 +522,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
     return request;
 };
 
-IDBCursor.prototype['delete'] = function () {
+IDBCursor.prototype.delete = function () {
     const me = this;
     IDBTransaction.__assertActive(me.__store.transaction);
     me.__store.transaction.__assertWritable();

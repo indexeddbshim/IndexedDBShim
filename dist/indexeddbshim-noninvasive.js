@@ -2,609 +2,695 @@
 
 },{}],2:[function(require,module,exports){
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-	typeof define === 'function' && define.amd ? define(['exports'], factory) :
-	(factory((global.EventTargeter = {})));
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+  typeof define === 'function' && define.amd ? define(['exports'], factory) :
+  (factory((global.EventTargeter = {})));
 }(this, (function (exports) { 'use strict';
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
-  return typeof obj;
-} : function (obj) {
-  return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-};
+  function _typeof(obj) {
+    if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
+      _typeof = function (obj) {
+        return typeof obj;
+      };
+    } else {
+      _typeof = function (obj) {
+        return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+      };
+    }
 
-exports.ShimDOMException = void 0;
-var phases = {
+    return _typeof(obj);
+  }
+
+  var phases = {
     NONE: 0,
     CAPTURING_PHASE: 1,
     AT_TARGET: 2,
     BUBBLING_PHASE: 3
-};
+  };
 
-if (typeof DOMException === 'undefined') {
+  if (typeof DOMException === 'undefined') {
     // Todo: Better polyfill (if even needed here)
     exports.ShimDOMException = function DOMException(msg, name) {
-        // No need for `toString` as same as for `Error`
-        var err = new Error(msg);
-        err.name = name;
-        return err;
+      // No need for `toString` as same as for `Error`
+      var err = new Error(msg);
+      err.name = name;
+      return err;
     };
-} else {
+  } else {
     exports.ShimDOMException = DOMException;
-}
+  }
 
-var ev = new WeakMap();
-var evCfg = new WeakMap();
+  var ev = new WeakMap();
+  var evCfg = new WeakMap(); // Todo: Set _ev argument outside of this function
 
-// Todo: Set _ev argument outside of this function
-/**
-* We use an adapter class rather than a proxy not only for compatibility but also since we have to clone
-* native event properties anyways in order to properly set `target`, etc.
-* @note The regular DOM method `dispatchEvent` won't work with this polyfill as it expects a native event
-*/
-var ShimEvent = function Event(type) {
+  /**
+  * We use an adapter class rather than a proxy not only for compatibility but also since we have to clone
+  * native event properties anyways in order to properly set `target`, etc.
+  * @note The regular DOM method `dispatchEvent` won't work with this polyfill as it expects a native event
+  */
+
+  var ShimEvent = function Event(type) {
     // eslint-disable-line no-native-reassign
     // For WebIDL checks of function's `length`, we check `arguments` for the optional arguments
     this[Symbol.toStringTag] = 'Event';
+
     this.toString = function () {
-        return '[object Event]';
+      return '[object Event]';
     };
+
     var evInit = arguments[1];
     var _ev = arguments[2];
+
     if (!arguments.length) {
-        throw new TypeError("Failed to construct 'Event': 1 argument required, but only 0 present.");
+      throw new TypeError("Failed to construct 'Event': 1 argument required, but only 0 present.");
     }
+
     evInit = evInit || {};
     _ev = _ev || {};
-
     var _evCfg = {};
-    if ('composed' in evInit) {
-        _evCfg.composed = evInit.composed;
-    }
 
-    // _evCfg.isTrusted = true; // We are not always using this for user-created events
+    if ('composed' in evInit) {
+      _evCfg.composed = evInit.composed;
+    } // _evCfg.isTrusted = true; // We are not always using this for user-created events
     // _evCfg.timeStamp = new Date().valueOf(); // This is no longer a timestamp, but monotonic (elapsed?)
+
 
     ev.set(this, _ev);
     evCfg.set(this, _evCfg);
     this.initEvent(type, evInit.bubbles, evInit.cancelable);
     Object.defineProperties(this, ['target', 'currentTarget', 'eventPhase', 'defaultPrevented'].reduce(function (obj, prop) {
-        obj[prop] = {
-            get: function get$$1() {
-                return (/* prop in _evCfg && */_evCfg[prop] !== undefined ? _evCfg[prop] : prop in _ev ? _ev[prop] :
-                    // Defaults
-                    prop === 'eventPhase' ? 0 : prop === 'defaultPrevented' ? false : null
-                );
-            }
-        };
-        return obj;
+      obj[prop] = {
+        get: function get() {
+          return (
+            /* prop in _evCfg && */
+            _evCfg[prop] !== undefined ? _evCfg[prop] : prop in _ev ? _ev[prop] : // Defaults
+            prop === 'eventPhase' ? 0 : prop === 'defaultPrevented' ? false : null
+          );
+        }
+      };
+      return obj;
     }, {}));
-    var props = [
-    // Event
+    var props = [// Event
     'type', 'bubbles', 'cancelable', // Defaults to false
-    'isTrusted', 'timeStamp', 'initEvent',
-    // Other event properties (not used by our code)
+    'isTrusted', 'timeStamp', 'initEvent', // Other event properties (not used by our code)
     'composedPath', 'composed'];
+
     if (this.toString() === '[object CustomEvent]') {
-        props.push('detail', 'initCustomEvent');
+      props.push('detail', 'initCustomEvent');
     }
 
     Object.defineProperties(this, props.reduce(function (obj, prop) {
-        obj[prop] = {
-            get: function get$$1() {
-                return prop in _evCfg ? _evCfg[prop] : prop in _ev ? _ev[prop] : ['bubbles', 'cancelable', 'composed'].includes(prop) ? false : undefined;
-            }
-        };
-        return obj;
-    }, {}));
-};
-
-ShimEvent.prototype.preventDefault = function () {
-    if (!(this instanceof ShimEvent)) {
-        throw new TypeError('Illegal invocation');
-    }
-    var _ev = ev.get(this);
-    var _evCfg = evCfg.get(this);
-    if (this.cancelable && !_evCfg._passive) {
-        _evCfg.defaultPrevented = true;
-        if (typeof _ev.preventDefault === 'function') {
-            // Prevent any predefined defaults
-            _ev.preventDefault();
+      obj[prop] = {
+        get: function get() {
+          return prop in _evCfg ? _evCfg[prop] : prop in _ev ? _ev[prop] : ['bubbles', 'cancelable', 'composed'].includes(prop) ? false : undefined;
         }
+      };
+      return obj;
+    }, {}));
+  };
+
+  ShimEvent.prototype.preventDefault = function () {
+    if (!(this instanceof ShimEvent)) {
+      throw new TypeError('Illegal invocation');
     }
-};
-ShimEvent.prototype.stopImmediatePropagation = function () {
+
+    var _ev = ev.get(this);
+
     var _evCfg = evCfg.get(this);
+
+    if (this.cancelable && !_evCfg._passive) {
+      _evCfg.defaultPrevented = true;
+
+      if (typeof _ev.preventDefault === 'function') {
+        // Prevent any predefined defaults
+        _ev.preventDefault();
+      }
+    }
+  };
+
+  ShimEvent.prototype.stopImmediatePropagation = function () {
+    var _evCfg = evCfg.get(this);
+
     _evCfg._stopImmediatePropagation = true;
-};
-ShimEvent.prototype.stopPropagation = function () {
+  };
+
+  ShimEvent.prototype.stopPropagation = function () {
     var _evCfg = evCfg.get(this);
+
     _evCfg._stopPropagation = true;
-};
-ShimEvent.prototype.initEvent = function (type, bubbles, cancelable) {
+  };
+
+  ShimEvent.prototype.initEvent = function (type, bubbles, cancelable) {
     // Chrome currently has function length 1 only but WebIDL says 3
     // const bubbles = arguments[1];
     // const cancelable = arguments[2];
     var _evCfg = evCfg.get(this);
 
     if (_evCfg._dispatched) {
-        return;
+      return;
     }
 
     _evCfg.type = type;
-    if (bubbles !== undefined) {
-        _evCfg.bubbles = bubbles;
-    }
-    if (cancelable !== undefined) {
-        _evCfg.cancelable = cancelable;
-    }
-};
-['type', 'target', 'currentTarget'].forEach(function (prop) {
-    Object.defineProperty(ShimEvent.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get: function get$$1() {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
-['eventPhase', 'defaultPrevented', 'bubbles', 'cancelable', 'timeStamp'].forEach(function (prop) {
-    Object.defineProperty(ShimEvent.prototype, prop, {
-        enumerable: true,
-        configurable: true,
-        get: function get$$1() {
-            throw new TypeError('Illegal invocation');
-        }
-    });
-});
-['NONE', 'CAPTURING_PHASE', 'AT_TARGET', 'BUBBLING_PHASE'].forEach(function (prop, i) {
-    Object.defineProperty(ShimEvent, prop, {
-        enumerable: true,
-        writable: false,
-        value: i
-    });
-    Object.defineProperty(ShimEvent.prototype, prop, {
-        writable: false,
-        value: i
-    });
-});
-ShimEvent[Symbol.toStringTag] = 'Function';
-ShimEvent.prototype[Symbol.toStringTag] = 'EventPrototype';
-Object.defineProperty(ShimEvent, 'prototype', {
-    writable: false
-});
 
-var ShimCustomEvent = function CustomEvent(type) {
+    if (bubbles !== undefined) {
+      _evCfg.bubbles = bubbles;
+    }
+
+    if (cancelable !== undefined) {
+      _evCfg.cancelable = cancelable;
+    }
+  };
+
+  ['type', 'target', 'currentTarget'].forEach(function (prop) {
+    Object.defineProperty(ShimEvent.prototype, prop, {
+      enumerable: true,
+      configurable: true,
+      get: function get() {
+        throw new TypeError('Illegal invocation');
+      }
+    });
+  });
+  ['eventPhase', 'defaultPrevented', 'bubbles', 'cancelable', 'timeStamp'].forEach(function (prop) {
+    Object.defineProperty(ShimEvent.prototype, prop, {
+      enumerable: true,
+      configurable: true,
+      get: function get() {
+        throw new TypeError('Illegal invocation');
+      }
+    });
+  });
+  ['NONE', 'CAPTURING_PHASE', 'AT_TARGET', 'BUBBLING_PHASE'].forEach(function (prop, i) {
+    Object.defineProperty(ShimEvent, prop, {
+      enumerable: true,
+      writable: false,
+      value: i
+    });
+    Object.defineProperty(ShimEvent.prototype, prop, {
+      writable: false,
+      value: i
+    });
+  });
+  ShimEvent[Symbol.toStringTag] = 'Function';
+  ShimEvent.prototype[Symbol.toStringTag] = 'EventPrototype';
+  Object.defineProperty(ShimEvent, 'prototype', {
+    writable: false
+  });
+
+  var ShimCustomEvent = function CustomEvent(type) {
     var evInit = arguments[1];
     var _ev = arguments[2];
     ShimEvent.call(this, type, evInit, _ev);
     this[Symbol.toStringTag] = 'CustomEvent';
+
     this.toString = function () {
-        return '[object CustomEvent]';
-    };
-    // var _evCfg = evCfg.get(this);
+      return '[object CustomEvent]';
+    }; // var _evCfg = evCfg.get(this);
+
+
     evInit = evInit || {};
     this.initCustomEvent(type, evInit.bubbles, evInit.cancelable, 'detail' in evInit ? evInit.detail : null);
-};
-Object.defineProperty(ShimCustomEvent.prototype, 'constructor', {
+  };
+
+  Object.defineProperty(ShimCustomEvent.prototype, 'constructor', {
     enumerable: false,
     writable: true,
     configurable: true,
     value: ShimCustomEvent
-});
-ShimCustomEvent.prototype.initCustomEvent = function (type, bubbles, cancelable, detail) {
+  });
+
+  ShimCustomEvent.prototype.initCustomEvent = function (type, bubbles, cancelable, detail) {
     if (!(this instanceof ShimCustomEvent)) {
-        throw new TypeError('Illegal invocation');
+      throw new TypeError('Illegal invocation');
     }
+
     var _evCfg = evCfg.get(this);
+
     ShimCustomEvent.call(this, type, {
-        bubbles: bubbles, cancelable: cancelable, detail: detail
+      bubbles: bubbles,
+      cancelable: cancelable,
+      detail: detail
     }, arguments[4]);
 
     if (_evCfg._dispatched) {
-        return;
+      return;
     }
 
     if (detail !== undefined) {
-        _evCfg.detail = detail;
+      _evCfg.detail = detail;
     }
-    Object.defineProperty(this, 'detail', {
-        get: function get$$1() {
-            return _evCfg.detail;
-        }
-    });
-};
-ShimCustomEvent[Symbol.toStringTag] = 'Function';
-ShimCustomEvent.prototype[Symbol.toStringTag] = 'CustomEventPrototype';
 
-Object.defineProperty(ShimCustomEvent.prototype, 'detail', {
+    Object.defineProperty(this, 'detail', {
+      get: function get() {
+        return _evCfg.detail;
+      }
+    });
+  };
+
+  ShimCustomEvent[Symbol.toStringTag] = 'Function';
+  ShimCustomEvent.prototype[Symbol.toStringTag] = 'CustomEventPrototype';
+  Object.defineProperty(ShimCustomEvent.prototype, 'detail', {
     enumerable: true,
     configurable: true,
-    get: function get$$1() {
-        throw new TypeError('Illegal invocation');
+    get: function get() {
+      throw new TypeError('Illegal invocation');
     }
-});
-Object.defineProperty(ShimCustomEvent, 'prototype', {
+  });
+  Object.defineProperty(ShimCustomEvent, 'prototype', {
     writable: false
-});
+  });
 
-function copyEvent(ev) {
+  function copyEvent(ev) {
     if ('detail' in ev) {
-        return new ShimCustomEvent(ev.type, { bubbles: ev.bubbles, cancelable: ev.cancelable, detail: ev.detail }, ev);
+      return new ShimCustomEvent(ev.type, {
+        bubbles: ev.bubbles,
+        cancelable: ev.cancelable,
+        detail: ev.detail
+      }, ev);
     }
-    return new ShimEvent(ev.type, { bubbles: ev.bubbles, cancelable: ev.cancelable }, ev);
-}
 
-function getListenersOptions(listeners, type, options) {
+    return new ShimEvent(ev.type, {
+      bubbles: ev.bubbles,
+      cancelable: ev.cancelable
+    }, ev);
+  }
+
+  function getListenersOptions(listeners, type, options) {
     var listenersByType = listeners[type];
     if (listenersByType === undefined) listeners[type] = listenersByType = [];
-    options = typeof options === 'boolean' ? { capture: options } : options || {};
+    options = typeof options === 'boolean' ? {
+      capture: options
+    } : options || {};
     var stringifiedOptions = JSON.stringify(options);
     var listenersByTypeOptions = listenersByType.filter(function (obj) {
-        return stringifiedOptions === JSON.stringify(obj.options);
+      return stringifiedOptions === JSON.stringify(obj.options);
     });
-    return { listenersByTypeOptions: listenersByTypeOptions, options: options, listenersByType: listenersByType };
-}
+    return {
+      listenersByTypeOptions: listenersByTypeOptions,
+      options: options,
+      listenersByType: listenersByType
+    };
+  }
 
-var methods = {
+  var methods = {
     addListener: function addListener(listeners, listener, type, options) {
-        var listenerOptions = getListenersOptions(listeners, type, options);
-        var listenersByTypeOptions = listenerOptions.listenersByTypeOptions;
-        options = listenerOptions.options;
-        var listenersByType = listenerOptions.listenersByType;
-
-        if (listenersByTypeOptions.some(function (l) {
-            return l.listener === listener;
-        })) return;
-        listenersByType.push({ listener: listener, options: options });
+      var listenerOptions = getListenersOptions(listeners, type, options);
+      var listenersByTypeOptions = listenerOptions.listenersByTypeOptions;
+      options = listenerOptions.options;
+      var listenersByType = listenerOptions.listenersByType;
+      if (listenersByTypeOptions.some(function (l) {
+        return l.listener === listener;
+      })) return;
+      listenersByType.push({
+        listener: listener,
+        options: options
+      });
     },
     removeListener: function removeListener(listeners, listener, type, options) {
-        var listenerOptions = getListenersOptions(listeners, type, options);
-        var listenersByType = listenerOptions.listenersByType;
-        var stringifiedOptions = JSON.stringify(listenerOptions.options);
-
-        listenersByType.some(function (l, i) {
-            if (l.listener === listener && stringifiedOptions === JSON.stringify(l.options)) {
-                listenersByType.splice(i, 1);
-                if (!listenersByType.length) delete listeners[type];
-                return true;
-            }
-        });
+      var listenerOptions = getListenersOptions(listeners, type, options);
+      var listenersByType = listenerOptions.listenersByType;
+      var stringifiedOptions = JSON.stringify(listenerOptions.options);
+      listenersByType.some(function (l, i) {
+        if (l.listener === listener && stringifiedOptions === JSON.stringify(l.options)) {
+          listenersByType.splice(i, 1);
+          if (!listenersByType.length) delete listeners[type];
+          return true;
+        }
+      });
     },
     hasListener: function hasListener(listeners, listener, type, options) {
-        var listenerOptions = getListenersOptions(listeners, type, options);
-        var listenersByTypeOptions = listenerOptions.listenersByTypeOptions;
-        return listenersByTypeOptions.some(function (l) {
-            return l.listener === listener;
-        });
+      var listenerOptions = getListenersOptions(listeners, type, options);
+      var listenersByTypeOptions = listenerOptions.listenersByTypeOptions;
+      return listenersByTypeOptions.some(function (l) {
+        return l.listener === listener;
+      });
     }
-};
+  };
 
-function EventTarget() {
+  function EventTarget() {
     throw new TypeError('Illegal constructor');
-}
+  }
 
-Object.assign(EventTarget.prototype, ['Early', '', 'Late', 'Default'].reduce(function (obj, listenerType) {
+  Object.assign(EventTarget.prototype, ['Early', '', 'Late', 'Default'].reduce(function (obj, listenerType) {
     ['add', 'remove', 'has'].forEach(function (method) {
-        obj[method + listenerType + 'EventListener'] = function (type, listener) {
-            var options = arguments[2]; // We keep the listener `length` as per WebIDL
-            if (arguments.length < 2) throw new TypeError('2 or more arguments required');
-            if (typeof type !== 'string') {
-                throw new exports.ShimDOMException('UNSPECIFIED_EVENT_TYPE_ERR', 'UNSPECIFIED_EVENT_TYPE_ERR');
-            }
-            if (listener.handleEvent) {
-                listener = listener.handleEvent.bind(listener);
-            }
-            var arrStr = '_' + listenerType.toLowerCase() + (listenerType === '' ? 'l' : 'L') + 'isteners';
-            if (!this[arrStr]) {
-                Object.defineProperty(this, arrStr, { value: {} });
-            }
-            return methods[method + 'Listener'](this[arrStr], listener, type, options);
-        };
+      obj[method + listenerType + 'EventListener'] = function (type, listener) {
+        var options = arguments[2]; // We keep the listener `length` as per WebIDL
+
+        if (arguments.length < 2) throw new TypeError('2 or more arguments required');
+
+        if (typeof type !== 'string') {
+          throw new exports.ShimDOMException('UNSPECIFIED_EVENT_TYPE_ERR', 'UNSPECIFIED_EVENT_TYPE_ERR');
+        }
+
+        if (listener.handleEvent) {
+          listener = listener.handleEvent.bind(listener);
+        }
+
+        var arrStr = '_' + listenerType.toLowerCase() + (listenerType === '' ? 'l' : 'L') + 'isteners';
+
+        if (!this[arrStr]) {
+          Object.defineProperty(this, arrStr, {
+            value: {}
+          });
+        }
+
+        return methods[method + 'Listener'](this[arrStr], listener, type, options);
+      };
     });
     return obj;
-}, {}));
-
-Object.assign(EventTarget.prototype, {
+  }, {}));
+  Object.assign(EventTarget.prototype, {
     __setOptions: function __setOptions(customOptions) {
-        customOptions = customOptions || {};
-        // Todo: Make into event properties?
-        this._defaultSync = customOptions.defaultSync;
-        this._extraProperties = customOptions.extraProperties || [];
-        if (customOptions.legacyOutputDidListenersThrowFlag) {
-            // IndexedDB
-            this._legacyOutputDidListenersThrowCheck = true;
-            this._extraProperties.push('__legacyOutputDidListenersThrowError');
-        }
+      customOptions = customOptions || {}; // Todo: Make into event properties?
+
+      this._defaultSync = customOptions.defaultSync;
+      this._extraProperties = customOptions.extraProperties || [];
+
+      if (customOptions.legacyOutputDidListenersThrowFlag) {
+        // IndexedDB
+        this._legacyOutputDidListenersThrowCheck = true;
+
+        this._extraProperties.push('__legacyOutputDidListenersThrowError');
+      }
     },
     dispatchEvent: function dispatchEvent(ev) {
-        return this._dispatchEvent(ev, true);
+      return this._dispatchEvent(ev, true);
     },
     _dispatchEvent: function _dispatchEvent(ev, setTarget) {
-        var _this = this;
+      var _this = this;
 
-        ['early', '', 'late', 'default'].forEach(function (listenerType) {
-            var arrStr = '_' + listenerType + (listenerType === '' ? 'l' : 'L') + 'isteners';
-            if (!_this[arrStr]) {
-                Object.defineProperty(_this, arrStr, { value: {} });
-            }
+      ['early', '', 'late', 'default'].forEach(function (listenerType) {
+        var arrStr = '_' + listenerType + (listenerType === '' ? 'l' : 'L') + 'isteners';
+
+        if (!_this[arrStr]) {
+          Object.defineProperty(_this, arrStr, {
+            value: {}
+          });
+        }
+      });
+
+      var _evCfg = evCfg.get(ev);
+
+      if (_evCfg && setTarget && _evCfg._dispatched) {
+        throw new exports.ShimDOMException('The object is in an invalid state.', 'InvalidStateError');
+      }
+
+      var eventCopy;
+
+      if (_evCfg) {
+        eventCopy = ev;
+      } else {
+        eventCopy = copyEvent(ev);
+        _evCfg = evCfg.get(eventCopy);
+        _evCfg._dispatched = true;
+
+        this._extraProperties.forEach(function (prop) {
+          if (prop in ev) {
+            eventCopy[prop] = ev[prop]; // Todo: Put internal to `ShimEvent`?
+          }
         });
+      }
 
-        var _evCfg = evCfg.get(ev);
-        if (_evCfg && setTarget && _evCfg._dispatched) {
-            throw new exports.ShimDOMException('The object is in an invalid state.', 'InvalidStateError');
+      var _eventCopy = eventCopy,
+          type = _eventCopy.type;
+
+      function finishEventDispatch() {
+        _evCfg.eventPhase = phases.NONE;
+        _evCfg.currentTarget = null;
+        delete _evCfg._children;
+      }
+
+      function invokeDefaults() {
+        // Ignore stopPropagation from defaults
+        _evCfg._stopImmediatePropagation = undefined;
+        _evCfg._stopPropagation = undefined; // We check here for whether we should invoke since may have changed since timeout (if late listener prevented default)
+
+        if (!eventCopy.defaultPrevented || !_evCfg.cancelable) {
+          // 2nd check should be redundant
+          _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke default listeners
+
+          eventCopy.target.invokeCurrentListeners(eventCopy.target._defaultListeners, eventCopy, type);
         }
 
-        var eventCopy = void 0;
-        if (_evCfg) {
-            eventCopy = ev;
-        } else {
-            eventCopy = copyEvent(ev);
-            _evCfg = evCfg.get(eventCopy);
-            _evCfg._dispatched = true;
-            this._extraProperties.forEach(function (prop) {
-                if (prop in ev) {
-                    eventCopy[prop] = ev[prop]; // Todo: Put internal to `ShimEvent`?
-                }
-            });
-        }
-        var _eventCopy = eventCopy,
-            type = _eventCopy.type;
+        finishEventDispatch();
+      }
 
+      var continueEventDispatch = function continueEventDispatch() {
+        // Ignore stop propagation of user now
+        _evCfg._stopImmediatePropagation = undefined;
+        _evCfg._stopPropagation = undefined;
 
-        function finishEventDispatch() {
-            _evCfg.eventPhase = phases.NONE;
-            _evCfg.currentTarget = null;
-            delete _evCfg._children;
+        if (!_this._defaultSync) {
+          setTimeout(invokeDefaults, 0);
+        } else invokeDefaults();
+
+        _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke late listeners
+        // Sync default might have stopped
+
+        if (!_evCfg._stopPropagation) {
+          _evCfg._stopImmediatePropagation = undefined;
+          _evCfg._stopPropagation = undefined; // We could allow stopPropagation by only executing upon (_evCfg._stopPropagation)
+
+          eventCopy.target.invokeCurrentListeners(eventCopy.target._lateListeners, eventCopy, type);
         }
-        function invokeDefaults() {
-            // Ignore stopPropagation from defaults
-            _evCfg._stopImmediatePropagation = undefined;
-            _evCfg._stopPropagation = undefined;
-            // We check here for whether we should invoke since may have changed since timeout (if late listener prevented default)
-            if (!eventCopy.defaultPrevented || !_evCfg.cancelable) {
-                // 2nd check should be redundant
-                _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke default listeners
-                eventCopy.target.invokeCurrentListeners(eventCopy.target._defaultListeners, eventCopy, type);
+
+        finishEventDispatch();
+        return !eventCopy.defaultPrevented;
+      };
+
+      if (setTarget) _evCfg.target = this;
+
+      switch (eventCopy.eventPhase) {
+        default:
+        case phases.NONE:
+          _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke early listeners
+
+          this.invokeCurrentListeners(this._earlyListeners, eventCopy, type);
+
+          if (!this.__getParent) {
+            _evCfg.eventPhase = phases.AT_TARGET;
+            return this._dispatchEvent(eventCopy, false);
+          }
+
+          var par = this;
+          var root = this;
+
+          while (par.__getParent && (par = par.__getParent()) !== null) {
+            if (!_evCfg._children) {
+              _evCfg._children = [];
             }
-            finishEventDispatch();
-        }
-        var continueEventDispatch = function continueEventDispatch() {
-            // Ignore stop propagation of user now
-            _evCfg._stopImmediatePropagation = undefined;
-            _evCfg._stopPropagation = undefined;
-            if (!_this._defaultSync) {
-                setTimeout(invokeDefaults, 0);
-            } else invokeDefaults();
 
-            _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke late listeners
-            // Sync default might have stopped
-            if (!_evCfg._stopPropagation) {
-                _evCfg._stopImmediatePropagation = undefined;
-                _evCfg._stopPropagation = undefined;
-                // We could allow stopPropagation by only executing upon (_evCfg._stopPropagation)
-                eventCopy.target.invokeCurrentListeners(eventCopy.target._lateListeners, eventCopy, type);
-            }
-            finishEventDispatch();
+            _evCfg._children.push(root);
 
-            return !eventCopy.defaultPrevented;
-        };
+            root = par;
+          }
 
-        if (setTarget) _evCfg.target = this;
+          root._defaultSync = this._defaultSync;
+          _evCfg.eventPhase = phases.CAPTURING_PHASE;
+          return root._dispatchEvent(eventCopy, false);
 
-        switch (eventCopy.eventPhase) {
-            default:case phases.NONE:
+        case phases.CAPTURING_PHASE:
+          if (_evCfg._stopPropagation) {
+            return continueEventDispatch();
+          }
 
-                _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke early listeners
-                this.invokeCurrentListeners(this._earlyListeners, eventCopy, type);
-                if (!this.__getParent) {
-                    _evCfg.eventPhase = phases.AT_TARGET;
-                    return this._dispatchEvent(eventCopy, false);
-                }
+          this.invokeCurrentListeners(this._listeners, eventCopy, type);
 
-                var par = this;
-                var root = this;
-                while (par.__getParent && (par = par.__getParent()) !== null) {
-                    if (!_evCfg._children) {
-                        _evCfg._children = [];
-                    }
-                    _evCfg._children.push(root);
-                    root = par;
-                }
-                root._defaultSync = this._defaultSync;
-                _evCfg.eventPhase = phases.CAPTURING_PHASE;
-                return root._dispatchEvent(eventCopy, false);
-            case phases.CAPTURING_PHASE:
-                if (_evCfg._stopPropagation) {
-                    return continueEventDispatch();
-                }
-                this.invokeCurrentListeners(this._listeners, eventCopy, type);
-                var child = _evCfg._children && _evCfg._children.length && _evCfg._children.pop();
-                if (!child || child === eventCopy.target) {
-                    _evCfg.eventPhase = phases.AT_TARGET;
-                }
-                if (child) child._defaultSync = this._defaultSync;
-                return (child || this)._dispatchEvent(eventCopy, false);
-            case phases.AT_TARGET:
-                if (_evCfg._stopPropagation) {
-                    return continueEventDispatch();
-                }
-                this.invokeCurrentListeners(this._listeners, eventCopy, type, true);
-                if (!_evCfg.bubbles) {
-                    return continueEventDispatch();
-                }
-                _evCfg.eventPhase = phases.BUBBLING_PHASE;
-                return this._dispatchEvent(eventCopy, false);
-            case phases.BUBBLING_PHASE:
-                if (_evCfg._stopPropagation) {
-                    return continueEventDispatch();
-                }
-                var parent = this.__getParent && this.__getParent();
-                if (!parent) {
-                    return continueEventDispatch();
-                }
-                parent.invokeCurrentListeners(parent._listeners, eventCopy, type, true);
-                parent._defaultSync = this._defaultSync;
-                return parent._dispatchEvent(eventCopy, false);
-        }
+          var child = _evCfg._children && _evCfg._children.length && _evCfg._children.pop();
+
+          if (!child || child === eventCopy.target) {
+            _evCfg.eventPhase = phases.AT_TARGET;
+          }
+
+          if (child) child._defaultSync = this._defaultSync;
+          return (child || this)._dispatchEvent(eventCopy, false);
+
+        case phases.AT_TARGET:
+          if (_evCfg._stopPropagation) {
+            return continueEventDispatch();
+          }
+
+          this.invokeCurrentListeners(this._listeners, eventCopy, type, true);
+
+          if (!_evCfg.bubbles) {
+            return continueEventDispatch();
+          }
+
+          _evCfg.eventPhase = phases.BUBBLING_PHASE;
+          return this._dispatchEvent(eventCopy, false);
+
+        case phases.BUBBLING_PHASE:
+          if (_evCfg._stopPropagation) {
+            return continueEventDispatch();
+          }
+
+          var parent = this.__getParent && this.__getParent();
+
+          if (!parent) {
+            return continueEventDispatch();
+          }
+
+          parent.invokeCurrentListeners(parent._listeners, eventCopy, type, true);
+          parent._defaultSync = this._defaultSync;
+          return parent._dispatchEvent(eventCopy, false);
+      }
     },
     invokeCurrentListeners: function invokeCurrentListeners(listeners, eventCopy, type, checkOnListeners) {
-        var _this2 = this;
+      var _this2 = this;
 
-        var _evCfg = evCfg.get(eventCopy);
-        _evCfg.currentTarget = this;
+      var _evCfg = evCfg.get(eventCopy);
 
-        var listOpts = getListenersOptions(listeners, type, {});
-        var listenersByType = listOpts.listenersByType.concat();
-        var dummyIPos = listenersByType.length ? 1 : 0;
+      _evCfg.currentTarget = this;
+      var listOpts = getListenersOptions(listeners, type, {});
+      var listenersByType = listOpts.listenersByType.concat();
+      var dummyIPos = listenersByType.length ? 1 : 0;
+      listenersByType.some(function (listenerObj, i) {
+        var onListener = checkOnListeners ? _this2['on' + type] : null;
+        if (_evCfg._stopImmediatePropagation) return true;
 
-        listenersByType.some(function (listenerObj, i) {
-            var onListener = checkOnListeners ? _this2['on' + type] : null;
-            if (_evCfg._stopImmediatePropagation) return true;
-            if (i === dummyIPos && typeof onListener === 'function') {
-                // We don't splice this in as could be overwritten; executes here per
-                //    https://html.spec.whatwg.org/multipage/webappapis.html#event-handler-attributes:event-handlers-14
-                _this2.tryCatch(eventCopy, function () {
-                    var ret = onListener.call(eventCopy.currentTarget, eventCopy);
-                    if (ret === false) {
-                        eventCopy.preventDefault();
-                    }
-                });
+        if (i === dummyIPos && typeof onListener === 'function') {
+          // We don't splice this in as could be overwritten; executes here per
+          //    https://html.spec.whatwg.org/multipage/webappapis.html#event-handler-attributes:event-handlers-14
+          _this2.tryCatch(eventCopy, function () {
+            var ret = onListener.call(eventCopy.currentTarget, eventCopy);
+
+            if (ret === false) {
+              eventCopy.preventDefault();
             }
-            var options = listenerObj.options;
-            var once = options.once,
-                passive = options.passive,
-                capture = options.capture;
+          });
+        }
 
+        var options = listenerObj.options;
+        var once = options.once,
+            passive = options.passive,
+            capture = options.capture;
+        _evCfg._passive = passive;
 
-            _evCfg._passive = passive;
+        if (capture && eventCopy.target !== eventCopy.currentTarget && eventCopy.eventPhase === phases.CAPTURING_PHASE || eventCopy.eventPhase === phases.AT_TARGET || !capture && eventCopy.target !== eventCopy.currentTarget && eventCopy.eventPhase === phases.BUBBLING_PHASE) {
+          var listener = listenerObj.listener;
 
-            if (capture && eventCopy.target !== eventCopy.currentTarget && eventCopy.eventPhase === phases.CAPTURING_PHASE || eventCopy.eventPhase === phases.AT_TARGET || !capture && eventCopy.target !== eventCopy.currentTarget && eventCopy.eventPhase === phases.BUBBLING_PHASE) {
-                var listener = listenerObj.listener;
-                _this2.tryCatch(eventCopy, function () {
-                    listener.call(eventCopy.currentTarget, eventCopy);
-                });
-                if (once) {
-                    _this2.removeEventListener(type, listener, options);
-                }
-            }
-        });
-        this.tryCatch(eventCopy, function () {
-            var onListener = checkOnListeners ? _this2['on' + type] : null;
-            if (typeof onListener === 'function' && listenersByType.length < 2) {
-                var ret = onListener.call(eventCopy.currentTarget, eventCopy); // Won't have executed if too short
-                if (ret === false) {
-                    eventCopy.preventDefault();
-                }
-            }
-        });
+          _this2.tryCatch(eventCopy, function () {
+            listener.call(eventCopy.currentTarget, eventCopy);
+          });
 
-        return !eventCopy.defaultPrevented;
+          if (once) {
+            _this2.removeEventListener(type, listener, options);
+          }
+        }
+      });
+      this.tryCatch(eventCopy, function () {
+        var onListener = checkOnListeners ? _this2['on' + type] : null;
+
+        if (typeof onListener === 'function' && listenersByType.length < 2) {
+          var ret = onListener.call(eventCopy.currentTarget, eventCopy); // Won't have executed if too short
+
+          if (ret === false) {
+            eventCopy.preventDefault();
+          }
+        }
+      });
+      return !eventCopy.defaultPrevented;
     },
     tryCatch: function tryCatch(ev, cb) {
-        try {
-            // Per MDN: Exceptions thrown by event handlers are reported
-            //    as uncaught exceptions; the event handlers run on a nested
-            //    callstack: they block the caller until they complete, but
-            //    exceptions do not propagate to the caller.
-            cb();
-        } catch (err) {
-            this.triggerErrorEvent(err, ev);
-        }
+      try {
+        // Per MDN: Exceptions thrown by event handlers are reported
+        //    as uncaught exceptions; the event handlers run on a nested
+        //    callstack: they block the caller until they complete, but
+        //    exceptions do not propagate to the caller.
+        cb();
+      } catch (err) {
+        this.triggerErrorEvent(err, ev);
+      }
     },
     triggerErrorEvent: function triggerErrorEvent(err, ev) {
-        var error = err;
-        if (typeof err === 'string') {
-            error = new Error('Uncaught exception: ' + err);
-        }
+      var error = err;
 
-        var triggerGlobalErrorEvent = void 0;
-        var useNodeImpl = false;
-        if (typeof window === 'undefined' || typeof ErrorEvent === 'undefined' || window && (typeof window === 'undefined' ? 'undefined' : _typeof(window)) === 'object' && !window.dispatchEvent) {
-            useNodeImpl = true;
-            triggerGlobalErrorEvent = function triggerGlobalErrorEvent() {
-                setTimeout(function () {
-                    // Node won't be able to catch in this way if we throw in the main thread
-                    // console.log(err); // Should we auto-log for user?
-                    throw error; // Let user listen to `process.on('uncaughtException', (err) => {});`
-                });
-            };
-        } else {
-            triggerGlobalErrorEvent = function triggerGlobalErrorEvent() {
-                // See https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onerror
-                //     and https://github.com/w3c/IndexedDB/issues/49
+      if (typeof err === 'string') {
+        error = new Error('Uncaught exception: ' + err);
+      }
 
-                // Note that a regular Event will properly trigger
-                //     `window.addEventListener('error')` handlers, but it will not trigger
-                //     `window.onerror` as per https://html.spec.whatwg.org/multipage/webappapis.html#handler-onerror
-                // Note also that the following line won't handle `window.addEventListener` handlers
-                //        if (window.onerror) window.onerror(error.message, err.fileName, err.lineNumber, error.columnNumber, error);
+      var triggerGlobalErrorEvent;
+      var useNodeImpl = false;
 
-                // `ErrorEvent` properly triggers `window.onerror` and `window.addEventListener('error')` handlers
-                var errEv = new ErrorEvent('error', {
-                    error: err,
-                    message: error.message || '',
-                    // We can't get the actually useful user's values!
-                    filename: error.fileName || '',
-                    lineno: error.lineNumber || 0,
-                    colno: error.columnNumber || 0
-                });
-                window.dispatchEvent(errEv);
-                // console.log(err); // Should we auto-log for user?
-            };
-        }
+      if (typeof window === 'undefined' || typeof ErrorEvent === 'undefined' || window && (typeof window === "undefined" ? "undefined" : _typeof(window)) === 'object' && !window.dispatchEvent) {
+        useNodeImpl = true;
 
-        // Todo: This really should always run here but as we can't set the global
-        //     `window` (e.g., using jsdom) since `setGlobalVars` becomes unable to
-        //     shim `indexedDB` in such a case currently (apparently due to
-        //     <https://github.com/axemclion/IndexedDBShim/issues/280>), we can't
-        //     avoid the above Node implementation (which, while providing some
-        //     fallback mechanism, is unstable)
-        if (!useNodeImpl || !this._legacyOutputDidListenersThrowCheck) triggerGlobalErrorEvent();
+        triggerGlobalErrorEvent = function triggerGlobalErrorEvent() {
+          setTimeout(function () {
+            // Node won't be able to catch in this way if we throw in the main thread
+            // console.log(err); // Should we auto-log for user?
+            throw error; // Let user listen to `process.on('uncaughtException', (err) => {});`
+          });
+        };
+      } else {
+        triggerGlobalErrorEvent = function triggerGlobalErrorEvent() {
+          // See https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onerror
+          //     and https://github.com/w3c/IndexedDB/issues/49
+          // Note that a regular Event will properly trigger
+          //     `window.addEventListener('error')` handlers, but it will not trigger
+          //     `window.onerror` as per https://html.spec.whatwg.org/multipage/webappapis.html#handler-onerror
+          // Note also that the following line won't handle `window.addEventListener` handlers
+          //        if (window.onerror) window.onerror(error.message, err.fileName, err.lineNumber, error.columnNumber, error);
+          // `ErrorEvent` properly triggers `window.onerror` and `window.addEventListener('error')` handlers
+          var errEv = new ErrorEvent('error', {
+            error: err,
+            message: error.message || '',
+            // We can't get the actually useful user's values!
+            filename: error.fileName || '',
+            lineno: error.lineNumber || 0,
+            colno: error.columnNumber || 0
+          });
+          window.dispatchEvent(errEv); // console.log(err); // Should we auto-log for user?
+        };
+      } // Todo: This really should always run here but as we can't set the global
+      //     `window` (e.g., using jsdom) since `setGlobalVars` becomes unable to
+      //     shim `indexedDB` in such a case currently (apparently due to
+      //     <https://github.com/axemclion/IndexedDBShim/issues/280>), we can't
+      //     avoid the above Node implementation (which, while providing some
+      //     fallback mechanism, is unstable)
 
-        // See https://dom.spec.whatwg.org/#concept-event-listener-inner-invoke and
-        //    https://github.com/w3c/IndexedDB/issues/140 (also https://github.com/w3c/IndexedDB/issues/49 )
-        if (this._legacyOutputDidListenersThrowCheck) {
-            ev.__legacyOutputDidListenersThrowError = error;
-        }
+
+      if (!useNodeImpl || !this._legacyOutputDidListenersThrowCheck) triggerGlobalErrorEvent(); // See https://dom.spec.whatwg.org/#concept-event-listener-inner-invoke and
+      //    https://github.com/w3c/IndexedDB/issues/140 (also https://github.com/w3c/IndexedDB/issues/49 )
+
+      if (this._legacyOutputDidListenersThrowCheck) {
+        ev.__legacyOutputDidListenersThrowError = error;
+      }
     }
-});
-EventTarget.prototype[Symbol.toStringTag] = 'EventTargetPrototype';
-
-Object.defineProperty(EventTarget, 'prototype', {
+  });
+  EventTarget.prototype[Symbol.toStringTag] = 'EventTargetPrototype';
+  Object.defineProperty(EventTarget, 'prototype', {
     writable: false
-});
-
-var ShimEventTarget = EventTarget;
-var EventTargetFactory = {
+  });
+  var ShimEventTarget = EventTarget;
+  var EventTargetFactory = {
     createInstance: function createInstance(customOptions) {
-        function EventTarget() {
-            this.__setOptions(customOptions);
-        }
-        EventTarget.prototype = ShimEventTarget.prototype;
-        return new EventTarget();
+      function EventTarget() {
+        this.__setOptions(customOptions);
+      }
+
+      EventTarget.prototype = ShimEventTarget.prototype;
+      return new EventTarget();
     }
-};
+  };
+  EventTarget.ShimEvent = ShimEvent;
+  EventTarget.ShimCustomEvent = ShimCustomEvent;
+  EventTarget.ShimDOMException = exports.ShimDOMException;
+  EventTarget.ShimEventTarget = EventTarget;
+  EventTarget.EventTargetFactory = EventTargetFactory;
 
-EventTarget.ShimEvent = ShimEvent;
-EventTarget.ShimCustomEvent = ShimCustomEvent;
-EventTarget.ShimDOMException = exports.ShimDOMException;
-EventTarget.ShimEventTarget = EventTarget;
-EventTarget.EventTargetFactory = EventTargetFactory;
-
-function setPrototypeOfCustomEvent() {
+  function setPrototypeOfCustomEvent() {
     // TODO: IDL needs but reported as slow!
     Object.setPrototypeOf(ShimCustomEvent, ShimEvent);
     Object.setPrototypeOf(ShimCustomEvent.prototype, ShimEvent.prototype);
-}
+  } // Todo: Move to own library (but allowing WeakMaps to be passed in for sharing here)
 
-exports.setPrototypeOfCustomEvent = setPrototypeOfCustomEvent;
-exports.EventTargetFactory = EventTargetFactory;
-exports.ShimEventTarget = EventTarget;
-exports.ShimEvent = ShimEvent;
-exports.ShimCustomEvent = ShimCustomEvent;
+  exports.setPrototypeOfCustomEvent = setPrototypeOfCustomEvent;
+  exports.EventTargetFactory = EventTargetFactory;
+  exports.ShimEventTarget = EventTarget;
+  exports.ShimEvent = ShimEvent;
+  exports.ShimCustomEvent = ShimCustomEvent;
 
-Object.defineProperty(exports, '__esModule', { value: true });
+  Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
 
@@ -1262,45 +1348,58 @@ module.exports = SyncPromise;
 
 },{}],6:[function(require,module,exports){
 (function (global){
-!function(e,t){"object"==typeof exports&&"undefined"!=typeof module?module.exports=t():"function"==typeof define&&define.amd?define(t):(e.Typeson=e.Typeson||{},e.Typeson.presets=e.Typeson.presets||{},e.Typeson.presets.structuredCloningThrowing=t())}(this,function(){"use strict";var e="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e},t=function(){return function(e,t){if(Array.isArray(e))return e;if(Symbol.iterator in Object(e))return function sliceIterator(e,t){var n=[],r=!0,i=!1,o=void 0;try{for(var s,a=e[Symbol.iterator]();!(r=(s=a.next()).done)&&(n.push(s.value),!t||n.length!==t);r=!0);}catch(e){i=!0,o=e}finally{try{!r&&a.return&&a.return()}finally{if(i)throw o}}return n}(e,t);throw new TypeError("Invalid attempt to destructure non-iterable instance")}}(),n=function(e){if(Array.isArray(e)){for(var t=0,n=Array(e.length);t<e.length;t++)n[t]=e[t];return n}return Array.from(e)},r=Object.keys,i=Array.isArray,o={}.toString,s=Object.getPrototypeOf,a={}.hasOwnProperty,c=a.toString,u=["type","replaced","iterateIn","iterateUnsetNumeric"];function isThenable(e,t){return Typeson.isObject(e)&&"function"==typeof e.then&&(!t||"function"==typeof e.catch)}function toStringTag(e){return o.call(e).slice(8,-1)}function hasConstructorOf(t,n){if(!t||"object"!==(void 0===t?"undefined":e(t)))return!1;var r=s(t);if(!r)return!1;var i=a.call(r,"constructor")&&r.constructor;return"function"!=typeof i?null===n:"function"==typeof i&&null!==n&&c.call(i)===c.call(n)}function isPlainObject(e){return!(!e||"Object"!==toStringTag(e))&&(!s(e)||hasConstructorOf(e,Object))}function isObject(t){return t&&"object"===(void 0===t?"undefined":e(t))}function Typeson(o){var s=[],a=[],c={},f=this.types={},p=this.stringify=function(e,t,n,r){r=Object.assign({},o,r,{stringification:!0});var s=y(e,null,r);return i(s)?JSON.stringify(s[0],t,n):s.then(function(e){return JSON.stringify(e,t,n)})};this.stringifySync=function(e,t,n,r){return p(e,t,n,Object.assign({},{throwOnBadSyncType:!0},r,{sync:!0}))},this.stringifyAsync=function(e,t,n,r){return p(e,t,n,Object.assign({},{throwOnBadSyncType:!0},r,{sync:!1}))};var l=this.parse=function(e,t,n){return n=Object.assign({},o,n,{parse:!0}),v(JSON.parse(e,t),n)};this.parseSync=function(e,t,n){return l(e,t,Object.assign({},{throwOnBadSyncType:!0},n,{sync:!0}))},this.parseAsync=function(e,t,n){return l(e,t,Object.assign({},{throwOnBadSyncType:!0},n,{sync:!1}))},this.specialTypeNames=function(e,t){var n=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{};return n.returnTypeNames=!0,this.encapsulate(e,t,n)},this.rootTypeName=function(e,t){var n=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{};return n.iterateNone=!0,this.encapsulate(e,t,n)};var y=this.encapsulate=function(f,p,l){var y=(l=Object.assign({sync:!0},o,l)).sync,v={},d=[],h=[],b=[],g=!(l&&"cyclic"in l)||l.cyclic,m=l.encapsulateObserver,T=_encapsulate("",f,g,p||{},b);function finish(e){var t=Object.values(v);if(l.iterateNone)return t.length?t[0]:Typeson.getJSONType(e);if(t.length){if(l.returnTypeNames)return[].concat(n(new Set(t)));e&&isPlainObject(e)&&!e.hasOwnProperty("$types")?e.$types=v:e={$:e,$types:{$:v}}}else isObject(e)&&e.hasOwnProperty("$types")&&(e={$:e,$types:!0});return!l.returnTypeNames&&e}return b.length?y&&l.throwOnBadSyncType?function(){throw new TypeError("Sync method requested but async result obtained")}():Promise.resolve(function checkPromises(e,n){return Promise.all(n.map(function(e){return e[1].p})).then(function(r){return Promise.all(r.map(function(r){var i=[],o=n.splice(0,1)[0],s=t(o,7),a=s[0],c=s[2],u=s[3],f=s[4],p=s[5],l=s[6],y=_encapsulate(a,r,c,u,i,!0,l),v=hasConstructorOf(y,TypesonPromise);return a&&v?y.p.then(function(t){return f[p]=t,checkPromises(e,i)}):(a?f[p]=y:e=v?y.p:y,checkPromises(e,i))}))}).then(function(){return e})}(T,b)).then(finish):!y&&l.throwOnBadSyncType?function(){throw new TypeError("Async method requested but sync result obtained")}():l.stringification&&y?[finish(T)]:y?finish(T):Promise.resolve(finish(T));function _adaptBuiltinStateObjectProperties(e,t,n){Object.assign(e,t);var r=u.map(function(t){var n=e[t];return delete e[t],n});n(),u.forEach(function(t,n){e[t]=r[n]})}function _encapsulate(t,n,o,a,c,u,f){var p=void 0,y={},b=void 0===n?"undefined":e(n),g=m?function(e){var r=f||a.type||Typeson.getJSONType(n);m(Object.assign(e||y,{keypath:t,value:n,cyclic:o,stateObj:a,promisesData:c,resolvingTypesonPromise:u,awaitingTypesonPromise:hasConstructorOf(n,TypesonPromise)},void 0!==r?{type:r}:{}))}:null;if(b in{string:1,boolean:1,number:1,undefined:1})return void 0===n||"number"===b&&(isNaN(n)||n===-1/0||n===1/0)?(p=replace(t,n,a,c,!1,u,g))!==n&&(y={replaced:p}):p=n,g&&g(),p;if(null===n)return g&&g(),n;if(o&&!a.iterateIn&&!a.iterateUnsetNumeric){var T=d.indexOf(n);if(!(T<0))return v[t]="#",g&&g({cyclicKeypath:h[T]}),"#"+h[T];!0===o&&(d.push(n),h.push(t))}var O=isPlainObject(n),w=i(n),S=(O||w)&&(!s.length||a.replaced)||a.iterateIn?n:replace(t,n,a,c,O||w,null,g),P=void 0;if(S!==n?(p=S,y={replaced:S}):w||"array"===a.iterateIn?(P=new Array(n.length),y={clone:P}):O||"object"===a.iterateIn?y={clone:P={}}:""===t&&hasConstructorOf(n,TypesonPromise)?(c.push([t,n,o,a,void 0,void 0,a.type]),p=n):p=n,g&&g(),l.iterateNone)return P||p;if(!P)return p;if(a.iterateIn){var j=function _loop(e){var r={ownKeys:n.hasOwnProperty(e)};_adaptBuiltinStateObjectProperties(a,r,function(){var r=t+(t?".":"")+escapeKeyPathComponent(e),i=_encapsulate(r,n[e],!!o,a,c,u);hasConstructorOf(i,TypesonPromise)?c.push([r,i,!!o,a,P,e,a.type]):void 0!==i&&(P[e]=i)})};for(var A in n)j(A);g&&g({endIterateIn:!0,end:!0})}else r(n).forEach(function(e){var r=t+(t?".":"")+escapeKeyPathComponent(e);_adaptBuiltinStateObjectProperties(a,{ownKeys:!0},function(){var t=_encapsulate(r,n[e],!!o,a,c,u);hasConstructorOf(t,TypesonPromise)?c.push([r,t,!!o,a,P,e,a.type]):void 0!==t&&(P[e]=t)})}),g&&g({endIterateOwn:!0,end:!0});if(a.iterateUnsetNumeric){for(var C=n.length,N=function _loop2(e){if(!(e in n)){var r=t+(t?".":"")+e;_adaptBuiltinStateObjectProperties(a,{ownKeys:!1},function(){var t=_encapsulate(r,void 0,!!o,a,c,u);hasConstructorOf(t,TypesonPromise)?c.push([r,t,!!o,a,P,e,a.type]):void 0!==t&&(P[e]=t)})}},B=0;B<C;B++)N(B);g&&g({endIterateUnsetNumeric:!0,end:!0})}return P}function replace(e,t,n,r,i,o,u){for(var f=i?s:a,p=f.length;p--;){var l=f[p];if(l.test(t,n)){var d=l.type;if(c[d]){var h=v[e];v[e]=h?[d].concat(h):d}return Object.assign(n,{type:d,replaced:!0}),!y&&l.replaceAsync||l.replace?(u&&u({replacing:!0}),_encapsulate(e,l[y||!l.replaceAsync?"replace":"replaceAsync"](t,n),g&&"readonly",n,r,o,d)):(u&&u({typeDetected:!0}),_encapsulate(e,t,g&&"readonly",n,r,o,d))}}return t}};this.encapsulateSync=function(e,t,n){return y(e,t,Object.assign({},{throwOnBadSyncType:!0},n,{sync:!0}))},this.encapsulateAsync=function(e,t,n){return y(e,t,Object.assign({},{throwOnBadSyncType:!0},n,{sync:!1}))};var v=this.revive=function(e,n){var s=(n=Object.assign({sync:!0},o,n)).sync,a=e&&e.$types,u=!0;if(!a)return e;if(!0===a)return e.$;a.$&&isPlainObject(a.$)&&(e=e.$,a=a.$,u=!1);var f=[],p={},l=function _revive(e,n,o,s,l,y){if(u&&"$types"===e)return;var v=a[e];if(i(n)||isPlainObject(n)){var d=i(n)?new Array(n.length):{};for(r(n).forEach(function(t){var r=_revive(e+(e?".":"")+escapeKeyPathComponent(t),n[t],o||d,s,d,t);hasConstructorOf(r,Undefined)?d[t]=void 0:void 0!==r&&(d[t]=r)}),n=d;f.length;){var h=t(f[0],4),b=h[0],g=h[1],m=h[2],T=h[3],O=getByKeyPath(b,g);if(hasConstructorOf(O,Undefined))m[T]=void 0;else{if(void 0===O)break;m[T]=O}f.splice(0,1)}}if(!v)return n;if("#"===v){var w=getByKeyPath(o,n.substr(1));return void 0===w&&f.push([o,n.substr(1),l,y]),w}var S=s.sync;return[].concat(v).reduce(function(e,t){var n=c[t];if(!n)throw new Error("Unregistered type: "+t);return n[S&&n.revive?"revive":!S&&n.reviveAsync?"reviveAsync":"revive"](e,p)},n)}("",e,null,n);return isThenable(l=hasConstructorOf(l,Undefined)?void 0:l)?s&&n.throwOnBadSyncType?function(){throw new TypeError("Sync method requested but async result obtained")}():l:!s&&n.throwOnBadSyncType?function(){throw new TypeError("Async method requested but sync result obtained")}():s?l:Promise.resolve(l)};this.reviveSync=function(e,t){return v(e,Object.assign({},{throwOnBadSyncType:!0},t,{sync:!0}))},this.reviveAsync=function(e,t){return v(e,Object.assign({},{throwOnBadSyncType:!0},t,{sync:!1}))},this.register=function(e,t){return t=t||{},[].concat(e).forEach(function R(e){if(i(e))return e.map(R);e&&r(e).forEach(function(n){if("#"===n)throw new TypeError("# cannot be used as a type name as it is reserved for cyclic objects");if(Typeson.JSON_TYPES.includes(n))throw new TypeError("Plain JSON object types are reserved as type names");var r=e[n],o=r.testPlainObjects?s:a,u=o.filter(function(e){return e.type===n});if(u.length&&(o.splice(o.indexOf(u[0]),1),delete c[n],delete f[n]),r){if("function"==typeof r){var p=r;r={test:function test(e){return e&&e.constructor===p},replace:function replace(e){return assign({},e)},revive:function revive(e){return assign(Object.create(p.prototype),e)}}}else i(r)&&(r={test:r[0],replace:r[1],revive:r[2]});var l={type:n,test:r.test.bind(r)};r.replace&&(l.replace=r.replace.bind(r)),r.replaceAsync&&(l.replaceAsync=r.replaceAsync.bind(r));var y="number"==typeof t.fallback?t.fallback:t.fallback?0:1/0;if(r.testPlainObjects?s.splice(y,0,l):a.splice(y,0,l),r.revive||r.reviveAsync){var v={};r.revive&&(v.revive=r.revive.bind(r)),r.reviveAsync&&(v.reviveAsync=r.reviveAsync.bind(r)),c[n]=v}f[n]=r}})}),this}}function assign(e,t){return r(t).map(function(n){e[n]=t[n]}),e}function escapeKeyPathComponent(e){return e.replace(/~/g,"~0").replace(/\./g,"~1")}function unescapeKeyPathComponent(e){return e.replace(/~1/g,".").replace(/~0/g,"~")}function getByKeyPath(e,t){if(""===t)return e;var n=t.indexOf(".");if(n>-1){var r=e[unescapeKeyPathComponent(t.substr(0,n))];return void 0===r?void 0:getByKeyPath(r,t.substr(n+1))}return e[unescapeKeyPathComponent(t)]}function Undefined(){}function TypesonPromise(e){this.p=new Promise(e)}TypesonPromise.prototype.then=function(e,t){var n=this;return new TypesonPromise(function(r,i){n.p.then(function(t){r(e?e(t):t)},function(e){n.p.catch(function(e){return t?t(e):Promise.reject(e)}).then(r,i)})})},TypesonPromise.prototype.catch=function(e){return this.then(null,e)},TypesonPromise.resolve=function(e){return new TypesonPromise(function(t){t(e)})},TypesonPromise.reject=function(e){return new TypesonPromise(function(t,n){n(e)})},["all","race"].map(function(e){TypesonPromise[e]=function(t){return new TypesonPromise(function(n,r){Promise[e](t.map(function(e){return e.p})).then(n,r)})}}),Typeson.Undefined=Undefined,Typeson.Promise=TypesonPromise,Typeson.isThenable=isThenable,Typeson.toStringTag=toStringTag,Typeson.hasConstructorOf=hasConstructorOf,Typeson.isObject=isObject,Typeson.isPlainObject=isPlainObject,Typeson.isUserObject=function isUserObject(e){if(!e||"Object"!==toStringTag(e))return!1;var t=s(e);return!t||hasConstructorOf(e,Object)||isUserObject(t)},Typeson.escapeKeyPathComponent=escapeKeyPathComponent,Typeson.unescapeKeyPathComponent=unescapeKeyPathComponent,Typeson.getByKeyPath=getByKeyPath,Typeson.getJSONType=function(t){return null===t?"null":i(t)?"array":void 0===t?"undefined":e(t)},Typeson.JSON_TYPES=["null","boolean","number","string","array","object"];for(var f={userObject:{test:function test(e,t){return Typeson.isUserObject(e)},replace:function replace(e){return Object.assign({},e)},revive:function revive(e){return e}}},p=[[{sparseArrays:{testPlainObjects:!0,test:function test(e){return Array.isArray(e)},replace:function replace(e,t){return t.iterateUnsetNumeric=!0,e}}},{sparseUndefined:{test:function test(e,t){return void 0===e&&!1===t.ownKeys},replace:function replace(e){return null},revive:function revive(e){}}}],{undef:{test:function test(e,t){return void 0===e&&(t.ownKeys||!("ownKeys"in t))},replace:function replace(e){return null},revive:function revive(e){return new Typeson.Undefined}}}],l={StringObject:{test:function test(t){return"String"===Typeson.toStringTag(t)&&"object"===(void 0===t?"undefined":e(t))},replace:function replace(e){return String(e)},revive:function revive(e){return new String(e)}},BooleanObject:{test:function test(t){return"Boolean"===Typeson.toStringTag(t)&&"object"===(void 0===t?"undefined":e(t))},replace:function replace(e){return Boolean(e)},revive:function revive(e){return new Boolean(e)}},NumberObject:{test:function test(t){return"Number"===Typeson.toStringTag(t)&&"object"===(void 0===t?"undefined":e(t))},replace:function replace(e){return Number(e)},revive:function revive(e){return new Number(e)}}},y=[{nan:{test:function test(e){return"number"==typeof e&&isNaN(e)},replace:function replace(e){return"NaN"},revive:function revive(e){return NaN}}},{infinity:{test:function test(e){return e===1/0},replace:function replace(e){return"Infinity"},revive:function revive(e){return 1/0}}},{negativeInfinity:{test:function test(e){return e===-1/0},replace:function replace(e){return"-Infinity"},revive:function revive(e){return-1/0}}}],v={date:{test:function test(e){return"Date"===Typeson.toStringTag(e)},replace:function replace(e){var t=e.getTime();return isNaN(t)?"NaN":t},revive:function revive(e){return"NaN"===e?new Date(NaN):new Date(e)}}},d={regexp:{test:function test(e){return"RegExp"===Typeson.toStringTag(e)},replace:function replace(e){return{source:e.source,flags:(e.global?"g":"")+(e.ignoreCase?"i":"")+(e.multiline?"m":"")+(e.sticky?"y":"")+(e.unicode?"u":"")}},revive:function revive(e){var t=e.source,n=e.flags;return new RegExp(t,n)}}},h={map:{test:function test(e){return"Map"===Typeson.toStringTag(e)},replace:function replace(e){return Array.from(e.entries())},revive:function revive(e){return new Map(e)}}},b={set:{test:function test(e){return"Set"===Typeson.toStringTag(e)},replace:function replace(e){return Array.from(e.values())},revive:function revive(e){return new Set(e)}}},g="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",m=new Uint8Array(256),T=0;T<g.length;T++)m[g.charCodeAt(T)]=T;var O=function encode(e,t,n){for(var r=new Uint8Array(e,t,n),i=r.length,o="",s=0;s<i;s+=3)o+=g[r[s]>>2],o+=g[(3&r[s])<<4|r[s+1]>>4],o+=g[(15&r[s+1])<<2|r[s+2]>>6],o+=g[63&r[s+2]];return i%3==2?o=o.substring(0,o.length-1)+"=":i%3==1&&(o=o.substring(0,o.length-2)+"=="),o},w=function decode(e){var t=e.length,n=.75*e.length,r=0,i=void 0,o=void 0,s=void 0,a=void 0;"="===e[e.length-1]&&(n--,"="===e[e.length-2]&&n--);for(var c=new ArrayBuffer(n),u=new Uint8Array(c),f=0;f<t;f+=4)i=m[e.charCodeAt(f)],o=m[e.charCodeAt(f+1)],s=m[e.charCodeAt(f+2)],a=m[e.charCodeAt(f+3)],u[r++]=i<<2|o>>4,u[r++]=(15&o)<<4|s>>2,u[r++]=(3&s)<<6|63&a;return c},S={arraybuffer:{test:function test(e){return"ArrayBuffer"===Typeson.toStringTag(e)},replace:function replace(e,t){t.buffers||(t.buffers=[]);var n=t.buffers.indexOf(e);return n>-1?{index:n}:(t.buffers.push(e),O(e))},revive:function revive(t,n){if(n.buffers||(n.buffers=[]),"object"===(void 0===t?"undefined":e(t)))return n.buffers[t.index];var r=w(t);return n.buffers.push(r),r}}},P="undefined"==typeof self?global:self,j={};["Int8Array","Uint8Array","Uint8ClampedArray","Int16Array","Uint16Array","Int32Array","Uint32Array","Float32Array","Float64Array"].forEach(function(e){var t=e,n=P[t];n&&(j[e.toLowerCase()]={test:function test(e){return Typeson.toStringTag(e)===t},replace:function replace(e,t){var n=e.buffer,r=e.byteOffset,i=e.length;t.buffers||(t.buffers=[]);var o=t.buffers.indexOf(n);return o>-1?{index:o,byteOffset:r,length:i}:(t.buffers.push(n),{encoded:O(n),byteOffset:r,length:i})},revive:function revive(e,t){t.buffers||(t.buffers=[]);var r=e.byteOffset,i=e.length,o=e.encoded,s=e.index,a=void 0;return"index"in e?a=t.buffers[s]:(a=w(o),t.buffers.push(a)),new n(a,r,i)}})});var A={dataview:{test:function test(e){return"DataView"===Typeson.toStringTag(e)},replace:function replace(e,t){var n=e.buffer,r=e.byteOffset,i=e.byteLength;t.buffers||(t.buffers=[]);var o=t.buffers.indexOf(n);return o>-1?{index:o,byteOffset:r,byteLength:i}:(t.buffers.push(n),{encoded:O(n),byteOffset:r,byteLength:i})},revive:function revive(e,t){t.buffers||(t.buffers=[]);var n=e.byteOffset,r=e.byteLength,i=e.encoded,o=e.index,s=void 0;return"index"in e?s=t.buffers[o]:(s=w(i),t.buffers.push(s)),new DataView(s,n,r)}}},C={IntlCollator:{test:function test(e){return Typeson.hasConstructorOf(e,Intl.Collator)},replace:function replace(e){return e.resolvedOptions()},revive:function revive(e){return new Intl.Collator(e.locale,e)}},IntlDateTimeFormat:{test:function test(e){return Typeson.hasConstructorOf(e,Intl.DateTimeFormat)},replace:function replace(e){return e.resolvedOptions()},revive:function revive(e){return new Intl.DateTimeFormat(e.locale,e)}},IntlNumberFormat:{test:function test(e){return Typeson.hasConstructorOf(e,Intl.NumberFormat)},replace:function replace(e){return e.resolvedOptions()},revive:function revive(e){return new Intl.NumberFormat(e.locale,e)}}},N={file:{test:function test(e){return"File"===Typeson.toStringTag(e)},replace:function replace(e){var t=new XMLHttpRequest;if(t.open("GET",URL.createObjectURL(e),!1),200!==t.status&&0!==t.status)throw new Error("Bad Blob access: "+t.status);return t.send(),{type:e.type,stringContents:t.responseText,name:e.name,lastModified:e.lastModified}},revive:function revive(e){var t=e.name,n=e.type,r=e.stringContents,i=e.lastModified;return new File([r],t,{type:n,lastModified:i})},replaceAsync:function replaceAsync(e){return new Typeson.Promise(function(t,n){if(e.isClosed)n(new Error("The File is closed"));else{var r=new FileReader;r.addEventListener("load",function(){t({type:e.type,stringContents:r.result,name:e.name,lastModified:e.lastModified})}),r.addEventListener("error",function(){n(r.error)}),r.readAsText(e)}})}}};return[f,p,l,y,v,d,{imagedata:{test:function test(e){return"ImageData"===Typeson.toStringTag(e)},replace:function replace(e){return{array:Array.from(e.data),width:e.width,height:e.height}},revive:function revive(e){return new ImageData(new Uint8ClampedArray(e.array),e.width,e.height)}}},{imagebitmap:{test:function test(e){return"ImageBitmap"===Typeson.toStringTag(e)||e&&e.dataset&&"ImageBitmap"===e.dataset.toStringTag},replace:function replace(e){var t=document.createElement("canvas");return t.getContext("2d").drawImage(e,0,0),t.toDataURL()},revive:function revive(e){var t=document.createElement("canvas"),n=t.getContext("2d"),r=document.createElement("img");return r.onload=function(){n.drawImage(r,0,0)},r.src=e,t},reviveAsync:function reviveAsync(e){var t=document.createElement("canvas"),n=t.getContext("2d"),r=document.createElement("img");return r.onload=function(){n.drawImage(r,0,0)},r.src=e,createImageBitmap(t)}}},N,{file:N.file,filelist:{test:function test(e){return"FileList"===Typeson.toStringTag(e)},replace:function replace(e){for(var t=[],n=0;n<e.length;n++)t[n]=e.item(n);return t},revive:function revive(e){function FileList(){this._files=arguments[0],this.length=this._files.length}return FileList.prototype.item=function(e){return this._files[e]},FileList.prototype[Symbol.toStringTag]="FileList",new FileList(e)}}},{blob:{test:function test(e){return"Blob"===Typeson.toStringTag(e)},replace:function replace(e){var t=new XMLHttpRequest;if(t.open("GET",URL.createObjectURL(e),!1),200!==t.status&&0!==t.status)throw new Error("Bad Blob access: "+t.status);return t.send(),{type:e.type,stringContents:t.responseText}},revive:function revive(e){var t=e.type,n=e.stringContents;return new Blob([n],{type:t})},replaceAsync:function replaceAsync(e){return new Typeson.Promise(function(t,n){if(e.isClosed)n(new Error("The Blob is closed"));else{var r=new FileReader;r.addEventListener("load",function(){t({type:e.type,stringContents:r.result})}),r.addEventListener("error",function(){n(r.error)}),r.readAsText(e)}})}}}].concat("function"==typeof Map?h:[],"function"==typeof Set?b:[],"function"==typeof ArrayBuffer?S:[],"function"==typeof Uint8Array?j:[],"function"==typeof DataView?A:[],"undefined"!=typeof Intl?C:[]).concat({checkDataCloneException:[function(t){var n={}.toString.call(t).slice(8,-1);if(["symbol","function"].includes(void 0===t?"undefined":e(t))||["Arguments","Module","Error","Promise","WeakMap","WeakSet"].includes(n)||t===Object.prototype||("Blob"===n||"File"===n)&&t.isClosed||t&&"object"===(void 0===t?"undefined":e(t))&&"number"==typeof t.nodeType&&"function"==typeof t.insertBefore)throw new DOMException("The object cannot be cloned.","DataCloneError");return!1}]})});
+!function(e,t){"object"==typeof exports&&"undefined"!=typeof module?module.exports=t():"function"==typeof define&&define.amd?define(t):e.Typeson=t()}(this,function(){"use strict";class TypesonPromise{constructor(e){this.p=new Promise(e)}}"undefined"!=typeof Symbol&&(TypesonPromise.prototype[Symbol.toStringTag]="TypesonPromise"),TypesonPromise.prototype.then=function(e,t){return new TypesonPromise((n,r)=>{this.p.then(function(t){n(e?e(t):t)},e=>{this.p.catch(function(e){return t?t(e):Promise.reject(e)}).then(n,r)})})},TypesonPromise.prototype.catch=function(e){return this.then(null,e)},TypesonPromise.resolve=function(e){return new TypesonPromise(t=>{t(e)})},TypesonPromise.reject=function(e){return new TypesonPromise((t,n)=>{n(e)})},["all","race"].map(function(e){TypesonPromise[e]=function(t){return new TypesonPromise(function(n,r){Promise[e](t.map(e=>e.p)).then(n,r)})}});const{toString:e}={},t={}.hasOwnProperty,n=Object.getPrototypeOf,r=t.toString;function isThenable(e,t){return isObject(e)&&"function"==typeof e.then&&(!t||"function"==typeof e.catch)}function toStringTag(t){return e.call(t).slice(8,-1)}function hasConstructorOf(e,o){if(!e||"object"!=typeof e)return!1;const i=n(e);if(!i)return!1;const s=t.call(i,"constructor")&&i.constructor;return"function"!=typeof s?null===o:"function"==typeof s&&null!==o&&r.call(s)===r.call(o)}function isPlainObject(e){if(!e||"Object"!==toStringTag(e))return!1;return!n(e)||hasConstructorOf(e,Object)}function isObject(e){return e&&"object"==typeof e}function escapeKeyPathComponent(e){return e.replace(/~/g,"~0").replace(/\./g,"~1")}function unescapeKeyPathComponent(e){return e.replace(/~1/g,".").replace(/~0/g,"~")}function getByKeyPath(e,t){if(""===t)return e;const n=t.indexOf(".");if(n>-1){const r=e[unescapeKeyPathComponent(t.substr(0,n))];return void 0===r?void 0:getByKeyPath(r,t.substr(n+1))}return e[unescapeKeyPathComponent(t)]}const{keys:o}=Object,{isArray:i}=Array,s={}.hasOwnProperty,a=["type","replaced","iterateIn","iterateUnsetNumeric"];function nestedPathsFirst(e,t){let n=e.keypath.match(/\./g),r=e.keypath.match(/\./g);return n&&(n=n.length),r&&(r=r.length),n>r?-1:r<n?1:e.keypath<t.keypath?-1:e.keypath>t.keypath}class Typeson{constructor(e){this.options=e,this.plainObjectReplacers=[],this.nonplainObjectReplacers=[],this.revivers={},this.types={}}stringify(e,t,n,r){r={...this.options,...r,stringification:!0};const o=this.encapsulate(e,null,r);return i(o)?JSON.stringify(o[0],t,n):o.then(e=>JSON.stringify(e,t,n))}stringifySync(e,t,n,r){return this.stringify(e,t,n,{throwOnBadSyncType:!0,...r,sync:!0})}stringifyAsync(e,t,n,r){return this.stringify(e,t,n,{throwOnBadSyncType:!0,...r,sync:!1})}parse(e,t,n){return n={...this.options,...n,parse:!0},this.revive(JSON.parse(e,t),n)}parseSync(e,t,n){return this.parse(e,t,{throwOnBadSyncType:!0,...n,sync:!0})}parseAsync(e,t,n){return this.parse(e,t,{throwOnBadSyncType:!0,...n,sync:!1})}specialTypeNames(e,t,n={}){return n.returnTypeNames=!0,this.encapsulate(e,t,n)}rootTypeName(e,t,n={}){return n.iterateNone=!0,this.encapsulate(e,t,n)}encapsulate(e,t,n){n={sync:!0,...this.options,...n};const{sync:r}=n,c=this,u={},f=[],p=[],l=[],y=!(n&&"cyclic"in n)||n.cyclic,{encapsulateObserver:v}=n,d=_encapsulate("",e,y,t||{},l);function finish(e){const t=Object.values(u);if(n.iterateNone)return t.length?t[0]:Typeson.getJSONType(e);if(t.length){if(n.returnTypeNames)return[...new Set(t)];e&&isPlainObject(e)&&!s.call(e,"$types")?e.$types=u:e={$:e,$types:{$:u}}}else isObject(e)&&s.call(e,"$types")&&(e={$:e,$types:!0});return!n.returnTypeNames&&e}function _adaptBuiltinStateObjectProperties(e,t,n){Object.assign(e,t);const r=a.map(t=>{const n=e[t];return delete e[t],n});n(),a.forEach((t,n)=>{e[t]=r[n]})}function _encapsulate(e,t,r,a,l,y,d){let h,b={};const g=typeof t,m=v?function(n){const o=d||a.type||Typeson.getJSONType(t);v(Object.assign(n||b,{keypath:e,value:t,cyclic:r,stateObj:a,promisesData:l,resolvingTypesonPromise:y,awaitingTypesonPromise:hasConstructorOf(t,TypesonPromise)},void 0!==o?{type:o}:{}))}:null;if(["string","boolean","number","undefined"].includes(g))return void 0===t||"number"===g&&(isNaN(t)||t===-1/0||t===1/0)?(h=replace(e,t,a,l,!1,y,m))!==t&&(b={replaced:h}):h=t,m&&m(),h;if(null===t)return m&&m(),t;if(r&&!a.iterateIn&&!a.iterateUnsetNumeric){const n=f.indexOf(t);if(!(n<0))return u[e]="#",m&&m({cyclicKeypath:p[n]}),"#"+p[n];!0===r&&(f.push(t),p.push(e))}const T=isPlainObject(t),O=i(t),w=(T||O)&&(!c.plainObjectReplacers.length||a.replaced)||a.iterateIn?t:replace(e,t,a,l,T||O,null,m);let A;if(w!==t?(h=w,b={replaced:w}):O&&"object"!==a.iterateIn||"array"===a.iterateIn?(A=new Array(t.length),b={clone:A}):T||"object"===a.iterateIn?(A={},a.addLength&&(A.length=t.length),b={clone:A}):""===e&&hasConstructorOf(t,TypesonPromise)?(l.push([e,t,r,a,void 0,void 0,a.type]),h=t):h=t,m&&m(),n.iterateNone)return A||h;if(!A)return h;if(a.iterateIn){for(const n in t){const o={ownKeys:s.call(t,n)};_adaptBuiltinStateObjectProperties(a,o,()=>{const o=e+(e?".":"")+escapeKeyPathComponent(n),i=_encapsulate(o,t[n],!!r,a,l,y);hasConstructorOf(i,TypesonPromise)?l.push([o,i,!!r,a,A,n,a.type]):void 0!==i&&(A[n]=i)})}m&&m({endIterateIn:!0,end:!0})}else o(t).forEach(function(n){const o=e+(e?".":"")+escapeKeyPathComponent(n);_adaptBuiltinStateObjectProperties(a,{ownKeys:!0},()=>{const e=_encapsulate(o,t[n],!!r,a,l,y);hasConstructorOf(e,TypesonPromise)?l.push([o,e,!!r,a,A,n,a.type]):void 0!==e&&(A[n]=e)})}),m&&m({endIterateOwn:!0,end:!0});if(a.iterateUnsetNumeric){const n=t.length;for(let o=0;o<n;o++)if(!(o in t)){const t=e+(e?".":"")+o;_adaptBuiltinStateObjectProperties(a,{ownKeys:!1},()=>{const e=_encapsulate(t,void 0,!!r,a,l,y);hasConstructorOf(e,TypesonPromise)?l.push([t,e,!!r,a,A,o,a.type]):void 0!==e&&(A[o]=e)})}m&&m({endIterateUnsetNumeric:!0,end:!0})}return A}function replace(e,t,n,o,i,s,a){const f=i?c.plainObjectReplacers:c.nonplainObjectReplacers;let p=f.length;for(;p--;){const i=f[p];if(i.test(t,n)){const{type:f}=i;if(c.revivers[f]){const t=u[e];u[e]=t?[f].concat(t):f}return Object.assign(n,{type:f,replaced:!0}),!r&&i.replaceAsync||i.replace?(a&&a({replacing:!0}),_encapsulate(e,i[r||!i.replaceAsync?"replace":"replaceAsync"](t,n),y&&"readonly",n,o,s,f)):(a&&a({typeDetected:!0}),_encapsulate(e,t,y&&"readonly",n,o,s,f))}}return t}return l.length?r&&n.throwOnBadSyncType?(()=>{throw new TypeError("Sync method requested but async result obtained")})():Promise.resolve(async function checkPromises(e,t){const n=await Promise.all(t.map(e=>e[1].p));return await Promise.all(n.map(async function(n){const r=[],[o]=t.splice(0,1),[i,,s,a,c,u,f]=o,p=_encapsulate(i,n,s,a,r,!0,f),l=hasConstructorOf(p,TypesonPromise);if(i&&l){const t=await p.p;return c[u]=t,checkPromises(e,r)}return i?c[u]=p:e=l?p.p:p,checkPromises(e,r)})),e}(d,l)).then(finish):!r&&n.throwOnBadSyncType?(()=>{throw new TypeError("Async method requested but sync result obtained")})():n.stringification&&r?[finish(d)]:r?finish(d):Promise.resolve(finish(d))}encapsulateSync(e,t,n){return this.encapsulate(e,t,{throwOnBadSyncType:!0,...n,sync:!0})}encapsulateAsync(e,t,n){return this.encapsulate(e,t,{throwOnBadSyncType:!0,...n,sync:!1})}revive(e,t){let n=e&&e.$types;if(!n)return e;if(!0===n)return e.$;t={sync:!0,...this.options,...t};const{sync:r}=t,s=[],a={};let c=!0;n.$&&isPlainObject(n.$)&&(e=e.$,n=n.$,c=!1);const u=this;function _revive(e,t,f,p,l){if(c&&"$types"===e)return;const y=n[e];if(i(t)||isPlainObject(t)){const n=i(t)?new Array(t.length):{};for(o(t).forEach(r=>{const o=_revive(e+(e?".":"")+escapeKeyPathComponent(r),t[r],f||n,n,r);hasConstructorOf(o,Undefined)?n[r]=void 0:void 0!==o&&(n[r]=o)}),t=n;s.length;){const[[e,t,n,r]]=s,o=getByKeyPath(e,t);if(hasConstructorOf(o,Undefined))n[r]=void 0;else{if(void 0===o)break;n[r]=o}s.splice(0,1)}}if(!y)return t;if("#"===y){const e=getByKeyPath(f,t.slice(1));return void 0===e&&s.push([f,t.slice(1),p,l]),e}return[].concat(y).reduce(function reducer(e,t){if(hasConstructorOf(e,TypesonPromise))return e.then(e=>reducer(e,t));const[n]=u.revivers[t];if(!n)throw new Error("Unregistered type: "+t);return n[r&&n.revive?"revive":!r&&n.reviveAsync?"reviveAsync":"revive"](e,a)},t)}function checkUndefined(e){return hasConstructorOf(e,Undefined)?void 0:e}const f=function revivePlainObjects(){const t=[];if(Object.entries(n).forEach(([e,r])=>{"#"!==r&&[].concat(r).forEach(function(r){const[,{plain:o}]=u.revivers[r];o&&(t.push({keypath:e,type:r}),delete n[e])})}),t.length)return t.sort(nestedPathsFirst).reduce(function reducer(t,{keypath:n,type:o}){if(hasConstructorOf(t,TypesonPromise))return t.then(e=>reducer(e,o));let i=getByKeyPath(e,n);if(hasConstructorOf(i,TypesonPromise))return i.then(e=>reducer(e,o));const[s]=u.revivers[o];if(!s)throw new Error("Unregistered type: "+o);void 0!==(i=s[r&&s.revive?"revive":!r&&s.reviveAsync?"reviveAsync":"revive"](i,a))&&(hasConstructorOf(i,Undefined)&&(i=void 0),function setAtKeyPath(e,t,n){if(""===t)return n;const r=t.indexOf(".");return r>-1?setAtKeyPath(e[unescapeKeyPathComponent(t.substr(0,r))],t.substr(r+1),n):(e[unescapeKeyPathComponent(t)]=n,e)}(e,n,i)===i&&(e=i))},void 0)}();let p;return isThenable(p=hasConstructorOf(f,TypesonPromise)?f.then(()=>_revive("",e,null)):_revive("",e,null))?r&&t.throwOnBadSyncType?(()=>{throw new TypeError("Sync method requested but async result obtained")})():hasConstructorOf(p,TypesonPromise)?p.p.then(checkUndefined):p:!r&&t.throwOnBadSyncType?(()=>{throw new TypeError("Async method requested but sync result obtained")})():r?checkUndefined(p):Promise.resolve(checkUndefined(p))}reviveSync(e,t){return this.revive(e,{throwOnBadSyncType:!0,...t,sync:!0})}reviveAsync(e,t){return this.revive(e,{throwOnBadSyncType:!0,...t,sync:!1})}register(e,t){return t=t||{},[].concat(e).forEach(function R(e){if(i(e))return e.map(R,this);e&&o(e).forEach(function(n){if("#"===n)throw new TypeError("# cannot be used as a type name as it is reserved for cyclic objects");if(Typeson.JSON_TYPES.includes(n))throw new TypeError("Plain JSON object types are reserved as type names");let r=e[n];const o=r.testPlainObjects?this.plainObjectReplacers:this.nonplainObjectReplacers,s=o.filter(function(e){return e.type===n});if(s.length&&(o.splice(o.indexOf(s[0]),1),delete this.revivers[n],delete this.types[n]),!r)return;if("function"==typeof r){const e=r;r={test:t=>t&&t.constructor===e,replace:e=>Object.assign({},e),revive:t=>Object.assign(Object.create(e.prototype),t)}}else if(i(r)){const[e,t,n]=r;r={test:e,replace:t,revive:n}}const a={type:n,test:r.test.bind(r)};r.replace&&(a.replace=r.replace.bind(r)),r.replaceAsync&&(a.replaceAsync=r.replaceAsync.bind(r));const c="number"==typeof t.fallback?t.fallback:t.fallback?0:1/0;if(r.testPlainObjects?this.plainObjectReplacers.splice(c,0,a):this.nonplainObjectReplacers.splice(c,0,a),r.revive||r.reviveAsync){const e={};r.revive&&(e.revive=r.revive.bind(r)),r.reviveAsync&&(e.reviveAsync=r.reviveAsync.bind(r)),this.revivers[n]=[e,{plain:r.testPlainObjects}]}this.types[n]=r},this)},this),this}}class Undefined{}function _typeof(e){return(_typeof="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e})(e)}function _slicedToArray(e,t){return function _arrayWithHoles(e){if(Array.isArray(e))return e}(e)||function _iterableToArrayLimit(e,t){var n=[],r=!0,o=!1,i=void 0;try{for(var s,a=e[Symbol.iterator]();!(r=(s=a.next()).done)&&(n.push(s.value),!t||n.length!==t);r=!0);}catch(e){o=!0,i=e}finally{try{r||null==a.return||a.return()}finally{if(o)throw i}}return n}(e,t)||function _nonIterableRest(){throw new TypeError("Invalid attempt to destructure non-iterable instance")}()}Typeson.Undefined=Undefined,Typeson.Promise=TypesonPromise,Typeson.isThenable=isThenable,Typeson.toStringTag=toStringTag,Typeson.hasConstructorOf=hasConstructorOf,Typeson.isObject=isObject,Typeson.isPlainObject=isPlainObject,Typeson.isUserObject=function isUserObject(e){if(!e||"Object"!==toStringTag(e))return!1;const t=n(e);return!t||hasConstructorOf(e,Object)||isUserObject(t)},Typeson.escapeKeyPathComponent=escapeKeyPathComponent,Typeson.unescapeKeyPathComponent=unescapeKeyPathComponent,Typeson.getByKeyPath=getByKeyPath,Typeson.getJSONType=function getJSONType(e){return null===e?"null":Array.isArray(e)?"array":typeof e},Typeson.JSON_TYPES=["null","boolean","number","string","array","object"];for(var c={arrayNonindexKeys:{testPlainObjects:!0,test:function test(e,t){return!!Array.isArray(e)&&(t.iterateIn="object",t.addLength=!0,!0)},revive:function revive(e){var t=[];return Object.entries(e).forEach(function(e){var n=_slicedToArray(e,2),r=n[0],o=n[1];t[r]=o}),t}}},u="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",f=new Uint8Array(256),p=0;p<u.length;p++)f[u.charCodeAt(p)]=p;var l=function encode(e,t,n){null==n&&(n=e.byteLength);for(var r=new Uint8Array(e,t||0,n),o=r.length,i="",s=0;s<o;s+=3)i+=u[r[s]>>2],i+=u[(3&r[s])<<4|r[s+1]>>4],i+=u[(15&r[s+1])<<2|r[s+2]>>6],i+=u[63&r[s+2]];return o%3==2?i=i.substring(0,i.length-1)+"=":o%3==1&&(i=i.substring(0,i.length-2)+"=="),i},y=function decode(e){var t,n,r,o,i=e.length,s=.75*e.length,a=0;"="===e[e.length-1]&&(s--,"="===e[e.length-2]&&s--);for(var c=new ArrayBuffer(s),u=new Uint8Array(c),p=0;p<i;p+=4)t=f[e.charCodeAt(p)],n=f[e.charCodeAt(p+1)],r=f[e.charCodeAt(p+2)],o=f[e.charCodeAt(p+3)],u[a++]=t<<2|n>>4,u[a++]=(15&n)<<4|r>>2,u[a++]=(3&r)<<6|63&o;return c},v={arraybuffer:{test:function test(e){return"ArrayBuffer"===Typeson.toStringTag(e)},replace:function replace(e,t){t.buffers||(t.buffers=[]);var n=t.buffers.indexOf(e);return n>-1?{index:n}:(t.buffers.push(e),l(e))},revive:function revive(e,t){if(t.buffers||(t.buffers=[]),"object"===_typeof(e))return t.buffers[e.index];var n=y(e);return t.buffers.push(n),n}}},d={bigintObject:{test:function test(e){return"object"===_typeof(e)&&Typeson.hasConstructorOf(e,BigInt)},replace:function replace(e){return String(e)},revive:function revive(e){return Object(BigInt(e))}}},h={bigint:{test:function test(e){return"bigint"==typeof e},replace:function replace(e){return String(e)},revive:function revive(e){return BigInt(e)}}};function string2arraybuffer(e){for(var t=new Uint8Array(e.length),n=0;n<e.length;n++)t[n]=e.charCodeAt(n);return t.buffer}var b={blob:{test:function test(e){return"Blob"===Typeson.toStringTag(e)},replace:function replace(e){var t=new XMLHttpRequest;if(t.overrideMimeType("text/plain; charset=x-user-defined"),t.open("GET",URL.createObjectURL(e),!1),200!==t.status&&0!==t.status)throw new Error("Bad Blob access: "+t.status);return t.send(),{type:e.type,stringContents:t.responseText}},revive:function revive(e){var t=e.type,n=e.stringContents;return new Blob([string2arraybuffer(n)],{type:t})},replaceAsync:function replaceAsync(e){return new Typeson.Promise(function(t,n){if(e.isClosed)n(new Error("The Blob is closed"));else{var r=new FileReader;r.addEventListener("load",function(){t({type:e.type,stringContents:r.result})}),r.addEventListener("error",function(){n(r.error)}),r.readAsBinaryString(e)}})}}},g={};var m={cloneable:{test:function test(e){return e&&"object"===_typeof(e)&&"function"==typeof e[Symbol.for("cloneEncapsulate")]},replace:function replace(e){var t=e[Symbol.for("cloneEncapsulate")](),n=function generateUUID(){var e=(new Date).getTime();return"undefined"!=typeof performance&&"function"==typeof performance.now&&(e+=performance.now()),"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(t){var n=(e+16*Math.random())%16|0;return e=Math.floor(e/16),("x"===t?n:3&n|8).toString(16)})}();return g[n]=e,{uuid:n,encapsulated:t}},revive:function revive(e){var t=e.uuid,n=e.encapsulated;return g[t][Symbol.for("cloneRevive")](n)}}},T={dataview:{test:function test(e){return"DataView"===Typeson.toStringTag(e)},replace:function replace(e,t){var n=e.buffer,r=e.byteOffset,o=e.byteLength;t.buffers||(t.buffers=[]);var i=t.buffers.indexOf(n);return i>-1?{index:i,byteOffset:r,byteLength:o}:(t.buffers.push(n),{encoded:l(n),byteOffset:r,byteLength:o})},revive:function revive(e,t){t.buffers||(t.buffers=[]);var n,r=e.byteOffset,o=e.byteLength,i=e.encoded,s=e.index;return"index"in e?n=t.buffers[s]:(n=y(i),t.buffers.push(n)),new DataView(n,r,o)}}},O={date:{test:function test(e){return"Date"===Typeson.toStringTag(e)},replace:function replace(e){var t=e.getTime();return isNaN(t)?"NaN":t},revive:function revive(e){return"NaN"===e?new Date(NaN):new Date(e)}}},w={error:{test:function test(e){return"Error"===Typeson.toStringTag(e)},replace:function replace(e){return{name:e.name,message:e.message}},revive:function revive(e){var t=e.name,n=e.message,r=new Error(n);return r.name=t,r}}},A="undefined"==typeof self?global:self,x={};["TypeError","RangeError","SyntaxError","ReferenceError","EvalError","URIError","InternalError"].forEach(function(e){var t=A[e];t&&(x[e.toLowerCase()]={test:function test(e){return Typeson.hasConstructorOf(e,t)},replace:function replace(e){return e.message},revive:function revive(e){return new t(e)}})});var S={file:{test:function test(e){return"File"===Typeson.toStringTag(e)},replace:function replace(e){var t=new XMLHttpRequest;if(t.overrideMimeType("text/plain; charset=x-user-defined"),t.open("GET",URL.createObjectURL(e),!1),200!==t.status&&0!==t.status)throw new Error("Bad Blob access: "+t.status);return t.send(),{type:e.type,stringContents:t.responseText,name:e.name,lastModified:e.lastModified}},revive:function revive(e){var t=e.name,n=e.type,r=e.stringContents,o=e.lastModified;return new File([string2arraybuffer(r)],t,{type:n,lastModified:o})},replaceAsync:function replaceAsync(e){return new Typeson.Promise(function(t,n){if(e.isClosed)n(new Error("The File is closed"));else{var r=new FileReader;r.addEventListener("load",function(){t({type:e.type,stringContents:r.result,name:e.name,lastModified:e.lastModified})}),r.addEventListener("error",function(){n(r.error)}),r.readAsBinaryString(e)}})}}},P={file:S.file,filelist:{test:function test(e){return"FileList"===Typeson.toStringTag(e)},replace:function replace(e){for(var t=[],n=0;n<e.length;n++)t[n]=e.item(n);return t},revive:function revive(e){function FileList(){this._files=arguments[0],this.length=this._files.length}return FileList.prototype.item=function(e){return this._files[e]},FileList.prototype[Symbol.toStringTag]="FileList",new FileList(e)}}},j={imagebitmap:{test:function test(e){return"ImageBitmap"===Typeson.toStringTag(e)||e&&e.dataset&&"ImageBitmap"===e.dataset.toStringTag},replace:function replace(e){var t=document.createElement("canvas");return t.getContext("2d").drawImage(e,0,0),t.toDataURL()},revive:function revive(e){var t=document.createElement("canvas"),n=t.getContext("2d"),r=document.createElement("img");return r.onload=function(){n.drawImage(r,0,0)},r.src=e,t},reviveAsync:function reviveAsync(e){var t=document.createElement("canvas"),n=t.getContext("2d"),r=document.createElement("img");return r.onload=function(){n.drawImage(r,0,0)},r.src=e,createImageBitmap(t)}}},C={imagedata:{test:function test(e){return"ImageData"===Typeson.toStringTag(e)},replace:function replace(e){return{array:Array.from(e.data),width:e.width,height:e.height}},revive:function revive(e){return new ImageData(new Uint8ClampedArray(e.array),e.width,e.height)}}},I={infinity:{test:function test(e){return e===1/0},replace:function replace(e){return"Infinity"},revive:function revive(e){return 1/0}}},E={IntlCollator:{test:function test(e){return Typeson.hasConstructorOf(e,Intl.Collator)},replace:function replace(e){return e.resolvedOptions()},revive:function revive(e){return new Intl.Collator(e.locale,e)}},IntlDateTimeFormat:{test:function test(e){return Typeson.hasConstructorOf(e,Intl.DateTimeFormat)},replace:function replace(e){return e.resolvedOptions()},revive:function revive(e){return new Intl.DateTimeFormat(e.locale,e)}},IntlNumberFormat:{test:function test(e){return Typeson.hasConstructorOf(e,Intl.NumberFormat)},replace:function replace(e){return e.resolvedOptions()},revive:function revive(e){return new Intl.NumberFormat(e.locale,e)}}},B={map:{test:function test(e){return"Map"===Typeson.toStringTag(e)},replace:function replace(e){return Array.from(e.entries())},revive:function revive(e){return new Map(e)}}},U={nan:{test:function test(e){return"number"==typeof e&&isNaN(e)},replace:function replace(e){return"NaN"},revive:function revive(e){return NaN}}},N={negativeInfinity:{test:function test(e){return e===-1/0},replace:function replace(e){return"-Infinity"},revive:function revive(e){return-1/0}}},_={nonbuiltinIgnore:{test:function test(e){return e&&"object"===_typeof(e)&&!Array.isArray(e)&&!["Object","Boolean","Number","String","Error","RegExp","Math","Date","Map","Set","JSON","ArrayBuffer","SharedArrayBuffer","DataView","Int8Array","Uint8Array","Uint8ClampedArray","Int16Array","Uint16Array","Int32Array","Uint32Array","Float32Array","Float64Array","Promise","String Iterator","Array Iterator","Map Iterator","Set Iterator","WeakMap","WeakSet","Atomics","Module"].includes(Typeson.toStringTag(e))},replace:function replace(e){}}},K={StringObject:{test:function test(e){return"String"===Typeson.toStringTag(e)&&"object"===_typeof(e)},replace:function replace(e){return String(e)},revive:function revive(e){return new String(e)}},BooleanObject:{test:function test(e){return"Boolean"===Typeson.toStringTag(e)&&"object"===_typeof(e)},replace:function replace(e){return Boolean(e)},revive:function revive(e){return new Boolean(e)}},NumberObject:{test:function test(e){return"Number"===Typeson.toStringTag(e)&&"object"===_typeof(e)},replace:function replace(e){return Number(e)},revive:function revive(e){return new Number(e)}}},L={regexp:{test:function test(e){return"RegExp"===Typeson.toStringTag(e)},replace:function replace(e){return{source:e.source,flags:(e.global?"g":"")+(e.ignoreCase?"i":"")+(e.multiline?"m":"")+(e.sticky?"y":"")+(e.unicode?"u":"")}},revive:function revive(e){var t=e.source,n=e.flags;return new RegExp(t,n)}}},k={};var M={resurrectable:{test:function test(e){return e&&!Array.isArray(e)&&["object","function","symbol"].includes(_typeof(e))},replace:function replace(e){var t=function generateUUID$1(){var e=(new Date).getTime();return"undefined"!=typeof performance&&"function"==typeof performance.now&&(e+=performance.now()),"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(t){var n=(e+16*Math.random())%16|0;return e=Math.floor(e/16),("x"===t?n:3&n|8).toString(16)})}();return k[t]=e,t},revive:function revive(e){return k[e]}}},F={set:{test:function test(e){return"Set"===Typeson.toStringTag(e)},replace:function replace(e){return Array.from(e.values())},revive:function revive(e){return new Set(e)}}},D="undefined"==typeof self?global:self,$={};["Int8Array","Uint8Array","Uint8ClampedArray","Int16Array","Uint16Array","Int32Array","Uint32Array","Float32Array","Float64Array"].forEach(function(e){var t=e,n=D[e];n&&($[e.toLowerCase()]={test:function test(e){return Typeson.toStringTag(e)===t},replace:function replace(e){return(0===e.byteOffset&&e.byteLength===e.buffer.byteLength?e:e.slice(0)).buffer},revive:function revive(e){return"ArrayBuffer"===Typeson.toStringTag(e)?new n(e):e}})});var J="undefined"==typeof self?global:self,q={};["Int8Array","Uint8Array","Uint8ClampedArray","Int16Array","Uint16Array","Int32Array","Uint32Array","Float32Array","Float64Array"].forEach(function(e){var t=e,n=J[t];n&&(q[e.toLowerCase()]={test:function test(e){return Typeson.toStringTag(e)===t},replace:function replace(e,t){var n=e.buffer,r=e.byteOffset,o=e.length;t.buffers||(t.buffers=[]);var i=t.buffers.indexOf(n);return i>-1?{index:i,byteOffset:r,length:o}:(t.buffers.push(n),{encoded:l(n),byteOffset:r,length:o})},revive:function revive(e,t){t.buffers||(t.buffers=[]);var r,o=e.byteOffset,i=e.length,s=e.encoded,a=e.index;return"index"in e?r=t.buffers[a]:(r=y(s),t.buffers.push(r)),new n(r,o,i)}})});var V={undef:{test:function test(e,t){return void 0===e&&(t.ownKeys||!("ownKeys"in t))},replace:function replace(e){return null},revive:function revive(e){return new Typeson.Undefined}}},W={userObject:{test:function test(e,t){return Typeson.isUserObject(e)},replace:function replace(e){return Object.assign({},e)},revive:function revive(e){return e}}},H=[U,I,N],G=[V,c,K,H,O,w,x,L].concat("function"==typeof Map?B:[],"function"==typeof Set?F:[],"function"==typeof ArrayBuffer?v:[],"function"==typeof Uint8Array?q:[],"function"==typeof DataView?T:[],"undefined"!=typeof Intl?E:[],"undefined"!=typeof BigInt?[h,d]:[]),X=[w,x],Y=[G,{ArrayBuffer:null},$],z=[{sparseArrays:{testPlainObjects:!0,test:function test(e){return Array.isArray(e)},replace:function replace(e,t){return t.iterateUnsetNumeric=!0,e}}},{sparseUndefined:{test:function test(e,t){return void 0===e&&!1===t.ownKeys},replace:function replace(e){return null},revive:function revive(e){}}}],Q=[W,V,c,K,H,O,L,C,j,S,P,b].concat("function"==typeof Map?B:[],"function"==typeof Set?F:[],"function"==typeof ArrayBuffer?v:[],"function"==typeof Uint8Array?q:[],"function"==typeof DataView?T:[],"undefined"!=typeof Intl?E:[],"undefined"!=typeof BigInt?[h,d]:[]),Z=Q.concat({checkDataCloneException:[function(e){var t={}.toString.call(e).slice(8,-1);if(["symbol","function"].includes(_typeof(e))||["Arguments","Module","Error","Promise","WeakMap","WeakSet"].includes(t)||e===Object.prototype||("Blob"===t||"File"===t)&&e.isClosed||e&&"object"===_typeof(e)&&"number"==typeof e.nodeType&&"function"==typeof e.insertBefore)throw new DOMException("The object cannot be cloned.","DataCloneError");return!1}]}),ee=[z,V],te=[G];return Typeson.types={arrayNonindexKeys:c,arraybuffer:v,bigintObject:d,bigint:h,blob:b,cloneable:m,dataview:T,date:O,error:w,errors:x,file:S,filelist:P,imagebitmap:j,imagedata:C,infinity:I,intlTypes:E,map:B,nan:U,negativeInfinity:N,nonbuiltinIgnore:_,primitiveObjects:K,regexp:L,resurrectable:M,set:F,typedArraysSocketio:$,typedArrays:q,undef:V,userObject:W},Typeson.presets={builtin:G,postMessage:X,socketio:Y,sparseUndefined:z,specialNumbers:H,structuredCloningThrowing:Z,structuredCloning:Q,undef:ee,universal:te},Typeson});
 
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{}],7:[function(require,module,exports){
-!function(e,n){"object"==typeof exports&&"undefined"!=typeof module?module.exports=n():"function"==typeof define&&define.amd?define(n):e.Typeson=n()}(this,function(){"use strict";var e="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e},n=function(){return function(e,n){if(Array.isArray(e))return e;if(Symbol.iterator in Object(e))return function sliceIterator(e,n){var t=[],r=!0,i=!1,o=void 0;try{for(var s,c=e[Symbol.iterator]();!(r=(s=c.next()).done)&&(t.push(s.value),!n||t.length!==n);r=!0);}catch(e){i=!0,o=e}finally{try{!r&&c.return&&c.return()}finally{if(i)throw o}}return t}(e,n);throw new TypeError("Invalid attempt to destructure non-iterable instance")}}(),t=function(e){if(Array.isArray(e)){for(var n=0,t=Array(e.length);n<e.length;n++)t[n]=e[n];return t}return Array.from(e)},r=Object.keys,i=Array.isArray,o={}.toString,s=Object.getPrototypeOf,c={}.hasOwnProperty,a=c.toString,u=["type","replaced","iterateIn","iterateUnsetNumeric"];function isThenable(e,n){return Typeson.isObject(e)&&"function"==typeof e.then&&(!n||"function"==typeof e.catch)}function toStringTag(e){return o.call(e).slice(8,-1)}function hasConstructorOf(n,t){if(!n||"object"!==(void 0===n?"undefined":e(n)))return!1;var r=s(n);if(!r)return!1;var i=c.call(r,"constructor")&&r.constructor;return"function"!=typeof i?null===t:"function"==typeof i&&null!==t&&a.call(i)===a.call(t)}function isPlainObject(e){return!(!e||"Object"!==toStringTag(e))&&(!s(e)||hasConstructorOf(e,Object))}function isObject(n){return n&&"object"===(void 0===n?"undefined":e(n))}function Typeson(o){var s=[],c=[],a={},y=this.types={},p=this.stringify=function(e,n,t,r){r=Object.assign({},o,r,{stringification:!0});var s=l(e,null,r);return i(s)?JSON.stringify(s[0],n,t):s.then(function(e){return JSON.stringify(e,n,t)})};this.stringifySync=function(e,n,t,r){return p(e,n,t,Object.assign({},{throwOnBadSyncType:!0},r,{sync:!0}))},this.stringifyAsync=function(e,n,t,r){return p(e,n,t,Object.assign({},{throwOnBadSyncType:!0},r,{sync:!1}))};var f=this.parse=function(e,n,t){return t=Object.assign({},o,t,{parse:!0}),h(JSON.parse(e,n),t)};this.parseSync=function(e,n,t){return f(e,n,Object.assign({},{throwOnBadSyncType:!0},t,{sync:!0}))},this.parseAsync=function(e,n,t){return f(e,n,Object.assign({},{throwOnBadSyncType:!0},t,{sync:!1}))},this.specialTypeNames=function(e,n){var t=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{};return t.returnTypeNames=!0,this.encapsulate(e,n,t)},this.rootTypeName=function(e,n){var t=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{};return t.iterateNone=!0,this.encapsulate(e,n,t)};var l=this.encapsulate=function(y,p,f){var l=(f=Object.assign({sync:!0},o,f)).sync,h={},v=[],d=[],b=[],O=!(f&&"cyclic"in f)||f.cyclic,m=f.encapsulateObserver,T=_encapsulate("",y,O,p||{},b);function finish(e){var n=Object.values(h);if(f.iterateNone)return n.length?n[0]:Typeson.getJSONType(e);if(n.length){if(f.returnTypeNames)return[].concat(t(new Set(n)));e&&isPlainObject(e)&&!e.hasOwnProperty("$types")?e.$types=h:e={$:e,$types:{$:h}}}else isObject(e)&&e.hasOwnProperty("$types")&&(e={$:e,$types:!0});return!f.returnTypeNames&&e}return b.length?l&&f.throwOnBadSyncType?function(){throw new TypeError("Sync method requested but async result obtained")}():Promise.resolve(function checkPromises(e,t){return Promise.all(t.map(function(e){return e[1].p})).then(function(r){return Promise.all(r.map(function(r){var i=[],o=t.splice(0,1)[0],s=n(o,7),c=s[0],a=s[2],u=s[3],y=s[4],p=s[5],f=s[6],l=_encapsulate(c,r,a,u,i,!0,f),h=hasConstructorOf(l,TypesonPromise);return c&&h?l.p.then(function(n){return y[p]=n,checkPromises(e,i)}):(c?y[p]=l:e=h?l.p:l,checkPromises(e,i))}))}).then(function(){return e})}(T,b)).then(finish):!l&&f.throwOnBadSyncType?function(){throw new TypeError("Async method requested but sync result obtained")}():f.stringification&&l?[finish(T)]:l?finish(T):Promise.resolve(finish(T));function _adaptBuiltinStateObjectProperties(e,n,t){Object.assign(e,n);var r=u.map(function(n){var t=e[n];return delete e[n],t});t(),u.forEach(function(n,t){e[n]=r[t]})}function _encapsulate(n,t,o,c,a,u,y){var p=void 0,l={},b=void 0===t?"undefined":e(t),O=m?function(e){var r=y||c.type||Typeson.getJSONType(t);m(Object.assign(e||l,{keypath:n,value:t,cyclic:o,stateObj:c,promisesData:a,resolvingTypesonPromise:u,awaitingTypesonPromise:hasConstructorOf(t,TypesonPromise)},void 0!==r?{type:r}:{}))}:null;if(b in{string:1,boolean:1,number:1,undefined:1})return void 0===t||"number"===b&&(isNaN(t)||t===-1/0||t===1/0)?(p=replace(n,t,c,a,!1,u,O))!==t&&(l={replaced:p}):p=t,O&&O(),p;if(null===t)return O&&O(),t;if(o&&!c.iterateIn&&!c.iterateUnsetNumeric){var T=v.indexOf(t);if(!(T<0))return h[n]="#",O&&O({cyclicKeypath:d[T]}),"#"+d[T];!0===o&&(v.push(t),d.push(n))}var g=isPlainObject(t),P=i(t),j=(g||P)&&(!s.length||c.replaced)||c.iterateIn?t:replace(n,t,c,a,g||P,null,O),S=void 0;if(j!==t?(p=j,l={replaced:j}):P||"array"===c.iterateIn?(S=new Array(t.length),l={clone:S}):g||"object"===c.iterateIn?l={clone:S={}}:""===n&&hasConstructorOf(t,TypesonPromise)?(a.push([n,t,o,c,void 0,void 0,c.type]),p=t):p=t,O&&O(),f.iterateNone)return S||p;if(!S)return p;if(c.iterateIn){var w=function _loop(e){var r={ownKeys:t.hasOwnProperty(e)};_adaptBuiltinStateObjectProperties(c,r,function(){var r=n+(n?".":"")+escapeKeyPathComponent(e),i=_encapsulate(r,t[e],!!o,c,a,u);hasConstructorOf(i,TypesonPromise)?a.push([r,i,!!o,c,S,e,c.type]):void 0!==i&&(S[e]=i)})};for(var A in t)w(A);O&&O({endIterateIn:!0,end:!0})}else r(t).forEach(function(e){var r=n+(n?".":"")+escapeKeyPathComponent(e);_adaptBuiltinStateObjectProperties(c,{ownKeys:!0},function(){var n=_encapsulate(r,t[e],!!o,c,a,u);hasConstructorOf(n,TypesonPromise)?a.push([r,n,!!o,c,S,e,c.type]):void 0!==n&&(S[e]=n)})}),O&&O({endIterateOwn:!0,end:!0});if(c.iterateUnsetNumeric){for(var C=t.length,N=function _loop2(e){if(!(e in t)){var r=n+(n?".":"")+e;_adaptBuiltinStateObjectProperties(c,{ownKeys:!1},function(){var n=_encapsulate(r,void 0,!!o,c,a,u);hasConstructorOf(n,TypesonPromise)?a.push([r,n,!!o,c,S,e,c.type]):void 0!==n&&(S[e]=n)})}},B=0;B<C;B++)N(B);O&&O({endIterateUnsetNumeric:!0,end:!0})}return S}function replace(e,n,t,r,i,o,u){for(var y=i?s:c,p=y.length;p--;){var f=y[p];if(f.test(n,t)){var v=f.type;if(a[v]){var d=h[e];h[e]=d?[v].concat(d):v}return Object.assign(t,{type:v,replaced:!0}),!l&&f.replaceAsync||f.replace?(u&&u({replacing:!0}),_encapsulate(e,f[l||!f.replaceAsync?"replace":"replaceAsync"](n,t),O&&"readonly",t,r,o,v)):(u&&u({typeDetected:!0}),_encapsulate(e,n,O&&"readonly",t,r,o,v))}}return n}};this.encapsulateSync=function(e,n,t){return l(e,n,Object.assign({},{throwOnBadSyncType:!0},t,{sync:!0}))},this.encapsulateAsync=function(e,n,t){return l(e,n,Object.assign({},{throwOnBadSyncType:!0},t,{sync:!1}))};var h=this.revive=function(e,t){var s=(t=Object.assign({sync:!0},o,t)).sync,c=e&&e.$types,u=!0;if(!c)return e;if(!0===c)return e.$;c.$&&isPlainObject(c.$)&&(e=e.$,c=c.$,u=!1);var y=[],p={},f=function _revive(e,t,o,s,f,l){if(u&&"$types"===e)return;var h=c[e];if(i(t)||isPlainObject(t)){var v=i(t)?new Array(t.length):{};for(r(t).forEach(function(n){var r=_revive(e+(e?".":"")+escapeKeyPathComponent(n),t[n],o||v,s,v,n);hasConstructorOf(r,Undefined)?v[n]=void 0:void 0!==r&&(v[n]=r)}),t=v;y.length;){var d=n(y[0],4),b=d[0],O=d[1],m=d[2],T=d[3],g=getByKeyPath(b,O);if(hasConstructorOf(g,Undefined))m[T]=void 0;else{if(void 0===g)break;m[T]=g}y.splice(0,1)}}if(!h)return t;if("#"===h){var P=getByKeyPath(o,t.substr(1));return void 0===P&&y.push([o,t.substr(1),f,l]),P}var j=s.sync;return[].concat(h).reduce(function(e,n){var t=a[n];if(!t)throw new Error("Unregistered type: "+n);return t[j&&t.revive?"revive":!j&&t.reviveAsync?"reviveAsync":"revive"](e,p)},t)}("",e,null,t);return isThenable(f=hasConstructorOf(f,Undefined)?void 0:f)?s&&t.throwOnBadSyncType?function(){throw new TypeError("Sync method requested but async result obtained")}():f:!s&&t.throwOnBadSyncType?function(){throw new TypeError("Async method requested but sync result obtained")}():s?f:Promise.resolve(f)};this.reviveSync=function(e,n){return h(e,Object.assign({},{throwOnBadSyncType:!0},n,{sync:!0}))},this.reviveAsync=function(e,n){return h(e,Object.assign({},{throwOnBadSyncType:!0},n,{sync:!1}))},this.register=function(e,n){return n=n||{},[].concat(e).forEach(function R(e){if(i(e))return e.map(R);e&&r(e).forEach(function(t){if("#"===t)throw new TypeError("# cannot be used as a type name as it is reserved for cyclic objects");if(Typeson.JSON_TYPES.includes(t))throw new TypeError("Plain JSON object types are reserved as type names");var r=e[t],o=r.testPlainObjects?s:c,u=o.filter(function(e){return e.type===t});if(u.length&&(o.splice(o.indexOf(u[0]),1),delete a[t],delete y[t]),r){if("function"==typeof r){var p=r;r={test:function test(e){return e&&e.constructor===p},replace:function replace(e){return assign({},e)},revive:function revive(e){return assign(Object.create(p.prototype),e)}}}else i(r)&&(r={test:r[0],replace:r[1],revive:r[2]});var f={type:t,test:r.test.bind(r)};r.replace&&(f.replace=r.replace.bind(r)),r.replaceAsync&&(f.replaceAsync=r.replaceAsync.bind(r));var l="number"==typeof n.fallback?n.fallback:n.fallback?0:1/0;if(r.testPlainObjects?s.splice(l,0,f):c.splice(l,0,f),r.revive||r.reviveAsync){var h={};r.revive&&(h.revive=r.revive.bind(r)),r.reviveAsync&&(h.reviveAsync=r.reviveAsync.bind(r)),a[t]=h}y[t]=r}})}),this}}function assign(e,n){return r(n).map(function(t){e[t]=n[t]}),e}function escapeKeyPathComponent(e){return e.replace(/~/g,"~0").replace(/\./g,"~1")}function unescapeKeyPathComponent(e){return e.replace(/~1/g,".").replace(/~0/g,"~")}function getByKeyPath(e,n){if(""===n)return e;var t=n.indexOf(".");if(t>-1){var r=e[unescapeKeyPathComponent(n.substr(0,t))];return void 0===r?void 0:getByKeyPath(r,n.substr(t+1))}return e[unescapeKeyPathComponent(n)]}function Undefined(){}function TypesonPromise(e){this.p=new Promise(e)}return TypesonPromise.prototype.then=function(e,n){var t=this;return new TypesonPromise(function(r,i){t.p.then(function(n){r(e?e(n):n)},function(e){t.p.catch(function(e){return n?n(e):Promise.reject(e)}).then(r,i)})})},TypesonPromise.prototype.catch=function(e){return this.then(null,e)},TypesonPromise.resolve=function(e){return new TypesonPromise(function(n){n(e)})},TypesonPromise.reject=function(e){return new TypesonPromise(function(n,t){t(e)})},["all","race"].map(function(e){TypesonPromise[e]=function(n){return new TypesonPromise(function(t,r){Promise[e](n.map(function(e){return e.p})).then(t,r)})}}),Typeson.Undefined=Undefined,Typeson.Promise=TypesonPromise,Typeson.isThenable=isThenable,Typeson.toStringTag=toStringTag,Typeson.hasConstructorOf=hasConstructorOf,Typeson.isObject=isObject,Typeson.isPlainObject=isPlainObject,Typeson.isUserObject=function isUserObject(e){if(!e||"Object"!==toStringTag(e))return!1;var n=s(e);return!n||hasConstructorOf(e,Object)||isUserObject(n)},Typeson.escapeKeyPathComponent=escapeKeyPathComponent,Typeson.unescapeKeyPathComponent=unescapeKeyPathComponent,Typeson.getByKeyPath=getByKeyPath,Typeson.getJSONType=function(n){return null===n?"null":i(n)?"array":void 0===n?"undefined":e(n)},Typeson.JSON_TYPES=["null","boolean","number","string","array","object"],Typeson});
-
-},{}],8:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+
+function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
 var map = {};
 var CFG = {};
 [// Boolean for verbose reporting
 'DEBUG', // Effectively defaults to false (ignored unless `true`)
-'cacheDatabaseInstances', // Boolean (effectively defaults to true) on whether to cache WebSQL `openDatabase` instances
-// Boolean on whether to auto-name databases (based on an auto-increment) when
-//   the empty string is supplied; useful with `memoryDatabase`; defaults to `false`
-//   which means the empty string will be used as the (valid) database name
-'autoName', // Determines whether the slow-performing `Object.setPrototypeOf` calls required
-//    for full WebIDL compliance will be used. Probably only needed for testing
-//    or environments where full introspection on class relationships is required;
-//    see http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
+// Boolean (effectively defaults to true) on whether to cache WebSQL
+//  `openDatabase` instances
+'cacheDatabaseInstances', // Boolean on whether to auto-name databases (based on an
+//   auto-increment) when the empty string is supplied; useful with
+//   `memoryDatabase`; defaults to `false` which means the empty string
+//   will be used as the (valid) database name
+'autoName', // Determines whether the slow-performing `Object.setPrototypeOf`
+//    calls required for full WebIDL compliance will be used. Probably
+//    only needed for testing or environments where full introspection
+//    on class relationships is required; see
+//    http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
 'fullIDLSupport', // Effectively defaults to false (ignored unless `true`)
 // Boolean on whether to perform origin checks in `IDBFactory` methods
-'checkOrigin', // Effectively defaults to `true` (must be set to `false` to cancel checks)
-// Used by `IDBCursor` continue methods for number of records to cache;
-'cursorPreloadPackSize', //  Defaults to 100
-// See optional API (`shimIndexedDB.__setUnicodeIdentifiers`);
+// Effectively defaults to `true` (must be set to `false` to cancel checks)
+'checkOrigin', // Used by `IDBCursor` continue methods for number of records to cache;
+//  Defaults to 100
+'cursorPreloadPackSize', // See optional API (`shimIndexedDB.__setUnicodeIdentifiers`);
 //    or just use the Unicode builds which invoke this method
 //    automatically using the large, fully spec-compliant, regular
 //    expression strings of `src/UnicodeIdentifiers.js`)
-'UnicodeIDStart', // In the non-Unicode builds, defaults to /[$A-Z_a-z]/
-'UnicodeIDContinue', // In the non-Unicode builds, defaults to /[$0-9A-Z_a-z]/
-// BROWSER-SPECIFIC CONFIG
+// In the non-Unicode builds, defaults to /[$A-Z_a-z]/
+'UnicodeIDStart', // In the non-Unicode builds, defaults to /[$0-9A-Z_a-z]/
+'UnicodeIDContinue', // Used by SCA.js for optional restructuring of typeson-registry
+//   Structured Cloning Algorithm; should only be needed for ensuring data
+//   created in 3.* versions of IndexedDBShim continue to work; see the
+//   library `typeson-registry-sca-reverter` to get a function to do this
+'registerSCA', // BROWSER-SPECIFIC CONFIG
 'avoidAutoShim', // Where WebSQL is detected but where `indexedDB` is
 //    missing or poor support is known (non-Chrome Android or
 //    non-Safari iOS9), the shim will be auto-applied without
@@ -1322,42 +1421,45 @@ var CFG = {};
 //  will try to use hundreds of megabytes to declare this upfront, instead
 //  of the user agent prompting the user for permission to increase the
 //  quota every five megabytes."
-'DEFAULT_DB_SIZE', // Defaults to (4 * 1024 * 1024) or (25 * 1024 * 1024) in Safari
-// Whether to create indexes on SQLite tables (and also whether to try dropping)
-'useSQLiteIndexes', // Effectively defaults to `false` (ignored unless `true`)
-// NODE-IMPINGING SETTINGS (created for sake of limitations in Node or desktop file
-//    system implementation but applied by default in browser for parity)
+// Defaults to (4 * 1024 * 1024) or (25 * 1024 * 1024) in Safari
+'DEFAULT_DB_SIZE', // Whether to create indexes on SQLite tables (and also whether to try
+//   dropping)
+// Effectively defaults to `false` (ignored unless `true`)
+'useSQLiteIndexes', // NODE-IMPINGING SETTINGS (created for sake of limitations in Node
+//    or desktop file system implementation but applied by default in
+//    browser for parity)
 // Used when setting global shims to determine whether to try to add
-//   other globals shimmed by the library (`ShimDOMException`, `ShimDOMStringList`,
-//   `ShimEvent`, `ShimCustomEvent`, `ShimEventTarget`)
-'addNonIDBGlobals', // Effectively defaults to `false` (ignored unless `true`)
-// Used when setting global shims to determine whether to try to overwrite
+//   other globals shimmed by the library (`ShimDOMException`,
+//   `ShimDOMStringList`, `ShimEvent`, `ShimCustomEvent`, `ShimEventTarget`)
+// Effectively defaults to `false` (ignored unless `true`)
+'addNonIDBGlobals', // Used when setting global shims to determine whether to try to overwrite
 //   other globals shimmed by the library (`DOMException`, `DOMStringList`,
 //   `Event`, `CustomEvent`, `EventTarget`)
-'replaceNonIDBGlobals', // Effectively defaults to `false` (ignored unless `true`)
-// Overcoming limitations with node-sqlite3/storing database name on file systems
+// Effectively defaults to `false` (ignored unless `true`)
+'replaceNonIDBGlobals', // Overcoming limitations with node-sqlite3/storing database name on
+//   file systems
 // https://en.wikipedia.org/wiki/Filename#Reserved_characters_and_words
 // Defaults to prefixing database with `D_`, escaping
 //   `databaseCharacterEscapeList`, escaping NUL, and
 //   escaping upper case letters, as well as enforcing
 //   `databaseNameLengthLimit`
-'escapeDatabaseName', 'unescapeDatabaseName', // Not used internally; usable as a convenience method
-// Defaults to global regex representing the following
-//   (characters nevertheless commonly reserved in modern, Unicode-supporting
-//   systems): 0x00-0x1F 0x7F " * / : < > ? \ |
-'databaseCharacterEscapeList', 'databaseNameLengthLimit', // Defaults to 254 (shortest typical modern file length limit)
-// Boolean defaulting to true on whether to escape NFD-escaping
+'escapeDatabaseName', // Not used internally; usable as a convenience method
+'unescapeDatabaseName', // Defaults to global regex representing the following
+//   (characters nevertheless commonly reserved in modern,
+//   Unicode-supporting systems): 0x00-0x1F 0x7F " * / : < > ? \ |
+'databaseCharacterEscapeList', // Defaults to 254 (shortest typical modern file length limit)
+'databaseNameLengthLimit', // Boolean defaulting to true on whether to escape NFD-escaping
 //   characters to avoid clashes on MacOS which performs NFD on files
 'escapeNFDForDatabaseNames', // Boolean on whether to add the `.sqlite` extension to file names;
 //   defaults to `true`
-'addSQLiteExtension', ['memoryDatabase', function (val) {
-  // Various types of in-memory databases that can auto-delete
-  if (!/^(?::memory:|file::memory:(\?[^#]*)?(#.*)?)?$/.test(val)) {
-    throw new TypeError('`memoryDatabase` must be the empty string, ":memory:", or a "file::memory:[?queryString][#hash] URL".');
+'addSQLiteExtension', // Various types of in-memory databases that can auto-delete
+['memoryDatabase', function (val) {
+  if (!/^(?::memory:|file::memory:(\?(?:[\0-"\$-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?(#(?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?)?$/.test(val)) {
+    throw new TypeError('`memoryDatabase` must be the empty string, ":memory:", or a ' + '"file::memory:[?queryString][#hash] URL".');
   }
 }], // NODE-SPECIFIC CONFIG
-// Boolean on whether to delete the database file itself after `deleteDatabase`;
-//   defaults to `true` as the database will be empty
+// Boolean on whether to delete the database file itself after
+//   `deleteDatabase`; defaults to `true` as the database will be empty
 'deleteDatabaseFiles', 'databaseBasePath', 'sysDatabaseBasePath', // NODE-SPECIFIC WEBSQL CONFIG
 'sqlBusyTimeout', // Defaults to 1000
 'sqlTrace', // Callback not used by default
@@ -1366,8 +1468,12 @@ var CFG = {};
   var validator;
 
   if (Array.isArray(prop)) {
-    validator = prop[1];
-    prop = prop[0];
+    var _prop = prop;
+
+    var _prop2 = _slicedToArray(_prop, 2);
+
+    prop = _prop2[0];
+    validator = _prop2[1];
   }
 
   Object.defineProperty(CFG, prop, {
@@ -1387,7 +1493,7 @@ var _default = CFG;
 exports.default = _default;
 module.exports = exports.default;
 
-},{}],9:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1405,15 +1511,17 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 /**
- * Creates a native DOMException, for browsers that support it
+ * Creates a native DOMException, for browsers that support it.
+ * @param {string} name
+ * @param {string} message
  * @returns {DOMException}
  */
 function createNativeDOMException(name, message) {
   return new DOMException.prototype.constructor(message, name || 'DOMException');
-}
+} // From web-platform-tests testharness.js name_code_map (though not in new spec)
+
 
 var codes = {
-  // From web-platform-tests testharness.js name_code_map (though not in new spec)
   IndexSizeError: 1,
   HierarchyRequestError: 3,
   WrongDocumentError: 4,
@@ -1474,14 +1582,19 @@ var legacyCodes = {
   INVALID_NODE_TYPE_ERR: 24,
   DATA_CLONE_ERR: 25
 };
+/**
+ *
+ * @returns {DOMException}
+ */
 
 function createNonNativeDOMExceptionClass() {
   function DOMException(message, name) {
     // const err = Error.prototype.constructor.call(this, message); // Any use to this? Won't set this.message
     this[Symbol.toStringTag] = 'DOMException';
     this._code = name in codes ? codes[name] : legacyCodes[name] || 0;
-    this._name = name || 'Error';
-    this._message = message === undefined ? '' : '' + message; // Not String() which converts Symbols
+    this._name = name || 'Error'; // We avoid `String()` in this next line as it converts Symbols
+
+    this._message = message === undefined ? '' : '' + message; // eslint-disable-line no-implicit-coercion
 
     Object.defineProperty(this, 'code', {
       configurable: true,
@@ -1511,7 +1624,9 @@ function createNonNativeDOMExceptionClass() {
   // class DummyDOMException extends Error {}; // Sometimes causing problems in Node
 
 
-  var DummyDOMException = function DOMException() {};
+  var DummyDOMException = function DOMException() {
+    /* */
+  };
 
   DummyDOMException.prototype = Object.create(Error.prototype); // Intended for subclassing
 
@@ -1608,8 +1723,9 @@ function isErrorOrDOMErrorOrDOMException(obj) {
 }
 /**
  * Finds the error argument.  This is useful because some WebSQL callbacks
- * pass the error as the first argument, and some pass it as the second argument.
- * @param {array} args
+ * pass the error as the first argument, and some pass it as the second
+ * argument.
+ * @param {Array} args
  * @returns {Error|DOMException|undefined}
  */
 
@@ -1637,6 +1753,12 @@ function findError(args) {
 
   return err;
 }
+/**
+ *
+ * @param {external:WebSQLError} webSQLErr
+ * @returns {DOMException}
+ */
+
 
 function webSQLErrback(webSQLErr) {
   var name, message;
@@ -1646,7 +1768,7 @@ function webSQLErrback(webSQLErr) {
       {
         // SQLError.QUOTA_ERR
         name = 'QuotaExceededError';
-        message = 'The operation failed because there was not enough remaining storage space, or the storage quota was reached and the user declined to give more space to the database.';
+        message = 'The operation failed because there was not enough ' + 'remaining storage space, or the storage quota was reached ' + 'and the user declined to give more space to the database.';
         break;
       }
 
@@ -1706,7 +1828,7 @@ if (useNativeDOMException) {
   };
 }
 
-},{"./CFG":8}],10:[function(require,module,exports){
+},{"./CFG":7}],9:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1813,7 +1935,7 @@ DOMStringList.prototype = (_DOMStringList$protot = {
     this._length = this._items.length;
 
     for (var i in this) {
-      if (i === String(parseInt(i, 10))) {
+      if (i === String(parseInt(i))) {
         delete this[i];
       }
     }
@@ -1910,7 +2032,7 @@ var _default = DOMStringList;
 exports.default = _default;
 module.exports = exports.default;
 
-},{}],11:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1942,6 +2064,13 @@ var util = _interopRequireWildcard(require("./util"));
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
+/**
+ *
+ * @param {string} type
+ * @param {Any} debug
+ * @param {EventInit} evInit
+ * @returns {Event}
+ */
 function createEvent(type, debug, evInit) {
   var ev = new _eventtargeter.ShimEvent(type, evInit);
   ev.debug = debug;
@@ -1955,7 +2084,7 @@ Object.defineProperty(_eventtargeter.ShimEvent, Symbol.hasInstance, {
   }
 });
 
-},{"./util":28,"eventtargeter":2}],12:[function(require,module,exports){
+},{"./util":27,"eventtargeter":2}],11:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2004,10 +2133,15 @@ function _construct(Parent, args, Class) { if (isNativeReflectConstruct()) { _co
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
+function IDBCursor() {
+  throw new TypeError('Illegal constructor');
+}
+
+var IDBCursorAlias = IDBCursor;
 /**
  * The IndexedDB Cursor Object
  * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBCursor
- * @param {IDBKeyRange} range
+ * @param {IDBKeyRange} query
  * @param {string} direction
  * @param {IDBObjectStore} store
  * @param {IDBObjectStore|IDBIndex} source
@@ -2015,11 +2149,6 @@ function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || func
  * @param {string} valueColumnName
  * @param {boolean} count
  */
-function IDBCursor() {
-  throw new TypeError('Illegal constructor');
-}
-
-var IDBCursorAlias = IDBCursor;
 
 IDBCursor.__super = function IDBCursor(query, direction, store, source, keyColumnName, valueColumnName, count) {
   this[Symbol.toStringTag] = 'IDBCursor';
@@ -2073,7 +2202,7 @@ IDBCursor.__super = function IDBCursor(query, direction, store, source, keyColum
   }
 
   this.__gotValue = true;
-  this['continue']();
+  this.continue();
 };
 
 IDBCursor.__createInstance = function () {
@@ -2476,7 +2605,7 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
   });
 };
 
-IDBCursor.prototype['continue'] = function ()
+IDBCursor.prototype.continue = function ()
 /* key */
 {
   this.__continue(arguments[0]);
@@ -2591,7 +2720,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
   return request;
 };
 
-IDBCursor.prototype['delete'] = function () {
+IDBCursor.prototype.delete = function () {
   var me = this;
 
   _IDBTransaction.default.__assertActive(me.__store.transaction);
@@ -2671,13 +2800,15 @@ Object.defineProperty(IDBCursorWithValue, 'prototype', {
   writable: false
 });
 
-},{"./CFG":8,"./DOMException":9,"./IDBFactory":14,"./IDBIndex":15,"./IDBKeyRange":16,"./IDBObjectStore":17,"./IDBRequest":18,"./IDBTransaction":19,"./Key":21,"./Sca":22,"./util":28}],13:[function(require,module,exports){
+},{"./CFG":7,"./DOMException":8,"./IDBFactory":13,"./IDBIndex":14,"./IDBKeyRange":15,"./IDBObjectStore":16,"./IDBRequest":17,"./IDBTransaction":18,"./Key":20,"./Sca":21,"./util":27}],12:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+
+var _eventtargeter = require("eventtargeter");
 
 var _DOMException = require("./DOMException");
 
@@ -2691,8 +2822,6 @@ var _IDBObjectStore = _interopRequireDefault(require("./IDBObjectStore"));
 
 var _IDBTransaction = _interopRequireDefault(require("./IDBTransaction"));
 
-var _eventtargeter = require("eventtargeter");
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
@@ -2705,12 +2834,16 @@ function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.
 
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
 
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 var listeners = ['onabort', 'onclose', 'onerror', 'onversionchange'];
 var readonlyProperties = ['name', 'version', 'objectStoreNames'];
 /**
  * IDB Database Object
  * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
- * @constructor
+ * @class
  */
 
 function IDBDatabase() {
@@ -2803,7 +2936,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName
 
   _IDBTransaction.default.__assertActive(this.__versionTransaction);
 
-  createOptions = Object.assign({}, createOptions);
+  createOptions = _objectSpread({}, createOptions);
   var _createOptions = createOptions,
       keyPath = _createOptions.keyPath;
   keyPath = keyPath === undefined ? null : util.convertToSequenceDOMString(keyPath);
@@ -2895,7 +3028,8 @@ IDBDatabase.prototype.transaction = function (storeNames
   }
 
   var mode = arguments[1];
-  storeNames = util.isIterable(storeNames) ? _toConsumableArray(new Set( // to be unique
+  storeNames = util.isIterable(storeNames) // Creating new array also ensures sequence is passed by value: https://heycam.github.io/webidl/#idl-sequence
+  ? _toConsumableArray(new Set( // to be unique
   util.convertToSequenceDOMString(storeNames) // iterables have `ToString` applied (and we convert to array for convenience)
   )).sort() // must be sorted
   : [util.convertToDOMString(storeNames)];
@@ -2989,7 +3123,7 @@ var _default = IDBDatabase;
 exports.default = _default;
 module.exports = exports.default;
 
-},{"./DOMException":9,"./DOMStringList":10,"./Event":11,"./IDBObjectStore":17,"./IDBTransaction":19,"./util":28,"eventtargeter":2}],14:[function(require,module,exports){
+},{"./DOMException":8,"./DOMStringList":9,"./Event":10,"./IDBObjectStore":16,"./IDBTransaction":18,"./util":27,"eventtargeter":2}],13:[function(require,module,exports){
 (function (process){
 "use strict";
 
@@ -3005,6 +3139,10 @@ Object.defineProperty(exports, "cmp", {
 });
 exports.shimIndexedDB = void 0;
 
+var _path = _interopRequireDefault(require("path"));
+
+var _syncPromise = _interopRequireDefault(require("sync-promise"));
+
 var _Event = require("./Event");
 
 var _IDBVersionChangeEvent = _interopRequireDefault(require("./IDBVersionChangeEvent"));
@@ -3014,8 +3152,6 @@ var _DOMException = require("./DOMException");
 var _IDBRequest = require("./IDBRequest");
 
 var _cmp = _interopRequireDefault(require("./cmp"));
-
-var _DOMStringList = _interopRequireDefault(require("./DOMStringList"));
 
 var util = _interopRequireWildcard(require("./util"));
 
@@ -3027,15 +3163,13 @@ var _IDBDatabase = _interopRequireDefault(require("./IDBDatabase"));
 
 var _CFG = _interopRequireDefault(require("./CFG"));
 
-var _syncPromise = _interopRequireDefault(require("sync-promise"));
-
-var _path = _interopRequireDefault(require("path"));
-
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+var fs = {}.toString.call(process) === '[object process]' ? require('fs') : null;
 
 var getOrigin = function getOrigin() {
   return (typeof location === "undefined" ? "undefined" : _typeof(location)) !== 'object' || !location ? 'null' : location.origin;
@@ -3112,7 +3246,7 @@ function triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersio
     return promises.then(function () {
       if (connectionIsClosed(entry)) {
         // Prior onversionchange must have caused this connection to be closed
-        return;
+        return undefined;
       }
 
       var e = new _IDBVersionChangeEvent.default('versionchange', {
@@ -3128,34 +3262,36 @@ function triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersio
       });
     });
   }, _syncPromise.default.resolve()).then(function () {
-    if (!connectionsClosed()) {
-      return new _syncPromise.default(function (resolve) {
-        var unblocking = {
-          check: function check() {
-            if (connectionsClosed()) {
-              resolve();
-            }
-          }
-        };
-        var e = new _IDBVersionChangeEvent.default('blocked', {
-          oldVersion: oldVersion,
-          newVersion: newVersion
-        });
-        setTimeout(function () {
-          req.dispatchEvent(e); // No need to catch errors
+    if (connectionsClosed()) {
+      return undefined;
+    }
 
-          if (!connectionsClosed()) {
-            openConnections.forEach(function (connection) {
-              if (!connectionIsClosed(connection)) {
-                connection.__unblocking = unblocking;
-              }
-            });
-          } else {
+    return new _syncPromise.default(function (resolve) {
+      var unblocking = {
+        check: function check() {
+          if (connectionsClosed()) {
             resolve();
           }
-        });
+        }
+      };
+      var e = new _IDBVersionChangeEvent.default('blocked', {
+        oldVersion: oldVersion,
+        newVersion: newVersion
       });
-    }
+      setTimeout(function () {
+        req.dispatchEvent(e); // No need to catch errors
+
+        if (!connectionsClosed()) {
+          openConnections.forEach(function (connection) {
+            if (!connectionIsClosed(connection)) {
+              connection.__unblocking = unblocking;
+            }
+          });
+        } else {
+          resolve();
+        }
+      });
+    });
   });
 }
 
@@ -3205,8 +3341,8 @@ function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, dat
     return;
   }
 
-  if (_CFG.default.deleteDatabaseFiles !== false && {}.toString.call(process) === '[object process]') {
-    require('fs').unlink(_path.default.join(_CFG.default.databaseBasePath || '', escapedDatabaseName), function (err) {
+  if (fs && _CFG.default.deleteDatabaseFiles !== false) {
+    fs.unlink(_path.default.join(_CFG.default.databaseBasePath || '', escapedDatabaseName), function (err) {
       if (err && err.code !== 'ENOENT') {
         // Ignore if file is already deleted
         dbError({
@@ -3218,7 +3354,6 @@ function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, dat
 
       databaseDeleted();
     });
-
     return;
   }
 
@@ -3281,7 +3416,7 @@ function createSysDB(__openDatabase, success, failure) {
 /**
  * IDBFactory Class
  * https://w3c.github.io/IndexedDB/#idl-def-IDBFactory
- * @constructor
+ * @class
  */
 
 
@@ -3294,22 +3429,6 @@ var IDBFactoryAlias = IDBFactory;
 IDBFactory.__createInstance = function () {
   function IDBFactory() {
     this[Symbol.toStringTag] = 'IDBFactory';
-    this.modules = {
-      // Export other shims (especially for testing)
-      Event: typeof Event !== 'undefined' ? Event : _Event.ShimEvent,
-      Error: Error,
-      // For test comparisons
-      ShimEvent: _Event.ShimEvent,
-      ShimCustomEvent: _Event.ShimCustomEvent,
-      ShimEventTarget: _Event.ShimEventTarget,
-      ShimDOMException: _DOMException.ShimDOMException,
-      ShimDOMStringList: _DOMStringList.default,
-      IDBFactory: IDBFactoryAlias
-    };
-    this.utils = {
-      createDOMException: _DOMException.createDOMException
-    }; // Expose for ease in simulating such exceptions during testing
-
     this.__connections = {};
   }
 
@@ -3425,7 +3544,7 @@ IDBFactory.prototype.open = function (name
 
                   if (oldVersion === 0) {
                     systx.executeSql('DELETE FROM dbVersions WHERE "name" = ?', [sqlSafeName], function () {
-                      cb(reportError);
+                      cb(reportError); // eslint-disable-line promise/no-callback-in-promise
                     }, reportError);
                   } else {
                     systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [oldVersion, sqlSafeName], cb, reportError);
@@ -3434,9 +3553,10 @@ IDBFactory.prototype.open = function (name
               }
 
               return;
-            }
+            } // In browser, should auto-commit
 
-            cb(); // In browser, should auto-commit
+
+            cb(); // eslint-disable-line promise/no-callback-in-promise
           };
 
           sysdb.transaction(function (systx) {
@@ -3551,6 +3671,10 @@ IDBFactory.prototype.open = function (name
 
             return false;
           });
+          return undefined;
+        }).catch(function (err) {
+          console.log('Error within `triggerAnyVersionChangeAndBlockedEvents`');
+          throw err;
         });
       } else {
         finishRequest();
@@ -3740,16 +3864,19 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         sysReadTx.executeSql('SELECT "version" FROM dbVersions WHERE "name" = ?', [sqlSafeName], function (sysReadTx, data) {
           if (data.rows.length === 0) {
             completeDatabaseDelete();
-            return;
+            return undefined;
           }
 
-          version = data.rows.item(0).version;
+          var _data$rows$item = data.rows.item(0);
+
+          version = _data$rows$item.version;
           var openConnections = me.__connections[name] || [];
           triggerAnyVersionChangeAndBlockedEvents(openConnections, req, version, null).then(function () {
+            // eslint-disable-line promise/catch-or-return
             // Since we need two databases which can't be in a single transaction, we
             //  do this deleting from `dbVersions` first since the `__sys__` deleting
             //  only impacts file memory whereas this one is critical for avoiding it
-            //  being found via `open` or `webkitGetDatabaseNames`; however, we will
+            //  being found via `open` or `databases`; however, we will
             //  avoid committing anyways until all deletions are made and rollback the
             //  `dbVersions` change if they fail
             sysdb.transaction(function (systx) {
@@ -3774,7 +3901,9 @@ IDBFactory.prototype.deleteDatabase = function (name) {
 
               return false;
             });
+            return undefined;
           }, dbError);
+          return undefined;
         }, dbError);
       });
     }, dbError);
@@ -3798,69 +3927,58 @@ IDBFactory.prototype.cmp = function (key1, key2) {
   return (0, _cmp.default)(key1, key2);
 };
 /**
-* NON-STANDARD!! (Also may return outdated information if a database has since been deleted)
-* @link https://www.w3.org/Bugs/Public/show_bug.cgi?id=16137
-* @link http://lists.w3.org/Archives/Public/public-webapps/2011JulSep/1537.html
+* May return outdated information if a database has since been deleted
+* @see https://github.com/w3c/IndexedDB/pull/240/files
 */
 
 
-IDBFactory.prototype.webkitGetDatabaseNames = function () {
+IDBFactory.prototype.databases = function () {
   var me = this;
-
-  if (!(me instanceof IDBFactory)) {
-    throw new TypeError('Illegal invocation');
-  }
-
-  if (hasNullOrigin()) {
-    throw (0, _DOMException.createDOMException)('SecurityError', 'Cannot get IndexedDB database names from an opaque origin.');
-  }
-
   var calledDbCreateError = false;
-
-  function dbGetDatabaseNamesError(tx, err) {
-    if (calledDbCreateError) {
-      return;
+  return new Promise(function (resolve, reject) {
+    // eslint-disable-line promise/avoid-new
+    if (!(me instanceof IDBFactory)) {
+      throw new TypeError('Illegal invocation');
     }
 
-    err = err ? (0, _DOMException.webSQLErrback)(err) : tx;
-    calledDbCreateError = true; // Re: why bubbling here (and how cancelable is only really relevant for `window.onerror`) see: https://github.com/w3c/IndexedDB/issues/86
+    if (hasNullOrigin()) {
+      throw (0, _DOMException.createDOMException)('SecurityError', 'Cannot get IndexedDB database names from an opaque origin.');
+    }
 
-    var evt = (0, _Event.createEvent)('error', err, {
-      bubbles: true,
-      cancelable: true
-    }); // http://stackoverflow.com/questions/40165909/to-where-do-idbopendbrequest-error-events-bubble-up/40181108#40181108
+    function dbGetDatabaseNamesError(tx, err) {
+      if (calledDbCreateError) {
+        return;
+      }
 
-    req.__readyState = 'done';
-    req.__error = err;
-    req.__result = undefined; // Must be undefined if an error per `result` getter
+      err = err ? (0, _DOMException.webSQLErrback)(err) : tx;
+      calledDbCreateError = true;
+      reject(err);
+    }
 
-    req.dispatchEvent(evt);
-  }
+    createSysDB(me.__openDatabase, function () {
+      sysdb.readTransaction(function (sysReadTx) {
+        sysReadTx.executeSql('SELECT "name", "version" FROM dbVersions', [], function (sysReadTx, data) {
+          var dbNames = [];
 
-  var req = _IDBRequest.IDBRequest.__createInstance();
+          for (var i = 0; i < data.rows.length; i++) {
+            var _data$rows$item2 = data.rows.item(i),
+                name = _data$rows$item2.name,
+                version = _data$rows$item2.version;
 
-  createSysDB(me.__openDatabase, function () {
-    sysdb.readTransaction(function (sysReadTx) {
-      sysReadTx.executeSql('SELECT "name" FROM dbVersions', [], function (sysReadTx, data) {
-        var dbNames = _DOMStringList.default.__createInstance();
+            dbNames.push({
+              name: util.unescapeSQLiteResponse(name),
+              version: version
+            });
+          }
 
-        for (var i = 0; i < data.rows.length; i++) {
-          dbNames.push(util.unescapeSQLiteResponse(data.rows.item(i).name));
-        }
-
-        req.__result = dbNames;
-        req.__readyState = 'done'; // https://github.com/w3c/IndexedDB/pull/202
-
-        var e = (0, _Event.createEvent)('success'); // http://stackoverflow.com/questions/40165909/to-where-do-idbopendbrequest-error-events-bubble-up/40181108#40181108
-
-        req.dispatchEvent(e);
+          resolve(dbNames);
+        }, dbGetDatabaseNamesError);
       }, dbGetDatabaseNamesError);
     }, dbGetDatabaseNamesError);
-  }, dbGetDatabaseNamesError);
-  return req;
+  });
 };
 /**
-* @Todo __forceClose: Test
+* @todo __forceClose: Test
 * This is provided to facilitate unit-testing of the
 *  closing of a database connection with a forced flag:
 * <http://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>
@@ -3874,13 +3992,13 @@ IDBFactory.prototype.__forceClose = function (dbName, connIdx, msg) {
     conn.__forceClose(msg);
   }
 
-  if (dbName == null) {
+  if (util.isNullish(dbName)) {
     Object.values(me.__connections).forEach(function (conn) {
       return conn.forEach(forceClose);
     });
   } else if (!me.__connections[dbName]) {
     console.log('No database connections with that name to force close');
-  } else if (connIdx == null) {
+  } else if (util.isNullish(connIdx)) {
     me.__connections[dbName].forEach(forceClose);
   } else if (!Number.isInteger(connIdx) || connIdx < 0 || connIdx > me.__connections[dbName].length - 1) {
     throw new TypeError('If providing an argument, __forceClose must be called with a ' + 'numeric index to indicate a specific connection to lose');
@@ -3905,7 +4023,7 @@ exports.shimIndexedDB = shimIndexedDB;
 
 }).call(this,require('_process'))
 
-},{"./CFG":8,"./DOMException":9,"./DOMStringList":10,"./Event":11,"./IDBDatabase":13,"./IDBRequest":18,"./IDBTransaction":19,"./IDBVersionChangeEvent":20,"./Key":21,"./cmp":25,"./util":28,"_process":4,"fs":1,"path":3,"sync-promise":5}],15:[function(require,module,exports){
+},{"./CFG":7,"./DOMException":8,"./Event":10,"./IDBDatabase":12,"./IDBRequest":17,"./IDBTransaction":18,"./IDBVersionChangeEvent":19,"./Key":20,"./cmp":24,"./util":27,"_process":4,"fs":1,"path":3,"sync-promise":5}],14:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3914,6 +4032,8 @@ Object.defineProperty(exports, "__esModule", {
 exports.buildFetchIndexDataSQL = buildFetchIndexDataSQL;
 exports.executeFetchIndexData = executeFetchIndexData;
 exports.default = exports.IDBIndex = IDBIndex;
+
+var _syncPromise = _interopRequireDefault(require("sync-promise"));
 
 var _DOMException = require("./DOMException");
 
@@ -3933,11 +4053,9 @@ var _CFG = _interopRequireDefault(require("./CFG"));
 
 var _IDBObjectStore = _interopRequireDefault(require("./IDBObjectStore"));
 
-var _syncPromise = _interopRequireDefault(require("sync-promise"));
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
 
@@ -3953,7 +4071,7 @@ var readonlyProperties = ['objectStore', 'keyPath', 'multiEntry', 'unique'];
  * http://www.w3.org/TR/IndexedDB/#idl-def-IDBIndex
  * @param {IDBObjectStore} store
  * @param {IDBIndexProperties} indexProperties
- * @constructor
+ * @class
  */
 
 function IDBIndex() {
@@ -3971,9 +4089,9 @@ IDBIndex.__createInstance = function (store, indexProperties) {
     me.__name = me.__originalName = indexProperties.columnName;
     me.__keyPath = Array.isArray(indexProperties.keyPath) ? indexProperties.keyPath.slice() : indexProperties.keyPath;
     var optionalParams = indexProperties.optionalParams;
-    me.__multiEntry = !!(optionalParams && optionalParams.multiEntry);
-    me.__unique = !!(optionalParams && optionalParams.unique);
-    me.__deleted = !!indexProperties.__deleted;
+    me.__multiEntry = Boolean(optionalParams && optionalParams.multiEntry);
+    me.__unique = Boolean(optionalParams && optionalParams.unique);
+    me.__deleted = Boolean(indexProperties.__deleted);
     me.__objectStore.__cursors = indexProperties.cursors || [];
     Object.defineProperty(me, '__currentName', {
       get: function get() {
@@ -4261,7 +4379,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
         unique: idx.unique,
         multiEntry: idx.multiEntry
       },
-      deleted: !!idx.deleted
+      deleted: Boolean(idx.deleted)
     };
   }
 
@@ -4298,7 +4416,7 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
 
   _IDBTransaction.default.__assertActive(me.objectStore.transaction);
 
-  if (nullDisallowed && range == null) {
+  if (nullDisallowed && util.isNullish(range)) {
     throw (0, _DOMException.createDOMException)('DataError', 'No key or range was specified');
   }
 
@@ -4498,7 +4616,10 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName) {
               });
             }));
 
-            _syncPromise.default.all(indexCreations).then(finish, error);
+            _syncPromise.default.all(indexCreations).then(finish, error).catch(function (err) {
+              console.log('Index rename error');
+              throw err;
+            });
           }, sqlError);
         }, sqlError);
       }, sqlError);
@@ -4530,9 +4651,12 @@ function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range,
   var isCount = opType === 'count';
   _CFG.default.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
   tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
+    // eslint-disable-line complexity
     var records = [];
     var recordCount = 0;
-    var decode = isCount ? function () {} : opType === 'key' ? function (record) {
+    var decode = isCount ? function () {
+      /* */
+    } : opType === 'key' ? function (record) {
       // Key.convertValueToKey(record.key); // Already validated before storage
       return Key.decode(util.unescapeSQLiteResponse(record.key));
     } : function (record) {
@@ -4599,7 +4723,7 @@ function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range,
 }
 
 function buildFetchIndexDataSQL(nullDisallowed, index, range, opType, multiChecks) {
-  var hasRange = nullDisallowed || range != null;
+  var hasRange = nullDisallowed || !util.isNullish(range);
   var col = opType === 'count' ? 'key' : opType; // It doesn't matter which column we use for 'count' as long as it is valid
 
   var sql = ['SELECT', util.sqlQuote(col) + (index.multiEntry ? ', ' + util.escapeIndexNameForSQL(index.name) : ''), 'FROM', util.escapeStoreNameForSQL(index.objectStore.__currentName), 'WHERE', util.escapeIndexNameForSQL(index.name), 'NOT NULL'];
@@ -4626,7 +4750,7 @@ function buildFetchIndexDataSQL(nullDisallowed, index, range, opType, multiCheck
   return [nullDisallowed, index, hasRange, range, opType, multiChecks, sql, sqlValues];
 }
 
-},{"./CFG":8,"./DOMException":9,"./IDBCursor":12,"./IDBKeyRange":16,"./IDBObjectStore":17,"./IDBTransaction":19,"./Key":21,"./Sca":22,"./util":28,"sync-promise":5}],16:[function(require,module,exports){
+},{"./CFG":7,"./DOMException":8,"./IDBCursor":11,"./IDBKeyRange":15,"./IDBObjectStore":16,"./IDBTransaction":18,"./Key":20,"./Sca":21,"./util":27,"sync-promise":5}],15:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4692,8 +4816,8 @@ IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
 
     this.__lower = lowerConverted;
     this.__upper = upperConverted;
-    this.__lowerOpen = !!lowerOpen;
-    this.__upperOpen = !!upperOpen;
+    this.__lowerOpen = Boolean(lowerOpen);
+    this.__upperOpen = Boolean(upperOpen);
   }
 
   IDBKeyRange.prototype = IDBKeyRangeAlias.prototype;
@@ -4829,7 +4953,7 @@ function convertValueToKeyRange(value, nullDisallowed) {
     return value;
   }
 
-  if (value == null) {
+  if (util.isNullish(value)) {
     if (nullDisallowed) {
       throw (0, _DOMException.createDOMException)('DataError', 'No key or range was specified');
     }
@@ -4841,13 +4965,15 @@ function convertValueToKeyRange(value, nullDisallowed) {
   return IDBKeyRange.only(value);
 }
 
-},{"./DOMException":9,"./Key":21,"./util":28}],17:[function(require,module,exports){
+},{"./DOMException":8,"./Key":20,"./util":27}],16:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+
+var _syncPromise = _interopRequireDefault(require("sync-promise"));
 
 var _DOMException = require("./DOMException");
 
@@ -4868,8 +4994,6 @@ var _IDBTransaction = _interopRequireDefault(require("./IDBTransaction"));
 var Sca = _interopRequireWildcard(require("./Sca"));
 
 var _CFG = _interopRequireDefault(require("./CFG"));
-
-var _syncPromise = _interopRequireDefault(require("sync-promise"));
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
@@ -4897,7 +5021,7 @@ var readonlyProperties = ['keyPath', 'indexNames', 'transaction', 'autoIncrement
  * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBObjectStore
  * @param {IDBObjectStoreProperties} storeProperties
  * @param {IDBTransaction} transaction
- * @constructor
+ * @class
  */
 
 function IDBObjectStore() {
@@ -4917,14 +5041,14 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
     me.__idbdb = storeProperties.idbdb;
     me.__cursors = storeProperties.cursors || []; // autoInc is numeric (0/1) on WinPhone
 
-    me.__autoIncrement = !!storeProperties.autoInc;
+    me.__autoIncrement = Boolean(storeProperties.autoInc);
     me.__indexes = {};
     me.__indexHandles = {};
     me.__indexNames = _DOMStringList.default.__createInstance();
     var indexList = storeProperties.indexList;
 
     for (var indexName in indexList) {
-      if (indexList.hasOwnProperty(indexName)) {
+      if (util.hasOwn(indexList, indexName)) {
         var index = _IDBIndex.IDBIndex.__createInstance(me, indexList[indexName]);
 
         me.__indexes[index.name] = index;
@@ -5331,8 +5455,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
       }
     });
   });
-
-  _syncPromise.default.all(indexPromises).then(function () {
+  return _syncPromise.default.all(indexPromises).then(function () {
     var sqlStart = ['INSERT INTO', util.escapeStoreNameForSQL(me.__currentName), '('];
     var sqlEnd = [' VALUES ('];
     var insertSqlValues = [];
@@ -5344,12 +5467,15 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
       insertSqlValues.push(util.escapeSQLiteStatement(Key.encode(clonedKeyOrCurrentNumber)));
     }
 
-    for (var key in paramMap) {
+    Object.entries(paramMap).forEach(function (_ref) {
+      var _ref2 = _slicedToArray(_ref, 2),
+          key = _ref2[0],
+          stmt = _ref2[1];
+
       sqlStart.push(util.escapeIndexNameForSQL(key) + ',');
       sqlEnd.push('?,');
-      insertSqlValues.push(util.escapeSQLiteStatement(paramMap[key]));
-    } // removing the trailing comma
-
+      insertSqlValues.push(util.escapeSQLiteStatement(stmt));
+    }); // removing the trailing comma
 
     sqlStart.push(util.sqlQuote('value') + ' )');
     sqlEnd.push('?)');
@@ -5362,6 +5488,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
       // Should occur for `add` operation
       error((0, _DOMException.createDOMException)('ConstraintError', err.message, err));
     });
+    return undefined;
   }).catch(function (err) {
     function fail() {
       // Todo: Add a different error object here if `assignCurrentNumber` fails in reverting?
@@ -5530,7 +5657,13 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
       try {
         // Opera can't deal with the try-catch here.
         if (data.rows.length === 0) {
-          return getAll ? success([]) : success();
+          if (getAll) {
+            success([]);
+          } else {
+            success();
+          }
+
+          return;
         }
 
         ret = [];
@@ -5597,7 +5730,7 @@ IDBObjectStore.prototype.getAllKeys = function ()
   return this.__get(query, true, true, count);
 };
 
-IDBObjectStore.prototype['delete'] = function (query) {
+IDBObjectStore.prototype.delete = function (query) {
   var me = this;
 
   if (!(this instanceof IDBObjectStore)) {
@@ -5810,8 +5943,8 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath
     columnName: indexName,
     keyPath: keyPath,
     optionalParams: {
-      unique: !!optionalParameters.unique,
-      multiEntry: !!optionalParameters.multiEntry
+      unique: Boolean(optionalParameters.unique),
+      multiEntry: Boolean(optionalParameters.multiEntry)
     }
   };
 
@@ -5858,7 +5991,7 @@ var _default = IDBObjectStore;
 exports.default = _default;
 module.exports = exports.default;
 
-},{"./CFG":8,"./DOMException":9,"./DOMStringList":10,"./IDBCursor":12,"./IDBIndex":15,"./IDBKeyRange":16,"./IDBTransaction":19,"./Key":21,"./Sca":22,"./util":28,"sync-promise":5}],18:[function(require,module,exports){
+},{"./CFG":7,"./DOMException":8,"./DOMStringList":9,"./IDBCursor":11,"./IDBIndex":14,"./IDBKeyRange":15,"./IDBTransaction":18,"./Key":20,"./Sca":21,"./util":27,"sync-promise":5}],17:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -5867,9 +6000,9 @@ Object.defineProperty(exports, "__esModule", {
 exports.IDBRequest = IDBRequest;
 exports.IDBOpenDBRequest = IDBOpenDBRequest;
 
-var _DOMException = require("./DOMException");
-
 var _eventtargeter = require("eventtargeter");
+
+var _DOMException = require("./DOMException");
 
 var util = _interopRequireWildcard(require("./util"));
 
@@ -5995,13 +6128,17 @@ Object.defineProperty(IDBOpenDBRequest, 'prototype', {
   writable: false
 });
 
-},{"./DOMException":9,"./util":28,"eventtargeter":2}],19:[function(require,module,exports){
+},{"./DOMException":8,"./util":27,"eventtargeter":2}],18:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+
+var _eventtargeter = require("eventtargeter");
+
+var _syncPromise = _interopRequireDefault(require("sync-promise"));
 
 var _Event = require("./Event");
 
@@ -6015,13 +6152,9 @@ var _IDBObjectStore = _interopRequireDefault(require("./IDBObjectStore"));
 
 var _CFG = _interopRequireDefault(require("./CFG"));
 
-var _eventtargeter = require("eventtargeter");
-
-var _syncPromise = _interopRequireDefault(require("sync-promise"));
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
 var uniqueID = 0;
 var listeners = ['onabort', 'oncomplete', 'onerror'];
@@ -6032,7 +6165,7 @@ var readonlyProperties = ['objectStoreNames', 'mode', 'db', 'error'];
  * @param {IDBDatabase} db
  * @param {string[]} storeNames
  * @param {string} mode
- * @constructor
+ * @class
  */
 
 function IDBTransaction() {
@@ -6386,9 +6519,9 @@ IDBTransaction.prototype.__pushToQueue = function (request, callback, args) {
   this.__assertActive();
 
   this.__requests.push({
-    'op': callback,
-    'args': args,
-    'req': request
+    op: callback,
+    args: args,
+    req: request
   });
 };
 
@@ -6507,13 +6640,15 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
     me.dispatchEvent((0, _Event.createEvent)('__preabort'));
 
     me.__requests.filter(function (q, i, arr) {
+      // eslint-disable-line promise/no-promise-in-callback
       return q.req && q.req.__readyState !== 'done' && [i, -1].includes(arr.map(function (q) {
         return q.req;
       }).lastIndexOf(q.req));
     }).reduce(function (promises, q) {
-      // We reduce to a chain of promises to be queued in order, so we cannot use `Promise.all`,
-      //  and I'm unsure whether `setTimeout` currently behaves first-in-first-out with the same timeout
-      //  so we could just use a `forEach`.
+      // We reduce to a chain of promises to be queued in order, so we cannot
+      //  use `Promise.all`, and I'm unsure whether `setTimeout` currently
+      //  behaves first-in-first-out with the same timeout so we could
+      //  just use a `forEach`.
       return promises.then(function () {
         q.req.__readyState = 'done';
         q.req.__result = undefined;
@@ -6542,6 +6677,10 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         me.__storeHandles = {};
         me.dispatchEvent((0, _Event.createEvent)('__abort'));
       });
+      return undefined;
+    }).catch(function (err) {
+      console.log('Abort error');
+      throw err;
     });
   }
 
@@ -6652,7 +6791,7 @@ var _default = IDBTransaction;
 exports.default = _default;
 module.exports = exports.default;
 
-},{"./CFG":8,"./DOMException":9,"./Event":11,"./IDBObjectStore":17,"./IDBRequest":18,"./util":28,"eventtargeter":2,"sync-promise":5}],20:[function(require,module,exports){
+},{"./CFG":7,"./DOMException":8,"./Event":10,"./IDBObjectStore":16,"./IDBRequest":17,"./util":27,"eventtargeter":2,"sync-promise":5}],19:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -6721,7 +6860,7 @@ var _default = IDBVersionChangeEvent;
 exports.default = _default;
 module.exports = exports.default;
 
-},{"./Event":11,"./util":28}],21:[function(require,module,exports){
+},{"./Event":10,"./util":27}],20:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -6834,7 +6973,7 @@ var types = {
 
       key32 = decimalIndex !== -1 ? key32.replace('.', '') : key32; // Get the index of the first significant digit.
 
-      var significantDigitIndex = key32.search(/[^0]/); // Truncate leading zeros.
+      var significantDigitIndex = key32.search(/(?:[\0-\/1-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])/); // Truncate leading zeros.
 
       key32 = key32.slice(significantDigitIndex);
       var sign, exponent, mantissa; // Finite cases:
@@ -6852,18 +6991,16 @@ var types = {
             exponent = flipBase32(padBase32Exponent(decimalIndex !== -1 ? decimalIndex : key32.length));
             mantissa = flipBase32(padBase32Mantissa(key32));
           } // Non-negative cases:
-
-        } else {
           // Negative exponent case:
-          if (key < 1) {
-            sign = signValues.indexOf('smallPositive');
-            exponent = flipBase32(padBase32Exponent(significantDigitIndex));
-            mantissa = padBase32Mantissa(key32); // Non-negative exponent case:
-          } else {
-            sign = signValues.indexOf('bigPositive');
-            exponent = padBase32Exponent(decimalIndex !== -1 ? decimalIndex : key32.length);
-            mantissa = padBase32Mantissa(key32);
-          }
+
+        } else if (key < 1) {
+          sign = signValues.indexOf('smallPositive');
+          exponent = flipBase32(padBase32Exponent(significantDigitIndex));
+          mantissa = padBase32Mantissa(key32); // Non-negative exponent case:
+        } else {
+          sign = signValues.indexOf('bigPositive');
+          exponent = padBase32Exponent(decimalIndex !== -1 ? decimalIndex : key32.length);
+          mantissa = padBase32Mantissa(key32);
         } // Infinite cases:
 
       } else {
@@ -6878,7 +7015,7 @@ var types = {
     // apply signs to the exponent and mantissa, do the base-32 power operation, and return
     // the original JavaScript number values.
     decode: function decode(key) {
-      var sign = +key.substr(2, 1);
+      var sign = Number(key.substr(2, 1));
       var exponent = key.substr(3, 2);
       var mantissa = key.substr(5, 11);
 
@@ -6923,7 +7060,7 @@ var types = {
     encode: function encode(key, inArray) {
       if (inArray) {
         // prepend each character with a dash, and append a space to the end
-        key = key.replace(/(.)/g, '-$1') + ' ';
+        key = key.replace(/((?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, '-$1') + ' ';
       }
 
       return keyTypeToEncodedChar.string + '-' + key;
@@ -6933,7 +7070,7 @@ var types = {
 
       if (inArray) {
         // remove the space at the end, and the dash before each character
-        key = key.substr(0, key.length - 1).replace(/-(.)/g, '$1');
+        key = key.substr(0, key.length - 1).replace(/\x2D((?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, '$1');
       }
 
       return key;
@@ -6995,7 +7132,7 @@ var types = {
       // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
       var k = key.slice(2);
       var arr = k.length ? k.split(',').map(function (s) {
-        return parseInt(s, 10);
+        return parseInt(s);
       }) : [];
       var buffer = new ArrayBuffer(arr.length);
       var uint8 = new Uint8Array(buffer);
@@ -7006,8 +7143,8 @@ var types = {
 };
 /**
  * Return a padded base-32 exponent value.
- * @param {number}
- * @return {string}
+ * @param {number} n
+ * @returns {string}
  */
 
 function padBase32Exponent(n) {
@@ -7016,8 +7153,8 @@ function padBase32Exponent(n) {
 }
 /**
  * Return a padded base-32 mantissa.
- * @param {string}
- * @return {string}
+ * @param {string} s
+ * @returns {string}
  */
 
 
@@ -7047,9 +7184,9 @@ function flipBase32(encoded) {
  * Someone may have already figured out a good way to store JavaScript floats as
  * binary strings and convert back. Barring a better method, however, one route
  * may be to generate decimal strings that `parseFloat` decodes predictably.
- * @param {string}
- * @param {string}
- * @return {number}
+ * @param {string} mantissa
+ * @param {string} exponent
+ * @returns {number}
  */
 
 
@@ -7058,18 +7195,18 @@ function pow32(mantissa, exponent) {
 
   if (exponent < 0) {
     return roundToPrecision(parseInt(mantissa, 32) * Math.pow(32, exponent - 10));
-  } else {
-    if (exponent < 11) {
-      var whole = mantissa.slice(0, exponent);
-      whole = parseInt(whole, 32);
-      var fraction = mantissa.slice(exponent);
-      fraction = parseInt(fraction, 32) * Math.pow(32, exponent - 11);
-      return roundToPrecision(whole + fraction);
-    } else {
-      var expansion = mantissa + zeros(exponent - 11);
-      return parseInt(expansion, 32);
-    }
   }
+
+  if (exponent < 11) {
+    var whole = mantissa.slice(0, exponent);
+    whole = parseInt(whole, 32);
+    var fraction = mantissa.slice(exponent);
+    fraction = parseInt(fraction, 32) * Math.pow(32, exponent - 11);
+    return roundToPrecision(whole + fraction);
+  }
+
+  var expansion = mantissa + zeros(exponent - 11);
+  return parseInt(expansion, 32);
 }
 /**
  *
@@ -7082,8 +7219,8 @@ function roundToPrecision(num, precision) {
 }
 /**
  * Returns a string of n zeros.
- * @param {number}
- * @return {string}
+ * @param {number} n
+ * @returns {string}
  */
 
 
@@ -7092,8 +7229,8 @@ function zeros(n) {
 }
 /**
  * Negates numeric strings.
- * @param {string}
- * @return {string}
+ * @param {string} s
+ * @returns {string}
  */
 
 
@@ -7166,6 +7303,7 @@ function getCopyBytesHeldByBufferSource(O) {
 
 
 function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
+  // eslint-disable-line complexity
   seen = seen || [];
   if (seen.includes(input)) return {
     type: 'array',
@@ -7378,6 +7516,7 @@ function evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKe
       }
 
       result.push(key.value);
+      return false;
     }, []) ? {
       failure: true
     } : {
@@ -7419,6 +7558,8 @@ function evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKe
       value = value[idntfr];
       return value === undefined;
     }
+
+    return false;
   }) ? {
     failure: true
   } : {
@@ -7436,9 +7577,7 @@ function evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKe
 function injectKeyIntoValueUsingKeyPath(value, key, keyPath) {
   var identifiers = keyPath.split('.');
   var last = identifiers.pop();
-
-  for (var i = 0; i < identifiers.length; i++) {
-    var identifier = identifiers[i];
+  identifiers.forEach(function (identifier) {
     var hop = Object.prototype.hasOwnProperty.call(value, identifier);
 
     if (!hop) {
@@ -7446,8 +7585,7 @@ function injectKeyIntoValueUsingKeyPath(value, key, keyPath) {
     }
 
     value = value[identifier];
-  }
-
+  });
   value[last] = key; // key is already a `keyValue` in our processing so no need to convert
 } // See https://github.com/w3c/IndexedDB/pull/146
 
@@ -7518,9 +7656,9 @@ function isMultiEntryMatch(encodedEntry, encodedKey) {
 
   if (keyType === 'array') {
     return encodedKey.indexOf(encodedEntry) > 1;
-  } else {
-    return encodedKey === encodedEntry;
   }
+
+  return encodedKey === encodedEntry;
 }
 
 function findMultiEntryMatches(keyEntry, range) {
@@ -7548,14 +7686,12 @@ function findMultiEntryMatches(keyEntry, range) {
         }
       }
 
-      if (range == null || isKeyInRange(key, range, true)) {
+      if (util.isNullish(range) || isKeyInRange(key, range, true)) {
         matches.push(key);
       }
     }
-  } else {
-    if (range == null || isKeyInRange(keyEntry, range, true)) {
-      matches.push(keyEntry);
-    }
+  } else if (util.isNullish(range) || isKeyInRange(keyEntry, range, true)) {
+    matches.push(keyEntry);
   }
 
   return matches;
@@ -7636,12 +7772,12 @@ function roundTrip(key, inArray) {
 
 var MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `Number.MAX_SAFE_INTEGER + 1`)
 
-function getCurrentNumber(tx, store, callback, sqlFailCb) {
+function getCurrentNumber(tx, store, func, sqlFailCb) {
   tx.executeSql('SELECT "currNum" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.__currentName)], function (tx, data) {
     if (data.rows.length !== 1) {
-      callback(1); // eslint-disable-line standard/no-callback-literal
+      func(1);
     } else {
-      callback(data.rows.item(0).currNum);
+      func(data.rows.item(0).currNum);
     }
   }, function (tx, error) {
     sqlFailCb((0, _DOMException.createDOMException)('DataError', 'Could not get the auto increment value for key', error));
@@ -7671,7 +7807,9 @@ function generateKeyForStore(tx, store, cb, sqlFailCb) {
   getCurrentNumber(tx, store, function (key) {
     if (key > MAX_ALLOWED_CURRENT_NUMBER) {
       // 2 ^ 53 (See <https://github.com/w3c/IndexedDB/issues/147>)
-      return cb('failure'); // eslint-disable-line standard/no-callback-literal
+      cb('failure'); // eslint-disable-line standard/no-callback-literal
+
+      return;
     } // Increment current number by 1 (we cannot leverage SQLite's
     //  autoincrement (and decrement when not needed), as decrementing
     //  will be overwritten/ignored upon the next insert)
@@ -7717,7 +7855,7 @@ function possiblyUpdateKeyGenerator(tx, store, key, successCb, sqlFailCb) {
 }
 /* eslint-disable object-property-newline */
 
-},{"./CFG":8,"./DOMException":9,"./cmp":25,"./util":28}],22:[function(require,module,exports){
+},{"./CFG":7,"./DOMException":8,"./cmp":24,"./util":27}],21:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -7726,102 +7864,36 @@ Object.defineProperty(exports, "__esModule", {
 exports.encode = encode;
 exports.decode = decode;
 exports.clone = clone;
+exports.register = register;
 
-var _typeson = _interopRequireDefault(require("typeson"));
-
-var _structuredCloningThrowing = _interopRequireDefault(require("typeson-registry/dist/presets/structured-cloning-throwing"));
+var _typesonRegistry = _interopRequireDefault(require("typeson-registry"));
 
 var _DOMException = require("./DOMException");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+// See: http://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
+var typeson = new _typesonRegistry.default().register(_typesonRegistry.default.presets.structuredCloningThrowing);
 
-function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+function register(func) {
+  typeson = new _typesonRegistry.default().register(func(_typesonRegistry.default.presets.structuredCloningThrowing));
+} // We are keeping the callback approach for now in case we wish to reexpose
+//   `Blob`, `File`, `FileList` asynchronously (though in such a case, we
+//   should probably refactor as a Promise)
 
-function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
 
-function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
-
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
-// Todo: Register `ImageBitmap` and add `Blob`/`File`/`FileList`
-// Todo: add a proper polyfill for `ImageData` using node-canvas
-// See also: http://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
-function traverseMapToRevertToLegacyTypeNames(obj) {
-  if (Array.isArray(obj)) {
-    return obj.forEach(traverseMapToRevertToLegacyTypeNames);
-  }
-
-  if (obj && _typeof(obj) === 'object') {
-    // Should be all
-    Object.entries(obj).forEach(function (_ref) {
-      var _ref2 = _slicedToArray(_ref, 2),
-          prop = _ref2[0],
-          val = _ref2[1];
-
-      if (prop in newTypeNamesToLegacy) {
-        var legacyProp = newTypeNamesToLegacy[prop];
-        delete obj[prop];
-        obj[legacyProp] = val;
-      }
-    });
-  }
-}
-
-var structuredCloning = _structuredCloningThrowing.default;
-var newTypeNamesToLegacy = {
-  IntlCollator: 'Intl.Collator',
-  IntlDateTimeFormat: 'Intl.DateTimeFormat',
-  IntlNumberFormat: 'Intl.NumberFormat',
-  userObject: 'userObjects',
-  undef: 'undefined',
-  negativeInfinity: 'NegativeInfinity',
-  nonbuiltinIgnore: 'nonBuiltInIgnore',
-  arraybuffer: 'ArrayBuffer',
-  blob: 'Blob',
-  dataview: 'DataView',
-  date: 'Date',
-  error: 'Error',
-  file: 'File',
-  filelist: 'FileList',
-  imagebitmap: 'ImageBitmap',
-  imagedata: 'ImageData',
-  infinity: 'Infinity',
-  map: 'Map',
-  nan: 'NaN',
-  regexp: 'RegExp',
-  set: 'Set',
-  int8array: 'Int8Array',
-  uint8array: 'Uint8Array',
-  uint8clampedarray: 'Uint8ClampedArray',
-  int16array: 'Int16Array',
-  uint16array: 'Uint16Array',
-  int32array: 'Int32Array',
-  uint32array: 'Uint32Array',
-  float32array: 'Float32Array',
-  float64array: 'Float64Array'
-}; // Todo: We should make this conditional on CONFIG and deprecate the legacy
-//   names, but for compatibility with data created under this major version,
-//   we need the legacy now
-// console.log('StructuredCloning1', JSON.stringify(structuredCloning));
-
-traverseMapToRevertToLegacyTypeNames(structuredCloning); // console.log('StructuredCloning2', JSON.stringify(structuredCloning));
-
-var typeson = new _typeson.default().register(structuredCloning); // We are keeping the callback approach for now in case we wish to reexpose Blob, File, FileList
-
-function encode(obj, cb) {
+function encode(obj, func) {
   var ret;
 
   try {
     ret = typeson.stringifySync(obj);
   } catch (err) {
     // SCA in typeson-registry using `DOMException` which is not defined (e.g., in Node)
-    if (_typeson.default.hasConstructorOf(err, ReferenceError) || // SCA in typeson-registry threw a cloning error and we are in a
+    if (_typesonRegistry.default.hasConstructorOf(err, ReferenceError) || // SCA in typeson-registry threw a cloning error and we are in a
     //   supporting environment (e.g., the browser) where `ShimDOMException` is
     //   an alias for `DOMException`; if typeson-registry ever uses our shim
     //   to throw, we can use this condition alone.
-    _typeson.default.hasConstructorOf(err, _DOMException.ShimDOMException)) {
+    _typesonRegistry.default.hasConstructorOf(err, _DOMException.ShimDOMException)) {
       throw (0, _DOMException.createDOMException)('DataCloneError', 'The object cannot be cloned.');
     } // We should rethrow non-cloning exceptions like from
     //  throwing getters (as in the W3C test, key-conversion-exceptions.htm)
@@ -7830,7 +7902,7 @@ function encode(obj, cb) {
     throw err;
   }
 
-  if (cb) cb(ret);
+  if (func) func(ret);
   return ret;
 }
 
@@ -7839,11 +7911,12 @@ function decode(obj) {
 }
 
 function clone(val) {
-  // We don't return the intermediate `encode` as we'll need to reencode the clone as it may differ
+  // We don't return the intermediate `encode` as we'll need to reencode
+  //   the clone as it may differ
   return decode(encode(val));
 }
 
-},{"./DOMException":9,"typeson":7,"typeson-registry/dist/presets/structured-cloning-throwing":6}],23:[function(require,module,exports){
+},{"./DOMException":8,"typeson-registry":6}],22:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -7857,7 +7930,7 @@ exports.UnicodeIDStart = UnicodeIDStart;
 var UnicodeIDContinue = "(?:[$0-9A-Z_a-z\\xAA\\xB5\\xB7\\xBA\\xC0-\\xD6\\xD8-\\xF6\\xF8-\\u02C1\\u02C6-\\u02D1\\u02E0-\\u02E4\\u02EC\\u02EE\\u0300-\\u0374\\u0376\\u0377\\u037A-\\u037D\\u037F\\u0386-\\u038A\\u038C\\u038E-\\u03A1\\u03A3-\\u03F5\\u03F7-\\u0481\\u0483-\\u0487\\u048A-\\u052F\\u0531-\\u0556\\u0559\\u0561-\\u0587\\u0591-\\u05BD\\u05BF\\u05C1\\u05C2\\u05C4\\u05C5\\u05C7\\u05D0-\\u05EA\\u05F0-\\u05F2\\u0610-\\u061A\\u0620-\\u0669\\u066E-\\u06D3\\u06D5-\\u06DC\\u06DF-\\u06E8\\u06EA-\\u06FC\\u06FF\\u0710-\\u074A\\u074D-\\u07B1\\u07C0-\\u07F5\\u07FA\\u0800-\\u082D\\u0840-\\u085B\\u08A0-\\u08B4\\u08B6-\\u08BD\\u08D4-\\u08E1\\u08E3-\\u0963\\u0966-\\u096F\\u0971-\\u0983\\u0985-\\u098C\\u098F\\u0990\\u0993-\\u09A8\\u09AA-\\u09B0\\u09B2\\u09B6-\\u09B9\\u09BC-\\u09C4\\u09C7\\u09C8\\u09CB-\\u09CE\\u09D7\\u09DC\\u09DD\\u09DF-\\u09E3\\u09E6-\\u09F1\\u0A01-\\u0A03\\u0A05-\\u0A0A\\u0A0F\\u0A10\\u0A13-\\u0A28\\u0A2A-\\u0A30\\u0A32\\u0A33\\u0A35\\u0A36\\u0A38\\u0A39\\u0A3C\\u0A3E-\\u0A42\\u0A47\\u0A48\\u0A4B-\\u0A4D\\u0A51\\u0A59-\\u0A5C\\u0A5E\\u0A66-\\u0A75\\u0A81-\\u0A83\\u0A85-\\u0A8D\\u0A8F-\\u0A91\\u0A93-\\u0AA8\\u0AAA-\\u0AB0\\u0AB2\\u0AB3\\u0AB5-\\u0AB9\\u0ABC-\\u0AC5\\u0AC7-\\u0AC9\\u0ACB-\\u0ACD\\u0AD0\\u0AE0-\\u0AE3\\u0AE6-\\u0AEF\\u0AF9\\u0B01-\\u0B03\\u0B05-\\u0B0C\\u0B0F\\u0B10\\u0B13-\\u0B28\\u0B2A-\\u0B30\\u0B32\\u0B33\\u0B35-\\u0B39\\u0B3C-\\u0B44\\u0B47\\u0B48\\u0B4B-\\u0B4D\\u0B56\\u0B57\\u0B5C\\u0B5D\\u0B5F-\\u0B63\\u0B66-\\u0B6F\\u0B71\\u0B82\\u0B83\\u0B85-\\u0B8A\\u0B8E-\\u0B90\\u0B92-\\u0B95\\u0B99\\u0B9A\\u0B9C\\u0B9E\\u0B9F\\u0BA3\\u0BA4\\u0BA8-\\u0BAA\\u0BAE-\\u0BB9\\u0BBE-\\u0BC2\\u0BC6-\\u0BC8\\u0BCA-\\u0BCD\\u0BD0\\u0BD7\\u0BE6-\\u0BEF\\u0C00-\\u0C03\\u0C05-\\u0C0C\\u0C0E-\\u0C10\\u0C12-\\u0C28\\u0C2A-\\u0C39\\u0C3D-\\u0C44\\u0C46-\\u0C48\\u0C4A-\\u0C4D\\u0C55\\u0C56\\u0C58-\\u0C5A\\u0C60-\\u0C63\\u0C66-\\u0C6F\\u0C80-\\u0C83\\u0C85-\\u0C8C\\u0C8E-\\u0C90\\u0C92-\\u0CA8\\u0CAA-\\u0CB3\\u0CB5-\\u0CB9\\u0CBC-\\u0CC4\\u0CC6-\\u0CC8\\u0CCA-\\u0CCD\\u0CD5\\u0CD6\\u0CDE\\u0CE0-\\u0CE3\\u0CE6-\\u0CEF\\u0CF1\\u0CF2\\u0D01-\\u0D03\\u0D05-\\u0D0C\\u0D0E-\\u0D10\\u0D12-\\u0D3A\\u0D3D-\\u0D44\\u0D46-\\u0D48\\u0D4A-\\u0D4E\\u0D54-\\u0D57\\u0D5F-\\u0D63\\u0D66-\\u0D6F\\u0D7A-\\u0D7F\\u0D82\\u0D83\\u0D85-\\u0D96\\u0D9A-\\u0DB1\\u0DB3-\\u0DBB\\u0DBD\\u0DC0-\\u0DC6\\u0DCA\\u0DCF-\\u0DD4\\u0DD6\\u0DD8-\\u0DDF\\u0DE6-\\u0DEF\\u0DF2\\u0DF3\\u0E01-\\u0E3A\\u0E40-\\u0E4E\\u0E50-\\u0E59\\u0E81\\u0E82\\u0E84\\u0E87\\u0E88\\u0E8A\\u0E8D\\u0E94-\\u0E97\\u0E99-\\u0E9F\\u0EA1-\\u0EA3\\u0EA5\\u0EA7\\u0EAA\\u0EAB\\u0EAD-\\u0EB9\\u0EBB-\\u0EBD\\u0EC0-\\u0EC4\\u0EC6\\u0EC8-\\u0ECD\\u0ED0-\\u0ED9\\u0EDC-\\u0EDF\\u0F00\\u0F18\\u0F19\\u0F20-\\u0F29\\u0F35\\u0F37\\u0F39\\u0F3E-\\u0F47\\u0F49-\\u0F6C\\u0F71-\\u0F84\\u0F86-\\u0F97\\u0F99-\\u0FBC\\u0FC6\\u1000-\\u1049\\u1050-\\u109D\\u10A0-\\u10C5\\u10C7\\u10CD\\u10D0-\\u10FA\\u10FC-\\u1248\\u124A-\\u124D\\u1250-\\u1256\\u1258\\u125A-\\u125D\\u1260-\\u1288\\u128A-\\u128D\\u1290-\\u12B0\\u12B2-\\u12B5\\u12B8-\\u12BE\\u12C0\\u12C2-\\u12C5\\u12C8-\\u12D6\\u12D8-\\u1310\\u1312-\\u1315\\u1318-\\u135A\\u135D-\\u135F\\u1369-\\u1371\\u1380-\\u138F\\u13A0-\\u13F5\\u13F8-\\u13FD\\u1401-\\u166C\\u166F-\\u167F\\u1681-\\u169A\\u16A0-\\u16EA\\u16EE-\\u16F8\\u1700-\\u170C\\u170E-\\u1714\\u1720-\\u1734\\u1740-\\u1753\\u1760-\\u176C\\u176E-\\u1770\\u1772\\u1773\\u1780-\\u17D3\\u17D7\\u17DC\\u17DD\\u17E0-\\u17E9\\u180B-\\u180D\\u1810-\\u1819\\u1820-\\u1877\\u1880-\\u18AA\\u18B0-\\u18F5\\u1900-\\u191E\\u1920-\\u192B\\u1930-\\u193B\\u1946-\\u196D\\u1970-\\u1974\\u1980-\\u19AB\\u19B0-\\u19C9\\u19D0-\\u19DA\\u1A00-\\u1A1B\\u1A20-\\u1A5E\\u1A60-\\u1A7C\\u1A7F-\\u1A89\\u1A90-\\u1A99\\u1AA7\\u1AB0-\\u1ABD\\u1B00-\\u1B4B\\u1B50-\\u1B59\\u1B6B-\\u1B73\\u1B80-\\u1BF3\\u1C00-\\u1C37\\u1C40-\\u1C49\\u1C4D-\\u1C7D\\u1C80-\\u1C88\\u1CD0-\\u1CD2\\u1CD4-\\u1CF6\\u1CF8\\u1CF9\\u1D00-\\u1DF5\\u1DFB-\\u1F15\\u1F18-\\u1F1D\\u1F20-\\u1F45\\u1F48-\\u1F4D\\u1F50-\\u1F57\\u1F59\\u1F5B\\u1F5D\\u1F5F-\\u1F7D\\u1F80-\\u1FB4\\u1FB6-\\u1FBC\\u1FBE\\u1FC2-\\u1FC4\\u1FC6-\\u1FCC\\u1FD0-\\u1FD3\\u1FD6-\\u1FDB\\u1FE0-\\u1FEC\\u1FF2-\\u1FF4\\u1FF6-\\u1FFC\\u200C\\u200D\\u203F\\u2040\\u2054\\u2071\\u207F\\u2090-\\u209C\\u20D0-\\u20DC\\u20E1\\u20E5-\\u20F0\\u2102\\u2107\\u210A-\\u2113\\u2115\\u2118-\\u211D\\u2124\\u2126\\u2128\\u212A-\\u2139\\u213C-\\u213F\\u2145-\\u2149\\u214E\\u2160-\\u2188\\u2C00-\\u2C2E\\u2C30-\\u2C5E\\u2C60-\\u2CE4\\u2CEB-\\u2CF3\\u2D00-\\u2D25\\u2D27\\u2D2D\\u2D30-\\u2D67\\u2D6F\\u2D7F-\\u2D96\\u2DA0-\\u2DA6\\u2DA8-\\u2DAE\\u2DB0-\\u2DB6\\u2DB8-\\u2DBE\\u2DC0-\\u2DC6\\u2DC8-\\u2DCE\\u2DD0-\\u2DD6\\u2DD8-\\u2DDE\\u2DE0-\\u2DFF\\u3005-\\u3007\\u3021-\\u302F\\u3031-\\u3035\\u3038-\\u303C\\u3041-\\u3096\\u3099-\\u309F\\u30A1-\\u30FA\\u30FC-\\u30FF\\u3105-\\u312D\\u3131-\\u318E\\u31A0-\\u31BA\\u31F0-\\u31FF\\u3400-\\u4DB5\\u4E00-\\u9FD5\\uA000-\\uA48C\\uA4D0-\\uA4FD\\uA500-\\uA60C\\uA610-\\uA62B\\uA640-\\uA66F\\uA674-\\uA67D\\uA67F-\\uA6F1\\uA717-\\uA71F\\uA722-\\uA788\\uA78B-\\uA7AE\\uA7B0-\\uA7B7\\uA7F7-\\uA827\\uA840-\\uA873\\uA880-\\uA8C5\\uA8D0-\\uA8D9\\uA8E0-\\uA8F7\\uA8FB\\uA8FD\\uA900-\\uA92D\\uA930-\\uA953\\uA960-\\uA97C\\uA980-\\uA9C0\\uA9CF-\\uA9D9\\uA9E0-\\uA9FE\\uAA00-\\uAA36\\uAA40-\\uAA4D\\uAA50-\\uAA59\\uAA60-\\uAA76\\uAA7A-\\uAAC2\\uAADB-\\uAADD\\uAAE0-\\uAAEF\\uAAF2-\\uAAF6\\uAB01-\\uAB06\\uAB09-\\uAB0E\\uAB11-\\uAB16\\uAB20-\\uAB26\\uAB28-\\uAB2E\\uAB30-\\uAB5A\\uAB5C-\\uAB65\\uAB70-\\uABEA\\uABEC\\uABED\\uABF0-\\uABF9\\uAC00-\\uD7A3\\uD7B0-\\uD7C6\\uD7CB-\\uD7FB\\uF900-\\uFA6D\\uFA70-\\uFAD9\\uFB00-\\uFB06\\uFB13-\\uFB17\\uFB1D-\\uFB28\\uFB2A-\\uFB36\\uFB38-\\uFB3C\\uFB3E\\uFB40\\uFB41\\uFB43\\uFB44\\uFB46-\\uFBB1\\uFBD3-\\uFD3D\\uFD50-\\uFD8F\\uFD92-\\uFDC7\\uFDF0-\\uFDFB\\uFE00-\\uFE0F\\uFE20-\\uFE2F\\uFE33\\uFE34\\uFE4D-\\uFE4F\\uFE70-\\uFE74\\uFE76-\\uFEFC\\uFF10-\\uFF19\\uFF21-\\uFF3A\\uFF3F\\uFF41-\\uFF5A\\uFF66-\\uFFBE\\uFFC2-\\uFFC7\\uFFCA-\\uFFCF\\uFFD2-\\uFFD7\\uFFDA-\\uFFDC]|\\uD800[\\uDC00-\\uDC0B\\uDC0D-\\uDC26\\uDC28-\\uDC3A\\uDC3C\\uDC3D\\uDC3F-\\uDC4D\\uDC50-\\uDC5D\\uDC80-\\uDCFA\\uDD40-\\uDD74\\uDDFD\\uDE80-\\uDE9C\\uDEA0-\\uDED0\\uDEE0\\uDF00-\\uDF1F\\uDF30-\\uDF4A\\uDF50-\\uDF7A\\uDF80-\\uDF9D\\uDFA0-\\uDFC3\\uDFC8-\\uDFCF\\uDFD1-\\uDFD5]|\\uD801[\\uDC00-\\uDC9D\\uDCA0-\\uDCA9\\uDCB0-\\uDCD3\\uDCD8-\\uDCFB\\uDD00-\\uDD27\\uDD30-\\uDD63\\uDE00-\\uDF36\\uDF40-\\uDF55\\uDF60-\\uDF67]|\\uD802[\\uDC00-\\uDC05\\uDC08\\uDC0A-\\uDC35\\uDC37\\uDC38\\uDC3C\\uDC3F-\\uDC55\\uDC60-\\uDC76\\uDC80-\\uDC9E\\uDCE0-\\uDCF2\\uDCF4\\uDCF5\\uDD00-\\uDD15\\uDD20-\\uDD39\\uDD80-\\uDDB7\\uDDBE\\uDDBF\\uDE00-\\uDE03\\uDE05\\uDE06\\uDE0C-\\uDE13\\uDE15-\\uDE17\\uDE19-\\uDE33\\uDE38-\\uDE3A\\uDE3F\\uDE60-\\uDE7C\\uDE80-\\uDE9C\\uDEC0-\\uDEC7\\uDEC9-\\uDEE6\\uDF00-\\uDF35\\uDF40-\\uDF55\\uDF60-\\uDF72\\uDF80-\\uDF91]|\\uD803[\\uDC00-\\uDC48\\uDC80-\\uDCB2\\uDCC0-\\uDCF2]|\\uD804[\\uDC00-\\uDC46\\uDC66-\\uDC6F\\uDC7F-\\uDCBA\\uDCD0-\\uDCE8\\uDCF0-\\uDCF9\\uDD00-\\uDD34\\uDD36-\\uDD3F\\uDD50-\\uDD73\\uDD76\\uDD80-\\uDDC4\\uDDCA-\\uDDCC\\uDDD0-\\uDDDA\\uDDDC\\uDE00-\\uDE11\\uDE13-\\uDE37\\uDE3E\\uDE80-\\uDE86\\uDE88\\uDE8A-\\uDE8D\\uDE8F-\\uDE9D\\uDE9F-\\uDEA8\\uDEB0-\\uDEEA\\uDEF0-\\uDEF9\\uDF00-\\uDF03\\uDF05-\\uDF0C\\uDF0F\\uDF10\\uDF13-\\uDF28\\uDF2A-\\uDF30\\uDF32\\uDF33\\uDF35-\\uDF39\\uDF3C-\\uDF44\\uDF47\\uDF48\\uDF4B-\\uDF4D\\uDF50\\uDF57\\uDF5D-\\uDF63\\uDF66-\\uDF6C\\uDF70-\\uDF74]|\\uD805[\\uDC00-\\uDC4A\\uDC50-\\uDC59\\uDC80-\\uDCC5\\uDCC7\\uDCD0-\\uDCD9\\uDD80-\\uDDB5\\uDDB8-\\uDDC0\\uDDD8-\\uDDDD\\uDE00-\\uDE40\\uDE44\\uDE50-\\uDE59\\uDE80-\\uDEB7\\uDEC0-\\uDEC9\\uDF00-\\uDF19\\uDF1D-\\uDF2B\\uDF30-\\uDF39]|\\uD806[\\uDCA0-\\uDCE9\\uDCFF\\uDEC0-\\uDEF8]|\\uD807[\\uDC00-\\uDC08\\uDC0A-\\uDC36\\uDC38-\\uDC40\\uDC50-\\uDC59\\uDC72-\\uDC8F\\uDC92-\\uDCA7\\uDCA9-\\uDCB6]|\\uD808[\\uDC00-\\uDF99]|\\uD809[\\uDC00-\\uDC6E\\uDC80-\\uDD43]|[\\uD80C\\uD81C-\\uD820\\uD840-\\uD868\\uD86A-\\uD86C\\uD86F-\\uD872][\\uDC00-\\uDFFF]|\\uD80D[\\uDC00-\\uDC2E]|\\uD811[\\uDC00-\\uDE46]|\\uD81A[\\uDC00-\\uDE38\\uDE40-\\uDE5E\\uDE60-\\uDE69\\uDED0-\\uDEED\\uDEF0-\\uDEF4\\uDF00-\\uDF36\\uDF40-\\uDF43\\uDF50-\\uDF59\\uDF63-\\uDF77\\uDF7D-\\uDF8F]|\\uD81B[\\uDF00-\\uDF44\\uDF50-\\uDF7E\\uDF8F-\\uDF9F\\uDFE0]|\\uD821[\\uDC00-\\uDFEC]|\\uD822[\\uDC00-\\uDEF2]|\\uD82C[\\uDC00\\uDC01]|\\uD82F[\\uDC00-\\uDC6A\\uDC70-\\uDC7C\\uDC80-\\uDC88\\uDC90-\\uDC99\\uDC9D\\uDC9E]|\\uD834[\\uDD65-\\uDD69\\uDD6D-\\uDD72\\uDD7B-\\uDD82\\uDD85-\\uDD8B\\uDDAA-\\uDDAD\\uDE42-\\uDE44]|\\uD835[\\uDC00-\\uDC54\\uDC56-\\uDC9C\\uDC9E\\uDC9F\\uDCA2\\uDCA5\\uDCA6\\uDCA9-\\uDCAC\\uDCAE-\\uDCB9\\uDCBB\\uDCBD-\\uDCC3\\uDCC5-\\uDD05\\uDD07-\\uDD0A\\uDD0D-\\uDD14\\uDD16-\\uDD1C\\uDD1E-\\uDD39\\uDD3B-\\uDD3E\\uDD40-\\uDD44\\uDD46\\uDD4A-\\uDD50\\uDD52-\\uDEA5\\uDEA8-\\uDEC0\\uDEC2-\\uDEDA\\uDEDC-\\uDEFA\\uDEFC-\\uDF14\\uDF16-\\uDF34\\uDF36-\\uDF4E\\uDF50-\\uDF6E\\uDF70-\\uDF88\\uDF8A-\\uDFA8\\uDFAA-\\uDFC2\\uDFC4-\\uDFCB\\uDFCE-\\uDFFF]|\\uD836[\\uDE00-\\uDE36\\uDE3B-\\uDE6C\\uDE75\\uDE84\\uDE9B-\\uDE9F\\uDEA1-\\uDEAF]|\\uD838[\\uDC00-\\uDC06\\uDC08-\\uDC18\\uDC1B-\\uDC21\\uDC23\\uDC24\\uDC26-\\uDC2A]|\\uD83A[\\uDC00-\\uDCC4\\uDCD0-\\uDCD6\\uDD00-\\uDD4A\\uDD50-\\uDD59]|\\uD83B[\\uDE00-\\uDE03\\uDE05-\\uDE1F\\uDE21\\uDE22\\uDE24\\uDE27\\uDE29-\\uDE32\\uDE34-\\uDE37\\uDE39\\uDE3B\\uDE42\\uDE47\\uDE49\\uDE4B\\uDE4D-\\uDE4F\\uDE51\\uDE52\\uDE54\\uDE57\\uDE59\\uDE5B\\uDE5D\\uDE5F\\uDE61\\uDE62\\uDE64\\uDE67-\\uDE6A\\uDE6C-\\uDE72\\uDE74-\\uDE77\\uDE79-\\uDE7C\\uDE7E\\uDE80-\\uDE89\\uDE8B-\\uDE9B\\uDEA1-\\uDEA3\\uDEA5-\\uDEA9\\uDEAB-\\uDEBB]|\\uD869[\\uDC00-\\uDED6\\uDF00-\\uDFFF]|\\uD86D[\\uDC00-\\uDF34\\uDF40-\\uDFFF]|\\uD86E[\\uDC00-\\uDC1D\\uDC20-\\uDFFF]|\\uD873[\\uDC00-\\uDEA1]|\\uD87E[\\uDC00-\\uDE1D]|\\uDB40[\\uDD00-\\uDDEF])";
 exports.UnicodeIDContinue = UnicodeIDContinue;
 
-},{}],24:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -7884,7 +7957,7 @@ var _default = _setGlobalVars.default;
 exports.default = _default;
 module.exports = exports.default;
 
-},{"./CFG":8,"./UnicodeIdentifiers":23,"./setGlobalVars":26}],25:[function(require,module,exports){
+},{"./CFG":7,"./UnicodeIdentifiers":22,"./setGlobalVars":25}],24:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -7901,9 +7974,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 /**
- * Compares two keys
- * @param key1
- * @param key2
+ * Compares two keys.
+ * @param first
+ * @param second
  * @returns {number}
  */
 function cmp(first, second) {
@@ -7924,15 +7997,18 @@ function cmp(first, second) {
     if (_typeof(second) === 'object') {
       second = JSON.stringify(second);
       decodedKey2 = JSON.stringify(decodedKey2);
-    } // encoding/decoding mismatches are usually due to a loss of floating-point precision
+    } // Encoding/decoding mismatches are usually due to a loss of
+    //   floating-point precision
 
 
     if (decodedKey1 !== first) {
-      console.warn(first + ' was incorrectly encoded as ' + decodedKey1);
+      console.warn( // eslint-disable-line no-console
+      first + ' was incorrectly encoded as ' + decodedKey1);
     }
 
     if (decodedKey2 !== second) {
-      console.warn(second + ' was incorrectly encoded as ' + decodedKey2);
+      console.warn( // eslint-disable-line no-console
+      second + ' was incorrectly encoded as ' + decodedKey2);
     }
   }
 
@@ -7943,12 +8019,18 @@ var _default = cmp;
 exports.default = _default;
 module.exports = exports.default;
 
-},{"./CFG":8,"./Key":21}],26:[function(require,module,exports){
+},{"./CFG":7,"./Key":20}],25:[function(require,module,exports){
 (function (global){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
+});
+Object.defineProperty(exports, "createDOMException", {
+  enumerable: true,
+  get: function get() {
+    return _DOMException.createDOMException;
+  }
 });
 exports.default = void 0;
 
@@ -7964,6 +8046,12 @@ var _DOMException = require("./DOMException");
 
 var _IDBFactory = require("./IDBFactory");
 
+var _DOMStringList = _interopRequireDefault(require("./DOMStringList"));
+
+var _Event = require("./Event");
+
+var _Sca = require("./Sca");
+
 var _IDBKeyRange = _interopRequireDefault(require("./IDBKeyRange"));
 
 var _IDBObjectStore = _interopRequireDefault(require("./IDBObjectStore"));
@@ -7976,7 +8064,11 @@ var _IDBDatabase = _interopRequireDefault(require("./IDBDatabase"));
 
 var _CFG = _interopRequireDefault(require("./CFG"));
 
+var _util = require("./util");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _defineEnumerableProperties(obj, descs) { for (var key in descs) { var desc = descs[key]; desc.configurable = desc.enumerable = true; if ("value" in desc) desc.writable = true; Object.defineProperty(obj, key, desc); } if (Object.getOwnPropertySymbols) { var objectSymbols = Object.getOwnPropertySymbols(descs); for (var i = 0; i < objectSymbols.length; i++) { var sym = objectSymbols[i]; var desc = descs[sym]; desc.configurable = desc.enumerable = true; if ("value" in desc) desc.writable = true; Object.defineProperty(obj, sym, desc); } } return obj; }
 
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
 
@@ -7986,16 +8078,17 @@ function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = 
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
-function _defineEnumerableProperties(obj, descs) { for (var key in descs) { var desc = descs[key]; desc.configurable = desc.enumerable = true; if ("value" in desc) desc.writable = true; Object.defineProperty(obj, key, desc); } if (Object.getOwnPropertySymbols) { var objectSymbols = Object.getOwnPropertySymbols(descs); for (var i = 0; i < objectSymbols.length; i++) { var sym = objectSymbols[i]; var desc = descs[sym]; desc.configurable = desc.enumerable = true; if ("value" in desc) desc.writable = true; Object.defineProperty(obj, sym, desc); } } return obj; }
-
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function setConfig(prop, val) {
   if (prop && _typeof(prop) === 'object') {
-    for (var p in prop) {
-      setConfig(p, prop[p]);
-    }
+    Object.entries(prop).forEach(function (_ref) {
+      var _ref2 = _slicedToArray(_ref, 2),
+          p = _ref2[0],
+          val = _ref2[1];
 
+      setConfig(p, val);
+    });
     return;
   }
 
@@ -8004,9 +8097,14 @@ function setConfig(prop, val) {
   }
 
   _CFG.default[prop] = val;
+
+  if (prop === 'registerSCA' && typeof val === 'function') {
+    (0, _Sca.register)(val);
+  }
 }
 
 function setGlobalVars(idb, initialConfig) {
+  // eslint-disable-line complexity
   if (initialConfig) {
     setConfig(initialConfig);
   }
@@ -8068,34 +8166,34 @@ function setGlobalVars(idb, initialConfig) {
     IDB.shimIndexedDB.__useShim = function () {
       function setNonIDBGlobals() {
         var prefix = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-        shim(prefix + 'DOMException', IDB.indexedDB.modules.ShimDOMException);
-        shim(prefix + 'DOMStringList', IDB.indexedDB.modules.ShimDOMStringList, {
+        shim(prefix + 'DOMException', _DOMException.ShimDOMException);
+        shim(prefix + 'DOMStringList', _DOMStringList.default, {
           enumerable: false,
           configurable: true,
           writable: true,
-          value: IDB.indexedDB.modules.ShimDOMStringList
+          value: _DOMStringList.default
         });
-        shim(prefix + 'Event', IDB.indexedDB.modules.ShimEvent, {
+        shim(prefix + 'Event', _Event.ShimEvent, {
           configurable: true,
           writable: true,
-          value: IDB.indexedDB.modules.ShimEvent,
+          value: _Event.ShimEvent,
           enumerable: false
         });
-        shim(prefix + 'CustomEvent', IDB.indexedDB.modules.ShimCustomEvent, {
+        shim(prefix + 'CustomEvent', _Event.ShimCustomEvent, {
           configurable: true,
           writable: true,
-          value: IDB.indexedDB.modules.ShimCustomEvent,
+          value: _Event.ShimCustomEvent,
           enumerable: false
         });
-        shim(prefix + 'EventTarget', IDB.indexedDB.modules.ShimEventTarget, {
+        shim(prefix + 'EventTarget', _Event.ShimEventTarget, {
           configurable: true,
           writable: true,
-          value: IDB.indexedDB.modules.ShimEventTarget,
+          value: _Event.ShimEventTarget,
           enumerable: false
         });
       }
 
-      var shimIDBFactory = IDB.shimIndexedDB.modules.IDBFactory;
+      var shimIDBFactory = _IDBFactory.IDBFactory;
 
       if (_CFG.default.win.openDatabase !== undefined) {
         _IDBFactory.shimIndexedDB.__openDatabase = _CFG.default.win.openDatabase.bind(_CFG.default.win); // We cache here in case the function is overwritten later as by the IndexedDB support promises tests
@@ -8105,7 +8203,7 @@ function setGlobalVars(idb, initialConfig) {
           enumerable: true,
           configurable: true,
           get: function get() {
-            if (this !== IDB && this != null && !this.shimNS) {
+            if (this !== IDB && !(0, _util.isNullish)(this) && !this.shimNS) {
               // Latter is hack for test environment
               throw new TypeError('Illegal invocation');
             }
@@ -8113,10 +8211,10 @@ function setGlobalVars(idb, initialConfig) {
             return _IDBFactory.shimIndexedDB;
           }
         });
-        [['IDBFactory', shimIDBFactory], ['IDBDatabase', _IDBDatabase.default], ['IDBObjectStore', _IDBObjectStore.default], ['IDBIndex', _IDBIndex.default], ['IDBTransaction', _IDBTransaction.default], ['IDBCursor', _IDBCursor.IDBCursor], ['IDBCursorWithValue', _IDBCursor.IDBCursorWithValue], ['IDBKeyRange', _IDBKeyRange.default], ['IDBRequest', _IDBRequest.IDBRequest], ['IDBOpenDBRequest', _IDBRequest.IDBOpenDBRequest], ['IDBVersionChangeEvent', _IDBVersionChangeEvent.default]].forEach(function (_ref) {
-          var _ref2 = _slicedToArray(_ref, 2),
-              prop = _ref2[0],
-              obj = _ref2[1];
+        [['IDBFactory', shimIDBFactory], ['IDBDatabase', _IDBDatabase.default], ['IDBObjectStore', _IDBObjectStore.default], ['IDBIndex', _IDBIndex.default], ['IDBTransaction', _IDBTransaction.default], ['IDBCursor', _IDBCursor.IDBCursor], ['IDBCursorWithValue', _IDBCursor.IDBCursorWithValue], ['IDBKeyRange', _IDBKeyRange.default], ['IDBRequest', _IDBRequest.IDBRequest], ['IDBOpenDBRequest', _IDBRequest.IDBOpenDBRequest], ['IDBVersionChangeEvent', _IDBVersionChangeEvent.default]].forEach(function (_ref3) {
+          var _ref4 = _slicedToArray(_ref3, 2),
+              prop = _ref4[0],
+              obj = _ref4[1];
 
           shim(prop, obj, {
             enumerable: false,
@@ -8128,18 +8226,16 @@ function setGlobalVars(idb, initialConfig) {
           // Slow per MDN so off by default! Though apparently needed for WebIDL: http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
           Object.setPrototypeOf(IDB.IDBOpenDBRequest, IDB.IDBRequest);
           Object.setPrototypeOf(IDB.IDBCursorWithValue, IDB.IDBCursor);
-          var ShimEvent = IDB.shimIndexedDB.modules.ShimEvent;
-          var ShimEventTarget = IDB.shimIndexedDB.modules.ShimEventTarget;
-          Object.setPrototypeOf(_IDBDatabase.default, ShimEventTarget);
-          Object.setPrototypeOf(_IDBRequest.IDBRequest, ShimEventTarget);
-          Object.setPrototypeOf(_IDBTransaction.default, ShimEventTarget);
-          Object.setPrototypeOf(_IDBVersionChangeEvent.default, ShimEvent);
+          Object.setPrototypeOf(_IDBDatabase.default, _Event.ShimEventTarget);
+          Object.setPrototypeOf(_IDBRequest.IDBRequest, _Event.ShimEventTarget);
+          Object.setPrototypeOf(_IDBTransaction.default, _Event.ShimEventTarget);
+          Object.setPrototypeOf(_IDBVersionChangeEvent.default, _Event.ShimEvent);
           Object.setPrototypeOf(_DOMException.ShimDOMException, Error);
           Object.setPrototypeOf(_DOMException.ShimDOMException.prototype, Error.prototype);
           (0, _eventtargeter.setPrototypeOfCustomEvent)();
         }
 
-        if (IDB.indexedDB && IDB.indexedDB.modules) {
+        if (IDB.indexedDB && !IDB.indexedDB.toString().includes('[native code]')) {
           if (_CFG.default.addNonIDBGlobals) {
             // As `DOMStringList` exists per IDL (and Chrome) in the global
             //   thread (but not in workers), we prefix the name to avoid
@@ -8170,9 +8266,9 @@ function setGlobalVars(idb, initialConfig) {
       return _CFG.default[prop];
     };
 
-    IDB.shimIndexedDB.__setUnicodeIdentifiers = function (_ref3) {
-      var UnicodeIDStart = _ref3.UnicodeIDStart,
-          UnicodeIDContinue = _ref3.UnicodeIDContinue;
+    IDB.shimIndexedDB.__setUnicodeIdentifiers = function (_ref5) {
+      var UnicodeIDStart = _ref5.UnicodeIDStart,
+          UnicodeIDContinue = _ref5.UnicodeIDContinue;
       setConfig({
         UnicodeIDStart: UnicodeIDStart,
         UnicodeIDContinue: UnicodeIDContinue
@@ -8182,13 +8278,7 @@ function setGlobalVars(idb, initialConfig) {
     // We no-op the harmless set-up properties and methods with a warning; the `IDBFactory` methods,
     //    however (including our non-standard methods), are not stubbed as they ought
     //    to fail earlier rather than potentially having side effects.
-    IDB.shimIndexedDB = {
-      modules: ['DOMException', 'DOMStringList', 'Event', 'CustomEvent', 'EventTarget'].reduce(function (o, prop) {
-        o['Shim' + prop] = IDB[prop]; // Just alias
-
-        return o;
-      }, {})
-    };
+    IDB.shimIndexedDB = {};
     ['__useShim', '__debug', '__setConfig', '__getConfig', '__setUnicodeIdentifiers'].forEach(function (prop) {
       IDB.shimIndexedDB[prop] = function () {
         console.warn('This browser does not have WebSQL to shim.');
@@ -8211,7 +8301,7 @@ function setGlobalVars(idb, initialConfig) {
   (!navigator.userAgent.includes('Safari') || navigator.userAgent.includes('Chrome')) && // Exclude genuine Safari: http://stackoverflow.com/a/7768006/271577
   // Detect iOS: http://stackoverflow.com/questions/9038625/detect-if-device-is-ios/9039885#9039885
   // and detect version 9: http://stackoverflow.com/a/26363560/271577
-  /(iPad|iPhone|iPod).* os 9_/i.test(navigator.userAgent) && !window.MSStream // But avoid IE11
+  /(iPad|iPhone|iPod)(?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])* o[s\u017F] 9_/i.test(navigator.userAgent) && !window.MSStream // But avoid IE11
   )) {
     poorIndexedDbSupport = true;
   }
@@ -8233,20 +8323,20 @@ function setGlobalVars(idb, initialConfig) {
   }
 
   return IDB;
-}
+} // Expose for ease in simulating such exceptions during testing
+
 
 var _default = setGlobalVars;
 exports.default = _default;
-module.exports = exports.default;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./CFG":8,"./DOMException":9,"./IDBCursor":12,"./IDBDatabase":13,"./IDBFactory":14,"./IDBIndex":15,"./IDBKeyRange":16,"./IDBObjectStore":17,"./IDBRequest":18,"./IDBTransaction":19,"./IDBVersionChangeEvent":20,"eventtargeter":2}],27:[function(require,module,exports){
+},{"./CFG":7,"./DOMException":8,"./DOMStringList":9,"./Event":10,"./IDBCursor":11,"./IDBDatabase":12,"./IDBFactory":13,"./IDBIndex":14,"./IDBKeyRange":15,"./IDBObjectStore":16,"./IDBRequest":17,"./IDBTransaction":18,"./IDBVersionChangeEvent":19,"./Sca":21,"./util":27,"eventtargeter":2}],26:[function(require,module,exports){
 "use strict";
 
 module.exports = /[\xC0-\xC5\xC7-\xCF\xD1-\xD6\xD9-\xDD\xE0-\xE5\xE7-\xEF\xF1-\xF6\xF9-\xFD\xFF-\u010F\u0112-\u0125\u0128-\u0130\u0134-\u0137\u0139-\u013E\u0143-\u0148\u014C-\u0151\u0154-\u0165\u0168-\u017E\u01A0\u01A1\u01AF\u01B0\u01CD-\u01DC\u01DE-\u01E3\u01E6-\u01F0\u01F4\u01F5\u01F8-\u021B\u021E\u021F\u0226-\u0233\u0344\u0385\u0386\u0388-\u038A\u038C\u038E-\u0390\u03AA-\u03B0\u03CA-\u03CE\u03D3\u03D4\u0400\u0401\u0403\u0407\u040C-\u040E\u0419\u0439\u0450\u0451\u0453\u0457\u045C-\u045E\u0476\u0477\u04C1\u04C2\u04D0-\u04D3\u04D6\u04D7\u04DA-\u04DF\u04E2-\u04E7\u04EA-\u04F5\u04F8\u04F9\u0622-\u0626\u06C0\u06C2\u06D3\u0929\u0931\u0934\u0958-\u095F\u09CB\u09CC\u09DC\u09DD\u09DF\u0A33\u0A36\u0A59-\u0A5B\u0A5E\u0B48\u0B4B\u0B4C\u0B5C\u0B5D\u0B94\u0BCA-\u0BCC\u0C48\u0CC0\u0CC7\u0CC8\u0CCA\u0CCB\u0D4A-\u0D4C\u0DDA\u0DDC-\u0DDE\u0F43\u0F4D\u0F52\u0F57\u0F5C\u0F69\u0F73\u0F75\u0F76\u0F78\u0F81\u0F93\u0F9D\u0FA2\u0FA7\u0FAC\u0FB9\u1026\u1B06\u1B08\u1B0A\u1B0C\u1B0E\u1B12\u1B3B\u1B3D\u1B40\u1B41\u1B43\u1E00-\u1E99\u1E9B\u1EA0-\u1EF9\u1F00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FC1-\u1FC4\u1FC6-\u1FD3\u1FD6-\u1FDB\u1FDD-\u1FEE\u1FF2-\u1FF4\u1FF6-\u1FFC\u212B\u219A\u219B\u21AE\u21CD-\u21CF\u2204\u2209\u220C\u2224\u2226\u2241\u2244\u2247\u2249\u2260\u2262\u226D-\u2271\u2274\u2275\u2278\u2279\u2280\u2281\u2284\u2285\u2288\u2289\u22AC-\u22AF\u22E0-\u22E3\u22EA-\u22ED\u2ADC\u304C\u304E\u3050\u3052\u3054\u3056\u3058\u305A\u305C\u305E\u3060\u3062\u3065\u3067\u3069\u3070\u3071\u3073\u3074\u3076\u3077\u3079\u307A\u307C\u307D\u3094\u309E\u30AC\u30AE\u30B0\u30B2\u30B4\u30B6\u30B8\u30BA\u30BC\u30BE\u30C0\u30C2\u30C5\u30C7\u30C9\u30D0\u30D1\u30D3\u30D4\u30D6\u30D7\u30D9\u30DA\u30DC\u30DD\u30F4\u30F7-\u30FA\u30FE\uAC00-\uD7A3\uFB1D\uFB1F\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFB4E]|\uD804[\uDC9A\uDC9C\uDCAB\uDD2E\uDD2F\uDF4B\uDF4C]|\uD805[\uDCBB\uDCBC\uDCBE\uDDBA\uDDBB]|\uD834[\uDD5E-\uDD64\uDDBB-\uDDC0]/;
 
-},{}],28:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -8277,6 +8367,8 @@ exports.isValidKeyPath = isValidKeyPath;
 exports.enforceRange = enforceRange;
 exports.convertToDOMString = convertToDOMString;
 exports.convertToSequenceDOMString = convertToSequenceDOMString;
+exports.isNullish = isNullish;
+exports.hasOwn = hasOwn;
 exports.padStart = padStart;
 
 var _CFG = _interopRequireDefault(require("./CFG"));
@@ -8299,7 +8391,7 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 
 function escapeUnmatchedSurrogates(arg) {
   // http://stackoverflow.com/a/6701665/271577
-  return arg.replace(/([\uD800-\uDBFF])(?![\uDC00-\uDFFF])|(^|[^\uD800-\uDBFF])([\uDC00-\uDFFF])/g, function (_, unmatchedHighSurrogate, precedingLow, unmatchedLowSurrogate) {
+  return arg.replace(/((?:[\uD800-\uDBFF](?![\uDC00-\uDFFF])))(?!(?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))|(^|(?:[\0-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))((?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, function (_, unmatchedHighSurrogate, precedingLow, unmatchedLowSurrogate) {
     // Could add a corresponding surrogate for compatibility with `node-sqlite3`: http://bugs.python.org/issue12569 and http://stackoverflow.com/a/6701665/271577
     //   but Chrome having problems
     if (unmatchedHighSurrogate) {
@@ -8327,7 +8419,9 @@ function escapeSQLiteStatement(arg) {
 }
 
 function unescapeSQLiteResponse(arg) {
-  return unescapeUnmatchedSurrogates(arg).replace(/\^0/g, '\0').replace(/\^\^/g, '^');
+  return unescapeUnmatchedSurrogates(arg).replace(/(\^+)0/g, function (_, esc) {
+    return esc.length % 2 ? '\0' : _;
+  }).replace(/\^\^/g, '^');
 }
 
 function sqlEscape(arg) {
@@ -8359,13 +8453,13 @@ function escapeDatabaseNameForSQLAndFiles(db) {
     // Todo: Remove `.source` when
     //   https://github.com/babel/babel/issues/5978 completed (see also
     //   https://github.com/axemclion/IndexedDBShim/issues/311#issuecomment-316090147 )
-    db = db.replace(new RegExp(_unicodeRegex.default.source, 'g'), function (expandable) {
+    db = db.replace(new RegExp(_unicodeRegex.default.source, 'gu'), function (expandable) {
       return '^4' + padStart(expandable.codePointAt().toString(16), 6, '0');
     });
   }
 
   if (_CFG.default.databaseCharacterEscapeList !== false) {
-    db = db.replace(_CFG.default.databaseCharacterEscapeList ? new RegExp(_CFG.default.databaseCharacterEscapeList, 'g') : /[\u0000-\u001F\u007F"*/:<>?\\|]/g, // eslint-disable-line no-control-regex
+    db = db.replace(_CFG.default.databaseCharacterEscapeList ? new RegExp(_CFG.default.databaseCharacterEscapeList, 'gu') : /[\0-\x1F"\*\/:<>\?\\\|\x7F]/g, // eslint-disable-line no-control-regex
     function (n0) {
       return '^1' + padStart(n0.charCodeAt().toString(16), 2, '0');
     });
@@ -8401,12 +8495,11 @@ function unescapeDatabaseNameForSQLAndFiles(db) {
   return unescapeUnmatchedSurrogates(db.slice(2) // D_
   // CFG.databaseCharacterEscapeList
   .replace(/(\^+)1([0-9a-f]{2})/g, function (_, esc, hex) {
-    return esc.length % 2 ? esc.slice(1) + String.fromCharCode(parseInt(hex, 16)) : _;
-  }) // CFG.escapeNFDForDatabaseNames
-  .replace(/(\^+)4([0-9a-f]{6})/g, function (_, esc, hex) {
+    return esc.length % 2 ? esc.slice(1) + String.fromCharCode(parseInt(hex, 16)) : _; // CFG.escapeNFDForDatabaseNames
+  }).replace(/(\^+)4([0-9a-f]{6})/g, function (_, esc, hex) {
     return esc.length % 2 ? esc.slice(1) + String.fromCodePoint(parseInt(hex, 16)) : _;
-  })) // escapeNameForSQLiteIdentifier (including unescapeUnmatchedSurrogates() above)
-  .replace(/(\^+)([A-Z])/g, function (_, esc, upperCase) {
+  }) // escapeNameForSQLiteIdentifier (including unescapeUnmatchedSurrogates() above)
+  ).replace(/(\^+)([A-Z])/g, function (_, esc, upperCase) {
     return esc.length % 2 ? esc.slice(1) + upperCase : _;
   }).replace(/(\^+)0/g, function (_, esc) {
     return esc.length % 2 ? esc.slice(1) + '\0' : _;
@@ -8543,7 +8636,7 @@ function isIdentifier(item) {
   var UnicodeIDContinue = _CFG.default.UnicodeIDContinue || '[$0-9A-Z_a-z]';
   var IdentifierStart = '(?:' + UnicodeIDStart + '|[$_])';
   var IdentifierPart = '(?:' + UnicodeIDContinue + "|[$_\u200C\u200D])";
-  return new RegExp('^' + IdentifierStart + IdentifierPart + '*$').test(item);
+  return new RegExp('^' + IdentifierStart + IdentifierPart + '*$', 'u').test(item);
 }
 
 function isValidKeyPathString(keyPathString) {
@@ -8552,10 +8645,9 @@ function isValidKeyPathString(keyPathString) {
 
 function isValidKeyPath(keyPath) {
   return isValidKeyPathString(keyPath) || Array.isArray(keyPath) && keyPath.length && // Convert array from sparse to dense http://www.2ality.com/2012/06/dense-arrays.html
-  Array.apply(null, keyPath).every(function (kpp) {
-    // See also https://heycam.github.io/webidl/#idl-DOMString
-    return isValidKeyPathString(kpp); // Should already be converted to string by here
-  });
+  // See also https://heycam.github.io/webidl/#idl-DOMString
+  _toConsumableArray(keyPath).every(isValidKeyPathString) // eslint-disable-line prefer-spread
+  ;
 }
 
 function enforceRange(number, type) {
@@ -8596,7 +8688,8 @@ function convertToDOMString(v, treatNullAs) {
 
 function ToString(o) {
   // Todo: See `es-abstract/es7`
-  return '' + o; // `String()` will not throw with Symbols
+  // `String()` will not throw with Symbols
+  return '' + o; // eslint-disable-line no-implicit-coercion
 }
 
 function convertToSequenceDOMString(val) {
@@ -8608,6 +8701,14 @@ function convertToSequenceDOMString(val) {
   }
 
   return ToString(val);
+}
+
+function isNullish(v) {
+  return v === null || v === undefined;
+}
+
+function hasOwn(obj, prop) {
+  return {}.hasOwnProperty.call(obj, prop);
 } // Todo: Replace with `String.prototype.padStart` when targeting supporting Node version
 
 
@@ -8615,7 +8716,7 @@ function padStart(str, ct, fill) {
   return new Array(ct - String(str).length + 1).join(fill) + str;
 }
 
-},{"./CFG":8,"./unicode-regex":27}]},{},[24])(24)
+},{"./CFG":7,"./unicode-regex":26}]},{},[23])(23)
 });
 
 //# sourceMappingURL=indexeddbshim-noninvasive.js.map

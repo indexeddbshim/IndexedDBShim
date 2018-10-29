@@ -571,15 +571,15 @@ describe('IDBIndex.openCursor', function () {
                     throw new Error('Expected ' + expectedLength + ' results, but got ' + data.length + '\n' + JSON.stringify(data.slice(0, 10), null, 2));
                 }
                 if (expected instanceof Array) {
-                    for (var i = 0; i < data.length; i++) {
+                    data.forEach((dt, i) => {
                         ['primaryKey', 'key', 'value'].forEach(function (prop) {
                             try {
-                                expect(data[i][prop]).to.deep.equal(expected[i][prop]);
+                                expect(dt[prop]).to.deep.equal(expected[i][prop]);
                             } catch (e) {
                                 throw new Error('The ' + prop + ' of result #' + (i + 1) + ' (of ' + data.length + ') does not match.\n\nActual:' + JSON.stringify(data[i], null, 2) + '\n\nExpected:' + JSON.stringify(expected[i], null, 2));
                             }
                         });
-                    }
+                    });
                 }
                 queriesCompleted++;
             });

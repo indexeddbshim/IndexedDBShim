@@ -1,10 +1,10 @@
+import {EventTargetFactory} from 'eventtargeter';
 import {createDOMException} from './DOMException';
 import {createEvent} from './Event';
 import * as util from './util';
 import DOMStringList from './DOMStringList';
 import IDBObjectStore from './IDBObjectStore';
 import IDBTransaction from './IDBTransaction';
-import {EventTargetFactory} from 'eventtargeter';
 
 const listeners = ['onabort', 'onclose', 'onerror', 'onversionchange'];
 const readonlyProperties = ['name', 'version', 'objectStoreNames'];
@@ -12,7 +12,7 @@ const readonlyProperties = ['name', 'version', 'objectStoreNames'];
 /**
  * IDB Database Object
  * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
- * @constructor
+ * @class
  */
 function IDBDatabase () {
     throw new TypeError('Illegal constructor');
@@ -80,7 +80,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
     this.throwIfUpgradeTransactionNull();
     IDBTransaction.__assertActive(this.__versionTransaction);
 
-    createOptions = Object.assign({}, createOptions);
+    createOptions = {...createOptions};
     let {keyPath} = createOptions;
     keyPath = keyPath === undefined ? null : util.convertToSequenceDOMString(keyPath);
     if (keyPath !== null && !util.isValidKeyPath(keyPath)) {
@@ -153,11 +153,10 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
     }
     let mode = arguments[1];
     storeNames = util.isIterable(storeNames)
-        ? [ // Creating new array also ensures sequence is passed by value: https://heycam.github.io/webidl/#idl-sequence
-            ...new Set( // to be unique
-                util.convertToSequenceDOMString(storeNames) // iterables have `ToString` applied (and we convert to array for convenience)
-            )
-        ].sort() // must be sorted
+        // Creating new array also ensures sequence is passed by value: https://heycam.github.io/webidl/#idl-sequence
+        ? [...new Set( // to be unique
+            util.convertToSequenceDOMString(storeNames) // iterables have `ToString` applied (and we convert to array for convenience)
+        )].sort() // must be sorted
         : [util.convertToDOMString(storeNames)];
 
     /* (function () {

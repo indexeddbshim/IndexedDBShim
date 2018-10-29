@@ -7,7 +7,7 @@
 [![CDNJS](https://img.shields.io/cdnjs/v/IndexedDBShim.svg)](https://cdnjs.com/libraries/IndexedDBShim)
 [![License](https://img.shields.io/npm/l/indexeddbshim.svg)](LICENSE-APACHE)
 
-|[Live Demo (stable)!](https://raw.githack.com/axemclion/IndexedDBShim/v3.10.0/index.html) | [Live Demo (master)!](https://raw.githack.com/axemclion/IndexedDBShim/master/index.html) |
+|[Live Demo (stable)!](https://raw.githack.com/axemclion/IndexedDBShim/v4.0.0/index.html) | [Live Demo (master)!](https://raw.githack.com/axemclion/IndexedDBShim/master/index.html) |
 | -------------- | ----------------- |
 
 
@@ -25,34 +25,37 @@ shim will ensure consistent behavior across all browsers.
 
 ## Features
 
-- Optionally adds full IndexedDB support to any web browser that [supports WebSQL](http://caniuse.com/#search=websql)
-- Does nothing if the browser already [natively supports IndexedDB](http://caniuse.com/#search=indexeddb)
-- Can _optionally replace_ native IndexedDB on browsers with [buggy implementations](http://www.raymondcamden.com/2014/09/25/IndexedDB-on-iOS-8-Broken-Bad/)
-- Works on __desktop__ and __mobile__ devices as well as __Node.js__ (courtesy of [websql](https://www.npmjs.com/package/websql) which sits on top of SQLite3)
-- Works on __Cordova__ and __PhoneGap__ via the [IndexedDB plug-in](http://plugins.cordova.io/#/package/com.msopentech.websql) (Not recently tested)
+- Optionally adds full IndexedDB support to any web browser that
+    [supports WebSQL](http://caniuse.com/#search=websql)
+- Does nothing if the browser already
+    [natively supports IndexedDB](http://caniuse.com/#search=indexeddb)
+- Can _optionally replace_ native IndexedDB on browsers with
+    [buggy implementations](http://www.raymondcamden.com/2014/09/25/IndexedDB-on-iOS-8-Broken-Bad/)
+- Works on __desktop__ and __mobile__ devices as well as __Node.js__ (courtesy of
+    [websql](https://www.npmjs.com/package/websql) which sits on top of SQLite3)
+- Works on __Cordova__ and __PhoneGap__ via the
+    [IndexedDB plug-in](http://plugins.cordova.io/#/package/com.msopentech.websql)
+    (Not recently tested)
 - This shim is basically an IndexedDB-to-WebSQL adapter.
-- More (though most likely now outdated) details about the project at [gh-pages](http://nparashuram.com/IndexedDBShim)
+- More (though most likely now outdated) details about the project at
+    [gh-pages](http://nparashuram.com/IndexedDBShim)
 
 ## Installation
 
 You can download the [development](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/dist/indexeddbshim.js)
-or [production (minified)](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/dist/indexeddbshim.min.js) script, or install it using [NPM](https://docs.npmjs.com/getting-started/what-is-npm)
-or [Bower](http://bower.io/).
+or
+[production (minified)](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/dist/indexeddbshim.min.js)
+script, or install it using [NPM](https://docs.npmjs.com/getting-started/what-is-npm).
 
 Please note that the version currently in `master` is the only one which
 supports Node.js (and has a number of fixes), but we are not yet ready
 for release.
 
 For Mac, you may need to have [CMake](https://cmake.org/download/) installed
-for the SQLite3 install to work (See `Tools->How to Install For Command Line Use`)
-as well as build SQLite3 from source via `npm install --build-from-source`
-in the `node-sqlite3` directory. Also make sure Python (2.7) is installed.
-
-### Bower
-
-````bash
-bower install IndexedDBShim
-````
+for the SQLite3 install to work (See
+`Tools->How to Install For Command Line Use`) as well as build SQLite3 from
+source via `npm install --build-from-source` in the `node-sqlite3` directory.
+Also make sure Python (2.7) is installed.
 
 ### npm
 
@@ -82,6 +85,7 @@ use the following instead:
 
 ```js
 const setGlobalVars = require('indexeddbshim');
+
 global.window = global; // We'll allow ourselves to use `window.indexedDB` or `indexedDB` as a global
 setGlobalVars(); // See signature below
 ```
@@ -218,7 +222,9 @@ via the second argument to `setGlobalVars()` (see its definition above).
 Its signature (for setting configuration after `shimIndexedDB` is created) is:
 
 ```js
-shimIndexedDB.__setConfig({property: value, property2: value2, ...});
+shimIndexedDB.__setConfig({
+    property: value, property2: value2, ...otherProperties
+});
 ```
 
 or:
@@ -226,6 +232,11 @@ or:
 ```js
 shimIndexedDB.__setConfig(property, value);
 ```
+
+### `createDOMException(name, message)`
+
+A utility for creating a `DOMException` instance. Attempts to use any
+available native implementation.
 
 #### Configuration options
 
@@ -237,10 +248,10 @@ The available properties relevant to browser or Node are:
     no deletes or aborts causing rollbacks) will reuse the same SQLite
     `openDatabase` instance.
 - __checkOrigin__ - Boolean on whether to perform origin checks in `IDBFactory`
-    methods (`open`, `deleteDatabase`, `webkitGetDatabaseNames`); effectively
-    defaults to true (must be set to `false` to cancel checks); for Node testing,
-    you will either need to define a `location` global from which the origin
-    value can be found or set this property to `false`.
+    methods (`open`, `deleteDatabase`, `databases`); effectively
+    defaults to true (must be set to `false` to cancel checks); for Node
+    testing, you will either need to define a `location` global from which
+    the origin value can be found or set this property to `false`.
 - __UnicodeIDStart__ and __UnicodeIDContinue__ - Invocation of
     `createObjectStore` and `createIndex` calls for validation of key paths.
     The specification technically allows all
@@ -251,6 +262,14 @@ The available properties relevant to browser or Node are:
     not `RegExp` objects. You can use this configuration to change the default
     to match the spec or as you see fit. In the future we may allow the spec
     behavior via optional dynamic loading of an internal module.
+- __registerSCA__ - For data created in 3.* versions of IndexedDBShim to
+    continue to work with the more recent version of typeson-registry we
+    are using (specifically its Structured Cloning Algorithm), set this
+    property to a callback which is passed the current typeson-registry
+    structured cloning algorithm representation and return its own to be
+    passed to `typeson.register`. See the library
+    [typeson-registry-sca-reverter](https://github.com/brettz9/typeson-registry-sca-reverter)
+    for a function that can do this.
 - __fullIDLSupport__ - If set to `true`, the slow-performing
     `Object.setPrototypeOf` calls required for full WebIDL compliance will
     be used. Probably only needed for testing or environments where full
@@ -273,7 +292,8 @@ The available properties relevant to browser or Node are:
     underlying WebSQL `openDatabase` calls. Defaults to `4 * 1024 * 1024` or
     `25 * 1024 * 1024` in Safari (apparently necessary due to Safari creating
     larger files and possibly also due to Safari not completing the storage
-    of all records even after permission is given). Has no effect in Node (using [`node-websql`](https://github.com/nolanlawson/node-websql)),
+    of all records even after permission is given). Has no effect in Node
+    (using [`node-websql`](https://github.com/nolanlawson/node-websql)),
     and its use in WebSQL-compliant browsers is implementation dependent (the
     browser may use this information to suggest the use of this quota to the
     user rather than prompting the user regularly for say incremental 5MB
@@ -333,8 +353,9 @@ browser, particularly if one changes the defaults.
     meaning with `node-sqlite3`. You can make the escaping more lax,
     e.g., if your file system is case-sensitive, or you could make it more
     stringent.
-- __unescapeDatabaseName__ - Not used internally; usable as a convenience method for
-    unescaping strings formatted per our default escaping conventions
+- __unescapeDatabaseName__ - Not used internally; usable as a convenience
+    method for unescaping strings formatted per our default escaping
+    conventions.
 - __databaseCharacterEscapeList__ - When this property and
     `escapeDatabaseName` are not overridden, the following characters will
     be escaped by default, even though IndexedDB has no such restrictions,
@@ -374,7 +395,7 @@ Node-only config:
     listing to be of SQLite in-memory databases; name supplied
     by user is still used (including to automatically build a cache since
     SQLite does not allow naming of in-memory databases); the name is also
-    accessible to `IDBFactory.webkitGetDatabaseNames()`; causes database
+    accessible to `IDBFactory.databases()`; causes database
     name/version tracking to also be within an in-memory database; if
     set in the browser, avoids normal database name escaping meant
     for Node compatibility; allowable values include the empty string,
@@ -390,11 +411,13 @@ Node config mostly for development debugging:
     (Defaults to 1000 ms)
 - __sqlTrace__ - Callback used by Node WebSQL for
     [SQLite config](https://github.com/mapbox/node-sqlite3/wiki/API#databaseconfigureoption-value)
-    (Invoked when an SQL statement executes, with a rendering of the statement text)
+    (Invoked when an SQL statement executes, with a rendering of the
+    statement text)
 - __sqlProfile__ - Callback used by Node WebSQL for
     [SQLite config](https://github.com/mapbox/node-sqlite3/wiki/API#databaseconfigureoption-value)
     (Invoked every time an SQL statement executes)
-    // Overcoming limitations with node-sqlite3/storing database name on file systems
+    // Overcoming limitations with node-sqlite3/storing database name on
+    // file systems
     // https://en.wikipedia.org/wiki/Filename#Reserved_characters_and_words
 
 ### shimIndexedDB.\__getConfig()
@@ -469,32 +492,41 @@ degrade performance particularly on a server (and in the browser,
 the WebSQL API on which we are relying did not apparently
 gain support in browsers for the synchronous API).
 
-[This test](https://github.com/w3c/web-platform-tests/blob/master/IndexedDB/transaction-deactivation-timing.html) and [this one](https://github.com/w3c/web-platform-tests/blob/master/IndexedDB/upgrade-transaction-deactivation-timing.html)
+[This test](https://github.com/w3c/web-platform-tests/blob/master/IndexedDB/transaction-deactivation-timing.html) and
+[this one](https://github.com/w3c/web-platform-tests/blob/master/IndexedDB/upgrade-transaction-deactivation-timing.html)
 demonstrate the *expected* timeout behavior with regard to `setTimeout`
 or promises and transaction expiration.
 
 ### [Structured Cloning Algorithm](https://html.spec.whatwg.org/multipage/infrastructure.html#safe-passing-of-structured-data)
 
-Due to [certain challenges](http://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm)
-in detecting cloneable objects from within JavaScript, there are certain limitations regarding cloning:
+Due to
+[certain challenges](http://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm)
+in detecting cloneable objects from within JavaScript, there are certain
+limitations regarding cloning:
 
-1. We cannot properly detect `Proxy` to throw upon encountering such non-cloneable objects
-1. Our reliance on `Object.prototype.toString` to detect uncloneable objects can fail
-    if that method is overridden or if `Symbol.toStringTag` is used to change the
-    default reporting of a given "class".
-1. Although they are currently working, we were only able to resolve `Blob`, `File`, and `FileList` objects synchronously (as [required per spec](https://github.com/axemclion/IndexedDBShim/issues/285))
-    using the now-deprecated XMLHttpRequest synchronous API.
-1. Without a means of transferring `ArrayBuffer` objects in Node, we cannot meet the
-    requirement to fail upon encountering detached binary objects.
+1. We cannot properly detect `Proxy` to throw upon encountering such
+    non-cloneable objects
+1. Our reliance on `Object.prototype.toString` to detect uncloneable objects
+    can fail if that method is overridden or if `Symbol.toStringTag` is used
+    to change the default reporting of a given "class".
+1. Although they are currently working, we were only able to resolve `Blob`,
+    `File`, and `FileList` objects synchronously (as
+    [required per spec](https://github.com/axemclion/IndexedDBShim/issues/285))
+    using the now-deprecated `XMLHttpRequest` synchronous API.
+1. Without a means of transferring `ArrayBuffer` objects in Node, we cannot
+    meet the requirement to fail upon encountering detached binary objects.
 1. They may be other subtleties we have not been able to work around.
 
-We have, however, overcome some cloning issues still faced by browser implementations, e.g., in Chrome (issue [#698564](https://bugs.chromium.org/p/chromium/issues/detail?id=698564))
+We have, however, overcome some cloning issues still faced by browser
+implementations, e.g., in Chrome (issue
+[#698564](https://bugs.chromium.org/p/chromium/issues/detail?id=698564))
 (re: not failing on `WeakMap`, `WeakSet`, `Promise`, and `Object.prototype`).
 
-We also have limitations in creating certain objects synchronously, namely, the one method
-for creating an image bitmap, `createImageBitmap`, returns a `Promise`, so we cannot clone
-a bona fide image bitmap synchronously so as to obtain any errors synchronously as expected
-by the IndexedDB methods involving cloning.
+We also have limitations in creating certain objects synchronously, namely, the
+one method for creating an image bitmap, `createImageBitmap`, returns a
+`Promise`, so we cannot clone a bona fide image bitmap synchronously so as to
+obtain any errors synchronously as expected by the IndexedDB methods involving
+cloning.
 
 ### Node versions 8.9.3 to 9.0.0
 
@@ -512,15 +544,17 @@ IndexedDBShim.  There are two possible workarounds for this:
 1. Create an `indexedDB` variable in your closure
 
 By creating a variable named `indexedDB`, all the code within that closure
-will use the variable instead of the `window.indexedDB` property.  For example:
+will use the variable instead of the `window.indexedDB` property.  For
+example:
 
 ```js
-(function() {
+(function () {
     // This works on all browsers, and only uses IndexedDBShim as a final fallback
-    var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB || window.shimIndexedDB;
+    var indexedDB = window.indexedDB || window.mozIndexedDB || // eslint-disable-line no-var
+        window.webkitIndexedDB || window.msIndexedDB || window.shimIndexedDB;
 
     // This code will use the native IndexedDB, if it exists, or the shim otherwise
-    indexedDB.open("MyDatabase", 1);
+    indexedDB.open('MyDatabase', 1);
 })();
 ```
 

@@ -5,6 +5,7 @@
     function openDb (name, callback) {
         queuedAsyncTest(name, function (assert) {
             var done = assert.async();
+            window.indexedDB.deleteDatabase(DB.NAME);
             var dbOpenRequest = window.indexedDB.open(DB.NAME);
             dbOpenRequest.onsuccess = function (e) {
                 _('Database opened successfully');
@@ -20,34 +21,29 @@
         });
     }
     queuedModule('IDBFactory');
-    openDb('webkitGetDatabaseNames', function (db, assert, done) {
-        if (!window.indexedDB.webkitGetDatabaseNames) {
-            assert.ok(false, 'Database does not support (non-standard) IDBFactory.prototype.webkitGetDatabaseNames()');
-            _('Database does not support (non-standard) IDBFactory.prototype.webkitGetDatabaseNames()');
+    openDb('databases', function (db, assert, done) {
+        if (!window.indexedDB.databases) {
+            assert.ok(false, 'Database does not support IDBFactory.prototype.databases()');
+            _('Database does not support IDBFactory.prototype.databases()');
             nextTest();
             done();
             return;
         }
-        var req = window.indexedDB.webkitGetDatabaseNames();
-        req.onsuccess = function () {
-            assert.ok(req.result.length >= 1, 'Database list successfully found');
-            var found = false;
-            for (var i = 0; i < req.result.length; i++) {
-                if (req.result.item(i) === DB.NAME) {
-                    found = true;
-                    break;
-                }
-            }
-            assert.ok(found, 'Database lits successfully matched earlier-added database');
+        window.indexedDB.databases().then(function (info) { // eslint-disable-line promise/catch-or-return
+            assert.ok(info.length >= 1, 'Database list successfully found');
+            var found = info.some(function (inf) {
+                return inf.name === DB.NAME && inf.version === 1;
+            });
+            assert.ok(found, 'Database list successfully matched earlier-added database');
             _('Database names retrieved');
             db.close();
+            return undefined;
+        }).catch(function () {
+            assert.ok(false, 'Unexpected error retrieving indexedDB.databases().');
+        }).then(function () {
             nextTest();
-            done();
-        };
-        req.onerror = function () {
-            assert.ok(false, 'Unexpected error retrieving indexedDB.webkitGetDatabaseName().');
-            nextTest();
-            done();
-        };
+            done(); // eslint-disable-line promise/no-callback-in-promise
+            return undefined;
+        });
     });
 }());

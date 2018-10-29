@@ -640,7 +640,8 @@
                     tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
                         if (tx1.oncomplete.calledThrice) {
                             if (save1.result === save2.result && save2.result === save3.result) {
-                                return done(new Error('The same primary key was generated for multiple records'));
+                                done(new Error('The same primary key was generated for multiple records'));
+                                return;
                             }
 
                             expect(save1.result).to.equal(1);
@@ -1119,7 +1120,8 @@
                     tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
                         if (tx1.oncomplete.calledThrice) {
                             if (save1.result === save2.result && save2.result === save3.result) {
-                                return done(new Error('The same primary key was generated for multiple records'));
+                                done(new Error('The same primary key was generated for multiple records'));
+                                return;
                             }
 
                             expect(save1.result).to.equal(1);
@@ -1299,7 +1301,8 @@
                     tx1.oncomplete = tx2.oncomplete = tx3.oncomplete = sinon.spy(function () {
                         if (tx1.oncomplete.calledThrice) {
                             if (save1.result === save2.result && save2.result === save3.result) {
-                                return done(new Error('The same primary key was generated for multiple records'));
+                                done(new Error('The same primary key was generated for multiple records'));
+                                return;
                             }
 
                             expect(save1.result).to.equal(1);

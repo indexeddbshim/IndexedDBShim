@@ -1,14 +1,15 @@
 const {transformSourceMapString} = require('sourcemap-transformer');
+
 function transformW3CStack (stack) {
     return transformSourceMapString(stack, {
         // at /Users/brett/IndexedDBShim/dist/indexeddbshim-UnicodeIdentifiers-node.js:6626:32
         // at IDBOpenDBRequest.tryCatch (/Users/brett/IndexedDBShim/dist/indexeddbshim-UnicodeIdentifiers-node.js:6641:9)
-        newFileRegex: /(\s*)at (\S+ \()?([^e][^(]*?):(\d+):(\d+)(\))?/,
+        newFileRegex: /(\s*)at (\S+ \()?([^e][^(]*?):(\d+):(\d+)(\))?/u, // eslint-disable-line unicorn/no-unsafe-regex
         newFilePath (match) {
             return match[3];
         },
         newFileLineNumber (match) {
-            return parseInt(match[4], 10);
+            return parseInt(match[4]);
         },
         newFileColumnNumber (match) {
             return match[5] || '';

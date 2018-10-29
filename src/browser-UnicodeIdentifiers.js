@@ -11,7 +11,9 @@ CFG.win = typeof window !== 'undefined' ? window : self; // For Web Workers
 setGlobalVars();
 // END: Same code as in browser.js
 
-const __setUnicodeIdentifiers = shimIndexedDB.__setUnicodeIdentifiers.bind(shimIndexedDB);
+const __setUnicodeIdentifiers = shimIndexedDB.__setUnicodeIdentifiers.bind(
+    shimIndexedDB
+);
 shimIndexedDB.__setUnicodeIdentifiers = function () {
     __setUnicodeIdentifiers(UnicodeIdentifiers);
 };

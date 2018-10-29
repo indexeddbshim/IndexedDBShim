@@ -1,3 +1,4 @@
+import SyncPromise from 'sync-promise';
 import {createDOMException} from './DOMException';
 import {IDBCursor, IDBCursorWithValue} from './IDBCursor';
 import {setSQLForKeyRange, convertValueToKeyRange} from './IDBKeyRange';
@@ -8,7 +9,6 @@ import {executeFetchIndexData, buildFetchIndexDataSQL, IDBIndex} from './IDBInde
 import IDBTransaction from './IDBTransaction';
 import * as Sca from './Sca';
 import CFG from './CFG';
-import SyncPromise from 'sync-promise';
 
 const readonlyProperties = ['keyPath', 'indexNames', 'transaction', 'autoIncrement'];
 
@@ -17,7 +17,7 @@ const readonlyProperties = ['keyPath', 'indexNames', 'transaction', 'autoIncreme
  * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBObjectStore
  * @param {IDBObjectStoreProperties} storeProperties
  * @param {IDBTransaction} transaction
- * @constructor
+ * @class
  */
 function IDBObjectStore () {
     throw new TypeError('Illegal constructor');
@@ -35,14 +35,14 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
         me.__cursors = storeProperties.cursors || [];
 
         // autoInc is numeric (0/1) on WinPhone
-        me.__autoIncrement = !!storeProperties.autoInc;
+        me.__autoIncrement = Boolean(storeProperties.autoInc);
 
         me.__indexes = {};
         me.__indexHandles = {};
         me.__indexNames = DOMStringList.__createInstance();
         const {indexList} = storeProperties;
         for (const indexName in indexList) {
-            if (indexList.hasOwnProperty(indexName)) {
+            if (util.hasOwn(indexList, indexName)) {
                 const index = IDBIndex.__createInstance(me, indexList[indexName]);
                 me.__indexes[index.name] = index;
                 if (!index.__deleted) {
@@ -419,7 +419,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
             }
         });
     });
-    SyncPromise.all(indexPromises).then(() => {
+    return SyncPromise.all(indexPromises).then(() => {
         const sqlStart = ['INSERT INTO', util.escapeStoreNameForSQL(me.__currentName), '('];
         const sqlEnd = [' VALUES ('];
         const insertSqlValues = [];
@@ -429,11 +429,11 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
             sqlEnd.push('?,');
             insertSqlValues.push(util.escapeSQLiteStatement(Key.encode(clonedKeyOrCurrentNumber)));
         }
-        for (const key in paramMap) {
+        Object.entries(paramMap).forEach(([key, stmt]) => {
             sqlStart.push(util.escapeIndexNameForSQL(key) + ',');
             sqlEnd.push('?,');
-            insertSqlValues.push(util.escapeSQLiteStatement(paramMap[key]));
-        }
+            insertSqlValues.push(util.escapeSQLiteStatement(stmt));
+        });
         // removing the trailing comma
         sqlStart.push(util.sqlQuote('value') + ' )');
         sqlEnd.push('?)');
@@ -448,6 +448,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
             // Should occur for `add` operation
             error(createDOMException('ConstraintError', err.message, err));
         });
+        return undefined;
     }).catch(function (err) {
         function fail () {
             // Todo: Add a different error object here if `assignCurrentNumber` fails in reverting?
@@ -573,7 +574,12 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
             try {
                 // Opera can't deal with the try-catch here.
                 if (data.rows.length === 0) {
-                    return getAll ? success([]) : success();
+                    if (getAll) {
+                        success([]);
+                    } else {
+                        success();
+                    }
+                    return;
                 }
                 ret = [];
                 if (getKey) {
@@ -628,7 +634,7 @@ IDBObjectStore.prototype.getAllKeys = function (/* query, count */) {
     return this.__get(query, true, true, count);
 };
 
-IDBObjectStore.prototype['delete'] = function (query) {
+IDBObjectStore.prototype.delete = function (query) {
     const me = this;
     if (!(this instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
@@ -786,8 +792,8 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath /* , optiona
         columnName: indexName,
         keyPath,
         optionalParams: {
-            unique: !!optionalParameters.unique,
-            multiEntry: !!optionalParameters.multiEntry
+            unique: Boolean(optionalParameters.unique),
+            multiEntry: Boolean(optionalParameters.multiEntry)
         }
     };
     const index = IDBIndex.__createInstance(me, indexProperties);

@@ -202,7 +202,10 @@ describe('IDBDatabase.createObjectStore', function () {
                 'out-of-line', 'out-of-line-generated', 'inline', 'inline-generated', 'inline-compound',
                 'dotted', 'dotted-generated', 'dotted-compound', 'inline-index', 'unique-index',
                 function (err, db) {
-                    if (err) return done(err);
+                    if (err) {
+                        done(err);
+                        return;
+                    }
                     db.close();
                     setTimeout(function () {
                         verifyDatabaseSchema(db.name);
@@ -252,21 +255,20 @@ describe('IDBDatabase.createObjectStore', function () {
             }
 
             function verifySchema (obj, schema) {
-                for (var prop in schema) {
+                Object.entries(schema).forEach(([prop, schemaValue]) => {
                     var objValue = obj[prop];
-                    var schemaValue = schema[prop];
 
                     if (!env.isShimmed && env.browser.isIE && prop === 'autoIncrement') {
                         // IE's native IndexedDB does not have the autoIncrement property
                         schemaValue = undefined;
                     }
 
-                    if (schemaValue instanceof Array) {
+                    if (Array.isArray(schemaValue)) {
                         objValue = Array.prototype.slice.call(objValue);
                     }
 
                     expect(objValue).to.deep.equal(schemaValue, obj.name + ' ' + prop);
-                }
+                });
             }
         });
     });

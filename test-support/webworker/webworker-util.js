@@ -1,19 +1,17 @@
 // Utilies and other common gook shared between the WebWorker master and
 // its constituent Workers.
+/* eslint-disable node/exports-style */
 
-const BSON = require('bson');
 const events = require('events');
 const path = require('path');
 const util = require('util');
-const {URL} = require('url');
-
-const bson = new BSON();
+const BSON = require('bson');
 
 // Some debugging functions
-const debugLevel = parseInt(process.env.NODE_DEBUG, 16);
-const debug = (debugLevel & 0x8)
+const debugLevel = parseInt(process.env.NODE_DEBUG, 16); // eslint-disable-line no-process-env
+const debug = (debugLevel & 0x8) // eslint-disable-line no-bitwise
     ? function () { console.error.apply(this, arguments); }
-    : function () {};
+    : function () { /* */ };
 exports.debug = debug;
 
 // Extract meaning from stack traces
@@ -41,7 +39,7 @@ exports.isValidMessage = isValidMessage;
 //
 // Sending messages is done with the send() method.
 const MsgStream = function (s) {
-    const self = this;
+    const self = this; // eslint-disable-line consistent-this
 
     events.EventEmitter.call(self);
 
@@ -63,13 +61,13 @@ const MsgStream = function (s) {
         const ms = getMsgObj(v, fd);
         debug('Process ' + process.pid + ' sending message: ' + util.inspect(ms));
 
-        s.send(bson.serialize(ms), {binary: true, mask: true});
+        s.send(BSON.serialize(ms), {binary: true, mask: true});
     };
 
     s.on('message', function (ms) {
         debug('Process ' + process.pid + ' received message: ' + ms);
 
-        const mo = bson.deserialize(ms);
+        const mo = BSON.deserialize(ms);
 
         // Ignore invalid messages; this is probably worth an error, though
         if (!isValidMessage(mo)) {

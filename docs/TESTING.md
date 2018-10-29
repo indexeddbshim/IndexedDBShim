@@ -42,6 +42,21 @@ allowing tests to be run from the runner without
 obtrusive changes to the repository is not yet refined (see also
 <https://github.com/w3c/web-platform-tests/issues/5133#issuecomment-293465747>).
 
+The now [recommended way](https://github.com/web-platform-tests/wpt/issues/6565)
+for installing [`web-platform-tests`](https://github.com/web-platform-tests/wpt/)
+is:
+
+1. (May need to do this first: `pip uninstall virtualenv`)
+1. `pip install virtualenv`
+1. Add to PATH (e.g., `sudo nano /etc/paths` and add path to bottom of file)
+    `$HOME/Library/Python/2.7/bin`.
+
+Then run (without any process for `npm run wpt` running):
+
+1. `./wpt run --headless chrome IndexedDB` or
+    `./wpt run --binary=path --headless chrome IndexedDB`,
+    installing any required dependencies.
+
 #### Manual browser testing
 
 If you want to run the tests in a normal web browser, you'll need to
@@ -57,7 +72,7 @@ Note that, for the Mocha tests, you probably wish to
 the testing since otherwise, it will only test the native implementation.
 
 For the W3C `web-platform-tests` tests, individual tests can be run
-in two ways.
+in these ways.
 
 1. The first way currently adds files within `web-platform-tests` but
     does not modify files. To do this you must run a `grunt dev` task
@@ -76,6 +91,7 @@ in two ways.
     run files in the runner or individually. As above, you must also keep the
     `grunt dev` task (or the like) running on port 9999 and install
     `web-platform-tests`.
+1. One may use `./wpt run` with specific paths (See automated testing above).
 
 ### Node Testing
 
@@ -87,8 +103,8 @@ To run the Node tests, run the following:
 1. `npm run tests-polyfill` (or its components `npm run fake`,
     `npm run mock`, `npm run w3c-old`). Note that only `fake` is
     currently passing in full, however.
-1. `npm run web-platform-tests` and in a separate terminal window,
-    `npm run w3c` (you must first run
+1. `npm run web-platform-tests` (or `npm run wpt`) and in a separate
+    terminal window, `npm run w3c` (you must first run
     `git submodule update --init --recursive` (possibly without
     [init](http://stackoverflow.com/a/10168693/271577) too if using
     an older version of Git), `git submodule foreach --recursive git fetch`,

@@ -25,8 +25,8 @@ queuedAsyncTest('Creating Indexes', function (assert) {
         // var db = dbOpenRequest.result;
         var objectStore1 = dbOpenRequest.transaction.objectStore(DB.OBJECT_STORE_1);
         var index1 = objectStore1.createIndex('Int Index', 'Int', { // eslint-disable-line no-unused-vars
-            'unique': false,
-            'multiEntry': false
+            unique: false,
+            multiEntry: false
         });
         var index2 = objectStore1.createIndex('String.Index', 'String'); // eslint-disable-line no-unused-vars
         assert.equal(objectStore1.indexNames.length, 2, '2 Indexes on object store successfully created');
@@ -101,7 +101,7 @@ queuedAsyncTest('Creating Indexes', function (assert) {
             var cursor = indexCursorReq.result;
             if (cursor) {
                 _('Iterating over cursor ' + cursor.key + ' for value ' + JSON.stringify(cursor.value));
-                cursor['continue']();
+                cursor.continue();
             } else {
                 assert.ok(true, 'Cursor Iteration completed');
                 db.close();
@@ -125,7 +125,7 @@ queuedAsyncTest('Creating Indexes', function (assert) {
             var cursor = indexCursorReq.result;
             if (cursor) {
                 _('Iterating over cursor ' + cursor.key + ' for value ' + JSON.stringify(cursor.value));
-                cursor['continue']();
+                cursor.continue();
             } else {
                 assert.ok(true, 'Cursor Iteration completed');
                 db.close();

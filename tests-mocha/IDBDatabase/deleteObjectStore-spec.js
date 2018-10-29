@@ -238,9 +238,8 @@ describe('IDBDatabase.deleteObjectStore', function () {
             }
 
             function verifySchema (obj, schema) {
-                for (var prop in schema) {
+                Object.entries(schema).forEach(([prop, schemaValue]) => {
                     var objValue = obj[prop];
-                    var schemaValue = schema[prop];
 
                     if (!env.isShimmed && env.browser.isIE && prop === 'autoIncrement') {
                         // IE's native IndexedDB does not have the autoIncrement property
@@ -252,7 +251,7 @@ describe('IDBDatabase.deleteObjectStore', function () {
                     }
 
                     expect(objValue).to.deep.equal(schemaValue, obj.name + ' ' + prop);
-                }
+                });
             }
         });
     });

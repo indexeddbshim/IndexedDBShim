@@ -75,7 +75,6 @@
         if (current.args.length === 2) {
             QUnit.test(current.name, current.args[1]);
         } else if (current.args.length === 3) {
-            // QUnit.test(current.name, current.args[1], current.args[2]);
             throw new Error('Replace 2nd arg to QUnit.test with `assert.expect(2nd arg val)`; test name: ' + current.name);
         }
     }

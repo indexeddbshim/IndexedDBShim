@@ -18,19 +18,18 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const util = require('util');
+const http = require('http');
 const WebSocket = require('ws');
+const XMLHttpRequest = require('local-xmlhttprequest');
+const Blob = require('w3c-blob'); // Needed by Node; uses native if available (browser)
+const fetch = require('isomorphic-fetch');
 const wwutil = require('./webworker-util');
 // Had problems with npm and the following when requiring `webworkers`
 //   as a separate repository (due to indirect circular dependency?);
 // const indexeddbshim = require('indexeddbshim');
 const indexeddbshim = require('../../dist/indexeddbshim-UnicodeIdentifiers-node'); // require('../../');
-const XMLHttpRequest = require('local-xmlhttprequest');
 const Worker = require('./webworker');
-const {URL, URLSearchParams} = require('url');
 // const isDateObject = require('is-date-object'); // Not needed in worker tests as in main thread tests
-const Blob = require('w3c-blob'); // Needed by Node; uses native if available (browser)
-const http = require('http');
-const fetch = require('isomorphic-fetch');
 /*
 const permittedProtocols;
 try {
@@ -109,9 +108,9 @@ const workerConfig = {
 // Construct the Script object to host the worker's code
 switch (scriptLoc.protocol) {
 case 'file':
-    if ([/interfaces\.any\.js$/, /interfaces\.any\.worker\.js$/].some((interfaceFileRegex) => interfaceFileRegex.test(workerURL))) {
-        workerURL = workerURL.replace(/.*web-platform-tests/, 'http://web-platform.test:8000');
-        prom = new Promise((resolve, reject) => {
+    if ([/interfaces\.any\.js$/u, /interfaces\.any\.worker\.js$/u].some((interfaceFileRegex) => interfaceFileRegex.test(workerURL))) {
+        workerURL = workerURL.replace(/.*web-platform-tests/u, 'http://web-platform.test:8000');
+        prom = new Promise((resolve, reject) => { // eslint-disable-line promise/avoid-new
             http.get(workerURL, (res) => {
                 res.setEncoding('utf8');
                 let rawData = '';
@@ -125,15 +124,15 @@ case 'file':
         });
     } else {
         prom = Promise.resolve(
-            fs.readFileSync(scriptLoc.pathname.replace(/\/$/, ''))
+            fs.readFileSync(scriptLoc.pathname.replace(/\/$/u, ''))
         ); // Latter replace needed on Mac but not Windows
     }
     break;
 
 default:
-    console.error('Cannot load script from unknown protocol \'' +
-        scriptLoc.protocol);
-    process.exit(1);
+    throw new Error(
+        'Cannot load script from unknown protocol \'' + scriptLoc.protocol
+    );
 }
 
 prom.then((scriptSource) => {
@@ -152,10 +151,10 @@ prom.then((scriptSource) => {
         // Don't bother setting inErrorHandler here, as we're already delivering
         // the event to the master anyway
         ms.send([wwutil.MSGTYPE_ERROR, {
-            'message': wwutil.getErrorMessage(e),
-            'filename': wwutil.getErrorFilename(e),
-            'lineno': wwutil.getErrorLine(e),
-            'stack': e.stack
+            message: wwutil.getErrorMessage(e),
+            filename: wwutil.getErrorFilename(e),
+            lineno: wwutil.getErrorLine(e),
+            stack: e.stack
         }]);
     };
 
@@ -187,7 +186,7 @@ prom.then((scriptSource) => {
         case wwutil.MSGTYPE_USER:
             // XXX: I have no idea what the event object here should really look
             //      like. I do know that it needs a 'data' elements, though.
-            if (workerCtx.onmessage || workerCtx.eventHandlers['message'].length > 0) {
+            if (workerCtx.onmessage || workerCtx.eventHandlers.message.length > 0) {
                 const e = {data: msg[1]};
 
                 if (fd) {
@@ -198,8 +197,8 @@ prom.then((scriptSource) => {
                     workerCtx.onmessage(e);
                 }
 
-                for (let i = 0; i < workerCtx.eventHandlers['message'].length; i++) {
-                    workerCtx.eventHandlers['message'][i](e);
+                for (let i = 0; i < workerCtx.eventHandlers.message.length; i++) {
+                    workerCtx.eventHandlers.message[i](e);
                 }
             }
 
@@ -252,7 +251,7 @@ prom.then((scriptSource) => {
     workerCtx.location = scriptLoc;
     workerCtx.closing = false;
     workerCtx.close = function () {
-        process.exit(0);
+        process.exit(0); // eslint-disable-line no-process-exit, unicorn/no-process-exit
     };
     workerCtx.eventHandlers = {message: []};
     workerCtx.addEventListener = function (event, handler) {
@@ -276,7 +275,7 @@ prom.then((scriptSource) => {
         // Todo: Support URL/absolute file paths
         for (let i = 0; i < arguments.length; i++) {
             // Todo: Handle pathType="url" (defaults to `localhost`) and if basePath is `false` with it
-            const currentPath = (/^[\\/]/).test(arguments[i]) // Root
+            const currentPath = (/^[\\/]/u).test(arguments[i]) // Root
                 ? workerConfig.pathType === 'file' && workerConfig.rootPath === false ? process.cwd() : workerConfig.rootPath
                 : workerConfig.pathType === 'file' && workerConfig.basePath === false ? process.cwd() : workerConfig.basePath;
             /*
@@ -317,7 +316,7 @@ prom.then((scriptSource) => {
     const baseCfg = {checkOrigin: false, databaseNameLengthLimit: 1000, addNonIDBGlobals: true};
     // Add indexedDB globals; we also add non-IndexedDB ones that are not normally "exposed" to workers
     // Only the second regex will ever be used, but just listing the files that should get fullIDLSupport
-    if ([/interfaces\.any\.js$/, /interfaces\.any\.worker\.js$/].some((interfaceFileRegex) => interfaceFileRegex.test(workerURL))) {
+    if ([/interfaces\.any\.js$/u, /interfaces\.any\.worker\.js$/u].some((interfaceFileRegex) => interfaceFileRegex.test(workerURL))) {
         indexeddbshim(workerCtx, Object.assign(baseCfg, {fullIDLSupport: true}));
     } else {
         indexeddbshim(workerCtx, baseCfg);
@@ -369,4 +368,7 @@ prom.then((scriptSource) => {
 
     // Context object for vm script api
     workerCtxObj = vm.createContext(workerCtx);
+    return undefined;
+}).catch((err) => {
+    throw err;
 });

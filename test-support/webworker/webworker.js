@@ -36,12 +36,12 @@ const fs = require('fs');
 const http = require('http');
 const path = require('path');
 const util = require('util');
-const wwutil = require('./webworker-util');
-const WebSocketServer = require('ws').Server;
 const os = require('os');
 const url = require('url');
-const isWin = /^win/.test(os.platform());
-const {URL} = url;
+const WebSocketServer = require('ws').Server;
+const wwutil = require('./webworker-util');
+
+const isWin = os.platform().startsWith('win');
 
 // Directory for our UNIX domain sockets
 const SOCK_DIR_PATH = path.join(os.tmpdir(), 'node-webworker-' + process.pid);
@@ -74,7 +74,7 @@ module.exports = function (workerConfig) {
     // }
     const Worker = function (src, opts) {
         // See https://html.spec.whatwg.org/multipage/workers.html#dom-worker
-        const self = this;
+        const self = this; // eslint-disable-line consistent-this
 
         opts = opts || {};
 
@@ -87,7 +87,7 @@ module.exports = function (workerConfig) {
             if (!(workerConfig.permittedProtocols || ['http', 'https']).map((p) => p + ':').includes(protocol)) {
                 throw new TypeError('This worker is not configured to support the protocol of the supplied Worker source argument (' + protocol + ').');
             }
-        } else if (urlObj.pathname && (/^[\\/]/).test(urlObj.pathname)) {
+        } else if (urlObj.pathname && (/^[\\/]/u).test(urlObj.pathname)) {
             if (workerConfig.rootPath === false) {
                 throw new TypeError('Absolute paths are not allowed when `rootPath` is `false`');
             }
@@ -147,12 +147,12 @@ module.exports = function (workerConfig) {
         const eventHandlers = {message: []};
 
         // The path to our socket
-        const sockFilePath = path.join(SOCK_DIR_PATH, '' + numWorkersCreated++);
+        const sockFilePath = path.join(SOCK_DIR_PATH, String(numWorkersCreated++));
         const sockPath = path.join((isWin ? '\\\\.\\pipe\\' : ''), sockFilePath); // '\\\\?\\pipe' had problems
 
         // Make sure our socket folder is in place (it may have been removed by a previous clean-up)
         try {
-            fs.mkdirSync(SOCK_DIR_PATH, parseInt('0700', 8));
+            fs.mkdirSync(SOCK_DIR_PATH, 0o0700);
         } catch (e) {}
 
         // Server instance for our communication socket with the child process
@@ -221,7 +221,8 @@ module.exports = function (workerConfig) {
                 // undefined once the process exits.
                 pid = cp.pid;
 
-                wwutil.debug(1,
+                wwutil.debug(
+                    1,
                     'Spawned process ' + pid + ' for worker \'' + src + '\': ' +
                     execPath + ' ' + args.join(' ')
                 );
@@ -302,13 +303,13 @@ module.exports = function (workerConfig) {
                     const err = msg[1];
                     // Prevent error by testharness.js; if we need more support later, we could invoke eventtargeter's Event polyfill
                     // console.log(err.stack);
-                    err.preventDefault = function () {};
+                    err.preventDefault = function () { /* */ };
                     self.onerror(err);
                 }
                 break;
 
             case wwutil.MSGTYPE_USER:
-                if (self.onmessage || eventHandlers['message'].length > 0) {
+                if (self.onmessage || eventHandlers.message.length > 0) {
                     const e = {data: msg[1]};
 
                     if (fd) {
@@ -319,8 +320,8 @@ module.exports = function (workerConfig) {
                         self.onmessage(e);
                     }
 
-                    for (let i = 0; i < eventHandlers['message'].length; i++) {
-                        eventHandlers['message'][i](e);
+                    for (let i = 0; i < eventHandlers.message.length; i++) {
+                        eventHandlers.message[i](e);
                     }
                 }
                 break;
@@ -427,7 +428,7 @@ module.exports = function (workerConfig) {
 
 // Perform any one-time initialization
 try {
-    fs.mkdirSync(SOCK_DIR_PATH, parseInt('0700', 8));
+    fs.mkdirSync(SOCK_DIR_PATH, 0o0700);
 } catch (e) {
     if (e.code && e.code !== 'EEXIST') {
         throw e;

@@ -243,9 +243,8 @@ describe('IDBObjectStore.deleteIndex', function () {
             }
 
             function verifySchema (obj, schema) {
-                for (var prop in schema) {
+                Object.entries(schema).forEach(([prop, schemaValue]) => {
                     var objValue = obj[prop];
-                    var schemaValue = schema[prop];
 
                     if (!env.isShimmed && env.browser.isIE && prop === 'multiEntry') {
                         // IE's native IndexedDB does not have the multiEntry property
@@ -257,7 +256,7 @@ describe('IDBObjectStore.deleteIndex', function () {
                     }
 
                     expect(objValue).to.deep.equal(schemaValue, obj.name + ' ' + prop);
-                }
+                });
             }
         });
     });

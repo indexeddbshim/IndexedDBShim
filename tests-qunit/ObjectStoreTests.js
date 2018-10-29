@@ -24,14 +24,14 @@ queuedAsyncTest('Creating an Object Store', function (assert) {
         var db = dbOpenRequest.result;
         db.createObjectStore(DB.OBJECT_STORE_1);
         db.createObjectStore(DB.OBJECT_STORE_2, {
-            'keyPath': 'Int',
-            'autoIncrement': true
+            keyPath: 'Int',
+            autoIncrement: true
         });
         db.createObjectStore(DB.OBJECT_STORE_3, {
-            'autoIncrement': true
+            autoIncrement: true
         });
         db.createObjectStore(DB.OBJECT_STORE_4, {
-            'keyPath': 'Int'
+            keyPath: 'Int'
         });
         var objectStore5 = db.createObjectStore(DB.OBJECT_STORE_5); // eslint-disable-line no-unused-vars
         assert.equal(db.objectStoreNames.length, 5, 'Count of Object Stores created is correct');

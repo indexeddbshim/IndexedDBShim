@@ -3,18 +3,27 @@
 require('source-map-support').install({ // Needed along with sourcemap transform
     environment: 'node'
 });
+const util = require('util');
 const fs = require('fs');
 const path = require('path');
-const {goodFiles, badFiles, notRunning, timeout, excludedWorkers, excludedNormal} = require('./node-good-bad-files');
 const vm = require('vm');
 const jsdom = require('jsdom');
+const colors = require('colors/safe');
+
+const readFile = util.promisify(fs.readFile);
+const readdir = util.promisify(fs.readdir);
+const writeFile = util.promisify(fs.writeFile);
+
 const {JSDOM} = jsdom;
 const CY = require('cyclonejs'); // Todo: Replace this with Sca (but need to make requireable)
-const Worker = require('./webworker/webworker'); // Todo: We could export this `Worker` publicly for others looking for a Worker polyfill with IDB support
 const XMLHttpRequestConstr = require('local-xmlhttprequest');
 const isDateObject = require('is-date-object');
-const transformV8Stack = require('./transformV8Stack');
 const fetch = require('isomorphic-fetch');
+const Worker = require('./webworker/webworker'); // Todo: We could export this `Worker` publicly for others looking for a Worker polyfill with IDB support
+const transformV8Stack = require('./transformV8Stack');
+const {
+    goodFiles, badFiles, notRunning, timeout, excludedWorkers, excludedNormal
+} = require('./node-good-bad-files');
 
 // const grunt = require('grunt');
 // require('../Gruntfile')(grunt);
@@ -26,21 +35,23 @@ const vmTimeout = 90000; // Time until we give up on the vm (increasing to 40000
 
 // SET-UP
 const fileArg = process.argv[2];
-const fileIndex = (/^-?\d+$/).test(fileArg) ? fileArg : (process.argv[3] || undefined);
-const endFileCount = (/^-?\d+$/).test(fileArg) && (/^-?\d+$/).test(process.argv[3]) ? process.argv[3] : (process.argv[4] || undefined);
+const fileIndex = (/^-?\d+$/u).test(fileArg) ? fileArg : (process.argv[3] || undefined);
+const endFileCount = (/^-?\d+$/u).test(fileArg) && (/^-?\d+$/u).test(process.argv[3]) ? process.argv[3] : (process.argv[4] || undefined);
 const dirPath = path.join('test-support', 'js');
 const idbTestPath = 'web-platform-tests';
 const indexeddbshim = require('../dist/indexeddbshim-UnicodeIdentifiers-node');
-const workerFileRegex = /^(_service-worker-indexeddb\.https\.js|(_interface-objects-)?00\d(\.worker)?\.js)$/;
+
+const {createDOMException} = indexeddbshim;
+const workerFileRegex = /^(_service-worker-indexeddb\.https\.js|(_interface-objects-)?00\d(\.worker)?\.js)$/u;
 // const indexeddbshimNonUnicode = require('../dist/indexeddbshim-node');
 
 // String replacements on code due, e.g., for lagging ES support in Node
 const nodeReplacementHacks = {
-    'idb-binary-key-roundtrip.js': [/(`Binary keys can be supplied using the view type \$\{type\}`),/, '$1'] // https://github.com/w3c/web-platform-tests/issues/4817
+    'idb-binary-key-roundtrip.js': [/(`Binary keys can be supplied using the view type \$\{type\}`),/u, '$1'] // https://github.com/w3c/web-platform-tests/issues/4817
 };
 
 const shimNS = {
-    colors: require('colors/safe'),
+    colors,
     fileName: '',
     finished () { throw new Error('Finished callback not set'); },
     isDateObject,
@@ -82,15 +93,15 @@ process.on('unhandledRejection', (reason, p) => {
 });
 */
 function exit () {
-    process.exit();
+    process.exit(); // eslint-disable-line no-process-exit, unicorn/no-process-exit
 }
-function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, item = 0) {
+async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, item = 0) {
     shimNS.fileName = jsFiles[item];
-    shimNS.finished = () => {
+    shimNS.finished = async () => {
         ct += 1;
-        function finishedCheck () {
+        async function finishedCheck () {
             function cleanJSONOutput (...args) {
-                return JSON.stringify(...args).replace(/"/g, "'").replace(/','/g, "', '");
+                return JSON.stringify(...args).replace(/"/gu, "'").replace(/','/gu, "', '");
             }
             if (ct < jsFiles.length) {
                 // Todo: Have the test environment script itself report back time-outs and
@@ -102,19 +113,19 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                 //   the timeout, however, does not even seem to be necessary.
                 // setTimeout(() => {
                 // grunt.task.run('clean-w3c');
-                readAndEvaluate(jsFiles, initial, ending, workers, ++item);
+                await readAndEvaluate(jsFiles, initial, ending, workers, ++item);
                 // }, intervalSpacing);
                 return;
             }
 
             // Ensure time for final clean-up (e.g., deleting databases) and
             //   logging before reporting results
-            setTimeout(() => {
-                shimNS.files['Files with all tests passing'] = shimNS.files.Pass.filter((p) =>
-                    !shimNS.files.Fail.includes(p) &&
-                    !shimNS.files.Timeout.includes(p) &&
-                    !shimNS.files['Not Run'].includes(p)
-                );
+            setTimeout(async () => {
+                shimNS.files['Files with all tests passing'] = shimNS.files.Pass.filter((p) => {
+                    return !shimNS.files.Fail.includes(p) &&
+                        !shimNS.files.Timeout.includes(p) &&
+                        !shimNS.files['Not Run'].includes(p);
+                });
                 console.log('\nTest files by status (may recur):');
                 console.log(
                     // Object.entries(shimNS.files).reduce((_, [status, files]) => { // Sometimes failing in Node 6.9.2
@@ -123,7 +134,9 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                         if (!files.length) {
                             return _ + '  ' + status + ': 0\n';
                         }
-                        return _ + '  ' + status + ' (' + files.length + '): [\n    ' + cleanJSONOutput(files).slice(1, -1) + '\n  ]\n';
+                        return _ + '  ' + status + ' (' + files.length +
+                            '): [\n    ' + cleanJSONOutput(files).slice(1, -1) +
+                            '\n  ]\n';
                     }, '\n')
                 );
 
@@ -150,8 +163,9 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                 if (shimNS.fileMap) {
                     console.log(
                         [...shimNS.fileMap].reduce(
-                            (str, [fileName, [passing, total]]) =>
-                                str + fileName + ': ' + passing + '/' + total + '\n',
+                            (str, [fileName, [passing, total]]) => {
+                                return str + fileName + ': ' + passing + '/' + total + '\n';
+                            },
                             ''
                         )
                     );
@@ -166,17 +180,18 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
                         // new Date().getTime() +
                         '.json'
                     );
-                    fs.writeFile(jsonOutputPath, JSON.stringify(shimNS.jsonOutput, null, 2), function (err) {
-                        if (err) { console.log(err); return; }
-                        console.log('Saved to ' + jsonOutputPath);
-                        exit();
-                    });
-                } else {
-                    exit();
+                    try {
+                        await writeFile(jsonOutputPath, JSON.stringify(shimNS.jsonOutput, null, 2));
+                    } catch (err) {
+                        console.log(err);
+                        return;
+                    }
+                    console.log('Saved to ' + jsonOutputPath);
                 }
+                exit();
             }, 1000);
         }
-        finishedCheck();
+        await finishedCheck();
     };
 
     // Exclude those currently breaking the tests
@@ -193,378 +208,412 @@ function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, i
         }
     }
 
-    fs.readFile(path.join(dirPath, shimNS.fileName), 'utf8', function (err, content) {
-        if (err) { return console.log(err); }
+    let content;
+    try {
+        content = await readFile(path.join(dirPath, shimNS.fileName), 'utf8');
+    } catch (err) {
+        console.log(err);
+        return;
+    }
 
-        if (nodeReplacementHacks[shimNS.fileName]) {
-            content = content.replace(...nodeReplacementHacks[shimNS.fileName]);
+    if (nodeReplacementHacks[shimNS.fileName]) {
+        content = content.replace(...nodeReplacementHacks[shimNS.fileName]);
+    }
+
+    const scripts = [];
+    const supported = [
+        'resources/testharness.js', 'resources/testharnessreport.js',
+        'resources/idlharness.js', 'resources/WebIDLParser.js',
+        'IndexedDB/idlharness.any.js',
+        'nested-cloning-common.js', 'interleaved-cursors-common.js',
+        'support.js', 'support-promises.js', 'service-workers/service-worker/resources/test-helpers.sub.js'
+    ];
+    // Use paths set in node-buildjs.js (when extracting <script> tags and joining contents)
+    content.replace(/beginscript::(.*?)::endscript/gu, (_, src) => {
+        // Fix paths for known support files and report new ones (so we can decide how to handle)
+        if (supported.includes(src) || supported.includes(src.replace(/^\//u, ''))) {
+            src = src.replace(/^\//u, '');
+            scripts.push(path.join(
+                idbTestPath,
+                // Since our build script is now copying it, we actually don't need this now,
+                //    but keeping comment in case this possibility is later closed
+                // src === 'resources/WebIDLParser.js' // See https://github.com/w3c/testharness.js/issues/231
+                // This file should be rewritten by `web-platform-tests/tools/serve/serve`,
+                //   but as we are allowing testing independently of this environment (and
+                //   are using file loading as opposed to URL loading mechanisms in our
+                //   testing) we just map it to the source file which appears to be rendered
+                //   unmodified
+                // ? 'resources/webidl2/lib/webidl2.js' : ()
+                ((/^(service-workers|resources|IndexedDB)/u).test(src)
+                    ? src
+                    : 'IndexedDB/' + src)
+            ));
+        } else {
+            console.log('missing?:' + src);
+        }
+    });
+
+    const harnessContent = await readAndJoinFiles(scripts);
+    // early envt't, harness, reporting env't, specific test
+    const allContent = initial + '\n' + harnessContent + '\n' + ending + '\n' + content;
+
+    // Build the window each time for test safety
+    const rootPath = path.join(__dirname, '../web-platform-tests');
+    const basePath = path.join(rootPath, 'IndexedDB');
+    /*
+    // Todo: We aren't really using this now as it doesn't help
+    //    with XMLHttpRequest; it also changes path of
+    //    node-XMLHttpRequest; submit PR to jsdom to get
+    //    relative local file paths working as in our
+    //    node-XMLHttpRequest fork (and with a desired base path);
+    //    however, we really need to get our own test server running
+    //    to allow URLs to work
+    */
+    // Todo: We should get this working with our test server; should work with `XMLHttpRequest` base
+    // Leverage the W3C server for interfaces test, assuming it is running;
+    //   as we are overriding `XMLHttpRequest` below, we are not really using this at the moment,
+    //   but to set up, see https://github.com/w3c/web-platform-tests
+    // const url = 'http://localhost:9999/web-platform-tests/IndexedDB/idlharness.any.html',
+    // const url = 'file://' + basePath;
+    const url = 'http://localhost:8000/IndexedDB/idlharness.any.html';
+    const {window} = await JSDOM.fromURL(url);
+    try {
+        // Should only pass in safe objects
+        const sandboxObj = {
+            console,
+            shimNS
+        };
+
+        const baseCfg = {
+            replaceNonIDBGlobals: true,
+            checkOrigin: false,
+            databaseNameLengthLimit: 1000,
+            useSQLiteIndexes: true,
+            DEBUG
+        };
+        if (['idbfactory-open-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js'].includes(
+            shimNS.fileName
+        )) {
+            baseCfg.checkOrigin = true;
+        }
+        global.location = window.location; // Needed by IDB for origin checks; also needed by `createObjectURL` polyfill
+
+        // Todo: We might switch based on file to normally try non-Unicode version or otherwise exclude properties as
+        //   some of these do incur a significant performance cost which could speed up the testing process if avoided,
+        //   though it could also make the tests more fragile to changes
+        // indexeddbshimNonUnicode(window);
+        if (['idlharness.any.js', '../non-indexedDB/exceptions.js', '../non-indexedDB/__event-interface.js'].includes(shimNS.fileName)) {
+            indexeddbshim(window, Object.assign(baseCfg, {fullIDLSupport: true}));
+        } else {
+            indexeddbshim(window, baseCfg);
         }
 
-        const scripts = [];
-        const supported = [
-            'resources/testharness.js', 'resources/testharnessreport.js',
-            'resources/idlharness.js', 'resources/WebIDLParser.js',
-            'IndexedDB/idlharness.any.js',
-            'nested-cloning-common.js', 'interleaved-cursors-common.js',
-            'support.js', 'support-promises.js', 'service-workers/service-worker/resources/test-helpers.sub.js'
+        // See <https://github.com/axemclion/IndexedDBShim/issues/280>
+        /*
+        ['DOMStringList', 'Event', 'CustomEvent', 'EventTarget' // These were having no effect due to https://github.com/jsdom/jsdom/issues/1720#issuecomment-279665105
+        ].forEach((prop) => {
+            // Object.defineProperty(window, prop, Object.getOwnPropertyDescriptor(window, 'Shim' + prop));
+            Object.defineProperty(window[prop], 'prototype', {
+                writable: false
+            });
+            window[prop].prototype[Symbol.toStringTag] = prop + 'Prototype';
+        });
+        // These overwrite jsdom's objects as needed by test checks
+        // window.CustomEvent = window.ShimCustomEvent; // Used in events tests
+        */
+
+        const _setTimeout = window.setTimeout;
+        window.setTimeout = function (cb, ms) { // Override to better ensure transaction has expired (otherwise we'd mostly need sync SQLite operations)
+            _setTimeout(cb, ms + 500);
+        };
+
+        Object.defineProperty(window.CustomEvent.prototype, 'constructor', {
+            enumerable: false
+        });
+        Object.setPrototypeOf(window.CustomEvent, window.Event);
+
+        if (['../non-indexedDB/exceptions.js', '../non-indexedDB/constructor-object.js'].includes(shimNS.fileName)) {
+            // These changes are for exceptions tests
+            const _appendChild = window.document.documentElement.appendChild.bind(window.document.documentElement);
+            window.document.documentElement.appendChild = function (...args) {
+                if (args[0] === window.document) { // exceptions.js compares the DOMException thrown here with the global DOMException object
+                    throw new window.DOMException('Hierarchy request error', 'HierarchyRequestError');
+                }
+                return _appendChild(...args);
+            };
+            const _bodyAppendChild = window.document.body.appendChild.bind(window.document.body);
+            window.document.body.appendChild = function (...args) {
+                const el = args[0];
+                if (el.localName.toLowerCase() === 'iframe') {
+                    const _onload = el.onload;
+                    el.onload = function (e) {
+                        const _appendChild = el.contentDocument.documentElement.appendChild.bind(el.contentDocument.documentElement);
+                        el.contentWindow.DOMException = window.DOMException;
+                        el.contentDocument.documentElement.appendChild = function (...args) {
+                            if (args[0] === el.contentDocument) {
+                                throw new window.DOMException('Hierarchy request error', 'HierarchyRequestError');
+                            }
+                            return _appendChild(...args);
+                        };
+                        return _onload(e);
+                    };
+                }
+                return _bodyAppendChild(...args);
+            };
+            window.Error = Error; // For comparison of DOMException by constructor-object.js test
+        } else if (['idbfactory-open-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js'].includes(shimNS.fileName)) {
+            const _createElement = window.document.createElement.bind(window.document);
+            window.document.createElement = function (...args) {
+                const elName = args[0];
+                const el = _createElement(...args);
+                if (elName === 'iframe') {
+                    let _onload;
+                    Object.defineProperties(el, {
+                        /*
+                        srcdoc: { // We need to have this run in its own sandbox or something
+                            set () {
+
+                            }
+                        },
+                        */
+                        onload: {
+                            set (val) {
+                                _onload = val;
+                            },
+                            get () {
+                                return function (e) {
+                                    setTimeout(function () {
+                                        _onload(e);
+                                    });
+                                };
+                            }
+                        }
+                    });
+                }
+                return el;
+            };
+        }
+
+        // window.XMLHttpRequest = XMLHttpRequest({basePath: 'http://localhost:8000/IndexedDB/'}); // Todo: We should support this too
+        window.XMLHttpRequest = XMLHttpRequestConstr({basePath});
+        window.XMLHttpRequest.prototype.overrideMimeType = function () { /* */ };
+        window.fetch = function (...args) {
+            if (args[0].startsWith('/')) {
+                args[0] = 'http://localhost:8000' + args[0];
+            }
+            return fetch(...args);
+        };
+
+        global.XMLHttpRequest = window.XMLHttpRequest;
+        // Expose the following to the `createObjectURL` polyfill
+        delete window.URL.createObjectURL;
+        global.URL = window.URL;
+        // Polyfill enough for our tests
+        const cou = require( // eslint-disable-line global-require
+            '../node_modules/typeson-registry/polyfills/createObjectURL-polyglot'
+        );
+        global.URL.createObjectURL = cou.createObjectURL;
+        global.XMLHttpRequest.prototype.overrideMimeType = cou.xmlHttpRequestOverrideMimeType({
+            polyfillDataURLs: true
+        });
+
+        delete require.cache[ // eslint-disable-line standard/computed-property-even-spacing
+            Object.keys(require.cache).filter((path) => path.includes('createObjectURL'))[0]
         ];
-        // Use paths set in node-buildjs.js (when extracting <script> tags and joining contents)
-        content.replace(/beginscript::(.*?)::endscript/g, (_, src) => {
-            // Fix paths for known support files and report new ones (so we can decide how to handle)
-            if (supported.includes(src) || supported.includes(src.replace(/^\//, ''))) {
-                src = src.replace(/^\//, '');
-                scripts.push(path.join(idbTestPath,
-                    // Since our build script is now copying it, we actually don't need this now,
-                    //    but keeping comment in case this possibility is later closed
-                    // src === 'resources/WebIDLParser.js' // See https://github.com/w3c/testharness.js/issues/231
-                    // This file should be rewritten by `web-platform-tests/tools/serve/serve`,
-                    //   but as we are allowing testing independently of this environment (and
-                    //   are using file loading as opposed to URL loading mechanisms in our
-                    //   testing) we just map it to the source file which appears to be rendered
-                    //   unmodified
-                    // ? 'resources/webidl2/lib/webidl2.js' : ()
-                    ((/^(service-workers|resources|IndexedDB)/).test(src)
-                        ? src
-                        : 'IndexedDB/' + src)
-                ));
-            } else {
-                console.log('missing?:' + src);
+
+        // We will otherwise miss these tests (though not sure this is the best solution):
+        //   see test_primary_interface_of in idlharness.js
+        window.Object = Object;
+        window.Object[Symbol.hasInstance] = function (inst) {
+            return inst && typeof inst === 'object';
+        };
+
+        window.Function = Function; // idlharness.any.js with check for `DOMStringList`'s prototype being the same Function.prototype (still true?)
+
+        // Not deleting per https://github.com/jsdom/jsdom/issues/1720#issuecomment-279665105
+        // Needed for avoiding test non-completion in '../non-indexedDB/interface-objects.js'
+        Object.defineProperty(window, 'TreeWalker', {
+            enumerable: false,
+            writable: true,
+            configurable: true,
+            value () { /* */ }
+        });
+
+        // Patch postMessage to throw for SCA (as needed by tests in key_invalid.htm)
+        const _postMessage = window.postMessage.bind(window);
+        // Todo: Submit this as PR to jsdom
+        window.postMessage = function (...args) {
+            try {
+                CY.clone(args[0]);
+            } catch (cloneErr) {
+                // Todo: Submit the likes of this as a PR to cyclonejs
+                throw createDOMException('DataCloneError', 'Could not clone the message.');
+            }
+            _postMessage(...args);
+        };
+        window.Worker = Worker({
+            relativePathType: 'file', // Todo: We need to change this to "url" when implemented
+            // Todo: We might auto-detect this by looking at window.location
+            basePath, // Todo: We need to change this to our server's base URL when implemented
+            // basePath: path.join(__dirname, 'js')
+            rootPath,
+            permittedProtocols: ['http', 'https', 'blob']
+        });
+        window.Blob.prototype[Symbol.toStringTag] = 'Blob';
+        window.File.prototype[Symbol.toStringTag] = 'File';
+        window.FileList.prototype[Symbol.toStringTag] = 'FileList';
+
+        // Needed by typeson-registry to revive clones
+        window.BigInt = global.BigInt;
+        global.Blob = window.Blob;
+        global.File = window.File;
+        // keypath-special-identifiers.htm still relies on this property
+        Object.defineProperty(global.File.prototype, 'lastModifiedDate', {
+            configurable: true,
+            get () {
+                return new Date(this.lastModified);
             }
         });
 
-        readAndJoinFiles(
-            scripts,
-            function (harnessContent) {
-                // early envt't, harness, reporting env't, specific test
-                const allContent = initial + '\n' + harnessContent + '\n' + ending + '\n' + content;
+        shimNS.window = window;
 
-                // Build the window each time for test safety
-                const rootPath = path.join(__dirname, '../web-platform-tests');
-                const basePath = path.join(rootPath, 'IndexedDB');
-                /*
-                // Todo: We aren't really using this now as it doesn't help
-                //    with XMLHttpRequest; it also changes path of
-                //    node-XMLHttpRequest; submit PR to jsdom to get
-                //    relative local file paths working as in our
-                //    node-XMLHttpRequest fork (and with a desired base path);
-                //    however, we really need to get our own test server running
-                //    to allow URLs to work
-                */
-                // Todo: We should get this working with our test server; should work with `XMLHttpRequest` base
-                // Leverage the W3C server for interfaces test (assuming it is running);
-                //   as we are overriding `XMLHttpRequest` below, we are not really using this at the moment,
-                //   but to set up, see https://github.com/w3c/web-platform-tests
-                // const url = 'http://localhost:9999/web-platform-tests/IndexedDB/idlharness.any.html',
-                // const url = 'file://' + basePath;
-                const url = 'http://localhost:8000/IndexedDB/idlharness.any.html';
-                JSDOM.fromURL(url).then(function ({window}) {
-                    try {
-                        // Should only pass in safe objects
-                        const sandboxObj = {
-                            console,
-                            shimNS
-                        };
-
-                        const baseCfg = {
-                            replaceNonIDBGlobals: true,
-                            checkOrigin: false,
-                            databaseNameLengthLimit: 1000,
-                            useSQLiteIndexes: true,
-                            DEBUG
-                        };
-                        if (['idbfactory-open-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js'].includes(
-                            shimNS.fileName
-                        )) {
-                            baseCfg.checkOrigin = true;
-                        }
-                        global.location = window.location; // Needed by IDB for origin checks; also needed by `createObjectURL` polyfill
-
-                        // Todo: We might switch based on file to normally try non-Unicode version or otherwise exclude properties as
-                        //   some of these do incur a significant performance cost which could speed up the testing process if avoided,
-                        //   though it could also make the tests more fragile to changes
-                        // indexeddbshimNonUnicode(window);
-                        if (['idlharness.any.js', '../non-indexedDB/exceptions.js', '../non-indexedDB/__event-interface.js'].includes(shimNS.fileName)) {
-                            indexeddbshim(window, Object.assign(baseCfg, {fullIDLSupport: true}));
-                        } else {
-                            indexeddbshim(window, baseCfg);
-                        }
-
-                        // See <https://github.com/axemclion/IndexedDBShim/issues/280>
-                        /*
-                        ['DOMStringList', 'Event', 'CustomEvent', 'EventTarget' // These were having no effect due to https://github.com/tmpvar/jsdom/issues/1720#issuecomment-279665105
-                        ].forEach((prop) => {
-                            // Object.defineProperty(window, prop, Object.getOwnPropertyDescriptor(window, 'Shim' + prop));
-                            Object.defineProperty(window[prop], 'prototype', {
-                                writable: false
-                            });
-                            window[prop].prototype[Symbol.toStringTag] = prop + 'Prototype';
-                        });
-                        // These overwrite jsdom's objects as needed by test checks
-                        // window.CustomEvent = window.ShimCustomEvent; // Used in events tests
-                        */
-
-                        const _setTimeout = window.setTimeout;
-                        window.setTimeout = function (cb, ms) { // Override to better ensure transaction has expired (otherwise we'd mostly need sync SQLite operations)
-                            _setTimeout(cb, ms + 500);
-                        };
-
-                        Object.defineProperty(window.CustomEvent.prototype, 'constructor', {
-                            enumerable: false
-                        });
-                        Object.setPrototypeOf(window.CustomEvent, window.Event);
-
-                        if (['../non-indexedDB/exceptions.js', '../non-indexedDB/constructor-object.js'].includes(shimNS.fileName)) {
-                            // These changes are for exceptions tests
-                            const _appendChild = window.document.documentElement.appendChild.bind(window.document.documentElement);
-                            window.document.documentElement.appendChild = function (...args) {
-                                if (args[0] === window.document) { // exceptions.js compares the DOMException thrown here with the global DOMException object
-                                    throw new window.DOMException('Hierarchy request error', 'HierarchyRequestError');
-                                }
-                                return _appendChild(...args);
-                            };
-                            const _bodyAppendChild = window.document.body.appendChild.bind(window.document.body);
-                            window.document.body.appendChild = function (...args) {
-                                const el = args[0];
-                                if (el.localName.toLowerCase() === 'iframe') {
-                                    const _onload = el.onload;
-                                    el.onload = function (e) {
-                                        const _appendChild = el.contentDocument.documentElement.appendChild.bind(el.contentDocument.documentElement);
-                                        el.contentWindow.DOMException = window.DOMException;
-                                        el.contentDocument.documentElement.appendChild = function (...args) {
-                                            if (args[0] === el.contentDocument) {
-                                                throw new window.DOMException('Hierarchy request error', 'HierarchyRequestError');
-                                            }
-                                            return _appendChild(...args);
-                                        };
-                                        return _onload(e);
-                                    };
-                                }
-                                return _bodyAppendChild(...args);
-                            };
-                            window.Error = window.indexedDB.modules.Error; // For comparison of DOMException by constructor-object.js test
-                        } else if (['idbfactory-open-opaque-origin.js', 'idbfactory-deleteDatabase-opaque-origin.js'].includes(shimNS.fileName)) {
-                            const _createElement = window.document.createElement.bind(window.document);
-                            window.document.createElement = function (...args) {
-                                const elName = args[0];
-                                const el = _createElement(...args);
-                                if (elName === 'iframe') {
-                                    let _onload;
-                                    Object.defineProperties(el, {
-                                        /*
-                                        srcdoc: { // We need to have this run in its own sandbox or something
-                                            set () {
-
-                                            }
-                                        },
-                                        */
-                                        onload: {
-                                            set (val) {
-                                                _onload = val;
-                                            },
-                                            get () {
-                                                return function (e) {
-                                                    setTimeout(function () {
-                                                        _onload(e);
-                                                    });
-                                                };
-                                            }
-                                        }
-                                    });
-                                }
-                                return el;
-                            };
-                        }
-
-                        // window.XMLHttpRequest = XMLHttpRequest({basePath: 'http://localhost:8000/IndexedDB/'}); // Todo: We should support this too
-                        window.XMLHttpRequest = XMLHttpRequestConstr({basePath});
-                        window.fetch = function (...args) {
-                            if (args[0].startsWith('/')) {
-                                args[0] = 'http://localhost:8000' + args[0];
-                            }
-                            return fetch(...args);
-                        };
-
-                        const _xhropen = window.XMLHttpRequest.prototype.open;
-                        window.XMLHttpRequest.prototype.open = function (method, url, async) {
-                            const match = url.match(/data:(.*);base64,/);
-                            if (match) { // Data URLs not handled by node-XMLHttpRequest
-                                this.status = 200;
-                                this.send = function () {};
-                                this.responseType = match[1] || '';
-                                this.responseText = Buffer.from(url.slice(match[0].length), 'base64').toString('utf8');
-                                return;
-                            }
-                            return _xhropen.call(this, method, url, async);
-                        };
-
-                        global.XMLHttpRequest = window.XMLHttpRequest;
-                        // Expose the following to the `createObjectURL` polyfill
-                        delete window.URL.createObjectURL;
-                        global.URL = window.URL;
-                        const cou = require('../node_modules/typeson-registry/polyfills/createObjectURL-polyglot'); // Polyfill enough for our tests
-                        global.URL.createObjectURL = cou.createObjectURL;
-                        global.XMLHttpRequest.prototype.open = cou.xmlHttpRequestOpen;
-
-                        delete require.cache[ // eslint-disable-line standard/computed-property-even-spacing
-                            Object.keys(require.cache).filter((path) => path.includes('createObjectURL'))[0]
-                        ];
-
-                        // We will otherwise miss these tests (though not sure this is the best solution):
-                        //   see test_primary_interface_of in idlharness.js
-                        window.Object = Object;
-                        window.Object[Symbol.hasInstance] = function (inst) { return inst && typeof inst === 'object'; };
-
-                        window.Function = Function; // idlharness.any.js with check for `DOMStringList`'s prototype being the same Function.prototype (still true?)
-
-                        // Not deleting per https://github.com/tmpvar/jsdom/issues/1720#issuecomment-279665105
-                        // Needed for avoiding test non-completion in '../non-indexedDB/interface-objects.js'
-                        Object.defineProperty(window, 'TreeWalker', {
-                            enumerable: false,
-                            writable: true,
-                            configurable: true,
-                            value () {}
-                        });
-
-                        // Patch postMessage to throw for SCA (as needed by tests in key_invalid.htm)
-                        const _postMessage = window.postMessage.bind(window);
-                        // Todo: Submit this as PR to jsdom
-                        window.postMessage = function (...args) {
-                            try {
-                                CY.clone(args[0]);
-                            } catch (cloneErr) {
-                                // Todo: Submit the likes of this as a PR to cyclonejs
-                                throw window.indexedDB.utils.createDOMException('DataCloneError', 'Could not clone the message.');
-                            }
-                            _postMessage(...args);
-                        };
-                        window.Worker = Worker({
-                            relativePathType: 'file', // Todo: We need to change this to "url" when implemented
-                            // Todo: We might auto-detect this by looking at window.location
-                            basePath, // Todo: We need to change this to our server's base URL when implemented
-                            // basePath: path.join(__dirname, 'js')
-                            rootPath,
-                            permittedProtocols: ['http', 'https', 'blob']
-                        });
-                        window.Blob.prototype[Symbol.toStringTag] = 'Blob';
-                        window.File.prototype[Symbol.toStringTag] = 'File';
-                        window.FileList.prototype[Symbol.toStringTag] = 'FileList';
-
-                        // Needed by typeson-registry to revive clones
-                        global.Blob = window.Blob;
-                        global.File = window.File;
-                        // keypath-special-identifiers.htm still relies on this property
-                        Object.defineProperty(global.File.prototype, 'lastModifiedDate', {
-                            configurable: true,
-                            get () {
-                                return new Date(this.lastModified);
-                            }
-                        });
-
-                        shimNS.window = window;
-
-                        vm.runInNewContext(allContent, sandboxObj, {
-                            displayErrors: true,
-                            timeout: vmTimeout
-                        });
-                    } catch (err) {
-                        console.log(err);
-                        // If there is an issue, save the last erring test along with our
-                        // custom test environment and the harness bundle; avoid some of our
-                        //  ESLint rules on this joined file to better notice any other
-                        //  issues between the code, custom environment, and harness
-                        const fileSave =
-                            '/' + '*' + shimNS.fileName + ':::' + err /* .replace(new RegExp('\\*' + '/', 'g'), '* /') */ + '*' + '/' +
-                            '/' + '* globals assert_equals, assert_array_equals, assert_unreached, async_test, EventWatcher, SharedWorkerGlobalScope, DedicatedWorkerGlobalScope, ServiceWorkerGlobalScope, WorkerGlobalScope *' + '/\n' +
-                            '/' + '*eslint-disable curly, no-unused-vars, no-self-compare, space-in-parens, no-extra-parens, spaced-comment, padded-blocks, no-useless-escape, func-call-spacing, comma-spacing, operator-linebreak, prefer-const, compat/compat, no-unneeded-ternary, space-unary-ops, object-property-newline, no-multiple-empty-lines, block-spacing, space-infix-ops, comma-dangle, no-template-curly-in-string, yoda, quotes, spaced-comment, no-var, key-spacing, camelcase, indent, semi, space-before-function-paren, eqeqeq, brace-style, no-array-constructor, keyword-spacing*' + '/\n' +
-                            allContent;
-                        fs.writeFile(path.join('test-support', 'latest-erring-bundled.js'), fileSave, function (err) {
-                            if (err) { return console.log(err); }
-                        });
-                        shimNS.finished();
-                    }
-                });
-            }
-        );
-    });
+        vm.runInNewContext(allContent, sandboxObj, {
+            displayErrors: true,
+            timeout: vmTimeout
+        });
+    } catch (err) {
+        console.log(err);
+        // If there is an issue, save the last erring test along with our
+        // custom test environment and the harness bundle; avoid some of our
+        //  ESLint rules on this joined file to better notice any other
+        //  issues between the code, custom environment, and harness
+        const fileSave =
+            '/' + '*' + shimNS.fileName + ':::' + err /* .replace(new RegExp('\\*' + '/', 'g'), '* /') */ + '*' + '/' +
+            '/' + '* globals assert_equals, assert_array_equals, assert_unreached, async_test, EventWatcher, SharedWorkerGlobalScope, DedicatedWorkerGlobalScope, ServiceWorkerGlobalScope, WorkerGlobalScope *' + '/\n' +
+            '/' + '*eslint-disable curly, no-unused-vars, no-self-compare, space-in-parens, no-extra-parens, spaced-comment, padded-blocks, no-useless-escape, func-call-spacing, comma-spacing, operator-linebreak, prefer-const, compat/compat, no-unneeded-ternary, space-unary-ops, object-property-newline, no-multiple-empty-lines, block-spacing, space-infix-ops, comma-dangle, no-template-curly-in-string, yoda, quotes, spaced-comment, no-var, key-spacing, camelcase, indent, semi, space-before-function-paren, eqeqeq, brace-style, no-array-constructor, keyword-spacing*' + '/\n' +
+            allContent;
+        try {
+            await writeFile(path.join('test-support', 'latest-erring-bundled.js'), fileSave);
+        } catch (err) {
+            console.log(err);
+        }
+        shimNS.finished();
+    }
 }
 
-function readAndEvaluateFiles (err, jsFiles, workers, recursing) {
-    if (err) { return console.log(err); }
-    jsFiles = jsFiles.filter((jsFile) => (/\.js/).test(jsFile));
+async function readAndEvaluateFiles (jsFiles, workers, recursing) {
+    jsFiles = jsFiles.filter((jsFile) => (/\.js/u).test(jsFile));
     if (!recursing && fileIndex) { // Start at a particular file count
-        const start = parseInt(fileIndex, 10);
-        const end = (endFileCount ? (start + parseInt(endFileCount, 10)) : jsFiles.length);
-        readAndEvaluateFiles(
-            err,
+        const start = parseInt(fileIndex);
+        const end = (endFileCount ? (start + parseInt(endFileCount)) : jsFiles.length);
+        await readAndEvaluateFiles(
             jsFiles.slice(start, end),
             workers,
             true
         );
         return;
     }
-    fs.readFile(path.join('test-support', 'environment.js'), 'utf8', function (err, initial) {
-        if (err) { return console.log(err); }
-
-        // console.log(JSON.stringify(jsFiles)); // See what files we've got
-
-        // Hard-coding problematic files for testing
-        // jsFiles = ['idbcursor-continuePrimaryKey-exception-order.js'];
-        // jsFiles = ['idlharness.any.js'];
-        // jsFiles = ['transaction-lifetime-empty.js'];
-
-        fs.readFile(path.join('test-support', 'custom-reporter.js'), 'utf8', function (err, ending) {
-            if (err) { return console.log(err); }
-            readAndEvaluate(jsFiles, initial, ending, workers);
-        });
-    });
-}
-
-switch (fileArg) {
-case 'good':
-    readAndEvaluateFiles(null, goodFiles);
-    break;
-case 'bad':
-    readAndEvaluateFiles(null, badFiles);
-    break;
-case 'timeout':
-    readAndEvaluateFiles(null, timeout);
-    break;
-case 'notRunning':
-    readAndEvaluateFiles(null, notRunning);
-    break;
-case 'domstringlist':
-    readAndEvaluateFiles(null, ['domstringlist.js']);
-    break;
-case 'events': case 'event':
-    // Tests `EventTarget`, etc. shims
-    readAndEvaluateFiles(null, ['../non-indexedDB/__event-interface.js', '../non-indexedDB/interface-objects.js']);
-    break;
-case 'exceptions': case 'exception': case 'domexception':
-    readAndEvaluateFiles(null, ['../non-indexedDB/DOMException-constructor.js', '../non-indexedDB/DOMException-constants.js', '../non-indexedDB/exceptions.js', '../non-indexedDB/constructor-object.js']);
-    break;
-case 'workers': case 'worker':
-    fs.readdir(dirPath, function (err, jsFiles) {
-        jsFiles = jsFiles.filter((file) => file.match(workerFileRegex));
-        readAndEvaluateFiles(err, jsFiles, true);
-    });
-    break;
-default:
-    if (!fileIndex && fileArg && fileArg !== 'all') {
-        readAndEvaluateFiles(null, [fileArg], true); // Allow specific worker files to be passed
-        break;
+    let initial;
+    try {
+        initial = await readFile(path.join('test-support', 'environment.js'), 'utf8');
+    } catch (err) {
+        console.log(err);
+        return;
     }
-    fs.readdir(dirPath, readAndEvaluateFiles);
-    break;
+
+    // console.log(JSON.stringify(jsFiles)); // See what files we've got
+
+    // Hard-coding problematic files for testing
+    // jsFiles = ['idbcursor-continuePrimaryKey-exception-order.js'];
+    // jsFiles = ['idlharness.any.js'];
+    // jsFiles = ['transaction-lifetime-empty.js'];
+
+    let ending;
+    try {
+        ending = await readFile(path.join('test-support', 'custom-reporter.js'), 'utf8');
+    } catch (err) {
+        console.log(err);
+        return;
+    }
+    await readAndEvaluate(jsFiles, initial, ending, workers);
 }
 
-function readAndJoinFiles (arr, cb, i = 0, str = '') {
+(async () => {
+    try {
+        switch (fileArg) {
+        case 'good':
+            await readAndEvaluateFiles(goodFiles);
+            break;
+        case 'bad':
+            await readAndEvaluateFiles(badFiles);
+            break;
+        case 'timeout':
+            await readAndEvaluateFiles(timeout);
+            break;
+        case 'notRunning':
+            await readAndEvaluateFiles(notRunning);
+            break;
+        case 'domstringlist':
+            await readAndEvaluateFiles(['domstringlist.js']);
+            break;
+        case 'events': case 'event':
+            // Tests `EventTarget`, etc. shims
+            await readAndEvaluateFiles([
+                '../non-indexedDB/__event-interface.js',
+                '../non-indexedDB/interface-objects.js'
+            ]);
+            break;
+        case 'exceptions': case 'exception': case 'domexception':
+            await readAndEvaluateFiles([
+                '../non-indexedDB/DOMException-constructor.js',
+                '../non-indexedDB/DOMException-constants.js',
+                '../non-indexedDB/exceptions.js',
+                '../non-indexedDB/constructor-object.js'
+            ]);
+            break;
+        case 'workers': case 'worker': {
+            let jsFiles;
+            try {
+                jsFiles = await readdir(dirPath).filter((file) => file.match(workerFileRegex));
+            } catch (err) {
+                console.log(err);
+                return;
+            }
+            await readAndEvaluateFiles(jsFiles, true);
+            break;
+        } default: {
+            if (!fileIndex && fileArg && fileArg !== 'all') {
+                await readAndEvaluateFiles([fileArg], true); // Allow specific worker files to be passed
+                break;
+            }
+            let files;
+            try {
+                files = await readdir(dirPath);
+            } catch (err) {
+                console.log(err);
+                return;
+            }
+            await readAndEvaluateFiles(files);
+            break;
+        }
+        }
+    } catch (err) {
+        console.log(err);
+    }
+})();
+
+async function readAndJoinFiles (arr, i = 0, str = '') {
     const filename = arr[i];
     if (!filename) { // || i === arr.length - 1) {
-        return cb(str);
+        return str;
     }
-    fs.readFile(filename, 'utf8', function (err, data) {
-        if (err) { return console.log(err); }
-        str += '/*jsfilename:' + filename + '*/\n\n' + data;
-        readAndJoinFiles(arr, cb, i + 1, str);
-    });
+    let data;
+    try {
+        data = await readFile(filename, 'utf8');
+    } catch (err) {
+        console.log(err);
+        throw err;
+    }
+    str += '/*jsfilename:' + filename + '*/\n\n' + data;
+    return readAndJoinFiles(arr, i + 1, str);
 }

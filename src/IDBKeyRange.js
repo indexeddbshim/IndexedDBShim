@@ -39,8 +39,8 @@ IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
 
         this.__lower = lowerConverted;
         this.__upper = upperConverted;
-        this.__lowerOpen = !!lowerOpen;
-        this.__upperOpen = !!upperOpen;
+        this.__lowerOpen = Boolean(lowerOpen);
+        this.__upperOpen = Boolean(upperOpen);
     }
     IDBKeyRange.prototype = IDBKeyRangeAlias.prototype;
     return new IDBKeyRange();
@@ -107,7 +107,7 @@ readonlyProperties.forEach((prop) => {
 });
 
 Object.defineProperty(IDBKeyRange, Symbol.hasInstance, {
-    value: obj => util.isObj(obj) && 'upper' in obj && typeof obj.lowerOpen === 'boolean'
+    value: (obj) => util.isObj(obj) && 'upper' in obj && typeof obj.lowerOpen === 'boolean'
 });
 
 Object.defineProperty(IDBKeyRange, 'prototype', {
@@ -150,7 +150,7 @@ function convertValueToKeyRange (value, nullDisallowed) {
         }
         return value;
     }
-    if (value == null) {
+    if (util.isNullish(value)) {
         if (nullDisallowed) {
             throw createDOMException('DataError', 'No key or range was specified');
         }

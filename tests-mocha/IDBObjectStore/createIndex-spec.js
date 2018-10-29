@@ -206,7 +206,10 @@ describe('IDBObjectStore.createIndex', function () {
                 'out-of-line', 'inline-index', 'unique-index', 'multi-entry-index',
                 'unique-multi-entry-index', 'dotted-index', 'compound-index', 'compound-index-unique',
                 function (err, db) {
-                    if (err) return done(err);
+                    if (err) {
+                        done(err);
+                        return;
+                    }
                     db.close();
                     setTimeout(function () {
                         verifyDatabaseSchema(db.name);
@@ -255,9 +258,8 @@ describe('IDBObjectStore.createIndex', function () {
             }
 
             function verifySchema (obj, schema) {
-                for (var prop in schema) {
+                Object.entries(schema).forEach(([prop, schemaValue]) => {
                     var objValue = obj[prop];
-                    var schemaValue = schema[prop];
 
                     if (!env.isShimmed && env.browser.isIE && prop === 'multiEntry') {
                         // IE's native IndexedDB does not have the multiEntry property
@@ -269,7 +271,7 @@ describe('IDBObjectStore.createIndex', function () {
                     }
 
                     expect(objValue).to.deep.equal(schemaValue, obj.name + ' ' + prop);
-                }
+                });
             }
         });
     });

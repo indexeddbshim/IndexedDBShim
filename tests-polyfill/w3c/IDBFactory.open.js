@@ -1,6 +1,6 @@
 describe('W3C IDBFactory.open Tests', function () {
     var FDBVersionChangeEvent = IDBVersionChangeEvent;
-    var Event = shimIndexedDB.modules.ShimEvent;
+    var Event = ShimEvent;
     //var FDBTransaction = IDBTransaction;
     var assert_unreached = support.assert_unreached;
     var createdb = support.createdb;

@@ -270,13 +270,13 @@ describe('IDBFactory.cmp', function () {
             tryToCompare([1, null, 2]);                         // array with null
             tryToCompare([true, false]);                        // array of booleans
             tryToCompare([{foo: 'bar'}]);                       // array of objects
-            tryToCompare(new Boolean(true)); // eslint-disable-line no-new-wrappers
-            tryToCompare(new Object()); // eslint-disable-line no-new-object
+            tryToCompare(new Boolean(true)); // eslint-disable-line no-new-wrappers, unicorn/new-for-builtins
+            tryToCompare(new Object()); // eslint-disable-line no-new-object, unicorn/new-for-builtins
 
             if (env.isShimmed || !env.browser.isIE) {
                 tryToCompare(null);                             // null
-                tryToCompare(new Number(12345)); // eslint-disable-line no-new-wrappers
-                tryToCompare(new String('hello world')); // eslint-disable-line no-new-wrappers
+                tryToCompare(new Number(12345)); // eslint-disable-line no-new-wrappers, unicorn/new-for-builtins
+                tryToCompare(new String('hello world')); // eslint-disable-line no-new-wrappers, unicorn/new-for-builtins
                 tryToCompare(new Date(''));                     // invalid date
                 tryToCompare(new RegExp('asdf'));               // RegExp object
                 tryToCompare(/asdf/);                           // RegExp literal

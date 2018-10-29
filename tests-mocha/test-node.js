@@ -3,7 +3,8 @@ window.location = {search: ''}; // useShim=true // This must go before sinon as 
 
 window.chai = require('chai');
 window.sinon = require('sinon');
-window.mocha = {setup () {}, globals () {}, checkLeaks () {}};
+
+window.mocha = {setup () { /* */ }, globals () { /* */ }, checkLeaks () { /* */ }};
 
 window.addEventListener = function (type) {
     if (type !== 'cordovacallbackerror') {
@@ -25,17 +26,17 @@ window.onerror = function () {
 };
 
 (function () {
-    const setGlobalVars = require('../dist/indexeddbshim-node.js');
+    const setGlobalVars = require('../dist/indexeddbshim-node.js'); // eslint-disable-line global-require
     setGlobalVars(window, {addNonIDBGlobals: true});
 
-    require('./test-environment.js');
-    require('./test-utils.js');
+    require('./test-environment.js'); // eslint-disable-line global-require
+    require('./test-utils.js'); // eslint-disable-line global-require
 
     var tests; // eslint-disable-line no-var
 
-    if (process.env.npm_config_test) {
-        tests = [process.env.npm_config_test];
-        console.log('Running test: ' + process.env.npm_config_test);
+    if (process.env.npm_config_test) { // eslint-disable-line no-process-env
+        tests = [process.env.npm_config_test]; // eslint-disable-line no-process-env
+        console.log('Running test: ' + process.env.npm_config_test); // eslint-disable-line no-process-env
     } else {
         tests = [
             'api-spec.js',
@@ -64,6 +65,6 @@ window.onerror = function () {
         ];
     }
     tests.forEach(function (path) {
-        require('./' + path);
+        require('./' + path); // eslint-disable-line import/no-dynamic-require, global-require
     });
 }());

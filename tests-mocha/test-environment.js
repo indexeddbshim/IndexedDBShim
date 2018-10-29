@@ -21,12 +21,12 @@
         /**
          * Does the browser natively support IndexedDB?
          */
-        nativeIndexedDB: !!window.indexedDB,
+        nativeIndexedDB: Boolean(window.indexedDB),
 
         /**
          * Does the browser natively support WebSql?
          */
-        nativeWebSql: !!window.openDatabase,
+        nativeWebSql: Boolean(window.openDatabase),
 
         /**
          * The IndexedDB instance that is being used (may be native, or the shim).
@@ -101,7 +101,7 @@
             shimIndexedDB.__setConfig('useSQLiteIndexes', true);
             shimIndexedDB.__debug(true);
             env.isNative = false;
-            if (IDBFactory === shimIndexedDB.modules.IDBFactory) {
+            if (!IDBFactory.toString().includes('[native code]')) {
                 env.indexedDB = shimIndexedDB;
                 env.isShimmed = true;
             } else {
@@ -110,8 +110,8 @@
 
             if (env.isShimmed) {
                 // Use the shimmed Error & Event classes instead of the native ones
-                env.Event = shimIndexedDB.modules.ShimEvent;
-                env.DOMException = shimIndexedDB.modules.ShimDOMException;
+                env.Event = window.ShimEvent;
+                env.DOMException = window.ShimDOMException;
             }
 
             if (env.nativeIndexedDB) {

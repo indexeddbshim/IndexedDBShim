@@ -1,6 +1,7 @@
-// See https://github.com/tmpvar/jsdom/issues/1720
+// See https://github.com/jsdom/jsdom/issues/1720
 const assert = require('assert');
 const jsdom = require('jsdom');
+
 const {JSDOM} = jsdom;
 
 const {window} = new JSDOM();

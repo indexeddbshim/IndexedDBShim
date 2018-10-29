@@ -32,7 +32,7 @@
             if (cursor) {
                 count++;
                 assert.ok(true, 'Iterating over cursor ' + cursor.key + ' for value ' + JSON.stringify(cursor.value));
-                cursor['continue']();
+                cursor.continue();
             } else {
                 assert.equal(count, 15);
                 objectStore.transaction.db.close();
@@ -58,15 +58,15 @@
                     updateReq.onsuccess = function () {
                         assert.equal(cursor.key, updateReq.result, 'Update value ' + cursor.key);
                         _('Updated cursor with key ' + updateReq.result);
-                        cursor['continue']();
+                        cursor.continue();
                     };
                     updateReq.onerror = function () {
                         assert.ok(false, 'No Update ' + cursor.key);
-                        cursor['continue']();
+                        cursor.continue();
                     };
                 } else {
                     assert.ok(true, 'Got cursor value ' + cursor.key + ':' + JSON.stringify(cursor.value));
-                    cursor['continue']();
+                    cursor.continue();
                 }
             } else {
                 _('Iterating over all objects completed');
@@ -92,19 +92,19 @@
             if (cursor) {
                 cursorIteration++;
                 if (cursor.value.Int % 5 === 0) {
-                    var updateReq = cursor['delete']();
+                    var updateReq = cursor.delete();
                     updateReq.onsuccess = function () {
                         assert.equal(undefined, updateReq.result, 'Deleted value ' + cursor.key);
                         _('Deleted cursor with key ' + updateReq.result);
-                        cursor['continue']();
+                        cursor.continue();
                     };
                     updateReq.onerror = function () {
                         assert.ok(false, 'No delete ' + cursor.key);
-                        cursor['continue']();
+                        cursor.continue();
                     };
                 } else {
                     assert.ok(true, 'Got cursor value ' + cursor.key + ':' + JSON.stringify(cursor.value));
-                    cursor['continue']();
+                    cursor.continue();
                 }
             } else {
                 objectStore.transaction.db.close();
@@ -135,7 +135,7 @@
             var cursor = indexCursorReq.result;
             if (cursor) {
                 _('Iterating over cursor ' + cursor.key + ' for value ' + JSON.stringify(cursor.value));
-                cursor['continue']();
+                cursor.continue();
             } else {
                 assert.ok(true, 'Cursor Iteration completed');
                 db.close();
