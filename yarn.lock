@@ -6907,10 +6907,10 @@ typedarray@^0.0.6, typedarray@~0.0.5:
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
 
-typeson-registry@1.0.0-alpha.24:
-  version "1.0.0-alpha.24"
-  resolved "https://registry.yarnpkg.com/typeson-registry/-/typeson-registry-1.0.0-alpha.24.tgz#b27d1660497d52027d61e8d2fa7f3415c5dbcb51"
-  integrity sha512-PyD4l/GsZ4pV/eUiWtEeDa0VjgSMb8LR5nZzvzx/5CqHGfB5ECrTot7Da4+vcGn3a3ujbRS9SUq9RC+rAoL4Qg==
+typeson-registry@1.0.0-alpha.25:
+  version "1.0.0-alpha.25"
+  resolved "https://registry.yarnpkg.com/typeson-registry/-/typeson-registry-1.0.0-alpha.25.tgz#106a9768da0821909382cc2f394a249da918a093"
+  integrity sha512-8yCQ3U0Ssu0SpZ8qzrtY92e44ZuQe2oOkKFnSYEcHUdiJ17DAAmlJJzqWa+ciCEY/kekon5xS3CTM7/k/Gb+SA==
   dependencies:
     base64-arraybuffer-es6 "0.4.2"
     typeson "5.11.0"

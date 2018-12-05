@@ -1,5 +1,10 @@
 # IndexedDBShim changes
 
+## 4.0.1
+
+- Build fix: Apply `browserslist` to `@babel/env`; update typeson-registry
+    to get its `browserslist` fix
+
 ## 4.0.0
 
 - Breaking change: **WARNING**: If you need 4.0.0 to work with data stored

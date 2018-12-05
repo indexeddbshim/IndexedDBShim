@@ -1,6 +1,6 @@
 {
   "name": "indexeddbshim",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "author": "Parashuram <code@nparashuram.com>",
   "contributors": [
     "Brett Zamir"
@@ -93,7 +93,7 @@
     "eventtargeter": "0.5.0",
     "sync-promise": "git+https://github.com/brettz9/sync-promise.git#full-sync-missing-promise-features",
     "typeson": "5.11.0",
-    "typeson-registry": "1.0.0-alpha.24",
+    "typeson-registry": "1.0.0-alpha.25",
     "websql": "git+https://github.com/brettz9/node-websql.git#configurable-secure2"
   },
   "devDependencies": {

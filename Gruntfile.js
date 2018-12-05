@@ -7,15 +7,13 @@ const pkg = require('./package.json');
 const babelBrowserOptions = {
     sourceMapsAbsolute: true,
     plugins: ['add-module-exports'],
-    presets: ['@babel/env']
-};
-const babelES6BrowserOptions = {...babelBrowserOptions,
     presets: [
         ['@babel/env', {
             targets: pkg.browserslist[0] // cover 100%
         }]
     ]
 };
+const babelES6BrowserOptions = babelBrowserOptions;
 
 const babelNodeOptions = {...babelBrowserOptions,
     presets: [
