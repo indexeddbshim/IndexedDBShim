@@ -86,7 +86,6 @@ module.exports = {
       }
   ],
   rules: {
-      'capitalized-comments': 0,
       'consistent-this': ['error', 'me'],
       'default-case': 0,
       'func-name-matching': 0,
@@ -98,9 +97,7 @@ module.exports = {
       'max-len': 0,
       'multiline-ternary': 0,
       'no-console': 0,
-      'no-magic-numbers': 0,
       'no-multi-spaces': 0,
-      'no-warning-comments': 0,
       'no-shadow': 0,
       'no-sync': 0,
       'prefer-rest-params': 0,
