@@ -1,5 +1,16 @@
 # IndexedDBShim changes
 
+## 4.1.0
+
+- Optimization: Update `typeson-registry` to return to more space-optimal
+    array format when arrays do not have non-index keys (while still
+    supporting arrays with non-index keys) and `undefined` and
+    sparse arrays formats (though all are backward-compatible with
+    old data).
+- Docs (README): Update note on typeson-registry-sca-reverter
+- npm: Add `request` peer dep
+- npm: Bump devDeps and adjust linting accordingly
+
 ## 4.0.1
 
 - Build fix: Apply `browserslist` to `@babel/env`; update typeson-registry

@@ -7,7 +7,7 @@
 [![CDNJS](https://img.shields.io/cdnjs/v/IndexedDBShim.svg)](https://cdnjs.com/libraries/IndexedDBShim)
 [![License](https://img.shields.io/npm/l/indexeddbshim.svg)](LICENSE-APACHE)
 
-|[Live Demo (stable)!](https://raw.githack.com/axemclion/IndexedDBShim/v4.0.1/index.html) | [Live Demo (master)!](https://raw.githack.com/axemclion/IndexedDBShim/master/index.html) |
+|[Live Demo (stable)!](https://raw.githack.com/axemclion/IndexedDBShim/v4.1.0/index.html) | [Live Demo (master)!](https://raw.githack.com/axemclion/IndexedDBShim/master/index.html) |
 | -------------- | ----------------- |
 
 
@@ -269,7 +269,8 @@ The available properties relevant to browser or Node are:
     structured cloning algorithm representation and return its own to be
     passed to `typeson.register`. See the library
     [typeson-registry-sca-reverter](https://github.com/brettz9/typeson-registry-sca-reverter)
-    for a function that can do this.
+    for a function that can do this and check it for updates if you are
+    using it in case needed to work against new updates of IndexedDBShim.
 - __fullIDLSupport__ - If set to `true`, the slow-performing
     `Object.setPrototypeOf` calls required for full WebIDL compliance will
     be used. Probably only needed for testing or environments where full
