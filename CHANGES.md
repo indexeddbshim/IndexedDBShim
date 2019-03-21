@@ -8,6 +8,8 @@
 - Linting (ESLint): Update per new reporting
 - Refactoring: Change private `__closed` flag to match spec
     terminology, `__closePending`.
+- Refactoring: Add `__done` flag to match spec, with `readyState`
+    getter using this flag
 - Testing (W3C): Update wpt; test results; fix regression
 - npm: Update devDeps, @babel/polyfill
 

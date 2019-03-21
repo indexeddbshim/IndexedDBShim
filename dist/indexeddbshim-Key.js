@@ -1800,20 +1800,28 @@ function defineListenerProperties(obj, listeners) {
 }
 
 function defineReadonlyProperties(obj, props) {
+  var getter = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
   props = typeof props === 'string' ? [props] : props;
   props.forEach(function (prop) {
-    var _o4, _mutatorMap4;
+    var o;
 
-    Object.defineProperty(obj, '__' + prop, {
-      enumerable: false,
-      configurable: false,
-      writable: true
-    }); // We must resort to this to get "get <name>" as
-    //   the function `name` for proper IDL
+    if (getter && prop in getter) {
+      o = getter[prop];
+    } else {
+      var _o4, _mutatorMap4;
 
-    var o = (_o4 = {}, _mutatorMap4 = {}, _mutatorMap4[prop] = _mutatorMap4[prop] || {}, _mutatorMap4[prop].get = function () {
-      return this['__' + prop];
-    }, _defineEnumerableProperties(_o4, _mutatorMap4), _o4);
+      Object.defineProperty(obj, '__' + prop, {
+        enumerable: false,
+        configurable: false,
+        writable: true
+      }); // We must resort to this to get "get <name>" as
+      //   the function `name` for proper IDL
+
+      o = (_o4 = {}, _mutatorMap4 = {}, _mutatorMap4[prop] = _mutatorMap4[prop] || {}, _mutatorMap4[prop].get = function () {
+        return this['__' + prop];
+      }, _defineEnumerableProperties(_o4, _mutatorMap4), _o4);
+    }
+
     var desc = Object.getOwnPropertyDescriptor(o, prop); // desc.enumerable = true; // Default
     // desc.configurable = true; // Default
 

@@ -2018,7 +2018,7 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
   const me = this;
   const recordsToPreloadOnContinue = me.__advanceCount || _CFG.default.cursorPreloadPackSize || 100;
   me.__gotValue = false;
-  me.__req.__readyState = 'pending'; // Unset done flag
+  me.__req.__done = false;
 
   me.__store.transaction.__pushToQueue(me.__req, function cursorContinue(tx, args, success, error, executeNextRequest) {
     function triggerSuccess(k, val, primKey) {
@@ -2937,7 +2937,7 @@ IDBFactory.prototype.open = function (name
       bubbles: true,
       cancelable: true
     });
-    req.__readyState = 'done';
+    req.__done = true;
     req.__error = err;
     req.__result = undefined; // Must be undefined if an error per `result` getter
 
@@ -2948,7 +2948,7 @@ IDBFactory.prototype.open = function (name
     tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList" FROM __sys__', [], function (tx, data) {
       function finishRequest() {
         req.__result = connection;
-        req.__readyState = 'done'; // https://github.com/w3c/IndexedDB/pull/202
+        req.__done = true;
       }
 
       const connection = _IDBDatabase.default.__createInstance(db, name, oldVersion, version, data);
@@ -3002,7 +3002,7 @@ IDBFactory.prototype.open = function (name
               });
               req.__result = connection;
               connection.__upgradeTransaction = req.__transaction = req.__result.__versionTransaction = _IDBTransaction.default.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
-              req.__readyState = 'done';
+              req.__done = true;
 
               req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded(tx, args, finished, error) {
                 req.dispatchEvent(e);
@@ -3040,12 +3040,10 @@ IDBFactory.prototype.open = function (name
               };
 
               req.transaction.on__abort = function () {
-                req.__transaction = null; // `readyState` and `result` will be reset anyways by `dbCreateError` but we follow spec:
-                //    see https://github.com/w3c/IndexedDB/issues/161 and
-                //    https://github.com/w3c/IndexedDB/pull/202
+                req.__transaction = null; // `readyState` and `result` will be reset anyways by `dbCreateError` but we follow spec.
 
                 req.__result = undefined;
-                req.__readyState = 'pending';
+                req.__done = false;
                 connection.close();
                 setTimeout(() => {
                   const err = (0, _DOMException.createDOMException)('AbortError', 'The upgrade transaction was aborted.');
@@ -3257,7 +3255,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
 
     err = (0, _DOMException.webSQLErrback)(err || tx);
     sysdbFinishedCbDelete(true, function () {
-      req.__readyState = 'done';
+      req.__done = true;
       req.__error = err;
       req.__result = undefined; // Must be undefined if an error per `result` getter
       // Re: why bubbling here (and how cancelable is only really relevant for `window.onerror`) see: https://github.com/w3c/IndexedDB/issues/86
@@ -3279,8 +3277,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
       // callback(function () {
       function completeDatabaseDelete() {
         req.__result = undefined;
-        req.__readyState = 'done'; // https://github.com/w3c/IndexedDB/pull/202
-
+        req.__done = true;
         const e = new _IDBVersionChangeEvent.default('success', {
           oldVersion: version,
           newVersion: null
@@ -5402,7 +5399,7 @@ IDBRequest.__super = function IDBRequest() {
       configurable: true,
 
       get() {
-        if (this.__readyState !== 'done') {
+        if (!this.__done) {
           throw (0, _DOMException.createDOMException)('InvalidStateError', "Can't get " + prop + '; the request is still pending.');
         }
 
@@ -5411,11 +5408,18 @@ IDBRequest.__super = function IDBRequest() {
 
     });
   }, this);
-  util.defineReadonlyProperties(this, readonlyProperties);
+  util.defineReadonlyProperties(this, readonlyProperties, {
+    readyState: {
+      get readyState() {
+        return this.__done ? 'done' : 'pending';
+      }
+
+    }
+  });
   util.defineListenerProperties(this, listeners);
   this.__result = undefined;
   this.__error = this.__source = this.__transaction = null;
-  this.__readyState = 'pending';
+  this.__done = false;
 };
 
 IDBRequest.__createInstance = function () {
@@ -5618,12 +5622,12 @@ IDBTransaction.prototype.__executeRequests = function () {
         q.req = req; // Need to do this in case of cursors
       }
 
-      if (q.req.__readyState === 'done') {
+      if (q.req.__done) {
         // Avoid continuing with aborted requests
         return;
       }
 
-      q.req.__readyState = 'done';
+      q.req.__done = true;
       q.req.__result = result;
       q.req.__error = null;
       me.__active = true;
@@ -5649,7 +5653,7 @@ IDBTransaction.prototype.__executeRequests = function () {
         return;
       }
 
-      if (q.req && q.req.__readyState === 'done') {
+      if (q.req && q.req.__done) {
         // Avoid continuing with aborted requests
         return;
       }
@@ -5663,7 +5667,7 @@ IDBTransaction.prototype.__executeRequests = function () {
       } // Fire an error event for the current IDBRequest
 
 
-      q.req.__readyState = 'done';
+      q.req.__done = true;
       q.req.__error = err;
       q.req.__result = undefined; // Must be undefined if an error per `result` getter
 
@@ -5715,7 +5719,7 @@ IDBTransaction.prototype.__executeRequests = function () {
             return;
           }
 
-          if (q.req.__readyState === 'done') {
+          if (q.req.__done) {
             // Avoid continuing with aborted requests
             return;
           }
@@ -6000,14 +6004,14 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
 
     me.__requests.filter(function (q, i, arr) {
       // eslint-disable-line promise/no-promise-in-callback
-      return q.req && q.req.__readyState !== 'done' && [i, -1].includes(arr.map(q => q.req).lastIndexOf(q.req));
+      return q.req && !q.req.__done && [i, -1].includes(arr.map(q => q.req).lastIndexOf(q.req));
     }).reduce(function (promises, q) {
       // We reduce to a chain of promises to be queued in order, so we cannot
       //  use `Promise.all`, and I'm unsure whether `setTimeout` currently
       //  behaves first-in-first-out with the same timeout so we could
       //  just use a `forEach`.
       return promises.then(function () {
-        q.req.__readyState = 'done';
+        q.req.__done = true;
         q.req.__result = undefined;
         q.req.__error = (0, _DOMException.createDOMException)('AbortError', 'A request was aborted (an unfinished request).');
         const reqEvt = (0, _Event.createEvent)('error', q.req.__error, {
@@ -7955,22 +7959,29 @@ function defineListenerProperties(obj, listeners) {
   });
 }
 
-function defineReadonlyProperties(obj, props) {
+function defineReadonlyProperties(obj, props, getter = null) {
   props = typeof props === 'string' ? [props] : props;
   props.forEach(function (prop) {
-    Object.defineProperty(obj, '__' + prop, {
-      enumerable: false,
-      configurable: false,
-      writable: true
-    }); // We must resort to this to get "get <name>" as
-    //   the function `name` for proper IDL
+    let o;
 
-    const o = {
-      get [prop]() {
-        return this['__' + prop];
-      }
+    if (getter && prop in getter) {
+      o = getter[prop];
+    } else {
+      Object.defineProperty(obj, '__' + prop, {
+        enumerable: false,
+        configurable: false,
+        writable: true
+      }); // We must resort to this to get "get <name>" as
+      //   the function `name` for proper IDL
 
-    };
+      o = {
+        get [prop]() {
+          return this['__' + prop];
+        }
+
+      };
+    }
+
     const desc = Object.getOwnPropertyDescriptor(o, prop); // desc.enumerable = true; // Default
     // desc.configurable = true; // Default
 

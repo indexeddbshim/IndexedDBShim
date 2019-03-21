@@ -28,19 +28,25 @@ IDBRequest.__super = function IDBRequest () {
             enumerable: true,
             configurable: true,
             get () {
-                if (this.__readyState !== 'done') {
+                if (!this.__done) {
                     throw createDOMException('InvalidStateError', "Can't get " + prop + '; the request is still pending.');
                 }
                 return this['__' + prop];
             }
         });
     }, this);
-    util.defineReadonlyProperties(this, readonlyProperties);
+    util.defineReadonlyProperties(this, readonlyProperties, {
+        readyState: {
+            get readyState () {
+                return this.__done ? 'done' : 'pending';
+            }
+        }
+    });
     util.defineListenerProperties(this, listeners);
 
     this.__result = undefined;
     this.__error = this.__source = this.__transaction = null;
-    this.__readyState = 'pending';
+    this.__done = false;
 };
 
 IDBRequest.__createInstance = function () {

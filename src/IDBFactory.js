@@ -301,7 +301,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
         calledDbCreateError = true;
         // Re: why bubbling here (and how cancelable is only really relevant for `window.onerror`) see: https://github.com/w3c/IndexedDB/issues/86
         const evt = createEvent('error', err, {bubbles: true, cancelable: true});
-        req.__readyState = 'done';
+        req.__done = true;
         req.__error = err;
         req.__result = undefined; // Must be undefined if an error per `result` getter
         req.dispatchEvent(evt);
@@ -311,7 +311,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
         tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList" FROM __sys__', [], function (tx, data) {
             function finishRequest () {
                 req.__result = connection;
-                req.__readyState = 'done'; // https://github.com/w3c/IndexedDB/pull/202
+                req.__done = true;
             }
             const connection = IDBDatabase.__createInstance(db, name, oldVersion, version, data);
             if (!me.__connections[name]) {
@@ -356,7 +356,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                             const e = new IDBVersionChangeEvent('upgradeneeded', {oldVersion, newVersion: version});
                             req.__result = connection;
                             connection.__upgradeTransaction = req.__transaction = req.__result.__versionTransaction = IDBTransaction.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
-                            req.__readyState = 'done';
+                            req.__done = true;
                             req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded (tx, args, finished, error) {
                                 req.dispatchEvent(e);
                                 if (e.__legacyOutputDidListenersThrowError) {
@@ -387,11 +387,9 @@ IDBFactory.prototype.open = function (name /* , version */) {
                             };
                             req.transaction.on__abort = function () {
                                 req.__transaction = null;
-                                // `readyState` and `result` will be reset anyways by `dbCreateError` but we follow spec:
-                                //    see https://github.com/w3c/IndexedDB/issues/161 and
-                                //    https://github.com/w3c/IndexedDB/pull/202
+                                // `readyState` and `result` will be reset anyways by `dbCreateError` but we follow spec.
                                 req.__result = undefined;
-                                req.__readyState = 'pending';
+                                req.__done = false;
 
                                 connection.close();
                                 setTimeout(() => {
@@ -588,7 +586,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
         }
         err = webSQLErrback(err || tx);
         sysdbFinishedCbDelete(true, function () {
-            req.__readyState = 'done';
+            req.__done = true;
             req.__error = err;
             req.__result = undefined; // Must be undefined if an error per `result` getter
             // Re: why bubbling here (and how cancelable is only really relevant for `window.onerror`) see: https://github.com/w3c/IndexedDB/issues/86
@@ -605,7 +603,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
 
             function completeDatabaseDelete () {
                 req.__result = undefined;
-                req.__readyState = 'done'; // https://github.com/w3c/IndexedDB/pull/202
+                req.__done = true;
                 const e = new IDBVersionChangeEvent('success', {oldVersion: version, newVersion: null});
                 req.dispatchEvent(e);
             }
