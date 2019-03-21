@@ -1,4 +1,3 @@
-
 import {IDBRequest} from './IDBRequest';
 import IDBObjectStore from './IDBObjectStore';
 import {createDOMException} from './DOMException';
@@ -16,8 +15,8 @@ function IDBCursor () {
 }
 const IDBCursorAlias = IDBCursor;
 /**
- * The IndexedDB Cursor Object
- * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBCursor
+ * The IndexedDB Cursor Object.
+ * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBCursor
  * @param {IDBKeyRange} query
  * @param {string} direction
  * @param {IDBObjectStore} store
@@ -25,10 +24,11 @@ const IDBCursorAlias = IDBCursor;
  * @param {string} keyColumnName
  * @param {string} valueColumnName
  * @param {boolean} count
+ * @returns {void}
  */
 IDBCursor.__super = function IDBCursor (query, direction, store, source, keyColumnName, valueColumnName, count) {
     this[Symbol.toStringTag] = 'IDBCursor';
-    util.defineReadonlyProperties(this, ['key', 'primaryKey']);
+    util.defineReadonlyProperties(this, ['key', 'primaryKey', 'request']);
     IDBObjectStore.__invalidStateIfDeleted(store);
     this.__indexSource = util.instanceOf(source, IDBIndex);
     if (this.__indexSource) IDBIndex.__invalidStateIfDeleted(source);
@@ -48,9 +48,9 @@ IDBCursor.__super = function IDBCursor (query, direction, store, source, keyColu
 
     this.__store = store;
     this.__range = range;
-    this.__req = IDBRequest.__createInstance();
-    this.__req.__source = source;
-    this.__req.__transaction = this.__store.transaction;
+    this.__request = IDBRequest.__createInstance();
+    this.__request.__source = source;
+    this.__request.__transaction = this.__store.transaction;
     this.__keyColumnName = keyColumnName;
     this.__valueColumnName = valueColumnName;
     this.__keyOnly = valueColumnName === 'key';
@@ -239,8 +239,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
                 const rowKey = Key.decode(rowItem[me.__keyColumnName], true);
                 const matches = Key.findMultiEntryMatches(rowKey, me.__range);
 
-                for (let j = 0; j < matches.length; j++) {
-                    const matchingKey = matches[j];
+                for (const matchingKey of matches) {
                     const clone = {
                         matchingKey: Key.encode(matchingKey, true),
                         key: rowItem.key
@@ -296,14 +295,23 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
 };
 
 /**
- * Creates an "onsuccess" callback
+* @callback module:IDBCursor.SuccessCallback
+* @param key
+* @param value
+* @param primaryKey
+* @returns {void}
+*/
+
+/**
+ * Creates an "onsuccess" callback.
  * @private
+ * @returns {module:IDBCursor.SuccessCallback}
  */
 IDBCursor.prototype.__onsuccess = function (success) {
     const me = this;
     return function (key, value, primaryKey) {
         if (me.__count) {
-            success(value, me.__req);
+            success(value, me.__request);
         } else {
             if (key !== undefined) {
                 me.__gotValue = true;
@@ -312,7 +320,7 @@ IDBCursor.prototype.__onsuccess = function (success) {
             me.__primaryKey = primaryKey === undefined ? null : primaryKey;
             me.__value = value === undefined ? null : value;
             const result = key === undefined ? null : me;
-            success(result, me.__req);
+            success(result, me.__request);
         }
     };
 };
@@ -380,9 +388,9 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
     const me = this;
     const recordsToPreloadOnContinue = me.__advanceCount || CFG.cursorPreloadPackSize || 100;
     me.__gotValue = false;
-    me.__req.__done = false;
+    me.__request.__done = false;
 
-    me.__store.transaction.__pushToQueue(me.__req, function cursorContinue (tx, args, success, error, executeNextRequest) {
+    me.__store.transaction.__pushToQueue(me.__request, function cursorContinue (tx, args, success, error, executeNextRequest) {
         function triggerSuccess (k, val, primKey) {
             if (advanceState) {
                 if (me.__advanceCount >= 2 && k !== undefined) {

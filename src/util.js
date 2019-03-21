@@ -38,7 +38,7 @@ function unescapeSQLiteResponse (arg) {
     return unescapeUnmatchedSurrogates(arg)
         .replace(/(\^+)0/gu, (_, esc) => {
             return esc.length % 2
-                ? '\0'
+                ? esc.slice(1) + '\0'
                 : _;
         })
         .replace(/\^\^/gu, '^');

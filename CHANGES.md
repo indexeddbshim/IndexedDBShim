@@ -1,17 +1,43 @@
 # IndexedDBShim changes
 
-## ?
+## 5.0.0
 
+- Breaking change: Move from deprecated `@babel/polyfill` to
+    recommended replacements `core-js-bundle` /
+    `regenerator-runtime`
+- Fix: For unescaping unmatched surrogates preceded by carets, we need to
+    restore the carets
 - Fix: Avoid erring in some instances with not-yet-added name key
     for `cacheDatabaseInstances` or `memoryDatabase`
 - Fix (Missing API): Add new `IDBCursor.request`
-- Linting (ESLint): Update per new reporting
+- Fix (example): Paths in `IDBKeyUtils.html` examples file
+- Optimization (build): Avoid `build` step as bundling `dist` files anyways;
+    avoid linting step as it has problem in grunt
 - Refactoring: Change private `__closed` flag to match spec
     terminology, `__closePending`.
 - Refactoring: Add `__done` flag to match spec, with `readyState`
     getter using this flag
+- Linting (ESLint): Update for `eslint-config-ash-nazg` (prefer
+    `for...of` and `includes`, etc.)
+- Linting (ESLint): Lint HTML and Markdown
+- Docs (JSDoc): Add returns and some additional docs
+- Docs (Code): Better toward `max-len`
+- Docs (README): Use paths more consistent with installing
+    indexeddbshim as dep.
+- Docs (README): Indicate ESM usage; fix broken link
+- Docs (TESTING): Info on individual tests
 - Testing (W3C): Update wpt; test results; fix regression
-- npm: Update devDeps, @babel/polyfill
+- Testing (W3C): Exclude tests causing undue timeouts in other files; update
+    test counts
+- Testing (W3C): Avoid excluding non-breaking test
+- Testing (W3C): Support new "any" files (and support future ones) and
+    fix for `location`; report reason for new test file failing; update
+    `web-platform-tests`; avoid excluded files in list of failed;
+    add scripts to list files in test folder which are not in goodBad
+    listing
+- Grunt: Avoid eslint task for main build as having problems with lint config
+- npm: Update `typeson`/`typeson-registry`, `eventtargeter`
+- npm: Update devDeps; package-lock
 
 ## 4.1.0
 

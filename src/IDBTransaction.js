@@ -12,8 +12,8 @@ const listeners = ['onabort', 'oncomplete', 'onerror'];
 const readonlyProperties = ['objectStoreNames', 'mode', 'db', 'error'];
 
 /**
- * The IndexedDB Transaction
- * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBTransaction
+ * The IndexedDB Transaction.
+ * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBTransaction
  * @param {IDBDatabase} db
  * @param {string[]} storeNames
  * @param {string} mode
@@ -56,13 +56,14 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
     return new IDBTransaction();
 };
 
-IDBTransaction.prototype = EventTargetFactory.createInstance({defaultSync: true, extraProperties: ['complete']}); // Ensure EventTarget preserves our properties
+IDBTransaction.prototype = EventTargetFactory.createInstance({
+    defaultSync: true,
+    // Ensure EventTarget preserves our properties
+    extraProperties: ['complete']
+});
+
 IDBTransaction.prototype.__transFinishedCb = function (err, cb) {
-    if (err) {
-        cb(true); // eslint-disable-line standard/no-callback-literal
-        return;
-    }
-    cb();
+    cb(Boolean(err));
 };
 IDBTransaction.prototype.__executeRequests = function () {
     const me = this;
@@ -107,7 +108,8 @@ IDBTransaction.prototype.__executeRequests = function () {
 
             function error (...args /* tx, err */) {
                 if (me.__errored || me.__requestsFinished) {
-                    // We've already called "onerror", "onabort", or thrown within the transaction, so don't do it again.
+                    // We've already called "onerror", "onabort", or thrown within
+                    //  the transaction, so don't do it again.
                     return;
                 }
                 if (q.req && q.req.__done) { // Avoid continuing with aborted requests
@@ -118,6 +120,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                     me.__abortTransaction(err);
                     return;
                 }
+
                 // Fire an error event for the current IDBRequest
                 q.req.__done = true;
                 q.req.__error = err;
@@ -257,7 +260,7 @@ IDBTransaction.prototype.__executeRequests = function () {
 
 /**
  * Creates a new IDBRequest for the transaction.
- * NOTE: The transaction is not queued until you call {@link IDBTransaction#__pushToQueue}
+ * NOTE: The transaction is not queued until you call {@link IDBTransaction#__pushToQueue}.
  * @returns {IDBRequest}
  * @protected
  */
@@ -270,7 +273,7 @@ IDBTransaction.prototype.__createRequest = function (source) {
 };
 
 /**
- * Adds a callback function to the transaction queue
+ * Adds a callback function to the transaction queue.
  * @param {function} callback
  * @param {*} args
  * @returns {IDBRequest}
@@ -283,10 +286,11 @@ IDBTransaction.prototype.__addToTransactionQueue = function (callback, args, sou
 };
 
 /**
- * Adds a callback function to the transaction queue without generating a request
+ * Adds a callback function to the transaction queue without generating a
+ *   request.
  * @param {function} callback
  * @param {*} args
- * @returns {IDBRequest}
+ * @returns {void}
  * @protected
  */
 IDBTransaction.prototype.__addNonRequestToTransactionQueue = function (callback, args, source) {
@@ -294,11 +298,12 @@ IDBTransaction.prototype.__addNonRequestToTransactionQueue = function (callback,
 };
 
 /**
- * Adds an IDBRequest to the transaction queue
+ * Adds an IDBRequest to the transaction queue.
  * @param {IDBRequest} request
  * @param {function} callback
  * @param {*} args
  * @protected
+ * @returns {void}
  */
 IDBTransaction.prototype.__pushToQueue = function (request, callback, args) {
     this.__assertActive();
@@ -339,7 +344,7 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
         throw new TypeError('No object store name was specified');
     }
     IDBTransaction.__assertNotFinished(me);
-    if (me.__objectStoreNames.indexOf(objectStoreName) === -1) {
+    if (me.__objectStoreNames.indexOf(objectStoreName) === -1) { // eslint-disable-line unicorn/prefer-includes
         throw createDOMException('NotFoundError', objectStoreName + ' is not participating in this transaction');
     }
     const store = me.db.__objectStores[objectStoreName];
@@ -370,14 +375,24 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         me.db.__version = me.db.__oldVersion;
         me.db.__objectStoreNames = me.db.__oldObjectStoreNames;
         me.__objectStoreNames = me.db.__oldObjectStoreNames;
-        Object.values(me.db.__objectStores).concat(Object.values(me.__storeHandles)).forEach(function (store) {
-            if ('__pendingName' in store && me.db.__oldObjectStoreNames.indexOf(store.__pendingName) > -1) { // Store was already created so we restore to name before the rename
+        Object.values(me.db.__objectStores).concat(
+            Object.values(me.__storeHandles)
+        ).forEach(function (store) {
+            // Store was already created so we restore to name before the rename
+            if ('__pendingName' in store &&
+                me.db.__oldObjectStoreNames.indexOf(store.__pendingName) > -1 // eslint-disable-line unicorn/prefer-includes
+            ) {
                 store.__name = store.__originalName;
             }
             store.__indexNames = store.__oldIndexNames;
             delete store.__pendingDelete;
-            Object.values(store.__indexes).concat(Object.values(store.__indexHandles)).forEach(function (index) {
-                if ('__pendingName' in index && store.__oldIndexNames.indexOf(index.__pendingName) > -1) { // Index was already created so we restore to name before the rename
+            Object.values(store.__indexes).concat(
+                Object.values(store.__indexHandles)
+            ).forEach(function (index) {
+                // Index was already created so we restore to name before the rename
+                if ('__pendingName' in index &&
+                    store.__oldIndexNames.indexOf(index.__pendingName) > -1 // eslint-disable-line unicorn/prefer-includes
+                ) {
                     index.__name = index.__originalName;
                 }
                 delete index.__pendingDelete;
@@ -478,6 +493,7 @@ IDBTransaction.prototype.abort = function () {
     IDBTransaction.__assertNotFinished(me);
     me.__abortTransaction(null);
 };
+
 IDBTransaction.prototype[Symbol.toStringTag] = 'IDBTransactionPrototype';
 
 IDBTransaction.__assertVersionChange = function (tx) {
@@ -516,7 +532,8 @@ IDBTransaction.__assertActive = function (tx) {
 };
 
 /**
-* Used by our EventTarget.prototype library to implement bubbling/capturing
+* Used by our `EventTarget.prototype` library to implement bubbling/capturing.
+* @returns {IDBDatabase}
 */
 IDBTransaction.prototype.__getParent = function () {
     return this.db;

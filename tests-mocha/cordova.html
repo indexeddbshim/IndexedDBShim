@@ -45,45 +45,46 @@
 
     <script src="cordova.js"></script>
     <script>
-      document.addEventListener('deviceready', onDeviceReady, false);
+        /* eslint-env mocha */
+        document.addEventListener('deviceready', onDeviceReady, false);
 
-      function onDeviceReady() {
-        addScript('api-spec.js');
-        addScript('IDBFactory/cmp-spec.js');
-        addScript('IDBFactory/deleteDatabase-spec.js');
-        addScript('IDBFactory/open-spec.js');
-        addScript('IDBDatabase/close-spec.js');
-        addScript('IDBDatabase/createObjectStore-spec.js');
-        addScript('IDBDatabase/deleteObjectStore-spec.js');
-        addScript('IDBDatabase/transaction-spec.js');
-        addScript('IDBIndex/count-spec.js');
-        addScript('IDBIndex/get-spec.js');
-        addScript('IDBIndex/getKey-spec.js');
-        addScript('IDBIndex/openCursor-spec.js');
-        addScript('IDBObjectStore/add-spec.js');
-        addScript('IDBObjectStore/put-spec.js');
-        addScript('IDBObjectStore/add-put-spec.js');
-        addScript('IDBObjectStore/clear-spec.js');
-        addScript('IDBObjectStore/createIndex-spec.js');
-        addScript('IDBObjectStore/deleteIndex-spec.js');
-        addScript('IDBObjectStore/delete-spec.js');
-        addScript('IDBObjectStore/index-spec.js');
-        addScript('IDBTransaction/objectStore-spec.js');
-        addScript('IDBTransaction/events-spec.js');
+        function onDeviceReady () {
+            addScript('api-spec.js');
+            addScript('IDBFactory/cmp-spec.js');
+            addScript('IDBFactory/deleteDatabase-spec.js');
+            addScript('IDBFactory/open-spec.js');
+            addScript('IDBDatabase/close-spec.js');
+            addScript('IDBDatabase/createObjectStore-spec.js');
+            addScript('IDBDatabase/deleteObjectStore-spec.js');
+            addScript('IDBDatabase/transaction-spec.js');
+            addScript('IDBIndex/count-spec.js');
+            addScript('IDBIndex/get-spec.js');
+            addScript('IDBIndex/getKey-spec.js');
+            addScript('IDBIndex/openCursor-spec.js');
+            addScript('IDBObjectStore/add-spec.js');
+            addScript('IDBObjectStore/put-spec.js');
+            addScript('IDBObjectStore/add-put-spec.js');
+            addScript('IDBObjectStore/clear-spec.js');
+            addScript('IDBObjectStore/createIndex-spec.js');
+            addScript('IDBObjectStore/deleteIndex-spec.js');
+            addScript('IDBObjectStore/delete-spec.js');
+            addScript('IDBObjectStore/index-spec.js');
+            addScript('IDBTransaction/objectStore-spec.js');
+            addScript('IDBTransaction/events-spec.js');
 
-        setTimeout(runTests, 2000);
-      }
+            setTimeout(runTests, 2000);
+        }
 
-      function runTests() {
-        mocha.checkLeaks();
-        mocha.run();
-      }
+        function runTests () {
+            mocha.checkLeaks();
+            mocha.run();
+        }
 
-      function addScript(url) {
-        var scriptElem = document.createElement('script');
-        scriptElem.src = url;
-        document.head.appendChild(scriptElem);
-      }
+        function addScript (url) {
+            const scriptElem = document.createElement('script');
+            scriptElem.src = url;
+            document.head.append(scriptElem);
+        }
     </script>
   </body>
 </html>

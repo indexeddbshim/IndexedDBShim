@@ -9,24 +9,32 @@ const writeFile = util.promisify(fs.writeFile);
 const readdir = util.promisify(fs.readdir);
 const mkdir = util.promisify(fs.mkdir);
 
-// Known scripts
-const testHarnessScripts = ['/resources/testharness.js', '/resources/testharnessreport.js'];
-const supportScripts = [
-    'support.js', 'support-promises.js',
-    'nested-cloning-common.js', 'interleaved-cursors-common.js',
-    '/common/get-host-info.sub.js' // 'web-platform-tests/IndexedDB/idbfactory-origin-isolation.html'
-];
-const webIDLScripts = [
-    '/resources/WebIDLParser.js', '/resources/idlharness.js',
-    '/IndexedDB/idlharness.any.js'
-];
-const serviceWorkerScripts = ['resources/test-helpers.sub.js'];
-const knownScripts = testHarnessScripts.concat(supportScripts, webIDLScripts, serviceWorkerScripts);
-
 const dirPath = process.argv[2] || 'web-platform-tests/IndexedDB';
-const builtJSPath = path.join('test-support', 'js');
 
 (async () => {
+    const anyFiles = (await readdir(dirPath)).filter((dir) => {
+        return dir.endsWith('.any.js');
+    });
+    const anyFilesPaths = anyFiles.map((dir) => {
+        return `/IndexedDB/${dir}`;
+    });
+
+    // Known scripts
+    const testHarnessScripts = ['/resources/testharness.js', '/resources/testharnessreport.js'];
+    const supportScripts = [
+        'support.js', 'support-promises.js',
+        'nested-cloning-common.js', 'interleaved-cursors-common.js',
+        '/common/get-host-info.sub.js' // 'web-platform-tests/IndexedDB/idbfactory-origin-isolation.html'
+    ];
+    const webIDLScripts = [
+        '/resources/WebIDLParser.js', '/resources/idlharness.js',
+        ...anyFilesPaths
+    ];
+    const serviceWorkerScripts = ['resources/test-helpers.sub.js'];
+    const knownScripts = testHarnessScripts.concat(supportScripts, webIDLScripts, serviceWorkerScripts);
+
+    const builtJSPath = path.join('test-support', 'js');
+
     try {
         await mkdir(builtJSPath);
     } catch (err) {}
@@ -50,19 +58,23 @@ const builtJSPath = path.join('test-support', 'js');
         inputFile: 'web-platform-tests/html/infrastructure/common-dom-interfaces/collections/domstringlist.html',
         outputFile: path.join(builtJSPath, 'domstringlist.js')
     }, {
-        inputFile: 'web-platform-tests/workers/semantics/interface-objects/003.html',
-        outputFile: path.join(builtJSPath, '_interface-objects-003.js')
+        inputFile: 'http://web-platform.test:8000/workers/semantics/interface-objects/003.any.html',
+        outputFile: path.join(builtJSPath, '_interface-objects-003.js'),
+        web: true
     }, {
-        inputFile: 'web-platform-tests/workers/semantics/interface-objects/004.html',
-        outputFile: path.join(builtJSPath, '_interface-objects-004.js')
+        inputFile: 'http://web-platform.test:8000/workers/semantics/interface-objects/004.any.html',
+        outputFile: path.join(builtJSPath, '_interface-objects-004.js'),
+        web: true
     }, {
         inputFile: 'web-platform-tests/service-workers/service-worker/indexeddb.https.html',
         outputFile: path.join(builtJSPath, '_service-worker-indexeddb.https.js')
-    }, {
-        inputFile: 'http://web-platform.test:8000/IndexedDB/idlharness.any.html',
-        outputFile: path.join(builtJSPath, 'idlharness.any.js'),
-        web: true
-    });
+    }, ...anyFiles.map((anyFile) => {
+        return {
+            inputFile: `http://web-platform.test:8000/IndexedDB/${anyFile.replace(/\.js$/, '.html')}`,
+            outputFile: path.join(builtJSPath, anyFile),
+            web: true
+        };
+    }));
 
     // Iterate IndexedDB files
     await Promise.all(htmlFiles.map(async ({inputFile, outputFile, web}, i) => {
@@ -78,7 +90,7 @@ const builtJSPath = path.join('test-support', 'js');
                         resolve(rawData);
                     });
                 }).on('error', (e) => {
-                    console.error(`Got error: ${e.message}`);
+                    console.error(`Got error retrieving ${inputFile}: ${e.message}`);
                 });
             });
         } else {
@@ -182,7 +194,11 @@ const builtJSPath = path.join('test-support', 'js');
             return;
         }
         try {
-            await writeFile('web-platform-tests/resources/WebIDLParser.js', data);
+            await writeFile('web-platform-tests/resources/WebIDLParser.js', data.replace(
+                // https://github.com/w3c/webidl2.js/issues/426
+                'while (proto !== Object.prototype) {',
+                'while (proto && proto !== Object.prototype) {'
+            ));
         } catch (err) {
             console.log(err);
         }

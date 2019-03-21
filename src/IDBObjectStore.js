@@ -13,8 +13,8 @@ import CFG from './CFG';
 const readonlyProperties = ['keyPath', 'indexNames', 'transaction', 'autoIncrement'];
 
 /**
- * IndexedDB Object Store
- * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBObjectStore
+ * IndexedDB Object Store.
+ * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBObjectStore
  * @param {IDBObjectStoreProperties} storeProperties
  * @param {IDBTransaction} transaction
  * @class
@@ -119,6 +119,7 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
  * @param {IDBObjectStore} store
  * @param {IDBTransaction} transaction
  * @protected
+ * @returns {IDBObjectStore}
  */
 IDBObjectStore.__clone = function (store, transaction) {
     const newStore = IDBObjectStore.__createInstance({
@@ -147,6 +148,7 @@ IDBObjectStore.__invalidStateIfDeleted = function (store, msg) {
  * @param {IDBDatabase} db
  * @param {IDBObjectStore} store
  * @protected
+ * @returns {IDBObjectStore}
  */
 IDBObjectStore.__createObjectStore = function (db, store) {
     // Add the object store to the IDBDatabase
@@ -203,6 +205,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
  * @param {IDBDatabase} db
  * @param {IDBObjectStore} store
  * @protected
+ * @returns {void}
  */
 IDBObjectStore.__deleteObjectStore = function (db, store) {
     // Remove the object store from the IDBDatabase
@@ -244,6 +247,12 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
     });
 };
 
+/**
+* @typedef {GenericArray} KeyValueArray
+* @property {module:Key.Key} 0
+* @property {*} 1
+*/
+
 // Todo: Although we may end up needing to do cloning genuinely asynchronously (for Blobs and FileLists),
 //   and we'll want to ensure the queue starts up synchronously, we nevertheless do the cloning
 //   before entering the queue and its callback since the encoding we do is preceded by validation
@@ -253,9 +262,13 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
 //   a `SyncPromise` from the `Sca.clone` operation and later detecting and ensuring it is resolved
 //   before continuing).
 /**
- * Determines whether the given inline or out-of-line key is valid, according to the object store's schema.
- * @param {*} value     Used for inline keys
- * @param {*} key       Used for out-of-line keys
+ * Determines whether the given inline or out-of-line key is valid,
+ *   according to the object store's schema.
+ * @param {*} value Used for inline keys
+ * @param {*} key Used for out-of-line keys
+ * @param {boolean} cursorUpdate
+ * @throws {DOMException}
+ * @returns {KeyValueArray}
  * @private
  */
 IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, key, cursorUpdate) {
@@ -302,14 +315,16 @@ IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, k
 };
 
 /**
- * From the store properties and object, extracts the value for the key in the object store
- * If the table has auto increment, get the current number (unless it has a keyPath leading to a
- *  valid but non-numeric or < 1 key)
+ * From the store properties and object, extracts the value for the key in
+ *   the object store
+ * If the table has auto increment, get the current number (unless it has
+ *   a keyPath leading to a valid but non-numeric or < 1 key).
  * @param {Object} tx
  * @param {Object} value
  * @param {Object} key
  * @param {function} success
  * @param {function} failure
+ * @returns {void}
  */
 IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb) {
     const me = this;
@@ -700,7 +715,7 @@ IDBObjectStore.prototype.count = function (/* query */) {
     IDBTransaction.__assertActive(me.transaction);
 
     // We don't need to add to cursors array since has the count parameter which won't cache
-    return IDBCursorWithValue.__createInstance(query, 'next', me, me, 'key', 'value', true).__req;
+    return IDBCursorWithValue.__createInstance(query, 'next', me, me, 'key', 'value', true).__request;
 };
 
 IDBObjectStore.prototype.openCursor = function (/* query, direction */) {
@@ -712,7 +727,7 @@ IDBObjectStore.prototype.openCursor = function (/* query, direction */) {
     IDBObjectStore.__invalidStateIfDeleted(me);
     const cursor = IDBCursorWithValue.__createInstance(query, direction, me, me, 'key', 'value');
     me.__cursors.push(cursor);
-    return cursor.__req;
+    return cursor.__request;
 };
 
 IDBObjectStore.prototype.openKeyCursor = function (/* query, direction */) {
@@ -724,7 +739,7 @@ IDBObjectStore.prototype.openKeyCursor = function (/* query, direction */) {
     const [query, direction] = arguments;
     const cursor = IDBCursor.__createInstance(query, direction, me, me, 'key', 'key');
     me.__cursors.push(cursor);
-    return cursor.__req;
+    return cursor.__request;
 };
 
 IDBObjectStore.prototype.index = function (indexName) {

@@ -5,12 +5,14 @@ import * as util from './util';
 const readonlyProperties = ['lower', 'upper', 'lowerOpen', 'upperOpen'];
 
 /**
- * The IndexedDB KeyRange object
- * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#dfn-key-range
+ * The IndexedDB KeyRange object.
+ * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#dfn-key-range
  * @param {Object} lower
  * @param {Object} upper
  * @param {Object} lowerOpen
  * @param {Object} upperOpen
+ * @throws {TypeError}
+ * @class
  */
 function IDBKeyRange () {
     throw new TypeError('Illegal constructor');

@@ -71,7 +71,7 @@ const workerConfig = {
 //
 //  http://www.whatwg.org/specs/web-workers/current-work/#runtime-script-errors
 //
-// XXX: There are all sorts of pieces of the error handling spec that are not
+// Todo: There are all sorts of pieces of the error handling spec that are not
 //      being done correctly. Pick a clause, any clause.
 let inErrorHandler = false;
 
@@ -184,7 +184,7 @@ prom.then((scriptSource) => {
             break;
 
         case wwutil.MSGTYPE_USER:
-            // XXX: I have no idea what the event object here should really look
+            // Todo: I have no idea what the event object here should really look
             //      like. I do know that it needs a 'data' elements, though.
             if (workerCtx.onmessage || workerCtx.eventHandlers.message.length > 0) {
                 const e = {data: msg[1]};
@@ -273,15 +273,15 @@ prom.then((scriptSource) => {
             throw new TypeError('For modules, `importScripts` should not be used. Use `import` statements instead.');
         }
         // Todo: Support URL/absolute file paths
-        for (let i = 0; i < arguments.length; i++) {
+        for (const arg of arguments) {
             // Todo: Handle pathType="url" (defaults to `localhost`) and if basePath is `false` with it
-            const currentPath = (/^[\\/]/u).test(arguments[i]) // Root
+            const currentPath = (/^[\\/]/u).test(arg) // Root
                 ? workerConfig.pathType === 'file' && workerConfig.rootPath === false ? process.cwd() : workerConfig.rootPath
                 : workerConfig.pathType === 'file' && workerConfig.basePath === false ? process.cwd() : workerConfig.basePath;
             /*
             console.log(path.join(
                 currentPath,
-                arguments[i]
+                arg
             ));
             */
             try {
@@ -289,7 +289,7 @@ prom.then((scriptSource) => {
                     fs.readFileSync(
                         path.join(
                             currentPath,
-                            arguments[i]
+                            arg
                         )
                     ),
                     workerCtxObj

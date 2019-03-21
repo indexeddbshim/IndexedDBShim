@@ -71,6 +71,7 @@
 
     /**
      * Intercept the first call to Mocha's `describe` function, and use it to initialize the test environment.
+     * @returns {void}
      */
     window.describe = function (name, testSuite) {
         initTestEnvironment();
@@ -81,6 +82,7 @@
 
     /**
      * Initializes the test environment, applying the shim if necessary.
+     * @returns {void}
      */
     function initTestEnvironment () {
         // Show which features the browser natively supports
@@ -94,7 +96,7 @@
         env.webSql = window.openDatabase;
 
         // Should we use the shim instead of the native IndexedDB?
-        var useShim = location.search.indexOf('useShim=true') > -1;
+        var useShim = location.search.includes('useShim=true');
         if (useShim || !window.indexedDB || window.indexedDB === window.shimIndexedDB) {
             // Replace the browser's native IndexedDB with the shim
             shimIndexedDB.__useShim();
@@ -130,7 +132,7 @@
     }
 
     /**
-     * Returns browser name and version
+     * Returns browser name and version.
      * @returns {browserInfo}
      */
     function getBrowserInfo () {
@@ -148,47 +150,44 @@
             isSafari: false
         };
 
-        if ((offset = userAgent.indexOf('Edge')) !== -1) {
+        if ((offset = userAgent.indexOf('Edge')) !== -1 ||
+            (offset = userAgent.indexOf('MSIE')) !== -1
+        ) {
             browserInfo.name = 'MSIE';
-            browserInfo.version = userAgent.substring(offset + 5);
+            browserInfo.version = userAgent.slice(offset + 5);
             browserInfo.isIE = true;
-            browserInfo.isMobile = userAgent.indexOf('Windows Phone') !== -1;
+            browserInfo.isMobile = userAgent.includes('Windows Phone');
         } else if ((offset = userAgent.indexOf('Chrome')) !== -1) {
             browserInfo.name = 'Chrome';
-            browserInfo.version = userAgent.substring(offset + 7);
+            browserInfo.version = userAgent.slice(offset + 7);
             browserInfo.isChrome = true;
         } else if ((offset = userAgent.indexOf('Firefox')) !== -1) {
             browserInfo.name = 'Firefox';
-            browserInfo.version = userAgent.substring(offset + 8);
+            browserInfo.version = userAgent.slice(offset + 8);
             browserInfo.isFirefox = true;
-        } else if ((offset = userAgent.indexOf('MSIE')) !== -1) {
-            browserInfo.name = 'MSIE';
-            browserInfo.version = userAgent.substring(offset + 5);
-            browserInfo.isIE = true;
-            browserInfo.isMobile = userAgent.indexOf('Windows Phone') !== -1;
-        } else if (userAgent.indexOf('Trident') !== -1) {
+        } else if (userAgent.includes('Trident')) {
             browserInfo.name = 'MSIE';
             browserInfo.version = '11';
             browserInfo.isIE = true;
-            browserInfo.isMobile = userAgent.indexOf('Windows Phone') !== -1;
+            browserInfo.isMobile = userAgent.includes('Windows Phone');
         } else if ((offset = userAgent.indexOf('Safari')) !== -1) {
             browserInfo.name = 'Safari';
             browserInfo.isSafari = true;
-            browserInfo.isMobile = userAgent.indexOf('Mobile Safari') !== -1;
+            browserInfo.isMobile = userAgent.includes('Mobile Safari');
             if ((offset = userAgent.indexOf('Version')) !== -1) {
-                browserInfo.version = userAgent.substring(offset + 8);
+                browserInfo.version = userAgent.slice(offset + 8);
             } else {
-                browserInfo.version = userAgent.substring(offset + 7);
+                browserInfo.version = userAgent.slice(offset + 7);
             }
         } else if ((offset = userAgent.indexOf('AppleWebKit')) !== -1) {
             browserInfo.name = 'Safari';
-            browserInfo.version = userAgent.substring(offset + 12);
+            browserInfo.version = userAgent.slice(offset + 12);
             browserInfo.isSafari = true;
-            browserInfo.isMobile = userAgent.indexOf('Mobile Safari') !== -1;
+            browserInfo.isMobile = userAgent.includes('Mobile Safari');
         }
 
         if ((offset = browserInfo.version.indexOf(';')) !== -1 || (offset = browserInfo.version.indexOf(' ')) !== -1) {
-            browserInfo.version = browserInfo.version.substring(0, offset);
+            browserInfo.version = browserInfo.version.slice(0, offset);
         }
 
         browserInfo.version = parseFloat(browserInfo.version);
@@ -197,7 +196,13 @@
     }
 
     /**
+    * @typedef {PlainObject} SimulatedElement
+    * @property {PlainObject} style
+    * @property {string} [className]
+    */
+    /**
      * A "safe" wrapper around `document.getElementById`
+     * @returns {Element|SimulatedElement}
      */
     function getElementById (id) {
         if (typeof document === 'undefined') {

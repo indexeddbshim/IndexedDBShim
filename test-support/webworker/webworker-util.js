@@ -1,6 +1,6 @@
 // Utilies and other common gook shared between the WebWorker master and
 // its constituent Workers.
-/* eslint-disable node/exports-style */
+/* eslint-disable node/exports-style, compat/compat */
 
 const events = require('events');
 const path = require('path');
@@ -10,7 +10,7 @@ const BSON = require('bson');
 // Some debugging functions
 const debugLevel = parseInt(process.env.NODE_DEBUG, 16); // eslint-disable-line no-process-env
 const debug = (debugLevel & 0x8) // eslint-disable-line no-bitwise
-    ? function () { console.error.apply(this, arguments); }
+    ? function () { Reflect.apply(console.error, this, arguments); }
     : function () { /* */ };
 exports.debug = debug;
 
@@ -122,9 +122,9 @@ exports.makeFileURL = function (workerConfig, dir) {
 // Todo: Implement the WorkerLocation interface described in
 // http://www.whatwg.org/specs/web-workers/current-work/#dom-workerlocation-href
 //   Leverage URL/URLSearchParams polyfill?
-// XXX: None of these properties are readonly as required by the spec.
+// Todo: None of these properties are readonly as required by the spec.
 const WorkerLocation = function (url) {
-    const u = new URL(url); // eslint-disable-line compat/compat
+    const u = new URL(url);
 
     // https://url.spec.whatwg.org/#url-miscellaneous
     const portForProto = function (proto) {
@@ -153,7 +153,7 @@ const WorkerLocation = function (url) {
     };
 
     this.href = u.href;
-    this.protocol = u.protocol.substring(0, u.protocol.length - 1);
+    this.protocol = u.protocol.slice(0, -1);
     this.host = u.host;
     this.hostname = u.hostname;
     this.port = (u.port) ? u.port : portForProto(this.protocol);
@@ -179,6 +179,7 @@ exports.getErrorMessage = function (e) {
 exports.getErrorFilename = function (e) {
     try {
         const m = e.stack.split('\n')[1].match(STACK_FRAME_RE);
+        // eslint-disable-next-line unicorn/prefer-string-slice
         return m[1].substring(
             0,
             m[1].lastIndexOf(':', m[1].lastIndexOf(':') - 1)

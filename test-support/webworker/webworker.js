@@ -353,6 +353,7 @@ module.exports = function (workerConfig) {
             if (Array.isArray(xfers)) { // Todo: Currently only handling detached buffers, not yet exposing the transfer
                 xfers.forEach(function (xfer) {
                     // Assumes this currently non-standard method gets implemented for Node
+                    // eslint-disable-next-line no-use-extend-native/no-use-extend-native
                     if (typeof ArrayBuffer.transfer === 'function') { ArrayBuffer.transfer(xfer, 0); }
                 });
             }

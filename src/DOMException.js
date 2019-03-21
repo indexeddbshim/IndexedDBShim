@@ -185,7 +185,7 @@ function createNonNativeDOMExceptionClass () {
 const ShimNonNativeDOMException = createNonNativeDOMExceptionClass();
 
 /**
- * Creates a generic Error object
+ * Creates a generic Error object.
  * @returns {Error}
  */
 function createNonNativeDOMException (name, message) {
@@ -197,6 +197,7 @@ function createNonNativeDOMException (name, message) {
  * @param {string} name
  * @param {string} message
  * @param {string|Error|null} error
+ * @returns {void}
  */
 function logError (name, message, error) {
     if (CFG.DEBUG) {
@@ -228,8 +229,7 @@ function findError (args) {
         if (args.length === 1) {
             return args[0];
         }
-        for (let i = 0; i < args.length; i++) {
-            const arg = args[i];
+        for (const arg of args) {
             if (isErrorOrDOMErrorOrDOMException(arg)) {
                 return arg;
             }

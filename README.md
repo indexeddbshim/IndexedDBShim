@@ -7,7 +7,7 @@
 [![CDNJS](https://img.shields.io/cdnjs/v/IndexedDBShim.svg)](https://cdnjs.com/libraries/IndexedDBShim)
 [![License](https://img.shields.io/npm/l/indexeddbshim.svg)](LICENSE-APACHE)
 
-|[Live Demo (stable)!](https://raw.githack.com/axemclion/IndexedDBShim/v4.1.0/index.html) | [Live Demo (master)!](https://raw.githack.com/axemclion/IndexedDBShim/master/index.html) |
+|[Live Demo (stable)!](https://raw.githack.com/axemclion/IndexedDBShim/v5.0.0/index.html) | [Live Demo (master)!](https://raw.githack.com/axemclion/IndexedDBShim/master/index.html) |
 | -------------- | ----------------- |
 
 
@@ -68,8 +68,9 @@ npm install indexeddbshim
 Add the following scripts to your page:
 
 ```html
-<script src="node_modules/@babel/polyfill/dist/polyfill.min.js"></script>
-<script src="dist/indexeddbshim.min.js"></script>
+<script src="./node_modules/core-js-bundle/minified.js"></script>
+<script src="./node_modules/regenerator-runtime/runtime.js"></script>
+<script src="./node_modules/indexeddbshim/dist/indexeddbshim.min.js"></script>
 ```
 
 If you need full Unicode compliance (handling special
@@ -77,8 +78,9 @@ non-alphanumeric identifiers in store and index names),
 use the following instead:
 
 ```html
-<script src="node_modules/@babel/polyfill/dist/polyfill.min.js"></script>
-<script src="dist/indexeddbshim-UnicodeIdentifiers.min.js"></script>
+<script src="./node_modules/core-js-bundle/minified.js"></script>
+<script src="./node_modules/regenerator-runtime/runtime.js"></script>
+<script src="./node_modules/indexeddbshim/dist/indexeddbshim-UnicodeIdentifiers.min.js"></script>
 ```
 
 ## Node set-up
@@ -88,6 +90,23 @@ const setGlobalVars = require('indexeddbshim');
 
 global.window = global; // We'll allow ourselves to use `window.indexedDB` or `indexedDB` as a global
 setGlobalVars(); // See signature below
+```
+
+## ES6 Modules
+
+### Bundler for Browser
+
+```js
+import setGlobalVars from 'indexeddbshim';
+```
+
+### Bundler for Node
+
+```js
+import setGlobalVars from 'indexeddbshim/src/node-UnicodeIdentifiers';
+
+// Or without Unicode support
+// import setGlobalVars from 'indexeddbshim/src/node';
 ```
 
 ## Usage/API

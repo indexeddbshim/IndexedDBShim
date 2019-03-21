@@ -278,6 +278,7 @@ describe('IDBFactory.cmp', function () {
                 tryToCompare(new Number(12345)); // eslint-disable-line no-new-wrappers, unicorn/new-for-builtins
                 tryToCompare(new String('hello world')); // eslint-disable-line no-new-wrappers, unicorn/new-for-builtins
                 tryToCompare(new Date(''));                     // invalid date
+                // eslint-disable-next-line prefer-regex-literals
                 tryToCompare(new RegExp('asdf'));               // RegExp object
                 tryToCompare(/asdf/);                           // RegExp literal
             }

@@ -1,6 +1,7 @@
 /* eslint-disable compat/compat */
 // Todo: Reuse any relevant portions in this file or `node-buildjs.js` for adapting tests for browser shimming
-require('source-map-support').install({ // Needed along with sourcemap transform
+require('source-map-support').install({
+    // Needed along with sourcemap transform
     environment: 'node'
 });
 const util = require('util');
@@ -8,6 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const jsdom = require('jsdom');
+// const {createImageData: ImageData} = require('canvas');
 const colors = require('colors/safe');
 
 const readFile = util.promisify(fs.readFile);
@@ -126,11 +128,23 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                         !shimNS.files.Timeout.includes(p) &&
                         !shimNS.files['Not Run'].includes(p);
                 });
+
+                const unknownFiles = [];
+                const knownFiles = [
+                    ...goodFiles, ...badFiles, ...notRunning,
+                    ...timeout, ...excludedWorkers, ...excludedNormal
+                ];
+
                 console.log('\nTest files by status (may recur):');
                 console.log(
                     // Object.entries(shimNS.files).reduce((_, [status, files]) => { // Sometimes failing in Node 6.9.2
                     Object.keys(shimNS.files).reduce((_, status) => {
                         const files = shimNS.files[status];
+                        files.forEach((file) => {
+                            if (!knownFiles.includes(file) && !unknownFiles.includes(file)) {
+                                unknownFiles.push(file);
+                            }
+                        });
                         if (!files.length) {
                             return _ + '  ' + status + ': 0\n';
                         }
@@ -148,9 +162,11 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                     cleanJSONOutput(shimNS.statuses, null, 2) + '\n'
                 );
 
+                console.log('Files run which were not in goodBadFiles list', unknownFiles.length, unknownFiles);
+
                 console.log('Unexpected failures:');
                 const failedFiles = shimNS.files.Fail.filter(
-                    (f) => !badFiles.includes(f) &&
+                    (f) => ![...badFiles, ...excludedWorkers, ...excludedNormal].includes(f) &&
                     !['../non-indexedDB/interface-objects.js'].includes(f) &&
                     (!workers || !['_service-worker-indexeddb.https.js'].includes(f))
                 );
@@ -172,7 +188,13 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                     shimNS.fileMap.clear(); // Release memory
                 }
                 if (excluded.length) {
-                    console.log('Please note that the following tests are being deliberately excluded as we do not yet have the built-in support for their features (e.g., shared and service workers), and they are not currently allowing the other tests to complete: ' + cleanJSONOutput(excluded));
+                    console.log(
+                        'Please note that the following tests ' + excluded.length +
+                        ' are being deliberately excluded as we do not yet have the ' +
+                        'built-in support for their features (e.g., shared and ' +
+                        'service workers), and they are not currently allowing the ' +
+                        'other tests to complete: ' + cleanJSONOutput(excluded)
+                    );
                 }
                 if (shimNS.jsonOutput) {
                     const jsonOutputPath = path.join(
@@ -224,7 +246,6 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
     const supported = [
         'resources/testharness.js', 'resources/testharnessreport.js',
         'resources/idlharness.js', 'resources/WebIDLParser.js',
-        'IndexedDB/idlharness.any.js',
         'nested-cloning-common.js', 'interleaved-cursors-common.js',
         'support.js', 'support-promises.js', 'service-workers/service-worker/resources/test-helpers.sub.js',
         'common/get-host-info.sub.js'
@@ -232,7 +253,9 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
     // Use paths set in node-buildjs.js (when extracting <script> tags and joining contents)
     content.replace(/beginscript::(.*?)::endscript/gu, (_, src) => {
         // Fix paths for known support files and report new ones (so we can decide how to handle)
-        if (supported.includes(src) || supported.includes(src.replace(/^\//u, ''))) {
+        if (supported.includes(src) || supported.includes(src.replace(/^\//u, '')) ||
+            (src.startsWith('/IndexedDB') && src.endsWith('.any.js'))
+        ) {
             src = src.replace(/^\//u, '');
             scripts.push(path.join(
                 idbTestPath,
@@ -405,20 +428,32 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             return fetch(...args);
         };
 
+        window.ImageData = function () { // ImageData;
+            this.data = [];
+        };
+        window.MessageChannel = function () {
+            // Testing
+        };
+        window.DOMMatrix = window.DOMMatrixReadOnly =
+            window.DOMPoint = window.DOMPointReadOnly =
+            window.DOMRect = window.DOMRectReadOnly = function () {
+                // Testing
+            };
+
         global.XMLHttpRequest = window.XMLHttpRequest;
         // Expose the following to the `createObjectURL` polyfill
         delete window.URL.createObjectURL;
         global.URL = window.URL;
         // Polyfill enough for our tests
         const cou = require( // eslint-disable-line global-require
-            '../node_modules/typeson-registry/polyfills/createObjectURL-polyglot'
+            '../node_modules/typeson-registry/polyfills/createObjectURL-cjs'
         );
         global.URL.createObjectURL = cou.createObjectURL;
         global.XMLHttpRequest.prototype.overrideMimeType = cou.xmlHttpRequestOverrideMimeType({
             polyfillDataURLs: true
         });
 
-        delete require.cache[ // eslint-disable-line standard/computed-property-even-spacing
+        delete require.cache[
             Object.keys(require.cache).filter((path) => path.includes('createObjectURL'))[0]
         ];
 
@@ -427,6 +462,11 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         window.Object = Object;
         window.Object[Symbol.hasInstance] = function (inst) {
             return inst && typeof inst === 'object';
+        };
+
+        window.Promise = Promise;
+        window.Promise[Symbol.hasInstance] = function (inst) {
+            return inst && typeof inst === 'object' && typeof inst.then === 'function';
         };
 
         window.Function = Function; // idlharness.any.js with check for `DOMStringList`'s prototype being the same Function.prototype (still true?)
@@ -476,6 +516,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             }
         });
 
+        // eslint-disable-next-line require-atomic-updates
         shimNS.window = window;
 
         vm.runInNewContext(allContent, sandboxObj, {

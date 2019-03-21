@@ -4,8 +4,8 @@
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
-  (factory((global.EventTargeter = {})));
-}(this, (function (exports) { 'use strict';
+  (global = global || self, factory(global.EventTargeter = {}));
+}(this, function (exports) { 'use strict';
 
   function _typeof(obj) {
     if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
@@ -21,45 +21,50 @@
     return _typeof(obj);
   }
 
+  /* eslint-disable no-sync, no-restricted-syntax */
+  // Todo: Switch to ES6 classes
   var phases = {
     NONE: 0,
     CAPTURING_PHASE: 1,
     AT_TARGET: 2,
     BUBBLING_PHASE: 3
   };
-
-  if (typeof DOMException === 'undefined') {
-    // Todo: Better polyfill (if even needed here)
-    exports.ShimDOMException = function DOMException(msg, name) {
-      // No need for `toString` as same as for `Error`
-      var err = new Error(msg);
-      err.name = name;
-      return err;
-    };
-  } else {
-    exports.ShimDOMException = DOMException;
-  }
-
+  var ShimDOMException = typeof DOMException === 'undefined' // Todo: Better polyfill (if even needed here)
+  // eslint-disable-next-line no-shadow
+  ? function DOMException(msg, name) {
+    // No need for `toString` as same as for `Error`
+    var err = new Error(msg);
+    err.name = name;
+    return err;
+  } : DOMException;
   var ev = new WeakMap();
   var evCfg = new WeakMap(); // Todo: Set _ev argument outside of this function
 
+  /* eslint-disable func-name-matching, no-shadow */
+
   /**
-  * We use an adapter class rather than a proxy not only for compatibility but also since we have to clone
-  * native event properties anyways in order to properly set `target`, etc.
-  * @note The regular DOM method `dispatchEvent` won't work with this polyfill as it expects a native event
+  * We use an adapter class rather than a proxy not only for compatibility
+  * but also since we have to clone native event properties anyways in order
+  * to properly set `target`, etc.
+  * The regular DOM method `dispatchEvent` won't work with this polyfill as
+  * it expects a native event.
+  * @class
+  * @param {string} type
   */
 
   var ShimEvent = function Event(type) {
-    // eslint-disable-line no-native-reassign
+    /* eslint-enable func-name-matching, no-shadow */
     // For WebIDL checks of function's `length`, we check `arguments` for the optional arguments
     this[Symbol.toStringTag] = 'Event';
 
     this.toString = function () {
       return '[object Event]';
-    };
+    }; // eslint-disable-next-line prefer-rest-params
 
-    var evInit = arguments[1];
-    var _ev = arguments[2];
+
+    var _arguments = Array.prototype.slice.call(arguments),
+        evInit = _arguments[1],
+        _ev = _arguments[2];
 
     if (!arguments.length) {
       throw new TypeError("Failed to construct 'Event': 1 argument required, but only 0 present.");
@@ -195,10 +200,21 @@
   Object.defineProperty(ShimEvent, 'prototype', {
     writable: false
   });
+  /* eslint-disable func-name-matching, no-shadow */
+
+  /**
+   *
+   * @param {string} type
+   * @class
+   */
 
   var ShimCustomEvent = function CustomEvent(type) {
-    var evInit = arguments[1];
-    var _ev = arguments[2];
+    /* eslint-enable func-name-matching, no-shadow */
+    // eslint-disable-next-line prefer-rest-params
+    var _arguments2 = Array.prototype.slice.call(arguments),
+        evInit = _arguments2[1],
+        _ev = _arguments2[2];
+
     ShimEvent.call(this, type, evInit, _ev);
     this[Symbol.toStringTag] = 'CustomEvent';
 
@@ -228,7 +244,8 @@
     ShimCustomEvent.call(this, type, {
       bubbles: bubbles,
       cancelable: cancelable,
-      detail: detail
+      detail: detail // eslint-disable-next-line prefer-rest-params
+
     }, arguments[4]);
 
     if (_evCfg._dispatched) {
@@ -258,21 +275,60 @@
   Object.defineProperty(ShimCustomEvent, 'prototype', {
     writable: false
   });
+  /**
+   *
+   * @param {Event} e
+   * @returns {ShimEvent}
+   */
 
-  function copyEvent(ev) {
-    if ('detail' in ev) {
-      return new ShimCustomEvent(ev.type, {
-        bubbles: ev.bubbles,
-        cancelable: ev.cancelable,
-        detail: ev.detail
-      }, ev);
+  function copyEvent(e) {
+    var bubbles = e.bubbles,
+        cancelable = e.cancelable,
+        detail = e.detail,
+        type = e.type;
+
+    if ('detail' in e) {
+      return new ShimCustomEvent(type, {
+        bubbles: bubbles,
+        cancelable: cancelable,
+        detail: detail
+      }, e);
     }
 
-    return new ShimEvent(ev.type, {
-      bubbles: ev.bubbles,
-      cancelable: ev.cancelable
-    }, ev);
+    return new ShimEvent(type, {
+      bubbles: bubbles,
+      cancelable: cancelable
+    }, e);
   }
+  /**
+  * @typedef {PlainObject} ListenerOptions
+  * @property {boolean} capture
+  */
+
+  /**
+  * @typedef {PlainObject} ListenerInfo
+  * @property {} listenersByTypeOptions
+  * @property {} options
+  * @property {} listenersByType
+  */
+
+  /**
+  * @typedef {function} listener
+  */
+
+  /**
+   * Keys are event types
+   * @typedef {Object<string,listener[]>} Listener
+  */
+
+  /**
+   *
+   * @param {Listener[]} listeners
+   * @param {string} type
+   * @param {boolean|ListenerOptions} options
+   * @returns {ListenerInfo}
+   */
+
 
   function getListenersOptions(listeners, type, options) {
     var listenersByType = listeners[type];
@@ -315,6 +371,8 @@
           if (!listenersByType.length) delete listeners[type];
           return true;
         }
+
+        return false;
       });
     },
     hasListener: function hasListener(listeners, listener, type, options) {
@@ -325,24 +383,39 @@
       });
     }
   };
+  /* eslint-disable no-shadow */
+
+  /**
+   * @class
+   */
 
   function EventTarget() {
+    /* eslint-enable no-shadow */
     throw new TypeError('Illegal constructor');
   }
 
   Object.assign(EventTarget.prototype, ['Early', '', 'Late', 'Default'].reduce(function (obj, listenerType) {
     ['add', 'remove', 'has'].forEach(function (method) {
       obj[method + listenerType + 'EventListener'] = function (type, listener) {
+        // eslint-disable-next-line prefer-rest-params
         var options = arguments[2]; // We keep the listener `length` as per WebIDL
 
         if (arguments.length < 2) throw new TypeError('2 or more arguments required');
 
         if (typeof type !== 'string') {
-          throw new exports.ShimDOMException('UNSPECIFIED_EVENT_TYPE_ERR', 'UNSPECIFIED_EVENT_TYPE_ERR');
+          throw new ShimDOMException('UNSPECIFIED_EVENT_TYPE_ERR', 'UNSPECIFIED_EVENT_TYPE_ERR');
         }
 
-        if (listener.handleEvent) {
-          listener = listener.handleEvent.bind(listener);
+        try {
+          // As per code such as the following, handleEvent may throw,
+          //  but is uncaught
+          // https://github.com/web-platform-tests/wpt/blob/master/IndexedDB/fire-error-event-exception.html#L54-L56
+          if (listener.handleEvent && listener.handleEvent.bind) {
+            listener = listener.handleEvent.bind(listener);
+          }
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.log('Uncaught `handleEvent` error', err);
         }
 
         var arrStr = '_' + listenerType.toLowerCase() + (listenerType === '' ? 'l' : 'L') + 'isteners';
@@ -372,10 +445,10 @@
         this._extraProperties.push('__legacyOutputDidListenersThrowError');
       }
     },
-    dispatchEvent: function dispatchEvent(ev) {
-      return this._dispatchEvent(ev, true);
+    dispatchEvent: function dispatchEvent(e) {
+      return this._dispatchEvent(e, true);
     },
-    _dispatchEvent: function _dispatchEvent(ev, setTarget) {
+    _dispatchEvent: function _dispatchEvent(e, setTarget) {
       var _this = this;
 
       ['early', '', 'late', 'default'].forEach(function (listenerType) {
@@ -388,36 +461,45 @@
         }
       });
 
-      var _evCfg = evCfg.get(ev);
+      var _evCfg = evCfg.get(e);
 
       if (_evCfg && setTarget && _evCfg._dispatched) {
-        throw new exports.ShimDOMException('The object is in an invalid state.', 'InvalidStateError');
+        throw new ShimDOMException('The object is in an invalid state.', 'InvalidStateError');
       }
 
       var eventCopy;
 
       if (_evCfg) {
-        eventCopy = ev;
+        eventCopy = e;
       } else {
-        eventCopy = copyEvent(ev);
+        eventCopy = copyEvent(e);
         _evCfg = evCfg.get(eventCopy);
         _evCfg._dispatched = true;
 
         this._extraProperties.forEach(function (prop) {
-          if (prop in ev) {
-            eventCopy[prop] = ev[prop]; // Todo: Put internal to `ShimEvent`?
+          if (prop in e) {
+            eventCopy[prop] = e[prop]; // Todo: Put internal to `ShimEvent`?
           }
         });
       }
 
       var _eventCopy = eventCopy,
           type = _eventCopy.type;
+      /**
+       *
+       * @returns {void}
+       */
 
       function finishEventDispatch() {
         _evCfg.eventPhase = phases.NONE;
         _evCfg.currentTarget = null;
         delete _evCfg._children;
       }
+      /**
+       *
+       * @returns {void}
+       */
+
 
       function invokeDefaults() {
         // Ignore stopPropagation from defaults
@@ -462,47 +544,54 @@
       switch (eventCopy.eventPhase) {
         default:
         case phases.NONE:
-          _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke early listeners
+          {
+            _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke early listeners
 
-          this.invokeCurrentListeners(this._earlyListeners, eventCopy, type);
+            this.invokeCurrentListeners(this._earlyListeners, eventCopy, type);
 
-          if (!this.__getParent) {
-            _evCfg.eventPhase = phases.AT_TARGET;
-            return this._dispatchEvent(eventCopy, false);
-          }
+            if (!this.__getParent) {
+              _evCfg.eventPhase = phases.AT_TARGET;
+              return this._dispatchEvent(eventCopy, false);
+            }
+            /* eslint-disable consistent-this */
 
-          var par = this;
-          var root = this;
 
-          while (par.__getParent && (par = par.__getParent()) !== null) {
-            if (!_evCfg._children) {
-              _evCfg._children = [];
+            var par = this;
+            var root = this;
+            /* eslint-enable consistent-this */
+
+            while (par.__getParent && (par = par.__getParent()) !== null) {
+              if (!_evCfg._children) {
+                _evCfg._children = [];
+              }
+
+              _evCfg._children.push(root);
+
+              root = par;
             }
 
-            _evCfg._children.push(root);
-
-            root = par;
+            root._defaultSync = this._defaultSync;
+            _evCfg.eventPhase = phases.CAPTURING_PHASE;
+            return root._dispatchEvent(eventCopy, false);
           }
-
-          root._defaultSync = this._defaultSync;
-          _evCfg.eventPhase = phases.CAPTURING_PHASE;
-          return root._dispatchEvent(eventCopy, false);
 
         case phases.CAPTURING_PHASE:
-          if (_evCfg._stopPropagation) {
-            return continueEventDispatch();
+          {
+            if (_evCfg._stopPropagation) {
+              return continueEventDispatch();
+            }
+
+            this.invokeCurrentListeners(this._listeners, eventCopy, type);
+
+            var child = _evCfg._children && _evCfg._children.length && _evCfg._children.pop();
+
+            if (!child || child === eventCopy.target) {
+              _evCfg.eventPhase = phases.AT_TARGET;
+            }
+
+            if (child) child._defaultSync = this._defaultSync;
+            return (child || this)._dispatchEvent(eventCopy, false);
           }
-
-          this.invokeCurrentListeners(this._listeners, eventCopy, type);
-
-          var child = _evCfg._children && _evCfg._children.length && _evCfg._children.pop();
-
-          if (!child || child === eventCopy.target) {
-            _evCfg.eventPhase = phases.AT_TARGET;
-          }
-
-          if (child) child._defaultSync = this._defaultSync;
-          return (child || this)._dispatchEvent(eventCopy, false);
 
         case phases.AT_TARGET:
           if (_evCfg._stopPropagation) {
@@ -519,19 +608,21 @@
           return this._dispatchEvent(eventCopy, false);
 
         case phases.BUBBLING_PHASE:
-          if (_evCfg._stopPropagation) {
-            return continueEventDispatch();
+          {
+            if (_evCfg._stopPropagation) {
+              return continueEventDispatch();
+            }
+
+            var parent = this.__getParent && this.__getParent();
+
+            if (!parent) {
+              return continueEventDispatch();
+            }
+
+            parent.invokeCurrentListeners(parent._listeners, eventCopy, type, true);
+            parent._defaultSync = this._defaultSync;
+            return parent._dispatchEvent(eventCopy, false);
           }
-
-          var parent = this.__getParent && this.__getParent();
-
-          if (!parent) {
-            return continueEventDispatch();
-          }
-
-          parent.invokeCurrentListeners(parent._listeners, eventCopy, type, true);
-          parent._defaultSync = this._defaultSync;
-          return parent._dispatchEvent(eventCopy, false);
       }
     },
     invokeCurrentListeners: function invokeCurrentListeners(listeners, eventCopy, type, checkOnListeners) {
@@ -576,6 +667,8 @@
             _this2.removeEventListener(type, listener, options);
           }
         }
+
+        return false;
       });
       this.tryCatch(eventCopy, function () {
         var onListener = checkOnListeners ? _this2['on' + type] : null;
@@ -590,18 +683,20 @@
       });
       return !eventCopy.defaultPrevented;
     },
-    tryCatch: function tryCatch(ev, cb) {
+    // eslint-disable-next-line promise/prefer-await-to-callbacks
+    tryCatch: function tryCatch(evt, cb) {
       try {
         // Per MDN: Exceptions thrown by event handlers are reported
         //    as uncaught exceptions; the event handlers run on a nested
         //    callstack: they block the caller until they complete, but
         //    exceptions do not propagate to the caller.
+        // eslint-disable-next-line promise/prefer-await-to-callbacks, callback-return
         cb();
       } catch (err) {
-        this.triggerErrorEvent(err, ev);
+        this.triggerErrorEvent(err, evt);
       }
     },
-    triggerErrorEvent: function triggerErrorEvent(err, ev) {
+    triggerErrorEvent: function triggerErrorEvent(err, evt) {
       var error = err;
 
       if (typeof err === 'string') {
@@ -653,7 +748,7 @@
       //    https://github.com/w3c/IndexedDB/issues/140 (also https://github.com/w3c/IndexedDB/issues/49 )
 
       if (this._legacyOutputDidListenersThrowCheck) {
-        ev.__legacyOutputDidListenersThrowError = error;
+        evt.__legacyOutputDidListenersThrowError = error;
       }
     }
   });
@@ -664,7 +759,13 @@
   var ShimEventTarget = EventTarget;
   var EventTargetFactory = {
     createInstance: function createInstance(customOptions) {
+      /* eslint-disable no-shadow */
+
+      /**
+       * @class
+       */
       function EventTarget() {
+        /* eslint-enable no-shadow */
         this.__setOptions(customOptions);
       }
 
@@ -674,9 +775,12 @@
   };
   EventTarget.ShimEvent = ShimEvent;
   EventTarget.ShimCustomEvent = ShimCustomEvent;
-  EventTarget.ShimDOMException = exports.ShimDOMException;
+  EventTarget.ShimDOMException = ShimDOMException;
   EventTarget.ShimEventTarget = EventTarget;
   EventTarget.EventTargetFactory = EventTargetFactory;
+  /**
+   * @returns {void}
+   */
 
   function setPrototypeOfCustomEvent() {
     // TODO: IDL needs but reported as slow!
@@ -684,15 +788,16 @@
     Object.setPrototypeOf(ShimCustomEvent.prototype, ShimEvent.prototype);
   } // Todo: Move to own library (but allowing WeakMaps to be passed in for sharing here)
 
-  exports.setPrototypeOfCustomEvent = setPrototypeOfCustomEvent;
   exports.EventTargetFactory = EventTargetFactory;
-  exports.ShimEventTarget = EventTarget;
-  exports.ShimEvent = ShimEvent;
   exports.ShimCustomEvent = ShimCustomEvent;
+  exports.ShimDOMException = ShimDOMException;
+  exports.ShimEvent = ShimEvent;
+  exports.ShimEventTarget = EventTarget;
+  exports.setPrototypeOfCustomEvent = setPrototypeOfCustomEvent;
 
   Object.defineProperty(exports, '__esModule', { value: true });
 
-})));
+}));
 
 },{}],3:[function(require,module,exports){
 (function (process){
@@ -1348,7 +1453,7 @@ module.exports = SyncPromise;
 
 },{}],6:[function(require,module,exports){
 (function (global){
-!function(e,t){"object"==typeof exports&&"undefined"!=typeof module?module.exports=t():"function"==typeof define&&define.amd?define(t):e.Typeson=t()}(this,function(){"use strict";function _typeof(e){return(_typeof="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e})(e)}function asyncGeneratorStep(e,t,r,n,i,a,o){try{var c=e[a](o),s=c.value}catch(e){return void r(e)}c.done?t(s):Promise.resolve(s).then(n,i)}function _asyncToGenerator(e){return function(){var t=this,r=arguments;return new Promise(function(n,i){var a=e.apply(t,r);function _next(e){asyncGeneratorStep(a,n,i,_next,_throw,"next",e)}function _throw(e){asyncGeneratorStep(a,n,i,_next,_throw,"throw",e)}_next(void 0)})}}function _classCallCheck(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}function _defineProperties(e,t){for(var r=0;r<t.length;r++){var n=t[r];n.enumerable=n.enumerable||!1,n.configurable=!0,"value"in n&&(n.writable=!0),Object.defineProperty(e,n.key,n)}}function _defineProperty(e,t,r){return t in e?Object.defineProperty(e,t,{value:r,enumerable:!0,configurable:!0,writable:!0}):e[t]=r,e}function _objectSpread(e){for(var t=1;t<arguments.length;t++){var r=null!=arguments[t]?arguments[t]:{},n=Object.keys(r);"function"==typeof Object.getOwnPropertySymbols&&(n=n.concat(Object.getOwnPropertySymbols(r).filter(function(e){return Object.getOwnPropertyDescriptor(r,e).enumerable}))),n.forEach(function(t){_defineProperty(e,t,r[t])})}return e}function _slicedToArray(e,t){return function _arrayWithHoles(e){if(Array.isArray(e))return e}(e)||function _iterableToArrayLimit(e,t){var r=[],n=!0,i=!1,a=void 0;try{for(var o,c=e[Symbol.iterator]();!(n=(o=c.next()).done)&&(r.push(o.value),!t||r.length!==t);n=!0);}catch(e){i=!0,a=e}finally{try{n||null==c.return||c.return()}finally{if(i)throw a}}return r}(e,t)||function _nonIterableRest(){throw new TypeError("Invalid attempt to destructure non-iterable instance")}()}function _toConsumableArray(e){return function _arrayWithoutHoles(e){if(Array.isArray(e)){for(var t=0,r=new Array(e.length);t<e.length;t++)r[t]=e[t];return r}}(e)||function _iterableToArray(e){if(Symbol.iterator in Object(e)||"[object Arguments]"===Object.prototype.toString.call(e))return Array.from(e)}(e)||function _nonIterableSpread(){throw new TypeError("Invalid attempt to spread non-iterable instance")}()}var e=function TypesonPromise(e){_classCallCheck(this,TypesonPromise),this.p=new Promise(e)};"undefined"!=typeof Symbol&&(e.prototype[Symbol.toStringTag]="TypesonPromise"),e.prototype.then=function(t,r){var n=this;return new e(function(e,i){n.p.then(function(r){e(t?t(r):r)},function(t){n.p.catch(function(e){return r?r(e):Promise.reject(e)}).then(e,i)})})},e.prototype.catch=function(e){return this.then(null,e)},e.resolve=function(t){return new e(function(e){e(t)})},e.reject=function(t){return new e(function(e,r){r(t)})},["all","race"].map(function(t){e[t]=function(r){return new e(function(e,n){Promise[t](r.map(function(e){return e.p})).then(e,n)})}});var t={}.toString,r={}.hasOwnProperty,n=Object.getPrototypeOf,i=r.toString;function isThenable(e,t){return isObject(e)&&"function"==typeof e.then&&(!t||"function"==typeof e.catch)}function toStringTag(e){return t.call(e).slice(8,-1)}function hasConstructorOf(e,t){if(!e||"object"!==_typeof(e))return!1;var a=n(e);if(!a)return!1;var o=r.call(a,"constructor")&&a.constructor;return"function"!=typeof o?null===t:"function"==typeof o&&null!==t&&i.call(o)===i.call(t)}function isPlainObject(e){return!(!e||"Object"!==toStringTag(e))&&(!n(e)||hasConstructorOf(e,Object))}function isObject(e){return e&&"object"===_typeof(e)}function escapeKeyPathComponent(e){return e.replace(/~/g,"~0").replace(/\./g,"~1")}function unescapeKeyPathComponent(e){return e.replace(/~1/g,".").replace(/~0/g,"~")}function getByKeyPath(e,t){if(""===t)return e;var r=t.indexOf(".");if(r>-1){var n=e[unescapeKeyPathComponent(t.substr(0,r))];return void 0===n?void 0:getByKeyPath(n,t.substr(r+1))}return e[unescapeKeyPathComponent(t)]}var a=Object.keys,o=Array.isArray,c={}.hasOwnProperty,s=["type","replaced","iterateIn","iterateUnsetNumeric"];function nestedPathsFirst(e,t){var r=e.keypath.match(/\./g),n=e.keypath.match(/\./g);return r&&(r=r.length),n&&(n=n.length),r>n?-1:n<r?1:e.keypath<t.keypath?-1:e.keypath>t.keypath}var u=function(){function Typeson(e){_classCallCheck(this,Typeson),this.options=e,this.plainObjectReplacers=[],this.nonplainObjectReplacers=[],this.revivers={},this.types={}}return function _createClass(e,t,r){return t&&_defineProperties(e.prototype,t),r&&_defineProperties(e,r),e}(Typeson,[{key:"stringify",value:function stringify(e,t,r,n){n=_objectSpread({},this.options,n,{stringification:!0});var i=this.encapsulate(e,null,n);return o(i)?JSON.stringify(i[0],t,r):i.then(function(e){return JSON.stringify(e,t,r)})}},{key:"stringifySync",value:function stringifySync(e,t,r,n){return this.stringify(e,t,r,_objectSpread({throwOnBadSyncType:!0},n,{sync:!0}))}},{key:"stringifyAsync",value:function stringifyAsync(e,t,r,n){return this.stringify(e,t,r,_objectSpread({throwOnBadSyncType:!0},n,{sync:!1}))}},{key:"parse",value:function parse(e,t,r){return r=_objectSpread({},this.options,r,{parse:!0}),this.revive(JSON.parse(e,t),r)}},{key:"parseSync",value:function parseSync(e,t,r){return this.parse(e,t,_objectSpread({throwOnBadSyncType:!0},r,{sync:!0}))}},{key:"parseAsync",value:function parseAsync(e,t,r){return this.parse(e,t,_objectSpread({throwOnBadSyncType:!0},r,{sync:!1}))}},{key:"specialTypeNames",value:function specialTypeNames(e,t){var r=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{};return r.returnTypeNames=!0,this.encapsulate(e,t,r)}},{key:"rootTypeName",value:function rootTypeName(e,t){var r=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{};return r.iterateNone=!0,this.encapsulate(e,t,r)}},{key:"encapsulate",value:function encapsulate(t,r,n){var i=(n=_objectSpread({sync:!0},this.options,n)).sync,u=this,f={},l=[],p=[],y=[],v=!(n&&"cyclic"in n)||n.cyclic,d=n.encapsulateObserver,h=_encapsulate("",t,v,r||{},y);function finish(e){var t=Object.values(f);if(n.iterateNone)return t.length?t[0]:Typeson.getJSONType(e);if(t.length){if(n.returnTypeNames)return _toConsumableArray(new Set(t));e&&isPlainObject(e)&&!c.call(e,"$types")?e.$types=f:e={$:e,$types:{$:f}}}else isObject(e)&&c.call(e,"$types")&&(e={$:e,$types:!0});return!n.returnTypeNames&&e}function checkPromises(e,t){return _checkPromises.apply(this,arguments)}function _checkPromises(){return(_checkPromises=_asyncToGenerator(regeneratorRuntime.mark(function _callee2(t,r){var n;return regeneratorRuntime.wrap(function _callee2$(i){for(;;)switch(i.prev=i.next){case 0:return i.next=2,Promise.all(r.map(function(e){return e[1].p}));case 2:return n=i.sent,i.next=5,Promise.all(n.map(function(){var n=_asyncToGenerator(regeneratorRuntime.mark(function _callee(n){var i,a,o,c,s,u,f,l,p,y,v,d,h,b;return regeneratorRuntime.wrap(function _callee$(g){for(;;)switch(g.prev=g.next){case 0:if(i=[],a=r.splice(0,1),o=_slicedToArray(a,1),c=o[0],s=_slicedToArray(c,7),u=s[0],f=s[2],l=s[3],p=s[4],y=s[5],v=s[6],d=_encapsulate(u,n,f,l,i,!0,v),h=hasConstructorOf(d,e),!u||!h){g.next=11;break}return g.next=8,d.p;case 8:return b=g.sent,p[y]=b,g.abrupt("return",checkPromises(t,i));case 11:return u?p[y]=d:t=h?d.p:d,g.abrupt("return",checkPromises(t,i));case 13:case"end":return g.stop()}},_callee,this)}));return function(e){return n.apply(this,arguments)}}()));case 5:return i.abrupt("return",t);case 6:case"end":return i.stop()}},_callee2,this)}))).apply(this,arguments)}function _adaptBuiltinStateObjectProperties(e,t,r){Object.assign(e,t);var n=s.map(function(t){var r=e[t];return delete e[t],r});r(),s.forEach(function(t,r){e[t]=n[r]})}function _encapsulate(t,r,i,s,y,v,h){var b,g={},m=_typeof(r),O=d?function(n){var a=h||s.type||Typeson.getJSONType(r);d(Object.assign(n||g,{keypath:t,value:r,cyclic:i,stateObj:s,promisesData:y,resolvingTypesonPromise:v,awaitingTypesonPromise:hasConstructorOf(r,e)},void 0!==a?{type:a}:{}))}:null;if(["string","boolean","number","undefined"].includes(m))return void 0===r||"number"===m&&(isNaN(r)||r===-1/0||r===1/0)?(b=replace(t,r,s,y,!1,v,O))!==r&&(g={replaced:b}):b=r,O&&O(),b;if(null===r)return O&&O(),r;if(i&&!s.iterateIn&&!s.iterateUnsetNumeric){var w=l.indexOf(r);if(!(w<0))return f[t]="#",O&&O({cyclicKeypath:p[w]}),"#"+p[w];!0===i&&(l.push(r),p.push(t))}var A,S=isPlainObject(r),x=o(r),T=(S||x)&&(!u.plainObjectReplacers.length||s.replaced)||s.iterateIn?r:replace(t,r,s,y,S||x,null,O);if(T!==r?(b=T,g={replaced:T}):x&&"object"!==s.iterateIn||"array"===s.iterateIn?(A=new Array(r.length),g={clone:A}):S||"object"===s.iterateIn?(A={},s.addLength&&(A.length=r.length),g={clone:A}):""===t&&hasConstructorOf(r,e)?(y.push([t,r,i,s,void 0,void 0,s.type]),b=r):b=r,O&&O(),n.iterateNone)return A||b;if(!A)return b;if(s.iterateIn){var j=function _loop(n){var a={ownKeys:c.call(r,n)};_adaptBuiltinStateObjectProperties(s,a,function(){var a=t+(t?".":"")+escapeKeyPathComponent(n),o=_encapsulate(a,r[n],!!i,s,y,v);hasConstructorOf(o,e)?y.push([a,o,!!i,s,A,n,s.type]):void 0!==o&&(A[n]=o)})};for(var _ in r)j(_);O&&O({endIterateIn:!0,end:!0})}else a(r).forEach(function(n){var a=t+(t?".":"")+escapeKeyPathComponent(n);_adaptBuiltinStateObjectProperties(s,{ownKeys:!0},function(){var t=_encapsulate(a,r[n],!!i,s,y,v);hasConstructorOf(t,e)?y.push([a,t,!!i,s,A,n,s.type]):void 0!==t&&(A[n]=t)})}),O&&O({endIterateOwn:!0,end:!0});if(s.iterateUnsetNumeric){for(var P=r.length,C=function _loop2(n){if(!(n in r)){var a=t+(t?".":"")+n;_adaptBuiltinStateObjectProperties(s,{ownKeys:!1},function(){var t=_encapsulate(a,void 0,!!i,s,y,v);hasConstructorOf(t,e)?y.push([a,t,!!i,s,A,n,s.type]):void 0!==t&&(A[n]=t)})}},I=0;I<P;I++)C(I);O&&O({endIterateUnsetNumeric:!0,end:!0})}return A}function replace(e,t,r,n,a,o,c){for(var s=a?u.plainObjectReplacers:u.nonplainObjectReplacers,l=s.length;l--;){var p=s[l];if(p.test(t,r)){var y=p.type;if(u.revivers[y]){var d=f[e];f[e]=d?[y].concat(d):y}return Object.assign(r,{type:y,replaced:!0}),!i&&p.replaceAsync||p.replace?(c&&c({replacing:!0}),_encapsulate(e,p[i||!p.replaceAsync?"replace":"replaceAsync"](t,r),v&&"readonly",r,n,o,y)):(c&&c({typeDetected:!0}),_encapsulate(e,t,v&&"readonly",r,n,o,y))}}return t}return y.length?i&&n.throwOnBadSyncType?function(){throw new TypeError("Sync method requested but async result obtained")}():Promise.resolve(checkPromises(h,y)).then(finish):!i&&n.throwOnBadSyncType?function(){throw new TypeError("Async method requested but sync result obtained")}():n.stringification&&i?[finish(h)]:i?finish(h):Promise.resolve(finish(h))}},{key:"encapsulateSync",value:function encapsulateSync(e,t,r){return this.encapsulate(e,t,_objectSpread({throwOnBadSyncType:!0},r,{sync:!0}))}},{key:"encapsulateAsync",value:function encapsulateAsync(e,t,r){return this.encapsulate(e,t,_objectSpread({throwOnBadSyncType:!0},r,{sync:!1}))}},{key:"revive",value:function revive(t,r){var n=t&&t.$types;if(!n)return t;if(!0===n)return t.$;var i=(r=_objectSpread({sync:!0},this.options,r)).sync,c=[],s={},u=!0;n.$&&isPlainObject(n.$)&&(t=t.$,n=n.$,u=!1);var l=this;function _revive(t,r,p,y,v){if(!u||"$types"!==t){var d=n[t];if(o(r)||isPlainObject(r)){var h=o(r)?new Array(r.length):{};for(a(r).forEach(function(e){var n=_revive(t+(t?".":"")+escapeKeyPathComponent(e),r[e],p||h,h,e);hasConstructorOf(n,f)?h[e]=void 0:void 0!==n&&(h[e]=n)}),r=h;c.length;){var b=_slicedToArray(c[0],4),g=b[0],m=b[1],O=b[2],w=b[3],A=getByKeyPath(g,m);if(hasConstructorOf(A,f))O[w]=void 0;else{if(void 0===A)break;O[w]=A}c.splice(0,1)}}if(!d)return r;if("#"===d){var S=getByKeyPath(p,r.slice(1));return void 0===S&&c.push([p,r.slice(1),y,v]),S}return[].concat(d).reduce(function reducer(t,r){if(hasConstructorOf(t,e))return t.then(function(e){return reducer(e,r)});var n=_slicedToArray(l.revivers[r],1)[0];if(!n)throw new Error("Unregistered type: "+r);return n[i&&n.revive?"revive":!i&&n.reviveAsync?"reviveAsync":"revive"](t,s)},r)}}function checkUndefined(e){return hasConstructorOf(e,f)?void 0:e}var p,y=function revivePlainObjects(){var r=[];if(Object.entries(n).forEach(function(e){var t=_slicedToArray(e,2),i=t[0],a=t[1];"#"!==a&&[].concat(a).forEach(function(e){_slicedToArray(l.revivers[e],2)[1].plain&&(r.push({keypath:i,type:e}),delete n[i])})}),r.length)return r.sort(nestedPathsFirst).reduce(function reducer(r,n){var a=n.keypath,o=n.type;if(hasConstructorOf(r,e))return r.then(function(e){return reducer(e,o)});var c=getByKeyPath(t,a);if(hasConstructorOf(c,e))return c.then(function(e){return reducer(e,o)});var u=_slicedToArray(l.revivers[o],1)[0];if(!u)throw new Error("Unregistered type: "+o);void 0!==(c=u[i&&u.revive?"revive":!i&&u.reviveAsync?"reviveAsync":"revive"](c,s))&&(hasConstructorOf(c,f)&&(c=void 0),function setAtKeyPath(e,t,r){if(""===t)return r;var n=t.indexOf(".");return n>-1?setAtKeyPath(e[unescapeKeyPathComponent(t.substr(0,n))],t.substr(n+1),r):(e[unescapeKeyPathComponent(t)]=r,e)}(t,a,c)===c&&(t=c))},void 0)}();return isThenable(p=hasConstructorOf(y,e)?y.then(function(){return _revive("",t,null)}):_revive("",t,null))?i&&r.throwOnBadSyncType?function(){throw new TypeError("Sync method requested but async result obtained")}():hasConstructorOf(p,e)?p.p.then(checkUndefined):p:!i&&r.throwOnBadSyncType?function(){throw new TypeError("Async method requested but sync result obtained")}():i?checkUndefined(p):Promise.resolve(checkUndefined(p))}},{key:"reviveSync",value:function reviveSync(e,t){return this.revive(e,_objectSpread({throwOnBadSyncType:!0},t,{sync:!0}))}},{key:"reviveAsync",value:function reviveAsync(e,t){return this.revive(e,_objectSpread({throwOnBadSyncType:!0},t,{sync:!1}))}},{key:"register",value:function register(e,t){return t=t||{},[].concat(e).forEach(function R(e){if(o(e))return e.map(R,this);e&&a(e).forEach(function(r){if("#"===r)throw new TypeError("# cannot be used as a type name as it is reserved for cyclic objects");if(Typeson.JSON_TYPES.includes(r))throw new TypeError("Plain JSON object types are reserved as type names");var n=e[r],i=n.testPlainObjects?this.plainObjectReplacers:this.nonplainObjectReplacers,a=i.filter(function(e){return e.type===r});if(a.length&&(i.splice(i.indexOf(a[0]),1),delete this.revivers[r],delete this.types[r]),n){if("function"==typeof n){var c=n;n={test:function test(e){return e&&e.constructor===c},replace:function replace(e){return Object.assign({},e)},revive:function revive(e){return Object.assign(Object.create(c.prototype),e)}}}else if(o(n)){var s=_slicedToArray(n,3);n={test:s[0],replace:s[1],revive:s[2]}}var u={type:r,test:n.test.bind(n)};n.replace&&(u.replace=n.replace.bind(n)),n.replaceAsync&&(u.replaceAsync=n.replaceAsync.bind(n));var f="number"==typeof t.fallback?t.fallback:t.fallback?0:1/0;if(n.testPlainObjects?this.plainObjectReplacers.splice(f,0,u):this.nonplainObjectReplacers.splice(f,0,u),n.revive||n.reviveAsync){var l={};n.revive&&(l.revive=n.revive.bind(n)),n.reviveAsync&&(l.reviveAsync=n.reviveAsync.bind(n)),this.revivers[r]=[l,{plain:n.testPlainObjects}]}this.types[r]=n}},this)},this),this}}]),Typeson}(),f=function Undefined(){_classCallCheck(this,Undefined)};u.Undefined=f,u.Promise=e,u.isThenable=isThenable,u.toStringTag=toStringTag,u.hasConstructorOf=hasConstructorOf,u.isObject=isObject,u.isPlainObject=isPlainObject,u.isUserObject=function isUserObject(e){if(!e||"Object"!==toStringTag(e))return!1;var t=n(e);return!t||hasConstructorOf(e,Object)||isUserObject(t)},u.escapeKeyPathComponent=escapeKeyPathComponent,u.unescapeKeyPathComponent=unescapeKeyPathComponent,u.getByKeyPath=getByKeyPath,u.getJSONType=function getJSONType(e){return null===e?"null":Array.isArray(e)?"array":_typeof(e)},u.JSON_TYPES=["null","boolean","number","string","array","object"];for(var l="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",p=new Uint8Array(256),y=0;y<l.length;y++)p[l.charCodeAt(y)]=y;var v=function encode(e,t,r){null==r&&(r=e.byteLength);for(var n=new Uint8Array(e,t||0,r),i=n.length,a="",o=0;o<i;o+=3)a+=l[n[o]>>2],a+=l[(3&n[o])<<4|n[o+1]>>4],a+=l[(15&n[o+1])<<2|n[o+2]>>6],a+=l[63&n[o+2]];return i%3==2?a=a.substring(0,a.length-1)+"=":i%3==1&&(a=a.substring(0,a.length-2)+"=="),a},d=function decode(e){var t,r,n,i,a=e.length,o=.75*e.length,c=0;"="===e[e.length-1]&&(o--,"="===e[e.length-2]&&o--);for(var s=new ArrayBuffer(o),u=new Uint8Array(s),f=0;f<a;f+=4)t=p[e.charCodeAt(f)],r=p[e.charCodeAt(f+1)],n=p[e.charCodeAt(f+2)],i=p[e.charCodeAt(f+3)],u[c++]=t<<2|r>>4,u[c++]=(15&r)<<4|n>>2,u[c++]=(3&n)<<6|63&i;return s},h={arraybuffer:{test:function test(e){return"ArrayBuffer"===u.toStringTag(e)},replace:function replace(e,t){t.buffers||(t.buffers=[]);var r=t.buffers.indexOf(e);return r>-1?{index:r}:(t.buffers.push(e),v(e))},revive:function revive(e,t){if(t.buffers||(t.buffers=[]),"object"===_typeof(e))return t.buffers[e.index];var r=d(e);return t.buffers.push(r),r}}},b={bigintObject:{test:function test(e){return"object"===_typeof(e)&&u.hasConstructorOf(e,BigInt)},replace:function replace(e){return String(e)},revive:function revive(e){return Object(BigInt(e))}}},g={bigint:{test:function test(e){return"bigint"==typeof e},replace:function replace(e){return String(e)},revive:function revive(e){return BigInt(e)}}};function string2arraybuffer(e){for(var t=new Uint8Array(e.length),r=0;r<e.length;r++)t[r]=e.charCodeAt(r);return t.buffer}var m={blob:{test:function test(e){return"Blob"===u.toStringTag(e)},replace:function replace(e){var t=new XMLHttpRequest;if(t.overrideMimeType("text/plain; charset=x-user-defined"),t.open("GET",URL.createObjectURL(e),!1),200!==t.status&&0!==t.status)throw new Error("Bad Blob access: "+t.status);return t.send(),{type:e.type,stringContents:t.responseText}},revive:function revive(e){var t=e.type,r=e.stringContents;return new Blob([string2arraybuffer(r)],{type:t})},replaceAsync:function replaceAsync(e){return new u.Promise(function(t,r){if(e.isClosed)r(new Error("The Blob is closed"));else{var n=new FileReader;n.addEventListener("load",function(){t({type:e.type,stringContents:n.result})}),n.addEventListener("error",function(){r(n.error)}),n.readAsBinaryString(e)}})}}},O={};var w={cloneable:{test:function test(e){return e&&"object"===_typeof(e)&&"function"==typeof e[Symbol.for("cloneEncapsulate")]},replace:function replace(e){var t=e[Symbol.for("cloneEncapsulate")](),r=function generateUUID(){var e=(new Date).getTime();return"undefined"!=typeof performance&&"function"==typeof performance.now&&(e+=performance.now()),"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(t){var r=(e+16*Math.random())%16|0;return e=Math.floor(e/16),("x"===t?r:3&r|8).toString(16)})}();return O[r]=e,{uuid:r,encapsulated:t}},revive:function revive(e){var t=e.uuid,r=e.encapsulated;return O[t][Symbol.for("cloneRevive")](r)}}},A={dataview:{test:function test(e){return"DataView"===u.toStringTag(e)},replace:function replace(e,t){var r=e.buffer,n=e.byteOffset,i=e.byteLength;t.buffers||(t.buffers=[]);var a=t.buffers.indexOf(r);return a>-1?{index:a,byteOffset:n,byteLength:i}:(t.buffers.push(r),{encoded:v(r),byteOffset:n,byteLength:i})},revive:function revive(e,t){t.buffers||(t.buffers=[]);var r,n=e.byteOffset,i=e.byteLength,a=e.encoded,o=e.index;return"index"in e?r=t.buffers[o]:(r=d(a),t.buffers.push(r)),new DataView(r,n,i)}}},S={date:{test:function test(e){return"Date"===u.toStringTag(e)},replace:function replace(e){var t=e.getTime();return isNaN(t)?"NaN":t},revive:function revive(e){return"NaN"===e?new Date(NaN):new Date(e)}}},x={error:{test:function test(e){return"Error"===u.toStringTag(e)},replace:function replace(e){return{name:e.name,message:e.message}},revive:function revive(e){var t=e.name,r=e.message,n=new Error(r);return n.name=t,n}}},T="undefined"==typeof self?global:self,j={};["TypeError","RangeError","SyntaxError","ReferenceError","EvalError","URIError","InternalError"].forEach(function(e){var t=T[e];t&&(j[e.toLowerCase()]={test:function test(e){return u.hasConstructorOf(e,t)},replace:function replace(e){return e.message},revive:function revive(e){return new t(e)}})});var _={file:{test:function test(e){return"File"===u.toStringTag(e)},replace:function replace(e){var t=new XMLHttpRequest;if(t.overrideMimeType("text/plain; charset=x-user-defined"),t.open("GET",URL.createObjectURL(e),!1),200!==t.status&&0!==t.status)throw new Error("Bad Blob access: "+t.status);return t.send(),{type:e.type,stringContents:t.responseText,name:e.name,lastModified:e.lastModified}},revive:function revive(e){var t=e.name,r=e.type,n=e.stringContents,i=e.lastModified;return new File([string2arraybuffer(n)],t,{type:r,lastModified:i})},replaceAsync:function replaceAsync(e){return new u.Promise(function(t,r){if(e.isClosed)r(new Error("The File is closed"));else{var n=new FileReader;n.addEventListener("load",function(){t({type:e.type,stringContents:n.result,name:e.name,lastModified:e.lastModified})}),n.addEventListener("error",function(){r(n.error)}),n.readAsBinaryString(e)}})}}},P={file:_.file,filelist:{test:function test(e){return"FileList"===u.toStringTag(e)},replace:function replace(e){for(var t=[],r=0;r<e.length;r++)t[r]=e.item(r);return t},revive:function revive(e){function FileList(){this._files=arguments[0],this.length=this._files.length}return FileList.prototype.item=function(e){return this._files[e]},FileList.prototype[Symbol.toStringTag]="FileList",new FileList(e)}}},C={imagebitmap:{test:function test(e){return"ImageBitmap"===u.toStringTag(e)||e&&e.dataset&&"ImageBitmap"===e.dataset.toStringTag},replace:function replace(e){var t=document.createElement("canvas");return t.getContext("2d").drawImage(e,0,0),t.toDataURL()},revive:function revive(e){var t=document.createElement("canvas"),r=t.getContext("2d"),n=document.createElement("img");return n.onload=function(){r.drawImage(n,0,0)},n.src=e,t},reviveAsync:function reviveAsync(e){var t=document.createElement("canvas"),r=t.getContext("2d"),n=document.createElement("img");return n.onload=function(){r.drawImage(n,0,0)},n.src=e,createImageBitmap(t)}}},I={imagedata:{test:function test(e){return"ImageData"===u.toStringTag(e)},replace:function replace(e){return{array:Array.from(e.data),width:e.width,height:e.height}},revive:function revive(e){return new ImageData(new Uint8ClampedArray(e.array),e.width,e.height)}}},E={infinity:{test:function test(e){return e===1/0},replace:function replace(e){return"Infinity"},revive:function revive(e){return 1/0}}},k={IntlCollator:{test:function test(e){return u.hasConstructorOf(e,Intl.Collator)},replace:function replace(e){return e.resolvedOptions()},revive:function revive(e){return new Intl.Collator(e.locale,e)}},IntlDateTimeFormat:{test:function test(e){return u.hasConstructorOf(e,Intl.DateTimeFormat)},replace:function replace(e){return e.resolvedOptions()},revive:function revive(e){return new Intl.DateTimeFormat(e.locale,e)}},IntlNumberFormat:{test:function test(e){return u.hasConstructorOf(e,Intl.NumberFormat)},replace:function replace(e){return e.resolvedOptions()},revive:function revive(e){return new Intl.NumberFormat(e.locale,e)}}},B={map:{test:function test(e){return"Map"===u.toStringTag(e)},replace:function replace(e){return Array.from(e.entries())},revive:function revive(e){return new Map(e)}}},N={nan:{test:function test(e){return"number"==typeof e&&isNaN(e)},replace:function replace(e){return"NaN"},revive:function revive(e){return NaN}}},U={negativeInfinity:{test:function test(e){return e===-1/0},replace:function replace(e){return"-Infinity"},revive:function revive(e){return-1/0}}},K={nonbuiltinIgnore:{test:function test(e){return e&&"object"===_typeof(e)&&!Array.isArray(e)&&!["Object","Boolean","Number","String","Error","RegExp","Math","Date","Map","Set","JSON","ArrayBuffer","SharedArrayBuffer","DataView","Int8Array","Uint8Array","Uint8ClampedArray","Int16Array","Uint16Array","Int32Array","Uint32Array","Float32Array","Float64Array","Promise","String Iterator","Array Iterator","Map Iterator","Set Iterator","WeakMap","WeakSet","Atomics","Module"].includes(u.toStringTag(e))},replace:function replace(e){}}},L={StringObject:{test:function test(e){return"String"===u.toStringTag(e)&&"object"===_typeof(e)},replace:function replace(e){return String(e)},revive:function revive(e){return new String(e)}},BooleanObject:{test:function test(e){return"Boolean"===u.toStringTag(e)&&"object"===_typeof(e)},replace:function replace(e){return Boolean(e)},revive:function revive(e){return new Boolean(e)}},NumberObject:{test:function test(e){return"Number"===u.toStringTag(e)&&"object"===_typeof(e)},replace:function replace(e){return Number(e)},revive:function revive(e){return new Number(e)}}},M={regexp:{test:function test(e){return"RegExp"===u.toStringTag(e)},replace:function replace(e){return{source:e.source,flags:(e.global?"g":"")+(e.ignoreCase?"i":"")+(e.multiline?"m":"")+(e.sticky?"y":"")+(e.unicode?"u":"")}},revive:function revive(e){var t=e.source,r=e.flags;return new RegExp(t,r)}}},F={};var D={resurrectable:{test:function test(e){return e&&!Array.isArray(e)&&["object","function","symbol"].includes(_typeof(e))},replace:function replace(e){var t=function generateUUID$1(){var e=(new Date).getTime();return"undefined"!=typeof performance&&"function"==typeof performance.now&&(e+=performance.now()),"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(t){var r=(e+16*Math.random())%16|0;return e=Math.floor(e/16),("x"===t?r:3&r|8).toString(16)})}();return F[t]=e,t},revive:function revive(e){return F[e]}}},$={set:{test:function test(e){return"Set"===u.toStringTag(e)},replace:function replace(e){return Array.from(e.values())},revive:function revive(e){return new Set(e)}}},J="undefined"==typeof self?global:self,G={};["Int8Array","Uint8Array","Uint8ClampedArray","Int16Array","Uint16Array","Int32Array","Uint32Array","Float32Array","Float64Array"].forEach(function(e){var t=e,r=J[e];r&&(G[e.toLowerCase()]={test:function test(e){return u.toStringTag(e)===t},replace:function replace(e){return(0===e.byteOffset&&e.byteLength===e.buffer.byteLength?e:e.slice(0)).buffer},revive:function revive(e){return"ArrayBuffer"===u.toStringTag(e)?new r(e):e}})});var q="undefined"==typeof self?global:self,W={};["Int8Array","Uint8Array","Uint8ClampedArray","Int16Array","Uint16Array","Int32Array","Uint32Array","Float32Array","Float64Array"].forEach(function(e){var t=e,r=q[t];r&&(W[e.toLowerCase()]={test:function test(e){return u.toStringTag(e)===t},replace:function replace(e,t){var r=e.buffer,n=e.byteOffset,i=e.length;t.buffers||(t.buffers=[]);var a=t.buffers.indexOf(r);return a>-1?{index:a,byteOffset:n,length:i}:(t.buffers.push(r),{encoded:v(r),byteOffset:n,length:i})},revive:function revive(e,t){t.buffers||(t.buffers=[]);var n,i=e.byteOffset,a=e.length,o=e.encoded,c=e.index;return"index"in e?n=t.buffers[c]:(n=d(o),t.buffers.push(n)),new r(n,i,a)}})});var V={undef:{test:function test(e,t){return void 0===e&&(t.ownKeys||!("ownKeys"in t))},replace:function replace(e){return 0},revive:function revive(e){return new u.Undefined}}},H={userObject:{test:function test(e,t){return u.isUserObject(e)},replace:function replace(e){return Object.assign({},e)},revive:function revive(e){return e}}},X=[{arrayNonindexKeys:{testPlainObjects:!0,test:function test(e,t){return!!Array.isArray(e)&&(Object.keys(e).some(function(e){return String(parseInt(e))!==e})&&(t.iterateIn="object",t.addLength=!0),!0)},replace:function replace(e,t){return Array.isArray(e)&&(t.iterateUnsetNumeric=!0),e},revive:function revive(e){if(Array.isArray(e))return e;var t=[];return Object.entries(e).forEach(function(e){var r=_slicedToArray(e,2),n=r[0],i=r[1];t[n]=i}),t}}},{sparseUndefined:{test:function test(e,t){return void 0===e&&!1===t.ownKeys},replace:function replace(e){return 0},revive:function revive(e){}}}],Y=[N,E,U],z=[V,X,L,Y,S,x,j,M].concat("function"==typeof Map?B:[],"function"==typeof Set?$:[],"function"==typeof ArrayBuffer?h:[],"function"==typeof Uint8Array?W:[],"function"==typeof DataView?A:[],"undefined"!=typeof Intl?k:[],"undefined"!=typeof BigInt?[g,b]:[]),Q=[x,j],Z=[z,{ArrayBuffer:null},G],ee=[{sparseArrays:{testPlainObjects:!0,test:function test(e){return Array.isArray(e)},replace:function replace(e,t){return t.iterateUnsetNumeric=!0,e}}},{sparseUndefined:{test:function test(e,t){return void 0===e&&!1===t.ownKeys},replace:function replace(e){return 0},revive:function revive(e){}}}],te=[H,V,X,L,Y,S,M,I,C,_,P,m].concat("function"==typeof Map?B:[],"function"==typeof Set?$:[],"function"==typeof ArrayBuffer?h:[],"function"==typeof Uint8Array?W:[],"function"==typeof DataView?A:[],"undefined"!=typeof Intl?k:[],"undefined"!=typeof BigInt?[g,b]:[]),re=te.concat({checkDataCloneException:[function(e){var t={}.toString.call(e).slice(8,-1);if(["symbol","function"].includes(_typeof(e))||["Arguments","Module","Error","Promise","WeakMap","WeakSet"].includes(t)||e===Object.prototype||("Blob"===t||"File"===t)&&e.isClosed||e&&"object"===_typeof(e)&&"number"==typeof e.nodeType&&"function"==typeof e.insertBefore)throw new DOMException("The object cannot be cloned.","DataCloneError");return!1}]}),ne=[ee,V],ie=[z];return u.types={arraybuffer:h,bigintObject:b,bigint:g,blob:m,cloneable:w,dataview:A,date:S,error:x,errors:j,file:_,filelist:P,imagebitmap:C,imagedata:I,infinity:E,intlTypes:k,map:B,nan:N,negativeInfinity:U,nonbuiltinIgnore:K,primitiveObjects:L,regexp:M,resurrectable:D,set:$,typedArraysSocketio:G,typedArrays:W,undef:V,userObject:H},u.presets={arrayNonindexKeys:X,builtin:z,postMessage:Q,socketio:Z,sparseUndefined:ee,specialNumbers:Y,structuredCloningThrowing:re,structuredCloning:te,undef:ne,universal:ie},u});
+!function(e,t){"object"==typeof exports&&"undefined"!=typeof module?module.exports=t():"function"==typeof define&&define.amd?define(t):(e=e||self).Typeson=t()}(this,function(){"use strict";function _typeof(e){return(_typeof="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e})(e)}function _defineProperties(e,t){for(var r=0;r<t.length;r++){var n=t[r];n.enumerable=n.enumerable||!1,n.configurable=!0,"value"in n&&(n.writable=!0),Object.defineProperty(e,n.key,n)}}function _defineProperty(e,t,r){return t in e?Object.defineProperty(e,t,{value:r,enumerable:!0,configurable:!0,writable:!0}):e[t]=r,e}function _toConsumableArray(e){return function _arrayWithoutHoles(e){if(Array.isArray(e)){for(var t=0,r=new Array(e.length);t<e.length;t++)r[t]=e[t];return r}}(e)||function _iterableToArray(e){if(Symbol.iterator in Object(e)||"[object Arguments]"===Object.prototype.toString.call(e))return Array.from(e)}(e)||function _nonIterableSpread(){throw new TypeError("Invalid attempt to spread non-iterable instance")}()}function _typeof$1(e){return(_typeof$1="function"==typeof Symbol&&"symbol"===_typeof(Symbol.iterator)?function _typeof$1(e){return _typeof(e)}:function _typeof$1(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":_typeof(e)})(e)}function asyncGeneratorStep(e,t,r,n,i,a,o){try{var c=e[a](o),s=c.value}catch(e){return void r(e)}c.done?t(s):Promise.resolve(s).then(n,i)}function _asyncToGenerator(e){return function(){var t=this,r=arguments;return new Promise(function(n,i){var a=e.apply(t,r);function _next(e){asyncGeneratorStep(a,n,i,_next,_throw,"next",e)}function _throw(e){asyncGeneratorStep(a,n,i,_next,_throw,"throw",e)}_next(void 0)})}}function _classCallCheck$1(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}function _defineProperties$1(e,t){for(var r=0;r<t.length;r++){var n=t[r];n.enumerable=n.enumerable||!1,n.configurable=!0,"value"in n&&(n.writable=!0),Object.defineProperty(e,n.key,n)}}function _defineProperty$1(e,t,r){return t in e?Object.defineProperty(e,t,{value:r,enumerable:!0,configurable:!0,writable:!0}):e[t]=r,e}function _objectSpread$1(e){for(var t=1;t<arguments.length;t++){var r=null!=arguments[t]?arguments[t]:{},n=Object.keys(r);"function"==typeof Object.getOwnPropertySymbols&&(n=n.concat(Object.getOwnPropertySymbols(r).filter(function(e){return Object.getOwnPropertyDescriptor(r,e).enumerable}))),n.forEach(function(t){_defineProperty$1(e,t,r[t])})}return e}function _slicedToArray(e,t){return function _arrayWithHoles(e){if(Array.isArray(e))return e}(e)||function _iterableToArrayLimit(e,t){var r=[],n=!0,i=!1,a=void 0;try{for(var o,c=e[Symbol.iterator]();!(n=(o=c.next()).done)&&(r.push(o.value),!t||r.length!==t);n=!0);}catch(e){i=!0,a=e}finally{try{n||null==c.return||c.return()}finally{if(i)throw a}}return r}(e,t)||function _nonIterableRest(){throw new TypeError("Invalid attempt to destructure non-iterable instance")}()}function _toConsumableArray$1(e){return function _arrayWithoutHoles$1(e){if(Array.isArray(e)){for(var t=0,r=new Array(e.length);t<e.length;t++)r[t]=e[t];return r}}(e)||function _iterableToArray$1(e){if(Symbol.iterator in Object(e)||"[object Arguments]"===Object.prototype.toString.call(e))return Array.from(e)}(e)||function _nonIterableSpread$1(){throw new TypeError("Invalid attempt to spread non-iterable instance")}()}var e=function TypesonPromise(e){_classCallCheck$1(this,TypesonPromise),this.p=new Promise(e)};"undefined"!=typeof Symbol&&(e.prototype[Symbol.toStringTag]="TypesonPromise"),e.prototype.then=function(t,r){var n=this;return new e(function(e,i){n.p.then(function(r){e(t?t(r):r)},function(t){n.p.catch(function(e){return r?r(e):Promise.reject(e)}).then(e,i)})})},e.prototype.catch=function(e){return this.then(null,e)},e.resolve=function(t){return new e(function(e){e(t)})},e.reject=function(t){return new e(function(e,r){r(t)})},["all","race"].map(function(t){e[t]=function(r){return new e(function(e,n){Promise[t](r.map(function(e){return e.p})).then(e,n)})}});var t={}.toString,r={}.hasOwnProperty,n=Object.getPrototypeOf,i=r.toString;function isThenable(e,t){return isObject(e)&&"function"==typeof e.then&&(!t||"function"==typeof e.catch)}function toStringTag(e){return t.call(e).slice(8,-1)}function hasConstructorOf(e,t){if(!e||"object"!==_typeof$1(e))return!1;var a=n(e);if(!a)return!1;var o=r.call(a,"constructor")&&a.constructor;return"function"!=typeof o?null===t:"function"==typeof o&&null!==t&&i.call(o)===i.call(t)}function isPlainObject(e){return!(!e||"Object"!==toStringTag(e))&&(!n(e)||hasConstructorOf(e,Object))}function isObject(e){return e&&"object"===_typeof$1(e)}function escapeKeyPathComponent(e){return e.replace(/~/g,"~0").replace(/\./g,"~1")}function unescapeKeyPathComponent(e){return e.replace(/~1/g,".").replace(/~0/g,"~")}function getByKeyPath(e,t){if(""===t)return e;var r=t.indexOf(".");if(r>-1){var n=e[unescapeKeyPathComponent(t.substr(0,r))];return void 0===n?void 0:getByKeyPath(n,t.substr(r+1))}return e[unescapeKeyPathComponent(t)]}var a=Object.keys,o=Array.isArray,c={}.hasOwnProperty,s=["type","replaced","iterateIn","iterateUnsetNumeric"];function nestedPathsFirst(e,t){var r=e.keypath.match(/\./g),n=e.keypath.match(/\./g);return r&&(r=r.length),n&&(n=n.length),r>n?-1:r<n?1:e.keypath<t.keypath?-1:e.keypath>t.keypath}var u=function(){function Typeson(e){_classCallCheck$1(this,Typeson),this.options=e,this.plainObjectReplacers=[],this.nonplainObjectReplacers=[],this.revivers={},this.types={}}return function _createClass$1(e,t,r){return t&&_defineProperties$1(e.prototype,t),r&&_defineProperties$1(e,r),e}(Typeson,[{key:"stringify",value:function stringify(e,t,r,n){n=_objectSpread$1({},this.options,n,{stringification:!0});var i=this.encapsulate(e,null,n);return o(i)?JSON.stringify(i[0],t,r):i.then(function(e){return JSON.stringify(e,t,r)})}},{key:"stringifySync",value:function stringifySync(e,t,r,n){return this.stringify(e,t,r,_objectSpread$1({throwOnBadSyncType:!0},n,{sync:!0}))}},{key:"stringifyAsync",value:function stringifyAsync(e,t,r,n){return this.stringify(e,t,r,_objectSpread$1({throwOnBadSyncType:!0},n,{sync:!1}))}},{key:"parse",value:function parse(e,t,r){return r=_objectSpread$1({},this.options,r,{parse:!0}),this.revive(JSON.parse(e,t),r)}},{key:"parseSync",value:function parseSync(e,t,r){return this.parse(e,t,_objectSpread$1({throwOnBadSyncType:!0},r,{sync:!0}))}},{key:"parseAsync",value:function parseAsync(e,t,r){return this.parse(e,t,_objectSpread$1({throwOnBadSyncType:!0},r,{sync:!1}))}},{key:"specialTypeNames",value:function specialTypeNames(e,t){var r=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{};return r.returnTypeNames=!0,this.encapsulate(e,t,r)}},{key:"rootTypeName",value:function rootTypeName(e,t){var r=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{};return r.iterateNone=!0,this.encapsulate(e,t,r)}},{key:"encapsulate",value:function encapsulate(t,r,n){var i=(n=_objectSpread$1({sync:!0},this.options,n)).sync,u=this,f={},l=[],p=[],y=[],v=!("cyclic"in n)||n.cyclic,d=n.encapsulateObserver,h=_encapsulate("",t,v,r||{},y);function finish(e){var t=Object.values(f);if(n.iterateNone)return t.length?t[0]:Typeson.getJSONType(e);if(t.length){if(n.returnTypeNames)return _toConsumableArray$1(new Set(t));e&&isPlainObject(e)&&!c.call(e,"$types")?e.$types=f:e={$:e,$types:{$:f}}}else isObject(e)&&c.call(e,"$types")&&(e={$:e,$types:!0});return!n.returnTypeNames&&e}function checkPromises(e,t){return _checkPromises.apply(this,arguments)}function _checkPromises(){return(_checkPromises=_asyncToGenerator(regeneratorRuntime.mark(function _callee2(t,r){var n;return regeneratorRuntime.wrap(function _callee2$(i){for(;;)switch(i.prev=i.next){case 0:return i.next=2,Promise.all(r.map(function(e){return e[1].p}));case 2:return n=i.sent,i.next=5,Promise.all(n.map(function(){var n=_asyncToGenerator(regeneratorRuntime.mark(function _callee(n){var i,a,o,c,s,u,f,l,p,y,v,d,h,b;return regeneratorRuntime.wrap(function _callee$(g){for(;;)switch(g.prev=g.next){case 0:if(i=[],a=r.splice(0,1),o=_slicedToArray(a,1),c=o[0],s=_slicedToArray(c,7),u=s[0],f=s[2],l=s[3],p=s[4],y=s[5],v=s[6],d=_encapsulate(u,n,f,l,i,!0,v),h=hasConstructorOf(d,e),!u||!h){g.next=11;break}return g.next=8,d.p;case 8:return b=g.sent,p[y]=b,g.abrupt("return",checkPromises(t,i));case 11:return u?p[y]=d:t=h?d.p:d,g.abrupt("return",checkPromises(t,i));case 13:case"end":return g.stop()}},_callee)}));return function(e){return n.apply(this,arguments)}}()));case 5:return i.abrupt("return",t);case 6:case"end":return i.stop()}},_callee2)}))).apply(this,arguments)}function _adaptBuiltinStateObjectProperties(e,t,r){Object.assign(e,t);var n=s.map(function(t){var r=e[t];return delete e[t],r});r(),s.forEach(function(t,r){e[t]=n[r]})}function _encapsulate(t,r,i,s,y,v,h){var b,g={},m=_typeof$1(r),O=d?function(n){var a=h||s.type||Typeson.getJSONType(r);d(Object.assign(n||g,{keypath:t,value:r,cyclic:i,stateObj:s,promisesData:y,resolvingTypesonPromise:v,awaitingTypesonPromise:hasConstructorOf(r,e)},void 0!==a?{type:a}:{}))}:null;if(["string","boolean","number","undefined"].includes(m))return void 0===r||"number"===m&&(isNaN(r)||r===-1/0||r===1/0)?(b=replace(t,r,s,y,!1,v,O))!==r&&(g={replaced:b}):b=r,O&&O(),b;if(null===r)return O&&O(),r;if(i&&!s.iterateIn&&!s.iterateUnsetNumeric){var w=l.indexOf(r);if(!(w<0))return f[t]="#",O&&O({cyclicKeypath:p[w]}),"#"+p[w];!0===i&&(l.push(r),p.push(t))}var S,A=isPlainObject(r),_=o(r),j=(A||_)&&(!u.plainObjectReplacers.length||s.replaced)||s.iterateIn?r:replace(t,r,s,y,A||_,null,O);if(j!==r?(b=j,g={replaced:j}):_&&"object"!==s.iterateIn||"array"===s.iterateIn?(S=new Array(r.length),g={clone:S}):A||"object"===s.iterateIn?(S={},s.addLength&&(S.length=r.length),g={clone:S}):""===t&&hasConstructorOf(r,e)?(y.push([t,r,i,s,void 0,void 0,s.type]),b=r):b=r,O&&O(),n.iterateNone)return S||b;if(!S)return b;if(s.iterateIn){var T=function _loop(n){var a={ownKeys:c.call(r,n)};_adaptBuiltinStateObjectProperties(s,a,function(){var a=t+(t?".":"")+escapeKeyPathComponent(n),o=_encapsulate(a,r[n],!!i,s,y,v);hasConstructorOf(o,e)?y.push([a,o,!!i,s,S,n,s.type]):void 0!==o&&(S[n]=o)})};for(var P in r)T(P);O&&O({endIterateIn:!0,end:!0})}else a(r).forEach(function(n){var a=t+(t?".":"")+escapeKeyPathComponent(n);_adaptBuiltinStateObjectProperties(s,{ownKeys:!0},function(){var t=_encapsulate(a,r[n],!!i,s,y,v);hasConstructorOf(t,e)?y.push([a,t,!!i,s,S,n,s.type]):void 0!==t&&(S[n]=t)})}),O&&O({endIterateOwn:!0,end:!0});if(s.iterateUnsetNumeric){for(var C=r.length,x=function _loop2(n){if(!(n in r)){var a=t+(t?".":"")+n;_adaptBuiltinStateObjectProperties(s,{ownKeys:!1},function(){var t=_encapsulate(a,void 0,!!i,s,y,v);hasConstructorOf(t,e)?y.push([a,t,!!i,s,S,n,s.type]):void 0!==t&&(S[n]=t)})}},I=0;I<C;I++)x(I);O&&O({endIterateUnsetNumeric:!0,end:!0})}return S}function replace(e,t,r,n,a,o,c){for(var s=a?u.plainObjectReplacers:u.nonplainObjectReplacers,l=s.length;l--;){var p=s[l];if(p.test(t,r)){var y=p.type;if(u.revivers[y]){var d=f[e];f[e]=d?[y].concat(d):y}return Object.assign(r,{type:y,replaced:!0}),!i&&p.replaceAsync||p.replace?(c&&c({replacing:!0}),_encapsulate(e,p[i||!p.replaceAsync?"replace":"replaceAsync"](t,r),v&&"readonly",r,n,o,y)):(c&&c({typeDetected:!0}),_encapsulate(e,t,v&&"readonly",r,n,o,y))}}return t}return y.length?i&&n.throwOnBadSyncType?function(){throw new TypeError("Sync method requested but async result obtained")}():Promise.resolve(checkPromises(h,y)).then(finish):!i&&n.throwOnBadSyncType?function(){throw new TypeError("Async method requested but sync result obtained")}():n.stringification&&i?[finish(h)]:i?finish(h):Promise.resolve(finish(h))}},{key:"encapsulateSync",value:function encapsulateSync(e,t,r){return this.encapsulate(e,t,_objectSpread$1({throwOnBadSyncType:!0},r,{sync:!0}))}},{key:"encapsulateAsync",value:function encapsulateAsync(e,t,r){return this.encapsulate(e,t,_objectSpread$1({throwOnBadSyncType:!0},r,{sync:!1}))}},{key:"revive",value:function revive(t,r){var n=t&&t.$types;if(!n)return t;if(!0===n)return t.$;var i=(r=_objectSpread$1({sync:!0},this.options,r)).sync,c=[],s={},u=!0;n.$&&isPlainObject(n.$)&&(t=t.$,n=n.$,u=!1);var l=this;function _revive(t,r,p,y,v){if(!u||"$types"!==t){var d=n[t];if(o(r)||isPlainObject(r)){var h=o(r)?new Array(r.length):{};for(a(r).forEach(function(e){var n=_revive(t+(t?".":"")+escapeKeyPathComponent(e),r[e],p||h,h,e);hasConstructorOf(n,f)?h[e]=void 0:void 0!==n&&(h[e]=n)}),r=h;c.length;){var b=_slicedToArray(c[0],4),g=b[0],m=b[1],O=b[2],w=b[3],S=getByKeyPath(g,m);if(hasConstructorOf(S,f))O[w]=void 0;else{if(void 0===S)break;O[w]=S}c.splice(0,1)}}if(!d)return r;if("#"===d){var A=getByKeyPath(p,r.slice(1));return void 0===A&&c.push([p,r.slice(1),y,v]),A}return[].concat(d).reduce(function reducer(t,r){if(hasConstructorOf(t,e))return t.then(function(e){return reducer(e,r)});var n=_slicedToArray(l.revivers[r],1)[0];if(!n)throw new Error("Unregistered type: "+r);return n[i&&n.revive?"revive":!i&&n.reviveAsync?"reviveAsync":"revive"](t,s)},r)}}function checkUndefined(e){return hasConstructorOf(e,f)?void 0:e}var p,y=function revivePlainObjects(){var r=[];if(Object.entries(n).forEach(function(e){var t=_slicedToArray(e,2),i=t[0],a=t[1];"#"!==a&&[].concat(a).forEach(function(e){_slicedToArray(l.revivers[e],2)[1].plain&&(r.push({keypath:i,type:e}),delete n[i])})}),r.length)return r.sort(nestedPathsFirst).reduce(function reducer(r,n){var a=n.keypath,o=n.type;if(hasConstructorOf(r,e))return r.then(function(e){return reducer(e,o)});var c=getByKeyPath(t,a);if(hasConstructorOf(c,e))return c.then(function(e){return reducer(e,o)});var u=_slicedToArray(l.revivers[o],1)[0];if(!u)throw new Error("Unregistered type: "+o);void 0!==(c=u[i&&u.revive?"revive":!i&&u.reviveAsync?"reviveAsync":"revive"](c,s))&&(hasConstructorOf(c,f)&&(c=void 0),function setAtKeyPath(e,t,r){if(""===t)return r;var n=t.indexOf(".");return n>-1?setAtKeyPath(e[unescapeKeyPathComponent(t.substr(0,n))],t.substr(n+1),r):(e[unescapeKeyPathComponent(t)]=r,e)}(t,a,c)===c&&(t=c))},void 0)}();return isThenable(p=hasConstructorOf(y,e)?y.then(function(){return _revive("",t,null)}):_revive("",t,null))?i&&r.throwOnBadSyncType?function(){throw new TypeError("Sync method requested but async result obtained")}():hasConstructorOf(p,e)?p.p.then(checkUndefined):p:!i&&r.throwOnBadSyncType?function(){throw new TypeError("Async method requested but sync result obtained")}():i?checkUndefined(p):Promise.resolve(checkUndefined(p))}},{key:"reviveSync",value:function reviveSync(e,t){return this.revive(e,_objectSpread$1({throwOnBadSyncType:!0},t,{sync:!0}))}},{key:"reviveAsync",value:function reviveAsync(e,t){return this.revive(e,_objectSpread$1({throwOnBadSyncType:!0},t,{sync:!1}))}},{key:"register",value:function register(e,t){return t=t||{},[].concat(e).forEach(function R(e){if(o(e))return e.map(R,this);e&&a(e).forEach(function(r){if("#"===r)throw new TypeError("# cannot be used as a type name as it is reserved for cyclic objects");if(Typeson.JSON_TYPES.includes(r))throw new TypeError("Plain JSON object types are reserved as type names");var n=e[r],i=n.testPlainObjects?this.plainObjectReplacers:this.nonplainObjectReplacers,a=i.filter(function(e){return e.type===r});if(a.length&&(i.splice(i.indexOf(a[0]),1),delete this.revivers[r],delete this.types[r]),n){if("function"==typeof n){var c=n;n={test:function test(e){return e&&e.constructor===c},replace:function replace(e){return Object.assign({},e)},revive:function revive(e){return Object.assign(Object.create(c.prototype),e)}}}else if(o(n)){var s=_slicedToArray(n,3);n={test:s[0],replace:s[1],revive:s[2]}}var u={type:r,test:n.test.bind(n)};n.replace&&(u.replace=n.replace.bind(n)),n.replaceAsync&&(u.replaceAsync=n.replaceAsync.bind(n));var f="number"==typeof t.fallback?t.fallback:t.fallback?0:1/0;if(n.testPlainObjects?this.plainObjectReplacers.splice(f,0,u):this.nonplainObjectReplacers.splice(f,0,u),n.revive||n.reviveAsync){var l={};n.revive&&(l.revive=n.revive.bind(n)),n.reviveAsync&&(l.reviveAsync=n.reviveAsync.bind(n)),this.revivers[r]=[l,{plain:n.testPlainObjects}]}this.types[r]=n}},this)},this),this}}]),Typeson}(),f=function Undefined(){_classCallCheck$1(this,Undefined)};u.Undefined=f,u.Promise=e,u.isThenable=isThenable,u.toStringTag=toStringTag,u.hasConstructorOf=hasConstructorOf,u.isObject=isObject,u.isPlainObject=isPlainObject,u.isUserObject=function isUserObject(e){if(!e||"Object"!==toStringTag(e))return!1;var t=n(e);return!t||hasConstructorOf(e,Object)||isUserObject(t)},u.escapeKeyPathComponent=escapeKeyPathComponent,u.unescapeKeyPathComponent=unescapeKeyPathComponent,u.getByKeyPath=getByKeyPath,u.getJSONType=function getJSONType(e){return null===e?"null":Array.isArray(e)?"array":_typeof$1(e)},u.JSON_TYPES=["null","boolean","number","string","array","object"];for(var l="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",p=new Uint8Array(256),y=0;y<l.length;y++)p[l.charCodeAt(y)]=y;var v=function encode(e,t,r){null==r&&(r=e.byteLength);for(var n=new Uint8Array(e,t||0,r),i=n.length,a="",o=0;o<i;o+=3)a+=l[n[o]>>2],a+=l[(3&n[o])<<4|n[o+1]>>4],a+=l[(15&n[o+1])<<2|n[o+2]>>6],a+=l[63&n[o+2]];return i%3==2?a=a.substring(0,a.length-1)+"=":i%3==1&&(a=a.substring(0,a.length-2)+"=="),a},d=function decode(e){var t,r,n,i,a=e.length,o=.75*e.length,c=0;"="===e[e.length-1]&&(o--,"="===e[e.length-2]&&o--);for(var s=new ArrayBuffer(o),u=new Uint8Array(s),f=0;f<a;f+=4)t=p[e.charCodeAt(f)],r=p[e.charCodeAt(f+1)],n=p[e.charCodeAt(f+2)],i=p[e.charCodeAt(f+3)],u[c++]=t<<2|r>>4,u[c++]=(15&r)<<4|n>>2,u[c++]=(3&n)<<6|63&i;return s},h={arraybuffer:{test:function test(e){return"ArrayBuffer"===u.toStringTag(e)},replace:function replace(e,t){t.buffers||(t.buffers=[]);var r=t.buffers.indexOf(e);return r>-1?{index:r}:(t.buffers.push(e),v(e))},revive:function revive(e,t){if(t.buffers||(t.buffers=[]),"object"===_typeof(e))return t.buffers[e.index];var r=d(e);return t.buffers.push(r),r}}},b={bigintObject:{test:function test(e){return"object"===_typeof(e)&&u.hasConstructorOf(e,BigInt)},replace:function replace(e){return String(e)},revive:function revive(e){return new Object(BigInt(e))}}},g={bigint:{test:function test(e){return"bigint"==typeof e},replace:function replace(e){return String(e)},revive:function revive(e){return BigInt(e)}}};function string2arraybuffer(e){for(var t=new Uint8Array(e.length),r=0;r<e.length;r++)t[r]=e.charCodeAt(r);return t.buffer}var m={blob:{test:function test(e){return"Blob"===u.toStringTag(e)},replace:function replace(e){var t=new XMLHttpRequest;if(t.overrideMimeType("text/plain; charset=x-user-defined"),t.open("GET",URL.createObjectURL(e),!1),200!==t.status&&0!==t.status)throw new Error("Bad Blob access: "+t.status);return t.send(),{type:e.type,stringContents:t.responseText}},revive:function revive(e){var t=e.type,r=e.stringContents;return new Blob([string2arraybuffer(r)],{type:t})},replaceAsync:function replaceAsync(e){return new u.Promise(function(t,r){if(e.isClosed)r(new Error("The Blob is closed"));else{var n=new FileReader;n.addEventListener("load",function(){t({type:e.type,stringContents:n.result})}),n.addEventListener("error",function(){r(n.error)}),n.readAsBinaryString(e)}})}}};function generateUUID(){var e=(new Date).getTime();return"undefined"!=typeof performance&&"function"==typeof performance.now&&(e+=performance.now()),"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(t){var r=(e+16*Math.random())%16|0;return e=Math.floor(e/16),("x"===t?r:3&r|8).toString(16)})}var O={},w={cloneable:{test:function test(e){return e&&"object"===_typeof(e)&&"function"==typeof e[Symbol.for("cloneEncapsulate")]},replace:function replace(e){var t=e[Symbol.for("cloneEncapsulate")](),r=generateUUID();return O[r]=e,{uuid:r,encapsulated:t}},revive:function revive(e){var t=e.uuid,r=e.encapsulated;return O[t][Symbol.for("cloneRevive")](r)}}},S={dataview:{test:function test(e){return"DataView"===u.toStringTag(e)},replace:function replace(e,t){var r=e.buffer,n=e.byteOffset,i=e.byteLength;t.buffers||(t.buffers=[]);var a=t.buffers.indexOf(r);return a>-1?{index:a,byteOffset:n,byteLength:i}:(t.buffers.push(r),{encoded:v(r),byteOffset:n,byteLength:i})},revive:function revive(e,t){t.buffers||(t.buffers=[]);var r,n=e.byteOffset,i=e.byteLength,a=e.encoded,o=e.index;return"index"in e?r=t.buffers[o]:(r=d(a),t.buffers.push(r)),new DataView(r,n,i)}}},A={date:{test:function test(e){return"Date"===u.toStringTag(e)},replace:function replace(e){var t=e.getTime();return isNaN(t)?"NaN":t},revive:function revive(e){return"NaN"===e?new Date(NaN):new Date(e)}}},_={error:{test:function test(e){return"Error"===u.toStringTag(e)},replace:function replace(e){return{name:e.name,message:e.message}},revive:function revive(e){var t=e.name,r=e.message,n=new Error(r);return n.name=t,n}}},j="undefined"==typeof self?global:self,T={};["TypeError","RangeError","SyntaxError","ReferenceError","EvalError","URIError","InternalError"].forEach(function(e){var t=j[e];t&&(T[e.toLowerCase()]={test:function test(e){return u.hasConstructorOf(e,t)},replace:function replace(e){return e.message},revive:function revive(e){return new t(e)}})});var P={file:{test:function test(e){return"File"===u.toStringTag(e)},replace:function replace(e){var t=new XMLHttpRequest;if(t.overrideMimeType("text/plain; charset=x-user-defined"),t.open("GET",URL.createObjectURL(e),!1),200!==t.status&&0!==t.status)throw new Error("Bad Blob access: "+t.status);return t.send(),{type:e.type,stringContents:t.responseText,name:e.name,lastModified:e.lastModified}},revive:function revive(e){var t=e.name,r=e.type,n=e.stringContents,i=e.lastModified;return new File([string2arraybuffer(n)],t,{type:r,lastModified:i})},replaceAsync:function replaceAsync(e){return new u.Promise(function(t,r){if(e.isClosed)r(new Error("The File is closed"));else{var n=new FileReader;n.addEventListener("load",function(){t({type:e.type,stringContents:n.result,name:e.name,lastModified:e.lastModified})}),n.addEventListener("error",function(){r(n.error)}),n.readAsBinaryString(e)}})}}},C={file:P.file,filelist:{test:function test(e){return"FileList"===u.toStringTag(e)},replace:function replace(e){for(var t=[],r=0;r<e.length;r++)t[r]=e.item(r);return t},revive:function revive(e){return new(function(){function FileList(){!function _classCallCheck(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}(this,FileList),this._files=arguments[0],this.length=this._files.length}return function _createClass(e,t,r){return t&&_defineProperties(e.prototype,t),r&&_defineProperties(e,r),e}(FileList,[{key:"item",value:function item(e){return this._files[e]}},{key:Symbol.toStringTag,get:function get(){return"FileList"}}]),FileList}())(e)}}},x={imagebitmap:{test:function test(e){return"ImageBitmap"===u.toStringTag(e)||e&&e.dataset&&"ImageBitmap"===e.dataset.toStringTag},replace:function replace(e){var t=document.createElement("canvas");return t.getContext("2d").drawImage(e,0,0),t.toDataURL()},revive:function revive(e){var t=document.createElement("canvas"),r=t.getContext("2d"),n=document.createElement("img");return n.addEventListener("load",function(){r.drawImage(n,0,0)}),n.src=e,t},reviveAsync:function reviveAsync(e){var t=document.createElement("canvas"),r=t.getContext("2d"),n=document.createElement("img");return n.addEventListener("load",function(){r.drawImage(n,0,0)}),n.src=e,createImageBitmap(t)}}},I={imagedata:{test:function test(e){return"ImageData"===u.toStringTag(e)},replace:function replace(e){return{array:_toConsumableArray(e.data),width:e.width,height:e.height}},revive:function revive(e){return new ImageData(new Uint8ClampedArray(e.array),e.width,e.height)}}},E={infinity:{test:function test(e){return e===1/0},replace:function replace(e){return"Infinity"},revive:function revive(e){return 1/0}}},k={IntlCollator:{test:function test(e){return u.hasConstructorOf(e,Intl.Collator)},replace:function replace(e){return e.resolvedOptions()},revive:function revive(e){return new Intl.Collator(e.locale,e)}},IntlDateTimeFormat:{test:function test(e){return u.hasConstructorOf(e,Intl.DateTimeFormat)},replace:function replace(e){return e.resolvedOptions()},revive:function revive(e){return new Intl.DateTimeFormat(e.locale,e)}},IntlNumberFormat:{test:function test(e){return u.hasConstructorOf(e,Intl.NumberFormat)},replace:function replace(e){return e.resolvedOptions()},revive:function revive(e){return new Intl.NumberFormat(e.locale,e)}}},B={map:{test:function test(e){return"Map"===u.toStringTag(e)},replace:function replace(e){return _toConsumableArray(e.entries())},revive:function revive(e){return new Map(e)}}},N={nan:{test:function test(e){return"number"==typeof e&&isNaN(e)},replace:function replace(e){return"NaN"},revive:function revive(e){return NaN}}},U={negativeInfinity:{test:function test(e){return e===-1/0},replace:function replace(e){return"-Infinity"},revive:function revive(e){return-1/0}}},$={nonbuiltinIgnore:{test:function test(e){return e&&"object"===_typeof(e)&&!Array.isArray(e)&&!["Object","Boolean","Number","String","Error","RegExp","Math","Date","Map","Set","JSON","ArrayBuffer","SharedArrayBuffer","DataView","Int8Array","Uint8Array","Uint8ClampedArray","Int16Array","Uint16Array","Int32Array","Uint32Array","Float32Array","Float64Array","Promise","String Iterator","Array Iterator","Map Iterator","Set Iterator","WeakMap","WeakSet","Atomics","Module"].includes(u.toStringTag(e))},replace:function replace(e){}}},K={StringObject:{test:function test(e){return"String"===u.toStringTag(e)&&"object"===_typeof(e)},replace:function replace(e){return String(e)},revive:function revive(e){return new String(e)}},BooleanObject:{test:function test(e){return"Boolean"===u.toStringTag(e)&&"object"===_typeof(e)},replace:function replace(e){return Boolean(e)},revive:function revive(e){return new Boolean(e)}},NumberObject:{test:function test(e){return"Number"===u.toStringTag(e)&&"object"===_typeof(e)},replace:function replace(e){return Number(e)},revive:function revive(e){return new Number(e)}}},L={regexp:{test:function test(e){return"RegExp"===u.toStringTag(e)},replace:function replace(e){return{source:e.source,flags:(e.global?"g":"")+(e.ignoreCase?"i":"")+(e.multiline?"m":"")+(e.sticky?"y":"")+(e.unicode?"u":"")}},revive:function revive(e){var t=e.source,r=e.flags;return new RegExp(t,r)}}},D={},F={resurrectable:{test:function test(e){return e&&!Array.isArray(e)&&["object","function","symbol"].includes(_typeof(e))},replace:function replace(e){var t=generateUUID();return D[t]=e,t},revive:function revive(e){return D[e]}}},M={set:{test:function test(e){return"Set"===u.toStringTag(e)},replace:function replace(e){return _toConsumableArray(e.values())},revive:function revive(e){return new Set(e)}}},J="undefined"==typeof self?global:self,G={};["Int8Array","Uint8Array","Uint8ClampedArray","Int16Array","Uint16Array","Int32Array","Uint32Array","Float32Array","Float64Array"].forEach(function(e){var t=e,r=J[e];r&&(G[e.toLowerCase()]={test:function test(e){return u.toStringTag(e)===t},replace:function replace(e){return(0===e.byteOffset&&e.byteLength===e.buffer.byteLength?e:e.slice(0)).buffer},revive:function revive(e){return"ArrayBuffer"===u.toStringTag(e)?new r(e):e}})});var W="undefined"==typeof self?global:self,q={};["Int8Array","Uint8Array","Uint8ClampedArray","Int16Array","Uint16Array","Int32Array","Uint32Array","Float32Array","Float64Array"].forEach(function(e){var t=e,r=W[t];r&&(q[e.toLowerCase()]={test:function test(e){return u.toStringTag(e)===t},replace:function replace(e,t){var r=e.buffer,n=e.byteOffset,i=e.length;t.buffers||(t.buffers=[]);var a=t.buffers.indexOf(r);return a>-1?{index:a,byteOffset:n,length:i}:(t.buffers.push(r),{encoded:v(r),byteOffset:n,length:i})},revive:function revive(e,t){t.buffers||(t.buffers=[]);var n,i=e.byteOffset,a=e.length,o=e.encoded,c=e.index;return"index"in e?n=t.buffers[c]:(n=d(o),t.buffers.push(n)),new r(n,i,a)}})});var H={undef:{test:function test(e,t){return void 0===e&&(t.ownKeys||!("ownKeys"in t))},replace:function replace(e){return 0},revive:function revive(e){return new u.Undefined}}},V={userObject:{test:function test(e,t){return u.isUserObject(e)},replace:function replace(e){return function _objectSpread(e){for(var t=1;t<arguments.length;t++){var r=null!=arguments[t]?arguments[t]:{},n=Object.keys(r);"function"==typeof Object.getOwnPropertySymbols&&(n=n.concat(Object.getOwnPropertySymbols(r).filter(function(e){return Object.getOwnPropertyDescriptor(r,e).enumerable}))),n.forEach(function(t){_defineProperty(e,t,r[t])})}return e}({},e)},revive:function revive(e){return e}}},X=[{arrayNonindexKeys:{testPlainObjects:!0,test:function test(e,t){return!!Array.isArray(e)&&(Object.keys(e).some(function(e){return String(parseInt(e))!==e})&&(t.iterateIn="object",t.addLength=!0),!0)},replace:function replace(e,t){return Array.isArray(e)&&(t.iterateUnsetNumeric=!0),e},revive:function revive(e){if(Array.isArray(e))return e;var t=[];return Object.keys(e).forEach(function(r){var n=e[r];t[r]=n}),t}}},{sparseUndefined:{test:function test(e,t){return void 0===e&&!1===t.ownKeys},replace:function replace(e){return 0},revive:function revive(e){}}}],Y=[N,E,U],z=[H,X,K,Y,A,_,T,L].concat("function"==typeof Map?B:[],"function"==typeof Set?M:[],"function"==typeof ArrayBuffer?h:[],"function"==typeof Uint8Array?q:[],"function"==typeof DataView?S:[],"undefined"!=typeof Intl?k:[],"undefined"!=typeof BigInt?[g,b]:[]),Q=[_,T],Z=[z,{ArrayBuffer:null},G],ee=[{sparseArrays:{testPlainObjects:!0,test:function test(e){return Array.isArray(e)},replace:function replace(e,t){return t.iterateUnsetNumeric=!0,e}}},{sparseUndefined:{test:function test(e,t){return void 0===e&&!1===t.ownKeys},replace:function replace(e){return 0},revive:function revive(e){}}}],te=[V,H,X,K,Y,A,L,I,x,P,C,m].concat("function"==typeof Map?B:[],"function"==typeof Set?M:[],"function"==typeof ArrayBuffer?h:[],"function"==typeof Uint8Array?q:[],"function"==typeof DataView?S:[],"undefined"!=typeof Intl?k:[],"undefined"!=typeof BigInt?[g,b]:[]),re=te.concat({checkDataCloneException:[function(e){var t={}.toString.call(e).slice(8,-1);if(["symbol","function"].includes(_typeof(e))||["Arguments","Module","Error","Promise","WeakMap","WeakSet"].includes(t)||e===Object.prototype||("Blob"===t||"File"===t)&&e.isClosed||e&&"object"===_typeof(e)&&"number"==typeof e.nodeType&&"function"==typeof e.insertBefore)throw new DOMException("The object cannot be cloned.","DataCloneError");return!1}]}),ne=[ee,H],ie=[z];return u.types={arraybuffer:h,bigintObject:b,bigint:g,blob:m,cloneable:w,dataview:S,date:A,error:_,errors:T,file:P,filelist:C,imagebitmap:x,imagedata:I,infinity:E,intlTypes:k,map:B,nan:N,negativeInfinity:U,nonbuiltinIgnore:$,primitiveObjects:K,regexp:L,resurrectable:F,set:M,typedArraysSocketio:G,typedArrays:q,undef:H,userObject:V},u.presets={arrayNonindexKeys:X,builtin:z,postmessage:Q,socketio:Z,sparseUndefined:ee,specialNumbers:Y,structuredCloningThrowing:re,structuredCloning:te,undef:ne,universal:ie},u});
 
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
@@ -1359,13 +1464,13 @@ module.exports = SyncPromise;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports["default"] = void 0;
 
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
 
-function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+function _iterableToArrayLimit(arr, i) { if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) { return; } var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
@@ -1490,7 +1595,7 @@ var CFG = {};
   });
 });
 var _default = CFG;
-exports.default = _default;
+exports["default"] = _default;
 module.exports = exports.default;
 
 },{}],8:[function(require,module,exports){
@@ -1506,7 +1611,7 @@ exports.createDOMException = exports.ShimDOMException = void 0;
 
 var _CFG = _interopRequireDefault(require("./CFG"));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
@@ -1690,7 +1795,7 @@ function createNonNativeDOMExceptionClass() {
 
 var ShimNonNativeDOMException = createNonNativeDOMExceptionClass();
 /**
- * Creates a generic Error object
+ * Creates a generic Error object.
  * @returns {Error}
  */
 
@@ -1702,11 +1807,12 @@ function createNonNativeDOMException(name, message) {
  * @param {string} name
  * @param {string} message
  * @param {string|Error|null} error
+ * @returns {void}
  */
 
 
 function logError(name, message, error) {
-  if (_CFG.default.DEBUG) {
+  if (_CFG["default"].DEBUG) {
     if (error && error.message) {
       error = error.message;
     }
@@ -1738,15 +1844,34 @@ function findError(args) {
       return args[0];
     }
 
-    for (var i = 0; i < args.length; i++) {
-      var arg = args[i];
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
 
-      if (isErrorOrDOMErrorOrDOMException(arg)) {
-        return arg;
+    try {
+      for (var _iterator = args[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        var arg = _step.value;
+
+        if (isErrorOrDOMErrorOrDOMException(arg)) {
+          return arg;
+        }
+
+        if (arg && typeof arg.message === 'string') {
+          err = arg;
+        }
       }
-
-      if (arg && typeof arg.message === 'string') {
-        err = arg;
+    } catch (err) {
+      _didIteratorError = true;
+      _iteratorError = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion && _iterator["return"] != null) {
+          _iterator["return"]();
+        }
+      } finally {
+        if (_didIteratorError) {
+          throw _iteratorError;
+        }
       }
     }
   }
@@ -1834,7 +1959,7 @@ if (useNativeDOMException) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports["default"] = void 0;
 
 var _DOMStringList$protot;
 
@@ -1859,7 +1984,8 @@ if (Object.defineProperty) {
 }
 /**
  * Shim the DOMStringList object.
- *
+ * @throws {TypeError}
+ * @class
  */
 
 
@@ -2029,7 +2155,7 @@ if (cleanInterface) {
 }
 
 var _default = DOMStringList;
-exports.default = _default;
+exports["default"] = _default;
 module.exports = exports.default;
 
 },{}],10:[function(require,module,exports){
@@ -2062,7 +2188,9 @@ var _eventtargeter = require("eventtargeter");
 
 var util = _interopRequireWildcard(require("./util"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 /**
  *
@@ -2115,15 +2243,17 @@ var _IDBIndex = _interopRequireDefault(require("./IDBIndex"));
 
 var _CFG = _interopRequireDefault(require("./CFG"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
 
-function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+function _iterableToArrayLimit(arr, i) { if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) { return; } var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
@@ -2139,8 +2269,8 @@ function IDBCursor() {
 
 var IDBCursorAlias = IDBCursor;
 /**
- * The IndexedDB Cursor Object
- * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBCursor
+ * The IndexedDB Cursor Object.
+ * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBCursor
  * @param {IDBKeyRange} query
  * @param {string} direction
  * @param {IDBObjectStore} store
@@ -2148,18 +2278,19 @@ var IDBCursorAlias = IDBCursor;
  * @param {string} keyColumnName
  * @param {string} valueColumnName
  * @param {boolean} count
+ * @returns {void}
  */
 
 IDBCursor.__super = function IDBCursor(query, direction, store, source, keyColumnName, valueColumnName, count) {
   this[Symbol.toStringTag] = 'IDBCursor';
-  util.defineReadonlyProperties(this, ['key', 'primaryKey']);
+  util.defineReadonlyProperties(this, ['key', 'primaryKey', 'request']);
 
-  _IDBObjectStore.default.__invalidStateIfDeleted(store);
+  _IDBObjectStore["default"].__invalidStateIfDeleted(store);
 
-  this.__indexSource = util.instanceOf(source, _IDBIndex.default);
-  if (this.__indexSource) _IDBIndex.default.__invalidStateIfDeleted(source);
+  this.__indexSource = util.instanceOf(source, _IDBIndex["default"]);
+  if (this.__indexSource) _IDBIndex["default"].__invalidStateIfDeleted(source);
 
-  _IDBTransaction.default.__assertActive(store.transaction);
+  _IDBTransaction["default"].__assertActive(store.transaction);
 
   var range = (0, _IDBKeyRange.convertValueToKeyRange)(query);
 
@@ -2182,9 +2313,9 @@ IDBCursor.__super = function IDBCursor(query, direction, store, source, keyColum
   this.__primaryKey = undefined;
   this.__store = store;
   this.__range = range;
-  this.__req = _IDBRequest.IDBRequest.__createInstance();
-  this.__req.__source = source;
-  this.__req.__transaction = this.__store.transaction;
+  this.__request = _IDBRequest.IDBRequest.__createInstance();
+  this.__request.__source = source;
+  this.__request.__transaction = this.__store.transaction;
   this.__keyColumnName = keyColumnName;
   this.__valueColumnName = valueColumnName;
   this.__keyOnly = valueColumnName === 'key';
@@ -2202,7 +2333,7 @@ IDBCursor.__super = function IDBCursor(query, direction, store, source, keyColum
   }
 
   this.__gotValue = true;
-  this.continue();
+  this["continue"]();
 };
 
 IDBCursor.__createInstance = function () {
@@ -2281,24 +2412,24 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
   }
 
   sql = sql.join(' ');
-  _CFG.default.DEBUG && console.log(sql, sqlValues);
+  _CFG["default"].DEBUG && console.log(sql, sqlValues);
   tx.executeSql(sql, sqlValues, function (tx, data) {
     if (me.__count) {
       success(undefined, data.rows.length, undefined);
     } else if (data.rows.length > 1) {
       me.__prefetchedIndex = 0;
       me.__prefetchedData = data.rows;
-      _CFG.default.DEBUG && console.log('Preloaded ' + me.__prefetchedData.length + ' records for cursor');
+      _CFG["default"].DEBUG && console.log('Preloaded ' + me.__prefetchedData.length + ' records for cursor');
 
       me.__decode(data.rows.item(0), success);
     } else if (data.rows.length === 1) {
       me.__decode(data.rows.item(0), success);
     } else {
-      _CFG.default.DEBUG && console.log('Reached end of cursors');
+      _CFG["default"].DEBUG && console.log('Reached end of cursors');
       success(undefined, undefined, undefined);
     }
   }, function (tx, err) {
-    _CFG.default.DEBUG && console.log('Could not execute Cursor.continue', sql, sqlValues);
+    _CFG["default"].DEBUG && console.log('Could not execute Cursor.continue', sql, sqlValues);
     error(err);
   });
 };
@@ -2309,7 +2440,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
   var me = this;
 
   if (me.__prefetchedData && me.__prefetchedData.length === me.__prefetchedIndex) {
-    _CFG.default.DEBUG && console.log('Reached end of multiEntry cursor');
+    _CFG["default"].DEBUG && console.log('Reached end of multiEntry cursor');
     success(undefined, undefined, undefined);
     return;
   }
@@ -2364,7 +2495,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
   }
 
   sql = sql.join(' ');
-  _CFG.default.DEBUG && console.log(sql, sqlValues);
+  _CFG["default"].DEBUG && console.log(sql, sqlValues);
   tx.executeSql(sql, sqlValues, function (tx, data) {
     if (data.rows.length > 0) {
       if (me.__count) {
@@ -2391,15 +2522,34 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
 
         var _matches = Key.findMultiEntryMatches(_rowKey, me.__range);
 
-        for (var j = 0; j < _matches.length; j++) {
-          var matchingKey = _matches[j];
-          var clone = {
-            matchingKey: Key.encode(matchingKey, true),
-            key: _rowItem.key
-          };
-          clone[me.__keyColumnName] = _rowItem[me.__keyColumnName];
-          clone[me.__valueColumnName] = _rowItem[me.__valueColumnName];
-          rows.push(clone);
+        var _iteratorNormalCompletion = true;
+        var _didIteratorError = false;
+        var _iteratorError = undefined;
+
+        try {
+          for (var _iterator = _matches[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var matchingKey = _step.value;
+            var clone = {
+              matchingKey: Key.encode(matchingKey, true),
+              key: _rowItem.key
+            };
+            clone[me.__keyColumnName] = _rowItem[me.__keyColumnName];
+            clone[me.__valueColumnName] = _rowItem[me.__valueColumnName];
+            rows.push(clone);
+          }
+        } catch (err) {
+          _didIteratorError = true;
+          _iteratorError = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion && _iterator["return"] != null) {
+              _iterator["return"]();
+            }
+          } finally {
+            if (_didIteratorError) {
+              throw _iteratorError;
+            }
+          }
         }
       }
 
@@ -2433,29 +2583,38 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
             return this.data[index];
           }
         };
-        _CFG.default.DEBUG && console.log('Preloaded ' + me.__prefetchedData.length + ' records for multiEntry cursor');
+        _CFG["default"].DEBUG && console.log('Preloaded ' + me.__prefetchedData.length + ' records for multiEntry cursor');
 
         me.__decode(rows[0], success);
       } else if (rows.length === 1) {
-        _CFG.default.DEBUG && console.log('Reached end of multiEntry cursor');
+        _CFG["default"].DEBUG && console.log('Reached end of multiEntry cursor');
 
         me.__decode(rows[0], success);
       } else {
-        _CFG.default.DEBUG && console.log('Reached end of multiEntry cursor');
+        _CFG["default"].DEBUG && console.log('Reached end of multiEntry cursor');
         success(undefined, undefined, undefined);
       }
     } else {
-      _CFG.default.DEBUG && console.log('Reached end of multiEntry cursor');
+      _CFG["default"].DEBUG && console.log('Reached end of multiEntry cursor');
       success(undefined, undefined, undefined);
     }
   }, function (tx, err) {
-    _CFG.default.DEBUG && console.log('Could not execute Cursor.continue', sql, sqlValues);
+    _CFG["default"].DEBUG && console.log('Could not execute Cursor.continue', sql, sqlValues);
     error(err);
   });
 };
 /**
- * Creates an "onsuccess" callback
+* @callback module:IDBCursor.SuccessCallback
+* @param key
+* @param value
+* @param primaryKey
+* @returns {void}
+*/
+
+/**
+ * Creates an "onsuccess" callback.
  * @private
+ * @returns {module:IDBCursor.SuccessCallback}
  */
 
 
@@ -2463,7 +2622,7 @@ IDBCursor.prototype.__onsuccess = function (success) {
   var me = this;
   return function (key, value, primaryKey) {
     if (me.__count) {
-      success(value, me.__req);
+      success(value, me.__request);
     } else {
       if (key !== undefined) {
         me.__gotValue = true;
@@ -2473,7 +2632,7 @@ IDBCursor.prototype.__onsuccess = function (success) {
       me.__primaryKey = primaryKey === undefined ? null : primaryKey;
       me.__value = value === undefined ? null : value;
       var result = key === undefined ? null : me;
-      success(result, me.__req);
+      success(result, me.__request);
     }
   };
 };
@@ -2508,9 +2667,9 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
 };
 
 IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
-  _IDBObjectStore.default.__invalidStateIfDeleted(this.__store, "The cursor's effective object store has been deleted");
+  _IDBObjectStore["default"].__invalidStateIfDeleted(this.__store, "The cursor's effective object store has been deleted");
 
-  if (this.__indexSource) _IDBIndex.default.__invalidStateIfDeleted(this.source, "The cursor's index source has been deleted");
+  if (this.__indexSource) _IDBIndex["default"].__invalidStateIfDeleted(this.source, "The cursor's index source has been deleted");
 };
 
 IDBCursor.prototype.__invalidateCache = function () {
@@ -2521,7 +2680,7 @@ IDBCursor.prototype.__continue = function (key, advanceContinue) {
   var me = this;
   var advanceState = me.__advanceCount !== undefined;
 
-  _IDBTransaction.default.__assertActive(me.__store.transaction);
+  _IDBTransaction["default"].__assertActive(me.__store.transaction);
 
   me.__sourceOrEffectiveObjStoreDeleted();
 
@@ -2543,11 +2702,11 @@ IDBCursor.prototype.__continue = function (key, advanceContinue) {
 
 IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) {
   var me = this;
-  var recordsToPreloadOnContinue = me.__advanceCount || _CFG.default.cursorPreloadPackSize || 100;
+  var recordsToPreloadOnContinue = me.__advanceCount || _CFG["default"].cursorPreloadPackSize || 100;
   me.__gotValue = false;
-  me.__req.__done = false;
+  me.__request.__done = false;
 
-  me.__store.transaction.__pushToQueue(me.__req, function cursorContinue(tx, args, success, error, executeNextRequest) {
+  me.__store.transaction.__pushToQueue(me.__request, function cursorContinue(tx, args, success, error, executeNextRequest) {
     function triggerSuccess(k, val, primKey) {
       if (advanceState) {
         if (me.__advanceCount >= 2 && k !== undefined) {
@@ -2604,7 +2763,7 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
   });
 };
 
-IDBCursor.prototype.continue = function ()
+IDBCursor.prototype["continue"] = function ()
 /* key */
 {
   this.__continue(arguments[0]);
@@ -2613,7 +2772,7 @@ IDBCursor.prototype.continue = function ()
 IDBCursor.prototype.continuePrimaryKey = function (key, primaryKey) {
   var me = this;
 
-  _IDBTransaction.default.__assertActive(me.__store.transaction);
+  _IDBTransaction["default"].__assertActive(me.__store.transaction);
 
   me.__sourceOrEffectiveObjStoreDeleted();
 
@@ -2676,7 +2835,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
   var me = this;
   if (!arguments.length) throw new TypeError('A value must be passed to update()');
 
-  _IDBTransaction.default.__assertActive(me.__store.transaction);
+  _IDBTransaction["default"].__assertActive(me.__store.transaction);
 
   me.__store.transaction.__assertWritable();
 
@@ -2696,7 +2855,7 @@ IDBCursor.prototype.update = function (valueToUpdate) {
 
   function addToQueue(clonedValue) {
     // We set the `invalidateCache` argument to `false` since the old value shouldn't be accessed
-    _IDBObjectStore.default.__storingRecordObjectStore(request, me.__store, false, clonedValue, false, key);
+    _IDBObjectStore["default"].__storingRecordObjectStore(request, me.__store, false, clonedValue, false, key);
   }
 
   if (me.__store.keyPath !== null) {
@@ -2719,10 +2878,10 @@ IDBCursor.prototype.update = function (valueToUpdate) {
   return request;
 };
 
-IDBCursor.prototype.delete = function () {
+IDBCursor.prototype["delete"] = function () {
   var me = this;
 
-  _IDBTransaction.default.__assertActive(me.__store.transaction);
+  _IDBTransaction["default"].__assertActive(me.__store.transaction);
 
   me.__store.transaction.__assertWritable();
 
@@ -2739,7 +2898,7 @@ IDBCursor.prototype.delete = function () {
   return this.__store.transaction.__addToTransactionQueue(function cursorDelete(tx, args, success, error) {
     me.__find(undefined, undefined, tx, function (key, value, primaryKey) {
       var sql = 'DELETE FROM  ' + util.escapeStoreNameForSQL(me.__store.__currentName) + ' WHERE "key" = ?';
-      _CFG.default.DEBUG && console.log(sql, key, primaryKey); // Key.convertValueToKey(primaryKey); // Already checked when entered
+      _CFG["default"].DEBUG && console.log(sql, key, primaryKey); // Key.convertValueToKey(primaryKey); // Already checked when entered
 
       tx.executeSql(sql, [util.escapeSQLiteStatement(Key.encode(primaryKey))], function (tx, data) {
         if (data.rowsAffected === 1) {
@@ -2805,7 +2964,7 @@ Object.defineProperty(IDBCursorWithValue, 'prototype', {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports["default"] = void 0;
 
 var _eventtargeter = require("eventtargeter");
 
@@ -2821,9 +2980,11 @@ var _IDBObjectStore = _interopRequireDefault(require("./IDBObjectStore"));
 
 var _IDBTransaction = _interopRequireDefault(require("./IDBTransaction"));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
 
@@ -2833,15 +2994,17 @@ function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.
 
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
 
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(source, true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(source).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 var listeners = ['onabort', 'onclose', 'onerror', 'onversionchange'];
 var readonlyProperties = ['name', 'version', 'objectStoreNames'];
 /**
- * IDB Database Object
- * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
+ * IDB Database Object.
+ * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
  * @class
  */
 
@@ -2872,7 +3035,7 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
 
     this.__transactions = [];
     this.__objectStores = {};
-    this.__objectStoreNames = _DOMStringList.default.__createInstance();
+    this.__objectStoreNames = _DOMStringList["default"].__createInstance();
     var itemCopy = {};
 
     var _loop = function _loop(i) {
@@ -2887,7 +3050,7 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
       });
       itemCopy.idbdb = _this;
 
-      var store = _IDBObjectStore.default.__createInstance(itemCopy);
+      var store = _IDBObjectStore["default"].__createInstance(itemCopy);
 
       _this.__objectStores[store.name] = store;
 
@@ -2928,12 +3091,12 @@ IDBDatabase.prototype.createObjectStore = function (storeName
     throw new TypeError('No object store name was specified');
   }
 
-  _IDBTransaction.default.__assertVersionChange(this.__versionTransaction); // this.__versionTransaction may not exist if called mistakenly by user in onsuccess
+  _IDBTransaction["default"].__assertVersionChange(this.__versionTransaction); // this.__versionTransaction may not exist if called mistakenly by user in onsuccess
 
 
   this.throwIfUpgradeTransactionNull();
 
-  _IDBTransaction.default.__assertActive(this.__versionTransaction);
+  _IDBTransaction["default"].__assertActive(this.__versionTransaction);
 
   createOptions = _objectSpread({}, createOptions);
   var _createOptions = createOptions,
@@ -2964,13 +3127,15 @@ IDBDatabase.prototype.createObjectStore = function (storeName
     idbdb: this
   };
 
-  var store = _IDBObjectStore.default.__createInstance(storeProperties, this.__versionTransaction);
+  var store = _IDBObjectStore["default"].__createInstance(storeProperties, this.__versionTransaction);
 
-  return _IDBObjectStore.default.__createObjectStore(this, store);
+  return _IDBObjectStore["default"].__createObjectStore(this, store);
 };
 /**
  * Deletes an object store.
  * @param {string} storeName
+ * @throws {TypeError|DOMException}
+ * @returns {void}
  */
 
 
@@ -2983,11 +3148,11 @@ IDBDatabase.prototype.deleteObjectStore = function (storeName) {
     throw new TypeError('No object store name was specified');
   }
 
-  _IDBTransaction.default.__assertVersionChange(this.__versionTransaction);
+  _IDBTransaction["default"].__assertVersionChange(this.__versionTransaction);
 
   this.throwIfUpgradeTransactionNull();
 
-  _IDBTransaction.default.__assertActive(this.__versionTransaction);
+  _IDBTransaction["default"].__assertActive(this.__versionTransaction);
 
   var store = this.__objectStores[storeName];
 
@@ -2995,7 +3160,7 @@ IDBDatabase.prototype.deleteObjectStore = function (storeName) {
     throw (0, _DOMException.createDOMException)('NotFoundError', 'Object store "' + storeName + '" does not exist in ' + this.name);
   }
 
-  _IDBObjectStore.default.__deleteObjectStore(this, store);
+  _IDBObjectStore["default"].__deleteObjectStore(this, store);
 };
 
 IDBDatabase.prototype.close = function () {
@@ -3045,13 +3210,13 @@ IDBDatabase.prototype.transaction = function (storeNames
 
   mode = mode || 'readonly';
 
-  _IDBTransaction.default.__assertNotVersionChange(this.__versionTransaction);
+  _IDBTransaction["default"].__assertNotVersionChange(this.__versionTransaction);
 
   if (this.__closePending) {
     throw (0, _DOMException.createDOMException)('InvalidStateError', 'An attempt was made to start a new transaction on a database connection that is not open');
   }
 
-  var objectStoreNames = _DOMStringList.default.__createInstance();
+  var objectStoreNames = _DOMStringList["default"].__createInstance();
 
   storeNames.forEach(function (storeName) {
     if (!_this2.objectStoreNames.contains(storeName)) {
@@ -3067,10 +3232,12 @@ IDBDatabase.prototype.transaction = function (storeNames
 
   if (mode !== 'readonly' && mode !== 'readwrite') {
     throw new TypeError('Invalid transaction mode: ' + mode);
-  } // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
+  } // Do not set transaction state to "inactive" yet (will be set after
+  //   timeout on creating transaction instance):
+  //   https://github.com/w3c/IndexedDB/issues/87
 
 
-  var trans = _IDBTransaction.default.__createInstance(this, objectStoreNames, mode);
+  var trans = _IDBTransaction["default"].__createInstance(this, objectStoreNames, mode);
 
   this.__transactions.push(trans);
 
@@ -3083,6 +3250,12 @@ IDBDatabase.prototype.throwIfUpgradeTransactionNull = function () {
     throw (0, _DOMException.createDOMException)('InvalidStateError', 'No upgrade transaction associated with database.');
   }
 }; // Todo __forceClose: Add tests for `__forceClose`
+
+/**
+ *
+ * @param {string} msg
+ * @returns {void}
+ */
 
 
 IDBDatabase.prototype.__forceClose = function (msg) {
@@ -3119,7 +3292,7 @@ Object.defineProperty(IDBDatabase, 'prototype', {
   writable: false
 });
 var _default = IDBDatabase;
-exports.default = _default;
+exports["default"] = _default;
 module.exports = exports.default;
 
 },{"./DOMException":8,"./DOMStringList":9,"./Event":10,"./IDBObjectStore":16,"./IDBTransaction":18,"./util":27,"eventtargeter":2}],13:[function(require,module,exports){
@@ -3133,7 +3306,7 @@ exports.IDBFactory = IDBFactory;
 Object.defineProperty(exports, "cmp", {
   enumerable: true,
   get: function get() {
-    return _cmp.default;
+    return _cmp["default"];
   }
 });
 exports.shimIndexedDB = void 0;
@@ -3162,12 +3335,15 @@ var _IDBDatabase = _interopRequireDefault(require("./IDBDatabase"));
 
 var _CFG = _interopRequireDefault(require("./CFG"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
+// eslint-disable-next-line no-undef
 var fs = {}.toString.call(process) === '[object process]' ? require('fs') : null;
 
 var getOrigin = function getOrigin() {
@@ -3175,7 +3351,7 @@ var getOrigin = function getOrigin() {
 };
 
 var hasNullOrigin = function hasNullOrigin() {
-  return _CFG.default.checkOrigin !== false && getOrigin() === 'null';
+  return _CFG["default"].checkOrigin !== false && getOrigin() === 'null';
 }; // Todo: This really should be process and tab-independent so the
 //  origin could vary; in the browser, this might be through a
 //  `SharedWorker`
@@ -3204,7 +3380,8 @@ function processNextInConnectionQueue(name) {
   req.addEventListener('success', removeFromQueue);
   req.addEventListener('error', removeFromQueue);
   cb(req);
-}
+} // eslint-disable-next-line default-param-last
+
 
 function addRequestToConnectionQueue(req, name) {
   var origin = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : getOrigin();
@@ -3248,11 +3425,11 @@ function triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersio
         return undefined;
       }
 
-      var e = new _IDBVersionChangeEvent.default('versionchange', {
+      var e = new _IDBVersionChangeEvent["default"]('versionchange', {
         oldVersion: oldVersion,
         newVersion: newVersion
       });
-      return new _syncPromise.default(function (resolve) {
+      return new _syncPromise["default"](function (resolve) {
         setTimeout(function () {
           entry.dispatchEvent(e); // No need to catch errors
 
@@ -3260,12 +3437,12 @@ function triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersio
         });
       });
     });
-  }, _syncPromise.default.resolve()).then(function () {
+  }, _syncPromise["default"].resolve()).then(function () {
     if (connectionsClosed()) {
       return undefined;
     }
 
-    return new _syncPromise.default(function (resolve) {
+    return new _syncPromise["default"](function (resolve) {
       var unblocking = {
         check: function check() {
           if (connectionsClosed()) {
@@ -3273,7 +3450,7 @@ function triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersio
           }
         }
       };
-      var e = new _IDBVersionChangeEvent.default('blocked', {
+      var e = new _IDBVersionChangeEvent["default"]('blocked', {
         oldVersion: oldVersion,
         newVersion: newVersion
       });
@@ -3305,12 +3482,11 @@ function getLatestCachedWebSQLVersion(name) {
 }
 
 function getLatestCachedWebSQLDB(name) {
-  return websqlDBCache[name] && websqlDBCache[name][// eslint-disable-line standard/computed-property-even-spacing
-  getLatestCachedWebSQLVersion(name)];
+  return websqlDBCache[name] && websqlDBCache[name][getLatestCachedWebSQLVersion(name)];
 }
 
 function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, databaseDeleted, dbError) {
-  var useMemoryDatabase = typeof _CFG.default.memoryDatabase === 'string';
+  var useMemoryDatabase = typeof _CFG["default"].memoryDatabase === 'string';
 
   if (useMemoryDatabase) {
     var latestSQLiteDBCached = websqlDBCache[name] ? getLatestCachedWebSQLDB(name) : null;
@@ -3340,8 +3516,8 @@ function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, dat
     return;
   }
 
-  if (fs && _CFG.default.deleteDatabaseFiles !== false) {
-    fs.unlink(_path.default.join(_CFG.default.databaseBasePath || '', escapedDatabaseName), function (err) {
+  if (fs && _CFG["default"].deleteDatabaseFiles !== false) {
+    fs.unlink(_path["default"].join(_CFG["default"].databaseBasePath || '', escapedDatabaseName), function (err) {
       if (err && err.code !== 'ENOENT') {
         // Ignore if file is already deleted
         dbError({
@@ -3356,7 +3532,7 @@ function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, dat
     return;
   }
 
-  var sqliteDB = __openDatabase(_path.default.join(_CFG.default.databaseBasePath || '', escapedDatabaseName), 1, name, _CFG.default.DEFAULT_DB_SIZE);
+  var sqliteDB = __openDatabase(_path["default"].join(_CFG["default"].databaseBasePath || '', escapedDatabaseName), 1, name, _CFG["default"].DEFAULT_DB_SIZE);
 
   sqliteDB.transaction(function (tx) {
     tx.executeSql('SELECT "name" FROM __sys__', [], function (tx, data) {
@@ -3385,24 +3561,25 @@ function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, dat
   });
 }
 /**
- * Creates the sysDB to keep track of version numbers for databases
- **/
+ * Creates the sysDB to keep track of version numbers for databases.
+ * @returns {void}
+ */
 
 
 function createSysDB(__openDatabase, success, failure) {
   function sysDbCreateError(tx, err) {
     err = (0, _DOMException.webSQLErrback)(err || tx);
-    _CFG.default.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
+    _CFG["default"].DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
     failure(err);
   }
 
   if (sysdb) {
     success();
   } else {
-    sysdb = __openDatabase(typeof _CFG.default.memoryDatabase === 'string' ? _CFG.default.memoryDatabase : _path.default.join(typeof _CFG.default.sysDatabaseBasePath === 'string' ? _CFG.default.sysDatabaseBasePath : _CFG.default.databaseBasePath || '', '__sysdb__' + (_CFG.default.addSQLiteExtension !== false ? '.sqlite' : '')), 1, 'System Database', _CFG.default.DEFAULT_DB_SIZE);
+    sysdb = __openDatabase(typeof _CFG["default"].memoryDatabase === 'string' ? _CFG["default"].memoryDatabase : _path["default"].join(typeof _CFG["default"].sysDatabaseBasePath === 'string' ? _CFG["default"].sysDatabaseBasePath : _CFG["default"].databaseBasePath || '', '__sysdb__' + (_CFG["default"].addSQLiteExtension !== false ? '.sqlite' : '')), 1, 'System Database', _CFG["default"].DEFAULT_DB_SIZE);
     sysdb.transaction(function (systx) {
       systx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name BLOB, version INT);', [], function (systx) {
-        if (!_CFG.default.useSQLiteIndexes) {
+        if (!_CFG["default"].useSQLiteIndexes) {
           success();
           return;
         }
@@ -3413,8 +3590,8 @@ function createSysDB(__openDatabase, success, failure) {
   }
 }
 /**
- * IDBFactory Class
- * https://w3c.github.io/IndexedDB/#idl-def-IDBFactory
+ * IDBFactory Class.
+ * @see https://w3c.github.io/IndexedDB/#idl-def-IDBFactory
  * @class
  */
 
@@ -3435,9 +3612,11 @@ IDBFactory.__createInstance = function () {
   return new IDBFactory();
 };
 /**
- * The IndexedDB Method to create a new database and return the DB
+ * The IndexedDB Method to create a new database and return the DB.
  * @param {string} name
  * @param {number} version
+ * @throws {TypeError} Illegal invocation or no arguments (for database name)
+ * @returns {IDBOpenDBRequest}
  */
 
 
@@ -3472,19 +3651,19 @@ IDBFactory.prototype.open = function (name
 
   var calledDbCreateError = false;
 
-  if (_CFG.default.autoName && name === '') {
+  if (_CFG["default"].autoName && name === '') {
     name = 'autoNamedDatabase_' + nameCounter++;
   }
 
   name = String(name); // cast to a string
 
   var sqlSafeName = util.escapeSQLiteStatement(name);
-  var useMemoryDatabase = typeof _CFG.default.memoryDatabase === 'string';
-  var useDatabaseCache = _CFG.default.cacheDatabaseInstances !== false || useMemoryDatabase;
-  var escapedDatabaseName;
+  var useMemoryDatabase = typeof _CFG["default"].memoryDatabase === 'string';
+  var useDatabaseCache = _CFG["default"].cacheDatabaseInstances !== false || useMemoryDatabase;
+  var escapedDatabaseName; // eslint-disable-next-line no-useless-catch
 
   try {
-    escapedDatabaseName = util.escapeDatabaseNameForSQLAndFiles(name);
+    escapedDatabaseName = util.escapeDatabaseNameForSQLAndFiles(name); // eslint-disable-next-line sonarjs/no-useless-catch
   } catch (err) {
     throw err; // new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
   }
@@ -3515,7 +3694,7 @@ IDBFactory.prototype.open = function (name
         req.__done = true;
       }
 
-      var connection = _IDBDatabase.default.__createInstance(db, name, oldVersion, version, data);
+      var connection = _IDBDatabase["default"].__createInstance(db, name, oldVersion, version, data);
 
       if (!me.__connections[name]) {
         me.__connections[name] = [];
@@ -3560,12 +3739,12 @@ IDBFactory.prototype.open = function (name
 
           sysdb.transaction(function (systx) {
             function versionSet() {
-              var e = new _IDBVersionChangeEvent.default('upgradeneeded', {
+              var e = new _IDBVersionChangeEvent["default"]('upgradeneeded', {
                 oldVersion: oldVersion,
                 newVersion: version
               });
               req.__result = connection;
-              connection.__upgradeTransaction = req.__transaction = req.__result.__versionTransaction = _IDBTransaction.default.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
+              connection.__upgradeTransaction = req.__transaction = req.__result.__versionTransaction = _IDBTransaction["default"].__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
               req.__done = true;
 
               req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded(tx, args, finished, error) {
@@ -3669,7 +3848,7 @@ IDBFactory.prototype.open = function (name
             return false;
           });
           return undefined;
-        }).catch(function (err) {
+        })["catch"](function (err) {
           console.log('Error within `triggerAnyVersionChangeAndBlockedEvents`');
           throw err;
         });
@@ -3687,7 +3866,7 @@ IDBFactory.prototype.open = function (name
     if ((useMemoryDatabase || useDatabaseCache) && name in websqlDBCache && websqlDBCache[name][version]) {
       db = websqlDBCache[name][version];
     } else {
-      db = me.__openDatabase(useMemoryDatabase ? _CFG.default.memoryDatabase : _path.default.join(_CFG.default.databaseBasePath || '', escapedDatabaseName), 1, name, _CFG.default.DEFAULT_DB_SIZE);
+      db = me.__openDatabase(useMemoryDatabase ? _CFG["default"].memoryDatabase : _path["default"].join(_CFG["default"].databaseBasePath || '', escapedDatabaseName), 1, name, _CFG["default"].DEFAULT_DB_SIZE);
 
       if (useDatabaseCache) {
         if (!(name in websqlDBCache)) {
@@ -3722,7 +3901,7 @@ IDBFactory.prototype.open = function (name
           setupDatabase(tx, db, oldVersion);
         }
 
-        if (!_CFG.default.createIndexes) {
+        if (!_CFG["default"].createIndexes) {
           setup();
           return;
         }
@@ -3765,7 +3944,7 @@ IDBFactory.prototype.open = function (name
   return req;
 };
 /**
- * Deletes a database
+ * Deletes a database.
  * @param {string} name
  * @returns {IDBOpenDBRequest}
  */
@@ -3789,16 +3968,16 @@ IDBFactory.prototype.deleteDatabase = function (name) {
   name = String(name); // cast to a string
 
   var sqlSafeName = util.escapeSQLiteStatement(name);
-  var escapedDatabaseName;
+  var escapedDatabaseName; // eslint-disable-next-line no-useless-catch
 
   try {
-    escapedDatabaseName = util.escapeDatabaseNameForSQLAndFiles(name);
+    escapedDatabaseName = util.escapeDatabaseNameForSQLAndFiles(name); // eslint-disable-next-line sonarjs/no-useless-catch
   } catch (err) {
     throw err; // throw new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
   }
 
-  var useMemoryDatabase = typeof _CFG.default.memoryDatabase === 'string';
-  var useDatabaseCache = _CFG.default.cacheDatabaseInstances !== false || useMemoryDatabase;
+  var useMemoryDatabase = typeof _CFG["default"].memoryDatabase === 'string';
+  var useDatabaseCache = _CFG["default"].cacheDatabaseInstances !== false || useMemoryDatabase;
 
   var req = _IDBRequest.IDBOpenDBRequest.__createInstance();
 
@@ -3842,7 +4021,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
       function completeDatabaseDelete() {
         req.__result = undefined;
         req.__done = true;
-        var e = new _IDBVersionChangeEvent.default('success', {
+        var e = new _IDBVersionChangeEvent["default"]('success', {
           oldVersion: version,
           newVersion: null
         });
@@ -3924,11 +4103,12 @@ IDBFactory.prototype.cmp = function (key1, key2) {
 
   Key.convertValueToKeyRethrowingAndIfInvalid(key1);
   Key.convertValueToKeyRethrowingAndIfInvalid(key2);
-  return (0, _cmp.default)(key1, key2);
+  return (0, _cmp["default"])(key1, key2);
 };
 /**
-* May return outdated information if a database has since been deleted
+* May return outdated information if a database has since been deleted.
 * @see https://github.com/w3c/IndexedDB/pull/240/files
+* @returns {Promise<string[]>}
 */
 
 
@@ -3978,10 +4158,15 @@ IDBFactory.prototype.databases = function () {
   });
 };
 /**
-* @todo __forceClose: Test
+* @todo forceClose: Test
 * This is provided to facilitate unit-testing of the
 *  closing of a database connection with a forced flag:
 * <http://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>
+* @param {string} dbName
+* @param {Integer} connIdx
+* @param {string} msg
+* @throws {TypeError}
+* @returns {void}
 */
 
 
@@ -4031,7 +4216,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.buildFetchIndexDataSQL = buildFetchIndexDataSQL;
 exports.executeFetchIndexData = executeFetchIndexData;
-exports.default = exports.IDBIndex = IDBIndex;
+exports["default"] = exports.IDBIndex = IDBIndex;
 
 var _syncPromise = _interopRequireDefault(require("sync-promise"));
 
@@ -4053,9 +4238,11 @@ var _CFG = _interopRequireDefault(require("./CFG"));
 
 var _IDBObjectStore = _interopRequireDefault(require("./IDBObjectStore"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
 
@@ -4067,8 +4254,8 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 var readonlyProperties = ['objectStore', 'keyPath', 'multiEntry', 'unique'];
 /**
- * IDB Index
- * http://www.w3.org/TR/IndexedDB/#idl-def-IDBIndex
+ * IDB Index.
+ * @see http://www.w3.org/TR/IndexedDB/#idl-def-IDBIndex
  * @param {IDBObjectStore} store
  * @param {IDBIndexProperties} indexProperties
  * @class
@@ -4109,13 +4296,13 @@ IDBIndex.__createInstance = function (store, indexProperties) {
         newName = util.convertToDOMString(newName);
         var oldName = me.name;
 
-        _IDBTransaction.default.__assertVersionChange(me.objectStore.transaction);
+        _IDBTransaction["default"].__assertVersionChange(me.objectStore.transaction);
 
-        _IDBTransaction.default.__assertActive(me.objectStore.transaction);
+        _IDBTransaction["default"].__assertActive(me.objectStore.transaction);
 
         IDBIndexAlias.__invalidStateIfDeleted(me);
 
-        _IDBObjectStore.default.__invalidStateIfDeleted(me);
+        _IDBObjectStore["default"].__invalidStateIfDeleted(me);
 
         if (newName === oldName) {
           return;
@@ -4167,6 +4354,7 @@ IDBIndex.__invalidStateIfDeleted = function (index, msg) {
  * @param {IDBIndex} index
  * @param {IDBObjectStore} store
  * @protected
+ * @returns {IDBIndex}
  */
 
 
@@ -4189,7 +4377,7 @@ IDBIndex.__clone = function (index, store) {
  * Creates a new index on an object store.
  * @param {IDBObjectStore} store
  * @param {IDBIndex} index
- * @returns {IDBIndex}
+ * @returns {void}
  * @protected
  */
 
@@ -4226,7 +4414,7 @@ IDBIndex.__createIndex = function (store, index) {
       IDBIndex.__updateIndexList(store, tx, function () {
         // Add index entries for all existing records
         tx.executeSql('SELECT "key", "value" FROM ' + util.escapeStoreNameForSQL(storeName), [], function (tx, data) {
-          _CFG.default.DEBUG && console.log('Adding existing ' + storeName + ' records to the ' + indexName + ' index');
+          _CFG["default"].DEBUG && console.log('Adding existing ' + storeName + ' records to the ' + indexName + ' index');
           addIndexEntry(0);
 
           function addIndexEntry(i) {
@@ -4282,7 +4470,7 @@ IDBIndex.__createIndex = function (store, index) {
     var escapedIndexNameSQL = util.escapeIndexNameForSQL(index.name);
 
     function addIndexSQL(tx) {
-      if (!_CFG.default.useSQLiteIndexes) {
+      if (!_CFG["default"].useSQLiteIndexes) {
         applyIndex(tx);
         return;
       }
@@ -4301,7 +4489,7 @@ IDBIndex.__createIndex = function (store, index) {
     } else {
       // For a new index, add a new column to the object store, then apply the index
       var sql = ['ALTER TABLE', escapedStoreNameSQL, 'ADD', escapedIndexNameSQL, 'BLOB'].join(' ');
-      _CFG.default.DEBUG && console.log(sql);
+      _CFG["default"].DEBUG && console.log(sql);
       tx.executeSql(sql, [], addIndexSQL, error);
     }
   }, undefined, store);
@@ -4311,6 +4499,7 @@ IDBIndex.__createIndex = function (store, index) {
  * @param {IDBObjectStore} store
  * @param {IDBIndex} index
  * @protected
+ * @returns {void}
  */
 
 
@@ -4348,7 +4537,7 @@ IDBIndex.__deleteIndex = function (store, index) {
       }, error);
     }
 
-    if (!_CFG.default.useSQLiteIndexes) {
+    if (!_CFG["default"].useSQLiteIndexes) {
       finishDeleteIndex();
       return;
     }
@@ -4362,6 +4551,7 @@ IDBIndex.__deleteIndex = function (store, index) {
  * @param {object} tx
  * @param {function} success
  * @param {function} failure
+ * @returns {void}
  */
 
 
@@ -4383,13 +4573,13 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
     };
   }
 
-  _CFG.default.DEBUG && console.log('Updating the index list for ' + store.__currentName, indexList);
+  _CFG["default"].DEBUG && console.log('Updating the index list for ' + store.__currentName, indexList);
   tx.executeSql('UPDATE __sys__ SET "indexList" = ? WHERE "name" = ?', [JSON.stringify(indexList), util.escapeSQLiteStatement(store.__currentName)], function () {
     success(store);
   }, failure);
 };
 /**
- * Retrieves index data for the given key
+ * Retrieves index data for the given key.
  * @param {*|IDBKeyRange} range
  * @param {string} opType
  * @param {boolean} nullDisallowed
@@ -4408,13 +4598,13 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
 
   IDBIndex.__invalidStateIfDeleted(me);
 
-  _IDBObjectStore.default.__invalidStateIfDeleted(me.objectStore);
+  _IDBObjectStore["default"].__invalidStateIfDeleted(me.objectStore);
 
   if (me.objectStore.__deleted) {
     throw (0, _DOMException.createDOMException)('InvalidStateError', "This index's object store has been deleted");
   }
 
-  _IDBTransaction.default.__assertActive(me.objectStore.transaction);
+  _IDBTransaction["default"].__assertActive(me.objectStore.transaction);
 
   if (nullDisallowed && util.isNullish(range)) {
     throw (0, _DOMException.createDOMException)('DataError', 'No key or range was specified');
@@ -4450,7 +4640,7 @@ IDBIndex.prototype.openCursor = function ()
 
   me.__objectStore.__cursors.push(cursor);
 
-  return cursor.__req;
+  return cursor.__request;
 };
 /**
  * Opens a cursor over the given key range.  The cursor only includes key values, not data.
@@ -4473,7 +4663,7 @@ IDBIndex.prototype.openKeyCursor = function ()
 
   me.__objectStore.__cursors.push(cursor);
 
-  return cursor.__req;
+  return cursor.__request;
 };
 
 IDBIndex.prototype.get = function (query) {
@@ -4526,7 +4716,7 @@ IDBIndex.prototype.count = function ()
   if (util.instanceOf(query, _IDBKeyRange.IDBKeyRange)) {
     // Todo: Do we need this block?
     // We don't need to add to cursors array since has the count parameter which won't cache
-    return _IDBCursor.IDBCursorWithValue.__createInstance(query, 'next', me.objectStore, me, util.escapeIndexNameForSQLKeyColumn(me.name), 'value', true).__req;
+    return _IDBCursor.IDBCursorWithValue.__createInstance(query, 'next', me.objectStore, me, util.escapeIndexNameForSQLKeyColumn(me.name), 'value', true).__request;
   }
 
   return me.__fetchIndexData(query, 'count', false);
@@ -4568,31 +4758,31 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName) {
 
 
     var sql = 'CREATE TABLE ' + escapedTmpStoreNameSQL + '(' + listColInfoToPreserve + escapedNewIndexNameSQL + ' ' + newNameType + ')';
-    _CFG.default.DEBUG && console.log(sql);
+    _CFG["default"].DEBUG && console.log(sql);
     tx.executeSql(sql, [], function () {
       var sql = 'INSERT INTO ' + escapedTmpStoreNameSQL + '(' + listColsToPreserve + escapedNewIndexNameSQL + ') SELECT ' + listColsToPreserve + util.escapeIndexNameForSQL(oldName) + ' FROM ' + escapedStoreNameSQL;
-      _CFG.default.DEBUG && console.log(sql);
+      _CFG["default"].DEBUG && console.log(sql);
       tx.executeSql(sql, [], function () {
         var sql = 'DROP TABLE ' + escapedStoreNameSQL;
-        _CFG.default.DEBUG && console.log(sql);
+        _CFG["default"].DEBUG && console.log(sql);
         tx.executeSql(sql, [], function () {
           var sql = 'ALTER TABLE ' + escapedTmpStoreNameSQL + ' RENAME TO ' + escapedStoreNameSQL;
-          _CFG.default.DEBUG && console.log(sql);
+          _CFG["default"].DEBUG && console.log(sql);
           tx.executeSql(sql, [], function (tx, data) {
-            if (!_CFG.default.useSQLiteIndexes) {
+            if (!_CFG["default"].useSQLiteIndexes) {
               finish();
               return;
             }
 
             var indexCreations = colNamesToPreserve.slice(2) // Doing `key` separately and no need for index on `value`
             .map(function (escapedIndexNameSQL) {
-              return new _syncPromise.default(function (resolve, reject) {
+              return new _syncPromise["default"](function (resolve, reject) {
                 var escapedIndexToRecreate = util.sqlQuote(escapedStoreNameSQL.slice(1, -1) + '^5' + escapedIndexNameSQL.slice(1, -1)); // const sql = 'DROP INDEX IF EXISTS ' + escapedIndexToRecreate;
                 // CFG.DEBUG && console.log(sql);
                 // tx.executeSql(sql, [], function () {
 
                 var sql = 'CREATE INDEX ' + escapedIndexToRecreate + ' ON ' + escapedStoreNameSQL + '(' + escapedIndexNameSQL + ')';
-                _CFG.default.DEBUG && console.log(sql);
+                _CFG["default"].DEBUG && console.log(sql);
                 tx.executeSql(sql, [], resolve, function (tx, err) {
                   reject(err);
                 }); // }, function (tx, err) {
@@ -4600,14 +4790,14 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName) {
                 // });
               });
             });
-            indexCreations.push(new _syncPromise.default(function (resolve, reject) {
+            indexCreations.push(new _syncPromise["default"](function (resolve, reject) {
               var escapedIndexToRecreate = util.sqlQuote('sk_' + escapedStoreNameSQL.slice(1, -1)); // Chrome erring here if not dropped first; Node does not
 
               var sql = 'DROP INDEX IF EXISTS ' + escapedIndexToRecreate;
-              _CFG.default.DEBUG && console.log(sql);
+              _CFG["default"].DEBUG && console.log(sql);
               tx.executeSql(sql, [], function () {
                 var sql = 'CREATE INDEX ' + escapedIndexToRecreate + ' ON ' + escapedStoreNameSQL + '("key")';
-                _CFG.default.DEBUG && console.log(sql);
+                _CFG["default"].DEBUG && console.log(sql);
                 tx.executeSql(sql, [], resolve, function (tx, err) {
                   reject(err);
                 });
@@ -4616,7 +4806,7 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName) {
               });
             }));
 
-            _syncPromise.default.all(indexCreations).then(finish, error).catch(function (err) {
+            _syncPromise["default"].all(indexCreations).then(finish, error)["catch"](function (err) {
               console.log('Index rename error');
               throw err;
             });
@@ -4649,7 +4839,7 @@ function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range,
   }
 
   var isCount = opType === 'count';
-  _CFG.default.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
+  _CFG["default"].DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
   tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
     var records = [];
     var recordCount = 0;
@@ -4756,7 +4946,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.setSQLForKeyRange = setSQLForKeyRange;
-exports.default = exports.IDBKeyRange = IDBKeyRange;
+exports["default"] = exports.IDBKeyRange = IDBKeyRange;
 exports.convertValueToKeyRange = convertValueToKeyRange;
 
 var _DOMException = require("./DOMException");
@@ -4765,18 +4955,22 @@ var Key = _interopRequireWildcard(require("./Key"));
 
 var util = _interopRequireWildcard(require("./util"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _defineEnumerableProperties(obj, descs) { for (var key in descs) { var desc = descs[key]; desc.configurable = desc.enumerable = true; if ("value" in desc) desc.writable = true; Object.defineProperty(obj, key, desc); } if (Object.getOwnPropertySymbols) { var objectSymbols = Object.getOwnPropertySymbols(descs); for (var i = 0; i < objectSymbols.length; i++) { var sym = objectSymbols[i]; var desc = descs[sym]; desc.configurable = desc.enumerable = true; if ("value" in desc) desc.writable = true; Object.defineProperty(obj, sym, desc); } } return obj; }
 
 var readonlyProperties = ['lower', 'upper', 'lowerOpen', 'upperOpen'];
 /**
- * The IndexedDB KeyRange object
- * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#dfn-key-range
+ * The IndexedDB KeyRange object.
+ * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#dfn-key-range
  * @param {Object} lower
  * @param {Object} upper
  * @param {Object} lowerOpen
  * @param {Object} upperOpen
+ * @throws {TypeError}
+ * @class
  */
 
 function IDBKeyRange() {
@@ -4970,7 +5164,7 @@ function convertValueToKeyRange(value, nullDisallowed) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports["default"] = void 0;
 
 var _syncPromise = _interopRequireDefault(require("sync-promise"));
 
@@ -4994,15 +5188,17 @@ var Sca = _interopRequireWildcard(require("./Sca"));
 
 var _CFG = _interopRequireDefault(require("./CFG"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
 
-function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+function _iterableToArrayLimit(arr, i) { if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) { return; } var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
@@ -5016,8 +5212,8 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 var readonlyProperties = ['keyPath', 'indexNames', 'transaction', 'autoIncrement'];
 /**
- * IndexedDB Object Store
- * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBObjectStore
+ * IndexedDB Object Store.
+ * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBObjectStore
  * @param {IDBObjectStoreProperties} storeProperties
  * @param {IDBTransaction} transaction
  * @class
@@ -5043,7 +5239,7 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
     me.__autoIncrement = Boolean(storeProperties.autoInc);
     me.__indexes = {};
     me.__indexHandles = {};
-    me.__indexNames = _DOMStringList.default.__createInstance();
+    me.__indexNames = _DOMStringList["default"].__createInstance();
     var indexList = storeProperties.indexList;
 
     for (var indexName in indexList) {
@@ -5077,9 +5273,9 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
 
         IDBObjectStoreAlias.__invalidStateIfDeleted(me);
 
-        _IDBTransaction.default.__assertVersionChange(me.transaction);
+        _IDBTransaction["default"].__assertVersionChange(me.transaction);
 
-        _IDBTransaction.default.__assertActive(me.transaction);
+        _IDBTransaction["default"].__assertActive(me.transaction);
 
         if (oldName === name) {
           return;
@@ -5107,13 +5303,13 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
         me.__pendingName = oldName;
         var sql = 'UPDATE __sys__ SET "name" = ? WHERE "name" = ?';
         var sqlValues = [util.escapeSQLiteStatement(name), util.escapeSQLiteStatement(oldName)];
-        _CFG.default.DEBUG && console.log(sql, sqlValues);
+        _CFG["default"].DEBUG && console.log(sql, sqlValues);
 
         me.transaction.__addNonRequestToTransactionQueue(function objectStoreClear(tx, args, success, error) {
           tx.executeSql(sql, sqlValues, function (tx, data) {
             // This SQL preserves indexes per https://www.sqlite.org/lang_altertable.html
             var sql = 'ALTER TABLE ' + util.escapeStoreNameForSQL(oldName) + ' RENAME TO ' + util.escapeStoreNameForSQL(name);
-            _CFG.default.DEBUG && console.log(sql);
+            _CFG["default"].DEBUG && console.log(sql);
             tx.executeSql(sql, [], function (tx, data) {
               delete me.__pendingName;
               success();
@@ -5134,6 +5330,7 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
  * @param {IDBObjectStore} store
  * @param {IDBTransaction} transaction
  * @protected
+ * @returns {IDBObjectStore}
  */
 
 
@@ -5163,6 +5360,7 @@ IDBObjectStore.__invalidStateIfDeleted = function (store, msg) {
  * @param {IDBDatabase} db
  * @param {IDBObjectStore} store
  * @protected
+ * @returns {IDBObjectStore}
  */
 
 
@@ -5184,14 +5382,14 @@ IDBObjectStore.__createObjectStore = function (db, store) {
 
   transaction.__addNonRequestToTransactionQueue(function createObjectStore(tx, args, success, failure) {
     function error(tx, err) {
-      _CFG.default.DEBUG && console.log(err);
+      _CFG["default"].DEBUG && console.log(err);
       failure((0, _DOMException.createDOMException)('UnknownError', 'Could not create object store "' + storeName + '"', err));
     }
 
     var escapedStoreNameSQL = util.escapeStoreNameForSQL(storeName); // key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
 
     var sql = ['CREATE TABLE', escapedStoreNameSQL, '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
-    _CFG.default.DEBUG && console.log(sql);
+    _CFG["default"].DEBUG && console.log(sql);
     tx.executeSql(sql, [], function (tx, data) {
       function insertStoreInfo() {
         var encodedKeyPath = JSON.stringify(store.keyPath);
@@ -5202,7 +5400,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
         }, error);
       }
 
-      if (!_CFG.default.useSQLiteIndexes) {
+      if (!_CFG["default"].useSQLiteIndexes) {
         insertStoreInfo();
         return;
       }
@@ -5218,6 +5416,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
  * @param {IDBDatabase} db
  * @param {IDBObjectStore} store
  * @protected
+ * @returns {void}
  */
 
 
@@ -5225,12 +5424,12 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
   // Remove the object store from the IDBDatabase
   store.__pendingDelete = true; // We don't delete the other index holders in case need reversion
 
-  store.__indexNames = _DOMStringList.default.__createInstance();
+  store.__indexNames = _DOMStringList["default"].__createInstance();
   db.objectStoreNames.splice(db.objectStoreNames.indexOf(store.__currentName), 1);
   var storeHandle = db.__versionTransaction.__storeHandles[store.__currentName];
 
   if (storeHandle) {
-    storeHandle.__indexNames = _DOMStringList.default.__createInstance();
+    storeHandle.__indexNames = _DOMStringList["default"].__createInstance();
     storeHandle.__pendingDelete = true;
   } // Remove the object store from WebSQL
 
@@ -5239,7 +5438,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
 
   transaction.__addNonRequestToTransactionQueue(function deleteObjectStore(tx, args, success, failure) {
     function error(tx, err) {
-      _CFG.default.DEBUG && console.log(err);
+      _CFG["default"].DEBUG && console.log(err);
       failure((0, _DOMException.createDOMException)('UnknownError', 'Could not delete ObjectStore', err));
     }
 
@@ -5261,7 +5460,13 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
       }
     });
   });
-}; // Todo: Although we may end up needing to do cloning genuinely asynchronously (for Blobs and FileLists),
+};
+/**
+* @typedef {GenericArray} KeyValueArray
+* @property {module:Key.Key} 0
+* @property {*} 1
+*/
+// Todo: Although we may end up needing to do cloning genuinely asynchronously (for Blobs and FileLists),
 //   and we'll want to ensure the queue starts up synchronously, we nevertheless do the cloning
 //   before entering the queue and its callback since the encoding we do is preceded by validation
 //   which we must do synchronously anyways. If we reimplement Blobs and FileLists asynchronously,
@@ -5271,9 +5476,13 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
 //   before continuing).
 
 /**
- * Determines whether the given inline or out-of-line key is valid, according to the object store's schema.
- * @param {*} value     Used for inline keys
- * @param {*} key       Used for out-of-line keys
+ * Determines whether the given inline or out-of-line key is valid,
+ *   according to the object store's schema.
+ * @param {*} value Used for inline keys
+ * @param {*} key Used for out-of-line keys
+ * @param {boolean} cursorUpdate
+ * @throws {DOMException}
+ * @returns {KeyValueArray}
  * @private
  */
 
@@ -5333,14 +5542,16 @@ IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, k
   return [key, clonedValue];
 };
 /**
- * From the store properties and object, extracts the value for the key in the object store
- * If the table has auto increment, get the current number (unless it has a keyPath leading to a
- *  valid but non-numeric or < 1 key)
+ * From the store properties and object, extracts the value for the key in
+ *   the object store
+ * If the table has auto increment, get the current number (unless it has
+ *   a keyPath leading to a valid but non-numeric or < 1 key).
  * @param {Object} tx
  * @param {Object} value
  * @param {Object} key
  * @param {function} success
  * @param {function} failure
+ * @returns {void}
  */
 
 
@@ -5395,7 +5606,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
     //   idea is to avoid, where possible, unnecessary delays (and
     //   consuming code ought to only see a difference in the browser
     //   where we can't control the transaction timeout anyways).
-    return new _syncPromise.default(function (resolve, reject) {
+    return new _syncPromise["default"](function (resolve, reject) {
       var index = me.__indexes[indexName];
 
       if ( // `createIndex` was called synchronously after the current insertion was added to
@@ -5454,7 +5665,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
       }
     });
   });
-  return _syncPromise.default.all(indexPromises).then(function () {
+  return _syncPromise["default"].all(indexPromises).then(function () {
     var sqlStart = ['INSERT INTO', util.escapeStoreNameForSQL(me.__currentName), '('];
     var sqlEnd = [' VALUES ('];
     var insertSqlValues = [];
@@ -5480,7 +5691,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
     sqlEnd.push('?)');
     insertSqlValues.push(util.escapeSQLiteStatement(encoded));
     var insertSql = sqlStart.join(' ') + sqlEnd.join(' ');
-    _CFG.default.DEBUG && console.log('SQL for adding', insertSql, insertSqlValues);
+    _CFG["default"].DEBUG && console.log('SQL for adding', insertSql, insertSqlValues);
     tx.executeSql(insertSql, insertSqlValues, function (tx, data) {
       success(clonedKeyOrCurrentNumber);
     }, function (tx, err) {
@@ -5488,7 +5699,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
       error((0, _DOMException.createDOMException)('ConstraintError', err.message, err));
     });
     return undefined;
-  }).catch(function (err) {
+  })["catch"](function (err) {
     function fail() {
       // Todo: Add a different error object here if `assignCurrentNumber` fails in reverting?
       error(err);
@@ -5519,7 +5730,7 @@ IDBObjectStore.prototype.add = function (value
 
   IDBObjectStore.__invalidStateIfDeleted(me);
 
-  _IDBTransaction.default.__assertActive(me.transaction);
+  _IDBTransaction["default"].__assertActive(me.transaction);
 
   me.transaction.__assertWritable();
 
@@ -5551,7 +5762,7 @@ IDBObjectStore.prototype.put = function (value
 
   IDBObjectStore.__invalidStateIfDeleted(me);
 
-  _IDBTransaction.default.__assertActive(me.transaction);
+  _IDBTransaction["default"].__assertActive(me.transaction);
 
   me.transaction.__assertWritable();
 
@@ -5574,7 +5785,7 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
   var sql = 'DELETE FROM ' + util.escapeStoreNameForSQL(me.__currentName) + ' WHERE "key" = ?';
   var encodedKey = Key.encode(key);
   tx.executeSql(sql, [util.escapeSQLiteStatement(encodedKey)], function (tx, data) {
-    _CFG.default.DEBUG && console.log('Did the row with the', key, 'exist?', data.rowsAffected);
+    _CFG["default"].DEBUG && console.log('Did the row with the', key, 'exist?', data.rowsAffected);
     cb(tx);
   }, function (tx, err) {
     error(err);
@@ -5622,7 +5833,7 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
 
   IDBObjectStore.__invalidStateIfDeleted(me);
 
-  _IDBTransaction.default.__assertActive(me.transaction);
+  _IDBTransaction["default"].__assertActive(me.transaction);
 
   var range = (0, _IDBKeyRange.convertValueToKeyRange)(query, !getAll);
   var col = getKey ? 'key' : 'value';
@@ -5648,9 +5859,9 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
 
   sql = sql.join(' ');
   return me.transaction.__addToTransactionQueue(function objectStoreGet(tx, args, success, error) {
-    _CFG.default.DEBUG && console.log('Fetching', me.__currentName, sqlValues);
+    _CFG["default"].DEBUG && console.log('Fetching', me.__currentName, sqlValues);
     tx.executeSql(sql, sqlValues, function (tx, data) {
-      _CFG.default.DEBUG && console.log('Fetched data', data);
+      _CFG["default"].DEBUG && console.log('Fetched data', data);
       var ret;
 
       try {
@@ -5683,7 +5894,7 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
         }
       } catch (e) {
         // If no result is returned, or error occurs when parsing JSON
-        _CFG.default.DEBUG && console.log(e);
+        _CFG["default"].DEBUG && console.log(e);
       }
 
       success(ret);
@@ -5729,7 +5940,7 @@ IDBObjectStore.prototype.getAllKeys = function ()
   return this.__get(query, true, true, count);
 };
 
-IDBObjectStore.prototype.delete = function (query) {
+IDBObjectStore.prototype["delete"] = function (query) {
   var me = this;
 
   if (!(this instanceof IDBObjectStore)) {
@@ -5742,7 +5953,7 @@ IDBObjectStore.prototype.delete = function (query) {
 
   IDBObjectStore.__invalidStateIfDeleted(me);
 
-  _IDBTransaction.default.__assertActive(me.transaction);
+  _IDBTransaction["default"].__assertActive(me.transaction);
 
   me.transaction.__assertWritable();
 
@@ -5752,9 +5963,9 @@ IDBObjectStore.prototype.delete = function (query) {
   (0, _IDBKeyRange.setSQLForKeyRange)(range, util.sqlQuote('key'), sqlArr, sqlValues);
   var sql = sqlArr.join(' ');
   return me.transaction.__addToTransactionQueue(function objectStoreDelete(tx, args, success, error) {
-    _CFG.default.DEBUG && console.log('Deleting', me.__currentName, sqlValues);
+    _CFG["default"].DEBUG && console.log('Deleting', me.__currentName, sqlValues);
     tx.executeSql(sql, sqlValues, function (tx, data) {
-      _CFG.default.DEBUG && console.log('Deleted from database', data.rowsAffected);
+      _CFG["default"].DEBUG && console.log('Deleted from database', data.rowsAffected);
 
       me.__cursors.forEach(function (cursor) {
         cursor.__invalidateCache(); // Delete
@@ -5777,13 +5988,13 @@ IDBObjectStore.prototype.clear = function () {
 
   IDBObjectStore.__invalidStateIfDeleted(me);
 
-  _IDBTransaction.default.__assertActive(me.transaction);
+  _IDBTransaction["default"].__assertActive(me.transaction);
 
   me.transaction.__assertWritable();
 
   return me.transaction.__addToTransactionQueue(function objectStoreClear(tx, args, success, error) {
     tx.executeSql('DELETE FROM ' + util.escapeStoreNameForSQL(me.__currentName), [], function (tx, data) {
-      _CFG.default.DEBUG && console.log('Cleared all records from database', data.rowsAffected);
+      _CFG["default"].DEBUG && console.log('Cleared all records from database', data.rowsAffected);
 
       me.__cursors.forEach(function (cursor) {
         cursor.__invalidateCache(); // Clear
@@ -5809,10 +6020,10 @@ IDBObjectStore.prototype.count = function ()
 
   IDBObjectStore.__invalidStateIfDeleted(me);
 
-  _IDBTransaction.default.__assertActive(me.transaction); // We don't need to add to cursors array since has the count parameter which won't cache
+  _IDBTransaction["default"].__assertActive(me.transaction); // We don't need to add to cursors array since has the count parameter which won't cache
 
 
-  return _IDBCursor.IDBCursorWithValue.__createInstance(query, 'next', me, me, 'key', 'value', true).__req;
+  return _IDBCursor.IDBCursorWithValue.__createInstance(query, 'next', me, me, 'key', 'value', true).__request;
 };
 
 IDBObjectStore.prototype.openCursor = function ()
@@ -5834,7 +6045,7 @@ IDBObjectStore.prototype.openCursor = function ()
 
   me.__cursors.push(cursor);
 
-  return cursor.__req;
+  return cursor.__request;
 };
 
 IDBObjectStore.prototype.openKeyCursor = function ()
@@ -5856,7 +6067,7 @@ IDBObjectStore.prototype.openKeyCursor = function ()
 
   me.__cursors.push(cursor);
 
-  return cursor.__req;
+  return cursor.__request;
 };
 
 IDBObjectStore.prototype.index = function (indexName) {
@@ -5872,7 +6083,7 @@ IDBObjectStore.prototype.index = function (indexName) {
 
   IDBObjectStore.__invalidStateIfDeleted(me);
 
-  _IDBTransaction.default.__assertNotFinished(me.transaction);
+  _IDBTransaction["default"].__assertNotFinished(me.transaction);
 
   var index = me.__indexes[indexName];
 
@@ -5915,11 +6126,11 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath
     throw new TypeError('No key path was specified');
   }
 
-  _IDBTransaction.default.__assertVersionChange(me.transaction);
+  _IDBTransaction["default"].__assertVersionChange(me.transaction);
 
   IDBObjectStore.__invalidStateIfDeleted(me);
 
-  _IDBTransaction.default.__assertActive(me.transaction);
+  _IDBTransaction["default"].__assertActive(me.transaction);
 
   if (me.__indexes[indexName] && !me.__indexes[indexName].__deleted && !me.__indexes[indexName].__pendingDelete) {
     throw (0, _DOMException.createDOMException)('ConstraintError', 'Index "' + indexName + '" already exists on ' + me.__currentName);
@@ -5965,11 +6176,11 @@ IDBObjectStore.prototype.deleteIndex = function (name) {
     throw new TypeError('No index name was specified');
   }
 
-  _IDBTransaction.default.__assertVersionChange(me.transaction);
+  _IDBTransaction["default"].__assertVersionChange(me.transaction);
 
   IDBObjectStore.__invalidStateIfDeleted(me);
 
-  _IDBTransaction.default.__assertActive(me.transaction);
+  _IDBTransaction["default"].__assertActive(me.transaction);
 
   var index = me.__indexes[name];
 
@@ -5987,7 +6198,7 @@ Object.defineProperty(IDBObjectStore, 'prototype', {
   writable: false
 });
 var _default = IDBObjectStore;
-exports.default = _default;
+exports["default"] = _default;
 module.exports = exports.default;
 
 },{"./CFG":7,"./DOMException":8,"./DOMStringList":9,"./IDBCursor":11,"./IDBIndex":14,"./IDBKeyRange":15,"./IDBTransaction":18,"./Key":20,"./Sca":21,"./util":27,"sync-promise":5}],17:[function(require,module,exports){
@@ -6005,14 +6216,17 @@ var _DOMException = require("./DOMException");
 
 var util = _interopRequireWildcard(require("./util"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 var listeners = ['onsuccess', 'onerror'];
 var readonlyProperties = ['source', 'transaction', 'readyState'];
 var doneFlagGetters = ['result', 'error'];
 /**
- * The IDBRequest Object that is returns for all async calls
- * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#request-api
+ * The IDBRequest Object that is returns for all async calls.
+ * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#request-api
+ * @class
  */
 
 function IDBRequest() {
@@ -6092,7 +6306,8 @@ Object.defineProperty(IDBRequest, 'prototype', {
 });
 var openListeners = ['onblocked', 'onupgradeneeded'];
 /**
- * The IDBOpenDBRequest called when a database is opened
+ * The IDBOpenDBRequest called when a database is opened.
+ * @class
  */
 
 function IDBOpenDBRequest() {
@@ -6140,7 +6355,7 @@ Object.defineProperty(IDBOpenDBRequest, 'prototype', {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports["default"] = void 0;
 
 var _eventtargeter = require("eventtargeter");
 
@@ -6158,16 +6373,18 @@ var _IDBObjectStore = _interopRequireDefault(require("./IDBObjectStore"));
 
 var _CFG = _interopRequireDefault(require("./CFG"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 var uniqueID = 0;
 var listeners = ['onabort', 'oncomplete', 'onerror'];
 var readonlyProperties = ['objectStoreNames', 'mode', 'db', 'error'];
 /**
- * The IndexedDB Transaction
- * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBTransaction
+ * The IndexedDB Transaction.
+ * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBTransaction
  * @param {IDBDatabase} db
  * @param {string[]} storeNames
  * @param {string} mode
@@ -6222,24 +6439,19 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
 
 IDBTransaction.prototype = _eventtargeter.EventTargetFactory.createInstance({
   defaultSync: true,
+  // Ensure EventTarget preserves our properties
   extraProperties: ['complete']
-}); // Ensure EventTarget preserves our properties
+});
 
 IDBTransaction.prototype.__transFinishedCb = function (err, cb) {
-  if (err) {
-    cb(true); // eslint-disable-line standard/no-callback-literal
-
-    return;
-  }
-
-  cb();
+  cb(Boolean(err));
 };
 
 IDBTransaction.prototype.__executeRequests = function () {
   var me = this;
 
   if (me.__running) {
-    _CFG.default.DEBUG && console.log('Looks like the request set is already running', me.mode);
+    _CFG["default"].DEBUG && console.log('Looks like the request set is already running', me.mode);
     return;
   }
 
@@ -6288,7 +6500,8 @@ IDBTransaction.prototype.__executeRequests = function () {
     /* tx, err */
     {
       if (me.__errored || me.__requestsFinished) {
-        // We've already called "onerror", "onabort", or thrown within the transaction, so don't do it again.
+        // We've already called "onerror", "onabort", or thrown within
+        //  the transaction, so don't do it again.
         return;
       }
 
@@ -6427,7 +6640,7 @@ IDBTransaction.prototype.__executeRequests = function () {
 
     function complete() {
       me.__completed = true;
-      _CFG.default.DEBUG && console.log('Transaction completed');
+      _CFG["default"].DEBUG && console.log('Transaction completed');
       var evt = (0, _Event.createEvent)('complete');
 
       try {
@@ -6469,7 +6682,7 @@ IDBTransaction.prototype.__executeRequests = function () {
 };
 /**
  * Creates a new IDBRequest for the transaction.
- * NOTE: The transaction is not queued until you call {@link IDBTransaction#__pushToQueue}
+ * NOTE: The transaction is not queued until you call {@link IDBTransaction#__pushToQueue}.
  * @returns {IDBRequest}
  * @protected
  */
@@ -6485,7 +6698,7 @@ IDBTransaction.prototype.__createRequest = function (source) {
   return request;
 };
 /**
- * Adds a callback function to the transaction queue
+ * Adds a callback function to the transaction queue.
  * @param {function} callback
  * @param {*} args
  * @returns {IDBRequest}
@@ -6501,10 +6714,11 @@ IDBTransaction.prototype.__addToTransactionQueue = function (callback, args, sou
   return request;
 };
 /**
- * Adds a callback function to the transaction queue without generating a request
+ * Adds a callback function to the transaction queue without generating a
+ *   request.
  * @param {function} callback
  * @param {*} args
- * @returns {IDBRequest}
+ * @returns {void}
  * @protected
  */
 
@@ -6513,11 +6727,12 @@ IDBTransaction.prototype.__addNonRequestToTransactionQueue = function (callback,
   this.__pushToQueue(null, callback, args);
 };
 /**
- * Adds an IDBRequest to the transaction queue
+ * Adds an IDBRequest to the transaction queue.
  * @param {IDBRequest} request
  * @param {function} callback
  * @param {*} args
  * @protected
+ * @returns {void}
  */
 
 
@@ -6567,6 +6782,7 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
   IDBTransaction.__assertNotFinished(me);
 
   if (me.__objectStoreNames.indexOf(objectStoreName) === -1) {
+    // eslint-disable-line unicorn/prefer-includes
     throw (0, _DOMException.createDOMException)('NotFoundError', objectStoreName + ' is not participating in this transaction');
   }
 
@@ -6579,7 +6795,7 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
   if (!me.__storeHandles[objectStoreName] || // These latter conditions are to allow store
   //   recreation to create new clone object
   me.__storeHandles[objectStoreName].__pendingDelete || me.__storeHandles[objectStoreName].__deleted) {
-    me.__storeHandles[objectStoreName] = _IDBObjectStore.default.__clone(store, me);
+    me.__storeHandles[objectStoreName] = _IDBObjectStore["default"].__clone(store, me);
   }
 
   return me.__storeHandles[objectStoreName];
@@ -6602,18 +6818,20 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
     me.db.__objectStoreNames = me.db.__oldObjectStoreNames;
     me.__objectStoreNames = me.db.__oldObjectStoreNames;
     Object.values(me.db.__objectStores).concat(Object.values(me.__storeHandles)).forEach(function (store) {
-      if ('__pendingName' in store && me.db.__oldObjectStoreNames.indexOf(store.__pendingName) > -1) {
-        // Store was already created so we restore to name before the rename
-        store.__name = store.__originalName;
-      }
+      // Store was already created so we restore to name before the rename
+      if ('__pendingName' in store && me.db.__oldObjectStoreNames.indexOf(store.__pendingName) > -1 // eslint-disable-line unicorn/prefer-includes
+      ) {
+          store.__name = store.__originalName;
+        }
 
       store.__indexNames = store.__oldIndexNames;
       delete store.__pendingDelete;
       Object.values(store.__indexes).concat(Object.values(store.__indexHandles)).forEach(function (index) {
-        if ('__pendingName' in index && store.__oldIndexNames.indexOf(index.__pendingName) > -1) {
-          // Index was already created so we restore to name before the rename
-          index.__name = index.__originalName;
-        }
+        // Index was already created so we restore to name before the rename
+        if ('__pendingName' in index && store.__oldIndexNames.indexOf(index.__pendingName) > -1 // eslint-disable-line unicorn/prefer-includes
+        ) {
+            index.__name = index.__originalName;
+          }
 
         delete index.__pendingDelete;
       });
@@ -6636,11 +6854,11 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
 
   function abort(tx, errOrResult) {
     if (!tx) {
-      _CFG.default.DEBUG && console.log('Rollback not possible due to missing transaction', me);
+      _CFG["default"].DEBUG && console.log('Rollback not possible due to missing transaction', me);
     } else if (errOrResult && typeof errOrResult.code === 'number') {
-      _CFG.default.DEBUG && console.log('Rollback erred; feature is probably not supported as per WebSQL', me);
+      _CFG["default"].DEBUG && console.log('Rollback erred; feature is probably not supported as per WebSQL', me);
     } else {
-      _CFG.default.DEBUG && console.log('Rollback succeeded', me);
+      _CFG["default"].DEBUG && console.log('Rollback succeeded', me);
     }
 
     me.dispatchEvent((0, _Event.createEvent)('__preabort'));
@@ -6663,7 +6881,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
           bubbles: true,
           cancelable: true
         });
-        return new _syncPromise.default(function (resolve) {
+        return new _syncPromise["default"](function (resolve) {
           setTimeout(function () {
             q.req.dispatchEvent(reqEvt); // No need to catch errors
 
@@ -6671,7 +6889,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
           });
         });
       });
-    }, _syncPromise.default.resolve()).then(function () {
+    }, _syncPromise["default"].resolve()).then(function () {
       // Also works when there are no pending requests
       var evt = (0, _Event.createEvent)('abort', err, {
         bubbles: true,
@@ -6684,7 +6902,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         me.dispatchEvent((0, _Event.createEvent)('__abort'));
       });
       return undefined;
-    }).catch(function (err) {
+    })["catch"](function (err) {
       console.log('Abort error');
       throw err;
     });
@@ -6728,7 +6946,7 @@ IDBTransaction.prototype.abort = function () {
     throw new TypeError('Illegal invocation');
   }
 
-  _CFG.default.DEBUG && console.log('The transaction was aborted', me);
+  _CFG["default"].DEBUG && console.log('The transaction was aborted', me);
 
   IDBTransaction.__assertNotFinished(me);
 
@@ -6774,7 +6992,8 @@ IDBTransaction.__assertActive = function (tx) {
   }
 };
 /**
-* Used by our EventTarget.prototype library to implement bubbling/capturing
+* Used by our `EventTarget.prototype` library to implement bubbling/capturing.
+* @returns {IDBDatabase}
 */
 
 
@@ -6794,7 +7013,7 @@ Object.defineProperty(IDBTransaction, 'prototype', {
   writable: false
 });
 var _default = IDBTransaction;
-exports.default = _default;
+exports["default"] = _default;
 module.exports = exports.default;
 
 },{"./CFG":7,"./DOMException":8,"./Event":10,"./IDBObjectStore":16,"./IDBRequest":17,"./util":27,"eventtargeter":2,"sync-promise":5}],19:[function(require,module,exports){
@@ -6803,13 +7022,15 @@ module.exports = exports.default;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports["default"] = void 0;
 
 var _Event = require("./Event");
 
 var util = _interopRequireWildcard(require("./util"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _defineEnumerableProperties(obj, descs) { for (var key in descs) { var desc = descs[key]; desc.configurable = desc.enumerable = true; if ("value" in desc) desc.writable = true; Object.defineProperty(obj, key, desc); } if (Object.getOwnPropertySymbols) { var objectSymbols = Object.getOwnPropertySymbols(descs); for (var i = 0; i < objectSymbols.length; i++) { var sym = objectSymbols[i]; var desc = descs[sym]; desc.configurable = desc.enumerable = true; if ("value" in desc) desc.writable = true; Object.defineProperty(obj, sym, desc); } } return obj; }
 
@@ -6863,7 +7084,7 @@ Object.defineProperty(IDBVersionChangeEvent, 'prototype', {
   writable: false
 });
 var _default = IDBVersionChangeEvent;
-exports.default = _default;
+exports["default"] = _default;
 module.exports = exports.default;
 
 },{"./Event":10,"./util":27}],20:[function(require,module,exports){
@@ -6901,9 +7122,11 @@ var _cmp = _interopRequireDefault(require("./cmp"));
 
 var _CFG = _interopRequireDefault(require("./CFG"));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
@@ -6914,6 +7137,18 @@ function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread n
 function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
 
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+
+function _iterableToArrayLimit(arr, i) { if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) { return; } var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+/**
+ * @module Key
+ */
 
 /**
  * Encodes the keys based on their types. This is required to maintain collations
@@ -7021,9 +7256,9 @@ var types = {
     // apply signs to the exponent and mantissa, do the base-32 power operation, and return
     // the original JavaScript number values.
     decode: function decode(key) {
-      var sign = Number(key.substr(2, 1));
-      var exponent = key.substr(3, 2);
-      var mantissa = key.substr(5, 11);
+      var sign = Number(key.slice(2, 3));
+      var exponent = key.slice(3, 5);
+      var mantissa = key.slice(5, 16);
 
       switch (signValues[sign]) {
         case 'negativeInfinity':
@@ -7076,25 +7311,46 @@ var types = {
 
       if (inArray) {
         // remove the space at the end, and the dash before each character
-        key = key.substr(0, key.length - 1).replace(/\x2D((?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, '$1');
+        key = key.slice(0, -1).replace(/\x2D((?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, '$1');
       }
 
       return key;
     }
   },
   // Arrays are encoded as JSON strings.
-  // An extra, value is added to each array during encoding to make empty arrays sort correctly.
+  // An extra, value is added to each array during encoding to make
+  //  empty arrays sort correctly.
   array: {
     encode: function encode(key) {
       var encoded = [];
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
 
-      for (var i = 0; i < key.length; i++) {
-        var item = key[i];
+      try {
+        for (var _iterator = key.entries()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var _step$value = _slicedToArray(_step.value, 2),
+              i = _step$value[0],
+              item = _step$value[1];
 
-        var encodedItem = _encode(item, true); // encode the array item
+          var encodedItem = _encode(item, true); // encode the array item
 
 
-        encoded[i] = encodedItem;
+          encoded[i] = encodedItem;
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator["return"] != null) {
+            _iterator["return"]();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
       }
 
       encoded.push(keyTypeToEncodedChar.invalid + '-'); // append an extra item, so empty arrays sort correctly
@@ -7170,14 +7426,34 @@ function padBase32Mantissa(s) {
 /**
  * Flips each digit of a base-32 encoded string.
  * @param {string} encoded
+ * @returns {string}
  */
 
 
 function flipBase32(encoded) {
   var flipped = '';
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
 
-  for (var i = 0; i < encoded.length; i++) {
-    flipped += (31 - parseInt(encoded[i], 32)).toString(32);
+  try {
+    for (var _iterator2 = encoded[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var ch = _step2.value;
+      flipped += (31 - parseInt(ch, 32)).toString(32);
+    }
+  } catch (err) {
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion2 && _iterator2["return"] != null) {
+        _iterator2["return"]();
+      }
+    } finally {
+      if (_didIteratorError2) {
+        throw _iteratorError2;
+      }
+    }
   }
 
   return flipped;
@@ -7215,7 +7491,9 @@ function pow32(mantissa, exponent) {
   return parseInt(expansion, 32);
 }
 /**
- *
+ * @param {Float} num
+ * @param {Float} precision
+ * @returns {Float}
  */
 
 
@@ -7244,7 +7522,11 @@ function negate(s) {
   return '-' + s;
 }
 /**
- * Returns the string "number", "date", "string", "binary", or "array"
+* @typedef {"number"|"date"|"string"|"binary"|"array"} module:Key.KeyType
+*/
+
+/**
+ * @returns {module:Key.KeyType}
  */
 
 
@@ -7258,10 +7540,11 @@ function getKeyType(key) {
   return ['string', 'number'].includes(keyType) ? keyType : 'invalid';
 }
 /**
- * Keys must be strings, numbers (besides NaN), Dates (if value is not NaN),
- *   binary objects or Arrays
+ * Keys must be strings, numbers (besides `NaN`), Dates (if value is not
+ *   `NaN`), binary objects or Arrays.
  * @param input The key input
- * @param seen An array of already seen keys
+ * @param {?(Array)} [seen] An array of already seen keys
+ * @returns {module:Key.keyValueObject}
  */
 
 
@@ -7269,13 +7552,22 @@ function convertValueToKey(input, seen) {
   return convertValueToKeyValueDecoded(input, seen, false, true);
 }
 /**
-* Currently not in use
+* Currently not in use.
+* @param input
+* @returns {module:Key.keyValueObject}
 */
 
 
 function convertValueToMultiEntryKey(input) {
   return convertValueToKeyValueDecoded(input, null, true, true);
-} // https://heycam.github.io/webidl/#ref-for-dfn-get-buffer-source-copy-2
+}
+/**
+ *
+ * @param O
+ * @throws {TypeError}
+ * @see https://heycam.github.io/webidl/#ref-for-dfn-get-buffer-source-copy-2
+ * @returns {Uint8Array}
+ */
 
 
 function getCopyBytesHeldByBufferSource(O) {
@@ -7302,19 +7594,38 @@ function getCopyBytesHeldByBufferSource(O) {
   return new Uint8Array(O.buffer || O, offset, length);
 }
 /**
+* @typedef {PlainObject} module:Key.keyValueObject
+* @property {module:Key.KeyType|"NaN"} type
+* @property {*} [value]
+* @property {boolean} [invalid]
+* @property {string} [message]
+* @todo Specify acceptable `value` more precisely
+*/
+
+/**
 * Shortcut utility to avoid returning full keys from `convertValueToKey`
 *   and subsequent need to process in calling code unless `fullKeys` is
-*   set; may throw
+*   set; may throw.
+* @param {module:Key.Key} input
+* @param {?(Array)} [seen]
+* @param {boolean} [multiEntry]
+* @param {boolean} [fullKeys]
+* @todo Document other allowable `input`
+* @returns {module:Key.keyValueObject}
 */
 
 
 function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
   seen = seen || [];
-  if (seen.includes(input)) return {
-    type: 'array',
-    invalid: true,
-    message: 'An array key cannot be circular'
-  };
+
+  if (seen.includes(input)) {
+    return {
+      type: 'array',
+      invalid: true,
+      message: 'An array key cannot be circular'
+    };
+  }
+
   var type = getKeyType(input);
   var ret = {
     type: type,
@@ -7325,10 +7636,11 @@ function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
     case 'number':
       {
         if (Number.isNaN(input)) {
+          // List as 'NaN' type for convenience of consumers in reporting errors
           return {
             type: 'NaN',
             invalid: true
-          }; // List as 'NaN' type for convenience of consumers in reporting errors
+          };
         }
 
         return ret;
@@ -7388,9 +7700,9 @@ function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
               }
 
               if (!multiEntry || !fullKeys && keys.every(function (k) {
-                return (0, _cmp.default)(k, key.value) !== 0;
+                return (0, _cmp["default"])(k, key.value) !== 0;
               }) || fullKeys && keys.every(function (k) {
-                return (0, _cmp.default)(k, key) !== 0;
+                return (0, _cmp["default"])(k, key) !== 0;
               })) {
                 keys.push(fullKeys ? key : key.value);
               }
@@ -7451,12 +7763,29 @@ function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
       }
   }
 }
+/**
+* @typedef {*} module:Key.Key
+* @todo Specify possible value more precisely
+*/
+
+/**
+ *
+ * @param {module:Key.Key} key
+ * @param {boolean} fullKeys
+ * @returns {module:Key.keyValueObject}
+ * @todo Document other allowable `key`?
+ */
+
 
 function convertValueToMultiEntryKeyDecoded(key, fullKeys) {
   return convertValueToKeyValueDecoded(key, null, true, fullKeys);
 }
 /**
-* An internal utility
+* An internal utility.
+* @param input
+* @param {boolean} seen
+* @throws {DOMException} `DataError`
+* @returns {module:Key.keyValueObject}
 */
 
 
@@ -7469,12 +7798,25 @@ function convertValueToKeyRethrowingAndIfInvalid(input, seen) {
 
   return key;
 }
+/**
+ *
+ * @param value
+ * @param keyPath
+ * @param {boolean} multiEntry
+ * @returns {module:Key.keyValueObject|module:Key.KeyPathEvaluateValue}
+ * @todo Document other possible return?
+ */
+
 
 function extractKeyFromValueUsingKeyPath(value, keyPath, multiEntry) {
   return extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry, true);
 }
 /**
-* Not currently in use
+* Not currently in use.
+* @param value
+* @param keyPath
+* @param {boolean} multiEntry
+* @returns {module:Key.KeyPathEvaluateValue}
 */
 
 
@@ -7483,7 +7825,13 @@ function evaluateKeyPathOnValue(value, keyPath, multiEntry) {
 }
 /**
 * May throw, return `{failure: true}` (e.g., non-object on keyPath resolution)
-*    or `{invalid: true}` (e.g., `NaN`)
+*    or `{invalid: true}` (e.g., `NaN`).
+* @param value
+* @param keyPath
+* @param {boolean} multiEntry
+* @param {boolean} fullKeys
+* @returns {module:Key.keyValueObject|module:Key.KeyPathEvaluateValue}
+* @todo Document other possible return?
 */
 
 
@@ -7501,12 +7849,22 @@ function extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry,
   return convertValueToMultiEntryKeyDecoded(r.value, fullKeys);
 }
 /**
- * Returns the value of an inline key based on a key path (wrapped in an object with key `value`)
- *   or `{failure: true}`
+* @typedef {PlainObject} module:Key.KeyPathEvaluateFailure
+* @property {boolean} failure
+*/
+
+/**
+* @typedef {PlainObject} module:Key.KeyPathEvaluateValue
+* @property {undefined|array|string} value
+*/
+
+/**
+ * Returns the value of an inline key based on a key path (wrapped in an
+ *   object with key `value`) or `{failure: true}`
  * @param {object} value
  * @param {string|array} keyPath
  * @param {boolean} multiEntry
- * @returns {undefined|array|string}
+ * @returns {module:Key.KeyPathEvaluateValue}
  */
 
 
@@ -7522,7 +7880,7 @@ function evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKe
 
       result.push(key.value);
       return false;
-    }, []) ? {
+    }) ? {
       failure: true
     } : {
       value: result
@@ -7572,10 +7930,11 @@ function evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKe
   };
 }
 /**
- * Sets the inline key value
+ * Sets the inline key value.
  * @param {object} value
  * @param {*} key
  * @param {string} keyPath
+ * @returns {void}
  */
 
 
@@ -7592,30 +7951,64 @@ function injectKeyIntoValueUsingKeyPath(value, key, keyPath) {
     value = value[identifier];
   });
   value[last] = key; // key is already a `keyValue` in our processing so no need to convert
-} // See https://github.com/w3c/IndexedDB/pull/146
+}
+/**
+ *
+ * @param value
+ * @param keyPath
+ * @see https://github.com/w3c/IndexedDB/pull/146
+ * @returns {boolean}
+ */
 
 
 function checkKeyCouldBeInjectedIntoValue(value, keyPath) {
   var identifiers = keyPath.split('.');
   identifiers.pop();
+  var _iteratorNormalCompletion3 = true;
+  var _didIteratorError3 = false;
+  var _iteratorError3 = undefined;
 
-  for (var i = 0; i < identifiers.length; i++) {
-    if (!util.isObj(value)) {
-      return false;
+  try {
+    for (var _iterator3 = identifiers[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+      var identifier = _step3.value;
+
+      if (!util.isObj(value)) {
+        return false;
+      }
+
+      var hop = Object.prototype.hasOwnProperty.call(value, identifier);
+
+      if (!hop) {
+        return true;
+      }
+
+      value = value[identifier];
     }
-
-    var identifier = identifiers[i];
-    var hop = Object.prototype.hasOwnProperty.call(value, identifier);
-
-    if (!hop) {
-      return true;
+  } catch (err) {
+    _didIteratorError3 = true;
+    _iteratorError3 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion3 && _iterator3["return"] != null) {
+        _iterator3["return"]();
+      }
+    } finally {
+      if (_didIteratorError3) {
+        throw _iteratorError3;
+      }
     }
-
-    value = value[identifier];
   }
 
   return util.isObj(value);
 }
+/**
+ *
+ * @param {module:Key.Key} key
+ * @param {IDBKeyRange} range
+ * @param {boolean} checkCached
+ * @returns {boolean}
+ */
+
 
 function isKeyInRange(key, range, checkCached) {
   var lowerMatch = range.lower === undefined;
@@ -7665,34 +8058,60 @@ function isMultiEntryMatch(encodedEntry, encodedKey) {
 
   return encodedKey === encodedEntry;
 }
+/**
+ *
+ * @param {module:Key.Key} keyEntry
+ * @param {IDBKeyRange} range
+ * @returns {module:Key.Key[]}
+ */
+
 
 function findMultiEntryMatches(keyEntry, range) {
   var matches = [];
 
   if (Array.isArray(keyEntry)) {
-    for (var i = 0; i < keyEntry.length; i++) {
-      var key = keyEntry[i];
+    var _iteratorNormalCompletion4 = true;
+    var _didIteratorError4 = false;
+    var _iteratorError4 = undefined;
 
-      if (Array.isArray(key)) {
-        if (range && range.lower === range.upper) {
-          continue;
-        }
+    try {
+      for (var _iterator4 = keyEntry[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+        var key = _step4.value;
 
-        if (key.length === 1) {
-          key = key[0];
-        } else {
-          var nested = findMultiEntryMatches(key, range);
-
-          if (nested.length > 0) {
-            matches.push(key);
+        if (Array.isArray(key)) {
+          if (range && range.lower === range.upper) {
+            continue;
           }
 
-          continue;
+          if (key.length === 1) {
+            key = key[0];
+          } else {
+            var nested = findMultiEntryMatches(key, range);
+
+            if (nested.length > 0) {
+              matches.push(key);
+            }
+
+            continue;
+          }
+        }
+
+        if (util.isNullish(range) || isKeyInRange(key, range, true)) {
+          matches.push(key);
         }
       }
-
-      if (util.isNullish(range) || isKeyInRange(key, range, true)) {
-        matches.push(key);
+    } catch (err) {
+      _didIteratorError4 = true;
+      _iteratorError4 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion4 && _iterator4["return"] != null) {
+          _iterator4["return"]();
+        }
+      } finally {
+        if (_didIteratorError4) {
+          throw _iteratorError4;
+        }
       }
     }
   } else if (util.isNullish(range) || isKeyInRange(keyEntry, range, true)) {
@@ -7702,7 +8121,14 @@ function findMultiEntryMatches(keyEntry, range) {
   return matches;
 }
 /**
-* Not currently in use but keeping for spec parity
+* @typedef {number|string|Date|ArrayBuffer|module:Key.ValueTypes[]} module:Key.ValueTypes
+*/
+
+/**
+* Not currently in use but keeping for spec parity.
+* @param {module:Key.Key} key
+* @throws {Error} Upon a "bad key"
+* @returns {module:Key.ValueTypes}
 */
 
 
@@ -7752,6 +8178,13 @@ function convertKeyToValue(key) {
       throw new Error('Bad key');
   }
 }
+/**
+ *
+ * @param {module:Key.Key} key
+ * @param {boolean} inArray
+ * @returns {string|null}
+ */
+
 
 function _encode(key, inArray) {
   // Bad keys like `null`, `object`, `boolean`, 'function', 'symbol' should not be passed here due to prior validation
@@ -7762,6 +8195,14 @@ function _encode(key, inArray) {
 
   return types[getKeyType(key)].encode(key, inArray);
 }
+/**
+ *
+ * @param {module:Key.Key} key
+ * @param {boolean} inArray
+ * @throws {Error} Invalid number
+ * @returns {undefined|module:Key.ValueTypes}
+ */
+
 
 function _decode(key, inArray) {
   if (typeof key !== 'string') {
@@ -7770,12 +8211,48 @@ function _decode(key, inArray) {
 
   return types[encodedCharToKeyType[key.slice(0, 1)]].decode(key, inArray);
 }
+/**
+ *
+ * @param {module:Key.Key} key
+ * @param {boolean} inArray
+ * @returns {undefined|module:Key.ValueTypes}
+ */
+
 
 function roundTrip(key, inArray) {
   return _decode(_encode(key, inArray), inArray);
 }
 
 var MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `Number.MAX_SAFE_INTEGER + 1`)
+
+/**
+ * @external WebSQLTransaction
+ */
+
+/**
+* @typedef {IDBObjectStore} IDBObjectStoreWithCurrentName
+* @property {string} __currentName
+*/
+
+/**
+ * @callback CurrentNumberCallback
+ * @param {Integer} The current number
+ */
+
+/**
+* @callback SQLFailureCallback
+* @param {DOMException}
+* @returns {void}
+*/
+
+/**
+ *
+ * @param {external:WebSQLTransaction} tx
+ * @param {IDBObjectStoreWithCurrentName} store
+ * @param {CurrentNumberCallback} func
+ * @param {SQLFailureCallback} sqlFailCb
+ * @returns {void}
+ */
 
 function getCurrentNumber(tx, store, func, sqlFailCb) {
   tx.executeSql('SELECT "currNum" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.__currentName)], function (tx, data) {
@@ -7788,18 +8265,38 @@ function getCurrentNumber(tx, store, func, sqlFailCb) {
     sqlFailCb((0, _DOMException.createDOMException)('DataError', 'Could not get the auto increment value for key', error));
   });
 }
+/**
+ *
+ * @param {external:WebSQLTransaction} tx
+ * @param {IDBObjectStoreWithCurrentName} store
+ * @param {Integer} num
+ * @param {CurrentNumberCallback} successCb
+ * @param {SQLFailureCallback} failCb
+ * @returns {void}
+ */
+
 
 function assignCurrentNumber(tx, store, num, successCb, failCb) {
   var sql = 'UPDATE __sys__ SET "currNum" = ? WHERE "name" = ?';
   var sqlValues = [num, util.escapeSQLiteStatement(store.__currentName)];
-  _CFG.default.DEBUG && console.log(sql, sqlValues);
+  _CFG["default"].DEBUG && console.log(sql, sqlValues);
   tx.executeSql(sql, sqlValues, function (tx, data) {
     successCb(num);
   }, function (tx, err) {
     failCb((0, _DOMException.createDOMException)('UnknownError', 'Could not set the auto increment value for key', err));
   });
-} // Bump up the auto-inc counter if the key path-resolved value is valid (greater than old value and >=1) OR
-//  if a manually passed in key is valid (numeric and >= 1) and >= any primaryKey
+}
+/**
+ * Bump up the auto-inc counter if the key path-resolved value is valid
+ *   (greater than old value and >=1) OR if a manually passed in key is
+ *   valid (numeric and >= 1) and >= any primaryKey.
+ * @param {external:WebSQLTransaction} tx
+ * @param {IDBObjectStoreWithCurrentName} store
+ * @param {Integer} num
+ * @param {CurrentNumberCallback} successCb
+ * @param {SQLFailureCallback} failCb
+ * @returns {void}
+ */
 
 
 function setCurrentNumber(tx, store, num, successCb, failCb) {
@@ -7807,6 +8304,22 @@ function setCurrentNumber(tx, store, num, successCb, failCb) {
   : num + 1;
   return assignCurrentNumber(tx, store, num, successCb, failCb);
 }
+/**
+ * @callback KeyForStoreCallback
+ * @param {"failure"|null} arg1
+ * @param {Integer} [arg2]
+ * @param {Integer} [arg3]
+ */
+
+/**
+ *
+ * @param {external:WebSQLTransaction} tx
+ * @param {IDBObjectStoreWithCurrentName} store
+ * @param {KeyForStoreCallback} cb
+ * @param {SQLFailureCallback} sqlFailCb
+ * @returns {void}
+ */
+
 
 function generateKeyForStore(tx, store, cb, sqlFailCb) {
   getCurrentNumber(tx, store, function (key) {
@@ -7827,6 +8340,16 @@ function generateKeyForStore(tx, store, cb, sqlFailCb) {
 } // Fractional or numbers exceeding the max do not get changed in the result
 //     per https://github.com/w3c/IndexedDB/issues/147
 //     so we do not return a key
+
+/**
+ *
+ * @param {external:WebSQLTransaction} tx
+ * @param {IDBObjectStoreWithCurrentName} store
+ * @param {*|Integer} key
+ * @param {CurrentNumberCallback|void} successCb
+ * @param {SQLFailureCallback} sqlFailCb
+ * @returns {void}
+ */
 
 
 function possiblyUpdateKeyGenerator(tx, store, key, successCb, sqlFailCb) {
@@ -7874,13 +8397,13 @@ var _typesonRegistry = _interopRequireDefault(require("typeson-registry"));
 
 var _DOMException = require("./DOMException");
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 // See: http://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
-var typeson = new _typesonRegistry.default().register(_typesonRegistry.default.presets.structuredCloningThrowing);
+var typeson = new _typesonRegistry["default"]().register(_typesonRegistry["default"].presets.structuredCloningThrowing);
 
 function register(func) {
-  typeson = new _typesonRegistry.default().register(func(_typesonRegistry.default.presets.structuredCloningThrowing));
+  typeson = new _typesonRegistry["default"]().register(func(_typesonRegistry["default"].presets.structuredCloningThrowing));
 } // We are keeping the callback approach for now in case we wish to reexpose
 //   `Blob`, `File`, `FileList` asynchronously (though in such a case, we
 //   should probably refactor as a Promise)
@@ -7893,11 +8416,11 @@ function encode(obj, func) {
     ret = typeson.stringifySync(obj);
   } catch (err) {
     // SCA in typeson-registry using `DOMException` which is not defined (e.g., in Node)
-    if (_typesonRegistry.default.hasConstructorOf(err, ReferenceError) || // SCA in typeson-registry threw a cloning error and we are in a
+    if (_typesonRegistry["default"].hasConstructorOf(err, ReferenceError) || // SCA in typeson-registry threw a cloning error and we are in a
     //   supporting environment (e.g., the browser) where `ShimDOMException` is
     //   an alias for `DOMException`; if typeson-registry ever uses our shim
     //   to throw, we can use this condition alone.
-    _typesonRegistry.default.hasConstructorOf(err, _DOMException.ShimDOMException)) {
+    _typesonRegistry["default"].hasConstructorOf(err, _DOMException.ShimDOMException)) {
       throw (0, _DOMException.createDOMException)('DataCloneError', 'The object cannot be cloned.');
     } // We should rethrow non-cloning exceptions like from
     //  throwing getters (as in the W3C test, key-conversion-exceptions.htm)
@@ -7943,17 +8466,19 @@ var _setGlobalVars = _interopRequireDefault(require("./setGlobalVars"));
 
 var _CFG = _interopRequireDefault(require("./CFG"));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 /* eslint-env browser, worker */
 
 /* global shimIndexedDB */
 // BEGIN: Same code as in browser.js
-_CFG.default.win = typeof window !== 'undefined' ? window : self; // For Web Workers
+_CFG["default"].win = typeof window !== 'undefined' ? window : self; // For Web Workers
 
-(0, _setGlobalVars.default)(); // END: Same code as in browser.js
+(0, _setGlobalVars["default"])(); // END: Same code as in browser.js
 
 var __setUnicodeIdentifiers = shimIndexedDB.__setUnicodeIdentifiers.bind(shimIndexedDB);
 
@@ -7969,13 +8494,13 @@ shimIndexedDB.__setUnicodeIdentifiers();
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports["default"] = void 0;
 
 var _CFG = _interopRequireDefault(require("./CFG"));
 
 var _Key = require("./Key");
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
@@ -7990,7 +8515,7 @@ function cmp(first, second) {
   var encodedKey2 = (0, _Key.encode)(second);
   var result = encodedKey1 > encodedKey2 ? 1 : encodedKey1 === encodedKey2 ? 0 : -1;
 
-  if (_CFG.default.DEBUG) {
+  if (_CFG["default"].DEBUG) {
     // verify that the keys encoded correctly
     var decodedKey1 = (0, _Key.decode)(encodedKey1);
     var decodedKey2 = (0, _Key.decode)(encodedKey2);
@@ -8020,7 +8545,7 @@ function cmp(first, second) {
 }
 
 var _default = cmp;
-exports.default = _default;
+exports["default"] = _default;
 module.exports = exports.default;
 
 },{"./CFG":7,"./Key":20}],25:[function(require,module,exports){
@@ -8036,7 +8561,7 @@ Object.defineProperty(exports, "createDOMException", {
     return _DOMException.createDOMException;
   }
 });
-exports.default = void 0;
+exports["default"] = void 0;
 
 var _eventtargeter = require("eventtargeter");
 
@@ -8070,7 +8595,7 @@ var _CFG = _interopRequireDefault(require("./CFG"));
 
 var _util = require("./util");
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function _defineEnumerableProperties(obj, descs) { for (var key in descs) { var desc = descs[key]; desc.configurable = desc.enumerable = true; if ("value" in desc) desc.writable = true; Object.defineProperty(obj, key, desc); } if (Object.getOwnPropertySymbols) { var objectSymbols = Object.getOwnPropertySymbols(descs); for (var i = 0; i < objectSymbols.length; i++) { var sym = objectSymbols[i]; var desc = descs[sym]; desc.configurable = desc.enumerable = true; if ("value" in desc) desc.writable = true; Object.defineProperty(obj, sym, desc); } } return obj; }
 
@@ -8078,7 +8603,7 @@ function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArra
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
 
-function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+function _iterableToArrayLimit(arr, i) { if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) { return; } var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
@@ -8096,11 +8621,11 @@ function setConfig(prop, val) {
     return;
   }
 
-  if (!(prop in _CFG.default)) {
+  if (!(prop in _CFG["default"])) {
     throw new Error(prop + ' is not a valid configuration property');
   }
 
-  _CFG.default[prop] = val;
+  _CFG["default"][prop] = val;
 
   if (prop === 'registerSCA' && typeof val === 'function') {
     (0, _Sca.register)(val);
@@ -8158,7 +8683,7 @@ function setGlobalVars(idb, initialConfig) {
     }
   }
 
-  if (_CFG.default.win.openDatabase !== undefined) {
+  if (_CFG["default"].win.openDatabase !== undefined) {
     shim('shimIndexedDB', _IDBFactory.shimIndexedDB, {
       enumerable: false,
       configurable: true
@@ -8170,11 +8695,11 @@ function setGlobalVars(idb, initialConfig) {
       function setNonIDBGlobals() {
         var prefix = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
         shim(prefix + 'DOMException', _DOMException.ShimDOMException);
-        shim(prefix + 'DOMStringList', _DOMStringList.default, {
+        shim(prefix + 'DOMStringList', _DOMStringList["default"], {
           enumerable: false,
           configurable: true,
           writable: true,
-          value: _DOMStringList.default
+          value: _DOMStringList["default"]
         });
         shim(prefix + 'Event', _Event.ShimEvent, {
           configurable: true,
@@ -8198,8 +8723,8 @@ function setGlobalVars(idb, initialConfig) {
 
       var shimIDBFactory = _IDBFactory.IDBFactory;
 
-      if (_CFG.default.win.openDatabase !== undefined) {
-        _IDBFactory.shimIndexedDB.__openDatabase = _CFG.default.win.openDatabase.bind(_CFG.default.win); // We cache here in case the function is overwritten later as by the IndexedDB support promises tests
+      if (_CFG["default"].win.openDatabase !== undefined) {
+        _IDBFactory.shimIndexedDB.__openDatabase = _CFG["default"].win.openDatabase.bind(_CFG["default"].win); // We cache here in case the function is overwritten later as by the IndexedDB support promises tests
         // Polyfill ALL of IndexedDB, using WebSQL
 
         shim('indexedDB', _IDBFactory.shimIndexedDB, {
@@ -8214,7 +8739,7 @@ function setGlobalVars(idb, initialConfig) {
             return _IDBFactory.shimIndexedDB;
           }
         });
-        [['IDBFactory', shimIDBFactory], ['IDBDatabase', _IDBDatabase.default], ['IDBObjectStore', _IDBObjectStore.default], ['IDBIndex', _IDBIndex.default], ['IDBTransaction', _IDBTransaction.default], ['IDBCursor', _IDBCursor.IDBCursor], ['IDBCursorWithValue', _IDBCursor.IDBCursorWithValue], ['IDBKeyRange', _IDBKeyRange.default], ['IDBRequest', _IDBRequest.IDBRequest], ['IDBOpenDBRequest', _IDBRequest.IDBOpenDBRequest], ['IDBVersionChangeEvent', _IDBVersionChangeEvent.default]].forEach(function (_ref3) {
+        [['IDBFactory', shimIDBFactory], ['IDBDatabase', _IDBDatabase["default"]], ['IDBObjectStore', _IDBObjectStore["default"]], ['IDBIndex', _IDBIndex["default"]], ['IDBTransaction', _IDBTransaction["default"]], ['IDBCursor', _IDBCursor.IDBCursor], ['IDBCursorWithValue', _IDBCursor.IDBCursorWithValue], ['IDBKeyRange', _IDBKeyRange["default"]], ['IDBRequest', _IDBRequest.IDBRequest], ['IDBOpenDBRequest', _IDBRequest.IDBOpenDBRequest], ['IDBVersionChangeEvent', _IDBVersionChangeEvent["default"]]].forEach(function (_ref3) {
           var _ref4 = _slicedToArray(_ref3, 2),
               prop = _ref4[0],
               obj = _ref4[1];
@@ -8225,28 +8750,28 @@ function setGlobalVars(idb, initialConfig) {
           });
         });
 
-        if (_CFG.default.fullIDLSupport) {
+        if (_CFG["default"].fullIDLSupport) {
           // Slow per MDN so off by default! Though apparently needed for WebIDL: http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
           Object.setPrototypeOf(IDB.IDBOpenDBRequest, IDB.IDBRequest);
           Object.setPrototypeOf(IDB.IDBCursorWithValue, IDB.IDBCursor);
-          Object.setPrototypeOf(_IDBDatabase.default, _Event.ShimEventTarget);
+          Object.setPrototypeOf(_IDBDatabase["default"], _Event.ShimEventTarget);
           Object.setPrototypeOf(_IDBRequest.IDBRequest, _Event.ShimEventTarget);
-          Object.setPrototypeOf(_IDBTransaction.default, _Event.ShimEventTarget);
-          Object.setPrototypeOf(_IDBVersionChangeEvent.default, _Event.ShimEvent);
+          Object.setPrototypeOf(_IDBTransaction["default"], _Event.ShimEventTarget);
+          Object.setPrototypeOf(_IDBVersionChangeEvent["default"], _Event.ShimEvent);
           Object.setPrototypeOf(_DOMException.ShimDOMException, Error);
           Object.setPrototypeOf(_DOMException.ShimDOMException.prototype, Error.prototype);
           (0, _eventtargeter.setPrototypeOfCustomEvent)();
         }
 
         if (IDB.indexedDB && !IDB.indexedDB.toString().includes('[native code]')) {
-          if (_CFG.default.addNonIDBGlobals) {
+          if (_CFG["default"].addNonIDBGlobals) {
             // As `DOMStringList` exists per IDL (and Chrome) in the global
             //   thread (but not in workers), we prefix the name to avoid
             //   shadowing or conflicts
             setNonIDBGlobals('Shim');
           }
 
-          if (_CFG.default.replaceNonIDBGlobals) {
+          if (_CFG["default"].replaceNonIDBGlobals) {
             setNonIDBGlobals();
           }
         }
@@ -8256,17 +8781,17 @@ function setGlobalVars(idb, initialConfig) {
     };
 
     IDB.shimIndexedDB.__debug = function (val) {
-      _CFG.default.DEBUG = val;
+      _CFG["default"].DEBUG = val;
     };
 
     IDB.shimIndexedDB.__setConfig = setConfig;
 
     IDB.shimIndexedDB.__getConfig = function (prop) {
-      if (!(prop in _CFG.default)) {
+      if (!(prop in _CFG["default"])) {
         throw new Error(prop + ' is not a valid configuration property');
       }
 
-      return _CFG.default[prop];
+      return _CFG["default"][prop];
     };
 
     IDB.shimIndexedDB.__setUnicodeIdentifiers = function (_ref5) {
@@ -8309,14 +8834,14 @@ function setGlobalVars(idb, initialConfig) {
     poorIndexedDbSupport = true;
   }
 
-  if (!_CFG.default.DEFAULT_DB_SIZE) {
-    _CFG.default.DEFAULT_DB_SIZE = ( // Safari currently requires larger size: (We don't need a larger size for Node as node-websql doesn't use this info)
+  if (!_CFG["default"].DEFAULT_DB_SIZE) {
+    _CFG["default"].DEFAULT_DB_SIZE = ( // Safari currently requires larger size: (We don't need a larger size for Node as node-websql doesn't use this info)
     // https://github.com/axemclion/IndexedDBShim/issues/41
     // https://github.com/axemclion/IndexedDBShim/issues/115
     typeof navigator !== 'undefined' && navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome') ? 25 : 4) * 1024 * 1024;
   }
 
-  if (!_CFG.default.avoidAutoShim && (!IDB.indexedDB || poorIndexedDbSupport) && _CFG.default.win.openDatabase !== undefined) {
+  if (!_CFG["default"].avoidAutoShim && (!IDB.indexedDB || poorIndexedDbSupport) && _CFG["default"].win.openDatabase !== undefined) {
     IDB.shimIndexedDB.__useShim();
   } else {
     IDB.IDBDatabase = IDB.IDBDatabase || IDB.webkitIDBDatabase;
@@ -8330,7 +8855,7 @@ function setGlobalVars(idb, initialConfig) {
 
 
 var _default = setGlobalVars;
-exports.default = _default;
+exports["default"] = _default;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
@@ -8378,7 +8903,7 @@ var _CFG = _interopRequireDefault(require("./CFG"));
 
 var _unicodeRegex = _interopRequireDefault(require("./unicode-regex"));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
 
@@ -8423,7 +8948,7 @@ function escapeSQLiteStatement(arg) {
 
 function unescapeSQLiteResponse(arg) {
   return unescapeUnmatchedSurrogates(arg).replace(/(\^+)0/g, function (_, esc) {
-    return esc.length % 2 ? '\0' : _;
+    return esc.length % 2 ? esc.slice(1) + '\0' : _;
   }).replace(/\^\^/g, '^');
 }
 
@@ -8441,40 +8966,40 @@ function sqlQuote(arg) {
 }
 
 function escapeDatabaseNameForSQLAndFiles(db) {
-  if (_CFG.default.escapeDatabaseName) {
+  if (_CFG["default"].escapeDatabaseName) {
     // We at least ensure NUL is escaped by default, but we need to still
     //   handle empty string and possibly also length (potentially
     //   throwing if too long), escaping casing (including Unicode?),
     //   and escaping special characters depending on file system
-    return _CFG.default.escapeDatabaseName(escapeSQLiteStatement(db));
+    return _CFG["default"].escapeDatabaseName(escapeSQLiteStatement(db));
   }
 
   db = 'D' + escapeNameForSQLiteIdentifier(db);
 
-  if (_CFG.default.escapeNFDForDatabaseNames !== false) {
+  if (_CFG["default"].escapeNFDForDatabaseNames !== false) {
     // ES6 copying of regex with different flags
     // Todo: Remove `.source` when
     //   https://github.com/babel/babel/issues/5978 completed (see also
     //   https://github.com/axemclion/IndexedDBShim/issues/311#issuecomment-316090147 )
-    db = db.replace(new RegExp(_unicodeRegex.default.source, 'gu'), function (expandable) {
+    db = db.replace(new RegExp(_unicodeRegex["default"].source, 'gu'), function (expandable) {
       return '^4' + padStart(expandable.codePointAt().toString(16), 6, '0');
     });
   }
 
-  if (_CFG.default.databaseCharacterEscapeList !== false) {
-    db = db.replace(_CFG.default.databaseCharacterEscapeList ? new RegExp(_CFG.default.databaseCharacterEscapeList, 'gu') : /[\0-\x1F"\*\/:<>\?\\\|\x7F]/g, // eslint-disable-line no-control-regex
+  if (_CFG["default"].databaseCharacterEscapeList !== false) {
+    db = db.replace(_CFG["default"].databaseCharacterEscapeList ? new RegExp(_CFG["default"].databaseCharacterEscapeList, 'gu') : /[\0-\x1F"\*\/:<>\?\\\|\x7F]/g, // eslint-disable-line no-control-regex
     function (n0) {
       return '^1' + padStart(n0.charCodeAt().toString(16), 2, '0');
     });
   }
 
-  if (_CFG.default.databaseNameLengthLimit !== false && db.length >= (_CFG.default.databaseNameLengthLimit || 254) - (_CFG.default.addSQLiteExtension !== false ? 7
+  if (_CFG["default"].databaseNameLengthLimit !== false && db.length >= (_CFG["default"].databaseNameLengthLimit || 254) - (_CFG["default"].addSQLiteExtension !== false ? 7
   /* '.sqlite'.length */
   : 0)) {
-    throw new Error('Unexpectedly long database name supplied; length limit required for Node compatibility; passed length: ' + db.length + '; length limit setting: ' + (_CFG.default.databaseNameLengthLimit || 254) + '.');
+    throw new Error('Unexpectedly long database name supplied; length limit required for Node compatibility; passed length: ' + db.length + '; length limit setting: ' + (_CFG["default"].databaseNameLengthLimit || 254) + '.');
   }
 
-  return db + (_CFG.default.addSQLiteExtension !== false ? '.sqlite' : ''); // Shouldn't have quoting (do we even need NUL/case escaping here?)
+  return db + (_CFG["default"].addSQLiteExtension !== false ? '.sqlite' : ''); // Shouldn't have quoting (do we even need NUL/case escaping here?)
 }
 
 function unescapeUnmatchedSurrogates(arg) {
@@ -8487,12 +9012,12 @@ function unescapeUnmatchedSurrogates(arg) {
 
 
 function unescapeDatabaseNameForSQLAndFiles(db) {
-  if (_CFG.default.unescapeDatabaseName) {
+  if (_CFG["default"].unescapeDatabaseName) {
     // We at least ensure NUL is unescaped by default, but we need to still
     //   handle empty string and possibly also length (potentially
     //   throwing if too long), unescaping casing (including Unicode?),
     //   and unescaping special characters depending on file system
-    return _CFG.default.unescapeDatabaseName(unescapeSQLiteResponse(db));
+    return _CFG["default"].unescapeDatabaseName(unescapeSQLiteResponse(db));
   }
 
   return unescapeUnmatchedSurrogates(db.slice(2) // D_
@@ -8642,9 +9167,9 @@ function isIdentifier(item) {
   //   expression for identifiers, but these can be passed in, using the expressions
   //   found at https://gist.github.com/brettz9/b4cd6821d990daa023b2e604de371407
   // ID_Start (includes Other_ID_Start)
-  var UnicodeIDStart = _CFG.default.UnicodeIDStart || '[$A-Z_a-z]'; // ID_Continue (includes Other_ID_Continue)
+  var UnicodeIDStart = _CFG["default"].UnicodeIDStart || '[$A-Z_a-z]'; // ID_Continue (includes Other_ID_Continue)
 
-  var UnicodeIDContinue = _CFG.default.UnicodeIDContinue || '[$0-9A-Z_a-z]';
+  var UnicodeIDContinue = _CFG["default"].UnicodeIDContinue || '[$0-9A-Z_a-z]';
   var IdentifierStart = '(?:' + UnicodeIDStart + '|[$_])';
   var IdentifierPart = '(?:' + UnicodeIDContinue + "|[$_\u200C\u200D])";
   return new RegExp('^' + IdentifierStart + IdentifierPart + '*$', 'u').test(item);

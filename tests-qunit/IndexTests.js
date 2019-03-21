@@ -24,7 +24,8 @@ queuedAsyncTest('Creating Indexes', function (assert) {
         _('Database upgrade called');
         // var db = dbOpenRequest.result;
         var objectStore1 = dbOpenRequest.transaction.objectStore(DB.OBJECT_STORE_1);
-        var index1 = objectStore1.createIndex('Int Index', 'Int', { // eslint-disable-line no-unused-vars
+        // eslint-disable-next-line no-unused-vars
+        var index1 = objectStore1.createIndex('Int Index', 'Int', {
             unique: false,
             multiEntry: false
         });

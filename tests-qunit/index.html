@@ -9,16 +9,21 @@
         <link rel="stylesheet" href="index.css" media="screen" />
 
         <script src="../test-support/source-map-support/browser-source-map-support.js"></script>
-        <script>sourceMapSupport.install();</script>
+        <script>
+        /* globals sourceMapSupport */
+        sourceMapSupport.install();
+        </script>
 
         <script src="../test-support/qunit-2.1.1.js"></script>
 
-        <script src="../test-support/@babel/polyfill/dist/polyfill.js"></script>
+        <script src="../test-support/core-js-bundle/minified.js"></script>
+        <script src="../test-support/regenerator-runtime/runtime.js"></script>
         <script src="../dist/indexeddbshim.js"></script>
 
         <script src="queuedUnit.js"></script>
         <script src="startTests.js"></script>
         <script>
+            /* globals startTests, addTestSuite, testFiles, QUnit */
             window.onload = function () {
                 startTests();
             };
@@ -30,8 +35,9 @@
             //   safer anyways).
             QUnit.config.autostart = false;
 
+            // eslint-disable-next-line no-unused-vars
             function addTest (i) {
-                var x = document.createElement('script');
+                const x = document.createElement('script');
                 x.src = testFiles[i];
                 x.onload = function () {
                     // All test files are loaded at this stage.
@@ -40,11 +46,12 @@
                     }
                     addTestSuite(i + 1);
                 };
-                document.body.appendChild(x);
+                document.body.append(x);
             }
 
+            // eslint-disable-next-line no-unused-vars
             function runWith () {
-                document.getElementById('qunit-tests').innerHTML = '';
+                document.querySelector('#qunit-tests').innerHTML = '';
 
                 window.indexedDB = window.webkitIndexedDB || window.mozIndexedDB;
                 startTests();
@@ -72,46 +79,47 @@
             test markup, will be hidden
         </div>
         <script>
-            (function(){
-                var browser = document.getElementById('browser');
-                var support = [];
-                var runOption = [];
+            (function () {
+                const browser = document.querySelector('#browser');
+                const support = [];
+                const runOption = [];
                 if (window.openDatabase) {
                     support.push('WebSql');
-                    document.getElementById('shimRunOption').style.display = 'block';
+                    document.querySelector('#shimRunOption').style.display = 'block';
                 }
                 if (window.mozIndexedDB) {
                     support.push('mozIndexedDB');
                     runOption.push('Native IndexedDB');
-                    document.getElementById('nativeRunOption').style.display = 'block';
+                    document.querySelector('#nativeRunOption').style.display = 'block';
                 }
                 if (window.webkitIndexedDB) {
                     support.push('webkitIndexedDB');
                     runOption.push('Native IndexedDB');
-                    document.getElementById('nativeRunOption').style.display = 'block';
+                    document.querySelector('#nativeRunOption').style.display = 'block';
                 }
                 if (window.msIndexedDB) {
                     support.push('msIndexedDB');
                     runOption.push('Native IndexedDB');
-                    document.getElementById('nativeRunOption').style.display = 'block';
+                    document.querySelector('#nativeRunOption').style.display = 'block';
                 }
                 browser.innerHTML = 'Storage technologies supported [' + support.join(', ') + ']';
             })();
         </script>
         <script>
-            if (window.location.href.indexOf('noanalytics=true') === -1) { // Slowing testing down in China where Google is blocked so giving an out
+            if (!window.location.href.includes('noanalytics=true')) { // Slowing testing down in China where Google is blocked so giving an out
+                // eslint-disable-next-line no-var
                 var _gaq = _gaq || [];
                 _gaq.push(['_setAccount', 'UA-617499-9']);
                 _gaq.push(['_setDomainName', 'none']);
                 _gaq.push(['_setAllowLinker', true]);
                 _gaq.push(['_trackPageview']);
 
-                (function(){
-                    var ga = document.createElement('script');
+                (function () {
+                    const ga = document.createElement('script');
                     ga.type = 'text/javascript';
                     ga.async = true;
-                    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-                    var s = document.getElementsByTagName('script')[0];
+                    ga.src = (document.location.protocol === 'https:' ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+                    const s = document.querySelector('script');
                     s.parentNode.insertBefore(ga, s);
                 })();
             }

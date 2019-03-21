@@ -403,11 +403,11 @@ describe('IDBObjectStore.put (only)', function () {
 
             var store = tx.objectStore('out-of-line');
 
-            var key1 = util.sampleData.veryLongString.substr(0, 889) + 'a';
+            var key1 = util.sampleData.veryLongString.slice(0, 889) + 'a';
             expect(key1).to.have.lengthOf(890);
             store.put({foo: 'bar'}, key1);
 
-            var key2 = util.sampleData.veryLongString.substr(0, 889) + 'b';
+            var key2 = util.sampleData.veryLongString.slice(0, 889) + 'b';
             expect(key1).to.have.lengthOf(890);
             store.put({foo: 'bar'}, key2);
 
@@ -448,11 +448,11 @@ describe('IDBObjectStore.put (only)', function () {
 
             var store = tx.objectStore('out-of-line');
 
-            var key1 = util.sampleData.veryLongString.substr(0, 888) + 'a';
+            var key1 = util.sampleData.veryLongString.slice(0, 888) + 'a';
             expect(key1).to.have.lengthOf(889);
             store.put({foo: 'bar'}, key1);
 
-            var key2 = util.sampleData.veryLongString.substr(0, 888) + 'b';
+            var key2 = util.sampleData.veryLongString.slice(0, 888) + 'b';
             expect(key1).to.have.lengthOf(889);
             store.put({foo: 'bar'}, key2);
 
@@ -492,7 +492,7 @@ describe('IDBObjectStore.put (only)', function () {
             tx.onerror = done;
 
             var store = tx.objectStore('out-of-line');
-            var veryLongString = util.sampleData.veryLongString.substr(0, 400);
+            var veryLongString = util.sampleData.veryLongString.slice(0, 400);
             store.put({foo: 'bar'}, [veryLongString, 1, 2, 3, 4, 5]);   // Key encodes this as an 925-character string
             store.put({foo: 'bar'}, [veryLongString, 1, 2, 3, 4, 6]);   // Key encodes this as an 925-character string
 

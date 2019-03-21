@@ -13,6 +13,7 @@ import IDBTransaction from './IDBTransaction';
 import IDBDatabase from './IDBDatabase';
 import CFG from './CFG';
 
+// eslint-disable-next-line no-undef
 const fs = ({}.toString.call(process) === '[object process]') ? require('fs') : null;
 
 const getOrigin = () => {
@@ -40,6 +41,7 @@ function processNextInConnectionQueue (name, origin = getOrigin()) {
     cb(req);
 }
 
+// eslint-disable-next-line default-param-last
 function addRequestToConnectionQueue (req, name, origin = getOrigin(), cb) {
     if (!connectionQueue[origin][name]) {
         connectionQueue[origin][name] = [];
@@ -116,7 +118,7 @@ function getLatestCachedWebSQLVersion (name) {
 }
 
 function getLatestCachedWebSQLDB (name) {
-    return websqlDBCache[name] && websqlDBCache[name][ // eslint-disable-line standard/computed-property-even-spacing
+    return websqlDBCache[name] && websqlDBCache[name][
         getLatestCachedWebSQLVersion(name)
     ];
 }
@@ -194,8 +196,9 @@ function cleanupDatabaseResources (__openDatabase, name, escapedDatabaseName, da
 }
 
 /**
- * Creates the sysDB to keep track of version numbers for databases
- **/
+ * Creates the sysDB to keep track of version numbers for databases.
+ * @returns {void}
+ */
 function createSysDB (__openDatabase, success, failure) {
     function sysDbCreateError (tx, err) {
         err = webSQLErrback(err || tx);
@@ -232,8 +235,8 @@ function createSysDB (__openDatabase, success, failure) {
 }
 
 /**
- * IDBFactory Class
- * https://w3c.github.io/IndexedDB/#idl-def-IDBFactory
+ * IDBFactory Class.
+ * @see https://w3c.github.io/IndexedDB/#idl-def-IDBFactory
  * @class
  */
 function IDBFactory () {
@@ -250,9 +253,11 @@ IDBFactory.__createInstance = function () {
 };
 
 /**
- * The IndexedDB Method to create a new database and return the DB
+ * The IndexedDB Method to create a new database and return the DB.
  * @param {string} name
  * @param {number} version
+ * @throws {TypeError} Illegal invocation or no arguments (for database name)
+ * @returns {IDBOpenDBRequest}
  */
 IDBFactory.prototype.open = function (name /* , version */) {
     const me = this;
@@ -287,8 +292,10 @@ IDBFactory.prototype.open = function (name /* , version */) {
     const useDatabaseCache = CFG.cacheDatabaseInstances !== false || useMemoryDatabase;
 
     let escapedDatabaseName;
+    // eslint-disable-next-line no-useless-catch
     try {
         escapedDatabaseName = util.escapeDatabaseNameForSQLAndFiles(name);
+    // eslint-disable-next-line sonarjs/no-useless-catch
     } catch (err) {
         throw err; // new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
     }
@@ -357,8 +364,10 @@ IDBFactory.prototype.open = function (name /* , version */) {
                             req.__result = connection;
                             connection.__upgradeTransaction = req.__transaction = req.__result.__versionTransaction = IDBTransaction.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
                             req.__done = true;
+
                             req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded (tx, args, finished, error) {
                                 req.dispatchEvent(e);
+
                                 if (e.__legacyOutputDidListenersThrowError) {
                                     logError('Error', 'An error occurred in an upgradeneeded handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
                                     req.transaction.__abortTransaction(createDOMException('AbortError', 'A request was aborted.'));
@@ -430,6 +439,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                 // });
                             };
                         }
+
                         if (oldVersion === 0) {
                             systx.executeSql('INSERT INTO dbVersions VALUES (?,?)', [sqlSafeName, version], versionSet, dbCreateError);
                         } else {
@@ -540,7 +550,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
 };
 
 /**
- * Deletes a database
+ * Deletes a database.
  * @param {string} name
  * @returns {IDBOpenDBRequest}
  */
@@ -560,8 +570,10 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     const sqlSafeName = util.escapeSQLiteStatement(name);
 
     let escapedDatabaseName;
+    // eslint-disable-next-line no-useless-catch
     try {
         escapedDatabaseName = util.escapeDatabaseNameForSQLAndFiles(name);
+    // eslint-disable-next-line sonarjs/no-useless-catch
     } catch (err) {
         throw err; // throw new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
     }
@@ -680,8 +692,9 @@ IDBFactory.prototype.cmp = function (key1, key2) {
 };
 
 /**
-* May return outdated information if a database has since been deleted
+* May return outdated information if a database has since been deleted.
 * @see https://github.com/w3c/IndexedDB/pull/240/files
+* @returns {Promise<string[]>}
 */
 IDBFactory.prototype.databases = function () {
     const me = this;
@@ -720,10 +733,15 @@ IDBFactory.prototype.databases = function () {
 };
 
 /**
-* @todo __forceClose: Test
+* @todo forceClose: Test
 * This is provided to facilitate unit-testing of the
 *  closing of a database connection with a forced flag:
 * <http://w3c.github.io/IndexedDB/#steps-for-closing-a-database-connection>
+* @param {string} dbName
+* @param {Integer} connIdx
+* @param {string} msg
+* @throws {TypeError}
+* @returns {void}
 */
 IDBFactory.prototype.__forceClose = function (dbName, connIdx, msg) {
     const me = this;

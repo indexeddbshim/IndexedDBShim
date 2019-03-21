@@ -1,4 +1,5 @@
 /* eslint-env node */
+/* eslint-disable node/no-unsupported-features/es-syntax */
 'use strict';
 
 const mapstraction = require('mapstraction');
@@ -210,7 +211,7 @@ module.exports = function (grunt) {
                 src: ['D_test_database*']
             },
             w3c: {
-                src: ['D_db*', 'D_test*', 'D_about*', 'D_^I^D^B*', 'D_blank*', 'D_database_name*', 'D_idbtransaction*', 'D_x', 'D_x.sqlite', 'D_y', 'D_y.sqlite', 'D_webworker*', 'D_http*']
+                src: ['D_^D^B2*', 'D_db*', 'D_test*', 'D_about*', 'D_^I^D^B*', 'D_blank*', 'D_database_name*', 'D_idbtransaction*', 'D_x', 'D_x.sqlite', 'D_y', 'D_y.sqlite', 'D_webworker*', 'D_http*']
             },
             w3cOld: {
                 src: ['D_db.sqlite*', 'D_test*', 'D_database_name*', 'D_idbtransaction*']
@@ -382,7 +383,7 @@ module.exports = function (grunt) {
         watch: {
             all: {
                 files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
-                tasks: ['eslint', 'browserify', 'uglify']
+                tasks: ['browserify', 'uglify']
             },
             browser: {
                 files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
@@ -409,7 +410,8 @@ module.exports = function (grunt) {
         copy: {
             'test-files': {
                 files: [
-                    {src: 'node_modules/@babel/polyfill/dist/polyfill.js', dest: 'test-support/@babel/polyfill/dist/polyfill.js', filter: 'isFile'},
+                    {src: 'node_modules/regenerator-runtime/runtime.js', dest: 'test-support/regenerator-runtime/runtime.js', filter: 'isFile'},
+                    {src: 'node_modules/core-js-bundle/minified.js', dest: 'test-support/core-js-bundle/minified.js', filter: 'isFile'},
                     {src: 'node_modules/source-map-support/browser-source-map-support.js', dest: 'test-support/source-map-support/browser-source-map-support.js', filter: 'isFile'},
                     {src: 'node_modules/mocha/mocha.css', dest: 'test-support/mocha/mocha.css', filter: 'isFile'},
                     {src: 'node_modules/mocha/mocha.js', dest: 'test-support/mocha/mocha.js', filter: 'isFile'},
@@ -437,7 +439,7 @@ module.exports = function (grunt) {
     grunt.registerTask('build-unicode', ['eslint', 'browserify:unicode', 'uglify:unicode']);
     grunt.registerTask('build-unicodeNode', ['browserify:unicodeNode']);
     grunt.registerTask('build-key', ['eslint', 'browserify:key', 'uglify:key']);
-    grunt.registerTask('build', ['eslint', 'browserify', 'uglify']);
+    grunt.registerTask('build', ['browserify', 'uglify']);
 
     const testJobs = ['build', 'connect'];
     grunt.registerTask('nodequnit', 'node-qunit');

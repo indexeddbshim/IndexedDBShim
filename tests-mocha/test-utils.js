@@ -51,6 +51,7 @@
          * @param {boolean} condition
          * @param {string} title
          * @param {function} test
+         * @returns {void}
          */
         skipIf (condition, title, test) {
             if (condition) {
@@ -65,6 +66,7 @@
          *
          * @param   {...string}     schema      One or more pre-defined schema items. (see {@link createSchemaItem})
          * @param   {function}      done        `function(err, db)`
+         * @returns {void}
          */
         createDatabase (schema, done) {
             schema = Array.prototype.slice.call(arguments, 0, arguments.length - 1);
@@ -104,6 +106,7 @@
          *
          * @param   {IDBObjectStore|IDBIndex}   store   The object store or index
          * @param   {function}                  done    `function(err, data)`
+         * @returns {void}
          */
         getAll (store, done) {
             util.query(store, done);
@@ -116,6 +119,7 @@
          * @param   {IDBKeyRange}               [keyRange]  The key or key range to query
          * @param   {string}                    [direction] The direction of the cursor
          * @param   {function}                  done        `function(err, data)`
+         * @returns {void}
          */
         query (store, keyRange, direction, done) {
             if (arguments.length === 2) {
@@ -173,6 +177,7 @@
          * that is pending deletion will cause runtime errors.
          *
          * @param   {function}  done    `function(err, dbName)`
+         * @returns {void}
          */
         generateDatabaseName (done) {
             dbNameCounter++;
@@ -198,7 +203,7 @@
         },
 
         /**
-         * An asynchronous for-each loop
+         * An asynchronous for-each loop.
          *
          * @param   {array}     array       The array to loop through
          *
@@ -211,6 +216,7 @@
          *
          * If iterator returns an {@link IDBRequest} or {@link IDBTransaction} object,
          * then `next` will automatically be bound to the `onsuccess`, `onerror`, `onblocked`, and `oncomplete` events.
+         * @returns {void}
          */
         asyncForEach (array, done, iterator) {
             var i = 0;
@@ -275,6 +281,7 @@
     /**
      * A class with instance and prototype properties.
      * Used to test the IndexedDB structured cloning algorithm.
+     * @returns {void}
      */
     function Person (name, age, dob, isMarried) {
         name && (this.name = name);
@@ -293,6 +300,7 @@
      *
      * @param   {IDBTransaction}    tx              The database upgrade transaction
      * @param   {string}            schemaItem      The name of the schema item to create
+     * @returns {void}
      */
     function createSchemaItem (tx, schemaItem) {
         switch (schemaItem) {

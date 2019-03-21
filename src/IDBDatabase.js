@@ -10,8 +10,8 @@ const listeners = ['onabort', 'onclose', 'onerror', 'onversionchange'];
 const readonlyProperties = ['name', 'version', 'objectStoreNames'];
 
 /**
- * IDB Database Object
- * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
+ * IDB Database Object.
+ * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
  * @class
  */
 function IDBDatabase () {
@@ -111,6 +111,8 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
 /**
  * Deletes an object store.
  * @param {string} storeName
+ * @throws {TypeError|DOMException}
+ * @returns {void}
  */
 IDBDatabase.prototype.deleteObjectStore = function (storeName) {
     if (!(this instanceof IDBDatabase)) {
@@ -193,8 +195,9 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
         throw new TypeError('Invalid transaction mode: ' + mode);
     }
 
-    // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
-
+    // Do not set transaction state to "inactive" yet (will be set after
+    //   timeout on creating transaction instance):
+    //   https://github.com/w3c/IndexedDB/issues/87
     const trans = IDBTransaction.__createInstance(this, objectStoreNames, mode);
     this.__transactions.push(trans);
     return trans;
@@ -208,6 +211,11 @@ IDBDatabase.prototype.throwIfUpgradeTransactionNull = function () {
 };
 
 // Todo __forceClose: Add tests for `__forceClose`
+/**
+ *
+ * @param {string} msg
+ * @returns {void}
+ */
 IDBDatabase.prototype.__forceClose = function (msg) {
     const me = this;
     me.close();
@@ -223,7 +231,10 @@ IDBDatabase.prototype.__forceClose = function (msg) {
                 });
             }
         };
-        trans.__abortTransaction(createDOMException('AbortError', 'The connection was force-closed: ' + (msg || '')));
+        trans.__abortTransaction(createDOMException(
+            'AbortError',
+            'The connection was force-closed: ' + (msg || '')
+        ));
     });
 };
 

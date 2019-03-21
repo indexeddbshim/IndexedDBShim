@@ -8,7 +8,10 @@ self.parent = self;
     nonEnumerables.concat(
         // Needed early by testing framework
         'clearTimeout', 'setTimeout',
-        'addEventListener', 'document'
+        'addEventListener', 'document',
+        'location', 'ImageData', 'Blob', 'File', 'Event', 'MessageChannel',
+        'DOMMatrix', 'DOMMatrixReadOnly', 'DOMPoint', 'DOMPointReadOnly',
+        'DOMRect', 'DOMRectReadOnly'
     ).forEach(function (prop) {
         // Isn't working for 'indexedDB' and its getter; see <https://github.com/axemclion/IndexedDBShim/issues/280>
         Object.defineProperty(this, prop, Object.getOwnPropertyDescriptor(shimNS.window, prop));

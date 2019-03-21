@@ -7,8 +7,9 @@ const readonlyProperties = ['source', 'transaction', 'readyState'];
 const doneFlagGetters = ['result', 'error'];
 
 /**
- * The IDBRequest Object that is returns for all async calls
- * http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#request-api
+ * The IDBRequest Object that is returns for all async calls.
+ * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#request-api
+ * @class
  */
 function IDBRequest () {
     throw new TypeError('Illegal constructor');
@@ -84,7 +85,8 @@ Object.defineProperty(IDBRequest, 'prototype', {
 const openListeners = ['onblocked', 'onupgradeneeded'];
 
 /**
- * The IDBOpenDBRequest called when a database is opened
+ * The IDBOpenDBRequest called when a database is opened.
+ * @class
  */
 function IDBOpenDBRequest () {
     throw new TypeError('Illegal constructor');

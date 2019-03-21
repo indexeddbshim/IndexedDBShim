@@ -15,7 +15,8 @@ if (Object.defineProperty) {
 
 /**
  * Shim the DOMStringList object.
- *
+ * @throws {TypeError}
+ * @class
  */
 const DOMStringList = function () {
     throw new TypeError('Illegal constructor');

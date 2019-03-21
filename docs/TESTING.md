@@ -117,6 +117,12 @@ To run the Node tests, run the following:
     the new ones are configured properly and working in the browser
     as do the old tests. The W3C Python browser server also ought to be
     running due to requirements with the URL having permissions.
+    Once `npm run w3c` has been run once, you may also test against
+    individual tests with:
+    `npm run w3c-test -- <test-name>`, e.g., `npm run w3c-test -- idbdatabase_createObjectStore7.js`, or with a starting index
+    and length (so as to break up the many tests into more
+    manageable segments, as may become necessary if there are
+    memory issues, e.g., `0 200` then `200 200`).
 
 If you need to rebuild SQLite, you can run `npm install` inside of the
 `node_modules/sqlite3` directory or run the IndexedDBShim `sqlite-rebuild`

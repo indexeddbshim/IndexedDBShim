@@ -1,5 +1,5 @@
 /* eslint-env qunit */
-/* eslint-disable no-var */
+/* eslint-disable no-var, unicorn/no-for-loop */
 /**
  * Ideally unit tests should be independent, but there are some cases where you
  * really want those tests to be executed one after the other. Here is some code
@@ -15,7 +15,7 @@
     // Filtering the tests based on the URLs
     var filteredTests = [];
     if (window.location) {
-        var q = window.location.search.substring(1).split('&');
+        var q = window.location.search.slice(1).split('&');
         for (var i = 0; i < q.length; i++) {
             var parts = q[i].split('=');
             switch (parts[0]) {
@@ -35,10 +35,11 @@
 
     /**
     * Use this method instead of QUnit.test. Once the test is finished, call
-    * nextTest();
+    * `nextTest();`.
+    * @returns {void}
     */
     function queuedAsyncTest (name) {
-        if (filteredTests.length === 0 || filteredTests.indexOf(currentModule + ': ' + name) !== -1) {
+        if (filteredTests.length === 0 || filteredTests.includes(currentModule + ': ' + name)) {
             testQueue.push({
                 name: name,
                 module: currentModule,
@@ -48,7 +49,8 @@
     }
 
     /**
-    * Use this in place of module(blah)
+    * Use this in place of module(blah).
+    * @returns {void}
     */
     function queuedModule (module) {
         currentModule = module;

@@ -4,13 +4,13 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports["default"] = void 0;
 
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
 
-function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+function _iterableToArrayLimit(arr, i) { if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) { return; } var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
@@ -135,7 +135,7 @@ var CFG = {};
   });
 });
 var _default = CFG;
-exports.default = _default;
+exports["default"] = _default;
 module.exports = exports.default;
 
 },{}],2:[function(require,module,exports){
@@ -151,7 +151,7 @@ exports.createDOMException = exports.ShimDOMException = void 0;
 
 var _CFG = _interopRequireDefault(require("./CFG"));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
@@ -335,7 +335,7 @@ function createNonNativeDOMExceptionClass() {
 
 var ShimNonNativeDOMException = createNonNativeDOMExceptionClass();
 /**
- * Creates a generic Error object
+ * Creates a generic Error object.
  * @returns {Error}
  */
 
@@ -347,11 +347,12 @@ function createNonNativeDOMException(name, message) {
  * @param {string} name
  * @param {string} message
  * @param {string|Error|null} error
+ * @returns {void}
  */
 
 
 function logError(name, message, error) {
-  if (_CFG.default.DEBUG) {
+  if (_CFG["default"].DEBUG) {
     if (error && error.message) {
       error = error.message;
     }
@@ -383,15 +384,34 @@ function findError(args) {
       return args[0];
     }
 
-    for (var i = 0; i < args.length; i++) {
-      var arg = args[i];
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
 
-      if (isErrorOrDOMErrorOrDOMException(arg)) {
-        return arg;
+    try {
+      for (var _iterator = args[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        var arg = _step.value;
+
+        if (isErrorOrDOMErrorOrDOMException(arg)) {
+          return arg;
+        }
+
+        if (arg && typeof arg.message === 'string') {
+          err = arg;
+        }
       }
-
-      if (arg && typeof arg.message === 'string') {
-        err = arg;
+    } catch (err) {
+      _didIteratorError = true;
+      _iteratorError = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion && _iterator["return"] != null) {
+          _iterator["return"]();
+        }
+      } finally {
+        if (_didIteratorError) {
+          throw _iteratorError;
+        }
       }
     }
   }
@@ -508,9 +528,11 @@ var _cmp = _interopRequireDefault(require("./cmp"));
 
 var _CFG = _interopRequireDefault(require("./CFG"));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
@@ -521,6 +543,18 @@ function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread n
 function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
 
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+
+function _iterableToArrayLimit(arr, i) { if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) { return; } var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+/**
+ * @module Key
+ */
 
 /**
  * Encodes the keys based on their types. This is required to maintain collations
@@ -628,9 +662,9 @@ var types = {
     // apply signs to the exponent and mantissa, do the base-32 power operation, and return
     // the original JavaScript number values.
     decode: function decode(key) {
-      var sign = Number(key.substr(2, 1));
-      var exponent = key.substr(3, 2);
-      var mantissa = key.substr(5, 11);
+      var sign = Number(key.slice(2, 3));
+      var exponent = key.slice(3, 5);
+      var mantissa = key.slice(5, 16);
 
       switch (signValues[sign]) {
         case 'negativeInfinity':
@@ -683,25 +717,46 @@ var types = {
 
       if (inArray) {
         // remove the space at the end, and the dash before each character
-        key = key.substr(0, key.length - 1).replace(/\x2D((?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, '$1');
+        key = key.slice(0, -1).replace(/\x2D((?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, '$1');
       }
 
       return key;
     }
   },
   // Arrays are encoded as JSON strings.
-  // An extra, value is added to each array during encoding to make empty arrays sort correctly.
+  // An extra, value is added to each array during encoding to make
+  //  empty arrays sort correctly.
   array: {
     encode: function encode(key) {
       var encoded = [];
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
 
-      for (var i = 0; i < key.length; i++) {
-        var item = key[i];
+      try {
+        for (var _iterator = key.entries()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var _step$value = _slicedToArray(_step.value, 2),
+              i = _step$value[0],
+              item = _step$value[1];
 
-        var encodedItem = _encode(item, true); // encode the array item
+          var encodedItem = _encode(item, true); // encode the array item
 
 
-        encoded[i] = encodedItem;
+          encoded[i] = encodedItem;
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator["return"] != null) {
+            _iterator["return"]();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
       }
 
       encoded.push(keyTypeToEncodedChar.invalid + '-'); // append an extra item, so empty arrays sort correctly
@@ -777,14 +832,34 @@ function padBase32Mantissa(s) {
 /**
  * Flips each digit of a base-32 encoded string.
  * @param {string} encoded
+ * @returns {string}
  */
 
 
 function flipBase32(encoded) {
   var flipped = '';
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
 
-  for (var i = 0; i < encoded.length; i++) {
-    flipped += (31 - parseInt(encoded[i], 32)).toString(32);
+  try {
+    for (var _iterator2 = encoded[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var ch = _step2.value;
+      flipped += (31 - parseInt(ch, 32)).toString(32);
+    }
+  } catch (err) {
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion2 && _iterator2["return"] != null) {
+        _iterator2["return"]();
+      }
+    } finally {
+      if (_didIteratorError2) {
+        throw _iteratorError2;
+      }
+    }
   }
 
   return flipped;
@@ -822,7 +897,9 @@ function pow32(mantissa, exponent) {
   return parseInt(expansion, 32);
 }
 /**
- *
+ * @param {Float} num
+ * @param {Float} precision
+ * @returns {Float}
  */
 
 
@@ -851,7 +928,11 @@ function negate(s) {
   return '-' + s;
 }
 /**
- * Returns the string "number", "date", "string", "binary", or "array"
+* @typedef {"number"|"date"|"string"|"binary"|"array"} module:Key.KeyType
+*/
+
+/**
+ * @returns {module:Key.KeyType}
  */
 
 
@@ -865,10 +946,11 @@ function getKeyType(key) {
   return ['string', 'number'].includes(keyType) ? keyType : 'invalid';
 }
 /**
- * Keys must be strings, numbers (besides NaN), Dates (if value is not NaN),
- *   binary objects or Arrays
+ * Keys must be strings, numbers (besides `NaN`), Dates (if value is not
+ *   `NaN`), binary objects or Arrays.
  * @param input The key input
- * @param seen An array of already seen keys
+ * @param {?(Array)} [seen] An array of already seen keys
+ * @returns {module:Key.keyValueObject}
  */
 
 
@@ -876,13 +958,22 @@ function convertValueToKey(input, seen) {
   return convertValueToKeyValueDecoded(input, seen, false, true);
 }
 /**
-* Currently not in use
+* Currently not in use.
+* @param input
+* @returns {module:Key.keyValueObject}
 */
 
 
 function convertValueToMultiEntryKey(input) {
   return convertValueToKeyValueDecoded(input, null, true, true);
-} // https://heycam.github.io/webidl/#ref-for-dfn-get-buffer-source-copy-2
+}
+/**
+ *
+ * @param O
+ * @throws {TypeError}
+ * @see https://heycam.github.io/webidl/#ref-for-dfn-get-buffer-source-copy-2
+ * @returns {Uint8Array}
+ */
 
 
 function getCopyBytesHeldByBufferSource(O) {
@@ -909,19 +1000,38 @@ function getCopyBytesHeldByBufferSource(O) {
   return new Uint8Array(O.buffer || O, offset, length);
 }
 /**
+* @typedef {PlainObject} module:Key.keyValueObject
+* @property {module:Key.KeyType|"NaN"} type
+* @property {*} [value]
+* @property {boolean} [invalid]
+* @property {string} [message]
+* @todo Specify acceptable `value` more precisely
+*/
+
+/**
 * Shortcut utility to avoid returning full keys from `convertValueToKey`
 *   and subsequent need to process in calling code unless `fullKeys` is
-*   set; may throw
+*   set; may throw.
+* @param {module:Key.Key} input
+* @param {?(Array)} [seen]
+* @param {boolean} [multiEntry]
+* @param {boolean} [fullKeys]
+* @todo Document other allowable `input`
+* @returns {module:Key.keyValueObject}
 */
 
 
 function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
   seen = seen || [];
-  if (seen.includes(input)) return {
-    type: 'array',
-    invalid: true,
-    message: 'An array key cannot be circular'
-  };
+
+  if (seen.includes(input)) {
+    return {
+      type: 'array',
+      invalid: true,
+      message: 'An array key cannot be circular'
+    };
+  }
+
   var type = getKeyType(input);
   var ret = {
     type: type,
@@ -932,10 +1042,11 @@ function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
     case 'number':
       {
         if (Number.isNaN(input)) {
+          // List as 'NaN' type for convenience of consumers in reporting errors
           return {
             type: 'NaN',
             invalid: true
-          }; // List as 'NaN' type for convenience of consumers in reporting errors
+          };
         }
 
         return ret;
@@ -995,9 +1106,9 @@ function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
               }
 
               if (!multiEntry || !fullKeys && keys.every(function (k) {
-                return (0, _cmp.default)(k, key.value) !== 0;
+                return (0, _cmp["default"])(k, key.value) !== 0;
               }) || fullKeys && keys.every(function (k) {
-                return (0, _cmp.default)(k, key) !== 0;
+                return (0, _cmp["default"])(k, key) !== 0;
               })) {
                 keys.push(fullKeys ? key : key.value);
               }
@@ -1058,12 +1169,29 @@ function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
       }
   }
 }
+/**
+* @typedef {*} module:Key.Key
+* @todo Specify possible value more precisely
+*/
+
+/**
+ *
+ * @param {module:Key.Key} key
+ * @param {boolean} fullKeys
+ * @returns {module:Key.keyValueObject}
+ * @todo Document other allowable `key`?
+ */
+
 
 function convertValueToMultiEntryKeyDecoded(key, fullKeys) {
   return convertValueToKeyValueDecoded(key, null, true, fullKeys);
 }
 /**
-* An internal utility
+* An internal utility.
+* @param input
+* @param {boolean} seen
+* @throws {DOMException} `DataError`
+* @returns {module:Key.keyValueObject}
 */
 
 
@@ -1076,12 +1204,25 @@ function convertValueToKeyRethrowingAndIfInvalid(input, seen) {
 
   return key;
 }
+/**
+ *
+ * @param value
+ * @param keyPath
+ * @param {boolean} multiEntry
+ * @returns {module:Key.keyValueObject|module:Key.KeyPathEvaluateValue}
+ * @todo Document other possible return?
+ */
+
 
 function extractKeyFromValueUsingKeyPath(value, keyPath, multiEntry) {
   return extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry, true);
 }
 /**
-* Not currently in use
+* Not currently in use.
+* @param value
+* @param keyPath
+* @param {boolean} multiEntry
+* @returns {module:Key.KeyPathEvaluateValue}
 */
 
 
@@ -1090,7 +1231,13 @@ function evaluateKeyPathOnValue(value, keyPath, multiEntry) {
 }
 /**
 * May throw, return `{failure: true}` (e.g., non-object on keyPath resolution)
-*    or `{invalid: true}` (e.g., `NaN`)
+*    or `{invalid: true}` (e.g., `NaN`).
+* @param value
+* @param keyPath
+* @param {boolean} multiEntry
+* @param {boolean} fullKeys
+* @returns {module:Key.keyValueObject|module:Key.KeyPathEvaluateValue}
+* @todo Document other possible return?
 */
 
 
@@ -1108,12 +1255,22 @@ function extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry,
   return convertValueToMultiEntryKeyDecoded(r.value, fullKeys);
 }
 /**
- * Returns the value of an inline key based on a key path (wrapped in an object with key `value`)
- *   or `{failure: true}`
+* @typedef {PlainObject} module:Key.KeyPathEvaluateFailure
+* @property {boolean} failure
+*/
+
+/**
+* @typedef {PlainObject} module:Key.KeyPathEvaluateValue
+* @property {undefined|array|string} value
+*/
+
+/**
+ * Returns the value of an inline key based on a key path (wrapped in an
+ *   object with key `value`) or `{failure: true}`
  * @param {object} value
  * @param {string|array} keyPath
  * @param {boolean} multiEntry
- * @returns {undefined|array|string}
+ * @returns {module:Key.KeyPathEvaluateValue}
  */
 
 
@@ -1129,7 +1286,7 @@ function evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKe
 
       result.push(key.value);
       return false;
-    }, []) ? {
+    }) ? {
       failure: true
     } : {
       value: result
@@ -1179,10 +1336,11 @@ function evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKe
   };
 }
 /**
- * Sets the inline key value
+ * Sets the inline key value.
  * @param {object} value
  * @param {*} key
  * @param {string} keyPath
+ * @returns {void}
  */
 
 
@@ -1199,30 +1357,64 @@ function injectKeyIntoValueUsingKeyPath(value, key, keyPath) {
     value = value[identifier];
   });
   value[last] = key; // key is already a `keyValue` in our processing so no need to convert
-} // See https://github.com/w3c/IndexedDB/pull/146
+}
+/**
+ *
+ * @param value
+ * @param keyPath
+ * @see https://github.com/w3c/IndexedDB/pull/146
+ * @returns {boolean}
+ */
 
 
 function checkKeyCouldBeInjectedIntoValue(value, keyPath) {
   var identifiers = keyPath.split('.');
   identifiers.pop();
+  var _iteratorNormalCompletion3 = true;
+  var _didIteratorError3 = false;
+  var _iteratorError3 = undefined;
 
-  for (var i = 0; i < identifiers.length; i++) {
-    if (!util.isObj(value)) {
-      return false;
+  try {
+    for (var _iterator3 = identifiers[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+      var identifier = _step3.value;
+
+      if (!util.isObj(value)) {
+        return false;
+      }
+
+      var hop = Object.prototype.hasOwnProperty.call(value, identifier);
+
+      if (!hop) {
+        return true;
+      }
+
+      value = value[identifier];
     }
-
-    var identifier = identifiers[i];
-    var hop = Object.prototype.hasOwnProperty.call(value, identifier);
-
-    if (!hop) {
-      return true;
+  } catch (err) {
+    _didIteratorError3 = true;
+    _iteratorError3 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion3 && _iterator3["return"] != null) {
+        _iterator3["return"]();
+      }
+    } finally {
+      if (_didIteratorError3) {
+        throw _iteratorError3;
+      }
     }
-
-    value = value[identifier];
   }
 
   return util.isObj(value);
 }
+/**
+ *
+ * @param {module:Key.Key} key
+ * @param {IDBKeyRange} range
+ * @param {boolean} checkCached
+ * @returns {boolean}
+ */
+
 
 function isKeyInRange(key, range, checkCached) {
   var lowerMatch = range.lower === undefined;
@@ -1272,34 +1464,60 @@ function isMultiEntryMatch(encodedEntry, encodedKey) {
 
   return encodedKey === encodedEntry;
 }
+/**
+ *
+ * @param {module:Key.Key} keyEntry
+ * @param {IDBKeyRange} range
+ * @returns {module:Key.Key[]}
+ */
+
 
 function findMultiEntryMatches(keyEntry, range) {
   var matches = [];
 
   if (Array.isArray(keyEntry)) {
-    for (var i = 0; i < keyEntry.length; i++) {
-      var key = keyEntry[i];
+    var _iteratorNormalCompletion4 = true;
+    var _didIteratorError4 = false;
+    var _iteratorError4 = undefined;
 
-      if (Array.isArray(key)) {
-        if (range && range.lower === range.upper) {
-          continue;
-        }
+    try {
+      for (var _iterator4 = keyEntry[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+        var key = _step4.value;
 
-        if (key.length === 1) {
-          key = key[0];
-        } else {
-          var nested = findMultiEntryMatches(key, range);
-
-          if (nested.length > 0) {
-            matches.push(key);
+        if (Array.isArray(key)) {
+          if (range && range.lower === range.upper) {
+            continue;
           }
 
-          continue;
+          if (key.length === 1) {
+            key = key[0];
+          } else {
+            var nested = findMultiEntryMatches(key, range);
+
+            if (nested.length > 0) {
+              matches.push(key);
+            }
+
+            continue;
+          }
+        }
+
+        if (util.isNullish(range) || isKeyInRange(key, range, true)) {
+          matches.push(key);
         }
       }
-
-      if (util.isNullish(range) || isKeyInRange(key, range, true)) {
-        matches.push(key);
+    } catch (err) {
+      _didIteratorError4 = true;
+      _iteratorError4 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion4 && _iterator4["return"] != null) {
+          _iterator4["return"]();
+        }
+      } finally {
+        if (_didIteratorError4) {
+          throw _iteratorError4;
+        }
       }
     }
   } else if (util.isNullish(range) || isKeyInRange(keyEntry, range, true)) {
@@ -1309,7 +1527,14 @@ function findMultiEntryMatches(keyEntry, range) {
   return matches;
 }
 /**
-* Not currently in use but keeping for spec parity
+* @typedef {number|string|Date|ArrayBuffer|module:Key.ValueTypes[]} module:Key.ValueTypes
+*/
+
+/**
+* Not currently in use but keeping for spec parity.
+* @param {module:Key.Key} key
+* @throws {Error} Upon a "bad key"
+* @returns {module:Key.ValueTypes}
 */
 
 
@@ -1359,6 +1584,13 @@ function convertKeyToValue(key) {
       throw new Error('Bad key');
   }
 }
+/**
+ *
+ * @param {module:Key.Key} key
+ * @param {boolean} inArray
+ * @returns {string|null}
+ */
+
 
 function _encode(key, inArray) {
   // Bad keys like `null`, `object`, `boolean`, 'function', 'symbol' should not be passed here due to prior validation
@@ -1369,6 +1601,14 @@ function _encode(key, inArray) {
 
   return types[getKeyType(key)].encode(key, inArray);
 }
+/**
+ *
+ * @param {module:Key.Key} key
+ * @param {boolean} inArray
+ * @throws {Error} Invalid number
+ * @returns {undefined|module:Key.ValueTypes}
+ */
+
 
 function _decode(key, inArray) {
   if (typeof key !== 'string') {
@@ -1377,12 +1617,48 @@ function _decode(key, inArray) {
 
   return types[encodedCharToKeyType[key.slice(0, 1)]].decode(key, inArray);
 }
+/**
+ *
+ * @param {module:Key.Key} key
+ * @param {boolean} inArray
+ * @returns {undefined|module:Key.ValueTypes}
+ */
+
 
 function roundTrip(key, inArray) {
   return _decode(_encode(key, inArray), inArray);
 }
 
 var MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `Number.MAX_SAFE_INTEGER + 1`)
+
+/**
+ * @external WebSQLTransaction
+ */
+
+/**
+* @typedef {IDBObjectStore} IDBObjectStoreWithCurrentName
+* @property {string} __currentName
+*/
+
+/**
+ * @callback CurrentNumberCallback
+ * @param {Integer} The current number
+ */
+
+/**
+* @callback SQLFailureCallback
+* @param {DOMException}
+* @returns {void}
+*/
+
+/**
+ *
+ * @param {external:WebSQLTransaction} tx
+ * @param {IDBObjectStoreWithCurrentName} store
+ * @param {CurrentNumberCallback} func
+ * @param {SQLFailureCallback} sqlFailCb
+ * @returns {void}
+ */
 
 function getCurrentNumber(tx, store, func, sqlFailCb) {
   tx.executeSql('SELECT "currNum" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.__currentName)], function (tx, data) {
@@ -1395,18 +1671,38 @@ function getCurrentNumber(tx, store, func, sqlFailCb) {
     sqlFailCb((0, _DOMException.createDOMException)('DataError', 'Could not get the auto increment value for key', error));
   });
 }
+/**
+ *
+ * @param {external:WebSQLTransaction} tx
+ * @param {IDBObjectStoreWithCurrentName} store
+ * @param {Integer} num
+ * @param {CurrentNumberCallback} successCb
+ * @param {SQLFailureCallback} failCb
+ * @returns {void}
+ */
+
 
 function assignCurrentNumber(tx, store, num, successCb, failCb) {
   var sql = 'UPDATE __sys__ SET "currNum" = ? WHERE "name" = ?';
   var sqlValues = [num, util.escapeSQLiteStatement(store.__currentName)];
-  _CFG.default.DEBUG && console.log(sql, sqlValues);
+  _CFG["default"].DEBUG && console.log(sql, sqlValues);
   tx.executeSql(sql, sqlValues, function (tx, data) {
     successCb(num);
   }, function (tx, err) {
     failCb((0, _DOMException.createDOMException)('UnknownError', 'Could not set the auto increment value for key', err));
   });
-} // Bump up the auto-inc counter if the key path-resolved value is valid (greater than old value and >=1) OR
-//  if a manually passed in key is valid (numeric and >= 1) and >= any primaryKey
+}
+/**
+ * Bump up the auto-inc counter if the key path-resolved value is valid
+ *   (greater than old value and >=1) OR if a manually passed in key is
+ *   valid (numeric and >= 1) and >= any primaryKey.
+ * @param {external:WebSQLTransaction} tx
+ * @param {IDBObjectStoreWithCurrentName} store
+ * @param {Integer} num
+ * @param {CurrentNumberCallback} successCb
+ * @param {SQLFailureCallback} failCb
+ * @returns {void}
+ */
 
 
 function setCurrentNumber(tx, store, num, successCb, failCb) {
@@ -1414,6 +1710,22 @@ function setCurrentNumber(tx, store, num, successCb, failCb) {
   : num + 1;
   return assignCurrentNumber(tx, store, num, successCb, failCb);
 }
+/**
+ * @callback KeyForStoreCallback
+ * @param {"failure"|null} arg1
+ * @param {Integer} [arg2]
+ * @param {Integer} [arg3]
+ */
+
+/**
+ *
+ * @param {external:WebSQLTransaction} tx
+ * @param {IDBObjectStoreWithCurrentName} store
+ * @param {KeyForStoreCallback} cb
+ * @param {SQLFailureCallback} sqlFailCb
+ * @returns {void}
+ */
+
 
 function generateKeyForStore(tx, store, cb, sqlFailCb) {
   getCurrentNumber(tx, store, function (key) {
@@ -1434,6 +1746,16 @@ function generateKeyForStore(tx, store, cb, sqlFailCb) {
 } // Fractional or numbers exceeding the max do not get changed in the result
 //     per https://github.com/w3c/IndexedDB/issues/147
 //     so we do not return a key
+
+/**
+ *
+ * @param {external:WebSQLTransaction} tx
+ * @param {IDBObjectStoreWithCurrentName} store
+ * @param {*|Integer} key
+ * @param {CurrentNumberCallback|void} successCb
+ * @param {SQLFailureCallback} sqlFailCb
+ * @returns {void}
+ */
 
 
 function possiblyUpdateKeyGenerator(tx, store, key, successCb, sqlFailCb) {
@@ -1472,13 +1794,13 @@ function possiblyUpdateKeyGenerator(tx, store, key, successCb, sqlFailCb) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports["default"] = void 0;
 
 var _CFG = _interopRequireDefault(require("./CFG"));
 
 var _Key = require("./Key");
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
@@ -1493,7 +1815,7 @@ function cmp(first, second) {
   var encodedKey2 = (0, _Key.encode)(second);
   var result = encodedKey1 > encodedKey2 ? 1 : encodedKey1 === encodedKey2 ? 0 : -1;
 
-  if (_CFG.default.DEBUG) {
+  if (_CFG["default"].DEBUG) {
     // verify that the keys encoded correctly
     var decodedKey1 = (0, _Key.decode)(encodedKey1);
     var decodedKey2 = (0, _Key.decode)(encodedKey2);
@@ -1523,7 +1845,7 @@ function cmp(first, second) {
 }
 
 var _default = cmp;
-exports.default = _default;
+exports["default"] = _default;
 module.exports = exports.default;
 
 },{"./CFG":1,"./Key":3}],5:[function(require,module,exports){
@@ -1570,7 +1892,7 @@ var _CFG = _interopRequireDefault(require("./CFG"));
 
 var _unicodeRegex = _interopRequireDefault(require("./unicode-regex"));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
 
@@ -1615,7 +1937,7 @@ function escapeSQLiteStatement(arg) {
 
 function unescapeSQLiteResponse(arg) {
   return unescapeUnmatchedSurrogates(arg).replace(/(\^+)0/g, function (_, esc) {
-    return esc.length % 2 ? '\0' : _;
+    return esc.length % 2 ? esc.slice(1) + '\0' : _;
   }).replace(/\^\^/g, '^');
 }
 
@@ -1633,40 +1955,40 @@ function sqlQuote(arg) {
 }
 
 function escapeDatabaseNameForSQLAndFiles(db) {
-  if (_CFG.default.escapeDatabaseName) {
+  if (_CFG["default"].escapeDatabaseName) {
     // We at least ensure NUL is escaped by default, but we need to still
     //   handle empty string and possibly also length (potentially
     //   throwing if too long), escaping casing (including Unicode?),
     //   and escaping special characters depending on file system
-    return _CFG.default.escapeDatabaseName(escapeSQLiteStatement(db));
+    return _CFG["default"].escapeDatabaseName(escapeSQLiteStatement(db));
   }
 
   db = 'D' + escapeNameForSQLiteIdentifier(db);
 
-  if (_CFG.default.escapeNFDForDatabaseNames !== false) {
+  if (_CFG["default"].escapeNFDForDatabaseNames !== false) {
     // ES6 copying of regex with different flags
     // Todo: Remove `.source` when
     //   https://github.com/babel/babel/issues/5978 completed (see also
     //   https://github.com/axemclion/IndexedDBShim/issues/311#issuecomment-316090147 )
-    db = db.replace(new RegExp(_unicodeRegex.default.source, 'gu'), function (expandable) {
+    db = db.replace(new RegExp(_unicodeRegex["default"].source, 'gu'), function (expandable) {
       return '^4' + padStart(expandable.codePointAt().toString(16), 6, '0');
     });
   }
 
-  if (_CFG.default.databaseCharacterEscapeList !== false) {
-    db = db.replace(_CFG.default.databaseCharacterEscapeList ? new RegExp(_CFG.default.databaseCharacterEscapeList, 'gu') : /[\0-\x1F"\*\/:<>\?\\\|\x7F]/g, // eslint-disable-line no-control-regex
+  if (_CFG["default"].databaseCharacterEscapeList !== false) {
+    db = db.replace(_CFG["default"].databaseCharacterEscapeList ? new RegExp(_CFG["default"].databaseCharacterEscapeList, 'gu') : /[\0-\x1F"\*\/:<>\?\\\|\x7F]/g, // eslint-disable-line no-control-regex
     function (n0) {
       return '^1' + padStart(n0.charCodeAt().toString(16), 2, '0');
     });
   }
 
-  if (_CFG.default.databaseNameLengthLimit !== false && db.length >= (_CFG.default.databaseNameLengthLimit || 254) - (_CFG.default.addSQLiteExtension !== false ? 7
+  if (_CFG["default"].databaseNameLengthLimit !== false && db.length >= (_CFG["default"].databaseNameLengthLimit || 254) - (_CFG["default"].addSQLiteExtension !== false ? 7
   /* '.sqlite'.length */
   : 0)) {
-    throw new Error('Unexpectedly long database name supplied; length limit required for Node compatibility; passed length: ' + db.length + '; length limit setting: ' + (_CFG.default.databaseNameLengthLimit || 254) + '.');
+    throw new Error('Unexpectedly long database name supplied; length limit required for Node compatibility; passed length: ' + db.length + '; length limit setting: ' + (_CFG["default"].databaseNameLengthLimit || 254) + '.');
   }
 
-  return db + (_CFG.default.addSQLiteExtension !== false ? '.sqlite' : ''); // Shouldn't have quoting (do we even need NUL/case escaping here?)
+  return db + (_CFG["default"].addSQLiteExtension !== false ? '.sqlite' : ''); // Shouldn't have quoting (do we even need NUL/case escaping here?)
 }
 
 function unescapeUnmatchedSurrogates(arg) {
@@ -1679,12 +2001,12 @@ function unescapeUnmatchedSurrogates(arg) {
 
 
 function unescapeDatabaseNameForSQLAndFiles(db) {
-  if (_CFG.default.unescapeDatabaseName) {
+  if (_CFG["default"].unescapeDatabaseName) {
     // We at least ensure NUL is unescaped by default, but we need to still
     //   handle empty string and possibly also length (potentially
     //   throwing if too long), unescaping casing (including Unicode?),
     //   and unescaping special characters depending on file system
-    return _CFG.default.unescapeDatabaseName(unescapeSQLiteResponse(db));
+    return _CFG["default"].unescapeDatabaseName(unescapeSQLiteResponse(db));
   }
 
   return unescapeUnmatchedSurrogates(db.slice(2) // D_
@@ -1834,9 +2156,9 @@ function isIdentifier(item) {
   //   expression for identifiers, but these can be passed in, using the expressions
   //   found at https://gist.github.com/brettz9/b4cd6821d990daa023b2e604de371407
   // ID_Start (includes Other_ID_Start)
-  var UnicodeIDStart = _CFG.default.UnicodeIDStart || '[$A-Z_a-z]'; // ID_Continue (includes Other_ID_Continue)
+  var UnicodeIDStart = _CFG["default"].UnicodeIDStart || '[$A-Z_a-z]'; // ID_Continue (includes Other_ID_Continue)
 
-  var UnicodeIDContinue = _CFG.default.UnicodeIDContinue || '[$0-9A-Z_a-z]';
+  var UnicodeIDContinue = _CFG["default"].UnicodeIDContinue || '[$0-9A-Z_a-z]';
   var IdentifierStart = '(?:' + UnicodeIDStart + '|[$_])';
   var IdentifierPart = '(?:' + UnicodeIDContinue + "|[$_\u200C\u200D])";
   return new RegExp('^' + IdentifierStart + IdentifierPart + '*$', 'u').test(item);

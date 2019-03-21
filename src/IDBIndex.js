@@ -12,8 +12,8 @@ import IDBObjectStore from './IDBObjectStore';
 const readonlyProperties = ['objectStore', 'keyPath', 'multiEntry', 'unique'];
 
 /**
- * IDB Index
- * http://www.w3.org/TR/IndexedDB/#idl-def-IDBIndex
+ * IDB Index.
+ * @see http://www.w3.org/TR/IndexedDB/#idl-def-IDBIndex
  * @param {IDBObjectStore} store
  * @param {IDBIndexProperties} indexProperties
  * @class
@@ -111,6 +111,7 @@ IDBIndex.__invalidStateIfDeleted = function (index, msg) {
  * @param {IDBIndex} index
  * @param {IDBObjectStore} store
  * @protected
+ * @returns {IDBIndex}
  */
 IDBIndex.__clone = function (index, store) {
     const idx = IDBIndex.__createInstance(store, {
@@ -131,7 +132,7 @@ IDBIndex.__clone = function (index, store) {
  * Creates a new index on an object store.
  * @param {IDBObjectStore} store
  * @param {IDBIndex} index
- * @returns {IDBIndex}
+ * @returns {void}
  * @protected
  */
 IDBIndex.__createIndex = function (store, index) {
@@ -263,6 +264,7 @@ IDBIndex.__createIndex = function (store, index) {
  * @param {IDBObjectStore} store
  * @param {IDBIndex} index
  * @protected
+ * @returns {void}
  */
 IDBIndex.__deleteIndex = function (store, index) {
     // Remove the index from the IDBObjectStore
@@ -318,6 +320,7 @@ IDBIndex.__deleteIndex = function (store, index) {
  * @param {object} tx
  * @param {function} success
  * @param {function} failure
+ * @returns {void}
  */
 IDBIndex.__updateIndexList = function (store, tx, success, failure) {
     const indexList = {};
@@ -342,7 +345,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
 };
 
 /**
- * Retrieves index data for the given key
+ * Retrieves index data for the given key.
  * @param {*|IDBKeyRange} range
  * @param {string} opType
  * @param {boolean} nullDisallowed
@@ -384,7 +387,7 @@ IDBIndex.prototype.openCursor = function (/* query, direction */) {
     const [query, direction] = arguments;
     const cursor = IDBCursorWithValue.__createInstance(query, direction, me.objectStore, me, util.escapeIndexNameForSQLKeyColumn(me.name), 'value');
     me.__objectStore.__cursors.push(cursor);
-    return cursor.__req;
+    return cursor.__request;
 };
 
 /**
@@ -398,7 +401,7 @@ IDBIndex.prototype.openKeyCursor = function (/* query, direction */) {
     const [query, direction] = arguments;
     const cursor = IDBCursor.__createInstance(query, direction, me.objectStore, me, util.escapeIndexNameForSQLKeyColumn(me.name), 'key');
     me.__objectStore.__cursors.push(cursor);
-    return cursor.__req;
+    return cursor.__request;
 };
 
 IDBIndex.prototype.get = function (query) {
@@ -435,7 +438,7 @@ IDBIndex.prototype.count = function (/* query */) {
 
     if (util.instanceOf(query, IDBKeyRange)) { // Todo: Do we need this block?
         // We don't need to add to cursors array since has the count parameter which won't cache
-        return IDBCursorWithValue.__createInstance(query, 'next', me.objectStore, me, util.escapeIndexNameForSQLKeyColumn(me.name), 'value', true).__req;
+        return IDBCursorWithValue.__createInstance(query, 'next', me.objectStore, me, util.escapeIndexNameForSQLKeyColumn(me.name), 'value', true).__request;
     }
     return me.__fetchIndexData(query, 'count', false);
 };
