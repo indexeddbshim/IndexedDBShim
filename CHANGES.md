@@ -4,6 +4,7 @@
 
 - Fix: Avoid erring in some instances with not-yet-added name key
     for `cacheDatabaseInstances` or `memoryDatabase`
+- Fix (Missing API): Add new `IDBCursor.request`
 - Linting (ESLint): Update per new reporting
 - Testing (W3C): Update wpt; test results; fix regression
 - npm: Update devDeps, @babel/polyfill

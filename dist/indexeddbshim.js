@@ -2757,7 +2757,7 @@ IDBCursor.prototype.delete = function () {
 };
 
 IDBCursor.prototype[Symbol.toStringTag] = 'IDBCursorPrototype';
-util.defineReadonlyOuterInterface(IDBCursor.prototype, ['source', 'direction', 'key', 'primaryKey']);
+util.defineReadonlyOuterInterface(IDBCursor.prototype, ['source', 'direction', 'key', 'primaryKey', 'request']);
 Object.defineProperty(IDBCursor, 'prototype', {
   writable: false
 });

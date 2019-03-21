@@ -557,7 +557,7 @@ IDBCursor.prototype[Symbol.toStringTag] = 'IDBCursorPrototype';
 
 util.defineReadonlyOuterInterface(
     IDBCursor.prototype,
-    ['source', 'direction', 'key', 'primaryKey']
+    ['source', 'direction', 'key', 'primaryKey', 'request']
 );
 Object.defineProperty(IDBCursor, 'prototype', {
     writable: false
