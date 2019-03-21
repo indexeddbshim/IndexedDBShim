@@ -23,7 +23,7 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
         this[Symbol.toStringTag] = 'IDBDatabase';
         util.defineReadonlyProperties(this, readonlyProperties);
         this.__db = db;
-        this.__closed = false;
+        this.__closePending = false;
         this.__oldVersion = oldVersion;
         this.__version = version;
         this.__name = name;
@@ -135,7 +135,7 @@ IDBDatabase.prototype.close = function () {
     if (!(this instanceof IDBDatabase)) {
         throw new TypeError('Illegal invocation');
     }
-    this.__closed = true;
+    this.__closePending = true;
     if (this.__unblocking) {
         this.__unblocking.check();
     }
@@ -173,7 +173,7 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
     mode = mode || 'readonly';
 
     IDBTransaction.__assertNotVersionChange(this.__versionTransaction);
-    if (this.__closed) {
+    if (this.__closePending) {
         throw createDOMException('InvalidStateError', 'An attempt was made to start a new transaction on a database connection that is not open');
     }
 

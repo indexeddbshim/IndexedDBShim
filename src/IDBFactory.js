@@ -55,7 +55,7 @@ function triggerAnyVersionChangeAndBlockedEvents (openConnections, req, oldVersi
     // Todo: For Node (and in browser using service workers if available?) the
     //    connections ought to involve those in any process; should also
     //    auto-close if unloading
-    const connectionIsClosed = (connection) => connection.__closed;
+    const connectionIsClosed = (connection) => connection.__closePending;
     const connectionsClosed = () => openConnections.every(connectionIsClosed);
     return openConnections.reduce(function (promises, entry) {
         if (connectionIsClosed(entry)) {
@@ -406,7 +406,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                 });
                             };
                             req.transaction.on__complete = function () {
-                                if (req.__result.__closed) {
+                                if (req.__result.__closePending) {
                                     req.__transaction = null;
                                     const err = createDOMException('AbortError', 'The connection has been closed.');
                                     dbCreateError(err);

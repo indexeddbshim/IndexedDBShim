@@ -6,6 +6,8 @@
     for `cacheDatabaseInstances` or `memoryDatabase`
 - Fix (Missing API): Add new `IDBCursor.request`
 - Linting (ESLint): Update per new reporting
+- Refactoring: Change private `__closed` flag to match spec
+    terminology, `__closePending`.
 - Testing (W3C): Update wpt; test results; fix regression
 - npm: Update devDeps, @babel/polyfill
 

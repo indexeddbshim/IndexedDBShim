@@ -2858,7 +2858,7 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
     this[Symbol.toStringTag] = 'IDBDatabase';
     util.defineReadonlyProperties(this, readonlyProperties);
     this.__db = db;
-    this.__closed = false;
+    this.__closePending = false;
     this.__oldVersion = oldVersion;
     this.__version = version;
     this.__name = name;
@@ -3003,7 +3003,7 @@ IDBDatabase.prototype.close = function () {
     throw new TypeError('Illegal invocation');
   }
 
-  this.__closed = true;
+  this.__closePending = true;
 
   if (this.__unblocking) {
     this.__unblocking.check();
@@ -3047,7 +3047,7 @@ IDBDatabase.prototype.transaction = function (storeNames
 
   _IDBTransaction.default.__assertNotVersionChange(this.__versionTransaction);
 
-  if (this.__closed) {
+  if (this.__closePending) {
     throw (0, _DOMException.createDOMException)('InvalidStateError', 'An attempt was made to start a new transaction on a database connection that is not open');
   }
 
@@ -3230,7 +3230,7 @@ function triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersio
   //    connections ought to involve those in any process; should also
   //    auto-close if unloading
   var connectionIsClosed = function connectionIsClosed(connection) {
-    return connection.__closed;
+    return connection.__closePending;
   };
 
   var connectionsClosed = function connectionsClosed() {
@@ -3625,7 +3625,7 @@ IDBFactory.prototype.open = function (name
               };
 
               req.transaction.on__complete = function () {
-                if (req.__result.__closed) {
+                if (req.__result.__closePending) {
                   req.__transaction = null;
                   var err = (0, _DOMException.createDOMException)('AbortError', 'The connection has been closed.');
                   dbCreateError(err);
