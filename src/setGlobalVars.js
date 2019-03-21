@@ -32,7 +32,7 @@ function setConfig (prop, val) {
     }
 }
 
-function setGlobalVars (idb, initialConfig) { // eslint-disable-line complexity
+function setGlobalVars (idb, initialConfig) {
     if (initialConfig) {
         setConfig(initialConfig);
     }

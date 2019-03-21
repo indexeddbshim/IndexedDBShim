@@ -1,5 +1,13 @@
 # IndexedDBShim changes
 
+## ?
+
+- Fix: Avoid erring in some instances with not-yet-added name key
+    for `cacheDatabaseInstances` or `memoryDatabase`
+- Linting (ESLint): Update per new reporting
+- Testing (W3C): Update wpt; test results; fix regression
+- npm: Update devDeps, @babel/polyfill
+
 ## 4.1.0
 
 - Optimization: Update `typeson-registry` to return to more space-optimal

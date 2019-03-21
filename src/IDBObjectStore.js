@@ -507,7 +507,7 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
     const sql = 'DELETE FROM ' + util.escapeStoreNameForSQL(me.__currentName) + ' WHERE "key" = ?';
     const encodedKey = Key.encode(key);
     tx.executeSql(sql, [util.escapeSQLiteStatement(encodedKey)], function (tx, data) {
-        CFG.DEBUG && console.log('Did the row with the', key, 'exist? ', data.rowsAffected);
+        CFG.DEBUG && console.log('Did the row with the', key, 'exist?', data.rowsAffected);
         cb(tx);
     }, function (tx, err) {
         error(err);

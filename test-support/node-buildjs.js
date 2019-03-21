@@ -1,4 +1,3 @@
-/* eslint-disable compat/compat */
 const fs = require('fs');
 const util = require('util');
 const path = require('path');
@@ -14,7 +13,8 @@ const mkdir = util.promisify(fs.mkdir);
 const testHarnessScripts = ['/resources/testharness.js', '/resources/testharnessreport.js'];
 const supportScripts = [
     'support.js', 'support-promises.js',
-    'nested-cloning-common.js', 'interleaved-cursors-common.js'
+    'nested-cloning-common.js', 'interleaved-cursors-common.js',
+    '/common/get-host-info.sub.js' // 'web-platform-tests/IndexedDB/idbfactory-origin-isolation.html'
 ];
 const webIDLScripts = [
     '/resources/WebIDLParser.js', '/resources/idlharness.js',

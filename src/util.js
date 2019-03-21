@@ -290,7 +290,7 @@ function isValidKeyPath (keyPath) {
         Array.isArray(keyPath) && keyPath.length &&
             // Convert array from sparse to dense http://www.2ality.com/2012/06/dense-arrays.html
             // See also https://heycam.github.io/webidl/#idl-DOMString
-            [...keyPath].every(isValidKeyPathString) // eslint-disable-line prefer-spread
+            [...keyPath].every(isValidKeyPathString)
     );
 }
 

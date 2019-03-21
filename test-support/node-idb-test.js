@@ -226,7 +226,8 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         'resources/idlharness.js', 'resources/WebIDLParser.js',
         'IndexedDB/idlharness.any.js',
         'nested-cloning-common.js', 'interleaved-cursors-common.js',
-        'support.js', 'support-promises.js', 'service-workers/service-worker/resources/test-helpers.sub.js'
+        'support.js', 'support-promises.js', 'service-workers/service-worker/resources/test-helpers.sub.js',
+        'common/get-host-info.sub.js'
     ];
     // Use paths set in node-buildjs.js (when extracting <script> tags and joining contents)
     content.replace(/beginscript::(.*?)::endscript/gu, (_, src) => {
@@ -244,7 +245,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                 //   testing) we just map it to the source file which appears to be rendered
                 //   unmodified
                 // ? 'resources/webidl2/lib/webidl2.js' : ()
-                ((/^(service-workers|resources|IndexedDB)/u).test(src)
+                ((/^(service-workers|resources|IndexedDB|common\/)/u).test(src)
                     ? src
                     : 'IndexedDB/' + src)
             ));
@@ -574,7 +575,7 @@ async function readAndEvaluateFiles (jsFiles, workers, recursing) {
         case 'workers': case 'worker': {
             let jsFiles;
             try {
-                jsFiles = await readdir(dirPath).filter((file) => file.match(workerFileRegex));
+                jsFiles = (await readdir(dirPath)).filter((file) => file.match(workerFileRegex));
             } catch (err) {
                 console.log(err);
                 return;

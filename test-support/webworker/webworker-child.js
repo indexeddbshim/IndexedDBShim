@@ -76,7 +76,7 @@ const workerConfig = {
 let inErrorHandler = false;
 
 // Set up the context for the worker instance
-let workerCtxObj; // eslint-disable-line prefer-const
+let workerCtxObj;
 let prom;
 
 // Per https://fetch.spec.whatwg.org/#cors-protocol-and-credentials

@@ -147,7 +147,7 @@ queuedAsyncTest('Creating Indexes', function (assert) {
         var req = index.get(value.Int);
         req.onsuccess = function () {
             assert.deepEqual(req.result, value, 'Got object from Index Get');
-            console.log('Got ', req.result, value);
+            console.log('Got', req.result, value);
             db.close();
             nextTest();
             done();
@@ -166,7 +166,7 @@ queuedAsyncTest('Creating Indexes', function (assert) {
         var req = index.getKey(value.Int);
         req.onsuccess = function () {
             assert.equal(req.result, key, 'Got key from Index Get');
-            console.log('Got ', req.result, value);
+            console.log('Got', req.result, value);
             db.close();
             nextTest();
             done();

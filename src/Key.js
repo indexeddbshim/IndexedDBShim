@@ -368,7 +368,7 @@ function getCopyBytesHeldByBufferSource (O) {
 *   and subsequent need to process in calling code unless `fullKeys` is
 *   set; may throw
 */
-function convertValueToKeyValueDecoded (input, seen, multiEntry, fullKeys) { // eslint-disable-line complexity
+function convertValueToKeyValueDecoded (input, seen, multiEntry, fullKeys) {
     seen = seen || [];
     if (seen.includes(input)) return {type: 'array', invalid: true, message: 'An array key cannot be circular'};
     const type = getKeyType(input);
@@ -771,7 +771,6 @@ function possiblyUpdateKeyGenerator (tx, store, key, successCb, sqlFailCb) {
     }
 }
 
-/* eslint-disable object-property-newline */
 export {encode, decode, roundTrip, convertKeyToValue, convertValueToKeyValueDecoded,
     convertValueToMultiEntryKeyDecoded,
     convertValueToKey,

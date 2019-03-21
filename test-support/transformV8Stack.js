@@ -4,7 +4,7 @@ function transformW3CStack (stack) {
     return transformSourceMapString(stack, {
         // at /Users/brett/IndexedDBShim/dist/indexeddbshim-UnicodeIdentifiers-node.js:6626:32
         // at IDBOpenDBRequest.tryCatch (/Users/brett/IndexedDBShim/dist/indexeddbshim-UnicodeIdentifiers-node.js:6641:9)
-        newFileRegex: /(\s*)at (\S+ \()?([^e][^(]*?):(\d+):(\d+)(\))?/u, // eslint-disable-line unicorn/no-unsafe-regex
+        newFileRegex: /(\s*)at (\S+ \()?([^e][^(]*?):(\d+):(\d+)(\))?/u,
         newFilePath (match) {
             return match[3];
         },

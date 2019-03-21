@@ -556,7 +556,7 @@ function executeFetchIndexData (count, unboundedDisallowed, index, hasKey, range
     }
     const isCount = opType === 'count';
     CFG.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
-    tx.executeSql(sql.join(' '), sqlValues, function (tx, data) { // eslint-disable-line complexity
+    tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
         const records = [];
         let recordCount = 0;
         const decode = isCount ? () => { /* */ } : (opType === 'key' ? (record) => {

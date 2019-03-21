@@ -1,4 +1,4 @@
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.setGlobalVars = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.setGlobalVars = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 
 },{}],2:[function(require,module,exports){
 (function (global, factory) {
@@ -696,6 +696,9 @@
 
 },{}],3:[function(require,module,exports){
 (function (process){
+// .dirname, .basename, and .extname methods are extracted from Node.js v8.11.1,
+// backported and transplited with Babel, with backwards-compat fixes
+
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -746,14 +749,6 @@ function normalizeArray(parts, allowAboveRoot) {
 
   return parts;
 }
-
-// Split a filename into [root, dir, basename, ext], unix version
-// 'root' is just a slash, or nothing.
-var splitPathRe =
-    /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
-var splitPath = function(filename) {
-  return splitPathRe.exec(filename).slice(1);
-};
 
 // path.resolve([from ...], to)
 // posix version
@@ -870,37 +865,120 @@ exports.relative = function(from, to) {
 exports.sep = '/';
 exports.delimiter = ':';
 
-exports.dirname = function(path) {
-  var result = splitPath(path),
-      root = result[0],
-      dir = result[1];
-
-  if (!root && !dir) {
-    // No dirname whatsoever
-    return '.';
+exports.dirname = function (path) {
+  if (typeof path !== 'string') path = path + '';
+  if (path.length === 0) return '.';
+  var code = path.charCodeAt(0);
+  var hasRoot = code === 47 /*/*/;
+  var end = -1;
+  var matchedSlash = true;
+  for (var i = path.length - 1; i >= 1; --i) {
+    code = path.charCodeAt(i);
+    if (code === 47 /*/*/) {
+        if (!matchedSlash) {
+          end = i;
+          break;
+        }
+      } else {
+      // We saw the first non-path separator
+      matchedSlash = false;
+    }
   }
 
-  if (dir) {
-    // It has a dirname, strip trailing slash
-    dir = dir.substr(0, dir.length - 1);
+  if (end === -1) return hasRoot ? '/' : '.';
+  if (hasRoot && end === 1) {
+    // return '//';
+    // Backwards-compat fix:
+    return '/';
   }
-
-  return root + dir;
+  return path.slice(0, end);
 };
 
+function basename(path) {
+  if (typeof path !== 'string') path = path + '';
 
-exports.basename = function(path, ext) {
-  var f = splitPath(path)[2];
-  // TODO: make this comparison case-insensitive on windows?
+  var start = 0;
+  var end = -1;
+  var matchedSlash = true;
+  var i;
+
+  for (i = path.length - 1; i >= 0; --i) {
+    if (path.charCodeAt(i) === 47 /*/*/) {
+        // If we reached a path separator that was not part of a set of path
+        // separators at the end of the string, stop now
+        if (!matchedSlash) {
+          start = i + 1;
+          break;
+        }
+      } else if (end === -1) {
+      // We saw the first non-path separator, mark this as the end of our
+      // path component
+      matchedSlash = false;
+      end = i + 1;
+    }
+  }
+
+  if (end === -1) return '';
+  return path.slice(start, end);
+}
+
+// Uses a mixed approach for backwards-compatibility, as ext behavior changed
+// in new Node.js versions, so only basename() above is backported here
+exports.basename = function (path, ext) {
+  var f = basename(path);
   if (ext && f.substr(-1 * ext.length) === ext) {
     f = f.substr(0, f.length - ext.length);
   }
   return f;
 };
 
+exports.extname = function (path) {
+  if (typeof path !== 'string') path = path + '';
+  var startDot = -1;
+  var startPart = 0;
+  var end = -1;
+  var matchedSlash = true;
+  // Track the state of characters (if any) we see before our first dot and
+  // after any path separator we find
+  var preDotState = 0;
+  for (var i = path.length - 1; i >= 0; --i) {
+    var code = path.charCodeAt(i);
+    if (code === 47 /*/*/) {
+        // If we reached a path separator that was not part of a set of path
+        // separators at the end of the string, stop now
+        if (!matchedSlash) {
+          startPart = i + 1;
+          break;
+        }
+        continue;
+      }
+    if (end === -1) {
+      // We saw the first non-path separator, mark this as the end of our
+      // extension
+      matchedSlash = false;
+      end = i + 1;
+    }
+    if (code === 46 /*.*/) {
+        // If this is our first dot, mark it as the start of our extension
+        if (startDot === -1)
+          startDot = i;
+        else if (preDotState !== 1)
+          preDotState = 1;
+    } else if (startDot !== -1) {
+      // We saw a non-dot and non-path separator before our dot, so we should
+      // have a good chance at having a non-empty extension
+      preDotState = -1;
+    }
+  }
 
-exports.extname = function(path) {
-  return splitPath(path)[3];
+  if (startDot === -1 || end === -1 ||
+      // We saw a non-dot character immediately before the dot
+      preDotState === 0 ||
+      // The (right-most) trimmed path component is exactly '..'
+      preDotState === 1 && startDot === end - 1 && startDot === startPart + 1) {
+    return '';
+  }
+  return path.slice(startDot, end);
 };
 
 function filter (xs, f) {
@@ -2409,8 +2487,7 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
     }
 
     if (me.__matchedKeys[rowItem.matchingKey]) {
-      callback(undefined, undefined, undefined); // eslint-disable-line standard/no-callback-literal
-
+      callback(undefined, undefined, undefined);
       return;
     }
 
@@ -3615,6 +3692,10 @@ IDBFactory.prototype.open = function (name
       db = me.__openDatabase(useMemoryDatabase ? _CFG.default.memoryDatabase : _path.default.join(_CFG.default.databaseBasePath || '', escapedDatabaseName), 1, name, _CFG.default.DEFAULT_DB_SIZE);
 
       if (useDatabaseCache) {
+        if (!(name in websqlDBCache)) {
+          websqlDBCache[name] = {};
+        }
+
         websqlDBCache[name][version] = db;
       }
     }
@@ -4573,7 +4654,6 @@ function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range,
   var isCount = opType === 'count';
   _CFG.default.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
   tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
-    // eslint-disable-line complexity
     var records = [];
     var recordCount = 0;
     var decode = isCount ? function () {
@@ -5497,7 +5577,7 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
   var sql = 'DELETE FROM ' + util.escapeStoreNameForSQL(me.__currentName) + ' WHERE "key" = ?';
   var encodedKey = Key.encode(key);
   tx.executeSql(sql, [util.escapeSQLiteStatement(encodedKey)], function (tx, data) {
-    _CFG.default.DEBUG && console.log('Did the row with the', key, 'exist? ', data.rowsAffected);
+    _CFG.default.DEBUG && console.log('Did the row with the', key, 'exist?', data.rowsAffected);
     cb(tx);
   }, function (tx, err) {
     error(err);
@@ -7225,7 +7305,6 @@ function getCopyBytesHeldByBufferSource(O) {
 
 
 function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
-  // eslint-disable-line complexity
   seen = seen || [];
   if (seen.includes(input)) return {
     type: 'array',
@@ -7775,7 +7854,6 @@ function possiblyUpdateKeyGenerator(tx, store, key, successCb, sqlFailCb) {
     }, sqlFailCb);
   }
 }
-/* eslint-disable object-property-newline */
 
 },{"./CFG":7,"./DOMException":8,"./cmp":24,"./util":27}],21:[function(require,module,exports){
 "use strict";
@@ -7924,13 +8002,11 @@ function cmp(first, second) {
 
 
     if (decodedKey1 !== first) {
-      console.warn( // eslint-disable-line no-console
-      first + ' was incorrectly encoded as ' + decodedKey1);
+      console.warn(first + ' was incorrectly encoded as ' + decodedKey1);
     }
 
     if (decodedKey2 !== second) {
-      console.warn( // eslint-disable-line no-console
-      second + ' was incorrectly encoded as ' + decodedKey2);
+      console.warn(second + ' was incorrectly encoded as ' + decodedKey2);
     }
   }
 
@@ -8026,7 +8102,6 @@ function setConfig(prop, val) {
 }
 
 function setGlobalVars(idb, initialConfig) {
-  // eslint-disable-line complexity
   if (initialConfig) {
     setConfig(initialConfig);
   }
@@ -8568,8 +8643,7 @@ function isValidKeyPathString(keyPathString) {
 function isValidKeyPath(keyPath) {
   return isValidKeyPathString(keyPath) || Array.isArray(keyPath) && keyPath.length && // Convert array from sparse to dense http://www.2ality.com/2012/06/dense-arrays.html
   // See also https://heycam.github.io/webidl/#idl-DOMString
-  _toConsumableArray(keyPath).every(isValidKeyPathString) // eslint-disable-line prefer-spread
-  ;
+  _toConsumableArray(keyPath).every(isValidKeyPathString);
 }
 
 function enforceRange(number, type) {
@@ -8640,4 +8714,5 @@ function padStart(str, ct, fill) {
 
 },{"./CFG":7,"./unicode-regex":26}]},{},[23])(23)
 });
+
 //# sourceMappingURL=indexeddbshim-noninvasive.js.map

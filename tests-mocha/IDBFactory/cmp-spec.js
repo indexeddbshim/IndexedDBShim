@@ -271,7 +271,7 @@ describe('IDBFactory.cmp', function () {
             tryToCompare([true, false]);                        // array of booleans
             tryToCompare([{foo: 'bar'}]);                       // array of objects
             tryToCompare(new Boolean(true)); // eslint-disable-line no-new-wrappers, unicorn/new-for-builtins
-            tryToCompare(new Object()); // eslint-disable-line no-new-object, unicorn/new-for-builtins
+            tryToCompare(new Object()); // eslint-disable-line no-new-object
 
             if (env.isShimmed || !env.browser.isIE) {
                 tryToCompare(null);                             // null

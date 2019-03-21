@@ -11,7 +11,7 @@ module.exports = {
     browser: true
   },
   settings: {
-    polyfills: ["promises"],
+    polyfills: ['promises', 'object-values', 'queryselector'],
     jsdoc: {
       additionalTagNames: {
         // In case we need to extend
@@ -111,6 +111,7 @@ module.exports = {
       'promise/prefer-await-to-callbacks': 0,
       'promise/prefer-await-to-then': 0,
       'unicorn/no-fn-reference-in-iterator': 0,
+      'unicorn/no-unsafe-regex': 0,
       'no-restricted-syntax': 0
   }
 }

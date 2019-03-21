@@ -1,6 +1,6 @@
 /* eslint-env mocha */
 /* globals expect, sinon, util, env, IDBRequest */
-/* eslint-disable no-var, spaced-comment, no-unused-expressions */
+/* eslint-disable no-var, no-unused-expressions */
 /*********************************************************
  *     This file contains tests that are THE SAME for
  *       IDBObjectStore.add and IDBObjectStore.put

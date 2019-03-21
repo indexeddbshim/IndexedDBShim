@@ -1,4 +1,4 @@
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.dummyPlaceholder = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.dummyPlaceholder = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -1960,8 +1960,7 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
     }
 
     if (me.__matchedKeys[rowItem.matchingKey]) {
-      callback(undefined, undefined, undefined); // eslint-disable-line standard/no-callback-literal
-
+      callback(undefined, undefined, undefined);
       return;
     }
 
@@ -2613,7 +2612,7 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-/* globals location, Event */
+/* globals location */
 const fs = {}.toString.call(process) === '[object process]' ? require('fs') : null;
 
 const getOrigin = () => {
@@ -3129,6 +3128,10 @@ IDBFactory.prototype.open = function (name
       db = me.__openDatabase(useMemoryDatabase ? _CFG.default.memoryDatabase : _path.default.join(_CFG.default.databaseBasePath || '', escapedDatabaseName), 1, name, _CFG.default.DEFAULT_DB_SIZE);
 
       if (useDatabaseCache) {
+        if (!(name in websqlDBCache)) {
+          websqlDBCache[name] = {};
+        }
+
         websqlDBCache[name][version] = db;
       }
     }
@@ -4056,7 +4059,6 @@ function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range,
   const isCount = opType === 'count';
   _CFG.default.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
   tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
-    // eslint-disable-line complexity
     const records = [];
     let recordCount = 0;
     const decode = isCount ? () => {
@@ -4947,7 +4949,7 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
   const sql = 'DELETE FROM ' + util.escapeStoreNameForSQL(me.__currentName) + ' WHERE "key" = ?';
   const encodedKey = Key.encode(key);
   tx.executeSql(sql, [util.escapeSQLiteStatement(encodedKey)], function (tx, data) {
-    _CFG.default.DEBUG && console.log('Did the row with the', key, 'exist? ', data.rowsAffected);
+    _CFG.default.DEBUG && console.log('Did the row with the', key, 'exist?', data.rowsAffected);
     cb(tx);
   }, function (tx, err) {
     error(err);
@@ -6647,7 +6649,6 @@ function getCopyBytesHeldByBufferSource(O) {
 
 
 function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
-  // eslint-disable-line complexity
   seen = seen || [];
   if (seen.includes(input)) return {
     type: 'array',
@@ -7180,7 +7181,6 @@ function possiblyUpdateKeyGenerator(tx, store, key, successCb, sqlFailCb) {
     }, sqlFailCb);
   }
 }
-/* eslint-disable object-property-newline */
 
 },{"./CFG":4,"./DOMException":5,"./cmp":19,"./util":24}],18:[function(require,module,exports){
 "use strict";
@@ -7286,13 +7286,11 @@ function cmp(first, second) {
 
 
     if (decodedKey1 !== first) {
-      console.warn( // eslint-disable-line no-console
-      first + ' was incorrectly encoded as ' + decodedKey1);
+      console.warn(first + ' was incorrectly encoded as ' + decodedKey1);
     }
 
     if (decodedKey2 !== second) {
-      console.warn( // eslint-disable-line no-console
-      second + ' was incorrectly encoded as ' + decodedKey2);
+      console.warn(second + ' was incorrectly encoded as ' + decodedKey2);
     }
   }
 
@@ -7437,7 +7435,6 @@ function setConfig(prop, val) {
 }
 
 function setGlobalVars(idb, initialConfig) {
-  // eslint-disable-line complexity
   if (initialConfig) {
     setConfig(initialConfig);
   }
@@ -7974,8 +7971,7 @@ function isValidKeyPathString(keyPathString) {
 function isValidKeyPath(keyPath) {
   return isValidKeyPathString(keyPath) || Array.isArray(keyPath) && keyPath.length && // Convert array from sparse to dense http://www.2ality.com/2012/06/dense-arrays.html
   // See also https://heycam.github.io/webidl/#idl-DOMString
-  [...keyPath].every(isValidKeyPathString) // eslint-disable-line prefer-spread
-  ;
+  [...keyPath].every(isValidKeyPathString);
 }
 
 function enforceRange(number, type) {
@@ -8046,4 +8042,5 @@ function padStart(str, ct, fill) {
 
 },{"./CFG":4,"./unicode-regex":23}]},{},[20])(20)
 });
+
 //# sourceMappingURL=indexeddbshim-node.js.map

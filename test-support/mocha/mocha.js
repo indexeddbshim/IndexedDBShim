@@ -9,7 +9,7 @@
  * Shim process.stdout.
  */
 
-process.stdout = require('browser-stdout')({level: false});
+process.stdout = require('browser-stdout')({label: false});
 
 var Mocha = require('./lib/mocha');
 
@@ -193,14 +193,179 @@ global.mocha = mocha;
 module.exports = global;
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./lib/mocha":13,"_process":56,"browser-stdout":39}],2:[function(require,module,exports){
+},{"./lib/mocha":14,"_process":68,"browser-stdout":41}],2:[function(require,module,exports){
+(function (process,global){
 'use strict';
 
-// just stub out growl
+/**
+ * Web Notifications module.
+ * @module Growl
+ */
 
-module.exports = require('../utils').noop;
+/**
+ * Save timer references to avoid Sinon interfering (see GH-237).
+ */
+var Date = global.Date;
+var setTimeout = global.setTimeout;
+var EVENT_RUN_END = require('../runner').constants.EVENT_RUN_END;
 
-},{"../utils":36}],3:[function(require,module,exports){
+/**
+ * Checks if browser notification support exists.
+ *
+ * @public
+ * @see {@link https://caniuse.com/#feat=notifications|Browser support (notifications)}
+ * @see {@link https://caniuse.com/#feat=promises|Browser support (promises)}
+ * @see {@link Mocha#growl}
+ * @see {@link Mocha#isGrowlCapable}
+ * @return {boolean} whether browser notification support exists
+ */
+exports.isCapable = function() {
+  var hasNotificationSupport = 'Notification' in window;
+  var hasPromiseSupport = typeof Promise === 'function';
+  return process.browser && hasNotificationSupport && hasPromiseSupport;
+};
+
+/**
+ * Implements browser notifications as a pseudo-reporter.
+ *
+ * @public
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/notification|Notification API}
+ * @see {@link https://developers.google.com/web/fundamentals/push-notifications/display-a-notification|Displaying a Notification}
+ * @see {@link Growl#isPermitted}
+ * @see {@link Mocha#_growl}
+ * @param {Runner} runner - Runner instance.
+ */
+exports.notify = function(runner) {
+  var promise = isPermitted();
+
+  /**
+   * Attempt notification.
+   */
+  var sendNotification = function() {
+    // If user hasn't responded yet... "No notification for you!" (Seinfeld)
+    Promise.race([promise, Promise.resolve(undefined)])
+      .then(canNotify)
+      .then(function() {
+        display(runner);
+      })
+      .catch(notPermitted);
+  };
+
+  runner.once(EVENT_RUN_END, sendNotification);
+};
+
+/**
+ * Checks if browser notification is permitted by user.
+ *
+ * @private
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Notification/permission|Notification.permission}
+ * @see {@link Mocha#growl}
+ * @see {@link Mocha#isGrowlPermitted}
+ * @returns {Promise<boolean>} promise determining if browser notification
+ *     permissible when fulfilled.
+ */
+function isPermitted() {
+  var permitted = {
+    granted: function allow() {
+      return Promise.resolve(true);
+    },
+    denied: function deny() {
+      return Promise.resolve(false);
+    },
+    default: function ask() {
+      return Notification.requestPermission().then(function(permission) {
+        return permission === 'granted';
+      });
+    }
+  };
+
+  return permitted[Notification.permission]();
+}
+
+/**
+ * @summary
+ * Determines if notification should proceed.
+ *
+ * @description
+ * Notification shall <strong>not</strong> proceed unless `value` is true.
+ *
+ * `value` will equal one of:
+ * <ul>
+ *   <li><code>true</code> (from `isPermitted`)</li>
+ *   <li><code>false</code> (from `isPermitted`)</li>
+ *   <li><code>undefined</code> (from `Promise.race`)</li>
+ * </ul>
+ *
+ * @private
+ * @param {boolean|undefined} value - Determines if notification permissible.
+ * @returns {Promise<undefined>} Notification can proceed
+ */
+function canNotify(value) {
+  if (!value) {
+    var why = value === false ? 'blocked' : 'unacknowledged';
+    var reason = 'not permitted by user (' + why + ')';
+    return Promise.reject(new Error(reason));
+  }
+  return Promise.resolve();
+}
+
+/**
+ * Displays the notification.
+ *
+ * @private
+ * @param {Runner} runner - Runner instance.
+ */
+function display(runner) {
+  var stats = runner.stats;
+  var symbol = {
+    cross: '\u274C',
+    tick: '\u2705'
+  };
+  var logo = require('../../package').notifyLogo;
+  var _message;
+  var message;
+  var title;
+
+  if (stats.failures) {
+    _message = stats.failures + ' of ' + stats.tests + ' tests failed';
+    message = symbol.cross + ' ' + _message;
+    title = 'Failed';
+  } else {
+    _message = stats.passes + ' tests passed in ' + stats.duration + 'ms';
+    message = symbol.tick + ' ' + _message;
+    title = 'Passed';
+  }
+
+  // Send notification
+  var options = {
+    badge: logo,
+    body: message,
+    dir: 'ltr',
+    icon: logo,
+    lang: 'en-US',
+    name: 'mocha',
+    requireInteraction: false,
+    timestamp: Date.now()
+  };
+  var notification = new Notification(title, options);
+
+  // Autoclose after brief delay (makes various browsers act same)
+  var FORCE_DURATION = 4000;
+  setTimeout(notification.close.bind(notification), FORCE_DURATION);
+}
+
+/**
+ * As notifications are tangential to our purpose, just log the error.
+ *
+ * @private
+ * @param {Error} err - Why notification didn't happen.
+ */
+function notPermitted(err) {
+  console.error('notification error:', err.message);
+}
+
+}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"../../package":89,"../runner":34,"_process":68}],3:[function(require,module,exports){
 'use strict';
 
 /**
@@ -222,7 +387,7 @@ function Progress() {
 /**
  * Set progress size to `size`.
  *
- * @api public
+ * @public
  * @param {number} size
  * @return {Progress} Progress instance.
  */
@@ -234,7 +399,7 @@ Progress.prototype.size = function(size) {
 /**
  * Set text to `text`.
  *
- * @api public
+ * @public
  * @param {string} text
  * @return {Progress} Progress instance.
  */
@@ -246,7 +411,7 @@ Progress.prototype.text = function(text) {
 /**
  * Set font size to `size`.
  *
- * @api public
+ * @public
  * @param {number} size
  * @return {Progress} Progress instance.
  */
@@ -352,14 +517,14 @@ module.exports = Context;
 /**
  * Initialize a new `Context`.
  *
- * @api private
+ * @private
  */
 function Context() {}
 
 /**
  * Set or get the context `Runnable` to `runnable`.
  *
- * @api private
+ * @private
  * @param {Runnable} runnable
  * @return {Context} context
  */
@@ -374,7 +539,7 @@ Context.prototype.runnable = function(runnable) {
 /**
  * Set or get test timeout `ms`.
  *
- * @api private
+ * @private
  * @param {number} ms
  * @return {Context} self
  */
@@ -389,7 +554,7 @@ Context.prototype.timeout = function(ms) {
 /**
  * Set test timeout `enabled`.
  *
- * @api private
+ * @private
  * @param {boolean} enabled
  * @return {Context} self
  */
@@ -404,7 +569,7 @@ Context.prototype.enableTimeouts = function(enabled) {
 /**
  * Set or get test slowness threshold `ms`.
  *
- * @api private
+ * @private
  * @param {number} ms
  * @return {Context} self
  */
@@ -419,7 +584,7 @@ Context.prototype.slow = function(ms) {
 /**
  * Mark a test as skipped.
  *
- * @api private
+ * @private
  * @throws Pending
  */
 Context.prototype.skip = function() {
@@ -429,7 +594,7 @@ Context.prototype.skip = function() {
 /**
  * Set or get a number of allowed retries on failed tests
  *
- * @api private
+ * @private
  * @param {number} n
  * @return {Context} self
  */
@@ -442,6 +607,149 @@ Context.prototype.retries = function(n) {
 };
 
 },{}],6:[function(require,module,exports){
+'use strict';
+/**
+ * @module Errors
+ */
+/**
+ * Factory functions to create throwable error objects
+ */
+
+/**
+ * Creates an error object to be thrown when no files to be tested could be found using specified pattern.
+ *
+ * @public
+ * @param {string} message - Error message to be displayed.
+ * @param {string} pattern - User-specified argument value.
+ * @returns {Error} instance detailing the error condition
+ */
+function createNoFilesMatchPatternError(message, pattern) {
+  var err = new Error(message);
+  err.code = 'ERR_MOCHA_NO_FILES_MATCH_PATTERN';
+  err.pattern = pattern;
+  return err;
+}
+
+/**
+ * Creates an error object to be thrown when the reporter specified in the options was not found.
+ *
+ * @public
+ * @param {string} message - Error message to be displayed.
+ * @param {string} reporter - User-specified reporter value.
+ * @returns {Error} instance detailing the error condition
+ */
+function createInvalidReporterError(message, reporter) {
+  var err = new TypeError(message);
+  err.code = 'ERR_MOCHA_INVALID_REPORTER';
+  err.reporter = reporter;
+  return err;
+}
+
+/**
+ * Creates an error object to be thrown when the interface specified in the options was not found.
+ *
+ * @public
+ * @param {string} message - Error message to be displayed.
+ * @param {string} ui - User-specified interface value.
+ * @returns {Error} instance detailing the error condition
+ */
+function createInvalidInterfaceError(message, ui) {
+  var err = new Error(message);
+  err.code = 'ERR_MOCHA_INVALID_INTERFACE';
+  err.interface = ui;
+  return err;
+}
+
+/**
+ * Creates an error object to be thrown when a behavior, option, or parameter is unsupported.
+ *
+ * @public
+ * @param {string} message - Error message to be displayed.
+ * @returns {Error} instance detailing the error condition
+ */
+function createUnsupportedError(message) {
+  var err = new Error(message);
+  err.code = 'ERR_MOCHA_UNSUPPORTED';
+  return err;
+}
+
+/**
+ * Creates an error object to be thrown when an argument is missing.
+ *
+ * @public
+ * @param {string} message - Error message to be displayed.
+ * @param {string} argument - Argument name.
+ * @param {string} expected - Expected argument datatype.
+ * @returns {Error} instance detailing the error condition
+ */
+function createMissingArgumentError(message, argument, expected) {
+  return createInvalidArgumentTypeError(message, argument, expected);
+}
+
+/**
+ * Creates an error object to be thrown when an argument did not use the supported type
+ *
+ * @public
+ * @param {string} message - Error message to be displayed.
+ * @param {string} argument - Argument name.
+ * @param {string} expected - Expected argument datatype.
+ * @returns {Error} instance detailing the error condition
+ */
+function createInvalidArgumentTypeError(message, argument, expected) {
+  var err = new TypeError(message);
+  err.code = 'ERR_MOCHA_INVALID_ARG_TYPE';
+  err.argument = argument;
+  err.expected = expected;
+  err.actual = typeof argument;
+  return err;
+}
+
+/**
+ * Creates an error object to be thrown when an argument did not use the supported value
+ *
+ * @public
+ * @param {string} message - Error message to be displayed.
+ * @param {string} argument - Argument name.
+ * @param {string} value - Argument value.
+ * @param {string} [reason] - Why value is invalid.
+ * @returns {Error} instance detailing the error condition
+ */
+function createInvalidArgumentValueError(message, argument, value, reason) {
+  var err = new TypeError(message);
+  err.code = 'ERR_MOCHA_INVALID_ARG_VALUE';
+  err.argument = argument;
+  err.value = value;
+  err.reason = typeof reason !== 'undefined' ? reason : 'is invalid';
+  return err;
+}
+
+/**
+ * Creates an error object to be thrown when an exception was caught, but the `Error` is falsy or undefined.
+ *
+ * @public
+ * @param {string} message - Error message to be displayed.
+ * @returns {Error} instance detailing the error condition
+ */
+function createInvalidExceptionError(message, value) {
+  var err = new Error(message);
+  err.code = 'ERR_MOCHA_INVALID_EXCEPTION';
+  err.valueType = typeof value;
+  err.value = value;
+  return err;
+}
+
+module.exports = {
+  createInvalidArgumentTypeError: createInvalidArgumentTypeError,
+  createInvalidArgumentValueError: createInvalidArgumentValueError,
+  createInvalidExceptionError: createInvalidExceptionError,
+  createInvalidInterfaceError: createInvalidInterfaceError,
+  createInvalidReporterError: createInvalidReporterError,
+  createMissingArgumentError: createMissingArgumentError,
+  createNoFilesMatchPatternError: createNoFilesMatchPatternError,
+  createUnsupportedError: createUnsupportedError
+};
+
+},{}],7:[function(require,module,exports){
 'use strict';
 
 var Runnable = require('./runnable');
@@ -489,10 +797,12 @@ Hook.prototype.error = function(err) {
   this._error = err;
 };
 
-},{"./runnable":32,"./utils":36}],7:[function(require,module,exports){
+},{"./runnable":33,"./utils":38}],8:[function(require,module,exports){
 'use strict';
 
 var Test = require('../test');
+var EVENT_FILE_PRE_REQUIRE = require('../suite').constants
+  .EVENT_FILE_PRE_REQUIRE;
 
 /**
  * BDD-style interface:
@@ -514,7 +824,7 @@ var Test = require('../test');
 module.exports = function bddInterface(suite) {
   var suites = [suite];
 
-  suite.on('pre-require', function(context, file, mocha) {
+  suite.on(EVENT_FILE_PRE_REQUIRE, function(context, file, mocha) {
     var common = require('./common')(suites, context, mocha);
 
     context.before = common.before;
@@ -605,10 +915,14 @@ module.exports = function bddInterface(suite) {
   });
 };
 
-},{"../test":35,"./common":8}],8:[function(require,module,exports){
+module.exports.description = 'BDD or RSpec style [default]';
+
+},{"../suite":36,"../test":37,"./common":9}],9:[function(require,module,exports){
 'use strict';
 
 var Suite = require('../suite');
+var errors = require('../errors');
+var createMissingArgumentError = errors.createMissingArgumentError;
 
 /**
  * Functions common to more than one interface.
@@ -619,6 +933,22 @@ var Suite = require('../suite');
  * @return {Object} An object containing common functions.
  */
 module.exports = function(suites, context, mocha) {
+  /**
+   * Check if the suite should be tested.
+   *
+   * @private
+   * @param {Suite} suite - suite to check
+   * @returns {boolean}
+   */
+  function shouldBeTested(suite) {
+    return (
+      !mocha.options.grep ||
+      (mocha.options.grep &&
+        mocha.options.grep.test(suite.fullTitle()) &&
+        !mocha.options.invert)
+    );
+  }
+
   return {
     /**
      * This is only present if flag --delay is passed into Mocha. It triggers
@@ -700,6 +1030,7 @@ module.exports = function(suites, context, mocha) {
 
       /**
        * Creates a suite.
+       *
        * @param {Object} opts Options
        * @param {string} opts.title Title of Suite
        * @param {Function} [opts.fn] Suite Function (not always applicable)
@@ -714,16 +1045,28 @@ module.exports = function(suites, context, mocha) {
         suite.file = opts.file;
         suites.unshift(suite);
         if (opts.isOnly) {
-          suite.parent._onlySuites = suite.parent._onlySuites.concat(suite);
+          if (mocha.options.forbidOnly && shouldBeTested(suite)) {
+            throw new Error('`.only` forbidden');
+          }
+
+          suite.parent.appendOnlySuite(suite);
+        }
+        if (suite.pending) {
+          if (mocha.options.forbidPending && shouldBeTested(suite)) {
+            throw new Error('Pending test forbidden');
+          }
         }
         if (typeof opts.fn === 'function') {
           opts.fn.call(suite);
           suites.shift();
         } else if (typeof opts.fn === 'undefined' && !suite.pending) {
-          throw new Error(
+          throw createMissingArgumentError(
             'Suite "' +
               suite.fullTitle() +
-              '" was defined but no callback was supplied. Supply a callback or explicitly skip the suite.'
+              '" was defined but no callback was supplied. ' +
+              'Supply a callback or explicitly skip the suite.',
+            'callback',
+            'function'
           );
         } else if (!opts.fn && suite.pending) {
           suites.shift();
@@ -742,7 +1085,7 @@ module.exports = function(suites, context, mocha) {
        * @returns {*}
        */
       only: function(mocha, test) {
-        test.parent._onlyTests = test.parent._onlyTests.concat(test);
+        test.parent.appendOnlyTest(test);
         return test;
       },
 
@@ -767,7 +1110,7 @@ module.exports = function(suites, context, mocha) {
   };
 };
 
-},{"../suite":34}],9:[function(require,module,exports){
+},{"../errors":6,"../suite":36}],10:[function(require,module,exports){
 'use strict';
 var Suite = require('../suite');
 var Test = require('../test');
@@ -792,7 +1135,7 @@ var Test = require('../test');
 module.exports = function(suite) {
   var suites = [suite];
 
-  suite.on('require', visit);
+  suite.on(Suite.constants.EVENT_FILE_REQUIRE, visit);
 
   function visit(obj, file) {
     var suite;
@@ -827,7 +1170,9 @@ module.exports = function(suite) {
   }
 };
 
-},{"../suite":34,"../test":35}],10:[function(require,module,exports){
+module.exports.description = 'Node.js module ("exports") style';
+
+},{"../suite":36,"../test":37}],11:[function(require,module,exports){
 'use strict';
 
 exports.bdd = require('./bdd');
@@ -835,10 +1180,12 @@ exports.tdd = require('./tdd');
 exports.qunit = require('./qunit');
 exports.exports = require('./exports');
 
-},{"./bdd":7,"./exports":9,"./qunit":11,"./tdd":12}],11:[function(require,module,exports){
+},{"./bdd":8,"./exports":10,"./qunit":12,"./tdd":13}],12:[function(require,module,exports){
 'use strict';
 
 var Test = require('../test');
+var EVENT_FILE_PRE_REQUIRE = require('../suite').constants
+  .EVENT_FILE_PRE_REQUIRE;
 
 /**
  * QUnit-style interface:
@@ -868,7 +1215,7 @@ var Test = require('../test');
 module.exports = function qUnitInterface(suite) {
   var suites = [suite];
 
-  suite.on('pre-require', function(context, file, mocha) {
+  suite.on(EVENT_FILE_PRE_REQUIRE, function(context, file, mocha) {
     var common = require('./common')(suites, context, mocha);
 
     context.before = common.before;
@@ -932,10 +1279,14 @@ module.exports = function qUnitInterface(suite) {
   });
 };
 
-},{"../test":35,"./common":8}],12:[function(require,module,exports){
+module.exports.description = 'QUnit style';
+
+},{"../suite":36,"../test":37,"./common":9}],13:[function(require,module,exports){
 'use strict';
 
 var Test = require('../test');
+var EVENT_FILE_PRE_REQUIRE = require('../suite').constants
+  .EVENT_FILE_PRE_REQUIRE;
 
 /**
  * TDD-style interface:
@@ -965,7 +1316,7 @@ var Test = require('../test');
 module.exports = function(suite) {
   var suites = [suite];
 
-  suite.on('pre-require', function(context, file, mocha) {
+  suite.on(EVENT_FILE_PRE_REQUIRE, function(context, file, mocha) {
     var common = require('./common')(suites, context, mocha);
 
     context.setup = common.beforeEach;
@@ -1036,8 +1387,11 @@ module.exports = function(suite) {
   });
 };
 
-},{"../test":35,"./common":8}],13:[function(require,module,exports){
-(function (process,global,__dirname){
+module.exports.description =
+  'traditional "suite"/"test" instead of BDD\'s "describe"/"it"';
+
+},{"../suite":36,"../test":37,"./common":9}],14:[function(require,module,exports){
+(function (process,global){
 'use strict';
 
 /*!
@@ -1048,8 +1402,19 @@ module.exports = function(suite) {
 
 var escapeRe = require('escape-string-regexp');
 var path = require('path');
-var reporters = require('./reporters');
+var builtinReporters = require('./reporters');
+var growl = require('./growl');
 var utils = require('./utils');
+var mocharc = require('./mocharc.json');
+var errors = require('./errors');
+var Suite = require('./suite');
+var createStatsCollector = require('./stats-collector');
+var createInvalidReporterError = errors.createInvalidReporterError;
+var createInvalidInterfaceError = errors.createInvalidInterfaceError;
+var EVENT_FILE_PRE_REQUIRE = Suite.constants.EVENT_FILE_PRE_REQUIRE;
+var EVENT_FILE_POST_REQUIRE = Suite.constants.EVENT_FILE_POST_REQUIRE;
+var EVENT_FILE_REQUIRE = Suite.constants.EVENT_FILE_REQUIRE;
+var sQuote = utils.sQuote;
 
 exports = module.exports = Mocha;
 
@@ -1074,11 +1439,10 @@ if (!process.browser) {
 exports.utils = utils;
 exports.interfaces = require('./interfaces');
 /**
- *
- * @memberof Mocha
  * @public
+ * @memberof Mocha
  */
-exports.reporters = reporters;
+exports.reporters = builtinReporters;
 exports.Runnable = require('./runnable');
 exports.Context = require('./context');
 /**
@@ -1086,75 +1450,110 @@ exports.Context = require('./context');
  * @memberof Mocha
  */
 exports.Runner = require('./runner');
-exports.Suite = require('./suite');
+exports.Suite = Suite;
 exports.Hook = require('./hook');
 exports.Test = require('./test');
 
 /**
- * Return image `name` path.
- *
- * @private
- * @param {string} name
- * @return {string}
- */
-function image(name) {
-  return path.join(__dirname, '..', 'assets', 'growl', name + '.png');
-}
-
-/**
- * Set up mocha with `options`.
- *
- * Options:
- *
- *   - `ui` name "bdd", "tdd", "exports" etc
- *   - `reporter` reporter instance, defaults to `mocha.reporters.spec`
- *   - `globals` array of accepted globals
- *   - `timeout` timeout in milliseconds
- *   - `retries` number of times to retry failed tests
- *   - `bail` bail on the first test failure
- *   - `slow` milliseconds to wait before considering a test slow
- *   - `ignoreLeaks` ignore global leaks
- *   - `fullTrace` display the full stack-trace on failing
- *   - `grep` string or regexp to filter tests with
- *
- * @class Mocha
- * @param {Object} options
- */
-function Mocha(options) {
-  options = options || {};
-  this.files = [];
-  this.options = options;
-  if (options.grep) {
-    this.grep(new RegExp(options.grep));
-  }
-  if (options.fgrep) {
-    this.fgrep(options.fgrep);
-  }
-  this.suite = new exports.Suite('', new exports.Context());
-  this.ui(options.ui);
-  this.bail(options.bail);
-  this.reporter(options.reporter, options.reporterOptions);
-  if (typeof options.timeout !== 'undefined' && options.timeout !== null) {
-    this.timeout(options.timeout);
-  }
-  if (typeof options.retries !== 'undefined' && options.retries !== null) {
-    this.retries(options.retries);
-  }
-  this.useColors(options.useColors);
-  if (options.enableTimeouts !== null) {
-    this.enableTimeouts(options.enableTimeouts);
-  }
-  if (options.slow) {
-    this.slow(options.slow);
-  }
-}
-
-/**
- * Enable or disable bailing on the first failure.
+ * Constructs a new Mocha instance with `options`.
  *
  * @public
- * @api public
- * @param {boolean} [bail]
+ * @class Mocha
+ * @param {Object} [options] - Settings object.
+ * @param {boolean} [options.allowUncaught] - Propagate uncaught errors?
+ * @param {boolean} [options.asyncOnly] - Force `done` callback or promise?
+ * @param {boolean} [options.bail] - Bail after first test failure?
+ * @param {boolean} [options.checkLeaks] - If true, check leaks.
+ * @param {boolean} [options.delay] - Delay root suite execution?
+ * @param {boolean} [options.enableTimeouts] - Enable timeouts?
+ * @param {string} [options.fgrep] - Test filter given string.
+ * @param {boolean} [options.forbidOnly] - Tests marked `only` fail the suite?
+ * @param {boolean} [options.forbidPending] - Pending tests fail the suite?
+ * @param {boolean} [options.fullStackTrace] - Full stacktrace upon failure?
+ * @param {string[]} [options.global] - Variables expected in global scope.
+ * @param {RegExp|string} [options.grep] - Test filter given regular expression.
+ * @param {boolean} [options.growl] - Enable desktop notifications?
+ * @param {boolean} [options.hideDiff] - Suppress diffs from failures?
+ * @param {boolean} [options.ignoreLeaks] - Ignore global leaks?
+ * @param {boolean} [options.invert] - Invert test filter matches?
+ * @param {boolean} [options.noHighlighting] - Disable syntax highlighting?
+ * @param {string} [options.reporter] - Reporter name.
+ * @param {Object} [options.reporterOption] - Reporter settings object.
+ * @param {number} [options.retries] - Number of times to retry failed tests.
+ * @param {number} [options.slow] - Slow threshold value.
+ * @param {number|string} [options.timeout] - Timeout threshold value.
+ * @param {string} [options.ui] - Interface name.
+ * @param {boolean} [options.color] - Color TTY output from reporter?
+ * @param {boolean} [options.useInlineDiffs] - Use inline diffs?
+ */
+function Mocha(options) {
+  options = utils.assign({}, mocharc, options || {});
+  this.files = [];
+  this.options = options;
+  // root suite
+  this.suite = new exports.Suite('', new exports.Context(), true);
+
+  if ('useColors' in options) {
+    utils.deprecate(
+      'useColors is DEPRECATED and will be removed from a future version of Mocha. Instead, use the "color" option'
+    );
+    options.color = 'color' in options ? options.color : options.useColors;
+  }
+
+  this.grep(options.grep)
+    .fgrep(options.fgrep)
+    .ui(options.ui)
+    .bail(options.bail)
+    .reporter(options.reporter, options.reporterOptions)
+    .useColors(options.color)
+    .slow(options.slow)
+    .useInlineDiffs(options.inlineDiffs)
+    .globals(options.globals);
+
+  if ('enableTimeouts' in options) {
+    utils.deprecate(
+      'enableTimeouts is DEPRECATED and will be removed from a future version of Mocha. Instead, use "timeout: false" to disable timeouts.'
+    );
+  }
+  this.timeout(
+    options.enableTimeouts === false || options.timeout === false
+      ? 0
+      : options.timeout
+  );
+
+  if ('retries' in options) {
+    this.retries(options.retries);
+  }
+
+  if ('diff' in options) {
+    this.hideDiff(!options.diff);
+  }
+
+  [
+    'allowUncaught',
+    'asyncOnly',
+    'checkLeaks',
+    'delay',
+    'forbidOnly',
+    'forbidPending',
+    'fullTrace',
+    'growl',
+    'invert'
+  ].forEach(function(opt) {
+    if (options[opt]) {
+      this[opt]();
+    }
+  }, this);
+}
+
+/**
+ * Enables or disables bailing on the first failure.
+ *
+ * @public
+ * @see {@link https://mochajs.org/#-b---bail|CLI option}
+ * @param {boolean} [bail=true] - Whether to bail on first error.
+ * @returns {Mocha} this
+ * @chainable
  */
 Mocha.prototype.bail = function(bail) {
   if (!arguments.length) {
@@ -1165,11 +1564,17 @@ Mocha.prototype.bail = function(bail) {
 };
 
 /**
- * Add test `file`.
+ * @summary
+ * Adds `file` to be loaded for execution.
+ *
+ * @description
+ * Useful for generic setup code that must be included within test suite.
  *
  * @public
- * @api public
- * @param {string} file
+ * @see {@link https://mochajs.org/#--file-file|CLI option}
+ * @param {string} file - Pathname of file to be loaded.
+ * @returns {Mocha} this
+ * @chainable
  */
 Mocha.prototype.addFile = function(file) {
   this.files.push(file);
@@ -1177,14 +1582,20 @@ Mocha.prototype.addFile = function(file) {
 };
 
 /**
- * Set reporter to `reporter`, defaults to "spec".
+ * Sets reporter to `reporter`, defaults to "spec".
  *
  * @public
- * @param {String|Function} reporter name or constructor
- * @param {Object} reporterOptions optional options
- * @api public
- * @param {string|Function} reporter name or constructor
- * @param {Object} reporterOptions optional options
+ * @see {@link https://mochajs.org/#-r---reporter-name|CLI option}
+ * @see {@link https://mochajs.org/#reporters|Reporters}
+ * @param {String|Function} reporter - Reporter name or constructor.
+ * @param {Object} [reporterOptions] - Options used to configure the reporter.
+ * @returns {Mocha} this
+ * @chainable
+ * @throws {Error} if requested reporter cannot be loaded
+ * @example
+ *
+ * // Use XUnit reporter and direct its output to file
+ * mocha.reporter('xunit', { output: '/path/to/testspec.xunit.xml' });
  */
 Mocha.prototype.reporter = function(reporter, reporterOptions) {
   if (typeof reporter === 'function') {
@@ -1193,44 +1604,43 @@ Mocha.prototype.reporter = function(reporter, reporterOptions) {
     reporter = reporter || 'spec';
     var _reporter;
     // Try to load a built-in reporter.
-    if (reporters[reporter]) {
-      _reporter = reporters[reporter];
+    if (builtinReporters[reporter]) {
+      _reporter = builtinReporters[reporter];
     }
     // Try to load reporters from process.cwd() and node_modules
     if (!_reporter) {
       try {
         _reporter = require(reporter);
       } catch (err) {
-        if (err.message.indexOf('Cannot find module') !== -1) {
+        if (
+          err.code !== 'MODULE_NOT_FOUND' ||
+          err.message.indexOf('Cannot find module') !== -1
+        ) {
           // Try to load reporters from a path (absolute or relative)
           try {
             _reporter = require(path.resolve(process.cwd(), reporter));
           } catch (_err) {
-            err.message.indexOf('Cannot find module') !== -1
-              ? console.warn('"' + reporter + '" reporter not found')
+            _err.code !== 'MODULE_NOT_FOUND' ||
+            _err.message.indexOf('Cannot find module') !== -1
+              ? console.warn(sQuote(reporter) + ' reporter not found')
               : console.warn(
-                  '"' +
-                    reporter +
-                    '" reporter blew up with error:\n' +
+                  sQuote(reporter) +
+                    ' reporter blew up with error:\n' +
                     err.stack
                 );
           }
         } else {
           console.warn(
-            '"' + reporter + '" reporter blew up with error:\n' + err.stack
+            sQuote(reporter) + ' reporter blew up with error:\n' + err.stack
           );
         }
       }
     }
-    if (!_reporter && reporter === 'teamcity') {
-      console.warn(
-        'The Teamcity reporter was moved to a package named ' +
-          'mocha-teamcity-reporter ' +
-          '(https://npmjs.org/package/mocha-teamcity-reporter).'
-      );
-    }
     if (!_reporter) {
-      throw new Error('invalid reporter "' + reporter + '"');
+      throw createInvalidReporterError(
+        'invalid reporter ' + sQuote(reporter),
+        reporter
+      );
     }
     this._reporter = _reporter;
   }
@@ -1239,31 +1649,44 @@ Mocha.prototype.reporter = function(reporter, reporterOptions) {
 };
 
 /**
- * Set test UI `name`, defaults to "bdd".
+ * Sets test UI `name`, defaults to "bdd".
+ *
  * @public
- * @api public
- * @param {string} bdd
+ * @see {@link https://mochajs.org/#-u---ui-name|CLI option}
+ * @see {@link https://mochajs.org/#interfaces|Interface DSLs}
+ * @param {string|Function} [ui=bdd] - Interface name or class.
+ * @returns {Mocha} this
+ * @chainable
+ * @throws {Error} if requested interface cannot be loaded
  */
-Mocha.prototype.ui = function(name) {
-  name = name || 'bdd';
-  this._ui = exports.interfaces[name];
-  if (!this._ui) {
-    try {
-      this._ui = require(name);
-    } catch (err) {
-      throw new Error('invalid interface "' + name + '"');
+Mocha.prototype.ui = function(ui) {
+  var bindInterface;
+  if (typeof ui === 'function') {
+    bindInterface = ui;
+  } else {
+    ui = ui || 'bdd';
+    bindInterface = exports.interfaces[ui];
+    if (!bindInterface) {
+      try {
+        bindInterface = require(ui);
+      } catch (err) {
+        throw createInvalidInterfaceError(
+          'invalid interface ' + sQuote(ui),
+          ui
+        );
+      }
     }
   }
-  this._ui = this._ui(this.suite);
+  bindInterface(this.suite);
 
-  this.suite.on('pre-require', function(context) {
+  this.suite.on(EVENT_FILE_PRE_REQUIRE, function(context) {
     exports.afterEach = context.afterEach || context.teardown;
     exports.after = context.after || context.suiteTeardown;
     exports.beforeEach = context.beforeEach || context.setup;
     exports.before = context.before || context.suiteSetup;
     exports.describe = context.describe || context.suite;
     exports.it = context.it || context.test;
-    exports.xit = context.xit || context.test.skip;
+    exports.xit = context.xit || (context.test && context.test.skip);
     exports.setup = context.setup || context.beforeEach;
     exports.suiteSetup = context.suiteSetup || context.before;
     exports.suiteTeardown = context.suiteTeardown || context.after;
@@ -1277,66 +1700,116 @@ Mocha.prototype.ui = function(name) {
 };
 
 /**
- * Load registered files.
+ * Loads `files` prior to execution.
  *
- * @api private
+ * @description
+ * The implementation relies on Node's `require` to execute
+ * the test interface functions and will be subject to its cache.
+ *
+ * @private
+ * @see {@link Mocha#addFile}
+ * @see {@link Mocha#run}
+ * @see {@link Mocha#unloadFiles}
+ * @param {Function} [fn] - Callback invoked upon completion.
  */
 Mocha.prototype.loadFiles = function(fn) {
   var self = this;
   var suite = this.suite;
   this.files.forEach(function(file) {
     file = path.resolve(file);
-    suite.emit('pre-require', global, file, self);
-    suite.emit('require', require(file), file, self);
-    suite.emit('post-require', global, file, self);
+    suite.emit(EVENT_FILE_PRE_REQUIRE, global, file, self);
+    suite.emit(EVENT_FILE_REQUIRE, require(file), file, self);
+    suite.emit(EVENT_FILE_POST_REQUIRE, global, file, self);
   });
   fn && fn();
 };
 
 /**
- * Enable growl support.
+ * Removes a previously loaded file from Node's `require` cache.
  *
- * @api private
+ * @private
+ * @static
+ * @see {@link Mocha#unloadFiles}
+ * @param {string} file - Pathname of file to be unloaded.
  */
-Mocha.prototype._growl = function(runner, reporter) {
-  var notify = require('growl');
-
-  runner.on('end', function() {
-    var stats = reporter.stats;
-    if (stats.failures) {
-      var msg = stats.failures + ' of ' + runner.total + ' tests failed';
-      notify(msg, {name: 'mocha', title: 'Failed', image: image('error')});
-    } else {
-      notify(stats.passes + ' tests passed in ' + stats.duration + 'ms', {
-        name: 'mocha',
-        title: 'Passed',
-        image: image('ok')
-      });
-    }
-  });
+Mocha.unloadFile = function(file) {
+  delete require.cache[require.resolve(file)];
 };
 
 /**
- * Escape string and add it to grep as a regexp.
+ * Unloads `files` from Node's `require` cache.
+ *
+ * @description
+ * This allows files to be "freshly" reloaded, providing the ability
+ * to reuse a Mocha instance programmatically.
+ *
+ * <strong>Intended for consumers &mdash; not used internally</strong>
  *
  * @public
- * @api public
- * @param str
- * @returns {Mocha}
+ * @see {@link Mocha.unloadFile}
+ * @see {@link Mocha#loadFiles}
+ * @see {@link Mocha#run}
+ * @returns {Mocha} this
+ * @chainable
+ */
+Mocha.prototype.unloadFiles = function() {
+  this.files.forEach(Mocha.unloadFile);
+  return this;
+};
+
+/**
+ * Sets `grep` filter after escaping RegExp special characters.
+ *
+ * @public
+ * @see {@link Mocha#grep}
+ * @param {string} str - Value to be converted to a regexp.
+ * @returns {Mocha} this
+ * @chainable
+ * @example
+ *
+ * // Select tests whose full title begins with `"foo"` followed by a period
+ * mocha.fgrep('foo.');
  */
 Mocha.prototype.fgrep = function(str) {
+  if (!str) {
+    return this;
+  }
   return this.grep(new RegExp(escapeRe(str)));
 };
 
 /**
- * Add regexp to grep, if `re` is a string it is escaped.
+ * @summary
+ * Sets `grep` filter used to select specific tests for execution.
+ *
+ * @description
+ * If `re` is a regexp-like string, it will be converted to regexp.
+ * The regexp is tested against the full title of each test (i.e., the
+ * name of the test preceded by titles of each its ancestral suites).
+ * As such, using an <em>exact-match</em> fixed pattern against the
+ * test name itself will not yield any matches.
+ * <br>
+ * <strong>Previous filter value will be overwritten on each call!</strong>
  *
  * @public
- * @param {RegExp|String} re
- * @return {Mocha}
- * @api public
- * @param {RegExp|string} re
- * @return {Mocha}
+ * @see {@link https://mochajs.org/#-g---grep-pattern|CLI option}
+ * @see {@link Mocha#fgrep}
+ * @see {@link Mocha#invert}
+ * @param {RegExp|String} re - Regular expression used to select tests.
+ * @return {Mocha} this
+ * @chainable
+ * @example
+ *
+ * // Select tests whose full title contains `"match"`, ignoring case
+ * mocha.grep(/match/i);
+ * @example
+ *
+ * // Same as above but with regexp-like string argument
+ * mocha.grep('/match/i');
+ * @example
+ *
+ * // ## Anti-example
+ * // Given embedded test `it('only-this-test')`...
+ * mocha.grep('/^only-this-test$/');    // NO! Use `.only()` to do this!
  */
 Mocha.prototype.grep = function(re) {
   if (utils.isString(re)) {
@@ -1348,12 +1821,18 @@ Mocha.prototype.grep = function(re) {
   }
   return this;
 };
+
 /**
- * Invert `.grep()` matches.
+ * Inverts `grep` matches.
  *
  * @public
- * @return {Mocha}
- * @api public
+ * @see {@link Mocha#grep}
+ * @return {Mocha} this
+ * @chainable
+ * @example
+ *
+ * // Select tests whose full title does *not* contain `"match"`, ignoring case
+ * mocha.grep(/match/i).invert();
  */
 Mocha.prototype.invert = function() {
   this.options.invert = true;
@@ -1361,26 +1840,31 @@ Mocha.prototype.invert = function() {
 };
 
 /**
- * Ignore global leaks.
+ * Enables or disables ignoring global leaks.
  *
  * @public
- * @param {Boolean} ignore
- * @return {Mocha}
- * @api public
- * @param {boolean} ignore
- * @return {Mocha}
+ * @see {@link Mocha#checkLeaks}
+ * @param {boolean} ignoreLeaks - Whether to ignore global leaks.
+ * @return {Mocha} this
+ * @chainable
+ * @example
+ *
+ * // Ignore global leaks
+ * mocha.ignoreLeaks(true);
  */
-Mocha.prototype.ignoreLeaks = function(ignore) {
-  this.options.ignoreLeaks = Boolean(ignore);
+Mocha.prototype.ignoreLeaks = function(ignoreLeaks) {
+  this.options.ignoreLeaks = Boolean(ignoreLeaks);
   return this;
 };
 
 /**
- * Enable global leak checking.
+ * Enables checking for global variables leaked while running tests.
  *
- * @return {Mocha}
- * @api public
  * @public
+ * @see {@link https://mochajs.org/#--check-leaks|CLI option}
+ * @see {@link Mocha#ignoreLeaks}
+ * @return {Mocha} this
+ * @chainable
  */
 Mocha.prototype.checkLeaks = function() {
   this.options.ignoreLeaks = false;
@@ -1388,11 +1872,11 @@ Mocha.prototype.checkLeaks = function() {
 };
 
 /**
- * Display long stack-trace on failing
+ * Displays full stack trace upon test failure.
  *
- * @return {Mocha}
- * @api public
  * @public
+ * @return {Mocha} this
+ * @chainable
  */
 Mocha.prototype.fullTrace = function() {
   this.options.fullStackTrace = true;
@@ -1400,41 +1884,77 @@ Mocha.prototype.fullTrace = function() {
 };
 
 /**
- * Enable growl support.
+ * Enables desktop notification support if prerequisite software installed.
  *
- * @return {Mocha}
- * @api public
  * @public
+ * @see {@link Mocha#isGrowlCapable}
+ * @see {@link Mocha#_growl}
+ * @return {Mocha} this
+ * @chainable
  */
 Mocha.prototype.growl = function() {
-  this.options.growl = true;
+  this.options.growl = this.isGrowlCapable();
+  if (!this.options.growl) {
+    var detail = process.browser
+      ? 'notification support not available in this browser...'
+      : 'notification support prerequisites not installed...';
+    console.error(detail + ' cannot enable!');
+  }
   return this;
 };
 
 /**
- * Ignore `globals` array or string.
+ * @summary
+ * Determines if Growl support seems likely.
  *
- * @param {Array|String} globals
- * @return {Mocha}
- * @api public
+ * @description
+ * <strong>Not available when run in browser.</strong>
+ *
+ * @private
+ * @see {@link Growl#isCapable}
+ * @see {@link Mocha#growl}
+ * @return {boolean} whether Growl support can be expected
+ */
+Mocha.prototype.isGrowlCapable = growl.isCapable;
+
+/**
+ * Implements desktop notifications using a pseudo-reporter.
+ *
+ * @private
+ * @see {@link Mocha#growl}
+ * @see {@link Growl#notify}
+ * @param {Runner} runner - Runner instance.
+ */
+Mocha.prototype._growl = growl.notify;
+
+/**
+ * Specifies whitelist of variable names to be expected in global scope.
+ *
  * @public
- * @param {Array|string} globals
- * @return {Mocha}
+ * @see {@link https://mochajs.org/#--globals-names|CLI option}
+ * @see {@link Mocha#checkLeaks}
+ * @param {String[]|String} globals - Accepted global variable name(s).
+ * @return {Mocha} this
+ * @chainable
+ * @example
+ *
+ * // Specify variables to be expected in global scope
+ * mocha.globals(['jQuery', 'MyLib']);
  */
 Mocha.prototype.globals = function(globals) {
-  this.options.globals = (this.options.globals || []).concat(globals);
+  this.options.globals = (this.options.globals || [])
+    .concat(globals)
+    .filter(Boolean);
   return this;
 };
 
 /**
- * Emit color output.
+ * Enables or disables TTY color output by screen-oriented reporters.
  *
- * @param {Boolean} colors
- * @return {Mocha}
- * @api public
  * @public
- * @param {boolean} colors
- * @return {Mocha}
+ * @param {boolean} colors - Whether to enable color output.
+ * @return {Mocha} this
+ * @chainable
  */
 Mocha.prototype.useColors = function(colors) {
   if (colors !== undefined) {
@@ -1444,14 +1964,13 @@ Mocha.prototype.useColors = function(colors) {
 };
 
 /**
- * Use inline diffs rather than +/-.
+ * Determines if reporter should use inline diffs (rather than +/-)
+ * in test failure output.
  *
- * @param {Boolean} inlineDiffs
- * @return {Mocha}
- * @api public
  * @public
- * @param {boolean} inlineDiffs
- * @return {Mocha}
+ * @param {boolean} inlineDiffs - Whether to use inline diffs.
+ * @return {Mocha} this
+ * @chainable
  */
 Mocha.prototype.useInlineDiffs = function(inlineDiffs) {
   this.options.useInlineDiffs = inlineDiffs !== undefined && inlineDiffs;
@@ -1459,14 +1978,12 @@ Mocha.prototype.useInlineDiffs = function(inlineDiffs) {
 };
 
 /**
- * Do not show diffs at all.
+ * Determines if reporter should include diffs in test failure output.
  *
- * @param {Boolean} hideDiff
- * @return {Mocha}
- * @api public
  * @public
- * @param {boolean} hideDiff
- * @return {Mocha}
+ * @param {boolean} hideDiff - Whether to hide diffs.
+ * @return {Mocha} this
+ * @chainable
  */
 Mocha.prototype.hideDiff = function(hideDiff) {
   this.options.hideDiff = hideDiff !== undefined && hideDiff;
@@ -1474,27 +1991,47 @@ Mocha.prototype.hideDiff = function(hideDiff) {
 };
 
 /**
- * Set the timeout in milliseconds.
+ * @summary
+ * Sets timeout threshold value.
  *
- * @param {Number} timeout
- * @return {Mocha}
- * @api public
+ * @description
+ * A string argument can use shorthand (such as "2s") and will be converted.
+ * If the value is `0`, timeouts will be disabled.
+ *
  * @public
- * @param {number} timeout
- * @return {Mocha}
+ * @see {@link https://mochajs.org/#-t---timeout-ms|CLI option}
+ * @see {@link https://mochajs.org/#--no-timeouts|CLI option}
+ * @see {@link https://mochajs.org/#timeouts|Timeouts}
+ * @see {@link Mocha#enableTimeouts}
+ * @param {number|string} msecs - Timeout threshold value.
+ * @return {Mocha} this
+ * @chainable
+ * @example
+ *
+ * // Sets timeout to one second
+ * mocha.timeout(1000);
+ * @example
+ *
+ * // Same as above but using string argument
+ * mocha.timeout('1s');
  */
-Mocha.prototype.timeout = function(timeout) {
-  this.suite.timeout(timeout);
+Mocha.prototype.timeout = function(msecs) {
+  this.suite.timeout(msecs);
   return this;
 };
 
 /**
- * Set the number of times to retry failed tests.
+ * Sets the number of times to retry failed tests.
  *
- * @param {Number} retry times
- * @return {Mocha}
- * @api public
  * @public
+ * @see {@link https://mochajs.org/#retry-tests|Retry Tests}
+ * @param {number} retry - Number of times to retry failed tests.
+ * @return {Mocha} this
+ * @chainable
+ * @example
+ *
+ * // Allow any failed test to retry one more time
+ * mocha.retries(1);
  */
 Mocha.prototype.retries = function(n) {
   this.suite.retries(n);
@@ -1502,43 +2039,50 @@ Mocha.prototype.retries = function(n) {
 };
 
 /**
- * Set slowness threshold in milliseconds.
+ * Sets slowness threshold value.
  *
- * @param {Number} slow
- * @return {Mocha}
- * @api public
  * @public
- * @param {number} slow
- * @return {Mocha}
+ * @see {@link https://mochajs.org/#-s---slow-ms|CLI option}
+ * @param {number} msecs - Slowness threshold value.
+ * @return {Mocha} this
+ * @chainable
+ * @example
+ *
+ * // Sets "slow" threshold to half a second
+ * mocha.slow(500);
+ * @example
+ *
+ * // Same as above but using string argument
+ * mocha.slow('0.5s');
  */
-Mocha.prototype.slow = function(slow) {
-  this.suite.slow(slow);
+Mocha.prototype.slow = function(msecs) {
+  this.suite.slow(msecs);
   return this;
 };
 
 /**
- * Enable timeouts.
+ * Enables or disables timeouts.
  *
- * @param {Boolean} enabled
- * @return {Mocha}
- * @api public
  * @public
- * @param {boolean} enabled
- * @return {Mocha}
+ * @see {@link https://mochajs.org/#-t---timeout-ms|CLI option}
+ * @see {@link https://mochajs.org/#--no-timeouts|CLI option}
+ * @param {boolean} enableTimeouts - Whether to enable timeouts.
+ * @return {Mocha} this
+ * @chainable
  */
-Mocha.prototype.enableTimeouts = function(enabled) {
+Mocha.prototype.enableTimeouts = function(enableTimeouts) {
   this.suite.enableTimeouts(
-    arguments.length && enabled !== undefined ? enabled : true
+    arguments.length && enableTimeouts !== undefined ? enableTimeouts : true
   );
   return this;
 };
 
 /**
- * Makes all tests async (accepting a callback)
+ * Forces all tests to either accept a `done` callback or return a promise.
  *
- * @return {Mocha}
- * @api public
  * @public
+ * @return {Mocha} this
+ * @chainable
  */
 Mocha.prototype.asyncOnly = function() {
   this.options.asyncOnly = true;
@@ -1546,10 +2090,11 @@ Mocha.prototype.asyncOnly = function() {
 };
 
 /**
- * Disable syntax highlighting (in browser).
+ * Disables syntax highlighting (in browser).
  *
- * @api public
  * @public
+ * @return {Mocha} this
+ * @chainable
  */
 Mocha.prototype.noHighlighting = function() {
   this.options.noHighlighting = true;
@@ -1557,11 +2102,11 @@ Mocha.prototype.noHighlighting = function() {
 };
 
 /**
- * Enable uncaught errors to propagate (in browser).
+ * Enables uncaught errors to propagate (in browser).
  *
- * @return {Mocha}
- * @api public
  * @public
+ * @return {Mocha} this
+ * @chainable
  */
 Mocha.prototype.allowUncaught = function() {
   this.options.allowUncaught = true;
@@ -1569,8 +2114,16 @@ Mocha.prototype.allowUncaught = function() {
 };
 
 /**
- * Delay root suite execution.
- * @returns {Mocha}
+ * @summary
+ * Delays root suite execution.
+ *
+ * @description
+ * Used to perform asynch operations before any suites are run.
+ *
+ * @public
+ * @see {@link https://mochajs.org/#delayed-root-suite|delayed root suite}
+ * @returns {Mocha} this
+ * @chainable
  */
 Mocha.prototype.delay = function delay() {
   this.options.delay = true;
@@ -1578,8 +2131,11 @@ Mocha.prototype.delay = function delay() {
 };
 
 /**
- * Tests marked only fail the suite
- * @returns {Mocha}
+ * Causes tests marked `only` to fail the suite.
+ *
+ * @public
+ * @returns {Mocha} this
+ * @chainable
  */
 Mocha.prototype.forbidOnly = function() {
   this.options.forbidOnly = true;
@@ -1587,8 +2143,11 @@ Mocha.prototype.forbidOnly = function() {
 };
 
 /**
- * Pending tests and tests marked skip fail the suite
- * @returns {Mocha}
+ * Causes pending tests and tests marked `skip` to fail the suite.
+ *
+ * @public
+ * @returns {Mocha} this
+ * @chainable
  */
 Mocha.prototype.forbidPending = function() {
   this.options.forbidPending = true;
@@ -1596,20 +2155,40 @@ Mocha.prototype.forbidPending = function() {
 };
 
 /**
- * Run tests and invoke `fn()` when complete.
+ * Mocha version as specified by "package.json".
  *
- * Note that `loadFiles` relies on Node's `require` to execute
- * the test interface functions and will be subject to the
- * cache - if the files are already in the `require` cache,
- * they will effectively be skipped. Therefore, to run tests
- * multiple times or to run tests in files that are already
- * in the `require` cache, make sure to clear them from the
- * cache first in whichever manner best suits your needs.
+ * @name Mocha#version
+ * @type string
+ * @readonly
+ */
+Object.defineProperty(Mocha.prototype, 'version', {
+  value: require('../package.json').version,
+  configurable: false,
+  enumerable: true,
+  writable: false
+});
+
+/**
+ * Callback to be invoked when test execution is complete.
  *
- * @api public
+ * @callback DoneCB
+ * @param {number} failures - Number of failures that occurred.
+ */
+
+/**
+ * Runs root suite and invokes `fn()` when complete.
+ *
+ * @description
+ * To run tests multiple times (or to run tests in files that are
+ * already in the `require` cache), make sure to clear them from
+ * the cache first!
+ *
  * @public
- * @param {Function} fn
- * @return {Runner}
+ * @see {@link Mocha#loadFiles}
+ * @see {@link Mocha#unloadFiles}
+ * @see {@link Runner#run}
+ * @param {DoneCB} [fn] - Callback invoked when test execution completed.
+ * @return {Runner} runner instance
  */
 Mocha.prototype.run = function(fn) {
   if (this.files.length) {
@@ -1619,6 +2198,7 @@ Mocha.prototype.run = function(fn) {
   var options = this.options;
   options.files = this.files;
   var runner = new exports.Runner(suite, options.delay);
+  createStatsCollector(runner);
   var reporter = new this._reporter(runner, options);
   runner.ignoreLeaks = options.ignoreLeaks !== false;
   runner.fullStackTrace = options.fullStackTrace;
@@ -1633,7 +2213,7 @@ Mocha.prototype.run = function(fn) {
     runner.globals(options.globals);
   }
   if (options.growl) {
-    this._growl(runner, reporter);
+    this._growl(runner);
   }
   if (options.useColors !== undefined) {
     exports.reporters.Base.useColors = options.useColors;
@@ -1642,116 +2222,31 @@ Mocha.prototype.run = function(fn) {
   exports.reporters.Base.hideDiff = options.hideDiff;
 
   function done(failures) {
+    fn = fn || utils.noop;
     if (reporter.done) {
       reporter.done(failures, fn);
     } else {
-      fn && fn(failures);
+      fn(failures);
     }
   }
 
   return runner.run(done);
 };
 
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},"/lib")
-},{"./context":5,"./hook":6,"./interfaces":10,"./reporters":20,"./runnable":32,"./runner":33,"./suite":34,"./test":35,"./utils":36,"_process":56,"escape-string-regexp":46,"growl":2,"path":40}],14:[function(require,module,exports){
-'use strict';
-/**
- * @module milliseconds
- */
-/**
- * Helpers.
- */
-
-var s = 1000;
-var m = s * 60;
-var h = m * 60;
-var d = h * 24;
-var y = d * 365.25;
-
-/**
- * Parse or format the given `val`.
- *
- * @memberof Mocha
- * @public
- * @api public
- * @param {string|number} val
- * @return {string|number}
- */
-module.exports = function(val) {
-  if (typeof val === 'string') {
-    return parse(val);
-  }
-  return format(val);
-};
-
-/**
- * Parse the given `str` and return milliseconds.
- *
- * @api private
- * @param {string} str
- * @return {number}
- */
-function parse(str) {
-  var match = /^((?:\d+)?\.?\d+) *(ms|seconds?|s|minutes?|m|hours?|h|days?|d|years?|y)?$/i.exec(
-    str
-  );
-  if (!match) {
-    return;
-  }
-  var n = parseFloat(match[1]);
-  var type = (match[2] || 'ms').toLowerCase();
-  switch (type) {
-    case 'years':
-    case 'year':
-    case 'y':
-      return n * y;
-    case 'days':
-    case 'day':
-    case 'd':
-      return n * d;
-    case 'hours':
-    case 'hour':
-    case 'h':
-      return n * h;
-    case 'minutes':
-    case 'minute':
-    case 'm':
-      return n * m;
-    case 'seconds':
-    case 'second':
-    case 's':
-      return n * s;
-    case 'ms':
-      return n;
-    default:
-    // No default case
-  }
+}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"../package.json":89,"./context":5,"./errors":6,"./growl":2,"./hook":7,"./interfaces":11,"./mocharc.json":15,"./reporters":21,"./runnable":33,"./runner":34,"./stats-collector":35,"./suite":36,"./test":37,"./utils":38,"_process":68,"escape-string-regexp":49,"path":42}],15:[function(require,module,exports){
+module.exports={
+  "diff": true,
+  "extension": ["js"],
+  "opts": "./test/mocha.opts",
+  "package": "./package.json",
+  "reporter": "spec",
+  "slow": 75,
+  "timeout": 2000,
+  "ui": "bdd"
 }
 
-/**
- * Format for `ms`.
- *
- * @api private
- * @param {number} ms
- * @return {string}
- */
-function format(ms) {
-  if (ms >= d) {
-    return Math.round(ms / d) + 'd';
-  }
-  if (ms >= h) {
-    return Math.round(ms / h) + 'h';
-  }
-  if (ms >= m) {
-    return Math.round(ms / m) + 'm';
-  }
-  if (ms >= s) {
-    return Math.round(ms / s) + 's';
-  }
-  return ms + 'ms';
-}
-
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 'use strict';
 
 module.exports = Pending;
@@ -1765,8 +2260,8 @@ function Pending(message) {
   this.message = message;
 }
 
-},{}],16:[function(require,module,exports){
-(function (process,global){
+},{}],17:[function(require,module,exports){
+(function (process){
 'use strict';
 /**
  * @module Base
@@ -1777,28 +2272,18 @@ function Pending(message) {
 
 var tty = require('tty');
 var diff = require('diff');
-var ms = require('../ms');
+var milliseconds = require('ms');
 var utils = require('../utils');
 var supportsColor = process.browser ? null : require('supports-color');
+var constants = require('../runner').constants;
+var EVENT_TEST_PASS = constants.EVENT_TEST_PASS;
+var EVENT_TEST_FAIL = constants.EVENT_TEST_FAIL;
 
 /**
  * Expose `Base`.
  */
 
 exports = module.exports = Base;
-
-/**
- * Save timer references to avoid Sinon interfering.
- * See: https://github.com/mochajs/mocha/issues/237
- */
-
-/* eslint-disable no-unused-vars, no-native-reassign */
-var Date = global.Date;
-var setTimeout = global.setTimeout;
-var setInterval = global.setInterval;
-var clearTimeout = global.clearTimeout;
-var clearInterval = global.clearInterval;
-/* eslint-enable no-unused-vars, no-native-reassign */
 
 /**
  * Check if both stdio streams are associated with a tty.
@@ -1874,7 +2359,7 @@ if (process.platform === 'win32') {
  * @param {string} type
  * @param {string} str
  * @return {string}
- * @api private
+ * @private
  */
 var color = (exports.color = function(type, str) {
   if (!exports.useColors) {
@@ -1967,7 +2452,6 @@ var generateDiff = (exports.generateDiff = function(actual, expected) {
  * @memberof Mocha.reporters.Base
  * @variation 1
  * @param {Array} failures
- * @api public
  */
 
 exports.list = function(failures) {
@@ -2040,51 +2524,24 @@ exports.list = function(failures) {
  * Initialize a new `Base` reporter.
  *
  * All other reporters generally
- * inherit from this reporter, providing
- * stats such as test duration, number
- * of tests passed / failed etc.
+ * inherit from this reporter.
  *
  * @memberof Mocha.reporters
  * @public
  * @class
  * @param {Runner} runner
- * @api public
  */
 
 function Base(runner) {
-  var stats = (this.stats = {
-    suites: 0,
-    tests: 0,
-    passes: 0,
-    pending: 0,
-    failures: 0
-  });
   var failures = (this.failures = []);
 
   if (!runner) {
-    return;
+    throw new TypeError('Missing runner argument');
   }
+  this.stats = runner.stats; // assigned so Reporters keep a closer reference
   this.runner = runner;
 
-  runner.stats = stats;
-
-  runner.on('start', function() {
-    stats.start = new Date();
-  });
-
-  runner.on('suite', function(suite) {
-    stats.suites = stats.suites || 0;
-    suite.root || stats.suites++;
-  });
-
-  runner.on('test end', function() {
-    stats.tests = stats.tests || 0;
-    stats.tests++;
-  });
-
-  runner.on('pass', function(test) {
-    stats.passes = stats.passes || 0;
-
+  runner.on(EVENT_TEST_PASS, function(test) {
     if (test.duration > test.slow()) {
       test.speed = 'slow';
     } else if (test.duration > test.slow() / 2) {
@@ -2092,27 +2549,14 @@ function Base(runner) {
     } else {
       test.speed = 'fast';
     }
-
-    stats.passes++;
   });
 
-  runner.on('fail', function(test, err) {
-    stats.failures = stats.failures || 0;
-    stats.failures++;
+  runner.on(EVENT_TEST_FAIL, function(test, err) {
     if (showDiff(err)) {
       stringifyDiffObjs(err);
     }
     test.err = err;
     failures.push(test);
-  });
-
-  runner.once('end', function() {
-    stats.end = new Date();
-    stats.duration = stats.end - stats.start;
-  });
-
-  runner.on('pending', function() {
-    stats.pending++;
   });
 }
 
@@ -2122,7 +2566,6 @@ function Base(runner) {
  *
  * @memberof Mocha.reporters.Base
  * @public
- * @api public
  */
 Base.prototype.epilogue = function() {
   var stats = this.stats;
@@ -2136,7 +2579,7 @@ Base.prototype.epilogue = function() {
     color('green', ' %d passing') +
     color('light', ' (%s)');
 
-  console.log(fmt, stats.passes || 0, ms(stats.duration));
+  console.log(fmt, stats.passes || 0, milliseconds(stats.duration));
 
   // pending
   if (stats.pending) {
@@ -2161,7 +2604,7 @@ Base.prototype.epilogue = function() {
 /**
  * Pad the given `str` to `len`.
  *
- * @api private
+ * @private
  * @param {string} str
  * @param {string} len
  * @return {string}
@@ -2174,7 +2617,7 @@ function pad(str, len) {
 /**
  * Returns an inline diff between 2 strings with coloured ANSI output.
  *
- * @api private
+ * @private
  * @param {String} actual
  * @param {String} expected
  * @return {string} Diff
@@ -2211,7 +2654,7 @@ function inlineDiff(actual, expected) {
 /**
  * Returns a unified diff between two strings with coloured ANSI output.
  *
- * @api private
+ * @private
  * @param {String} actual
  * @param {String} expected
  * @return {string} The diff.
@@ -2254,7 +2697,7 @@ function unifiedDiff(actual, expected) {
 /**
  * Return a character diff for `err`.
  *
- * @api private
+ * @private
  * @param {String} actual
  * @param {String} expected
  * @return {string} the diff
@@ -2277,7 +2720,7 @@ function errorDiff(actual, expected) {
 /**
  * Color lines for `str`, using the color `name`.
  *
- * @api private
+ * @private
  * @param {string} name
  * @param {string} str
  * @return {string}
@@ -2299,7 +2742,7 @@ var objToString = Object.prototype.toString;
 /**
  * Check that a / b have the same type.
  *
- * @api private
+ * @private
  * @param {Object} a
  * @param {Object} b
  * @return {boolean}
@@ -2308,8 +2751,10 @@ function sameType(a, b) {
   return objToString.call(a) === objToString.call(b);
 }
 
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../ms":14,"../utils":36,"_process":56,"diff":45,"supports-color":40,"tty":4}],17:[function(require,module,exports){
+Base.abstract = true;
+
+}).call(this,require('_process'))
+},{"../runner":34,"../utils":38,"_process":68,"diff":48,"ms":60,"supports-color":42,"tty":4}],18:[function(require,module,exports){
 'use strict';
 /**
  * @module Doc
@@ -2320,6 +2765,11 @@ function sameType(a, b) {
 
 var Base = require('./base');
 var utils = require('../utils');
+var constants = require('../runner').constants;
+var EVENT_TEST_PASS = constants.EVENT_TEST_PASS;
+var EVENT_TEST_FAIL = constants.EVENT_TEST_FAIL;
+var EVENT_SUITE_BEGIN = constants.EVENT_SUITE_BEGIN;
+var EVENT_SUITE_END = constants.EVENT_SUITE_END;
 
 /**
  * Expose `Doc`.
@@ -2335,7 +2785,6 @@ exports = module.exports = Doc;
  * @extends {Base}
  * @public
  * @param {Runner} runner
- * @api public
  */
 function Doc(runner) {
   Base.call(this, runner);
@@ -2346,7 +2795,7 @@ function Doc(runner) {
     return Array(indents).join('  ');
   }
 
-  runner.on('suite', function(suite) {
+  runner.on(EVENT_SUITE_BEGIN, function(suite) {
     if (suite.root) {
       return;
     }
@@ -2357,7 +2806,7 @@ function Doc(runner) {
     console.log('%s<dl>', indent());
   });
 
-  runner.on('suite end', function(suite) {
+  runner.on(EVENT_SUITE_END, function(suite) {
     if (suite.root) {
       return;
     }
@@ -2367,13 +2816,13 @@ function Doc(runner) {
     --indents;
   });
 
-  runner.on('pass', function(test) {
+  runner.on(EVENT_TEST_PASS, function(test) {
     console.log('%s  <dt>%s</dt>', indent(), utils.escape(test.title));
     var code = utils.escape(utils.clean(test.body));
     console.log('%s  <dd><pre><code>%s</code></pre></dd>', indent(), code);
   });
 
-  runner.on('fail', function(test, err) {
+  runner.on(EVENT_TEST_FAIL, function(test, err) {
     console.log(
       '%s  <dt class="error">%s</dt>',
       indent(),
@@ -2389,7 +2838,9 @@ function Doc(runner) {
   });
 }
 
-},{"../utils":36,"./base":16}],18:[function(require,module,exports){
+Doc.description = 'HTML documentation';
+
+},{"../runner":34,"../utils":38,"./base":17}],19:[function(require,module,exports){
 (function (process){
 'use strict';
 /**
@@ -2401,7 +2852,12 @@ function Doc(runner) {
 
 var Base = require('./base');
 var inherits = require('../utils').inherits;
-var color = Base.color;
+var constants = require('../runner').constants;
+var EVENT_TEST_PASS = constants.EVENT_TEST_PASS;
+var EVENT_TEST_FAIL = constants.EVENT_TEST_FAIL;
+var EVENT_RUN_BEGIN = constants.EVENT_RUN_BEGIN;
+var EVENT_TEST_PENDING = constants.EVENT_TEST_PENDING;
+var EVENT_RUN_END = constants.EVENT_RUN_END;
 
 /**
  * Expose `Dot`.
@@ -2416,7 +2872,6 @@ exports = module.exports = Dot;
  * @memberof Mocha.reporters
  * @extends Mocha.reporters.Base
  * @public
- * @api public
  * @param {Runner} runner
  */
 function Dot(runner) {
@@ -2426,36 +2881,36 @@ function Dot(runner) {
   var width = (Base.window.width * 0.75) | 0;
   var n = -1;
 
-  runner.on('start', function() {
+  runner.on(EVENT_RUN_BEGIN, function() {
     process.stdout.write('\n');
   });
 
-  runner.on('pending', function() {
+  runner.on(EVENT_TEST_PENDING, function() {
     if (++n % width === 0) {
       process.stdout.write('\n  ');
     }
-    process.stdout.write(color('pending', Base.symbols.comma));
+    process.stdout.write(Base.color('pending', Base.symbols.comma));
   });
 
-  runner.on('pass', function(test) {
+  runner.on(EVENT_TEST_PASS, function(test) {
     if (++n % width === 0) {
       process.stdout.write('\n  ');
     }
     if (test.speed === 'slow') {
-      process.stdout.write(color('bright yellow', Base.symbols.dot));
+      process.stdout.write(Base.color('bright yellow', Base.symbols.dot));
     } else {
-      process.stdout.write(color(test.speed, Base.symbols.dot));
+      process.stdout.write(Base.color(test.speed, Base.symbols.dot));
     }
   });
 
-  runner.on('fail', function() {
+  runner.on(EVENT_TEST_FAIL, function() {
     if (++n % width === 0) {
       process.stdout.write('\n  ');
     }
-    process.stdout.write(color('fail', Base.symbols.bang));
+    process.stdout.write(Base.color('fail', Base.symbols.bang));
   });
 
-  runner.once('end', function() {
+  runner.once(EVENT_RUN_END, function() {
     console.log();
     self.epilogue();
   });
@@ -2466,8 +2921,10 @@ function Dot(runner) {
  */
 inherits(Dot, Base);
 
+Dot.description = 'dot matrix representation';
+
 }).call(this,require('_process'))
-},{"../utils":36,"./base":16,"_process":56}],19:[function(require,module,exports){
+},{"../runner":34,"../utils":38,"./base":17,"_process":68}],20:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -2483,19 +2940,19 @@ var Base = require('./base');
 var utils = require('../utils');
 var Progress = require('../browser/progress');
 var escapeRe = require('escape-string-regexp');
+var constants = require('../runner').constants;
+var EVENT_TEST_PASS = constants.EVENT_TEST_PASS;
+var EVENT_TEST_FAIL = constants.EVENT_TEST_FAIL;
+var EVENT_SUITE_BEGIN = constants.EVENT_SUITE_BEGIN;
+var EVENT_SUITE_END = constants.EVENT_SUITE_END;
+var EVENT_TEST_PENDING = constants.EVENT_TEST_PENDING;
 var escape = utils.escape;
 
 /**
  * Save timer references to avoid Sinon interfering (see GH-237).
  */
 
-/* eslint-disable no-unused-vars, no-native-reassign */
 var Date = global.Date;
-var setTimeout = global.setTimeout;
-var setInterval = global.setInterval;
-var clearTimeout = global.clearTimeout;
-var clearInterval = global.clearInterval;
-/* eslint-enable no-unused-vars, no-native-reassign */
 
 /**
  * Expose `HTML`.
@@ -2524,7 +2981,6 @@ var playIcon = '&#x2023;';
  * @class
  * @memberof Mocha.reporters
  * @extends Mocha.reporters.Base
- * @api public
  * @param {Runner} runner
  */
 function HTML(runner) {
@@ -2590,7 +3046,7 @@ function HTML(runner) {
     progress.size(40);
   }
 
-  runner.on('suite', function(suite) {
+  runner.on(EVENT_SUITE_BEGIN, function(suite) {
     if (suite.root) {
       return;
     }
@@ -2609,7 +3065,7 @@ function HTML(runner) {
     el.appendChild(stack[0]);
   });
 
-  runner.on('suite end', function(suite) {
+  runner.on(EVENT_SUITE_END, function(suite) {
     if (suite.root) {
       updateStats();
       return;
@@ -2617,7 +3073,7 @@ function HTML(runner) {
     stack.shift();
   });
 
-  runner.on('pass', function(test) {
+  runner.on(EVENT_TEST_PASS, function(test) {
     var url = self.testURL(test);
     var markup =
       '<li class="test pass %e"><h2>%e<span class="duration">%ems</span> ' +
@@ -2630,7 +3086,7 @@ function HTML(runner) {
     updateStats();
   });
 
-  runner.on('fail', function(test) {
+  runner.on(EVENT_TEST_FAIL, function(test) {
     var el = fragment(
       '<li class="test fail"><h2>%e <a href="%e" class="replay">' +
         playIcon +
@@ -2686,7 +3142,7 @@ function HTML(runner) {
     updateStats();
   });
 
-  runner.on('pending', function(test) {
+  runner.on(EVENT_TEST_PENDING, function(test) {
     var el = fragment(
       '<li class="test pass pending"><h2>%e</h2></li>',
       test.title
@@ -2704,7 +3160,7 @@ function HTML(runner) {
 
   function updateStats() {
     // TODO: add to stats
-    var percent = (stats.tests / runner.total * 100) | 0;
+    var percent = ((stats.tests / runner.total) * 100) | 0;
     if (progress) {
       progress.update(percent).draw(ctx);
     }
@@ -2858,8 +3314,10 @@ function on(el, event, fn) {
   }
 }
 
+HTML.browserOnly = true;
+
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../browser/progress":3,"../utils":36,"./base":16,"escape-string-regexp":46}],20:[function(require,module,exports){
+},{"../browser/progress":3,"../runner":34,"../utils":38,"./base":17,"escape-string-regexp":49}],21:[function(require,module,exports){
 'use strict';
 
 // Alias exports to a their normalized format Mocha#reporter to prevent a need
@@ -2880,7 +3338,7 @@ exports.Progress = exports.progress = require('./progress');
 exports.Landing = exports.landing = require('./landing');
 exports.JSONStream = exports['json-stream'] = require('./json-stream');
 
-},{"./base":16,"./doc":17,"./dot":18,"./html":19,"./json":22,"./json-stream":21,"./landing":23,"./list":24,"./markdown":25,"./min":26,"./nyan":27,"./progress":28,"./spec":29,"./tap":30,"./xunit":31}],21:[function(require,module,exports){
+},{"./base":17,"./doc":18,"./dot":19,"./html":20,"./json":23,"./json-stream":22,"./landing":24,"./list":25,"./markdown":26,"./min":27,"./nyan":28,"./progress":29,"./spec":30,"./tap":31,"./xunit":32}],22:[function(require,module,exports){
 (function (process){
 'use strict';
 /**
@@ -2891,57 +3349,75 @@ exports.JSONStream = exports['json-stream'] = require('./json-stream');
  */
 
 var Base = require('./base');
+var constants = require('../runner').constants;
+var EVENT_TEST_PASS = constants.EVENT_TEST_PASS;
+var EVENT_TEST_FAIL = constants.EVENT_TEST_FAIL;
+var EVENT_RUN_BEGIN = constants.EVENT_RUN_BEGIN;
+var EVENT_RUN_END = constants.EVENT_RUN_END;
 
 /**
- * Expose `List`.
+ * Expose `JSONStream`.
  */
 
-exports = module.exports = List;
+exports = module.exports = JSONStream;
 
 /**
- * Initialize a new `JSONStream` test reporter.
+ * Constructs a new `JSONStream` reporter instance.
  *
  * @public
- * @name JSONStream
- * @class JSONStream
- * @memberof Mocha.reporters
+ * @class
  * @extends Mocha.reporters.Base
- * @api public
- * @param {Runner} runner
+ * @memberof Mocha.reporters
+ * @param {Runner} runner - Instance triggers reporter actions.
  */
-function List(runner) {
+function JSONStream(runner) {
   Base.call(this, runner);
 
   var self = this;
   var total = runner.total;
 
-  runner.on('start', function() {
-    console.log(JSON.stringify(['start', {total: total}]));
+  runner.once(EVENT_RUN_BEGIN, function() {
+    writeEvent(['start', {total: total}]);
   });
 
-  runner.on('pass', function(test) {
-    console.log(JSON.stringify(['pass', clean(test)]));
+  runner.on(EVENT_TEST_PASS, function(test) {
+    writeEvent(['pass', clean(test)]);
   });
 
-  runner.on('fail', function(test, err) {
+  runner.on(EVENT_TEST_FAIL, function(test, err) {
     test = clean(test);
     test.err = err.message;
     test.stack = err.stack || null;
-    console.log(JSON.stringify(['fail', test]));
+    writeEvent(['fail', test]);
   });
 
-  runner.once('end', function() {
-    process.stdout.write(JSON.stringify(['end', self.stats]));
+  runner.once(EVENT_RUN_END, function() {
+    writeEvent(['end', self.stats]);
   });
 }
 
 /**
- * Return a plain-object representation of `test`
- * free of cyclic properties etc.
+ * Mocha event to be written to the output stream.
+ * @typedef {Array} JSONStream~MochaEvent
+ */
+
+/**
+ * Writes Mocha event to reporter output stream.
  *
- * @api private
- * @param {Object} test
- * @return {Object}
+ * @private
+ * @param {JSONStream~MochaEvent} event - Mocha event to be output.
+ */
+function writeEvent(event) {
+  process.stdout.write(JSON.stringify(event) + '\n');
+}
+
+/**
+ * Returns an object literal representation of `test`
+ * free of cyclic properties, etc.
+ *
+ * @private
+ * @param {Test} test - Instance used as data source.
+ * @return {Object} object containing pared-down test instance data
  */
 function clean(test) {
   return {
@@ -2952,8 +3428,10 @@ function clean(test) {
   };
 }
 
+JSONStream.description = 'newline delimited JSON events';
+
 }).call(this,require('_process'))
-},{"./base":16,"_process":56}],22:[function(require,module,exports){
+},{"../runner":34,"./base":17,"_process":68}],23:[function(require,module,exports){
 (function (process){
 'use strict';
 /**
@@ -2964,6 +3442,12 @@ function clean(test) {
  */
 
 var Base = require('./base');
+var constants = require('../runner').constants;
+var EVENT_TEST_PASS = constants.EVENT_TEST_PASS;
+var EVENT_TEST_FAIL = constants.EVENT_TEST_FAIL;
+var EVENT_TEST_END = constants.EVENT_TEST_END;
+var EVENT_RUN_END = constants.EVENT_RUN_END;
+var EVENT_TEST_PENDING = constants.EVENT_TEST_PENDING;
 
 /**
  * Expose `JSON`.
@@ -2978,7 +3462,6 @@ exports = module.exports = JSONReporter;
  * @class JSON
  * @memberof Mocha.reporters
  * @extends Mocha.reporters.Base
- * @api public
  * @param {Runner} runner
  */
 function JSONReporter(runner) {
@@ -2990,23 +3473,23 @@ function JSONReporter(runner) {
   var failures = [];
   var passes = [];
 
-  runner.on('test end', function(test) {
+  runner.on(EVENT_TEST_END, function(test) {
     tests.push(test);
   });
 
-  runner.on('pass', function(test) {
+  runner.on(EVENT_TEST_PASS, function(test) {
     passes.push(test);
   });
 
-  runner.on('fail', function(test) {
+  runner.on(EVENT_TEST_FAIL, function(test) {
     failures.push(test);
   });
 
-  runner.on('pending', function(test) {
+  runner.on(EVENT_TEST_PENDING, function(test) {
     pending.push(test);
   });
 
-  runner.once('end', function() {
+  runner.once(EVENT_RUN_END, function() {
     var obj = {
       stats: self.stats,
       tests: tests.map(clean),
@@ -3025,7 +3508,7 @@ function JSONReporter(runner) {
  * Return a plain-object representation of `test`
  * free of cyclic properties etc.
  *
- * @api private
+ * @private
  * @param {Object} test
  * @return {Object}
  */
@@ -3047,7 +3530,7 @@ function clean(test) {
 /**
  * Replaces any circular references inside `obj` with '[object Object]'
  *
- * @api private
+ * @private
  * @param {Object} obj
  * @return {Object}
  */
@@ -3071,7 +3554,7 @@ function cleanCycles(obj) {
 /**
  * Transform an Error object into a JSON object.
  *
- * @api private
+ * @private
  * @param {Error} err
  * @return {Object}
  */
@@ -3083,8 +3566,10 @@ function errorJSON(err) {
   return res;
 }
 
+JSONReporter.description = 'single JSON object';
+
 }).call(this,require('_process'))
-},{"./base":16,"_process":56}],23:[function(require,module,exports){
+},{"../runner":34,"./base":17,"_process":68}],24:[function(require,module,exports){
 (function (process){
 'use strict';
 /**
@@ -3096,6 +3581,12 @@ function errorJSON(err) {
 
 var Base = require('./base');
 var inherits = require('../utils').inherits;
+var constants = require('../runner').constants;
+var EVENT_RUN_BEGIN = constants.EVENT_RUN_BEGIN;
+var EVENT_RUN_END = constants.EVENT_RUN_END;
+var EVENT_TEST_END = constants.EVENT_TEST_END;
+var STATE_FAILED = require('../runnable').constants.STATE_FAILED;
+
 var cursor = Base.cursor;
 var color = Base.color;
 
@@ -3130,7 +3621,6 @@ Base.colors.runway = 90;
  * @class
  * @memberof Mocha.reporters
  * @extends Mocha.reporters.Base
- * @api public
  * @param {Runner} runner
  */
 function Landing(runner) {
@@ -3149,17 +3639,17 @@ function Landing(runner) {
     return '  ' + color('runway', buf);
   }
 
-  runner.on('start', function() {
+  runner.on(EVENT_RUN_BEGIN, function() {
     stream.write('\n\n\n  ');
     cursor.hide();
   });
 
-  runner.on('test end', function(test) {
+  runner.on(EVENT_TEST_END, function(test) {
     // check if the plane crashed
-    var col = crashed === -1 ? (width * ++n / total) | 0 : crashed;
+    var col = crashed === -1 ? ((width * ++n) / total) | 0 : crashed;
 
     // show the crash
-    if (test.state === 'failed') {
+    if (test.state === STATE_FAILED) {
       plane = color('plane crash', '✈');
       crashed = col;
     }
@@ -3175,7 +3665,7 @@ function Landing(runner) {
     stream.write('\u001b[0m');
   });
 
-  runner.once('end', function() {
+  runner.once(EVENT_RUN_END, function() {
     cursor.show();
     console.log();
     self.epilogue();
@@ -3187,8 +3677,10 @@ function Landing(runner) {
  */
 inherits(Landing, Base);
 
+Landing.description = 'Unicode landing strip';
+
 }).call(this,require('_process'))
-},{"../utils":36,"./base":16,"_process":56}],24:[function(require,module,exports){
+},{"../runnable":33,"../runner":34,"../utils":38,"./base":17,"_process":68}],25:[function(require,module,exports){
 (function (process){
 'use strict';
 /**
@@ -3200,6 +3692,13 @@ inherits(Landing, Base);
 
 var Base = require('./base');
 var inherits = require('../utils').inherits;
+var constants = require('../runner').constants;
+var EVENT_RUN_BEGIN = constants.EVENT_RUN_BEGIN;
+var EVENT_RUN_END = constants.EVENT_RUN_END;
+var EVENT_TEST_BEGIN = constants.EVENT_TEST_BEGIN;
+var EVENT_TEST_FAIL = constants.EVENT_TEST_FAIL;
+var EVENT_TEST_PASS = constants.EVENT_TEST_PASS;
+var EVENT_TEST_PENDING = constants.EVENT_TEST_PENDING;
 var color = Base.color;
 var cursor = Base.cursor;
 
@@ -3216,7 +3715,6 @@ exports = module.exports = List;
  * @class
  * @memberof Mocha.reporters
  * @extends Mocha.reporters.Base
- * @api public
  * @param {Runner} runner
  */
 function List(runner) {
@@ -3225,20 +3723,20 @@ function List(runner) {
   var self = this;
   var n = 0;
 
-  runner.on('start', function() {
+  runner.on(EVENT_RUN_BEGIN, function() {
     console.log();
   });
 
-  runner.on('test', function(test) {
+  runner.on(EVENT_TEST_BEGIN, function(test) {
     process.stdout.write(color('pass', '    ' + test.fullTitle() + ': '));
   });
 
-  runner.on('pending', function(test) {
+  runner.on(EVENT_TEST_PENDING, function(test) {
     var fmt = color('checkmark', '  -') + color('pending', ' %s');
     console.log(fmt, test.fullTitle());
   });
 
-  runner.on('pass', function(test) {
+  runner.on(EVENT_TEST_PASS, function(test) {
     var fmt =
       color('checkmark', '  ' + Base.symbols.ok) +
       color('pass', ' %s: ') +
@@ -3247,12 +3745,12 @@ function List(runner) {
     console.log(fmt, test.fullTitle(), test.duration);
   });
 
-  runner.on('fail', function(test) {
+  runner.on(EVENT_TEST_FAIL, function(test) {
     cursor.CR();
     console.log(color('fail', '  %d) %s'), ++n, test.fullTitle());
   });
 
-  runner.once('end', self.epilogue.bind(self));
+  runner.once(EVENT_RUN_END, self.epilogue.bind(self));
 }
 
 /**
@@ -3260,8 +3758,10 @@ function List(runner) {
  */
 inherits(List, Base);
 
+List.description = 'like "spec" reporter but flat';
+
 }).call(this,require('_process'))
-},{"../utils":36,"./base":16,"_process":56}],25:[function(require,module,exports){
+},{"../runner":34,"../utils":38,"./base":17,"_process":68}],26:[function(require,module,exports){
 (function (process){
 'use strict';
 /**
@@ -3273,6 +3773,11 @@ inherits(List, Base);
 
 var Base = require('./base');
 var utils = require('../utils');
+var constants = require('../runner').constants;
+var EVENT_RUN_END = constants.EVENT_RUN_END;
+var EVENT_SUITE_BEGIN = constants.EVENT_SUITE_BEGIN;
+var EVENT_SUITE_END = constants.EVENT_SUITE_END;
+var EVENT_TEST_PASS = constants.EVENT_TEST_PASS;
 
 /**
  * Constants
@@ -3293,7 +3798,6 @@ exports = module.exports = Markdown;
  * @class
  * @memberof Mocha.reporters
  * @extends Mocha.reporters.Base
- * @api public
  * @param {Runner} runner
  */
 function Markdown(runner) {
@@ -3343,18 +3847,18 @@ function Markdown(runner) {
 
   generateTOC(runner.suite);
 
-  runner.on('suite', function(suite) {
+  runner.on(EVENT_SUITE_BEGIN, function(suite) {
     ++level;
     var slug = utils.slug(suite.fullTitle());
     buf += '<a name="' + slug + '"></a>' + '\n';
     buf += title(suite.title) + '\n';
   });
 
-  runner.on('suite end', function() {
+  runner.on(EVENT_SUITE_END, function() {
     --level;
   });
 
-  runner.on('pass', function(test) {
+  runner.on(EVENT_TEST_PASS, function(test) {
     var code = utils.clean(test.body);
     buf += test.title + '.\n';
     buf += '\n```js\n';
@@ -3362,15 +3866,17 @@ function Markdown(runner) {
     buf += '```\n\n';
   });
 
-  runner.once('end', function() {
+  runner.once(EVENT_RUN_END, function() {
     process.stdout.write('# TOC\n');
     process.stdout.write(generateTOC(runner.suite));
     process.stdout.write(buf);
   });
 }
 
+Markdown.description = 'GitHub Flavored Markdown';
+
 }).call(this,require('_process'))
-},{"../utils":36,"./base":16,"_process":56}],26:[function(require,module,exports){
+},{"../runner":34,"../utils":38,"./base":17,"_process":68}],27:[function(require,module,exports){
 (function (process){
 'use strict';
 /**
@@ -3382,6 +3888,9 @@ function Markdown(runner) {
 
 var Base = require('./base');
 var inherits = require('../utils').inherits;
+var constants = require('../runner').constants;
+var EVENT_RUN_END = constants.EVENT_RUN_END;
+var EVENT_RUN_BEGIN = constants.EVENT_RUN_BEGIN;
 
 /**
  * Expose `Min`.
@@ -3396,20 +3905,19 @@ exports = module.exports = Min;
  * @class
  * @memberof Mocha.reporters
  * @extends Mocha.reporters.Base
- * @api public
  * @param {Runner} runner
  */
 function Min(runner) {
   Base.call(this, runner);
 
-  runner.on('start', function() {
+  runner.on(EVENT_RUN_BEGIN, function() {
     // clear screen
     process.stdout.write('\u001b[2J');
     // set cursor position
     process.stdout.write('\u001b[1;3H');
   });
 
-  runner.once('end', this.epilogue.bind(this));
+  runner.once(EVENT_RUN_END, this.epilogue.bind(this));
 }
 
 /**
@@ -3417,8 +3925,10 @@ function Min(runner) {
  */
 inherits(Min, Base);
 
+Min.description = 'essentially just a summary';
+
 }).call(this,require('_process'))
-},{"../utils":36,"./base":16,"_process":56}],27:[function(require,module,exports){
+},{"../runner":34,"../utils":38,"./base":17,"_process":68}],28:[function(require,module,exports){
 (function (process){
 'use strict';
 /**
@@ -3429,7 +3939,13 @@ inherits(Min, Base);
  */
 
 var Base = require('./base');
+var constants = require('../runner').constants;
 var inherits = require('../utils').inherits;
+var EVENT_RUN_BEGIN = constants.EVENT_RUN_BEGIN;
+var EVENT_TEST_PENDING = constants.EVENT_TEST_PENDING;
+var EVENT_TEST_PASS = constants.EVENT_TEST_PASS;
+var EVENT_RUN_END = constants.EVENT_RUN_END;
+var EVENT_TEST_FAIL = constants.EVENT_TEST_FAIL;
 
 /**
  * Expose `Dot`.
@@ -3441,7 +3957,6 @@ exports = module.exports = NyanCat;
  * Initialize a new `Dot` matrix test reporter.
  *
  * @param {Runner} runner
- * @api public
  * @public
  * @class Nyan
  * @memberof Mocha.reporters
@@ -3463,24 +3978,24 @@ function NyanCat(runner) {
   this.trajectories = [[], [], [], []];
   this.trajectoryWidthMax = width - nyanCatWidth;
 
-  runner.on('start', function() {
+  runner.on(EVENT_RUN_BEGIN, function() {
     Base.cursor.hide();
     self.draw();
   });
 
-  runner.on('pending', function() {
+  runner.on(EVENT_TEST_PENDING, function() {
     self.draw();
   });
 
-  runner.on('pass', function() {
+  runner.on(EVENT_TEST_PASS, function() {
     self.draw();
   });
 
-  runner.on('fail', function() {
+  runner.on(EVENT_TEST_FAIL, function() {
     self.draw();
   });
 
-  runner.once('end', function() {
+  runner.once(EVENT_RUN_END, function() {
     Base.cursor.show();
     for (var i = 0; i < self.numberOfLines; i++) {
       write('\n');
@@ -3497,7 +4012,7 @@ inherits(NyanCat, Base);
 /**
  * Draw the nyan cat
  *
- * @api private
+ * @private
  */
 
 NyanCat.prototype.draw = function() {
@@ -3512,7 +4027,7 @@ NyanCat.prototype.draw = function() {
  * Draw the "scoreboard" showing the number
  * of passes, failures and pending tests.
  *
- * @api private
+ * @private
  */
 
 NyanCat.prototype.drawScoreboard = function() {
@@ -3535,7 +4050,7 @@ NyanCat.prototype.drawScoreboard = function() {
 /**
  * Append the rainbow.
  *
- * @api private
+ * @private
  */
 
 NyanCat.prototype.appendRainbow = function() {
@@ -3554,7 +4069,7 @@ NyanCat.prototype.appendRainbow = function() {
 /**
  * Draw the rainbow.
  *
- * @api private
+ * @private
  */
 
 NyanCat.prototype.drawRainbow = function() {
@@ -3572,7 +4087,7 @@ NyanCat.prototype.drawRainbow = function() {
 /**
  * Draw the nyan cat
  *
- * @api private
+ * @private
  */
 NyanCat.prototype.drawNyanCat = function() {
   var self = this;
@@ -3606,7 +4121,7 @@ NyanCat.prototype.drawNyanCat = function() {
 /**
  * Draw nyan cat face.
  *
- * @api private
+ * @private
  * @return {string}
  */
 
@@ -3625,7 +4140,7 @@ NyanCat.prototype.face = function() {
 /**
  * Move cursor up `n`.
  *
- * @api private
+ * @private
  * @param {number} n
  */
 
@@ -3636,7 +4151,7 @@ NyanCat.prototype.cursorUp = function(n) {
 /**
  * Move cursor down `n`.
  *
- * @api private
+ * @private
  * @param {number} n
  */
 
@@ -3647,7 +4162,7 @@ NyanCat.prototype.cursorDown = function(n) {
 /**
  * Generate rainbow colors.
  *
- * @api private
+ * @private
  * @return {Array}
  */
 NyanCat.prototype.generateColors = function() {
@@ -3668,7 +4183,7 @@ NyanCat.prototype.generateColors = function() {
 /**
  * Apply rainbow to the given `str`.
  *
- * @api private
+ * @private
  * @param {string} str
  * @return {string}
  */
@@ -3690,8 +4205,10 @@ function write(string) {
   process.stdout.write(string);
 }
 
+NyanCat.description = '"nyan cat"';
+
 }).call(this,require('_process'))
-},{"../utils":36,"./base":16,"_process":56}],28:[function(require,module,exports){
+},{"../runner":34,"../utils":38,"./base":17,"_process":68}],29:[function(require,module,exports){
 (function (process){
 'use strict';
 /**
@@ -3702,6 +4219,10 @@ function write(string) {
  */
 
 var Base = require('./base');
+var constants = require('../runner').constants;
+var EVENT_RUN_BEGIN = constants.EVENT_RUN_BEGIN;
+var EVENT_TEST_END = constants.EVENT_TEST_END;
+var EVENT_RUN_END = constants.EVENT_RUN_END;
 var inherits = require('../utils').inherits;
 var color = Base.color;
 var cursor = Base.cursor;
@@ -3725,7 +4246,6 @@ Base.colors.progress = 90;
  * @class
  * @memberof Mocha.reporters
  * @extends Mocha.reporters.Base
- * @api public
  * @param {Runner} runner
  * @param {Object} options
  */
@@ -3749,13 +4269,13 @@ function Progress(runner, options) {
   options.verbose = reporterOptions.verbose || false;
 
   // tests started
-  runner.on('start', function() {
+  runner.on(EVENT_RUN_BEGIN, function() {
     console.log();
     cursor.hide();
   });
 
   // tests complete
-  runner.on('test end', function() {
+  runner.on(EVENT_TEST_END, function() {
     complete++;
 
     var percent = complete / total;
@@ -3781,7 +4301,7 @@ function Progress(runner, options) {
 
   // tests are complete, output some stats
   // and the failures if any
-  runner.once('end', function() {
+  runner.once(EVENT_RUN_END, function() {
     cursor.show();
     console.log();
     self.epilogue();
@@ -3793,8 +4313,10 @@ function Progress(runner, options) {
  */
 inherits(Progress, Base);
 
+Progress.description = 'a progress bar';
+
 }).call(this,require('_process'))
-},{"../utils":36,"./base":16,"_process":56}],29:[function(require,module,exports){
+},{"../runner":34,"../utils":38,"./base":17,"_process":68}],30:[function(require,module,exports){
 'use strict';
 /**
  * @module Spec
@@ -3804,6 +4326,14 @@ inherits(Progress, Base);
  */
 
 var Base = require('./base');
+var constants = require('../runner').constants;
+var EVENT_RUN_BEGIN = constants.EVENT_RUN_BEGIN;
+var EVENT_RUN_END = constants.EVENT_RUN_END;
+var EVENT_SUITE_BEGIN = constants.EVENT_SUITE_BEGIN;
+var EVENT_SUITE_END = constants.EVENT_SUITE_END;
+var EVENT_TEST_FAIL = constants.EVENT_TEST_FAIL;
+var EVENT_TEST_PASS = constants.EVENT_TEST_PASS;
+var EVENT_TEST_PENDING = constants.EVENT_TEST_PENDING;
 var inherits = require('../utils').inherits;
 var color = Base.color;
 
@@ -3820,7 +4350,6 @@ exports = module.exports = Spec;
  * @class
  * @memberof Mocha.reporters
  * @extends Mocha.reporters.Base
- * @api public
  * @param {Runner} runner
  */
 function Spec(runner) {
@@ -3834,28 +4363,28 @@ function Spec(runner) {
     return Array(indents).join('  ');
   }
 
-  runner.on('start', function() {
+  runner.on(EVENT_RUN_BEGIN, function() {
     console.log();
   });
 
-  runner.on('suite', function(suite) {
+  runner.on(EVENT_SUITE_BEGIN, function(suite) {
     ++indents;
     console.log(color('suite', '%s%s'), indent(), suite.title);
   });
 
-  runner.on('suite end', function() {
+  runner.on(EVENT_SUITE_END, function() {
     --indents;
     if (indents === 1) {
       console.log();
     }
   });
 
-  runner.on('pending', function(test) {
+  runner.on(EVENT_TEST_PENDING, function(test) {
     var fmt = indent() + color('pending', '  - %s');
     console.log(fmt, test.title);
   });
 
-  runner.on('pass', function(test) {
+  runner.on(EVENT_TEST_PASS, function(test) {
     var fmt;
     if (test.speed === 'fast') {
       fmt =
@@ -3873,11 +4402,11 @@ function Spec(runner) {
     }
   });
 
-  runner.on('fail', function(test) {
+  runner.on(EVENT_TEST_FAIL, function(test) {
     console.log(indent() + color('fail', '  %d) %s'), ++n, test.title);
   });
 
-  runner.once('end', self.epilogue.bind(self));
+  runner.once(EVENT_RUN_END, self.epilogue.bind(self));
 }
 
 /**
@@ -3885,7 +4414,10 @@ function Spec(runner) {
  */
 inherits(Spec, Base);
 
-},{"../utils":36,"./base":16}],30:[function(require,module,exports){
+Spec.description = 'hierarchical & verbose [default]';
+
+},{"../runner":34,"../utils":38,"./base":17}],31:[function(require,module,exports){
+(function (process){
 'use strict';
 /**
  * @module TAP
@@ -3894,7 +4426,17 @@ inherits(Spec, Base);
  * Module dependencies.
  */
 
+var util = require('util');
 var Base = require('./base');
+var constants = require('../runner').constants;
+var EVENT_TEST_PASS = constants.EVENT_TEST_PASS;
+var EVENT_TEST_FAIL = constants.EVENT_TEST_FAIL;
+var EVENT_RUN_BEGIN = constants.EVENT_RUN_BEGIN;
+var EVENT_RUN_END = constants.EVENT_RUN_END;
+var EVENT_TEST_PENDING = constants.EVENT_TEST_PENDING;
+var EVENT_TEST_END = constants.EVENT_TEST_END;
+var inherits = require('../utils').inherits;
+var sprintf = util.format;
 
 /**
  * Expose `TAP`.
@@ -3903,67 +4445,276 @@ var Base = require('./base');
 exports = module.exports = TAP;
 
 /**
- * Initialize a new `TAP` reporter.
+ * Constructs a new TAP reporter with runner instance and reporter options.
  *
  * @public
  * @class
- * @memberof Mocha.reporters
  * @extends Mocha.reporters.Base
- * @api public
- * @param {Runner} runner
+ * @memberof Mocha.reporters
+ * @param {Runner} runner - Instance triggers reporter actions.
+ * @param {Object} [options] - runner options
  */
-function TAP(runner) {
-  Base.call(this, runner);
+function TAP(runner, options) {
+  Base.call(this, runner, options);
 
+  var self = this;
   var n = 1;
-  var passes = 0;
-  var failures = 0;
 
-  runner.on('start', function() {
-    var total = runner.grepTotal(runner.suite);
-    console.log('%d..%d', 1, total);
+  var tapVersion = '12';
+  if (options && options.reporterOptions) {
+    if (options.reporterOptions.tapVersion) {
+      tapVersion = options.reporterOptions.tapVersion.toString();
+    }
+  }
+
+  this._producer = createProducer(tapVersion);
+
+  runner.once(EVENT_RUN_BEGIN, function() {
+    var ntests = runner.grepTotal(runner.suite);
+    self._producer.writeVersion();
+    self._producer.writePlan(ntests);
   });
 
-  runner.on('test end', function() {
+  runner.on(EVENT_TEST_END, function() {
     ++n;
   });
 
-  runner.on('pending', function(test) {
-    console.log('ok %d %s # SKIP -', n, title(test));
+  runner.on(EVENT_TEST_PENDING, function(test) {
+    self._producer.writePending(n, test);
   });
 
-  runner.on('pass', function(test) {
-    passes++;
-    console.log('ok %d %s', n, title(test));
+  runner.on(EVENT_TEST_PASS, function(test) {
+    self._producer.writePass(n, test);
   });
 
-  runner.on('fail', function(test, err) {
-    failures++;
-    console.log('not ok %d %s', n, title(test));
-    if (err.stack) {
-      console.log(err.stack.replace(/^/gm, '  '));
-    }
+  runner.on(EVENT_TEST_FAIL, function(test, err) {
+    self._producer.writeFail(n, test, err);
   });
 
-  runner.once('end', function() {
-    console.log('# tests ' + (passes + failures));
-    console.log('# pass ' + passes);
-    console.log('# fail ' + failures);
+  runner.once(EVENT_RUN_END, function() {
+    self._producer.writeEpilogue(runner.stats);
   });
 }
 
 /**
- * Return a TAP-safe title of `test`
+ * Inherit from `Base.prototype`.
+ */
+inherits(TAP, Base);
+
+/**
+ * Returns a TAP-safe title of `test`.
  *
- * @api private
- * @param {Object} test
- * @return {String}
+ * @private
+ * @param {Test} test - Test instance.
+ * @return {String} title with any hash character removed
  */
 function title(test) {
   return test.fullTitle().replace(/#/g, '');
 }
 
-},{"./base":16}],31:[function(require,module,exports){
+/**
+ * Writes newline-terminated formatted string to reporter output stream.
+ *
+ * @private
+ * @param {string} format - `printf`-like format string
+ * @param {...*} [varArgs] - Format string arguments
+ */
+function println(format, varArgs) {
+  var vargs = Array.from(arguments);
+  vargs[0] += '\n';
+  process.stdout.write(sprintf.apply(null, vargs));
+}
+
+/**
+ * Returns a `tapVersion`-appropriate TAP producer instance, if possible.
+ *
+ * @private
+ * @param {string} tapVersion - Version of TAP specification to produce.
+ * @returns {TAPProducer} specification-appropriate instance
+ * @throws {Error} if specification version has no associated producer.
+ */
+function createProducer(tapVersion) {
+  var producers = {
+    '12': new TAP12Producer(),
+    '13': new TAP13Producer()
+  };
+  var producer = producers[tapVersion];
+
+  if (!producer) {
+    throw new Error(
+      'invalid or unsupported TAP version: ' + JSON.stringify(tapVersion)
+    );
+  }
+
+  return producer;
+}
+
+/**
+ * @summary
+ * Constructs a new TAPProducer.
+ *
+ * @description
+ * <em>Only</em> to be used as an abstract base class.
+ *
+ * @private
+ * @constructor
+ */
+function TAPProducer() {}
+
+/**
+ * Writes the TAP version to reporter output stream.
+ *
+ * @abstract
+ */
+TAPProducer.prototype.writeVersion = function() {};
+
+/**
+ * Writes the plan to reporter output stream.
+ *
+ * @abstract
+ * @param {number} ntests - Number of tests that are planned to run.
+ */
+TAPProducer.prototype.writePlan = function(ntests) {
+  println('%d..%d', 1, ntests);
+};
+
+/**
+ * Writes that test passed to reporter output stream.
+ *
+ * @abstract
+ * @param {number} n - Index of test that passed.
+ * @param {Test} test - Instance containing test information.
+ */
+TAPProducer.prototype.writePass = function(n, test) {
+  println('ok %d %s', n, title(test));
+};
+
+/**
+ * Writes that test was skipped to reporter output stream.
+ *
+ * @abstract
+ * @param {number} n - Index of test that was skipped.
+ * @param {Test} test - Instance containing test information.
+ */
+TAPProducer.prototype.writePending = function(n, test) {
+  println('ok %d %s # SKIP -', n, title(test));
+};
+
+/**
+ * Writes that test failed to reporter output stream.
+ *
+ * @abstract
+ * @param {number} n - Index of test that failed.
+ * @param {Test} test - Instance containing test information.
+ * @param {Error} err - Reason the test failed.
+ */
+TAPProducer.prototype.writeFail = function(n, test, err) {
+  println('not ok %d %s', n, title(test));
+};
+
+/**
+ * Writes the summary epilogue to reporter output stream.
+ *
+ * @abstract
+ * @param {Object} stats - Object containing run statistics.
+ */
+TAPProducer.prototype.writeEpilogue = function(stats) {
+  // :TBD: Why is this not counting pending tests?
+  println('# tests ' + (stats.passes + stats.failures));
+  println('# pass ' + stats.passes);
+  // :TBD: Why are we not showing pending results?
+  println('# fail ' + stats.failures);
+};
+
+/**
+ * @summary
+ * Constructs a new TAP12Producer.
+ *
+ * @description
+ * Produces output conforming to the TAP12 specification.
+ *
+ * @private
+ * @constructor
+ * @extends TAPProducer
+ * @see {@link https://testanything.org/tap-specification.html|Specification}
+ */
+function TAP12Producer() {
+  /**
+   * Writes that test failed to reporter output stream, with error formatting.
+   * @override
+   */
+  this.writeFail = function(n, test, err) {
+    TAPProducer.prototype.writeFail.call(this, n, test, err);
+    if (err.message) {
+      println(err.message.replace(/^/gm, '  '));
+    }
+    if (err.stack) {
+      println(err.stack.replace(/^/gm, '  '));
+    }
+  };
+}
+
+/**
+ * Inherit from `TAPProducer.prototype`.
+ */
+inherits(TAP12Producer, TAPProducer);
+
+/**
+ * @summary
+ * Constructs a new TAP13Producer.
+ *
+ * @description
+ * Produces output conforming to the TAP13 specification.
+ *
+ * @private
+ * @constructor
+ * @extends TAPProducer
+ * @see {@link https://testanything.org/tap-version-13-specification.html|Specification}
+ */
+function TAP13Producer() {
+  /**
+   * Writes the TAP version to reporter output stream.
+   * @override
+   */
+  this.writeVersion = function() {
+    println('TAP version 13');
+  };
+
+  /**
+   * Writes that test failed to reporter output stream, with error formatting.
+   * @override
+   */
+  this.writeFail = function(n, test, err) {
+    TAPProducer.prototype.writeFail.call(this, n, test, err);
+    var emitYamlBlock = err.message != null || err.stack != null;
+    if (emitYamlBlock) {
+      println(indent(1) + '---');
+      if (err.message) {
+        println(indent(2) + 'message: |-');
+        println(err.message.replace(/^/gm, indent(3)));
+      }
+      if (err.stack) {
+        println(indent(2) + 'stack: |-');
+        println(err.stack.replace(/^/gm, indent(3)));
+      }
+      println(indent(1) + '...');
+    }
+  };
+
+  function indent(level) {
+    return Array(level + 1).join('  ');
+  }
+}
+
+/**
+ * Inherit from `TAPProducer.prototype`.
+ */
+inherits(TAP13Producer, TAPProducer);
+
+TAP.description = 'TAP-compatible output';
+
+}).call(this,require('_process'))
+},{"../runner":34,"../utils":38,"./base":17,"_process":68,"util":88}],32:[function(require,module,exports){
 (function (process,global){
 'use strict';
 /**
@@ -3975,23 +4726,24 @@ function title(test) {
 
 var Base = require('./base');
 var utils = require('../utils');
-var inherits = utils.inherits;
 var fs = require('fs');
-var escape = utils.escape;
 var mkdirp = require('mkdirp');
 var path = require('path');
+var errors = require('../errors');
+var createUnsupportedError = errors.createUnsupportedError;
+var constants = require('../runner').constants;
+var EVENT_TEST_PASS = constants.EVENT_TEST_PASS;
+var EVENT_TEST_FAIL = constants.EVENT_TEST_FAIL;
+var EVENT_RUN_END = constants.EVENT_RUN_END;
+var EVENT_TEST_PENDING = constants.EVENT_TEST_PENDING;
+var STATE_FAILED = require('../runnable').constants.STATE_FAILED;
+var inherits = utils.inherits;
+var escape = utils.escape;
 
 /**
  * Save timer references to avoid Sinon interfering (see GH-237).
  */
-
-/* eslint-disable no-unused-vars, no-native-reassign */
 var Date = global.Date;
-var setTimeout = global.setTimeout;
-var setInterval = global.setInterval;
-var clearTimeout = global.clearTimeout;
-var clearInterval = global.clearInterval;
-/* eslint-enable no-unused-vars, no-native-reassign */
 
 /**
  * Expose `XUnit`.
@@ -4006,7 +4758,6 @@ exports = module.exports = XUnit;
  * @class
  * @memberof Mocha.reporters
  * @extends Mocha.reporters.Base
- * @api public
  * @param {Runner} runner
  */
 function XUnit(runner, options) {
@@ -4025,7 +4776,7 @@ function XUnit(runner, options) {
   if (options && options.reporterOptions) {
     if (options.reporterOptions.output) {
       if (!fs.createWriteStream) {
-        throw new Error('file output not supported in browser');
+        throw createUnsupportedError('file output not supported in browser');
       }
 
       mkdirp.sync(path.dirname(options.reporterOptions.output));
@@ -4039,26 +4790,26 @@ function XUnit(runner, options) {
   // fall back to the default suite name
   suiteName = suiteName || DEFAULT_SUITE_NAME;
 
-  runner.on('pending', function(test) {
+  runner.on(EVENT_TEST_PENDING, function(test) {
     tests.push(test);
   });
 
-  runner.on('pass', function(test) {
+  runner.on(EVENT_TEST_PASS, function(test) {
     tests.push(test);
   });
 
-  runner.on('fail', function(test) {
+  runner.on(EVENT_TEST_FAIL, function(test) {
     tests.push(test);
   });
 
-  runner.once('end', function() {
+  runner.once(EVENT_RUN_END, function() {
     self.write(
       tag(
         'testsuite',
         {
           name: suiteName,
           tests: stats.tests,
-          failures: stats.failures,
+          failures: 0,
           errors: stats.failures,
           skipped: stats.tests - stats.failures - stats.passes,
           timestamp: new Date().toUTCString(),
@@ -4118,14 +4869,20 @@ XUnit.prototype.write = function(line) {
  * @param {Test} test
  */
 XUnit.prototype.test = function(test) {
+  Base.useColors = false;
+
   var attrs = {
     classname: test.parent.fullTitle(),
     name: test.title,
     time: test.duration / 1000 || 0
   };
 
-  if (test.state === 'failed') {
+  if (test.state === STATE_FAILED) {
     var err = test.err;
+    var diff =
+      Base.hideDiff || !err.actual || !err.expected
+        ? ''
+        : '\n' + Base.generateDiff(err.actual, err.expected);
     this.write(
       tag(
         'testcase',
@@ -4135,7 +4892,7 @@ XUnit.prototype.test = function(test) {
           'failure',
           {},
           false,
-          escape(err.message) + '\n' + escape(err.stack)
+          escape(err.message) + escape(diff) + '\n' + escape(err.stack)
         )
       )
     );
@@ -4173,37 +4930,37 @@ function tag(name, attrs, close, content) {
   return tag;
 }
 
+XUnit.description = 'XUnit-compatible XML output';
+
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../utils":36,"./base":16,"_process":56,"fs":40,"mkdirp":53,"path":40}],32:[function(require,module,exports){
+},{"../errors":6,"../runnable":33,"../runner":34,"../utils":38,"./base":17,"_process":68,"fs":42,"mkdirp":59,"path":42}],33:[function(require,module,exports){
 (function (global){
 'use strict';
+
 var EventEmitter = require('events').EventEmitter;
 var Pending = require('./pending');
 var debug = require('debug')('mocha:runnable');
-var milliseconds = require('./ms');
+var milliseconds = require('ms');
 var utils = require('./utils');
+var createInvalidExceptionError = require('./errors')
+  .createInvalidExceptionError;
 
 /**
  * Save timer references to avoid Sinon interfering (see GH-237).
  */
-
-/* eslint-disable no-unused-vars, no-native-reassign */
 var Date = global.Date;
 var setTimeout = global.setTimeout;
-var setInterval = global.setInterval;
 var clearTimeout = global.clearTimeout;
-var clearInterval = global.clearInterval;
-/* eslint-enable no-unused-vars, no-native-reassign */
-
 var toString = Object.prototype.toString;
 
 module.exports = Runnable;
 
 /**
- * Initialize a new `Runnable` with the given `title` and callback `fn`.  Derived from [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
+ * Initialize a new `Runnable` with the given `title` and callback `fn`.
  *
  * @class
- * @extends EventEmitter
+ * @extends external:EventEmitter
+ * @public
  * @param {String} title
  * @param {Function} fn
  */
@@ -4228,22 +4985,42 @@ function Runnable(title, fn) {
 utils.inherits(Runnable, EventEmitter);
 
 /**
- * Set & get timeout `ms`.
+ * Get current timeout value in msecs.
  *
- * @api private
- * @param {number|string} ms
- * @return {Runnable|number} ms or Runnable instance.
+ * @private
+ * @returns {number} current timeout threshold value
+ */
+/**
+ * @summary
+ * Set timeout threshold value (msecs).
+ *
+ * @description
+ * A string argument can use shorthand (e.g., "2s") and will be converted.
+ * The value will be clamped to range [<code>0</code>, <code>2^<sup>31</sup>-1</code>].
+ * If clamped value matches either range endpoint, timeouts will be disabled.
+ *
+ * @private
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setTimeout#Maximum_delay_value}
+ * @param {number|string} ms - Timeout threshold value.
+ * @returns {Runnable} this
+ * @chainable
  */
 Runnable.prototype.timeout = function(ms) {
   if (!arguments.length) {
     return this._timeout;
   }
-  // see #1652 for reasoning
-  if (ms === 0 || ms > Math.pow(2, 31)) {
-    this._enableTimeouts = false;
-  }
   if (typeof ms === 'string') {
     ms = milliseconds(ms);
+  }
+
+  // Clamp to range
+  var INT_MAX = Math.pow(2, 31) - 1;
+  var range = [0, INT_MAX];
+  ms = utils.clamp(ms, range);
+
+  // see #1652 for reasoning
+  if (ms === range[0] || ms === range[1]) {
+    this._enableTimeouts = false;
   }
   debug('timeout %d', ms);
   this._timeout = ms;
@@ -4256,7 +5033,7 @@ Runnable.prototype.timeout = function(ms) {
 /**
  * Set or get slow `ms`.
  *
- * @api private
+ * @private
  * @param {number|string} ms
  * @return {Runnable|number} ms or Runnable instance.
  */
@@ -4275,7 +5052,7 @@ Runnable.prototype.slow = function(ms) {
 /**
  * Set and get whether timeout is `enabled`.
  *
- * @api private
+ * @private
  * @param {boolean} enabled
  * @return {Runnable|boolean} enabled or Runnable instance.
  */
@@ -4293,7 +5070,6 @@ Runnable.prototype.enableTimeouts = function(enabled) {
  *
  * @memberof Mocha.Runnable
  * @public
- * @api public
  */
 Runnable.prototype.skip = function() {
   throw new Pending('sync skip');
@@ -4302,7 +5078,7 @@ Runnable.prototype.skip = function() {
 /**
  * Check if this runnable or its parent suite is marked as pending.
  *
- * @api private
+ * @private
  */
 Runnable.prototype.isPending = function() {
   return this.pending || (this.parent && this.parent.isPending());
@@ -4314,7 +5090,7 @@ Runnable.prototype.isPending = function() {
  * @private
  */
 Runnable.prototype.isFailed = function() {
-  return !this.isPending() && this.state === 'failed';
+  return !this.isPending() && this.state === constants.STATE_FAILED;
 };
 
 /**
@@ -4323,13 +5099,13 @@ Runnable.prototype.isFailed = function() {
  * @private
  */
 Runnable.prototype.isPassed = function() {
-  return !this.isPending() && this.state === 'passed';
+  return !this.isPending() && this.state === constants.STATE_PASSED;
 };
 
 /**
  * Set or get number of retries.
  *
- * @api private
+ * @private
  */
 Runnable.prototype.retries = function(n) {
   if (!arguments.length) {
@@ -4341,7 +5117,7 @@ Runnable.prototype.retries = function(n) {
 /**
  * Set or get current retry
  *
- * @api private
+ * @private
  */
 Runnable.prototype.currentRetry = function(n) {
   if (!arguments.length) {
@@ -4356,7 +5132,6 @@ Runnable.prototype.currentRetry = function(n) {
  *
  * @memberof Mocha.Runnable
  * @public
- * @api public
  * @return {string}
  */
 Runnable.prototype.fullTitle = function() {
@@ -4368,7 +5143,6 @@ Runnable.prototype.fullTitle = function() {
  *
  * @memberof Mocha.Runnable
  * @public
- * @api public
  * @return {string}
  */
 Runnable.prototype.titlePath = function() {
@@ -4378,7 +5152,7 @@ Runnable.prototype.titlePath = function() {
 /**
  * Clear the timeout.
  *
- * @api private
+ * @private
  */
 Runnable.prototype.clearTimeout = function() {
   clearTimeout(this.timer);
@@ -4387,7 +5161,7 @@ Runnable.prototype.clearTimeout = function() {
 /**
  * Inspect the runnable void of private properties.
  *
- * @api private
+ * @private
  * @return {string}
  */
 Runnable.prototype.inspect = function() {
@@ -4412,7 +5186,7 @@ Runnable.prototype.inspect = function() {
 /**
  * Reset the timeout.
  *
- * @api private
+ * @private
  */
 Runnable.prototype.resetTimeout = function() {
   var self = this;
@@ -4434,7 +5208,7 @@ Runnable.prototype.resetTimeout = function() {
 /**
  * Set or get a list of whitelisted globals for this test run.
  *
- * @api private
+ * @private
  * @param {string[]} globals
  */
 Runnable.prototype.globals = function(globals) {
@@ -4448,7 +5222,7 @@ Runnable.prototype.globals = function(globals) {
  * Run the test and invoke `fn(err)`.
  *
  * @param {Function} fn
- * @api private
+ * @private
  */
 Runnable.prototype.run = function(fn) {
   var self = this;
@@ -4520,7 +5294,7 @@ Runnable.prototype.run = function(fn) {
       callFnAsync(this.fn);
     } catch (err) {
       emitted = true;
-      done(utils.getError(err));
+      done(Runnable.toValueOrError(err));
     }
     return;
   }
@@ -4543,7 +5317,7 @@ Runnable.prototype.run = function(fn) {
     }
   } catch (err) {
     emitted = true;
-    done(utils.getError(err));
+    done(Runnable.toValueOrError(err));
   }
 
   function callFn(fn) {
@@ -4618,32 +5392,82 @@ Runnable.prototype._timeoutError = function(ms) {
   return new Error(msg);
 };
 
+var constants = utils.defineConstants(
+  /**
+   * {@link Runnable}-related constants.
+   * @public
+   * @memberof Runnable
+   * @readonly
+   * @static
+   * @alias constants
+   * @enum {string}
+   */
+  {
+    /**
+     * Value of `state` prop when a `Runnable` has failed
+     */
+    STATE_FAILED: 'failed',
+    /**
+     * Value of `state` prop when a `Runnable` has passed
+     */
+    STATE_PASSED: 'passed'
+  }
+);
+
+/**
+ * Given `value`, return identity if truthy, otherwise create an "invalid exception" error and return that.
+ * @param {*} [value] - Value to return, if present
+ * @returns {*|Error} `value`, otherwise an `Error`
+ * @private
+ */
+Runnable.toValueOrError = function(value) {
+  return (
+    value ||
+    createInvalidExceptionError(
+      'Runnable failed with falsy or undefined exception. Please throw an Error instead.',
+      value
+    )
+  );
+};
+
+Runnable.constants = constants;
+
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./ms":14,"./pending":15,"./utils":36,"debug":43,"events":47}],33:[function(require,module,exports){
+},{"./errors":6,"./pending":16,"./utils":38,"debug":45,"events":50,"ms":60}],34:[function(require,module,exports){
 (function (process,global){
 'use strict';
 
 /**
- * @module Runner
- */
-/**
  * Module dependencies.
  */
+var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var Pending = require('./pending');
 var utils = require('./utils');
 var inherits = utils.inherits;
 var debug = require('debug')('mocha:runner');
 var Runnable = require('./runnable');
+var Suite = require('./suite');
+var HOOK_TYPE_BEFORE_EACH = Suite.constants.HOOK_TYPE_BEFORE_EACH;
+var HOOK_TYPE_AFTER_EACH = Suite.constants.HOOK_TYPE_AFTER_EACH;
+var HOOK_TYPE_AFTER_ALL = Suite.constants.HOOK_TYPE_AFTER_ALL;
+var HOOK_TYPE_BEFORE_ALL = Suite.constants.HOOK_TYPE_BEFORE_ALL;
+var EVENT_ROOT_SUITE_RUN = Suite.constants.EVENT_ROOT_SUITE_RUN;
+var STATE_FAILED = Runnable.constants.STATE_FAILED;
+var STATE_PASSED = Runnable.constants.STATE_PASSED;
+var dQuote = utils.dQuote;
+var ngettext = utils.ngettext;
+var sQuote = utils.sQuote;
 var stackFilter = utils.stackTraceFilter();
 var stringify = utils.stringify;
 var type = utils.type;
-var undefinedError = utils.undefinedError;
+var createInvalidExceptionError = require('./errors')
+  .createInvalidExceptionError;
 
 /**
  * Non-enumerable globals.
+ * @readonly
  */
-
 var globals = [
   'setTimeout',
   'clearTimeout',
@@ -4655,34 +5479,85 @@ var globals = [
   'clearImmediate'
 ];
 
-/**
- * Expose `Runner`.
- */
+var constants = utils.defineConstants(
+  /**
+   * {@link Runner}-related constants.
+   * @public
+   * @memberof Runner
+   * @readonly
+   * @alias constants
+   * @static
+   * @enum {string}
+   */
+  {
+    /**
+     * Emitted when {@link Hook} execution begins
+     */
+    EVENT_HOOK_BEGIN: 'hook',
+    /**
+     * Emitted when {@link Hook} execution ends
+     */
+    EVENT_HOOK_END: 'hook end',
+    /**
+     * Emitted when Root {@link Suite} execution begins (all files have been parsed and hooks/tests are ready for execution)
+     */
+    EVENT_RUN_BEGIN: 'start',
+    /**
+     * Emitted when Root {@link Suite} execution has been delayed via `delay` option
+     */
+    EVENT_DELAY_BEGIN: 'waiting',
+    /**
+     * Emitted when delayed Root {@link Suite} execution is triggered by user via `global.run()`
+     */
+    EVENT_DELAY_END: 'ready',
+    /**
+     * Emitted when Root {@link Suite} execution ends
+     */
+    EVENT_RUN_END: 'end',
+    /**
+     * Emitted when {@link Suite} execution begins
+     */
+    EVENT_SUITE_BEGIN: 'suite',
+    /**
+     * Emitted when {@link Suite} execution ends
+     */
+    EVENT_SUITE_END: 'suite end',
+    /**
+     * Emitted when {@link Test} execution begins
+     */
+    EVENT_TEST_BEGIN: 'test',
+    /**
+     * Emitted when {@link Test} execution ends
+     */
+    EVENT_TEST_END: 'test end',
+    /**
+     * Emitted when {@link Test} execution fails
+     */
+    EVENT_TEST_FAIL: 'fail',
+    /**
+     * Emitted when {@link Test} execution succeeds
+     */
+    EVENT_TEST_PASS: 'pass',
+    /**
+     * Emitted when {@link Test} becomes pending
+     */
+    EVENT_TEST_PENDING: 'pending',
+    /**
+     * Emitted when {@link Test} execution has failed, but will retry
+     */
+    EVENT_TEST_RETRY: 'retry'
+  }
+);
 
 module.exports = Runner;
 
 /**
- * Initialize a `Runner` for the given `suite`. Derived from [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
+ * Initialize a `Runner` at the Root {@link Suite}, which represents a hierarchy of {@link Suite|Suites} and {@link Test|Tests}.
  *
- * Events:
- *
- *   - `start`  execution started
- *   - `end`  execution complete
- *   - `suite`  (suite) test suite execution started
- *   - `suite end`  (suite) all tests (and sub-suites) have finished
- *   - `test`  (test) test execution started
- *   - `test end`  (test) test completed
- *   - `hook`  (hook) hook execution started
- *   - `hook end`  (hook) hook complete
- *   - `pass`  (test) test passed
- *   - `fail`  (test, err) test failed
- *   - `pending`  (test) test pending
- *
- * @memberof Mocha
+ * @extends external:EventEmitter
  * @public
  * @class
- * @api public
- * @param {Suite} [suite] Root suite
+ * @param {Suite} suite Root suite
  * @param {boolean} [delay] Whether or not to delay execution of root suite
  * until ready.
  */
@@ -4695,10 +5570,10 @@ function Runner(suite, delay) {
   this.started = false;
   this.total = suite.total();
   this.failures = 0;
-  this.on('test end', function(test) {
+  this.on(constants.EVENT_TEST_END, function(test) {
     self.checkGlobals(test);
   });
-  this.on('hook end', function(hook) {
+  this.on(constants.EVENT_HOOK_END, function(hook) {
     self.checkGlobals(hook);
   });
   this._defaultGrep = /.*/;
@@ -4710,7 +5585,7 @@ function Runner(suite, delay) {
  * Wrapper for setImmediate, process.nextTick, or browser polyfill.
  *
  * @param {Function} fn
- * @api private
+ * @private
  */
 Runner.immediately = global.setImmediate || process.nextTick;
 
@@ -4723,9 +5598,8 @@ inherits(Runner, EventEmitter);
  * Run tests with full titles matching `re`. Updates runner.total
  * with number of tests matched.
  *
- * @api public
  * @public
- * @memberof Mocha.Runner
+ * @memberof Runner
  * @param {RegExp} re
  * @param {boolean} invert
  * @return {Runner} Runner instance.
@@ -4742,8 +5616,7 @@ Runner.prototype.grep = function(re, invert) {
  * Returns the number of tests matching the grep search for the
  * given suite.
  *
- * @memberof Mocha.Runner
- * @api public
+ * @memberof Runner
  * @public
  * @param {Suite} suite
  * @return {number}
@@ -4769,7 +5642,7 @@ Runner.prototype.grepTotal = function(suite) {
  * Return a list of global properties.
  *
  * @return {Array}
- * @api private
+ * @private
  */
 Runner.prototype.globalProps = function() {
   var props = Object.keys(global);
@@ -4788,9 +5661,8 @@ Runner.prototype.globalProps = function() {
 /**
  * Allow the given `arr` of globals.
  *
- * @api public
  * @public
- * @memberof Mocha.Runner
+ * @memberof Runner
  * @param {Array} arr
  * @return {Runner} Runner instance.
  */
@@ -4806,7 +5678,7 @@ Runner.prototype.globals = function(arr) {
 /**
  * Check for global variable leaks.
  *
- * @api private
+ * @private
  */
 Runner.prototype.checkGlobals = function(test) {
   if (this.ignoreLeaks) {
@@ -4829,20 +5701,21 @@ Runner.prototype.checkGlobals = function(test) {
   leaks = filterLeaks(ok, globals);
   this._globals = this._globals.concat(leaks);
 
-  if (leaks.length > 1) {
-    this.fail(
-      test,
-      new Error('global leaks detected: ' + leaks.join(', ') + '')
+  if (leaks.length) {
+    var format = ngettext(
+      leaks.length,
+      'global leak detected: %s',
+      'global leaks detected: %s'
     );
-  } else if (leaks.length) {
-    this.fail(test, new Error('global leak detected: ' + leaks[0]));
+    var error = new Error(util.format(format, leaks.map(sQuote).join(', ')));
+    this.fail(test, error);
   }
 };
 
 /**
  * Fail the given `test`.
  *
- * @api private
+ * @private
  * @param {Test} test
  * @param {Error} err
  */
@@ -4852,16 +5725,10 @@ Runner.prototype.fail = function(test, err) {
   }
 
   ++this.failures;
-  test.state = 'failed';
+  test.state = STATE_FAILED;
 
-  if (!(err instanceof Error || (err && typeof err.message === 'string'))) {
-    err = new Error(
-      'the ' +
-        type(err) +
-        ' ' +
-        stringify(err) +
-        ' was thrown, throw an Error :)'
-    );
+  if (!isError(err)) {
+    err = thrown2Error(err);
   }
 
   try {
@@ -4871,17 +5738,15 @@ Runner.prototype.fail = function(test, err) {
     // some environments do not take kindly to monkeying with the stack
   }
 
-  this.emit('fail', test, err);
-  if (this.suite.bail()) {
-    this.emit('end');
-  }
+  this.emit(constants.EVENT_TEST_FAIL, test, err);
 };
 
 /**
  * Fail the given `hook` with `err`.
  *
  * Hook failures work in the following pattern:
- * - If bail, then exit
+ * - If bail, run corresponding `after each` and `after` hooks,
+ *   then exit
  * - Failed `before` hook skips all tests in a suite and subsuites,
  *   but jumps to corresponding `after` hook
  * - Failed `before each` hook skips remaining tests in a
@@ -4893,15 +5758,23 @@ Runner.prototype.fail = function(test, err) {
  *   suite and subsuites, but executes other `after each`
  *   hooks
  *
- * @api private
+ * @private
  * @param {Hook} hook
  * @param {Error} err
  */
 Runner.prototype.failHook = function(hook, err) {
+  hook.originalTitle = hook.originalTitle || hook.title;
   if (hook.ctx && hook.ctx.currentTest) {
-    hook.originalTitle = hook.originalTitle || hook.title;
     hook.title =
-      hook.originalTitle + ' for "' + hook.ctx.currentTest.title + '"';
+      hook.originalTitle + ' for ' + dQuote(hook.ctx.currentTest.title);
+  } else {
+    var parentTitle;
+    if (hook.parent.title) {
+      parentTitle = hook.parent.title;
+    } else {
+      parentTitle = hook.parent.root ? '{root}' : '';
+    }
+    hook.title = hook.originalTitle + ' in ' + dQuote(parentTitle);
   }
 
   this.fail(hook, err);
@@ -4910,14 +5783,14 @@ Runner.prototype.failHook = function(hook, err) {
 /**
  * Run hook `name` callbacks and then invoke `fn()`.
  *
- * @api private
+ * @private
  * @param {string} name
  * @param {Function} fn
  */
 
 Runner.prototype.hook = function(name, fn) {
   var suite = this.suite;
-  var hooks = suite['_' + name];
+  var hooks = suite.getHooks(name);
   var self = this;
 
   function next(i) {
@@ -4927,9 +5800,15 @@ Runner.prototype.hook = function(name, fn) {
     }
     self.currentRunnable = hook;
 
-    hook.ctx.currentTest = self.test;
+    if (name === 'beforeAll') {
+      hook.ctx.currentTest = hook.parent.tests[0];
+    } else if (name === 'afterAll') {
+      hook.ctx.currentTest = hook.parent.tests[hook.parent.tests.length - 1];
+    } else {
+      hook.ctx.currentTest = self.test;
+    }
 
-    self.emit('hook', hook);
+    self.emit(constants.EVENT_HOOK_BEGIN, hook);
 
     if (!hook.listeners('error').length) {
       hook.on('error', function(err) {
@@ -4944,11 +5823,14 @@ Runner.prototype.hook = function(name, fn) {
       }
       if (err) {
         if (err instanceof Pending) {
-          if (name === 'beforeEach' || name === 'afterEach') {
+          if (name === HOOK_TYPE_BEFORE_EACH || name === HOOK_TYPE_AFTER_EACH) {
             self.test.pending = true;
           } else {
             suite.tests.forEach(function(test) {
               test.pending = true;
+            });
+            suite.suites.forEach(function(suite) {
+              suite.pending = true;
             });
             // a pending hook won't be executed twice.
             hook.pending = true;
@@ -4960,7 +5842,7 @@ Runner.prototype.hook = function(name, fn) {
           return fn(err);
         }
       }
-      self.emit('hook end', hook);
+      self.emit(constants.EVENT_HOOK_END, hook);
       delete hook.ctx.currentTest;
       next(++i);
     });
@@ -4975,7 +5857,7 @@ Runner.prototype.hook = function(name, fn) {
  * Run hook `name` for the given array of `suites`
  * in order, and callback `fn(err, errSuite)`.
  *
- * @api private
+ * @private
  * @param {string} name
  * @param {Array} suites
  * @param {Function} fn
@@ -5011,7 +5893,7 @@ Runner.prototype.hooks = function(name, suites, fn) {
  *
  * @param {String} name
  * @param {Function} fn
- * @api private
+ * @private
  */
 Runner.prototype.hookUp = function(name, fn) {
   var suites = [this.suite].concat(this.parents()).reverse();
@@ -5023,7 +5905,7 @@ Runner.prototype.hookUp = function(name, fn) {
  *
  * @param {String} name
  * @param {Function} fn
- * @api private
+ * @private
  */
 Runner.prototype.hookDown = function(name, fn) {
   var suites = [this.suite].concat(this.parents());
@@ -5035,7 +5917,7 @@ Runner.prototype.hookDown = function(name, fn) {
  * closest to furthest.
  *
  * @return {Array}
- * @api private
+ * @private
  */
 Runner.prototype.parents = function() {
   var suite = this.suite;
@@ -5051,7 +5933,7 @@ Runner.prototype.parents = function() {
  * Run the current test and callback `fn(err)`.
  *
  * @param {Function} fn
- * @api private
+ * @private
  */
 Runner.prototype.runTest = function(fn) {
   var self = this;
@@ -5060,7 +5942,9 @@ Runner.prototype.runTest = function(fn) {
   if (!test) {
     return;
   }
-  if (this.forbidOnly && hasOnly(this.parents().reverse()[0] || this.suite)) {
+
+  var suite = this.parents().reverse()[0] || this.suite;
+  if (this.forbidOnly && suite.hasOnly()) {
     fn(new Error('`.only` forbidden'));
     return;
   }
@@ -5084,7 +5968,7 @@ Runner.prototype.runTest = function(fn) {
 /**
  * Run tests in the given `suite` and invoke the callback `fn()` when complete.
  *
- * @api private
+ * @private
  * @param {Suite} suite
  * @param {Function} fn
  */
@@ -5103,7 +5987,7 @@ Runner.prototype.runTests = function(suite, fn) {
 
     if (self.suite) {
       // call hookUp afterEach
-      self.hookUp('afterEach', function(err2, errSuite2) {
+      self.hookUp(HOOK_TYPE_AFTER_EACH, function(err2, errSuite2) {
         self.suite = orig;
         // some hooks may fail even now
         if (err2) {
@@ -5122,7 +6006,7 @@ Runner.prototype.runTests = function(suite, fn) {
   function next(err, errSuite) {
     // if we bail after first err
     if (self.failures && suite._bail) {
-      return fn();
+      tests = [];
     }
 
     if (self._abort) {
@@ -5169,24 +6053,24 @@ Runner.prototype.runTests = function(suite, fn) {
         self.fail(test, new Error('Pending test forbidden'));
         delete test.isPending;
       } else {
-        self.emit('pending', test);
+        self.emit(constants.EVENT_TEST_PENDING, test);
       }
-      self.emit('test end', test);
+      self.emit(constants.EVENT_TEST_END, test);
       return next();
     }
 
     // execute test and hook(s)
-    self.emit('test', (self.test = test));
-    self.hookDown('beforeEach', function(err, errSuite) {
+    self.emit(constants.EVENT_TEST_BEGIN, (self.test = test));
+    self.hookDown(HOOK_TYPE_BEFORE_EACH, function(err, errSuite) {
       if (test.isPending()) {
         if (self.forbidPending) {
           test.isPending = alwaysFalse;
           self.fail(test, new Error('Pending test forbidden'));
           delete test.isPending;
         } else {
-          self.emit('pending', test);
+          self.emit(constants.EVENT_TEST_PENDING, test);
         }
-        self.emit('test end', test);
+        self.emit(constants.EVENT_TEST_END, test);
         return next();
       }
       if (err) {
@@ -5201,31 +6085,33 @@ Runner.prototype.runTests = function(suite, fn) {
             self.fail(test, new Error('Pending test forbidden'));
           } else if (err instanceof Pending) {
             test.pending = true;
-            self.emit('pending', test);
+            self.emit(constants.EVENT_TEST_PENDING, test);
           } else if (retry < test.retries()) {
             var clonedTest = test.clone();
             clonedTest.currentRetry(retry + 1);
             tests.unshift(clonedTest);
 
+            self.emit(constants.EVENT_TEST_RETRY, test, err);
+
             // Early return + hook trigger so that it doesn't
             // increment the count wrong
-            return self.hookUp('afterEach', next);
+            return self.hookUp(HOOK_TYPE_AFTER_EACH, next);
           } else {
             self.fail(test, err);
           }
-          self.emit('test end', test);
+          self.emit(constants.EVENT_TEST_END, test);
 
           if (err instanceof Pending) {
             return next();
           }
 
-          return self.hookUp('afterEach', next);
+          return self.hookUp(HOOK_TYPE_AFTER_EACH, next);
         }
 
-        test.state = 'passed';
-        self.emit('pass', test);
-        self.emit('test end', test);
-        self.hookUp('afterEach', next);
+        test.state = STATE_PASSED;
+        self.emit(constants.EVENT_TEST_PASS, test);
+        self.emit(constants.EVENT_TEST_END, test);
+        self.hookUp(HOOK_TYPE_AFTER_EACH, next);
       });
     });
   }
@@ -5242,7 +6128,7 @@ function alwaysFalse() {
 /**
  * Run the given `suite` and invoke the callback `fn()` when complete.
  *
- * @api private
+ * @private
  * @param {Suite} suite
  * @param {Function} fn
  */
@@ -5258,7 +6144,7 @@ Runner.prototype.runSuite = function(suite, fn) {
     return fn();
   }
 
-  this.emit('suite', (this.suite = suite));
+  this.emit(constants.EVENT_SUITE_BEGIN, (this.suite = suite));
 
   function next(errSuite) {
     if (errSuite) {
@@ -5308,8 +6194,8 @@ Runner.prototype.runSuite = function(suite, fn) {
       // remove reference to test
       delete self.test;
 
-      self.hook('afterAll', function() {
-        self.emit('suite end', suite);
+      self.hook(HOOK_TYPE_AFTER_ALL, function() {
+        self.emit(constants.EVENT_SUITE_END, suite);
         fn(errSuite);
       });
     }
@@ -5317,7 +6203,7 @@ Runner.prototype.runSuite = function(suite, fn) {
 
   this.nextSuite = next;
 
-  this.hook('beforeAll', function(err) {
+  this.hook(HOOK_TYPE_BEFORE_ALL, function(err) {
     if (err) {
       return done();
     }
@@ -5329,22 +6215,21 @@ Runner.prototype.runSuite = function(suite, fn) {
  * Handle uncaught exceptions.
  *
  * @param {Error} err
- * @api private
+ * @private
  */
 Runner.prototype.uncaught = function(err) {
   if (err) {
-    debug(
-      'uncaught exception %s',
-      err ===
-      function() {
-        return this;
-      }.call(err)
-        ? err.message || err
-        : err
-    );
+    debug('uncaught exception %O', err);
   } else {
-    debug('uncaught undefined exception');
-    err = undefinedError();
+    debug('uncaught undefined/falsy exception');
+    err = createInvalidExceptionError(
+      'Caught falsy/undefined exception which would otherwise be uncaught. No stack trace found; try a debugger',
+      err
+    );
+  }
+
+  if (!isError(err)) {
+    err = thrown2Error(err);
   }
   err.uncaught = true;
 
@@ -5358,9 +6243,9 @@ Runner.prototype.uncaught = function(err) {
       this.fail(runnable, err);
     } else {
       // Can't recover from this failure
-      this.emit('start');
+      this.emit(constants.EVENT_RUN_BEGIN);
       this.fail(runnable, err);
-      this.emit('end');
+      this.emit(constants.EVENT_RUN_END);
     }
 
     return;
@@ -5380,14 +6265,17 @@ Runner.prototype.uncaught = function(err) {
   this.fail(runnable, err);
   if (!alreadyPassed) {
     // recover from test
-    if (runnable.type === 'test') {
-      this.emit('test end', runnable);
-      this.hookUp('afterEach', this.next);
+    if (runnable.type === constants.EVENT_TEST_BEGIN) {
+      this.emit(constants.EVENT_TEST_END, runnable);
+      this.hookUp(HOOK_TYPE_AFTER_EACH, this.next);
       return;
     }
+    debug(runnable);
 
     // recover from hooks
     var errSuite = this.suite;
+
+    // XXX how about a less awful way to determine this?
     // if hook failure is in afterEach block
     if (runnable.fullTitle().indexOf('after each') > -1) {
       return this.hookErr(err, errSuite, true);
@@ -5401,54 +6289,15 @@ Runner.prototype.uncaught = function(err) {
   }
 
   // bail
-  this.emit('end');
+  this.emit(constants.EVENT_RUN_END);
 };
-
-/**
- * Cleans up the references to all the deferred functions
- * (before/after/beforeEach/afterEach) and tests of a Suite.
- * These must be deleted otherwise a memory leak can happen,
- * as those functions may reference variables from closures,
- * thus those variables can never be garbage collected as long
- * as the deferred functions exist.
- *
- * @param {Suite} suite
- */
-function cleanSuiteReferences(suite) {
-  function cleanArrReferences(arr) {
-    for (var i = 0; i < arr.length; i++) {
-      delete arr[i].fn;
-    }
-  }
-
-  if (Array.isArray(suite._beforeAll)) {
-    cleanArrReferences(suite._beforeAll);
-  }
-
-  if (Array.isArray(suite._beforeEach)) {
-    cleanArrReferences(suite._beforeEach);
-  }
-
-  if (Array.isArray(suite._afterAll)) {
-    cleanArrReferences(suite._afterAll);
-  }
-
-  if (Array.isArray(suite._afterEach)) {
-    cleanArrReferences(suite._afterEach);
-  }
-
-  for (var i = 0; i < suite.tests.length; i++) {
-    delete suite.tests[i].fn;
-  }
-}
 
 /**
  * Run the root suite and invoke `fn(failures)`
  * on completion.
  *
- * @api public
  * @public
- * @memberof Mocha.Runner
+ * @memberof Runner
  * @param {Function} fn
  * @return {Runner} Runner instance.
  */
@@ -5464,25 +6313,31 @@ Runner.prototype.run = function(fn) {
 
   function start() {
     // If there is an `only` filter
-    if (hasOnly(rootSuite)) {
-      filterOnly(rootSuite);
+    if (rootSuite.hasOnly()) {
+      rootSuite.filterOnly();
     }
     self.started = true;
-    self.emit('start');
+    if (self._delay) {
+      self.emit(constants.EVENT_DELAY_END);
+    }
+    self.emit(constants.EVENT_RUN_BEGIN);
+
     self.runSuite(rootSuite, function() {
       debug('finished running');
-      self.emit('end');
+      self.emit(constants.EVENT_RUN_END);
     });
   }
 
-  debug('start');
+  debug(constants.EVENT_RUN_BEGIN);
 
   // references cleanup to avoid memory leaks
-  this.on('suite end', cleanSuiteReferences);
+  this.on(constants.EVENT_SUITE_END, function(suite) {
+    suite.cleanReferences();
+  });
 
   // callback
-  this.on('end', function() {
-    debug('end');
+  this.on(constants.EVENT_RUN_END, function() {
+    debug(constants.EVENT_RUN_END);
     process.removeListener('uncaughtException', uncaught);
     fn(self.failures);
   });
@@ -5493,8 +6348,8 @@ Runner.prototype.run = function(fn) {
   if (this._delay) {
     // for reporters, I guess.
     // might be nice to debounce some dots while we wait.
-    this.emit('waiting', rootSuite);
-    rootSuite.once('run', start);
+    this.emit(constants.EVENT_DELAY_BEGIN, rootSuite);
+    rootSuite.once(EVENT_ROOT_SUITE_RUN, start);
   } else {
     start();
   }
@@ -5505,9 +6360,8 @@ Runner.prototype.run = function(fn) {
 /**
  * Cleanly abort execution.
  *
- * @memberof Mocha.Runner
+ * @memberof Runner
  * @public
- * @api public
  * @return {Runner} Runner instance.
  */
 Runner.prototype.abort = function() {
@@ -5518,57 +6372,9 @@ Runner.prototype.abort = function() {
 };
 
 /**
- * Filter suites based on `isOnly` logic.
- *
- * @param {Array} suite
- * @returns {Boolean}
- * @api private
- */
-function filterOnly(suite) {
-  if (suite._onlyTests.length) {
-    // If the suite contains `only` tests, run those and ignore any nested suites.
-    suite.tests = suite._onlyTests;
-    suite.suites = [];
-  } else {
-    // Otherwise, do not run any of the tests in this suite.
-    suite.tests = [];
-    suite._onlySuites.forEach(function(onlySuite) {
-      // If there are other `only` tests/suites nested in the current `only` suite, then filter that `only` suite.
-      // Otherwise, all of the tests on this `only` suite should be run, so don't filter it.
-      if (hasOnly(onlySuite)) {
-        filterOnly(onlySuite);
-      }
-    });
-    // Run the `only` suites, as well as any other suites that have `only` tests/suites as descendants.
-    suite.suites = suite.suites.filter(function(childSuite) {
-      return (
-        suite._onlySuites.indexOf(childSuite) !== -1 || filterOnly(childSuite)
-      );
-    });
-  }
-  // Keep the suite only if there is something to run
-  return suite.tests.length || suite.suites.length;
-}
-
-/**
- * Determines whether a suite has an `only` test or suite as a descendant.
- *
- * @param {Array} suite
- * @returns {Boolean}
- * @api private
- */
-function hasOnly(suite) {
-  return (
-    suite._onlyTests.length ||
-    suite._onlySuites.length ||
-    suite.suites.some(hasOnly)
-  );
-}
-
-/**
  * Filter leaks with the given globals flagged as `ok`.
  *
- * @api private
+ * @private
  * @param {Array} ok
  * @param {Array} globals
  * @return {Array}
@@ -5609,10 +6415,38 @@ function filterLeaks(ok, globals) {
 }
 
 /**
+ * Check if argument is an instance of Error object or a duck-typed equivalent.
+ *
+ * @private
+ * @param {Object} err - object to check
+ * @param {string} err.message - error message
+ * @returns {boolean}
+ */
+function isError(err) {
+  return err instanceof Error || (err && typeof err.message === 'string');
+}
+
+/**
+ *
+ * Converts thrown non-extensible type into proper Error.
+ *
+ * @private
+ * @param {*} thrown - Non-extensible type thrown by code
+ * @return {Error}
+ */
+function thrown2Error(err) {
+  return new Error(
+    'the ' + type(err) + ' ' + stringify(err) + ' was thrown, throw an Error :)'
+  );
+}
+
+/**
  * Array of globals dependent on the environment.
  *
  * @return {Array}
- * @api private
+ * @deprecated
+ * @todo remove; long since unsupported
+ * @private
  */
 function extraGlobals() {
   if (typeof process === 'object' && typeof process.version === 'string') {
@@ -5622,7 +6456,6 @@ function extraGlobals() {
     });
 
     // 'errno' was renamed to process._errno in v0.9.11.
-
     if (nodeVersion < 0x00090b) {
       return ['errno'];
     }
@@ -5631,12 +6464,104 @@ function extraGlobals() {
   return [];
 }
 
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./pending":15,"./runnable":32,"./utils":36,"_process":56,"debug":43,"events":47}],34:[function(require,module,exports){
-'use strict';
+Runner.constants = constants;
+
 /**
- * @module Suite
+ * Node.js' `EventEmitter`
+ * @external EventEmitter
+ * @see {@link https://nodejs.org/api/events.html#events_class_eventemitter}
  */
+
+}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./errors":6,"./pending":16,"./runnable":33,"./suite":36,"./utils":38,"_process":68,"debug":45,"events":50,"util":88}],35:[function(require,module,exports){
+(function (global){
+'use strict';
+
+/**
+ * Provides a factory function for a {@link StatsCollector} object.
+ * @module
+ */
+
+var constants = require('./runner').constants;
+var EVENT_TEST_PASS = constants.EVENT_TEST_PASS;
+var EVENT_TEST_FAIL = constants.EVENT_TEST_FAIL;
+var EVENT_SUITE_BEGIN = constants.EVENT_SUITE_BEGIN;
+var EVENT_RUN_BEGIN = constants.EVENT_RUN_BEGIN;
+var EVENT_TEST_PENDING = constants.EVENT_TEST_PENDING;
+var EVENT_RUN_END = constants.EVENT_RUN_END;
+var EVENT_TEST_END = constants.EVENT_TEST_END;
+
+/**
+ * Test statistics collector.
+ *
+ * @public
+ * @typedef {Object} StatsCollector
+ * @property {number} suites - integer count of suites run.
+ * @property {number} tests - integer count of tests run.
+ * @property {number} passes - integer count of passing tests.
+ * @property {number} pending - integer count of pending tests.
+ * @property {number} failures - integer count of failed tests.
+ * @property {Date} start - time when testing began.
+ * @property {Date} end - time when testing concluded.
+ * @property {number} duration - number of msecs that testing took.
+ */
+
+var Date = global.Date;
+
+/**
+ * Provides stats such as test duration, number of tests passed / failed etc., by listening for events emitted by `runner`.
+ *
+ * @private
+ * @param {Runner} runner - Runner instance
+ * @throws {TypeError} If falsy `runner`
+ */
+function createStatsCollector(runner) {
+  /**
+   * @type StatsCollector
+   */
+  var stats = {
+    suites: 0,
+    tests: 0,
+    passes: 0,
+    pending: 0,
+    failures: 0
+  };
+
+  if (!runner) {
+    throw new TypeError('Missing runner argument');
+  }
+
+  runner.stats = stats;
+
+  runner.once(EVENT_RUN_BEGIN, function() {
+    stats.start = new Date();
+  });
+  runner.on(EVENT_SUITE_BEGIN, function(suite) {
+    suite.root || stats.suites++;
+  });
+  runner.on(EVENT_TEST_PASS, function() {
+    stats.passes++;
+  });
+  runner.on(EVENT_TEST_FAIL, function() {
+    stats.failures++;
+  });
+  runner.on(EVENT_TEST_PENDING, function() {
+    stats.pending++;
+  });
+  runner.on(EVENT_TEST_END, function() {
+    stats.tests++;
+  });
+  runner.once(EVENT_RUN_END, function() {
+    stats.end = new Date();
+    stats.duration = stats.end - stats.start;
+  });
+}
+
+module.exports = createStatsCollector;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./runner":34}],36:[function(require,module,exports){
+'use strict';
 
 /**
  * Module dependencies.
@@ -5646,7 +6571,9 @@ var Hook = require('./hook');
 var utils = require('./utils');
 var inherits = utils.inherits;
 var debug = require('debug')('mocha:suite');
-var milliseconds = require('./ms');
+var milliseconds = require('ms');
+var errors = require('./errors');
+var createInvalidArgumentTypeError = errors.createInvalidArgumentTypeError;
 
 /**
  * Expose `Suite`.
@@ -5655,18 +6582,14 @@ var milliseconds = require('./ms');
 exports = module.exports = Suite;
 
 /**
- * Create a new `Suite` with the given `title` and parent `Suite`. When a suite
- * with the same title is already present, that suite is returned to provide
- * nicer reporter and more flexible meta-testing.
+ * Create a new `Suite` with the given `title` and parent `Suite`.
  *
- * @memberof Mocha
  * @public
- * @api public
- * @param {Suite} parent
- * @param {string} title
+ * @param {Suite} parent - Parent suite (required!)
+ * @param {string} title - Title
  * @return {Suite}
  */
-exports.create = function(parent, title) {
+Suite.create = function(parent, title) {
   var suite = new Suite(title, parent.ctx);
   suite.parent = parent;
   title = suite.fullTitle();
@@ -5675,20 +6598,24 @@ exports.create = function(parent, title) {
 };
 
 /**
- * Initialize a new `Suite` with the given `title` and `ctx`. Derived from [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
+ * Constructs a new `Suite` instance with the given `title`, `ctx`, and `isRoot`.
  *
- * @memberof Mocha
  * @public
  * @class
- * @param {string} title
- * @param {Context} parentContext
+ * @extends EventEmitter
+ * @see {@link https://nodejs.org/api/events.html#events_class_eventemitter|EventEmitter}
+ * @param {string} title - Suite title.
+ * @param {Context} parentContext - Parent context instance.
+ * @param {boolean} [isRoot=false] - Whether this is the root suite.
  */
-function Suite(title, parentContext) {
+function Suite(title, parentContext, isRoot) {
   if (!utils.isString(title)) {
-    throw new Error(
-      'Suite `title` should be a "string" but "' +
+    throw createInvalidArgumentTypeError(
+      'Suite argument "title" must be a string. Received type "' +
         typeof title +
-        '" was given instead.'
+        '"',
+      'title',
+      'string'
     );
   }
   this.title = title;
@@ -5702,7 +6629,7 @@ function Suite(title, parentContext) {
   this._beforeAll = [];
   this._afterEach = [];
   this._afterAll = [];
-  this.root = !title;
+  this.root = isRoot === true;
   this._timeout = 2000;
   this._enableTimeouts = true;
   this._slow = 75;
@@ -5711,6 +6638,16 @@ function Suite(title, parentContext) {
   this._onlyTests = [];
   this._onlySuites = [];
   this.delayed = false;
+
+  this.on('newListener', function(event) {
+    if (deprecatedEvents[event]) {
+      utils.deprecate(
+        'Event "' +
+          event +
+          '" is deprecated.  Please let the Mocha team know about your use case: https://git.io/v6Lwm'
+      );
+    }
+  });
 }
 
 /**
@@ -5721,7 +6658,7 @@ inherits(Suite, EventEmitter);
 /**
  * Return a clone of this `Suite`.
  *
- * @api private
+ * @private
  * @return {Suite}
  */
 Suite.prototype.clone = function() {
@@ -5739,7 +6676,7 @@ Suite.prototype.clone = function() {
 /**
  * Set or get timeout `ms` or short-hand such as "2s".
  *
- * @api private
+ * @private
  * @param {number|string} ms
  * @return {Suite|number} for chaining
  */
@@ -5761,7 +6698,7 @@ Suite.prototype.timeout = function(ms) {
 /**
  * Set or get number of times to retry a failed test.
  *
- * @api private
+ * @private
  * @param {number|string} n
  * @return {Suite|number} for chaining
  */
@@ -5777,7 +6714,7 @@ Suite.prototype.retries = function(n) {
 /**
  * Set or get timeout to `enabled`.
  *
- * @api private
+ * @private
  * @param {boolean} enabled
  * @return {Suite|boolean} self or enabled
  */
@@ -5793,7 +6730,7 @@ Suite.prototype.enableTimeouts = function(enabled) {
 /**
  * Set or get slow `ms` or short-hand such as "2s".
  *
- * @api private
+ * @private
  * @param {number|string} ms
  * @return {Suite|number} for chaining
  */
@@ -5812,7 +6749,7 @@ Suite.prototype.slow = function(ms) {
 /**
  * Set or get whether to bail after first error.
  *
- * @api private
+ * @private
  * @param {boolean} bail
  * @return {Suite|number} for chaining
  */
@@ -5828,7 +6765,7 @@ Suite.prototype.bail = function(bail) {
 /**
  * Check if this suite or its parent suite is marked as pending.
  *
- * @api private
+ * @private
  */
 Suite.prototype.isPending = function() {
   return this.pending || (this.parent && this.parent.isPending());
@@ -5856,7 +6793,7 @@ Suite.prototype._createHook = function(title, fn) {
 /**
  * Run `fn(test[, done])` before running tests.
  *
- * @api private
+ * @private
  * @param {string} title
  * @param {Function} fn
  * @return {Suite} for chaining
@@ -5873,14 +6810,14 @@ Suite.prototype.beforeAll = function(title, fn) {
 
   var hook = this._createHook(title, fn);
   this._beforeAll.push(hook);
-  this.emit('beforeAll', hook);
+  this.emit(constants.EVENT_SUITE_ADD_HOOK_BEFORE_ALL, hook);
   return this;
 };
 
 /**
  * Run `fn(test[, done])` after running tests.
  *
- * @api private
+ * @private
  * @param {string} title
  * @param {Function} fn
  * @return {Suite} for chaining
@@ -5897,14 +6834,14 @@ Suite.prototype.afterAll = function(title, fn) {
 
   var hook = this._createHook(title, fn);
   this._afterAll.push(hook);
-  this.emit('afterAll', hook);
+  this.emit(constants.EVENT_SUITE_ADD_HOOK_AFTER_ALL, hook);
   return this;
 };
 
 /**
  * Run `fn(test[, done])` before each test case.
  *
- * @api private
+ * @private
  * @param {string} title
  * @param {Function} fn
  * @return {Suite} for chaining
@@ -5921,14 +6858,14 @@ Suite.prototype.beforeEach = function(title, fn) {
 
   var hook = this._createHook(title, fn);
   this._beforeEach.push(hook);
-  this.emit('beforeEach', hook);
+  this.emit(constants.EVENT_SUITE_ADD_HOOK_BEFORE_EACH, hook);
   return this;
 };
 
 /**
  * Run `fn(test[, done])` after each test case.
  *
- * @api private
+ * @private
  * @param {string} title
  * @param {Function} fn
  * @return {Suite} for chaining
@@ -5945,33 +6882,34 @@ Suite.prototype.afterEach = function(title, fn) {
 
   var hook = this._createHook(title, fn);
   this._afterEach.push(hook);
-  this.emit('afterEach', hook);
+  this.emit(constants.EVENT_SUITE_ADD_HOOK_AFTER_EACH, hook);
   return this;
 };
 
 /**
  * Add a test `suite`.
  *
- * @api private
+ * @private
  * @param {Suite} suite
  * @return {Suite} for chaining
  */
 Suite.prototype.addSuite = function(suite) {
   suite.parent = this;
+  suite.root = false;
   suite.timeout(this.timeout());
   suite.retries(this.retries());
   suite.enableTimeouts(this.enableTimeouts());
   suite.slow(this.slow());
   suite.bail(this.bail());
   this.suites.push(suite);
-  this.emit('suite', suite);
+  this.emit(constants.EVENT_SUITE_ADD_SUITE, suite);
   return this;
 };
 
 /**
  * Add a `test` to this suite.
  *
- * @api private
+ * @private
  * @param {Test} test
  * @return {Suite} for chaining
  */
@@ -5983,7 +6921,7 @@ Suite.prototype.addTest = function(test) {
   test.slow(this.slow());
   test.ctx = this.ctx;
   this.tests.push(test);
-  this.emit('test', test);
+  this.emit(constants.EVENT_SUITE_ADD_TEST, test);
   return this;
 };
 
@@ -5991,9 +6929,8 @@ Suite.prototype.addTest = function(test) {
  * Return the full title generated by recursively concatenating the parent's
  * full title.
  *
- * @memberof Mocha.Suite
+ * @memberof Suite
  * @public
- * @api public
  * @return {string}
  */
 Suite.prototype.fullTitle = function() {
@@ -6004,9 +6941,8 @@ Suite.prototype.fullTitle = function() {
  * Return the title path generated by recursively concatenating the parent's
  * title path.
  *
- * @memberof Mocha.Suite
+ * @memberof Suite
  * @public
- * @api public
  * @return {string}
  */
 Suite.prototype.titlePath = function() {
@@ -6023,9 +6959,8 @@ Suite.prototype.titlePath = function() {
 /**
  * Return the total number of tests.
  *
- * @memberof Mocha.Suite
+ * @memberof Suite
  * @public
- * @api public
  * @return {number}
  */
 Suite.prototype.total = function() {
@@ -6040,7 +6975,7 @@ Suite.prototype.total = function() {
  * Iterates through each suite recursively to find all tests. Applies a
  * function in the format `fn(test)`.
  *
- * @api private
+ * @private
  * @param {Function} fn
  * @return {Suite}
  */
@@ -6054,17 +6989,225 @@ Suite.prototype.eachTest = function(fn) {
 
 /**
  * This will run the root suite if we happen to be running in delayed mode.
+ * @private
  */
 Suite.prototype.run = function run() {
   if (this.root) {
-    this.emit('run');
+    this.emit(constants.EVENT_ROOT_SUITE_RUN);
   }
 };
 
-},{"./hook":6,"./ms":14,"./utils":36,"debug":43,"events":47}],35:[function(require,module,exports){
+/**
+ * Determines whether a suite has an `only` test or suite as a descendant.
+ *
+ * @private
+ * @returns {Boolean}
+ */
+Suite.prototype.hasOnly = function hasOnly() {
+  return (
+    this._onlyTests.length > 0 ||
+    this._onlySuites.length > 0 ||
+    this.suites.some(function(suite) {
+      return suite.hasOnly();
+    })
+  );
+};
+
+/**
+ * Filter suites based on `isOnly` logic.
+ *
+ * @private
+ * @returns {Boolean}
+ */
+Suite.prototype.filterOnly = function filterOnly() {
+  if (this._onlyTests.length) {
+    // If the suite contains `only` tests, run those and ignore any nested suites.
+    this.tests = this._onlyTests;
+    this.suites = [];
+  } else {
+    // Otherwise, do not run any of the tests in this suite.
+    this.tests = [];
+    this._onlySuites.forEach(function(onlySuite) {
+      // If there are other `only` tests/suites nested in the current `only` suite, then filter that `only` suite.
+      // Otherwise, all of the tests on this `only` suite should be run, so don't filter it.
+      if (onlySuite.hasOnly()) {
+        onlySuite.filterOnly();
+      }
+    });
+    // Run the `only` suites, as well as any other suites that have `only` tests/suites as descendants.
+    var onlySuites = this._onlySuites;
+    this.suites = this.suites.filter(function(childSuite) {
+      return onlySuites.indexOf(childSuite) !== -1 || childSuite.filterOnly();
+    });
+  }
+  // Keep the suite only if there is something to run
+  return this.tests.length > 0 || this.suites.length > 0;
+};
+
+/**
+ * Adds a suite to the list of subsuites marked `only`.
+ *
+ * @private
+ * @param {Suite} suite
+ */
+Suite.prototype.appendOnlySuite = function(suite) {
+  this._onlySuites.push(suite);
+};
+
+/**
+ * Adds a test to the list of tests marked `only`.
+ *
+ * @private
+ * @param {Test} test
+ */
+Suite.prototype.appendOnlyTest = function(test) {
+  this._onlyTests.push(test);
+};
+
+/**
+ * Returns the array of hooks by hook name; see `HOOK_TYPE_*` constants.
+ * @private
+ */
+Suite.prototype.getHooks = function getHooks(name) {
+  return this['_' + name];
+};
+
+/**
+ * Cleans up the references to all the deferred functions
+ * (before/after/beforeEach/afterEach) and tests of a Suite.
+ * These must be deleted otherwise a memory leak can happen,
+ * as those functions may reference variables from closures,
+ * thus those variables can never be garbage collected as long
+ * as the deferred functions exist.
+ *
+ * @private
+ */
+Suite.prototype.cleanReferences = function cleanReferences() {
+  function cleanArrReferences(arr) {
+    for (var i = 0; i < arr.length; i++) {
+      delete arr[i].fn;
+    }
+  }
+
+  if (Array.isArray(this._beforeAll)) {
+    cleanArrReferences(this._beforeAll);
+  }
+
+  if (Array.isArray(this._beforeEach)) {
+    cleanArrReferences(this._beforeEach);
+  }
+
+  if (Array.isArray(this._afterAll)) {
+    cleanArrReferences(this._afterAll);
+  }
+
+  if (Array.isArray(this._afterEach)) {
+    cleanArrReferences(this._afterEach);
+  }
+
+  for (var i = 0; i < this.tests.length; i++) {
+    delete this.tests[i].fn;
+  }
+};
+
+var constants = utils.defineConstants(
+  /**
+   * {@link Suite}-related constants.
+   * @public
+   * @memberof Suite
+   * @alias constants
+   * @readonly
+   * @static
+   * @enum {string}
+   */
+  {
+    /**
+     * Event emitted after a test file has been loaded Not emitted in browser.
+     */
+    EVENT_FILE_POST_REQUIRE: 'post-require',
+    /**
+     * Event emitted before a test file has been loaded. In browser, this is emitted once an interface has been selected.
+     */
+    EVENT_FILE_PRE_REQUIRE: 'pre-require',
+    /**
+     * Event emitted immediately after a test file has been loaded. Not emitted in browser.
+     */
+    EVENT_FILE_REQUIRE: 'require',
+    /**
+     * Event emitted when `global.run()` is called (use with `delay` option)
+     */
+    EVENT_ROOT_SUITE_RUN: 'run',
+
+    /**
+     * Namespace for collection of a `Suite`'s "after all" hooks
+     */
+    HOOK_TYPE_AFTER_ALL: 'afterAll',
+    /**
+     * Namespace for collection of a `Suite`'s "after each" hooks
+     */
+    HOOK_TYPE_AFTER_EACH: 'afterEach',
+    /**
+     * Namespace for collection of a `Suite`'s "before all" hooks
+     */
+    HOOK_TYPE_BEFORE_ALL: 'beforeAll',
+    /**
+     * Namespace for collection of a `Suite`'s "before all" hooks
+     */
+    HOOK_TYPE_BEFORE_EACH: 'beforeEach',
+
+    // the following events are all deprecated
+
+    /**
+     * Emitted after an "after all" `Hook` has been added to a `Suite`. Deprecated
+     */
+    EVENT_SUITE_ADD_HOOK_AFTER_ALL: 'afterAll',
+    /**
+     * Emitted after an "after each" `Hook` has been added to a `Suite` Deprecated
+     */
+    EVENT_SUITE_ADD_HOOK_AFTER_EACH: 'afterEach',
+    /**
+     * Emitted after an "before all" `Hook` has been added to a `Suite` Deprecated
+     */
+    EVENT_SUITE_ADD_HOOK_BEFORE_ALL: 'beforeAll',
+    /**
+     * Emitted after an "before each" `Hook` has been added to a `Suite` Deprecated
+     */
+    EVENT_SUITE_ADD_HOOK_BEFORE_EACH: 'beforeEach',
+    /**
+     * Emitted after a child `Suite` has been added to a `Suite`. Deprecated
+     */
+    EVENT_SUITE_ADD_SUITE: 'suite',
+    /**
+     * Emitted after a `Test` has been added to a `Suite`. Deprecated
+     */
+    EVENT_SUITE_ADD_TEST: 'test'
+  }
+);
+
+/**
+ * @summary There are no known use cases for these events.
+ * @desc This is a `Set`-like object having all keys being the constant's string value and the value being `true`.
+ * @todo Remove eventually
+ * @type {Object<string,boolean>}
+ * @ignore
+ */
+var deprecatedEvents = Object.keys(constants)
+  .filter(function(constant) {
+    return constant.substring(0, 15) === 'EVENT_SUITE_ADD';
+  })
+  .reduce(function(acc, constant) {
+    acc[constants[constant]] = true;
+    return acc;
+  }, utils.createMap());
+
+Suite.constants = constants;
+
+},{"./errors":6,"./hook":7,"./utils":38,"debug":45,"events":50,"ms":60}],37:[function(require,module,exports){
 'use strict';
 var Runnable = require('./runnable');
 var utils = require('./utils');
+var errors = require('./errors');
+var createInvalidArgumentTypeError = errors.createInvalidArgumentTypeError;
 var isString = utils.isString;
 
 module.exports = Test;
@@ -6072,17 +7215,20 @@ module.exports = Test;
 /**
  * Initialize a new `Test` with the given `title` and callback `fn`.
  *
+ * @public
  * @class
  * @extends Runnable
- * @param {String} title
- * @param {Function} fn
+ * @param {String} title - Test title (required)
+ * @param {Function} [fn] - Test callback.  If omitted, the Test is considered "pending"
  */
 function Test(title, fn) {
   if (!isString(title)) {
-    throw new Error(
-      'Test `title` should be a "string" but "' +
+    throw createInvalidArgumentTypeError(
+      'Test argument "title" should be a string. Received type "' +
         typeof title +
-        '" was given instead.'
+        '"',
+      'title',
+      'string'
     );
   }
   Runnable.call(this, title, fn);
@@ -6109,37 +7255,45 @@ Test.prototype.clone = function() {
   return test;
 };
 
-},{"./runnable":32,"./utils":36}],36:[function(require,module,exports){
+},{"./errors":6,"./runnable":33,"./utils":38}],38:[function(require,module,exports){
 (function (process,Buffer){
 'use strict';
 
 /**
- * @module
+ * Various utility functions used throughout Mocha's codebase.
+ * @module utils
  */
 
 /**
  * Module dependencies.
  */
 
-var debug = require('debug')('mocha:watch');
 var fs = require('fs');
-var glob = require('glob');
 var path = require('path');
-var join = path.join;
+var util = require('util');
+var glob = require('glob');
 var he = require('he');
+var errors = require('./errors');
+var createNoFilesMatchPatternError = errors.createNoFilesMatchPatternError;
+var createMissingArgumentError = errors.createMissingArgumentError;
+
+var assign = (exports.assign = require('object.assign').getPolyfill());
 
 /**
- * Ignored directories.
+ * Inherit the prototype methods from one constructor into another.
+ *
+ * @param {function} ctor - Constructor function which needs to inherit the
+ *     prototype.
+ * @param {function} superCtor - Constructor function to inherit prototype from.
+ * @throws {TypeError} if either constructor is null, or if super constructor
+ *     lacks a prototype.
  */
-
-var ignore = ['node_modules', '.git'];
-
-exports.inherits = require('util').inherits;
+exports.inherits = util.inherits;
 
 /**
  * Escape special characters in the given string of html.
  *
- * @api private
+ * @private
  * @param  {string} html
  * @return {string}
  */
@@ -6150,7 +7304,7 @@ exports.escape = function(html) {
 /**
  * Test if the given obj is type of string.
  *
- * @api private
+ * @private
  * @param {Object} obj
  * @return {boolean}
  */
@@ -6162,12 +7316,13 @@ exports.isString = function(obj) {
  * Watch the given `files` for changes
  * and invoke `fn(file)` on modification.
  *
- * @api private
+ * @private
  * @param {Array} files
  * @param {Function} fn
  */
 exports.watch = function(files, fn) {
   var options = {interval: 100};
+  var debug = require('debug')('mocha:watch');
   files.forEach(function(file) {
     debug('file %s', file);
     fs.watchFile(file, options, function(curr, prev) {
@@ -6179,40 +7334,52 @@ exports.watch = function(files, fn) {
 };
 
 /**
- * Ignored files.
+ * Predicate to screen `pathname` for further consideration.
  *
- * @api private
- * @param {string} path
- * @return {boolean}
+ * @description
+ * Returns <code>false</code> for pathname referencing:
+ * <ul>
+ *   <li>'npm' package installation directory
+ *   <li>'git' version control directory
+ * </ul>
+ *
+ * @private
+ * @param {string} pathname - File or directory name to screen
+ * @return {boolean} whether pathname should be further considered
+ * @example
+ * ['node_modules', 'test.js'].filter(considerFurther); // => ['test.js']
  */
-function ignored(path) {
-  return !~ignore.indexOf(path);
+function considerFurther(pathname) {
+  var ignore = ['node_modules', '.git'];
+
+  return !~ignore.indexOf(pathname);
 }
 
 /**
  * Lookup files in the given `dir`.
  *
- * @api private
+ * @description
+ * Filenames are returned in _traversal_ order by the OS/filesystem.
+ * **Make no assumption that the names will be sorted in any fashion.**
+ *
+ * @private
  * @param {string} dir
- * @param {string[]} [ext=['.js']]
+ * @param {string[]} [exts=['js']]
  * @param {Array} [ret=[]]
  * @return {Array}
  */
-exports.files = function(dir, ext, ret) {
+exports.files = function(dir, exts, ret) {
   ret = ret || [];
-  ext = ext || ['js'];
+  exts = exts || ['js'];
 
-  var re = new RegExp('\\.(' + ext.join('|') + ')$');
-
-  fs
-    .readdirSync(dir)
-    .filter(ignored)
-    .forEach(function(path) {
-      path = join(dir, path);
-      if (fs.lstatSync(path).isDirectory()) {
-        exports.files(path, ext, ret);
-      } else if (path.match(re)) {
-        ret.push(path);
+  fs.readdirSync(dir)
+    .filter(considerFurther)
+    .forEach(function(dirent) {
+      var pathname = path.join(dir, dirent);
+      if (fs.lstatSync(pathname).isDirectory()) {
+        exports.files(pathname, exts, ret);
+      } else if (hasMatchingExtname(pathname, exts)) {
+        ret.push(pathname);
       }
     });
 
@@ -6222,7 +7389,7 @@ exports.files = function(dir, ext, ret) {
 /**
  * Compute a slug from the given `str`.
  *
- * @api private
+ * @private
  * @param {string} str
  * @return {string}
  */
@@ -6264,7 +7431,7 @@ exports.clean = function(str) {
 /**
  * Parse the given `qs`.
  *
- * @api private
+ * @private
  * @param {string} qs
  * @return {Object}
  */
@@ -6287,7 +7454,7 @@ exports.parseQuery = function(qs) {
 /**
  * Highlight the given string of `js`.
  *
- * @api private
+ * @private
  * @param {string} js
  * @return {string}
  */
@@ -6312,7 +7479,7 @@ function highlight(js) {
 /**
  * Highlight the contents of tag `name`.
  *
- * @api private
+ * @private
  * @param {string} name
  */
 exports.highlightTags = function(name) {
@@ -6331,7 +7498,7 @@ exports.highlightTags = function(name) {
  * Objects w/ no properties return `'{}'`
  * All else: return result of `value.toString()`
  *
- * @api private
+ * @private
  * @param {*} value The value to inspect.
  * @param {string} typeHint The type of the value
  * @returns {string}
@@ -6353,7 +7520,7 @@ function emptyRepresentation(value, typeHint) {
  * Takes some variable and asks `Object.prototype.toString()` what it thinks it
  * is.
  *
- * @api private
+ * @private
  * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/toString
  * @param {*} value The value to test.
  * @returns {string} Computed type
@@ -6394,7 +7561,7 @@ var type = (exports.type = function type(value) {
  * - If `value` has properties, call {@link exports.canonicalize} on it, then return result of
  *   JSON.stringify().
  *
- * @api private
+ * @private
  * @see exports.type
  * @param {*} value
  * @return {string}
@@ -6440,7 +7607,7 @@ exports.stringify = function(value) {
 /**
  * like JSON.stringify but more sense.
  *
- * @api private
+ * @private
  * @param {Object}  object
  * @param {number=} spaces
  * @param {number=} depth
@@ -6535,7 +7702,7 @@ function jsonStringify(object, spaces, depth) {
  * - is a non-empty `Array`, `Object`, or `Function`, return the result of calling this function again.
  * - is an empty `Array`, `Object`, or `Function`, return the result of calling `emptyRepresentation()`
  *
- * @api private
+ * @private
  * @see {@link exports.stringify}
  * @param {*} value Thing to inspect.  May or may not have properties.
  * @param {Array} [stack=[]] Stack of seen values
@@ -6610,33 +7777,81 @@ exports.canonicalize = function canonicalize(value, stack, typeHint) {
 };
 
 /**
+ * Determines if pathname has a matching file extension.
+ *
+ * @private
+ * @param {string} pathname - Pathname to check for match.
+ * @param {string[]} exts - List of file extensions (sans period).
+ * @return {boolean} whether file extension matches.
+ * @example
+ * hasMatchingExtname('foo.html', ['js', 'css']); // => false
+ */
+function hasMatchingExtname(pathname, exts) {
+  var suffix = path.extname(pathname).slice(1);
+  return exts.some(function(element) {
+    return suffix === element;
+  });
+}
+
+/**
+ * Determines if pathname would be a "hidden" file (or directory) on UN*X.
+ *
+ * @description
+ * On UN*X, pathnames beginning with a full stop (aka dot) are hidden during
+ * typical usage. Dotfiles, plain-text configuration files, are prime examples.
+ *
+ * @see {@link http://xahlee.info/UnixResource_dir/writ/unix_origin_of_dot_filename.html|Origin of Dot File Names}
+ *
+ * @private
+ * @param {string} pathname - Pathname to check for match.
+ * @return {boolean} whether pathname would be considered a hidden file.
+ * @example
+ * isHiddenOnUnix('.profile'); // => true
+ */
+function isHiddenOnUnix(pathname) {
+  return path.basename(pathname)[0] === '.';
+}
+
+/**
  * Lookup file names at the given `path`.
  *
- * @memberof Mocha.utils
+ * @description
+ * Filenames are returned in _traversal_ order by the OS/filesystem.
+ * **Make no assumption that the names will be sorted in any fashion.**
+ *
  * @public
- * @api public
- * @param {string} filepath Base path to start searching from.
- * @param {string[]} extensions File extensions to look for.
- * @param {boolean} recursive Whether or not to recurse into subdirectories.
+ * @memberof Mocha.utils
+ * @todo Fix extension handling
+ * @param {string} filepath - Base path to start searching from.
+ * @param {string[]} extensions - File extensions to look for.
+ * @param {boolean} recursive - Whether to recurse into subdirectories.
  * @return {string[]} An array of paths.
+ * @throws {Error} if no files match pattern.
+ * @throws {TypeError} if `filepath` is directory and `extensions` not provided.
  */
 exports.lookupFiles = function lookupFiles(filepath, extensions, recursive) {
   var files = [];
+  var stat;
 
   if (!fs.existsSync(filepath)) {
     if (fs.existsSync(filepath + '.js')) {
       filepath += '.js';
     } else {
+      // Handle glob
       files = glob.sync(filepath);
       if (!files.length) {
-        throw new Error("cannot resolve path (or pattern) '" + filepath + "'");
+        throw createNoFilesMatchPatternError(
+          'Cannot find any files matching pattern ' + exports.dQuote(filepath),
+          filepath
+        );
       }
       return files;
     }
   }
 
+  // Handle file
   try {
-    var stat = fs.statSync(filepath);
+    stat = fs.statSync(filepath);
     if (stat.isFile()) {
       return filepath;
     }
@@ -6645,13 +7860,16 @@ exports.lookupFiles = function lookupFiles(filepath, extensions, recursive) {
     return;
   }
 
-  fs.readdirSync(filepath).forEach(function(file) {
-    file = path.join(filepath, file);
+  // Handle directory
+  fs.readdirSync(filepath).forEach(function(dirent) {
+    var pathname = path.join(filepath, dirent);
+    var stat;
+
     try {
-      var stat = fs.statSync(file);
+      stat = fs.statSync(pathname);
       if (stat.isDirectory()) {
         if (recursive) {
-          files = files.concat(lookupFiles(file, extensions, recursive));
+          files = files.concat(lookupFiles(pathname, extensions, recursive));
         }
         return;
       }
@@ -6660,41 +7878,72 @@ exports.lookupFiles = function lookupFiles(filepath, extensions, recursive) {
       return;
     }
     if (!extensions) {
-      throw new Error(
-        'extensions parameter required when filepath is a directory'
+      throw createMissingArgumentError(
+        util.format(
+          'Argument %s required when argument %s is a directory',
+          exports.sQuote('extensions'),
+          exports.sQuote('filepath')
+        ),
+        'extensions',
+        'array'
       );
     }
-    var re = new RegExp('\\.(?:' + extensions.join('|') + ')$');
-    if (!stat.isFile() || !re.test(file) || path.basename(file)[0] === '.') {
+
+    if (
+      !stat.isFile() ||
+      !hasMatchingExtname(pathname, extensions) ||
+      isHiddenOnUnix(pathname)
+    ) {
       return;
     }
-    files.push(file);
+    files.push(pathname);
   });
 
   return files;
 };
 
 /**
- * Generate an undefined error with a message warning the user.
- *
- * @return {Error}
+ * process.emitWarning or a polyfill
+ * @see https://nodejs.org/api/process.html#process_process_emitwarning_warning_options
+ * @ignore
  */
-
-exports.undefinedError = function() {
-  return new Error(
-    'Caught undefined error, did you throw without specifying what?'
-  );
-};
+function emitWarning(msg, type) {
+  if (process.emitWarning) {
+    process.emitWarning(msg, type);
+  } else {
+    process.nextTick(function() {
+      console.warn(type + ': ' + msg);
+    });
+  }
+}
 
 /**
- * Generate an undefined error if `err` is not defined.
+ * Show a deprecation warning. Each distinct message is only displayed once.
+ * Ignores empty messages.
  *
- * @param {Error} err
- * @return {Error}
+ * @param {string} [msg] - Warning to print
+ * @private
  */
+exports.deprecate = function deprecate(msg) {
+  msg = String(msg);
+  if (msg && !deprecate.cache[msg]) {
+    deprecate.cache[msg] = true;
+    emitWarning(msg, 'DeprecationWarning');
+  }
+};
+exports.deprecate.cache = {};
 
-exports.getError = function(err) {
-  return err || exports.undefinedError();
+/**
+ * Show a generic warning.
+ * Ignores empty messages.
+ *
+ * @param {string} [msg] - Warning to print
+ * @private
+ */
+exports.warn = function warn(msg) {
+  if (msg) {
+    emitWarning(msg);
+  }
 };
 
 /**
@@ -6724,8 +7973,6 @@ exports.stackTraceFilter = function() {
   function isMochaInternal(line) {
     return (
       ~line.indexOf('node_modules' + slash + 'mocha' + slash) ||
-      ~line.indexOf('node_modules' + slash + 'mocha.js') ||
-      ~line.indexOf('bower_components' + slash + 'mocha.js') ||
       ~line.indexOf(slash + 'mocha.js')
     );
   }
@@ -6754,7 +8001,7 @@ exports.stackTraceFilter = function() {
       }
 
       // Clean up cwd(absolute)
-      if (/\(?.+:\d+:\d+\)?$/.test(line)) {
+      if (/:\d+:\d+\)?$/.test(line)) {
         line = line.replace('(' + cwd, '(');
       }
 
@@ -6768,22 +8015,148 @@ exports.stackTraceFilter = function() {
 
 /**
  * Crude, but effective.
- * @api
+ * @public
  * @param {*} value
  * @returns {boolean} Whether or not `value` is a Promise
  */
 exports.isPromise = function isPromise(value) {
-  return typeof value === 'object' && typeof value.then === 'function';
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof value.then === 'function'
+  );
+};
+
+/**
+ * Clamps a numeric value to an inclusive range.
+ *
+ * @param {number} value - Value to be clamped.
+ * @param {numer[]} range - Two element array specifying [min, max] range.
+ * @returns {number} clamped value
+ */
+exports.clamp = function clamp(value, range) {
+  return Math.min(Math.max(value, range[0]), range[1]);
+};
+
+/**
+ * Single quote text by combining with undirectional ASCII quotation marks.
+ *
+ * @description
+ * Provides a simple means of markup for quoting text to be used in output.
+ * Use this to quote names of variables, methods, and packages.
+ *
+ * <samp>package 'foo' cannot be found</samp>
+ *
+ * @private
+ * @param {string} str - Value to be quoted.
+ * @returns {string} quoted value
+ * @example
+ * sQuote('n') // => 'n'
+ */
+exports.sQuote = function(str) {
+  return "'" + str + "'";
+};
+
+/**
+ * Double quote text by combining with undirectional ASCII quotation marks.
+ *
+ * @description
+ * Provides a simple means of markup for quoting text to be used in output.
+ * Use this to quote names of datatypes, classes, pathnames, and strings.
+ *
+ * <samp>argument 'value' must be "string" or "number"</samp>
+ *
+ * @private
+ * @param {string} str - Value to be quoted.
+ * @returns {string} quoted value
+ * @example
+ * dQuote('number') // => "number"
+ */
+exports.dQuote = function(str) {
+  return '"' + str + '"';
+};
+
+/**
+ * Provides simplistic message translation for dealing with plurality.
+ *
+ * @description
+ * Use this to create messages which need to be singular or plural.
+ * Some languages have several plural forms, so _complete_ message clauses
+ * are preferable to generating the message on the fly.
+ *
+ * @private
+ * @param {number} n - Non-negative integer
+ * @param {string} msg1 - Message to be used in English for `n = 1`
+ * @param {string} msg2 - Message to be used in English for `n = 0, 2, 3, ...`
+ * @returns {string} message corresponding to value of `n`
+ * @example
+ * var sprintf = require('util').format;
+ * var pkgs = ['one', 'two'];
+ * var msg = sprintf(
+ *   ngettext(
+ *     pkgs.length,
+ *     'cannot load package: %s',
+ *     'cannot load packages: %s'
+ *   ),
+ *   pkgs.map(sQuote).join(', ')
+ * );
+ * console.log(msg); // => cannot load packages: 'one', 'two'
+ */
+exports.ngettext = function(n, msg1, msg2) {
+  if (typeof n === 'number' && n >= 0) {
+    return n === 1 ? msg1 : msg2;
+  }
 };
 
 /**
  * It's a noop.
- * @api
+ * @public
  */
 exports.noop = function() {};
 
+/**
+ * Creates a map-like object.
+ *
+ * @description
+ * A "map" is an object with no prototype, for our purposes. In some cases
+ * this would be more appropriate than a `Map`, especially if your environment
+ * doesn't support it. Recommended for use in Mocha's public APIs.
+ *
+ * @public
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map|MDN:Map}
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/create#Custom_and_Null_objects|MDN:Object.create - Custom objects}
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign|MDN:Object.assign}
+ * @param {...*} [obj] - Arguments to `Object.assign()`.
+ * @returns {Object} An object with no prototype, having `...obj` properties
+ */
+exports.createMap = function(obj) {
+  return assign.apply(
+    null,
+    [Object.create(null)].concat(Array.prototype.slice.call(arguments))
+  );
+};
+
+/**
+ * Creates a read-only map-like object.
+ *
+ * @description
+ * This differs from {@link module:utils.createMap createMap} only in that
+ * the argument must be non-empty, because the result is frozen.
+ *
+ * @see {@link module:utils.createMap createMap}
+ * @param {...*} [obj] - Arguments to `Object.assign()`.
+ * @returns {Object} A frozen object with no prototype, having `...obj` properties
+ * @throws {TypeError} if argument is not a non-empty object.
+ */
+exports.defineConstants = function(obj) {
+  if (type(obj) !== 'object' || !Object.keys(obj).length) {
+    throw new TypeError('Invalid argument; expected a non-empty object');
+  }
+  return Object.freeze(exports.createMap(obj));
+};
+
 }).call(this,require('_process'),require("buffer").Buffer)
-},{"_process":56,"buffer":41,"debug":43,"fs":40,"glob":40,"he":48,"path":40,"util":76}],37:[function(require,module,exports){
+},{"./errors":6,"_process":68,"buffer":43,"debug":45,"fs":42,"glob":42,"he":54,"object.assign":64,"path":42,"util":88}],39:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -6936,9 +8309,9 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],38:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 
-},{}],39:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 (function (process){
 var WritableStream = require('stream').Writable
 var inherits = require('util').inherits
@@ -6967,9 +8340,9 @@ BrowserStdout.prototype._write = function(chunks, encoding, cb) {
 }
 
 }).call(this,require('_process'))
-},{"_process":56,"stream":71,"util":76}],40:[function(require,module,exports){
-arguments[4][38][0].apply(exports,arguments)
-},{"dup":38}],41:[function(require,module,exports){
+},{"_process":68,"stream":83,"util":88}],42:[function(require,module,exports){
+arguments[4][40][0].apply(exports,arguments)
+},{"dup":40}],43:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -8707,7 +10080,7 @@ function numberIsNaN (obj) {
   return obj !== obj // eslint-disable-line no-self-compare
 }
 
-},{"base64-js":37,"ieee754":49}],42:[function(require,module,exports){
+},{"base64-js":39,"ieee754":55}],44:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -8818,43 +10191,28 @@ function objectToString(o) {
 }
 
 }).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":51}],43:[function(require,module,exports){
+},{"../../is-buffer/index.js":57}],45:[function(require,module,exports){
 (function (process){
+"use strict";
+
+function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+/* eslint-env browser */
+
 /**
  * This is the web browser implementation of `debug()`.
- *
- * Expose `debug()` as the module.
  */
-
-exports = module.exports = require('./debug');
 exports.log = log;
 exports.formatArgs = formatArgs;
 exports.save = save;
 exports.load = load;
 exports.useColors = useColors;
-exports.storage = 'undefined' != typeof chrome
-               && 'undefined' != typeof chrome.storage
-                  ? chrome.storage.local
-                  : localstorage();
-
+exports.storage = localstorage();
 /**
  * Colors.
  */
 
-exports.colors = [
-  '#0000CC', '#0000FF', '#0033CC', '#0033FF', '#0066CC', '#0066FF', '#0099CC',
-  '#0099FF', '#00CC00', '#00CC33', '#00CC66', '#00CC99', '#00CCCC', '#00CCFF',
-  '#3300CC', '#3300FF', '#3333CC', '#3333FF', '#3366CC', '#3366FF', '#3399CC',
-  '#3399FF', '#33CC00', '#33CC33', '#33CC66', '#33CC99', '#33CCCC', '#33CCFF',
-  '#6600CC', '#6600FF', '#6633CC', '#6633FF', '#66CC00', '#66CC33', '#9900CC',
-  '#9900FF', '#9933CC', '#9933FF', '#99CC00', '#99CC33', '#CC0000', '#CC0033',
-  '#CC0066', '#CC0099', '#CC00CC', '#CC00FF', '#CC3300', '#CC3333', '#CC3366',
-  '#CC3399', '#CC33CC', '#CC33FF', '#CC6600', '#CC6633', '#CC9900', '#CC9933',
-  '#CCCC00', '#CCCC33', '#FF0000', '#FF0033', '#FF0066', '#FF0099', '#FF00CC',
-  '#FF00FF', '#FF3300', '#FF3333', '#FF3366', '#FF3399', '#FF33CC', '#FF33FF',
-  '#FF6600', '#FF6633', '#FF9900', '#FF9933', '#FFCC00', '#FFCC33'
-];
-
+exports.colors = ['#0000CC', '#0000FF', '#0033CC', '#0033FF', '#0066CC', '#0066FF', '#0099CC', '#0099FF', '#00CC00', '#00CC33', '#00CC66', '#00CC99', '#00CCCC', '#00CCFF', '#3300CC', '#3300FF', '#3333CC', '#3333FF', '#3366CC', '#3366FF', '#3399CC', '#3399FF', '#33CC00', '#33CC33', '#33CC66', '#33CC99', '#33CCCC', '#33CCFF', '#6600CC', '#6600FF', '#6633CC', '#6633FF', '#66CC00', '#66CC33', '#9900CC', '#9900FF', '#9933CC', '#9933FF', '#99CC00', '#99CC33', '#CC0000', '#CC0033', '#CC0066', '#CC0099', '#CC00CC', '#CC00FF', '#CC3300', '#CC3333', '#CC3366', '#CC3399', '#CC33CC', '#CC33FF', '#CC6600', '#CC6633', '#CC9900', '#CC9933', '#CCCC00', '#CCCC33', '#FF0000', '#FF0033', '#FF0066', '#FF0099', '#FF00CC', '#FF00FF', '#FF3300', '#FF3333', '#FF3366', '#FF3399', '#FF33CC', '#FF33FF', '#FF6600', '#FF6633', '#FF9900', '#FF9933', '#FFCC00', '#FFCC33'];
 /**
  * Currently only WebKit-based Web Inspectors, Firefox >= v31,
  * and the Firebug extension (any Firefox version) are known
@@ -8862,84 +10220,65 @@ exports.colors = [
  *
  * TODO: add a `localStorage` variable to explicitly enable/disable colors
  */
+// eslint-disable-next-line complexity
 
 function useColors() {
   // NB: In an Electron preload script, document will be defined but not fully
   // initialized. Since we know we're in Chrome, we'll just detect this case
   // explicitly
-  if (typeof window !== 'undefined' && window.process && window.process.type === 'renderer') {
+  if (typeof window !== 'undefined' && window.process && (window.process.type === 'renderer' || window.process.__nwjs)) {
     return true;
-  }
+  } // Internet Explorer and Edge do not support colors.
 
-  // Internet Explorer and Edge do not support colors.
+
   if (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/(edge|trident)\/(\d+)/)) {
     return false;
-  }
-
-  // is webkit? http://stackoverflow.com/a/16459606/376773
+  } // Is webkit? http://stackoverflow.com/a/16459606/376773
   // document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
-  return (typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance) ||
-    // is firebug? http://stackoverflow.com/a/398120/376773
-    (typeof window !== 'undefined' && window.console && (window.console.firebug || (window.console.exception && window.console.table))) ||
-    // is firefox >= v31?
-    // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
-    (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31) ||
-    // double check webkit in userAgent just in case we are in a worker
-    (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/));
+
+
+  return typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance || // Is firebug? http://stackoverflow.com/a/398120/376773
+  typeof window !== 'undefined' && window.console && (window.console.firebug || window.console.exception && window.console.table) || // Is firefox >= v31?
+  // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
+  typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31 || // Double check webkit in userAgent just in case we are in a worker
+  typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/);
 }
-
-/**
- * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
- */
-
-exports.formatters.j = function(v) {
-  try {
-    return JSON.stringify(v);
-  } catch (err) {
-    return '[UnexpectedJSONParseError]: ' + err.message;
-  }
-};
-
-
 /**
  * Colorize log arguments if enabled.
  *
  * @api public
  */
 
+
 function formatArgs(args) {
-  var useColors = this.useColors;
+  args[0] = (this.useColors ? '%c' : '') + this.namespace + (this.useColors ? ' %c' : ' ') + args[0] + (this.useColors ? '%c ' : ' ') + '+' + module.exports.humanize(this.diff);
 
-  args[0] = (useColors ? '%c' : '')
-    + this.namespace
-    + (useColors ? ' %c' : ' ')
-    + args[0]
-    + (useColors ? '%c ' : ' ')
-    + '+' + exports.humanize(this.diff);
-
-  if (!useColors) return;
+  if (!this.useColors) {
+    return;
+  }
 
   var c = 'color: ' + this.color;
-  args.splice(1, 0, c, 'color: inherit')
-
-  // the final "%c" is somewhat tricky, because there could be other
+  args.splice(1, 0, c, 'color: inherit'); // The final "%c" is somewhat tricky, because there could be other
   // arguments passed either before or after the %c, so we need to
   // figure out the correct index to insert the CSS into
+
   var index = 0;
   var lastC = 0;
-  args[0].replace(/%[a-zA-Z%]/g, function(match) {
-    if ('%%' === match) return;
+  args[0].replace(/%[a-zA-Z%]/g, function (match) {
+    if (match === '%%') {
+      return;
+    }
+
     index++;
-    if ('%c' === match) {
-      // we only are interested in the *last* %c
+
+    if (match === '%c') {
+      // We only are interested in the *last* %c
       // (the user may have provided their own)
       lastC = index;
     }
   });
-
   args.splice(lastC, 0, c);
 }
-
 /**
  * Invokes `console.log()` when available.
  * No-op when `console.log` is not a "function".
@@ -8947,14 +10286,14 @@ function formatArgs(args) {
  * @api public
  */
 
-function log() {
-  // this hackery is required for IE8/9, where
-  // the `console.log` function doesn't have 'apply'
-  return 'object' === typeof console
-    && console.log
-    && Function.prototype.apply.call(console.log, console, arguments);
-}
 
+function log() {
+  var _console;
+
+  // This hackery is required for IE8/9, where
+  // the `console.log` function doesn't have 'apply'
+  return (typeof console === "undefined" ? "undefined" : _typeof(console)) === 'object' && console.log && (_console = console).log.apply(_console, arguments);
+}
 /**
  * Save `namespaces`.
  *
@@ -8962,16 +10301,18 @@ function log() {
  * @api private
  */
 
+
 function save(namespaces) {
   try {
-    if (null == namespaces) {
-      exports.storage.removeItem('debug');
+    if (namespaces) {
+      exports.storage.setItem('debug', namespaces);
     } else {
-      exports.storage.debug = namespaces;
+      exports.storage.removeItem('debug');
     }
-  } catch(e) {}
+  } catch (error) {// Swallow
+    // XXX (@Qix-) should we be logging these?
+  }
 }
-
 /**
  * Load `namespaces`.
  *
@@ -8979,26 +10320,23 @@ function save(namespaces) {
  * @api private
  */
 
+
 function load() {
   var r;
-  try {
-    r = exports.storage.debug;
-  } catch(e) {}
 
+  try {
+    r = exports.storage.getItem('debug');
+  } catch (error) {} // Swallow
+  // XXX (@Qix-) should we be logging these?
   // If debug isn't set in LS, and we're in Electron, try to load $DEBUG
+
+
   if (!r && typeof process !== 'undefined' && 'env' in process) {
     r = process.env.DEBUG;
   }
 
   return r;
 }
-
-/**
- * Enable namespaces listed in `localStorage.debug` initially.
- */
-
-exports.enable(load());
-
 /**
  * Localstorage attempts to return the localstorage.
  *
@@ -9010,241 +10348,345 @@ exports.enable(load());
  * @api private
  */
 
+
 function localstorage() {
   try {
-    return window.localStorage;
-  } catch (e) {}
+    // TVMLKit (Apple TV JS Runtime) does not have a window object, just localStorage in the global context
+    // The Browser also has localStorage in the global context.
+    return localStorage;
+  } catch (error) {// Swallow
+    // XXX (@Qix-) should we be logging these?
+  }
 }
 
+module.exports = require('./common')(exports);
+var formatters = module.exports.formatters;
+/**
+ * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
+ */
+
+formatters.j = function (v) {
+  try {
+    return JSON.stringify(v);
+  } catch (error) {
+    return '[UnexpectedJSONParseError]: ' + error.message;
+  }
+};
+
+
 }).call(this,require('_process'))
-},{"./debug":44,"_process":56}],44:[function(require,module,exports){
+},{"./common":46,"_process":68}],46:[function(require,module,exports){
+"use strict";
 
 /**
  * This is the common logic for both the Node.js and web browser
  * implementations of `debug()`.
- *
- * Expose `debug()` as the module.
  */
+function setup(env) {
+  createDebug.debug = createDebug;
+  createDebug.default = createDebug;
+  createDebug.coerce = coerce;
+  createDebug.disable = disable;
+  createDebug.enable = enable;
+  createDebug.enabled = enabled;
+  createDebug.humanize = require('ms');
+  Object.keys(env).forEach(function (key) {
+    createDebug[key] = env[key];
+  });
+  /**
+  * Active `debug` instances.
+  */
 
-exports = module.exports = createDebug.debug = createDebug['default'] = createDebug;
-exports.coerce = coerce;
-exports.disable = disable;
-exports.enable = enable;
-exports.enabled = enabled;
-exports.humanize = require('ms');
+  createDebug.instances = [];
+  /**
+  * The currently active debug mode names, and names to skip.
+  */
 
-/**
- * Active `debug` instances.
- */
-exports.instances = [];
+  createDebug.names = [];
+  createDebug.skips = [];
+  /**
+  * Map of special "%n" handling functions, for the debug "format" argument.
+  *
+  * Valid key names are a single, lower or upper-case letter, i.e. "n" and "N".
+  */
 
-/**
- * The currently active debug mode names, and names to skip.
- */
+  createDebug.formatters = {};
+  /**
+  * Selects a color for a debug namespace
+  * @param {String} namespace The namespace string for the for the debug instance to be colored
+  * @return {Number|String} An ANSI color code for the given namespace
+  * @api private
+  */
 
-exports.names = [];
-exports.skips = [];
+  function selectColor(namespace) {
+    var hash = 0;
 
-/**
- * Map of special "%n" handling functions, for the debug "format" argument.
- *
- * Valid key names are a single, lower or upper-case letter, i.e. "n" and "N".
- */
+    for (var i = 0; i < namespace.length; i++) {
+      hash = (hash << 5) - hash + namespace.charCodeAt(i);
+      hash |= 0; // Convert to 32bit integer
+    }
 
-exports.formatters = {};
-
-/**
- * Select a color.
- * @param {String} namespace
- * @return {Number}
- * @api private
- */
-
-function selectColor(namespace) {
-  var hash = 0, i;
-
-  for (i in namespace) {
-    hash  = ((hash << 5) - hash) + namespace.charCodeAt(i);
-    hash |= 0; // Convert to 32bit integer
+    return createDebug.colors[Math.abs(hash) % createDebug.colors.length];
   }
 
-  return exports.colors[Math.abs(hash) % exports.colors.length];
-}
+  createDebug.selectColor = selectColor;
+  /**
+  * Create a debugger with the given `namespace`.
+  *
+  * @param {String} namespace
+  * @return {Function}
+  * @api public
+  */
 
-/**
- * Create a debugger with the given `namespace`.
- *
- * @param {String} namespace
- * @return {Function}
- * @api public
- */
+  function createDebug(namespace) {
+    var prevTime;
 
-function createDebug(namespace) {
-
-  var prevTime;
-
-  function debug() {
-    // disabled?
-    if (!debug.enabled) return;
-
-    var self = debug;
-
-    // set `diff` timestamp
-    var curr = +new Date();
-    var ms = curr - (prevTime || curr);
-    self.diff = ms;
-    self.prev = prevTime;
-    self.curr = curr;
-    prevTime = curr;
-
-    // turn the `arguments` into a proper Array
-    var args = new Array(arguments.length);
-    for (var i = 0; i < args.length; i++) {
-      args[i] = arguments[i];
-    }
-
-    args[0] = exports.coerce(args[0]);
-
-    if ('string' !== typeof args[0]) {
-      // anything else let's inspect with %O
-      args.unshift('%O');
-    }
-
-    // apply any `formatters` transformations
-    var index = 0;
-    args[0] = args[0].replace(/%([a-zA-Z%])/g, function(match, format) {
-      // if we encounter an escaped % then don't increase the array index
-      if (match === '%%') return match;
-      index++;
-      var formatter = exports.formatters[format];
-      if ('function' === typeof formatter) {
-        var val = args[index];
-        match = formatter.call(self, val);
-
-        // now we need to remove `args[index]` since it's inlined in the `format`
-        args.splice(index, 1);
-        index--;
+    function debug() {
+      // Disabled?
+      if (!debug.enabled) {
+        return;
       }
-      return match;
-    });
 
-    // apply env-specific formatting (colors, etc.)
-    exports.formatArgs.call(self, args);
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
 
-    var logFn = debug.log || exports.log || console.log.bind(console);
-    logFn.apply(self, args);
-  }
+      var self = debug; // Set `diff` timestamp
 
-  debug.namespace = namespace;
-  debug.enabled = exports.enabled(namespace);
-  debug.useColors = exports.useColors();
-  debug.color = selectColor(namespace);
-  debug.destroy = destroy;
+      var curr = Number(new Date());
+      var ms = curr - (prevTime || curr);
+      self.diff = ms;
+      self.prev = prevTime;
+      self.curr = curr;
+      prevTime = curr;
+      args[0] = createDebug.coerce(args[0]);
 
-  // env-specific initialization logic for debug instances
-  if ('function' === typeof exports.init) {
-    exports.init(debug);
-  }
+      if (typeof args[0] !== 'string') {
+        // Anything else let's inspect with %O
+        args.unshift('%O');
+      } // Apply any `formatters` transformations
 
-  exports.instances.push(debug);
 
-  return debug;
-}
+      var index = 0;
+      args[0] = args[0].replace(/%([a-zA-Z%])/g, function (match, format) {
+        // If we encounter an escaped % then don't increase the array index
+        if (match === '%%') {
+          return match;
+        }
 
-function destroy () {
-  var index = exports.instances.indexOf(this);
-  if (index !== -1) {
-    exports.instances.splice(index, 1);
-    return true;
-  } else {
-    return false;
-  }
-}
+        index++;
+        var formatter = createDebug.formatters[format];
 
-/**
- * Enables a debug mode by namespaces. This can include modes
- * separated by a colon and wildcards.
- *
- * @param {String} namespaces
- * @api public
- */
+        if (typeof formatter === 'function') {
+          var val = args[index];
+          match = formatter.call(self, val); // Now we need to remove `args[index]` since it's inlined in the `format`
 
-function enable(namespaces) {
-  exports.save(namespaces);
+          args.splice(index, 1);
+          index--;
+        }
 
-  exports.names = [];
-  exports.skips = [];
+        return match;
+      }); // Apply env-specific formatting (colors, etc.)
 
-  var i;
-  var split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
-  var len = split.length;
-
-  for (i = 0; i < len; i++) {
-    if (!split[i]) continue; // ignore empty strings
-    namespaces = split[i].replace(/\*/g, '.*?');
-    if (namespaces[0] === '-') {
-      exports.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
-    } else {
-      exports.names.push(new RegExp('^' + namespaces + '$'));
+      createDebug.formatArgs.call(self, args);
+      var logFn = self.log || createDebug.log;
+      logFn.apply(self, args);
     }
-  }
 
-  for (i = 0; i < exports.instances.length; i++) {
-    var instance = exports.instances[i];
-    instance.enabled = exports.enabled(instance.namespace);
-  }
-}
+    debug.namespace = namespace;
+    debug.enabled = createDebug.enabled(namespace);
+    debug.useColors = createDebug.useColors();
+    debug.color = selectColor(namespace);
+    debug.destroy = destroy;
+    debug.extend = extend; // Debug.formatArgs = formatArgs;
+    // debug.rawLog = rawLog;
+    // env-specific initialization logic for debug instances
 
-/**
- * Disable debug output.
- *
- * @api public
- */
-
-function disable() {
-  exports.enable('');
-}
-
-/**
- * Returns true if the given mode name is enabled, false otherwise.
- *
- * @param {String} name
- * @return {Boolean}
- * @api public
- */
-
-function enabled(name) {
-  if (name[name.length - 1] === '*') {
-    return true;
-  }
-  var i, len;
-  for (i = 0, len = exports.skips.length; i < len; i++) {
-    if (exports.skips[i].test(name)) {
-      return false;
+    if (typeof createDebug.init === 'function') {
+      createDebug.init(debug);
     }
+
+    createDebug.instances.push(debug);
+    return debug;
   }
-  for (i = 0, len = exports.names.length; i < len; i++) {
-    if (exports.names[i].test(name)) {
+
+  function destroy() {
+    var index = createDebug.instances.indexOf(this);
+
+    if (index !== -1) {
+      createDebug.instances.splice(index, 1);
       return true;
     }
+
+    return false;
   }
-  return false;
+
+  function extend(namespace, delimiter) {
+    return createDebug(this.namespace + (typeof delimiter === 'undefined' ? ':' : delimiter) + namespace);
+  }
+  /**
+  * Enables a debug mode by namespaces. This can include modes
+  * separated by a colon and wildcards.
+  *
+  * @param {String} namespaces
+  * @api public
+  */
+
+
+  function enable(namespaces) {
+    createDebug.save(namespaces);
+    createDebug.names = [];
+    createDebug.skips = [];
+    var i;
+    var split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
+    var len = split.length;
+
+    for (i = 0; i < len; i++) {
+      if (!split[i]) {
+        // ignore empty strings
+        continue;
+      }
+
+      namespaces = split[i].replace(/\*/g, '.*?');
+
+      if (namespaces[0] === '-') {
+        createDebug.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
+      } else {
+        createDebug.names.push(new RegExp('^' + namespaces + '$'));
+      }
+    }
+
+    for (i = 0; i < createDebug.instances.length; i++) {
+      var instance = createDebug.instances[i];
+      instance.enabled = createDebug.enabled(instance.namespace);
+    }
+  }
+  /**
+  * Disable debug output.
+  *
+  * @api public
+  */
+
+
+  function disable() {
+    createDebug.enable('');
+  }
+  /**
+  * Returns true if the given mode name is enabled, false otherwise.
+  *
+  * @param {String} name
+  * @return {Boolean}
+  * @api public
+  */
+
+
+  function enabled(name) {
+    if (name[name.length - 1] === '*') {
+      return true;
+    }
+
+    var i;
+    var len;
+
+    for (i = 0, len = createDebug.skips.length; i < len; i++) {
+      if (createDebug.skips[i].test(name)) {
+        return false;
+      }
+    }
+
+    for (i = 0, len = createDebug.names.length; i < len; i++) {
+      if (createDebug.names[i].test(name)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+  /**
+  * Coerce `val`.
+  *
+  * @param {Mixed} val
+  * @return {Mixed}
+  * @api private
+  */
+
+
+  function coerce(val) {
+    if (val instanceof Error) {
+      return val.stack || val.message;
+    }
+
+    return val;
+  }
+
+  createDebug.enable(createDebug.load());
+  return createDebug;
 }
 
-/**
- * Coerce `val`.
- *
- * @param {Mixed} val
- * @return {Mixed}
- * @api private
- */
+module.exports = setup;
 
-function coerce(val) {
-  if (val instanceof Error) return val.stack || val.message;
-  return val;
-}
 
-},{"ms":54}],45:[function(require,module,exports){
+},{"ms":60}],47:[function(require,module,exports){
+'use strict';
+
+var keys = require('object-keys');
+var hasSymbols = typeof Symbol === 'function' && typeof Symbol('foo') === 'symbol';
+
+var toStr = Object.prototype.toString;
+var concat = Array.prototype.concat;
+var origDefineProperty = Object.defineProperty;
+
+var isFunction = function (fn) {
+	return typeof fn === 'function' && toStr.call(fn) === '[object Function]';
+};
+
+var arePropertyDescriptorsSupported = function () {
+	var obj = {};
+	try {
+		origDefineProperty(obj, 'x', { enumerable: false, value: obj });
+		// eslint-disable-next-line no-unused-vars, no-restricted-syntax
+		for (var _ in obj) { // jscs:ignore disallowUnusedVariables
+			return false;
+		}
+		return obj.x === obj;
+	} catch (e) { /* this is IE 8. */
+		return false;
+	}
+};
+var supportsDescriptors = origDefineProperty && arePropertyDescriptorsSupported();
+
+var defineProperty = function (object, name, value, predicate) {
+	if (name in object && (!isFunction(predicate) || !predicate())) {
+		return;
+	}
+	if (supportsDescriptors) {
+		origDefineProperty(object, name, {
+			configurable: true,
+			enumerable: false,
+			value: value,
+			writable: true
+		});
+	} else {
+		object[name] = value;
+	}
+};
+
+var defineProperties = function (object, map) {
+	var predicates = arguments.length > 2 ? arguments[2] : {};
+	var props = keys(map);
+	if (hasSymbols) {
+		props = concat.call(props, Object.getOwnPropertySymbols(map));
+	}
+	for (var i = 0; i < props.length; i += 1) {
+		defineProperty(object, props[i], map[props[i]], predicates[props[i]]);
+	}
+};
+
+defineProperties.supportsDescriptors = !!supportsDescriptors;
+
+module.exports = defineProperties;
+
+},{"object-keys":61}],48:[function(require,module,exports){
 /*!
 
  diff v3.5.0
@@ -11088,7 +12530,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ ])
 });
 ;
-},{}],46:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 'use strict';
 
 var matchOperatorsRe = /[|\\{}()[\]^$+*?.]/g;
@@ -11101,7 +12543,7 @@ module.exports = function (str) {
 	return str.replace(matchOperatorsRe, '\\$&');
 };
 
-},{}],47:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -11532,24 +12974,28 @@ EventEmitter.prototype.removeAllListeners =
       return this;
     };
 
-EventEmitter.prototype.listeners = function listeners(type) {
-  var evlistener;
-  var ret;
-  var events = this._events;
+function _listeners(target, type, unwrap) {
+  var events = target._events;
 
   if (!events)
-    ret = [];
-  else {
-    evlistener = events[type];
-    if (!evlistener)
-      ret = [];
-    else if (typeof evlistener === 'function')
-      ret = [evlistener.listener || evlistener];
-    else
-      ret = unwrapListeners(evlistener);
-  }
+    return [];
 
-  return ret;
+  var evlistener = events[type];
+  if (!evlistener)
+    return [];
+
+  if (typeof evlistener === 'function')
+    return unwrap ? [evlistener.listener || evlistener] : [evlistener];
+
+  return unwrap ? unwrapListeners(evlistener) : arrayClone(evlistener, evlistener.length);
+}
+
+EventEmitter.prototype.listeners = function listeners(type) {
+  return _listeners(this, type, true);
+};
+
+EventEmitter.prototype.rawListeners = function rawListeners(type) {
+  return _listeners(this, type, false);
 };
 
 EventEmitter.listenerCount = function(emitter, type) {
@@ -11622,9 +13068,114 @@ function functionBindPolyfill(context) {
   };
 }
 
-},{}],48:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
+'use strict';
+
+/* eslint no-invalid-this: 1 */
+
+var ERROR_MESSAGE = 'Function.prototype.bind called on incompatible ';
+var slice = Array.prototype.slice;
+var toStr = Object.prototype.toString;
+var funcType = '[object Function]';
+
+module.exports = function bind(that) {
+    var target = this;
+    if (typeof target !== 'function' || toStr.call(target) !== funcType) {
+        throw new TypeError(ERROR_MESSAGE + target);
+    }
+    var args = slice.call(arguments, 1);
+
+    var bound;
+    var binder = function () {
+        if (this instanceof bound) {
+            var result = target.apply(
+                this,
+                args.concat(slice.call(arguments))
+            );
+            if (Object(result) === result) {
+                return result;
+            }
+            return this;
+        } else {
+            return target.apply(
+                that,
+                args.concat(slice.call(arguments))
+            );
+        }
+    };
+
+    var boundLength = Math.max(0, target.length - args.length);
+    var boundArgs = [];
+    for (var i = 0; i < boundLength; i++) {
+        boundArgs.push('$' + i);
+    }
+
+    bound = Function('binder', 'return function (' + boundArgs.join(',') + '){ return binder.apply(this,arguments); }')(binder);
+
+    if (target.prototype) {
+        var Empty = function Empty() {};
+        Empty.prototype = target.prototype;
+        bound.prototype = new Empty();
+        Empty.prototype = null;
+    }
+
+    return bound;
+};
+
+},{}],52:[function(require,module,exports){
+'use strict';
+
+var implementation = require('./implementation');
+
+module.exports = Function.prototype.bind || implementation;
+
+},{"./implementation":51}],53:[function(require,module,exports){
+'use strict';
+
+/* eslint complexity: [2, 17], max-statements: [2, 33] */
+module.exports = function hasSymbols() {
+	if (typeof Symbol !== 'function' || typeof Object.getOwnPropertySymbols !== 'function') { return false; }
+	if (typeof Symbol.iterator === 'symbol') { return true; }
+
+	var obj = {};
+	var sym = Symbol('test');
+	var symObj = Object(sym);
+	if (typeof sym === 'string') { return false; }
+
+	if (Object.prototype.toString.call(sym) !== '[object Symbol]') { return false; }
+	if (Object.prototype.toString.call(symObj) !== '[object Symbol]') { return false; }
+
+	// temp disabled per https://github.com/ljharb/object.assign/issues/17
+	// if (sym instanceof Symbol) { return false; }
+	// temp disabled per https://github.com/WebReflection/get-own-property-symbols/issues/4
+	// if (!(symObj instanceof Symbol)) { return false; }
+
+	// if (typeof Symbol.prototype.toString !== 'function') { return false; }
+	// if (String(sym) !== Symbol.prototype.toString.call(sym)) { return false; }
+
+	var symVal = 42;
+	obj[sym] = symVal;
+	for (sym in obj) { return false; } // eslint-disable-line no-restricted-syntax
+	if (typeof Object.keys === 'function' && Object.keys(obj).length !== 0) { return false; }
+
+	if (typeof Object.getOwnPropertyNames === 'function' && Object.getOwnPropertyNames(obj).length !== 0) { return false; }
+
+	var syms = Object.getOwnPropertySymbols(obj);
+	if (syms.length !== 1 || syms[0] !== sym) { return false; }
+
+	if (!Object.prototype.propertyIsEnumerable.call(obj, sym)) { return false; }
+
+	if (typeof Object.getOwnPropertyDescriptor === 'function') {
+		var descriptor = Object.getOwnPropertyDescriptor(obj, sym);
+		if (descriptor.value !== symVal || descriptor.enumerable !== true) { return false; }
+	}
+
+	return true;
+};
+
+},{}],54:[function(require,module,exports){
 (function (global){
-/*! https://mths.be/he v1.1.1 by @mathias | MIT license */
+/*! https://mths.be/he v1.2.0 by @mathias | MIT license */
 ;(function(root) {
 
 	// Detect free variables `exports`.
@@ -11677,7 +13228,7 @@ function functionBindPolyfill(context) {
 
 	var regexInvalidEntity = /&#(?:[xX][^a-fA-F0-9]|[^0-9xX])/;
 	var regexInvalidRawCodePoint = /[\0-\x08\x0B\x0E-\x1F\x7F-\x9F\uFDD0-\uFDEF\uFFFE\uFFFF]|[\uD83F\uD87F\uD8BF\uD8FF\uD93F\uD97F\uD9BF\uD9FF\uDA3F\uDA7F\uDABF\uDAFF\uDB3F\uDB7F\uDBBF\uDBFF][\uDFFE\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/;
-	var regexDecode = /&#([0-9]+)(;?)|&#[xX]([a-fA-F0-9]+)(;?)|&([0-9a-zA-Z]+);|&(Aacute|Agrave|Atilde|Ccedil|Eacute|Egrave|Iacute|Igrave|Ntilde|Oacute|Ograve|Oslash|Otilde|Uacute|Ugrave|Yacute|aacute|agrave|atilde|brvbar|ccedil|curren|divide|eacute|egrave|frac12|frac14|frac34|iacute|igrave|iquest|middot|ntilde|oacute|ograve|oslash|otilde|plusmn|uacute|ugrave|yacute|AElig|Acirc|Aring|Ecirc|Icirc|Ocirc|THORN|Ucirc|acirc|acute|aelig|aring|cedil|ecirc|icirc|iexcl|laquo|micro|ocirc|pound|raquo|szlig|thorn|times|ucirc|Auml|COPY|Euml|Iuml|Ouml|QUOT|Uuml|auml|cent|copy|euml|iuml|macr|nbsp|ordf|ordm|ouml|para|quot|sect|sup1|sup2|sup3|uuml|yuml|AMP|ETH|REG|amp|deg|eth|not|reg|shy|uml|yen|GT|LT|gt|lt)([=a-zA-Z0-9])?/g;
+	var regexDecode = /&(CounterClockwiseContourIntegral|DoubleLongLeftRightArrow|ClockwiseContourIntegral|NotNestedGreaterGreater|NotSquareSupersetEqual|DiacriticalDoubleAcute|NotRightTriangleEqual|NotSucceedsSlantEqual|NotPrecedesSlantEqual|CloseCurlyDoubleQuote|NegativeVeryThinSpace|DoubleContourIntegral|FilledVerySmallSquare|CapitalDifferentialD|OpenCurlyDoubleQuote|EmptyVerySmallSquare|NestedGreaterGreater|DoubleLongRightArrow|NotLeftTriangleEqual|NotGreaterSlantEqual|ReverseUpEquilibrium|DoubleLeftRightArrow|NotSquareSubsetEqual|NotDoubleVerticalBar|RightArrowLeftArrow|NotGreaterFullEqual|NotRightTriangleBar|SquareSupersetEqual|DownLeftRightVector|DoubleLongLeftArrow|leftrightsquigarrow|LeftArrowRightArrow|NegativeMediumSpace|blacktriangleright|RightDownVectorBar|PrecedesSlantEqual|RightDoubleBracket|SucceedsSlantEqual|NotLeftTriangleBar|RightTriangleEqual|SquareIntersection|RightDownTeeVector|ReverseEquilibrium|NegativeThickSpace|longleftrightarrow|Longleftrightarrow|LongLeftRightArrow|DownRightTeeVector|DownRightVectorBar|GreaterSlantEqual|SquareSubsetEqual|LeftDownVectorBar|LeftDoubleBracket|VerticalSeparator|rightleftharpoons|NotGreaterGreater|NotSquareSuperset|blacktriangleleft|blacktriangledown|NegativeThinSpace|LeftDownTeeVector|NotLessSlantEqual|leftrightharpoons|DoubleUpDownArrow|DoubleVerticalBar|LeftTriangleEqual|FilledSmallSquare|twoheadrightarrow|NotNestedLessLess|DownLeftTeeVector|DownLeftVectorBar|RightAngleBracket|NotTildeFullEqual|NotReverseElement|RightUpDownVector|DiacriticalTilde|NotSucceedsTilde|circlearrowright|NotPrecedesEqual|rightharpoondown|DoubleRightArrow|NotSucceedsEqual|NonBreakingSpace|NotRightTriangle|LessEqualGreater|RightUpTeeVector|LeftAngleBracket|GreaterFullEqual|DownArrowUpArrow|RightUpVectorBar|twoheadleftarrow|GreaterEqualLess|downharpoonright|RightTriangleBar|ntrianglerighteq|NotSupersetEqual|LeftUpDownVector|DiacriticalAcute|rightrightarrows|vartriangleright|UpArrowDownArrow|DiacriticalGrave|UnderParenthesis|EmptySmallSquare|LeftUpVectorBar|leftrightarrows|DownRightVector|downharpoonleft|trianglerighteq|ShortRightArrow|OverParenthesis|DoubleLeftArrow|DoubleDownArrow|NotSquareSubset|bigtriangledown|ntrianglelefteq|UpperRightArrow|curvearrowright|vartriangleleft|NotLeftTriangle|nleftrightarrow|LowerRightArrow|NotHumpDownHump|NotGreaterTilde|rightthreetimes|LeftUpTeeVector|NotGreaterEqual|straightepsilon|LeftTriangleBar|rightsquigarrow|ContourIntegral|rightleftarrows|CloseCurlyQuote|RightDownVector|LeftRightVector|nLeftrightarrow|leftharpoondown|circlearrowleft|SquareSuperset|OpenCurlyQuote|hookrightarrow|HorizontalLine|DiacriticalDot|NotLessGreater|ntriangleright|DoubleRightTee|InvisibleComma|InvisibleTimes|LowerLeftArrow|DownLeftVector|NotSubsetEqual|curvearrowleft|trianglelefteq|NotVerticalBar|TildeFullEqual|downdownarrows|NotGreaterLess|RightTeeVector|ZeroWidthSpace|looparrowright|LongRightArrow|doublebarwedge|ShortLeftArrow|ShortDownArrow|RightVectorBar|GreaterGreater|ReverseElement|rightharpoonup|LessSlantEqual|leftthreetimes|upharpoonright|rightarrowtail|LeftDownVector|Longrightarrow|NestedLessLess|UpperLeftArrow|nshortparallel|leftleftarrows|leftrightarrow|Leftrightarrow|LeftRightArrow|longrightarrow|upharpoonleft|RightArrowBar|ApplyFunction|LeftTeeVector|leftarrowtail|NotEqualTilde|varsubsetneqq|varsupsetneqq|RightTeeArrow|SucceedsEqual|SucceedsTilde|LeftVectorBar|SupersetEqual|hookleftarrow|DifferentialD|VerticalTilde|VeryThinSpace|blacktriangle|bigtriangleup|LessFullEqual|divideontimes|leftharpoonup|UpEquilibrium|ntriangleleft|RightTriangle|measuredangle|shortparallel|longleftarrow|Longleftarrow|LongLeftArrow|DoubleLeftTee|Poincareplane|PrecedesEqual|triangleright|DoubleUpArrow|RightUpVector|fallingdotseq|looparrowleft|PrecedesTilde|NotTildeEqual|NotTildeTilde|smallsetminus|Proportional|triangleleft|triangledown|UnderBracket|NotHumpEqual|exponentiale|ExponentialE|NotLessTilde|HilbertSpace|RightCeiling|blacklozenge|varsupsetneq|HumpDownHump|GreaterEqual|VerticalLine|LeftTeeArrow|NotLessEqual|DownTeeArrow|LeftTriangle|varsubsetneq|Intersection|NotCongruent|DownArrowBar|LeftUpVector|LeftArrowBar|risingdotseq|GreaterTilde|RoundImplies|SquareSubset|ShortUpArrow|NotSuperset|quaternions|precnapprox|backepsilon|preccurlyeq|OverBracket|blacksquare|MediumSpace|VerticalBar|circledcirc|circleddash|CircleMinus|CircleTimes|LessGreater|curlyeqprec|curlyeqsucc|diamondsuit|UpDownArrow|Updownarrow|RuleDelayed|Rrightarrow|updownarrow|RightVector|nRightarrow|nrightarrow|eqslantless|LeftCeiling|Equilibrium|SmallCircle|expectation|NotSucceeds|thickapprox|GreaterLess|SquareUnion|NotPrecedes|NotLessLess|straightphi|succnapprox|succcurlyeq|SubsetEqual|sqsupseteq|Proportion|Laplacetrf|ImaginaryI|supsetneqq|NotGreater|gtreqqless|NotElement|ThickSpace|TildeEqual|TildeTilde|Fouriertrf|rmoustache|EqualTilde|eqslantgtr|UnderBrace|LeftVector|UpArrowBar|nLeftarrow|nsubseteqq|subsetneqq|nsupseteqq|nleftarrow|succapprox|lessapprox|UpTeeArrow|upuparrows|curlywedge|lesseqqgtr|varepsilon|varnothing|RightFloor|complement|CirclePlus|sqsubseteq|Lleftarrow|circledast|RightArrow|Rightarrow|rightarrow|lmoustache|Bernoullis|precapprox|mapstoleft|mapstodown|longmapsto|dotsquare|downarrow|DoubleDot|nsubseteq|supsetneq|leftarrow|nsupseteq|subsetneq|ThinSpace|ngeqslant|subseteqq|HumpEqual|NotSubset|triangleq|NotCupCap|lesseqgtr|heartsuit|TripleDot|Leftarrow|Coproduct|Congruent|varpropto|complexes|gvertneqq|LeftArrow|LessTilde|supseteqq|MinusPlus|CircleDot|nleqslant|NotExists|gtreqless|nparallel|UnionPlus|LeftFloor|checkmark|CenterDot|centerdot|Mellintrf|gtrapprox|bigotimes|OverBrace|spadesuit|therefore|pitchfork|rationals|PlusMinus|Backslash|Therefore|DownBreve|backsimeq|backprime|DownArrow|nshortmid|Downarrow|lvertneqq|eqvparsl|imagline|imagpart|infintie|integers|Integral|intercal|LessLess|Uarrocir|intlarhk|sqsupset|angmsdaf|sqsubset|llcorner|vartheta|cupbrcap|lnapprox|Superset|SuchThat|succnsim|succneqq|angmsdag|biguplus|curlyvee|trpezium|Succeeds|NotTilde|bigwedge|angmsdah|angrtvbd|triminus|cwconint|fpartint|lrcorner|smeparsl|subseteq|urcorner|lurdshar|laemptyv|DDotrahd|approxeq|ldrushar|awconint|mapstoup|backcong|shortmid|triangle|geqslant|gesdotol|timesbar|circledR|circledS|setminus|multimap|naturals|scpolint|ncongdot|RightTee|boxminus|gnapprox|boxtimes|andslope|thicksim|angmsdaa|varsigma|cirfnint|rtriltri|angmsdab|rppolint|angmsdac|barwedge|drbkarow|clubsuit|thetasym|bsolhsub|capbrcup|dzigrarr|doteqdot|DotEqual|dotminus|UnderBar|NotEqual|realpart|otimesas|ulcorner|hksearow|hkswarow|parallel|PartialD|elinters|emptyset|plusacir|bbrktbrk|angmsdad|pointint|bigoplus|angmsdae|Precedes|bigsqcup|varkappa|notindot|supseteq|precneqq|precnsim|profalar|profline|profsurf|leqslant|lesdotor|raemptyv|subplus|notnivb|notnivc|subrarr|zigrarr|vzigzag|submult|subedot|Element|between|cirscir|larrbfs|larrsim|lotimes|lbrksld|lbrkslu|lozenge|ldrdhar|dbkarow|bigcirc|epsilon|simrarr|simplus|ltquest|Epsilon|luruhar|gtquest|maltese|npolint|eqcolon|npreceq|bigodot|ddagger|gtrless|bnequiv|harrcir|ddotseq|equivDD|backsim|demptyv|nsqsube|nsqsupe|Upsilon|nsubset|upsilon|minusdu|nsucceq|swarrow|nsupset|coloneq|searrow|boxplus|napprox|natural|asympeq|alefsym|congdot|nearrow|bigstar|diamond|supplus|tritime|LeftTee|nvinfin|triplus|NewLine|nvltrie|nvrtrie|nwarrow|nexists|Diamond|ruluhar|Implies|supmult|angzarr|suplarr|suphsub|questeq|because|digamma|Because|olcross|bemptyv|omicron|Omicron|rotimes|NoBreak|intprod|angrtvb|orderof|uwangle|suphsol|lesdoto|orslope|DownTee|realine|cudarrl|rdldhar|OverBar|supedot|lessdot|supdsub|topfork|succsim|rbrkslu|rbrksld|pertenk|cudarrr|isindot|planckh|lessgtr|pluscir|gesdoto|plussim|plustwo|lesssim|cularrp|rarrsim|Cayleys|notinva|notinvb|notinvc|UpArrow|Uparrow|uparrow|NotLess|dwangle|precsim|Product|curarrm|Cconint|dotplus|rarrbfs|ccupssm|Cedilla|cemptyv|notniva|quatint|frac35|frac38|frac45|frac56|frac58|frac78|tridot|xoplus|gacute|gammad|Gammad|lfisht|lfloor|bigcup|sqsupe|gbreve|Gbreve|lharul|sqsube|sqcups|Gcedil|apacir|llhard|lmidot|Lmidot|lmoust|andand|sqcaps|approx|Abreve|spades|circeq|tprime|divide|topcir|Assign|topbot|gesdot|divonx|xuplus|timesd|gesles|atilde|solbar|SOFTcy|loplus|timesb|lowast|lowbar|dlcorn|dlcrop|softcy|dollar|lparlt|thksim|lrhard|Atilde|lsaquo|smashp|bigvee|thinsp|wreath|bkarow|lsquor|lstrok|Lstrok|lthree|ltimes|ltlarr|DotDot|simdot|ltrPar|weierp|xsqcup|angmsd|sigmav|sigmaf|zeetrf|Zcaron|zcaron|mapsto|vsupne|thetav|cirmid|marker|mcomma|Zacute|vsubnE|there4|gtlPar|vsubne|bottom|gtrarr|SHCHcy|shchcy|midast|midcir|middot|minusb|minusd|gtrdot|bowtie|sfrown|mnplus|models|colone|seswar|Colone|mstpos|searhk|gtrsim|nacute|Nacute|boxbox|telrec|hairsp|Tcedil|nbumpe|scnsim|ncaron|Ncaron|ncedil|Ncedil|hamilt|Scedil|nearhk|hardcy|HARDcy|tcedil|Tcaron|commat|nequiv|nesear|tcaron|target|hearts|nexist|varrho|scedil|Scaron|scaron|hellip|Sacute|sacute|hercon|swnwar|compfn|rtimes|rthree|rsquor|rsaquo|zacute|wedgeq|homtht|barvee|barwed|Barwed|rpargt|horbar|conint|swarhk|roplus|nltrie|hslash|hstrok|Hstrok|rmoust|Conint|bprime|hybull|hyphen|iacute|Iacute|supsup|supsub|supsim|varphi|coprod|brvbar|agrave|Supset|supset|igrave|Igrave|notinE|Agrave|iiiint|iinfin|copysr|wedbar|Verbar|vangrt|becaus|incare|verbar|inodot|bullet|drcorn|intcal|drcrop|cularr|vellip|Utilde|bumpeq|cupcap|dstrok|Dstrok|CupCap|cupcup|cupdot|eacute|Eacute|supdot|iquest|easter|ecaron|Ecaron|ecolon|isinsv|utilde|itilde|Itilde|curarr|succeq|Bumpeq|cacute|ulcrop|nparsl|Cacute|nprcue|egrave|Egrave|nrarrc|nrarrw|subsup|subsub|nrtrie|jsercy|nsccue|Jsercy|kappav|kcedil|Kcedil|subsim|ulcorn|nsimeq|egsdot|veebar|kgreen|capand|elsdot|Subset|subset|curren|aacute|lacute|Lacute|emptyv|ntilde|Ntilde|lagran|lambda|Lambda|capcap|Ugrave|langle|subdot|emsp13|numero|emsp14|nvdash|nvDash|nVdash|nVDash|ugrave|ufisht|nvHarr|larrfs|nvlArr|larrhk|larrlp|larrpl|nvrArr|Udblac|nwarhk|larrtl|nwnear|oacute|Oacute|latail|lAtail|sstarf|lbrace|odblac|Odblac|lbrack|udblac|odsold|eparsl|lcaron|Lcaron|ograve|Ograve|lcedil|Lcedil|Aacute|ssmile|ssetmn|squarf|ldquor|capcup|ominus|cylcty|rharul|eqcirc|dagger|rfloor|rfisht|Dagger|daleth|equals|origof|capdot|equest|dcaron|Dcaron|rdquor|oslash|Oslash|otilde|Otilde|otimes|Otimes|urcrop|Ubreve|ubreve|Yacute|Uacute|uacute|Rcedil|rcedil|urcorn|parsim|Rcaron|Vdashl|rcaron|Tstrok|percnt|period|permil|Exists|yacute|rbrack|rbrace|phmmat|ccaron|Ccaron|planck|ccedil|plankv|tstrok|female|plusdo|plusdu|ffilig|plusmn|ffllig|Ccedil|rAtail|dfisht|bernou|ratail|Rarrtl|rarrtl|angsph|rarrpl|rarrlp|rarrhk|xwedge|xotime|forall|ForAll|Vvdash|vsupnE|preceq|bigcap|frac12|frac13|frac14|primes|rarrfs|prnsim|frac15|Square|frac16|square|lesdot|frac18|frac23|propto|prurel|rarrap|rangle|puncsp|frac25|Racute|qprime|racute|lesges|frac34|abreve|AElig|eqsim|utdot|setmn|urtri|Equal|Uring|seArr|uring|searr|dashv|Dashv|mumap|nabla|iogon|Iogon|sdote|sdotb|scsim|napid|napos|equiv|natur|Acirc|dblac|erarr|nbump|iprod|erDot|ucirc|awint|esdot|angrt|ncong|isinE|scnap|Scirc|scirc|ndash|isins|Ubrcy|nearr|neArr|isinv|nedot|ubrcy|acute|Ycirc|iukcy|Iukcy|xutri|nesim|caret|jcirc|Jcirc|caron|twixt|ddarr|sccue|exist|jmath|sbquo|ngeqq|angst|ccaps|lceil|ngsim|UpTee|delta|Delta|rtrif|nharr|nhArr|nhpar|rtrie|jukcy|Jukcy|kappa|rsquo|Kappa|nlarr|nlArr|TSHcy|rrarr|aogon|Aogon|fflig|xrarr|tshcy|ccirc|nleqq|filig|upsih|nless|dharl|nlsim|fjlig|ropar|nltri|dharr|robrk|roarr|fllig|fltns|roang|rnmid|subnE|subne|lAarr|trisb|Ccirc|acirc|ccups|blank|VDash|forkv|Vdash|langd|cedil|blk12|blk14|laquo|strns|diams|notin|vDash|larrb|blk34|block|disin|uplus|vdash|vBarv|aelig|starf|Wedge|check|xrArr|lates|lbarr|lBarr|notni|lbbrk|bcong|frasl|lbrke|frown|vrtri|vprop|vnsup|gamma|Gamma|wedge|xodot|bdquo|srarr|doteq|ldquo|boxdl|boxdL|gcirc|Gcirc|boxDl|boxDL|boxdr|boxdR|boxDr|TRADE|trade|rlhar|boxDR|vnsub|npart|vltri|rlarr|boxhd|boxhD|nprec|gescc|nrarr|nrArr|boxHd|boxHD|boxhu|boxhU|nrtri|boxHu|clubs|boxHU|times|colon|Colon|gimel|xlArr|Tilde|nsime|tilde|nsmid|nspar|THORN|thorn|xlarr|nsube|nsubE|thkap|xhArr|comma|nsucc|boxul|boxuL|nsupe|nsupE|gneqq|gnsim|boxUl|boxUL|grave|boxur|boxuR|boxUr|boxUR|lescc|angle|bepsi|boxvh|varpi|boxvH|numsp|Theta|gsime|gsiml|theta|boxVh|boxVH|boxvl|gtcir|gtdot|boxvL|boxVl|boxVL|crarr|cross|Cross|nvsim|boxvr|nwarr|nwArr|sqsup|dtdot|Uogon|lhard|lharu|dtrif|ocirc|Ocirc|lhblk|duarr|odash|sqsub|Hacek|sqcup|llarr|duhar|oelig|OElig|ofcir|boxvR|uogon|lltri|boxVr|csube|uuarr|ohbar|csupe|ctdot|olarr|olcir|harrw|oline|sqcap|omacr|Omacr|omega|Omega|boxVR|aleph|lneqq|lnsim|loang|loarr|rharu|lobrk|hcirc|operp|oplus|rhard|Hcirc|orarr|Union|order|ecirc|Ecirc|cuepr|szlig|cuesc|breve|reals|eDDot|Breve|hoarr|lopar|utrif|rdquo|Umacr|umacr|efDot|swArr|ultri|alpha|rceil|ovbar|swarr|Wcirc|wcirc|smtes|smile|bsemi|lrarr|aring|parsl|lrhar|bsime|uhblk|lrtri|cupor|Aring|uharr|uharl|slarr|rbrke|bsolb|lsime|rbbrk|RBarr|lsimg|phone|rBarr|rbarr|icirc|lsquo|Icirc|emacr|Emacr|ratio|simne|plusb|simlE|simgE|simeq|pluse|ltcir|ltdot|empty|xharr|xdtri|iexcl|Alpha|ltrie|rarrw|pound|ltrif|xcirc|bumpe|prcue|bumpE|asymp|amacr|cuvee|Sigma|sigma|iiint|udhar|iiota|ijlig|IJlig|supnE|imacr|Imacr|prime|Prime|image|prnap|eogon|Eogon|rarrc|mdash|mDDot|cuwed|imath|supne|imped|Amacr|udarr|prsim|micro|rarrb|cwint|raquo|infin|eplus|range|rangd|Ucirc|radic|minus|amalg|veeeq|rAarr|epsiv|ycirc|quest|sharp|quot|zwnj|Qscr|race|qscr|Qopf|qopf|qint|rang|Rang|Zscr|zscr|Zopf|zopf|rarr|rArr|Rarr|Pscr|pscr|prop|prod|prnE|prec|ZHcy|zhcy|prap|Zeta|zeta|Popf|popf|Zdot|plus|zdot|Yuml|yuml|phiv|YUcy|yucy|Yscr|yscr|perp|Yopf|yopf|part|para|YIcy|Ouml|rcub|yicy|YAcy|rdca|ouml|osol|Oscr|rdsh|yacy|real|oscr|xvee|andd|rect|andv|Xscr|oror|ordm|ordf|xscr|ange|aopf|Aopf|rHar|Xopf|opar|Oopf|xopf|xnis|rhov|oopf|omid|xmap|oint|apid|apos|ogon|ascr|Ascr|odot|odiv|xcup|xcap|ocir|oast|nvlt|nvle|nvgt|nvge|nvap|Wscr|wscr|auml|ntlg|ntgl|nsup|nsub|nsim|Nscr|nscr|nsce|Wopf|ring|npre|wopf|npar|Auml|Barv|bbrk|Nopf|nopf|nmid|nLtv|beta|ropf|Ropf|Beta|beth|nles|rpar|nleq|bnot|bNot|nldr|NJcy|rscr|Rscr|Vscr|vscr|rsqb|njcy|bopf|nisd|Bopf|rtri|Vopf|nGtv|ngtr|vopf|boxh|boxH|boxv|nges|ngeq|boxV|bscr|scap|Bscr|bsim|Vert|vert|bsol|bull|bump|caps|cdot|ncup|scnE|ncap|nbsp|napE|Cdot|cent|sdot|Vbar|nang|vBar|chcy|Mscr|mscr|sect|semi|CHcy|Mopf|mopf|sext|circ|cire|mldr|mlcp|cirE|comp|shcy|SHcy|vArr|varr|cong|copf|Copf|copy|COPY|malt|male|macr|lvnE|cscr|ltri|sime|ltcc|simg|Cscr|siml|csub|Uuml|lsqb|lsim|uuml|csup|Lscr|lscr|utri|smid|lpar|cups|smte|lozf|darr|Lopf|Uscr|solb|lopf|sopf|Sopf|lneq|uscr|spar|dArr|lnap|Darr|dash|Sqrt|LJcy|ljcy|lHar|dHar|Upsi|upsi|diam|lesg|djcy|DJcy|leqq|dopf|Dopf|dscr|Dscr|dscy|ldsh|ldca|squf|DScy|sscr|Sscr|dsol|lcub|late|star|Star|Uopf|Larr|lArr|larr|uopf|dtri|dzcy|sube|subE|Lang|lang|Kscr|kscr|Kopf|kopf|KJcy|kjcy|KHcy|khcy|DZcy|ecir|edot|eDot|Jscr|jscr|succ|Jopf|jopf|Edot|uHar|emsp|ensp|Iuml|iuml|eopf|isin|Iscr|iscr|Eopf|epar|sung|epsi|escr|sup1|sup2|sup3|Iota|iota|supe|supE|Iopf|iopf|IOcy|iocy|Escr|esim|Esim|imof|Uarr|QUOT|uArr|uarr|euml|IEcy|iecy|Idot|Euml|euro|excl|Hscr|hscr|Hopf|hopf|TScy|tscy|Tscr|hbar|tscr|flat|tbrk|fnof|hArr|harr|half|fopf|Fopf|tdot|gvnE|fork|trie|gtcc|fscr|Fscr|gdot|gsim|Gscr|gscr|Gopf|gopf|gneq|Gdot|tosa|gnap|Topf|topf|geqq|toea|GJcy|gjcy|tint|gesl|mid|Sfr|ggg|top|ges|gla|glE|glj|geq|gne|gEl|gel|gnE|Gcy|gcy|gap|Tfr|tfr|Tcy|tcy|Hat|Tau|Ffr|tau|Tab|hfr|Hfr|ffr|Fcy|fcy|icy|Icy|iff|ETH|eth|ifr|Ifr|Eta|eta|int|Int|Sup|sup|ucy|Ucy|Sum|sum|jcy|ENG|ufr|Ufr|eng|Jcy|jfr|els|ell|egs|Efr|efr|Jfr|uml|kcy|Kcy|Ecy|ecy|kfr|Kfr|lap|Sub|sub|lat|lcy|Lcy|leg|Dot|dot|lEg|leq|les|squ|div|die|lfr|Lfr|lgE|Dfr|dfr|Del|deg|Dcy|dcy|lne|lnE|sol|loz|smt|Cup|lrm|cup|lsh|Lsh|sim|shy|map|Map|mcy|Mcy|mfr|Mfr|mho|gfr|Gfr|sfr|cir|Chi|chi|nap|Cfr|vcy|Vcy|cfr|Scy|scy|ncy|Ncy|vee|Vee|Cap|cap|nfr|scE|sce|Nfr|nge|ngE|nGg|vfr|Vfr|ngt|bot|nGt|nis|niv|Rsh|rsh|nle|nlE|bne|Bfr|bfr|nLl|nlt|nLt|Bcy|bcy|not|Not|rlm|wfr|Wfr|npr|nsc|num|ocy|ast|Ocy|ofr|xfr|Xfr|Ofr|ogt|ohm|apE|olt|Rho|ape|rho|Rfr|rfr|ord|REG|ang|reg|orv|And|and|AMP|Rcy|amp|Afr|ycy|Ycy|yen|yfr|Yfr|rcy|par|pcy|Pcy|pfr|Pfr|phi|Phi|afr|Acy|acy|zcy|Zcy|piv|acE|acd|zfr|Zfr|pre|prE|psi|Psi|qfr|Qfr|zwj|Or|ge|Gg|gt|gg|el|oS|lt|Lt|LT|Re|lg|gl|eg|ne|Im|it|le|DD|wp|wr|nu|Nu|dd|lE|Sc|sc|pi|Pi|ee|af|ll|Ll|rx|gE|xi|pm|Xi|ic|pr|Pr|in|ni|mp|mu|ac|Mu|or|ap|Gt|GT|ii);|&(Aacute|Agrave|Atilde|Ccedil|Eacute|Egrave|Iacute|Igrave|Ntilde|Oacute|Ograve|Oslash|Otilde|Uacute|Ugrave|Yacute|aacute|agrave|atilde|brvbar|ccedil|curren|divide|eacute|egrave|frac12|frac14|frac34|iacute|igrave|iquest|middot|ntilde|oacute|ograve|oslash|otilde|plusmn|uacute|ugrave|yacute|AElig|Acirc|Aring|Ecirc|Icirc|Ocirc|THORN|Ucirc|acirc|acute|aelig|aring|cedil|ecirc|icirc|iexcl|laquo|micro|ocirc|pound|raquo|szlig|thorn|times|ucirc|Auml|COPY|Euml|Iuml|Ouml|QUOT|Uuml|auml|cent|copy|euml|iuml|macr|nbsp|ordf|ordm|ouml|para|quot|sect|sup1|sup2|sup3|uuml|yuml|AMP|ETH|REG|amp|deg|eth|not|reg|shy|uml|yen|GT|LT|gt|lt)(?!;)([=a-zA-Z0-9]?)|&#([0-9]+)(;?)|&#[xX]([a-fA-F0-9]+)(;?)|&([0-9a-zA-Z]+)/g;
 	var decodeMap = {'aacute':'\xE1','Aacute':'\xC1','abreve':'\u0103','Abreve':'\u0102','ac':'\u223E','acd':'\u223F','acE':'\u223E\u0333','acirc':'\xE2','Acirc':'\xC2','acute':'\xB4','acy':'\u0430','Acy':'\u0410','aelig':'\xE6','AElig':'\xC6','af':'\u2061','afr':'\uD835\uDD1E','Afr':'\uD835\uDD04','agrave':'\xE0','Agrave':'\xC0','alefsym':'\u2135','aleph':'\u2135','alpha':'\u03B1','Alpha':'\u0391','amacr':'\u0101','Amacr':'\u0100','amalg':'\u2A3F','amp':'&','AMP':'&','and':'\u2227','And':'\u2A53','andand':'\u2A55','andd':'\u2A5C','andslope':'\u2A58','andv':'\u2A5A','ang':'\u2220','ange':'\u29A4','angle':'\u2220','angmsd':'\u2221','angmsdaa':'\u29A8','angmsdab':'\u29A9','angmsdac':'\u29AA','angmsdad':'\u29AB','angmsdae':'\u29AC','angmsdaf':'\u29AD','angmsdag':'\u29AE','angmsdah':'\u29AF','angrt':'\u221F','angrtvb':'\u22BE','angrtvbd':'\u299D','angsph':'\u2222','angst':'\xC5','angzarr':'\u237C','aogon':'\u0105','Aogon':'\u0104','aopf':'\uD835\uDD52','Aopf':'\uD835\uDD38','ap':'\u2248','apacir':'\u2A6F','ape':'\u224A','apE':'\u2A70','apid':'\u224B','apos':'\'','ApplyFunction':'\u2061','approx':'\u2248','approxeq':'\u224A','aring':'\xE5','Aring':'\xC5','ascr':'\uD835\uDCB6','Ascr':'\uD835\uDC9C','Assign':'\u2254','ast':'*','asymp':'\u2248','asympeq':'\u224D','atilde':'\xE3','Atilde':'\xC3','auml':'\xE4','Auml':'\xC4','awconint':'\u2233','awint':'\u2A11','backcong':'\u224C','backepsilon':'\u03F6','backprime':'\u2035','backsim':'\u223D','backsimeq':'\u22CD','Backslash':'\u2216','Barv':'\u2AE7','barvee':'\u22BD','barwed':'\u2305','Barwed':'\u2306','barwedge':'\u2305','bbrk':'\u23B5','bbrktbrk':'\u23B6','bcong':'\u224C','bcy':'\u0431','Bcy':'\u0411','bdquo':'\u201E','becaus':'\u2235','because':'\u2235','Because':'\u2235','bemptyv':'\u29B0','bepsi':'\u03F6','bernou':'\u212C','Bernoullis':'\u212C','beta':'\u03B2','Beta':'\u0392','beth':'\u2136','between':'\u226C','bfr':'\uD835\uDD1F','Bfr':'\uD835\uDD05','bigcap':'\u22C2','bigcirc':'\u25EF','bigcup':'\u22C3','bigodot':'\u2A00','bigoplus':'\u2A01','bigotimes':'\u2A02','bigsqcup':'\u2A06','bigstar':'\u2605','bigtriangledown':'\u25BD','bigtriangleup':'\u25B3','biguplus':'\u2A04','bigvee':'\u22C1','bigwedge':'\u22C0','bkarow':'\u290D','blacklozenge':'\u29EB','blacksquare':'\u25AA','blacktriangle':'\u25B4','blacktriangledown':'\u25BE','blacktriangleleft':'\u25C2','blacktriangleright':'\u25B8','blank':'\u2423','blk12':'\u2592','blk14':'\u2591','blk34':'\u2593','block':'\u2588','bne':'=\u20E5','bnequiv':'\u2261\u20E5','bnot':'\u2310','bNot':'\u2AED','bopf':'\uD835\uDD53','Bopf':'\uD835\uDD39','bot':'\u22A5','bottom':'\u22A5','bowtie':'\u22C8','boxbox':'\u29C9','boxdl':'\u2510','boxdL':'\u2555','boxDl':'\u2556','boxDL':'\u2557','boxdr':'\u250C','boxdR':'\u2552','boxDr':'\u2553','boxDR':'\u2554','boxh':'\u2500','boxH':'\u2550','boxhd':'\u252C','boxhD':'\u2565','boxHd':'\u2564','boxHD':'\u2566','boxhu':'\u2534','boxhU':'\u2568','boxHu':'\u2567','boxHU':'\u2569','boxminus':'\u229F','boxplus':'\u229E','boxtimes':'\u22A0','boxul':'\u2518','boxuL':'\u255B','boxUl':'\u255C','boxUL':'\u255D','boxur':'\u2514','boxuR':'\u2558','boxUr':'\u2559','boxUR':'\u255A','boxv':'\u2502','boxV':'\u2551','boxvh':'\u253C','boxvH':'\u256A','boxVh':'\u256B','boxVH':'\u256C','boxvl':'\u2524','boxvL':'\u2561','boxVl':'\u2562','boxVL':'\u2563','boxvr':'\u251C','boxvR':'\u255E','boxVr':'\u255F','boxVR':'\u2560','bprime':'\u2035','breve':'\u02D8','Breve':'\u02D8','brvbar':'\xA6','bscr':'\uD835\uDCB7','Bscr':'\u212C','bsemi':'\u204F','bsim':'\u223D','bsime':'\u22CD','bsol':'\\','bsolb':'\u29C5','bsolhsub':'\u27C8','bull':'\u2022','bullet':'\u2022','bump':'\u224E','bumpe':'\u224F','bumpE':'\u2AAE','bumpeq':'\u224F','Bumpeq':'\u224E','cacute':'\u0107','Cacute':'\u0106','cap':'\u2229','Cap':'\u22D2','capand':'\u2A44','capbrcup':'\u2A49','capcap':'\u2A4B','capcup':'\u2A47','capdot':'\u2A40','CapitalDifferentialD':'\u2145','caps':'\u2229\uFE00','caret':'\u2041','caron':'\u02C7','Cayleys':'\u212D','ccaps':'\u2A4D','ccaron':'\u010D','Ccaron':'\u010C','ccedil':'\xE7','Ccedil':'\xC7','ccirc':'\u0109','Ccirc':'\u0108','Cconint':'\u2230','ccups':'\u2A4C','ccupssm':'\u2A50','cdot':'\u010B','Cdot':'\u010A','cedil':'\xB8','Cedilla':'\xB8','cemptyv':'\u29B2','cent':'\xA2','centerdot':'\xB7','CenterDot':'\xB7','cfr':'\uD835\uDD20','Cfr':'\u212D','chcy':'\u0447','CHcy':'\u0427','check':'\u2713','checkmark':'\u2713','chi':'\u03C7','Chi':'\u03A7','cir':'\u25CB','circ':'\u02C6','circeq':'\u2257','circlearrowleft':'\u21BA','circlearrowright':'\u21BB','circledast':'\u229B','circledcirc':'\u229A','circleddash':'\u229D','CircleDot':'\u2299','circledR':'\xAE','circledS':'\u24C8','CircleMinus':'\u2296','CirclePlus':'\u2295','CircleTimes':'\u2297','cire':'\u2257','cirE':'\u29C3','cirfnint':'\u2A10','cirmid':'\u2AEF','cirscir':'\u29C2','ClockwiseContourIntegral':'\u2232','CloseCurlyDoubleQuote':'\u201D','CloseCurlyQuote':'\u2019','clubs':'\u2663','clubsuit':'\u2663','colon':':','Colon':'\u2237','colone':'\u2254','Colone':'\u2A74','coloneq':'\u2254','comma':',','commat':'@','comp':'\u2201','compfn':'\u2218','complement':'\u2201','complexes':'\u2102','cong':'\u2245','congdot':'\u2A6D','Congruent':'\u2261','conint':'\u222E','Conint':'\u222F','ContourIntegral':'\u222E','copf':'\uD835\uDD54','Copf':'\u2102','coprod':'\u2210','Coproduct':'\u2210','copy':'\xA9','COPY':'\xA9','copysr':'\u2117','CounterClockwiseContourIntegral':'\u2233','crarr':'\u21B5','cross':'\u2717','Cross':'\u2A2F','cscr':'\uD835\uDCB8','Cscr':'\uD835\uDC9E','csub':'\u2ACF','csube':'\u2AD1','csup':'\u2AD0','csupe':'\u2AD2','ctdot':'\u22EF','cudarrl':'\u2938','cudarrr':'\u2935','cuepr':'\u22DE','cuesc':'\u22DF','cularr':'\u21B6','cularrp':'\u293D','cup':'\u222A','Cup':'\u22D3','cupbrcap':'\u2A48','cupcap':'\u2A46','CupCap':'\u224D','cupcup':'\u2A4A','cupdot':'\u228D','cupor':'\u2A45','cups':'\u222A\uFE00','curarr':'\u21B7','curarrm':'\u293C','curlyeqprec':'\u22DE','curlyeqsucc':'\u22DF','curlyvee':'\u22CE','curlywedge':'\u22CF','curren':'\xA4','curvearrowleft':'\u21B6','curvearrowright':'\u21B7','cuvee':'\u22CE','cuwed':'\u22CF','cwconint':'\u2232','cwint':'\u2231','cylcty':'\u232D','dagger':'\u2020','Dagger':'\u2021','daleth':'\u2138','darr':'\u2193','dArr':'\u21D3','Darr':'\u21A1','dash':'\u2010','dashv':'\u22A3','Dashv':'\u2AE4','dbkarow':'\u290F','dblac':'\u02DD','dcaron':'\u010F','Dcaron':'\u010E','dcy':'\u0434','Dcy':'\u0414','dd':'\u2146','DD':'\u2145','ddagger':'\u2021','ddarr':'\u21CA','DDotrahd':'\u2911','ddotseq':'\u2A77','deg':'\xB0','Del':'\u2207','delta':'\u03B4','Delta':'\u0394','demptyv':'\u29B1','dfisht':'\u297F','dfr':'\uD835\uDD21','Dfr':'\uD835\uDD07','dHar':'\u2965','dharl':'\u21C3','dharr':'\u21C2','DiacriticalAcute':'\xB4','DiacriticalDot':'\u02D9','DiacriticalDoubleAcute':'\u02DD','DiacriticalGrave':'`','DiacriticalTilde':'\u02DC','diam':'\u22C4','diamond':'\u22C4','Diamond':'\u22C4','diamondsuit':'\u2666','diams':'\u2666','die':'\xA8','DifferentialD':'\u2146','digamma':'\u03DD','disin':'\u22F2','div':'\xF7','divide':'\xF7','divideontimes':'\u22C7','divonx':'\u22C7','djcy':'\u0452','DJcy':'\u0402','dlcorn':'\u231E','dlcrop':'\u230D','dollar':'$','dopf':'\uD835\uDD55','Dopf':'\uD835\uDD3B','dot':'\u02D9','Dot':'\xA8','DotDot':'\u20DC','doteq':'\u2250','doteqdot':'\u2251','DotEqual':'\u2250','dotminus':'\u2238','dotplus':'\u2214','dotsquare':'\u22A1','doublebarwedge':'\u2306','DoubleContourIntegral':'\u222F','DoubleDot':'\xA8','DoubleDownArrow':'\u21D3','DoubleLeftArrow':'\u21D0','DoubleLeftRightArrow':'\u21D4','DoubleLeftTee':'\u2AE4','DoubleLongLeftArrow':'\u27F8','DoubleLongLeftRightArrow':'\u27FA','DoubleLongRightArrow':'\u27F9','DoubleRightArrow':'\u21D2','DoubleRightTee':'\u22A8','DoubleUpArrow':'\u21D1','DoubleUpDownArrow':'\u21D5','DoubleVerticalBar':'\u2225','downarrow':'\u2193','Downarrow':'\u21D3','DownArrow':'\u2193','DownArrowBar':'\u2913','DownArrowUpArrow':'\u21F5','DownBreve':'\u0311','downdownarrows':'\u21CA','downharpoonleft':'\u21C3','downharpoonright':'\u21C2','DownLeftRightVector':'\u2950','DownLeftTeeVector':'\u295E','DownLeftVector':'\u21BD','DownLeftVectorBar':'\u2956','DownRightTeeVector':'\u295F','DownRightVector':'\u21C1','DownRightVectorBar':'\u2957','DownTee':'\u22A4','DownTeeArrow':'\u21A7','drbkarow':'\u2910','drcorn':'\u231F','drcrop':'\u230C','dscr':'\uD835\uDCB9','Dscr':'\uD835\uDC9F','dscy':'\u0455','DScy':'\u0405','dsol':'\u29F6','dstrok':'\u0111','Dstrok':'\u0110','dtdot':'\u22F1','dtri':'\u25BF','dtrif':'\u25BE','duarr':'\u21F5','duhar':'\u296F','dwangle':'\u29A6','dzcy':'\u045F','DZcy':'\u040F','dzigrarr':'\u27FF','eacute':'\xE9','Eacute':'\xC9','easter':'\u2A6E','ecaron':'\u011B','Ecaron':'\u011A','ecir':'\u2256','ecirc':'\xEA','Ecirc':'\xCA','ecolon':'\u2255','ecy':'\u044D','Ecy':'\u042D','eDDot':'\u2A77','edot':'\u0117','eDot':'\u2251','Edot':'\u0116','ee':'\u2147','efDot':'\u2252','efr':'\uD835\uDD22','Efr':'\uD835\uDD08','eg':'\u2A9A','egrave':'\xE8','Egrave':'\xC8','egs':'\u2A96','egsdot':'\u2A98','el':'\u2A99','Element':'\u2208','elinters':'\u23E7','ell':'\u2113','els':'\u2A95','elsdot':'\u2A97','emacr':'\u0113','Emacr':'\u0112','empty':'\u2205','emptyset':'\u2205','EmptySmallSquare':'\u25FB','emptyv':'\u2205','EmptyVerySmallSquare':'\u25AB','emsp':'\u2003','emsp13':'\u2004','emsp14':'\u2005','eng':'\u014B','ENG':'\u014A','ensp':'\u2002','eogon':'\u0119','Eogon':'\u0118','eopf':'\uD835\uDD56','Eopf':'\uD835\uDD3C','epar':'\u22D5','eparsl':'\u29E3','eplus':'\u2A71','epsi':'\u03B5','epsilon':'\u03B5','Epsilon':'\u0395','epsiv':'\u03F5','eqcirc':'\u2256','eqcolon':'\u2255','eqsim':'\u2242','eqslantgtr':'\u2A96','eqslantless':'\u2A95','Equal':'\u2A75','equals':'=','EqualTilde':'\u2242','equest':'\u225F','Equilibrium':'\u21CC','equiv':'\u2261','equivDD':'\u2A78','eqvparsl':'\u29E5','erarr':'\u2971','erDot':'\u2253','escr':'\u212F','Escr':'\u2130','esdot':'\u2250','esim':'\u2242','Esim':'\u2A73','eta':'\u03B7','Eta':'\u0397','eth':'\xF0','ETH':'\xD0','euml':'\xEB','Euml':'\xCB','euro':'\u20AC','excl':'!','exist':'\u2203','Exists':'\u2203','expectation':'\u2130','exponentiale':'\u2147','ExponentialE':'\u2147','fallingdotseq':'\u2252','fcy':'\u0444','Fcy':'\u0424','female':'\u2640','ffilig':'\uFB03','fflig':'\uFB00','ffllig':'\uFB04','ffr':'\uD835\uDD23','Ffr':'\uD835\uDD09','filig':'\uFB01','FilledSmallSquare':'\u25FC','FilledVerySmallSquare':'\u25AA','fjlig':'fj','flat':'\u266D','fllig':'\uFB02','fltns':'\u25B1','fnof':'\u0192','fopf':'\uD835\uDD57','Fopf':'\uD835\uDD3D','forall':'\u2200','ForAll':'\u2200','fork':'\u22D4','forkv':'\u2AD9','Fouriertrf':'\u2131','fpartint':'\u2A0D','frac12':'\xBD','frac13':'\u2153','frac14':'\xBC','frac15':'\u2155','frac16':'\u2159','frac18':'\u215B','frac23':'\u2154','frac25':'\u2156','frac34':'\xBE','frac35':'\u2157','frac38':'\u215C','frac45':'\u2158','frac56':'\u215A','frac58':'\u215D','frac78':'\u215E','frasl':'\u2044','frown':'\u2322','fscr':'\uD835\uDCBB','Fscr':'\u2131','gacute':'\u01F5','gamma':'\u03B3','Gamma':'\u0393','gammad':'\u03DD','Gammad':'\u03DC','gap':'\u2A86','gbreve':'\u011F','Gbreve':'\u011E','Gcedil':'\u0122','gcirc':'\u011D','Gcirc':'\u011C','gcy':'\u0433','Gcy':'\u0413','gdot':'\u0121','Gdot':'\u0120','ge':'\u2265','gE':'\u2267','gel':'\u22DB','gEl':'\u2A8C','geq':'\u2265','geqq':'\u2267','geqslant':'\u2A7E','ges':'\u2A7E','gescc':'\u2AA9','gesdot':'\u2A80','gesdoto':'\u2A82','gesdotol':'\u2A84','gesl':'\u22DB\uFE00','gesles':'\u2A94','gfr':'\uD835\uDD24','Gfr':'\uD835\uDD0A','gg':'\u226B','Gg':'\u22D9','ggg':'\u22D9','gimel':'\u2137','gjcy':'\u0453','GJcy':'\u0403','gl':'\u2277','gla':'\u2AA5','glE':'\u2A92','glj':'\u2AA4','gnap':'\u2A8A','gnapprox':'\u2A8A','gne':'\u2A88','gnE':'\u2269','gneq':'\u2A88','gneqq':'\u2269','gnsim':'\u22E7','gopf':'\uD835\uDD58','Gopf':'\uD835\uDD3E','grave':'`','GreaterEqual':'\u2265','GreaterEqualLess':'\u22DB','GreaterFullEqual':'\u2267','GreaterGreater':'\u2AA2','GreaterLess':'\u2277','GreaterSlantEqual':'\u2A7E','GreaterTilde':'\u2273','gscr':'\u210A','Gscr':'\uD835\uDCA2','gsim':'\u2273','gsime':'\u2A8E','gsiml':'\u2A90','gt':'>','Gt':'\u226B','GT':'>','gtcc':'\u2AA7','gtcir':'\u2A7A','gtdot':'\u22D7','gtlPar':'\u2995','gtquest':'\u2A7C','gtrapprox':'\u2A86','gtrarr':'\u2978','gtrdot':'\u22D7','gtreqless':'\u22DB','gtreqqless':'\u2A8C','gtrless':'\u2277','gtrsim':'\u2273','gvertneqq':'\u2269\uFE00','gvnE':'\u2269\uFE00','Hacek':'\u02C7','hairsp':'\u200A','half':'\xBD','hamilt':'\u210B','hardcy':'\u044A','HARDcy':'\u042A','harr':'\u2194','hArr':'\u21D4','harrcir':'\u2948','harrw':'\u21AD','Hat':'^','hbar':'\u210F','hcirc':'\u0125','Hcirc':'\u0124','hearts':'\u2665','heartsuit':'\u2665','hellip':'\u2026','hercon':'\u22B9','hfr':'\uD835\uDD25','Hfr':'\u210C','HilbertSpace':'\u210B','hksearow':'\u2925','hkswarow':'\u2926','hoarr':'\u21FF','homtht':'\u223B','hookleftarrow':'\u21A9','hookrightarrow':'\u21AA','hopf':'\uD835\uDD59','Hopf':'\u210D','horbar':'\u2015','HorizontalLine':'\u2500','hscr':'\uD835\uDCBD','Hscr':'\u210B','hslash':'\u210F','hstrok':'\u0127','Hstrok':'\u0126','HumpDownHump':'\u224E','HumpEqual':'\u224F','hybull':'\u2043','hyphen':'\u2010','iacute':'\xED','Iacute':'\xCD','ic':'\u2063','icirc':'\xEE','Icirc':'\xCE','icy':'\u0438','Icy':'\u0418','Idot':'\u0130','iecy':'\u0435','IEcy':'\u0415','iexcl':'\xA1','iff':'\u21D4','ifr':'\uD835\uDD26','Ifr':'\u2111','igrave':'\xEC','Igrave':'\xCC','ii':'\u2148','iiiint':'\u2A0C','iiint':'\u222D','iinfin':'\u29DC','iiota':'\u2129','ijlig':'\u0133','IJlig':'\u0132','Im':'\u2111','imacr':'\u012B','Imacr':'\u012A','image':'\u2111','ImaginaryI':'\u2148','imagline':'\u2110','imagpart':'\u2111','imath':'\u0131','imof':'\u22B7','imped':'\u01B5','Implies':'\u21D2','in':'\u2208','incare':'\u2105','infin':'\u221E','infintie':'\u29DD','inodot':'\u0131','int':'\u222B','Int':'\u222C','intcal':'\u22BA','integers':'\u2124','Integral':'\u222B','intercal':'\u22BA','Intersection':'\u22C2','intlarhk':'\u2A17','intprod':'\u2A3C','InvisibleComma':'\u2063','InvisibleTimes':'\u2062','iocy':'\u0451','IOcy':'\u0401','iogon':'\u012F','Iogon':'\u012E','iopf':'\uD835\uDD5A','Iopf':'\uD835\uDD40','iota':'\u03B9','Iota':'\u0399','iprod':'\u2A3C','iquest':'\xBF','iscr':'\uD835\uDCBE','Iscr':'\u2110','isin':'\u2208','isindot':'\u22F5','isinE':'\u22F9','isins':'\u22F4','isinsv':'\u22F3','isinv':'\u2208','it':'\u2062','itilde':'\u0129','Itilde':'\u0128','iukcy':'\u0456','Iukcy':'\u0406','iuml':'\xEF','Iuml':'\xCF','jcirc':'\u0135','Jcirc':'\u0134','jcy':'\u0439','Jcy':'\u0419','jfr':'\uD835\uDD27','Jfr':'\uD835\uDD0D','jmath':'\u0237','jopf':'\uD835\uDD5B','Jopf':'\uD835\uDD41','jscr':'\uD835\uDCBF','Jscr':'\uD835\uDCA5','jsercy':'\u0458','Jsercy':'\u0408','jukcy':'\u0454','Jukcy':'\u0404','kappa':'\u03BA','Kappa':'\u039A','kappav':'\u03F0','kcedil':'\u0137','Kcedil':'\u0136','kcy':'\u043A','Kcy':'\u041A','kfr':'\uD835\uDD28','Kfr':'\uD835\uDD0E','kgreen':'\u0138','khcy':'\u0445','KHcy':'\u0425','kjcy':'\u045C','KJcy':'\u040C','kopf':'\uD835\uDD5C','Kopf':'\uD835\uDD42','kscr':'\uD835\uDCC0','Kscr':'\uD835\uDCA6','lAarr':'\u21DA','lacute':'\u013A','Lacute':'\u0139','laemptyv':'\u29B4','lagran':'\u2112','lambda':'\u03BB','Lambda':'\u039B','lang':'\u27E8','Lang':'\u27EA','langd':'\u2991','langle':'\u27E8','lap':'\u2A85','Laplacetrf':'\u2112','laquo':'\xAB','larr':'\u2190','lArr':'\u21D0','Larr':'\u219E','larrb':'\u21E4','larrbfs':'\u291F','larrfs':'\u291D','larrhk':'\u21A9','larrlp':'\u21AB','larrpl':'\u2939','larrsim':'\u2973','larrtl':'\u21A2','lat':'\u2AAB','latail':'\u2919','lAtail':'\u291B','late':'\u2AAD','lates':'\u2AAD\uFE00','lbarr':'\u290C','lBarr':'\u290E','lbbrk':'\u2772','lbrace':'{','lbrack':'[','lbrke':'\u298B','lbrksld':'\u298F','lbrkslu':'\u298D','lcaron':'\u013E','Lcaron':'\u013D','lcedil':'\u013C','Lcedil':'\u013B','lceil':'\u2308','lcub':'{','lcy':'\u043B','Lcy':'\u041B','ldca':'\u2936','ldquo':'\u201C','ldquor':'\u201E','ldrdhar':'\u2967','ldrushar':'\u294B','ldsh':'\u21B2','le':'\u2264','lE':'\u2266','LeftAngleBracket':'\u27E8','leftarrow':'\u2190','Leftarrow':'\u21D0','LeftArrow':'\u2190','LeftArrowBar':'\u21E4','LeftArrowRightArrow':'\u21C6','leftarrowtail':'\u21A2','LeftCeiling':'\u2308','LeftDoubleBracket':'\u27E6','LeftDownTeeVector':'\u2961','LeftDownVector':'\u21C3','LeftDownVectorBar':'\u2959','LeftFloor':'\u230A','leftharpoondown':'\u21BD','leftharpoonup':'\u21BC','leftleftarrows':'\u21C7','leftrightarrow':'\u2194','Leftrightarrow':'\u21D4','LeftRightArrow':'\u2194','leftrightarrows':'\u21C6','leftrightharpoons':'\u21CB','leftrightsquigarrow':'\u21AD','LeftRightVector':'\u294E','LeftTee':'\u22A3','LeftTeeArrow':'\u21A4','LeftTeeVector':'\u295A','leftthreetimes':'\u22CB','LeftTriangle':'\u22B2','LeftTriangleBar':'\u29CF','LeftTriangleEqual':'\u22B4','LeftUpDownVector':'\u2951','LeftUpTeeVector':'\u2960','LeftUpVector':'\u21BF','LeftUpVectorBar':'\u2958','LeftVector':'\u21BC','LeftVectorBar':'\u2952','leg':'\u22DA','lEg':'\u2A8B','leq':'\u2264','leqq':'\u2266','leqslant':'\u2A7D','les':'\u2A7D','lescc':'\u2AA8','lesdot':'\u2A7F','lesdoto':'\u2A81','lesdotor':'\u2A83','lesg':'\u22DA\uFE00','lesges':'\u2A93','lessapprox':'\u2A85','lessdot':'\u22D6','lesseqgtr':'\u22DA','lesseqqgtr':'\u2A8B','LessEqualGreater':'\u22DA','LessFullEqual':'\u2266','LessGreater':'\u2276','lessgtr':'\u2276','LessLess':'\u2AA1','lesssim':'\u2272','LessSlantEqual':'\u2A7D','LessTilde':'\u2272','lfisht':'\u297C','lfloor':'\u230A','lfr':'\uD835\uDD29','Lfr':'\uD835\uDD0F','lg':'\u2276','lgE':'\u2A91','lHar':'\u2962','lhard':'\u21BD','lharu':'\u21BC','lharul':'\u296A','lhblk':'\u2584','ljcy':'\u0459','LJcy':'\u0409','ll':'\u226A','Ll':'\u22D8','llarr':'\u21C7','llcorner':'\u231E','Lleftarrow':'\u21DA','llhard':'\u296B','lltri':'\u25FA','lmidot':'\u0140','Lmidot':'\u013F','lmoust':'\u23B0','lmoustache':'\u23B0','lnap':'\u2A89','lnapprox':'\u2A89','lne':'\u2A87','lnE':'\u2268','lneq':'\u2A87','lneqq':'\u2268','lnsim':'\u22E6','loang':'\u27EC','loarr':'\u21FD','lobrk':'\u27E6','longleftarrow':'\u27F5','Longleftarrow':'\u27F8','LongLeftArrow':'\u27F5','longleftrightarrow':'\u27F7','Longleftrightarrow':'\u27FA','LongLeftRightArrow':'\u27F7','longmapsto':'\u27FC','longrightarrow':'\u27F6','Longrightarrow':'\u27F9','LongRightArrow':'\u27F6','looparrowleft':'\u21AB','looparrowright':'\u21AC','lopar':'\u2985','lopf':'\uD835\uDD5D','Lopf':'\uD835\uDD43','loplus':'\u2A2D','lotimes':'\u2A34','lowast':'\u2217','lowbar':'_','LowerLeftArrow':'\u2199','LowerRightArrow':'\u2198','loz':'\u25CA','lozenge':'\u25CA','lozf':'\u29EB','lpar':'(','lparlt':'\u2993','lrarr':'\u21C6','lrcorner':'\u231F','lrhar':'\u21CB','lrhard':'\u296D','lrm':'\u200E','lrtri':'\u22BF','lsaquo':'\u2039','lscr':'\uD835\uDCC1','Lscr':'\u2112','lsh':'\u21B0','Lsh':'\u21B0','lsim':'\u2272','lsime':'\u2A8D','lsimg':'\u2A8F','lsqb':'[','lsquo':'\u2018','lsquor':'\u201A','lstrok':'\u0142','Lstrok':'\u0141','lt':'<','Lt':'\u226A','LT':'<','ltcc':'\u2AA6','ltcir':'\u2A79','ltdot':'\u22D6','lthree':'\u22CB','ltimes':'\u22C9','ltlarr':'\u2976','ltquest':'\u2A7B','ltri':'\u25C3','ltrie':'\u22B4','ltrif':'\u25C2','ltrPar':'\u2996','lurdshar':'\u294A','luruhar':'\u2966','lvertneqq':'\u2268\uFE00','lvnE':'\u2268\uFE00','macr':'\xAF','male':'\u2642','malt':'\u2720','maltese':'\u2720','map':'\u21A6','Map':'\u2905','mapsto':'\u21A6','mapstodown':'\u21A7','mapstoleft':'\u21A4','mapstoup':'\u21A5','marker':'\u25AE','mcomma':'\u2A29','mcy':'\u043C','Mcy':'\u041C','mdash':'\u2014','mDDot':'\u223A','measuredangle':'\u2221','MediumSpace':'\u205F','Mellintrf':'\u2133','mfr':'\uD835\uDD2A','Mfr':'\uD835\uDD10','mho':'\u2127','micro':'\xB5','mid':'\u2223','midast':'*','midcir':'\u2AF0','middot':'\xB7','minus':'\u2212','minusb':'\u229F','minusd':'\u2238','minusdu':'\u2A2A','MinusPlus':'\u2213','mlcp':'\u2ADB','mldr':'\u2026','mnplus':'\u2213','models':'\u22A7','mopf':'\uD835\uDD5E','Mopf':'\uD835\uDD44','mp':'\u2213','mscr':'\uD835\uDCC2','Mscr':'\u2133','mstpos':'\u223E','mu':'\u03BC','Mu':'\u039C','multimap':'\u22B8','mumap':'\u22B8','nabla':'\u2207','nacute':'\u0144','Nacute':'\u0143','nang':'\u2220\u20D2','nap':'\u2249','napE':'\u2A70\u0338','napid':'\u224B\u0338','napos':'\u0149','napprox':'\u2249','natur':'\u266E','natural':'\u266E','naturals':'\u2115','nbsp':'\xA0','nbump':'\u224E\u0338','nbumpe':'\u224F\u0338','ncap':'\u2A43','ncaron':'\u0148','Ncaron':'\u0147','ncedil':'\u0146','Ncedil':'\u0145','ncong':'\u2247','ncongdot':'\u2A6D\u0338','ncup':'\u2A42','ncy':'\u043D','Ncy':'\u041D','ndash':'\u2013','ne':'\u2260','nearhk':'\u2924','nearr':'\u2197','neArr':'\u21D7','nearrow':'\u2197','nedot':'\u2250\u0338','NegativeMediumSpace':'\u200B','NegativeThickSpace':'\u200B','NegativeThinSpace':'\u200B','NegativeVeryThinSpace':'\u200B','nequiv':'\u2262','nesear':'\u2928','nesim':'\u2242\u0338','NestedGreaterGreater':'\u226B','NestedLessLess':'\u226A','NewLine':'\n','nexist':'\u2204','nexists':'\u2204','nfr':'\uD835\uDD2B','Nfr':'\uD835\uDD11','nge':'\u2271','ngE':'\u2267\u0338','ngeq':'\u2271','ngeqq':'\u2267\u0338','ngeqslant':'\u2A7E\u0338','nges':'\u2A7E\u0338','nGg':'\u22D9\u0338','ngsim':'\u2275','ngt':'\u226F','nGt':'\u226B\u20D2','ngtr':'\u226F','nGtv':'\u226B\u0338','nharr':'\u21AE','nhArr':'\u21CE','nhpar':'\u2AF2','ni':'\u220B','nis':'\u22FC','nisd':'\u22FA','niv':'\u220B','njcy':'\u045A','NJcy':'\u040A','nlarr':'\u219A','nlArr':'\u21CD','nldr':'\u2025','nle':'\u2270','nlE':'\u2266\u0338','nleftarrow':'\u219A','nLeftarrow':'\u21CD','nleftrightarrow':'\u21AE','nLeftrightarrow':'\u21CE','nleq':'\u2270','nleqq':'\u2266\u0338','nleqslant':'\u2A7D\u0338','nles':'\u2A7D\u0338','nless':'\u226E','nLl':'\u22D8\u0338','nlsim':'\u2274','nlt':'\u226E','nLt':'\u226A\u20D2','nltri':'\u22EA','nltrie':'\u22EC','nLtv':'\u226A\u0338','nmid':'\u2224','NoBreak':'\u2060','NonBreakingSpace':'\xA0','nopf':'\uD835\uDD5F','Nopf':'\u2115','not':'\xAC','Not':'\u2AEC','NotCongruent':'\u2262','NotCupCap':'\u226D','NotDoubleVerticalBar':'\u2226','NotElement':'\u2209','NotEqual':'\u2260','NotEqualTilde':'\u2242\u0338','NotExists':'\u2204','NotGreater':'\u226F','NotGreaterEqual':'\u2271','NotGreaterFullEqual':'\u2267\u0338','NotGreaterGreater':'\u226B\u0338','NotGreaterLess':'\u2279','NotGreaterSlantEqual':'\u2A7E\u0338','NotGreaterTilde':'\u2275','NotHumpDownHump':'\u224E\u0338','NotHumpEqual':'\u224F\u0338','notin':'\u2209','notindot':'\u22F5\u0338','notinE':'\u22F9\u0338','notinva':'\u2209','notinvb':'\u22F7','notinvc':'\u22F6','NotLeftTriangle':'\u22EA','NotLeftTriangleBar':'\u29CF\u0338','NotLeftTriangleEqual':'\u22EC','NotLess':'\u226E','NotLessEqual':'\u2270','NotLessGreater':'\u2278','NotLessLess':'\u226A\u0338','NotLessSlantEqual':'\u2A7D\u0338','NotLessTilde':'\u2274','NotNestedGreaterGreater':'\u2AA2\u0338','NotNestedLessLess':'\u2AA1\u0338','notni':'\u220C','notniva':'\u220C','notnivb':'\u22FE','notnivc':'\u22FD','NotPrecedes':'\u2280','NotPrecedesEqual':'\u2AAF\u0338','NotPrecedesSlantEqual':'\u22E0','NotReverseElement':'\u220C','NotRightTriangle':'\u22EB','NotRightTriangleBar':'\u29D0\u0338','NotRightTriangleEqual':'\u22ED','NotSquareSubset':'\u228F\u0338','NotSquareSubsetEqual':'\u22E2','NotSquareSuperset':'\u2290\u0338','NotSquareSupersetEqual':'\u22E3','NotSubset':'\u2282\u20D2','NotSubsetEqual':'\u2288','NotSucceeds':'\u2281','NotSucceedsEqual':'\u2AB0\u0338','NotSucceedsSlantEqual':'\u22E1','NotSucceedsTilde':'\u227F\u0338','NotSuperset':'\u2283\u20D2','NotSupersetEqual':'\u2289','NotTilde':'\u2241','NotTildeEqual':'\u2244','NotTildeFullEqual':'\u2247','NotTildeTilde':'\u2249','NotVerticalBar':'\u2224','npar':'\u2226','nparallel':'\u2226','nparsl':'\u2AFD\u20E5','npart':'\u2202\u0338','npolint':'\u2A14','npr':'\u2280','nprcue':'\u22E0','npre':'\u2AAF\u0338','nprec':'\u2280','npreceq':'\u2AAF\u0338','nrarr':'\u219B','nrArr':'\u21CF','nrarrc':'\u2933\u0338','nrarrw':'\u219D\u0338','nrightarrow':'\u219B','nRightarrow':'\u21CF','nrtri':'\u22EB','nrtrie':'\u22ED','nsc':'\u2281','nsccue':'\u22E1','nsce':'\u2AB0\u0338','nscr':'\uD835\uDCC3','Nscr':'\uD835\uDCA9','nshortmid':'\u2224','nshortparallel':'\u2226','nsim':'\u2241','nsime':'\u2244','nsimeq':'\u2244','nsmid':'\u2224','nspar':'\u2226','nsqsube':'\u22E2','nsqsupe':'\u22E3','nsub':'\u2284','nsube':'\u2288','nsubE':'\u2AC5\u0338','nsubset':'\u2282\u20D2','nsubseteq':'\u2288','nsubseteqq':'\u2AC5\u0338','nsucc':'\u2281','nsucceq':'\u2AB0\u0338','nsup':'\u2285','nsupe':'\u2289','nsupE':'\u2AC6\u0338','nsupset':'\u2283\u20D2','nsupseteq':'\u2289','nsupseteqq':'\u2AC6\u0338','ntgl':'\u2279','ntilde':'\xF1','Ntilde':'\xD1','ntlg':'\u2278','ntriangleleft':'\u22EA','ntrianglelefteq':'\u22EC','ntriangleright':'\u22EB','ntrianglerighteq':'\u22ED','nu':'\u03BD','Nu':'\u039D','num':'#','numero':'\u2116','numsp':'\u2007','nvap':'\u224D\u20D2','nvdash':'\u22AC','nvDash':'\u22AD','nVdash':'\u22AE','nVDash':'\u22AF','nvge':'\u2265\u20D2','nvgt':'>\u20D2','nvHarr':'\u2904','nvinfin':'\u29DE','nvlArr':'\u2902','nvle':'\u2264\u20D2','nvlt':'<\u20D2','nvltrie':'\u22B4\u20D2','nvrArr':'\u2903','nvrtrie':'\u22B5\u20D2','nvsim':'\u223C\u20D2','nwarhk':'\u2923','nwarr':'\u2196','nwArr':'\u21D6','nwarrow':'\u2196','nwnear':'\u2927','oacute':'\xF3','Oacute':'\xD3','oast':'\u229B','ocir':'\u229A','ocirc':'\xF4','Ocirc':'\xD4','ocy':'\u043E','Ocy':'\u041E','odash':'\u229D','odblac':'\u0151','Odblac':'\u0150','odiv':'\u2A38','odot':'\u2299','odsold':'\u29BC','oelig':'\u0153','OElig':'\u0152','ofcir':'\u29BF','ofr':'\uD835\uDD2C','Ofr':'\uD835\uDD12','ogon':'\u02DB','ograve':'\xF2','Ograve':'\xD2','ogt':'\u29C1','ohbar':'\u29B5','ohm':'\u03A9','oint':'\u222E','olarr':'\u21BA','olcir':'\u29BE','olcross':'\u29BB','oline':'\u203E','olt':'\u29C0','omacr':'\u014D','Omacr':'\u014C','omega':'\u03C9','Omega':'\u03A9','omicron':'\u03BF','Omicron':'\u039F','omid':'\u29B6','ominus':'\u2296','oopf':'\uD835\uDD60','Oopf':'\uD835\uDD46','opar':'\u29B7','OpenCurlyDoubleQuote':'\u201C','OpenCurlyQuote':'\u2018','operp':'\u29B9','oplus':'\u2295','or':'\u2228','Or':'\u2A54','orarr':'\u21BB','ord':'\u2A5D','order':'\u2134','orderof':'\u2134','ordf':'\xAA','ordm':'\xBA','origof':'\u22B6','oror':'\u2A56','orslope':'\u2A57','orv':'\u2A5B','oS':'\u24C8','oscr':'\u2134','Oscr':'\uD835\uDCAA','oslash':'\xF8','Oslash':'\xD8','osol':'\u2298','otilde':'\xF5','Otilde':'\xD5','otimes':'\u2297','Otimes':'\u2A37','otimesas':'\u2A36','ouml':'\xF6','Ouml':'\xD6','ovbar':'\u233D','OverBar':'\u203E','OverBrace':'\u23DE','OverBracket':'\u23B4','OverParenthesis':'\u23DC','par':'\u2225','para':'\xB6','parallel':'\u2225','parsim':'\u2AF3','parsl':'\u2AFD','part':'\u2202','PartialD':'\u2202','pcy':'\u043F','Pcy':'\u041F','percnt':'%','period':'.','permil':'\u2030','perp':'\u22A5','pertenk':'\u2031','pfr':'\uD835\uDD2D','Pfr':'\uD835\uDD13','phi':'\u03C6','Phi':'\u03A6','phiv':'\u03D5','phmmat':'\u2133','phone':'\u260E','pi':'\u03C0','Pi':'\u03A0','pitchfork':'\u22D4','piv':'\u03D6','planck':'\u210F','planckh':'\u210E','plankv':'\u210F','plus':'+','plusacir':'\u2A23','plusb':'\u229E','pluscir':'\u2A22','plusdo':'\u2214','plusdu':'\u2A25','pluse':'\u2A72','PlusMinus':'\xB1','plusmn':'\xB1','plussim':'\u2A26','plustwo':'\u2A27','pm':'\xB1','Poincareplane':'\u210C','pointint':'\u2A15','popf':'\uD835\uDD61','Popf':'\u2119','pound':'\xA3','pr':'\u227A','Pr':'\u2ABB','prap':'\u2AB7','prcue':'\u227C','pre':'\u2AAF','prE':'\u2AB3','prec':'\u227A','precapprox':'\u2AB7','preccurlyeq':'\u227C','Precedes':'\u227A','PrecedesEqual':'\u2AAF','PrecedesSlantEqual':'\u227C','PrecedesTilde':'\u227E','preceq':'\u2AAF','precnapprox':'\u2AB9','precneqq':'\u2AB5','precnsim':'\u22E8','precsim':'\u227E','prime':'\u2032','Prime':'\u2033','primes':'\u2119','prnap':'\u2AB9','prnE':'\u2AB5','prnsim':'\u22E8','prod':'\u220F','Product':'\u220F','profalar':'\u232E','profline':'\u2312','profsurf':'\u2313','prop':'\u221D','Proportion':'\u2237','Proportional':'\u221D','propto':'\u221D','prsim':'\u227E','prurel':'\u22B0','pscr':'\uD835\uDCC5','Pscr':'\uD835\uDCAB','psi':'\u03C8','Psi':'\u03A8','puncsp':'\u2008','qfr':'\uD835\uDD2E','Qfr':'\uD835\uDD14','qint':'\u2A0C','qopf':'\uD835\uDD62','Qopf':'\u211A','qprime':'\u2057','qscr':'\uD835\uDCC6','Qscr':'\uD835\uDCAC','quaternions':'\u210D','quatint':'\u2A16','quest':'?','questeq':'\u225F','quot':'"','QUOT':'"','rAarr':'\u21DB','race':'\u223D\u0331','racute':'\u0155','Racute':'\u0154','radic':'\u221A','raemptyv':'\u29B3','rang':'\u27E9','Rang':'\u27EB','rangd':'\u2992','range':'\u29A5','rangle':'\u27E9','raquo':'\xBB','rarr':'\u2192','rArr':'\u21D2','Rarr':'\u21A0','rarrap':'\u2975','rarrb':'\u21E5','rarrbfs':'\u2920','rarrc':'\u2933','rarrfs':'\u291E','rarrhk':'\u21AA','rarrlp':'\u21AC','rarrpl':'\u2945','rarrsim':'\u2974','rarrtl':'\u21A3','Rarrtl':'\u2916','rarrw':'\u219D','ratail':'\u291A','rAtail':'\u291C','ratio':'\u2236','rationals':'\u211A','rbarr':'\u290D','rBarr':'\u290F','RBarr':'\u2910','rbbrk':'\u2773','rbrace':'}','rbrack':']','rbrke':'\u298C','rbrksld':'\u298E','rbrkslu':'\u2990','rcaron':'\u0159','Rcaron':'\u0158','rcedil':'\u0157','Rcedil':'\u0156','rceil':'\u2309','rcub':'}','rcy':'\u0440','Rcy':'\u0420','rdca':'\u2937','rdldhar':'\u2969','rdquo':'\u201D','rdquor':'\u201D','rdsh':'\u21B3','Re':'\u211C','real':'\u211C','realine':'\u211B','realpart':'\u211C','reals':'\u211D','rect':'\u25AD','reg':'\xAE','REG':'\xAE','ReverseElement':'\u220B','ReverseEquilibrium':'\u21CB','ReverseUpEquilibrium':'\u296F','rfisht':'\u297D','rfloor':'\u230B','rfr':'\uD835\uDD2F','Rfr':'\u211C','rHar':'\u2964','rhard':'\u21C1','rharu':'\u21C0','rharul':'\u296C','rho':'\u03C1','Rho':'\u03A1','rhov':'\u03F1','RightAngleBracket':'\u27E9','rightarrow':'\u2192','Rightarrow':'\u21D2','RightArrow':'\u2192','RightArrowBar':'\u21E5','RightArrowLeftArrow':'\u21C4','rightarrowtail':'\u21A3','RightCeiling':'\u2309','RightDoubleBracket':'\u27E7','RightDownTeeVector':'\u295D','RightDownVector':'\u21C2','RightDownVectorBar':'\u2955','RightFloor':'\u230B','rightharpoondown':'\u21C1','rightharpoonup':'\u21C0','rightleftarrows':'\u21C4','rightleftharpoons':'\u21CC','rightrightarrows':'\u21C9','rightsquigarrow':'\u219D','RightTee':'\u22A2','RightTeeArrow':'\u21A6','RightTeeVector':'\u295B','rightthreetimes':'\u22CC','RightTriangle':'\u22B3','RightTriangleBar':'\u29D0','RightTriangleEqual':'\u22B5','RightUpDownVector':'\u294F','RightUpTeeVector':'\u295C','RightUpVector':'\u21BE','RightUpVectorBar':'\u2954','RightVector':'\u21C0','RightVectorBar':'\u2953','ring':'\u02DA','risingdotseq':'\u2253','rlarr':'\u21C4','rlhar':'\u21CC','rlm':'\u200F','rmoust':'\u23B1','rmoustache':'\u23B1','rnmid':'\u2AEE','roang':'\u27ED','roarr':'\u21FE','robrk':'\u27E7','ropar':'\u2986','ropf':'\uD835\uDD63','Ropf':'\u211D','roplus':'\u2A2E','rotimes':'\u2A35','RoundImplies':'\u2970','rpar':')','rpargt':'\u2994','rppolint':'\u2A12','rrarr':'\u21C9','Rrightarrow':'\u21DB','rsaquo':'\u203A','rscr':'\uD835\uDCC7','Rscr':'\u211B','rsh':'\u21B1','Rsh':'\u21B1','rsqb':']','rsquo':'\u2019','rsquor':'\u2019','rthree':'\u22CC','rtimes':'\u22CA','rtri':'\u25B9','rtrie':'\u22B5','rtrif':'\u25B8','rtriltri':'\u29CE','RuleDelayed':'\u29F4','ruluhar':'\u2968','rx':'\u211E','sacute':'\u015B','Sacute':'\u015A','sbquo':'\u201A','sc':'\u227B','Sc':'\u2ABC','scap':'\u2AB8','scaron':'\u0161','Scaron':'\u0160','sccue':'\u227D','sce':'\u2AB0','scE':'\u2AB4','scedil':'\u015F','Scedil':'\u015E','scirc':'\u015D','Scirc':'\u015C','scnap':'\u2ABA','scnE':'\u2AB6','scnsim':'\u22E9','scpolint':'\u2A13','scsim':'\u227F','scy':'\u0441','Scy':'\u0421','sdot':'\u22C5','sdotb':'\u22A1','sdote':'\u2A66','searhk':'\u2925','searr':'\u2198','seArr':'\u21D8','searrow':'\u2198','sect':'\xA7','semi':';','seswar':'\u2929','setminus':'\u2216','setmn':'\u2216','sext':'\u2736','sfr':'\uD835\uDD30','Sfr':'\uD835\uDD16','sfrown':'\u2322','sharp':'\u266F','shchcy':'\u0449','SHCHcy':'\u0429','shcy':'\u0448','SHcy':'\u0428','ShortDownArrow':'\u2193','ShortLeftArrow':'\u2190','shortmid':'\u2223','shortparallel':'\u2225','ShortRightArrow':'\u2192','ShortUpArrow':'\u2191','shy':'\xAD','sigma':'\u03C3','Sigma':'\u03A3','sigmaf':'\u03C2','sigmav':'\u03C2','sim':'\u223C','simdot':'\u2A6A','sime':'\u2243','simeq':'\u2243','simg':'\u2A9E','simgE':'\u2AA0','siml':'\u2A9D','simlE':'\u2A9F','simne':'\u2246','simplus':'\u2A24','simrarr':'\u2972','slarr':'\u2190','SmallCircle':'\u2218','smallsetminus':'\u2216','smashp':'\u2A33','smeparsl':'\u29E4','smid':'\u2223','smile':'\u2323','smt':'\u2AAA','smte':'\u2AAC','smtes':'\u2AAC\uFE00','softcy':'\u044C','SOFTcy':'\u042C','sol':'/','solb':'\u29C4','solbar':'\u233F','sopf':'\uD835\uDD64','Sopf':'\uD835\uDD4A','spades':'\u2660','spadesuit':'\u2660','spar':'\u2225','sqcap':'\u2293','sqcaps':'\u2293\uFE00','sqcup':'\u2294','sqcups':'\u2294\uFE00','Sqrt':'\u221A','sqsub':'\u228F','sqsube':'\u2291','sqsubset':'\u228F','sqsubseteq':'\u2291','sqsup':'\u2290','sqsupe':'\u2292','sqsupset':'\u2290','sqsupseteq':'\u2292','squ':'\u25A1','square':'\u25A1','Square':'\u25A1','SquareIntersection':'\u2293','SquareSubset':'\u228F','SquareSubsetEqual':'\u2291','SquareSuperset':'\u2290','SquareSupersetEqual':'\u2292','SquareUnion':'\u2294','squarf':'\u25AA','squf':'\u25AA','srarr':'\u2192','sscr':'\uD835\uDCC8','Sscr':'\uD835\uDCAE','ssetmn':'\u2216','ssmile':'\u2323','sstarf':'\u22C6','star':'\u2606','Star':'\u22C6','starf':'\u2605','straightepsilon':'\u03F5','straightphi':'\u03D5','strns':'\xAF','sub':'\u2282','Sub':'\u22D0','subdot':'\u2ABD','sube':'\u2286','subE':'\u2AC5','subedot':'\u2AC3','submult':'\u2AC1','subne':'\u228A','subnE':'\u2ACB','subplus':'\u2ABF','subrarr':'\u2979','subset':'\u2282','Subset':'\u22D0','subseteq':'\u2286','subseteqq':'\u2AC5','SubsetEqual':'\u2286','subsetneq':'\u228A','subsetneqq':'\u2ACB','subsim':'\u2AC7','subsub':'\u2AD5','subsup':'\u2AD3','succ':'\u227B','succapprox':'\u2AB8','succcurlyeq':'\u227D','Succeeds':'\u227B','SucceedsEqual':'\u2AB0','SucceedsSlantEqual':'\u227D','SucceedsTilde':'\u227F','succeq':'\u2AB0','succnapprox':'\u2ABA','succneqq':'\u2AB6','succnsim':'\u22E9','succsim':'\u227F','SuchThat':'\u220B','sum':'\u2211','Sum':'\u2211','sung':'\u266A','sup':'\u2283','Sup':'\u22D1','sup1':'\xB9','sup2':'\xB2','sup3':'\xB3','supdot':'\u2ABE','supdsub':'\u2AD8','supe':'\u2287','supE':'\u2AC6','supedot':'\u2AC4','Superset':'\u2283','SupersetEqual':'\u2287','suphsol':'\u27C9','suphsub':'\u2AD7','suplarr':'\u297B','supmult':'\u2AC2','supne':'\u228B','supnE':'\u2ACC','supplus':'\u2AC0','supset':'\u2283','Supset':'\u22D1','supseteq':'\u2287','supseteqq':'\u2AC6','supsetneq':'\u228B','supsetneqq':'\u2ACC','supsim':'\u2AC8','supsub':'\u2AD4','supsup':'\u2AD6','swarhk':'\u2926','swarr':'\u2199','swArr':'\u21D9','swarrow':'\u2199','swnwar':'\u292A','szlig':'\xDF','Tab':'\t','target':'\u2316','tau':'\u03C4','Tau':'\u03A4','tbrk':'\u23B4','tcaron':'\u0165','Tcaron':'\u0164','tcedil':'\u0163','Tcedil':'\u0162','tcy':'\u0442','Tcy':'\u0422','tdot':'\u20DB','telrec':'\u2315','tfr':'\uD835\uDD31','Tfr':'\uD835\uDD17','there4':'\u2234','therefore':'\u2234','Therefore':'\u2234','theta':'\u03B8','Theta':'\u0398','thetasym':'\u03D1','thetav':'\u03D1','thickapprox':'\u2248','thicksim':'\u223C','ThickSpace':'\u205F\u200A','thinsp':'\u2009','ThinSpace':'\u2009','thkap':'\u2248','thksim':'\u223C','thorn':'\xFE','THORN':'\xDE','tilde':'\u02DC','Tilde':'\u223C','TildeEqual':'\u2243','TildeFullEqual':'\u2245','TildeTilde':'\u2248','times':'\xD7','timesb':'\u22A0','timesbar':'\u2A31','timesd':'\u2A30','tint':'\u222D','toea':'\u2928','top':'\u22A4','topbot':'\u2336','topcir':'\u2AF1','topf':'\uD835\uDD65','Topf':'\uD835\uDD4B','topfork':'\u2ADA','tosa':'\u2929','tprime':'\u2034','trade':'\u2122','TRADE':'\u2122','triangle':'\u25B5','triangledown':'\u25BF','triangleleft':'\u25C3','trianglelefteq':'\u22B4','triangleq':'\u225C','triangleright':'\u25B9','trianglerighteq':'\u22B5','tridot':'\u25EC','trie':'\u225C','triminus':'\u2A3A','TripleDot':'\u20DB','triplus':'\u2A39','trisb':'\u29CD','tritime':'\u2A3B','trpezium':'\u23E2','tscr':'\uD835\uDCC9','Tscr':'\uD835\uDCAF','tscy':'\u0446','TScy':'\u0426','tshcy':'\u045B','TSHcy':'\u040B','tstrok':'\u0167','Tstrok':'\u0166','twixt':'\u226C','twoheadleftarrow':'\u219E','twoheadrightarrow':'\u21A0','uacute':'\xFA','Uacute':'\xDA','uarr':'\u2191','uArr':'\u21D1','Uarr':'\u219F','Uarrocir':'\u2949','ubrcy':'\u045E','Ubrcy':'\u040E','ubreve':'\u016D','Ubreve':'\u016C','ucirc':'\xFB','Ucirc':'\xDB','ucy':'\u0443','Ucy':'\u0423','udarr':'\u21C5','udblac':'\u0171','Udblac':'\u0170','udhar':'\u296E','ufisht':'\u297E','ufr':'\uD835\uDD32','Ufr':'\uD835\uDD18','ugrave':'\xF9','Ugrave':'\xD9','uHar':'\u2963','uharl':'\u21BF','uharr':'\u21BE','uhblk':'\u2580','ulcorn':'\u231C','ulcorner':'\u231C','ulcrop':'\u230F','ultri':'\u25F8','umacr':'\u016B','Umacr':'\u016A','uml':'\xA8','UnderBar':'_','UnderBrace':'\u23DF','UnderBracket':'\u23B5','UnderParenthesis':'\u23DD','Union':'\u22C3','UnionPlus':'\u228E','uogon':'\u0173','Uogon':'\u0172','uopf':'\uD835\uDD66','Uopf':'\uD835\uDD4C','uparrow':'\u2191','Uparrow':'\u21D1','UpArrow':'\u2191','UpArrowBar':'\u2912','UpArrowDownArrow':'\u21C5','updownarrow':'\u2195','Updownarrow':'\u21D5','UpDownArrow':'\u2195','UpEquilibrium':'\u296E','upharpoonleft':'\u21BF','upharpoonright':'\u21BE','uplus':'\u228E','UpperLeftArrow':'\u2196','UpperRightArrow':'\u2197','upsi':'\u03C5','Upsi':'\u03D2','upsih':'\u03D2','upsilon':'\u03C5','Upsilon':'\u03A5','UpTee':'\u22A5','UpTeeArrow':'\u21A5','upuparrows':'\u21C8','urcorn':'\u231D','urcorner':'\u231D','urcrop':'\u230E','uring':'\u016F','Uring':'\u016E','urtri':'\u25F9','uscr':'\uD835\uDCCA','Uscr':'\uD835\uDCB0','utdot':'\u22F0','utilde':'\u0169','Utilde':'\u0168','utri':'\u25B5','utrif':'\u25B4','uuarr':'\u21C8','uuml':'\xFC','Uuml':'\xDC','uwangle':'\u29A7','vangrt':'\u299C','varepsilon':'\u03F5','varkappa':'\u03F0','varnothing':'\u2205','varphi':'\u03D5','varpi':'\u03D6','varpropto':'\u221D','varr':'\u2195','vArr':'\u21D5','varrho':'\u03F1','varsigma':'\u03C2','varsubsetneq':'\u228A\uFE00','varsubsetneqq':'\u2ACB\uFE00','varsupsetneq':'\u228B\uFE00','varsupsetneqq':'\u2ACC\uFE00','vartheta':'\u03D1','vartriangleleft':'\u22B2','vartriangleright':'\u22B3','vBar':'\u2AE8','Vbar':'\u2AEB','vBarv':'\u2AE9','vcy':'\u0432','Vcy':'\u0412','vdash':'\u22A2','vDash':'\u22A8','Vdash':'\u22A9','VDash':'\u22AB','Vdashl':'\u2AE6','vee':'\u2228','Vee':'\u22C1','veebar':'\u22BB','veeeq':'\u225A','vellip':'\u22EE','verbar':'|','Verbar':'\u2016','vert':'|','Vert':'\u2016','VerticalBar':'\u2223','VerticalLine':'|','VerticalSeparator':'\u2758','VerticalTilde':'\u2240','VeryThinSpace':'\u200A','vfr':'\uD835\uDD33','Vfr':'\uD835\uDD19','vltri':'\u22B2','vnsub':'\u2282\u20D2','vnsup':'\u2283\u20D2','vopf':'\uD835\uDD67','Vopf':'\uD835\uDD4D','vprop':'\u221D','vrtri':'\u22B3','vscr':'\uD835\uDCCB','Vscr':'\uD835\uDCB1','vsubne':'\u228A\uFE00','vsubnE':'\u2ACB\uFE00','vsupne':'\u228B\uFE00','vsupnE':'\u2ACC\uFE00','Vvdash':'\u22AA','vzigzag':'\u299A','wcirc':'\u0175','Wcirc':'\u0174','wedbar':'\u2A5F','wedge':'\u2227','Wedge':'\u22C0','wedgeq':'\u2259','weierp':'\u2118','wfr':'\uD835\uDD34','Wfr':'\uD835\uDD1A','wopf':'\uD835\uDD68','Wopf':'\uD835\uDD4E','wp':'\u2118','wr':'\u2240','wreath':'\u2240','wscr':'\uD835\uDCCC','Wscr':'\uD835\uDCB2','xcap':'\u22C2','xcirc':'\u25EF','xcup':'\u22C3','xdtri':'\u25BD','xfr':'\uD835\uDD35','Xfr':'\uD835\uDD1B','xharr':'\u27F7','xhArr':'\u27FA','xi':'\u03BE','Xi':'\u039E','xlarr':'\u27F5','xlArr':'\u27F8','xmap':'\u27FC','xnis':'\u22FB','xodot':'\u2A00','xopf':'\uD835\uDD69','Xopf':'\uD835\uDD4F','xoplus':'\u2A01','xotime':'\u2A02','xrarr':'\u27F6','xrArr':'\u27F9','xscr':'\uD835\uDCCD','Xscr':'\uD835\uDCB3','xsqcup':'\u2A06','xuplus':'\u2A04','xutri':'\u25B3','xvee':'\u22C1','xwedge':'\u22C0','yacute':'\xFD','Yacute':'\xDD','yacy':'\u044F','YAcy':'\u042F','ycirc':'\u0177','Ycirc':'\u0176','ycy':'\u044B','Ycy':'\u042B','yen':'\xA5','yfr':'\uD835\uDD36','Yfr':'\uD835\uDD1C','yicy':'\u0457','YIcy':'\u0407','yopf':'\uD835\uDD6A','Yopf':'\uD835\uDD50','yscr':'\uD835\uDCCE','Yscr':'\uD835\uDCB4','yucy':'\u044E','YUcy':'\u042E','yuml':'\xFF','Yuml':'\u0178','zacute':'\u017A','Zacute':'\u0179','zcaron':'\u017E','Zcaron':'\u017D','zcy':'\u0437','Zcy':'\u0417','zdot':'\u017C','Zdot':'\u017B','zeetrf':'\u2128','ZeroWidthSpace':'\u200B','zeta':'\u03B6','Zeta':'\u0396','zfr':'\uD835\uDD37','Zfr':'\u2128','zhcy':'\u0436','ZHcy':'\u0416','zigrarr':'\u21DD','zopf':'\uD835\uDD6B','Zopf':'\u2124','zscr':'\uD835\uDCCF','Zscr':'\uD835\uDCB5','zwj':'\u200D','zwnj':'\u200C'};
 	var decodeMapLegacy = {'aacute':'\xE1','Aacute':'\xC1','acirc':'\xE2','Acirc':'\xC2','acute':'\xB4','aelig':'\xE6','AElig':'\xC6','agrave':'\xE0','Agrave':'\xC0','amp':'&','AMP':'&','aring':'\xE5','Aring':'\xC5','atilde':'\xE3','Atilde':'\xC3','auml':'\xE4','Auml':'\xC4','brvbar':'\xA6','ccedil':'\xE7','Ccedil':'\xC7','cedil':'\xB8','cent':'\xA2','copy':'\xA9','COPY':'\xA9','curren':'\xA4','deg':'\xB0','divide':'\xF7','eacute':'\xE9','Eacute':'\xC9','ecirc':'\xEA','Ecirc':'\xCA','egrave':'\xE8','Egrave':'\xC8','eth':'\xF0','ETH':'\xD0','euml':'\xEB','Euml':'\xCB','frac12':'\xBD','frac14':'\xBC','frac34':'\xBE','gt':'>','GT':'>','iacute':'\xED','Iacute':'\xCD','icirc':'\xEE','Icirc':'\xCE','iexcl':'\xA1','igrave':'\xEC','Igrave':'\xCC','iquest':'\xBF','iuml':'\xEF','Iuml':'\xCF','laquo':'\xAB','lt':'<','LT':'<','macr':'\xAF','micro':'\xB5','middot':'\xB7','nbsp':'\xA0','not':'\xAC','ntilde':'\xF1','Ntilde':'\xD1','oacute':'\xF3','Oacute':'\xD3','ocirc':'\xF4','Ocirc':'\xD4','ograve':'\xF2','Ograve':'\xD2','ordf':'\xAA','ordm':'\xBA','oslash':'\xF8','Oslash':'\xD8','otilde':'\xF5','Otilde':'\xD5','ouml':'\xF6','Ouml':'\xD6','para':'\xB6','plusmn':'\xB1','pound':'\xA3','quot':'"','QUOT':'"','raquo':'\xBB','reg':'\xAE','REG':'\xAE','sect':'\xA7','shy':'\xAD','sup1':'\xB9','sup2':'\xB2','sup3':'\xB3','szlig':'\xDF','thorn':'\xFE','THORN':'\xDE','times':'\xD7','uacute':'\xFA','Uacute':'\xDA','ucirc':'\xFB','Ucirc':'\xDB','ugrave':'\xF9','Ugrave':'\xD9','uml':'\xA8','uuml':'\xFC','Uuml':'\xDC','yacute':'\xFD','Yacute':'\xDD','yen':'\xA5','yuml':'\xFF'};
 	var decodeMapNumeric = {'0':'\uFFFD','128':'\u20AC','130':'\u201A','131':'\u0192','132':'\u201E','133':'\u2026','134':'\u2020','135':'\u2021','136':'\u02C6','137':'\u2030','138':'\u0160','139':'\u2039','140':'\u0152','142':'\u017D','145':'\u2018','146':'\u2019','147':'\u201C','148':'\u201D','149':'\u2022','150':'\u2013','151':'\u2014','152':'\u02DC','153':'\u2122','154':'\u0161','155':'\u203A','156':'\u0153','158':'\u017E','159':'\u0178'};
@@ -11855,69 +13406,72 @@ function functionBindPolyfill(context) {
 		if (strict && regexInvalidEntity.test(html)) {
 			parseError('malformed character reference');
 		}
-		return html.replace(regexDecode, function($0, $1, $2, $3, $4, $5, $6, $7) {
+		return html.replace(regexDecode, function($0, $1, $2, $3, $4, $5, $6, $7, $8) {
 			var codePoint;
 			var semicolon;
 			var decDigits;
 			var hexDigits;
 			var reference;
 			var next;
+
 			if ($1) {
+				reference = $1;
+				// Note: there is no need to check `has(decodeMap, reference)`.
+				return decodeMap[reference];
+			}
+
+			if ($2) {
+				// Decode named character references without trailing `;`, e.g. `&amp`.
+				// This is only a parse error if it gets converted to `&`, or if it is
+				// followed by `=` in an attribute context.
+				reference = $2;
+				next = $3;
+				if (next && options.isAttributeValue) {
+					if (strict && next == '=') {
+						parseError('`&` did not start a character reference');
+					}
+					return $0;
+				} else {
+					if (strict) {
+						parseError(
+							'named character reference was not terminated by a semicolon'
+						);
+					}
+					// Note: there is no need to check `has(decodeMapLegacy, reference)`.
+					return decodeMapLegacy[reference] + (next || '');
+				}
+			}
+
+			if ($4) {
 				// Decode decimal escapes, e.g. `&#119558;`.
-				decDigits = $1;
-				semicolon = $2;
+				decDigits = $4;
+				semicolon = $5;
 				if (strict && !semicolon) {
 					parseError('character reference was not terminated by a semicolon');
 				}
 				codePoint = parseInt(decDigits, 10);
 				return codePointToSymbol(codePoint, strict);
 			}
-			if ($3) {
+
+			if ($6) {
 				// Decode hexadecimal escapes, e.g. `&#x1D306;`.
-				hexDigits = $3;
-				semicolon = $4;
+				hexDigits = $6;
+				semicolon = $7;
 				if (strict && !semicolon) {
 					parseError('character reference was not terminated by a semicolon');
 				}
 				codePoint = parseInt(hexDigits, 16);
 				return codePointToSymbol(codePoint, strict);
 			}
-			if ($5) {
-				// Decode named character references with trailing `;`, e.g. `&copy;`.
-				reference = $5;
-				if (has(decodeMap, reference)) {
-					return decodeMap[reference];
-				} else {
-					// Ambiguous ampersand. https://mths.be/notes/ambiguous-ampersands
-					if (strict) {
-						parseError(
-							'named character reference was not terminated by a semicolon'
-						);
-					}
-					return $0;
-				}
+
+			// If we’re still here, `if ($7)` is implied; it’s an ambiguous
+			// ampersand for sure. https://mths.be/notes/ambiguous-ampersands
+			if (strict) {
+				parseError(
+					'named character reference was not terminated by a semicolon'
+				);
 			}
-			// If we’re still here, it’s a legacy reference for sure. No need for an
-			// extra `if` check.
-			// Decode named character references without trailing `;`, e.g. `&amp`
-			// This is only a parse error if it gets converted to `&`, or if it is
-			// followed by `=` in an attribute context.
-			reference = $6;
-			next = $7;
-			if (next && options.isAttributeValue) {
-				if (strict && next == '=') {
-					parseError('`&` did not start a character reference');
-				}
-				return $0;
-			} else {
-				if (strict) {
-					parseError(
-						'named character reference was not terminated by a semicolon'
-					);
-				}
-				// Note: there is no need to check `has(decodeMapLegacy, reference)`.
-				return decodeMapLegacy[reference] + (next || '');
-			}
+			return $0;
 		});
 	};
 	// Expose default options (so they can be overridden globally).
@@ -11936,7 +13490,7 @@ function functionBindPolyfill(context) {
 	/*--------------------------------------------------------------------------*/
 
 	var he = {
-		'version': '1.1.1',
+		'version': '1.2.0',
 		'encode': encode,
 		'decode': decode,
 		'escape': escape,
@@ -11966,7 +13520,7 @@ function functionBindPolyfill(context) {
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],49:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = (nBytes * 8) - mLen - 1
@@ -12052,7 +13606,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],50:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -12077,7 +13631,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],51:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -12100,14 +13654,14 @@ function isSlowBuffer (obj) {
   return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
-},{}],52:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],53:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 (function (process){
 var path = require('path');
 var fs = require('fs');
@@ -12209,7 +13763,7 @@ mkdirP.sync = function sync (p, opts, made) {
 };
 
 }).call(this,require('_process'))
-},{"_process":56,"fs":40,"path":40}],54:[function(require,module,exports){
+},{"_process":68,"fs":42,"path":42}],60:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -12218,6 +13772,7 @@ var s = 1000;
 var m = s * 60;
 var h = m * 60;
 var d = h * 24;
+var w = d * 7;
 var y = d * 365.25;
 
 /**
@@ -12261,7 +13816,7 @@ function parse(str) {
   if (str.length > 100) {
     return;
   }
-  var match = /^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(
+  var match = /^((?:\d+)?\-?\d?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i.exec(
     str
   );
   if (!match) {
@@ -12276,6 +13831,10 @@ function parse(str) {
     case 'yr':
     case 'y':
       return n * y;
+    case 'weeks':
+    case 'week':
+    case 'w':
+      return n * w;
     case 'days':
     case 'day':
     case 'd':
@@ -12318,16 +13877,17 @@ function parse(str) {
  */
 
 function fmtShort(ms) {
-  if (ms >= d) {
+  var msAbs = Math.abs(ms);
+  if (msAbs >= d) {
     return Math.round(ms / d) + 'd';
   }
-  if (ms >= h) {
+  if (msAbs >= h) {
     return Math.round(ms / h) + 'h';
   }
-  if (ms >= m) {
+  if (msAbs >= m) {
     return Math.round(ms / m) + 'm';
   }
-  if (ms >= s) {
+  if (msAbs >= s) {
     return Math.round(ms / s) + 's';
   }
   return ms + 'ms';
@@ -12342,28 +13902,325 @@ function fmtShort(ms) {
  */
 
 function fmtLong(ms) {
-  return plural(ms, d, 'day') ||
-    plural(ms, h, 'hour') ||
-    plural(ms, m, 'minute') ||
-    plural(ms, s, 'second') ||
-    ms + ' ms';
+  var msAbs = Math.abs(ms);
+  if (msAbs >= d) {
+    return plural(ms, msAbs, d, 'day');
+  }
+  if (msAbs >= h) {
+    return plural(ms, msAbs, h, 'hour');
+  }
+  if (msAbs >= m) {
+    return plural(ms, msAbs, m, 'minute');
+  }
+  if (msAbs >= s) {
+    return plural(ms, msAbs, s, 'second');
+  }
+  return ms + ' ms';
 }
 
 /**
  * Pluralization helper.
  */
 
-function plural(ms, n, name) {
-  if (ms < n) {
-    return;
-  }
-  if (ms < n * 1.5) {
-    return Math.floor(ms / n) + ' ' + name;
-  }
-  return Math.ceil(ms / n) + ' ' + name + 's';
+function plural(ms, msAbs, n, name) {
+  var isPlural = msAbs >= n * 1.5;
+  return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
 }
 
-},{}],55:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
+'use strict';
+
+// modified from https://github.com/es-shims/es5-shim
+var has = Object.prototype.hasOwnProperty;
+var toStr = Object.prototype.toString;
+var slice = Array.prototype.slice;
+var isArgs = require('./isArguments');
+var isEnumerable = Object.prototype.propertyIsEnumerable;
+var hasDontEnumBug = !isEnumerable.call({ toString: null }, 'toString');
+var hasProtoEnumBug = isEnumerable.call(function () {}, 'prototype');
+var dontEnums = [
+	'toString',
+	'toLocaleString',
+	'valueOf',
+	'hasOwnProperty',
+	'isPrototypeOf',
+	'propertyIsEnumerable',
+	'constructor'
+];
+var equalsConstructorPrototype = function (o) {
+	var ctor = o.constructor;
+	return ctor && ctor.prototype === o;
+};
+var excludedKeys = {
+	$applicationCache: true,
+	$console: true,
+	$external: true,
+	$frame: true,
+	$frameElement: true,
+	$frames: true,
+	$innerHeight: true,
+	$innerWidth: true,
+	$outerHeight: true,
+	$outerWidth: true,
+	$pageXOffset: true,
+	$pageYOffset: true,
+	$parent: true,
+	$scrollLeft: true,
+	$scrollTop: true,
+	$scrollX: true,
+	$scrollY: true,
+	$self: true,
+	$webkitIndexedDB: true,
+	$webkitStorageInfo: true,
+	$window: true
+};
+var hasAutomationEqualityBug = (function () {
+	/* global window */
+	if (typeof window === 'undefined') { return false; }
+	for (var k in window) {
+		try {
+			if (!excludedKeys['$' + k] && has.call(window, k) && window[k] !== null && typeof window[k] === 'object') {
+				try {
+					equalsConstructorPrototype(window[k]);
+				} catch (e) {
+					return true;
+				}
+			}
+		} catch (e) {
+			return true;
+		}
+	}
+	return false;
+}());
+var equalsConstructorPrototypeIfNotBuggy = function (o) {
+	/* global window */
+	if (typeof window === 'undefined' || !hasAutomationEqualityBug) {
+		return equalsConstructorPrototype(o);
+	}
+	try {
+		return equalsConstructorPrototype(o);
+	} catch (e) {
+		return false;
+	}
+};
+
+var keysShim = function keys(object) {
+	var isObject = object !== null && typeof object === 'object';
+	var isFunction = toStr.call(object) === '[object Function]';
+	var isArguments = isArgs(object);
+	var isString = isObject && toStr.call(object) === '[object String]';
+	var theKeys = [];
+
+	if (!isObject && !isFunction && !isArguments) {
+		throw new TypeError('Object.keys called on a non-object');
+	}
+
+	var skipProto = hasProtoEnumBug && isFunction;
+	if (isString && object.length > 0 && !has.call(object, 0)) {
+		for (var i = 0; i < object.length; ++i) {
+			theKeys.push(String(i));
+		}
+	}
+
+	if (isArguments && object.length > 0) {
+		for (var j = 0; j < object.length; ++j) {
+			theKeys.push(String(j));
+		}
+	} else {
+		for (var name in object) {
+			if (!(skipProto && name === 'prototype') && has.call(object, name)) {
+				theKeys.push(String(name));
+			}
+		}
+	}
+
+	if (hasDontEnumBug) {
+		var skipConstructor = equalsConstructorPrototypeIfNotBuggy(object);
+
+		for (var k = 0; k < dontEnums.length; ++k) {
+			if (!(skipConstructor && dontEnums[k] === 'constructor') && has.call(object, dontEnums[k])) {
+				theKeys.push(dontEnums[k]);
+			}
+		}
+	}
+	return theKeys;
+};
+
+keysShim.shim = function shimObjectKeys() {
+	if (Object.keys) {
+		var keysWorksWithArguments = (function () {
+			// Safari 5.0 bug
+			return (Object.keys(arguments) || '').length === 2;
+		}(1, 2));
+		if (!keysWorksWithArguments) {
+			var originalKeys = Object.keys;
+			Object.keys = function keys(object) { // eslint-disable-line func-name-matching
+				if (isArgs(object)) {
+					return originalKeys(slice.call(object));
+				} else {
+					return originalKeys(object);
+				}
+			};
+		}
+	} else {
+		Object.keys = keysShim;
+	}
+	return Object.keys || keysShim;
+};
+
+module.exports = keysShim;
+
+},{"./isArguments":62}],62:[function(require,module,exports){
+'use strict';
+
+var toStr = Object.prototype.toString;
+
+module.exports = function isArguments(value) {
+	var str = toStr.call(value);
+	var isArgs = str === '[object Arguments]';
+	if (!isArgs) {
+		isArgs = str !== '[object Array]' &&
+			value !== null &&
+			typeof value === 'object' &&
+			typeof value.length === 'number' &&
+			value.length >= 0 &&
+			toStr.call(value.callee) === '[object Function]';
+	}
+	return isArgs;
+};
+
+},{}],63:[function(require,module,exports){
+'use strict';
+
+// modified from https://github.com/es-shims/es6-shim
+var keys = require('object-keys');
+var bind = require('function-bind');
+var canBeObject = function (obj) {
+	return typeof obj !== 'undefined' && obj !== null;
+};
+var hasSymbols = require('has-symbols/shams')();
+var toObject = Object;
+var push = bind.call(Function.call, Array.prototype.push);
+var propIsEnumerable = bind.call(Function.call, Object.prototype.propertyIsEnumerable);
+var originalGetSymbols = hasSymbols ? Object.getOwnPropertySymbols : null;
+
+module.exports = function assign(target, source1) {
+	if (!canBeObject(target)) { throw new TypeError('target must be an object'); }
+	var objTarget = toObject(target);
+	var s, source, i, props, syms, value, key;
+	for (s = 1; s < arguments.length; ++s) {
+		source = toObject(arguments[s]);
+		props = keys(source);
+		var getSymbols = hasSymbols && (Object.getOwnPropertySymbols || originalGetSymbols);
+		if (getSymbols) {
+			syms = getSymbols(source);
+			for (i = 0; i < syms.length; ++i) {
+				key = syms[i];
+				if (propIsEnumerable(source, key)) {
+					push(props, key);
+				}
+			}
+		}
+		for (i = 0; i < props.length; ++i) {
+			key = props[i];
+			value = source[key];
+			if (propIsEnumerable(source, key)) {
+				objTarget[key] = value;
+			}
+		}
+	}
+	return objTarget;
+};
+
+},{"function-bind":52,"has-symbols/shams":53,"object-keys":61}],64:[function(require,module,exports){
+'use strict';
+
+var defineProperties = require('define-properties');
+
+var implementation = require('./implementation');
+var getPolyfill = require('./polyfill');
+var shim = require('./shim');
+
+var polyfill = getPolyfill();
+
+defineProperties(polyfill, {
+	getPolyfill: getPolyfill,
+	implementation: implementation,
+	shim: shim
+});
+
+module.exports = polyfill;
+
+},{"./implementation":63,"./polyfill":65,"./shim":66,"define-properties":47}],65:[function(require,module,exports){
+'use strict';
+
+var implementation = require('./implementation');
+
+var lacksProperEnumerationOrder = function () {
+	if (!Object.assign) {
+		return false;
+	}
+	// v8, specifically in node 4.x, has a bug with incorrect property enumeration order
+	// note: this does not detect the bug unless there's 20 characters
+	var str = 'abcdefghijklmnopqrst';
+	var letters = str.split('');
+	var map = {};
+	for (var i = 0; i < letters.length; ++i) {
+		map[letters[i]] = letters[i];
+	}
+	var obj = Object.assign({}, map);
+	var actual = '';
+	for (var k in obj) {
+		actual += k;
+	}
+	return str !== actual;
+};
+
+var assignHasPendingExceptions = function () {
+	if (!Object.assign || !Object.preventExtensions) {
+		return false;
+	}
+	// Firefox 37 still has "pending exception" logic in its Object.assign implementation,
+	// which is 72% slower than our shim, and Firefox 40's native implementation.
+	var thrower = Object.preventExtensions({ 1: 2 });
+	try {
+		Object.assign(thrower, 'xy');
+	} catch (e) {
+		return thrower[1] === 'y';
+	}
+	return false;
+};
+
+module.exports = function getPolyfill() {
+	if (!Object.assign) {
+		return implementation;
+	}
+	if (lacksProperEnumerationOrder()) {
+		return implementation;
+	}
+	if (assignHasPendingExceptions()) {
+		return implementation;
+	}
+	return Object.assign;
+};
+
+},{"./implementation":63}],66:[function(require,module,exports){
+'use strict';
+
+var define = require('define-properties');
+var getPolyfill = require('./polyfill');
+
+module.exports = function shimAssign() {
+	var polyfill = getPolyfill();
+	define(
+		Object,
+		{ assign: polyfill },
+		{ assign: function () { return Object.assign !== polyfill; } }
+	);
+	return polyfill;
+};
+
+},{"./polyfill":65,"define-properties":47}],67:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -12411,7 +14268,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 
 
 }).call(this,require('_process'))
-},{"_process":56}],56:[function(require,module,exports){
+},{"_process":68}],68:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -12597,10 +14454,10 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],57:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 module.exports = require('./lib/_stream_duplex.js');
 
-},{"./lib/_stream_duplex.js":58}],58:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":70}],70:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -12732,7 +14589,7 @@ Duplex.prototype._destroy = function (err, cb) {
 
   pna.nextTick(cb, err);
 };
-},{"./_stream_readable":60,"./_stream_writable":62,"core-util-is":42,"inherits":50,"process-nextick-args":55}],59:[function(require,module,exports){
+},{"./_stream_readable":72,"./_stream_writable":74,"core-util-is":44,"inherits":56,"process-nextick-args":67}],71:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -12780,7 +14637,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":61,"core-util-is":42,"inherits":50}],60:[function(require,module,exports){
+},{"./_stream_transform":73,"core-util-is":44,"inherits":56}],72:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -13802,7 +15659,7 @@ function indexOf(xs, x) {
   return -1;
 }
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./_stream_duplex":58,"./internal/streams/BufferList":63,"./internal/streams/destroy":64,"./internal/streams/stream":65,"_process":56,"core-util-is":42,"events":47,"inherits":50,"isarray":52,"process-nextick-args":55,"safe-buffer":70,"string_decoder/":72,"util":38}],61:[function(require,module,exports){
+},{"./_stream_duplex":70,"./internal/streams/BufferList":75,"./internal/streams/destroy":76,"./internal/streams/stream":77,"_process":68,"core-util-is":44,"events":50,"inherits":56,"isarray":58,"process-nextick-args":67,"safe-buffer":82,"string_decoder/":84,"util":40}],73:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -14017,7 +15874,7 @@ function done(stream, er, data) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":58,"core-util-is":42,"inherits":50}],62:[function(require,module,exports){
+},{"./_stream_duplex":70,"core-util-is":44,"inherits":56}],74:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -14707,7 +16564,7 @@ Writable.prototype._destroy = function (err, cb) {
   cb(err);
 };
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./_stream_duplex":58,"./internal/streams/destroy":64,"./internal/streams/stream":65,"_process":56,"core-util-is":42,"inherits":50,"process-nextick-args":55,"safe-buffer":70,"util-deprecate":73}],63:[function(require,module,exports){
+},{"./_stream_duplex":70,"./internal/streams/destroy":76,"./internal/streams/stream":77,"_process":68,"core-util-is":44,"inherits":56,"process-nextick-args":67,"safe-buffer":82,"util-deprecate":85}],75:[function(require,module,exports){
 'use strict';
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -14787,7 +16644,7 @@ if (util && util.inspect && util.inspect.custom) {
     return this.constructor.name + ' ' + obj;
   };
 }
-},{"safe-buffer":70,"util":38}],64:[function(require,module,exports){
+},{"safe-buffer":82,"util":40}],76:[function(require,module,exports){
 'use strict';
 
 /*<replacement>*/
@@ -14862,13 +16719,13 @@ module.exports = {
   destroy: destroy,
   undestroy: undestroy
 };
-},{"process-nextick-args":55}],65:[function(require,module,exports){
+},{"process-nextick-args":67}],77:[function(require,module,exports){
 module.exports = require('events').EventEmitter;
 
-},{"events":47}],66:[function(require,module,exports){
+},{"events":50}],78:[function(require,module,exports){
 module.exports = require('./readable').PassThrough
 
-},{"./readable":67}],67:[function(require,module,exports){
+},{"./readable":79}],79:[function(require,module,exports){
 exports = module.exports = require('./lib/_stream_readable.js');
 exports.Stream = exports;
 exports.Readable = exports;
@@ -14877,13 +16734,13 @@ exports.Duplex = require('./lib/_stream_duplex.js');
 exports.Transform = require('./lib/_stream_transform.js');
 exports.PassThrough = require('./lib/_stream_passthrough.js');
 
-},{"./lib/_stream_duplex.js":58,"./lib/_stream_passthrough.js":59,"./lib/_stream_readable.js":60,"./lib/_stream_transform.js":61,"./lib/_stream_writable.js":62}],68:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":70,"./lib/_stream_passthrough.js":71,"./lib/_stream_readable.js":72,"./lib/_stream_transform.js":73,"./lib/_stream_writable.js":74}],80:[function(require,module,exports){
 module.exports = require('./readable').Transform
 
-},{"./readable":67}],69:[function(require,module,exports){
+},{"./readable":79}],81:[function(require,module,exports){
 module.exports = require('./lib/_stream_writable.js');
 
-},{"./lib/_stream_writable.js":62}],70:[function(require,module,exports){
+},{"./lib/_stream_writable.js":74}],82:[function(require,module,exports){
 /* eslint-disable node/no-deprecated-api */
 var buffer = require('buffer')
 var Buffer = buffer.Buffer
@@ -14947,7 +16804,7 @@ SafeBuffer.allocUnsafeSlow = function (size) {
   return buffer.SlowBuffer(size)
 }
 
-},{"buffer":41}],71:[function(require,module,exports){
+},{"buffer":43}],83:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -15076,7 +16933,7 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":47,"inherits":50,"readable-stream/duplex.js":57,"readable-stream/passthrough.js":66,"readable-stream/readable.js":67,"readable-stream/transform.js":68,"readable-stream/writable.js":69}],72:[function(require,module,exports){
+},{"events":50,"inherits":56,"readable-stream/duplex.js":69,"readable-stream/passthrough.js":78,"readable-stream/readable.js":79,"readable-stream/transform.js":80,"readable-stream/writable.js":81}],84:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -15373,7 +17230,7 @@ function simpleWrite(buf) {
 function simpleEnd(buf) {
   return buf && buf.length ? this.write(buf) : '';
 }
-},{"safe-buffer":70}],73:[function(require,module,exports){
+},{"safe-buffer":82}],85:[function(require,module,exports){
 (function (global){
 
 /**
@@ -15444,16 +17301,16 @@ function config (name) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],74:[function(require,module,exports){
-arguments[4][50][0].apply(exports,arguments)
-},{"dup":50}],75:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
+arguments[4][56][0].apply(exports,arguments)
+},{"dup":56}],87:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],76:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -16043,4 +17900,11 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":75,"_process":56,"inherits":74}]},{},[1]);
+},{"./support/isBuffer":87,"_process":68,"inherits":86}],89:[function(require,module,exports){
+module.exports={
+  "name": "mocha",
+  "version": "6.0.2",
+  "homepage": "https://mochajs.org/",
+  "notifyLogo": "https://ibin.co/4QuRuGjXvl36.png"
+}
+},{}]},{},[1]);

@@ -30,12 +30,12 @@ function cmp (first, second) {
         // Encoding/decoding mismatches are usually due to a loss of
         //   floating-point precision
         if (decodedKey1 !== first) {
-            console.warn( // eslint-disable-line no-console
+            console.warn(
                 first + ' was incorrectly encoded as ' + decodedKey1
             );
         }
         if (decodedKey2 !== second) {
-            console.warn( // eslint-disable-line no-console
+            console.warn(
                 second + ' was incorrectly encoded as ' + decodedKey2
             );
         }

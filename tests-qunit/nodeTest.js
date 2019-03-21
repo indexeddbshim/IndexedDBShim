@@ -6,7 +6,7 @@ const setGlobalVars = require('../dist/indexeddbshim-node');
 
 setGlobalVars(global.window);
 
-function addTest (i) { // eslint-disable-line no-unused-vars
+function addTest (i) {
     console.log('i:' + i);
     require('./' + testFiles[i]); // eslint-disable-line global-require, import/no-dynamic-require
     addTestSuite(i + 1);

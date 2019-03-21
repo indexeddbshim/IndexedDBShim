@@ -1,11 +1,11 @@
 /* eslint-env qunit */
 /* globals nextTest, addTest */
 /* eslint-disable no-var */
-var dbVersion = 0; // eslint-disable-line no-unused-vars
-var testNames = ['Database', 'ObjectStore', 'ObjectStoreCrud', 'Cursor', 'Index', 'Factory']; // eslint-disable-line no-unused-vars
-var testFiles = testNames.map(function (testName) { return testName + 'Tests.js'; }); // eslint-disable-line no-unused-vars
+var dbVersion = 0;
+var testNames = ['Database', 'ObjectStore', 'ObjectStoreCrud', 'Cursor', 'Index', 'Factory'];
+var testFiles = testNames.map(function (testName) { return testName + 'Tests.js'; });
 
-function _ (msg) { // eslint-disable-line no-unused-vars
+function _ (msg) {
     console.log('[' + QUnit.config.current.testName + ']', msg, arguments.callee.caller ? arguments.callee.caller.arguments : ' -- '); // eslint-disable-line no-caller
 }
 
@@ -50,7 +50,7 @@ function addTestSuite (i) {
         nextTest();
         return;
     }
-    console.log('Adding test suite ', testNames[i]);
+    console.log('Adding test suite', testNames[i]);
     addTest(i);
 }
 
@@ -70,7 +70,7 @@ function deleteDB (callback) {
     };
 }
 
-function startTests () { // eslint-disable-line no-unused-vars
+function startTests () {
     if (typeof window.mozIndexedDB !== 'undefined') {
         window.indexedDB = window.mozIndexedDB;
     } else {

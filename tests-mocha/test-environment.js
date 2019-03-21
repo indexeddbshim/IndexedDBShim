@@ -203,6 +203,6 @@
         if (typeof document === 'undefined') {
             return {className: '', style: {}};
         }
-        return document.getElementById(id) || {style: {}};
+        return document.querySelector('#' + id) || {style: {}};
     }
 })();

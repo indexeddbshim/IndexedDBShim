@@ -1,4 +1,4 @@
-/* globals location, Event */
+/* globals location */
 import path from 'path';
 import SyncPromise from 'sync-promise';
 
@@ -476,6 +476,9 @@ IDBFactory.prototype.open = function (name /* , version */) {
                 CFG.DEFAULT_DB_SIZE
             );
             if (useDatabaseCache) {
+                if (!(name in websqlDBCache)) {
+                    websqlDBCache[name] = {};
+                }
                 websqlDBCache[name][version] = db;
             }
         }
