@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const jsdom = require('jsdom');
-// const {createImageData: ImageData} = require('canvas');
+const {createImageData: ImageData} = require('canvas');
 const colors = require('colors/safe');
 
 // Requires `--experimental-worker` (as of 10.5.0)
@@ -438,9 +438,8 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             return fetch(...args);
         };
 
-        window.ImageData = function () { // ImageData;
-            this.data = [];
-        };
+        // Filed https://github.com/Automattic/node-canvas/issues/1476 for parity in API
+        global.ImageData = window.ImageData = ImageData;
         window.MessageChannel = MessageChannel;
         window.DOMMatrix = window.DOMMatrixReadOnly =
             window.DOMPoint = window.DOMPointReadOnly =
