@@ -12,7 +12,7 @@
 - Testing (W3C): Add canvas for `ImageData`
 - Docs: Link to TrialTool
 - npm: Bump typeson-registry (Cause `Event` and `MessageChannel` to
-    throw upon attempted cloning)
+    throw upon attempted cloning); bump devDeps
 
 ## 5.0.0
 
