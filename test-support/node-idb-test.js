@@ -330,6 +330,12 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             indexeddbshim(window, Object.assign(baseCfg, {fullIDLSupport: true}));
         } else {
             indexeddbshim(window, baseCfg);
+            // We will otherwise miss these tests (though not sure this is the best solution):
+            //   see test_primary_interface_of in idlharness.js
+            window.Object = Object;
+            window.Object[Symbol.hasInstance] = function (inst) {
+                return inst && typeof inst === 'object';
+            };
         }
 
         // See <https://github.com/axemclion/IndexedDBShim/issues/280>
@@ -456,13 +462,6 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         delete require.cache[
             Object.keys(require.cache).filter((path) => path.includes('createObjectURL'))[0]
         ];
-
-        // We will otherwise miss these tests (though not sure this is the best solution):
-        //   see test_primary_interface_of in idlharness.js
-        window.Object = Object;
-        window.Object[Symbol.hasInstance] = function (inst) {
-            return inst && typeof inst === 'object';
-        };
 
         window.Promise = Promise;
         window.Promise[Symbol.hasInstance] = function (inst) {

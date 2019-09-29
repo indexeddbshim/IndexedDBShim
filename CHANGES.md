@@ -1,5 +1,13 @@
 # IndexedDBShim changes
 
+## ?
+
+- Fix: For `CFG.fullIDLSupport`, ensure prototypes of `IDBCursor`,
+    `IDBKeyRange`, `IDBIndex`, `IDBObjectStore`, `IDBFactory` are
+    objects that serialize to `[object ObjectPrototype]`
+- Testing (W3C): Avoid hack in test to deal with missing prototype;
+    do not inject `Object` on full IDL tests
+
 ## 5.0.0
 
 - Breaking change: Move from deprecated `@babel/polyfill` to

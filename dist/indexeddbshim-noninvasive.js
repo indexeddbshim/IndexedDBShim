@@ -8593,6 +8593,8 @@ var _util = require("./util");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 function _defineEnumerableProperties(obj, descs) { for (var key in descs) { var desc = descs[key]; desc.configurable = desc.enumerable = true; if ("value" in desc) desc.writable = true; Object.defineProperty(obj, key, desc); } if (Object.getOwnPropertySymbols) { var objectSymbols = Object.getOwnPropertySymbols(descs); for (var i = 0; i < objectSymbols.length; i++) { var sym = objectSymbols[i]; var desc = descs[sym]; desc.configurable = desc.enumerable = true; if ("value" in desc) desc.writable = true; Object.defineProperty(obj, sym, desc); } } return obj; }
 
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
@@ -8748,6 +8750,15 @@ function setGlobalVars(idb, initialConfig) {
 
         if (_CFG["default"].fullIDLSupport) {
           // Slow per MDN so off by default! Though apparently needed for WebIDL: http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
+          // We will otherwise miss these tests (though not sure this is the best solution):
+          //   see test_primary_interface_of in idlharness.js
+          var ObjectPrototype = _defineProperty({}, Symbol.toStringTag, 'ObjectPrototype');
+
+          Object.setPrototypeOf(IDB.IDBCursor.prototype, ObjectPrototype);
+          Object.setPrototypeOf(IDB.IDBKeyRange.prototype, ObjectPrototype);
+          Object.setPrototypeOf(IDB.IDBIndex.prototype, ObjectPrototype);
+          Object.setPrototypeOf(IDB.IDBObjectStore.prototype, ObjectPrototype);
+          Object.setPrototypeOf(IDB.IDBFactory.prototype, ObjectPrototype);
           Object.setPrototypeOf(IDB.IDBOpenDBRequest, IDB.IDBRequest);
           Object.setPrototypeOf(IDB.IDBCursorWithValue, IDB.IDBCursor);
           Object.setPrototypeOf(_IDBDatabase["default"], _Event.ShimEventTarget);

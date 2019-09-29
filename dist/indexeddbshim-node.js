@@ -7949,6 +7949,16 @@ function setGlobalVars(idb, initialConfig) {
 
         if (_CFG.default.fullIDLSupport) {
           // Slow per MDN so off by default! Though apparently needed for WebIDL: http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
+          // We will otherwise miss these tests (though not sure this is the best solution):
+          //   see test_primary_interface_of in idlharness.js
+          const ObjectPrototype = {
+            [Symbol.toStringTag]: 'ObjectPrototype'
+          };
+          Object.setPrototypeOf(IDB.IDBCursor.prototype, ObjectPrototype);
+          Object.setPrototypeOf(IDB.IDBKeyRange.prototype, ObjectPrototype);
+          Object.setPrototypeOf(IDB.IDBIndex.prototype, ObjectPrototype);
+          Object.setPrototypeOf(IDB.IDBObjectStore.prototype, ObjectPrototype);
+          Object.setPrototypeOf(IDB.IDBFactory.prototype, ObjectPrototype);
           Object.setPrototypeOf(IDB.IDBOpenDBRequest, IDB.IDBRequest);
           Object.setPrototypeOf(IDB.IDBCursorWithValue, IDB.IDBCursor);
           Object.setPrototypeOf(_IDBDatabase.default, _Event.ShimEventTarget);

@@ -194,11 +194,7 @@ const dirPath = process.argv[2] || 'web-platform-tests/IndexedDB';
             return;
         }
         try {
-            await writeFile('web-platform-tests/resources/WebIDLParser.js', data.replace(
-                // https://github.com/w3c/webidl2.js/issues/426
-                'while (proto !== Object.prototype) {',
-                'while (proto && proto !== Object.prototype) {'
-            ));
+            await writeFile('web-platform-tests/resources/WebIDLParser.js', data);
         } catch (err) {
             console.log(err);
         }
