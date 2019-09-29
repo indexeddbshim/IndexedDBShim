@@ -12,6 +12,10 @@ const jsdom = require('jsdom');
 // const {createImageData: ImageData} = require('canvas');
 const colors = require('colors/safe');
 
+// Requires `--experimental-worker` (as of 10.5.0)
+// eslint-disable-next-line node/no-missing-require
+const {MessageChannel} = require('worker_threads');
+
 const readFile = util.promisify(fs.readFile);
 const readdir = util.promisify(fs.readdir);
 const writeFile = util.promisify(fs.writeFile);
@@ -95,7 +99,7 @@ process.on('unhandledRejection', (reason, p) => {
 });
 */
 function exit () {
-    process.exit(); // eslint-disable-line no-process-exit, unicorn/no-process-exit
+    process.exit(); // eslint-disable-line no-process-exit
 }
 async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, item = 0) {
     shimNS.fileName = jsFiles[item];
@@ -437,9 +441,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         window.ImageData = function () { // ImageData;
             this.data = [];
         };
-        window.MessageChannel = function () {
-            // Testing
-        };
+        window.MessageChannel = MessageChannel;
         window.DOMMatrix = window.DOMMatrixReadOnly =
             window.DOMPoint = window.DOMPointReadOnly =
             window.DOMRect = window.DOMRectReadOnly = function () {

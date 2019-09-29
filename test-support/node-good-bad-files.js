@@ -114,8 +114,8 @@ IndexedDB Test counts:
         'upgrade-transaction-deactivation-timing.js' (3 tests)
 
 Current IndexedDB (and domstringlist) test statuses (vmTimeout = 40000):
-  'Pass': 1100, (including 4 domstringlist tests but avoiding exclusions)
-  'Fail': 124, // 116 are from one structured cloning test
+  'Pass': 1102, (including 4 domstringlist tests but avoiding exclusions)
+  'Fail': 122, // 114 are from one structured cloning test
   'Timeout': 6,
   'Not Run': 3,
   'Total tests': 1233 (including 4 domstringlist tests but avoiding exclusions)

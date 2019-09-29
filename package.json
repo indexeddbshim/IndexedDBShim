@@ -48,7 +48,7 @@
     "w3c-add-wrap": "node test-support/wrap-w3c-tests",
     "w3c-remove-wrap": "node test-support/wrap-w3c-tests remove",
     "w3c-wrap": "node test-support/wrap-w3c-tests",
-    "w3c-test": "grunt clean-w3c && node test-support/node-idb-test",
+    "w3c-test": "grunt clean-w3c && node --experimental-worker test-support/node-idb-test",
     "w3c-good": "npm run w3c-build && node test-support/node-idb-test good && grunt clean-w3c",
     "w3c-bad": "npm run w3c-build && node test-support/node-idb-test bad && grunt clean-w3c",
     "w3c-good-test": "node test-support/node-idb-test good && grunt clean-w3c",
@@ -95,7 +95,7 @@
     "regenerator-runtime": "^0.13.3",
     "sync-promise": "git+https://github.com/brettz9/sync-promise.git#full-sync-missing-promise-features",
     "typeson": "5.13.0",
-    "typeson-registry": "1.0.0-alpha.28",
+    "typeson-registry": "1.0.0-alpha.29",
     "websql": "git+https://github.com/brettz9/node-websql.git#configurable-secure2"
   },
   "devDependencies": {
