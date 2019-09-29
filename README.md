@@ -620,6 +620,15 @@ See [Versions](docs/versions/) for migration information.
 
 See [TESTING](docs/TESTING.md).
 
+## Resources for IndexedDB
+
+- [TrialTool](http://nparashuram.com/trialtool) - For experimenting with
+    IndexedDB commands, including predefined examples. (Some examples
+    may depend on others previously being run, even with
+    "Load Pre-Requisites" added, but it is nevertheless useful to avoid
+    boilerplate in testing out commands, in conjunction with
+    the browser developer tools.)
+
 ## Contributing
 
 Pull requests or Bug reports welcome! See [CONTRIBUTING](docs/CONTRIBUTING.MD)

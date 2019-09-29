@@ -10,6 +10,7 @@
 - Testing (W3C): Add `structured-clone.any.js` to known `badFiles` list
 - Testing (W3C): Add `MessageChannel`
 - Testing (W3C): Add canvas for `ImageData`
+- Docs: Link to TrialTool
 - npm: Bump typeson-registry (Cause `Event` and `MessageChannel` to
     throw upon attempted cloning)
 
