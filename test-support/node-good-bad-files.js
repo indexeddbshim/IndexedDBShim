@@ -20,7 +20,8 @@ mostly relate to most of the same issues.)
     - `idlharness.any.js`
     - `idb-explicit-commit-throw.any.js`
     - `idb-explicit-commit.any.js`
-- `relaxedDurability` transaction option
+- `durability` transaction option
+    - https://github.com/axemclion/IndexedDBShim/issues/351
     - `transaction-relaxed-durability.tentative.any.js`
 
 1. TIMING/TRANSACTION FINISHED TIMING
