@@ -87,6 +87,10 @@ See <https://github.com/axemclion/IndexedDBShim/issues/286>.
         by installing canvas (though see
         https://github.com/jsdom/jsdom/issues/1749 in case this
         can be avoided in the future as well)
+        - Note that per https://github.com/mozilla/standards-positions/issues/165 ,
+            it seems that `Error` will be cloneable after all; evident in
+            its test: https://github.com/web-platform-tests/wpt/blob/master/IndexedDB/structured-clone.any.js#L192-L211
+            Will need to add to typeson-registry structured-cloning-throwing
 
 See <https://github.com/axemclion/IndexedDBShim/issues/286>.
 
