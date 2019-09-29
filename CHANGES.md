@@ -7,6 +7,7 @@
     objects that serialize to `[object ObjectPrototype]`
 - Testing (W3C): Avoid hack in test to deal with missing prototype;
     do not inject `Object` on full IDL tests
+- Testing (W3C): Add `structured-clone.any.js` to known `badFiles` list
 
 ## 5.0.0
 
