@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const jsdom = require('jsdom');
-const {ImageData} = require('canvas');
+const {ImageData, DOMPoint, DOMMatrix} = require('canvas');
 const colors = require('colors/safe');
 
 // Requires `--experimental-worker` (as of 10.5.0)
@@ -439,9 +439,10 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         };
 
         global.ImageData = window.ImageData = ImageData;
+        window.DOMPoint = DOMPoint;
+        window.DOMMatrix = DOMMatrix;
         window.MessageChannel = MessageChannel;
-        window.DOMMatrix = window.DOMMatrixReadOnly =
-            window.DOMPoint = window.DOMPointReadOnly =
+        window.DOMMatrixReadOnly = window.DOMPointReadOnly =
             window.DOMRect = window.DOMRectReadOnly = function () {
                 // Testing
             };
