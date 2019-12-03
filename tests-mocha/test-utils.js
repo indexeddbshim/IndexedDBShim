@@ -69,7 +69,7 @@
          * @returns {void}
          */
         createDatabase (schema, done) {
-            schema = Array.prototype.slice.call(arguments, 0, arguments.length - 1);
+            schema = [].slice.call(arguments, 0, -1);
             done = arguments[arguments.length - 1];
 
             util.generateDatabaseName(function (err, dbName) {

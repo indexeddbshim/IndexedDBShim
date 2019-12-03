@@ -7,7 +7,7 @@
 [![CDNJS](https://img.shields.io/cdnjs/v/IndexedDBShim.svg)](https://cdnjs.com/libraries/IndexedDBShim)
 [![License](https://img.shields.io/npm/l/indexeddbshim.svg)](LICENSE-APACHE)
 
-|[Live Demo (stable)!](https://raw.githack.com/axemclion/IndexedDBShim/v5.0.0/index.html) | [Live Demo (master)!](https://raw.githack.com/axemclion/IndexedDBShim/master/index.html) |
+|[Live Demo (stable)!](https://raw.githack.com/axemclion/IndexedDBShim/v6.0.0/index.html) | [Live Demo (master)!](https://raw.githack.com/axemclion/IndexedDBShim/master/index.html) |
 | -------------- | ----------------- |
 
 
@@ -59,8 +59,14 @@ Also make sure Python (2.7) is installed.
 
 ### npm
 
-```bash
+```shell
 npm install indexeddbshim
+```
+
+or
+
+```shell
+yarn add indexeddbshim
 ```
 
 ## Browser set-up
@@ -603,7 +609,7 @@ subdirectory rather than just the IndexedDB ones). Otherwise, just use
 `git clone https://github.com/axemclion/IndexedDBShim.git`
 
 1. __Install dev dependencies (and websql for Node)__
-`npm install`
+`yarn install`
 
 1. __Run the build script__
 `npm start`

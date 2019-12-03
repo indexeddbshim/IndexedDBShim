@@ -82,24 +82,24 @@
             (function () {
                 const browser = document.querySelector('#browser');
                 const support = [];
-                const runOption = [];
+                // const runOption = [];
                 if (window.openDatabase) {
                     support.push('WebSql');
                     document.querySelector('#shimRunOption').style.display = 'block';
                 }
                 if (window.mozIndexedDB) {
                     support.push('mozIndexedDB');
-                    runOption.push('Native IndexedDB');
+                    // runOption.push('Native IndexedDB');
                     document.querySelector('#nativeRunOption').style.display = 'block';
                 }
                 if (window.webkitIndexedDB) {
                     support.push('webkitIndexedDB');
-                    runOption.push('Native IndexedDB');
+                    // runOption.push('Native IndexedDB');
                     document.querySelector('#nativeRunOption').style.display = 'block';
                 }
                 if (window.msIndexedDB) {
                     support.push('msIndexedDB');
-                    runOption.push('Native IndexedDB');
+                    // runOption.push('Native IndexedDB');
                     document.querySelector('#nativeRunOption').style.display = 'block';
                 }
                 browser.innerHTML = 'Storage technologies supported [' + support.join(', ') + ']';

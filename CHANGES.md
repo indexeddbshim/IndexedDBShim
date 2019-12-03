@@ -1,18 +1,23 @@
 # IndexedDBShim changes
 
-## ?
+## 6.0.0
 
+- npm (BREAKING CHANGE): Move core-js-bundle out of deps; user to install
+    if needed for supported environments
 - Fix: For `CFG.fullIDLSupport`, ensure prototypes of `IDBCursor`,
     `IDBKeyRange`, `IDBIndex`, `IDBObjectStore`, `IDBFactory` are
     objects that serialize to `[object ObjectPrototype]`
+- Linting (ESLint): Apply latest updates
 - Testing (W3C): Avoid hack in test to deal with missing prototype;
     do not inject `Object` on full IDL tests
 - Testing (W3C): Add `structured-clone.any.js` to known `badFiles` list
 - Testing (W3C): Add `MessageChannel`
 - Testing (W3C): Add canvas for `ImageData`
 - Docs: Link to TrialTool
-- npm: Bump typeson-registry (Cause `Event` and `MessageChannel` to
-    throw upon attempted cloning); bump devDeps
+- npm: Remove `package-lock.json` in favor of `yarn.lock`
+- npm: Bump `typeson-registry` (Cause `Event` and `MessageChannel` to
+    throw upon attempted cloning); update `typeson`; bump devDeps and
+    local copies
 
 ## 5.0.0
 

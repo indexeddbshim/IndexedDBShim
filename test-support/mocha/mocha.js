@@ -1477,7 +1477,7 @@ exports.Test = require('./test');
  * @param {boolean} [options.ignoreLeaks] - Ignore global leaks?
  * @param {boolean} [options.invert] - Invert test filter matches?
  * @param {boolean} [options.noHighlighting] - Disable syntax highlighting?
- * @param {string} [options.reporter] - Reporter name.
+ * @param {string|constructor} [options.reporter] - Reporter name or constructor.
  * @param {Object} [options.reporterOption] - Reporter settings object.
  * @param {number} [options.retries] - Number of times to retry failed tests.
  * @param {number} [options.slow] - Slow threshold value.
@@ -1557,7 +1557,7 @@ function Mocha(options) {
  * Enables or disables bailing on the first failure.
  *
  * @public
- * @see {@link https://mochajs.org/#-b---bail|CLI option}
+ * @see {@link /#-bail-b|CLI option}
  * @param {boolean} [bail=true] - Whether to bail on first error.
  * @returns {Mocha} this
  * @chainable
@@ -1578,7 +1578,7 @@ Mocha.prototype.bail = function(bail) {
  * Useful for generic setup code that must be included within test suite.
  *
  * @public
- * @see {@link https://mochajs.org/#--file-file|CLI option}
+ * @see {@link /#-file-filedirectoryglob|CLI option}
  * @param {string} file - Pathname of file to be loaded.
  * @returns {Mocha} this
  * @chainable
@@ -1592,8 +1592,8 @@ Mocha.prototype.addFile = function(file) {
  * Sets reporter to `reporter`, defaults to "spec".
  *
  * @public
- * @see {@link https://mochajs.org/#-r---reporter-name|CLI option}
- * @see {@link https://mochajs.org/#reporters|Reporters}
+ * @see {@link /#-reporter-name-r-name|CLI option}
+ * @see {@link /#reporters|Reporters}
  * @param {String|Function} reporter - Reporter name or constructor.
  * @param {Object} [reporterOptions] - Options used to configure the reporter.
  * @returns {Mocha} this
@@ -1659,8 +1659,8 @@ Mocha.prototype.reporter = function(reporter, reporterOptions) {
  * Sets test UI `name`, defaults to "bdd".
  *
  * @public
- * @see {@link https://mochajs.org/#-u---ui-name|CLI option}
- * @see {@link https://mochajs.org/#interfaces|Interface DSLs}
+ * @see {@link /#-ui-name-u-name|CLI option}
+ * @see {@link /#interfaces|Interface DSLs}
  * @param {string|Function} [ui=bdd] - Interface name or class.
  * @returns {Mocha} this
  * @chainable
@@ -1798,7 +1798,7 @@ Mocha.prototype.fgrep = function(str) {
  * <strong>Previous filter value will be overwritten on each call!</strong>
  *
  * @public
- * @see {@link https://mochajs.org/#-g---grep-pattern|CLI option}
+ * @see {@link /#grep-regexp-g-regexp|CLI option}
  * @see {@link Mocha#fgrep}
  * @see {@link Mocha#invert}
  * @param {RegExp|String} re - Regular expression used to select tests.
@@ -1868,7 +1868,7 @@ Mocha.prototype.ignoreLeaks = function(ignoreLeaks) {
  * Enables checking for global variables leaked while running tests.
  *
  * @public
- * @see {@link https://mochajs.org/#--check-leaks|CLI option}
+ * @see {@link /#-check-leaks|CLI option}
  * @see {@link Mocha#ignoreLeaks}
  * @return {Mocha} this
  * @chainable
@@ -1938,7 +1938,7 @@ Mocha.prototype._growl = growl.notify;
  * Specifies whitelist of variable names to be expected in global scope.
  *
  * @public
- * @see {@link https://mochajs.org/#-global-variable-name|CLI option}
+ * @see {@link /#-global-variable-name|CLI option}
  * @see {@link Mocha#checkLeaks}
  * @param {String[]|String} globals - Accepted global variable name(s).
  * @return {Mocha} this
@@ -2009,9 +2009,8 @@ Mocha.prototype.hideDiff = function(hideDiff) {
  * If the value is `0`, timeouts will be disabled.
  *
  * @public
- * @see {@link https://mochajs.org/#-t---timeout-ms|CLI option}
- * @see {@link https://mochajs.org/#--no-timeouts|CLI option}
- * @see {@link https://mochajs.org/#timeouts|Timeouts}
+ * @see {@link /#-timeout-ms-t-ms|CLI option}
+ * @see {@link /#timeouts|Timeouts}
  * @see {@link Mocha#enableTimeouts}
  * @param {number|string} msecs - Timeout threshold value.
  * @return {Mocha} this
@@ -2034,7 +2033,7 @@ Mocha.prototype.timeout = function(msecs) {
  * Sets the number of times to retry failed tests.
  *
  * @public
- * @see {@link https://mochajs.org/#retry-tests|Retry Tests}
+ * @see {@link /#retry-tests|Retry Tests}
  * @param {number} retry - Number of times to retry failed tests.
  * @return {Mocha} this
  * @chainable
@@ -2052,7 +2051,7 @@ Mocha.prototype.retries = function(n) {
  * Sets slowness threshold value.
  *
  * @public
- * @see {@link https://mochajs.org/#-s---slow-ms|CLI option}
+ * @see {@link /#-slow-ms-s-ms|CLI option}
  * @param {number} msecs - Slowness threshold value.
  * @return {Mocha} this
  * @chainable
@@ -2074,8 +2073,7 @@ Mocha.prototype.slow = function(msecs) {
  * Enables or disables timeouts.
  *
  * @public
- * @see {@link https://mochajs.org/#-t---timeout-ms|CLI option}
- * @see {@link https://mochajs.org/#--no-timeouts|CLI option}
+ * @see {@link /#-timeout-ms-t-ms|CLI option}
  * @param {boolean} enableTimeouts - Whether to enable timeouts.
  * @return {Mocha} this
  * @chainable
@@ -2131,7 +2129,7 @@ Mocha.prototype.allowUncaught = function() {
  * Used to perform asynch operations before any suites are run.
  *
  * @public
- * @see {@link https://mochajs.org/#delayed-root-suite|delayed root suite}
+ * @see {@link /#delayed-root-suite|delayed root suite}
  * @returns {Mocha} this
  * @chainable
  */
@@ -2299,7 +2297,7 @@ exports = module.exports = Base;
  * Check if both stdio streams are associated with a tty.
  */
 
-var isatty = tty.isatty(1) && tty.isatty(2);
+var isatty = process.stdout.isTTY && process.stderr.isTTY;
 
 /**
  * Save log references to avoid tests interfering (see GH-3604).
@@ -2471,6 +2469,7 @@ var generateDiff = (exports.generateDiff = function(actual, expected) {
  *     Error property
  */
 exports.list = function(failures) {
+  var multipleErr, multipleTest;
   Base.consoleLog();
   failures.forEach(function(test, i) {
     // format
@@ -2481,7 +2480,16 @@ exports.list = function(failures) {
 
     // msg
     var msg;
-    var err = test.err;
+    var err;
+    if (test.err && test.err.multiple) {
+      if (multipleTest !== test) {
+        multipleTest = test;
+        multipleErr = [test.err].concat(test.err.multiple);
+      }
+      err = multipleErr.shift();
+    } else {
+      err = test.err;
+    }
     var message;
     if (err.message && typeof err.message.toString === 'function') {
       message = err.message + '';
@@ -2572,7 +2580,12 @@ function Base(runner, options) {
     if (showDiff(err)) {
       stringifyDiffObjs(err);
     }
-    test.err = err;
+    // more than one error per test
+    if (test.err && err instanceof Error) {
+      test.err.multiple = (test.err.multiple || []).concat(err);
+    } else {
+      test.err = err;
+    }
     failures.push(test);
   });
 }
@@ -2581,7 +2594,7 @@ function Base(runner, options) {
  * Outputs common epilogue used by many of the bundled reporters.
  *
  * @public
- * @memberof Mocha.reporters.Base
+ * @memberof Mocha.reporters
  */
 Base.prototype.epilogue = function() {
   var stats = this.stats;
@@ -3309,8 +3322,8 @@ function hideSuitesWithout(classname) {
  */
 function unhide() {
   var els = document.getElementsByClassName('suite hidden');
-  for (var i = 0; i < els.length; ++i) {
-    els[i].className = els[i].className.replace('suite hidden', 'suite');
+  while (els.length > 0) {
+    els[0].className = els[0].className.replace('suite hidden', 'suite');
   }
 }
 
@@ -5614,7 +5627,7 @@ function Runner(suite, delay) {
   });
   this._defaultGrep = /.*/;
   this.grep(this._defaultGrep);
-  this.globals(this.globalProps().concat(extraGlobals()));
+  this.globals(this.globalProps());
 }
 
 /**
@@ -6338,7 +6351,7 @@ Runner.prototype.uncaught = function(err) {
   }
 
   // bail
-  this.emit(constants.EVENT_RUN_END);
+  this.abort();
 };
 
 /**
@@ -6487,30 +6500,6 @@ function thrown2Error(err) {
   return new Error(
     'the ' + type(err) + ' ' + stringify(err) + ' was thrown, throw an Error :)'
   );
-}
-
-/**
- * Array of globals dependent on the environment.
- *
- * @return {Array}
- * @deprecated
- * @todo remove; long since unsupported
- * @private
- */
-function extraGlobals() {
-  if (typeof process === 'object' && typeof process.version === 'string') {
-    var parts = process.version.split('.');
-    var nodeVersion = parts.reduce(function(a, v) {
-      return (a << 8) | v;
-    });
-
-    // 'errno' was renamed to process._errno in v0.9.11.
-    if (nodeVersion < 0x00090b) {
-      return ['errno'];
-    }
-  }
-
-  return [];
 }
 
 Runner.constants = constants;
@@ -18097,7 +18086,7 @@ function hasOwnProperty(obj, prop) {
 },{"./support/isBuffer":88,"_process":69,"inherits":56}],90:[function(require,module,exports){
 module.exports={
   "name": "mocha",
-  "version": "6.2.0",
+  "version": "6.2.2",
   "homepage": "https://mochajs.org/",
   "notifyLogo": "https://ibin.co/4QuRuGjXvl36.png"
 }
