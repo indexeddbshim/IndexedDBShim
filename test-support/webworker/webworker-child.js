@@ -359,7 +359,17 @@ prom.then((scriptSource) => {
     //   if exposing we should do so; for W3C IndexedDB or IndexedDB-related tests,
     //   however, they do not currently require a working implementation except to
     //   check that they exist
-    ['SharedWorker', 'MessagePort', 'MessageEvent', 'WorkerNavigator', 'MessageChannel', 'WorkerLocation', 'ImageData', 'ImageBitmap', 'CanvasPath', 'Path2D', 'PromiseRejectionEvent', 'EventSource', 'WebSocket', 'CloseEvent', 'BroadcastChannel', 'XMLHttpRequestEventTarget', 'XMLHttpRequestUpload', 'ProgressEvent', 'FormData', 'File', 'FileList', 'FileReader', 'FileReaderSync', 'ErrorEvent', 'ReadableStream', 'WritableStream', 'ByteLengthQueuingStrategy', 'CountQueuingStrategy'].forEach((prop) => {
+    [
+        'SharedWorker', 'MessagePort', 'MessageEvent', 'WorkerNavigator',
+        'MessageChannel', 'WorkerLocation', 'ImageData', 'ImageBitmap',
+        'CanvasPath', 'Path2D', 'PromiseRejectionEvent', 'EventSource',
+        'WebSocket', 'CloseEvent', 'BroadcastChannel',
+        'XMLHttpRequestEventTarget', 'XMLHttpRequestUpload',
+        'ProgressEvent', 'FormData', 'File', 'FileList', 'FileReader',
+        'FileReaderSync', 'ErrorEvent', 'ReadableStream', 'WritableStream',
+        'ByteLengthQueuingStrategy', 'CountQueuingStrategy',
+        'CanvasGradient', 'CanvasPattern', 'TextMetrics'
+    ].forEach((prop) => {
         workerCtx[prop] = function () {
             throw new Error(prop + ' not implemented');
         };

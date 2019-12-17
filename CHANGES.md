@@ -1,5 +1,14 @@
 # IndexedDBShim changes
 
+## ?
+
+- npm: Update deps (typeson and typeson-registry)
+- npm: Update devDeps
+- Testing (W3C): Update web-platform-tests
+- Testing (W3C): Shim objects that are only checked for exposure
+- Testing (W3C): Avoid reporting known failures as unexpected
+- Testing (W3C): Update test counts
+
 ## 6.0.0
 
 - npm (BREAKING CHANGE): Move core-js-bundle out of deps; user to install

@@ -171,7 +171,11 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                 console.log('Unexpected failures:');
                 const failedFiles = shimNS.files.Fail.filter(
                     (f) => ![...badFiles, ...excludedWorkers, ...excludedNormal].includes(f) &&
-                    !['../non-indexedDB/interface-objects.js'].includes(f) &&
+                    ![
+                        '../non-indexedDB/interface-objects.js',
+                        '../non-indexedDB/__event-interface.js',
+                        '../non-indexedDB/exceptions.js'
+                    ].includes(f) &&
                     (!workers || !['_service-worker-indexeddb.https.js'].includes(f))
                 );
                 if (failedFiles.length) {

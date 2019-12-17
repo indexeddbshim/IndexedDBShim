@@ -131,9 +131,9 @@ IndexedDB Test counts:
         'upgrade-transaction-deactivation-timing.js' (3 tests)
 
 Current IndexedDB (and domstringlist) test statuses (vmTimeout = 40000):
-  'Pass': 1129, (including 4 domstringlist tests but avoiding exclusions)
+  'Pass': 1130, (including 4 domstringlist tests but avoiding exclusions)
   'Fail': 149, // 114 are from one structured cloning test and 12+1+1 from missing commit API
-  'Timeout': 6,
+  'Timeout': 5,
   'Not Run': 4,
   'Total tests': 1288 (including 4 domstringlist tests but avoiding exclusions)
 
@@ -148,15 +148,15 @@ Current IndexedDB (and domstringlist) test statuses (vmTimeout = 40000):
 //   beyond our tests), we'd like for these tests (and eventually all of the
 //   W3C Worker tests, of which there are many) to pass completely,
 //   particularly if we expose the shim. Note that the worker
-//   implementation does put a few bogus interfaces to pass an interface
+//   implementation does put a few mock interfaces to pass an interface
 //   test and those features would need to be properly shimmed as possible
 //   as well.
 
-Worker Test counts: 5 files (1 good, 2 bad, 2 shared workers tests excluded
+Worker Test counts: 5 files (2 good, 1 bad, 2 shared workers tests excluded
     as not executing at all given failure at lack of support)
 Current worker test statuses with 2 files excluded:
-  'Pass': 96
-  'Fail': 3,
+  'Pass': 98
+  'Fail': 1,
   'Not Run': 0,
   'Total tests': 99
 
@@ -173,8 +173,8 @@ Current worker test statuses with 2 files excluded:
 // Todo: We ought to really run all of the web-platform-tests/dom/events tests
 Event Test counts: 2 files (1 good, 1 bad - '../non-indexedDB/__event-interface.js')
 Current Event test statuses with 0 files excluded:
-  'Pass': 61,
-  'Fail': 9,
+  'Pass': 57,
+  'Fail': 13,
   'Timeout': 0,
   'Not Run': 0,
   'Total tests': 70
@@ -186,8 +186,8 @@ Current Event test statuses with 0 files excluded:
 DOMException Test counts: 4 files (3 good, 1 bad)
 Current DOMException test statuses with 0 files excluded:
 {
-  'Pass': 101,
-  'Fail': 5,
+  'Pass': 96,
+  'Fail': 10,
   'Timeout': 0,
   'Not Run': 0,
   'Total tests': 106
