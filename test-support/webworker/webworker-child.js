@@ -251,7 +251,7 @@ prom.then((scriptSource) => {
     workerCtx.location = scriptLoc;
     workerCtx.closing = false;
     workerCtx.close = function () {
-        process.exit(0); // eslint-disable-line no-process-exit, unicorn/no-process-exit
+        process.exit(0); // eslint-disable-line unicorn/no-process-exit
     };
     workerCtx.eventHandlers = {message: []};
     workerCtx.addEventListener = function (event, handler) {

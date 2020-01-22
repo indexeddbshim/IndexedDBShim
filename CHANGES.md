@@ -1,13 +1,22 @@
-# IndexedDBShim changes
+# CHANGES for IndexedDBShim
 
-## ?
+## 6.0.1
 
-- npm: Update deps (typeson and typeson-registry)
-- npm: Update devDeps
+- Note that the typeson updates include some important fixes for accurately
+    storing certain types or combinations of types
+- Fix: For `CFG.fullIDLSupport`, revert setting of prototypes of
+    `IDBCursor`, `IDBKeyRange`, `IDBIndex`, `IDBObjectStore`,
+    `IDBFactory` to objects that serialize to
+    `[object ObjectPrototype]`
+- Linting (ESLint): Latest as per ash-nazg
+- Travis: Change to 10 and 12
 - Testing (W3C): Update web-platform-tests
 - Testing (W3C): Shim objects that are only checked for exposure
 - Testing (W3C): Avoid reporting known failures as unexpected
 - Testing (W3C): Update test counts
+- npm: Add script for updating submodules
+- npm: Update deps (typeson and typeson-registry)
+- npm: Update devDeps
 
 ## 6.0.0
 

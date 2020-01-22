@@ -24,7 +24,7 @@
     });
 
     /**
-     * This function runs after every test
+     * This function runs after every test.
      */
     afterEach(function (done) {
         // Delete all databases that were created during this test
@@ -36,12 +36,13 @@
     util = window.util = {
         sampleData: {
             /**
-             * A custom class, used to test the IndexedDB structured cloning algorithm
+             * A custom class, used to test the IndexedDB structured
+             * cloning algorithm.
              */
             Person: Person,
 
             /**
-             * A very long string :)
+             * A very long string :) .
              */
             veryLongString: new Array(1001).join('1234567890')  // 10,000 characters
         },

@@ -18,7 +18,8 @@ before_script:
 - "./travis.sh before"
 - npm install -g grunt-cli
 node_js:
-- 8.12.0
+- 10
+- 12
 notifications:
   email: false
 language: node_js

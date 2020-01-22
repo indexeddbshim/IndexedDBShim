@@ -10,10 +10,10 @@
     window.expect = chai.expect;
     var describe = window.describe;
 
-    /** Environment Info **/
+    /** Environment info. */
     var env = window.env = {
         /**
-         * Browser info
+         * Browser info.
          * @type {browserInfo}
          */
         browser: getBrowserInfo(),
@@ -30,8 +30,9 @@
 
         /**
          * The IndexedDB instance that is being used (may be native, or the shim).
-         * HACK: We can't use window.indexedDB directly in our tests, because of Safari on iOS.
-         * See https://github.com/axemclion/IndexedDBShim/issues/167
+         * HACK: We can't use window.indexedDB directly in our tests, because of
+         * Safari on iOS.
+         * @see https://github.com/axemclion/IndexedDBShim/issues/167
          */
         indexedDB: window.indexedDB,
 
@@ -52,19 +53,22 @@
         isShimmed: false,
 
         /**
-         * Are we using the polyfill (not the full shim, but a polyfilled version of the native IndexedDB)
+         * Are we using the polyfill (not the full shim, but a polyfilled
+         * version of the native IndexedDB)?
          */
         isPolyfilled: false,
 
         /**
-         * IndexedDBShim can't always use these native classes, because some browsers don't allow us to instantiate them.
-         * It's also not safe to shim these classes on the global scope, because it could break other stuff.
+         * IndexedDBShim can't always use these native classes, because some
+         * browsers don't allow us to instantiate them.
+         * It's also not safe to shim these classes on the global scope
+         * because it could break other stuff.
          */
         Event: window.ShimEvent || window.Event,
         DOMException: window.ShimDOMException || window.DOMException,
 
         /**
-         * Safe duration by which transaction should have expired
+         * Safe duration by which transaction should have expired.
         */
         transactionDuration: 1000
     };

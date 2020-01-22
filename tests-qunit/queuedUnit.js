@@ -57,8 +57,8 @@
     }
 
     /**
-    * Once the current test is over, call nextTest() to start running the next
-    * test
+    * Once the current test is over, call `nextTest()` to start running the
+    * next test.
     */
     var testCount = 1;
     function nextTest () {

@@ -9,7 +9,7 @@ import CFG from './CFG';
 
 /**
  * Encodes the keys based on their types. This is required to maintain collations
- * We leave space for future keys
+ * We leave space for future keys.
  */
 const keyTypeToEncodedChar = {
     invalid: 100,
@@ -836,11 +836,12 @@ const MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `N
 /**
  * @callback CurrentNumberCallback
  * @param {Integer} The current number
+ * @returns {void}
  */
 
 /**
 * @callback SQLFailureCallback
-* @param {DOMException}
+* @param {DOMException} exception
 * @returns {void}
 */
 
@@ -913,6 +914,7 @@ function setCurrentNumber (tx, store, num, successCb, failCb) {
  * @param {"failure"|null} arg1
  * @param {Integer} [arg2]
  * @param {Integer} [arg3]
+ * @returns {void}
  */
 
 /**

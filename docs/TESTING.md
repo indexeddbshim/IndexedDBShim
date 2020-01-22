@@ -109,7 +109,8 @@ To run the Node tests, run the following:
     [init](http://stackoverflow.com/a/10168693/271577) too if using
     an older version of Git), `git submodule foreach --recursive git fetch`,
     and `git submodule foreach git merge origin master` or possibly
-    `git submodule foreach git pull --ff-only origin master`). Note that some
+    `git submodule foreach git pull --ff-only origin master`). For the
+    former three, you can run `npm run submodules`. Note that some
     of these tests may not be passing because of the test environment not
     being completely configured for Node. We are working on fixing this.
     There are some older and less complete W3C tests that can be run

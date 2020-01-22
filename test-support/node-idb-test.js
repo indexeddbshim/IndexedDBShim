@@ -99,7 +99,7 @@ process.on('unhandledRejection', (reason, p) => {
 });
 */
 function exit () {
-    process.exit(); // eslint-disable-line no-process-exit
+    process.exit();
 }
 async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, item = 0) {
     shimNS.fileName = jsFiles[item];
@@ -336,6 +336,8 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         // indexeddbshimNonUnicode(window);
         if (['idlharness.any.js', '../non-indexedDB/exceptions.js', '../non-indexedDB/__event-interface.js'].includes(shimNS.fileName)) {
             indexeddbshim(window, Object.assign(baseCfg, {fullIDLSupport: true}));
+            // https://github.com/w3c/webidl2.js/issues/426
+            window.$$isHarnessTest = true;
         } else {
             indexeddbshim(window, baseCfg);
             // We will otherwise miss these tests (though not sure this is the best solution):
@@ -509,7 +511,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         window.FileList.prototype[Symbol.toStringTag] = 'FileList';
 
         // Needed by typeson-registry to revive clones
-        window.BigInt = global.BigInt;
+        // window.BigInt = global.BigInt;
         global.Blob = window.Blob;
         global.File = window.File;
         // keypath-special-identifiers.htm still relies on this property
@@ -520,7 +522,6 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             }
         });
 
-        // eslint-disable-next-line require-atomic-updates
         shimNS.window = window;
 
         vm.runInNewContext(allContent, sandboxObj, {
