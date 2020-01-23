@@ -11,7 +11,7 @@ self.parent = self;
     }
     nonEnumerables.concat(
         // Needed early by testing framework
-        'Function',
+        'Function', 'TypeError',
         'clearTimeout', 'setTimeout',
         'addEventListener', 'document',
         'location', 'ImageData', 'Blob', 'File', 'Event', 'MessageChannel',

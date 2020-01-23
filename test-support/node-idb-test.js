@@ -254,6 +254,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
     const supported = [
         'resources/testharness.js', 'resources/testharnessreport.js',
         'resources/idlharness.js', 'resources/WebIDLParser.js',
+        'resources/testdriver.js', 'resources/testdriver-vendor.js',
         'nested-cloning-common.js', 'interleaved-cursors-common.js',
         'support.js', 'support-promises.js', 'service-workers/service-worker/resources/test-helpers.sub.js',
         'common/get-host-info.sub.js'
