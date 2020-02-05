@@ -13,7 +13,6 @@ const {ImageData, DOMPoint, DOMMatrix} = require('canvas');
 const colors = require('colors/safe');
 
 // Requires `--experimental-worker` (as of 10.5.0)
-// eslint-disable-next-line node/no-missing-require
 const {MessageChannel} = require('worker_threads');
 
 const readFile = util.promisify(fs.readFile);

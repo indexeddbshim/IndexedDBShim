@@ -3,9 +3,11 @@
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
   (global = global || self, factory(global.EventTargeter = {}));
-}(this, function (exports) { 'use strict';
+}(this, (function (exports) { 'use strict';
 
   function _typeof(obj) {
+    "@babel/helpers - typeof";
+
     if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
       _typeof = function (obj) {
         return typeof obj;
@@ -300,28 +302,38 @@
   }
   /**
   * @typedef {PlainObject} ListenerOptions
-  * @property {boolean} capture
+  * @property {boolean} once Remove listener after invoking once
+  * @property {boolean} passive Don't allow `preventDefault`
+  * @property {boolean} capture Use `_children` and set `eventPhase`
+  */
+
+  /**
+  * @typedef {PlainObject} ListenerAndOptions
+  * @property {listener} listener
+  * @property {ListenerOptions} options
   */
 
   /**
   * @typedef {PlainObject} ListenerInfo
-  * @property {} listenersByTypeOptions
-  * @property {} options
-  * @property {} listenersByType
+  * @property {ListenerAndOptions[]} listenersByTypeOptions
+  * @property {ListenerOptions} options
+  * @property {ListenerAndOptions[]} listenersByType
   */
 
   /**
-  * @typedef {function} listener
+  * @callback Listener
+  * @param {Event} e
+  * @returns {boolean}
   */
 
   /**
-   * Keys are event types
-   * @typedef {Object<string,listener[]>} Listener
+   * Keys are event types.
+   * @typedef {Object<string,Listener[]>} Listeners
   */
 
   /**
    *
-   * @param {Listener[]} listeners
+   * @param {Listeners} listeners
    * @param {string} type
    * @param {boolean|ListenerOptions} options
    * @returns {ListenerInfo}
@@ -795,7 +807,7 @@
 
   Object.defineProperty(exports, '__esModule', { value: true });
 
-}));
+})));
 
 },{}],2:[function(require,module,exports){
 // Since [immediate](https://github.com/calvinmetcalf/immediate) is

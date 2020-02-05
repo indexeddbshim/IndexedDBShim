@@ -1494,7 +1494,10 @@ function Mocha(options) {
   this.grep(options.grep)
     .fgrep(options.fgrep)
     .ui(options.ui)
-    .reporter(options.reporter, options.reporterOption)
+    .reporter(
+      options.reporter,
+      options.reporterOption || options.reporterOptions // reporterOptions was previously the only way to specify options to reporter
+    )
     .slow(options.slow)
     .global(options.global);
 
@@ -5369,8 +5372,17 @@ Runnable.prototype.run = function(fn) {
     fn(err);
   }
 
-  // for .resetTimeout()
+  // for .resetTimeout() and Runner#uncaught()
   this.callback = done;
+
+  if (this.fn && typeof this.fn.call !== 'function') {
+    done(
+      new TypeError(
+        'A runnable must be passed a function as its second argument.'
+      )
+    );
+    return;
+  }
 
   // explicit async with `done` argument
   if (this.async) {
@@ -6187,7 +6199,7 @@ Runner.prototype.runTests = function(suite, fn) {
         self.emit(constants.EVENT_TEST_END, test);
         // skip inner afterEach hooks below errSuite level
         var origSuite = self.suite;
-        self.suite = errSuite;
+        self.suite = errSuite || self.suite;
         return self.hookUp(HOOK_TYPE_AFTER_EACH, function(e, eSuite) {
           self.suite = origSuite;
           next(e, eSuite);
@@ -6257,7 +6269,6 @@ Runner.prototype.runSuite = function(suite, fn) {
   var i = 0;
   var self = this;
   var total = this.grepTotal(suite);
-  var afterAllHookCalled = false;
 
   debug('run suite %s', suite.fullTitle());
 
@@ -6305,21 +6316,13 @@ Runner.prototype.runSuite = function(suite, fn) {
     self.suite = suite;
     self.nextSuite = next;
 
-    if (afterAllHookCalled) {
+    // remove reference to test
+    delete self.test;
+
+    self.hook(HOOK_TYPE_AFTER_ALL, function() {
+      self.emit(constants.EVENT_SUITE_END, suite);
       fn(errSuite);
-    } else {
-      // mark that the afterAll block has been called once
-      // and so can be skipped if there is an error in it.
-      afterAllHookCalled = true;
-
-      // remove reference to test
-      delete self.test;
-
-      self.hook(HOOK_TYPE_AFTER_ALL, function() {
-        self.emit(constants.EVENT_SUITE_END, suite);
-        fn(errSuite);
-      });
-    }
+    });
   }
 
   this.nextSuite = next;
@@ -6333,7 +6336,7 @@ Runner.prototype.runSuite = function(suite, fn) {
 };
 
 /**
- * Handle uncaught exceptions.
+ * Handle uncaught exceptions within runner.
  *
  * @param {Error} err
  * @private
@@ -6394,36 +6397,24 @@ Runner.prototype.uncaught = function(err) {
 
   // we cannot recover gracefully if a Runnable has already passed
   // then fails asynchronously
-  var alreadyPassed = runnable.isPassed();
-  // this will change the state to "failed" regardless of the current value
-  this.fail(runnable, err);
-  if (!alreadyPassed) {
-    // recover from test
-    if (runnable.type === constants.EVENT_TEST_BEGIN) {
-      this.emit(constants.EVENT_TEST_END, runnable);
-      this.hookUp(HOOK_TYPE_AFTER_EACH, this.next);
-      return;
-    }
+  if (runnable.isPassed()) {
+    this.fail(runnable, err);
+    this.abort();
+  } else {
     debug(runnable);
-
-    // recover from hooks
-    var errSuite = this.suite;
-
-    // XXX how about a less awful way to determine this?
-    // if hook failure is in afterEach block
-    if (runnable.fullTitle().indexOf('after each') > -1) {
-      return this.hookErr(err, errSuite, true);
-    }
-    // if hook failure is in beforeEach block
-    if (runnable.fullTitle().indexOf('before each') > -1) {
-      return this.hookErr(err, errSuite, false);
-    }
-    // if hook failure is in after or before blocks
-    return this.nextSuite(errSuite);
+    return runnable.callback(err);
   }
+};
 
-  // bail
-  this.abort();
+/**
+ * Handle uncaught exceptions after runner's end event.
+ *
+ * @param {Error} err
+ * @private
+ */
+Runner.prototype.uncaughtEnd = function uncaughtEnd(err) {
+  if (err instanceof Pending) return;
+  throw err;
 };
 
 /**
@@ -6473,16 +6464,12 @@ Runner.prototype.run = function(fn) {
   this.on(constants.EVENT_RUN_END, function() {
     debug(constants.EVENT_RUN_END);
     process.removeListener('uncaughtException', uncaught);
-    process.on('uncaughtException', function(err) {
-      if (err instanceof Pending) {
-        return;
-      }
-      throw err;
-    });
+    process.on('uncaughtException', self.uncaughtEnd);
     fn(self.failures);
   });
 
   // uncaught exception
+  process.removeListener('uncaughtException', self.uncaughtEnd);
   process.on('uncaughtException', uncaught);
 
   if (this._delay) {
@@ -18090,7 +18077,7 @@ function hasOwnProperty(obj, prop) {
 },{"./support/isBuffer":88,"_process":69,"inherits":56}],90:[function(require,module,exports){
 module.exports={
   "name": "mocha",
-  "version": "7.0.0",
+  "version": "7.0.1",
   "homepage": "https://mochajs.org/",
   "notifyLogo": "https://ibin.co/4QuRuGjXvl36.png"
 }
