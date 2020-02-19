@@ -304,11 +304,11 @@
                     };
 
                     var store = tx.objectStore('out-of-line-generated');
-                    var save1 = store[save]({foo: 'bar'});          // <-- generated key
-                    var save2 = store[save]({biz: 'baz'}, 'abc');   // <-- specified key
-                    var save3 = store[save]({bat: 'bar'});          // <-- generated key
-                    var save4 = store[save]({bar: 'foo'}, 99);      // <-- specified key
-                    var save5 = store[save]({baz: 'biz'});          // <-- generated key
+                    var save1 = store[save]({foo: 'bar'}); // <-- generated key
+                    var save2 = store[save]({biz: 'baz'}, 'abc'); // <-- specified key
+                    var save3 = store[save]({bat: 'bar'}); // <-- generated key
+                    var save4 = store[save]({bar: 'foo'}, 99); // <-- specified key
+                    var save5 = store[save]({baz: 'biz'}); // <-- generated key
 
                     var allData;
                     util.getAll(store, function (err, data) {
@@ -321,11 +321,11 @@
                     });
 
                     tx.oncomplete = function () {
-                        expect(save1.result).to.equal(1);       // Generated keys should always start at 1
-                        expect(save2.result).to.equal('abc');   // This key was explicitly specified
-                        expect(save3.result).to.be.above(1);    // Depending on the implementation, it might be 2 or 3
-                        expect(save4.result).to.equal(99);      // This key was explicitly specified
-                        expect(save5.result).to.be.above(2);    // Depending on the implementation, it might be 3, 5, or 100
+                        expect(save1.result).to.equal(1); // Generated keys should always start at 1
+                        expect(save2.result).to.equal('abc'); // This key was explicitly specified
+                        expect(save3.result).to.be.above(1); // Depending on the implementation, it might be 2 or 3
+                        expect(save4.result).to.equal(99); // This key was explicitly specified
+                        expect(save5.result).to.be.above(2); // Depending on the implementation, it might be 3, 5, or 100
 
                         expect(allData).to.have.same.deep.members([
                             {primaryKey: 1, key: 1, value: {foo: 'bar'}},
@@ -355,20 +355,20 @@
                     tx.onerror = done;
                     var savingCounter = 0, savedCounter = 0;
 
-                    saveKey('');                            // empty string
+                    saveKey(''); // empty string
                     saveKey(util.sampleData.veryLongString);// very long string
-                    saveKey(0);                             // zero
-                    saveKey(-99999);                        // negative number
-                    saveKey(3.12345);                       // float
-                    saveKey(Infinity);                      // infinity
-                    saveKey(-Infinity);                     // negative infinity
-                    saveKey(new Date(2000, 1, 2));          // Date
+                    saveKey(0); // zero
+                    saveKey(-99999); // negative number
+                    saveKey(3.12345); // float
+                    saveKey(Infinity); // infinity
+                    saveKey(-Infinity); // negative infinity
+                    saveKey(new Date(2000, 1, 2)); // Date
 
                     if (env.isShimmed || !env.browser.isIE) {
-                        saveKey([]);                        // empty array
-                        saveKey(['a', '', 'b']);            // array of strings
-                        saveKey([1, 2.345, -678]);          // array of numbers
-                        saveKey([new Date(2005, 6, 7)]);    // array of Dates
+                        saveKey([]); // empty array
+                        saveKey(['a', '', 'b']); // array of strings
+                        saveKey([1, 2.345, -678]); // array of numbers
+                        saveKey([new Date(2005, 6, 7)]); // array of Dates
                     }
 
                     function saveKey (key) {
@@ -414,21 +414,21 @@
                     var store = tx.objectStore('out-of-line');
                     tx.onerror = done;
 
-                    tryToSaveKey(undefined);                            // undefined
-                    tryToSaveKey(NaN);                                  // NaN
-                    tryToSaveKey(true);                                 // boolean
-                    tryToSaveKey(false);                                // boolean
-                    tryToSaveKey({});                                   // empty object
-                    tryToSaveKey({foo: 'bar'});                         // object
-                    tryToSaveKey(new util.sampleData.Person('John'));   // Class
-                    tryToSaveKey([1, undefined, 2]);                    // array with undefined
-                    tryToSaveKey([1, null, 2]);                         // array with null
-                    tryToSaveKey([true, false]);                        // array of booleans
-                    tryToSaveKey([{foo: 'bar'}]);                       // array of objects
+                    tryToSaveKey(undefined); // undefined
+                    tryToSaveKey(NaN); // NaN
+                    tryToSaveKey(true); // boolean
+                    tryToSaveKey(false); // boolean
+                    tryToSaveKey({}); // empty object
+                    tryToSaveKey({foo: 'bar'}); // object
+                    tryToSaveKey(new util.sampleData.Person('John')); // Class
+                    tryToSaveKey([1, undefined, 2]); // array with undefined
+                    tryToSaveKey([1, null, 2]); // array with null
+                    tryToSaveKey([true, false]); // array of booleans
+                    tryToSaveKey([{foo: 'bar'}]); // array of objects
 
                     if (env.isShimmed || !env.browser.isIE) {
-                        tryToSaveKey(null);                             // null
-                        tryToSaveKey(/^regex$/);                        // RegExp
+                        tryToSaveKey(null); // null
+                        tryToSaveKey(/^regex$/); // RegExp
                     }
 
                     function tryToSaveKey (key) {
@@ -441,7 +441,7 @@
                         }
 
                         if (!env.isPolyfilled) {
-                            expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
+                            expect(err).to.be.an.instanceOf(env.DOMException); // The polyfill throws a normal error
                         }
                         expect(err).to.be.ok;
                         expect(err.name).to.equal('DataError');
@@ -465,35 +465,35 @@
                     tx.onerror = done;
                     var savingCounter = 0, savedCounter = 0;
 
-                    saveData(undefined);                                // undefined
-                    saveData(true);                                     // boolean
-                    saveData(false);                                    // boolean
-                    saveData('');                                       // empty string
-                    saveData(util.sampleData.veryLongString);           // very long string
-                    saveData('hello world');                            // string
-                    saveData(0);                                        // zero
-                    saveData(-99999);                                   // negative number
-                    saveData(3.12345);                                  // float
-                    saveData(Infinity);                                 // infinity
-                    saveData(-Infinity);                                // negative infinity
-                    saveData(NaN);                                      // NaN
-                    saveData({});                                       // empty object
-                    saveData({foo: 'bar'});                             // object
-                    saveData(new Date(2000, 1, 2));                     // Date
-                    saveData(new util.sampleData.Person('John', 30));   // Class
-                    saveData(/^regex$/);                                // RegExp
-                    saveData([]);                                       // empty array
-                    saveData(['a', '', 'b']);                           // array of strings
-                    saveData([1, 2.345, -678]);                         // array of numbers
-                    saveData([new Date(2005, 6, 7)]);                   // array of Dates
-                    saveData([1, undefined, 2]);                        // array with undefined
-                    saveData([1, null, 2]);                             // array with null
-                    saveData([1, NaN, 3]);                              // array with NaN
-                    saveData([true, false]);                            // array of booleans
-                    saveData([{foo: 'bar'}, {}]);                       // array of objects
+                    saveData(undefined); // undefined
+                    saveData(true); // boolean
+                    saveData(false); // boolean
+                    saveData(''); // empty string
+                    saveData(util.sampleData.veryLongString); // very long string
+                    saveData('hello world'); // string
+                    saveData(0); // zero
+                    saveData(-99999); // negative number
+                    saveData(3.12345); // float
+                    saveData(Infinity); // infinity
+                    saveData(-Infinity); // negative infinity
+                    saveData(NaN); // NaN
+                    saveData({}); // empty object
+                    saveData({foo: 'bar'}); // object
+                    saveData(new Date(2000, 1, 2)); // Date
+                    saveData(new util.sampleData.Person('John', 30)); // Class
+                    saveData(/^regex$/); // RegExp
+                    saveData([]); // empty array
+                    saveData(['a', '', 'b']); // array of strings
+                    saveData([1, 2.345, -678]); // array of numbers
+                    saveData([new Date(2005, 6, 7)]); // array of Dates
+                    saveData([1, undefined, 2]); // array with undefined
+                    saveData([1, null, 2]); // array with null
+                    saveData([1, NaN, 3]); // array with NaN
+                    saveData([true, false]); // array of booleans
+                    saveData([{foo: 'bar'}, {}]); // array of objects
 
                     if (env.isShimmed || !env.browser.isIE) {
-                        saveData(null);                                 // null
+                        saveData(null); // null
                     }
 
                     function saveData (data) {
@@ -753,11 +753,11 @@
                     tx.onerror = done;
 
                     var store = tx.objectStore('inline-generated');
-                    var save1 = store[save]({foo: 'bar'});             // <-- generated key
-                    var save2 = store[save]({id: 'abc', biz: 'baz'});  // <-- specified key
-                    var save3 = store[save]({bat: 'bar'});             // <-- generated key
-                    var save4 = store[save]({id: 99, bar: 'foo'});     // <-- specified key
-                    var save5 = store[save]({baz: 'biz'});             // <-- generated key
+                    var save1 = store[save]({foo: 'bar'}); // <-- generated key
+                    var save2 = store[save]({id: 'abc', biz: 'baz'}); // <-- specified key
+                    var save3 = store[save]({bat: 'bar'}); // <-- generated key
+                    var save4 = store[save]({id: 99, bar: 'foo'}); // <-- specified key
+                    var save5 = store[save]({baz: 'biz'}); // <-- generated key
 
                     var allData;
                     util.getAll(store, function (err, data) {
@@ -770,11 +770,11 @@
                     });
 
                     tx.oncomplete = function () {
-                        expect(save1.result).to.equal(1);       // Generated keys should always start at 1
-                        expect(save2.result).to.equal('abc');   // This key was explicitly specified
-                        expect(save3.result).to.be.above(1);    // Depending on the implementation, it might be 2 or 3
-                        expect(save4.result).to.equal(99);      // This key was explicitly specified
-                        expect(save5.result).to.be.above(2);    // Depending on the implementation, it might be 3, 5, or 100
+                        expect(save1.result).to.equal(1); // Generated keys should always start at 1
+                        expect(save2.result).to.equal('abc'); // This key was explicitly specified
+                        expect(save3.result).to.be.above(1); // Depending on the implementation, it might be 2 or 3
+                        expect(save4.result).to.equal(99); // This key was explicitly specified
+                        expect(save5.result).to.be.above(2); // Depending on the implementation, it might be 3, 5, or 100
 
                         expect(allData).to.have.same.deep.members([
                             {primaryKey: 1, key: 1, value: {id: 1, foo: 'bar'}},
@@ -804,20 +804,20 @@
                     tx.onerror = done;
                     var savingCounter = 0, savedCounter = 0;
 
-                    saveKey('');                            // empty string
+                    saveKey(''); // empty string
                     saveKey(util.sampleData.veryLongString);// very long string
-                    saveKey(0);                             // zero
-                    saveKey(-99999);                        // negative number
-                    saveKey(3.12345);                       // float
-                    saveKey(Infinity);                      // infinity
-                    saveKey(-Infinity);                     // negative infinity
-                    saveKey(new Date(2000, 1, 2));          // Date
+                    saveKey(0); // zero
+                    saveKey(-99999); // negative number
+                    saveKey(3.12345); // float
+                    saveKey(Infinity); // infinity
+                    saveKey(-Infinity); // negative infinity
+                    saveKey(new Date(2000, 1, 2)); // Date
 
                     if (env.isShimmed || !env.browser.isIE) {
-                        saveKey([]);                        // empty array
-                        saveKey(['a', '', 'b']);            // array of strings
-                        saveKey([1, 2.345, -678]);          // array of numbers
-                        saveKey([new Date(2005, 6, 7)]);    // array of Dates
+                        saveKey([]); // empty array
+                        saveKey(['a', '', 'b']); // array of strings
+                        saveKey([1, 2.345, -678]); // array of numbers
+                        saveKey([new Date(2005, 6, 7)]); // array of Dates
                     }
 
                     function saveKey (key) {
@@ -863,21 +863,21 @@
                     var store = tx.objectStore('inline');
                     tx.onerror = done;
 
-                    tryToSaveKey(undefined);                            // undefined
-                    tryToSaveKey(NaN);                                  // NaN
-                    tryToSaveKey(true);                                 // boolean
-                    tryToSaveKey(false);                                // boolean
-                    tryToSaveKey({});                                   // empty object
-                    tryToSaveKey({foo: 'bar'});                         // object
-                    tryToSaveKey(new util.sampleData.Person('John'));   // Class
-                    tryToSaveKey(/^regex$/);                            // RegExp
-                    tryToSaveKey([1, undefined, 2]);                    // array with undefined
-                    tryToSaveKey([1, null, 2]);                         // array with null
-                    tryToSaveKey([true, false]);                        // array of booleans
-                    tryToSaveKey([{foo: 'bar'}]);                       // array of objects
+                    tryToSaveKey(undefined); // undefined
+                    tryToSaveKey(NaN); // NaN
+                    tryToSaveKey(true); // boolean
+                    tryToSaveKey(false); // boolean
+                    tryToSaveKey({}); // empty object
+                    tryToSaveKey({foo: 'bar'}); // object
+                    tryToSaveKey(new util.sampleData.Person('John')); // Class
+                    tryToSaveKey(/^regex$/); // RegExp
+                    tryToSaveKey([1, undefined, 2]); // array with undefined
+                    tryToSaveKey([1, null, 2]); // array with null
+                    tryToSaveKey([true, false]); // array of booleans
+                    tryToSaveKey([{foo: 'bar'}]); // array of objects
 
                     if (env.isShimmed || !env.browser.isIE) {
-                        tryToSaveKey(null);                             // null
+                        tryToSaveKey(null); // null
                     }
 
                     function tryToSaveKey (key) {
@@ -890,7 +890,7 @@
                         }
 
                         if (!env.isPolyfilled) {
-                            expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
+                            expect(err).to.be.an.instanceOf(env.DOMException); // The polyfill throws a normal error
                         }
                         expect(err).to.be.ok;
                         expect(err.name).to.equal('DataError');
@@ -913,21 +913,21 @@
                     tx.onerror = done;
                     var savingCounter = 0, savedCounter = 0;
 
-                    saveData({});                                       // empty object
-                    saveData({foo: 'bar'});                             // object
-                    saveData(new util.sampleData.Person('John', 30));   // Class
-                    saveData([]);                                       // empty array
-                    saveData(['a', '', 'b']);                           // array of strings
-                    saveData([1, 2.345, -678]);                         // array of numbers
-                    saveData([new Date(2005, 6, 7)]);                   // array of Dates
-                    saveData([1, undefined, 2]);                        // array with undefined
-                    saveData([1, null, 2]);                             // array with null
-                    saveData([true, false]);                            // array of booleans
-                    saveData([{foo: 'bar'}, {}]);                       // array of objects
+                    saveData({}); // empty object
+                    saveData({foo: 'bar'}); // object
+                    saveData(new util.sampleData.Person('John', 30)); // Class
+                    saveData([]); // empty array
+                    saveData(['a', '', 'b']); // array of strings
+                    saveData([1, 2.345, -678]); // array of numbers
+                    saveData([new Date(2005, 6, 7)]); // array of Dates
+                    saveData([1, undefined, 2]); // array with undefined
+                    saveData([1, null, 2]); // array with null
+                    saveData([true, false]); // array of booleans
+                    saveData([{foo: 'bar'}, {}]); // array of objects
 
                     if (env.isShimmed || !env.browser.isFirefox) {
-                        saveData(new Date(2000, 1, 2));                 // Date
-                        saveData(/^regex$/);                            // RegExp
+                        saveData(new Date(2000, 1, 2)); // Date
+                        saveData(/^regex$/); // RegExp
                     }
 
                     function saveData (data) {
@@ -984,20 +984,20 @@
                     var store = tx.objectStore('inline-generated');
                     tx.onerror = done;
 
-                    tryToSaveData(undefined);           // undefined
-                    tryToSaveData(true);                // boolean
-                    tryToSaveData(false);               // boolean
-                    tryToSaveData('');                  // empty string
-                    tryToSaveData('hello world');       // string
-                    tryToSaveData(0);                   // zero
-                    tryToSaveData(-99999);              // negative number
-                    tryToSaveData(3.12345);             // float
-                    tryToSaveData(Infinity);            // infinity
-                    tryToSaveData(-Infinity);           // negative infinity
-                    tryToSaveData(NaN);                 // NaN
+                    tryToSaveData(undefined); // undefined
+                    tryToSaveData(true); // boolean
+                    tryToSaveData(false); // boolean
+                    tryToSaveData(''); // empty string
+                    tryToSaveData('hello world'); // string
+                    tryToSaveData(0); // zero
+                    tryToSaveData(-99999); // negative number
+                    tryToSaveData(3.12345); // float
+                    tryToSaveData(Infinity); // infinity
+                    tryToSaveData(-Infinity); // negative infinity
+                    tryToSaveData(NaN); // NaN
 
                     if (env.isShimmed || !env.browser.isIE) {
-                        tryToSaveData(null);            // null
+                        tryToSaveData(null); // null
                     }
 
                     function tryToSaveData (value) {
@@ -1459,20 +1459,20 @@
                     tx.onerror = done;
                     var savingCounter = 0, savedCounter = 0;
 
-                    saveKey('');                                    // empty string
-                    saveKey(0);                                     // zero
-                    saveKey(-99999);                                // negative number
-                    saveKey(3.12345);                               // float
-                    saveKey(Infinity);                              // infinity
-                    saveKey(-Infinity);                             // negative infinity
-                    saveKey(new Date(2000, 1, 2));                  // Date
-                    saveKey([]);                                    // empty array
-                    saveKey(['a', '', 'b']);                        // array of strings
-                    saveKey([1, 2.345, -678]);                      // array of numbers
-                    saveKey([new Date(2005, 6, 7)]);                // array of Dates
+                    saveKey(''); // empty string
+                    saveKey(0); // zero
+                    saveKey(-99999); // negative number
+                    saveKey(3.12345); // float
+                    saveKey(Infinity); // infinity
+                    saveKey(-Infinity); // negative infinity
+                    saveKey(new Date(2000, 1, 2)); // Date
+                    saveKey([]); // empty array
+                    saveKey(['a', '', 'b']); // array of strings
+                    saveKey([1, 2.345, -678]); // array of numbers
+                    saveKey([new Date(2005, 6, 7)]); // array of Dates
 
                     if (!env.browser.isIE) {
-                        saveKey(util.sampleData.veryLongString);    // very long string
+                        saveKey(util.sampleData.veryLongString); // very long string
                     }
 
                     function saveKey (key) {
@@ -1519,20 +1519,20 @@
                     var store = tx.objectStore('dotted-compound');
                     tx.onerror = done;
 
-                    tryToSaveKey(undefined);                // undefined
-                    tryToSaveKey(NaN);                      // NaN
-                    tryToSaveKey(true);                     // boolean
-                    tryToSaveKey(false);                    // boolean
-                    tryToSaveKey({});                       // empty object
-                    tryToSaveKey({foo: 'bar'});             // object
-                    tryToSaveKey(/^regex$/);                // RegExp
-                    tryToSaveKey([1, undefined, 2]);        // array with undefined
-                    tryToSaveKey([1, null, 2]);             // array with null
-                    tryToSaveKey([true, false]);            // array of booleans
-                    tryToSaveKey([{foo: 'bar'}]);           // array of objects
+                    tryToSaveKey(undefined); // undefined
+                    tryToSaveKey(NaN); // NaN
+                    tryToSaveKey(true); // boolean
+                    tryToSaveKey(false); // boolean
+                    tryToSaveKey({}); // empty object
+                    tryToSaveKey({foo: 'bar'}); // object
+                    tryToSaveKey(/^regex$/); // RegExp
+                    tryToSaveKey([1, undefined, 2]); // array with undefined
+                    tryToSaveKey([1, null, 2]); // array with null
+                    tryToSaveKey([true, false]); // array of booleans
+                    tryToSaveKey([{foo: 'bar'}]); // array of objects
 
                     if (env.isShimmed || !env.browser.isIE) {
-                        tryToSaveKey(null);                 // null
+                        tryToSaveKey(null); // null
                     }
 
                     function tryToSaveKey (key) {
@@ -1545,7 +1545,7 @@
                         }
 
                         if (!env.isPolyfilled) {
-                            expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
+                            expect(err).to.be.an.instanceOf(env.DOMException); // The polyfill throws a normal error
                         }
                         expect(err).to.be.ok;
                         expect(err.name).to.equal('DataError');
@@ -1564,13 +1564,13 @@
 
                     var store = tx.objectStore('inline-compound');
                     try {
-                        store[save]({id: 1});   // The "name" property is missing
+                        store[save]({id: 1}); // The "name" property is missing
                     } catch (e) {
                         err = e;
                     }
 
                     if (!env.isPolyfilled) {
-                        expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
+                        expect(err).to.be.an.instanceOf(env.DOMException); // The polyfill throws a normal error
                     }
                     expect(err).to.be.ok;
                     expect(err.name).to.equal('DataError');

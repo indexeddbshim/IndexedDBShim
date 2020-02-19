@@ -104,7 +104,7 @@ describe('IDBIndex.getKey', function () {
                 expect(key.result).to.not.be.ok;
 
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(key.result).equal(undefined);    // Safari returns null
+                    expect(key.result).equal(undefined); // Safari returns null
                 }
 
                 db.close();
@@ -230,9 +230,9 @@ describe('IDBIndex.getKey', function () {
                 expect(key2.result).to.not.be.ok;
                 expect(key3.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(key1.result).equal(undefined);   // Safari returns null
-                    expect(key2.result).equal(undefined);   // Safari returns null
-                    expect(key3.result).equal(undefined);   // Safari returns null
+                    expect(key1.result).equal(undefined); // Safari returns null
+                    expect(key2.result).equal(undefined); // Safari returns null
+                    expect(key3.result).equal(undefined); // Safari returns null
                 }
 
                 db.close();
@@ -270,9 +270,9 @@ describe('IDBIndex.getKey', function () {
                 expect(key2.result).to.not.be.ok;
                 expect(key3.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(key1.result).equal(undefined);   // Safari returns null
-                    expect(key2.result).equal(undefined);   // Safari returns null
-                    expect(key3.result).equal(undefined);   // Safari returns null
+                    expect(key1.result).equal(undefined); // Safari returns null
+                    expect(key2.result).equal(undefined); // Safari returns null
+                    expect(key3.result).equal(undefined); // Safari returns null
                 }
 
                 db.close();
@@ -309,9 +309,9 @@ describe('IDBIndex.getKey', function () {
                 expect(key2.result).to.not.be.ok;
                 expect(key3.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(key1.result).equal(undefined);   // Safari returns null
-                    expect(key2.result).equal(undefined);   // Safari returns null
-                    expect(key3.result).equal(undefined);   // Safari returns null
+                    expect(key1.result).equal(undefined); // Safari returns null
+                    expect(key2.result).equal(undefined); // Safari returns null
+                    expect(key3.result).equal(undefined); // Safari returns null
                 }
 
                 db.close();
@@ -539,20 +539,20 @@ describe('IDBIndex.getKey', function () {
             var index = store.index('inline-index');
             var gettingCounter = 0, gottenCounter = 0;
 
-            getKey('');                            // empty string
+            getKey(''); // empty string
             getKey(util.sampleData.veryLongString);// very long string
-            getKey(0);                             // zero
-            getKey(-99999);                        // negative number
-            getKey(3.12345);                       // float
-            getKey(Infinity);                      // infinity
-            getKey(-Infinity);                     // negative infinity
-            getKey(new Date(2000, 1, 2));          // Date
+            getKey(0); // zero
+            getKey(-99999); // negative number
+            getKey(3.12345); // float
+            getKey(Infinity); // infinity
+            getKey(-Infinity); // negative infinity
+            getKey(new Date(2000, 1, 2)); // Date
 
             if (env.isShimmed || !env.browser.isIE) {
-                getKey([]);                        // empty array
-                getKey(['a', '', 'b']);            // array of strings
-                getKey([1, 2.345, -678]);          // array of numbers
-                getKey([new Date(2005, 6, 7)]);    // array of Dates
+                getKey([]); // empty array
+                getKey(['a', '', 'b']); // array of strings
+                getKey([1, 2.345, -678]); // array of numbers
+                getKey([new Date(2005, 6, 7)]); // array of Dates
             }
 
             function getKey (theKey) {
@@ -586,20 +586,20 @@ describe('IDBIndex.getKey', function () {
             var store = tx.objectStore('out-of-line-generated');
             var index = store.index('inline-index');
 
-            tryToGet(undefined);                            // undefined
-            tryToGet(NaN);                                  // NaN
-            tryToGet(true);                                 // boolean
-            tryToGet(false);                                // boolean
-            tryToGet({});                                   // empty object
-            tryToGet({foo: 'bar'});                         // object
-            tryToGet(new util.sampleData.Person('John'));   // Class
-            tryToGet([1, undefined, 2]);                    // array with undefined
-            tryToGet([1, null, 2]);                         // array with null
-            tryToGet([true, false]);                        // array of booleans
-            tryToGet([{foo: 'bar'}]);                       // array of objects
+            tryToGet(undefined); // undefined
+            tryToGet(NaN); // NaN
+            tryToGet(true); // boolean
+            tryToGet(false); // boolean
+            tryToGet({}); // empty object
+            tryToGet({foo: 'bar'}); // object
+            tryToGet(new util.sampleData.Person('John')); // Class
+            tryToGet([1, undefined, 2]); // array with undefined
+            tryToGet([1, null, 2]); // array with null
+            tryToGet([true, false]); // array of booleans
+            tryToGet([{foo: 'bar'}]); // array of objects
 
             if (env.isShimmed || !env.browser.isIE) {
-                tryToGet(/^regex$/);                        // RegExp
+                tryToGet(/^regex$/); // RegExp
             }
 
             function tryToGet (key) {
@@ -612,7 +612,7 @@ describe('IDBIndex.getKey', function () {
                 }
 
                 if (!env.isPolyfilled) {
-                    expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
+                    expect(err).to.be.an.instanceOf(env.DOMException); // The polyfill throws a normal error
                 }
                 expect(err).to.be.ok;
                 expect(err.name).to.equal('DataError');
@@ -651,13 +651,13 @@ describe('IDBIndex.getKey', function () {
                 expect(key1.result).to.deep.equal('a');
                 expect(key2.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(key2.result).equal(undefined);     // Safari returns null
+                    expect(key2.result).equal(undefined); // Safari returns null
                 }
-                expect(key3.result).to.include('b');        // Some browsers return different records
+                expect(key3.result).to.include('b'); // Some browsers return different records
                 expect(key4.result).to.deep.equal(['a', 'b', 'c']);
                 expect(key5.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(key5.result).equal(undefined);     // Safari returns null
+                    expect(key5.result).equal(undefined); // Safari returns null
                 }
 
                 db.close();
@@ -693,14 +693,14 @@ describe('IDBIndex.getKey', function () {
                 expect(key1.result).to.deep.equal('a');
                 expect(key2.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(key2.result).equal(undefined);     // Safari returns null
+                    expect(key2.result).equal(undefined); // Safari returns null
                 }
                 expect(key3.result).to.deep.equal(['b']);
                 expect(key4.result).to.not.be.ok;
                 expect(key5.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
                     expect(key4.result).equal(undefined);
-                    expect(key5.result).equal(undefined);     // Safari returns null
+                    expect(key5.result).equal(undefined); // Safari returns null
                 }
 
                 db.close();
@@ -723,7 +723,7 @@ describe('IDBIndex.getKey', function () {
 
             store.add({id: 12345, name: 'John Doe'});
 
-            var key = index.getKey([12345]);            // <-- "id" is specified, but "name" is missing
+            var key = index.getKey([12345]); // <-- "id" is specified, but "name" is missing
             key.onerror = sinon.spy();
 
             tx.oncomplete = function () {
@@ -733,7 +733,7 @@ describe('IDBIndex.getKey', function () {
                 // Make sure no data was returned
                 expect(key.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(key.result).equal(undefined);    // Safari returns null
+                    expect(key.result).equal(undefined); // Safari returns null
                 }
 
                 db.close();

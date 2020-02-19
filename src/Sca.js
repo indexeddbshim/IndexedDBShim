@@ -1,6 +1,6 @@
 import Typeson from 'typeson-registry';
 
-import {createDOMException, ShimDOMException} from './DOMException';
+import {createDOMException, ShimDOMException} from './DOMException.js';
 
 // See: http://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
 

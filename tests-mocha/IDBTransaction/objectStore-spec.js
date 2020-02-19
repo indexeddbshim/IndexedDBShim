@@ -142,7 +142,7 @@ describe('IDBTransaction.objectStore', function () {
 
                 expect(err).to.be.an.instanceOf(env.DOMException);
                 if (env.isShimmed || !env.browser.isIE) {
-                    expect(err.name).to.equal('InvalidStateError');     // IE is "TransactionInactiveError"
+                    expect(err.name).to.equal('InvalidStateError'); // IE is "TransactionInactiveError"
                 }
 
                 db.close();

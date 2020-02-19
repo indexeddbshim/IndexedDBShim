@@ -1,6 +1,6 @@
 import {EventTargetFactory} from 'eventtargeter';
-import {createDOMException} from './DOMException';
-import * as util from './util';
+import {createDOMException} from './DOMException.js';
+import * as util from './util.js';
 
 const listeners = ['onsuccess', 'onerror'];
 const readonlyProperties = ['source', 'transaction', 'readyState'];
@@ -14,6 +14,7 @@ const doneFlagGetters = ['result', 'error'];
 function IDBRequest () {
     throw new TypeError('Illegal constructor');
 }
+// eslint-disable-next-line func-name-matching
 IDBRequest.__super = function IDBRequest () {
     this[Symbol.toStringTag] = 'IDBRequest';
     this.__setOptions({

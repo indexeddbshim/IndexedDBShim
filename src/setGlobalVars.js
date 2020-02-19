@@ -1,20 +1,20 @@
 /* globals self */
 import {setPrototypeOfCustomEvent} from 'eventtargeter';
-import shimIDBVersionChangeEvent from './IDBVersionChangeEvent';
-import {IDBCursor as shimIDBCursor, IDBCursorWithValue as shimIDBCursorWithValue} from './IDBCursor';
-import {IDBRequest as shimIDBRequest, IDBOpenDBRequest as shimIDBOpenDBRequest} from './IDBRequest';
-import {createDOMException, ShimDOMException} from './DOMException';
-import {shimIndexedDB, IDBFactory} from './IDBFactory';
-import DOMStringList from './DOMStringList';
-import {ShimEvent, ShimCustomEvent, ShimEventTarget} from './Event';
-import {register} from './Sca';
-import shimIDBKeyRange from './IDBKeyRange';
-import shimIDBObjectStore from './IDBObjectStore';
-import shimIDBIndex from './IDBIndex';
-import shimIDBTransaction from './IDBTransaction';
-import shimIDBDatabase from './IDBDatabase';
-import CFG from './CFG';
-import {isNullish} from './util';
+import shimIDBVersionChangeEvent from './IDBVersionChangeEvent.js';
+import {IDBCursor as shimIDBCursor, IDBCursorWithValue as shimIDBCursorWithValue} from './IDBCursor.js';
+import {IDBRequest as shimIDBRequest, IDBOpenDBRequest as shimIDBOpenDBRequest} from './IDBRequest.js';
+import {createDOMException, ShimDOMException} from './DOMException.js';
+import {shimIndexedDB, IDBFactory} from './IDBFactory.js';
+import DOMStringList from './DOMStringList.js';
+import {ShimEvent, ShimCustomEvent, ShimEventTarget} from './Event.js';
+import {register} from './Sca.js';
+import shimIDBKeyRange from './IDBKeyRange.js';
+import shimIDBObjectStore from './IDBObjectStore.js';
+import shimIDBIndex from './IDBIndex.js';
+import shimIDBTransaction from './IDBTransaction.js';
+import shimIDBDatabase from './IDBDatabase.js';
+import CFG from './CFG.js';
+import {isNullish} from './util.js';
 
 function setConfig (prop, val) {
     if (prop && typeof prop === 'object') {
@@ -204,21 +204,26 @@ function setGlobalVars (idb, initialConfig) {
 
     // Detect browsers with known IndexedDB issues (e.g. Android pre-4.4)
     let poorIndexedDbSupport = false;
-    if (typeof navigator !== 'undefined' && ( // Ignore Node or other environments
-        (
-            // Bad non-Chrome Android support
-            (/Android (?:2|3|4\.[0-3])/u).test(navigator.userAgent) &&
-            !navigator.userAgent.includes('Chrome')
-        ) ||
-        (
-            // Bad non-Safari iOS9 support (see <https://github.com/axemclion/IndexedDBShim/issues/252>)
-            (!navigator.userAgent.includes('Safari') || navigator.userAgent.includes('Chrome')) && // Exclude genuine Safari: http://stackoverflow.com/a/7768006/271577
-            // Detect iOS: http://stackoverflow.com/questions/9038625/detect-if-device-is-ios/9039885#9039885
-            // and detect version 9: http://stackoverflow.com/a/26363560/271577
-            (/(iPad|iPhone|iPod).* os 9_/ui).test(navigator.userAgent) &&
-            !window.MSStream // But avoid IE11
+    if (
+        typeof navigator !== 'undefined' &&
+        // Not apparently defined in React Native
+        navigator.userAgent &&
+        ( // Ignore Node or other environments
+            (
+                // Bad non-Chrome Android support
+                (/Android (?:2|3|4\.[0-3])/u).test(navigator.userAgent) &&
+                !navigator.userAgent.includes('Chrome')
+            ) ||
+            (
+                // Bad non-Safari iOS9 support (see <https://github.com/axemclion/IndexedDBShim/issues/252>)
+                (!navigator.userAgent.includes('Safari') || navigator.userAgent.includes('Chrome')) && // Exclude genuine Safari: http://stackoverflow.com/a/7768006/271577
+                // Detect iOS: http://stackoverflow.com/questions/9038625/detect-if-device-is-ios/9039885#9039885
+                // and detect version 9: http://stackoverflow.com/a/26363560/271577
+                (/(iPad|iPhone|iPod).* os 9_/ui).test(navigator.userAgent) &&
+                !window.MSStream // But avoid IE11
+            )
         )
-    )) {
+    ) {
         poorIndexedDbSupport = true;
     }
     if (!CFG.DEFAULT_DB_SIZE) {
@@ -227,9 +232,13 @@ function setGlobalVars (idb, initialConfig) {
                 // https://github.com/axemclion/IndexedDBShim/issues/41
                 // https://github.com/axemclion/IndexedDBShim/issues/115
                 typeof navigator !== 'undefined' &&
+                // React Native
+                navigator.userAgent &&
                 navigator.userAgent.includes('Safari') &&
                 !navigator.userAgent.includes('Chrome')
-            ) ? 25 : 4
+            )
+                ? 25
+                : 4
         ) * 1024 * 1024;
     }
     if (!CFG.avoidAutoShim &&

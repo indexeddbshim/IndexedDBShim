@@ -1,10 +1,10 @@
 import {EventTargetFactory} from 'eventtargeter';
-import {createDOMException} from './DOMException';
-import {createEvent} from './Event';
-import * as util from './util';
-import DOMStringList from './DOMStringList';
-import IDBObjectStore from './IDBObjectStore';
-import IDBTransaction from './IDBTransaction';
+import {createDOMException} from './DOMException.js';
+import {createEvent} from './Event.js';
+import * as util from './util.js';
+import DOMStringList from './DOMStringList.js';
+import IDBObjectStore from './IDBObjectStore.js';
+import IDBTransaction from './IDBTransaction.js';
 
 const listeners = ['onabort', 'onclose', 'onerror', 'onversionchange'];
 const readonlyProperties = ['name', 'version', 'objectStoreNames'];
@@ -61,6 +61,7 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
 IDBDatabase.prototype = EventTargetFactory.createInstance();
 IDBDatabase.prototype[Symbol.toStringTag] = 'IDBDatabasePrototype';
 
+/* eslint-disable jsdoc/check-param-names */
 /**
  * Creates a new object store.
  * @param {string} storeName
@@ -68,6 +69,8 @@ IDBDatabase.prototype[Symbol.toStringTag] = 'IDBDatabasePrototype';
  * @returns {IDBObjectStore}
  */
 IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions */) {
+    /* eslint-enable jsdoc/check-param-names */
+    // eslint-disable-next-line prefer-rest-params
     let createOptions = arguments[1];
     storeName = String(storeName); // W3C test within IDBObjectStore.js seems to accept string conversion
     if (!(this instanceof IDBDatabase)) {
@@ -143,6 +146,7 @@ IDBDatabase.prototype.close = function () {
     }
 };
 
+/* eslint-disable jsdoc/check-param-names */
 /**
  * Starts a new transaction.
  * @param {string|string[]} storeNames
@@ -150,9 +154,11 @@ IDBDatabase.prototype.close = function () {
  * @returns {IDBTransaction}
  */
 IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
+    /* eslint-enable jsdoc/check-param-names */
     if (arguments.length === 0) {
         throw new TypeError('You must supply a valid `storeNames` to `IDBDatabase.transaction`');
     }
+    // eslint-disable-next-line prefer-rest-params
     let mode = arguments[1];
     storeNames = util.isIterable(storeNames)
         // Creating new array also ensures sequence is passed by value: https://heycam.github.io/webidl/#idl-sequence

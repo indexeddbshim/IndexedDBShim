@@ -2,11 +2,87 @@
 /* eslint-disable node/no-unsupported-features/es-syntax */
 'use strict';
 
-const mapstraction = require('mapstraction');
+const babel = require('rollup-plugin-babel');
+const nodeResolve = require('@rollup/plugin-node-resolve');
+const commonJS = require('@rollup/plugin-commonjs');
+
+const globals = require('rollup-plugin-node-globals');
+const nodePolyfills = require('rollup-plugin-node-polyfills');
+
+const json = require('@rollup/plugin-json');
+const replace = require('@rollup/plugin-replace');
+const builtins = require('builtin-modules');
+
 const pkg = require('./package.json');
 
+const getRollupPlugins = (babelOptions, {addBuiltins} = {}) => {
+    return {
+        plugins () {
+            const ret = [
+                nodeResolve({
+                    preferBuiltins: !addBuiltins
+                }),
+                commonJS({
+                    // Gets issue with dynamic requires and we aren't
+                    //  "importing" anyways
+                    ignore: ['sqlite3']
+                }),
+                babel(babelOptions)
+            ];
+            if (addBuiltins) {
+                ret.unshift(globals(), nodePolyfills());
+            } else {
+                // Fix from https://github.com/rollup/rollup/issues/1507#issuecomment-340550539
+                ret.splice(1, 0, replace({
+                    delimiters: ['', ''],
+                    // Replacements:
+                    'require(\'readable-stream/transform\')': 'require(\'stream\').Transform',
+                    'require("readable-stream/transform")': 'require("stream").Transform',
+                    'readable-stream': 'stream'
+                }));
+
+                ret.unshift(json());
+            }
+            return ret;
+        }
+    };
+};
+
+const browserEnvironment = () => {
+    return {
+        format: 'umd',
+        sourcemap: true,
+        ...getRollupPlugins(babelBrowserOptions, {addBuiltins: true}),
+        mainFields: ['browser', 'module', 'main'] // Don't need 'jsnext'?
+    };
+};
+
+const nodeEnvironment = () => {
+    return {
+        // Avoid using `browser` entry in package.json
+        // mainFields: ['module', 'main'], // Default
+        format: 'cjs',
+        // Avoid `window` checking (link now broken)
+        // https://github.com/substack/node-rollup/issues/1277#issuecomment-115198436
+        name: 'dummyPlaceholder',
+        sourcemap: true,
+        ...getRollupPlugins(babelNodeOptions, {addBuiltins: false}),
+        external: [
+            ...builtins,
+            'websql/custom/index.js', 'websql/lib/sqlite/SQLiteDatabase',
+            // Fix from https://github.com/rollup/rollup/issues/1507#issuecomment-340550539
+            'readable-stream', 'readable-stream/transform'
+        ]
+        // Notes when using browserify:
+        // Could try for consistency with any relative paths if still
+        //  seeing https://github.com/axemclion/IndexedDBShim/issues/291 ;
+        //  see also http://stackoverflow.com/a/33124979/271577
+        // basedir: __dirname,
+    };
+};
+
 const babelBrowserOptions = {
-    sourceMapsAbsolute: true,
+    // sourceMapsAbsolute: true,
     plugins: ['add-module-exports'],
     presets: [
         ['@babel/env', {
@@ -14,7 +90,6 @@ const babelBrowserOptions = {
         }]
     ]
 };
-const babelES6BrowserOptions = babelBrowserOptions;
 
 const babelNodeOptions = {...babelBrowserOptions,
     presets: [
@@ -31,121 +106,48 @@ module.exports = function (grunt) {
     const saucekey = process.env.SAUCE_ACCESS_KEY !== undefined ? process.env.SAUCE_ACCESS_KEY : null; // eslint-disable-line no-process-env
 
     // bumpVersion(pkg);
+    // Todo: Add `grunt-mocha-istanbul`! https://www.npmjs.com/package/grunt-mocha-istanbul
     grunt.initConfig({
         pkg,
-        browserify: {
+        rollup: {
             key: {
                 options: {
-                    transform: [['babelify', babelES6BrowserOptions]],
-                    browserifyOptions: {
-                        debug: true,
-                        standalone: 'IDBKeyUtils',
-                        plugin: [function (b, o) {
-                            o._ = ['dist/indexeddbshim-Key.js.map'];
-                            return mapstraction(b, o);
-                        }]
-                    }
+                    ...browserEnvironment(),
+                    name: 'IDBKeyUtils'
                 },
                 files: {
                     'dist/<%= pkg.name%>-Key.js': 'src/Key.js'
                 }
             },
             unicode: {
-                options: {
-                    transform: [['babelify', babelBrowserOptions]],
-                    browserifyOptions: {
-                        debug: true,
-                        plugin: [function (b, o) {
-                            o._ = ['dist/indexeddbshim-UnicodeIdentifiers.js.map'];
-                            return mapstraction(b, o);
-                        }]
-                    }
-                },
+                options: browserEnvironment(),
                 files: {
                     'dist/<%= pkg.name%>-UnicodeIdentifiers.js': 'src/browser-UnicodeIdentifiers.js'
                 }
             },
             unicodeNode: {
-                options: {
-                    transform: [['babelify', babelNodeOptions]],
-                    exclude: ['websql/custom', 'websql/lib/sqlite/SQLiteDatabase'],
-                    // Avoid `window` checking
-                    browserifyOptions: {
-                        debug: true,
-                        standalone: 'dummyPlaceholder',
-                        basedir: __dirname, // Could try for consistency with any relative paths if still seeing https://github.com/axemclion/IndexedDBShim/issues/291 ; see also http://stackoverflow.com/a/33124979/271577
-                        builtins: false, // No need to define in Node (if there are any)
-                        browserField: false, // Avoid using `browser` entry in package.json
-                        // https://github.com/substack/node-browserify/issues/1277#issuecomment-115198436
-                        // One would think this wouldn't be necessary with `builts`: false
-                        insertGlobalVars: {
-                            process () { // Avoid having a non-Node polyfill added
-                            }
-                        },
-                        plugin: [function (b, o) {
-                            o._ = ['dist/indexeddbshim-UnicodeIdentifiers-node.js.map'];
-                            return mapstraction(b, o);
-                        }]
-                    }
-                },
+                options: nodeEnvironment(),
                 files: {
                     'dist/<%= pkg.name%>-UnicodeIdentifiers-node.js': 'src/node-UnicodeIdentifiers.js'
                 }
             },
             browser: {
-                options: {
-                    transform: [['babelify', babelBrowserOptions]],
-                    browserifyOptions: {
-                        debug: true,
-                        plugin: [function (b, o) {
-                            o._ = ['dist/indexeddbshim.js.map'];
-                            return mapstraction(b, o);
-                        }]
-                    }
-                },
+                options: browserEnvironment(),
                 files: {
                     'dist/<%= pkg.name%>.js': 'src/browser.js'
                 }
             },
             browserNoninvasive: {
                 options: {
-                    transform: [['babelify', babelBrowserOptions]],
-                    browserifyOptions: {
-                        debug: true,
-                        standalone: 'setGlobalVars',
-                        plugin: [function (b, o) {
-                            o._ = ['dist/indexeddbshim-noninvasive.js.map'];
-                            return mapstraction(b, o);
-                        }]
-                    }
+                    ...browserEnvironment(),
+                    name: 'setGlobalVars'
                 },
                 files: {
                     'dist/<%= pkg.name%>-noninvasive.js': 'src/browser-noninvasive.js'
                 }
             },
             node: {
-                options: {
-                    transform: [['babelify', babelNodeOptions]],
-                    exclude: ['websql/custom', 'websql/lib/sqlite/SQLiteDatabase'],
-                    // Avoid `window` checking
-                    browserifyOptions: {
-                        debug: true,
-                        standalone: 'dummyPlaceholder',
-                        basedir: __dirname, // Could try for consistency with any relative paths if still seeing https://github.com/axemclion/IndexedDBShim/issues/291 ; see also http://stackoverflow.com/a/33124979/271577
-                        builtins: false, // No need to define in Node (if there are any)
-                        browserField: false, // Avoid using `browser` entry in package.json
-                        // https://github.com/substack/node-browserify/issues/1277#issuecomment-115198436
-                        // One would think this wouldn't be necessary with `builts`: false
-                        insertGlobalVars: {
-                            process () { // Avoid having a non-Node polyfill added
-                            }
-                        },
-                        plugin: [function (b, o) {
-                            o._ = ['dist/indexeddbshim-node.js.map'];
-                            return mapstraction(b, o);
-                        }]
-                    }
-                },
+                options: nodeEnvironment(),
                 files: {
                     'dist/<%= pkg.name%>-node.js': 'src/node.js'
                 }
@@ -383,27 +385,39 @@ module.exports = function (grunt) {
         watch: {
             all: {
                 files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
-                tasks: ['browserify', 'uglify']
+                tasks: ['rollup', 'uglify']
             },
             browser: {
                 files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
-                tasks: ['eslint', 'browserify:browser', 'uglify:browser']
+                tasks: [
+                    // 'eslint',
+                    'rollup:browser', 'uglify:browser'
+                ]
             },
             browserNoninvasive: {
                 files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
-                tasks: ['eslint', 'browserify:browserNoninvasive', 'uglify:browserNoninvasive']
+                tasks: [
+                    // 'eslint',
+                    'rollup:browserNoninvasive', 'uglify:browserNoninvasive'
+                ]
             },
             node: {
                 files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
-                tasks: ['eslint', 'browserify:node']
+                tasks: [
+                    // 'eslint',
+                    'rollup:node'
+                ]
             },
             unicode: {
                 files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
-                tasks: ['eslint', 'browserify:unicode', 'uglify:unicode']
+                tasks: [
+                    // 'eslint',
+                    'rollup:unicode', 'uglify:unicode'
+                ]
             },
             unicodeNode: {
                 files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
-                tasks: ['browserify:unicodeNode']
+                tasks: ['rollup:unicodeNode']
             }
         },
 
@@ -433,13 +447,28 @@ module.exports = function (grunt) {
         }
     }
 
-    grunt.registerTask('build-browser', ['eslint', 'browserify:browser', 'uglify:browser']);
-    grunt.registerTask('build-browserNoninvasive', ['eslint', 'browserify:browserNoninvasive', 'uglify:browserNoninvasive']);
-    grunt.registerTask('build-node', ['eslint', 'browserify:node']);
-    grunt.registerTask('build-unicode', ['eslint', 'browserify:unicode', 'uglify:unicode']);
-    grunt.registerTask('build-unicodeNode', ['browserify:unicodeNode']);
-    grunt.registerTask('build-key', ['eslint', 'browserify:key', 'uglify:key']);
-    grunt.registerTask('build', ['browserify', 'uglify']);
+    grunt.registerTask('build-browser', [
+        // 'eslint',
+        'rollup:browser', 'uglify:browser'
+    ]);
+    grunt.registerTask('build-browserNoninvasive', [
+        // 'eslint',
+        'rollup:browserNoninvasive', 'uglify:browserNoninvasive'
+    ]);
+    grunt.registerTask('build-node', [
+        // 'eslint',
+        'rollup:node'
+    ]);
+    grunt.registerTask('build-unicode', [
+        // 'eslint',
+        'rollup:unicode', 'uglify:unicode'
+    ]);
+    grunt.registerTask('build-unicodeNode', ['rollup:unicodeNode']);
+    grunt.registerTask('build-key', [
+        // 'eslint',
+        'rollup:key', 'uglify:key'
+    ]);
+    grunt.registerTask('build', ['rollup', 'uglify']);
 
     const testJobs = ['build', 'connect'];
     grunt.registerTask('nodequnit', 'node-qunit');

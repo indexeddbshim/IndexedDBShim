@@ -75,12 +75,15 @@
 
     /**
      * Intercept the first call to Mocha's `describe` function, and use it to initialize the test environment.
+     * @param {string} name
+     * @param {function} testSuite
      * @returns {void}
      */
     window.describe = function (name, testSuite) {
         initTestEnvironment();
         mocha.checkLeaks();
         window.describe = describe;
+        // eslint-disable-next-line prefer-rest-params
         describe.apply(window, arguments);
     };
 
@@ -206,6 +209,7 @@
     */
     /**
      * A "safe" wrapper around `document.getElementById`
+     * @param {string} id
      * @returns {Element|SimulatedElement}
      */
     function getElementById (id) {

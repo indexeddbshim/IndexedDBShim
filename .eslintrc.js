@@ -1,3 +1,5 @@
+'use strict';
+
 module.exports = {
     extends: [
         'ash-nazg/sauron-node', 'plugin:qunit/recommended'
@@ -50,12 +52,19 @@ module.exports = {
         }
     },
     overrides: [
+        {
+            files: '*.html',
+            rules: {
+                'import/unambiguous': 0
+            }
+        },
         // Our Markdown rules (and used for JSDoc examples as well, by way of
         //   our use of `matchingFileName` in conjunction with
         //   `jsdoc/check-examples` within `ash-nazg`)
         {
             files: ['**/*.md'],
             rules: {
+                'import/no-commonjs': 'off',
                 'eol-last': ['off'],
                 'no-console': ['off'],
                 'no-undef': ['off'],
@@ -70,14 +79,16 @@ module.exports = {
         },
         // Non-ESM Node files:
         {
-            files: ['Gruntfile.js'],
+            files: ['Gruntfile.js', '.eslintrc.js'],
+            extends: ['plugin:node/recommended-script'],
             globals: {
-                "require": "readonly",
-                "module": "readonly",
-                __dirname: "readonly"
+                require: 'readonly',
+                module: 'readonly',
+                __dirname: 'readonly'
             },
             rules: {
-                'strict': ['off']
+                'import/no-commonjs': 0,
+                strict: ['error', 'global']
             }
         },
         // @core-js-bundle can provide
@@ -92,15 +103,23 @@ module.exports = {
         //   not a lower Node version
         {
             files: ['test-support/**', 'tests-mocha/**', 'tests-qunit/**'],
-            // We want console in tests!
+            extends: ['plugin:node/recommended-script'],
             globals: {
-                "require": "readonly",
-                "exports": "readonly",
-                "module": "readonly",
-                __dirname: "readonly"
+                require: 'readonly',
+                exports: 'readonly',
+                module: 'readonly',
+                __dirname: 'readonly'
             },
             rules: {
-                'strict': 'off',
+                // See about reenabling
+                'vars-on-top': 0,
+
+                'import/no-commonjs': 0,
+                strict: 0, // ['error', 'function'],
+                // Add back since overridding
+                'unicorn/no-process-exit': 'error',
+                'no-process-exit': 0,
+                // We want console in tests!
                 'no-console': 'off',
                 'object-shorthand': ['off'],
                 'prefer-destructuring': ['off'],
@@ -114,40 +133,28 @@ module.exports = {
         }
     ],
     rules: {
-        // This should definitely be enabled at some point
-        'jsdoc/require-jsdoc': 0,
         indent: ['error', 4],
-
         'consistent-this': ['error', 'me'],
+        // We use `instanceof` otherwise prohibited by `eslint-config-ash-nazg`,
+        //  with `Symbol.hasInstance`
+        'no-restricted-syntax': 0,
 
         // Disable until find time to address
         'default-case': 0,
-        'func-name-matching': 0,
-        'import/extensions': 0,
-        'node/file-extension-in-import': 0,
-        'import/no-commonjs': 0,
-        'import/no-mutable-exports': 0,
-        'import/unambiguous': 0,
         'max-len': 0,
-        'multiline-ternary': 0,
         'no-console': 0,
-        'no-multi-spaces': 0,
         'no-shadow': 0,
         'no-sync': 0,
-        'prefer-rest-params': 0,
-        'require-jsdoc': 0,
-        'valid-jsdoc': 0,
-        'vars-on-top': 0,
-        'jsdoc/require-param': 0,
+        'prefer-named-capture-group': 0,
+
+        // These should definitely be enabled at some point
+        'jsdoc/require-jsdoc': 0,
         'jsdoc/require-param-type': 0,
         'jsdoc/check-types': 0,
-        'jsdoc/check-param-names': 0,
+
+        'node/prefer-promises/fs': 0,
         'promise/prefer-await-to-callbacks': 0,
         'promise/prefer-await-to-then': 0,
-        'node/prefer-promises/fs': 0,
-        'unicorn/no-fn-reference-in-iterator': 0,
-        'unicorn/no-unsafe-regex': 0,
-        'no-restricted-syntax': 0,
-        'prefer-named-capture-group': 0,
+        'unicorn/no-unsafe-regex': 0
     }
 };

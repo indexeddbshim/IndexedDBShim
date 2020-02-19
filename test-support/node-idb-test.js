@@ -229,7 +229,8 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
     if (jsFiles.length > 1) {
         excluded = workers
             // Keep these arrays even if made empty for sake of any new breaking W3C tests
-            ? excludedWorkers : excludedNormal;
+            ? excludedWorkers
+            : excludedNormal;
         if (excluded.includes(shimNS.fileName) || (!workers && workerFileRegex.test(shimNS.fileName))) {
             excludedCount++;
             shimNS.finished();

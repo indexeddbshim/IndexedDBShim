@@ -493,8 +493,8 @@ describe('IDBObjectStore.put (only)', function () {
 
             var store = tx.objectStore('out-of-line');
             var veryLongString = util.sampleData.veryLongString.slice(0, 400);
-            store.put({foo: 'bar'}, [veryLongString, 1, 2, 3, 4, 5]);   // Key encodes this as an 925-character string
-            store.put({foo: 'bar'}, [veryLongString, 1, 2, 3, 4, 6]);   // Key encodes this as an 925-character string
+            store.put({foo: 'bar'}, [veryLongString, 1, 2, 3, 4, 5]); // Key encodes this as an 925-character string
+            store.put({foo: 'bar'}, [veryLongString, 1, 2, 3, 4, 6]); // Key encodes this as an 925-character string
 
             var allData;
             util.getAll(store, function (err, data) {
@@ -532,8 +532,8 @@ describe('IDBObjectStore.put (only)', function () {
             tx.onerror = done;
 
             var store = tx.objectStore('out-of-line');
-            store.put({foo: 'bar'}, [1, 2, 3, 4]);   // Key encodes this as an 844-character string
-            store.put({foo: 'bar'}, [1, 2, 3, 5]);   // Key encodes this as an 844-character string
+            store.put({foo: 'bar'}, [1, 2, 3, 4]); // Key encodes this as an 844-character string
+            store.put({foo: 'bar'}, [1, 2, 3, 5]); // Key encodes this as an 844-character string
 
             var allData;
             util.getAll(store, function (err, data) {

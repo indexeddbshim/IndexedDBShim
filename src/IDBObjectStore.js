@@ -1,17 +1,18 @@
 import SyncPromise from 'sync-promise';
-import {createDOMException} from './DOMException';
-import {IDBCursor, IDBCursorWithValue} from './IDBCursor';
-import {setSQLForKeyRange, convertValueToKeyRange} from './IDBKeyRange';
-import DOMStringList from './DOMStringList';
-import * as util from './util';
-import * as Key from './Key';
-import {executeFetchIndexData, buildFetchIndexDataSQL, IDBIndex} from './IDBIndex';
-import IDBTransaction from './IDBTransaction';
-import * as Sca from './Sca';
-import CFG from './CFG';
+import {createDOMException} from './DOMException.js';
+import {IDBCursor, IDBCursorWithValue} from './IDBCursor.js';
+import {setSQLForKeyRange, convertValueToKeyRange} from './IDBKeyRange.js';
+import DOMStringList from './DOMStringList.js';
+import * as util from './util.js';
+import * as Key from './Key.js';
+import {executeFetchIndexData, buildFetchIndexDataSQL, IDBIndex} from './IDBIndex.js';
+import IDBTransaction from './IDBTransaction.js';
+import * as Sca from './Sca.js';
+import CFG from './CFG.js';
 
 const readonlyProperties = ['keyPath', 'indexNames', 'transaction', 'autoIncrement'];
 
+/* eslint-disable jsdoc/check-param-names */
 /**
  * IndexedDB Object Store.
  * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBObjectStore
@@ -20,6 +21,7 @@ const readonlyProperties = ['keyPath', 'indexNames', 'transaction', 'autoIncreme
  * @class
  */
 function IDBObjectStore () {
+    /* eslint-enable jsdoc/check-param-names */
     throw new TypeError('Illegal constructor');
 }
 const IDBObjectStoreAlias = IDBObjectStore;
@@ -323,7 +325,7 @@ IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, k
  * @param {Object} value
  * @param {Object} key
  * @param {function} success
- * @param {function} failure
+ * @param {function} failCb
  * @returns {void}
  */
 IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb) {
@@ -479,6 +481,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
 
 IDBObjectStore.prototype.add = function (value /* , key */) {
     const me = this;
+    // eslint-disable-next-line prefer-rest-params
     const key = arguments[1];
     if (!(me instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
@@ -498,6 +501,7 @@ IDBObjectStore.prototype.add = function (value /* , key */) {
 
 IDBObjectStore.prototype.put = function (value /*, key */) {
     const me = this;
+    // eslint-disable-next-line prefer-rest-params
     const key = arguments[1];
     if (!(me instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
@@ -530,6 +534,7 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
 };
 
 IDBObjectStore.__storingRecordObjectStore = function (request, store, invalidateCache, value, noOverwrite /* , key */) {
+    // eslint-disable-next-line prefer-rest-params
     const key = arguments[5];
     store.transaction.__pushToQueue(request, function (tx, args, success, error) {
         store.__deriveKey(tx, value, key, function (clonedKeyOrCurrentNumber, oldCn) {
@@ -640,11 +645,13 @@ IDBObjectStore.prototype.getKey = function (query) {
 };
 
 IDBObjectStore.prototype.getAll = function (/* query, count */) {
+    // eslint-disable-next-line prefer-rest-params
     const [query, count] = arguments;
     return this.__get(query, false, true, count);
 };
 
 IDBObjectStore.prototype.getAllKeys = function (/* query, count */) {
+    // eslint-disable-next-line prefer-rest-params
     const [query, count] = arguments;
     return this.__get(query, true, true, count);
 };
@@ -707,6 +714,7 @@ IDBObjectStore.prototype.clear = function () {
 
 IDBObjectStore.prototype.count = function (/* query */) {
     const me = this;
+    // eslint-disable-next-line prefer-rest-params
     const query = arguments[0];
     if (!(me instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
@@ -720,6 +728,7 @@ IDBObjectStore.prototype.count = function (/* query */) {
 
 IDBObjectStore.prototype.openCursor = function (/* query, direction */) {
     const me = this;
+    // eslint-disable-next-line prefer-rest-params
     const [query, direction] = arguments;
     if (!(me instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
@@ -736,6 +745,7 @@ IDBObjectStore.prototype.openKeyCursor = function (/* query, direction */) {
         throw new TypeError('Illegal invocation');
     }
     IDBObjectStore.__invalidStateIfDeleted(me);
+    // eslint-disable-next-line prefer-rest-params
     const [query, direction] = arguments;
     const cursor = IDBCursor.__createInstance(query, direction, me, me, 'key', 'key');
     me.__cursors.push(cursor);
@@ -766,6 +776,7 @@ IDBObjectStore.prototype.index = function (indexName) {
     return me.__indexHandles[indexName];
 };
 
+/* eslint-disable jsdoc/check-param-names */
 /**
  * Creates a new index on the object store.
  * @param {string} indexName
@@ -774,7 +785,9 @@ IDBObjectStore.prototype.index = function (indexName) {
  * @returns {IDBIndex}
  */
 IDBObjectStore.prototype.createIndex = function (indexName, keyPath /* , optionalParameters */) {
+    /* eslint-enable jsdoc/check-param-names */
     const me = this;
+    // eslint-disable-next-line prefer-rest-params
     let optionalParameters = arguments[2];
     if (!(me instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');

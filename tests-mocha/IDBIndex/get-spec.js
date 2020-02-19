@@ -121,8 +121,8 @@ describe('IDBIndex.get', function () {
                 expect(indexGet.result).to.not.be.ok;
 
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(storeGet.result).equal(undefined);    // Safari returns null
-                    expect(indexGet.result).equal(undefined);    // Safari returns null
+                    expect(storeGet.result).equal(undefined); // Safari returns null
+                    expect(indexGet.result).equal(undefined); // Safari returns null
                 }
 
                 db.close();
@@ -279,9 +279,9 @@ describe('IDBIndex.get', function () {
                 expect(indexGet2.result).to.not.be.ok;
                 expect(indexGet3.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(indexGet1.result).equal(undefined);   // Safari returns null
-                    expect(indexGet2.result).equal(undefined);   // Safari returns null
-                    expect(indexGet3.result).equal(undefined);   // Safari returns null
+                    expect(indexGet1.result).equal(undefined); // Safari returns null
+                    expect(indexGet2.result).equal(undefined); // Safari returns null
+                    expect(indexGet3.result).equal(undefined); // Safari returns null
                 }
 
                 db.close();
@@ -327,9 +327,9 @@ describe('IDBIndex.get', function () {
                 expect(indexGet2.result).to.not.be.ok;
                 expect(indexGet3.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(indexGet1.result).equal(undefined);   // Safari returns null
-                    expect(indexGet2.result).equal(undefined);   // Safari returns null
-                    expect(indexGet3.result).equal(undefined);   // Safari returns null
+                    expect(indexGet1.result).equal(undefined); // Safari returns null
+                    expect(indexGet2.result).equal(undefined); // Safari returns null
+                    expect(indexGet3.result).equal(undefined); // Safari returns null
                 }
 
                 db.close();
@@ -374,9 +374,9 @@ describe('IDBIndex.get', function () {
                 expect(indexGet2.result).to.not.be.ok;
                 expect(indexGet3.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(indexGet1.result).equal(undefined);   // Safari returns null
-                    expect(indexGet2.result).equal(undefined);   // Safari returns null
-                    expect(indexGet3.result).equal(undefined);   // Safari returns null
+                    expect(indexGet1.result).equal(undefined); // Safari returns null
+                    expect(indexGet2.result).equal(undefined); // Safari returns null
+                    expect(indexGet3.result).equal(undefined); // Safari returns null
                 }
 
                 db.close();
@@ -657,20 +657,20 @@ describe('IDBIndex.get', function () {
             var index = store.index('inline-index');
             var gettingCounter = 0, gottenCounter = 0;
 
-            getKey('');                            // empty string
+            getKey(''); // empty string
             getKey(util.sampleData.veryLongString);// very long string
-            getKey(0);                             // zero
-            getKey(-99999);                        // negative number
-            getKey(3.12345);                       // float
-            getKey(Infinity);                      // infinity
-            getKey(-Infinity);                     // negative infinity
-            getKey(new Date(2000, 1, 2));          // Date
+            getKey(0); // zero
+            getKey(-99999); // negative number
+            getKey(3.12345); // float
+            getKey(Infinity); // infinity
+            getKey(-Infinity); // negative infinity
+            getKey(new Date(2000, 1, 2)); // Date
 
             if (env.isShimmed || !env.browser.isIE) {
-                getKey([]);                        // empty array
-                getKey(['a', '', 'b']);            // array of strings
-                getKey([1, 2.345, -678]);          // array of numbers
-                getKey([new Date(2005, 6, 7)]);    // array of Dates
+                getKey([]); // empty array
+                getKey(['a', '', 'b']); // array of strings
+                getKey([1, 2.345, -678]); // array of numbers
+                getKey([new Date(2005, 6, 7)]); // array of Dates
             }
 
             function getKey (key) {
@@ -705,20 +705,20 @@ describe('IDBIndex.get', function () {
             var store = tx.objectStore('out-of-line-generated');
             var index = store.index('inline-index');
 
-            tryToGet(undefined);                            // undefined
-            tryToGet(NaN);                                  // NaN
-            tryToGet(true);                                 // boolean
-            tryToGet(false);                                // boolean
-            tryToGet({});                                   // empty object
-            tryToGet({foo: 'bar'});                         // object
-            tryToGet(new util.sampleData.Person('John'));   // Class
-            tryToGet([1, undefined, 2]);                    // array with undefined
-            tryToGet([1, null, 2]);                         // array with null
-            tryToGet([true, false]);                        // array of booleans
-            tryToGet([{foo: 'bar'}]);                       // array of objects
+            tryToGet(undefined); // undefined
+            tryToGet(NaN); // NaN
+            tryToGet(true); // boolean
+            tryToGet(false); // boolean
+            tryToGet({}); // empty object
+            tryToGet({foo: 'bar'}); // object
+            tryToGet(new util.sampleData.Person('John')); // Class
+            tryToGet([1, undefined, 2]); // array with undefined
+            tryToGet([1, null, 2]); // array with null
+            tryToGet([true, false]); // array of booleans
+            tryToGet([{foo: 'bar'}]); // array of objects
 
             if (env.isShimmed || !env.browser.isIE) {
-                tryToGet(/^regex$/);                        // RegExp
+                tryToGet(/^regex$/); // RegExp
             }
 
             function tryToGet (key, IDBObj) {
@@ -735,7 +735,7 @@ describe('IDBIndex.get', function () {
                     }
 
                     if (!env.isPolyfilled) {
-                        expect(err).to.be.an.instanceOf(env.DOMException);      // The polyfill throws a normal error
+                        expect(err).to.be.an.instanceOf(env.DOMException); // The polyfill throws a normal error
                     }
                     expect(err).to.be.ok;
                     expect(err.name).to.equal('DataError');
@@ -795,15 +795,15 @@ describe('IDBIndex.get', function () {
                 expect(indexGet1.result).to.deep.equal({id: 'a'});
                 expect(indexGet2.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(indexGet2.result).equal(undefined);     // Safari returns null
+                    expect(indexGet2.result).equal(undefined); // Safari returns null
                 }
-                expect(indexGet3.result.id).to.include('b');      // Some browsers return different records
+                expect(indexGet3.result.id).to.include('b'); // Some browsers return different records
                 expect(indexGet4.result).to.deep.equal({id: ['a', 'b', 'c']});
                 expect(indexGet5.result).to.not.be.ok;
                 expect(indexGet6.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(indexGet5.result).equal(undefined);     // Safari returns null
-                    expect(indexGet6.result).equal(undefined);     // Safari returns null
+                    expect(indexGet5.result).equal(undefined); // Safari returns null
+                    expect(indexGet6.result).equal(undefined); // Safari returns null
                 }
 
                 db.close();
@@ -854,14 +854,14 @@ describe('IDBIndex.get', function () {
                 expect(indexGet1.result).to.deep.equal({id: 'a'});
                 expect(indexGet2.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(indexGet2.result).equal(undefined);     // Safari returns null
+                    expect(indexGet2.result).equal(undefined); // Safari returns null
                 }
                 expect(indexGet3.result).to.deep.equal({id: ['b']});
                 expect(indexGet4.result).to.not.be.ok;
                 expect(indexGet5.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
                     expect(indexGet4.result).equal(undefined);
-                    expect(indexGet5.result).equal(undefined);     // Safari returns null
+                    expect(indexGet5.result).equal(undefined); // Safari returns null
                 }
 
                 db.close();
@@ -884,8 +884,8 @@ describe('IDBIndex.get', function () {
 
             store.add({id: 12345, name: 'John Doe'});
 
-            var storeGet = store.get([12345]);            // <-- "id" is specified, but "name" is missing
-            var indexGet = index.get([12345]);            // <-- "id" is specified, but "name" is missing
+            var storeGet = store.get([12345]); // <-- "id" is specified, but "name" is missing
+            var indexGet = index.get([12345]); // <-- "id" is specified, but "name" is missing
 
             storeGet.onerror = sinon.spy();
             indexGet.onerror = sinon.spy();
@@ -899,7 +899,7 @@ describe('IDBIndex.get', function () {
                 expect(storeGet.result).equal(undefined);
                 expect(indexGet.result).to.not.be.ok;
                 if (env.isShimmed || !env.browser.isSafari) {
-                    expect(indexGet.result).equal(undefined);    // Safari returns null
+                    expect(indexGet.result).equal(undefined); // Safari returns null
                 }
 
                 db.close();

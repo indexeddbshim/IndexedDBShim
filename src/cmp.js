@@ -1,5 +1,5 @@
-import CFG from './CFG';
-import {encode as keyEncode, decode as keyDecode} from './Key';
+import CFG from './CFG.js';
+import {encode as keyEncode, decode as keyDecode} from './Key.js';
 
 /**
  * Compares two keys.

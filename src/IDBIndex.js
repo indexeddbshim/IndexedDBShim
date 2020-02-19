@@ -1,16 +1,17 @@
 import SyncPromise from 'sync-promise';
-import {createDOMException} from './DOMException';
-import {IDBCursor, IDBCursorWithValue} from './IDBCursor';
-import * as util from './util';
-import * as Key from './Key';
-import {setSQLForKeyRange, IDBKeyRange, convertValueToKeyRange} from './IDBKeyRange';
-import IDBTransaction from './IDBTransaction';
-import * as Sca from './Sca';
-import CFG from './CFG';
-import IDBObjectStore from './IDBObjectStore';
+import {createDOMException} from './DOMException.js';
+import {IDBCursor, IDBCursorWithValue} from './IDBCursor.js';
+import * as util from './util.js';
+import * as Key from './Key.js';
+import {setSQLForKeyRange, IDBKeyRange, convertValueToKeyRange} from './IDBKeyRange.js';
+import IDBTransaction from './IDBTransaction.js';
+import * as Sca from './Sca.js';
+import CFG from './CFG.js';
+import IDBObjectStore from './IDBObjectStore.js';
 
 const readonlyProperties = ['objectStore', 'keyPath', 'multiEntry', 'unique'];
 
+/* eslint-disable jsdoc/check-param-names */
 /**
  * IDB Index.
  * @see http://www.w3.org/TR/IndexedDB/#idl-def-IDBIndex
@@ -19,6 +20,7 @@ const readonlyProperties = ['objectStore', 'keyPath', 'multiEntry', 'unique'];
  * @class
  */
 function IDBIndex () {
+    /* eslint-enable jsdoc/check-param-names */
     throw new TypeError('Illegal constructor');
 }
 const IDBIndexAlias = IDBIndex;
@@ -376,6 +378,7 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
     }, undefined, me);
 };
 
+/* eslint-disable jsdoc/check-param-names */
 /**
  * Opens a cursor over the given key range.
  * @param {*|IDBKeyRange} query
@@ -383,13 +386,16 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
  * @returns {IDBRequest}
  */
 IDBIndex.prototype.openCursor = function (/* query, direction */) {
+    /* eslint-enable jsdoc/check-param-names */
     const me = this;
+    // eslint-disable-next-line prefer-rest-params
     const [query, direction] = arguments;
     const cursor = IDBCursorWithValue.__createInstance(query, direction, me.objectStore, me, util.escapeIndexNameForSQLKeyColumn(me.name), 'value');
     me.__objectStore.__cursors.push(cursor);
     return cursor.__request;
 };
 
+/* eslint-disable jsdoc/check-param-names */
 /**
  * Opens a cursor over the given key range.  The cursor only includes key values, not data.
  * @param {*|IDBKeyRange} query
@@ -397,7 +403,9 @@ IDBIndex.prototype.openCursor = function (/* query, direction */) {
  * @returns {IDBRequest}
  */
 IDBIndex.prototype.openKeyCursor = function (/* query, direction */) {
+    /* eslint-enable jsdoc/check-param-names */
     const me = this;
+    // eslint-disable-next-line prefer-rest-params
     const [query, direction] = arguments;
     const cursor = IDBCursor.__createInstance(query, direction, me.objectStore, me, util.escapeIndexNameForSQLKeyColumn(me.name), 'key');
     me.__objectStore.__cursors.push(cursor);
@@ -419,17 +427,20 @@ IDBIndex.prototype.getKey = function (query) {
 };
 
 IDBIndex.prototype.getAll = function (/* query, count */) {
+    // eslint-disable-next-line prefer-rest-params
     const [query, count] = arguments;
     return this.__fetchIndexData(query, 'value', false, count);
 };
 
 IDBIndex.prototype.getAllKeys = function (/* query, count */) {
+    // eslint-disable-next-line prefer-rest-params
     const [query, count] = arguments;
     return this.__fetchIndexData(query, 'key', false, count);
 };
 
 IDBIndex.prototype.count = function (/* query */) {
     const me = this;
+    // eslint-disable-next-line prefer-rest-params
     const query = arguments[0];
     // With the exception of needing to check whether the index has been
     //  deleted, we could, for greater spec parity (if not accuracy),
@@ -562,12 +573,16 @@ function executeFetchIndexData (count, unboundedDisallowed, index, hasKey, range
     tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
         const records = [];
         let recordCount = 0;
-        const decode = isCount ? () => { /* */ } : (opType === 'key' ? (record) => {
-            // Key.convertValueToKey(record.key); // Already validated before storage
-            return Key.decode(util.unescapeSQLiteResponse(record.key));
-        } : (record) => { // when opType is value
-            return Sca.decode(util.unescapeSQLiteResponse(record.value));
-        });
+        const decode = isCount
+            ? () => { /* */ }
+            : (opType === 'key'
+                ? (record) => {
+                    // Key.convertValueToKey(record.key); // Already validated before storage
+                    return Key.decode(util.unescapeSQLiteResponse(record.key));
+                }
+                : (record) => { // when opType is value
+                    return Sca.decode(util.unescapeSQLiteResponse(record.value));
+                });
         if (index.multiEntry) {
             const escapedIndexNameForKeyCol = util.escapeIndexNameForSQLKeyColumn(index.name);
             const encodedKey = Key.encode(range, index.multiEntry);

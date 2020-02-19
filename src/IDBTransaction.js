@@ -1,16 +1,17 @@
 import {EventTargetFactory} from 'eventtargeter';
 import SyncPromise from 'sync-promise';
-import {createEvent} from './Event';
-import {logError, findError, webSQLErrback, createDOMException} from './DOMException';
-import {IDBRequest} from './IDBRequest';
-import * as util from './util';
-import IDBObjectStore from './IDBObjectStore';
-import CFG from './CFG';
+import {createEvent} from './Event.js';
+import {logError, findError, webSQLErrback, createDOMException} from './DOMException.js';
+import {IDBRequest} from './IDBRequest.js';
+import * as util from './util.js';
+import IDBObjectStore from './IDBObjectStore.js';
+import CFG from './CFG.js';
 
 let uniqueID = 0;
 const listeners = ['onabort', 'oncomplete', 'onerror'];
 const readonlyProperties = ['objectStoreNames', 'mode', 'db', 'error'];
 
+/* eslint-disable jsdoc/check-param-names */
 /**
  * The IndexedDB Transaction.
  * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBTransaction
@@ -20,6 +21,7 @@ const readonlyProperties = ['objectStoreNames', 'mode', 'db', 'error'];
  * @class
  */
 function IDBTransaction () {
+    /* eslint-enable jsdoc/check-param-names */
     throw new TypeError('Illegal constructor');
 }
 const IDBTransactionAlias = IDBTransaction;
@@ -261,6 +263,7 @@ IDBTransaction.prototype.__executeRequests = function () {
 /**
  * Creates a new IDBRequest for the transaction.
  * NOTE: The transaction is not queued until you call {@link IDBTransaction#__pushToQueue}.
+ * @param {IDBDatabase} source
  * @returns {IDBRequest}
  * @protected
  */
@@ -276,6 +279,7 @@ IDBTransaction.prototype.__createRequest = function (source) {
  * Adds a callback function to the transaction queue.
  * @param {function} callback
  * @param {*} args
+ * @param {IDBDatabase} source
  * @returns {IDBRequest}
  * @protected
  */
@@ -290,6 +294,7 @@ IDBTransaction.prototype.__addToTransactionQueue = function (callback, args, sou
  *   request.
  * @param {function} callback
  * @param {*} args
+ * @param {IDBDatabase} source
  * @returns {void}
  * @protected
  */

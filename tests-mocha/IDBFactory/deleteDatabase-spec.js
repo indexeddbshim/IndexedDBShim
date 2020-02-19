@@ -48,7 +48,7 @@ describe('IDBFactory.deleteDatabase', function () {
 
             del.onsuccess = function (event) {
                 if (env.isShimmed || (!env.browser.isIE && !env.browser.isSafari)) {
-                    expect(event).to.be.an.instanceOf('ShimEvent' in window ? window.ShimEvent : Event);   // IE and Safari use a normal event
+                    expect(event).to.be.an.instanceOf('ShimEvent' in window ? window.ShimEvent : Event); // IE and Safari use a normal event
                 }
                 done();
             };

@@ -1,10 +1,10 @@
 /* eslint-env browser, worker */
 /* global shimIndexedDB */
-import * as UnicodeIdentifiers from './UnicodeIdentifiers';
+import * as UnicodeIdentifiers from './UnicodeIdentifiers.js';
 
 // BEGIN: Same code as in browser.js
-import setGlobalVars from './setGlobalVars';
-import CFG from './CFG';
+import setGlobalVars from './setGlobalVars.js';
+import CFG from './CFG.js';
 
 CFG.win = typeof window !== 'undefined' ? window : self; // For Web Workers
 

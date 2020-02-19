@@ -259,28 +259,28 @@ describe('IDBFactory.cmp', function () {
         it('should not allow these keys', function () {
             this.timeout(5000);
 
-            tryToCompare(undefined);                            // undefined
-            tryToCompare(NaN);                                  // NaN
-            tryToCompare(true);                                 // boolean
-            tryToCompare(false);                                // boolean
-            tryToCompare({});                                   // empty object
-            tryToCompare({foo: 'bar'});                         // object
-            tryToCompare(new util.sampleData.Person('John'));   // Class
-            tryToCompare([1, undefined, 2]);                    // array with undefined
-            tryToCompare([1, null, 2]);                         // array with null
-            tryToCompare([true, false]);                        // array of booleans
-            tryToCompare([{foo: 'bar'}]);                       // array of objects
+            tryToCompare(undefined); // undefined
+            tryToCompare(NaN); // NaN
+            tryToCompare(true); // boolean
+            tryToCompare(false); // boolean
+            tryToCompare({}); // empty object
+            tryToCompare({foo: 'bar'}); // object
+            tryToCompare(new util.sampleData.Person('John')); // Class
+            tryToCompare([1, undefined, 2]); // array with undefined
+            tryToCompare([1, null, 2]); // array with null
+            tryToCompare([true, false]); // array of booleans
+            tryToCompare([{foo: 'bar'}]); // array of objects
             tryToCompare(new Boolean(true)); // eslint-disable-line no-new-wrappers, unicorn/new-for-builtins
             tryToCompare(new Object()); // eslint-disable-line no-new-object
 
             if (env.isShimmed || !env.browser.isIE) {
-                tryToCompare(null);                             // null
+                tryToCompare(null); // null
                 tryToCompare(new Number(12345)); // eslint-disable-line no-new-wrappers, unicorn/new-for-builtins
                 tryToCompare(new String('hello world')); // eslint-disable-line no-new-wrappers, unicorn/new-for-builtins
-                tryToCompare(new Date(''));                     // invalid date
+                tryToCompare(new Date('')); // invalid date
                 // eslint-disable-next-line prefer-regex-literals
-                tryToCompare(new RegExp('asdf'));               // RegExp object
-                tryToCompare(/asdf/);                           // RegExp literal
+                tryToCompare(new RegExp('asdf')); // RegExp object
+                tryToCompare(/asdf/); // RegExp literal
             }
 
             function tryToCompare (x) {

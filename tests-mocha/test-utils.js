@@ -44,7 +44,7 @@
             /**
              * A very long string :) .
              */
-            veryLongString: new Array(1001).join('1234567890')  // 10,000 characters
+            veryLongString: new Array(1001).join('1234567890') // 10,000 characters
         },
 
         /**
@@ -65,13 +65,15 @@
         /**
          * Creates a test database with one or more pre-defined schema items.
          *
-         * @param   {...string}     schema      One or more pre-defined schema items. (see {@link createSchemaItem})
-         * @param   {function}      done        `function(err, db)`
+         * @param {...string} schema One or more pre-defined schema items. (see {@link createSchemaItem})
+         * @param {function} done `function(err, db)`
          * @returns {void}
          */
         createDatabase (schema, done) {
+            /* eslint-disable prefer-rest-params */
             schema = [].slice.call(arguments, 0, -1);
             done = arguments[arguments.length - 1];
+            /* eslint-enable prefer-rest-params */
 
             util.generateDatabaseName(function (err, dbName) {
                 // Open the database
@@ -271,6 +273,7 @@
                     cb();
                     return;
                 }
+                // eslint-disable-next-line prefer-rest-params
                 util._onerror.apply(window, arguments);
             };
         },
@@ -282,6 +285,10 @@
     /**
      * A class with instance and prototype properties.
      * Used to test the IndexedDB structured cloning algorithm.
+     * @param {string} name
+     * @param {Integer} age
+     * @param {Date} dob
+     * @param {boolean} isMarried
      * @returns {void}
      */
     function Person (name, age, dob, isMarried) {

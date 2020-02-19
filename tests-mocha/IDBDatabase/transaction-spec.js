@@ -246,15 +246,15 @@ describe('IDBDatabase.transaction', function () {
         it('should throw an error if an invalid mode is specified', function (done) {
             util.createDatabase('inline', function (err, db) {
                 try {
-                    db.transaction('inline', 'ReadWrite');          // <--- mode is case-sensitive
+                    db.transaction('inline', 'ReadWrite'); // <--- mode is case-sensitive
                 } catch (e) {
                     err = e;
                 }
 
                 expect(err && typeof err).equal('object'); // When using native, an('object') will show custom string
                 if (env.isShimmed || !env.browser.isIE) {
-                    expect(err).to.be.an.instanceOf(TypeError);     // IE throws a DOMException
-                    expect(err.name).to.equal('TypeError');         // IE throws "InvalidAccessError"
+                    expect(err).to.be.an.instanceOf(TypeError); // IE throws a DOMException
+                    expect(err.name).to.equal('TypeError'); // IE throws "InvalidAccessError"
                 }
 
                 db.close();
@@ -265,15 +265,15 @@ describe('IDBDatabase.transaction', function () {
         it('should throw an error if an illegal mode is specified', function (done) {
             util.createDatabase('inline', function (err, db) {
                 try {
-                    db.transaction('inline', 'versionchange');      // <--- illegal
+                    db.transaction('inline', 'versionchange'); // <--- illegal
                 } catch (e) {
                     err = e;
                 }
 
                 expect(err && typeof err).equal('object'); // When using native, an('object') will show custom string
                 if (env.isShimmed || (!env.browser.isIE && !env.browser.isFirefox)) {
-                    expect(err).to.be.an.instanceOf(TypeError);     // IE & Firefox throw a DOMException
-                    expect(err.name).to.equal('TypeError');         // IE & Firefox throw "InvalidAccessError"
+                    expect(err).to.be.an.instanceOf(TypeError); // IE & Firefox throw a DOMException
+                    expect(err.name).to.equal('TypeError'); // IE & Firefox throw "InvalidAccessError"
                 }
 
                 db.close();

@@ -1,7 +1,7 @@
-import {createDOMException} from './DOMException';
-import * as util from './util';
-import cmp from './cmp';
-import CFG from './CFG';
+import {createDOMException} from './DOMException.js';
+import * as util from './util.js';
+import cmp from './cmp.js';
+import CFG from './CFG.js';
 
 /**
  * @module Key
@@ -329,6 +329,7 @@ function negate (s) {
 */
 
 /**
+ * @param key
  * @returns {module:Key.KeyType}
  */
 function getKeyType (key) {
@@ -568,6 +569,7 @@ function extractKeyValueDecodedFromValueUsingKeyPath (value, keyPath, multiEntry
  * @param {object} value
  * @param {string|array} keyPath
  * @param {boolean} multiEntry
+ * @param {boolean} [fullKeys]
  * @returns {module:Key.KeyPathEvaluateValue}
  */
 function evaluateKeyPathOnValueToDecodedValue (value, keyPath, multiEntry, fullKeys) {
@@ -580,7 +582,9 @@ function evaluateKeyPathOnValueToDecodedValue (value, keyPath, multiEntry, fullK
             }
             result.push(key.value);
             return false;
-        }) ? {failure: true} : {value: result};
+        })
+            ? {failure: true}
+            : {value: result};
     }
     if (keyPath === '') {
         return {value};
@@ -613,7 +617,9 @@ function evaluateKeyPathOnValueToDecodedValue (value, keyPath, multiEntry, fullK
             return value === undefined;
         }
         return false;
-    }) ? {failure: true} : {value};
+    })
+        ? {failure: true}
+        : {value};
 }
 
 /**

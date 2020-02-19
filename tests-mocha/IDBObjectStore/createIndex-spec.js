@@ -31,7 +31,7 @@ describe('IDBObjectStore.createIndex', function () {
                     expect(index.keyPath).to.equal('foo.bar.baz');
                     expect(index.unique).equal(false);
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(index.multiEntry).equal(false);    // IE doesn't have this property
+                        expect(index.multiEntry).equal(false); // IE doesn't have this property
                     }
                 });
 
@@ -64,7 +64,7 @@ describe('IDBObjectStore.createIndex', function () {
                     expect(index.keyPath).to.equal('foo.bar.baz');
                     expect(index.unique).equal(true);
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(index.multiEntry).equal(false);    // IE doesn't have this property
+                        expect(index.multiEntry).equal(false); // IE doesn't have this property
                     }
                 });
 
@@ -97,7 +97,7 @@ describe('IDBObjectStore.createIndex', function () {
                     expect(index.keyPath).to.equal('foo.bar.baz');
                     expect(index.unique).equal(false);
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(index.multiEntry).equal(true);    // IE doesn't have this property
+                        expect(index.multiEntry).equal(true); // IE doesn't have this property
                     }
                 });
 
@@ -130,7 +130,7 @@ describe('IDBObjectStore.createIndex', function () {
                     expect(index.keyPath).to.equal('foo.bar.baz');
                     expect(index.unique).equal(true);
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(index.multiEntry).equal(true);    // IE doesn't have this property
+                        expect(index.multiEntry).equal(true); // IE doesn't have this property
                     }
                 });
 
@@ -363,7 +363,7 @@ describe('IDBObjectStore.createIndex', function () {
                     }
 
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(err).to.be.an.instanceOf(env.DOMException);  // The IE polyfill throws a normal Error
+                        expect(err).to.be.an.instanceOf(env.DOMException); // The IE polyfill throws a normal Error
                     }
                     expect(err).to.be.ok;
                     expect(err.name).to.equal('InvalidAccessError');

@@ -1,5 +1,5 @@
-import {ShimEvent} from './Event';
-import * as util from './util';
+import {ShimEvent} from './Event.js';
+import * as util from './util.js';
 
 const readonlyProperties = ['oldVersion', 'newVersion'];
 
@@ -10,6 +10,7 @@ function IDBVersionChangeEvent (type /* , eventInitDict */) { // eventInitDict i
     this.toString = function () {
         return '[object IDBVersionChangeEvent]';
     };
+    // eslint-disable-next-line prefer-rest-params
     this.__eventInitDict = arguments[1] || {};
 }
 

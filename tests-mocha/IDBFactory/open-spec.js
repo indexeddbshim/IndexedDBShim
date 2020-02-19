@@ -158,7 +158,7 @@ describe('IDBFactory.open', function () {
                     expect(db.version).to.equal(1);
                     expect(event.newVersion).to.equal(1);
                     if (env.isShimmed || !env.browser.isSafari) {
-                        expect(event.oldVersion).to.equal(0);   // BUG: Safari equals Number.MAX_VALUE
+                        expect(event.oldVersion).to.equal(0); // BUG: Safari equals Number.MAX_VALUE
                     }
                 });
 
@@ -177,15 +177,15 @@ describe('IDBFactory.open', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name);                // <--- No version number
+                var open = indexedDB.open(name); // <--- No version number
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
                     var db = event.target.result;
                     expect(db.version).to.equal(1);
                     if (env.isShimmed || !env.browser.isSafari) {
-                        expect(event.newVersion).to.equal(1);   // BUG: Safari equals null
-                        expect(event.oldVersion).to.equal(0);   // BUG: Safari equals Number.MAX_VALUE
+                        expect(event.newVersion).to.equal(1); // BUG: Safari equals null
+                        expect(event.oldVersion).to.equal(0); // BUG: Safari equals Number.MAX_VALUE
                     }
                 });
 
@@ -357,7 +357,7 @@ describe('IDBFactory.open', function () {
                     });
 
                     open.onsuccess = function () {
-                        sinon.assert.calledOnce(open.onupgradeneeded);  // <-- only called once, not five times
+                        sinon.assert.calledOnce(open.onupgradeneeded); // <-- only called once, not five times
                         open.result.close();
                         done();
                     };
@@ -429,9 +429,9 @@ describe('IDBFactory.open', function () {
             tryToOpen(Infinity);
             tryToOpen(-Infinity);
             tryToOpen(NaN);
-            tryToOpen(/^regex$/);
 
             if (env.isShimmed || !env.browser.isFirefox) {
+                tryToOpen(/^regex$/);
                 tryToOpen(null);
                 tryToOpen({foo: 'bar'});
                 tryToOpen([]);

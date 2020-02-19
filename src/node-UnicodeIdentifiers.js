@@ -1,7 +1,7 @@
-import setGlobalVars from './setGlobalVars';
-import nodeWebSQL from './nodeWebSQL'; // Importing "websql" would not gain us SQLite config ability
-import CFG from './CFG';
-import * as UnicodeIdentifiers from './UnicodeIdentifiers';
+import setGlobalVars from './setGlobalVars.js';
+import nodeWebSQL from './nodeWebSQL.js'; // Importing "websql" would not gain us SQLite config ability
+import CFG from './CFG.js';
+import * as UnicodeIdentifiers from './UnicodeIdentifiers.js';
 
 CFG.win = {openDatabase: nodeWebSQL};
 

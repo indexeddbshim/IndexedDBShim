@@ -682,20 +682,20 @@ describe('IDBObjectStore.delete', function () {
             var store = tx.objectStore('out-of-line-generated');
             var deletingCounter = 0, deletedCounter = 0;
 
-            deleteKey('');                            // empty string
+            deleteKey(''); // empty string
             deleteKey(util.sampleData.veryLongString);// very long string
-            deleteKey(0);                             // zero
-            deleteKey(-99999);                        // negative number
-            deleteKey(3.12345);                       // float
-            deleteKey(Infinity);                      // infinity
-            deleteKey(-Infinity);                     // negative infinity
-            deleteKey(new Date(2000, 1, 2));          // Date
+            deleteKey(0); // zero
+            deleteKey(-99999); // negative number
+            deleteKey(3.12345); // float
+            deleteKey(Infinity); // infinity
+            deleteKey(-Infinity); // negative infinity
+            deleteKey(new Date(2000, 1, 2)); // Date
 
             if (env.isShimmed || !env.browser.isIE) {
-                deleteKey([]);                        // empty array
-                deleteKey(['a', '', 'b']);            // array of strings
-                deleteKey([1, 2.345, -678]);          // array of numbers
-                deleteKey([new Date(2005, 6, 7)]);    // array of Dates
+                deleteKey([]); // empty array
+                deleteKey(['a', '', 'b']); // array of strings
+                deleteKey([1, 2.345, -678]); // array of numbers
+                deleteKey([new Date(2005, 6, 7)]); // array of Dates
             }
 
             function deleteKey (key) {
@@ -728,20 +728,20 @@ describe('IDBObjectStore.delete', function () {
             var tx = db.transaction('out-of-line-generated', 'readwrite');
             var store = tx.objectStore('out-of-line-generated');
 
-            tryToDelete(undefined);                             // undefined
-            tryToDelete(NaN);                                   // NaN
-            tryToDelete(true);                                  // boolean
-            tryToDelete(false);                                 // boolean
-            tryToDelete({});                                    // empty object
-            tryToDelete({foo: 'bar'});                          // object
-            tryToDelete(new util.sampleData.Person('John'));    // Class
-            tryToDelete([1, undefined, 2]);                     // array with undefined
-            tryToDelete([1, null, 2]);                          // array with null
-            tryToDelete([true, false]);                         // array of booleans
-            tryToDelete([{foo: 'bar'}]);                        // array of objects
+            tryToDelete(undefined); // undefined
+            tryToDelete(NaN); // NaN
+            tryToDelete(true); // boolean
+            tryToDelete(false); // boolean
+            tryToDelete({}); // empty object
+            tryToDelete({foo: 'bar'}); // object
+            tryToDelete(new util.sampleData.Person('John')); // Class
+            tryToDelete([1, undefined, 2]); // array with undefined
+            tryToDelete([1, null, 2]); // array with null
+            tryToDelete([true, false]); // array of booleans
+            tryToDelete([{foo: 'bar'}]); // array of objects
 
             if (env.isShimmed || !env.browser.isIE) {
-                tryToDelete(/^regex$/);                         // RegExp
+                tryToDelete(/^regex$/); // RegExp
             }
 
             function tryToDelete (key) {
@@ -754,7 +754,7 @@ describe('IDBObjectStore.delete', function () {
                 }
 
                 if (!env.isPolyfilled) {
-                    expect(err).to.be.an.instanceOf(env.DOMException);  // The polyfill throws a normal error
+                    expect(err).to.be.an.instanceOf(env.DOMException); // The polyfill throws a normal error
                 }
                 expect(err).to.be.ok;
                 expect(err.name).to.equal('DataError');
@@ -778,7 +778,7 @@ describe('IDBObjectStore.delete', function () {
 
             store.add({id: 12345, name: 'John Doe'});
 
-            var del = store.delete([12345]);            // <-- "id" is specified, but "name" is missing
+            var del = store.delete([12345]); // <-- "id" is specified, but "name" is missing
             del.onerror = sinon.spy();
 
             var allData;

@@ -1,5 +1,30 @@
 # CHANGES for IndexedDBShim
 
+## 6.1.0
+
+- Build (change/optimization): Remove `browersify`/`babelify`/
+    `mapstraction` process in favor of `grunt-rollup` with plugins;
+    reduces minified build size and expands non-minfiied size (so that
+    the source incorporated from `typeson`/`typeson-registry` is not
+    minified)
+    - `indexeddbshim-noninvasive.min.js` (182 KB -> 154 KB)
+    - `indexeddbshim.min.js` (165 KB -> 137 KB)
+    - `indexeddbshim-Key.min.js` (27.7 KB -> 16 KB)
+- Enhancement: Check that `navigator.userAgent` even exists (avoid erring
+    in React Native)
+- Fix: `__forceClose` method with nullish value as name was not closing
+    all connections
+- Linting (ESLint): Add file extensions; lint `.eslintrc` file itself;
+    enable other disabled rules
+- Docs: Add license badges (with `license-badger` routine)
+- Testing: Remove `grunt-qunit-puppeteer` devDep. (slow to install)
+- Testing (Mocha): Allow Firefox tests to pass
+- Testing (W3C): Bump memory so tests can complete
+- npm: Update dep. `typeson-registry` (for `module` importing)
+- npm: Add `package-lock.json` (needed by `npm audit`)
+- npm: Update devDeps
+- yarn: Remove `yarn.lock` (having some difficulties installing everything)
+
 ## 6.0.1
 
 - Note that the typeson updates include some important fixes for accurately

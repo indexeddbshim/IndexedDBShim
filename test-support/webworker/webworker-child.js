@@ -267,13 +267,13 @@ prom.then((scriptSource) => {
             }
         }
     };
-    workerCtx.importScripts = function () {
+    workerCtx.importScripts = function (...args) {
         if (workerOptions.type === 'module') {
             // https://html.spec.whatwg.org/multipage/workers.html#importing-scripts-and-libraries
             throw new TypeError('For modules, `importScripts` should not be used. Use `import` statements instead.');
         }
         // Todo: Support URL/absolute file paths
-        for (const arg of arguments) {
+        for (const arg of args) {
             // Todo: Handle pathType="url" (defaults to `localhost`) and if basePath is `false` with it
             const currentPath = (/^[\\/]/u).test(arg) // Root
                 ? workerConfig.pathType === 'file' && workerConfig.rootPath === false ? process.cwd() : workerConfig.rootPath

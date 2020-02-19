@@ -1,5 +1,5 @@
-import CFG from './CFG';
-import expandsOnNFD from './unicode-regex';
+import CFG from './CFG.js';
+import expandsOnNFD from './unicode-regex.js';
 
 function escapeUnmatchedSurrogates (arg) {
     // http://stackoverflow.com/a/6701665/271577
@@ -287,7 +287,9 @@ function isIdentifier (item) {
 
 function isValidKeyPathString (keyPathString) {
     return typeof keyPathString === 'string' &&
-        (keyPathString === '' || isIdentifier(keyPathString) || keyPathString.split('.').every(isIdentifier));
+        (keyPathString === '' || isIdentifier(keyPathString) || keyPathString.split('.').every((pathComponent) => {
+            return isIdentifier(pathComponent);
+        }));
 }
 
 function isValidKeyPath (keyPath) {
@@ -295,7 +297,9 @@ function isValidKeyPath (keyPath) {
         Array.isArray(keyPath) && keyPath.length &&
             // Convert array from sparse to dense http://www.2ality.com/2012/06/dense-arrays.html
             // See also https://heycam.github.io/webidl/#idl-DOMString
-            [...keyPath].every(isValidKeyPathString)
+            [...keyPath].every((pathComponent) => {
+                return isValidKeyPathString(pathComponent);
+            })
     );
 }
 
@@ -337,7 +341,9 @@ function convertToSequenceDOMString (val) {
     // Per <https://heycam.github.io/webidl/#idl-sequence>, converting to a sequence works with iterables
     if (isIterable(val)) { // We don't want conversion to array to convert primitives
         // Per <https://heycam.github.io/webidl/#es-DOMString>, converting to a `DOMString` to be via `ToString`: https://tc39.github.io/ecma262/#sec-tostring
-        return [...val].map(ToString);
+        return [...val].map((item) => {
+            return ToString(item);
+        });
     }
     return ToString(val);
 }

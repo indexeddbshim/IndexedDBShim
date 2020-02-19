@@ -1,5 +1,5 @@
 /* globals DOMException */
-import CFG from './CFG';
+import CFG from './CFG.js';
 
 /**
  * Creates a native DOMException, for browsers that support it.
@@ -118,6 +118,7 @@ function createNonNativeDOMExceptionClass () {
     // Necessary for W3C tests which complains if `DOMException` has properties on its "own" prototype
 
     // class DummyDOMException extends Error {}; // Sometimes causing problems in Node
+    // eslint-disable-next-line func-name-matching
     const DummyDOMException = function DOMException () { /* */ };
     DummyDOMException.prototype = Object.create(Error.prototype); // Intended for subclassing
     ['name', 'message'].forEach((prop) => {
@@ -186,6 +187,8 @@ const ShimNonNativeDOMException = createNonNativeDOMExceptionClass();
 
 /**
  * Creates a generic Error object.
+ * @param {string} name
+ * @param {string} message
  * @returns {Error}
  */
 function createNonNativeDOMException (name, message) {
@@ -288,19 +291,18 @@ try {
     }
 } catch (e) {}
 
-let createDOMException, ShimDOMException;
-if (useNativeDOMException) {
-    ShimDOMException = DOMException;
-    createDOMException = function (name, message, error) {
+const createDOMException = useNativeDOMException
+    ? function (name, message, error) {
         logError(name, message, error);
         return createNativeDOMException(name, message);
-    };
-} else {
-    ShimDOMException = ShimNonNativeDOMException;
-    createDOMException = function (name, message, error) {
+    }
+    : function (name, message, error) {
         logError(name, message, error);
         return createNonNativeDOMException(name, message);
     };
-}
+
+const ShimDOMException = useNativeDOMException
+    ? DOMException
+    : ShimNonNativeDOMException;
 
 export {logError, findError, ShimDOMException, createDOMException, webSQLErrback};

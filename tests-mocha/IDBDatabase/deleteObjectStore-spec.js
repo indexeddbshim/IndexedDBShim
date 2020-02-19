@@ -139,7 +139,7 @@ describe('IDBDatabase.deleteObjectStore', function () {
                     var store1 = tx.objectStore('My Store');
                     expect(store1.keyPath).to.equal('foo');
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(store1.autoIncrement).equal(false);   // IE doesn't have this property
+                        expect(store1.autoIncrement).equal(false); // IE doesn't have this property
                     }
 
                     db.deleteObjectStore('My Store');
@@ -148,7 +148,7 @@ describe('IDBDatabase.deleteObjectStore', function () {
                     expect(store2).not.to.equal(store1);
                     expect(store2.keyPath).to.equal('bar');
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(store1.autoIncrement).equal(false);   // IE doesn't have this property
+                        expect(store1.autoIncrement).equal(false); // IE doesn't have this property
                     }
                 });
 

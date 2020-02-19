@@ -60,7 +60,7 @@ describe('IDBObjectStore.add (only)', function () {
                 sinon.assert.called(tx.onerror);
 
                 if (env.isShimmed || (!env.browser.isSafari && !env.browser.isFirefox)) {
-                    expect(add2.error).to.be.an.instanceOf(env.DOMException);   // Was DOMError before latest draft spec
+                    expect(add2.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
 
@@ -110,12 +110,12 @@ describe('IDBObjectStore.add (only)', function () {
                     expect(save3.error.name).to.equal('ConstraintError');
 
                     if (env.isShimmed || !env.browser.isSafari) {
-                        expect(save2.result).equal(undefined);   // Safari uses null
-                        expect(save3.result).equal(undefined);   // Safari uses null
+                        expect(save2.result).equal(undefined); // Safari uses null
+                        expect(save3.result).equal(undefined); // Safari uses null
 
                         if (!env.browser.isFirefox) {
-                            expect(save2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
-                            expect(save3.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
+                            expect(save2.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
+                            expect(save3.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
                         }
                     }
 
@@ -166,7 +166,7 @@ describe('IDBObjectStore.add (only)', function () {
                 sinon.assert.called(tx.onerror);
 
                 if (env.isShimmed || (!env.browser.isSafari && !env.browser.isFirefox)) {
-                    expect(add2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
+                    expect(add2.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
 
@@ -218,7 +218,7 @@ describe('IDBObjectStore.add (only)', function () {
                 sinon.assert.called(tx.onerror);
 
                 if (env.isShimmed || (!env.browser.isSafari && !env.browser.isFirefox)) {
-                    expect(add2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
+                    expect(add2.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
 
@@ -268,12 +268,12 @@ describe('IDBObjectStore.add (only)', function () {
                     expect(save3.error.name).to.equal('ConstraintError');
 
                     if (env.isShimmed || !env.browser.isSafari) {
-                        expect(save2.result).equal(undefined);   // Safari uses null
-                        expect(save3.result).equal(undefined);   // Safari uses null
+                        expect(save2.result).equal(undefined); // Safari uses null
+                        expect(save3.result).equal(undefined); // Safari uses null
 
                         if (!env.browser.isFirefox) {
-                            expect(save2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
-                            expect(save3.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
+                            expect(save2.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
+                            expect(save3.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
                         }
                     }
 
@@ -326,7 +326,7 @@ describe('IDBObjectStore.add (only)', function () {
                 sinon.assert.called(tx.onerror);
 
                 if (env.isShimmed || (!env.browser.isSafari && !env.browser.isFirefox)) {
-                    expect(add2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
+                    expect(add2.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
 
@@ -377,7 +377,7 @@ describe('IDBObjectStore.add (only)', function () {
                 sinon.assert.called(tx.onerror);
 
                 if (env.isShimmed || (!env.browser.isSafari && !env.browser.isFirefox)) {
-                    expect(add2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
+                    expect(add2.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
 
@@ -429,7 +429,7 @@ describe('IDBObjectStore.add (only)', function () {
                 sinon.assert.called(tx.onerror);
 
                 if (env.isShimmed || (!env.browser.isSafari && !env.browser.isFirefox)) {
-                    expect(add2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
+                    expect(add2.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
 
@@ -481,7 +481,7 @@ describe('IDBObjectStore.add (only)', function () {
                 sinon.assert.called(tx.onerror);
 
                 if (env.isShimmed || (!env.browser.isSafari && !env.browser.isFirefox)) {
-                    expect(add2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
+                    expect(add2.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
 
@@ -533,7 +533,7 @@ describe('IDBObjectStore.add (only)', function () {
                 sinon.assert.called(tx.onerror);
 
                 if (env.isShimmed || (!env.browser.isSafari && !env.browser.isFirefox)) {
-                    expect(add2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
+                    expect(add2.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
 
@@ -585,7 +585,7 @@ describe('IDBObjectStore.add (only)', function () {
                 sinon.assert.called(tx.onerror);
 
                 if (env.isShimmed || (!env.browser.isSafari && !env.browser.isFirefox)) {
-                    expect(add2.error).to.be.an.instanceOf(env.DOMException);     // Was DOMError before latest draft spec
+                    expect(add2.error).to.be.an.instanceOf(env.DOMException); // Was DOMError before latest draft spec
                 }
                 expect(add2.error.name).to.equal('ConstraintError');
 

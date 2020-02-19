@@ -30,7 +30,7 @@ describe('IDBDatabase.createObjectStore', function () {
                     expect(store.keyPath).equal(null);
                     expect(store.indexNames).to.have.lengthOf(0);
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(store.autoIncrement).equal(false);    // IE doesn't have this property
+                        expect(store.autoIncrement).equal(false); // IE doesn't have this property
                     }
                 });
 
@@ -62,7 +62,7 @@ describe('IDBDatabase.createObjectStore', function () {
                     expect(store.keyPath).equal(null);
                     expect(store.indexNames).to.have.lengthOf(0);
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(store.autoIncrement).equal(true);    // IE doesn't have this property
+                        expect(store.autoIncrement).equal(true); // IE doesn't have this property
                     }
                 });
 
@@ -94,7 +94,7 @@ describe('IDBDatabase.createObjectStore', function () {
                     expect(store.keyPath).to.equal('foo.bar.baz');
                     expect(store.indexNames).to.have.lengthOf(0);
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(store.autoIncrement).equal(false);    // IE doesn't have this property
+                        expect(store.autoIncrement).equal(false); // IE doesn't have this property
                     }
                 });
 
@@ -126,7 +126,7 @@ describe('IDBDatabase.createObjectStore', function () {
                     expect(store.keyPath).to.equal('foo.bar.baz');
                     expect(store.indexNames).to.have.lengthOf(0);
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(store.autoIncrement).equal(true);    // IE doesn't have this property
+                        expect(store.autoIncrement).equal(true); // IE doesn't have this property
                     }
                 });
 

@@ -1,19 +1,21 @@
-import {IDBRequest} from './IDBRequest';
-import IDBObjectStore from './IDBObjectStore';
-import {createDOMException} from './DOMException';
-import {setSQLForKeyRange, convertValueToKeyRange} from './IDBKeyRange';
-import {cmp} from './IDBFactory';
-import * as util from './util';
-import IDBTransaction from './IDBTransaction';
-import * as Key from './Key';
-import * as Sca from './Sca';
-import IDBIndex from './IDBIndex'; // eslint-disable-line import/no-named-as-default
-import CFG from './CFG';
+import {IDBRequest} from './IDBRequest.js';
+import IDBObjectStore from './IDBObjectStore.js';
+import {createDOMException} from './DOMException.js';
+import {setSQLForKeyRange, convertValueToKeyRange} from './IDBKeyRange.js';
+import {cmp} from './IDBFactory.js';
+import * as util from './util.js';
+import IDBTransaction from './IDBTransaction.js';
+import * as Key from './Key.js';
+import * as Sca from './Sca.js';
+import IDBIndex from './IDBIndex.js'; // eslint-disable-line import/no-named-as-default
+import CFG from './CFG.js';
 
 function IDBCursor () {
     throw new TypeError('Illegal constructor');
 }
 const IDBCursorAlias = IDBCursor;
+
+/* eslint-disable func-name-matching */
 /**
  * The IndexedDB Cursor Object.
  * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBCursor
@@ -27,6 +29,7 @@ const IDBCursorAlias = IDBCursor;
  * @returns {void}
  */
 IDBCursor.__super = function IDBCursor (query, direction, store, source, keyColumnName, valueColumnName, count) {
+    /* eslint-enable func-name-matching */
     this[Symbol.toStringTag] = 'IDBCursor';
     util.defineReadonlyProperties(this, ['key', 'primaryKey', 'request']);
     IDBObjectStore.__invalidStateIfDeleted(store);
@@ -295,6 +298,13 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
 };
 
 /**
+* @callback module:IDBCursor.SuccessArg
+* @param value
+* @param {IDBRequest} req
+* @returns {void}
+*/
+
+/**
 * @callback module:IDBCursor.SuccessCallback
 * @param key
 * @param value
@@ -305,6 +315,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
 /**
  * Creates an "onsuccess" callback.
  * @private
+ * @param {module:IDBCursor.SuccessArg} success
  * @returns {module:IDBCursor.SuccessCallback}
  */
 IDBCursor.prototype.__onsuccess = function (success) {
@@ -441,6 +452,7 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
 };
 
 IDBCursor.prototype.continue = function (/* key */) {
+    // eslint-disable-next-line prefer-rest-params
     this.__continue(arguments[0]);
 };
 

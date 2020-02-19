@@ -36,20 +36,23 @@
     /**
     * Use this method instead of QUnit.test. Once the test is finished, call
     * `nextTest();`.
+    * @param {string} name
+    * @param {external:QUnitTest} test
     * @returns {void}
     */
-    function queuedAsyncTest (name) {
+    function queuedAsyncTest (name, test) {
         if (filteredTests.length === 0 || filteredTests.includes(currentModule + ': ' + name)) {
             testQueue.push({
-                name: name,
+                name,
                 module: currentModule,
-                args: arguments
+                args: [name, test]
             });
         }
     }
 
     /**
     * Use this in place of module(blah).
+    * @param {string} module
     * @returns {void}
     */
     function queuedModule (module) {

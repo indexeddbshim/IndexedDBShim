@@ -2,16 +2,16 @@
 import path from 'path';
 import SyncPromise from 'sync-promise';
 
-import {createEvent} from './Event';
-import IDBVersionChangeEvent from './IDBVersionChangeEvent';
-import {logError, webSQLErrback, createDOMException} from './DOMException';
-import {IDBOpenDBRequest} from './IDBRequest';
-import cmp from './cmp';
-import * as util from './util';
-import * as Key from './Key';
-import IDBTransaction from './IDBTransaction';
-import IDBDatabase from './IDBDatabase';
-import CFG from './CFG';
+import {createEvent} from './Event.js';
+import IDBVersionChangeEvent from './IDBVersionChangeEvent.js';
+import {logError, webSQLErrback, createDOMException} from './DOMException.js';
+import {IDBOpenDBRequest} from './IDBRequest.js';
+import cmp from './cmp.js';
+import * as util from './util.js';
+import * as Key from './Key.js';
+import IDBTransaction from './IDBTransaction.js';
+import IDBDatabase from './IDBDatabase.js';
+import CFG from './CFG.js';
 
 // eslint-disable-next-line no-undef
 const fs = ({}.toString.call(process) === '[object process]') ? require('fs') : null;
@@ -58,7 +58,9 @@ function triggerAnyVersionChangeAndBlockedEvents (openConnections, req, oldVersi
     //    connections ought to involve those in any process; should also
     //    auto-close if unloading
     const connectionIsClosed = (connection) => connection.__closePending;
-    const connectionsClosed = () => openConnections.every(connectionIsClosed);
+    const connectionsClosed = () => openConnections.every((conn) => {
+        return connectionIsClosed(conn);
+    });
     return openConnections.reduce(function (promises, entry) {
         if (connectionIsClosed(entry)) {
             return promises;
@@ -110,7 +112,9 @@ let sysdb;
 let nameCounter = 0;
 
 function getLatestCachedWebSQLVersion (name) {
-    return Object.keys(websqlDBCache[name]).map(Number).reduce(
+    return Object.keys(websqlDBCache[name]).map((version) => {
+        return Number(version);
+    }).reduce(
         (prev, curr) => {
             return curr > prev ? curr : prev;
         }, 0
@@ -196,7 +200,15 @@ function cleanupDatabaseResources (__openDatabase, name, escapedDatabaseName, da
 }
 
 /**
+* @callback CreateSysDBSuccessCallback
+* @returns {void}
+*/
+
+/**
  * Creates the sysDB to keep track of version numbers for databases.
+ * @param {openDatabase} __openDatabase
+ * @param {CreateSysDBSuccessCallback} success
+ * @param {DOMException} failure
  * @returns {void}
  */
 function createSysDB (__openDatabase, success, failure) {
@@ -252,6 +264,7 @@ IDBFactory.__createInstance = function () {
     return new IDBFactory();
 };
 
+/* eslint-disable jsdoc/check-param-names */
 /**
  * The IndexedDB Method to create a new database and return the DB.
  * @param {string} name
@@ -260,10 +273,12 @@ IDBFactory.__createInstance = function () {
  * @returns {IDBOpenDBRequest}
  */
 IDBFactory.prototype.open = function (name /* , version */) {
+    /* eslint-enable jsdoc/check-param-names */
     const me = this;
     if (!(me instanceof IDBFactory)) {
         throw new TypeError('Illegal invocation');
     }
+    // eslint-disable-next-line prefer-rest-params
     let version = arguments[1];
 
     if (arguments.length === 0) {
@@ -355,7 +370,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                             return;
                         }
                         // In browser, should auto-commit
-                        cb();  // eslint-disable-line promise/no-callback-in-promise
+                        cb(); // eslint-disable-line promise/no-callback-in-promise
                     };
 
                     sysdb.transaction(function (systx) {
@@ -749,11 +764,15 @@ IDBFactory.prototype.__forceClose = function (dbName, connIdx, msg) {
         conn.__forceClose(msg);
     }
     if (util.isNullish(dbName)) {
-        Object.values(me.__connections).forEach((conn) => conn.forEach(forceClose));
+        Object.values(me.__connections).forEach((conn) => {
+            forceClose(conn);
+        });
     } else if (!me.__connections[dbName]) {
         console.log('No database connections with that name to force close');
     } else if (util.isNullish(connIdx)) {
-        me.__connections[dbName].forEach(forceClose);
+        me.__connections[dbName].forEach((conn) => {
+            forceClose(conn);
+        });
     } else if (!Number.isInteger(connIdx) || connIdx < 0 || connIdx > me.__connections[dbName].length - 1) {
         throw new TypeError(
             'If providing an argument, __forceClose must be called with a ' +

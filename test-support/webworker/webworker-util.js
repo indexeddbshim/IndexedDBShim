@@ -10,7 +10,7 @@ const BSON = require('bson');
 // Some debugging functions
 const debugLevel = parseInt(process.env.NODE_DEBUG, 16); // eslint-disable-line no-process-env
 const debug = (debugLevel & 0x8) // eslint-disable-line no-bitwise
-    ? function () { Reflect.apply(console.error, this, arguments); }
+    ? function (...args) { Reflect.apply(console.error, this, args); }
     : function () { /* */ };
 exports.debug = debug;
 

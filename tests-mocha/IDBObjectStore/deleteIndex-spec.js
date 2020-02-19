@@ -144,7 +144,7 @@ describe('IDBObjectStore.deleteIndex', function () {
                     expect(index1.keyPath).to.equal('foo');
                     expect(index1.unique).equal(false);
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(index1.multiEntry).equal(false);   // IE doesn't have this property
+                        expect(index1.multiEntry).equal(false); // IE doesn't have this property
                     }
 
                     store.deleteIndex('My Index');
@@ -154,7 +154,7 @@ describe('IDBObjectStore.deleteIndex', function () {
                     expect(index2.keyPath).to.equal('bar');
                     expect(index2.unique).equal(true);
                     if (env.isShimmed || !env.browser.isIE) {
-                        expect(index2.multiEntry).equal(true);   // IE doesn't have this property
+                        expect(index2.multiEntry).equal(true); // IE doesn't have this property
                     }
                 });
 

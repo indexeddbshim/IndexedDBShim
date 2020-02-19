@@ -1,6 +1,6 @@
-import customOpenDatabase from 'websql/custom';
-import SQLiteDatabase from 'websql/lib/sqlite/SQLiteDatabase';
-import CFG from './CFG';
+import customOpenDatabase from 'websql/custom/index.js';
+import SQLiteDatabase from 'websql/lib/sqlite/SQLiteDatabase.js';
+import CFG from './CFG.js';
 
 function wrappedSQLiteDatabase (name) {
     const db = new SQLiteDatabase(name);

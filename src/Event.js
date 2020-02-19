@@ -1,5 +1,5 @@
 import {ShimEventTarget, ShimEvent, ShimCustomEvent} from 'eventtargeter';
-import * as util from './util';
+import * as util from './util.js';
 
 /**
  *
