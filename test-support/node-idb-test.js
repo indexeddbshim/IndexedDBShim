@@ -255,6 +255,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         'resources/testharness.js', 'resources/testharnessreport.js',
         'resources/idlharness.js', 'resources/WebIDLParser.js',
         'resources/testdriver.js', 'resources/testdriver-vendor.js',
+        'common/subset-tests.js',
         'nested-cloning-common.js', 'interleaved-cursors-common.js',
         'support.js', 'support-promises.js', 'service-workers/service-worker/resources/test-helpers.sub.js',
         'common/get-host-info.sub.js'
@@ -372,6 +373,21 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             enumerable: false
         });
         Object.setPrototypeOf(window.CustomEvent, window.Event);
+
+        if (shimNS.fileName === 'file_support.sub.js') {
+            const _getById = window.document.getElementById;
+            // Getting `Error: element in different document or shadow tree`
+            //  with this use
+            window.document.getElementById = function (id) {
+                if (id === 'file_input') {
+                    const input = window.document.createElement('input');
+                    input.id = 'file_input';
+                    input.type = 'file';
+                    return input;
+                }
+                return _getById.call(this, id);
+            };
+        }
 
         if (['../non-indexedDB/exceptions.js', '../non-indexedDB/constructor-object.js'].includes(shimNS.fileName)) {
             // These changes are for exceptions tests

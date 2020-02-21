@@ -104,7 +104,7 @@ To run the Node tests, run the following:
     `npm run mock`, `npm run w3c-old`). Note that only `fake` is
     currently passing in full, however.
 1. `npm run web-platform-tests` (or `npm run wpt`) and in a separate
-    terminal window, `npm run w3c` (you must first run
+    terminal window, then run `npm run w3c` (you must first run
     `git submodule update --init --recursive` (possibly without
     [init](http://stackoverflow.com/a/10168693/271577) too if using
     an older version of Git), `git submodule foreach --recursive git fetch`,

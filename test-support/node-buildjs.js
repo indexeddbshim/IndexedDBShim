@@ -22,6 +22,9 @@ const dirPath = process.argv[2] || 'web-platform-tests/IndexedDB';
     // Known scripts
     const testHarnessScripts = ['/resources/testharness.js', '/resources/testharnessreport.js'];
     const supportScripts = [
+        '/resources/testdriver.js',
+        '/resources/testdriver-vendor.js',
+        '/common/subset-tests.js',
         'support.js', 'support-promises.js',
         'nested-cloning-common.js', 'interleaved-cursors-common.js',
         '/common/get-host-info.sub.js' // 'web-platform-tests/IndexedDB/idbfactory-origin-isolation.html'
@@ -110,9 +113,9 @@ const dirPath = process.argv[2] || 'web-platform-tests/IndexedDB';
         $$('*').forEach(function (elem, i) {
             if (![
                 'html', 'head', 'body', 'meta', 'title',
-                'link', 'script', 'div', 'h1'
+                'link', 'script', 'div', 'h1', 'form', 'input'
             ].includes(elem.nodeName.toLowerCase())) {
-                console.log('Unexpected element: ' + elem.nodeName);
+                console.log('Unexpected element: ' + elem.nodeName + ' in file: ' + inputFile);
             }
             const atts = [...elem.attributes].map((a) => a.name);
             if (atts.some((att) => {
