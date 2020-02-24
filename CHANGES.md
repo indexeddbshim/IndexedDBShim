@@ -1,5 +1,11 @@
 # CHANGES for IndexedDBShim
 
+## 6.1.1
+
+- Fix (Android): Overcome apparent Android SQLite mishandling of
+    boolean (convert to `Number`)
+- Fix (React Native): Avoid referencing `require` statement directly
+
 ## 6.1.0
 
 - Build (change/optimization): Remove `browersify`/`babelify`/

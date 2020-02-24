@@ -8278,7 +8278,10 @@ IDBObjectStore.__createObjectStore = function (db, store) {
     tx.executeSql(sql, [], function (tx, data) {
       function insertStoreInfo() {
         const encodedKeyPath = JSON.stringify(store.keyPath);
-        tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [escapeSQLiteStatement(storeName), encodedKeyPath, store.autoIncrement, '{}', 1], function () {
+        tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [escapeSQLiteStatement(storeName), encodedKeyPath, // For why converting here, see comment and following
+        //  discussion at:
+        //  https://github.com/axemclion/IndexedDBShim/issues/313#issuecomment-590086778
+        Number(store.autoIncrement), '{}', 1], function () {
           delete store.__pendingCreate;
           delete store.__deleted;
           success(store);
@@ -9365,8 +9368,14 @@ Object.defineProperty(IDBDatabase, 'prototype', {
 });
 
 /* globals location */
+//  static require:
+//  See:
+// 1. The comment and following discussion at: https://github.com/axemclion/IndexedDBShim/issues/313#issuecomment-590086778
+// 2. https://github.com/facebook/create-react-app/issues/3074#issuecomment-327484250
 
-const fs = {}.toString.call(process) === '[object process]' ? require('fs') : null;
+const fsStr = 'fs'; // eslint-disable-next-line no-undef, import/no-dynamic-require
+
+const fs = {}.toString.call(process) === '[object process]' ? require(fsStr) : null;
 
 const getOrigin = () => {
   return typeof location !== 'object' || !location ? 'null' : location.origin;

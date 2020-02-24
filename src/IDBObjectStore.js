@@ -184,7 +184,16 @@ IDBObjectStore.__createObjectStore = function (db, store) {
         tx.executeSql(sql, [], function (tx, data) {
             function insertStoreInfo () {
                 const encodedKeyPath = JSON.stringify(store.keyPath);
-                tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [util.escapeSQLiteStatement(storeName), encodedKeyPath, store.autoIncrement, '{}', 1], function () {
+                tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [
+                    util.escapeSQLiteStatement(storeName),
+                    encodedKeyPath,
+                    // For why converting here, see comment and following
+                    //  discussion at:
+                    //  https://github.com/axemclion/IndexedDBShim/issues/313#issuecomment-590086778
+                    Number(store.autoIncrement),
+                    '{}',
+                    1
+                ], function () {
                     delete store.__pendingCreate;
                     delete store.__deleted;
                     success(store);
@@ -444,7 +453,11 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
             // Key.convertValueToKey(primaryKey); // Already run
             sqlStart.push(util.sqlQuote('key'), ',');
             sqlEnd.push('?,');
-            insertSqlValues.push(util.escapeSQLiteStatement(Key.encode(clonedKeyOrCurrentNumber)));
+            insertSqlValues.push(
+                util.escapeSQLiteStatement(
+                    Key.encode(clonedKeyOrCurrentNumber)
+                )
+            );
         }
         Object.entries(paramMap).forEach(([key, stmt]) => {
             sqlStart.push(util.escapeIndexNameForSQL(key) + ',');

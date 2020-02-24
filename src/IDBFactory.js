@@ -13,8 +13,14 @@ import IDBTransaction from './IDBTransaction.js';
 import IDBDatabase from './IDBDatabase.js';
 import CFG from './CFG.js';
 
-// eslint-disable-next-line no-undef
-const fs = ({}.toString.call(process) === '[object process]') ? require('fs') : null;
+// We add this require dynamically as React Native apparently crashes with such a
+//  static require:
+//  See:
+// 1. The comment and following discussion at: https://github.com/axemclion/IndexedDBShim/issues/313#issuecomment-590086778
+// 2. https://github.com/facebook/create-react-app/issues/3074#issuecomment-327484250
+const fsStr = 'fs';
+// eslint-disable-next-line no-undef, import/no-dynamic-require
+const fs = ({}.toString.call(process) === '[object process]') ? require(fsStr) : null;
 
 const getOrigin = () => {
     return (typeof location !== 'object' || !location) ? 'null' : location.origin;
