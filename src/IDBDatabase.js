@@ -44,6 +44,11 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
             //  custom `currNum` which we don't need) onto a new object
             itemCopy.name = item.name;
             itemCopy.keyPath = JSON.parse(item.keyPath);
+            // Though `autoInc` is coming from the database as a NUMERIC
+            // type (how SQLite stores BOOLEAN set in CREATE TABLE),
+            // and should thus be parsed into a number here (0 or 1),
+            // `IDBObjectStore.__createInstance` will convert to a boolean
+            // when setting the store's `autoIncrement`.
             ['autoInc', 'indexList'].forEach(function (prop) {
                 itemCopy[prop] = JSON.parse(item[prop]);
             });
