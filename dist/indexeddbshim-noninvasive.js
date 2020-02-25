@@ -10066,9 +10066,9 @@
   // 1. The comment and following discussion at: https://github.com/axemclion/IndexedDBShim/issues/313#issuecomment-590086778
   // 2. https://github.com/facebook/create-react-app/issues/3074#issuecomment-327484250
 
-  var fsStr = 'fs'; // eslint-disable-next-line no-undef, import/no-dynamic-require
+  var fsStr = {}.toString.call(process) === '[object process]' ? 'fs' : null; // eslint-disable-next-line no-undef, import/no-dynamic-require
 
-  var fs = {}.toString.call(process) === '[object process]' ? require(fsStr) : null;
+  var fs = fsStr ? require(fsStr) : null;
 
   var getOrigin = function getOrigin() {
     return (typeof location === "undefined" ? "undefined" : _typeof(location)) !== 'object' || !location ? 'null' : location.origin;
