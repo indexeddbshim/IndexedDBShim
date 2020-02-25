@@ -4,7 +4,9 @@
 
 - Fix (Android): Overcome apparent Android SQLite mishandling of
     boolean (convert to `Number`)
-- Fix (React Native): Avoid referencing `require` statement directly
+- Fix (React Native): Use dynamically generated string for `require`
+    to avoid erring (@swittk)
+- Testing (W3C): Update per latest wpt
 
 ## 6.1.0
 
