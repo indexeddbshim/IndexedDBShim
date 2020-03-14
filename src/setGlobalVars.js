@@ -4,7 +4,7 @@ import shimIDBVersionChangeEvent from './IDBVersionChangeEvent.js';
 import {IDBCursor as shimIDBCursor, IDBCursorWithValue as shimIDBCursorWithValue} from './IDBCursor.js';
 import {IDBRequest as shimIDBRequest, IDBOpenDBRequest as shimIDBOpenDBRequest} from './IDBRequest.js';
 import {createDOMException, ShimDOMException} from './DOMException.js';
-import {shimIndexedDB, IDBFactory} from './IDBFactory.js';
+import {shimIndexedDB, IDBFactory, setFS} from './IDBFactory.js';
 import DOMStringList from './DOMStringList.js';
 import {ShimEvent, ShimCustomEvent, ShimEventTarget} from './Event.js';
 import {register} from './Sca.js';
@@ -143,6 +143,10 @@ function setGlobalVars (idb, initialConfig) {
                         configurable: true
                     });
                 });
+                // For Node environments
+                if (CFG.fs) {
+                    setFS(CFG.fs);
+                }
                 if (CFG.fullIDLSupport) {
                     // Slow per MDN so off by default! Though apparently needed for WebIDL: http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
 

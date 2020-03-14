@@ -13,14 +13,10 @@ import IDBTransaction from './IDBTransaction.js';
 import IDBDatabase from './IDBDatabase.js';
 import CFG from './CFG.js';
 
-// We add this require dynamically as React Native apparently crashes with such a
-//  static require:
-//  See:
-// 1. The comment and following discussion at: https://github.com/axemclion/IndexedDBShim/issues/313#issuecomment-590086778
-// 2. https://github.com/facebook/create-react-app/issues/3074#issuecomment-327484250
-const fsStr = ({}.toString.call(process) === '[object process]') ? 'fs' : null;
-// eslint-disable-next-line no-undef, import/no-dynamic-require
-const fs = fsStr ? require(fsStr) : null;
+let fs;
+const setFS = (_fs) => {
+    fs = _fs;
+};
 
 const getOrigin = () => {
     return (typeof location !== 'object' || !location) ? 'null' : location.origin;
@@ -800,4 +796,4 @@ Object.defineProperty(IDBFactory, 'prototype', {
 });
 
 const shimIndexedDB = IDBFactory.__createInstance();
-export {IDBFactory, cmp, shimIndexedDB};
+export {IDBFactory, cmp, shimIndexedDB, setFS};

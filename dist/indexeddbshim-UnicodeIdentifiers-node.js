@@ -5,6 +5,55 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 var path = _interopDefault(require('path'));
 var customOpenDatabase = _interopDefault(require('websql/custom/index.js'));
 
+function _defineProperty(obj, key, value) {
+  if (key in obj) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj[key] = value;
+  }
+
+  return obj;
+}
+
+function ownKeys(object, enumerableOnly) {
+  var keys = Object.keys(object);
+
+  if (Object.getOwnPropertySymbols) {
+    var symbols = Object.getOwnPropertySymbols(object);
+    if (enumerableOnly) symbols = symbols.filter(function (sym) {
+      return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+    });
+    keys.push.apply(keys, symbols);
+  }
+
+  return keys;
+}
+
+function _objectSpread2(target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i] != null ? arguments[i] : {};
+
+    if (i % 2) {
+      ownKeys(Object(source), true).forEach(function (key) {
+        _defineProperty(target, key, source[key]);
+      });
+    } else if (Object.getOwnPropertyDescriptors) {
+      Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
+    } else {
+      ownKeys(Object(source)).forEach(function (key) {
+        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+      });
+    }
+  }
+
+  return target;
+}
+
 function _typeof(obj) {
   "@babel/helpers - typeof";
 
@@ -858,7 +907,8 @@ const CFG = {};
 'useSQLiteIndexes', // NODE-IMPINGING SETTINGS (created for sake of limitations in Node
 //    or desktop file system implementation but applied by default in
 //    browser for parity)
-// Used when setting global shims to determine whether to try to add
+// File system module with `unlink` to remove deleted database files
+'fs', // Used when setting global shims to determine whether to try to add
 //   other globals shimmed by the library (`ShimDOMException`,
 //   `ShimDOMStringList`, `ShimEvent`, `ShimCustomEvent`, `ShimEventTarget`)
 // Effectively defaults to `false` (ignored unless `true`)
@@ -4228,7 +4278,7 @@ function _createClass(Constructor, protoProps, staticProps) {
   return Constructor;
 }
 
-function _defineProperty(obj, key, value) {
+function _defineProperty$1(obj, key, value) {
   if (key in obj) {
     Object.defineProperty(obj, key, {
       value: value,
@@ -4243,7 +4293,7 @@ function _defineProperty(obj, key, value) {
   return obj;
 }
 
-function ownKeys(object, enumerableOnly) {
+function ownKeys$1(object, enumerableOnly) {
   var keys = Object.keys(object);
 
   if (Object.getOwnPropertySymbols) {
@@ -4257,18 +4307,18 @@ function ownKeys(object, enumerableOnly) {
   return keys;
 }
 
-function _objectSpread2(target) {
+function _objectSpread2$1(target) {
   for (var i = 1; i < arguments.length; i++) {
     var source = arguments[i] != null ? arguments[i] : {};
 
     if (i % 2) {
-      ownKeys(Object(source), true).forEach(function (key) {
-        _defineProperty(target, key, source[key]);
+      ownKeys$1(Object(source), true).forEach(function (key) {
+        _defineProperty$1(target, key, source[key]);
       });
     } else if (Object.getOwnPropertyDescriptors) {
       Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
     } else {
-      ownKeys(Object(source)).forEach(function (key) {
+      ownKeys$1(Object(source)).forEach(function (key) {
         Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
       });
     }
@@ -4674,9 +4724,7 @@ function nestedPathsFirst(a, b) {
  */
 
 
-var Typeson =
-/*#__PURE__*/
-function () {
+var Typeson = /*#__PURE__*/function () {
   function Typeson(options) {
     _classCallCheck(this, Typeson);
 
@@ -4719,7 +4767,7 @@ function () {
   _createClass(Typeson, [{
     key: "stringify",
     value: function stringify(obj, replacer, space, opts) {
-      opts = _objectSpread2({}, this.options, {}, opts, {
+      opts = _objectSpread2$1({}, this.options, {}, opts, {
         stringification: true
       });
       var encapsulated = this.encapsulate(obj, null, opts);
@@ -4744,7 +4792,7 @@ function () {
   }, {
     key: "stringifySync",
     value: function stringifySync(obj, replacer, space, opts) {
-      return this.stringify(obj, replacer, space, _objectSpread2({
+      return this.stringify(obj, replacer, space, _objectSpread2$1({
         throwOnBadSyncType: true
       }, opts, {
         sync: true
@@ -4762,7 +4810,7 @@ function () {
   }, {
     key: "stringifyAsync",
     value: function stringifyAsync(obj, replacer, space, opts) {
-      return this.stringify(obj, replacer, space, _objectSpread2({
+      return this.stringify(obj, replacer, space, _objectSpread2$1({
         throwOnBadSyncType: true
       }, opts, {
         sync: false
@@ -4781,7 +4829,7 @@ function () {
   }, {
     key: "parse",
     value: function parse(text, reviver, opts) {
-      opts = _objectSpread2({}, this.options, {}, opts, {
+      opts = _objectSpread2$1({}, this.options, {}, opts, {
         parse: true
       });
       return this.revive(JSON.parse(text, reviver), opts);
@@ -4798,7 +4846,7 @@ function () {
   }, {
     key: "parseSync",
     value: function parseSync(text, reviver, opts) {
-      return this.parse(text, reviver, _objectSpread2({
+      return this.parse(text, reviver, _objectSpread2$1({
         throwOnBadSyncType: true
       }, opts, {
         sync: true
@@ -4815,7 +4863,7 @@ function () {
   }, {
     key: "parseAsync",
     value: function parseAsync(text, reviver, opts) {
-      return this.parse(text, reviver, _objectSpread2({
+      return this.parse(text, reviver, _objectSpread2$1({
         throwOnBadSyncType: true
       }, opts, {
         sync: false
@@ -4865,7 +4913,7 @@ function () {
   }, {
     key: "encapsulate",
     value: function encapsulate(obj, stateObj, opts) {
-      opts = _objectSpread2({
+      opts = _objectSpread2$1({
         sync: true
       }, this.options, {}, opts);
       var _opts = opts,
@@ -4958,9 +5006,7 @@ function () {
 
 
       function _checkPromises() {
-        _checkPromises = _asyncToGenerator(
-        /*#__PURE__*/
-        regeneratorRuntime.mark(function _callee2(ret, promisesData) {
+        _checkPromises = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(ret, promisesData) {
           var promResults;
           return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
@@ -4974,12 +5020,8 @@ function () {
                 case 2:
                   promResults = _context2.sent;
                   _context2.next = 5;
-                  return Promise.all(promResults.map(
-                  /*#__PURE__*/
-                  function () {
-                    var _ref = _asyncToGenerator(
-                    /*#__PURE__*/
-                    regeneratorRuntime.mark(function _callee(promResult) {
+                  return Promise.all(promResults.map( /*#__PURE__*/function () {
+                    var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(promResult) {
                       var newPromisesData, _promisesData$splice, _promisesData$splice2, prData, _prData, keyPath, cyclic, stateObj, parentObj, key, detectedType, encaps, isTypesonPromise, encaps2;
 
                       return regeneratorRuntime.wrap(function _callee$(_context) {
@@ -5393,7 +5435,7 @@ function () {
   }, {
     key: "encapsulateSync",
     value: function encapsulateSync(obj, stateObj, opts) {
-      return this.encapsulate(obj, stateObj, _objectSpread2({
+      return this.encapsulate(obj, stateObj, _objectSpread2$1({
         throwOnBadSyncType: true
       }, opts, {
         sync: true
@@ -5409,7 +5451,7 @@ function () {
   }, {
     key: "encapsulateAsync",
     value: function encapsulateAsync(obj, stateObj, opts) {
-      return this.encapsulate(obj, stateObj, _objectSpread2({
+      return this.encapsulate(obj, stateObj, _objectSpread2$1({
         throwOnBadSyncType: true
       }, opts, {
         sync: false
@@ -5441,7 +5483,7 @@ function () {
         return obj.$;
       }
 
-      opts = _objectSpread2({
+      opts = _objectSpread2$1({
         sync: true
       }, this.options, {}, opts);
       var _opts3 = opts,
@@ -5732,7 +5774,7 @@ function () {
   }, {
     key: "reviveSync",
     value: function reviveSync(obj, opts) {
-      return this.revive(obj, _objectSpread2({
+      return this.revive(obj, _objectSpread2$1({
         throwOnBadSyncType: true
       }, opts, {
         sync: true
@@ -5747,7 +5789,7 @@ function () {
   }, {
     key: "reviveAsync",
     value: function reviveAsync(obj, opts) {
-      return this.revive(obj, _objectSpread2({
+      return this.revive(obj, _objectSpread2$1({
         throwOnBadSyncType: true
       }, opts, {
         sync: false
@@ -5805,7 +5847,7 @@ function () {
                 return x && x.constructor === Class;
               },
               replace: function replace(x) {
-                return _objectSpread2({}, x);
+                return _objectSpread2$1({}, x);
               },
               revive: function revive(x) {
                 return Object.assign(Object.create(Class.prototype), x);
@@ -6985,55 +7027,6 @@ const undef = {
   }
 };
 
-function _defineProperty$1(obj, key, value) {
-  if (key in obj) {
-    Object.defineProperty(obj, key, {
-      value: value,
-      enumerable: true,
-      configurable: true,
-      writable: true
-    });
-  } else {
-    obj[key] = value;
-  }
-
-  return obj;
-}
-
-function ownKeys$1(object, enumerableOnly) {
-  var keys = Object.keys(object);
-
-  if (Object.getOwnPropertySymbols) {
-    var symbols = Object.getOwnPropertySymbols(object);
-    if (enumerableOnly) symbols = symbols.filter(function (sym) {
-      return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-    });
-    keys.push.apply(keys, symbols);
-  }
-
-  return keys;
-}
-
-function _objectSpread2$1(target) {
-  for (var i = 1; i < arguments.length; i++) {
-    var source = arguments[i] != null ? arguments[i] : {};
-
-    if (i % 2) {
-      ownKeys$1(Object(source), true).forEach(function (key) {
-        _defineProperty$1(target, key, source[key]);
-      });
-    } else if (Object.getOwnPropertyDescriptors) {
-      Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
-    } else {
-      ownKeys$1(Object(source)).forEach(function (key) {
-        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-      });
-    }
-  }
-
-  return target;
-}
-
 const userObject = {
   userObject: {
     test(x, stateObj) {
@@ -7041,7 +7034,7 @@ const userObject = {
     },
 
     replace(n) {
-      return _objectSpread2$1({}, n);
+      return _objectSpread2({}, n);
     },
 
     revive(s) {
@@ -9175,7 +9168,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName
 
   IDBTransaction.__assertActive(this.__versionTransaction);
 
-  createOptions = _objectSpread2$1({}, createOptions);
+  createOptions = _objectSpread2({}, createOptions);
   let {
     keyPath
   } = createOptions;
@@ -9373,14 +9366,11 @@ Object.defineProperty(IDBDatabase, 'prototype', {
 });
 
 /* globals location */
-//  static require:
-//  See:
-// 1. The comment and following discussion at: https://github.com/axemclion/IndexedDBShim/issues/313#issuecomment-590086778
-// 2. https://github.com/facebook/create-react-app/issues/3074#issuecomment-327484250
+let fs;
 
-const fsStr = {}.toString.call(process) === '[object process]' ? 'fs' : null; // eslint-disable-next-line no-undef, import/no-dynamic-require
-
-const fs = fsStr ? require(fsStr) : null;
+const setFS = _fs => {
+  fs = _fs;
+};
 
 const getOrigin = () => {
   return typeof location !== 'object' || !location ? 'null' : location.origin;
@@ -11055,7 +11045,11 @@ function setGlobalVars(idb, initialConfig) {
             enumerable: false,
             configurable: true
           });
-        });
+        }); // For Node environments
+
+        if (CFG.fs) {
+          setFS(CFG.fs);
+        }
 
         if (CFG.fullIDLSupport) {
           // Slow per MDN so off by default! Though apparently needed for WebIDL: http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
@@ -11303,12 +11297,16 @@ var UnicodeIdentifiers = /*#__PURE__*/Object.freeze({
   UnicodeIDContinue: UnicodeIDContinue
 });
 
+const fs$1 = require('fs');
+
 CFG.win = {
   openDatabase: nodeWebSQL
 };
 
-const __setGlobalVars = function (idb, initialConfig) {
-  const obj = setGlobalVars(idb, initialConfig);
+const __setGlobalVars = function (idb, initialConfig = {}) {
+  const obj = setGlobalVars(idb, _objectSpread2({
+    fs: fs$1
+  }, initialConfig));
 
   obj.shimIndexedDB.__setUnicodeIdentifiers(UnicodeIdentifiers);
 

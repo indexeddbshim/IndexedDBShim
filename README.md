@@ -337,6 +337,8 @@ The available properties relevant to browser or Node are:
 The following config are mostly relevant to Node but has bearing on the
 browser, particularly if one changes the defaults.
 
+- __fs__ - File system module with `unlink` to remove deleted database files.
+    Auto-set by Node distributions.
 - __addNonIDBGlobals__ - If set to `true` will polyfill the "global" with
     non-IndexedDB shims created by and sometimes returned publicly by
     the library. These include `ShimEvent`, `ShimCustomEvent`,

@@ -1,5 +1,12 @@
 # CHANGES for IndexedDBShim
 
+## 6.1.2
+
+- Fix (Webpack): Add CFS item `fs` (which the Node files automatically
+    set) to allow removal of database files without disturbing
+    non-Node environments that do their own special handling of
+    `require` statements
+
 ## 6.1.1
 
 - Fix (Android): Overcome apparent Android SQLite mishandling of

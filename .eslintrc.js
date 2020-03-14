@@ -53,6 +53,16 @@ module.exports = {
     },
     overrides: [
         {
+            files: 'src/node*',
+            globals: {
+                require: true
+            },
+            env: {
+                browser: false,
+                node: true
+            }
+        },
+        {
             files: '*.html',
             rules: {
                 'import/unambiguous': 0
