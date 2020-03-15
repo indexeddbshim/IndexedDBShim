@@ -9,3 +9,6 @@
 !index.html
 !LICENSE-MIT.txt
 !LICENSE-APACHE.txt
+
+coverage
+.nyc_output
