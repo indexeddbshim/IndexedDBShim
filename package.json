@@ -65,7 +65,7 @@
     "w3c-test-only": "node --experimental-worker test-support/node-idb-test",
     "coverage:mocha": "nyc --silent mocha tests-mocha/test-node.js",
     "coverage:report": "nyc report",
-    "coverage": "run-s -c clean coverage:fake coverage:mock coverage:w3cOld coverage:mocha clean coverage:report",
+    "coverage": "run-s -c clean coverage:fake coverage:mock coverage:w3c coverage:mocha clean coverage:report",
 
     "sauce-qunit": "grunt sauce-qunit",
     "node-qunit": "grunt clean-qunit && grunt nodequnit && grunt clean-qunit",
