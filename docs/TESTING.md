@@ -97,33 +97,27 @@ in these ways.
 
 To run the Node tests, run the following:
 
-1. `npm run node-qunit` - The full test suite sometimes
-    [does not complete execution](https://github.com/axemclion/IndexedDBShim/issues/251).
-1. `npm run mocha`
-1. `npm run tests-polyfill` (or its components `npm run fake`,
-    `npm run mock`, `npm run w3c-old`). Note that only `fake` is
-    currently passing in full, however.
-1. `npm run web-platform-tests` (or `npm run wpt`) and in a separate
-    terminal window, then run `npm run w3c` (you must first run
-    `git submodule update --init --recursive` (possibly without
-    [init](http://stackoverflow.com/a/10168693/271577) too if using
-    an older version of Git), `git submodule foreach --recursive git fetch`,
-    and `git submodule foreach git merge origin master` or possibly
-    `git submodule foreach git pull --ff-only origin master`). For the
-    former three, you can run `npm run submodules`. Note that some
-    of these tests may not be passing because of the test environment not
-    being completely configured for Node. We are working on fixing this.
-    There are some older and less complete W3C tests that can be run
-    with `npm run w3c-old`, but the goal is to remove these once
-    the new ones are configured properly and working in the browser
-    as do the old tests. The W3C Python browser server also ought to be
-    running due to requirements with the URL having permissions.
-    Once `npm run w3c` has been run once, you may also test against
-    individual tests with:
-    `npm run w3c-test -- <test-name>`, e.g., `npm run w3c-test -- idbdatabase_createObjectStore7.js`, or with a starting index
-    and length (so as to break up the many tests into more
-    manageable segments, as may become necessary if there are
-    memory issues, e.g., `0 200` then `200 200`).
+1. `npm test` (Includes the following)
+    1. `npm run puppeteer-qunit`
+    1. `npm run coverage` (includes the following, along with cleanup scripts)
+        1. `npm run coverage:qunit`
+        1. `npm run coverage:mocha`
+        1. `npm run coverage:polyfill` (or its components `npm run coverage:fake`,
+            `npm run coverage:mock`, `npm run coverage:w3c-old`).
+        1. `npm run w3c` (you must first run `npm run submodules` to get the
+            submodules updated. Note that some of these tests may not be
+            passing because of the test environment not being completely
+            configured for Node. We are working on fixing this.
+            There are some older and less complete W3C tests that can be run
+            with `npm run w3c-old`, but the goal is to remove these once
+            the new ones are configured properly and working in the browser
+            as do the old tests. The W3C Python browser server also ought to be
+            running due to requirements with the URL having permissions.
+            Once `npm run w3c` has been run once, you may also test against
+            individual tests with:
+            `npm run test:w3c -- <test-name>`, e.g., `npm run test:w3c -- idbdatabase_createObjectStore7.js`, or with a starting index
+            and length (so as to break up the many tests into more
+            manageable segments, e.g., `0 200` then `200 200`).
 
 If you need to rebuild SQLite, you can run `npm install` inside of the
 `node_modules/sqlite3` directory or run the IndexedDBShim `sqlite-rebuild`
