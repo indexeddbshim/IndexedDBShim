@@ -57,29 +57,6 @@ module.exports = function (grunt) {
                 dest: 'dist/<%=pkg.name%>-noninvasive.min.js'
             }
         },
-        clean: {
-            qunitTests: {
-                src: ['D_dbname*']
-            },
-            mochaTests: {
-                src: ['D_indexeddbshim_test_database_*', 'D_test.sqlite']
-            },
-            fake: {
-                src: ['D_test0.*']
-            },
-            mock: {
-                src: ['D_test_database*']
-            },
-            w3c: {
-                src: ['D_^D^B2*', 'D_db*', 'D_test*', 'D_about*', 'D_^I^D^B*', 'D_blank*', 'D_database_name*', 'D_idbtransaction*', 'D_x', 'D_x.sqlite', 'D_y', 'D_y.sqlite', 'D_webworker*', 'D_http*']
-            },
-            w3cOld: {
-                src: ['D_db.sqlite*', 'D_test*', 'D_database_name*', 'D_idbtransaction*']
-            },
-            sysDB: {
-                src: ['__sysdb__*']
-            }
-        },
         connect: {
             server: {
                 options: {
@@ -118,17 +95,6 @@ module.exports = function (grunt) {
                     },
                     */
                     qunitPage: 'http://localhost:9999/tests-qunit/index.html'
-                }
-            }
-        },
-        'node-qunit': {
-            all: {
-                deps: ['./tests-qunit/node-init.js', './tests-qunit/queuedUnit.js', './tests-qunit/startTests.js'],
-                code: './dist/<%= pkg.name%>-node.js',
-                tests: './tests-qunit/nodeTest.js',
-                callback (err, res) { // var doneCb = this.async();
-                    if (err) console.log(err);
-                    else console.log(res);
                 }
             }
         },
@@ -270,7 +236,6 @@ module.exports = function (grunt) {
     }
 
     const testJobs = ['connect'];
-    grunt.registerTask('nodequnit', 'node-qunit');
     grunt.registerTask('puppeteer-qunit', ['connect', 'qunit_puppeteer']);
     grunt.registerTask('mocha', ['mochaTest:test']); // clean:mochaTests isn't working here as locked (even with force:true on it or grunt-wait) so we do in package.json
     grunt.registerTask('fake', ['mochaTest:fake']);
@@ -285,14 +250,6 @@ module.exports = function (grunt) {
 
     grunt.registerTask('sauce-qunit', testJobs);
 
-    grunt.registerTask('clean-mocha', ['clean:mochaTests', 'clean:sysDB']);
-    grunt.registerTask('clean-qunit', ['clean:qunitTests', 'clean:sysDB']);
-    grunt.registerTask('clean-polyfill', ['clean:fake', 'clean:mock', 'clean:w3cOld', 'clean:sysDB']);
-    grunt.registerTask('clean-fake', ['clean:fake', 'clean:sysDB']);
-    grunt.registerTask('clean-mock', ['clean:mock', 'clean:sysDB']);
-    grunt.registerTask('clean-w3c', ['clean:w3c', 'clean:sysDB']);
-    grunt.registerTask('clean-w3c-old', ['clean:w3cOld', 'clean:sysDB']);
-
     grunt.registerTask('default', 'dev');
     grunt.registerTask('dev', ['connect', 'watch:all']);
     grunt.registerTask('connect-watch', ['connect', 'watch:all']);
@@ -301,10 +258,6 @@ module.exports = function (grunt) {
     grunt.registerTask('dev-node', ['connect', 'watch:node']);
     grunt.registerTask('dev-unicode', ['connect', 'watch:unicode']);
     grunt.registerTask('dev-unicodeNode', ['connect', 'watch:unicodeNode']);
-
-    grunt.event.on('qunit.error.onError', (msg, trace) => {
-        grunt.log.ok('Grunt qunit: ' + msg + '::' + JSON.stringify(trace));
-    });
 };
 
 /**
