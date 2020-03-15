@@ -276,20 +276,6 @@ module.exports = function (grunt) {
                 files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
                 tasks: []
             }
-        },
-
-        copy: {
-            'test-files': {
-                files: [
-                    {src: 'node_modules/regenerator-runtime/runtime.js', dest: 'test-support/regenerator-runtime/runtime.js', filter: 'isFile'},
-                    {src: 'node_modules/core-js-bundle/minified.js', dest: 'test-support/core-js-bundle/minified.js', filter: 'isFile'},
-                    {src: 'node_modules/source-map-support/browser-source-map-support.js', dest: 'test-support/source-map-support/browser-source-map-support.js', filter: 'isFile'},
-                    {src: 'node_modules/mocha/mocha.css', dest: 'test-support/mocha/mocha.css', filter: 'isFile'},
-                    {src: 'node_modules/mocha/mocha.js', dest: 'test-support/mocha/mocha.js', filter: 'isFile'},
-                    {src: 'node_modules/chai/chai.js', dest: 'test-support/chai/chai.js', filter: 'isFile'},
-                    {src: 'node_modules/sinon/pkg/sinon-no-sourcemaps.js', dest: 'test-support/sinon/pkg/sinon-no-sourcemaps.js', filter: 'isFile'}
-                ]
-            }
         }
     });
 
