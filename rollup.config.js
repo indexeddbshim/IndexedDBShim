@@ -10,9 +10,7 @@ import babel from 'rollup-plugin-babel';
 import globals from 'rollup-plugin-node-globals';
 import nodePolyfills from 'rollup-plugin-node-polyfills';
 import filesize from 'rollup-plugin-filesize';
-
-// Todo: Move from uglify routine in Gruntfile.js
-// import terser from 'rollup-plugin-terser';
+import {terser} from 'rollup-plugin-terser';
 
 import builtins from 'builtin-modules';
 
@@ -38,7 +36,7 @@ const babelNodeOptions = {...babelBrowserOptions,
     ]
 };
 
-const getRollupPlugins = (babelOptions, {addBuiltins, mainFields} = {}) => {
+const getRollupPlugins = (babelOptions, {addBuiltins, mainFields, min} = {}) => {
     const ret = [
         nodeResolve({
             mainFields,
@@ -66,96 +64,130 @@ const getRollupPlugins = (babelOptions, {addBuiltins, mainFields} = {}) => {
 
         ret.unshift(json());
     }
+    if (min) {
+        ret.push(terser({
+            output: {
+                // Not apparently working per https://github.com/TrySound/rollup-plugin-terser/issues/68
+                comments (node, comment) {
+                    return (/\/*!/u).test(comment.value);
+                }
+            }
+        }));
+    }
     return ret;
 };
 
 const browserEnvironment = ({input, name, output: file}) => {
-    return {
-        input,
-        output: {
-            name,
-            file,
-            format: 'umd',
-            sourcemap: true
-        },
-        plugins: getRollupPlugins(
-            babelBrowserOptions,
-            {addBuiltins: true, mainFields: ['browser', 'module', 'main']} // Don't need 'jsnext'?
-        )
-    };
+    const banner = `/*! ${pkg.name} - v${pkg.version} - ` +
+        // eslint-disable-next-line compat/compat
+        `${new Intl.DateTimeFormat('en-US').format(new Date())} */\n`;
+    return [true, false].map((min) => {
+        return {
+            input,
+            output: {
+                name,
+                banner,
+                file: min ? file.replace(/\.js$/u, '.min.js') : file,
+                format: 'umd',
+                sourcemap: true
+            },
+            plugins: getRollupPlugins(
+                babelBrowserOptions,
+                {min, addBuiltins: true, mainFields: ['browser', 'module', 'main']} // Don't need 'jsnext'?
+            )
+        };
+    });
 };
 
 const nodeEnvironment = ({input, name, output: file}) => {
-    return {
-        input,
-        external: [
-            ...builtins,
-            'websql/custom/index.js', 'websql/lib/sqlite/SQLiteDatabase',
-            // Fix from https://github.com/rollup/rollup/issues/1507#issuecomment-340550539
-            'readable-stream', 'readable-stream/transform'
-        ],
-        output: {
-            file,
-            name,
-            // Avoid using `browser` entry in package.json
-            format: 'cjs',
-            // Avoid `window` checking (link now broken)
-            // https://github.com/substack/node-rollup/issues/1277#issuecomment-115198436
-            sourcemap: true
-            // Notes when using browserify:
-            // Could try for consistency with any relative paths if still
-            //  seeing https://github.com/axemclion/IndexedDBShim/issues/291 ;
-            //  see also http://stackoverflow.com/a/33124979/271577
-            // basedir: __dirname,
-        },
-        plugins: getRollupPlugins(
-            babelNodeOptions,
-            {
-                addBuiltins: false
-                // mainFields: ['module', 'main'] // Default
-            }
-        )
-    };
+    const banner = `/*! ${pkg.name} - v${pkg.version} - ` +
+        // eslint-disable-next-line compat/compat
+        `${new Intl.DateTimeFormat('en-US').format(new Date())} */\n`;
+    return [false].map((min) => {
+        return {
+            input,
+            external: [
+                ...builtins,
+                'websql/custom/index.js', 'websql/lib/sqlite/SQLiteDatabase',
+                // Fix from https://github.com/rollup/rollup/issues/1507#issuecomment-340550539
+                'readable-stream', 'readable-stream/transform'
+            ],
+            output: {
+                file: min ? file.replace(/\.js$/u, '.min.js') : file,
+                name,
+                banner,
+                // Avoid using `browser` entry in package.json
+                format: 'cjs',
+                // Avoid `window` checking (link now broken)
+                // https://github.com/substack/node-rollup/issues/1277#issuecomment-115198436
+                sourcemap: true
+                // Notes when using browserify:
+                // Could try for consistency with any relative paths if still
+                //  seeing https://github.com/axemclion/IndexedDBShim/issues/291 ;
+                //  see also http://stackoverflow.com/a/33124979/271577
+                // basedir: __dirname,
+            },
+            plugins: getRollupPlugins(
+                babelNodeOptions,
+                {
+                    min,
+                    addBuiltins: false
+                    // mainFields: ['module', 'main'] // Default
+                }
+            )
+        };
+    });
 };
 
-// eslint-disable-next-line import/no-anonymous-default-export
-export default [
-    {
-        input: 'node_modules/unicode-10.0.0/Binary_Property/Expands_On_NFD/regex.js',
-        output: {
-            file: 'src/unicode-regex.js',
-            format: 'esm'
+/* eslint-disable import/no-anonymous-default-export */
+/**
+ * @param {PlainObject} commandLineArgs Object allowing user-defined `config*`,
+ * e.g., `configBrowserOnly`
+ * @returns {[type]} [description]
+ */
+export default (commandLineArgs) => {
+    /* eslint-enable import/no-anonymous-default-export */
+
+    // if (commandLineArgs.configBrowserOnly) {
+
+    return [
+        {
+            input: 'node_modules/unicode-10.0.0/Binary_Property/Expands_On_NFD/regex.js',
+            output: {
+                file: 'src/unicode-regex.js',
+                format: 'esm'
+            },
+            plugins: [
+                commonJS({
+                    include: ['node_modules/**']
+                })
+            ]
         },
-        plugins: [
-            commonJS({
-                include: ['node_modules/**']
-            })
-        ]
-    },
-    browserEnvironment({
-        name: 'IDBKeyUtils',
-        input: 'src/Key.js',
-        output: `dist/${pkg.name}-Key.js`
-    }),
-    browserEnvironment({
-        input: 'src/browser-UnicodeIdentifiers.js',
-        output: `dist/${pkg.name}-UnicodeIdentifiers.js`
-    }),
-    nodeEnvironment({
-        input: 'src/node-UnicodeIdentifiers.js',
-        output: `dist/${pkg.name}-UnicodeIdentifiers-node.js`
-    }),
-    browserEnvironment({
-        input: 'src/browser.js',
-        output: `dist/${pkg.name}.js`
-    }),
-    browserEnvironment({
-        name: 'setGlobalVars',
-        input: 'src/browser-noninvasive.js',
-        output: `dist/${pkg.name}-noninvasive.js`
-    }),
-    nodeEnvironment({
-        input: 'src/node.js',
-        output: `dist/${pkg.name}-node.js`
-    })
-];
+        ...browserEnvironment({
+            name: 'IDBKeyUtils',
+            input: 'src/Key.js',
+            output: `dist/${pkg.name}-Key.js`
+        }),
+        ...browserEnvironment({
+            input: 'src/browser-UnicodeIdentifiers.js',
+            output: `dist/${pkg.name}-UnicodeIdentifiers.js`
+        }),
+        ...nodeEnvironment({
+            input: 'src/node-UnicodeIdentifiers.js',
+            output: `dist/${pkg.name}-UnicodeIdentifiers-node.js`
+        }),
+        ...browserEnvironment({
+            input: 'src/browser.js',
+            output: `dist/${pkg.name}.js`
+        }),
+        ...browserEnvironment({
+            name: 'setGlobalVars',
+            input: 'src/browser-noninvasive.js',
+            output: `dist/${pkg.name}-noninvasive.js`
+        }),
+        ...nodeEnvironment({
+            input: 'src/node.js',
+            output: `dist/${pkg.name}-node.js`
+        })
+    ];
+};

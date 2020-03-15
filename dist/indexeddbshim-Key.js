@@ -1,3 +1,5 @@
+/*! indexeddbshim - v6.1.1 - 3/15/2020 */
+
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :

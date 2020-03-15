@@ -1,3 +1,5 @@
+/*! indexeddbshim - v6.1.1 - 3/15/2020 */
+
 (function (factory) {
   typeof define === 'function' && define.amd ? define(factory) :
   factory();

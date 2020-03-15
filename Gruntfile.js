@@ -1,60 +1,10 @@
-/* eslint-env node */
 'use strict';
-
-const pkg = require('./package.json');
 
 module.exports = function (grunt) {
     const sauceuser = process.env.SAUCE_USERNAME !== undefined ? process.env.SAUCE_USERNAME : 'indexeddbshim'; // eslint-disable-line no-process-env
     const saucekey = process.env.SAUCE_ACCESS_KEY !== undefined ? process.env.SAUCE_ACCESS_KEY : null; // eslint-disable-line no-process-env
 
     grunt.initConfig({
-        pkg,
-        uglify: {
-            key: {
-                options: {
-                    banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
-                    sourceMap: true,
-                    sourceMapIn: 'dist/<%=pkg.name%>-Key.js.map',
-                    sourceMapName: 'dist/<%=pkg.name%>-Key.min.js.map',
-                    sourceMapRoot: 'https://raw.githack.com/axemclion/IndexedDBShim/v' + pkg.version + '/dist/'
-                },
-                src: 'dist/<%= pkg.name%>-Key.js',
-                dest: 'dist/<%= pkg.name%>-Key.min.js'
-            },
-            unicode: {
-                options: {
-                    banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
-                    sourceMap: true,
-                    sourceMapIn: 'dist/<%=pkg.name%>-UnicodeIdentifiers.js.map',
-                    sourceMapName: 'dist/<%=pkg.name%>-UnicodeIdentifiers.min.js.map',
-                    sourceMapRoot: 'https://raw.githack.com/axemclion/IndexedDBShim/v' + pkg.version + '/dist/'
-                },
-                src: 'dist/<%= pkg.name%>-UnicodeIdentifiers.js',
-                dest: 'dist/<%= pkg.name%>-UnicodeIdentifiers.min.js'
-            },
-            browser: {
-                options: {
-                    banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
-                    sourceMap: true,
-                    sourceMapIn: 'dist/<%=pkg.name%>.js.map',
-                    sourceMapName: 'dist/<%=pkg.name%>.min.js.map',
-                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v' + pkg.version + '/dist/'
-                },
-                src: 'dist/<%= pkg.name%>.js',
-                dest: 'dist/<%=pkg.name%>.min.js'
-            },
-            browserNoninvasive: {
-                options: {
-                    banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - ' + '<%= grunt.template.today("yyyy-mm-dd") %> */\n',
-                    sourceMap: true,
-                    sourceMapIn: 'dist/<%=pkg.name%>-noninvasive.js.map',
-                    sourceMapName: 'dist/<%=pkg.name%>-noninvasive.min.js.map',
-                    sourceMapRoot: 'https://cdn.rawgit.com/axemclion/IndexedDBShim/v' + pkg.version + '/dist/'
-                },
-                src: 'dist/<%= pkg.name%>-noninvasive.js',
-                dest: 'dist/<%=pkg.name%>-noninvasive.min.js'
-            }
-        },
         qunit_puppeteer: {
             test: {
                 options: {
