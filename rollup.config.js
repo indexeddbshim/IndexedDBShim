@@ -9,6 +9,7 @@ import replace from '@rollup/plugin-replace';
 import babel from 'rollup-plugin-babel';
 import globals from 'rollup-plugin-node-globals';
 import nodePolyfills from 'rollup-plugin-node-polyfills';
+import filesize from 'rollup-plugin-filesize';
 
 // Todo: Move from uglify routine in Gruntfile.js
 // import terser from 'rollup-plugin-terser';
@@ -48,7 +49,8 @@ const getRollupPlugins = (babelOptions, {addBuiltins, mainFields} = {}) => {
             //  "importing" anyways
             ignore: ['sqlite3']
         }),
-        babel(babelOptions)
+        babel(babelOptions),
+        filesize()
     ];
     if (addBuiltins) {
         ret.unshift(globals(), nodePolyfills());
