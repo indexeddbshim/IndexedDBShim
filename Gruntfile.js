@@ -289,11 +289,6 @@ module.exports = function (grunt) {
                     {src: 'node_modules/chai/chai.js', dest: 'test-support/chai/chai.js', filter: 'isFile'},
                     {src: 'node_modules/sinon/pkg/sinon-no-sourcemaps.js', dest: 'test-support/sinon/pkg/sinon-no-sourcemaps.js', filter: 'isFile'}
                 ]
-            },
-            regex: {
-                files: [
-                    {src: 'node_modules/unicode-10.0.0/Binary_Property/Expands_On_NFD/regex.js', dest: 'src/unicode-regex.js', filter: 'isFile'}
-                ]
             }
         }
     });
