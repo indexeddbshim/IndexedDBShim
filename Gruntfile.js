@@ -1,105 +1,7 @@
 /* eslint-env node */
-/* eslint-disable node/no-unsupported-features/es-syntax */
 'use strict';
 
-const babel = require('rollup-plugin-babel');
-const nodeResolve = require('@rollup/plugin-node-resolve');
-const commonJS = require('@rollup/plugin-commonjs');
-
-const globals = require('rollup-plugin-node-globals');
-const nodePolyfills = require('rollup-plugin-node-polyfills');
-
-const json = require('@rollup/plugin-json');
-const replace = require('@rollup/plugin-replace');
-const builtins = require('builtin-modules');
-
 const pkg = require('./package.json');
-
-const getRollupPlugins = (babelOptions, {addBuiltins} = {}) => {
-    return {
-        plugins () {
-            const ret = [
-                nodeResolve({
-                    preferBuiltins: !addBuiltins
-                }),
-                commonJS({
-                    // Gets issue with dynamic requires and we aren't
-                    //  "importing" anyways
-                    ignore: ['sqlite3']
-                }),
-                babel(babelOptions)
-            ];
-            if (addBuiltins) {
-                ret.unshift(globals(), nodePolyfills());
-            } else {
-                // Fix from https://github.com/rollup/rollup/issues/1507#issuecomment-340550539
-                ret.splice(1, 0, replace({
-                    delimiters: ['', ''],
-                    // Replacements:
-                    'require(\'readable-stream/transform\')': 'require(\'stream\').Transform',
-                    'require("readable-stream/transform")': 'require("stream").Transform',
-                    'readable-stream': 'stream'
-                }));
-
-                ret.unshift(json());
-            }
-            return ret;
-        }
-    };
-};
-
-const browserEnvironment = () => {
-    return {
-        format: 'umd',
-        sourcemap: true,
-        ...getRollupPlugins(babelBrowserOptions, {addBuiltins: true}),
-        mainFields: ['browser', 'module', 'main'] // Don't need 'jsnext'?
-    };
-};
-
-const nodeEnvironment = () => {
-    return {
-        // Avoid using `browser` entry in package.json
-        // mainFields: ['module', 'main'], // Default
-        format: 'cjs',
-        // Avoid `window` checking (link now broken)
-        // https://github.com/substack/node-rollup/issues/1277#issuecomment-115198436
-        name: 'dummyPlaceholder',
-        sourcemap: true,
-        ...getRollupPlugins(babelNodeOptions, {addBuiltins: false}),
-        external: [
-            ...builtins,
-            'websql/custom/index.js', 'websql/lib/sqlite/SQLiteDatabase',
-            // Fix from https://github.com/rollup/rollup/issues/1507#issuecomment-340550539
-            'readable-stream', 'readable-stream/transform'
-        ]
-        // Notes when using browserify:
-        // Could try for consistency with any relative paths if still
-        //  seeing https://github.com/axemclion/IndexedDBShim/issues/291 ;
-        //  see also http://stackoverflow.com/a/33124979/271577
-        // basedir: __dirname,
-    };
-};
-
-const babelBrowserOptions = {
-    // sourceMapsAbsolute: true,
-    plugins: ['add-module-exports'],
-    presets: [
-        ['@babel/env', {
-            targets: pkg.browserslist[0] // cover 100%
-        }]
-    ]
-};
-
-const babelNodeOptions = {...babelBrowserOptions,
-    presets: [
-        ['@babel/env', {
-            targets: {
-                node: '6.9'
-            }
-        }]
-    ]
-};
 
 module.exports = function (grunt) {
     const sauceuser = process.env.SAUCE_USERNAME !== undefined ? process.env.SAUCE_USERNAME : 'indexeddbshim'; // eslint-disable-line no-process-env
@@ -109,50 +11,6 @@ module.exports = function (grunt) {
     // Todo: Add `grunt-mocha-istanbul`! https://www.npmjs.com/package/grunt-mocha-istanbul
     grunt.initConfig({
         pkg,
-        rollup: {
-            key: {
-                options: {
-                    ...browserEnvironment(),
-                    name: 'IDBKeyUtils'
-                },
-                files: {
-                    'dist/<%= pkg.name%>-Key.js': 'src/Key.js'
-                }
-            },
-            unicode: {
-                options: browserEnvironment(),
-                files: {
-                    'dist/<%= pkg.name%>-UnicodeIdentifiers.js': 'src/browser-UnicodeIdentifiers.js'
-                }
-            },
-            unicodeNode: {
-                options: nodeEnvironment(),
-                files: {
-                    'dist/<%= pkg.name%>-UnicodeIdentifiers-node.js': 'src/node-UnicodeIdentifiers.js'
-                }
-            },
-            browser: {
-                options: browserEnvironment(),
-                files: {
-                    'dist/<%= pkg.name%>.js': 'src/browser.js'
-                }
-            },
-            browserNoninvasive: {
-                options: {
-                    ...browserEnvironment(),
-                    name: 'setGlobalVars'
-                },
-                files: {
-                    'dist/<%= pkg.name%>-noninvasive.js': 'src/browser-noninvasive.js'
-                }
-            },
-            node: {
-                options: nodeEnvironment(),
-                files: {
-                    'dist/<%= pkg.name%>-node.js': 'src/node.js'
-                }
-            }
-        },
         uglify: {
             key: {
                 options: {
@@ -385,39 +243,38 @@ module.exports = function (grunt) {
         watch: {
             all: {
                 files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
-                tasks: ['rollup', 'uglify']
+                tasks: ['uglify']
             },
             browser: {
                 files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
                 tasks: [
                     // 'eslint',
-                    'rollup:browser', 'uglify:browser'
+                    'uglify:browser'
                 ]
             },
             browserNoninvasive: {
                 files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
                 tasks: [
                     // 'eslint',
-                    'rollup:browserNoninvasive', 'uglify:browserNoninvasive'
+                    'uglify:browserNoninvasive'
                 ]
             },
             node: {
                 files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
                 tasks: [
-                    // 'eslint',
-                    'rollup:node'
+                    // 'eslint'
                 ]
             },
             unicode: {
                 files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
                 tasks: [
                     // 'eslint',
-                    'rollup:unicode', 'uglify:unicode'
+                    'uglify:unicode'
                 ]
             },
             unicodeNode: {
                 files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
-                tasks: ['rollup:unicodeNode']
+                tasks: []
             }
         },
 
@@ -447,30 +304,7 @@ module.exports = function (grunt) {
         }
     }
 
-    grunt.registerTask('build-browser', [
-        // 'eslint',
-        'rollup:browser', 'uglify:browser'
-    ]);
-    grunt.registerTask('build-browserNoninvasive', [
-        // 'eslint',
-        'rollup:browserNoninvasive', 'uglify:browserNoninvasive'
-    ]);
-    grunt.registerTask('build-node', [
-        // 'eslint',
-        'rollup:node'
-    ]);
-    grunt.registerTask('build-unicode', [
-        // 'eslint',
-        'rollup:unicode', 'uglify:unicode'
-    ]);
-    grunt.registerTask('build-unicodeNode', ['rollup:unicodeNode']);
-    grunt.registerTask('build-key', [
-        // 'eslint',
-        'rollup:key', 'uglify:key'
-    ]);
-    grunt.registerTask('build', ['rollup', 'uglify']);
-
-    const testJobs = ['build', 'connect'];
+    const testJobs = ['connect'];
     grunt.registerTask('nodequnit', 'node-qunit');
     grunt.registerTask('puppeteer-qunit', ['connect', 'qunit_puppeteer']);
     grunt.registerTask('mocha', ['mochaTest:test']); // clean:mochaTests isn't working here as locked (even with force:true on it or grunt-wait) so we do in package.json
@@ -494,14 +328,14 @@ module.exports = function (grunt) {
     grunt.registerTask('clean-w3c', ['clean:w3c', 'clean:sysDB']);
     grunt.registerTask('clean-w3c-old', ['clean:w3cOld', 'clean:sysDB']);
 
-    grunt.registerTask('default', 'build');
-    grunt.registerTask('dev', ['build', 'connect', 'watch:all']);
+    grunt.registerTask('default', 'dev');
+    grunt.registerTask('dev', ['connect', 'watch:all']);
     grunt.registerTask('connect-watch', ['connect', 'watch:all']);
-    grunt.registerTask('dev-browser', ['build-browser', 'connect', 'watch:browser']);
-    grunt.registerTask('dev-browserNoninvasive', ['build-browserNoninvasive', 'connect', 'watch:browserNoninvasive']);
-    grunt.registerTask('dev-node', ['build-node', 'connect', 'watch:node']);
-    grunt.registerTask('dev-unicode', ['build-unicode', 'connect', 'watch:unicode']);
-    grunt.registerTask('dev-unicodeNode', ['build-unicodeNode', 'connect', 'watch:unicodeNode']);
+    grunt.registerTask('dev-browser', ['connect', 'watch:browser']);
+    grunt.registerTask('dev-browserNoninvasive', ['connect', 'watch:browserNoninvasive']);
+    grunt.registerTask('dev-node', ['connect', 'watch:node']);
+    grunt.registerTask('dev-unicode', ['connect', 'watch:unicode']);
+    grunt.registerTask('dev-unicodeNode', ['connect', 'watch:unicodeNode']);
 
     grunt.event.on('qunit.error.onError', (msg, trace) => {
         grunt.log.ok('Grunt qunit: ' + msg + '::' + JSON.stringify(trace));
