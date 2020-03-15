@@ -7,8 +7,6 @@ module.exports = function (grunt) {
     const sauceuser = process.env.SAUCE_USERNAME !== undefined ? process.env.SAUCE_USERNAME : 'indexeddbshim'; // eslint-disable-line no-process-env
     const saucekey = process.env.SAUCE_ACCESS_KEY !== undefined ? process.env.SAUCE_ACCESS_KEY : null; // eslint-disable-line no-process-env
 
-    // bumpVersion(pkg);
-    // Todo: Add `grunt-mocha-istanbul`! https://www.npmjs.com/package/grunt-mocha-istanbul
     grunt.initConfig({
         pkg,
         uglify: {
@@ -123,59 +121,11 @@ module.exports = function (grunt) {
                     }]
                 }
             }
-        },
-
-        watch: {
-            all: {
-                files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
-                tasks: ['uglify']
-            },
-            browser: {
-                files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
-                tasks: [
-                    // 'eslint',
-                    'uglify:browser'
-                ]
-            },
-            browserNoninvasive: {
-                files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
-                tasks: [
-                    // 'eslint',
-                    'uglify:browserNoninvasive'
-                ]
-            },
-            node: {
-                files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
-                tasks: [
-                    // 'eslint'
-                ]
-            },
-            unicode: {
-                files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
-                tasks: [
-                    // 'eslint',
-                    'uglify:unicode'
-                ]
-            },
-            unicodeNode: {
-                files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],
-                tasks: []
-            }
         }
     });
 
-    for (const key in grunt.file.readJSON('package.json').devDependencies) {
-        if (key !== 'grunt' && key.indexOf('grunt') === 0 && key !== 'grunt-cli') {
-            grunt.loadNpmTasks(key);
-        }
-    }
-
     const testJobs = [];
     grunt.registerTask('puppeteer-qunit', ['connect', 'qunit_puppeteer']);
-    grunt.registerTask('mocha', ['mochaTest:test']); // clean:mochaTests isn't working here as locked (even with force:true on it or grunt-wait) so we do in package.json
-    grunt.registerTask('fake', ['mochaTest:fake']);
-    grunt.registerTask('mock', ['mochaTest:mock']);
-    grunt.registerTask('w3c-old', ['mochaTest:w3cOld']);
 
     if (saucekey !== null) {
         testJobs.push('saucelabs-qunit');
@@ -184,23 +134,4 @@ module.exports = function (grunt) {
     }
 
     grunt.registerTask('sauce-qunit', testJobs);
-
-    grunt.registerTask('default', 'dev');
-    grunt.registerTask('dev-browser', ['connect', 'watch:browser']);
-    grunt.registerTask('dev-browserNoninvasive', ['connect', 'watch:browserNoninvasive']);
-    grunt.registerTask('dev-node', ['connect', 'watch:node']);
-    grunt.registerTask('dev-unicode', ['connect', 'watch:unicode']);
-    grunt.registerTask('dev-unicodeNode', ['connect', 'watch:unicodeNode']);
 };
-
-/**
- * Bumps the revision number of the node package object, so the the banner in indexeddbshim.min.js
- * will match the next upcoming revision of the package.
- */
-/*
-function bumpVersion (pkg) {
-    const version = pkg.version.split('.');
-    version[2] = parseInt(version[2]) + 1;
-    pkg.version = version.join('.');
-}
-*/
