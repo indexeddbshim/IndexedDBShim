@@ -60,7 +60,7 @@
 
     "coverage:fake": "nyc --silent --no-clean mocha tests-polyfill/fakeIndexedDB/test-node.js",
     "coverage:mock": "nyc --silent --no-clean mocha tests-polyfill/indexedDBmock/test-node.js",
-    "coverage:w3cOld": "nyc --silent mocha tests-polyfill/w3c/test-node.js",
+    "coverage:w3cOld": "nyc --silent --no-clean mocha tests-polyfill/w3c/test-node.js",
     "coverage:w3c": "NODE_OPTIONS=--max_old_space_size=4096 nyc --silent --no-clean npm run w3c-test-only",
     "w3c-test-only": "node --experimental-worker test-support/node-idb-test",
     "coverage:mocha": "nyc --silent --no-clean mocha tests-mocha/test-node.js",
