@@ -224,22 +224,6 @@ module.exports = function (grunt) {
             }
         },
 
-        eslint: {
-            files: ['**/*.md', 'src/**/*.js', 'tests-qunit/**/*.js', 'tests-mocha/**/*.js', 'test-support/*.js', 'test-support/webworker/*.js', 'Gruntfile.js', '!test-support/qunit-2.1.1.js', '!test-support/latest-erring-bundled.js', '!src/unicode-regex.js', '!web-platform-tests/**', '!node_modules/**', '!tests-polyfill/**'],
-            /*
-            // Didn't work for some reason
-            // https://github.com/sindresorhus/grunt-eslint/issues/119#issuecomment-343716068
-            files: [
-                '**'
-            ].concat(grunt.file.read('.eslintignore').split('\n')
-                .map(e => e.split('#', 1)[0].trim()).filter(e => e !== '')
-                .map(e => e.startsWith('!') ? e.slice(1) : `!${e}`)),
-            */
-            options: {
-                configFile: '.eslintrc.js'
-            }
-        },
-
         watch: {
             all: {
                 files: ['Gruntfile.js', 'src/*', 'node_modules/eventtarget/EventTarget.js', 'node_modules/websql/lib/websql/WebSQLTransaction.js', 'node_modules/websql/lib/websql/WebSQLDatabase.js'],

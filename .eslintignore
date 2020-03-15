@@ -3,6 +3,8 @@ src/unicode-regex.js
 examples
 ignore
 node_modules
+coverage
+.nyc_output
 tests-polyfill
 web-platform-tests
 test-support/**/*.js
@@ -10,5 +12,4 @@ test-support/**/*.js
 !test-support/*.js
 test-support/qunit-2.1.1.js
 test-support/latest-erring-bundled.js
-
 !.eslintrc.js
