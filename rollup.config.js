@@ -1,15 +1,17 @@
 /* eslint-env node */
 /* eslint-disable node/no-unsupported-features/es-syntax */
 
-import babel from 'rollup-plugin-babel';
-
 import nodeResolve from '@rollup/plugin-node-resolve';
 import commonJS from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import replace from '@rollup/plugin-replace';
 
+import babel from 'rollup-plugin-babel';
 import globals from 'rollup-plugin-node-globals';
 import nodePolyfills from 'rollup-plugin-node-polyfills';
+
+// Todo: Move from uglify routine in Gruntfile.js
+// import terser from 'rollup-plugin-terser';
 
 import builtins from 'builtin-modules';
 
