@@ -2,7 +2,7 @@
 /* globals nextTest, addTest */
 /* eslint-disable no-var */
 var dbVersion = 0;
-var testNames = ['Database', 'ObjectStore', 'ObjectStoreCrud', 'Cursor', 'Index', 'Factory'];
+var testNames = ['Database', 'ObjectStore', 'ObjectStoreCrud', 'Cursor', 'Index'];
 var testFiles = testNames.map(function (testName) { return testName + 'Tests.js'; });
 
 function _ (msg) {

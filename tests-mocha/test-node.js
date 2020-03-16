@@ -41,6 +41,7 @@ window.onerror = function () {
         tests = [
             'api-spec.js',
             'IDBFactory/cmp-spec.js',
+            'IDBFactory/databases-spec.js',
             'IDBFactory/deleteDatabase-spec.js',
             'IDBFactory/open-spec.js',
             'IDBDatabase/close-spec.js',
