@@ -14,7 +14,7 @@ test-support/json-output*
 ignore
 node_modules
 
-# Should be deleted by Grunt
+# Should be deleted by npm scripts
 dbName*
 __sysdb__*
 D_^D^B2*

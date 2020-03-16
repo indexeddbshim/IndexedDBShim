@@ -30,9 +30,9 @@
             // Prevent `QUnit` from running tests
             //  Used in combination with QUnit.start() below;
             // The timing happens to work in the browser
-            //   without manual start, but the timing of grunt-qunit-puppeteer
-            //   necessitates this asynchronous approach (which should be
-            //   safer anyways).
+            //   without manual start, but the timing (when we were
+            //   using grunt-qunit-puppeteer) necessitated this
+            //   asynchronous approach (which should be safer anyways).
             QUnit.config.autostart = false;
 
             // eslint-disable-next-line no-unused-vars

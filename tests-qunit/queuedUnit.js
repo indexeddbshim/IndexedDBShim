@@ -28,7 +28,7 @@
     }
 
     QUnit.test('Setting up qunit', function (assert) {
-        var done = assert.async(); // Needed by grunt-contrib-qunit
+        var done = assert.async(); // Was needed by grunt-contrib-qunit
         assert.ok('Queued Unit setup complete');
         done();
     });

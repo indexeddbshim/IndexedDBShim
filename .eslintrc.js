@@ -89,7 +89,7 @@ module.exports = {
         },
         // Non-ESM Node files:
         {
-            files: ['Gruntfile.js', '.eslintrc.js'],
+            files: ['.eslintrc.js'],
             extends: ['plugin:node/recommended-script'],
             globals: {
                 require: 'readonly',

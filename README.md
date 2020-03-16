@@ -7,7 +7,7 @@
 [![CDNJS](https://img.shields.io/cdnjs/v/IndexedDBShim.svg)](https://cdnjs.com/libraries/IndexedDBShim)
 [![License](https://img.shields.io/npm/l/indexeddbshim.svg)](LICENSE-APACHE)
 
-|[Live Demo (stable)!](https://raw.githack.com/axemclion/IndexedDBShim/v6.1.0/index.html) | [Live Demo (master)!](https://raw.githack.com/axemclion/IndexedDBShim/master/index.html) |
+|[Live Demo (stable)!](https://raw.githack.com/axemclion/IndexedDBShim/v6.2.0/index.html) | [Live Demo (master)!](https://raw.githack.com/axemclion/IndexedDBShim/master/index.html) |
 | -------------- | ----------------- |
 
 

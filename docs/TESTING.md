@@ -8,8 +8,8 @@ tests, but at present its W3C tests
 They can be run through a variety of means as described below.
 
 To properly build the files (lint, browserify, and minify), use `npm start`
-or to also keep a web server, run `npm run dev` (or `grunt dev`). If
-you wish to do testing which only rebuilds the browser files, run
+or to also keep a web server, run `npm run dev`. If you wish to do
+testing which only rebuilds the browser files, run
 `npm run dev-browser` and if only testing Node, run `npm run dev-node`.
 But before release, one should run `npm run build` (or `npm run dev`).
 
@@ -27,13 +27,7 @@ a [problem in Firefox](https://github.com/axemclion/IndexedDBShim/issues/250).
 #### Automated browser unit testing
 
 Follow all of the steps above to build the project, then run `npm test`
-or `npm run sauce-qunit` (or `npm run puppeteer-qunit` or
-`grunt puppeteer-qunit` to avoid using Saucelabs when you have
-credentials set up as environmental variables) to run the unit tests.
-
-Note that when not running Saucelabs, the tests are run in
-[grunt-qunit-puppeteer](https://github.com/timostark/qunit-puppeteer),
-which uses headless Chromium.
+to run the unit tests.
 
 Although it is possible to get the W3C `web-platform-tests` runner
 working via patches as per
@@ -75,8 +69,8 @@ For the W3C `web-platform-tests` tests, individual tests can be run
 in these ways.
 
 1. The first way currently adds files within `web-platform-tests` but
-    does not modify files. To do this you must run a `grunt dev` task
-    or another such test that connects (to port 9999) and also follow
+    does not modify files. To do this you must run a `start` task
+    or another such test that starts a server at port 9999 and also follow
     the instructions to install and run the server at
     <https://github.com/w3c/web-platform-tests>. If you run
     `npm run w3c-add-wrap` (or `npm run w3c-remove-wrap` to undo), you
@@ -88,8 +82,8 @@ in these ways.
     W3C test runner at <http://web-platform.test:8000/tools/runner/index.html>,
     but it involves modifying files within `web-platform-tests` (you can use
     `git reset` to undo, however). You can then run `npm run w3c-wrap` and
-    run files in the runner or individually. As above, you must also keep the
-    `grunt dev` task (or the like) running on port 9999 and install
+    run files in the runner or individually. As above, you must also run
+    the `start` task (or the like) running on port 9999 and install
     `web-platform-tests`.
 1. One may use `./wpt run` with specific paths (See automated testing above).
 

@@ -1,18 +1,14 @@
 # CHANGES for IndexedDBShim
 
-## 6.1.2
+## 6.2.0
 
-- Fix (Webpack): Add CFS item `fs` (which the Node files automatically
-    set) to allow removal of database files without disturbing
-    non-Node environments that do their own special handling of
-    `require` statements
-
-## 6.1.1
-
+- Fix (React Native/Webpack): Add CFG item `fs` (which the Node
+    files automatically set) to allow removal of database files
+    without disturbing non-Node environments that do their own
+    special handling of `require` statements
 - Fix (Android): Overcome apparent Android SQLite mishandling of
     boolean (convert to `Number`)
-- Fix (React Native): Use dynamically generated string for `require`
-    to avoid erring (@swittk)
+- Build: Drop Grunt in favor of equivalent npm scripts
 - Testing (W3C): Update per latest wpt
 
 ## 6.1.0

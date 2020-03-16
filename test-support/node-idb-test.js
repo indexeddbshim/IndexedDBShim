@@ -30,9 +30,6 @@ const {
     goodFiles, badFiles, notRunning, timeout, excludedWorkers, excludedNormal
 } = require('./node-good-bad-files');
 
-// const grunt = require('grunt');
-// require('../Gruntfile')(grunt);
-
 // CONFIG
 const DEBUG = false;
 const vmTimeout = 90000; // Time until we give up on the vm (increasing to 40000 didn't make a difference on coverage in earlier versions)
@@ -117,7 +114,6 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                 //   in the tests (more tests do pass with these timeouts);
                 //   the timeout, however, does not even seem to be necessary.
                 // setTimeout(() => {
-                // grunt.task.run('clean-w3c');
                 await readAndEvaluate(jsFiles, initial, ending, workers, ++item);
                 // }, intervalSpacing);
                 return;
