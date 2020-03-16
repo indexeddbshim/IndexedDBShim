@@ -1,8 +1,29 @@
 /* eslint-env mocha */
-/* globals expect, sinon, util, env, IDBRequest */
+/* globals expect, sinon, util, env, IDBRequest, testHelper */
 /* eslint-disable no-var, no-unused-expressions */
 describe('IDBIndex.get', function () {
     'use strict';
+
+    it('Index Get', function (done) {
+        testHelper.createIndexesAndData((error, [key, value, objectStore, db]) => {
+            if (error) {
+                done(error);
+                return;
+            }
+            var index = objectStore.index('Int Index');
+            var req = index.get(value.Int);
+            req.onsuccess = function () {
+                expect(req.result, 'Got object from Index Get').to.deep.equal(value);
+                console.log('Got', req.result, value);
+                db.close();
+                done();
+            };
+            req.onerror = function () {
+                db.close();
+                done(new Error('Could not continue opening cursor'));
+            };
+        });
+    });
 
     it('should return an IDBRequest', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {

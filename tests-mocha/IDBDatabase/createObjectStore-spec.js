@@ -156,6 +156,10 @@ describe('IDBDatabase.createObjectStore', function () {
                         var db = event.target.result;
                         db.createObjectStore('My Store 1');
                         db.createObjectStore('My Store 2', {keyPath: 'foo', autoIncrement: false});
+                        expect(
+                            db.objectStoreNames,
+                            'Count of Object Stores created is correct'
+                        ).to.have.a.lengthOf(2);
 
                         expect(Array.prototype.slice.call(db.objectStoreNames))
                             .to.have.same.members(['My Store 1', 'My Store 2']);

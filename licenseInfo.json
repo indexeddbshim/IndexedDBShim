@@ -1,7 +1,7 @@
 {
   "bundledRootPackages": [
     "core-js-bundle", "regenerator-runtime",
-    "mocha", "chai", "qunit", "sinon", "source-map-support",
+    "mocha", "chai", "sinon", "source-map-support",
     "web-platform-tests"
   ],
   "filesByLicense": {

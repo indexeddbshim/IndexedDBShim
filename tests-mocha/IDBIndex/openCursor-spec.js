@@ -1,8 +1,34 @@
 /* eslint-env mocha */
-/* globals expect, sinon, util, env, IDBRequest, IDBCursor, IDBKeyRange  */
+/* globals expect, sinon, util, env, IDBRequest, IDBCursor, IDBKeyRange, testHelper  */
 /* eslint-disable no-var, no-unused-expressions */
 describe('IDBIndex.openCursor', function () {
     'use strict';
+
+    it('Index Cursor', function (done) {
+        testHelper.createIndexesAndData((error, [key, value, objectStore, db]) => {
+            if (error) {
+                done(error);
+                return;
+            }
+            var index = objectStore.index('Int Index');
+            var indexCursorReq = index.openCursor();
+            indexCursorReq.onsuccess = function () {
+                var cursor = indexCursorReq.result;
+                if (cursor) {
+                    expect(true, 'Iterating over cursor ' + cursor.key + ' for value ' + JSON.stringify(cursor.value)).to.be.true;
+                    cursor.continue();
+                } else {
+                    expect(true, 'Cursor Iteration completed').to.be.true;
+                    db.close();
+                    done();
+                }
+            };
+            indexCursorReq.onerror = function () {
+                db.close();
+                done(new Error('Could not continue opening cursor'));
+            };
+        });
+    });
 
     it('should return an IDBRequest', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {

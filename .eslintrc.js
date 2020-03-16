@@ -2,13 +2,12 @@
 
 module.exports = {
     extends: [
-        'ash-nazg/sauron-node', 'plugin:qunit/recommended'
+        'ash-nazg/sauron-node'
     ],
     parserOptions: {
         ecmaVersion: 2018,
         sourceType: 'module'
     },
-    plugins: ['qunit'],
     env: {
         browser: true
     },
@@ -112,7 +111,7 @@ module.exports = {
         // May need to support a lower browser version for test/development files, but
         //   not a lower Node version
         {
-            files: ['test-support/**', 'tests-mocha/**', 'tests-qunit/**'],
+            files: ['test-support/**', 'tests-mocha/**'],
             extends: ['plugin:node/recommended-script'],
             globals: {
                 require: 'readonly',

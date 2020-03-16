@@ -134,6 +134,7 @@ describe('IDBFactory.open', function () {
                     var db = open.result;
                     expect(db.name).to.equal(name);
                     expect(db.version).to.equal(1);
+                    expect(open.result.version).to.equal(1);
                     expect(db.objectStoreNames).to.have.lengthOf(0);
 
                     open.result.close();
@@ -183,6 +184,7 @@ describe('IDBFactory.open', function () {
                 open.onupgradeneeded = sinon.spy(function (event) {
                     var db = event.target.result;
                     expect(db.version).to.equal(1);
+                    expect(open.result.version).to.equal(1);
                     if (env.isShimmed || !env.browser.isSafari) {
                         expect(event.newVersion).to.equal(1); // BUG: Safari equals null
                         expect(event.oldVersion).to.equal(0); // BUG: Safari equals Number.MAX_VALUE

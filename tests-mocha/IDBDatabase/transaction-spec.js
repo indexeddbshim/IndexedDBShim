@@ -27,7 +27,7 @@ describe('IDBDatabase.transaction', function () {
                     done();
                     return;
                 }
-                var tx = db.transaction('inline', 'readonly');
+                var tx = db.transaction(['inline'], 'readonly');
                 expect(tx.db).to.equal(db);
 
                 db.close();

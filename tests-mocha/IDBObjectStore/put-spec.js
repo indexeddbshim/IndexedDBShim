@@ -1,8 +1,50 @@
 /* eslint-env mocha */
-/* globals expect, util, env */
+/* globals expect, util, env, testHelper, testData */
 /* eslint-disable no-var */
 describe('IDBObjectStore.put (only)', function () {
     'use strict';
+
+    const {sample} = testData;
+
+    it('Updating data in Object Store', function (done) {
+        testHelper.createObjectStores(undefined, (error, [objectStore]) => {
+            if (error) {
+                done(error);
+                return;
+            }
+            var key = sample.integer();
+            var data = sample.obj();
+            data.modified = true;
+            var req = objectStore.put(data, key);
+            req.onsuccess = function () {
+                expect(req.result, 'Data added to Object store').to.equal(key);
+                objectStore.transaction.db.close();
+                done();
+            };
+            req.onerror = function () {
+                done(new Error('Could not update Data'));
+            };
+        });
+    });
+
+    it('Updating non-existent in Object Store', function (done) {
+        testHelper.createObjectStores(undefined, (error, [objectStore]) => {
+            if (error) {
+                done(error);
+                return;
+            }
+            var key = 'UPDATED';
+            var req = objectStore.put(sample.obj(), key);
+            req.onsuccess = function () {
+                expect(req.result, 'Data updated in Object store').to.equal(key);
+                objectStore.transaction.db.close();
+                done();
+            };
+            req.onerror = function () {
+                done(new Error('Could not update Data'));
+            };
+        });
+    });
 
     it('should update an existing record with an out-of-line key', function (done) {
         util.createDatabase('out-of-line', function (err, db) {

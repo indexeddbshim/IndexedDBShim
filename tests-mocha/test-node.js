@@ -40,6 +40,8 @@ window.onerror = function () {
     } else {
         tests = [
             'api-spec.js',
+            'IDBCursor/delete-spec.js',
+            'IDBCursor/update-spec.js',
             'IDBFactory/cmp-spec.js',
             'IDBFactory/databases-spec.js',
             'IDBFactory/deleteDatabase-spec.js',
@@ -52,15 +54,20 @@ window.onerror = function () {
             'IDBIndex/get-spec.js',
             'IDBIndex/getKey-spec.js',
             'IDBIndex/openCursor-spec.js',
+            'IDBIndex/openKeyCursor-spec.js',
             'IDBKeyRange/includes-spec.js',
-            'IDBObjectStore/add-spec.js',
-            'IDBObjectStore/put-spec.js',
             'IDBObjectStore/add-put-spec.js',
+            'IDBObjectStore/add-spec.js',
             'IDBObjectStore/clear-spec.js',
+            'IDBObjectStore/count-spec.js',
             'IDBObjectStore/createIndex-spec.js',
-            'IDBObjectStore/deleteIndex-spec.js',
             'IDBObjectStore/delete-spec.js',
+            'IDBObjectStore/deleteIndex-spec.js',
+            'IDBObjectStore/get-spec.js',
             'IDBObjectStore/index-spec.js',
+            'IDBObjectStore/indexNames-spec.js',
+            'IDBObjectStore/openKeyCursor-spec.js',
+            'IDBObjectStore/put-spec.js',
             'IDBTransaction/objectStore-spec.js',
             'IDBTransaction/events-spec.js'
         ];

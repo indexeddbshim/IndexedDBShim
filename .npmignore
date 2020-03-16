@@ -3,7 +3,6 @@
 /test-support
 /tests-mocha
 /tests-polyfill
-/tests-qunit
 /web-platform-tests
 /*.*
 !index.html

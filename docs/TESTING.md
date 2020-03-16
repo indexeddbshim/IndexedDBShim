@@ -1,6 +1,6 @@
 ## Testing
 
-There are currently three folders for tests, `tests-qunit`,
+There are currently three folders for tests, `test-support`,
 `tests-mocha` and `tests-polyfill` (the latter are also Mocha-based
 tests, but at present its W3C tests
 [only work in Node](https://github.com/axemclion/IndexedDBShim/issues/249)).
@@ -18,8 +18,6 @@ The tests produce various database files. These are avoided in
 you wish to delete them all manually, run `npm run clean`.
 
 ### Browser testing
-
-All QUnit-based tests should pass in modern browsers.
 
 All Mocha-based browser tests should pass except for one test having
 a [problem in Firefox](https://github.com/axemclion/IndexedDBShim/issues/250).
@@ -55,11 +53,9 @@ Then run (without any process for `npm run wpt` running):
 
 If you want to run the tests in a normal web browser, you'll need to
 spin-up a local web server and then open
-[`tests-qunit/index.html?noglobals`](https://github.com/axemclion/IndexedDBShim/blob/master/tests-qunit/index.html?noglobals)
-and/or [`tests-mocha/index.html`](https://github.com/axemclion/IndexedDBShim/blob/master/tests-mocha/index.html)
+[`tests-mocha/index.html`](https://github.com/axemclion/IndexedDBShim/blob/master/tests-mocha/index.html)
 in your browser. You can also run `npm run dev` and point your
-browser to `http://localhost:9999/tests-qunit/index.html` or
-`http://localhost:9999/tests-mocha/index.html`.
+browser to `http://localhost:9999/tests-mocha/index.html`.
 
 Note that, for the Mocha tests, you probably wish to
 "Switch to IndexedDBShim" when doing
@@ -92,9 +88,7 @@ in these ways.
 To run the Node tests, run the following:
 
 1. `npm test` (Includes the following)
-    1. `npm run puppeteer-qunit`
     1. `npm run coverage` (includes the following, along with cleanup scripts)
-        1. `npm run coverage:qunit`
         1. `npm run coverage:mocha`
         1. `npm run coverage:polyfill` (or its components `npm run coverage:fake`,
             `npm run coverage:mock`, `npm run coverage:w3c-old`).

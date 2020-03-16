@@ -1,6 +1,6 @@
 /* eslint-env mocha */
-/* globals chai, shimIndexedDB, location, IDBFactory */
-/* eslint-disable no-var */
+/* globals chai, expect, shimIndexedDB, location, IDBFactory */
+/* eslint-disable no-var, no-unused-expressions */
 (function () {
     'use strict';
 
@@ -230,6 +230,193 @@
             OBJECT_STORE_5: 'objectStore5',
             INDEX1_ON_OBJECT_STORE_1: 'Index1_ObjectStore1',
             INDEX1_ON_OBJECT_STORE_2: 'Index1_ObjectStore2'
+        },
+        sample: (function () {
+            var generatedNumbers = {};
+            return {
+                obj () {
+                    return {
+                        String: 'Sample ' + new Date(),
+                        Int: this.integer(),
+                        Float: Math.random(),
+                        Boolean: true
+                    };
+                },
+                integer (arg) {
+                    // Ensuring a unique integer everytime, for the sake of index get
+                    var r;
+                    do {
+                        r = parseInt(Math.random() * (arg || 100000));
+                    }
+                    while (generatedNumbers[r]);
+                    generatedNumbers[r] = true;
+                    return r;
+                }
+            };
+        }())
+    };
+    var {testData: {DB, sample}} = window;
+    window.testHelper = {
+        createIndexes (cb) {
+            this.createObjectStores(undefined, (error, [, db]) => {
+                if (error) {
+                    expect(false, error).to.be.true;
+                    return;
+                }
+                db.close();
+                var dbOpenRequest = window.indexedDB.open(DB.NAME, 2);
+                dbOpenRequest.onsuccess = function (e) {
+                    expect(true, 'Database Opened successfully').to.be.true;
+                    var newDb = dbOpenRequest.result;
+                    var transaction = newDb.transaction([DB.OBJECT_STORE_1], 'readwrite');
+                    var objectStore = transaction.objectStore(DB.OBJECT_STORE_1);
+                    cb(null, [objectStore, newDb]);
+                };
+                dbOpenRequest.onerror = function (e) {
+                    cb(new Error('Database NOT Opened successfully'));
+                };
+                dbOpenRequest.onupgradeneeded = function (e) {
+                    expect(true, 'Database Upgraded successfully').to.be.true;
+                    // var db = dbOpenRequest.result;
+                    var objectStore1 = dbOpenRequest.transaction.objectStore(DB.OBJECT_STORE_1);
+                    // eslint-disable-next-line no-unused-vars
+                    var index1 = objectStore1.createIndex('Int Index', 'Int', {
+                        unique: false,
+                        multiEntry: false
+                    });
+                    var index2 = objectStore1.createIndex('String.Index', 'String'); // eslint-disable-line no-unused-vars
+                    expect(objectStore1.indexNames, '2 Indexes on object store successfully created').to.have.lengthOf(2);
+                };
+                dbOpenRequest.onblocked = function (e) {
+                    cb(new Error('Opening database blocked'));
+                };
+            });
+        },
+        createIndexesAndData (cb) {
+            var key = sample.integer();
+            var value = sample.obj();
+            this.createIndexes((error, [objectStore, db]) => {
+                if (error) {
+                    expect(false, error).to.be.true;
+                    return;
+                }
+                var addReq = objectStore.add(value, key);
+                addReq.onsuccess = function (e) {
+                    expect(addReq.result, 'Data successfully added').to.equal(key);
+                    cb(null, [key, value, objectStore, db]);
+                };
+                addReq.onerror = function () {
+                    db.close();
+                    cb(new Error('Could not add data'));
+                };
+            });
+        },
+        // eslint-disable-next-line default-param-last
+        createObjectStores (storeName = DB.OBJECT_STORE_1, cb) {
+            const delReq = window.indexedDB.deleteDatabase(DB.NAME);
+            delReq.onblocked = () => {
+                expect(false, 'blocked').to.be.true;
+            };
+            delReq.onerror = (err) => {
+                expect(false, err).to.be.true;
+            };
+            delReq.onsuccess = () => {
+                var dbOpenRequest = window.indexedDB.open(DB.NAME, 1);
+                dbOpenRequest.onsuccess = function (e) {
+                    expect(true, 'Database opened successfully with version ' + dbOpenRequest.result.version).to.be.true;
+                    var db = dbOpenRequest.result;
+                    var transaction = db.transaction([
+                        DB.OBJECT_STORE_1, DB.OBJECT_STORE_2,
+                        DB.OBJECT_STORE_3
+                    ], 'readwrite');
+                    var objectStore = transaction.objectStore(storeName);
+                    cb(null, [objectStore, db]);
+                };
+                dbOpenRequest.onerror = function (e) {
+                    expect(false, 'Database NOT Opened successfully').to.be.true;
+                    cb(e);
+                };
+                dbOpenRequest.onupgradeneeded = function (e) {
+                    expect(true, 'Database Upgraded successfully').to.be.true;
+                    var db = dbOpenRequest.result;
+                    db.createObjectStore(DB.OBJECT_STORE_1);
+                    db.createObjectStore(DB.OBJECT_STORE_2, {
+                        keyPath: 'Int',
+                        autoIncrement: true
+                    });
+                    db.createObjectStore(DB.OBJECT_STORE_3, {
+                        autoIncrement: true
+                    });
+                    db.createObjectStore(DB.OBJECT_STORE_4, {
+                        keyPath: 'Int'
+                    });
+                    var objectStore5 = db.createObjectStore(DB.OBJECT_STORE_5); // eslint-disable-line no-unused-vars
+                    expect(
+                        db.objectStoreNames,
+                        'Count of Object Stores created is correct'
+                    ).to.have.lengthOf(5);
+                };
+
+                dbOpenRequest.onblocked = function (e) {
+                    expect(false, 'Database open is now blocked').to.be.true;
+                    cb(e);
+                };
+            };
+        },
+        addObjectStoreData (cb) {
+            var dbOpenRequest = window.indexedDB.open(DB.NAME);
+            dbOpenRequest.onsuccess = function (e) {
+                expect(true, 'Database Opened successfully').to.be.true;
+                var db = dbOpenRequest.result;
+                var transaction = db.transaction([DB.OBJECT_STORE_1], 'readwrite');
+                var objectStore = transaction.objectStore(DB.OBJECT_STORE_1);
+                var counter = 0, max = 15;
+                var success = function () {
+                    expect(true, 'Data added to store').to.be.true;
+                    if (++counter >= max) {
+                        db.close();
+                        // eslint-disable-next-line callback-return
+                        cb();
+                    }
+                };
+                var error = function (e) {
+                    expect(false, 'Could not add data').to.be.true;
+                    if (++counter >= 10) {
+                        // eslint-disable-next-line callback-return
+                        cb(e);
+                    }
+                };
+                for (var i = 0; i < max; i++) {
+                    var req = objectStore.add(sample.obj(), i);
+                    req.onsuccess = success;
+                    req.onerror = error;
+                }
+            };
+            dbOpenRequest.onerror = function (e) {
+                expect(false, 'Database NOT Opened successfully').to.be.true;
+                cb(e);
+            };
+            dbOpenRequest.onblocked = function (e) {
+                expect(false, 'Opening database blocked').to.be.true;
+                cb(e);
+            };
+        },
+        // eslint-disable-next-line default-param-last
+        openObjectStore (storeName = DB.OBJECT_STORE_1, cb) {
+            var dbOpenRequest = window.indexedDB.open(DB.NAME);
+            dbOpenRequest.onsuccess = function (e) {
+                var db = dbOpenRequest.result;
+                var transaction = db.transaction([
+                    DB.OBJECT_STORE_1, DB.OBJECT_STORE_2,
+                    DB.OBJECT_STORE_3
+                ], 'readwrite');
+                var objectStore = transaction.objectStore(storeName);
+                cb(null, [objectStore, db]);
+            };
+            dbOpenRequest.onerror = function (e) {
+                expect(false, 'Database NOT Opened successfully').to.be.true;
+                cb(e);
+            };
         }
     };
 })();

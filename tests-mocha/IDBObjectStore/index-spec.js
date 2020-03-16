@@ -1,8 +1,21 @@
 /* eslint-env mocha */
-/* globals expect, util, env, IDBIndex */
+/* globals expect, util, env, IDBIndex, testHelper */
 /* eslint-disable no-var */
 describe('IDBObjectStore.index', function () {
     'use strict';
+
+    it('Check index keyPath exists after reopening database', function (done) {
+        testHelper.createIndexes((error, [objectStore, db]) => {
+            if (error) {
+                done(error);
+                return;
+            }
+            var index = objectStore.index('Int Index');
+            expect(index.keyPath, 'keyPath on index still exists').to.equal('Int');
+            db.close();
+            done();
+        });
+    });
 
     it('should return an IDBIndex', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {

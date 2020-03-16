@@ -1,8 +1,9 @@
 /* eslint-env mocha */
-/* globals expect, sinon, util, env */
+/* globals expect, sinon, util, env, testData, testHelper */
 /* eslint-disable no-var, no-unused-expressions */
 describe('IDBObjectStore.add (only)', function () {
     'use strict';
+    const {sample, DB} = testData;
 
     var onerror;
     beforeEach(function () {
@@ -20,6 +21,118 @@ describe('IDBObjectStore.add (only)', function () {
     afterEach(function () {
         // Restore the global error handler
         window.onerror = onerror;
+    });
+
+    it('Adding data of various types to Object Store', function (done) {
+        var key = sample.integer();
+        var data = sample.obj();
+        testHelper.createObjectStores(undefined, function (error, [objectStore, db]) {
+            if (error) {
+                done(error);
+                return;
+            }
+            var req = objectStore.add(data, key);
+            req.onsuccess = function (e) {
+                expect(req.result, 'Data added to Object store').to.equal(key);
+                objectStore.transaction.db.close();
+                done();
+            };
+            req.onerror = function (e) {
+                done(new Error(
+                    'Could not add Data to ObjectStore1'
+                ));
+            };
+        });
+    });
+
+    it('Lots of data Added to objectStore1', function (done) {
+        testHelper.createObjectStores(undefined, (error, [, db]) => {
+            if (error) {
+                done(error);
+                return;
+            }
+            db.close();
+            testHelper.addObjectStoreData(done);
+        });
+    });
+
+    it('Adding data of different types with keypath and autoInc, no key', function (done) {
+        testHelper.createObjectStores(DB.OBJECT_STORE_2, function (error, [objectStore, db]) {
+            if (error) {
+                done(error);
+                return;
+            }
+            var req = objectStore.add(sample.obj());
+            req.onsuccess = function (e) {
+                expect(req.result, 'Data added to Object store').to.not.equal(null);
+                objectStore.transaction.db.close();
+                done();
+            };
+            req.onerror = function (e) {
+                done(new Error(
+                    'Could not add Data to ObjectStore1'
+                ));
+            };
+        });
+    });
+
+    it('Adding with keypath and autoInc, no key in path', function (done) {
+        testHelper.createObjectStores(DB.OBJECT_STORE_2, (error, [objectStore]) => {
+            if (error) {
+                done(error);
+                return;
+            }
+            var data = sample.obj();
+            delete data.Int;
+            var req = objectStore.add(data);
+            req.onsuccess = function (e) {
+                expect(req.result, 'Data added to Object store').to.not.equal(null);
+                objectStore.transaction.db.close();
+                done();
+            };
+            req.onerror = function (e) {
+                done(new Error(
+                    'Could not add Data to ObjectStore1'
+                ));
+            };
+        });
+    });
+
+    it('Adding with NO keypath and autoInc', function (done) {
+        var key = sample.integer();
+        testHelper.createObjectStores(DB.OBJECT_STORE_3, (error, [objectStore]) => {
+            if (error) {
+                done(error);
+                return;
+            }
+            var req = objectStore.add(sample.obj(), key);
+            req.onsuccess = function (e) {
+                expect(req.result, 'Data added to Object store').to.equal(key);
+                objectStore.transaction.db.close();
+                done();
+            };
+            req.onerror = function (e) {
+                done(new Error('Could not add Data to ObjectStore1'));
+            };
+        });
+    });
+
+    it('Adding with NO keypath and autoInc - no key specified', function (done) {
+        testHelper.createObjectStores(DB.OBJECT_STORE_3, (error, [objectStore]) => {
+            if (error) {
+                done(error);
+                return;
+            }
+            var req = objectStore.add(sample.obj());
+            req.onsuccess = function (e) {
+                expect(req.result, 'Data added to Object store').to.be.ok;
+                objectStore.transaction.db.close();
+                done();
+            };
+            req.onerror = function (e) {
+                done(new Error('Could not add Data to ObjectStore1'));
+            };
+        });
     });
 
     it('should throw an error if an out-of-line key already exists', function (done) {

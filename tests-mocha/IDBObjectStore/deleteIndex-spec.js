@@ -1,12 +1,51 @@
 /* eslint-env mocha */
-/* globals expect, sinon, util, env */
-/* eslint-disable no-var */
+/* globals expect, sinon, util, env, testHelper */
+/* eslint-disable no-var, no-unused-expressions */
 describe('IDBObjectStore.deleteIndex', function () {
     'use strict';
 
     var indexedDB;
     beforeEach(function () {
         indexedDB = env.indexedDB;
+    });
+
+    it('deletes indexes', function (done) {
+        var {testData: {DB}} = window;
+        testHelper.createObjectStores(undefined, (error, [, db]) => {
+            if (error) {
+                done(error);
+                return;
+            }
+            db.close();
+            var dbOpenRequest = indexedDB.open(DB.NAME);
+            dbOpenRequest.onsuccess = function (e) {
+                expect(true, 'Database Opened successfully').to.be.true;
+                dbOpenRequest.result.close();
+                done();
+            };
+            dbOpenRequest.onerror = function (e) {
+                console.log('e', e);
+                done(new Error('Database NOT Opened successfully'));
+            };
+            dbOpenRequest.onupgradeneeded = function (e) {
+                expect(true, 'Database Upgraded successfully').to.be.true;
+                // var db = dbOpenRequest.result;
+                var objectStore1 = dbOpenRequest.transaction.objectStore(DB.OBJECT_STORE_1);
+                var count = objectStore1.indexNames.length;
+
+                var index3 = objectStore1.createIndex('DeleteTestIndex', 'String'); // eslint-disable-line no-unused-vars
+                expect(objectStore1.indexNames, 'Index on object store successfully created').to.have.lengthOf(count + 1);
+                objectStore1.deleteIndex('DeleteTestIndex');
+                expect(objectStore1.indexNames, 'Index on object store successfully deleted').to.have.lengthOf(count);
+                objectStore1.createIndex('DeleteTestIndex', 'Int');
+                expect(objectStore1.indexNames, 'Index with previously deleted name successfully created').to.have.lengthOf(count + 1);
+                objectStore1.deleteIndex('DeleteTestIndex');
+                expect(objectStore1.indexNames, 'Index with previously deleted name successfully deleted').to.have.lengthOf(count);
+            };
+            dbOpenRequest.onblocked = function (e) {
+                done(new Error('Opening database blocked'));
+            };
+        });
     });
 
     describe('success tests', function () {
