@@ -52,6 +52,7 @@ const nodeReplacementHacks = {
     'idb-binary-key-roundtrip.js': [/(`Binary keys can be supplied using the view type \$\{type\}`),/u, '$1'] // https://github.com/w3c/web-platform-tests/issues/4817
 };
 
+const jsonResults = true;
 const shimNS = {
     colors,
     fileName: '',
@@ -199,7 +200,31 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                         'other tests to complete: ' + cleanJSONOutput(excluded)
                     );
                 }
-                if (shimNS.jsonOutput) {
+                if (jsonResults) {
+                    const jsonOutputPath = path.join(
+                        'test-support', 'results',
+                        'file-w3c' +
+                            // new Date().getTime() +
+                            '.json'
+                    );
+                    try {
+                        await writeFile(jsonOutputPath, JSON.stringify(
+                            {
+                                stats: {
+                                    passes: shimNS.statuses.Pass,
+                                    failures:
+                                        shimNS.statuses.Fail +
+                                        shimNS.statuses.Timeout +
+                                        shimNS.statuses['Not Run']
+                                }
+                            }, null, 2
+                        ));
+                    } catch (err) {
+                        console.log(err);
+                        return;
+                    }
+                    console.log('Saved to ' + jsonOutputPath);
+                } else if (shimNS.jsonOutput) {
                     const jsonOutputPath = path.join(
                         'test-support', 'json-output' +
                         // new Date().getTime() +

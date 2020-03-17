@@ -11,6 +11,7 @@ test-support/latest-erring-bundled.js
 
 test-support/js
 test-support/json-output*
+test-support/results
 ignore
 node_modules
 

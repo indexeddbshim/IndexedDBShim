@@ -6,7 +6,7 @@
 [![npm](http://img.shields.io/npm/v/indexeddbshim.svg)](https://www.npmjs.com/package/indexeddbshim)
 [![CDNJS](https://img.shields.io/cdnjs/v/IndexedDBShim.svg)](https://cdnjs.com/libraries/IndexedDBShim)
 
-<!--[![Tests badge](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/badges/tests-badge.svg?sanitize=true)](badges/tests-badge.svg)-->
+[![Tests badge](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/badges/tests-badge.svg?sanitize=true)](badges/tests-badge.svg)
 [![Coverage badge](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/badges/coverage-badge.svg?sanitize=true)](badges/coverage-badge.svg)
 
 
