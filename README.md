@@ -9,7 +9,6 @@
 [![Tests badge](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/badges/tests-badge.svg?sanitize=true)](badges/tests-badge.svg)
 [![Coverage badge](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/badges/coverage-badge.svg?sanitize=true)](badges/coverage-badge.svg)
 
-
 [![Known Vulnerabilities](https://snyk.io/test/github/axemclion/IndexedDBShim/badge.svg)](https://snyk.io/test/github/axemclion/IndexedDBShim)
 [![Total Alerts](https://img.shields.io/lgtm/alerts/g/axemclion/IndexedDBShim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/axemclion/IndexedDBShim/alerts)
 [![Code Quality: Javascript](https://img.shields.io/lgtm/grade/javascript/g/axemclion/IndexedDBShim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/axemclion/IndexedDBShim/context:javascript)
