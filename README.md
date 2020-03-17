@@ -14,9 +14,13 @@
 [![Total Alerts](https://img.shields.io/lgtm/alerts/g/axemclion/IndexedDBShim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/axemclion/IndexedDBShim/alerts)
 [![Code Quality: Javascript](https://img.shields.io/lgtm/grade/javascript/g/axemclion/IndexedDBShim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/axemclion/IndexedDBShim/context:javascript)
 
-[![Licenses badge](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/badges/licenses-badge.svg?sanitize=true)](badges/licenses-badge.svg)
-[![Licenses dev badge](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/badges/licenses-badge-dev.svg?sanitize=true)](badges/licenses-badge-dev.svg)
 [![License](https://img.shields.io/npm/l/indexeddbshim.svg)](LICENSE-APACHE)
+
+[![Licenses badge](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/badges/licenses-badge.svg?sanitize=true)](badges/licenses-badge.svg)
+<!--
+[![Licenses dev badge](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/badges/licenses-badge-dev.svg?sanitize=true)](badges/licenses-badge-dev.svg)
+-->
+(see also [licenses for dev. deps.](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/badges/licenses-badge-dev.svg?sanitize=true))
 
 <!--[![issuehunt-to-marktext](https://issuehunt.io/static/embed/issuehunt-button-v1.svg)](https://issuehunt.io/r/axemclion/IndexedDBShim)-->
 
