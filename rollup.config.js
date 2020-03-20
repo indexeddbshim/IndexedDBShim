@@ -139,11 +139,15 @@ const nodeEnvironment = ({input, name, output: file}) => {
     });
 };
 
+/**
+* @external Rollup
+*/
+
 /* eslint-disable import/no-anonymous-default-export */
 /**
  * @param {PlainObject} commandLineArgs Object allowing user-defined `config*`,
  * e.g., `configBrowserOnly`
- * @returns {[type]} [description]
+ * @returns {external:Rollup[]}
  */
 export default (commandLineArgs) => {
     /* eslint-enable import/no-anonymous-default-export */
