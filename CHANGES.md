@@ -4,6 +4,7 @@
 
 - Fork from <https://github.com/axemclion/IndexedDBShim>.
 - Project: Add Github Sponors button to be able to accept funding
+- Project: Restore demo via Github Pages
 - Fix (React Native/Webpack): Add CFG item `fs` (which the Node
     files automatically set) to allow removal of database files
     without disturbing non-Node environments that do their own
