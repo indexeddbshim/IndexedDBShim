@@ -1,5 +1,9 @@
 # CHANGES for indexeddbshim/indexeddbshim
 
+## 6.2.1
+
+- Docs: Fix badges
+
 ## 6.2.0
 
 - Fork from <https://github.com/axemclion/IndexedDBShim>.
