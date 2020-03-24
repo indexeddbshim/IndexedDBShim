@@ -4,7 +4,7 @@
 [![Dependencies](https://img.shields.io/david/indexeddbshim/indexeddbshim.svg)](https://david-dm.org/indexeddbshim/indexeddbshim)
 [![devDependencies](https://img.shields.io/david/dev/indexeddbshim/indexeddbshim.svg)](https://david-dm.org/indexeddbshim/indexeddbshim?type=dev)
 [![npm](http://img.shields.io/npm/v/@indexeddbshim/indexeddbshim.svg)](https://www.npmjs.com/package/@indexeddbshim/indexeddbshim)
-[![CDNJS](https://img.shields.io/cdnjs/v/IndexedDBShim.svg)](https://cdnjs.com/libraries/IndexedDBShim)
+[![CDNJS](https://img.shields.io/cdnjs/v/IndexedDBShim.svg)](https://cdnjs.com/libraries/@indexeddbshim/indexeddbshim)
 
 [![Tests badge](https://raw.githubusercontent.com/indexeddbshim/indexeddbshim/master/badges/tests-badge.svg?sanitize=true)](badges/tests-badge.svg)
 [![Coverage badge](https://raw.githubusercontent.com/indexeddbshim/indexeddbshim/master/badges/coverage-badge.svg?sanitize=true)](badges/coverage-badge.svg)
