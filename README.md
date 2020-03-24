@@ -108,7 +108,7 @@ use the following instead:
 ## Node set-up
 
 ```js
-const setGlobalVars = require('indexeddbshim');
+const setGlobalVars = require('@indexeddbshim/indexeddbshim');
 
 global.window = global; // We'll allow ourselves to use `window.indexedDB` or `indexedDB` as a global
 setGlobalVars(); // See signature below
@@ -119,16 +119,16 @@ setGlobalVars(); // See signature below
 ### Bundler for Browser
 
 ```js
-import setGlobalVars from 'indexeddbshim';
+import setGlobalVars from '@indexeddbshim/indexeddbshim';
 ```
 
 ### Bundler for Node
 
 ```js
-import setGlobalVars from 'indexeddbshim/src/node-UnicodeIdentifiers';
+import setGlobalVars from '@indexeddbshim/indexeddbshim/src/node-UnicodeIdentifiers';
 
 // Or without Unicode support
-// import setGlobalVars from 'indexeddbshim/src/node';
+// import setGlobalVars from '@indexeddbshim/indexeddbshim/src/node';
 ```
 
 ## Usage/API

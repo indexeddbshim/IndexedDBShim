@@ -1,5 +1,5 @@
 {
-  "name": "indexeddbshim",
+  "name": "@indexeddbshim/indexeddbshim",
   "version": "6.2.0",
   "author": "Parashuram <code@nparashuram.com>",
   "contributors": [

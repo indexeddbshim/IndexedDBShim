@@ -26,7 +26,7 @@ const fetch = require('isomorphic-fetch');
 const wwutil = require('./webworker-util');
 // Had problems with npm and the following when requiring `webworkers`
 //   as a separate repository (due to indirect circular dependency?);
-// const indexeddbshim = require('indexeddbshim');
+// const indexeddbshim = require('@indexeddbshim/indexeddbshim');
 const indexeddbshim = require('../../dist/indexeddbshim-UnicodeIdentifiers-node'); // require('../../');
 const Worker = require('./webworker');
 // const isDateObject = require('is-date-object'); // Not needed in worker tests as in main thread tests
