@@ -55,7 +55,7 @@ shim will ensure consistent behavior across all browsers.
     (Not recently tested)
 - This shim is basically an IndexedDB-to-WebSQL adapter.
 - More (though most likely now outdated) details about the project at
-    [gh-pages](http://nparashuram.com/IndexedDBShim)
+    <http://nparashuram.com/IndexedDBShim>
 
 ## Installation
 
