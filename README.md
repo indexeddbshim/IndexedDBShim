@@ -3,7 +3,7 @@
 [![Build Status](https://img.shields.io/travis/indexeddbshim/indexeddbshim.svg)](https://travis-ci.org/indexeddbshim/indexeddbshim)
 [![Dependencies](https://img.shields.io/david/indexeddbshim/indexeddbshim.svg)](https://david-dm.org/indexeddbshim/indexeddbshim)
 [![devDependencies](https://img.shields.io/david/dev/indexeddbshim/indexeddbshim.svg)](https://david-dm.org/indexeddbshim/indexeddbshim?type=dev)
-[![npm](http://img.shields.io/npm/v/indexeddbshim.svg)](https://www.npmjs.com/package/indexeddbshim)
+[![npm](http://img.shields.io/npm/v/@indexeddbshim/indexeddbshim.svg)](https://www.npmjs.com/package/@indexeddbshim/indexeddbshim)
 [![CDNJS](https://img.shields.io/cdnjs/v/IndexedDBShim.svg)](https://cdnjs.com/libraries/IndexedDBShim)
 
 [![Tests badge](https://raw.githubusercontent.com/indexeddbshim/indexeddbshim/master/badges/tests-badge.svg?sanitize=true)](badges/tests-badge.svg)
@@ -13,7 +13,7 @@
 [![Total Alerts](https://img.shields.io/lgtm/alerts/g/indexeddbshim/indexeddbshim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/indexeddbshim/indexeddbshim/alerts)
 [![Code Quality: Javascript](https://img.shields.io/lgtm/grade/javascript/g/indexeddbshim/indexeddbshim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/indexeddbshim/indexeddbshim/context:javascript)
 
-[![License](https://img.shields.io/npm/l/indexeddbshim.svg)](LICENSE-APACHE)
+[![License](https://img.shields.io/npm/l/@indexeddbshim/indexeddbshim.svg)](LICENSE-APACHE)
 
 [![Licenses badge](https://raw.githubusercontent.com/indexeddbshim/indexeddbshim/master/badges/licenses-badge.svg?sanitize=true)](badges/licenses-badge.svg)
 <!--
