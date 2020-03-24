@@ -23,7 +23,7 @@
 
 <!--[![issuehunt-to-marktext](https://issuehunt.io/static/embed/issuehunt-button-v1.svg)](https://issuehunt.io/r/indexeddbshim/indexeddbshim)-->
 
-|[Live Demo (stable)!](https://raw.githack.com/indexeddbshim/indexeddbshim/v6.2.0/index.html) | [Live Demo (master)!](https://raw.githack.com/indexeddbshim/indexeddbshim/master/index.html) |
+|[Live Demo (stable)!](https://raw.githack.com/indexeddbshim/indexeddbshim/v6.2.0/index.html) | [Live Demo (master)!](https://indexeddbshim.github.io/indexeddbshim/) |
 | -------------- | ----------------- |
 
 **This is a maintained fork of [IndexedDBShim](https://github.com/axemclion/IndexedDBShim). To migrate from IndexedDBShim, you should be able to just replace references requiring or importing `indexeddbshim` with `@indexeddbshim/indexeddbshim`.**
