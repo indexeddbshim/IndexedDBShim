@@ -1,29 +1,29 @@
 # IndexedDB Polyfill
 
-[![Build Status](https://img.shields.io/travis/axemclion/IndexedDBShim.svg)](https://travis-ci.org/axemclion/IndexedDBShim)
-[![Dependencies](https://img.shields.io/david/axemclion/indexeddbshim.svg)](https://david-dm.org/axemclion/indexeddbshim)
-[![devDependencies](https://img.shields.io/david/dev/axemclion/indexeddbshim.svg)](https://david-dm.org/axemclion/indexeddbshim?type=dev)
+[![Build Status](https://img.shields.io/travis/indexeddbshim/indexeddbshim.svg)](https://travis-ci.org/indexeddbshim/indexeddbshim)
+[![Dependencies](https://img.shields.io/david/indexeddbshim/indexeddbshim.svg)](https://david-dm.org/indexeddbshim/indexeddbshim)
+[![devDependencies](https://img.shields.io/david/dev/indexeddbshim/indexeddbshim.svg)](https://david-dm.org/indexeddbshim/indexeddbshim?type=dev)
 [![npm](http://img.shields.io/npm/v/indexeddbshim.svg)](https://www.npmjs.com/package/indexeddbshim)
 [![CDNJS](https://img.shields.io/cdnjs/v/IndexedDBShim.svg)](https://cdnjs.com/libraries/IndexedDBShim)
 
-[![Tests badge](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/badges/tests-badge.svg?sanitize=true)](badges/tests-badge.svg)
-[![Coverage badge](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/badges/coverage-badge.svg?sanitize=true)](badges/coverage-badge.svg)
+[![Tests badge](https://raw.githubusercontent.com/indexeddbshim/indexeddbshim/master/badges/tests-badge.svg?sanitize=true)](badges/tests-badge.svg)
+[![Coverage badge](https://raw.githubusercontent.com/indexeddbshim/indexeddbshim/master/badges/coverage-badge.svg?sanitize=true)](badges/coverage-badge.svg)
 
-[![Known Vulnerabilities](https://snyk.io/test/github/axemclion/IndexedDBShim/badge.svg)](https://snyk.io/test/github/axemclion/IndexedDBShim)
-[![Total Alerts](https://img.shields.io/lgtm/alerts/g/axemclion/IndexedDBShim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/axemclion/IndexedDBShim/alerts)
-[![Code Quality: Javascript](https://img.shields.io/lgtm/grade/javascript/g/axemclion/IndexedDBShim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/axemclion/IndexedDBShim/context:javascript)
+[![Known Vulnerabilities](https://snyk.io/test/github/indexeddbshim/indexeddbshim/badge.svg)](https://snyk.io/test/github/indexeddbshim/indexeddbshim)
+[![Total Alerts](https://img.shields.io/lgtm/alerts/g/indexeddbshim/indexeddbshim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/indexeddbshim/indexeddbshim/alerts)
+[![Code Quality: Javascript](https://img.shields.io/lgtm/grade/javascript/g/indexeddbshim/indexeddbshim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/indexeddbshim/indexeddbshim/context:javascript)
 
 [![License](https://img.shields.io/npm/l/indexeddbshim.svg)](LICENSE-APACHE)
 
-[![Licenses badge](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/badges/licenses-badge.svg?sanitize=true)](badges/licenses-badge.svg)
+[![Licenses badge](https://raw.githubusercontent.com/indexeddbshim/indexeddbshim/master/badges/licenses-badge.svg?sanitize=true)](badges/licenses-badge.svg)
 <!--
-[![Licenses dev badge](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/badges/licenses-badge-dev.svg?sanitize=true)](badges/licenses-badge-dev.svg)
+[![Licenses dev badge](https://raw.githubusercontent.com/indexeddbshim/indexeddbshim/master/badges/licenses-badge-dev.svg?sanitize=true)](badges/licenses-badge-dev.svg)
 -->
-(see also [licenses for dev. deps.](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/badges/licenses-badge-dev.svg?sanitize=true))
+(see also [licenses for dev. deps.](https://raw.githubusercontent.com/indexeddbshim/indexeddbshim/master/badges/licenses-badge-dev.svg?sanitize=true))
 
-<!--[![issuehunt-to-marktext](https://issuehunt.io/static/embed/issuehunt-button-v1.svg)](https://issuehunt.io/r/axemclion/IndexedDBShim)-->
+<!--[![issuehunt-to-marktext](https://issuehunt.io/static/embed/issuehunt-button-v1.svg)](https://issuehunt.io/r/indexeddbshim/indexeddbshim)-->
 
-|[Live Demo (stable)!](https://raw.githack.com/axemclion/IndexedDBShim/v6.2.0/index.html) | [Live Demo (master)!](https://raw.githack.com/axemclion/IndexedDBShim/master/index.html) |
+|[Live Demo (stable)!](https://raw.githack.com/indexeddbshim/indexeddbshim/v6.2.0/index.html) | [Live Demo (master)!](https://raw.githack.com/indexeddbshim/indexeddbshim/master/index.html) |
 | -------------- | ----------------- |
 
 
@@ -58,9 +58,9 @@ shim will ensure consistent behavior across all browsers.
 
 ## Installation
 
-You can download the [development](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/dist/indexeddbshim.js)
+You can download the [development](https://raw.githubusercontent.com/indexeddbshim/indexeddbshim/master/dist/indexeddbshim.js)
 or
-[production (minified)](https://raw.githubusercontent.com/axemclion/IndexedDBShim/master/dist/indexeddbshim.min.js)
+[production (minified)](https://raw.githubusercontent.com/indexeddbshim/indexeddbshim/master/dist/indexeddbshim.min.js)
 script, or install it using [NPM](https://docs.npmjs.com/getting-started/what-is-npm).
 
 Please note that the version currently in `master` is the only one which
@@ -76,13 +76,13 @@ Also make sure Python (2.7) is installed.
 ### npm
 
 ```shell
-npm install indexeddbshim
+npm install @indexeddbshim/indexeddbshim
 ```
 
 or
 
 ```shell
-yarn add indexeddbshim
+yarn add @indexeddbshim/indexeddbshim
 ```
 
 ## Browser set-up
@@ -475,8 +475,8 @@ shimIndexedDB.__getConfig(property);
 ## Known Issues
 
 All code has bugs, and this project is no exception.  If you find a bug,
-please [let us know about it](https://github.com/axemclion/IndexedDBShim/issues).
-Or better yet, [send us a fix](https://github.com/axemclion/IndexedDBShim/pulls)!
+please [let us know about it](https://github.com/indexeddbshim/indexeddbshim/issues).
+Or better yet, [send us a fix](https://github.com/indexeddbshim/indexeddbshim/pulls)!
 Please make sure someone else hasn't already reported the same bug though.
 
 Here is a summary of main [known issues](https://github.com/axemclion/IndexedDBShim/issues/262#issuecomment-254413002)
@@ -620,11 +620,11 @@ To build the project locally on your computer:
 1. __Clone this repo__
 If you clone the repository to work against an unstable version, you only
 need to clone the repository recursively (via
-`git clone https://github.com/axemclion/IndexedDBShim.git --recursive`)
+`git clone https://github.com/indexeddbshim/indexeddbshim.git --recursive`)
 if you wish to have the W3C tests available for testing (which
 unfortunately loads all W3C tests into the "web-platform-tests"
 subdirectory rather than just the IndexedDB ones). Otherwise, just use
-`git clone https://github.com/axemclion/IndexedDBShim.git`
+`git clone https://github.com/indexeddbshim/indexeddbshim.git`
 
 1. __Install dev dependencies (and websql for Node)__
 `yarn install`

@@ -1,4 +1,4 @@
-This repository uses [Travis-CI](https://travis-ci.org/axemclion/indexeddbshim)
+This repository uses [Travis-CI](https://travis-ci.org/indexeddbshim/indexeddbshim)
 for running the continuous integration (CI) tests. It uses [Sauce Labs](http://saucelabs.com)
 to run automated test cases on different browsers. The Sauce Labs server can
 be only accessed using a secure environment variable that is not accessible

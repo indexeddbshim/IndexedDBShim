@@ -5,7 +5,7 @@
   "contributors": [
     "Brett Zamir"
   ],
-  "homepage": "https://github.com/axemclion/IndexedDBShim",
+  "homepage": "https://github.com/indexeddbshim/IndexedDBShim",
   "description": "A polyfill for IndexedDB using WebSql",
   "nyc": {
     "reporter": [
@@ -94,10 +94,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/axemclion/IndexedDBShim"
+    "url": "https://github.com/indexeddbshim/IndexedDBShim"
   },
   "bugs": {
-    "url": "https://github.com/axemclion/IndexedDBShim/issues"
+    "url": "https://github.com/indexeddbshim/IndexedDBShim/issues"
   },
   "main": "dist/indexeddbshim-node.js",
   "browser": "dist/indexeddbshim.min.js",

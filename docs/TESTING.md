@@ -53,7 +53,7 @@ Then run (without any process for `npm run wpt` running):
 
 If you want to run the tests in a normal web browser, you'll need to
 spin-up a local web server and then open
-[`tests-mocha/index.html`](https://github.com/axemclion/IndexedDBShim/blob/master/tests-mocha/index.html)
+[`tests-mocha/index.html`](https://github.com/indexeddbshim/indexeddbshim/blob/master/tests-mocha/index.html)
 in your browser. You can also run `npm run dev` and point your
 browser to `http://localhost:9999/tests-mocha/index.html`.
 
@@ -124,9 +124,9 @@ If you want to run the tests in a Cordova or PhoneGap app, then you'll need
 to create a new Cordova/PhoneGap project, and add the
 [IndexedDB plug-in](http://plugins.cordova.io/#/package/com.msopentech.indexeddb).
 Then copy the contents of our
-[`tests`](https://github.com/axemclion/IndexedDBShim/tree/master/tests)
+[`tests`](https://github.com/indexeddbshim/indexeddbshim/tree/master/tests)
 directory into your project's `www` directory.   Delete our
-[`index.html`](https://github.com/axemclion/IndexedDBShim/blob/master/tests/index.html)
+[`index.html`](https://github.com/indexeddbshim/indexeddbshim/blob/master/tests/index.html)
 file and rename
-[`cordova.html`](https://github.com/axemclion/IndexedDBShim/blob/master/tests/cordova.html)
+[`cordova.html`](https://github.com/indexeddbshim/indexeddbshim/blob/master/tests/cordova.html)
 to `index.html`.
