@@ -26,6 +26,7 @@
 |[Live Demo (stable)!](https://raw.githack.com/indexeddbshim/indexeddbshim/v6.2.0/index.html) | [Live Demo (master)!](https://raw.githack.com/indexeddbshim/indexeddbshim/master/index.html) |
 | -------------- | ----------------- |
 
+**This is a maintained fork of [IndexedDBShim](https://github.com/axemclion/IndexedDBShim). To migrate from IndexedDBShim, you should be able to just replace references requiring or importing `indexeddbshim` with `@indexeddbshim/indexeddbshim`.**
 
 __Use a single, indexable, offline storage API across all desktop and mobile
 browsers and Node.js.__
