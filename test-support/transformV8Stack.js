@@ -9,7 +9,7 @@ function transformW3CStack (stack) {
             return match[3];
         },
         newFileLineNumber (match) {
-            return parseInt(match[4]);
+            return Number.parseInt(match[4]);
         },
         newFileColumnNumber (match) {
             return match[5] || '';

@@ -727,7 +727,7 @@ describe('IDBIndex.get', function () {
             var index = store.index('inline-index');
 
             tryToGet(undefined); // undefined
-            tryToGet(NaN); // NaN
+            tryToGet(Number.NaN); // NaN
             tryToGet(true); // boolean
             tryToGet(false); // boolean
             tryToGet({}); // empty object

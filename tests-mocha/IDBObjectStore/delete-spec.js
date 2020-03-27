@@ -729,7 +729,7 @@ describe('IDBObjectStore.delete', function () {
             var store = tx.objectStore('out-of-line-generated');
 
             tryToDelete(undefined); // undefined
-            tryToDelete(NaN); // NaN
+            tryToDelete(Number.NaN); // NaN
             tryToDelete(true); // boolean
             tryToDelete(false); // boolean
             tryToDelete({}); // empty object

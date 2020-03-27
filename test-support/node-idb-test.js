@@ -589,8 +589,8 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
 async function readAndEvaluateFiles (jsFiles, workers, recursing) {
     jsFiles = jsFiles.filter((jsFile) => (/\.js/u).test(jsFile));
     if (!recursing && fileIndex) { // Start at a particular file count
-        const start = parseInt(fileIndex);
-        const end = (endFileCount ? (start + parseInt(endFileCount)) : jsFiles.length);
+        const start = Number.parseInt(fileIndex);
+        const end = (endFileCount ? (start + Number.parseInt(endFileCount)) : jsFiles.length);
         await readAndEvaluateFiles(
             jsFiles.slice(start, end),
             workers,

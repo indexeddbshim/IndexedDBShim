@@ -533,7 +533,7 @@ describe('IDBIndex.openCursor', function () {
             var store = tx.objectStore('out-of-line-generated');
             var index = store.index('inline-index');
 
-            tryToGet(NaN); // NaN
+            tryToGet(Number.NaN); // NaN
             tryToGet(true); // boolean
             tryToGet(false); // boolean
             tryToGet({}); // empty object

@@ -415,7 +415,7 @@
                     tx.onerror = done;
 
                     tryToSaveKey(undefined); // undefined
-                    tryToSaveKey(NaN); // NaN
+                    tryToSaveKey(Number.NaN); // NaN
                     tryToSaveKey(true); // boolean
                     tryToSaveKey(false); // boolean
                     tryToSaveKey({}); // empty object
@@ -476,7 +476,7 @@
                     saveData(3.12345); // float
                     saveData(Infinity); // infinity
                     saveData(-Infinity); // negative infinity
-                    saveData(NaN); // NaN
+                    saveData(Number.NaN); // NaN
                     saveData({}); // empty object
                     saveData({foo: 'bar'}); // object
                     saveData(new Date(2000, 1, 2)); // Date
@@ -488,7 +488,7 @@
                     saveData([new Date(2005, 6, 7)]); // array of Dates
                     saveData([1, undefined, 2]); // array with undefined
                     saveData([1, null, 2]); // array with null
-                    saveData([1, NaN, 3]); // array with NaN
+                    saveData([1, Number.NaN, 3]); // array with NaN
                     saveData([true, false]); // array of booleans
                     saveData([{foo: 'bar'}, {}]); // array of objects
 
@@ -864,7 +864,7 @@
                     tx.onerror = done;
 
                     tryToSaveKey(undefined); // undefined
-                    tryToSaveKey(NaN); // NaN
+                    tryToSaveKey(Number.NaN); // NaN
                     tryToSaveKey(true); // boolean
                     tryToSaveKey(false); // boolean
                     tryToSaveKey({}); // empty object
@@ -994,7 +994,7 @@
                     tryToSaveData(3.12345); // float
                     tryToSaveData(Infinity); // infinity
                     tryToSaveData(-Infinity); // negative infinity
-                    tryToSaveData(NaN); // NaN
+                    tryToSaveData(Number.NaN); // NaN
 
                     if (env.isShimmed || !env.browser.isIE) {
                         tryToSaveData(null); // null
@@ -1520,7 +1520,7 @@
                     tx.onerror = done;
 
                     tryToSaveKey(undefined); // undefined
-                    tryToSaveKey(NaN); // NaN
+                    tryToSaveKey(Number.NaN); // NaN
                     tryToSaveKey(true); // boolean
                     tryToSaveKey(false); // boolean
                     tryToSaveKey({}); // empty object

@@ -593,7 +593,7 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
         count = 1;
     }
     if (count) {
-        if (typeof count !== 'number' || isNaN(count) || !isFinite(count)) {
+        if (!Number.isFinite(count)) {
             throw new TypeError('The count parameter must be a finite number');
         }
         sql.push('LIMIT', count);

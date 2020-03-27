@@ -430,7 +430,7 @@ describe('IDBFactory.open', function () {
             tryToOpen(-3);
             tryToOpen(Infinity);
             tryToOpen(-Infinity);
-            tryToOpen(NaN);
+            tryToOpen(Number.NaN);
 
             if (env.isShimmed || !env.browser.isFirefox) {
                 tryToOpen(/^regex$/);

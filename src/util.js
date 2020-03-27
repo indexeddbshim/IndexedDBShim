@@ -99,11 +99,11 @@ function unescapeUnmatchedSurrogates (arg) {
     return arg
         .replace(/(\^+)3(d[0-9a-f]{3})/gu, (_, esc, lowSurr) => {
             return esc.length % 2
-                ? esc.slice(1) + String.fromCharCode(parseInt(lowSurr, 16))
+                ? esc.slice(1) + String.fromCharCode(Number.parseInt(lowSurr, 16))
                 : _;
         }).replace(/(\^+)2(d[0-9a-f]{3})/gu, (_, esc, highSurr) => {
             return esc.length % 2
-                ? esc.slice(1) + String.fromCharCode(parseInt(highSurr, 16))
+                ? esc.slice(1) + String.fromCharCode(Number.parseInt(highSurr, 16))
                 : _;
         });
 }
@@ -123,12 +123,12 @@ function unescapeDatabaseNameForSQLAndFiles (db) {
             // CFG.databaseCharacterEscapeList
             .replace(/(\^+)1([0-9a-f]{2})/gu, (_, esc, hex) => {
                 return esc.length % 2
-                    ? esc.slice(1) + String.fromCharCode(parseInt(hex, 16))
+                    ? esc.slice(1) + String.fromCharCode(Number.parseInt(hex, 16))
                     : _;
             // CFG.escapeNFDForDatabaseNames
             }).replace(/(\^+)4([0-9a-f]{6})/gu, (_, esc, hex) => {
                 return esc.length % 2
-                    ? esc.slice(1) + String.fromCodePoint(parseInt(hex, 16))
+                    ? esc.slice(1) + String.fromCodePoint(Number.parseInt(hex, 16))
                     : _;
             })
     // escapeNameForSQLiteIdentifier (including unescapeUnmatchedSurrogates() above)
@@ -320,7 +320,7 @@ function enforceRange (number, type) {
     default:
         throw new Error('Unrecognized type supplied to enforceRange');
     }
-    if (isNaN(number) || !isFinite(number) ||
+    if (!Number.isFinite(number) ||
         number > max ||
         number < min) {
         throw new TypeError('Invalid range: ' + number);

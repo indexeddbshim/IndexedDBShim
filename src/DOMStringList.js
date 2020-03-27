@@ -78,7 +78,7 @@ DOMStringList.prototype = {
         this._items.splice(...args);
         this._length = this._items.length;
         for (const i in this) {
-            if (i === String(parseInt(i))) {
+            if (i === String(Number.parseInt(i))) {
                 delete this[i];
             }
         }

@@ -1058,9 +1058,9 @@ function escapeDatabaseNameForSQLAndFiles(db) {
 
 function unescapeUnmatchedSurrogates(arg) {
   return arg.replace(/(\^+)3(d[0-9a-f]{3})/gu, (_, esc, lowSurr) => {
-    return esc.length % 2 ? esc.slice(1) + String.fromCharCode(parseInt(lowSurr, 16)) : _;
+    return esc.length % 2 ? esc.slice(1) + String.fromCharCode(Number.parseInt(lowSurr, 16)) : _;
   }).replace(/(\^+)2(d[0-9a-f]{3})/gu, (_, esc, highSurr) => {
-    return esc.length % 2 ? esc.slice(1) + String.fromCharCode(parseInt(highSurr, 16)) : _;
+    return esc.length % 2 ? esc.slice(1) + String.fromCharCode(Number.parseInt(highSurr, 16)) : _;
   });
 } // Not in use internally but supplied for convenience
 
@@ -1247,7 +1247,7 @@ function enforceRange(number, type) {
       throw new Error('Unrecognized type supplied to enforceRange');
   }
 
-  if (isNaN(number) || !isFinite(number) || number > max || number < min) {
+  if (!Number.isFinite(number) || number > max || number < min) {
     throw new TypeError('Invalid range: ' + number);
   }
 
@@ -2091,7 +2091,7 @@ const types = {
       key32 = key32.slice(significantDigitIndex);
       let sign, exponent, mantissa; // Finite cases:
 
-      if (isFinite(key)) {
+      if (Number.isFinite(Number(key))) {
         // Negative cases:
         if (key < 0) {
           // Negative exponent case:
@@ -2247,7 +2247,7 @@ const types = {
     decode(key) {
       // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
       const k = key.slice(2);
-      const arr = k.length ? k.split(',').map(s => parseInt(s)) : [];
+      const arr = k.length ? k.split(',').map(s => Number.parseInt(s)) : [];
       const buffer = new ArrayBuffer(arr.length);
       const uint8 = new Uint8Array(buffer);
       uint8.set(arr);
@@ -2287,7 +2287,7 @@ function flipBase32(encoded) {
   let flipped = '';
 
   for (const ch of encoded) {
-    flipped += (31 - parseInt(ch, 32)).toString(32);
+    flipped += (31 - Number.parseInt(ch, 32)).toString(32);
   }
 
   return flipped;
@@ -2307,22 +2307,22 @@ function flipBase32(encoded) {
 
 
 function pow32(mantissa, exponent) {
-  exponent = parseInt(exponent, 32);
+  exponent = Number.parseInt(exponent, 32);
 
   if (exponent < 0) {
-    return roundToPrecision(parseInt(mantissa, 32) * Math.pow(32, exponent - 10));
+    return roundToPrecision(Number.parseInt(mantissa, 32) * Math.pow(32, exponent - 10));
   }
 
   if (exponent < 11) {
     let whole = mantissa.slice(0, exponent);
-    whole = parseInt(whole, 32);
+    whole = Number.parseInt(whole, 32);
     let fraction = mantissa.slice(exponent);
-    fraction = parseInt(fraction, 32) * Math.pow(32, exponent - 11);
+    fraction = Number.parseInt(fraction, 32) * Math.pow(32, exponent - 11);
     return roundToPrecision(whole + fraction);
   }
 
   const expansion = mantissa + zeros(exponent - 11);
-  return parseInt(expansion, 32);
+  return Number.parseInt(expansion, 32);
 }
 /**
  * @param {Float} num
@@ -2333,7 +2333,7 @@ function pow32(mantissa, exponent) {
 
 function roundToPrecision(num, precision) {
   precision = precision || 16;
-  return parseFloat(num.toPrecision(precision));
+  return Number.parseFloat(num.toPrecision(precision));
 }
 /**
  * Returns a string of n zeros.
@@ -3490,7 +3490,7 @@ DOMStringList.prototype = {
     this._length = this._items.length;
 
     for (const i in this) {
-      if (i === String(parseInt(i))) {
+      if (i === String(Number.parseInt(i))) {
         delete this[i];
       }
     }
@@ -8724,7 +8724,7 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
   }
 
   if (count) {
-    if (typeof count !== 'number' || isNaN(count) || !isFinite(count)) {
+    if (!Number.isFinite(count)) {
       throw new TypeError('The count parameter must be a finite number');
     }
 

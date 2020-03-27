@@ -82,7 +82,9 @@ const types = {
             let sign, exponent, mantissa;
 
             // Finite cases:
-            if (isFinite(key)) {
+            if (Number.isFinite(
+                Number(key)
+            )) {
                 // Negative cases:
                 if (key < 0) {
                     // Negative exponent case:
@@ -225,7 +227,7 @@ const types = {
         decode (key) {
             // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
             const k = key.slice(2);
-            const arr = k.length ? k.split(',').map((s) => parseInt(s)) : [];
+            const arr = k.length ? k.split(',').map((s) => Number.parseInt(s)) : [];
             const buffer = new ArrayBuffer(arr.length);
             const uint8 = new Uint8Array(buffer);
             uint8.set(arr);
@@ -261,7 +263,7 @@ function padBase32Mantissa (s) {
 function flipBase32 (encoded) {
     let flipped = '';
     for (const ch of encoded) {
-        flipped += (31 - parseInt(ch, 32)).toString(32);
+        flipped += (31 - Number.parseInt(ch, 32)).toString(32);
     }
     return flipped;
 }
@@ -279,21 +281,21 @@ function flipBase32 (encoded) {
  * @returns {number}
  */
 function pow32 (mantissa, exponent) {
-    exponent = parseInt(exponent, 32);
+    exponent = Number.parseInt(exponent, 32);
     if (exponent < 0) {
         return roundToPrecision(
-            parseInt(mantissa, 32) * (32 ** (exponent - 10))
+            Number.parseInt(mantissa, 32) * (32 ** (exponent - 10))
         );
     }
     if (exponent < 11) {
         let whole = mantissa.slice(0, exponent);
-        whole = parseInt(whole, 32);
+        whole = Number.parseInt(whole, 32);
         let fraction = mantissa.slice(exponent);
-        fraction = parseInt(fraction, 32) * (32 ** (exponent - 11));
+        fraction = Number.parseInt(fraction, 32) * (32 ** (exponent - 11));
         return roundToPrecision(whole + fraction);
     }
     const expansion = mantissa + zeros(exponent - 11);
-    return parseInt(expansion, 32);
+    return Number.parseInt(expansion, 32);
 }
 
 /**
@@ -303,7 +305,7 @@ function pow32 (mantissa, exponent) {
  */
 function roundToPrecision (num, precision) {
     precision = precision || 16;
-    return parseFloat(num.toPrecision(precision));
+    return Number.parseFloat(num.toPrecision(precision));
 }
 
 /**

@@ -260,7 +260,7 @@ describe('IDBFactory.cmp', function () {
             this.timeout(5000);
 
             tryToCompare(undefined); // undefined
-            tryToCompare(NaN); // NaN
+            tryToCompare(Number.NaN); // NaN
             tryToCompare(true); // boolean
             tryToCompare(false); // boolean
             tryToCompare({}); // empty object

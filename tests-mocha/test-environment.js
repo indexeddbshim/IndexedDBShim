@@ -197,7 +197,7 @@
             browserInfo.version = browserInfo.version.slice(0, offset);
         }
 
-        browserInfo.version = parseFloat(browserInfo.version);
+        browserInfo.version = Number.parseFloat(browserInfo.version);
 
         return browserInfo;
     }
@@ -246,7 +246,7 @@
                     // Ensuring a unique integer everytime, for the sake of index get
                     var r;
                     do {
-                        r = parseInt(Math.random() * (arg || 100000));
+                        r = Number.parseInt(Math.random() * (arg || 100000));
                     }
                     while (generatedNumbers[r]);
                     generatedNumbers[r] = true;

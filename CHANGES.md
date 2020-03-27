@@ -4,6 +4,7 @@
 
 - Build: Fix per current fork
 - Docs: Update coverage badge per latest coveradge
+- Linting (ESLint): As per latest ash-nazg
 - npm: Update devDeps
 
 ## 6.2.1

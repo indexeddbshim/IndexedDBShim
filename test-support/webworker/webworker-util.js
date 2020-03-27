@@ -8,7 +8,7 @@ const util = require('util');
 const BSON = require('bson');
 
 // Some debugging functions
-const debugLevel = parseInt(process.env.NODE_DEBUG, 16); // eslint-disable-line no-process-env
+const debugLevel = Number.parseInt(process.env.NODE_DEBUG, 16); // eslint-disable-line no-process-env
 const debug = (debugLevel & 0x8) // eslint-disable-line no-bitwise
     ? function (...args) { Reflect.apply(console.error, this, args); }
     : function () { /* */ };
@@ -194,7 +194,7 @@ exports.getErrorLine = function (e) {
     try {
         const m = e.stack.split('\n')[1].match(STACK_FRAME_RE);
         const parts = m[1].split(':');
-        return parseInt(parts[parts.length - 2]);
+        return Number.parseInt(parts[parts.length - 2]);
     } catch (e) {
         return -1;
     }

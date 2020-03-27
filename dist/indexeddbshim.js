@@ -1290,9 +1290,9 @@
 
   function unescapeUnmatchedSurrogates(arg) {
     return arg.replace(/(\^+)3(d[0-9a-f]{3})/g, function (_, esc, lowSurr) {
-      return esc.length % 2 ? esc.slice(1) + String.fromCharCode(parseInt(lowSurr, 16)) : _;
+      return esc.length % 2 ? esc.slice(1) + String.fromCharCode(Number.parseInt(lowSurr, 16)) : _;
     }).replace(/(\^+)2(d[0-9a-f]{3})/g, function (_, esc, highSurr) {
-      return esc.length % 2 ? esc.slice(1) + String.fromCharCode(parseInt(highSurr, 16)) : _;
+      return esc.length % 2 ? esc.slice(1) + String.fromCharCode(Number.parseInt(highSurr, 16)) : _;
     });
   } // Not in use internally but supplied for convenience
 
@@ -1472,7 +1472,7 @@
         throw new Error('Unrecognized type supplied to enforceRange');
     }
 
-    if (isNaN(number) || !isFinite(number) || number > max || number < min) {
+    if (!Number.isFinite(number) || number > max || number < min) {
       throw new TypeError('Invalid range: ' + number);
     }
 
@@ -2321,7 +2321,7 @@
         key32 = key32.slice(significantDigitIndex);
         var sign, exponent, mantissa; // Finite cases:
 
-        if (isFinite(key)) {
+        if (Number.isFinite(Number(key))) {
           // Negative cases:
           if (key < 0) {
             // Negative exponent case:
@@ -2487,7 +2487,7 @@
         // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
         var k = key.slice(2);
         var arr = k.length ? k.split(',').map(function (s) {
-          return parseInt(s);
+          return Number.parseInt(s);
         }) : [];
         var buffer = new ArrayBuffer(arr.length);
         var uint8 = new Uint8Array(buffer);
@@ -2532,7 +2532,7 @@
     try {
       for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
         var ch = _step2.value;
-        flipped += (31 - parseInt(ch, 32)).toString(32);
+        flipped += (31 - Number.parseInt(ch, 32)).toString(32);
       }
     } catch (err) {
       _iterator2.e(err);
@@ -2557,22 +2557,22 @@
 
 
   function pow32(mantissa, exponent) {
-    exponent = parseInt(exponent, 32);
+    exponent = Number.parseInt(exponent, 32);
 
     if (exponent < 0) {
-      return roundToPrecision(parseInt(mantissa, 32) * Math.pow(32, exponent - 10));
+      return roundToPrecision(Number.parseInt(mantissa, 32) * Math.pow(32, exponent - 10));
     }
 
     if (exponent < 11) {
       var whole = mantissa.slice(0, exponent);
-      whole = parseInt(whole, 32);
+      whole = Number.parseInt(whole, 32);
       var fraction = mantissa.slice(exponent);
-      fraction = parseInt(fraction, 32) * Math.pow(32, exponent - 11);
+      fraction = Number.parseInt(fraction, 32) * Math.pow(32, exponent - 11);
       return roundToPrecision(whole + fraction);
     }
 
     var expansion = mantissa + zeros(exponent - 11);
-    return parseInt(expansion, 32);
+    return Number.parseInt(expansion, 32);
   }
   /**
    * @param {Float} num
@@ -2583,7 +2583,7 @@
 
   function roundToPrecision(num, precision) {
     precision = precision || 16;
-    return parseFloat(num.toPrecision(precision));
+    return Number.parseFloat(num.toPrecision(precision));
   }
   /**
    * Returns a string of n zeros.
@@ -3776,7 +3776,7 @@
       this._length = this._items.length;
 
       for (var i in this) {
-        if (i === String(parseInt(i))) {
+        if (i === String(Number.parseInt(i))) {
           delete this[i];
         }
       }
@@ -8948,7 +8948,7 @@
     }
 
     if (count) {
-      if (typeof count !== 'number' || isNaN(count) || !isFinite(count)) {
+      if (!Number.isFinite(count)) {
         throw new TypeError('The count parameter must be a finite number');
       }
 
