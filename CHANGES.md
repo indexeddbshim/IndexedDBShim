@@ -1,5 +1,11 @@
 # CHANGES for indexeddbshim/indexeddbshim
 
+## ?
+
+- Build: Fix per current fork
+- Docs: Update coverage badge per latest coveradge
+- npm: Update devDeps
+
 ## 6.2.1
 
 - Docs: Fix badges
