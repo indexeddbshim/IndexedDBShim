@@ -1,4 +1,4 @@
-# CHANGES for indexeddbshim/indexeddbshim
+# CHANGES for @indexeddbshim/indexeddbshim
 
 ## ?
 
