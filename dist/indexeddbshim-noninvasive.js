@@ -1,4 +1,4 @@
-/*! @indexeddbshim/indexeddbshim - v6.2.1 - 3/27/2020 */
+/*! @indexeddbshim/indexeddbshim - v6.3.0 - 5/9/2020 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -212,7 +212,7 @@
     if (typeof o === "string") return _arrayLikeToArray(o, minLen);
     var n = Object.prototype.toString.call(o).slice(8, -1);
     if (n === "Object" && o.constructor) n = o.constructor.name;
-    if (n === "Map" || n === "Set") return Array.from(n);
+    if (n === "Map" || n === "Set") return Array.from(o);
     if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
   }
 
@@ -3758,9 +3758,11 @@
       return this._items;
     },
     forEach: function forEach(cb, thisArg) {
+      // eslint-disable-next-line unicorn/no-fn-reference-in-iterator
       this._items.forEach(cb, thisArg);
     },
     map: function map(cb, thisArg) {
+      // eslint-disable-next-line unicorn/no-fn-reference-in-iterator
       return this._items.map(cb, thisArg);
     },
     indexOf: function indexOf(str) {
@@ -7570,6 +7572,7 @@
     var ret;
 
     try {
+      // eslint-disable-next-line node/no-sync
       ret = typeson$1.stringifySync(obj);
     } catch (err) {
       // SCA in typeson-registry using `DOMException` which is not defined (e.g., in Node)

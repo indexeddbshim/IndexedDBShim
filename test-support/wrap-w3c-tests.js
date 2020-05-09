@@ -1,3 +1,4 @@
+/* eslint-disable node/no-sync */
 const fs = require('fs');
 const path = require('path');
 const rp = require('request-promise-native');

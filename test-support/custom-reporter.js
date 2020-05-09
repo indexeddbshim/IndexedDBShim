@@ -34,8 +34,14 @@
             ].includes(prop)) {
             return;
         }
+        const desc = Object.getOwnPropertyDescriptor(shimNS.window, prop);
         // Todo: This doesn't seem to work for Event, EventTarget, CustomEvent, DOMStringList as still enumerable
-        Object.defineProperty(this, prop, Object.getOwnPropertyDescriptor(shimNS.window, prop));
+        if (desc) {
+            Object.defineProperty(this, prop, desc);
+        } else {
+            // `addEventListener` has none (in browser also)
+            this[prop] = shimNS.window[prop].bind(shimNS.window);
+        }
     }, this);
     // shimIndexedDB.__debug(true);
 

@@ -1,9 +1,10 @@
-/*! @indexeddbshim/indexeddbshim - v6.2.1 - 3/27/2020 */
+/*! @indexeddbshim/indexeddbshim - v6.3.0 - 5/9/2020 */
 
 'use strict';
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
+var fs$1 = _interopDefault(require('fs'));
 var path = _interopDefault(require('path'));
 var customOpenDatabase = _interopDefault(require('websql/custom/index.js'));
 
@@ -3464,10 +3465,12 @@ DOMStringList.prototype = {
   },
 
   forEach(cb, thisArg) {
+    // eslint-disable-next-line unicorn/no-fn-reference-in-iterator
     this._items.forEach(cb, thisArg);
   },
 
   map(cb, thisArg) {
+    // eslint-disable-next-line unicorn/no-fn-reference-in-iterator
     return this._items.map(cb, thisArg);
   },
 
@@ -7369,6 +7372,7 @@ function encode$2(obj, func) {
   let ret;
 
   try {
+    // eslint-disable-next-line node/no-sync
     ret = typeson.stringifySync(obj);
   } catch (err) {
     // SCA in typeson-registry using `DOMException` which is not defined (e.g., in Node)
@@ -11287,8 +11291,6 @@ function wrappedSQLiteDatabase(name) {
 }
 
 const nodeWebSQL = customOpenDatabase(wrappedSQLiteDatabase);
-
-const fs$1 = require('fs');
 
 CFG.win = {
   openDatabase: nodeWebSQL

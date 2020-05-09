@@ -61,9 +61,11 @@ DOMStringList.prototype = {
         return this._items;
     },
     forEach (cb, thisArg) {
+        // eslint-disable-next-line unicorn/no-fn-reference-in-iterator
         this._items.forEach(cb, thisArg);
     },
     map (cb, thisArg) {
+        // eslint-disable-next-line unicorn/no-fn-reference-in-iterator
         return this._items.map(cb, thisArg);
     },
     indexOf (str) {

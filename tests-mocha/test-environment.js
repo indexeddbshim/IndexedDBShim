@@ -375,14 +375,14 @@
                     expect(true, 'Data added to store').to.be.true;
                     if (++counter >= max) {
                         db.close();
-                        // eslint-disable-next-line callback-return
+                        // eslint-disable-next-line node/callback-return
                         cb();
                     }
                 };
                 var error = function (e) {
                     expect(false, 'Could not add data').to.be.true;
                     if (++counter >= 10) {
-                        // eslint-disable-next-line callback-return
+                        // eslint-disable-next-line node/callback-return
                         cb(e);
                     }
                 };

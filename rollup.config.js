@@ -6,7 +6,7 @@ import commonJS from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import replace from '@rollup/plugin-replace';
 
-import babel from 'rollup-plugin-babel';
+import babel from '@rollup/plugin-babel';
 import globals from 'rollup-plugin-node-globals';
 import nodePolyfills from 'rollup-plugin-node-polyfills';
 import filesize from 'rollup-plugin-filesize';
@@ -20,6 +20,7 @@ const pkgNameNoScope = pkg.name.replace(/@indexeddbshim\//u, '');
 
 const babelBrowserOptions = {
     // sourceMapsAbsolute: true,
+    babelHelpers: 'bundled',
     plugins: ['add-module-exports'],
     presets: [
         ['@babel/env', {
@@ -29,6 +30,7 @@ const babelBrowserOptions = {
 };
 
 const babelNodeOptions = {...babelBrowserOptions,
+    babelHelpers: 'bundled',
     presets: [
         ['@babel/env', {
             targets: {
@@ -50,7 +52,9 @@ const getRollupPlugins = (babelOptions, {addBuiltins, mainFields, min} = {}) => 
             ignore: ['sqlite3']
         }),
         babel(babelOptions),
-        filesize()
+        filesize({
+            showBeforeSizes: 'build'
+        })
     ];
     if (addBuiltins) {
         ret.unshift(globals(), nodePolyfills());

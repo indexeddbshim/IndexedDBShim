@@ -8,12 +8,12 @@ const util = require('util');
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
+// Requires `--experimental-worker` (as of 10.5.0)
+const {MessageChannel} = require('worker_threads');
+
 const jsdom = require('jsdom');
 const {ImageData, DOMPoint, DOMMatrix} = require('canvas');
 const colors = require('colors/safe');
-
-// Requires `--experimental-worker` (as of 10.5.0)
-const {MessageChannel} = require('worker_threads');
 
 const readFile = util.promisify(fs.readFile);
 const readdir = util.promisify(fs.readdir);
@@ -496,7 +496,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         delete window.URL.createObjectURL;
         global.URL = window.URL;
         // Polyfill enough for our tests
-        const cou = require( // eslint-disable-line global-require
+        const cou = require( // eslint-disable-line node/global-require
             '../node_modules/typeson-registry/polyfills/createObjectURL-cjs'
         );
         global.URL.createObjectURL = cou.createObjectURL;

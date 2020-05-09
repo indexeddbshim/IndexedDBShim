@@ -5311,31 +5311,6 @@ Runnable.prototype.clearTimeout = function() {
 };
 
 /**
- * Inspect the runnable void of private properties.
- *
- * @private
- * @return {string}
- */
-Runnable.prototype.inspect = function() {
-  return JSON.stringify(
-    this,
-    function(key, val) {
-      if (key[0] === '_') {
-        return;
-      }
-      if (key === 'parent') {
-        return '#<Suite>';
-      }
-      if (key === 'ctx') {
-        return '#<Context>';
-      }
-      return val;
-    },
-    2
-  );
-};
-
-/**
  * Reset the timeout.
  *
  * @private
@@ -5615,7 +5590,6 @@ var EVENT_ROOT_SUITE_RUN = Suite.constants.EVENT_ROOT_SUITE_RUN;
 var STATE_FAILED = Runnable.constants.STATE_FAILED;
 var STATE_PASSED = Runnable.constants.STATE_PASSED;
 var dQuote = utils.dQuote;
-var ngettext = utils.ngettext;
 var sQuote = utils.sQuote;
 var stackFilter = utils.stackTraceFilter();
 var stringify = utils.stringify;
@@ -5731,7 +5705,7 @@ function Runner(suite, delay) {
   this.total = suite.total();
   this.failures = 0;
   this.on(constants.EVENT_TEST_END, function(test) {
-    if (test.retriedTest() && test.parent) {
+    if (test.type === 'test' && test.retriedTest() && test.parent) {
       var idx =
         test.parent.tests && test.parent.tests.indexOf(test.retriedTest());
       if (idx > -1) test.parent.tests[idx] = test;
@@ -5867,12 +5841,8 @@ Runner.prototype.checkGlobals = function(test) {
   this._globals = this._globals.concat(leaks);
 
   if (leaks.length) {
-    var format = ngettext(
-      leaks.length,
-      'global leak detected: %s',
-      'global leaks detected: %s'
-    );
-    var error = new Error(util.format(format, leaks.map(sQuote).join(', ')));
+    var msg = 'global leak(s) detected: %s';
+    var error = new Error(util.format(msg, leaks.map(sQuote).join(', ')));
     this.fail(test, error);
   }
 };
@@ -6535,7 +6505,9 @@ Runner.prototype.run = function(fn) {
     this.emit(constants.EVENT_DELAY_BEGIN, rootSuite);
     rootSuite.once(EVENT_ROOT_SUITE_RUN, start);
   } else {
-    start();
+    Runner.immediately(function() {
+      start();
+    });
   }
 
   return this;
@@ -8185,38 +8157,6 @@ exports.sQuote = function(str) {
  */
 exports.dQuote = function(str) {
   return '"' + str + '"';
-};
-
-/**
- * Provides simplistic message translation for dealing with plurality.
- *
- * @description
- * Use this to create messages which need to be singular or plural.
- * Some languages have several plural forms, so _complete_ message clauses
- * are preferable to generating the message on the fly.
- *
- * @private
- * @param {number} n - Non-negative integer
- * @param {string} msg1 - Message to be used in English for `n = 1`
- * @param {string} msg2 - Message to be used in English for `n = 0, 2, 3, ...`
- * @returns {string} message corresponding to value of `n`
- * @example
- * var sprintf = require('util').format;
- * var pkgs = ['one', 'two'];
- * var msg = sprintf(
- *   ngettext(
- *     pkgs.length,
- *     'cannot load package: %s',
- *     'cannot load packages: %s'
- *   ),
- *   pkgs.map(sQuote).join(', ')
- * );
- * console.log(msg); // => cannot load packages: 'one', 'two'
- */
-exports.ngettext = function(n, msg1, msg2) {
-  if (typeof n === 'number' && n >= 0) {
-    return n === 1 ? msg1 : msg2;
-  }
 };
 
 /**
@@ -13838,7 +13778,6 @@ module.exports = Array.isArray || function (arr) {
 };
 
 },{}],59:[function(require,module,exports){
-(function (process){
 var path = require('path');
 var fs = require('fs');
 var _0777 = parseInt('0777', 8);
@@ -13858,7 +13797,7 @@ function mkdirP (p, opts, f, made) {
     var xfs = opts.fs || fs;
     
     if (mode === undefined) {
-        mode = _0777 & (~process.umask());
+        mode = _0777
     }
     if (!made) made = null;
     
@@ -13872,6 +13811,7 @@ function mkdirP (p, opts, f, made) {
         }
         switch (er.code) {
             case 'ENOENT':
+                if (path.dirname(p) === p) return cb(er);
                 mkdirP(path.dirname(p), opts, function (er, made) {
                     if (er) cb(er, made);
                     else mkdirP(p, opts, cb, made);
@@ -13902,7 +13842,7 @@ mkdirP.sync = function sync (p, opts, made) {
     var xfs = opts.fs || fs;
     
     if (mode === undefined) {
-        mode = _0777 & (~process.umask());
+        mode = _0777
     }
     if (!made) made = null;
 
@@ -13938,8 +13878,7 @@ mkdirP.sync = function sync (p, opts, made) {
     return made;
 };
 
-}).call(this,require('_process'))
-},{"_process":69,"fs":42,"path":42}],60:[function(require,module,exports){
+},{"fs":42,"path":42}],60:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -18169,7 +18108,7 @@ function hasOwnProperty(obj, prop) {
 },{"./support/isBuffer":88,"_process":69,"inherits":56}],90:[function(require,module,exports){
 module.exports={
   "name": "mocha",
-  "version": "7.1.0",
+  "version": "7.1.2",
   "homepage": "https://mochajs.org/",
   "notifyLogo": "https://ibin.co/4QuRuGjXvl36.png"
 }

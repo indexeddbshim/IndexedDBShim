@@ -2,5 +2,5 @@
 
 module.exports = {
     timeout: '5000',
-    reporter: 'mocha-multi-reporters'
+    reporter: 'cypress-multi-reporters'
 };

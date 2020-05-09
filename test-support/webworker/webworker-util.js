@@ -8,7 +8,7 @@ const util = require('util');
 const BSON = require('bson');
 
 // Some debugging functions
-const debugLevel = Number.parseInt(process.env.NODE_DEBUG, 16); // eslint-disable-line no-process-env
+const debugLevel = Number.parseInt(process.env.NODE_DEBUG, 16); // eslint-disable-line node/no-process-env
 const debug = (debugLevel & 0x8) // eslint-disable-line no-bitwise
     ? function (...args) { Reflect.apply(console.error, this, args); }
     : function () { /* */ };

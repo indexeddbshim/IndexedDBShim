@@ -20,6 +20,13 @@ self.parent = self;
         'BigInt', 'ArrayBuffer', 'FileReader', 'Promise'
     ).forEach(function (prop) {
         // Isn't working for 'indexedDB' and its getter; see <https://github.com/axemclion/IndexedDBShim/issues/280>
-        Object.defineProperty(this, prop, Object.getOwnPropertyDescriptor(shimNS.window, prop));
+        const desc = Object.getOwnPropertyDescriptor(shimNS.window, prop);
+        // Todo: This doesn't seem to work for Event, EventTarget, CustomEvent, DOMStringList as still enumerable
+        if (desc) {
+            Object.defineProperty(this, prop, desc);
+        } else {
+            // `addEventListener` has none (in browser also)
+            this[prop] = shimNS.window[prop].bind(shimNS.window);
+        }
     }, this);
 }());
