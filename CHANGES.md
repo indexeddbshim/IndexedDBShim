@@ -1,16 +1,20 @@
 # CHANGES for @indexeddbshim/indexeddbshim
 
-## ?
+## 6.4.0
 
 - Build: Update per latest devDeps.
 - Build: Report compared to last build size
 - Linting: As per latest ash-nazg
 - Testing: Update tests to continue working per latest Node/jsdom
-- Testing: Switch to cmrOutput-supporting `cypres-multi-reporters` fork (no need for Promise-based mocha-multi-reporters fork with proper implementation)
+- Testing: Switch to cmrOutput-supporting `cypres-multi-reporters` fork
+    (no need for Promise-based mocha-multi-reporters fork with proper
+    implementation)
 - Docs: Switch to mocha-badge-generator fork for proper async behavior
 - Docs: Update license badges
 - npm: Switch from deprecated rollup-plugin-babel to rollup/plugin-babel
-- npm: Update devDeps (related to Babel, Rollup, ESLint, core-js, jsdom, badges, mocha/nyc, sinon, source-map-support, ws)
+- npm: Update typeson-registry dep.
+- npm: Update devDeps (related to Babel, Rollup, ESLint, core-js,
+    jsdom, badges, mocha/nyc, sinon, source-map-support, ws)
 
 ## 6.3.0
 

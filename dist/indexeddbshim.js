@@ -1,4 +1,4 @@
-/*! @indexeddbshim/indexeddbshim - v6.3.0 - 5/9/2020 */
+/*! @indexeddbshim/indexeddbshim - v6.3.0 - 5/10/2020 */
 
 (function (factory) {
   typeof define === 'function' && define.amd ? define(factory) :
@@ -6270,6 +6270,8 @@
     });
   });
 
+  /* eslint-disable node/no-unsupported-features/es-syntax */
+
   /*
    * base64-arraybuffer
    * https://github.com/niklasvh/base64-arraybuffer
@@ -6284,14 +6286,21 @@
   for (var i = 0; i < chars.length; i++) {
     lookup[chars.charCodeAt(i)] = i;
   }
+  /**
+   * @param {ArrayBuffer} arraybuffer
+   * @param {Integer} byteOffset
+   * @param {Integer} lngth
+   * @returns {string}
+   */
 
-  var encode = function encode(arraybuffer, byteOffset, length) {
-    if (length === null || length === undefined) {
-      length = arraybuffer.byteLength; // Needed for Safari
+
+  var encode = function encode(arraybuffer, byteOffset, lngth) {
+    if (lngth === null || lngth === undefined) {
+      lngth = arraybuffer.byteLength; // Needed for Safari
     }
 
     var bytes = new Uint8Array(arraybuffer, byteOffset || 0, // Default needed for Safari
-    length);
+    lngth);
     var len = bytes.length;
     var base64 = '';
 
@@ -6303,13 +6312,18 @@
     }
 
     if (len % 3 === 2) {
-      base64 = base64.substring(0, base64.length - 1) + '=';
+      base64 = base64.slice(0, -1) + '=';
     } else if (len % 3 === 1) {
-      base64 = base64.substring(0, base64.length - 2) + '==';
+      base64 = base64.slice(0, -2) + '==';
     }
 
     return base64;
   };
+  /**
+   * @param {string} base64
+   * @returns {ArrayBuffer}
+   */
+
 
   var decode = function decode(base64) {
     var len = base64.length;
@@ -6648,7 +6662,7 @@
       replace: function replace(dt) {
         var time = dt.getTime();
 
-        if (isNaN(time)) {
+        if (Number.isNaN(time)) {
           return 'NaN';
         }
 
@@ -6656,7 +6670,7 @@
       },
       revive: function revive(time) {
         if (time === 'NaN') {
-          return new Date(NaN);
+          return new Date(Number.NaN);
         }
 
         return new Date(time);
@@ -6989,13 +7003,13 @@
   var nan = {
     nan: {
       test: function test(x) {
-        return typeof x === 'number' && isNaN(x);
+        return Number.isNaN(x);
       },
       replace: function replace(n) {
         return 'NaN';
       },
       revive: function revive(s) {
-        return NaN;
+        return Number.NaN;
       }
     }
   };
@@ -7269,13 +7283,13 @@
           //  non-index keys will be larger however
           Object.keys(x).some(function (k) {
             //  No need to check for `isNaN` or
-            //   `isNaN(parseInt())` as `NaN` will be treated
-            //   as a string.
-            //  No need to do check as `parseInt(Number())`
-            //   since scientific notation will be
-            //   pre-resolved if a number was given, and it
-            //   will otherwise be a string
-            return String(parseInt(k)) !== k;
+            //   `isNaN(Number.parseInt())` as `NaN` will be
+            //   treated as a string.
+            //  No need to do check as
+            //   `Number.parseInt(Number())` since scientific
+            //   notation will be pre-resolved if a number
+            //   was given, and it will otherwise be a string
+            return String(Number.parseInt(k)) !== k;
           })) {
             stateObj.iterateIn = 'object';
             stateObj.addLength = true;
@@ -7432,23 +7446,6 @@
   typeof BigInt !== 'undefined' ? [bigint, bigintObject] : []);
 
   var structuredCloningThrowing = expObj$1.concat({
-    // Todo: Waiting on https://github.com/whatwg/html/issues/5158
-
-    /*
-    checkDataCloneExceptionPrototype: {
-        testPlainObjects: true,
-        test (val) {
-            // A non-array exotic object but note this is not throwing in
-            //   Chrome `postMessage`
-            if (val === Object.prototype) {
-                throw new DOMException(
-                    'The object cannot be cloned.', 'DataCloneError'
-                );
-            }
-            return false;
-        }
-    },
-    */
     checkDataCloneException: {
       test: function test(val) {
         // Should also throw with:
@@ -7458,7 +7455,8 @@
         //       function's `toStringTag`)
         // 3. internal slots besides [[Prototype]] or [[Extensible]] (e.g.,
         //        [[PromiseState]] or [[WeakMapData]])
-        // 4. exotic object (e.g., `Proxy`) (which does not have default
+        // 4. exotic object (e.g., `Proxy`) (unless an `%ObjectPrototype%`
+        //      intrinsic object) (which does not have default
         //      behavior for one or more of the essential internal methods
         //      that are limited to the following for non-function objects
         //      (we auto-exclude functions):

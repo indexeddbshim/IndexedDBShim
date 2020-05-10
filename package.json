@@ -1,6 +1,6 @@
 {
   "name": "@indexeddbshim/indexeddbshim",
-  "version": "6.3.0",
+  "version": "6.4.0",
   "author": "Parashuram <code@nparashuram.com>",
   "contributors": [
     "Brett Zamir"
@@ -132,7 +132,7 @@
     "regenerator-runtime": "^0.13.5",
     "sync-promise": "git+https://github.com/brettz9/sync-promise.git#full-sync-missing-promise-features",
     "typeson": "5.18.2",
-    "typeson-registry": "1.0.0-alpha.35",
+    "typeson-registry": "1.0.0-alpha.36",
     "websql": "git+https://github.com/brettz9/node-websql.git#configurable-secure2"
   },
   "devDependencies": {
@@ -159,7 +159,7 @@
     "cypress-multi-reporters": "git+https://github.com/brettz9/cypress-multi-reporters.git#cmr-output",
     "delay-cli": "^1.1.0",
     "eslint": "^7.0.0",
-    "eslint-config-ash-nazg": "^21.0.0",
+    "eslint-config-ash-nazg": "^22.0.0",
     "eslint-config-standard": "^14.1.1",
     "eslint-plugin-array-func": "^3.1.5",
     "eslint-plugin-compat": "^3.5.1",
@@ -191,7 +191,7 @@
     "request": "^2.88",
     "request-promise-native": "^1.0.8",
     "rimraf": "^3.0.2",
-    "rollup": "^2.8.2",
+    "rollup": "^2.9.0",
     "rollup-plugin-filesize": "^8.0.2",
     "rollup-plugin-node-globals": "^1.4.0",
     "rollup-plugin-node-polyfills": "^0.2.1",
@@ -202,7 +202,7 @@
     "typescript": "^3.8.3",
     "unicode-10.0.0": "0.7.5",
     "w3c-blob": "0.0.1",
-    "ws": "^7.2.5"
+    "ws": "^7.3.0"
   },
   "bundleDependencies": [],
   "license": "(MIT OR Apache-2.0)",

@@ -1,4 +1,4 @@
-/*! @indexeddbshim/indexeddbshim - v6.3.0 - 5/9/2020 */
+/*! @indexeddbshim/indexeddbshim - v6.3.0 - 5/10/2020 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
