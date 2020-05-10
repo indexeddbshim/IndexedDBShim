@@ -10,7 +10,7 @@
 - Docs: Switch to mocha-badge-generator fork for proper async behavior
 - Docs: Update license badges
 - npm: Switch from deprecated rollup-plugin-babel to rollup/plugin-babel
-- npm: Update devDeps (related to Babel, Rollup, ESLint, core-js, jsdom, license-badger, mocha/nyc, sinon, source-map-support, ws)
+- npm: Update devDeps (related to Babel, Rollup, ESLint, core-js, jsdom, badges, mocha/nyc, sinon, source-map-support, ws)
 
 ## 6.3.0
 
