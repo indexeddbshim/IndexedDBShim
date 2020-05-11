@@ -1,5 +1,9 @@
 # CHANGES for @indexeddbshim/indexeddbshim
 
+## ?
+
+- Testing: Switch to stable version of `cypres-multi-reporters`
+
 ## 6.4.0
 
 - Build: Update per latest devDeps.

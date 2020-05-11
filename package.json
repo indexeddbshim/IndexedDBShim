@@ -156,7 +156,7 @@
     "core-js-bundle": "^3.6.5",
     "coveradge": "^0.6.0",
     "cyclonejs": "1.1.4",
-    "cypress-multi-reporters": "git+https://github.com/brettz9/cypress-multi-reporters.git#cmr-output",
+    "cypress-multi-reporters": "^1.3.0",
     "delay-cli": "^1.1.0",
     "eslint": "^7.0.0",
     "eslint-config-ash-nazg": "^22.0.0",
