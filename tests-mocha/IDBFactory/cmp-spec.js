@@ -84,6 +84,7 @@ describe('IDBFactory.cmp', function () {
             equal(-0, 0);
             equal(+0, -0);
             equal(0.0000000000001);
+            // eslint-disable-next-line no-loss-of-precision
             equal(9999999999999.9999999999999);
             equal(Infinity);
             equal(-Infinity);

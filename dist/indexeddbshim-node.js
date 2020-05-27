@@ -1,10 +1,9 @@
-/*! @indexeddbshim/indexeddbshim - v6.3.0 - 5/10/2020 */
+/*! @indexeddbshim/indexeddbshim - v6.5.0 - 5/27/2020 */
 
 'use strict';
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
-var fs$1 = _interopDefault(require('fs'));
 var path = _interopDefault(require('path'));
 var customOpenDatabase = _interopDefault(require('websql/custom/index.js'));
 
@@ -11289,6 +11288,8 @@ function wrappedSQLiteDatabase(name) {
 }
 
 const nodeWebSQL = customOpenDatabase(wrappedSQLiteDatabase);
+
+const fs$1 = require('fs');
 
 CFG.win = {
   openDatabase: nodeWebSQL

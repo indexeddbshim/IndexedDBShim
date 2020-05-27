@@ -1,8 +1,13 @@
 # CHANGES for @indexeddbshim/indexeddbshim
 
-## ?
+## 6.5.0
 
+- Linting: As per latest ash-nazg
+- Build: Update mocha copy
 - Testing: Switch to stable version of `cypres-multi-reporters`
+- npm: Add `prepublishOnly` script
+- npm: Update `typeson-registry`
+- npm: Update devDeps.
 
 ## 6.4.0
 
