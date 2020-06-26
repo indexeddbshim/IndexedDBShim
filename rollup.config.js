@@ -16,7 +16,7 @@ import builtins from 'builtin-modules';
 
 import pkg from './package.json';
 
-const pkgNameNoScope = pkg.name.replace(/@indexeddbshim\//u, '');
+const pkgName = pkg.name;
 
 const babelBrowserOptions = {
     // sourceMapsAbsolute: true,
@@ -176,28 +176,28 @@ export default (commandLineArgs) => {
         ...browserEnvironment({
             name: 'IDBKeyUtils',
             input: 'src/Key.js',
-            output: `dist/${pkgNameNoScope}-Key.js`
+            output: `dist/${pkgName}-Key.js`
         }),
         ...browserEnvironment({
             input: 'src/browser-UnicodeIdentifiers.js',
-            output: `dist/${pkgNameNoScope}-UnicodeIdentifiers.js`
+            output: `dist/${pkgName}-UnicodeIdentifiers.js`
         }),
         ...nodeEnvironment({
             input: 'src/node-UnicodeIdentifiers.js',
-            output: `dist/${pkgNameNoScope}-UnicodeIdentifiers-node.js`
+            output: `dist/${pkgName}-UnicodeIdentifiers-node.js`
         }),
         ...browserEnvironment({
             input: 'src/browser.js',
-            output: `dist/${pkgNameNoScope}.js`
+            output: `dist/${pkgName}.js`
         }),
         ...browserEnvironment({
             name: 'setGlobalVars',
             input: 'src/browser-noninvasive.js',
-            output: `dist/${pkgNameNoScope}-noninvasive.js`
+            output: `dist/${pkgName}-noninvasive.js`
         }),
         ...nodeEnvironment({
             input: 'src/node.js',
-            output: `dist/${pkgNameNoScope}-node.js`
+            output: `dist/${pkgName}-node.js`
         })
     ];
 };
