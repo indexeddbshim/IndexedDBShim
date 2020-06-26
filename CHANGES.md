@@ -1,8 +1,11 @@
 # CHANGES for indexeddbshim
 
-## 6.6.0
+## 6.6.0 (releasing again as `indexeddbshim` and deprecating `@indexeddbshim/indexeddbshim`)
 
-- Incorporate previous updates made to `@indexeddbshim/indexeddbshim`
+- Incorporate previous relevant updates made to `@indexeddbshim/indexeddbshim`
+- Linting: As per latest ash-nazg
+- npm: Add `lint` to `test`
+- npm: Update devDeps. (and bundled mocha copy)
 
 ## 6.5.0 (was published to `@indexeddbshim/indexeddbshim` only)
 

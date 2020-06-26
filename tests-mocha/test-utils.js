@@ -308,6 +308,7 @@
      *
      * @param   {IDBTransaction}    tx              The database upgrade transaction
      * @param   {string}            schemaItem      The name of the schema item to create
+     * @throws {Error} If not one of the predefined schema items
      * @returns {void}
      */
     function createSchemaItem (tx, schemaItem) {

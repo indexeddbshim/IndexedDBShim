@@ -2697,6 +2697,7 @@
   * @param {?(Array)} [seen]
   * @param {boolean} [multiEntry]
   * @param {boolean} [fullKeys]
+  * @throws {TypeError} See `getCopyBytesHeldByBufferSource`
   * @todo Document other allowable `input`
   * @returns {module:Key.keyValueObject}
   */

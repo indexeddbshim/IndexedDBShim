@@ -158,6 +158,7 @@ module.exports = {
         'no-shadow': 0,
         'no-sync': 0,
         'prefer-named-capture-group': 0,
+        'eslint-comments/require-description': 0,
 
         // These should definitely be enabled at some point
         'jsdoc/require-jsdoc': 0,
