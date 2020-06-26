@@ -1,6 +1,6 @@
 # IndexedDB Polyfill
 
-[![Build Status](https://img.shields.io/travis/indexeddbshim/indexeddbshim.svg)](https://travis-ci.org/indexeddbshim/indexeddbshim)
+[![Build Status](https://img.shields.io/travis/indexeddbshim/IndexedDBShim.svg)](https://travis-ci.org/indexeddbshim/IndexedDBShim)
 [![Dependencies](https://img.shields.io/david/indexeddbshim/indexeddbshim.svg)](https://david-dm.org/indexeddbshim/indexeddbshim)
 [![devDependencies](https://img.shields.io/david/dev/indexeddbshim/indexeddbshim.svg)](https://david-dm.org/indexeddbshim/indexeddbshim?type=dev)
 [![npm](http://img.shields.io/npm/v/indexeddbshim.svg)](https://www.npmjs.com/package/indexeddbshim)
