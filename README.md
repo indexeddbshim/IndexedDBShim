@@ -3,11 +3,8 @@
 [![Build Status](https://img.shields.io/travis/indexeddbshim/indexeddbshim.svg)](https://travis-ci.org/indexeddbshim/indexeddbshim)
 [![Dependencies](https://img.shields.io/david/indexeddbshim/indexeddbshim.svg)](https://david-dm.org/indexeddbshim/indexeddbshim)
 [![devDependencies](https://img.shields.io/david/dev/indexeddbshim/indexeddbshim.svg)](https://david-dm.org/indexeddbshim/indexeddbshim?type=dev)
-[![npm](http://img.shields.io/npm/v/@indexeddbshim/indexeddbshim.svg)](https://www.npmjs.com/package/@indexeddbshim/indexeddbshim)
-<!--
-May restore later: https://github.com/indexeddbshim/indexeddbshim/issues/16
-[![CDNJS](https://img.shields.io/cdnjs/v/IndexedDBShim.svg)](https://cdnjs.com/libraries/@indexeddbshim/indexeddbshim)
--->
+[![npm](http://img.shields.io/npm/v/indexeddbshim.svg)](https://www.npmjs.com/package/indexeddbshim)
+[![CDNJS](https://img.shields.io/cdnjs/v/IndexedDBShim.svg)](https://cdnjs.com/libraries/indexeddbshim)
 
 [![Tests badge](https://raw.githubusercontent.com/indexeddbshim/indexeddbshim/master/badges/tests-badge.svg?sanitize=true)](badges/tests-badge.svg)
 [![Coverage badge](https://raw.githubusercontent.com/indexeddbshim/indexeddbshim/master/badges/coverage-badge.svg?sanitize=true)](badges/coverage-badge.svg)
@@ -16,7 +13,7 @@ May restore later: https://github.com/indexeddbshim/indexeddbshim/issues/16
 [![Total Alerts](https://img.shields.io/lgtm/alerts/g/indexeddbshim/indexeddbshim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/indexeddbshim/indexeddbshim/alerts)
 [![Code Quality: Javascript](https://img.shields.io/lgtm/grade/javascript/g/indexeddbshim/indexeddbshim.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/indexeddbshim/indexeddbshim/context:javascript)
 
-[![License](https://img.shields.io/npm/l/@indexeddbshim/indexeddbshim.svg)](LICENSE-APACHE)
+[![License](https://img.shields.io/npm/l/indexeddbshim.svg)](LICENSE-APACHE)
 
 [![Licenses badge](https://raw.githubusercontent.com/indexeddbshim/indexeddbshim/master/badges/licenses-badge.svg?sanitize=true)](badges/licenses-badge.svg)
 <!--
@@ -28,8 +25,6 @@ May restore later: https://github.com/indexeddbshim/indexeddbshim/issues/16
 
 |[Live Demo (stable)!](https://raw.githack.com/indexeddbshim/indexeddbshim/v6.2.0/index.html) | [Live Demo (master)!](https://indexeddbshim.github.io/indexeddbshim/) |
 | -------------- | ----------------- |
-
-**This is a maintained fork of [IndexedDBShim](https://github.com/axemclion/IndexedDBShim). To migrate from IndexedDBShim, you should be able to just replace references requiring or importing `indexeddbshim` with `@indexeddbshim/indexeddbshim`.**
 
 __Use a single, indexable, offline storage API across all desktop and mobile
 browsers and Node.js.__
@@ -80,13 +75,13 @@ Also make sure Python (2.7) is installed.
 ### npm
 
 ```shell
-npm install @indexeddbshim/indexeddbshim
+npm install indexeddbshim
 ```
 
 or
 
 ```shell
-yarn add @indexeddbshim/indexeddbshim
+yarn add indexeddbshim
 ```
 
 ## Browser set-up
@@ -112,7 +107,7 @@ use the following instead:
 ## Node set-up
 
 ```js
-const setGlobalVars = require('@indexeddbshim/indexeddbshim');
+const setGlobalVars = require('indexeddbshim');
 
 global.window = global; // We'll allow ourselves to use `window.indexedDB` or `indexedDB` as a global
 setGlobalVars(); // See signature below
@@ -123,16 +118,16 @@ setGlobalVars(); // See signature below
 ### Bundler for Browser
 
 ```js
-import setGlobalVars from '@indexeddbshim/indexeddbshim';
+import setGlobalVars from 'indexeddbshim';
 ```
 
 ### Bundler for Node
 
 ```js
-import setGlobalVars from '@indexeddbshim/indexeddbshim/src/node-UnicodeIdentifiers';
+import setGlobalVars from 'indexeddbshim/src/node-UnicodeIdentifiers';
 
 // Or without Unicode support
-// import setGlobalVars from '@indexeddbshim/indexeddbshim/src/node';
+// import setGlobalVars from 'indexeddbshim/src/node';
 ```
 
 ## Usage/API
