@@ -1,5 +1,13 @@
 # CHANGES for indexeddbshim
 
+# 7.0.0
+
+- Breaking change: Require Node >= 10
+- Enhancement: By way of `typeson-registry`, support `CryptoKey`
+- Docs: Update dev. license badge per latest
+- Linting: As per latest ash-nazg
+- npm: Update deps. (`regenerator-runtime`, `typeson-registry`) devDeps.
+
 ## 6.6.0 (releasing again as `indexeddbshim` and deprecating `@indexeddbshim/indexeddbshim`)
 
 - Incorporate previous relevant updates made to `@indexeddbshim/indexeddbshim`
