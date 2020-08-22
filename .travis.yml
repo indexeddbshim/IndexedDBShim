@@ -1,10 +1,13 @@
-sudo: false
+os: linux
+dist: xenial
+language: node_js
 node_js:
-- 10
-- 12
+  - 10
+  - 12
+  - 14
+
 notifications:
   email: false
-language: node_js
 env:
   global:
   - secure: "fsW/dvC3qp3tSEKjmFgJJkt3rw3zMmmFj1QNIx6ZTMvzWN7X+NDb3BSFpFSzM5YoJB3RuVxhTCnIekuf3Ekh4ykQ6amWs2Es/EFdS++d1xwnir2EseocpmfTs32GD47obVnUmkbS0qMCZkTHU12PGrD8HOD46PKtBnMQ94Z8kOY="
