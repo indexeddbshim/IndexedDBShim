@@ -1,4 +1,4 @@
-/* eslint-disable compat/compat, node/no-sync */
+/* eslint-disable node/no-sync */
 // Todo: SharedWorker/ServiceWorker/MessageChannel polyfills
 // WebWorkers implementation.
 //

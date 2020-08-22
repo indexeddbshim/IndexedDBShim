@@ -1,9 +1,9 @@
-/*! indexeddbshim - v6.6.0 - 6/26/2020 */
+/*! indexeddbshim - v6.6.0 - 8/22/2020 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
-  (global = global || self, global.setGlobalVars = factory());
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.setGlobalVars = factory());
 }(this, (function () { 'use strict';
 
   // ID_Start (includes Other_ID_Start)
@@ -2802,13 +2802,8 @@
                 }
               }();
 
-              switch (_ret) {
-                case "continue":
-                  continue;
-
-                default:
-                  if (_typeof(_ret) === "object") return _ret.v;
-              }
+              if (_ret === "continue") continue;
+              if (_typeof(_ret) === "object") return _ret.v;
             } catch (err) {
               if (!multiEntry) {
                 throw err;
@@ -6519,9 +6514,7 @@
       replace: function replace(b) {
         // Sync
         var req = new XMLHttpRequest();
-        req.overrideMimeType('text/plain; charset=x-user-defined'); // eslint-disable-next-line max-len
-        // eslint-disable-next-line node/no-unsupported-features/node-builtins
-
+        req.overrideMimeType('text/plain; charset=x-user-defined');
         req.open('GET', URL.createObjectURL(b), false); // Sync
 
         req.send(); // Seems not feasible to accurately simulate
@@ -6615,6 +6608,43 @@
         var uuid = _ref.uuid,
             encapsulated = _ref.encapsulated;
         return cloneableObjectsByUUID[uuid][Symbol["for"]('cloneRevive')](encapsulated);
+      }
+    }
+  };
+
+  /* globals crypto */
+  var cryptokey = {
+    cryptokey: {
+      test: function test(x) {
+        return typeson.toStringTag(x) === 'CryptoKey' && x.extractable;
+      },
+      replaceAsync: function replaceAsync(key) {
+        return new typeson.Promise(function (resolve, reject) {
+          // eslint-disable-next-line promise/catch-or-return
+          crypto.subtle.exportKey('jwk', key)["catch"](
+          /* eslint-disable promise/prefer-await-to-callbacks */
+          // istanbul ignore next
+          function (err) {
+            /* eslint-enable promise/prefer-await-to-callbacks */
+            // eslint-disable-next-line max-len
+            // istanbul ignore next -- Our format should be valid and our key extractable
+            reject(err);
+          } // eslint-disable-next-line max-len
+          // eslint-disable-next-line promise/always-return, promise/prefer-await-to-then
+          ).then(function (jwk) {
+            resolve({
+              jwk: jwk,
+              algorithm: key.algorithm,
+              usages: key.usages
+            });
+          });
+        });
+      },
+      revive: function revive(_ref) {
+        var jwk = _ref.jwk,
+            algorithm = _ref.algorithm,
+            usages = _ref.usages;
+        return crypto.subtle.importKey('jwk', jwk, algorithm, true, usages);
       }
     }
   };
@@ -6754,9 +6784,7 @@
       replace: function replace(f) {
         // Sync
         var req = new XMLHttpRequest();
-        req.overrideMimeType('text/plain; charset=x-user-defined'); // eslint-disable-next-line max-len
-        // eslint-disable-next-line node/no-unsupported-features/node-builtins
-
+        req.overrideMimeType('text/plain; charset=x-user-defined');
         req.open('GET', URL.createObjectURL(f), false); // Sync
 
         req.send(); // Seems not feasible to accurately simulate
@@ -7462,6 +7490,8 @@
   /* istanbul ignore next */
   typeof Intl !== 'undefined' ? intlTypes : [],
   /* istanbul ignore next */
+  typeof crypto !== 'undefined' ? cryptokey : [],
+  /* istanbul ignore next */
   typeof BigInt !== 'undefined' ? [bigint, bigintObject] : []);
 
   var structuredCloningThrowing = expObj$1.concat({
@@ -7534,6 +7564,7 @@
     bigint: bigint,
     blob: blob,
     cloneable: cloneable,
+    cryptokey: cryptokey,
     dataview: dataview,
     date: date,
     error: error,

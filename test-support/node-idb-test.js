@@ -505,7 +505,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         });
 
         delete require.cache[
-            Object.keys(require.cache).filter((path) => path.includes('createObjectURL'))[0]
+            Object.keys(require.cache).find((path) => path.includes('createObjectURL'))
         ];
 
         window.Promise = Promise;

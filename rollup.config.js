@@ -1,6 +1,3 @@
-/* eslint-env node */
-/* eslint-disable node/no-unsupported-features/es-syntax */
-
 import nodeResolve from '@rollup/plugin-node-resolve';
 import commonJS from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
@@ -122,6 +119,7 @@ const nodeEnvironment = ({input, name, output: file}) => {
                 file: min ? file.replace(/\.js$/u, '.min.js') : file,
                 name,
                 banner,
+                exports: 'default',
                 // Avoid using `browser` entry in package.json
                 format: 'cjs',
                 // Avoid `window` checking (link now broken)

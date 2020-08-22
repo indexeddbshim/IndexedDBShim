@@ -1,4 +1,4 @@
-/* eslint-disable compat/compat, node/no-sync */
+/* eslint-disable node/no-sync */
 // Launcher script for WebWorkers.
 //
 // Sets up context and runs a worker script. This is not intended to be

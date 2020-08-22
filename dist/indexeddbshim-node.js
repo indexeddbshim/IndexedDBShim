@@ -1,11 +1,14 @@
-/*! indexeddbshim - v6.6.0 - 6/26/2020 */
+/*! indexeddbshim - v6.6.0 - 8/22/2020 */
 
 'use strict';
 
-function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
+var path = require('path');
+var customOpenDatabase = require('websql/custom/index.js');
 
-var path = _interopDefault(require('path'));
-var customOpenDatabase = _interopDefault(require('websql/custom/index.js'));
+function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+
+var path__default = /*#__PURE__*/_interopDefaultLegacy(path);
+var customOpenDatabase__default = /*#__PURE__*/_interopDefaultLegacy(customOpenDatabase);
 
 function _defineProperty(obj, key, value) {
   if (key in obj) {
@@ -6197,9 +6200,7 @@ const blob = {
     replace(b) {
       // Sync
       const req = new XMLHttpRequest();
-      req.overrideMimeType('text/plain; charset=x-user-defined'); // eslint-disable-next-line max-len
-      // eslint-disable-next-line node/no-unsupported-features/node-builtins
-
+      req.overrideMimeType('text/plain; charset=x-user-defined');
       req.open('GET', URL.createObjectURL(b), false); // Sync
 
       req.send(); // Seems not feasible to accurately simulate
@@ -6300,6 +6301,47 @@ const cloneable = {
       encapsulated
     }) {
       return cloneableObjectsByUUID[uuid][Symbol.for('cloneRevive')](encapsulated);
+    }
+
+  }
+};
+
+/* globals crypto */
+const cryptokey = {
+  cryptokey: {
+    test(x) {
+      return Typeson.toStringTag(x) === 'CryptoKey' && x.extractable;
+    },
+
+    replaceAsync(key) {
+      return new Typeson.Promise((resolve, reject) => {
+        // eslint-disable-next-line promise/catch-or-return
+        crypto.subtle.exportKey('jwk', key).catch(
+        /* eslint-disable promise/prefer-await-to-callbacks */
+        // istanbul ignore next
+        err => {
+          /* eslint-enable promise/prefer-await-to-callbacks */
+          // eslint-disable-next-line max-len
+          // istanbul ignore next -- Our format should be valid and our key extractable
+          reject(err);
+        } // eslint-disable-next-line max-len
+        // eslint-disable-next-line promise/always-return, promise/prefer-await-to-then
+        ).then(jwk => {
+          resolve({
+            jwk,
+            algorithm: key.algorithm,
+            usages: key.usages
+          });
+        });
+      });
+    },
+
+    revive({
+      jwk,
+      algorithm,
+      usages
+    }) {
+      return crypto.subtle.importKey('jwk', jwk, algorithm, true, usages);
     }
 
   }
@@ -6458,9 +6500,7 @@ const file = {
     replace(f) {
       // Sync
       const req = new XMLHttpRequest();
-      req.overrideMimeType('text/plain; charset=x-user-defined'); // eslint-disable-next-line max-len
-      // eslint-disable-next-line node/no-unsupported-features/node-builtins
-
+      req.overrideMimeType('text/plain; charset=x-user-defined');
       req.open('GET', URL.createObjectURL(f), false); // Sync
 
       req.send(); // Seems not feasible to accurately simulate
@@ -7247,6 +7287,8 @@ typeof DataView === 'function' ? dataview : [],
 /* istanbul ignore next */
 typeof Intl !== 'undefined' ? intlTypes : [],
 /* istanbul ignore next */
+typeof crypto !== 'undefined' ? cryptokey : [],
+/* istanbul ignore next */
 typeof BigInt !== 'undefined' ? [bigint, bigintObject] : []);
 
 /* globals DOMException */
@@ -7321,6 +7363,7 @@ Typeson.types = {
   bigint,
   blob,
   cloneable,
+  cryptokey,
   dataview,
   date,
   error,
@@ -9542,7 +9585,7 @@ function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, dat
   }
 
   if (fs && CFG.deleteDatabaseFiles !== false) {
-    fs.unlink(path.join(CFG.databaseBasePath || '', escapedDatabaseName), err => {
+    fs.unlink(path__default['default'].join(CFG.databaseBasePath || '', escapedDatabaseName), err => {
       if (err && err.code !== 'ENOENT') {
         // Ignore if file is already deleted
         dbError({
@@ -9557,7 +9600,7 @@ function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, dat
     return;
   }
 
-  const sqliteDB = __openDatabase(path.join(CFG.databaseBasePath || '', escapedDatabaseName), 1, name, CFG.DEFAULT_DB_SIZE);
+  const sqliteDB = __openDatabase(path__default['default'].join(CFG.databaseBasePath || '', escapedDatabaseName), 1, name, CFG.DEFAULT_DB_SIZE);
 
   sqliteDB.transaction(function (tx) {
     tx.executeSql('SELECT "name" FROM __sys__', [], function (tx, data) {
@@ -9609,7 +9652,7 @@ function createSysDB(__openDatabase, success, failure) {
   if (sysdb) {
     success();
   } else {
-    sysdb = __openDatabase(typeof CFG.memoryDatabase === 'string' ? CFG.memoryDatabase : path.join(typeof CFG.sysDatabaseBasePath === 'string' ? CFG.sysDatabaseBasePath : CFG.databaseBasePath || '', '__sysdb__' + (CFG.addSQLiteExtension !== false ? '.sqlite' : '')), 1, 'System Database', CFG.DEFAULT_DB_SIZE);
+    sysdb = __openDatabase(typeof CFG.memoryDatabase === 'string' ? CFG.memoryDatabase : path__default['default'].join(typeof CFG.sysDatabaseBasePath === 'string' ? CFG.sysDatabaseBasePath : CFG.databaseBasePath || '', '__sysdb__' + (CFG.addSQLiteExtension !== false ? '.sqlite' : '')), 1, 'System Database', CFG.DEFAULT_DB_SIZE);
     sysdb.transaction(function (systx) {
       systx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name BLOB, version INT);', [], function (systx) {
         if (!CFG.useSQLiteIndexes) {
@@ -9903,7 +9946,7 @@ IDBFactory.prototype.open = function (name
     if ((useMemoryDatabase || useDatabaseCache) && name in websqlDBCache && websqlDBCache[name][version]) {
       db = websqlDBCache[name][version];
     } else {
-      db = me.__openDatabase(useMemoryDatabase ? CFG.memoryDatabase : path.join(CFG.databaseBasePath || '', escapedDatabaseName), 1, name, CFG.DEFAULT_DB_SIZE);
+      db = me.__openDatabase(useMemoryDatabase ? CFG.memoryDatabase : path__default['default'].join(CFG.databaseBasePath || '', escapedDatabaseName), 1, name, CFG.DEFAULT_DB_SIZE);
 
       if (useDatabaseCache) {
         if (!(name in websqlDBCache)) {
@@ -11288,7 +11331,7 @@ function wrappedSQLiteDatabase(name) {
   return db;
 }
 
-const nodeWebSQL = customOpenDatabase(wrappedSQLiteDatabase);
+const nodeWebSQL = customOpenDatabase__default['default'](wrappedSQLiteDatabase);
 
 const fs$1 = require('fs');
 

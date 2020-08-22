@@ -485,6 +485,7 @@ to resolve:
 processes/browser windows
 1. Some issues related to [task/micro-task timing](https://github.com/axemclion/IndexedDBShim/issues/296)
 in Node (for inherent limitations in the browser, see below).
+1. [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData/ImageData) storage on Node 14 when used with `node-canvas` - due to [this issue](https://github.com/Automattic/node-canvas/issues/1646)
 
 There are a few bugs that are outside of our power to fix.  Namely:
 

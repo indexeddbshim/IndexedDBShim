@@ -122,6 +122,12 @@ module.exports = {
                 module: 'readonly',
                 __dirname: 'readonly'
             },
+            settings: {
+                polyfills: [
+                    'ErrorEvent',
+                    'navigator'
+                ]
+            },
             rules: {
                 // See about reenabling
                 'vars-on-top': 0,

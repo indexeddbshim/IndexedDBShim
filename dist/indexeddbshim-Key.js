@@ -1,9 +1,9 @@
-/*! indexeddbshim - v6.6.0 - 6/26/2020 */
+/*! indexeddbshim - v6.6.0 - 8/22/2020 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
-  (global = global || self, factory(global.IDBKeyUtils = {}));
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.IDBKeyUtils = {}));
 }(this, (function (exports) { 'use strict';
 
   function _typeof(obj) {
@@ -1147,13 +1147,8 @@
                 }
               }();
 
-              switch (_ret) {
-                case "continue":
-                  continue;
-
-                default:
-                  if (_typeof(_ret) === "object") return _ret.v;
-              }
+              if (_ret === "continue") continue;
+              if (_typeof(_ret) === "object") return _ret.v;
             } catch (err) {
               if (!multiEntry) {
                 throw err;

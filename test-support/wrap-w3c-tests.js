@@ -176,7 +176,7 @@ loaderWin.addEventListener('DOMContentLoaded', function () {
             'idlharness.any.sharedworker.html'
         ].forEach(async (htmlFile) => {
             const htmlPath = path.join(indexedDBDir, htmlFile);
-            const urlPath = new URL( // eslint-disable-line compat/compat
+            const urlPath = new URL(
                 htmlFile,
                 'http://web-platform.test:8000/IndexedDB/'
             );
