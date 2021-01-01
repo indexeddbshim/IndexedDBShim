@@ -1,5 +1,9 @@
 # CHANGES for indexeddbshim
 
+## ?
+
+- Testing: Switch to stable version of `mocha-multi-reporters`
+
 # 7.0.0
 
 - Breaking change: Require Node >= 10
