@@ -687,8 +687,8 @@ describe('IDBObjectStore.delete', function () {
             deleteKey(0); // zero
             deleteKey(-99999); // negative number
             deleteKey(3.12345); // float
-            deleteKey(Infinity); // infinity
-            deleteKey(-Infinity); // negative infinity
+            deleteKey(Number.POSITIVE_INFINITY); // infinity
+            deleteKey(Number.NEGATIVE_INFINITY); // negative infinity
             deleteKey(new Date(2000, 1, 2)); // Date
 
             if (env.isShimmed || !env.browser.isIE) {

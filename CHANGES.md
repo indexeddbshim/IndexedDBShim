@@ -2,7 +2,9 @@
 
 ## ?
 
+- Linting (ESLint): As per latest ash-nazg
 - Testing: Switch to stable version of `mocha-multi-reporters`
+- npm: Update devDeps. and package-lock
 
 # 7.0.0
 
@@ -904,18 +906,18 @@ they were actually changes since a more recent version on `master`.
 - Fix: Interface changes for `DOMStringList`: illegal constructor, length
    enumerable, `instanceof` override
 - Fix: WebIDL-based changes, including:
-   1) new `CFG` option `fullIDLSupport` to avoid expensive
+   - new `CFG` option `fullIDLSupport` to avoid expensive
        `setPrototypeOf` by default;
-   2) Illegal constructor and `prototype` invocation (while allowing
+   - Illegal constructor and `prototype` invocation (while allowing
        normal access)
-   3) Make `prototype` non-writable as appropriate
-   4) Ensure `constructor` set on `prototype` as appropriate
-   5) Proper `Symbol.toStringTag` and `toString` exposure on
+   - Make `prototype` non-writable as appropriate
+   - Ensure `constructor` set on `prototype` as appropriate
+   - Proper `Symbol.toStringTag` and `toString` exposure on
        classes and prototypes
-   6) Use `arguments` object in place of some function parameters
+   - Use `arguments` object in place of some function parameters
        to get proper function lengths
-   7) Set properties to appropriate `enumerable`/`configurable`
-   8) Set proper inheritance hierarchy, including to `EventTarget` or
+   - Set properties to appropriate `enumerable`/`configurable`
+   - Set proper inheritance hierarchy, including to `EventTarget` or
        `Event`
 - Fix: Properly report global shimming errors when setting a readonly
    failed and `Object.defineProperty` is not present

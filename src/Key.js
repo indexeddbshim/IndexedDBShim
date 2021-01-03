@@ -135,9 +135,9 @@ const types = {
 
             switch (signValues[sign]) {
             case 'negativeInfinity':
-                return -Infinity;
+                return Number.NEGATIVE_INFINITY;
             case 'positiveInfinity':
-                return Infinity;
+                return Number.POSITIVE_INFINITY;
             case 'bigPositive':
                 return pow32(mantissa, exponent);
             case 'smallPositive':
@@ -300,11 +300,10 @@ function pow32 (mantissa, exponent) {
 
 /**
  * @param {Float} num
- * @param {Float} precision
+ * @param {Float} [precision=16]
  * @returns {Float}
  */
-function roundToPrecision (num, precision) {
-    precision = precision || 16;
+function roundToPrecision (num, precision = 16) {
     return Number.parseFloat(num.toPrecision(precision));
 }
 
@@ -937,7 +936,7 @@ function setCurrentNumber (tx, store, num, successCb, failCb) {
 function generateKeyForStore (tx, store, cb, sqlFailCb) {
     getCurrentNumber(tx, store, function (key) {
         if (key > MAX_ALLOWED_CURRENT_NUMBER) { // 2 ^ 53 (See <https://github.com/w3c/IndexedDB/issues/147>)
-            cb('failure'); // eslint-disable-line standard/no-callback-literal
+            cb('failure'); // eslint-disable-line node/no-callback-literal
             return;
         }
         // Increment current number by 1 (we cannot leverage SQLite's

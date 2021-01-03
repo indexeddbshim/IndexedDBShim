@@ -156,8 +156,8 @@ describe('IDBFactory.deleteDatabase', function () {
         deleteDatabase(util.sampleData.veryLongString);
         deleteDatabase(42);
         deleteDatabase(-0.331);
-        deleteDatabase(Infinity);
-        deleteDatabase(-Infinity);
+        deleteDatabase(Number.POSITIVE_INFINITY);
+        deleteDatabase(Number.NEGATIVE_INFINITY);
         deleteDatabase(Number.NaN);
         deleteDatabase([]);
         deleteDatabase(['a', 'b', 'c']);

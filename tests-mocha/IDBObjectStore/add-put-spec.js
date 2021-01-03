@@ -360,8 +360,8 @@
                     saveKey(0); // zero
                     saveKey(-99999); // negative number
                     saveKey(3.12345); // float
-                    saveKey(Infinity); // infinity
-                    saveKey(-Infinity); // negative infinity
+                    saveKey(Number.POSITIVE_INFINITY); // infinity
+                    saveKey(Number.NEGATIVE_INFINITY); // negative infinity
                     saveKey(new Date(2000, 1, 2)); // Date
 
                     if (env.isShimmed || !env.browser.isIE) {
@@ -474,8 +474,8 @@
                     saveData(0); // zero
                     saveData(-99999); // negative number
                     saveData(3.12345); // float
-                    saveData(Infinity); // infinity
-                    saveData(-Infinity); // negative infinity
+                    saveData(Number.POSITIVE_INFINITY); // infinity
+                    saveData(Number.NEGATIVE_INFINITY); // negative infinity
                     saveData(Number.NaN); // NaN
                     saveData({}); // empty object
                     saveData({foo: 'bar'}); // object
@@ -809,8 +809,8 @@
                     saveKey(0); // zero
                     saveKey(-99999); // negative number
                     saveKey(3.12345); // float
-                    saveKey(Infinity); // infinity
-                    saveKey(-Infinity); // negative infinity
+                    saveKey(Number.POSITIVE_INFINITY); // infinity
+                    saveKey(Number.NEGATIVE_INFINITY); // negative infinity
                     saveKey(new Date(2000, 1, 2)); // Date
 
                     if (env.isShimmed || !env.browser.isIE) {
@@ -992,8 +992,8 @@
                     tryToSaveData(0); // zero
                     tryToSaveData(-99999); // negative number
                     tryToSaveData(3.12345); // float
-                    tryToSaveData(Infinity); // infinity
-                    tryToSaveData(-Infinity); // negative infinity
+                    tryToSaveData(Number.POSITIVE_INFINITY); // infinity
+                    tryToSaveData(Number.NEGATIVE_INFINITY); // negative infinity
                     tryToSaveData(Number.NaN); // NaN
 
                     if (env.isShimmed || !env.browser.isIE) {
@@ -1463,8 +1463,8 @@
                     saveKey(0); // zero
                     saveKey(-99999); // negative number
                     saveKey(3.12345); // float
-                    saveKey(Infinity); // infinity
-                    saveKey(-Infinity); // negative infinity
+                    saveKey(Number.POSITIVE_INFINITY); // infinity
+                    saveKey(Number.NEGATIVE_INFINITY); // negative infinity
                     saveKey(new Date(2000, 1, 2)); // Date
                     saveKey([]); // empty array
                     saveKey(['a', '', 'b']); // array of strings

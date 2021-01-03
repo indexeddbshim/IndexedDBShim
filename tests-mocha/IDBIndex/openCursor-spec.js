@@ -485,8 +485,8 @@ describe('IDBIndex.openCursor', function () {
             getKey(0); // zero
             getKey(-99999); // negative number
             getKey(3.12345); // float
-            getKey(Infinity); // infinity
-            getKey(-Infinity); // negative infinity
+            getKey(Number.POSITIVE_INFINITY); // infinity
+            getKey(Number.NEGATIVE_INFINITY); // negative infinity
             getKey(new Date(2000, 1, 2)); // Date
             getKey(null); // null
 
@@ -650,7 +650,7 @@ describe('IDBIndex.openCursor', function () {
                 query(store, IDBKeyRange.upperBound(0, true), [
                     {primaryKey: -3, key: -3, value: 'three'}
                 ]);
-                query(store, IDBKeyRange.bound(-Infinity, 1, true, true), [
+                query(store, IDBKeyRange.bound(Number.NEGATIVE_INFINITY, 1, true, true), [
                     {primaryKey: -3, key: -3, value: 'three'},
                     {primaryKey: 0.0000000000005, key: 0.0000000000005, value: 'five'}
                 ]);
@@ -658,7 +658,7 @@ describe('IDBIndex.openCursor', function () {
                 // Index queries
                 query(index, 101, []);
                 query(index, IDBKeyRange.lowerBound(1), []);
-                query(index, IDBKeyRange.bound(-Infinity, Infinity), []);
+                query(index, IDBKeyRange.bound(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY), []);
             });
         });
 
@@ -796,7 +796,7 @@ describe('IDBIndex.openCursor', function () {
                 ]);
 
                 // Index queries
-                query(index, IDBKeyRange.bound(-Infinity, Infinity), 'prev', [
+                query(index, IDBKeyRange.bound(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY), 'prev', [
                     {primaryKey: 2, key: 2, value: {name: {first: 2}}},
                     {primaryKey: 1, key: 1, value: {name: {first: 1}}},
                     {primaryKey: 0.0000000000005, key: 0.0000000000005, value: {name: {first: 0.0000000000005}}},
@@ -888,8 +888,8 @@ describe('IDBIndex.openCursor', function () {
                 store.add({id: new Date(2001, 1, 1), name: {first: new Date(2002, 2, 2), last: new Date(2003, 3, 3)}});
 
                 // Object Store queries
-                query(store, IDBKeyRange.bound(-Infinity, Infinity), []);
-                query(store, IDBKeyRange.bound([-Infinity], [Infinity], true, true), 'prev', [
+                query(store, IDBKeyRange.bound(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY), []);
+                query(store, IDBKeyRange.bound([Number.NEGATIVE_INFINITY], [Number.POSITIVE_INFINITY], true, true), 'prev', [
                     {primaryKey: [1, 2, 3], key: [1, 2, 3], value: {id: 1, name: {first: 2, last: 3}}},
                     {primaryKey: [-1, -2, -3], key: [-1, -2, -3], value: {id: -1, name: {first: -2, last: -3}}},
                     {primaryKey: [-1, -3, -2], key: [-1, -3, -2], value: {id: -1, name: {first: -3, last: -2}}}
@@ -945,8 +945,8 @@ describe('IDBIndex.openCursor', function () {
                 store.add({id: -1, name: {first: -2, last: -3}});
 
                 // Object Store queries
-                query(store, IDBKeyRange.bound([-Infinity], [Infinity]), []);
-                query(store, IDBKeyRange.bound(-Infinity, Infinity), [
+                query(store, IDBKeyRange.bound([Number.NEGATIVE_INFINITY], [Number.POSITIVE_INFINITY]), []);
+                query(store, IDBKeyRange.bound(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY), [
                     {primaryKey: -1, key: -1, value: {id: -1, name: {first: -2, last: -3}}},
                     {primaryKey: 0, key: 0, value: {id: 0}},
                     {primaryKey: 1, key: 1, value: {id: 1, name: {first: 2, last: 3}}}

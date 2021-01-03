@@ -683,8 +683,8 @@ describe('IDBIndex.get', function () {
             getKey(0); // zero
             getKey(-99999); // negative number
             getKey(3.12345); // float
-            getKey(Infinity); // infinity
-            getKey(-Infinity); // negative infinity
+            getKey(Number.POSITIVE_INFINITY); // infinity
+            getKey(Number.NEGATIVE_INFINITY); // negative infinity
             getKey(new Date(2000, 1, 2)); // Date
 
             if (env.isShimmed || !env.browser.isIE) {

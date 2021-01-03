@@ -146,7 +146,7 @@ module.exports = {
                 'node/no-unsupported-features/es-builtins': ['off'],
                 'node/no-unsupported-features/node-builtins': ['off'],
                 'unicorn/prefer-add-event-listener': ['off'],
-                'unicorn/no-array-instanceof': ['off']
+                'unicorn/no-instanceof-array': ['off']
             }
         }
     ],

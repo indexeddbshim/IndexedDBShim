@@ -63,13 +63,13 @@ describe('IDBFactory.cmp', function () {
             compare(-0.12345, -0.12344);
             compare(1, 1.0000000000001);
             compare(1.9999999999999, 2);
-            compare(0, Infinity);
-            compare(-1, Infinity);
-            compare(1, Infinity);
-            compare(-Infinity, 0);
-            compare(-Infinity, 1);
-            compare(-Infinity, -1);
-            compare(-Infinity, Infinity);
+            compare(0, Number.POSITIVE_INFINITY);
+            compare(-1, Number.POSITIVE_INFINITY);
+            compare(1, Number.POSITIVE_INFINITY);
+            compare(Number.NEGATIVE_INFINITY, 0);
+            compare(Number.NEGATIVE_INFINITY, 1);
+            compare(Number.NEGATIVE_INFINITY, -1);
+            compare(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY);
             compare(-Math.PI, Math.PI);
             compare(-Number.MAX_VALUE, Number.MAX_VALUE);
             compare(-Number.MIN_VALUE, 0);
@@ -86,8 +86,8 @@ describe('IDBFactory.cmp', function () {
             equal(0.0000000000001);
             // eslint-disable-next-line no-loss-of-precision
             equal(9999999999999.9999999999999);
-            equal(Infinity);
-            equal(-Infinity);
+            equal(Number.POSITIVE_INFINITY);
+            equal(Number.NEGATIVE_INFINITY);
             equal(Math.PI);
             equal(-Math.PI);
             equal(Number.MIN_VALUE);

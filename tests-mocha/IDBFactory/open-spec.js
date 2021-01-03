@@ -428,8 +428,8 @@ describe('IDBFactory.open', function () {
             tryToOpen('foobar');
             tryToOpen(0);
             tryToOpen(-3);
-            tryToOpen(Infinity);
-            tryToOpen(-Infinity);
+            tryToOpen(Number.POSITIVE_INFINITY);
+            tryToOpen(Number.NEGATIVE_INFINITY);
             tryToOpen(Number.NaN);
 
             if (env.isShimmed || !env.browser.isFirefox) {
