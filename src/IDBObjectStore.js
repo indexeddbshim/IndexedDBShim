@@ -481,7 +481,8 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
         return undefined;
     }).catch(function (err) {
         function fail () {
-            // Todo: Add a different error object here if `assignCurrentNumber` fails in reverting?
+            // Todo: Add a different error object here if `assignCurrentNumber`
+            //  fails in reverting?
             error(err);
         }
         if (typeof oldCn === 'number') {

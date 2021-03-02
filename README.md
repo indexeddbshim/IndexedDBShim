@@ -90,7 +90,6 @@ Add the following scripts to your page:
 
 ```html
 <script src="./node_modules/core-js-bundle/minified.js"></script>
-<script src="./node_modules/regenerator-runtime/runtime.js"></script>
 <script src="./node_modules/indexeddbshim/dist/indexeddbshim.min.js"></script>
 ```
 
@@ -100,7 +99,6 @@ use the following instead:
 
 ```html
 <script src="./node_modules/core-js-bundle/minified.js"></script>
-<script src="./node_modules/regenerator-runtime/runtime.js"></script>
 <script src="./node_modules/indexeddbshim/dist/indexeddbshim-UnicodeIdentifiers.min.js"></script>
 ```
 

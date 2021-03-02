@@ -312,7 +312,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
     // eslint-disable-next-line no-useless-catch
     try {
         escapedDatabaseName = util.escapeDatabaseNameForSQLAndFiles(name);
-    // eslint-disable-next-line sonarjs/no-useless-catch
+    // eslint-disable-next-line radar/no-useless-catch
     } catch (err) {
         throw err; // new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
     }
@@ -590,7 +590,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     // eslint-disable-next-line no-useless-catch
     try {
         escapedDatabaseName = util.escapeDatabaseNameForSQLAndFiles(name);
-    // eslint-disable-next-line sonarjs/no-useless-catch
+    // eslint-disable-next-line radar/no-useless-catch
     } catch (err) {
         throw err; // throw new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
     }

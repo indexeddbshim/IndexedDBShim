@@ -101,10 +101,11 @@
             var _gaq; // eslint-disable-line no-var
             if (!window.location.href.includes('noanalytics=true')) { // Slowing testing down in China where Google is blocked so giving an out
                 _gaq = _gaq || [];
-                _gaq.push(['_setAccount', 'UA-617499-9']);
-                _gaq.push(['_setDomainName', 'none']);
-                _gaq.push(['_setAllowLinker', true]);
-                _gaq.push(['_trackPageview']);
+                _gaq.push(
+                    ['_setAccount', 'UA-617499-9'],
+                    ['_setDomainName', 'none'],
+                    ['_setAllowLinker', true]
+                );
 
                 (function () {
                     const ga = document.createElement('script');

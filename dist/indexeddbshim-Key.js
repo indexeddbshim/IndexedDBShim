@@ -1,4 +1,4 @@
-/*! indexeddbshim - v6.6.0 - 8/22/2020 */
+/*! indexeddbshim - v7.0.0 - 3/5/2021 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -237,7 +237,7 @@
   //   defaults to `true`
   'addSQLiteExtension', // Various types of in-memory databases that can auto-delete
   ['memoryDatabase', function (val) {
-    if (!/^(?::memory:|file::memory:(\?(?:[\0-"\$-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?(#(?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?)?$/.test(val)) {
+    if (!/^(?::memory:|file::memory:(\?(?:(?!#)[\s\S])*)?(#(?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?)?$/.test(val)) {
       throw new TypeError('`memoryDatabase` must be the empty string, ":memory:", or a ' + '"file::memory:[?queryString][#hash] URL".');
     }
   }], // NODE-SPECIFIC CONFIG
@@ -512,14 +512,14 @@
 
   function escapeUnmatchedSurrogates(arg) {
     // http://stackoverflow.com/a/6701665/271577
-    return arg.replace(/((?:[\uD800-\uDBFF](?![\uDC00-\uDFFF])))(?!(?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))|(^|(?:[\0-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))((?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, function (_, unmatchedHighSurrogate, precedingLow, unmatchedLowSurrogate) {
+    return arg.replace(/((?:[\uD800-\uDBFF](?![\uDC00-\uDFFF])))(?!(?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))|(^|(?:(?![\uD800-\uDBFF](?![\uDC00-\uDFFF]))[\s\S]))((?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, function (_, unmatchedHighSurrogate, precedingLow, unmatchedLowSurrogate) {
       // Could add a corresponding surrogate for compatibility with `node-sqlite3`: http://bugs.python.org/issue12569 and http://stackoverflow.com/a/6701665/271577
       //   but Chrome having problems
       if (unmatchedHighSurrogate) {
-        return '^2' + padStart(unmatchedHighSurrogate.charCodeAt().toString(16), 4, '0');
+        return '^2' + unmatchedHighSurrogate.charCodeAt().toString(16).padStart(4, '0');
       }
 
-      return (precedingLow || '') + '^3' + padStart(unmatchedLowSurrogate.charCodeAt().toString(16), 4, '0');
+      return (precedingLow || '') + '^3' + unmatchedLowSurrogate.charCodeAt().toString(16).padStart(4, '0');
     });
   }
 
@@ -552,11 +552,6 @@
 
   function isNullish(v) {
     return v === null || v === undefined;
-  }
-
-
-  function padStart(str, ct, fill) {
-    return new Array(ct - String(str).length + 1).join(fill) + str;
   }
 
   /**
@@ -669,7 +664,7 @@
 
         key32 = decimalIndex !== -1 ? key32.replace('.', '') : key32; // Get the index of the first significant digit.
 
-        var significantDigitIndex = key32.search(/(?:[\0-\/1-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])/); // Truncate leading zeros.
+        var significantDigitIndex = key32.search(/(?:(?!0)[\s\S])/); // Truncate leading zeros.
 
         key32 = key32.slice(significantDigitIndex);
         var sign, exponent, mantissa; // Finite cases:
@@ -717,10 +712,10 @@
 
         switch (signValues[sign]) {
           case 'negativeInfinity':
-            return -Infinity;
+            return Number.NEGATIVE_INFINITY;
 
           case 'positiveInfinity':
-            return Infinity;
+            return Number.POSITIVE_INFINITY;
 
           case 'bigPositive':
             return pow32(mantissa, exponent);
@@ -832,7 +827,7 @@
       // `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
       encode: function encode(key) {
         return keyTypeToEncodedChar.binary + '-' + (key.byteLength ? _toConsumableArray(getCopyBytesHeldByBufferSource(key)).map(function (b) {
-          return padStart(b, 3, '0');
+          return String(b).padStart(3, '0');
         }) // e.g., '255,005,254,000,001,033'
         : '');
       },
@@ -929,13 +924,13 @@
   }
   /**
    * @param {Float} num
-   * @param {Float} precision
+   * @param {Float} [precision=16]
    * @returns {Float}
    */
 
 
-  function roundToPrecision(num, precision) {
-    precision = precision || 16;
+  function roundToPrecision(num) {
+    var precision = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 16;
     return Number.parseFloat(num.toPrecision(precision));
   }
   /**
@@ -1743,7 +1738,7 @@
     getCurrentNumber(tx, store, function (key) {
       if (key > MAX_ALLOWED_CURRENT_NUMBER) {
         // 2 ^ 53 (See <https://github.com/w3c/IndexedDB/issues/147>)
-        cb('failure'); // eslint-disable-line standard/no-callback-literal
+        cb('failure'); // eslint-disable-line node/no-callback-literal
 
         return;
       } // Increment current number by 1 (we cannot leverage SQLite's

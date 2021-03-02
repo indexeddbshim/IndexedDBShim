@@ -221,7 +221,9 @@ const types = {
         // `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
         encode (key) {
             return keyTypeToEncodedChar.binary + '-' + (key.byteLength
-                ? [...getCopyBytesHeldByBufferSource(key)].map((b) => util.padStart(b, 3, '0')) // e.g., '255,005,254,000,001,033'
+                ? [...getCopyBytesHeldByBufferSource(key)].map(
+                    (b) => String(b).padStart(3, '0')
+                ) // e.g., '255,005,254,000,001,033'
                 : '');
         },
         decode (key) {

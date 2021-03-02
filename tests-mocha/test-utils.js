@@ -44,7 +44,9 @@
             /**
              * A very long string :) .
              */
-            veryLongString: new Array(1001).join('1234567890') // 10,000 characters
+            veryLongString:
+                // eslint-disable-next-line unicorn/no-new-array -- Easy way
+                new Array(1001).join('1234567890') // 10,000 characters
         },
 
         /**

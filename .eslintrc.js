@@ -1,13 +1,38 @@
 'use strict';
 
+const rules = {
+    indent: ['error', 4],
+    'consistent-this': ['error', 'me'],
+    // We use `instanceof` otherwise prohibited by `eslint-config-ash-nazg`,
+    //  with `Symbol.hasInstance`
+    'no-restricted-syntax': 0,
+
+    // Disable until find time to address
+    'default-case': 0,
+    'max-len': 0,
+    'no-console': 0,
+    'no-shadow': 0,
+    'no-sync': 0,
+    'prefer-named-capture-group': 0,
+    'eslint-comments/require-description': 0,
+
+    // These should definitely be enabled at some point
+    'jsdoc/require-jsdoc': 0,
+    'jsdoc/require-param-type': 0,
+    'jsdoc/check-types': 0,
+
+    'node/prefer-promises/fs': 0,
+    'promise/prefer-await-to-callbacks': 0,
+    'promise/prefer-await-to-then': 0,
+    'unicorn/no-unsafe-regex': 0,
+    'unicorn/no-this-assignment': 0,
+    'unicorn/prefer-spread': 0
+};
+
 module.exports = {
     extends: [
-        'ash-nazg/sauron-node'
+        'ash-nazg/sauron-node-overrides'
     ],
-    parserOptions: {
-        ecmaVersion: 2018,
-        sourceType: 'module'
-    },
     env: {
         browser: true
     },
@@ -41,6 +66,7 @@ module.exports = {
             'Promise',
             'Set',
             'String.fromCodePoint',
+            'String.padStart',
             'Symbol.hasInstance',
             'Symbol.iterator',
             'Symbol.toStringTag',
@@ -74,7 +100,7 @@ module.exports = {
         //   our use of `matchingFileName` in conjunction with
         //   `jsdoc/check-examples` within `ash-nazg`)
         {
-            files: ['**/*.md'],
+            files: ['**/*.md/*.js'],
             rules: {
                 'import/no-commonjs': 'off',
                 'eol-last': ['off'],
@@ -89,20 +115,6 @@ module.exports = {
                 'node/no-unsupported-features/es-syntax': 'off'
             }
         },
-        // Non-ESM Node files:
-        {
-            files: ['.eslintrc.js'],
-            extends: ['plugin:node/recommended-script'],
-            globals: {
-                require: 'readonly',
-                module: 'readonly',
-                __dirname: 'readonly'
-            },
-            rules: {
-                'import/no-commonjs': 0,
-                strict: ['error', 'global']
-            }
-        },
         // @core-js-bundle can provide
         {
             files: ['src/**'],
@@ -115,13 +127,7 @@ module.exports = {
         //   not a lower Node version
         {
             files: ['test-support/**', 'tests-mocha/**'],
-            extends: ['plugin:node/recommended-script'],
-            globals: {
-                require: 'readonly',
-                exports: 'readonly',
-                module: 'readonly',
-                __dirname: 'readonly'
-            },
+            extends: ['ash-nazg/sauron-node-script'],
             settings: {
                 polyfills: [
                     'ErrorEvent',
@@ -132,10 +138,7 @@ module.exports = {
                 // See about reenabling
                 'vars-on-top': 0,
 
-                'import/no-commonjs': 0,
                 strict: 0, // ['error', 'function'],
-                // Add back since overridding
-                'unicorn/no-process-exit': 'error',
                 'no-process-exit': 0,
                 // We want console in tests!
                 'no-console': 'off',
@@ -146,34 +149,11 @@ module.exports = {
                 'node/no-unsupported-features/es-builtins': ['off'],
                 'node/no-unsupported-features/node-builtins': ['off'],
                 'unicorn/prefer-add-event-listener': ['off'],
-                'unicorn/no-instanceof-array': ['off']
+                'unicorn/no-instanceof-array': ['off'],
+
+                ...rules
             }
         }
     ],
-    rules: {
-        indent: ['error', 4],
-        'consistent-this': ['error', 'me'],
-        // We use `instanceof` otherwise prohibited by `eslint-config-ash-nazg`,
-        //  with `Symbol.hasInstance`
-        'no-restricted-syntax': 0,
-
-        // Disable until find time to address
-        'default-case': 0,
-        'max-len': 0,
-        'no-console': 0,
-        'no-shadow': 0,
-        'no-sync': 0,
-        'prefer-named-capture-group': 0,
-        'eslint-comments/require-description': 0,
-
-        // These should definitely be enabled at some point
-        'jsdoc/require-jsdoc': 0,
-        'jsdoc/require-param-type': 0,
-        'jsdoc/check-types': 0,
-
-        'node/prefer-promises/fs': 0,
-        'promise/prefer-await-to-callbacks': 0,
-        'promise/prefer-await-to-then': 0,
-        'unicorn/no-unsafe-regex': 0
-    }
+    rules
 };

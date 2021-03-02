@@ -9,9 +9,11 @@ function escapeUnmatchedSurrogates (arg) {
             // Could add a corresponding surrogate for compatibility with `node-sqlite3`: http://bugs.python.org/issue12569 and http://stackoverflow.com/a/6701665/271577
             //   but Chrome having problems
             if (unmatchedHighSurrogate) {
-                return '^2' + padStart(unmatchedHighSurrogate.charCodeAt().toString(16), 4, '0');
+                return '^2' + unmatchedHighSurrogate.charCodeAt()
+                    .toString(16).padStart(4, '0');
             }
-            return (precedingLow || '') + '^3' + padStart(unmatchedLowSurrogate.charCodeAt().toString(16), 4, '0');
+            return (precedingLow || '') + '^3' +
+                unmatchedLowSurrogate.charCodeAt().toString(16).padStart(4, '0');
         }
     );
 }
@@ -68,11 +70,8 @@ function escapeDatabaseNameForSQLAndFiles (db) {
     db = 'D' + escapeNameForSQLiteIdentifier(db);
     if (CFG.escapeNFDForDatabaseNames !== false) {
         // ES6 copying of regex with different flags
-        // Todo: Remove `.source` when
-        //   https://github.com/babel/babel/issues/5978 completed (see also
-        //   https://github.com/axemclion/IndexedDBShim/issues/311#issuecomment-316090147 )
-        db = db.replace(new RegExp(expandsOnNFD.source, 'gu'), function (expandable) {
-            return '^4' + padStart(expandable.codePointAt().toString(16), 6, '0');
+        db = db.replace(new RegExp(expandsOnNFD, 'gu'), function (expandable) {
+            return '^4' + expandable.codePointAt().toString(16).padStart(6, '0');
         });
     }
     if (CFG.databaseCharacterEscapeList !== false) {
@@ -81,7 +80,7 @@ function escapeDatabaseNameForSQLAndFiles (db) {
                 ? new RegExp(CFG.databaseCharacterEscapeList, 'gu')
                 : /[\u0000-\u001F\u007F"*/:<>?\\|]/gu), // eslint-disable-line no-control-regex
             function (n0) {
-                return '^1' + padStart(n0.charCodeAt().toString(16), 2, '0');
+                return '^1' + n0.charCodeAt().toString(16).padStart(2, '0');
             }
         );
     }
@@ -356,11 +355,6 @@ function hasOwn (obj, prop) {
     return {}.hasOwnProperty.call(obj, prop);
 }
 
-// Todo: Replace with `String.prototype.padStart` when targeting supporting Node version
-function padStart (str, ct, fill) {
-    return new Array(ct - (String(str)).length + 1).join(fill) + str;
-}
-
 export {escapeSQLiteStatement, unescapeSQLiteResponse,
     escapeDatabaseNameForSQLAndFiles, unescapeDatabaseNameForSQLAndFiles,
     escapeStoreNameForSQL, escapeIndexNameForSQL, escapeIndexNameForSQLKeyColumn,
@@ -371,4 +365,4 @@ export {escapeSQLiteStatement, unescapeSQLiteResponse,
     defineListenerProperties, defineReadonlyProperties,
     isValidKeyPath, enforceRange,
     convertToDOMString, convertToSequenceDOMString,
-    isNullish, hasOwn, padStart};
+    isNullish, hasOwn};

@@ -1,7 +1,7 @@
 /* eslint-disable node/no-sync */
 const fs = require('fs');
 const path = require('path');
-const rp = require('request-promise-native');
+const got = require('got');
 
 const indexedDBDir = path.join(__dirname, '../web-platform-tests/IndexedDB/');
 const loaderFile = '_indexeddbshim-loader.html';
@@ -26,7 +26,6 @@ if (process.argv[2] === 'remove') {
 <meta charset="utf-8" />
 <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon" />
 <script src="http://localhost:9999/node_modules/core-js-bundle/minified.js"></script>
-<script src="http://localhost:9999/node_modules/regenerator-runtime/runtime.js"></script>
 <script src="http://localhost:9999/dist/indexeddbshim-noninvasive.min.js"></script>
 `);
 
@@ -116,7 +115,6 @@ loaderWin.addEventListener('DOMContentLoaded', function () {
         const htmlFiles = files.filter((f) => (/\.html?$/u).test(f));
         const polyfillScript = `
 <script src="http://localhost:9999/node_modules/core-js-bundle/minified.js"></script>
-<script src="http://localhost:9999/node_modules/regenerator-runtime/runtime.js"></script>
 <script src="http://localhost:9999/dist/indexeddbshim-noninvasive.js"></script>
 <script>
     'use strict';
@@ -180,7 +178,7 @@ loaderWin.addEventListener('DOMContentLoaded', function () {
                 htmlFile,
                 'http://web-platform.test:8000/IndexedDB/'
             );
-            const fileContents = await rp(urlPath.href);
+            const {body: fileContents} = await got(urlPath.href);
             replace(htmlPath, fileContents, true);
         });
     });

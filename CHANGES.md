@@ -1,9 +1,24 @@
 # CHANGES for indexeddbshim
 
-## ?
+## 7.1.0
+
+### User-facing
+
+- Build: Update
+- npm: Update `typeson`, `typeson-registry` deps.
+- npm: Remove `regenerator-runtime` dep.
+- npm: Update `unicode-10.0.0` to `@unicode/unicode-13.0.0`
+
+### Dev-facing
 
 - Linting (ESLint): As per latest ash-nazg
+- Build: Set `preventAssignment: true` in `@rollup/plugin-replace`
+- Refactoring: Switch to native `padStart` given minimum Node version
+- Refactoring: Switch to copy RegExp constructor now that Babel should have
+    fixed (see #311)
 - Testing: Switch to stable version of `mocha-multi-reporters`
+- npm: Change from deprecated `request`/`request-promise-native` to `got`
+- npm: Remove `remark`
 - npm: Update devDeps. and package-lock
 
 # 7.0.0

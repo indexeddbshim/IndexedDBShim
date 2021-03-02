@@ -58,6 +58,7 @@ const getRollupPlugins = (babelOptions, {addBuiltins, mainFields, min} = {}) => 
     } else {
         // Fix from https://github.com/rollup/rollup/issues/1507#issuecomment-340550539
         ret.splice(1, 0, replace({
+            preventAssignment: true,
             delimiters: ['', ''],
             // Replacements:
             'require(\'readable-stream/transform\')': 'require(\'stream\').Transform',
@@ -82,7 +83,6 @@ const getRollupPlugins = (babelOptions, {addBuiltins, mainFields, min} = {}) => 
 
 const browserEnvironment = ({input, name, output: file}) => {
     const banner = `/*! ${pkg.name} - v${pkg.version} - ` +
-        // eslint-disable-next-line compat/compat
         `${new Intl.DateTimeFormat('en-US').format(new Date())} */\n`;
     return [true, false].map((min) => {
         return {
@@ -104,7 +104,6 @@ const browserEnvironment = ({input, name, output: file}) => {
 
 const nodeEnvironment = ({input, name, output: file}) => {
     const banner = `/*! ${pkg.name} - v${pkg.version} - ` +
-        // eslint-disable-next-line compat/compat
         `${new Intl.DateTimeFormat('en-US').format(new Date())} */\n`;
     return [false].map((min) => {
         return {
@@ -147,20 +146,17 @@ const nodeEnvironment = ({input, name, output: file}) => {
 * @external Rollup
 */
 
-/* eslint-disable import/no-anonymous-default-export */
 /**
  * @param {PlainObject} commandLineArgs Object allowing user-defined `config*`,
  * e.g., `configBrowserOnly`
  * @returns {external:Rollup[]}
  */
 export default (commandLineArgs) => {
-    /* eslint-enable import/no-anonymous-default-export */
-
     // if (commandLineArgs.configBrowserOnly) {
 
     return [
         {
-            input: 'node_modules/unicode-10.0.0/Binary_Property/Expands_On_NFD/regex.js',
+            input: 'node_modules/@unicode/unicode-13.0.0/Binary_Property/Expands_On_NFD/regex.js',
             output: {
                 file: 'src/unicode-regex.js',
                 format: 'esm'
