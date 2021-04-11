@@ -2,26 +2,27 @@
 
 ## ?
 
-### User-facing
+### User-impacting
 
-### Dev-facing
+- npm: Update websql fork to be based off latest
+
+### Dev-impacting
 
 - Linting (ESLint): As per latest ash-nazg
-- npm: Update websql fork to be based off latest
 - Testing: List unexpectedly wholly passing files
 - npm: Switch to `@brettz9/node-static` (fixes vulnerabilities)
 - npm: Update devDeps. and package-lock
 
 ## 7.1.0
 
-### User-facing
+### User-impacting
 
 - Build: Update
 - npm: Update `typeson`, `typeson-registry` deps.
 - npm: Remove `regenerator-runtime` dep.
 - npm: Update `unicode-10.0.0` to `@unicode/unicode-13.0.0`
 
-### Dev-facing
+### Dev-impacting
 
 - Linting (ESLint): As per latest ash-nazg
 - Build: Set `preventAssignment: true` in `@rollup/plugin-replace`
