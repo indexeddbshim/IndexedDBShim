@@ -136,7 +136,7 @@
     "sync-promise": "git+https://github.com/brettz9/sync-promise.git#full-sync-missing-promise-features",
     "typeson": "6.0.0",
     "typeson-registry": "1.0.0-alpha.39",
-    "websql": "git+https://github.com/brettz9/node-websql.git#configurable-secure2"
+    "websql": "git+https://github.com/brettz9/node-websql.git#configurable-secure3"
   },
   "devDependencies": {
     "@babel/core": "^7.13.15",

@@ -164,6 +164,19 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
 
                 console.log('Files run which were not in goodBadFiles list', unknownFiles.length, unknownFiles);
 
+                console.log('Unexpectedly wholly passing files:');
+
+                const unexpectedPasses = shimNS.files['Files with all tests passing'].filter((file) => {
+                    return !goodFiles.includes(file);
+                });
+                if (unexpectedPasses.length) {
+                    console.log(
+                        '  ' + '(' + unexpectedPasses.length + '): [\n    ' + cleanJSONOutput(unexpectedPasses).slice(1, -1) + '\n  ]\n'
+                    );
+                } else {
+                    console.log('(None)');
+                }
+
                 console.log('Unexpected failures:');
                 const failedFiles = shimNS.files.Fail.filter(
                     (f) => ![...badFiles, ...excludedWorkers, ...excludedNormal].includes(f) &&

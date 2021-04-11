@@ -7,6 +7,8 @@
 ### Dev-facing
 
 - Linting (ESLint): As per latest ash-nazg
+- npm: Update websql fork to be based off latest
+- Testing: List unexpectedly wholly passing files
 - npm: Switch to `@brettz9/node-static` (fixes vulnerabilities)
 - npm: Update devDeps. and package-lock
 
