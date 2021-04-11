@@ -1,5 +1,15 @@
 # CHANGES for indexeddbshim
 
+## ?
+
+### User-facing
+
+### Dev-facing
+
+- Linting (ESLint): As per latest ash-nazg
+- npm: Switch to `@brettz9/node-static` (fixes vulnerabilities)
+- npm: Update devDeps. and package-lock
+
 ## 7.1.0
 
 ### User-facing

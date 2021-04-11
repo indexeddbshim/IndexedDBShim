@@ -1,4 +1,4 @@
-/*! indexeddbshim - v7.0.0 - 3/5/2021 */
+/*! indexeddbshim - v7.1.0 - 4/11/2021 */
 
 (function (factory) {
   typeof define === 'function' && define.amd ? define(factory) :
@@ -3742,11 +3742,9 @@
       return this._items;
     },
     forEach: function forEach(cb, thisArg) {
-      // eslint-disable-next-line unicorn/no-array-callback-reference
       this._items.forEach(cb, thisArg);
     },
     map: function map(cb, thisArg) {
-      // eslint-disable-next-line unicorn/no-array-callback-reference
       return this._items.map(cb, thisArg);
     },
     indexOf: function indexOf(str) {

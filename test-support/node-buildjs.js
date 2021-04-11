@@ -161,14 +161,12 @@ const dirPath = process.argv[2] || 'web-platform-tests/IndexedDB';
     const harnessContent = [
         '/resources/testharness.js',
         '/resources/testharnessreport.js'
-    // eslint-disable-next-line unicorn/no-array-callback-reference
     ].reduce(reducer, '');
     const harnessContent0 = [
         '/resources/WebIDLParser.js',
         '/resources/idlharness.js',
         '/resources/testharness.js',
         '/resources/testharnessreport.js'
-    // eslint-disable-next-line unicorn/no-array-callback-reference
     ].reduce(reducer, '');
     const scripts = [
         {

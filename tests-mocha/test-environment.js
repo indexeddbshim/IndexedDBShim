@@ -181,6 +181,7 @@
             browserInfo.name = 'Safari';
             browserInfo.isSafari = true;
             browserInfo.isMobile = userAgent.includes('Mobile Safari');
+            // eslint-disable-next-line unicorn/prefer-ternary -- Easier
             if ((offset = userAgent.indexOf('Version')) !== -1) {
                 browserInfo.version = userAgent.slice(offset + 8);
             } else {

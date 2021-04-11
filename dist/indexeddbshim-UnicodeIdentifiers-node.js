@@ -1,4 +1,4 @@
-/*! indexeddbshim - v7.0.0 - 3/5/2021 */
+/*! indexeddbshim - v7.1.0 - 4/11/2021 */
 
 'use strict';
 
@@ -3459,12 +3459,10 @@ DOMStringList.prototype = {
   },
 
   forEach(cb, thisArg) {
-    // eslint-disable-next-line unicorn/no-array-callback-reference
     this._items.forEach(cb, thisArg);
   },
 
   map(cb, thisArg) {
-    // eslint-disable-next-line unicorn/no-array-callback-reference
     return this._items.map(cb, thisArg);
   },
 
