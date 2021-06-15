@@ -26,6 +26,7 @@ self.parent = self;
             Object.defineProperty(this, prop, desc);
         } else {
             // `addEventListener` has none (in browser also)
+            // eslint-disable-next-line unicorn/prefer-prototype-methods
             this[prop] = shimNS.window[prop].bind(shimNS.window);
         }
     }, this);

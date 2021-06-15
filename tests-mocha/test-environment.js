@@ -146,7 +146,7 @@
         var userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
         var offset;
 
-        /** @name browserInfo **/
+        /** @name browserInfo */
         var browserInfo = {
             name: '',
             version: '0',

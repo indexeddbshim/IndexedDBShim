@@ -104,7 +104,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
         throw createDOMException('InvalidAccessError', 'With autoIncrement set, the keyPath argument must not be an array or empty string.');
     }
 
-    /** @name IDBObjectStoreProperties **/
+    /** @name IDBObjectStoreProperties */
     const storeProperties = {
         name: storeName,
         keyPath,

@@ -23,12 +23,12 @@ const WebSocket = require('ws');
 const XMLHttpRequest = require('local-xmlhttprequest');
 const Blob = require('w3c-blob'); // Needed by Node; uses native if available (browser)
 const fetch = require('isomorphic-fetch');
-const wwutil = require('./webworker-util');
+const wwutil = require('./webworker-util.js');
 // Had problems with npm and the following when requiring `webworkers`
 //   as a separate repository (due to indirect circular dependency?);
 // const indexeddbshim = require('indexeddbshim');
-const indexeddbshim = require('../../dist/indexeddbshim-UnicodeIdentifiers-node'); // require('../../');
-const Worker = require('./webworker');
+const indexeddbshim = require('../../dist/indexeddbshim-UnicodeIdentifiers-node.js'); // require('../../');
+const Worker = require('./webworker.js');
 // const isDateObject = require('is-date-object'); // Not needed in worker tests as in main thread tests
 /*
 const permittedProtocols;
@@ -251,6 +251,7 @@ prom.then((scriptSource) => {
     workerCtx.location = scriptLoc;
     workerCtx.closing = false;
     workerCtx.close = function () {
+        // eslint-disable-next-line unicorn/no-process-exit
         process.exit(0);
     };
     workerCtx.eventHandlers = {message: []};

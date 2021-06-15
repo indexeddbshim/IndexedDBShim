@@ -61,9 +61,11 @@ DOMStringList.prototype = {
         return this._items;
     },
     forEach (cb, thisArg) {
+        // eslint-disable-next-line unicorn/no-array-callback-reference
         this._items.forEach(cb, thisArg);
     },
     map (cb, thisArg) {
+        // eslint-disable-next-line unicorn/no-array-callback-reference
         return this._items.map(cb, thisArg);
     },
     indexOf (str) {
@@ -99,7 +101,7 @@ DOMStringList.prototype = {
 };
 Object.defineProperty(DOMStringList, Symbol.hasInstance, {
     value (obj) {
-        return ({}.toString.call(obj) === 'DOMStringListPrototype');
+        return Object.prototype.toString.call(obj) === 'DOMStringListPrototype';
     }
 });
 const DOMStringListAlias = DOMStringList;

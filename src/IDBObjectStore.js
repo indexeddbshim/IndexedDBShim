@@ -829,7 +829,7 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath /* , optiona
     }
 
     optionalParameters = optionalParameters || {};
-    /** @name IDBIndexProperties **/
+    /** @name IDBIndexProperties */
     const indexProperties = {
         columnName: indexName,
         keyPath,

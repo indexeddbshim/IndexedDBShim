@@ -158,6 +158,7 @@ const dirPath = process.argv[2] || 'web-platform-tests/IndexedDB';
         // console.log("The file " + outputFile + " was saved!");
     }));
     const reducer = (s, src) => s + '/' + '*beginscript::' + src + '::endscript*' + '/\n';
+    /* eslint-disable unicorn/no-array-callback-reference */
     const harnessContent = [
         '/resources/testharness.js',
         '/resources/testharnessreport.js'
@@ -168,6 +169,7 @@ const dirPath = process.argv[2] || 'web-platform-tests/IndexedDB';
         '/resources/testharness.js',
         '/resources/testharnessreport.js'
     ].reduce(reducer, '');
+    /* eslint-enable unicorn/no-array-callback-reference */
     const scripts = [
         {
             inputFile: '/workers/semantics/interface-objects/001.worker.js',

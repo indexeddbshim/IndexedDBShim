@@ -73,7 +73,7 @@
          */
         createDatabase (schema, done) {
             /* eslint-disable prefer-rest-params */
-            schema = [].slice.call(arguments, 0, -1);
+            schema = Array.prototype.slice.call(arguments, 0, -1);
             done = arguments[arguments.length - 1];
             /* eslint-enable prefer-rest-params */
 
@@ -211,9 +211,7 @@
          * An asynchronous for-each loop.
          *
          * @param   {array}     array       The array to loop through
-         *
          * @param   {function}  done        Callback function (when the loop is finished or an error occurs)
-         *
          * @param   {function}  iterator
          * The logic for each iteration.  Signature is `function(item, index, next)`.
          * Call `next()` to continue to the next item.  Call `next(Error)` to throw an error and cancel the loop.
@@ -275,7 +273,7 @@
                     cb();
                     return;
                 }
-                // eslint-disable-next-line prefer-rest-params
+                // eslint-disable-next-line prefer-rest-params, unicorn/prefer-prototype-methods
                 util._onerror.apply(window, arguments);
             };
         },

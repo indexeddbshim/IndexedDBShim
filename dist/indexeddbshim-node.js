@@ -1286,7 +1286,7 @@ function isNullish(v) {
 }
 
 function hasOwn$2(obj, prop) {
-  return {}.hasOwnProperty.call(obj, prop);
+  return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
 /**
@@ -3463,10 +3463,12 @@ DOMStringList.prototype = {
   },
 
   forEach(cb, thisArg) {
+    // eslint-disable-next-line unicorn/no-array-callback-reference
     this._items.forEach(cb, thisArg);
   },
 
   map(cb, thisArg) {
+    // eslint-disable-next-line unicorn/no-array-callback-reference
     return this._items.map(cb, thisArg);
   },
 
@@ -3515,7 +3517,7 @@ DOMStringList.prototype = {
 };
 Object.defineProperty(DOMStringList, Symbol.hasInstance, {
   value(obj) {
-    return {}.toString.call(obj) === 'DOMStringListPrototype';
+    return Object.prototype.toString.call(obj) === 'DOMStringListPrototype';
   }
 
 });
@@ -9159,7 +9161,7 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath
   }
 
   optionalParameters = optionalParameters || {};
-  /** @name IDBIndexProperties **/
+  /** @name IDBIndexProperties */
 
   const indexProperties = {
     columnName: indexName,
@@ -9329,7 +9331,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName
   if (autoInc && (keyPath === '' || Array.isArray(keyPath))) {
     throw createDOMException('InvalidAccessError', 'With autoIncrement set, the keyPath argument must not be an array or empty string.');
   }
-  /** @name IDBObjectStoreProperties **/
+  /** @name IDBObjectStoreProperties */
 
 
   const storeProperties = {
@@ -11106,6 +11108,7 @@ function setGlobalVars(idb, initialConfig) {
         } else {
           const o = {
             get [name]() {
+              // eslint-disable-next-line unicorn/prefer-prototype-methods
               return propDesc.get.call(this);
             }
 
@@ -11165,6 +11168,7 @@ function setGlobalVars(idb, initialConfig) {
       const shimIDBFactory = IDBFactory;
 
       if (CFG.win.openDatabase !== undefined) {
+        // eslint-disable-next-line unicorn/prefer-prototype-methods
         shimIndexedDB.__openDatabase = CFG.win.openDatabase.bind(CFG.win); // We cache here in case the function is overwritten later as by the IndexedDB support promises tests
         // Polyfill ALL of IndexedDB, using WebSQL
 

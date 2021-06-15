@@ -24,11 +24,11 @@ const CY = require('cyclonejs'); // Todo: Replace this with Sca (but need to mak
 const XMLHttpRequestConstr = require('local-xmlhttprequest');
 const isDateObject = require('is-date-object');
 const fetch = require('isomorphic-fetch');
-const Worker = require('./webworker/webworker'); // Todo: We could export this `Worker` publicly for others looking for a Worker polyfill with IDB support
-const transformV8Stack = require('./transformV8Stack');
+const Worker = require('./webworker/webworker.js'); // Todo: We could export this `Worker` publicly for others looking for a Worker polyfill with IDB support
+const transformV8Stack = require('./transformV8Stack.js');
 const {
     goodFiles, badFiles, notRunning, timeout, excludedWorkers, excludedNormal
-} = require('./node-good-bad-files');
+} = require('./node-good-bad-files.js');
 
 // CONFIG
 const DEBUG = false;
@@ -41,7 +41,7 @@ const fileIndex = (/^-?\d+$/u).test(fileArg) ? fileArg : (process.argv[3] || und
 const endFileCount = (/^-?\d+$/u).test(fileArg) && (/^-?\d+$/u).test(process.argv[3]) ? process.argv[3] : (process.argv[4] || undefined);
 const dirPath = path.join('test-support', 'js');
 const idbTestPath = 'web-platform-tests';
-const indexeddbshim = require('../dist/indexeddbshim-UnicodeIdentifiers-node');
+const indexeddbshim = require('../dist/indexeddbshim-UnicodeIdentifiers-node.js');
 
 const {createDOMException} = indexeddbshim;
 const workerFileRegex = /^(_service-worker-indexeddb\.https\.js|(_interface-objects-)?00\d(\.worker)?\.js)$/u;
@@ -423,6 +423,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             };
         }
 
+        /* eslint-disable unicorn/prefer-prototype-methods */
         if (['../non-indexedDB/exceptions.js', '../non-indexedDB/constructor-object.js'].includes(shimNS.fileName)) {
             // These changes are for exceptions tests
             const _appendChild = window.document.documentElement.appendChild.bind(window.document.documentElement);
@@ -510,7 +511,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         global.URL = window.URL;
         // Polyfill enough for our tests
         const cou = require( // eslint-disable-line node/global-require
-            '../node_modules/typeson-registry/polyfills/createObjectURL-cjs'
+            '../node_modules/typeson-registry/polyfills/createObjectURL-cjs.js'
         );
         global.URL.createObjectURL = cou.createObjectURL;
         global.XMLHttpRequest.prototype.overrideMimeType = cou.xmlHttpRequestOverrideMimeType({
@@ -539,6 +540,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
 
         // Patch postMessage to throw for SCA (as needed by tests in key_invalid.htm)
         const _postMessage = window.postMessage.bind(window);
+        /* eslint-enable unicorn/prefer-prototype-methods */
         // Todo: Submit this as PR to jsdom
         window.postMessage = function (...args) {
             try {

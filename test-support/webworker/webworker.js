@@ -39,7 +39,7 @@ const util = require('util');
 const os = require('os');
 const url = require('url');
 const WebSocketServer = require('ws').Server;
-const wwutil = require('./webworker-util');
+const wwutil = require('./webworker-util.js');
 
 const isWin = os.platform().startsWith('win');
 

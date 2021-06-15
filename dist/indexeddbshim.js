@@ -1513,7 +1513,7 @@
   }
 
   function hasOwn(obj, prop) {
-    return {}.hasOwnProperty.call(obj, prop);
+    return Object.prototype.hasOwnProperty.call(obj, prop);
   }
 
   /**
@@ -3751,9 +3751,11 @@
       return this._items;
     },
     forEach: function forEach(cb, thisArg) {
+      // eslint-disable-next-line unicorn/no-array-callback-reference
       this._items.forEach(cb, thisArg);
     },
     map: function map(cb, thisArg) {
+      // eslint-disable-next-line unicorn/no-array-callback-reference
       return this._items.map(cb, thisArg);
     },
     indexOf: function indexOf(str) {
@@ -3812,7 +3814,7 @@
   })), _DOMStringList$protot);
   Object.defineProperty(DOMStringList, Symbol.hasInstance, {
     value: function value(obj) {
-      return {}.toString.call(obj) === 'DOMStringListPrototype';
+      return Object.prototype.toString.call(obj) === 'DOMStringListPrototype';
     }
   });
   var DOMStringListAlias = DOMStringList;
@@ -9387,7 +9389,7 @@
     }
 
     optionalParameters = optionalParameters || {};
-    /** @name IDBIndexProperties **/
+    /** @name IDBIndexProperties */
 
     var indexProperties = {
       columnName: indexName,
@@ -9792,7 +9794,7 @@
     if (autoInc && (keyPath === '' || Array.isArray(keyPath))) {
       throw createDOMException('InvalidAccessError', 'With autoIncrement set, the keyPath argument must not be an array or empty string.');
     }
-    /** @name IDBObjectStoreProperties **/
+    /** @name IDBObjectStoreProperties */
 
 
     var storeProperties = {
@@ -11608,6 +11610,7 @@
             var _o, _mutatorMap;
 
             var o = (_o = {}, _mutatorMap = {}, _mutatorMap[name] = _mutatorMap[name] || {}, _mutatorMap[name].get = function () {
+              // eslint-disable-next-line unicorn/prefer-prototype-methods
               return propDesc.get.call(this);
             }, _defineEnumerableProperties(_o, _mutatorMap), _o);
             desc = Object.getOwnPropertyDescriptor(o, name);
@@ -11666,6 +11669,7 @@
         var shimIDBFactory = IDBFactory;
 
         if (CFG.win.openDatabase !== undefined) {
+          // eslint-disable-next-line unicorn/prefer-prototype-methods
           shimIndexedDB.__openDatabase = CFG.win.openDatabase.bind(CFG.win); // We cache here in case the function is overwritten later as by the IndexedDB support promises tests
           // Polyfill ALL of IndexedDB, using WebSQL
 

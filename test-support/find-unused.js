@@ -1,7 +1,7 @@
 const fs = require('fs');
 const util = require('util');
 const {join} = require('path');
-const goodBad = require('./node-good-bad-files');
+const goodBad = require('./node-good-bad-files.js');
 
 (async () => {
     const readdir = util.promisify(fs.readdir);

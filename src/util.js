@@ -352,7 +352,7 @@ function isNullish (v) {
 }
 
 function hasOwn (obj, prop) {
-    return {}.hasOwnProperty.call(obj, prop);
+    return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
 export {escapeSQLiteStatement, unescapeSQLiteResponse,

@@ -10,6 +10,7 @@ const BSON = require('bson');
 // Some debugging functions
 const debugLevel = Number.parseInt(process.env.NODE_DEBUG, 16); // eslint-disable-line node/no-process-env
 const debug = (debugLevel & 0x8) // eslint-disable-line no-bitwise
+    // eslint-disable-next-line unicorn/prefer-prototype-methods
     ? function (...args) { Reflect.apply(console.error, this, args); }
     : function () { /* */ };
 exports.debug = debug;
@@ -41,6 +42,7 @@ exports.isValidMessage = isValidMessage;
 const MsgStream = function (s) {
     const self = this; // eslint-disable-line consistent-this
 
+    // eslint-disable-next-line unicorn/prefer-prototype-methods
     events.EventEmitter.call(self);
 
     // Sequence numbers for outgoing and incoming FDs
