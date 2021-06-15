@@ -5,6 +5,7 @@
 ### User-impacting
 
 - npm: Update websql fork to be based off latest
+- npm: Update typeson (minor)
 
 ### Dev-impacting
 

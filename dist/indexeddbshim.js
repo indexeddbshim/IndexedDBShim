@@ -1,9 +1,47 @@
-/*! indexeddbshim - v7.1.0 - 4/11/2021 */
+/*! indexeddbshim - v7.1.0 - 6/15/2021 */
 
 (function (factory) {
   typeof define === 'function' && define.amd ? define(factory) :
   factory();
 }((function () { 'use strict';
+
+  function ownKeys(object, enumerableOnly) {
+    var keys = Object.keys(object);
+
+    if (Object.getOwnPropertySymbols) {
+      var symbols = Object.getOwnPropertySymbols(object);
+
+      if (enumerableOnly) {
+        symbols = symbols.filter(function (sym) {
+          return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+        });
+      }
+
+      keys.push.apply(keys, symbols);
+    }
+
+    return keys;
+  }
+
+  function _objectSpread2(target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i] != null ? arguments[i] : {};
+
+      if (i % 2) {
+        ownKeys(Object(source), true).forEach(function (key) {
+          _defineProperty(target, key, source[key]);
+        });
+      } else if (Object.getOwnPropertyDescriptors) {
+        Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
+      } else {
+        ownKeys(Object(source)).forEach(function (key) {
+          Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+        });
+      }
+    }
+
+    return target;
+  }
 
   function _typeof$1(obj) {
     "@babel/helpers - typeof";
@@ -81,40 +119,6 @@
     return obj;
   }
 
-  function ownKeys(object, enumerableOnly) {
-    var keys = Object.keys(object);
-
-    if (Object.getOwnPropertySymbols) {
-      var symbols = Object.getOwnPropertySymbols(object);
-      if (enumerableOnly) symbols = symbols.filter(function (sym) {
-        return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-      });
-      keys.push.apply(keys, symbols);
-    }
-
-    return keys;
-  }
-
-  function _objectSpread2(target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i] != null ? arguments[i] : {};
-
-      if (i % 2) {
-        ownKeys(Object(source), true).forEach(function (key) {
-          _defineProperty(target, key, source[key]);
-        });
-      } else if (Object.getOwnPropertyDescriptors) {
-        Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
-      } else {
-        ownKeys(Object(source)).forEach(function (key) {
-          Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-        });
-      }
-    }
-
-    return target;
-  }
-
   function _setPrototypeOf(o, p) {
     _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) {
       o.__proto__ = p;
@@ -171,18 +175,21 @@
   }
 
   function _iterableToArray(iter) {
-    if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter);
+    if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter);
   }
 
   function _iterableToArrayLimit(arr, i) {
-    if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
+    var _i = arr == null ? null : typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"];
+
+    if (_i == null) return;
     var _arr = [];
     var _n = true;
     var _d = false;
-    var _e = undefined;
+
+    var _s, _e;
 
     try {
-      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+      for (_i = _i.call(arr); !(_n = (_s = _i.next()).done); _n = true) {
         _arr.push(_s.value);
 
         if (i && _arr.length === i) break;
@@ -227,9 +234,9 @@
   }
 
   function _createForOfIteratorHelper(o, allowArrayLike) {
-    var it;
+    var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"];
 
-    if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) {
+    if (!it) {
       if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
         if (it) o = it;
         var i = 0;
@@ -262,7 +269,7 @@
         err;
     return {
       s: function () {
-        it = o[Symbol.iterator]();
+        it = it.call(o);
       },
       n: function () {
         var step = it.next();
@@ -2031,9 +2038,11 @@
     writable: false
   });
 
-  // Since [immediate](https://github.com/calvinmetcalf/immediate) is
+  var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+
   //   not doing the trick for our WebSQL transactions (at least in Node),
   //   we are forced to make the promises run fully synchronously.
+
   function isPromise(p) {
     return p && typeof p.then === 'function';
   }
@@ -4497,14 +4506,9 @@
     writable: false
   });
 
-  var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+  var typeson$1 = {exports: {}};
 
-  function createCommonjsModule(fn) {
-    var module = { exports: {} };
-  	return fn(module, module.exports), module.exports;
-  }
-
-  var typeson$1 = createCommonjsModule(function (module, exports) {
+  (function (module, exports) {
     (function (global, factory) {
       module.exports = factory() ;
     })(commonjsGlobal, function () {
@@ -4788,7 +4792,7 @@
         });
       };
 
-      ['all', 'race'].forEach(function (meth) {
+      ['all', 'race', 'allSettled'].forEach(function (meth) {
         /**
          *
          * @param {Promise<any>[]} promArr
@@ -6359,7 +6363,9 @@
       Typeson.JSON_TYPES = ['null', 'boolean', 'number', 'string', 'array', 'object'];
       return Typeson;
     });
-  });
+  })(typeson$1);
+
+  var Typeson = typeson$1.exports;
 
   /*
    * base64-arraybuffer
@@ -6447,7 +6453,7 @@
   var arraybuffer = {
     arraybuffer: {
       test: function test(x) {
-        return typeson$1.toStringTag(x) === 'ArrayBuffer';
+        return Typeson.toStringTag(x) === 'ArrayBuffer';
       },
       replace: function replace(b, stateObj) {
         if (!stateObj.buffers) {
@@ -6485,7 +6491,7 @@
   var bigintObject = {
     bigintObject: {
       test: function test(x) {
-        return _typeof$1(x) === 'object' && typeson$1.hasConstructorOf(x, BigInt);
+        return _typeof$1(x) === 'object' && Typeson.hasConstructorOf(x, BigInt);
       },
       replace: function replace(n) {
         return String(n);
@@ -6584,7 +6590,7 @@
   var blob = {
     blob: {
       test: function test(x) {
-        return typeson$1.toStringTag(x) === 'Blob';
+        return Typeson.toStringTag(x) === 'Blob';
       },
       replace: function replace(b) {
         // Sync
@@ -6613,7 +6619,7 @@
         });
       },
       replaceAsync: function replaceAsync(b) {
-        return new typeson$1.Promise(function (resolve, reject) {
+        return new Typeson.Promise(function (resolve, reject) {
           /*
           if (b.isClosed) { // On MDN, but not in https://w3c.github.io/FileAPI/#dfn-Blob
               reject(new Error('The Blob is closed'));
@@ -6692,10 +6698,10 @@
   var cryptokey = {
     cryptokey: {
       test: function test(x) {
-        return typeson$1.toStringTag(x) === 'CryptoKey' && x.extractable;
+        return Typeson.toStringTag(x) === 'CryptoKey' && x.extractable;
       },
       replaceAsync: function replaceAsync(key) {
-        return new typeson$1.Promise(function (resolve, reject) {
+        return new Typeson.Promise(function (resolve, reject) {
           // eslint-disable-next-line promise/catch-or-return
           crypto.subtle.exportKey('jwk', key)["catch"](
           /* eslint-disable promise/prefer-await-to-callbacks */
@@ -6728,7 +6734,7 @@
   var dataview = {
     dataview: {
       test: function test(x) {
-        return typeson$1.toStringTag(x) === 'DataView';
+        return Typeson.toStringTag(x) === 'DataView';
       },
       replace: function replace(_ref, stateObj) {
         var buffer = _ref.buffer,
@@ -6782,7 +6788,7 @@
   var date = {
     date: {
       test: function test(x) {
-        return typeson$1.toStringTag(x) === 'Date';
+        return Typeson.toStringTag(x) === 'Date';
       },
       replace: function replace(dt) {
         var time = dt.getTime();
@@ -6806,7 +6812,7 @@
   var error = {
     error: {
       test: function test(x) {
-        return typeson$1.toStringTag(x) === 'Error';
+        return Typeson.toStringTag(x) === 'Error';
       },
       replace: function replace(_ref) {
         var name = _ref.name,
@@ -6839,7 +6845,7 @@
     if (Cnstrctr) {
       errors[errName.toLowerCase()] = {
         test: function test(x) {
-          return typeson$1.hasConstructorOf(x, Cnstrctr);
+          return Typeson.hasConstructorOf(x, Cnstrctr);
         },
         replace: function replace(e) {
           return e.message;
@@ -6855,7 +6861,7 @@
   var file = {
     file: {
       test: function test(x) {
-        return typeson$1.toStringTag(x) === 'File';
+        return Typeson.toStringTag(x) === 'File';
       },
       replace: function replace(f) {
         // Sync
@@ -6889,7 +6895,7 @@
         });
       },
       replaceAsync: function replaceAsync(f) {
-        return new typeson$1.Promise(function (resolve, reject) {
+        return new Typeson.Promise(function (resolve, reject) {
           /*
           if (f.isClosed) { // On MDN, but not in https://w3c.github.io/FileAPI/#dfn-Blob
               reject(new Error('The File is closed'));
@@ -6921,7 +6927,7 @@
     file: file.file,
     filelist: {
       test: function test(x) {
-        return typeson$1.toStringTag(x) === 'FileList';
+        return Typeson.toStringTag(x) === 'FileList';
       },
       replace: function replace(fl) {
         var arr = [];
@@ -6984,7 +6990,7 @@
   var imagebitmap = {
     imagebitmap: {
       test: function test(x) {
-        return typeson$1.toStringTag(x) === 'ImageBitmap' || // In Node, our polyfill sets the dataset on a canvas
+        return Typeson.toStringTag(x) === 'ImageBitmap' || // In Node, our polyfill sets the dataset on a canvas
         //  element as JSDom no longer allows overriding toStringTag
         x && x.dataset && x.dataset.toStringTag === 'ImageBitmap';
       },
@@ -7040,7 +7046,7 @@
   var imagedata = {
     imagedata: {
       test: function test(x) {
-        return typeson$1.toStringTag(x) === 'ImageData';
+        return Typeson.toStringTag(x) === 'ImageData';
       },
       replace: function replace(d) {
         return {
@@ -7072,7 +7078,7 @@
 
   var IntlCollator = {
     test: function test(x) {
-      return typeson$1.hasConstructorOf(x, Intl.Collator);
+      return Typeson.hasConstructorOf(x, Intl.Collator);
     },
     replace: function replace(c) {
       return c.resolvedOptions();
@@ -7083,7 +7089,7 @@
   };
   var IntlDateTimeFormat = {
     test: function test(x) {
-      return typeson$1.hasConstructorOf(x, Intl.DateTimeFormat);
+      return Typeson.hasConstructorOf(x, Intl.DateTimeFormat);
     },
     replace: function replace(dtf) {
       return dtf.resolvedOptions();
@@ -7094,7 +7100,7 @@
   };
   var IntlNumberFormat = {
     test: function test(x) {
-      return typeson$1.hasConstructorOf(x, Intl.NumberFormat);
+      return Typeson.hasConstructorOf(x, Intl.NumberFormat);
     },
     replace: function replace(nf) {
       return nf.resolvedOptions();
@@ -7112,7 +7118,7 @@
   var map = {
     map: {
       test: function test(x) {
-        return typeson$1.toStringTag(x) === 'Map';
+        return Typeson.toStringTag(x) === 'Map';
       },
       replace: function replace(mp) {
         return _toConsumableArray(mp.entries());
@@ -7157,7 +7163,7 @@
         return x && _typeof$1(x) === 'object' && !Array.isArray(x) && !['Object', // `Proxy` and `Reflect`, two other built-in objects, will also
         //   have a `toStringTag` of `Object`; we don't want built-in
         //   function objects, however
-        'Boolean', 'Number', 'String', 'Error', 'RegExp', 'Math', 'Date', 'Map', 'Set', 'JSON', 'ArrayBuffer', 'SharedArrayBuffer', 'DataView', 'Int8Array', 'Uint8Array', 'Uint8ClampedArray', 'Int16Array', 'Uint16Array', 'Int32Array', 'Uint32Array', 'Float32Array', 'Float64Array', 'Promise', 'String Iterator', 'Array Iterator', 'Map Iterator', 'Set Iterator', 'WeakMap', 'WeakSet', 'Atomics', 'Module'].includes(typeson$1.toStringTag(x));
+        'Boolean', 'Number', 'String', 'Error', 'RegExp', 'Math', 'Date', 'Map', 'Set', 'JSON', 'ArrayBuffer', 'SharedArrayBuffer', 'DataView', 'Int8Array', 'Uint8Array', 'Uint8ClampedArray', 'Int16Array', 'Uint16Array', 'Int32Array', 'Uint32Array', 'Float32Array', 'Float64Array', 'Promise', 'String Iterator', 'Array Iterator', 'Map Iterator', 'Set Iterator', 'WeakMap', 'WeakSet', 'Atomics', 'Module'].includes(Typeson.toStringTag(x));
       },
       replace: function replace(rexp) {// Not in use
       }
@@ -7168,7 +7174,7 @@
     // String Object (not primitive string which need no type spec)
     StringObject: {
       test: function test(x) {
-        return typeson$1.toStringTag(x) === 'String' && _typeof$1(x) === 'object';
+        return Typeson.toStringTag(x) === 'String' && _typeof$1(x) === 'object';
       },
       replace: function replace(s) {
         return String(s);
@@ -7182,7 +7188,7 @@
     // Boolean Object (not primitive boolean which need no type spec)
     BooleanObject: {
       test: function test(x) {
-        return typeson$1.toStringTag(x) === 'Boolean' && _typeof$1(x) === 'object';
+        return Typeson.toStringTag(x) === 'Boolean' && _typeof$1(x) === 'object';
       },
       replace: function replace(b) {
         return Boolean(b);
@@ -7196,7 +7202,7 @@
     // Number Object (not primitive number which need no type spec)
     NumberObject: {
       test: function test(x) {
-        return typeson$1.toStringTag(x) === 'Number' && _typeof$1(x) === 'object';
+        return Typeson.toStringTag(x) === 'Number' && _typeof$1(x) === 'object';
       },
       replace: function replace(n) {
         return Number(n);
@@ -7212,7 +7218,7 @@
   var regexp = {
     regexp: {
       test: function test(x) {
-        return typeson$1.toStringTag(x) === 'RegExp';
+        return Typeson.toStringTag(x) === 'RegExp';
       },
       replace: function replace(rexp) {
         return {
@@ -7248,7 +7254,7 @@
   var set = {
     set: {
       test: function test(x) {
-        return typeson$1.toStringTag(x) === 'Set';
+        return Typeson.toStringTag(x) === 'Set';
       },
       replace: function replace(st) {
         return _toConsumableArray(st.values());
@@ -7276,7 +7282,7 @@
 
     typedArraysSocketIO[typeName.toLowerCase()] = {
       test: function test(x) {
-        return typeson$1.toStringTag(x) === arrType;
+        return Typeson.toStringTag(x) === arrType;
       },
       replace: function replace(a) {
         return (a.byteOffset === 0 && a.byteLength === a.buffer.byteLength ? a // socket.io supports streaming ArrayBuffers.
@@ -7292,7 +7298,7 @@
         //   get here is an ArrayBuffer
         // If not, let's assume user wants to receive it as
         //   configured with socket.io.
-        return typeson$1.toStringTag(buf) === 'ArrayBuffer' ? new TypedArray(buf) : buf;
+        return Typeson.toStringTag(buf) === 'ArrayBuffer' ? new TypedArray(buf) : buf;
       }
     };
   });
@@ -7313,7 +7319,7 @@
 
     typedArrays[typeName.toLowerCase()] = {
       test: function test(x) {
-        return typeson$1.toStringTag(x) === arrType;
+        return Typeson.toStringTag(x) === arrType;
       },
       replace: function replace(_ref, stateObj) {
         var buffer = _ref.buffer,
@@ -7376,7 +7382,7 @@
       revive: function revive(s) {
         // Will add `undefined` (returning `undefined` would instead
         //   avoid explicitly setting)
-        return new typeson$1.Undefined();
+        return new Typeson.Undefined();
       }
     }
   };
@@ -7384,7 +7390,7 @@
   var userObject = {
     userObject: {
       test: function test(x, stateObj) {
-        return typeson$1.isUserObject(x);
+        return Typeson.isUserObject(x);
       },
       replace: function replace(n) {
         return _objectSpread2({}, n);
@@ -7634,7 +7640,7 @@
   ];
 
   // This file is auto-generated from `build.js`
-  typeson$1.types = {
+  Typeson.types = {
     arraybuffer: arraybuffer,
     bigintObject: bigintObject,
     bigint: bigint,
@@ -7664,7 +7670,7 @@
     undef: undef$1,
     userObject: userObject
   };
-  typeson$1.presets = {
+  Typeson.presets = {
     arrayNonindexKeys: arrayNonindexKeys,
     builtin: expObj$1,
     postmessage: postmessage,
@@ -7677,10 +7683,10 @@
     universal: universal
   };
 
-  var typeson = new typeson$1().register(typeson$1.presets.structuredCloningThrowing);
+  var typeson = new Typeson().register(Typeson.presets.structuredCloningThrowing);
 
   function register(func) {
-    typeson = new typeson$1().register(func(typeson$1.presets.structuredCloningThrowing));
+    typeson = new Typeson().register(func(Typeson.presets.structuredCloningThrowing));
   } // We are keeping the callback approach for now in case we wish to reexpose
   //   `Blob`, `File`, `FileList` asynchronously (though in such a case, we
   //   should probably refactor as a Promise)
@@ -7694,11 +7700,11 @@
       ret = typeson.stringifySync(obj);
     } catch (err) {
       // SCA in typeson-registry using `DOMException` which is not defined (e.g., in Node)
-      if (typeson$1.hasConstructorOf(err, ReferenceError) || // SCA in typeson-registry threw a cloning error and we are in a
+      if (Typeson.hasConstructorOf(err, ReferenceError) || // SCA in typeson-registry threw a cloning error and we are in a
       //   supporting environment (e.g., the browser) where `ShimDOMException` is
       //   an alias for `DOMException`; if typeson-registry ever uses our shim
       //   to throw, we can use this condition alone.
-      typeson$1.hasConstructorOf(err, ShimDOMException)) {
+      Typeson.hasConstructorOf(err, ShimDOMException)) {
         throw createDOMException('DataCloneError', 'The object cannot be cloned.');
       } // We should rethrow non-cloning exceptions like from
       //  throwing getters (as in the W3C test, key-conversion-exceptions.htm)

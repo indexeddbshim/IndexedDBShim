@@ -1,4 +1,4 @@
-/*! indexeddbshim - v7.1.0 - 4/11/2021 */
+/*! indexeddbshim - v7.1.0 - 6/15/2021 */
 
 'use strict';
 
@@ -10,29 +10,18 @@ function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'defau
 var path__default = /*#__PURE__*/_interopDefaultLegacy(path);
 var customOpenDatabase__default = /*#__PURE__*/_interopDefaultLegacy(customOpenDatabase);
 
-function _defineProperty$1(obj, key, value) {
-  if (key in obj) {
-    Object.defineProperty(obj, key, {
-      value: value,
-      enumerable: true,
-      configurable: true,
-      writable: true
-    });
-  } else {
-    obj[key] = value;
-  }
-
-  return obj;
-}
-
 function ownKeys$1(object, enumerableOnly) {
   var keys = Object.keys(object);
 
   if (Object.getOwnPropertySymbols) {
     var symbols = Object.getOwnPropertySymbols(object);
-    if (enumerableOnly) symbols = symbols.filter(function (sym) {
-      return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-    });
+
+    if (enumerableOnly) {
+      symbols = symbols.filter(function (sym) {
+        return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+      });
+    }
+
     keys.push.apply(keys, symbols);
   }
 
@@ -57,6 +46,21 @@ function _objectSpread2$1(target) {
   }
 
   return target;
+}
+
+function _defineProperty$1(obj, key, value) {
+  if (key in obj) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj[key] = value;
+  }
+
+  return obj;
 }
 
 function _typeof$1(obj) {
@@ -1800,9 +1804,9 @@ Object.defineProperty(IDBOpenDBRequest, 'prototype', {
   writable: false
 });
 
-// Since [immediate](https://github.com/calvinmetcalf/immediate) is
 //   not doing the trick for our WebSQL transactions (at least in Node),
 //   we are forced to make the promises run fully synchronously.
+
 function isPromise(p) {
   return p && typeof p.then === 'function';
 }
@@ -4480,7 +4484,7 @@ TypesonPromise.reject = function (v) {
   });
 };
 
-['all', 'race'].forEach(function (meth) {
+['all', 'race', 'allSettled'].forEach(function (meth) {
   /**
    *
    * @param {Promise<any>[]} promArr
@@ -11295,17 +11299,18 @@ function setGlobalVars(idb, initialConfig) {
   return IDB;
 } // Expose for ease in simulating such exceptions during testing
 
-function SQLiteResult(error, insertId, rowsAffected, rows) {
+function SQLiteResult$1(error, insertId, rowsAffected, rows) {
   this.error = error;
   this.insertId = insertId;
   this.rowsAffected = rowsAffected;
   this.rows = rows;
 }
 
-var SQLiteResult_1 = SQLiteResult;
+var SQLiteResult_1 = SQLiteResult$1;
 
 var sqlite3 = require('sqlite3');
 
+var SQLiteResult = SQLiteResult_1;
 var READ_ONLY_ERROR = new Error('could not prepare statement (23 not authorized)');
 
 function SQLiteDatabase(name, opts) {
@@ -11329,12 +11334,12 @@ function SQLiteDatabase(name, opts) {
 function runSelect(db, sql, args, cb) {
   db.all(sql, args, function (err, rows) {
     if (err) {
-      return cb(new SQLiteResult_1(err));
+      return cb(new SQLiteResult(err));
     }
 
     var insertId = void 0;
     var rowsAffected = 0;
-    var resultSet = new SQLiteResult_1(null, insertId, rowsAffected, rows);
+    var resultSet = new SQLiteResult(null, insertId, rowsAffected, rows);
     cb(resultSet);
   });
 }
@@ -11342,7 +11347,7 @@ function runSelect(db, sql, args, cb) {
 function runNonSelect(db, sql, args, cb) {
   db.run(sql, args, function (err) {
     if (err) {
-      return cb(new SQLiteResult_1(err));
+      return cb(new SQLiteResult(err));
     }
     /* jshint validthis:true */
 
@@ -11351,7 +11356,7 @@ function runNonSelect(db, sql, args, cb) {
     var insertId = executionResult.lastID;
     var rowsAffected = executionResult.changes;
     var rows = [];
-    var resultSet = new SQLiteResult_1(null, insertId, rowsAffected, rows);
+    var resultSet = new SQLiteResult(null, insertId, rowsAffected, rows);
     cb(resultSet);
   });
 }
@@ -11390,7 +11395,7 @@ SQLiteDatabase.prototype.exec = function exec(queries, readOnly, callback) {
     var isSelect = /^\s*SELECT\b/i.test(sql);
 
     if (readOnly && !isSelect) {
-      onQueryComplete(i)(new SQLiteResult_1(READ_ONLY_ERROR));
+      onQueryComplete(i)(new SQLiteResult(READ_ONLY_ERROR));
     } else if (isSelect) {
       runSelect(db, sql, args, onQueryComplete(i));
     } else {
