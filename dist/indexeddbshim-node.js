@@ -1,4 +1,4 @@
-/*! indexeddbshim - v7.1.0 - 6/15/2021 */
+/*! indexeddbshim - v9.0.0 - 1/5/2022 */
 
 'use strict';
 
@@ -15,14 +15,9 @@ function ownKeys$1(object, enumerableOnly) {
 
   if (Object.getOwnPropertySymbols) {
     var symbols = Object.getOwnPropertySymbols(object);
-
-    if (enumerableOnly) {
-      symbols = symbols.filter(function (sym) {
-        return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-      });
-    }
-
-    keys.push.apply(keys, symbols);
+    enumerableOnly && (symbols = symbols.filter(function (sym) {
+      return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+    })), keys.push.apply(keys, symbols);
   }
 
   return keys;
@@ -30,19 +25,12 @@ function ownKeys$1(object, enumerableOnly) {
 
 function _objectSpread2$1(target) {
   for (var i = 1; i < arguments.length; i++) {
-    var source = arguments[i] != null ? arguments[i] : {};
-
-    if (i % 2) {
-      ownKeys$1(Object(source), true).forEach(function (key) {
-        _defineProperty$1(target, key, source[key]);
-      });
-    } else if (Object.getOwnPropertyDescriptors) {
-      Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
-    } else {
-      ownKeys$1(Object(source)).forEach(function (key) {
-        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-      });
-    }
+    var source = null != arguments[i] ? arguments[i] : {};
+    i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) {
+      _defineProperty$1(target, key, source[key]);
+    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) {
+      Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+    });
   }
 
   return target;
@@ -984,10 +972,10 @@ function escapeUnmatchedSurrogates(arg) {
     // Could add a corresponding surrogate for compatibility with `node-sqlite3`: http://bugs.python.org/issue12569 and http://stackoverflow.com/a/6701665/271577
     //   but Chrome having problems
     if (unmatchedHighSurrogate) {
-      return '^2' + unmatchedHighSurrogate.charCodeAt().toString(16).padStart(4, '0');
+      return '^2' + unmatchedHighSurrogate.codePointAt().toString(16).padStart(4, '0');
     }
 
-    return (precedingLow || '') + '^3' + unmatchedLowSurrogate.charCodeAt().toString(16).padStart(4, '0');
+    return (precedingLow || '') + '^3' + unmatchedLowSurrogate.codePointAt().toString(16).padStart(4, '0');
   });
 }
 
@@ -1047,6 +1035,7 @@ function escapeDatabaseNameForSQLAndFiles(db) {
   if (CFG.databaseCharacterEscapeList !== false) {
     db = db.replace(CFG.databaseCharacterEscapeList ? new RegExp(CFG.databaseCharacterEscapeList, 'gu') : /[\u0000-\u001F\u007F"*/:<>?\\|]/gu, // eslint-disable-line no-control-regex
     function (n0) {
+      // eslint-disable-next-line unicorn/prefer-code-point -- Switch to `codePointAt`?
       return '^1' + n0.charCodeAt().toString(16).padStart(2, '0');
     });
   }
@@ -1062,9 +1051,9 @@ function escapeDatabaseNameForSQLAndFiles(db) {
 
 function unescapeUnmatchedSurrogates(arg) {
   return arg.replace(/(\^+)3(d[0-9a-f]{3})/gu, (_, esc, lowSurr) => {
-    return esc.length % 2 ? esc.slice(1) + String.fromCharCode(Number.parseInt(lowSurr, 16)) : _;
+    return esc.length % 2 ? esc.slice(1) + String.fromCodePoint(Number.parseInt(lowSurr, 16)) : _;
   }).replace(/(\^+)2(d[0-9a-f]{3})/gu, (_, esc, highSurr) => {
-    return esc.length % 2 ? esc.slice(1) + String.fromCharCode(Number.parseInt(highSurr, 16)) : _;
+    return esc.length % 2 ? esc.slice(1) + String.fromCodePoint(Number.parseInt(highSurr, 16)) : _;
   });
 } // Not in use internally but supplied for convenience
 
@@ -1694,7 +1683,7 @@ IDBRequest.__super = function IDBRequest() {
 
   });
 
-  doneFlagGetters.forEach(function (prop) {
+  doneFlagGetters.forEach(prop => {
     Object.defineProperty(this, '__' + prop, {
       enumerable: false,
       configurable: false,
@@ -1713,7 +1702,7 @@ IDBRequest.__super = function IDBRequest() {
       }
 
     });
-  }, this);
+  });
   defineReadonlyProperties(this, readonlyProperties$5, {
     readyState: {
       get readyState() {
@@ -2033,7 +2022,7 @@ const keyTypeToEncodedChar = {
 };
 const keyTypes = Object.keys(keyTypeToEncodedChar);
 keyTypes.forEach(k => {
-  keyTypeToEncodedChar[k] = String.fromCharCode(keyTypeToEncodedChar[k]);
+  keyTypeToEncodedChar[k] = String.fromCodePoint(keyTypeToEncodedChar[k]);
 });
 const encodedCharToKeyType = keyTypes.reduce((o, k) => {
   o[keyTypeToEncodedChar[k]] = k;
@@ -3463,12 +3452,12 @@ DOMStringList.prototype = {
   },
 
   forEach(cb, thisArg) {
-    // eslint-disable-next-line unicorn/no-array-callback-reference
+    // eslint-disable-next-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument
     this._items.forEach(cb, thisArg);
   },
 
   map(cb, thisArg) {
-    // eslint-disable-next-line unicorn/no-array-callback-reference
+    // eslint-disable-next-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument
     return this._items.map(cb, thisArg);
   },
 
@@ -4019,8 +4008,8 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
       // Store was already created so we restore to name before the rename
       if ('__pendingName' in store && me.db.__oldObjectStoreNames.indexOf(store.__pendingName) > -1 // eslint-disable-line unicorn/prefer-includes
       ) {
-          store.__name = store.__originalName;
-        }
+        store.__name = store.__originalName;
+      }
 
       store.__indexNames = store.__oldIndexNames;
       delete store.__pendingDelete;
@@ -4028,8 +4017,8 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         // Index was already created so we restore to name before the rename
         if ('__pendingName' in index && store.__oldIndexNames.indexOf(index.__pendingName) > -1 // eslint-disable-line unicorn/prefer-includes
         ) {
-            index.__name = index.__originalName;
-          }
+          index.__name = index.__originalName;
+        }
 
         delete index.__pendingDelete;
       });
@@ -7932,9 +7921,9 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
  */
 
 
-IDBIndex.prototype.openCursor = function ()
-/* query, direction */
-{
+IDBIndex.prototype.openCursor = function
+  /* query, direction */
+() {
   /* eslint-enable jsdoc/check-param-names */
   const me = this; // eslint-disable-next-line prefer-rest-params
 
@@ -7956,9 +7945,9 @@ IDBIndex.prototype.openCursor = function ()
  */
 
 
-IDBIndex.prototype.openKeyCursor = function ()
-/* query, direction */
-{
+IDBIndex.prototype.openKeyCursor = function
+  /* query, direction */
+() {
   /* eslint-enable jsdoc/check-param-names */
   const me = this; // eslint-disable-next-line prefer-rest-params
 
@@ -7989,25 +7978,25 @@ IDBIndex.prototype.getKey = function (query) {
   return this.__fetchIndexData(query, 'key', true);
 };
 
-IDBIndex.prototype.getAll = function ()
-/* query, count */
-{
+IDBIndex.prototype.getAll = function
+  /* query, count */
+() {
   // eslint-disable-next-line prefer-rest-params
   const [query, count] = arguments;
   return this.__fetchIndexData(query, 'value', false, count);
 };
 
-IDBIndex.prototype.getAllKeys = function ()
-/* query, count */
-{
+IDBIndex.prototype.getAllKeys = function
+  /* query, count */
+() {
   // eslint-disable-next-line prefer-rest-params
   const [query, count] = arguments;
   return this.__fetchIndexData(query, 'key', false, count);
 };
 
-IDBIndex.prototype.count = function ()
-/* query */
-{
+IDBIndex.prototype.count = function
+  /* query */
+() {
   const me = this; // eslint-disable-next-line prefer-rest-params
 
   const query = arguments[0]; // With the exception of needing to check whether the index has been
@@ -8936,17 +8925,17 @@ IDBObjectStore.prototype.getKey = function (query) {
   return this.__get(query, true);
 };
 
-IDBObjectStore.prototype.getAll = function ()
-/* query, count */
-{
+IDBObjectStore.prototype.getAll = function
+  /* query, count */
+() {
   // eslint-disable-next-line prefer-rest-params
   const [query, count] = arguments;
   return this.__get(query, false, true, count);
 };
 
-IDBObjectStore.prototype.getAllKeys = function ()
-/* query, count */
-{
+IDBObjectStore.prototype.getAllKeys = function
+  /* query, count */
+() {
   // eslint-disable-next-line prefer-rest-params
   const [query, count] = arguments;
   return this.__get(query, true, true, count);
@@ -9020,9 +9009,9 @@ IDBObjectStore.prototype.clear = function () {
   }, undefined, me);
 };
 
-IDBObjectStore.prototype.count = function ()
-/* query */
-{
+IDBObjectStore.prototype.count = function
+  /* query */
+() {
   const me = this; // eslint-disable-next-line prefer-rest-params
 
   const query = arguments[0];
@@ -9039,9 +9028,9 @@ IDBObjectStore.prototype.count = function ()
   return IDBCursorWithValue.__createInstance(query, 'next', me, me, 'key', 'value', true).__request;
 };
 
-IDBObjectStore.prototype.openCursor = function ()
-/* query, direction */
-{
+IDBObjectStore.prototype.openCursor = function
+  /* query, direction */
+() {
   const me = this; // eslint-disable-next-line prefer-rest-params
 
   const [query, direction] = arguments;
@@ -9059,9 +9048,9 @@ IDBObjectStore.prototype.openCursor = function ()
   return cursor.__request;
 };
 
-IDBObjectStore.prototype.openKeyCursor = function ()
-/* query, direction */
-{
+IDBObjectStore.prototype.openKeyCursor = function
+  /* query, direction */
+() {
   const me = this;
 
   if (!(me instanceof IDBObjectStore)) {
@@ -9682,7 +9671,7 @@ function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, dat
   }
 
   if (fs$1 && CFG.deleteDatabaseFiles !== false) {
-    fs$1.unlink(path__default['default'].join(CFG.databaseBasePath || '', escapedDatabaseName), err => {
+    fs$1.unlink(path__default["default"].join(CFG.databaseBasePath || '', escapedDatabaseName), err => {
       if (err && err.code !== 'ENOENT') {
         // Ignore if file is already deleted
         dbError({
@@ -9697,7 +9686,7 @@ function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, dat
     return;
   }
 
-  const sqliteDB = __openDatabase(path__default['default'].join(CFG.databaseBasePath || '', escapedDatabaseName), 1, name, CFG.DEFAULT_DB_SIZE);
+  const sqliteDB = __openDatabase(path__default["default"].join(CFG.databaseBasePath || '', escapedDatabaseName), 1, name, CFG.DEFAULT_DB_SIZE);
 
   sqliteDB.transaction(function (tx) {
     tx.executeSql('SELECT "name" FROM __sys__', [], function (tx, data) {
@@ -9749,7 +9738,7 @@ function createSysDB(__openDatabase, success, failure) {
   if (sysdb) {
     success();
   } else {
-    sysdb = __openDatabase(typeof CFG.memoryDatabase === 'string' ? CFG.memoryDatabase : path__default['default'].join(typeof CFG.sysDatabaseBasePath === 'string' ? CFG.sysDatabaseBasePath : CFG.databaseBasePath || '', '__sysdb__' + (CFG.addSQLiteExtension !== false ? '.sqlite' : '')), 1, 'System Database', CFG.DEFAULT_DB_SIZE);
+    sysdb = __openDatabase(typeof CFG.memoryDatabase === 'string' ? CFG.memoryDatabase : path__default["default"].join(typeof CFG.sysDatabaseBasePath === 'string' ? CFG.sysDatabaseBasePath : CFG.databaseBasePath || '', '__sysdb__' + (CFG.addSQLiteExtension !== false ? '.sqlite' : '')), 1, 'System Database', CFG.DEFAULT_DB_SIZE);
     sysdb.transaction(function (systx) {
       systx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name BLOB, version INT);', [], function (systx) {
         if (!CFG.useSQLiteIndexes) {
@@ -9840,7 +9829,7 @@ IDBFactory.prototype.open = function (name
   let escapedDatabaseName; // eslint-disable-next-line no-useless-catch
 
   try {
-    escapedDatabaseName = escapeDatabaseNameForSQLAndFiles(name); // eslint-disable-next-line radar/no-useless-catch
+    escapedDatabaseName = escapeDatabaseNameForSQLAndFiles(name); // eslint-disable-next-line sonarjs/no-useless-catch
   } catch (err) {
     throw err; // new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
   }
@@ -10043,7 +10032,7 @@ IDBFactory.prototype.open = function (name
     if ((useMemoryDatabase || useDatabaseCache) && name in websqlDBCache && websqlDBCache[name][version]) {
       db = websqlDBCache[name][version];
     } else {
-      db = me.__openDatabase(useMemoryDatabase ? CFG.memoryDatabase : path__default['default'].join(CFG.databaseBasePath || '', escapedDatabaseName), 1, name, CFG.DEFAULT_DB_SIZE);
+      db = me.__openDatabase(useMemoryDatabase ? CFG.memoryDatabase : path__default["default"].join(CFG.databaseBasePath || '', escapedDatabaseName), 1, name, CFG.DEFAULT_DB_SIZE);
 
       if (useDatabaseCache) {
         if (!(name in websqlDBCache)) {
@@ -10148,7 +10137,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
   let escapedDatabaseName; // eslint-disable-next-line no-useless-catch
 
   try {
-    escapedDatabaseName = escapeDatabaseNameForSQLAndFiles(name); // eslint-disable-next-line radar/no-useless-catch
+    escapedDatabaseName = escapeDatabaseNameForSQLAndFiles(name); // eslint-disable-next-line sonarjs/no-useless-catch
   } catch (err) {
     throw err; // throw new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
   }
@@ -10868,9 +10857,9 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
   });
 };
 
-IDBCursor.prototype.continue = function ()
-/* key */
-{
+IDBCursor.prototype.continue = function
+  /* key */
+() {
   // eslint-disable-next-line prefer-rest-params
   this.__continue(arguments[0]);
 };
@@ -11108,7 +11097,6 @@ function setGlobalVars(idb, initialConfig) {
         } else {
           const o = {
             get [name]() {
-              // eslint-disable-next-line unicorn/prefer-prototype-methods
               return propDesc.get.call(this);
             }
 
@@ -11168,7 +11156,6 @@ function setGlobalVars(idb, initialConfig) {
       const shimIDBFactory = IDBFactory;
 
       if (CFG.win.openDatabase !== undefined) {
-        // eslint-disable-next-line unicorn/prefer-prototype-methods
         shimIndexedDB.__openDatabase = CFG.win.openDatabase.bind(CFG.win); // We cache here in case the function is overwritten later as by the IndexedDB support promises tests
         // Polyfill ALL of IndexedDB, using WebSQL
 
@@ -11431,7 +11418,7 @@ function wrappedSQLiteDatabase(name) {
   return db;
 }
 
-const nodeWebSQL = customOpenDatabase__default['default'](wrappedSQLiteDatabase);
+const nodeWebSQL = customOpenDatabase__default["default"](wrappedSQLiteDatabase);
 
 const fs = require('fs');
 

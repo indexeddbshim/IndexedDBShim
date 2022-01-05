@@ -273,7 +273,7 @@
                     cb();
                     return;
                 }
-                // eslint-disable-next-line prefer-rest-params, unicorn/prefer-prototype-methods
+                // eslint-disable-next-line prefer-rest-params
                 util._onerror.apply(window, arguments);
             };
         },

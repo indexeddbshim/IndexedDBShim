@@ -18,7 +18,7 @@ self.parent = self;
         'DOMMatrix', 'DOMMatrixReadOnly', 'DOMPoint', 'DOMPointReadOnly',
         'DOMRect', 'DOMRectReadOnly',
         'BigInt', 'ArrayBuffer', 'FileReader', 'Promise'
-    ).forEach(function (prop) {
+    ).forEach((prop) => {
         // Isn't working for 'indexedDB' and its getter; see <https://github.com/axemclion/IndexedDBShim/issues/280>
         const desc = Object.getOwnPropertyDescriptor(shimNS.window, prop);
         // Todo: This doesn't seem to work for Event, EventTarget, CustomEvent, DOMStringList as still enumerable
@@ -26,8 +26,7 @@ self.parent = self;
             Object.defineProperty(this, prop, desc);
         } else {
             // `addEventListener` has none (in browser also)
-            // eslint-disable-next-line unicorn/prefer-prototype-methods
             this[prop] = shimNS.window[prop].bind(shimNS.window);
         }
-    }, this);
+    });
 }());

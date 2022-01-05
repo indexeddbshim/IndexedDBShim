@@ -1,5 +1,17 @@
 # CHANGES for indexeddbshim
 
+## 9.0.0
+
+### User-impacting
+
+- Breaking change: Require Node 12+
+- Update: Local build and test copies
+
+### Dev-impacting
+
+- Linting: As per latest ash-nazg
+- npm: update devDeps
+
 ## 8.0.0
 
 ### User-impacting

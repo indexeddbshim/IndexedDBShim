@@ -60,7 +60,6 @@ function setGlobalVars (idb, initialConfig) {
                 } else {
                     const o = {
                         get [name] () {
-                            // eslint-disable-next-line unicorn/prefer-prototype-methods
                             return propDesc.get.call(this);
                         }
                     };
@@ -114,7 +113,6 @@ function setGlobalVars (idb, initialConfig) {
             }
             const shimIDBFactory = IDBFactory;
             if (CFG.win.openDatabase !== undefined) {
-                // eslint-disable-next-line unicorn/prefer-prototype-methods
                 shimIndexedDB.__openDatabase = CFG.win.openDatabase.bind(CFG.win); // We cache here in case the function is overwritten later as by the IndexedDB support promises tests
                 // Polyfill ALL of IndexedDB, using WebSQL
                 shim('indexedDB', shimIndexedDB, {

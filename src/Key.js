@@ -21,7 +21,7 @@ const keyTypeToEncodedChar = {
 };
 const keyTypes = Object.keys(keyTypeToEncodedChar);
 keyTypes.forEach((k) => {
-    keyTypeToEncodedChar[k] = String.fromCharCode(keyTypeToEncodedChar[k]);
+    keyTypeToEncodedChar[k] = String.fromCodePoint(keyTypeToEncodedChar[k]);
 });
 
 const encodedCharToKeyType = keyTypes.reduce((o, k) => {

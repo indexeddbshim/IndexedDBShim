@@ -1,25 +1,19 @@
-/*! indexeddbshim - v7.1.0 - 6/15/2021 */
+/*! indexeddbshim - v9.0.0 - 1/5/2022 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.IDBKeyUtils = {}));
-}(this, (function (exports) { 'use strict';
+})(this, (function (exports) { 'use strict';
 
   function _typeof(obj) {
     "@babel/helpers - typeof";
 
-    if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
-      _typeof = function (obj) {
-        return typeof obj;
-      };
-    } else {
-      _typeof = function (obj) {
-        return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-      };
-    }
-
-    return _typeof(obj);
+    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) {
+      return typeof obj;
+    } : function (obj) {
+      return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+    }, _typeof(obj);
   }
 
   function _slicedToArray(arr, i) {
@@ -519,10 +513,10 @@
       // Could add a corresponding surrogate for compatibility with `node-sqlite3`: http://bugs.python.org/issue12569 and http://stackoverflow.com/a/6701665/271577
       //   but Chrome having problems
       if (unmatchedHighSurrogate) {
-        return '^2' + unmatchedHighSurrogate.charCodeAt().toString(16).padStart(4, '0');
+        return '^2' + unmatchedHighSurrogate.codePointAt().toString(16).padStart(4, '0');
       }
 
-      return (precedingLow || '') + '^3' + unmatchedLowSurrogate.charCodeAt().toString(16).padStart(4, '0');
+      return (precedingLow || '') + '^3' + unmatchedLowSurrogate.codePointAt().toString(16).padStart(4, '0');
     });
   }
 
@@ -617,7 +611,7 @@
   };
   var keyTypes = Object.keys(keyTypeToEncodedChar);
   keyTypes.forEach(function (k) {
-    keyTypeToEncodedChar[k] = String.fromCharCode(keyTypeToEncodedChar[k]);
+    keyTypeToEncodedChar[k] = String.fromCodePoint(keyTypeToEncodedChar[k]);
   });
   var encodedCharToKeyType = keyTypes.reduce(function (o, k) {
     o[keyTypeToEncodedChar[k]] = k;
@@ -1821,5 +1815,5 @@
 
   Object.defineProperty(exports, '__esModule', { value: true });
 
-})));
+}));
 //# sourceMappingURL=indexeddbshim-Key.js.map

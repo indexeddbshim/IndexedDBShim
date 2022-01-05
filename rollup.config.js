@@ -1,9 +1,15 @@
-import nodeResolve from '@rollup/plugin-node-resolve';
+/* eslint-disable
+    import/default,
+    import/namespace,
+    import/no-deprecated,
+    import/no-named-as-default,
+    import/no-named-as-default-member */
+import {nodeResolve} from '@rollup/plugin-node-resolve';
 import commonJS from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import replace from '@rollup/plugin-replace';
 
-import babel from '@rollup/plugin-babel';
+import {babel} from '@rollup/plugin-babel';
 import globals from 'rollup-plugin-node-globals';
 import nodePolyfills from 'rollup-plugin-node-polyfills';
 import filesize from 'rollup-plugin-filesize';

@@ -423,7 +423,6 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             };
         }
 
-        /* eslint-disable unicorn/prefer-prototype-methods */
         if (['../non-indexedDB/exceptions.js', '../non-indexedDB/constructor-object.js'].includes(shimNS.fileName)) {
             // These changes are for exceptions tests
             const _appendChild = window.document.documentElement.appendChild.bind(window.document.documentElement);
@@ -540,7 +539,6 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
 
         // Patch postMessage to throw for SCA (as needed by tests in key_invalid.htm)
         const _postMessage = window.postMessage.bind(window);
-        /* eslint-enable unicorn/prefer-prototype-methods */
         // Todo: Submit this as PR to jsdom
         window.postMessage = function (...args) {
             try {

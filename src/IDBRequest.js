@@ -20,7 +20,7 @@ IDBRequest.__super = function IDBRequest () {
     this.__setOptions({
         legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
     });
-    doneFlagGetters.forEach(function (prop) {
+    doneFlagGetters.forEach((prop) => {
         Object.defineProperty(this, '__' + prop, {
             enumerable: false,
             configurable: false,
@@ -36,7 +36,7 @@ IDBRequest.__super = function IDBRequest () {
                 return this['__' + prop];
             }
         });
-    }, this);
+    });
     util.defineReadonlyProperties(this, readonlyProperties, {
         readyState: {
             get readyState () {

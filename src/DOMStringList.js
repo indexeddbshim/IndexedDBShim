@@ -61,11 +61,11 @@ DOMStringList.prototype = {
         return this._items;
     },
     forEach (cb, thisArg) {
-        // eslint-disable-next-line unicorn/no-array-callback-reference
+        // eslint-disable-next-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument
         this._items.forEach(cb, thisArg);
     },
     map (cb, thisArg) {
-        // eslint-disable-next-line unicorn/no-array-callback-reference
+        // eslint-disable-next-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument
         return this._items.map(cb, thisArg);
     },
     indexOf (str) {

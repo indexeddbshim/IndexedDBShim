@@ -11,7 +11,6 @@ CFG.win = typeof window !== 'undefined' ? window : self; // For Web Workers
 setGlobalVars();
 // END: Same code as in browser.js
 
-// eslint-disable-next-line unicorn/prefer-prototype-methods
 const __setUnicodeIdentifiers = shimIndexedDB.__setUnicodeIdentifiers.bind(
     shimIndexedDB
 );

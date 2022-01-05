@@ -21,7 +21,7 @@
         'Blob', 'File', 'DOMException', 'Event', 'CustomEvent', 'EventTarget', 'DOMStringList', 'URL',
         'Window', 'Node', 'Document', 'DOMImplementation', 'DocumentFragment', 'ProcessingInstruction', 'DocumentType', 'Element', 'Attr', 'CharacterData', 'Text', 'Comment', 'NodeIterator', 'TreeWalker', 'NodeFilter', 'NodeList', 'HTMLCollection', 'DOMTokenList'
     ]; // These are needed by IndexedDB tests
-    nonEnumerables.concat(Object.keys(shimNS.window)).forEach(function (prop) {
+    nonEnumerables.concat(Object.keys(shimNS.window)).forEach((prop) => {
         if (prop[0] === '_' || // One type added by jsdom
             [
                 // Already added
@@ -40,10 +40,9 @@
             Object.defineProperty(this, prop, desc);
         } else {
             // `addEventListener` has none (in browser also)
-            // eslint-disable-next-line unicorn/prefer-prototype-methods
             this[prop] = shimNS.window[prop].bind(shimNS.window);
         }
-    }, this);
+    });
     // shimIndexedDB.__debug(true);
 
     // We need to overcome the `value.js` test's `instanceof` checks as

@@ -9,11 +9,11 @@ function escapeUnmatchedSurrogates (arg) {
             // Could add a corresponding surrogate for compatibility with `node-sqlite3`: http://bugs.python.org/issue12569 and http://stackoverflow.com/a/6701665/271577
             //   but Chrome having problems
             if (unmatchedHighSurrogate) {
-                return '^2' + unmatchedHighSurrogate.charCodeAt()
+                return '^2' + unmatchedHighSurrogate.codePointAt()
                     .toString(16).padStart(4, '0');
             }
             return (precedingLow || '') + '^3' +
-                unmatchedLowSurrogate.charCodeAt().toString(16).padStart(4, '0');
+                unmatchedLowSurrogate.codePointAt().toString(16).padStart(4, '0');
         }
     );
 }
@@ -80,6 +80,7 @@ function escapeDatabaseNameForSQLAndFiles (db) {
                 ? new RegExp(CFG.databaseCharacterEscapeList, 'gu')
                 : /[\u0000-\u001F\u007F"*/:<>?\\|]/gu), // eslint-disable-line no-control-regex
             function (n0) {
+                // eslint-disable-next-line unicorn/prefer-code-point -- Switch to `codePointAt`?
                 return '^1' + n0.charCodeAt().toString(16).padStart(2, '0');
             }
         );
@@ -98,11 +99,11 @@ function unescapeUnmatchedSurrogates (arg) {
     return arg
         .replace(/(\^+)3(d[0-9a-f]{3})/gu, (_, esc, lowSurr) => {
             return esc.length % 2
-                ? esc.slice(1) + String.fromCharCode(Number.parseInt(lowSurr, 16))
+                ? esc.slice(1) + String.fromCodePoint(Number.parseInt(lowSurr, 16))
                 : _;
         }).replace(/(\^+)2(d[0-9a-f]{3})/gu, (_, esc, highSurr) => {
             return esc.length % 2
-                ? esc.slice(1) + String.fromCharCode(Number.parseInt(highSurr, 16))
+                ? esc.slice(1) + String.fromCodePoint(Number.parseInt(highSurr, 16))
                 : _;
         });
 }
@@ -122,7 +123,7 @@ function unescapeDatabaseNameForSQLAndFiles (db) {
             // CFG.databaseCharacterEscapeList
             .replace(/(\^+)1([0-9a-f]{2})/gu, (_, esc, hex) => {
                 return esc.length % 2
-                    ? esc.slice(1) + String.fromCharCode(Number.parseInt(hex, 16))
+                    ? esc.slice(1) + String.fromCodePoint(Number.parseInt(hex, 16))
                     : _;
             // CFG.escapeNFDForDatabaseNames
             }).replace(/(\^+)4([0-9a-f]{6})/gu, (_, esc, hex) => {
