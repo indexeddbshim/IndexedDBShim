@@ -62,10 +62,6 @@ or
 [production (minified)](https://raw.githubusercontent.com/indexeddbshim/indexeddbshim/master/dist/indexeddbshim.min.js)
 script, or install it using [NPM](https://docs.npmjs.com/getting-started/what-is-npm).
 
-Please note that the version currently in `master` is the only one which
-supports Node.js (and has a number of fixes), but we are not yet ready
-for release.
-
 For Mac, you may need to have [CMake](https://cmake.org/download/) installed
 for the SQLite3 install to work (See
 `Tools->How to Install For Command Line Use`) as well as build SQLite3 from
