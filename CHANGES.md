@@ -1,5 +1,10 @@
 # CHANGES for indexeddbshim
 
+## ?
+
+- chore: update typeson, typeson-registry (taking advantage of some
+    tree-shaking/smaller bundle size, devDeps.
+
 ## 9.0.0
 
 ### User-impacting

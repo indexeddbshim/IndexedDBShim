@@ -1,4 +1,4 @@
-/*! indexeddbshim - v9.0.0 - 1/5/2022 */
+/*! indexeddbshim - v9.0.0 - 2/26/2022 */
 
 'use strict';
 
@@ -34,6 +34,42 @@ function _objectSpread2$1(target) {
   }
 
   return target;
+}
+
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
+  try {
+    var info = gen[key](arg);
+    var value = info.value;
+  } catch (error) {
+    reject(error);
+    return;
+  }
+
+  if (info.done) {
+    resolve(value);
+  } else {
+    Promise.resolve(value).then(_next, _throw);
+  }
+}
+
+function _asyncToGenerator(fn) {
+  return function () {
+    var self = this,
+        args = arguments;
+    return new Promise(function (resolve, reject) {
+      var gen = fn.apply(self, args);
+
+      function _next(value) {
+        asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value);
+      }
+
+      function _throw(err) {
+        asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err);
+      }
+
+      _next(undefined);
+    });
+  };
 }
 
 function _defineProperty$1(obj, key, value) {
@@ -845,7 +881,7 @@ function setPrototypeOfCustomEvent() {
   Object.setPrototypeOf(ShimCustomEvent.prototype, ShimEvent.prototype);
 } // Todo: Move to own library (but allowing WeakMaps to be passed in for sharing here)
 
-const map$1 = {};
+const map = {};
 const CFG = {};
 [// Boolean for verbose reporting
 'DEBUG', // Effectively defaults to false (ignored unless `true`)
@@ -950,7 +986,7 @@ const CFG = {};
 
   Object.defineProperty(CFG, prop, {
     get() {
-      return map$1[prop];
+      return map[prop];
     },
 
     set(val) {
@@ -958,7 +994,7 @@ const CFG = {};
         validator(val);
       }
 
-      map$1[prop] = val;
+      map[prop] = val;
     }
 
   });
@@ -1274,7 +1310,7 @@ function isNullish(v) {
   return v === null || v === undefined;
 }
 
-function hasOwn$2(obj, prop) {
+function hasOwn(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
@@ -1970,14 +2006,14 @@ var syncPromiseCommonjs = SyncPromise;
  */
 
 function cmp(first, second) {
-  const encodedKey1 = encode$2(first);
-  const encodedKey2 = encode$2(second);
+  const encodedKey1 = encode$1(first);
+  const encodedKey2 = encode$1(second);
   const result = encodedKey1 > encodedKey2 ? 1 : encodedKey1 === encodedKey2 ? 0 : -1;
 
   if (CFG.DEBUG) {
     // verify that the keys encoded correctly
-    let decodedKey1 = decode$2(encodedKey1);
-    let decodedKey2 = decode$2(encodedKey2);
+    let decodedKey1 = decode$1(encodedKey1);
+    let decodedKey2 = decode$1(encodedKey2);
 
     if (typeof first === 'object') {
       first = JSON.stringify(first);
@@ -2189,7 +2225,7 @@ const types = {
       const encoded = [];
 
       for (const [i, item] of key.entries()) {
-        const encodedItem = encode$2(item, true); // encode the array item
+        const encodedItem = encode$1(item, true); // encode the array item
 
         encoded[i] = encodedItem;
       }
@@ -2205,7 +2241,7 @@ const types = {
 
       for (let i = 0; i < decoded.length; i++) {
         const item = decoded[i];
-        const decodedItem = decode$2(item, true); // decode the item
+        const decodedItem = decode$1(item, true); // decode the item
 
         decoded[i] = decodedItem;
       }
@@ -2798,9 +2834,9 @@ function checkKeyCouldBeInjectedIntoValue(value, keyPath) {
 function isKeyInRange(key, range, checkCached) {
   let lowerMatch = range.lower === undefined;
   let upperMatch = range.upper === undefined;
-  const encodedKey = encode$2(key, true);
-  const lower = checkCached ? range.__lowerCached : encode$2(range.lower, true);
-  const upper = checkCached ? range.__upperCached : encode$2(range.upper, true);
+  const encodedKey = encode$1(key, true);
+  const lower = checkCached ? range.__lowerCached : encode$1(range.lower, true);
+  const upper = checkCached ? range.__upperCached : encode$1(range.upper, true);
 
   if (range.lower !== undefined) {
     if (range.lowerOpen && encodedKey > lower) {
@@ -2950,7 +2986,7 @@ function convertKeyToValue(key) {
  */
 
 
-function encode$2(key, inArray) {
+function encode$1(key, inArray) {
   // Bad keys like `null`, `object`, `boolean`, 'function', 'symbol' should not be passed here due to prior validation
   if (key === undefined) {
     return null;
@@ -2968,7 +3004,7 @@ function encode$2(key, inArray) {
  */
 
 
-function decode$2(key, inArray) {
+function decode$1(key, inArray) {
   if (typeof key !== 'string') {
     return undefined;
   }
@@ -2984,7 +3020,7 @@ function decode$2(key, inArray) {
 
 
 function roundTrip(key, inArray) {
-  return decode$2(encode$2(key, inArray), inArray);
+  return decode$1(encode$1(key, inArray), inArray);
 }
 
 const MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `Number.MAX_SAFE_INTEGER + 1`)
@@ -3150,8 +3186,8 @@ function possiblyUpdateKeyGenerator(tx, store, key, successCb, sqlFailCb) {
 
 var Key = /*#__PURE__*/Object.freeze({
   __proto__: null,
-  encode: encode$2,
-  decode: decode$2,
+  encode: encode$1,
+  decode: decode$1,
   roundTrip: roundTrip,
   convertKeyToValue: convertKeyToValue,
   convertValueToKeyValueDecoded: convertValueToKeyValueDecoded,
@@ -3216,7 +3252,7 @@ IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
     }
 
     if (lower !== undefined && upper !== undefined && lower !== upper) {
-      if (encode$2(lower) > encode$2(upper)) {
+      if (encode$1(lower) > encode$1(upper)) {
         throw createDOMException('DataError', '`lower` must not be greater than `upper` argument in `bound()` call.');
       }
     }
@@ -3325,11 +3361,11 @@ function setSQLForKeyRange(range, quotedKeyColumnName, sql, sqlValues, addAnd, c
     const hasUpper = range.upper !== undefined;
 
     if (hasLower) {
-      encodedLowerKey = checkCached ? range.__lowerCached : encode$2(range.lower);
+      encodedLowerKey = checkCached ? range.__lowerCached : encode$1(range.lower);
     }
 
     if (hasUpper) {
-      encodedUpperKey = checkCached ? range.__upperCached : encode$2(range.upper);
+      encodedUpperKey = checkCached ? range.__upperCached : encode$1(range.upper);
     }
 
     if (hasLower) {
@@ -4198,3297 +4234,1256 @@ Object.defineProperty(IDBTransaction, 'prototype', {
   writable: false
 });
 
-function _typeof(obj) {
-  "@babel/helpers - typeof";
-
-  if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
-    _typeof = function (obj) {
-      return typeof obj;
-    };
-  } else {
-    _typeof = function (obj) {
-      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-    };
-  }
-
-  return _typeof(obj);
-}
-
-function _classCallCheck(instance, Constructor) {
-  if (!(instance instanceof Constructor)) {
-    throw new TypeError("Cannot call a class as a function");
-  }
-}
-
-function _defineProperties(target, props) {
-  for (var i = 0; i < props.length; i++) {
-    var descriptor = props[i];
-    descriptor.enumerable = descriptor.enumerable || false;
-    descriptor.configurable = true;
-    if ("value" in descriptor) descriptor.writable = true;
-    Object.defineProperty(target, descriptor.key, descriptor);
-  }
-}
-
-function _createClass(Constructor, protoProps, staticProps) {
-  if (protoProps) _defineProperties(Constructor.prototype, protoProps);
-  if (staticProps) _defineProperties(Constructor, staticProps);
-  return Constructor;
-}
-
-function _defineProperty(obj, key, value) {
-  if (key in obj) {
-    Object.defineProperty(obj, key, {
-      value: value,
-      enumerable: true,
-      configurable: true,
-      writable: true
-    });
-  } else {
-    obj[key] = value;
-  }
-
-  return obj;
-}
-
-function ownKeys(object, enumerableOnly) {
-  var keys = Object.keys(object);
+function ownKeys(e, t) {
+  var r = Object.keys(e);
 
   if (Object.getOwnPropertySymbols) {
-    var symbols = Object.getOwnPropertySymbols(object);
-    if (enumerableOnly) symbols = symbols.filter(function (sym) {
-      return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+    var n = Object.getOwnPropertySymbols(e);
+    t && (n = n.filter(function (t) {
+      return Object.getOwnPropertyDescriptor(e, t).enumerable;
+    })), r.push.apply(r, n);
+  }
+
+  return r;
+}
+
+function _objectSpread2(e) {
+  for (var t = 1; t < arguments.length; t++) {
+    var r = null != arguments[t] ? arguments[t] : {};
+    t % 2 ? ownKeys(Object(r), !0).forEach(function (t) {
+      _defineProperty(e, t, r[t]);
+    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(r)) : ownKeys(Object(r)).forEach(function (t) {
+      Object.defineProperty(e, t, Object.getOwnPropertyDescriptor(r, t));
     });
-    keys.push.apply(keys, symbols);
   }
 
-  return keys;
+  return e;
 }
 
-function _objectSpread2(target) {
-  for (var i = 1; i < arguments.length; i++) {
-    var source = arguments[i] != null ? arguments[i] : {};
+function _typeof(e) {
+  return (_typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (e) {
+    return typeof e;
+  } : function (e) {
+    return e && "function" == typeof Symbol && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
+  })(e);
+}
 
-    if (i % 2) {
-      ownKeys(Object(source), true).forEach(function (key) {
-        _defineProperty(target, key, source[key]);
-      });
-    } else if (Object.getOwnPropertyDescriptors) {
-      Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
-    } else {
-      ownKeys(Object(source)).forEach(function (key) {
-        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-      });
-    }
+function _classCallCheck(e, t) {
+  if (!(e instanceof t)) throw new TypeError("Cannot call a class as a function");
+}
+
+function _defineProperties(e, t) {
+  for (var r = 0; r < t.length; r++) {
+    var n = t[r];
+    n.enumerable = n.enumerable || !1, n.configurable = !0, "value" in n && (n.writable = !0), Object.defineProperty(e, n.key, n);
   }
-
-  return target;
 }
 
-function _slicedToArray(arr, i) {
-  return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
+function _createClass(e, t, r) {
+  return t && _defineProperties(e.prototype, t), r && _defineProperties(e, r), Object.defineProperty(e, "prototype", {
+    writable: !1
+  }), e;
 }
 
-function _toConsumableArray(arr) {
-  return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread();
+function _defineProperty(e, t, r) {
+  return t in e ? Object.defineProperty(e, t, {
+    value: r,
+    enumerable: !0,
+    configurable: !0,
+    writable: !0
+  }) : e[t] = r, e;
 }
 
-function _arrayWithoutHoles(arr) {
-  if (Array.isArray(arr)) return _arrayLikeToArray(arr);
-}
+function _slicedToArray(e, t) {
+  return function _arrayWithHoles(e) {
+    if (Array.isArray(e)) return e;
+  }(e) || function _iterableToArrayLimit(e, t) {
+    var r = null == e ? null : "undefined" != typeof Symbol && e[Symbol.iterator] || e["@@iterator"];
 
-function _arrayWithHoles(arr) {
-  if (Array.isArray(arr)) return arr;
-}
+    if (null != r) {
+      var n,
+          a,
+          o = [],
+          i = !0,
+          s = !1;
 
-function _iterableToArray(iter) {
-  if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter);
-}
+      try {
+        for (r = r.call(e); !(i = (n = r.next()).done) && (o.push(n.value), !t || o.length !== t); i = !0);
+      } catch (e) {
+        s = !0, a = e;
+      } finally {
+        try {
+          i || null == r.return || r.return();
+        } finally {
+          if (s) throw a;
+        }
+      }
 
-function _iterableToArrayLimit(arr, i) {
-  if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
-  var _arr = [];
-  var _n = true;
-  var _d = false;
-  var _e = undefined;
-
-  try {
-    for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
-      _arr.push(_s.value);
-
-      if (i && _arr.length === i) break;
+      return o;
     }
-  } catch (err) {
-    _d = true;
-    _e = err;
-  } finally {
-    try {
-      if (!_n && _i["return"] != null) _i["return"]();
-    } finally {
-      if (_d) throw _e;
-    }
+  }(e, t) || _unsupportedIterableToArray(e, t) || function _nonIterableRest() {
+    throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+  }();
+}
+
+function _unsupportedIterableToArray(e, t) {
+  if (e) {
+    if ("string" == typeof e) return _arrayLikeToArray(e, t);
+    var r = Object.prototype.toString.call(e).slice(8, -1);
+    return "Object" === r && e.constructor && (r = e.constructor.name), "Map" === r || "Set" === r ? Array.from(e) : "Arguments" === r || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(r) ? _arrayLikeToArray(e, t) : void 0;
   }
-
-  return _arr;
 }
 
-function _unsupportedIterableToArray(o, minLen) {
-  if (!o) return;
-  if (typeof o === "string") return _arrayLikeToArray(o, minLen);
-  var n = Object.prototype.toString.call(o).slice(8, -1);
-  if (n === "Object" && o.constructor) n = o.constructor.name;
-  if (n === "Map" || n === "Set") return Array.from(o);
-  if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
+function _arrayLikeToArray(e, t) {
+  (null == t || t > e.length) && (t = e.length);
+
+  for (var r = 0, n = new Array(t); r < t; r++) n[r] = e[r];
+
+  return n;
 }
 
-function _arrayLikeToArray(arr, len) {
-  if (len == null || len > arr.length) len = arr.length;
+var e = _createClass(function TypesonPromise(e) {
+  _classCallCheck(this, TypesonPromise), this.p = new Promise(e);
+});
 
-  for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
-
-  return arr2;
-}
-
-function _nonIterableSpread() {
-  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-}
-
-function _nonIterableRest() {
-  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-}
-/**
-* @callback TypesonFulfilled
-* @returns {Promise<any>|any}
-*/
-
-/**
-* @callback TypesonRejected
-* @returns {Promise<any>|any}
-*/
-
-/**
- * @callback TypesonResolve
- * @param {any} value
- * @returns {Promise<any>}
- */
-
-/**
- * @callback TypesonReject
- * @param {Error|any} error
- * @returns {Promise<any>}
- */
-
-/**
- * @callback TypesonResolveReject
- * @param {TypesonResolve} typesonResolve
- * @param {TypesonReject} typesonReject
- * @returns {Promise<any>}
- */
-
-/* eslint-disable block-spacing, space-before-function-paren,
-  space-before-blocks, space-infix-ops, semi, promise/avoid-new,
-  jsdoc/require-jsdoc */
-
-/**
- * We keep this function minimized so if using two instances of this
- *   library, where one is minimized and one is not, it will still work
- *   with `hasConstructorOf`.
- * With ES6 classes, we may be able to simply use `class TypesonPromise
- *   extends Promise` and add a string tag for detection.
- * @param {TypesonResolveReject} f
- */
-
-
-var TypesonPromise = function TypesonPromise(f) {
-  _classCallCheck(this, TypesonPromise);
-
-  this.p = new Promise(f);
-};
-/* eslint-enable block-spacing, space-before-function-paren,
-  space-before-blocks, space-infix-ops, semi, promise/avoid-new,
-  jsdoc/require-jsdoc */
-// eslint-disable-next-line max-len
-// class TypesonPromise extends Promise {get[Symbol.toStringTag](){return 'TypesonPromise'};} // eslint-disable-line keyword-spacing, space-before-function-paren, space-before-blocks, block-spacing, semi
-
-
-TypesonPromise.__typeson__type__ = 'TypesonPromise'; // Note: core-js-bundle provides a `Symbol` polyfill
-
-/* istanbul ignore else */
-
-if (typeof Symbol !== 'undefined') {
-  // Ensure `isUserObject` will return `false` for `TypesonPromise`
-  TypesonPromise.prototype[Symbol.toStringTag] = 'TypesonPromise';
-}
-/**
- *
- * @param {TypesonFulfilled} [onFulfilled]
- * @param {TypesonRejected} [onRejected]
- * @returns {TypesonPromise}
- */
-
-
-TypesonPromise.prototype.then = function (onFulfilled, onRejected) {
-  var _this = this;
-
-  return new TypesonPromise(function (typesonResolve, typesonReject) {
-    // eslint-disable-next-line promise/catch-or-return
-    _this.p.then(function (res) {
-      // eslint-disable-next-line promise/always-return
-      typesonResolve(onFulfilled ? onFulfilled(res) : res);
-    })["catch"](function (res) {
-      return onRejected ? onRejected(res) : Promise.reject(res);
-    }).then(typesonResolve, typesonReject);
+e.__typeson__type__ = "TypesonPromise", "undefined" != typeof Symbol && (e.prototype[Symbol.toStringTag] = "TypesonPromise"), e.prototype.then = function (t, r) {
+  var n = this;
+  return new e(function (e, a) {
+    n.p.then(function (r) {
+      e(t ? t(r) : r);
+    }).catch(function (e) {
+      return r ? r(e) : Promise.reject(e);
+    }).then(e, a);
   });
-};
-/**
- *
- * @param {TypesonRejected} onRejected
- * @returns {TypesonPromise}
- */
-
-
-TypesonPromise.prototype["catch"] = function (onRejected) {
-  return this.then(null, onRejected);
-};
-/**
- *
- * @param {any} v
- * @returns {TypesonPromise}
- */
-
-
-TypesonPromise.resolve = function (v) {
-  return new TypesonPromise(function (typesonResolve) {
-    typesonResolve(v);
+}, e.prototype.catch = function (e) {
+  return this.then(null, e);
+}, e.resolve = function (t) {
+  return new e(function (e) {
+    e(t);
   });
-};
-/**
- *
- * @param {any} v
- * @returns {TypesonPromise}
- */
-
-
-TypesonPromise.reject = function (v) {
-  return new TypesonPromise(function (typesonResolve, typesonReject) {
-    typesonReject(v);
+}, e.reject = function (t) {
+  return new e(function (e, r) {
+    r(t);
   });
-};
-
-['all', 'race', 'allSettled'].forEach(function (meth) {
-  /**
-   *
-   * @param {Promise<any>[]} promArr
-   * @returns {TypesonPromise}
-   */
-  TypesonPromise[meth] = function (promArr) {
-    return new TypesonPromise(function (typesonResolve, typesonReject) {
-      // eslint-disable-next-line promise/catch-or-return
-      Promise[meth](promArr.map(function (prom) {
-        return prom && prom.constructor && prom.constructor.__typeson__type__ === 'TypesonPromise' ? prom.p : prom;
-      })).then(typesonResolve, typesonReject);
+}, ["all", "race", "allSettled"].forEach(function (t) {
+  e[t] = function (r) {
+    return new e(function (e, n) {
+      Promise[t](r.map(function (e) {
+        return e && e.constructor && "TypesonPromise" === e.constructor.__typeson__type__ ? e.p : e;
+      })).then(e, n);
     });
   };
 });
-var _ref = {},
-    toStr = _ref.toString,
-    hasOwn$1 = {}.hasOwnProperty,
-    getProto = Object.getPrototypeOf,
-    fnToString = hasOwn$1.toString;
-/**
- * Second argument not in use internally, but provided for utility.
- * @param {any} v
- * @param {boolean} catchCheck
- * @returns {boolean}
- */
+var t = {}.toString,
+    r = {}.hasOwnProperty,
+    n = Object.getPrototypeOf,
+    a = r.toString;
 
-function isThenable(v, catchCheck) {
-  return isObject(v) && typeof v.then === 'function' && (!catchCheck || typeof v["catch"] === 'function');
-}
-/**
- *
- * @param {any} val
- * @returns {string}
- */
-
-
-function toStringTag(val) {
-  return toStr.call(val).slice(8, -1);
-}
-/**
- * This function is dependent on both constructors
- *   being identical so any minimization is expected of both.
- * @param {any} a
- * @param {GenericFunction} b
- * @returns {boolean}
- */
-
-
-function hasConstructorOf(a, b) {
-  if (!a || _typeof(a) !== 'object') {
-    return false;
-  }
-
-  var proto = getProto(a);
-
-  if (!proto) {
-    return b === null;
-  }
-
-  var Ctor = hasOwn$1.call(proto, 'constructor') && proto.constructor;
-
-  if (typeof Ctor !== 'function') {
-    return b === null;
-  }
-
-  if (b === Ctor) {
-    return true;
-  }
-
-  if (b !== null && fnToString.call(Ctor) === fnToString.call(b)) {
-    return true;
-  }
-
-  if (typeof b === 'function' && typeof Ctor.__typeson__type__ === 'string' && Ctor.__typeson__type__ === b.__typeson__type__) {
-    return true;
-  }
-
-  return false;
-}
-/**
- *
- * @param {any} val
- * @returns {boolean}
- */
-
-
-function isPlainObject(val) {
-  // Mirrors jQuery's
-  if (!val || toStringTag(val) !== 'Object') {
-    return false;
-  }
-
-  var proto = getProto(val);
-
-  if (!proto) {
-    // `Object.create(null)`
-    return true;
-  }
-
-  return hasConstructorOf(val, Object);
-}
-/**
- *
- * @param {any} val
- * @returns {boolean}
- */
-
-
-function isUserObject(val) {
-  if (!val || toStringTag(val) !== 'Object') {
-    return false;
-  }
-
-  var proto = getProto(val);
-
-  if (!proto) {
-    // `Object.create(null)`
-    return true;
-  }
-
-  return hasConstructorOf(val, Object) || isUserObject(proto);
-}
-/**
- *
- * @param {any} v
- * @returns {boolean}
- */
-
-
-function isObject(v) {
-  return v && _typeof(v) === 'object';
-}
-/**
- *
- * @param {string} keyPathComponent
- * @returns {string}
- */
-
-
-function escapeKeyPathComponent(keyPathComponent) {
-  return keyPathComponent.replace(/~/g, '~0').replace(/\./g, '~1');
-}
-/**
- *
- * @param {string} keyPathComponent
- * @returns {string}
- */
-
-
-function unescapeKeyPathComponent(keyPathComponent) {
-  return keyPathComponent.replace(/~1/g, '.').replace(/~0/g, '~');
-}
-/**
- * @param {PlainObject|GenericArray} obj
- * @param {string} keyPath
- * @returns {any}
- */
-
-
-function getByKeyPath(obj, keyPath) {
-  if (keyPath === '') {
-    return obj;
-  }
-
-  var period = keyPath.indexOf('.');
-
-  if (period > -1) {
-    var innerObj = obj[unescapeKeyPathComponent(keyPath.slice(0, period))];
-    return innerObj === undefined ? undefined : getByKeyPath(innerObj, keyPath.slice(period + 1));
-  }
-
-  return obj[unescapeKeyPathComponent(keyPath)];
-}
-/**
- *
- * @param {PlainObject} obj
- * @param {string} keyPath
- * @param {any} value
- * @returns {any}
- */
-
-
-function setAtKeyPath(obj, keyPath, value) {
-  if (keyPath === '') {
-    return value;
-  }
-
-  var period = keyPath.indexOf('.');
-
-  if (period > -1) {
-    var innerObj = obj[unescapeKeyPathComponent(keyPath.slice(0, period))];
-    return setAtKeyPath(innerObj, keyPath.slice(period + 1), value);
-  }
-
-  obj[unescapeKeyPathComponent(keyPath)] = value;
-  return obj;
-}
-/**
- *
- * @param {external:JSON} value
- * @returns {"null"|"array"|"undefined"|"boolean"|"number"|"string"|
- *  "object"|"symbol"}
- */
-
-
-function getJSONType(value) {
-  return value === null ? 'null' : Array.isArray(value) ? 'array' : _typeof(value);
+function isThenable(e, t) {
+  return isObject(e) && "function" == typeof e.then && (!t || "function" == typeof e.catch);
 }
 
-function _await(value, then, direct) {
-  if (direct) {
-    return then ? then(value) : value;
-  }
-
-  if (!value || !value.then) {
-    value = Promise.resolve(value);
-  }
-
-  return then ? value.then(then) : value;
+function toStringTag(e) {
+  return t.call(e).slice(8, -1);
 }
 
-var keys = Object.keys,
-    isArray = Array.isArray,
-    hasOwn = {}.hasOwnProperty,
-    internalStateObjPropsToIgnore = ['type', 'replaced', 'iterateIn', 'iterateUnsetNumeric'];
-/**
- * Handle plain object revivers first so reference setting can use
- * revived type (e.g., array instead of object); assumes revived
- * has same structure or will otherwise break subsequent references.
- * @param {PlainObjectType} a
- * @param {PlainObjectType} b
- * @returns {1|-1|boolean}
- */
+function hasConstructorOf(e, t) {
+  if (!e || "object" !== _typeof(e)) return !1;
+  var o = n(e);
+  if (!o) return null === t;
+  var i = r.call(o, "constructor") && o.constructor;
+  return "function" != typeof i ? null === t : t === i || null !== t && a.call(i) === a.call(t) || "function" == typeof t && "string" == typeof i.__typeson__type__ && i.__typeson__type__ === t.__typeson__type__;
+}
 
-function _async(f) {
+function isPlainObject(e) {
+  return !(!e || "Object" !== toStringTag(e)) && (!n(e) || hasConstructorOf(e, Object));
+}
+
+function isUserObject(e) {
+  if (!e || "Object" !== toStringTag(e)) return !1;
+  var t = n(e);
+  return !t || hasConstructorOf(e, Object) || isUserObject(t);
+}
+
+function isObject(e) {
+  return e && "object" === _typeof(e);
+}
+
+function escapeKeyPathComponent(e) {
+  return e.replace(/~/g, "~0").replace(/\./g, "~1");
+}
+
+function unescapeKeyPathComponent(e) {
+  return e.replace(/~1/g, ".").replace(/~0/g, "~");
+}
+
+function getByKeyPath(e, t) {
+  if ("" === t) return e;
+  var r = t.indexOf(".");
+
+  if (r > -1) {
+    var n = e[unescapeKeyPathComponent(t.slice(0, r))];
+    return void 0 === n ? void 0 : getByKeyPath(n, t.slice(r + 1));
+  }
+
+  return e[unescapeKeyPathComponent(t)];
+}
+
+function setAtKeyPath(e, t, r) {
+  if ("" === t) return r;
+  var n = t.indexOf(".");
+  return n > -1 ? setAtKeyPath(e[unescapeKeyPathComponent(t.slice(0, n))], t.slice(n + 1), r) : (e[unescapeKeyPathComponent(t)] = r, e);
+}
+
+function getJSONType(e) {
+  return null === e ? "null" : Array.isArray(e) ? "array" : _typeof(e);
+}
+
+function _await(e, t, r) {
+  return r ? t ? t(e) : e : (e && e.then || (e = Promise.resolve(e)), t ? e.then(t) : e);
+}
+
+var o = Object.keys,
+    i = Array.isArray,
+    s = {}.hasOwnProperty,
+    c = ["type", "replaced", "iterateIn", "iterateUnsetNumeric"];
+
+function _async(e) {
   return function () {
-    for (var args = [], i = 0; i < arguments.length; i++) {
-      args[i] = arguments[i];
-    }
+    for (var t = [], r = 0; r < arguments.length; r++) t[r] = arguments[r];
 
     try {
-      return Promise.resolve(f.apply(this, args));
+      return Promise.resolve(e.apply(this, t));
     } catch (e) {
       return Promise.reject(e);
     }
   };
 }
-/**
- * @callback Tester
- * @param {any} value
- * @param {StateObject} stateobj
- * @returns {boolean}
- */
 
-/**
-* @callback Replacer
-* @param {any} value
-* @param {StateObject} stateObj
-* @returns {any} Should be JSON-stringifiable
-*/
-
-/**
-* @callback Reviver
-* @param {JSON} value
-* @param {StateObject} stateObj
-* @returns {any}
-*/
-
-/**
-* @typedef {PlainObject} TypesonOptions
-* @property {boolean} stringification Auto-set by `stringify`
-*/
-
-/**
- * An instance of this class can be used to call `stringify()` and `parse()`.
- * Typeson resolves cyclic references by default. Can also be extended to
- * support custom types using the register() method.
- *
- * @class
- * @param {{cyclic: boolean}} [options] - if cyclic (default true),
- *   cyclic references will be handled gracefully.
- */
-
-
-function _invoke(body, then) {
-  var result = body();
-
-  if (result && result.then) {
-    return result.then(then);
-  }
-
-  return then(result);
+function nestedPathsFirst(e, t) {
+  if ("" === e.keypath) return -1;
+  var r = e.keypath.match(/\./g) || 0,
+      n = t.keypath.match(/\./g) || 0;
+  return r && (r = r.length), n && (n = n.length), r > n ? -1 : r < n ? 1 : e.keypath < t.keypath ? -1 : e.keypath > t.keypath;
 }
 
-function nestedPathsFirst(a, b) {
-  if (a.keypath === '') {
-    return -1;
+var u = function () {
+  function Typeson(e) {
+    _classCallCheck(this, Typeson), this.options = e, this.plainObjectReplacers = [], this.nonplainObjectReplacers = [], this.revivers = {}, this.types = {};
   }
 
-  var as = a.keypath.match(/\./g) || 0;
-  var bs = b.keypath.match(/\./g) || 0;
-
-  if (as) {
-    as = as.length;
-  }
-
-  if (bs) {
-    bs = bs.length;
-  }
-
-  return as > bs ? -1 : as < bs ? 1 : a.keypath < b.keypath ? -1 : a.keypath > b.keypath;
-}
-
-var Typeson = /*#__PURE__*/function () {
-  /**
-   * @param {TypesonOptions} options
-   */
-  function Typeson(options) {
-    _classCallCheck(this, Typeson);
-
-    this.options = options; // Replacers signature: replace (value). Returns falsy if not
-    //   replacing. Otherwise ['Date', value.getTime()]
-
-    this.plainObjectReplacers = [];
-    this.nonplainObjectReplacers = []; // Revivers: [{type => reviver}, {plain: boolean}].
-    //   Sample: [{'Date': value => new Date(value)}, {plain: false}]
-
-    this.revivers = {};
-    /** Types registered via `register()`. */
-
-    this.types = {};
-  }
-  /**
-  * @typedef {null|boolean|number|string|GenericArray|PlainObject} JSON
-  */
-
-  /**
-  * @callback JSONReplacer
-  * @param {""|string} key
-  * @param {JSON} value
-  * @returns {number|string|boolean|null|PlainObject|undefined}
-  * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#The%20replacer%20parameter
-  */
-
-  /**
-   * Serialize given object to Typeson.
-   * Initial arguments work identical to those of `JSON.stringify`.
-   * The `replacer` argument has nothing to do with our replacers.
-   * @param {any} obj
-   * @param {JSONReplacer|string[]} replacer
-   * @param {number|string} space
-   * @param {TypesonOptions} opts
-   * @returns {string|Promise<string>} Promise resolves to a string
-   */
-
-
-  _createClass(Typeson, [{
+  return _createClass(Typeson, [{
     key: "stringify",
-    value: function stringify(obj, replacer, space, opts) {
-      opts = _objectSpread2(_objectSpread2(_objectSpread2({}, this.options), opts), {}, {
-        stringification: true
+    value: function stringify(e, t, r, n) {
+      n = _objectSpread2(_objectSpread2(_objectSpread2({}, this.options), n), {}, {
+        stringification: !0
       });
-      var encapsulated = this.encapsulate(obj, null, opts);
-
-      if (isArray(encapsulated)) {
-        return JSON.stringify(encapsulated[0], replacer, space);
-      }
-
-      return encapsulated.then(function (res) {
-        return JSON.stringify(res, replacer, space);
+      var a = this.encapsulate(e, null, n);
+      return i(a) ? JSON.stringify(a[0], t, r) : a.then(function (e) {
+        return JSON.stringify(e, t, r);
       });
     }
-    /**
-     * Also sync but throws on non-sync result.
-     * @param {any} obj
-     * @param {JSONReplacer|string[]} replacer
-     * @param {number|string} space
-     * @param {TypesonOptions} opts
-     * @returns {string}
-     */
-
   }, {
     key: "stringifySync",
-    value: function stringifySync(obj, replacer, space, opts) {
-      return this.stringify(obj, replacer, space, _objectSpread2(_objectSpread2({
-        throwOnBadSyncType: true
-      }, opts), {}, {
-        sync: true
+    value: function stringifySync(e, t, r, n) {
+      return this.stringify(e, t, r, _objectSpread2(_objectSpread2({
+        throwOnBadSyncType: !0
+      }, n), {}, {
+        sync: !0
       }));
     }
-    /**
-     *
-     * @param {any} obj
-     * @param {JSONReplacer|string[]} replacer
-     * @param {number|string} space
-     * @param {TypesonOptions} opts
-     * @returns {Promise<string>}
-     */
-
   }, {
     key: "stringifyAsync",
-    value: function stringifyAsync(obj, replacer, space, opts) {
-      return this.stringify(obj, replacer, space, _objectSpread2(_objectSpread2({
-        throwOnBadSyncType: true
-      }, opts), {}, {
-        sync: false
+    value: function stringifyAsync(e, t, r, n) {
+      return this.stringify(e, t, r, _objectSpread2(_objectSpread2({
+        throwOnBadSyncType: !0
+      }, n), {}, {
+        sync: !1
       }));
     }
-    /**
-    * @callback JSONReviver
-    * @param {string} key
-    * @param {JSON} value
-    * @returns {JSON}
-    */
-
-    /**
-     * Parse Typeson back into an obejct.
-     * Initial arguments works identical to those of `JSON.parse()`.
-     * @param {string} text
-     * @param {JSONReviver} reviver This JSON reviver has nothing to do with
-     *   our revivers.
-     * @param {TypesonOptions} opts
-     * @returns {external:JSON}
-     */
-
   }, {
     key: "parse",
-    value: function parse(text, reviver, opts) {
-      opts = _objectSpread2(_objectSpread2(_objectSpread2({}, this.options), opts), {}, {
-        parse: true
-      });
-      return this.revive(JSON.parse(text, reviver), opts);
+    value: function parse(e, t, r) {
+      return r = _objectSpread2(_objectSpread2(_objectSpread2({}, this.options), r), {}, {
+        parse: !0
+      }), this.revive(JSON.parse(e, t), r);
     }
-    /**
-    * Also sync but throws on non-sync result.
-    * @param {string} text
-    * @param {JSONReviver} reviver This JSON reviver has nothing to do with
-    *   our revivers.
-    * @param {TypesonOptions} opts
-    * @returns {external:JSON}
-    */
-
   }, {
     key: "parseSync",
-    value: function parseSync(text, reviver, opts) {
-      return this.parse(text, reviver, _objectSpread2(_objectSpread2({
-        throwOnBadSyncType: true
-      }, opts), {}, {
-        sync: true
+    value: function parseSync(e, t, r) {
+      return this.parse(e, t, _objectSpread2(_objectSpread2({
+        throwOnBadSyncType: !0
+      }, r), {}, {
+        sync: !0
       }));
     }
-    /**
-    * @param {string} text
-    * @param {JSONReviver} reviver This JSON reviver has nothing to do with
-    *   our revivers.
-    * @param {TypesonOptions} opts
-    * @returns {Promise<external:JSON>} Resolves to `external:JSON`
-    */
-
   }, {
     key: "parseAsync",
-    value: function parseAsync(text, reviver, opts) {
-      return this.parse(text, reviver, _objectSpread2(_objectSpread2({
-        throwOnBadSyncType: true
-      }, opts), {}, {
-        sync: false
+    value: function parseAsync(e, t, r) {
+      return this.parse(e, t, _objectSpread2(_objectSpread2({
+        throwOnBadSyncType: !0
+      }, r), {}, {
+        sync: !1
       }));
     }
-    /**
-    * @typedef {} StateObject
-    */
-
-    /**
-     *
-     * @param {any} obj
-     * @param {StateObject} stateObj
-     * @param {TypesonOptions} [opts={}]
-     * @returns {string[]|false}
-     */
-
   }, {
     key: "specialTypeNames",
-    value: function specialTypeNames(obj, stateObj) {
-      var opts = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-      opts.returnTypeNames = true;
-      return this.encapsulate(obj, stateObj, opts);
+    value: function specialTypeNames(e, t) {
+      var r = arguments.length > 2 && void 0 !== arguments[2] ? arguments[2] : {};
+      return r.returnTypeNames = !0, this.encapsulate(e, t, r);
     }
-    /**
-     *
-     * @param {any} obj
-     * @param {PlainObject} stateObj
-     * @param {PlainObject} [opts={}]
-     * @returns {Promise<any>|GenericArray|PlainObject|string|false}
-     */
-
   }, {
     key: "rootTypeName",
-    value: function rootTypeName(obj, stateObj) {
-      var opts = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-      opts.iterateNone = true;
-      return this.encapsulate(obj, stateObj, opts);
+    value: function rootTypeName(e, t) {
+      var r = arguments.length > 2 && void 0 !== arguments[2] ? arguments[2] : {};
+      return r.iterateNone = !0, this.encapsulate(e, t, r);
     }
-    /**
-     * Encapsulate a complex object into a plain Object by replacing
-     * registered types with plain objects representing the types data.
-     *
-     * This method is used internally by `Typeson.stringify()`.
-     * @param {any} obj - Object to encapsulate.
-     * @param {PlainObject} stateObj
-     * @param {PlainObject} opts
-     * @returns {Promise<any>|GenericArray|PlainObject|string|false}
-     */
-
   }, {
     key: "encapsulate",
-    value: function encapsulate(obj, stateObj, opts) {
-      /**
-       *
-       * @param {any} ret
-       * @param {GenericArray} promisesData
-       * @returns {Promise<any>}
-       */
-      var checkPromises = _async(function (ret, promisesData) {
-        return _await(Promise.all(promisesData.map(function (pd) {
-          return pd[1].p;
-        })), function (promResults) {
-          return _await(Promise.all(promResults.map(_async(function (promResult) {
-            var _exit = false;
-            var newPromisesData = [];
+    value: function encapsulate(t, r, n) {
+      var a = _async(function (t, r) {
+        return _await(Promise.all(r.map(function (e) {
+          return e[1].p;
+        })), function (n) {
+          return _await(Promise.all(n.map(_async(function (n) {
+            var o = !1,
+                i = [],
+                s = _slicedToArray(r.splice(0, 1), 1),
+                c = _slicedToArray(s[0], 7),
+                u = c[0],
+                l = c[2],
+                f = c[3],
+                y = c[4],
+                p = c[5],
+                d = c[6],
+                v = _encapsulate(u, n, l, f, i, !0, d),
+                b = hasConstructorOf(v, e);
 
-            var _promisesData$splice = promisesData.splice(0, 1),
-                _promisesData$splice2 = _slicedToArray(_promisesData$splice, 1),
-                prData = _promisesData$splice2[0];
-
-            var _prData = _slicedToArray(prData, 7),
-                keyPath = _prData[0],
-                cyclic = _prData[2],
-                stateObj = _prData[3],
-                parentObj = _prData[4],
-                key = _prData[5],
-                detectedType = _prData[6];
-
-            var encaps = _encapsulate(keyPath, promResult, cyclic, stateObj, newPromisesData, true, detectedType);
-
-            var isTypesonPromise = hasConstructorOf(encaps, TypesonPromise); // Handle case where an embedded custom type itself
-            //   returns a `Typeson.Promise`
-
-            return _invoke(function () {
-              if (keyPath && isTypesonPromise) {
-                return _await(encaps.p, function (encaps2) {
-                  parentObj[key] = encaps2;
-                  _exit = true;
-                  return checkPromises(ret, newPromisesData);
-                });
-              }
-            }, function (_result) {
-              if (_exit) return _result;
-
-              if (keyPath) {
-                parentObj[key] = encaps;
-              } else if (isTypesonPromise) {
-                ret = encaps.p;
-              } else {
-                // If this is itself a `Typeson.Promise` (because the
-                //   original value supplied was a `Promise` or
-                //   because the supplied custom type value resolved
-                //   to one), returning it below will be fine since
-                //   a `Promise` is expected anyways given current
-                //   config (and if not a `Promise`, it will be ready
-                //   as the resolve value)
-                ret = encaps;
-              }
-
-              return checkPromises(ret, newPromisesData);
+            return function _invoke(e, t) {
+              var r = e();
+              return r && r.then ? r.then(t) : t(r);
+            }(function () {
+              if (u && b) return _await(v.p, function (e) {
+                y[p] = e;
+                var r = a(t, i);
+                return o = !0, r;
+              });
+            }, function (e) {
+              return o ? e : (u ? y[p] = v : t = b ? v.p : v, a(t, i));
             });
           }))), function () {
-            return ret;
+            return t;
           });
         });
-      });
-      /**
-      * @typedef {PlainObject} OwnKeysObject
-      * @property {boolean} ownKeys
-      */
+      }),
+          u = (n = _objectSpread2(_objectSpread2({
+        sync: !0
+      }, this.options), n)).sync,
+          l = this,
+          f = {},
+          y = [],
+          p = [],
+          d = [],
+          v = !("cyclic" in n) || n.cyclic,
+          b = n.encapsulateObserver,
+          h = _encapsulate("", t, v, r || {}, d);
 
-      /**
-      * @callback BuiltinStateObjectPropertiesCallback
-      * @returns {void}
-      */
+      function finish(e) {
+        var t = Object.values(f);
+        if (n.iterateNone) return t.length ? t[0] : getJSONType(e);
 
-      /**
-       *
-       * @param {StateObject} stateObj
-       * @param {OwnKeysObject} ownKeysObj
-       * @param {BuiltinStateObjectPropertiesCallback} cb
-       * @returns {undefined}
-       */
-
-
-      opts = _objectSpread2(_objectSpread2({
-        sync: true
-      }, this.options), opts);
-      var _opts = opts,
-          sync = _opts.sync;
-      var that = this,
-          types = {},
-          refObjs = [],
-          // For checking cyclic references
-      refKeys = [],
-          // For checking cyclic references
-      promisesDataRoot = []; // Clone the object deeply while at the same time replacing any
-      //   special types or cyclic reference:
-
-      var cyclic = 'cyclic' in opts ? opts.cyclic : true;
-      var _opts2 = opts,
-          encapsulateObserver = _opts2.encapsulateObserver;
-
-      var ret = _encapsulate('', obj, cyclic, stateObj || {}, promisesDataRoot);
-      /**
-       *
-       * @param {any} ret
-       * @returns {GenericArray|PlainObject|string|false}
-       */
-
-
-      function finish(ret) {
-        // Add `$types` to result only if we ever bumped into a
-        //  special type (or special case where object has own `$types`)
-        var typeNames = Object.values(types);
-
-        if (opts.iterateNone) {
-          if (typeNames.length) {
-            return typeNames[0];
-          }
-
-          return Typeson.getJSONType(ret);
-        }
-
-        if (typeNames.length) {
-          if (opts.returnTypeNames) {
-            return _toConsumableArray(new Set(typeNames));
-          } // Special if array (or a primitive) was serialized
-          //   because JSON would ignore custom `$types` prop on it
-
-
-          if (!ret || !isPlainObject(ret) || // Also need to handle if this is an object with its
-          //   own `$types` property (to avoid ambiguity)
-          hasOwn.call(ret, '$types')) {
-            ret = {
-              $: ret,
-              $types: {
-                $: types
-              }
-            };
-          } else {
-            ret.$types = types;
-          } // No special types
-
-        } else if (isObject(ret) && hasOwn.call(ret, '$types')) {
-          ret = {
-            $: ret,
-            $types: true
+        if (t.length) {
+          if (n.returnTypeNames) return function _toConsumableArray(e) {
+            return function _arrayWithoutHoles(e) {
+              if (Array.isArray(e)) return _arrayLikeToArray(e);
+            }(e) || function _iterableToArray(e) {
+              if ("undefined" != typeof Symbol && null != e[Symbol.iterator] || null != e["@@iterator"]) return Array.from(e);
+            }(e) || _unsupportedIterableToArray(e) || function _nonIterableSpread() {
+              throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+            }();
+          }(new Set(t));
+          e && isPlainObject(e) && !s.call(e, "$types") ? e.$types = f : e = {
+            $: e,
+            $types: {
+              $: f
+            }
           };
-        }
+        } else isObject(e) && s.call(e, "$types") && (e = {
+          $: e,
+          $types: !0
+        });
 
-        if (opts.returnTypeNames) {
-          return false;
-        }
-
-        return ret;
+        return !n.returnTypeNames && e;
       }
 
-      function _adaptBuiltinStateObjectProperties(stateObj, ownKeysObj, cb) {
-        Object.assign(stateObj, ownKeysObj);
-        var vals = internalStateObjPropsToIgnore.map(function (prop) {
-          var tmp = stateObj[prop];
-          delete stateObj[prop];
-          return tmp;
-        }); // eslint-disable-next-line node/callback-return
-
-        cb();
-        internalStateObjPropsToIgnore.forEach(function (prop, i) {
-          stateObj[prop] = vals[i];
+      function _adaptBuiltinStateObjectProperties(e, t, r) {
+        Object.assign(e, t);
+        var n = c.map(function (t) {
+          var r = e[t];
+          return delete e[t], r;
+        });
+        r(), c.forEach(function (t, r) {
+          e[t] = n[r];
         });
       }
-      /**
-       *
-       * @param {string} keypath
-       * @param {any} value
-       * @param {boolean} cyclic
-       * @param {PlainObject} stateObj
-       * @param {boolean} promisesData
-       * @param {boolean} resolvingTypesonPromise
-       * @param {string} detectedType
-       * @returns {any}
-       */
 
-
-      function _encapsulate(keypath, value, cyclic, stateObj, promisesData, resolvingTypesonPromise, detectedType) {
-        var ret;
-        var observerData = {};
-
-        var $typeof = _typeof(value);
-
-        var runObserver = encapsulateObserver ? function (obj) {
-          var type = detectedType || stateObj.type || Typeson.getJSONType(value);
-          encapsulateObserver(Object.assign(obj || observerData, {
-            keypath: keypath,
-            value: value,
-            cyclic: cyclic,
-            stateObj: stateObj,
-            promisesData: promisesData,
-            resolvingTypesonPromise: resolvingTypesonPromise,
-            awaitingTypesonPromise: hasConstructorOf(value, TypesonPromise)
+      function _encapsulate(t, r, a, c, u, d, v) {
+        var h,
+            g = {},
+            m = _typeof(r),
+            O = b ? function (n) {
+          var o = v || c.type || getJSONType(r);
+          b(Object.assign(n || g, {
+            keypath: t,
+            value: r,
+            cyclic: a,
+            stateObj: c,
+            promisesData: u,
+            resolvingTypesonPromise: d,
+            awaitingTypesonPromise: hasConstructorOf(r, e)
           }, {
-            type: type
+            type: o
           }));
         } : null;
 
-        if (['string', 'boolean', 'number', 'undefined'].includes($typeof)) {
-          if (value === undefined || Number.isNaN(value) || value === Number.NEGATIVE_INFINITY || value === Number.POSITIVE_INFINITY) {
-            ret = stateObj.replaced ? value : replace(keypath, value, stateObj, promisesData, false, resolvingTypesonPromise, runObserver);
+        if (["string", "boolean", "number", "undefined"].includes(m)) return void 0 === r || Number.isNaN(r) || r === Number.NEGATIVE_INFINITY || r === Number.POSITIVE_INFINITY ? (h = c.replaced ? r : replace(t, r, c, u, !1, d, O)) !== r && (g = {
+          replaced: h
+        }) : h = r, O && O(), h;
+        if (null === r) return O && O(), r;
 
-            if (ret !== value) {
-              observerData = {
-                replaced: ret
-              };
-            }
-          } else {
-            ret = value;
-          }
-
-          if (runObserver) {
-            runObserver();
-          }
-
-          return ret;
+        if (a && !c.iterateIn && !c.iterateUnsetNumeric && r && "object" === _typeof(r)) {
+          var S = y.indexOf(r);
+          if (!(S < 0)) return f[t] = "#", O && O({
+            cyclicKeypath: p[S]
+          }), "#" + p[S];
+          !0 === a && (y.push(r), p.push(t));
         }
 
-        if (value === null) {
-          if (runObserver) {
-            runObserver();
-          }
+        var _,
+            w = isPlainObject(r),
+            A = i(r),
+            j = (w || A) && (!l.plainObjectReplacers.length || c.replaced) || c.iterateIn ? r : replace(t, r, c, u, w || A, null, O);
 
-          return value;
-        }
+        if (j !== r ? (h = j, g = {
+          replaced: j
+        }) : "" === t && hasConstructorOf(r, e) ? (u.push([t, r, a, c, void 0, void 0, c.type]), h = r) : A && "object" !== c.iterateIn || "array" === c.iterateIn ? (_ = new Array(r.length), g = {
+          clone: _
+        }) : (["function", "symbol"].includes(_typeof(r)) || "toJSON" in r || hasConstructorOf(r, e) || hasConstructorOf(r, Promise) || hasConstructorOf(r, ArrayBuffer)) && !w && "object" !== c.iterateIn ? h = r : (_ = {}, c.addLength && (_.length = r.length), g = {
+          clone: _
+        }), O && O(), n.iterateNone) return _ || h;
+        if (!_) return h;
 
-        if (cyclic && !stateObj.iterateIn && !stateObj.iterateUnsetNumeric && value && _typeof(value) === 'object') {
-          // Options set to detect cyclic references and be able
-          //   to rewrite them.
-          var refIndex = refObjs.indexOf(value);
+        if (c.iterateIn) {
+          var T = function _loop(n) {
+            var o = {
+              ownKeys: s.call(r, n)
+            };
 
-          if (refIndex < 0) {
-            if (cyclic === true) {
-              refObjs.push(value);
-              refKeys.push(keypath);
-            }
-          } else {
-            types[keypath] = '#';
+            _adaptBuiltinStateObjectProperties(c, o, function () {
+              var o = t + (t ? "." : "") + escapeKeyPathComponent(n),
+                  i = _encapsulate(o, r[n], Boolean(a), c, u, d);
 
-            if (runObserver) {
-              runObserver({
-                cyclicKeypath: refKeys[refIndex]
-              });
-            }
-
-            return '#' + refKeys[refIndex];
-          }
-        }
-
-        var isPlainObj = isPlainObject(value);
-        var isArr = isArray(value);
-        var replaced = // Running replace will cause infinite loop as will test
-        //   positive again
-        (isPlainObj || isArr) && (!that.plainObjectReplacers.length || stateObj.replaced) || stateObj.iterateIn ? // Optimization: if plain object and no plain-object
-        //   replacers, don't try finding a replacer
-        value : replace(keypath, value, stateObj, promisesData, isPlainObj || isArr, null, runObserver);
-        var clone;
-
-        if (replaced !== value) {
-          ret = replaced;
-          observerData = {
-            replaced: replaced
+              hasConstructorOf(i, e) ? u.push([o, i, Boolean(a), c, _, n, c.type]) : void 0 !== i && (_[n] = i);
+            });
           };
-        } else {
-          // eslint-disable-next-line no-lonely-if
-          if (keypath === '' && hasConstructorOf(value, TypesonPromise)) {
-            promisesData.push([keypath, value, cyclic, stateObj, undefined, undefined, stateObj.type]);
-            ret = value;
-          } else if (isArr && stateObj.iterateIn !== 'object' || stateObj.iterateIn === 'array') {
-            // eslint-disable-next-line unicorn/no-new-array -- Sparse
-            clone = new Array(value.length);
-            observerData = {
-              clone: clone
-            };
-          } else if (!['function', 'symbol'].includes(_typeof(value)) && !('toJSON' in value) && !hasConstructorOf(value, TypesonPromise) && !hasConstructorOf(value, Promise) && !hasConstructorOf(value, ArrayBuffer) || isPlainObj || stateObj.iterateIn === 'object') {
-            clone = {};
 
-            if (stateObj.addLength) {
-              clone.length = value.length;
-            }
+          for (var I in r) T(I);
 
-            observerData = {
-              clone: clone
-            };
-          } else {
-            ret = value; // Only clone vanilla objects and arrays
-          }
-        }
-
-        if (runObserver) {
-          runObserver();
-        }
-
-        if (opts.iterateNone) {
-          return clone || ret;
-        }
-
-        if (!clone) {
-          return ret;
-        } // Iterate object or array
-
-
-        if (stateObj.iterateIn) {
-          var _loop = function _loop(key) {
-            var ownKeysObj = {
-              ownKeys: hasOwn.call(value, key)
-            };
-
-            _adaptBuiltinStateObjectProperties(stateObj, ownKeysObj, function () {
-              var kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
-
-              var val = _encapsulate(kp, value[key], Boolean(cyclic), stateObj, promisesData, resolvingTypesonPromise);
-
-              if (hasConstructorOf(val, TypesonPromise)) {
-                promisesData.push([kp, val, Boolean(cyclic), stateObj, clone, key, stateObj.type]);
-              } else if (val !== undefined) {
-                clone[key] = val;
-              }
-            });
-          }; // eslint-disable-next-line guard-for-in
-
-
-          for (var key in value) {
-            _loop(key);
-          }
-
-          if (runObserver) {
-            runObserver({
-              endIterateIn: true,
-              end: true
-            });
-          }
-        } else {
-          // Note: Non-indexes on arrays won't survive stringify so
-          //  somewhat wasteful for arrays, but so too is iterating
-          //  all numeric indexes on sparse arrays when not wanted
-          //  or filtering own keys for positive integers
-          keys(value).forEach(function (key) {
-            var kp = keypath + (keypath ? '.' : '') + escapeKeyPathComponent(key);
-            var ownKeysObj = {
-              ownKeys: true
-            };
-
-            _adaptBuiltinStateObjectProperties(stateObj, ownKeysObj, function () {
-              var val = _encapsulate(kp, value[key], Boolean(cyclic), stateObj, promisesData, resolvingTypesonPromise);
-
-              if (hasConstructorOf(val, TypesonPromise)) {
-                promisesData.push([kp, val, Boolean(cyclic), stateObj, clone, key, stateObj.type]);
-              } else if (val !== undefined) {
-                clone[key] = val;
-              }
-            });
+          O && O({
+            endIterateIn: !0,
+            end: !0
           });
+        } else o(r).forEach(function (n) {
+          var o = t + (t ? "." : "") + escapeKeyPathComponent(n);
 
-          if (runObserver) {
-            runObserver({
-              endIterateOwn: true,
-              end: true
-            });
-          }
-        } // Iterate array for non-own numeric properties (we can't
-        //   replace the prior loop though as it iterates non-integer
-        //   keys)
+          _adaptBuiltinStateObjectProperties(c, {
+            ownKeys: !0
+          }, function () {
+            var t = _encapsulate(o, r[n], Boolean(a), c, u, d);
 
+            hasConstructorOf(t, e) ? u.push([o, t, Boolean(a), c, _, n, c.type]) : void 0 !== t && (_[n] = t);
+          });
+        }), O && O({
+          endIterateOwn: !0,
+          end: !0
+        });
 
-        if (stateObj.iterateUnsetNumeric) {
-          var vl = value.length;
+        if (c.iterateUnsetNumeric) {
+          for (var P = r.length, N = function _loop2(n) {
+            if (!(n in r)) {
+              var o = t + (t ? "." : "") + n;
 
-          var _loop2 = function _loop2(i) {
-            if (!(i in value)) {
-              // No need to escape numeric
-              var kp = keypath + (keypath ? '.' : '') + i;
-              var ownKeysObj = {
-                ownKeys: false
-              };
+              _adaptBuiltinStateObjectProperties(c, {
+                ownKeys: !1
+              }, function () {
+                var t = _encapsulate(o, void 0, Boolean(a), c, u, d);
 
-              _adaptBuiltinStateObjectProperties(stateObj, ownKeysObj, function () {
-                var val = _encapsulate(kp, undefined, Boolean(cyclic), stateObj, promisesData, resolvingTypesonPromise);
-
-                if (hasConstructorOf(val, TypesonPromise)) {
-                  promisesData.push([kp, val, Boolean(cyclic), stateObj, clone, i, stateObj.type]);
-                } else if (val !== undefined) {
-                  clone[i] = val;
-                }
+                hasConstructorOf(t, e) ? u.push([o, t, Boolean(a), c, _, n, c.type]) : void 0 !== t && (_[n] = t);
               });
             }
-          };
+          }, C = 0; C < P; C++) N(C);
 
-          for (var i = 0; i < vl; i++) {
-            _loop2(i);
-          }
+          O && O({
+            endIterateUnsetNumeric: !0,
+            end: !0
+          });
+        }
 
-          if (runObserver) {
-            runObserver({
-              endIterateUnsetNumeric: true,
-              end: true
-            });
+        return _;
+      }
+
+      function replace(e, t, r, n, a, o, i) {
+        for (var s = a ? l.plainObjectReplacers : l.nonplainObjectReplacers, c = s.length; c--;) {
+          var y = s[c];
+
+          if (y.test(t, r)) {
+            var p = y.type;
+
+            if (l.revivers[p]) {
+              var d = f[e];
+              f[e] = d ? [p].concat(d) : p;
+            }
+
+            return Object.assign(r, {
+              type: p,
+              replaced: !0
+            }), !u && y.replaceAsync || y.replace ? (i && i({
+              replacing: !0
+            }), _encapsulate(e, y[u || !y.replaceAsync ? "replace" : "replaceAsync"](t, r), v && "readonly", r, n, o, p)) : (i && i({
+              typeDetected: !0
+            }), _encapsulate(e, t, v && "readonly", r, n, o, p));
           }
         }
 
-        return clone;
-      }
-      /**
-      * @typedef {PlainObject} KeyPathEvent
-      * @property {string} cyclicKeypath
-      */
-
-      /**
-      * @typedef {PlainObject} EndIterateInEvent
-      * @property {boolean} endIterateIn
-      * @property {boolean} end
-      */
-
-      /**
-      * @typedef {PlainObject} EndIterateUnsetNumericEvent
-      * @property {boolean} endIterateUnsetNumeric
-      * @property {boolean} end
-      */
-
-      /**
-      * @typedef {PlainObject} TypeDetectedEvent
-      * @property {boolean} typeDetected
-      */
-
-      /**
-      * @typedef {PlainObject} ReplacingEvent
-      * @property {boolean} replacing
-      */
-
-      /**
-      * @callback Observer
-      * @param {KeyPathEvent|EndIterateInEvent|EndIterateUnsetNumericEvent|
-      * TypeDetectedEvent|ReplacingEvent} [event]
-      * @returns {void}
-      */
-
-      /**
-       *
-       * @param {string} keypath
-       * @param {any} value
-       * @param {PlainObject} stateObj
-       * @param {GenericArray} promisesData
-       * @param {boolean} plainObject
-       * @param {boolean} resolvingTypesonPromise
-       * @param {Observer} [runObserver]
-       * @returns {any}
-       */
-
-
-      function replace(keypath, value, stateObj, promisesData, plainObject, resolvingTypesonPromise, runObserver) {
-        // Encapsulate registered types
-        var replacers = plainObject ? that.plainObjectReplacers : that.nonplainObjectReplacers;
-        var i = replacers.length;
-
-        while (i--) {
-          var replacer = replacers[i];
-
-          if (replacer.test(value, stateObj)) {
-            var type = replacer.type;
-
-            if (that.revivers[type]) {
-              // Record the type only if a corresponding reviver
-              //   exists. This is to support specs where only
-              //   replacement is done.
-              // For example, ensuring deep cloning of the object,
-              //   or replacing a type to its equivalent without
-              //   the need to revive it.
-              var existing = types[keypath]; // type can comprise an array of types (see test
-              //   "should support intermediate types")
-
-              types[keypath] = existing ? [type].concat(existing) : type;
-            }
-
-            Object.assign(stateObj, {
-              type: type,
-              replaced: true
-            });
-
-            if ((sync || !replacer.replaceAsync) && !replacer.replace) {
-              if (runObserver) {
-                runObserver({
-                  typeDetected: true
-                });
-              }
-
-              return _encapsulate(keypath, value, cyclic && 'readonly', stateObj, promisesData, resolvingTypesonPromise, type);
-            }
-
-            if (runObserver) {
-              runObserver({
-                replacing: true
-              });
-            } // Now, also traverse the result in case it contains its
-            //   own types to replace
-
-
-            var replaceMethod = sync || !replacer.replaceAsync ? 'replace' : 'replaceAsync';
-            return _encapsulate(keypath, replacer[replaceMethod](value, stateObj), cyclic && 'readonly', stateObj, promisesData, resolvingTypesonPromise, type);
-          }
-        }
-
-        return value;
+        return t;
       }
 
-      return promisesDataRoot.length ? sync && opts.throwOnBadSyncType ? function () {
-        throw new TypeError('Sync method requested but async result obtained');
-      }() : Promise.resolve(checkPromises(ret, promisesDataRoot)).then(finish) : !sync && opts.throwOnBadSyncType ? function () {
-        throw new TypeError('Async method requested but sync result obtained');
-      }() // If this is a synchronous request for stringification, yet
-      //   a promise is the result, we don't want to resolve leading
-      //   to an async result, so we return an array to avoid
-      //   ambiguity
-      : opts.stringification && sync ? [finish(ret)] : sync ? finish(ret) : Promise.resolve(finish(ret));
+      return d.length ? u && n.throwOnBadSyncType ? function () {
+        throw new TypeError("Sync method requested but async result obtained");
+      }() : Promise.resolve(a(h, d)).then(finish) : !u && n.throwOnBadSyncType ? function () {
+        throw new TypeError("Async method requested but sync result obtained");
+      }() : n.stringification && u ? [finish(h)] : u ? finish(h) : Promise.resolve(finish(h));
     }
-    /**
-     * Also sync but throws on non-sync result.
-     * @param {any} obj
-     * @param {StateObject} stateObj
-     * @param {TypesonOptions} opts
-     * @returns {any}
-     */
-
   }, {
     key: "encapsulateSync",
-    value: function encapsulateSync(obj, stateObj, opts) {
-      return this.encapsulate(obj, stateObj, _objectSpread2(_objectSpread2({
-        throwOnBadSyncType: true
-      }, opts), {}, {
-        sync: true
+    value: function encapsulateSync(e, t, r) {
+      return this.encapsulate(e, t, _objectSpread2(_objectSpread2({
+        throwOnBadSyncType: !0
+      }, r), {}, {
+        sync: !0
       }));
     }
-    /**
-     * @param {any} obj
-     * @param {StateObject} stateObj
-     * @param {TypesonOptions} opts
-     * @returns {any}
-     */
-
   }, {
     key: "encapsulateAsync",
-    value: function encapsulateAsync(obj, stateObj, opts) {
-      return this.encapsulate(obj, stateObj, _objectSpread2(_objectSpread2({
-        throwOnBadSyncType: true
-      }, opts), {}, {
-        sync: false
+    value: function encapsulateAsync(e, t, r) {
+      return this.encapsulate(e, t, _objectSpread2(_objectSpread2({
+        throwOnBadSyncType: !0
+      }, r), {}, {
+        sync: !1
       }));
     }
-    /**
-     * Revive an encapsulated object.
-     * This method is used internally by `Typeson.parse()`.
-     * @param {PlainObject} obj - Object to revive. If it has `$types` member,
-     *   the properties that are listed there will be replaced with its true
-     *   type instead of just plain objects.
-     * @param {TypesonOptions} opts
-     * @throws TypeError If mismatch between sync/async type and result
-     * @returns {Promise<any>|any} If async, returns a Promise that resolves
-     * to `any`.
-     */
-
   }, {
     key: "revive",
-    value: function revive(obj, opts) {
-      var types = obj && obj.$types; // No type info added. Revival not needed.
+    value: function revive(t, r) {
+      var n = t && t.$types;
+      if (!n) return t;
+      if (!0 === n) return t.$;
 
-      if (!types) {
-        return obj;
-      } // Object happened to have own `$types` property but with
-      //   no actual types, so we unescape and return that object
+      var a = (r = _objectSpread2(_objectSpread2({
+        sync: !0
+      }, this.options), r)).sync,
+          s = [],
+          c = {},
+          u = !0;
 
+      n.$ && isPlainObject(n.$) && (t = t.$, n = n.$, u = !1);
+      var f = this;
 
-      if (types === true) {
-        return obj.$;
+      function executeReviver(e, t) {
+        var r = _slicedToArray(f.revivers[e] || [], 1)[0];
+
+        if (!r) throw new Error("Unregistered type: " + e);
+        return a && !("revive" in r) ? t : r[a && r.revive ? "revive" : !a && r.reviveAsync ? "reviveAsync" : "revive"](t, c);
       }
 
-      opts = _objectSpread2(_objectSpread2({
-        sync: true
-      }, this.options), opts);
-      var _opts3 = opts,
-          sync = _opts3.sync;
-      var keyPathResolutions = [];
-      var stateObj = {};
-      var ignore$Types = true; // Special when root object is not a trivial Object, it will
-      //   be encapsulated in `$`. It will also be encapsulated in
-      //   `$` if it has its own `$` property to avoid ambiguity
+      var y = [];
 
-      if (types.$ && isPlainObject(types.$)) {
-        obj = obj.$;
-        types = types.$;
-        ignore$Types = false;
+      function checkUndefined(e) {
+        return hasConstructorOf(e, l) ? void 0 : e;
       }
 
-      var that = this;
-      /**
-       * @callback RevivalReducer
-       * @param {any} value
-       * @param {string} type
-       * @returns {any}
-       */
+      var p,
+          d = function revivePlainObjects() {
+        var r = [];
+        if (Object.entries(n).forEach(function (e) {
+          var t = _slicedToArray(e, 2),
+              a = t[0],
+              o = t[1];
 
-      /**
-       *
-       * @param {string} type
-       * @param {any} val
-       * @throws {Error}
-       * @returns {any}
-       */
-
-      function executeReviver(type, val) {
-        var _ref = that.revivers[type] || [],
-            _ref2 = _slicedToArray(_ref, 1),
-            reviver = _ref2[0];
-
-        if (!reviver) {
-          throw new Error('Unregistered type: ' + type);
-        } // Only `sync` expected here, as problematic async would
-        //  be missing both `reviver` and `reviverAsync`, and
-        //  encapsulation shouldn't have added types, so
-        //  should have made an early exit
-
-
-        if (sync && !('revive' in reviver)) {
-          // Just return value as is
-          return val;
-        }
-
-        return reviver[sync && reviver.revive ? 'revive' : !sync && reviver.reviveAsync ? 'reviveAsync' : 'revive'](val, stateObj);
-      }
-      /**
-       *
-       * @returns {void|TypesonPromise<void>}
-       */
-
-
-      function revivePlainObjects() {
-        // const references = [];
-        // const reviveTypes = [];
-        var plainObjectTypes = [];
-        Object.entries(types).forEach(function (_ref3) {
-          var _ref4 = _slicedToArray(_ref3, 2),
-              keypath = _ref4[0],
-              type = _ref4[1];
-
-          if (type === '#') {
-            /*
-            references.push({
-                keypath,
-                reference: getByKeyPath(obj, keypath)
-            });
-            */
-            return;
-          }
-
-          [].concat(type).forEach(function (type) {
-            var _ref5 = that.revivers[type] || [null, {}],
-                _ref6 = _slicedToArray(_ref5, 2),
-                plain = _ref6[1].plain;
-
-            if (!plain) {
-              // reviveTypes.push({keypath, type});
-              return;
-            }
-
-            plainObjectTypes.push({
-              keypath: keypath,
-              type: type
-            });
-            delete types[keypath]; // Avoid repeating
+          "#" !== o && [].concat(o).forEach(function (e) {
+            _slicedToArray(f.revivers[e] || [null, {}], 2)[1].plain && (r.push({
+              keypath: a,
+              type: e
+            }), delete n[a]);
           });
-        });
-
-        if (!plainObjectTypes.length) {
-          return undefined;
-        } // console.log(plainObjectTypes.sort(nestedPathsFirst));
-
-        /**
-        * @typedef {PlainObject} PlainObjectType
-        * @property {string} keypath
-        * @property {string} type
-        */
-
-
-        return plainObjectTypes.sort(nestedPathsFirst).reduce(function reducer(possibleTypesonPromise, _ref7) {
-          var keypath = _ref7.keypath,
-              type = _ref7.type;
-
-          if (isThenable(possibleTypesonPromise)) {
-            return possibleTypesonPromise.then(function (val) {
-              return reducer(val, {
-                keypath: keypath,
-                type: type
-              });
+        }), r.length) return r.sort(nestedPathsFirst).reduce(function reducer(r, n) {
+          var a = n.keypath,
+              o = n.type;
+          if (isThenable(r)) return r.then(function (e) {
+            return reducer(e, {
+              keypath: a,
+              type: o
             });
-          } // console.log('obj', JSON.stringify(keypath), obj);
-
-
-          var val = getByKeyPath(obj, keypath);
-          val = executeReviver(type, val);
-
-          if (hasConstructorOf(val, TypesonPromise)) {
-            return val.then(function (v) {
-              var newVal = setAtKeyPath(obj, keypath, v);
-
-              if (newVal === v) {
-                obj = newVal;
-              }
-
-              return undefined;
-            });
-          }
-
-          var newVal = setAtKeyPath(obj, keypath, val);
-
-          if (newVal === val) {
-            obj = newVal;
-          }
-
-          return undefined;
-        }, undefined // This argument must be explicit
-        ); // references.forEach(({keypath, reference}) => {});
-        // reviveTypes.sort(nestedPathsFirst).forEach(() => {});
-      }
-
-      var revivalPromises = [];
-      /**
-       *
-       * @param {string} keypath
-       * @param {any} value
-       * @param {?(GenericArray|PlainObject)} target
-       * @param {GenericArray|PlainObject} [clone]
-       * @param {string} [key]
-       * @returns {any}
-       */
-
-      function _revive(keypath, value, target, clone, key) {
-        if (ignore$Types && keypath === '$types') {
-          return undefined;
-        }
-
-        var type = types[keypath];
-        var isArr = isArray(value);
-
-        if (isArr || isPlainObject(value)) {
-          // eslint-disable-next-line unicorn/no-new-array -- Sparse
-          var _clone = isArr ? new Array(value.length) : {}; // Iterate object or array
-
-
-          keys(value).forEach(function (k) {
-            var val = _revive(keypath + (keypath ? '.' : '') + escapeKeyPathComponent(k), value[k], target || _clone, _clone, k);
-
-            var set = function set(v) {
-              if (hasConstructorOf(v, Undefined)) {
-                _clone[k] = undefined;
-              } else if (v !== undefined) {
-                _clone[k] = v;
-              }
-
-              return v;
-            };
-
-            if (hasConstructorOf(val, TypesonPromise)) {
-              revivalPromises.push(val.then(function (ret) {
-                return set(ret);
-              }));
-            } else {
-              set(val);
-            }
           });
-          value = _clone; // Try to resolve cyclic reference as soon as available
-
-          while (keyPathResolutions.length) {
-            var _keyPathResolutions$ = _slicedToArray(keyPathResolutions[0], 4),
-                _target = _keyPathResolutions$[0],
-                keyPath = _keyPathResolutions$[1],
-                _clone2 = _keyPathResolutions$[2],
-                k = _keyPathResolutions$[3];
-
-            var val = getByKeyPath(_target, keyPath); // Typeson.Undefined not expected here as not cyclic or
-            //   `undefined`
-
-            if (val !== undefined) {
-              _clone2[k] = val;
-            } else {
-              break;
-            }
-
-            keyPathResolutions.splice(0, 1);
-          }
-        }
-
-        if (!type) {
-          return value;
-        }
-
-        if (type === '#') {
-          var _ret = getByKeyPath(target, value.slice(1));
-
-          if (_ret === undefined) {
-            // Cyclic reference not yet available
-            keyPathResolutions.push([target, value.slice(1), clone, key]);
-          }
-
-          return _ret;
-        } // `type` can be an array here
-
-
-        return [].concat(type).reduce(function reducer(val, typ) {
-          if (hasConstructorOf(val, TypesonPromise)) {
-            return val.then(function (v) {
-              // TypesonPromise here too
-              return reducer(v, typ);
-            });
-          }
-
-          return executeReviver(typ, val);
-        }, value);
-      }
-      /**
-       *
-       * @param {any} retrn
-       * @returns {undefined|any}
-       */
-
-
-      function checkUndefined(retrn) {
-        return hasConstructorOf(retrn, Undefined) ? undefined : retrn;
-      }
-
-      var possibleTypesonPromise = revivePlainObjects();
-      var ret;
-
-      if (hasConstructorOf(possibleTypesonPromise, TypesonPromise)) {
-        ret = possibleTypesonPromise.then(function () {
-          return obj;
-        });
-      } else {
-        ret = _revive('', obj, null);
-
-        if (revivalPromises.length) {
-          // Ensure children resolved
-          ret = TypesonPromise.resolve(ret).then(function (r) {
-            return TypesonPromise.all([// May be a TypesonPromise or not
-            r].concat(revivalPromises));
-          }).then(function (_ref8) {
-            var _ref9 = _slicedToArray(_ref8, 1),
-                r = _ref9[0];
-
-            return r;
+          var i = getByKeyPath(t, a);
+          if (hasConstructorOf(i = executeReviver(o, i), e)) return i.then(function (e) {
+            var r = setAtKeyPath(t, a, e);
+            r === e && (t = r);
           });
-        }
-      }
+          var s = setAtKeyPath(t, a, i);
+          s === i && (t = s);
+        }, void 0);
+      }();
 
-      return isThenable(ret) ? sync && opts.throwOnBadSyncType ? function () {
-        throw new TypeError('Sync method requested but async result obtained');
-      }() : hasConstructorOf(ret, TypesonPromise) ? ret.p.then(checkUndefined) : ret : !sync && opts.throwOnBadSyncType ? function () {
-        throw new TypeError('Async method requested but sync result obtained');
-      }() : sync ? checkUndefined(ret) : Promise.resolve(checkUndefined(ret));
+      return hasConstructorOf(d, e) ? p = d.then(function () {
+        return t;
+      }) : (p = function _revive(t, r, a, c, f) {
+        if (!u || "$types" !== t) {
+          var p = n[t],
+              d = i(r);
+
+          if (d || isPlainObject(r)) {
+            var v = d ? new Array(r.length) : {};
+
+            for (o(r).forEach(function (n) {
+              var o = _revive(t + (t ? "." : "") + escapeKeyPathComponent(n), r[n], a || v, v, n),
+                  i = function set(e) {
+                return hasConstructorOf(e, l) ? v[n] = void 0 : void 0 !== e && (v[n] = e), e;
+              };
+
+              hasConstructorOf(o, e) ? y.push(o.then(function (e) {
+                return i(e);
+              })) : i(o);
+            }), r = v; s.length;) {
+              var b = _slicedToArray(s[0], 4),
+                  h = b[0],
+                  g = b[1],
+                  m = b[2],
+                  O = b[3],
+                  S = getByKeyPath(h, g);
+
+              if (void 0 === S) break;
+              m[O] = S, s.splice(0, 1);
+            }
+          }
+
+          if (!p) return r;
+
+          if ("#" === p) {
+            var _ = getByKeyPath(a, r.slice(1));
+
+            return void 0 === _ && s.push([a, r.slice(1), c, f]), _;
+          }
+
+          return [].concat(p).reduce(function reducer(t, r) {
+            return hasConstructorOf(t, e) ? t.then(function (e) {
+              return reducer(e, r);
+            }) : executeReviver(r, t);
+          }, r);
+        }
+      }("", t, null), y.length && (p = e.resolve(p).then(function (t) {
+        return e.all([t].concat(y));
+      }).then(function (e) {
+        return _slicedToArray(e, 1)[0];
+      }))), isThenable(p) ? a && r.throwOnBadSyncType ? function () {
+        throw new TypeError("Sync method requested but async result obtained");
+      }() : hasConstructorOf(p, e) ? p.p.then(checkUndefined) : p : !a && r.throwOnBadSyncType ? function () {
+        throw new TypeError("Async method requested but sync result obtained");
+      }() : a ? checkUndefined(p) : Promise.resolve(checkUndefined(p));
     }
-    /**
-     * Also sync but throws on non-sync result.
-     * @param {any} obj
-     * @param {TypesonOptions} opts
-     * @returns {any}
-     */
-
   }, {
     key: "reviveSync",
-    value: function reviveSync(obj, opts) {
-      return this.revive(obj, _objectSpread2(_objectSpread2({
-        throwOnBadSyncType: true
-      }, opts), {}, {
-        sync: true
+    value: function reviveSync(e, t) {
+      return this.revive(e, _objectSpread2(_objectSpread2({
+        throwOnBadSyncType: !0
+      }, t), {}, {
+        sync: !0
       }));
     }
-    /**
-    * @param {any} obj
-    * @param {TypesonOptions} opts
-    * @returns {Promise<any>}
-    */
-
   }, {
     key: "reviveAsync",
-    value: function reviveAsync(obj, opts) {
-      return this.revive(obj, _objectSpread2(_objectSpread2({
-        throwOnBadSyncType: true
-      }, opts), {}, {
-        sync: false
+    value: function reviveAsync(e, t) {
+      return this.revive(e, _objectSpread2(_objectSpread2({
+        throwOnBadSyncType: !0
+      }, t), {}, {
+        sync: !1
       }));
     }
-    /**
-    * @typedef {Tester|Replacer|Reviver} Spec
-    */
-
-    /**
-     * Register types.
-     * For examples on how to use this method, see
-     *   {@link https://github.com/dfahlander/typeson-registry/tree/master/types}.
-     * @param {object<string,Spec[]>[]} typeSpecSets -
-     * Types and their functions [test, encapsulate, revive];
-     * @param {TypesonOptions} opts
-     * @returns {Typeson}
-     */
-
   }, {
     key: "register",
-    value: function register(typeSpecSets, opts) {
-      opts = opts || {};
-      [].concat(typeSpecSets).forEach(function R(typeSpec) {
-        var _this = this; // Allow arrays of arrays of arrays...
+    value: function register(e, t) {
+      var r = this;
+      t = t || {};
 
-
-        if (isArray(typeSpec)) {
-          return typeSpec.map(function (typSpec) {
-            return R.call(_this, typSpec);
-          });
-        }
-
-        typeSpec && keys(typeSpec).forEach(function (typeId) {
-          if (typeId === '#') {
-            throw new TypeError('# cannot be used as a type name as it is reserved ' + 'for cyclic objects');
-          } else if (Typeson.JSON_TYPES.includes(typeId)) {
-            throw new TypeError('Plain JSON object types are reserved as type names');
-          }
-
-          var spec = typeSpec[typeId];
-          var replacers = spec && spec.testPlainObjects ? this.plainObjectReplacers : this.nonplainObjectReplacers;
-          var existingReplacer = replacers.filter(function (r) {
-            return r.type === typeId;
+      var n = function R(e) {
+        i(e) ? e.forEach(function (e) {
+          return R(e);
+        }) : e && o(e).forEach(function (n) {
+          if ("#" === n) throw new TypeError("# cannot be used as a type name as it is reserved for cyclic objects");
+          if (f.includes(n)) throw new TypeError("Plain JSON object types are reserved as type names");
+          var a = e[n],
+              o = a && a.testPlainObjects ? r.plainObjectReplacers : r.nonplainObjectReplacers,
+              s = o.filter(function (e) {
+            return e.type === n;
           });
 
-          if (existingReplacer.length) {
-            // Remove existing spec and replace with this one.
-            replacers.splice(replacers.indexOf(existingReplacer[0]), 1);
-            delete this.revivers[typeId];
-            delete this.types[typeId];
-          }
-
-          if (typeof spec === 'function') {
-            // Support registering just a class without replacer/reviver
-            var Class = spec;
-            spec = {
-              test: function test(x) {
-                return x && x.constructor === Class;
+          if (s.length && (o.splice(o.indexOf(s[0]), 1), delete r.revivers[n], delete r.types[n]), "function" == typeof a) {
+            var c = a;
+            a = {
+              test: function test(e) {
+                return e && e.constructor === c;
               },
-              replace: function replace(x) {
-                return _objectSpread2({}, x);
+              replace: function replace(e) {
+                return _objectSpread2({}, e);
               },
-              revive: function revive(x) {
-                return Object.assign(Object.create(Class.prototype), x);
+              revive: function revive(e) {
+                return Object.assign(Object.create(c.prototype), e);
               }
             };
-          } else if (isArray(spec)) {
-            var _spec = spec,
-                _spec2 = _slicedToArray(_spec, 3),
-                test = _spec2[0],
-                replace = _spec2[1],
-                revive = _spec2[2];
+          } else if (i(a)) {
+            var u = _slicedToArray(a, 3);
 
-            spec = {
-              test: test,
-              replace: replace,
-              revive: revive
+            a = {
+              test: u[0],
+              replace: u[1],
+              revive: u[2]
             };
           }
 
-          if (!spec || !spec.test) {
-            return;
-          }
+          if (a && a.test) {
+            var l = {
+              type: n,
+              test: a.test.bind(a)
+            };
+            a.replace && (l.replace = a.replace.bind(a)), a.replaceAsync && (l.replaceAsync = a.replaceAsync.bind(a));
+            var y = "number" == typeof t.fallback ? t.fallback : t.fallback ? 0 : Number.POSITIVE_INFINITY;
 
-          var replacerObj = {
-            type: typeId,
-            test: spec.test.bind(spec)
-          };
-
-          if (spec.replace) {
-            replacerObj.replace = spec.replace.bind(spec);
-          }
-
-          if (spec.replaceAsync) {
-            replacerObj.replaceAsync = spec.replaceAsync.bind(spec);
-          }
-
-          var start = typeof opts.fallback === 'number' ? opts.fallback : opts.fallback ? 0 : Number.POSITIVE_INFINITY;
-
-          if (spec.testPlainObjects) {
-            this.plainObjectReplacers.splice(start, 0, replacerObj);
-          } else {
-            this.nonplainObjectReplacers.splice(start, 0, replacerObj);
-          } // Todo: We might consider a testAsync type
-
-
-          if (spec.revive || spec.reviveAsync) {
-            var reviverObj = {};
-
-            if (spec.revive) {
-              reviverObj.revive = spec.revive.bind(spec);
+            if (a.testPlainObjects ? r.plainObjectReplacers.splice(y, 0, l) : r.nonplainObjectReplacers.splice(y, 0, l), a.revive || a.reviveAsync) {
+              var p = {};
+              a.revive && (p.revive = a.revive.bind(a)), a.reviveAsync && (p.reviveAsync = a.reviveAsync.bind(a)), r.revivers[n] = [p, {
+                plain: a.testPlainObjects
+              }];
             }
 
-            if (spec.reviveAsync) {
-              reviverObj.reviveAsync = spec.reviveAsync.bind(spec);
-            }
+            r.types[n] = a;
+          }
+        });
+      };
 
-            this.revivers[typeId] = [reviverObj, {
-              plain: spec.testPlainObjects
-            }];
-          } // Record to be retrieved via public types property.
-
-
-          this.types[typeId] = spec;
-        }, this);
-      }, this);
-      return this;
+      return [].concat(e).forEach(function (e) {
+        return n(e);
+      }), this;
     }
-  }]);
-
-  return Typeson;
-}();
-/**
- * We keep this function minimized so if using two instances of this
- * library, where one is minimized and one is not, it will still work
- * with `hasConstructorOf`.
- * @class
- */
-
-
-var Undefined = function Undefined() {
+  }]), Typeson;
+}(),
+    l = _createClass(function Undefined() {
   _classCallCheck(this, Undefined);
-}; // eslint-disable-line space-before-blocks
-
-
-Undefined.__typeson__type__ = 'TypesonUndefined'; // The following provide classes meant to avoid clashes with other values
-// To insist `undefined` should be added
-
-Typeson.Undefined = Undefined; // To support async encapsulation/stringification
-
-Typeson.Promise = TypesonPromise; // Some fundamental type-checking utilities
-
-Typeson.isThenable = isThenable;
-Typeson.toStringTag = toStringTag;
-Typeson.hasConstructorOf = hasConstructorOf;
-Typeson.isObject = isObject;
-Typeson.isPlainObject = isPlainObject;
-Typeson.isUserObject = isUserObject;
-Typeson.escapeKeyPathComponent = escapeKeyPathComponent;
-Typeson.unescapeKeyPathComponent = unescapeKeyPathComponent;
-Typeson.getByKeyPath = getByKeyPath;
-Typeson.getJSONType = getJSONType;
-Typeson.JSON_TYPES = ['null', 'boolean', 'number', 'string', 'array', 'object'];
-
-/*
- * base64-arraybuffer
- * https://github.com/niklasvh/base64-arraybuffer
- *
- * Copyright (c) 2017 Brett Zamir, 2012 Niklas von Hertzen
- * Licensed under the MIT license.
- */
-var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'; // Use a lookup table to find the index.
-
-var lookup = new Uint8Array(256);
-
-for (var i = 0; i < chars.length; i++) {
-  lookup[chars.charCodeAt(i)] = i;
-}
-/**
- * @param {ArrayBuffer} arraybuffer
- * @param {Integer} byteOffset
- * @param {Integer} lngth
- * @returns {string}
- */
-
-
-var encode$1 = function encode(arraybuffer, byteOffset, lngth) {
-  if (lngth === null || lngth === undefined) {
-    lngth = arraybuffer.byteLength; // Needed for Safari
-  }
-
-  var bytes = new Uint8Array(arraybuffer, byteOffset || 0, // Default needed for Safari
-  lngth);
-  var len = bytes.length;
-  var base64 = '';
-
-  for (var _i = 0; _i < len; _i += 3) {
-    base64 += chars[bytes[_i] >> 2];
-    base64 += chars[(bytes[_i] & 3) << 4 | bytes[_i + 1] >> 4];
-    base64 += chars[(bytes[_i + 1] & 15) << 2 | bytes[_i + 2] >> 6];
-    base64 += chars[bytes[_i + 2] & 63];
-  }
-
-  if (len % 3 === 2) {
-    base64 = base64.slice(0, -1) + '=';
-  } else if (len % 3 === 1) {
-    base64 = base64.slice(0, -2) + '==';
-  }
-
-  return base64;
-};
-/**
- * @param {string} base64
- * @returns {ArrayBuffer}
- */
-
-
-var decode$1 = function decode(base64) {
-  var len = base64.length;
-  var bufferLength = base64.length * 0.75;
-  var p = 0;
-  var encoded1, encoded2, encoded3, encoded4;
-
-  if (base64[base64.length - 1] === '=') {
-    bufferLength--;
-
-    if (base64[base64.length - 2] === '=') {
-      bufferLength--;
-    }
-  }
-
-  var arraybuffer = new ArrayBuffer(bufferLength),
-      bytes = new Uint8Array(arraybuffer);
-
-  for (var _i2 = 0; _i2 < len; _i2 += 4) {
-    encoded1 = lookup[base64.charCodeAt(_i2)];
-    encoded2 = lookup[base64.charCodeAt(_i2 + 1)];
-    encoded3 = lookup[base64.charCodeAt(_i2 + 2)];
-    encoded4 = lookup[base64.charCodeAt(_i2 + 3)];
-    bytes[p++] = encoded1 << 2 | encoded2 >> 4;
-    bytes[p++] = (encoded2 & 15) << 4 | encoded3 >> 2;
-    bytes[p++] = (encoded3 & 3) << 6 | encoded4 & 63;
-  }
-
-  return arraybuffer;
-};
-
-const arraybuffer = {
-  arraybuffer: {
-    test(x) {
-      return Typeson.toStringTag(x) === 'ArrayBuffer';
-    },
-
-    replace(b, stateObj) {
-      if (!stateObj.buffers) {
-        stateObj.buffers = [];
-      }
-
-      const index = stateObj.buffers.indexOf(b);
-
-      if (index > -1) {
-        return {
-          index
-        };
-      }
-
-      stateObj.buffers.push(b);
-      return encode$1(b);
-    },
-
-    revive(b64, stateObj) {
-      if (!stateObj.buffers) {
-        stateObj.buffers = [];
-      }
-
-      if (typeof b64 === 'object') {
-        return stateObj.buffers[b64.index];
-      }
-
-      const buffer = decode$1(b64);
-      stateObj.buffers.push(buffer);
-      return buffer;
-    }
-
-  }
-};
- // See also typed-arrays!
-
-/* globals BigInt */
-const bigintObject = {
-  bigintObject: {
-    test(x) {
-      return typeof x === 'object' && Typeson.hasConstructorOf(x, BigInt);
-    },
-
-    replace(n) {
-      return String(n);
-    },
-
-    revive(s) {
-      // Filed this to avoid error: https://github.com/eslint/eslint/issues/11810
-      // eslint-disable-next-line no-new-object
-      return new Object(BigInt(s));
-    }
-
-  }
-};
-
-/* globals BigInt */
-const bigint = {
-  bigint: {
-    test(x) {
-      return typeof x === 'bigint';
-    },
-
-    replace(n) {
-      return String(n);
-    },
-
-    revive(s) {
-      return BigInt(s);
-    }
-
-  }
-};
-
-/**
- * Not currently in use internally, but provided for parity.
- * @param {ArrayBuffer} buf
- * @returns {Uint8Array}
- */
-/**
- *
- * @param {string} str
- * @returns {ArrayBuffer}
- */
-
-
-function string2arraybuffer(str) {
-  /*
-  // UTF-8 approaches
-  const utf8 = unescape(encodeURIComponent(str));
-  const arr = new Uint8Array(utf8.length);
-  for (let i = 0; i < utf8.length; i++) {
-      arr[i] = utf8.charCodeAt(i);
-  }
-  return arr.buffer;
-   const utf8 = [];
-  for (let i = 0; i < str.length; i++) {
-      let charcode = str.charCodeAt(i);
-      if (charcode < 0x80) utf8.push(charcode);
-      else if (charcode < 0x800) {
-          utf8.push(0xc0 | (charcode >> 6),
-              0x80 | (charcode & 0x3f));
-      } else if (charcode < 0xd800 || charcode >= 0xe000) {
-          utf8.push(0xe0 | (charcode >> 12),
-              0x80 | ((charcode >> 6) & 0x3f),
-              0x80 | (charcode & 0x3f));
-      // surrogate pair
-      } else {
-          i++;
-          // UTF-16 encodes 0x10000-0x10FFFF by
-          // subtracting 0x10000 and splitting the
-          // 20 bits of 0x0-0xFFFFF into two halves
-          charcode = 0x10000 + (((charcode & 0x3ff) << 10) |
-              (str.charCodeAt(i) & 0x3ff));
-          utf8.push(0xf0 | (charcode >> 18),
-              0x80 | ((charcode >> 12) & 0x3f),
-              0x80 | ((charcode >> 6) & 0x3f),
-              0x80 | (charcode & 0x3f));
-      }
-  }
-  return utf8;
-  */
-
-  /*
-  // Working UTF-16 options (equivalents)
-  const buf = new ArrayBuffer(str.length * 2); // 2 bytes for each char
-  const bufView = new Uint16Array(buf);
-  for (let i = 0, strLen = str.length; i < strLen; i++) {
-      bufView[i] = str.charCodeAt(i);
-  }
-  return buf;
-  */
-  const array = new Uint8Array(str.length);
-
-  for (let i = 0; i < str.length; i++) {
-    array[i] = str.charCodeAt(i); // & 0xff;
-  }
-
-  return array.buffer;
-}
-
-/* globals XMLHttpRequest, Blob, FileReader */
-const blob = {
-  blob: {
-    test(x) {
-      return Typeson.toStringTag(x) === 'Blob';
-    },
-
-    replace(b) {
-      // Sync
-      const req = new XMLHttpRequest();
-      req.overrideMimeType('text/plain; charset=x-user-defined');
-      req.open('GET', URL.createObjectURL(b), false); // Sync
-
-      req.send(); // Seems not feasible to accurately simulate
-
-      /* istanbul ignore next */
-
-      if (req.status !== 200 && req.status !== 0) {
-        throw new Error('Bad Blob access: ' + req.status);
-      }
-
-      return {
-        type: b.type,
-        stringContents: req.responseText
-      };
-    },
-
-    revive({
-      type,
-      stringContents
-    }) {
-      return new Blob([string2arraybuffer(stringContents)], {
-        type
-      });
-    },
-
-    replaceAsync(b) {
-      return new Typeson.Promise((resolve, reject) => {
-        /*
-        if (b.isClosed) { // On MDN, but not in https://w3c.github.io/FileAPI/#dfn-Blob
-            reject(new Error('The Blob is closed'));
-            return;
-        }
-        */
-        const reader = new FileReader();
-        reader.addEventListener('load', () => {
-          resolve({
-            type: b.type,
-            stringContents: reader.result
-          });
-        }); // Seems not feasible to accurately simulate
-
-        /* istanbul ignore next */
-
-        reader.addEventListener('error', () => {
-          reject(reader.error);
-        });
-        reader.readAsBinaryString(b);
-      });
-    }
-
-  }
-};
-
-/* globals performance */
-// The `performance` global is optional
-
-/**
- * @todo We could use `import generateUUID from 'uuid/v4';` (but it needs
- *   crypto library, etc.; `rollup-plugin-node-builtins` doesn't recommend
- *   using its own version and though there is <https://www.npmjs.com/package/crypto-browserify>,
- *   it may be troublesome to bundle and not strongly needed)
- * @returns {string}
- */
-function generateUUID() {
-  //  Adapted from original: public domain/MIT: http://stackoverflow.com/a/8809472/271577
-
-  /* istanbul ignore next */
-  let d = Date.now() + ( // use high-precision timer if available
-  // istanbul ignore next
-  typeof performance !== 'undefined' && typeof performance.now === 'function' ? performance.now() : 0);
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/gu, function (c) {
-    /* eslint-disable no-bitwise */
-    const r = Math.trunc((d + Math.random() * 16) % 16);
-    d = Math.floor(d / 16);
-    return (c === 'x' ? r : r & 0x3 | 0x8).toString(16);
-    /* eslint-enable no-bitwise */
-  });
-}
-
-const cloneableObjectsByUUID = {};
-const cloneable = {
-  cloneable: {
-    test(x) {
-      return x && typeof x === 'object' && typeof x[Symbol.for('cloneEncapsulate')] === 'function';
-    },
-
-    replace(clonable) {
-      const encapsulated = clonable[Symbol.for('cloneEncapsulate')]();
-      const uuid = generateUUID();
-      cloneableObjectsByUUID[uuid] = clonable;
-      return {
-        uuid,
-        encapsulated
-      };
-    },
-
-    revive({
-      uuid,
-      encapsulated
-    }) {
-      return cloneableObjectsByUUID[uuid][Symbol.for('cloneRevive')](encapsulated);
-    }
-
-  }
-};
-
-/* globals crypto */
-const cryptokey = {
-  cryptokey: {
-    test(x) {
-      return Typeson.toStringTag(x) === 'CryptoKey' && x.extractable;
-    },
-
-    replaceAsync(key) {
-      return new Typeson.Promise((resolve, reject) => {
-        // eslint-disable-next-line promise/catch-or-return
-        crypto.subtle.exportKey('jwk', key).catch(
-        /* eslint-disable promise/prefer-await-to-callbacks */
-        // istanbul ignore next
-        err => {
-          /* eslint-enable promise/prefer-await-to-callbacks */
-          // eslint-disable-next-line max-len
-          // istanbul ignore next -- Our format should be valid and our key extractable
-          reject(err);
-        } // eslint-disable-next-line max-len
-        // eslint-disable-next-line promise/always-return, promise/prefer-await-to-then
-        ).then(jwk => {
-          resolve({
-            jwk,
-            algorithm: key.algorithm,
-            usages: key.usages
-          });
-        });
-      });
-    },
-
-    revive({
-      jwk,
-      algorithm,
-      usages
-    }) {
-      return crypto.subtle.importKey('jwk', jwk, algorithm, true, usages);
-    }
-
-  }
-};
-
-const dataview = {
-  dataview: {
-    test(x) {
-      return Typeson.toStringTag(x) === 'DataView';
-    },
-
-    replace({
-      buffer,
-      byteOffset,
-      byteLength
-    }, stateObj) {
-      if (!stateObj.buffers) {
-        stateObj.buffers = [];
-      }
-
-      const index = stateObj.buffers.indexOf(buffer);
-
-      if (index > -1) {
-        return {
-          index,
-          byteOffset,
-          byteLength
-        };
-      }
-
-      stateObj.buffers.push(buffer);
-      return {
-        encoded: encode$1(buffer),
-        byteOffset,
-        byteLength
-      };
-    },
-
-    revive(b64Obj, stateObj) {
-      if (!stateObj.buffers) {
-        stateObj.buffers = [];
-      }
-
-      const {
-        byteOffset,
-        byteLength,
-        encoded,
-        index
-      } = b64Obj;
-      let buffer;
-
-      if ('index' in b64Obj) {
-        buffer = stateObj.buffers[index];
-      } else {
-        buffer = decode$1(encoded);
-        stateObj.buffers.push(buffer);
-      }
-
-      return new DataView(buffer, byteOffset, byteLength);
-    }
-
-  }
-};
-
-const date = {
-  date: {
-    test(x) {
-      return Typeson.toStringTag(x) === 'Date';
-    },
-
-    replace(dt) {
-      const time = dt.getTime();
-
-      if (Number.isNaN(time)) {
-        return 'NaN';
-      }
-
-      return time;
-    },
-
-    revive(time) {
-      if (time === 'NaN') {
-        return new Date(Number.NaN);
-      }
-
-      return new Date(time);
-    }
-
-  }
-};
-
-const error = {
-  error: {
-    test(x) {
-      return Typeson.toStringTag(x) === 'Error';
-    },
-
-    replace({
-      name,
-      message
-    }) {
-      return {
-        name,
-        message
-      };
-    },
-
-    revive({
-      name,
-      message
-    }) {
-      const e = new Error(message);
-      e.name = name;
-      return e;
-    }
-
-  }
-}; // See also errors.js that may be registered after having registered this type.
-
-/* eslint-env browser, node */
-/* istanbul ignore next */
-
-const _global$2 = typeof self === 'undefined' ? global : self;
-
-const errors = {}; // Comprises all built-in errors.
-
-['TypeError', 'RangeError', 'SyntaxError', 'ReferenceError', 'EvalError', 'URIError', 'InternalError' // non-standard
-].forEach(errName => {
-  const Cnstrctr = _global$2[errName];
-
-  if (Cnstrctr) {
-    errors[errName.toLowerCase()] = {
-      test(x) {
-        return Typeson.hasConstructorOf(x, Cnstrctr);
-      },
-
-      replace(e) {
-        return e.message;
-      },
-
-      revive(message) {
-        return new Cnstrctr(message);
-      }
-
-    };
-  }
 });
 
-/* globals XMLHttpRequest, File, FileReader */
-const file = {
-  file: {
-    test(x) {
-      return Typeson.toStringTag(x) === 'File';
+l.__typeson__type__ = "TypesonUndefined";
+
+for (var f = ["null", "boolean", "number", "string", "array", "object"], y = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", p = new Uint8Array(256), d = 0; d < y.length; d++) p[y.codePointAt(d)] = d;
+
+var v = function encode(e, t, r) {
+  null == r && (r = e.byteLength);
+
+  for (var n = new Uint8Array(e, t || 0, r), a = n.length, o = "", i = 0; i < a; i += 3) o += y[n[i] >> 2], o += y[(3 & n[i]) << 4 | n[i + 1] >> 4], o += y[(15 & n[i + 1]) << 2 | n[i + 2] >> 6], o += y[63 & n[i + 2]];
+
+  return a % 3 == 2 ? o = o.slice(0, -1) + "=" : a % 3 == 1 && (o = o.slice(0, -2) + "=="), o;
+},
+    b = function decode(e) {
+  var t,
+      r,
+      n,
+      a,
+      o = e.length,
+      i = .75 * e.length,
+      s = 0;
+  "=" === e[e.length - 1] && (i--, "=" === e[e.length - 2] && i--);
+
+  for (var c = new ArrayBuffer(i), u = new Uint8Array(c), l = 0; l < o; l += 4) t = p[e.codePointAt(l)], r = p[e.codePointAt(l + 1)], n = p[e.codePointAt(l + 2)], a = p[e.codePointAt(l + 3)], u[s++] = t << 2 | r >> 4, u[s++] = (15 & r) << 4 | n >> 2, u[s++] = (3 & n) << 6 | 63 & a;
+
+  return c;
+};
+
+const h = {
+  arraybuffer: {
+    test: e => "ArrayBuffer" === toStringTag(e),
+
+    replace(e, t) {
+      t.buffers || (t.buffers = []);
+      const r = t.buffers.indexOf(e);
+      return r > -1 ? {
+        index: r
+      } : (t.buffers.push(e), v(e));
     },
 
-    replace(f) {
-      // Sync
-      const req = new XMLHttpRequest();
-      req.overrideMimeType('text/plain; charset=x-user-defined');
-      req.open('GET', URL.createObjectURL(f), false); // Sync
-
-      req.send(); // Seems not feasible to accurately simulate
-
-      /* istanbul ignore next */
-
-      if (req.status !== 200 && req.status !== 0) {
-        throw new Error('Bad File access: ' + req.status);
-      }
-
-      return {
-        type: f.type,
-        stringContents: req.responseText,
-        name: f.name,
-        lastModified: f.lastModified
-      };
-    },
-
-    revive({
-      name,
-      type,
-      stringContents,
-      lastModified
-    }) {
-      return new File([string2arraybuffer(stringContents)], name, {
-        type,
-        lastModified
-      });
-    },
-
-    replaceAsync(f) {
-      return new Typeson.Promise(function (resolve, reject) {
-        /*
-        if (f.isClosed) { // On MDN, but not in https://w3c.github.io/FileAPI/#dfn-Blob
-            reject(new Error('The File is closed'));
-            return;
-        }
-        */
-        const reader = new FileReader();
-        reader.addEventListener('load', function () {
-          resolve({
-            type: f.type,
-            stringContents: reader.result,
-            name: f.name,
-            lastModified: f.lastModified
-          });
-        }); // Seems not feasible to accurately simulate
-
-        /* istanbul ignore next */
-
-        reader.addEventListener('error', function () {
-          reject(reader.error);
-        });
-        reader.readAsBinaryString(f);
-      });
+    revive(e, t) {
+      if (t.buffers || (t.buffers = []), "object" == typeof e) return t.buffers[e.index];
+      const r = b(e);
+      return t.buffers.push(r), r;
     }
 
   }
+},
+      g = {
+  bigintObject: {
+    test: e => "object" == typeof e && hasConstructorOf(e, BigInt),
+    replace: e => String(e),
+    revive: e => new Object(BigInt(e))
+  }
+},
+      m = {
+  bigint: {
+    test: e => "bigint" == typeof e,
+    replace: e => String(e),
+    revive: e => BigInt(e)
+  }
 };
 
-const filelist = {
-  file: file.file,
+function string2arraybuffer(e) {
+  const t = new Uint8Array(e.length);
+
+  for (let r = 0; r < e.length; r++) t[r] = e.charCodeAt(r);
+
+  return t.buffer;
+}
+
+const O = {
+  blob: {
+    test: e => "Blob" === toStringTag(e),
+
+    replace(e) {
+      const t = new XMLHttpRequest();
+      if (t.overrideMimeType("text/plain; charset=x-user-defined"), t.open("GET", URL.createObjectURL(e), !1), t.send(), 200 !== t.status && 0 !== t.status) throw new Error("Bad Blob access: " + t.status);
+      return {
+        type: e.type,
+        stringContents: t.responseText
+      };
+    },
+
+    revive: ({
+      type: e,
+      stringContents: t
+    }) => new Blob([string2arraybuffer(t)], {
+      type: e
+    }),
+    replaceAsync: t => new e((e, r) => {
+      const n = new FileReader();
+      n.addEventListener("load", () => {
+        e({
+          type: t.type,
+          stringContents: n.result
+        });
+      }), n.addEventListener("error", () => {
+        r(n.error);
+      }), n.readAsBinaryString(t);
+    })
+  }
+};
+
+const w = {
+  cryptokey: {
+    test: e => "CryptoKey" === toStringTag(e) && e.extractable,
+    replaceAsync: t => new e( /*#__PURE__*/function () {
+      var _ref = _asyncToGenerator(function* (e, r) {
+        let n;
+
+        try {
+          n = yield crypto.subtle.exportKey("jwk", t);
+        } catch (e) {
+          return void r(e);
+        }
+
+        e({
+          jwk: n,
+          algorithm: t.algorithm,
+          usages: t.usages
+        });
+      });
+
+      return function (_x, _x2) {
+        return _ref.apply(this, arguments);
+      };
+    }()),
+    revive: ({
+      jwk: e,
+      algorithm: t,
+      usages: r
+    }) => crypto.subtle.importKey("jwk", e, t, !0, r)
+  }
+},
+      A = {
+  dataview: {
+    test: e => "DataView" === toStringTag(e),
+
+    replace({
+      buffer: e,
+      byteOffset: t,
+      byteLength: r
+    }, n) {
+      n.buffers || (n.buffers = []);
+      const a = n.buffers.indexOf(e);
+      return a > -1 ? {
+        index: a,
+        byteOffset: t,
+        byteLength: r
+      } : (n.buffers.push(e), {
+        encoded: v(e),
+        byteOffset: t,
+        byteLength: r
+      });
+    },
+
+    revive(e, t) {
+      t.buffers || (t.buffers = []);
+      const {
+        byteOffset: r,
+        byteLength: n,
+        encoded: a,
+        index: o
+      } = e;
+      let i;
+      return "index" in e ? i = t.buffers[o] : (i = b(a), t.buffers.push(i)), new DataView(i, r, n);
+    }
+
+  }
+},
+      j = {
+  date: {
+    test: e => "Date" === toStringTag(e),
+
+    replace(e) {
+      const t = e.getTime();
+      return Number.isNaN(t) ? "NaN" : t;
+    },
+
+    revive: e => "NaN" === e ? new Date(Number.NaN) : new Date(e)
+  }
+},
+      I = "undefined" == typeof self ? global : self,
+      P = {};
+["TypeError", "RangeError", "SyntaxError", "ReferenceError", "EvalError", "URIError", "InternalError"].forEach(e => {
+  const t = I[e];
+  t && (P[e.toLowerCase()] = {
+    test: e => hasConstructorOf(e, t),
+    replace: e => e.message,
+    revive: e => new t(e)
+  });
+});
+const N = {
+  file: {
+    test: e => "File" === toStringTag(e),
+
+    replace(e) {
+      const t = new XMLHttpRequest();
+      if (t.overrideMimeType("text/plain; charset=x-user-defined"), t.open("GET", URL.createObjectURL(e), !1), t.send(), 200 !== t.status && 0 !== t.status) throw new Error("Bad File access: " + t.status);
+      return {
+        type: e.type,
+        stringContents: t.responseText,
+        name: e.name,
+        lastModified: e.lastModified
+      };
+    },
+
+    revive: ({
+      name: e,
+      type: t,
+      stringContents: r,
+      lastModified: n
+    }) => new File([string2arraybuffer(r)], e, {
+      type: t,
+      lastModified: n
+    }),
+    replaceAsync: t => new e(function (e, r) {
+      const n = new FileReader();
+      n.addEventListener("load", function () {
+        e({
+          type: t.type,
+          stringContents: n.result,
+          name: t.name,
+          lastModified: t.lastModified
+        });
+      }), n.addEventListener("error", function () {
+        r(n.error);
+      }), n.readAsBinaryString(t);
+    })
+  }
+},
+      C = {
+  file: N.file,
   filelist: {
-    test(x) {
-      return Typeson.toStringTag(x) === 'FileList';
+    test: e => "FileList" === toStringTag(e),
+
+    replace(e) {
+      const t = [];
+
+      for (let r = 0; r < e.length; r++) t[r] = e.item(r);
+
+      return t;
     },
 
-    replace(fl) {
-      const arr = [];
-
-      for (let i = 0; i < fl.length; i++) {
-        arr[i] = fl.item(i);
-      }
-
-      return arr;
-    },
-
-    revive(o) {
-      /**
-       * `FileList` polyfill.
-       */
+    revive(e) {
       class FileList {
-        /**
-         * Set private properties and length.
-         */
         constructor() {
-          // eslint-disable-next-line prefer-rest-params
-          this._files = arguments[0];
-          this.length = this._files.length;
+          this._files = arguments[0], this.length = this._files.length;
         }
-        /**
-         * @param {Integer} index
-         * @returns {File}
-         */
 
-
-        item(index) {
-          return this._files[index];
+        item(e) {
+          return this._files[e];
         }
-        /* eslint-disable class-methods-use-this */
-
-        /**
-         * @returns {"FileList"}
-         */
-
 
         get [Symbol.toStringTag]() {
-          /* eslint-enable class-methods-use-this */
-          return 'FileList';
+          return "FileList";
         }
 
       }
 
-      return new FileList(o);
+      return new FileList(e);
     }
 
   }
-};
-
-/* globals createImageBitmap */
-const imagebitmap = {
+},
+      E = {
   imagebitmap: {
-    test(x) {
-      return Typeson.toStringTag(x) === 'ImageBitmap' || // In Node, our polyfill sets the dataset on a canvas
-      //  element as JSDom no longer allows overriding toStringTag
-      x && x.dataset && x.dataset.toStringTag === 'ImageBitmap';
+    test: e => "ImageBitmap" === toStringTag(e) || e && e.dataset && "ImageBitmap" === e.dataset.toStringTag,
+
+    replace(e) {
+      const t = document.createElement("canvas");
+      return t.getContext("2d").drawImage(e, 0, 0), t.toDataURL();
     },
 
-    replace(bm) {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(bm, 0, 0); // Although `width` and `height` are part of `ImageBitMap`,
-      //   these will be auto-created for us when reviving with the
-      //   data URL (and they are not settable even if they weren't)
-      // return {
-      //   width: bm.width, height: bm.height, dataURL: canvas.toDataURL()
-      // };
-
-      return canvas.toDataURL();
+    revive(e) {
+      const t = document.createElement("canvas"),
+            r = t.getContext("2d"),
+            n = document.createElement("img");
+      return n.addEventListener("load", function () {
+        r.drawImage(n, 0, 0);
+      }), n.src = e, t;
     },
 
-    revive(o) {
-      /*
-      var req = new XMLHttpRequest();
-      req.open('GET', o, false); // Sync
-      if (req.status !== 200 && req.status !== 0) {
-        throw new Error('Bad ImageBitmap access: ' + req.status);
-      }
-      req.send();
-      return req.responseText;
-      */
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = document.createElement('img'); // The onload is needed by some browsers per http://stackoverflow.com/a/4776378/271577
-
-      img.addEventListener('load', function () {
-        ctx.drawImage(img, 0, 0);
-      });
-      img.src = o; // Works in contexts allowing an `ImageBitmap` (We might use
-      //   `OffscreenCanvas.transferToBitmap` when supported)
-
-      return canvas;
-    },
-
-    reviveAsync(o) {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = document.createElement('img'); // The onload is needed by some browsers per http://stackoverflow.com/a/4776378/271577
-
-      img.addEventListener('load', function () {
-        ctx.drawImage(img, 0, 0);
-      });
-      img.src = o; // o.dataURL;
-
-      return createImageBitmap(canvas); // Returns a promise
+    reviveAsync(e) {
+      const t = document.createElement("canvas"),
+            r = t.getContext("2d"),
+            n = document.createElement("img");
+      return n.addEventListener("load", function () {
+        r.drawImage(n, 0, 0);
+      }), n.src = e, createImageBitmap(t);
     }
 
   }
-};
-
-/* globals ImageData */
-const imagedata = {
+},
+      x = {
   imagedata: {
-    test(x) {
-      return Typeson.toStringTag(x) === 'ImageData';
-    },
-
-    replace(d) {
-      return {
-        // Ensure `length` gets preserved for revival
-        array: [...d.data],
-        width: d.width,
-        height: d.height
-      };
-    },
-
-    revive(o) {
-      return new ImageData(new Uint8ClampedArray(o.array), o.width, o.height);
-    }
-
+    test: e => "ImageData" === toStringTag(e),
+    replace: e => ({
+      array: [...e.data],
+      width: e.width,
+      height: e.height
+    }),
+    revive: e => new ImageData(new Uint8ClampedArray(e.array), e.width, e.height)
   }
-};
-
-const infinity = {
+},
+      k = {
   infinity: {
-    test(x) {
-      return x === Number.POSITIVE_INFINITY;
-    },
-
-    replace(n) {
-      return 'Infinity';
-    },
-
-    revive(s) {
-      return Number.POSITIVE_INFINITY;
-    }
-
+    test: e => e === Number.POSITIVE_INFINITY,
+    replace: e => "Infinity",
+    revive: e => Number.POSITIVE_INFINITY
   }
-};
-
-const IntlCollator = {
-  test(x) {
-    return Typeson.hasConstructorOf(x, Intl.Collator);
+},
+      B = {
+  test: e => hasConstructorOf(e, Intl.Collator),
+  replace: e => e.resolvedOptions(),
+  revive: e => new Intl.Collator(e.locale, e)
+},
+      U = {
+  IntlCollator: B,
+  IntlDateTimeFormat: {
+    test: e => hasConstructorOf(e, Intl.DateTimeFormat),
+    replace: e => e.resolvedOptions(),
+    revive: e => new Intl.DateTimeFormat(e.locale, e)
   },
-
-  replace(c) {
-    return c.resolvedOptions();
-  },
-
-  revive(options) {
-    return new Intl.Collator(options.locale, options);
+  IntlNumberFormat: {
+    test: e => hasConstructorOf(e, Intl.NumberFormat),
+    replace: e => e.resolvedOptions(),
+    revive: e => new Intl.NumberFormat(e.locale, e)
   }
-
-};
-const IntlDateTimeFormat = {
-  test(x) {
-    return Typeson.hasConstructorOf(x, Intl.DateTimeFormat);
-  },
-
-  replace(dtf) {
-    return dtf.resolvedOptions();
-  },
-
-  revive(options) {
-    return new Intl.DateTimeFormat(options.locale, options);
-  }
-
-};
-const IntlNumberFormat = {
-  test(x) {
-    return Typeson.hasConstructorOf(x, Intl.NumberFormat);
-  },
-
-  replace(nf) {
-    return nf.resolvedOptions();
-  },
-
-  revive(options) {
-    return new Intl.NumberFormat(options.locale, options);
-  }
-
-};
-const intlTypes = {
-  IntlCollator,
-  IntlDateTimeFormat,
-  IntlNumberFormat
-};
-
-const map = {
+},
+      K = {
   map: {
-    test(x) {
-      return Typeson.toStringTag(x) === 'Map';
-    },
-
-    replace(mp) {
-      return [...mp.entries()];
-    },
-
-    revive(entries) {
-      return new Map(entries);
-    }
-
+    test: e => "Map" === toStringTag(e),
+    replace: e => [...e.entries()],
+    revive: e => new Map(e)
   }
-};
-
-const nan = {
+},
+      L = {
   nan: {
-    test(x) {
-      return Number.isNaN(x);
-    },
-
-    replace(n) {
-      return 'NaN';
-    },
-
-    revive(s) {
-      return Number.NaN;
-    }
-
+    test: e => Number.isNaN(e),
+    replace: e => "NaN",
+    revive: e => Number.NaN
   }
-};
-
-const negativeInfinity = {
+},
+      F = {
   negativeInfinity: {
-    test(x) {
-      return x === Number.NEGATIVE_INFINITY;
-    },
-
-    replace(n) {
-      return '-Infinity';
-    },
-
-    revive(s) {
-      return Number.NEGATIVE_INFINITY;
-    }
-
+    test: e => e === Number.NEGATIVE_INFINITY,
+    replace: e => "-Infinity",
+    revive: e => Number.NEGATIVE_INFINITY
   }
-};
-
-const nonbuiltinIgnore = {
-  nonbuiltinIgnore: {
-    test(x) {
-      return x && typeof x === 'object' && !Array.isArray(x) && !['Object', // `Proxy` and `Reflect`, two other built-in objects, will also
-      //   have a `toStringTag` of `Object`; we don't want built-in
-      //   function objects, however
-      'Boolean', 'Number', 'String', 'Error', 'RegExp', 'Math', 'Date', 'Map', 'Set', 'JSON', 'ArrayBuffer', 'SharedArrayBuffer', 'DataView', 'Int8Array', 'Uint8Array', 'Uint8ClampedArray', 'Int16Array', 'Uint16Array', 'Int32Array', 'Uint32Array', 'Float32Array', 'Float64Array', 'Promise', 'String Iterator', 'Array Iterator', 'Map Iterator', 'Set Iterator', 'WeakMap', 'WeakSet', 'Atomics', 'Module'].includes(Typeson.toStringTag(x));
-    },
-
-    replace(rexp) {// Not in use
-    }
-
-  }
-};
-
-// This module is for objectified primitives (such as `new Number(3)` or
-const primitiveObjects = {
-  // String Object (not primitive string which need no type spec)
+},
+      M = {
   StringObject: {
-    test(x) {
-      return Typeson.toStringTag(x) === 'String' && typeof x === 'object';
-    },
-
-    replace(s) {
-      return String(s);
-    },
-
-    // convert to primitive string
-    revive(s) {
-      return new String(s);
-    } // Revive to an objectified string
-
-
+    test: e => "String" === toStringTag(e) && "object" == typeof e,
+    replace: e => String(e),
+    revive: e => new String(e)
   },
-  // Boolean Object (not primitive boolean which need no type spec)
   BooleanObject: {
-    test(x) {
-      return Typeson.toStringTag(x) === 'Boolean' && typeof x === 'object';
-    },
-
-    replace(b) {
-      return Boolean(b);
-    },
-
-    // convert to primitive boolean
-    revive(b) {
-      // Revive to an objectified Boolean
-      return new Boolean(b);
-    }
-
+    test: e => "Boolean" === toStringTag(e) && "object" == typeof e,
+    replace: e => Boolean(e),
+    revive: e => new Boolean(e)
   },
-  // Number Object (not primitive number which need no type spec)
   NumberObject: {
-    test(x) {
-      return Typeson.toStringTag(x) === 'Number' && typeof x === 'object';
-    },
-
-    replace(n) {
-      return Number(n);
-    },
-
-    // convert to primitive number
-    revive(n) {
-      return new Number(n);
-    } // Revive to an objectified number
-
-
+    test: e => "Number" === toStringTag(e) && "object" == typeof e,
+    replace: e => Number(e),
+    revive: e => new Number(e)
   }
-};
-
-const regexp = {
+},
+      $ = {
   regexp: {
-    test(x) {
-      return Typeson.toStringTag(x) === 'RegExp';
-    },
-
-    replace(rexp) {
-      return {
-        source: rexp.source,
-        flags: (rexp.global ? 'g' : '') + (rexp.ignoreCase ? 'i' : '') + (rexp.multiline ? 'm' : '') + (rexp.sticky ? 'y' : '') + (rexp.unicode ? 'u' : '')
-      };
-    },
-
-    revive({
-      source,
-      flags
-    }) {
-      return new RegExp(source, flags);
-    }
-
+    test: e => "RegExp" === toStringTag(e),
+    replace: e => ({
+      source: e.source,
+      flags: (e.global ? "g" : "") + (e.ignoreCase ? "i" : "") + (e.multiline ? "m" : "") + (e.sticky ? "y" : "") + (e.unicode ? "u" : "")
+    }),
+    revive: ({
+      source: e,
+      flags: t
+    }) => new RegExp(e, t)
   }
-};
-
-// Here we allow the exact same non-plain object, function, and symbol
-const resurrectableObjectsByUUID = {};
-const resurrectable = {
-  resurrectable: {
-    test(x) {
-      return x && !Array.isArray(x) && ['object', 'function', 'symbol'].includes(typeof x);
-    },
-
-    replace(rsrrctble) {
-      const uuid = generateUUID();
-      resurrectableObjectsByUUID[uuid] = rsrrctble;
-      return uuid;
-    },
-
-    revive(serializedResurrectable) {
-      return resurrectableObjectsByUUID[serializedResurrectable];
-    }
-
-  }
-};
-
-const set = {
+},
+      Y = {
   set: {
-    test(x) {
-      return Typeson.toStringTag(x) === 'Set';
-    },
-
-    replace(st) {
-      return [...st.values()];
-    },
-
-    revive(values) {
-      return new Set(values);
-    }
-
+    test: e => "Set" === toStringTag(e),
+    replace: e => [...e.values()],
+    revive: e => new Set(e)
   }
-};
-
-/* eslint-env browser, node */
-/* istanbul ignore next */
-
-const _global$1 = typeof self === 'undefined' ? global : self; // Support all kinds of typed arrays (views of ArrayBuffers)
-
-
-const typedArraysSocketIO = {};
-['Int8Array', 'Uint8Array', 'Uint8ClampedArray', 'Int16Array', 'Uint16Array', 'Int32Array', 'Uint32Array', 'Float32Array', 'Float64Array'].forEach(function (typeName) {
-  const arrType = typeName;
-  const TypedArray = _global$1[typeName];
-  /* istanbul ignore if */
-
-  if (!TypedArray) {
-    return;
-  }
-
-  typedArraysSocketIO[typeName.toLowerCase()] = {
-    test(x) {
-      return Typeson.toStringTag(x) === arrType;
-    },
-
-    replace(a) {
-      return (a.byteOffset === 0 && a.byteLength === a.buffer.byteLength ? a // socket.io supports streaming ArrayBuffers.
-      // If we have a typed array representing a portion
-      //   of the buffer, we need to clone
-      //   the buffer before leaving it to socket.io.
-      : a.slice(0)).buffer;
-    },
-
-    revive(buf) {
-      // One may configure socket.io to revive binary data as
-      //    Buffer or Blob.
-      // We should therefore not rely on that the instance we
-      //   get here is an ArrayBuffer
-      // If not, let's assume user wants to receive it as
-      //   configured with socket.io.
-      return Typeson.toStringTag(buf) === 'ArrayBuffer' ? new TypedArray(buf) : buf;
-    }
-
-  };
+},
+      q = "undefined" == typeof self ? global : self,
+      W = {};
+["Int8Array", "Uint8Array", "Uint8ClampedArray", "Int16Array", "Uint16Array", "Int32Array", "Uint32Array", "Float32Array", "Float64Array"].forEach(function (e) {
+  const t = e,
+        r = q[e];
+  r && (W[e.toLowerCase()] = {
+    test: e => toStringTag(e) === t,
+    replace: e => (0 === e.byteOffset && e.byteLength === e.buffer.byteLength ? e : e.slice(0)).buffer,
+    revive: e => "ArrayBuffer" === toStringTag(e) ? new r(e) : e
+  });
 });
-
-/* eslint-env browser, node */
-/* istanbul ignore next */
-
-const _global = typeof self === 'undefined' ? global : self;
-
-const typedArrays = {};
-['Int8Array', 'Uint8Array', 'Uint8ClampedArray', 'Int16Array', 'Uint16Array', 'Int32Array', 'Uint32Array', 'Float32Array', 'Float64Array'].forEach(function (typeName) {
-  const arrType = typeName;
-  const TypedArray = _global[arrType];
-  /* istanbul ignore if */
-
-  if (!TypedArray) {
-    return;
-  }
-
-  typedArrays[typeName.toLowerCase()] = {
-    test(x) {
-      return Typeson.toStringTag(x) === arrType;
-    },
+const G = "undefined" == typeof self ? global : self,
+      H = {};
+["Int8Array", "Uint8Array", "Uint8ClampedArray", "Int16Array", "Uint16Array", "Int32Array", "Uint32Array", "Float32Array", "Float64Array"].forEach(function (e) {
+  const t = e,
+        r = G[t];
+  r && (H[e.toLowerCase()] = {
+    test: e => toStringTag(e) === t,
 
     replace({
-      buffer,
-      byteOffset,
-      length: l
-    }, stateObj) {
-      if (!stateObj.buffers) {
-        stateObj.buffers = [];
-      }
-
-      const index = stateObj.buffers.indexOf(buffer);
-
-      if (index > -1) {
-        return {
-          index,
-          byteOffset,
-          length: l
-        };
-      }
-
-      stateObj.buffers.push(buffer);
-      return {
-        encoded: encode$1(buffer),
-        byteOffset,
-        length: l
-      };
-    },
-
-    revive(b64Obj, stateObj) {
-      if (!stateObj.buffers) {
-        stateObj.buffers = [];
-      }
-
-      const {
-        byteOffset,
-        length: len,
-        encoded,
-        index
-      } = b64Obj;
-      let buffer;
-
-      if ('index' in b64Obj) {
-        buffer = stateObj.buffers[index];
-      } else {
-        buffer = decode$1(encoded);
-        stateObj.buffers.push(buffer);
-      }
-
-      return new TypedArray(buffer, byteOffset, len);
-    }
-
-  };
-});
-
-// This does not preserve `undefined` in sparse arrays; see the `undefined`
-const undef$1 = {
-  undef: {
-    test(x, stateObj) {
-      return typeof x === 'undefined' && (stateObj.ownKeys || !('ownKeys' in stateObj));
-    },
-
-    replace(n) {
-      return 0;
-    },
-
-    revive(s) {
-      // Will add `undefined` (returning `undefined` would instead
-      //   avoid explicitly setting)
-      return new Typeson.Undefined();
-    }
-
-  }
-};
-
-const userObject = {
-  userObject: {
-    test(x, stateObj) {
-      return Typeson.isUserObject(x);
-    },
-
-    replace(n) {
-      return _objectSpread2$1({}, n);
-    },
-
-    revive(s) {
-      return s;
-    }
-
-  }
-};
-
-const arrayNonindexKeys = [{
-  arrayNonindexKeys: {
-    testPlainObjects: true,
-
-    test(x, stateObj) {
-      if (Array.isArray(x)) {
-        if ( // By avoiding serializing arrays into objects which
-        //  have only positive-integer keys, we reduce
-        //  size and improve revival performance; arrays with
-        //  non-index keys will be larger however
-        Object.keys(x).some(k => {
-          //  No need to check for `isNaN` or
-          //   `isNaN(Number.parseInt())` as `NaN` will be
-          //   treated as a string.
-          //  No need to do check as
-          //   `Number.parseInt(Number())` since scientific
-          //   notation will be pre-resolved if a number
-          //   was given, and it will otherwise be a string
-          return String(Number.parseInt(k)) !== k;
-        })) {
-          stateObj.iterateIn = 'object';
-          stateObj.addLength = true;
-        }
-
-        return true;
-      }
-
-      return false;
-    },
-
-    replace(a, stateObj) {
-      // Catch sparse undefined
-      stateObj.iterateUnsetNumeric = true;
-      return a;
-    },
-
-    revive(o) {
-      if (Array.isArray(o)) {
-        return o;
-      }
-
-      const arr = []; // No map here as may be a sparse array (including
-      //   with `length` set)
-      // Todo: Reenable when Node `engines` >= 7
-      // Object.entries(o).forEach(([key, val]) => {
-
-      Object.keys(o).forEach(key => {
-        const val = o[key];
-        arr[key] = val;
+      buffer: e,
+      byteOffset: t,
+      length: r
+    }, n) {
+      n.buffers || (n.buffers = []);
+      const a = n.buffers.indexOf(e);
+      return a > -1 ? {
+        index: a,
+        byteOffset: t,
+        length: r
+      } : (n.buffers.push(e), {
+        encoded: v(e),
+        byteOffset: t,
+        length: r
       });
-      return arr;
+    },
+
+    revive(e, t) {
+      t.buffers || (t.buffers = []);
+      const {
+        byteOffset: n,
+        length: a,
+        encoded: o,
+        index: i
+      } = e;
+      let s;
+      return "index" in e ? s = t.buffers[i] : (s = b(o), t.buffers.push(s)), new r(s, n, a);
+    }
+
+  });
+});
+const X = {
+  undef: {
+    test: (e, t) => void 0 === e && (t.ownKeys || !("ownKeys" in t)),
+    replace: e => 0,
+    revive: e => new l()
+  }
+},
+      z = {
+  userObject: {
+    test: (e, t) => isUserObject(e),
+    replace: e => _objectSpread2$1({}, e),
+    revive: e => e
+  }
+},
+      Q = [{
+  arrayNonindexKeys: {
+    testPlainObjects: !0,
+    test: (e, t) => !!Array.isArray(e) && (Object.keys(e).some(e => String(Number.parseInt(e)) !== e) && (t.iterateIn = "object", t.addLength = !0), !0),
+    replace: (e, t) => (t.iterateUnsetNumeric = !0, e),
+
+    revive(e) {
+      if (Array.isArray(e)) return e;
+      const t = [];
+      return Object.keys(e).forEach(r => {
+        const n = e[r];
+        t[r] = n;
+      }), t;
     }
 
   }
 }, {
   sparseUndefined: {
-    test(x, stateObj) {
-      return typeof x === 'undefined' && stateObj.ownKeys === false;
-    },
+    test: (e, t) => void 0 === e && !1 === t.ownKeys,
+    replace: e => 0,
 
-    replace(n) {
-      return 0;
-    },
-
-    revive(s) {
-      return undefined;
-    } // Will avoid adding anything
-
+    revive(e) {}
 
   }
-}];
-
-const specialNumbers = [nan, infinity, negativeInfinity];
-
-/* This preset includes types that are built-in into the JavaScript
-    language itself, this should work universally.
-
-  Types that were added in ES6 or beyond will be checked before inclusion
-   so that this module can be consumed by both ES5 and ES6 environments.
-
-  Some types cannot be encapsulated because their inner state is private:
-    `WeakMap`, `WeakSet`.
-
-  The Function type is not included because their closures would not be
-    serialized, so a revived Function that uses closures would not behave
-    as expected.
-
-  Symbols are similarly not included.
-*/
-const expObj$1 = [undef$1, // ES5
-arrayNonindexKeys, primitiveObjects, specialNumbers, date, error, errors, regexp].concat( // ES2015 (ES6)
-
-/* istanbul ignore next */
-typeof Map === 'function' ? map : [],
-/* istanbul ignore next */
-typeof Set === 'function' ? set : [],
-/* istanbul ignore next */
-typeof ArrayBuffer === 'function' ? arraybuffer : [],
-/* istanbul ignore next */
-typeof Uint8Array === 'function' ? typedArrays : [],
-/* istanbul ignore next */
-typeof DataView === 'function' ? dataview : [],
-/* istanbul ignore next */
-typeof Intl !== 'undefined' ? intlTypes : [],
-/* istanbul ignore next */
-typeof BigInt !== 'undefined' ? [bigint, bigintObject] : []);
-
-/*
-When communicating via `postMessage()` (`Worker.postMessage()` or
-`window.postMessage()`), the browser will use a similar algorithm as Typeson
-does to encapsulate and revive all items in the structure (aka the structured
-clone algorithm). This algorithm supports all built-in types as well as many
-DOM types. Therefore, only types that are not included in the structured clone
-algorithm need to be registered, which is:
-
-* Error
-* Specific Errors like SyntaxError, TypeError, etc.
-* Any custom type you want to send across window- or worker boundraries
-
-This preset will only include the Error types and you can register your
-custom types after having registered these.
-*/
-const postmessage = [error, errors];
-
-const socketio = [expObj$1, // Leave ArrayBuffer as is, and let socket.io stream it instead.
-{
-  arraybuffer: null
-}, // Encapsulate TypedArrays in ArrayBuffers instead of base64 strings.
-typedArraysSocketIO];
-
-const sparseUndefined = [{
-  sparseArrays: {
-    testPlainObjects: true,
-
-    test(x) {
-      return Array.isArray(x);
-    },
-
-    replace(a, stateObj) {
-      stateObj.iterateUnsetNumeric = true;
-      return a;
-    }
-
-  }
-}, {
-  sparseUndefined: {
-    test(x, stateObj) {
-      return typeof x === 'undefined' && stateObj.ownKeys === false;
-    },
-
-    replace(n) {
-      return 0;
-    },
-
-    revive(s) {
-      return undefined;
-    } // Will avoid adding anything
-
-
-  }
-}];
-
-/* This preset includes types for the Structured Cloning Algorithm. */
-const expObj = [// Todo: Might also register synchronous `ImageBitmap` and
-//    `Blob`/`File`/`FileList`?
-// ES5
-userObject, // Processed last (non-builtin)
-undef$1, arrayNonindexKeys, primitiveObjects, specialNumbers, date, regexp, // Non-built-ins
-imagedata, imagebitmap, // Async return
-file, filelist, blob].concat( // ES2015 (ES6)
-
-/* istanbul ignore next */
-typeof Map === 'function' ? map : [],
-/* istanbul ignore next */
-typeof Set === 'function' ? set : [],
-/* istanbul ignore next */
-typeof ArrayBuffer === 'function' ? arraybuffer : [],
-/* istanbul ignore next */
-typeof Uint8Array === 'function' ? typedArrays : [],
-/* istanbul ignore next */
-typeof DataView === 'function' ? dataview : [],
-/* istanbul ignore next */
-typeof Intl !== 'undefined' ? intlTypes : [],
-/* istanbul ignore next */
-typeof crypto !== 'undefined' ? cryptokey : [],
-/* istanbul ignore next */
-typeof BigInt !== 'undefined' ? [bigint, bigintObject] : []);
-
-/* globals DOMException */
-var structuredCloningThrowing = expObj.concat({
+}],
+      Z = [L, k, F],
+      ae = [z, X, Q, M, Z, j, $, x, E, N, C, O].concat("function" == typeof Map ? K : [], "function" == typeof Set ? Y : [], "function" == typeof ArrayBuffer ? h : [], "function" == typeof Uint8Array ? H : [], "function" == typeof DataView ? A : [], "undefined" != typeof Intl ? U : [], "undefined" != typeof crypto ? w : [], "undefined" != typeof BigInt ? [m, g] : []);
+var oe = ae.concat({
   checkDataCloneException: {
-    test(val) {
-      // Should also throw with:
-      // 1. `IsDetachedBuffer` (a process not called within the
-      //      ECMAScript spec)
-      // 2. `IsCallable` (covered by `typeof === 'function'` or a
-      //       function's `toStringTag`)
-      // 3. internal slots besides [[Prototype]] or [[Extensible]] (e.g.,
-      //        [[PromiseState]] or [[WeakMapData]])
-      // 4. exotic object (e.g., `Proxy`) (unless an `%ObjectPrototype%`
-      //      intrinsic object) (which does not have default
-      //      behavior for one or more of the essential internal methods
-      //      that are limited to the following for non-function objects
-      //      (we auto-exclude functions):
-      //      [[GetPrototypeOf]],[[SetPrototypeOf]],[[IsExtensible]],
-      //      [[PreventExtensions]],[[GetOwnProperty]],
-      //      [[DefineOwnProperty]],[[HasProperty]],
-      //      [[Get]],[[Set]],[[Delete]],[[OwnPropertyKeys]]);
-      //      except for the standard, built-in exotic objects, we'd need
-      //      to know whether these methods had distinct behaviors
-      // Note: There is no apparent way for us to detect a `Proxy` and
-      //      reject (Chrome at least is not rejecting anyways)
-      const stringTag = {}.toString.call(val).slice(8, -1);
-
-      if ([// Symbol's `toStringTag` is only "Symbol" for its initial
-      //   value, so we check `typeof`
-      'symbol', // All functions including bound function exotic objects
-      'function'].includes(typeof val) || [// A non-array exotic object
-      'Arguments', // A non-array exotic object
-      'Module', // `Error` and other errors have the [[ErrorData]] internal
-      //    slot and give "Error"
-      'Error', // Promise instances have an extra slot ([[PromiseState]])
-      //    but not throwing in Chrome `postMessage`
-      'Promise', // WeakMap instances have an extra slot ([[WeakMapData]])
-      //    but not throwing in Chrome `postMessage`
-      'WeakMap', // WeakSet instances have an extra slot ([[WeakSetData]])
-      //    but not throwing in Chrome `postMessage`
-      'WeakSet', // HTML-SPECIFIC
-      'Event', // Also in Node `worker_threads` (currently experimental)
-      'MessageChannel'].includes(stringTag) ||
-      /*
-      // isClosed is no longer documented
-      ((stringTag === 'Blob' || stringTag === 'File') &&
-          val.isClosed) ||
-      */
-      val && typeof val === 'object' && // Duck-type DOM node objects (non-array exotic?
-      //    objects which cannot be cloned by the SCA)
-      typeof val.nodeType === 'number' && typeof val.insertBefore === 'function') {
-        throw new DOMException('The object cannot be cloned.', 'DataCloneError');
-      }
-
-      return false;
+    test(e) {
+      const t = {}.toString.call(e).slice(8, -1);
+      if (["symbol", "function"].includes(typeof e) || ["Arguments", "Module", "Error", "Promise", "WeakMap", "WeakSet", "Event", "MessageChannel"].includes(t) || e && "object" == typeof e && "number" == typeof e.nodeType && "function" == typeof e.insertBefore) throw new DOMException("The object cannot be cloned.", "DataCloneError");
+      return !1;
     }
 
   }
 });
 
-const undef = [sparseUndefined, undef$1];
-
-const universal = [expObj$1 // TODO: Add types that are de-facto universal even though not
-//   built-in into ecmasript standard.
-];
-
-// This file is auto-generated from `build.js`
-Typeson.types = {
-  arraybuffer,
-  bigintObject,
-  bigint,
-  blob,
-  cloneable,
-  cryptokey,
-  dataview,
-  date,
-  error,
-  errors,
-  file,
-  filelist,
-  imagebitmap,
-  imagedata,
-  infinity,
-  intlTypes,
-  map,
-  nan,
-  negativeInfinity,
-  nonbuiltinIgnore,
-  primitiveObjects,
-  regexp,
-  resurrectable,
-  set,
-  typedArraysSocketio: typedArraysSocketIO,
-  typedArrays,
-  undef: undef$1,
-  userObject
-};
-Typeson.presets = {
-  arrayNonindexKeys,
-  builtin: expObj$1,
-  postmessage,
-  socketio,
-  sparseUndefined,
-  specialNumbers,
-  structuredCloningThrowing,
-  structuredCloning: expObj,
-  undef: undef,
-  universal
-};
-
-let typeson = new Typeson().register(Typeson.presets.structuredCloningThrowing);
+let typeson = new u().register(oe);
 
 function register(func) {
-  typeson = new Typeson().register(func(Typeson.presets.structuredCloningThrowing));
+  typeson = new u().register(func(oe));
 } // We are keeping the callback approach for now in case we wish to reexpose
 //   `Blob`, `File`, `FileList` asynchronously (though in such a case, we
 //   should probably refactor as a Promise)
@@ -7502,11 +5497,11 @@ function encode(obj, func) {
     ret = typeson.stringifySync(obj);
   } catch (err) {
     // SCA in typeson-registry using `DOMException` which is not defined (e.g., in Node)
-    if (Typeson.hasConstructorOf(err, ReferenceError) || // SCA in typeson-registry threw a cloning error and we are in a
+    if (hasConstructorOf(err, ReferenceError) || // SCA in typeson-registry threw a cloning error and we are in a
     //   supporting environment (e.g., the browser) where `ShimDOMException` is
     //   an alias for `DOMException`; if typeson-registry ever uses our shim
     //   to throw, we can use this condition alone.
-    Typeson.hasConstructorOf(err, ShimDOMException)) {
+    hasConstructorOf(err, ShimDOMException)) {
       throw createDOMException('DataCloneError', 'The object cannot be cloned.');
     } // We should rethrow non-cloning exceptions like from
     //  throwing getters (as in the W3C test, key-conversion-exceptions.htm)
@@ -7722,7 +5717,7 @@ IDBIndex.__createIndex = function (store, index) {
                   throw new Error('Go to catch; ignore bad indexKey');
                 }
 
-                indexKey = encode$2(indexKey.value, index.multiEntry);
+                indexKey = encode$1(indexKey.value, index.multiEntry);
 
                 if (index.unique) {
                   if (indexValues[indexKey]) {
@@ -8123,11 +6118,11 @@ function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range,
   tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
     const records = [];
     let recordCount = 0;
-    const decode$1 = isCount ? () => {
+    const decode$2 = isCount ? () => {
       /* */
     } : opType === 'key' ? record => {
       // Key.convertValueToKey(record.key); // Already validated before storage
-      return decode$2(unescapeSQLiteResponse(record.key));
+      return decode$1(unescapeSQLiteResponse(record.key));
     } : record => {
       // when opType is value
       return decode(unescapeSQLiteResponse(record.value));
@@ -8135,11 +6130,11 @@ function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range,
 
     if (index.multiEntry) {
       const escapedIndexNameForKeyCol = escapeIndexNameForSQLKeyColumn(index.name);
-      const encodedKey = encode$2(range, index.multiEntry);
+      const encodedKey = encode$1(range, index.multiEntry);
 
       for (let i = 0; i < data.rows.length; i++) {
         const row = data.rows.item(i);
-        const rowKey = decode$2(row[escapedIndexNameForKeyCol]);
+        const rowKey = decode$1(row[escapedIndexNameForKeyCol]);
         let record;
 
         if (hasKey && (multiChecks && range.some(check => rowKey.includes(check)) || // More precise than our SQL
@@ -8154,7 +6149,7 @@ function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range,
         }
 
         if (record) {
-          records.push(decode$1(record));
+          records.push(decode$2(record));
 
           if (unboundedDisallowed) {
             break;
@@ -8166,7 +6161,7 @@ function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range,
         const record = data.rows.item(i);
 
         if (record) {
-          records.push(decode$1(record));
+          records.push(decode$2(record));
         }
       }
 
@@ -8196,12 +6191,12 @@ function buildFetchIndexDataSQL(nullDisallowed, index, range, opType, multiCheck
       range.forEach((innerKey, i) => {
         if (i > 0) sql.push('OR');
         sql.push(escapeIndexNameForSQL(index.name), "LIKE ? ESCAPE '^' ");
-        sqlValues.push('%' + sqlLIKEEscape(encode$2(innerKey, index.multiEntry)) + '%');
+        sqlValues.push('%' + sqlLIKEEscape(encode$1(innerKey, index.multiEntry)) + '%');
       });
       sql.push(')');
     } else if (index.multiEntry) {
       sql.push('AND', escapeIndexNameForSQL(index.name), "LIKE ? ESCAPE '^'");
-      sqlValues.push('%' + sqlLIKEEscape(encode$2(range, index.multiEntry)) + '%');
+      sqlValues.push('%' + sqlLIKEEscape(encode$1(range, index.multiEntry)) + '%');
     } else {
       const convertedRange = convertValueToKeyRange(range, nullDisallowed);
       setSQLForKeyRange(convertedRange, escapeIndexNameForSQL(index.name), sql, sqlValues, true, false);
@@ -8249,7 +6244,7 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
     } = storeProperties;
 
     for (const indexName in indexList) {
-      if (hasOwn$2(indexList, indexName)) {
+      if (hasOwn(indexList, indexName)) {
         const index = IDBIndex.__createInstance(me, indexList[indexName]);
 
         me.__indexes[index.name] = index;
@@ -8655,7 +6650,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
           return;
         }
 
-        paramMap[index.__currentName] = encode$2(indexKey, index.multiEntry);
+        paramMap[index.__currentName] = encode$1(indexKey, index.multiEntry);
       }
 
       if (index.unique) {
@@ -8685,7 +6680,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
       // Key.convertValueToKey(primaryKey); // Already run
       sqlStart.push(sqlQuote('key'), ',');
       sqlEnd.push('?,');
-      insertSqlValues.push(escapeSQLiteStatement(encode$2(clonedKeyOrCurrentNumber)));
+      insertSqlValues.push(escapeSQLiteStatement(encode$1(clonedKeyOrCurrentNumber)));
     }
 
     Object.entries(paramMap).forEach(([key, stmt]) => {
@@ -8787,7 +6782,7 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
   // Key.convertValueToKey(key); // Already run
 
   const sql = 'DELETE FROM ' + escapeStoreNameForSQL(me.__currentName) + ' WHERE "key" = ?';
-  const encodedKey = encode$2(key);
+  const encodedKey = encode$1(key);
   tx.executeSql(sql, [escapeSQLiteStatement(encodedKey)], function (tx, data) {
     CFG.DEBUG && console.log('Did the row with the', key, 'exist?', data.rowsAffected);
     cb(tx);
@@ -8886,7 +6881,7 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
         if (getKey) {
           for (let i = 0; i < data.rows.length; i++) {
             // Key.convertValueToKey(data.rows.item(i).key); // Already validated before storage
-            ret.push(decode$2(unescapeSQLiteResponse(data.rows.item(i).key), false));
+            ret.push(decode$1(unescapeSQLiteResponse(data.rows.item(i).key), false));
           }
         } else {
           for (let i = 0; i < data.rows.length; i++) {
@@ -10439,8 +8434,8 @@ IDBCursor.__super = function IDBCursor(query, direction, store, source, keyColum
 
   if (range !== undefined) {
     // Encode the key range and cache the encoded values, so we don't have to re-encode them over and over
-    range.__lowerCached = range.lower !== undefined && encode$2(range.lower, this.__multiEntryIndex);
-    range.__upperCached = range.upper !== undefined && encode$2(range.upper, this.__multiEntryIndex);
+    range.__lowerCached = range.lower !== undefined && encode$1(range.lower, this.__multiEntryIndex);
+    range.__upperCached = range.upper !== undefined && encode$1(range.upper, this.__multiEntryIndex);
   }
 
   this.__gotValue = true;
@@ -10480,17 +8475,17 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
   if (primaryKey !== undefined) {
     sql.push('AND', quotedKey, op + '= ?'); // Key.convertValueToKey(primaryKey); // Already checked by `continuePrimaryKey`
 
-    sqlValues.push(encode$2(primaryKey));
+    sqlValues.push(encode$1(primaryKey));
   }
 
   if (key !== undefined) {
     sql.push('AND', quotedKeyColumnName, op + '= ?'); // Key.convertValueToKey(key); // Already checked by `continue` or `continuePrimaryKey`
 
-    sqlValues.push(encode$2(key));
+    sqlValues.push(encode$1(key));
   } else if (continueCall && me.__key !== undefined) {
     sql.push('AND', quotedKeyColumnName, op + ' ?'); // Key.convertValueToKey(me.__key); // Already checked when stored
 
-    sqlValues.push(encode$2(me.__key));
+    sqlValues.push(encode$1(me.__key));
   }
 
   if (!me.__count) {
@@ -10571,17 +8566,17 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
   if (primaryKey !== undefined) {
     sql.push('AND', quotedKey, op + '= ?'); // Key.convertValueToKey(primaryKey); // Already checked by `continuePrimaryKey`
 
-    sqlValues.push(encode$2(primaryKey));
+    sqlValues.push(encode$1(primaryKey));
   }
 
   if (key !== undefined) {
     sql.push('AND', quotedKeyColumnName, op + '= ?'); // Key.convertValueToKey(key); // Already checked by `continue` or `continuePrimaryKey`
 
-    sqlValues.push(encode$2(key));
+    sqlValues.push(encode$1(key));
   } else if (me.__key !== undefined) {
     sql.push('AND', quotedKeyColumnName, op + ' ?'); // Key.convertValueToKey(me.__key); // Already checked when entered
 
-    sqlValues.push(encode$2(me.__key));
+    sqlValues.push(encode$1(me.__key));
   }
 
   if (!me.__count) {
@@ -10610,7 +8605,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
 
         for (let i = 0; i < data.rows.length; i++) {
           const rowItem = data.rows.item(i);
-          const rowKey = decode$2(rowItem[me.__keyColumnName], true);
+          const rowKey = decode$1(rowItem[me.__keyColumnName], true);
           const matches = findMultiEntryMatches(rowKey, me.__range);
           ct += matches.length;
         }
@@ -10623,12 +8618,12 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
 
       for (let i = 0; i < data.rows.length; i++) {
         const rowItem = data.rows.item(i);
-        const rowKey = decode$2(rowItem[me.__keyColumnName], true);
+        const rowKey = decode$1(rowItem[me.__keyColumnName], true);
         const matches = findMultiEntryMatches(rowKey, me.__range);
 
         for (const matchingKey of matches) {
           const clone = {
-            matchingKey: encode$2(matchingKey, true),
+            matchingKey: encode$1(matchingKey, true),
             key: rowItem.key
           };
           clone[me.__keyColumnName] = rowItem[me.__keyColumnName];
@@ -10750,11 +8745,11 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
   const encKey = unescapeSQLiteResponse(me.__multiEntryIndex ? rowItem.matchingKey : rowItem[me.__keyColumnName]);
   const encVal = unescapeSQLiteResponse(rowItem[me.__valueColumnName]);
   const encPrimaryKey = unescapeSQLiteResponse(rowItem.key);
-  const key = decode$2(encKey, me.__multiEntryIndex);
+  const key = decode$1(encKey, me.__multiEntryIndex);
 
   const val = me.__valueDecoder.decode(encVal);
 
-  const primaryKey = decode$2(encPrimaryKey);
+  const primaryKey = decode$1(encPrimaryKey);
   callback(key, val, primaryKey, encKey
   /*, encVal, encPrimaryKey */
   );
@@ -10837,7 +8832,7 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
             cursorContinue(tx, args, success, error);
           }
 
-          if (me.__unique && !me.__multiEntryIndex && encKey === encode$2(me.key, me.__multiEntryIndex)) {
+          if (me.__unique && !me.__multiEntryIndex && encKey === encode$1(me.key, me.__multiEntryIndex)) {
             cursorContinue(tx, args, success, error);
             return;
           }
@@ -10991,7 +8986,7 @@ IDBCursor.prototype.delete = function () {
       const sql = 'DELETE FROM  ' + escapeStoreNameForSQL(me.__store.__currentName) + ' WHERE "key" = ?';
       CFG.DEBUG && console.log(sql, key, primaryKey); // Key.convertValueToKey(primaryKey); // Already checked when entered
 
-      tx.executeSql(sql, [escapeSQLiteStatement(encode$2(primaryKey))], function (tx, data) {
+      tx.executeSql(sql, [escapeSQLiteStatement(encode$1(primaryKey))], function (tx, data) {
         if (data.rowsAffected === 1) {
           // We don't invalidate the cache (as we don't access it anymore
           //    and it will set the index off)

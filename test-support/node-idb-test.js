@@ -510,7 +510,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         global.URL = window.URL;
         // Polyfill enough for our tests
         const cou = require( // eslint-disable-line node/global-require
-            '../node_modules/typeson-registry/polyfills/createObjectURL-cjs.js'
+            '../node_modules/typeson-registry/polyfills/createObjectURL.umd.js'
         );
         global.URL.createObjectURL = cou.createObjectURL;
         global.XMLHttpRequest.prototype.overrideMimeType = cou.xmlHttpRequestOverrideMimeType({
