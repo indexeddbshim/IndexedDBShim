@@ -1,9 +1,11 @@
 # CHANGES for indexeddbshim
 
-## ?
+## 10.0.0
 
-- chore: update typeson, typeson-registry (taking advantage of some
-    tree-shaking/smaller bundle size, devDeps.
+- BREAKING: Requires Node 14
+- chore: update `typeson`, `typeson-registry` (taking advantage of some
+    tree-shaking/smaller bundle size, devDeps.; switch to maintained
+    fork of `@mochajs/json-file-reporter`
 
 ## 9.0.0
 
