@@ -1,6 +1,6 @@
 {
-  "mochajsJsonFileReporterReporterOptions": {
+  "esJoyJsonFileReporterReporterOptions": {
     "output": "test-support/results/file-{id}.json"
   },
-  "reporterEnabled": "spec, @mochajs/json-file-reporter"
+  "reporterEnabled": "spec, @es-joy/json-file-reporter"
 }

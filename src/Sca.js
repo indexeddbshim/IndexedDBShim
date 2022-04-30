@@ -18,7 +18,7 @@ function register (func) {
 function encode (obj, func) {
     let ret;
     try {
-        // eslint-disable-next-line node/no-sync
+        // eslint-disable-next-line n/no-sync
         ret = typeson.stringifySync(obj);
     } catch (err) {
         // SCA in typeson-registry using `DOMException` which is not defined (e.g., in Node)

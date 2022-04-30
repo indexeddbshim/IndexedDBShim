@@ -1,4 +1,4 @@
-/* eslint-disable node/no-sync */
+/* eslint-disable n/no-sync */
 const fs = require('fs');
 const path = require('path');
 const got = require('got');

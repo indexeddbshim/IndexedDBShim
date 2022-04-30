@@ -21,7 +21,7 @@ const rules = {
     'jsdoc/require-param-type': 0,
     'jsdoc/check-types': 0,
 
-    'node/prefer-promises/fs': 0,
+    'n/prefer-promises/fs': 0,
     'promise/prefer-await-to-callbacks': 0,
     'promise/prefer-await-to-then': 0,
     'unicorn/no-unsafe-regex': 0,
@@ -110,17 +110,17 @@ module.exports = {
                 'padded-blocks': ['off'],
                 'import/unambiguous': ['off'],
                 'import/no-unresolved': ['off'],
-                'node/no-missing-require': ['off'],
-                'node/no-missing-import': ['off'],
-                'node/no-unsupported-features/es-syntax': 'off'
+                'n/no-missing-require': ['off'],
+                'n/no-missing-import': ['off'],
+                'n/no-unsupported-features/es-syntax': 'off'
             }
         },
         // @core-js-bundle can provide
         {
             files: ['src/**'],
             rules: {
-                'node/no-unsupported-features/es-builtins': 'off',
-                'node/no-unsupported-features/es-syntax': 'off'
+                'n/no-unsupported-features/es-builtins': 'off',
+                'n/no-unsupported-features/es-syntax': 'off'
             }
         },
         // May need to support a lower browser version for test/development files, but
@@ -145,9 +145,9 @@ module.exports = {
                 'object-shorthand': ['off'],
                 'prefer-destructuring': ['off'],
                 'require-unicode-regexp': ['off'],
-                'node/no-unsupported-features/es-syntax': 'off',
-                'node/no-unsupported-features/es-builtins': ['off'],
-                'node/no-unsupported-features/node-builtins': ['off'],
+                'n/no-unsupported-features/es-syntax': 'off',
+                'n/no-unsupported-features/es-builtins': ['off'],
+                'n/no-unsupported-features/node-builtins': ['off'],
                 'unicorn/prefer-add-event-listener': ['off'],
                 'unicorn/no-instanceof-array': ['off'],
 

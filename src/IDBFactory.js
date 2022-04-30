@@ -114,9 +114,7 @@ let sysdb;
 let nameCounter = 0;
 
 function getLatestCachedWebSQLVersion (name) {
-    return Object.keys(websqlDBCache[name]).map((version) => {
-        return Number(version);
-    }).reduce(
+    return Object.keys(websqlDBCache[name]).map(Number).reduce(
         (prev, curr) => {
             return curr > prev ? curr : prev;
         }, 0

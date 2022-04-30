@@ -1,4 +1,4 @@
-/* eslint-disable node/no-sync */
+/* eslint-disable n/no-sync */
 // Launcher script for WebWorkers.
 //
 // Sets up context and runs a worker script. This is not intended to be
@@ -251,7 +251,7 @@ prom.then((scriptSource) => {
     workerCtx.location = scriptLoc;
     workerCtx.closing = false;
     workerCtx.close = function () {
-        // eslint-disable-next-line unicorn/no-process-exit
+        // eslint-disable-next-line n/no-process-exit, unicorn/no-process-exit
         process.exit(0);
     };
     workerCtx.eventHandlers = {message: []};

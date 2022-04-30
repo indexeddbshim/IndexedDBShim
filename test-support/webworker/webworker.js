@@ -1,4 +1,4 @@
-/* eslint-disable node/no-sync */
+/* eslint-disable n/no-sync */
 // Todo: SharedWorker/ServiceWorker/MessageChannel polyfills
 // WebWorkers implementation.
 //
@@ -81,7 +81,7 @@ module.exports = function (workerConfig) {
         let basePath;
         // We don't use `new URL` as we need `url.parse` relative URL behavior; see
         //   https://github.com/nodejs/node/issues/12682
-        const urlObj = url.parse(src); // eslint-disable-line node/no-deprecated-api
+        const urlObj = url.parse(src); // eslint-disable-line n/no-deprecated-api
         if (urlObj.host !== null) {
             const {protocol} = urlObj;
             if (!(workerConfig.permittedProtocols || ['http', 'https']).map((p) => p + ':').includes(protocol)) {

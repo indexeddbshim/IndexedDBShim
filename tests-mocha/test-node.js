@@ -26,17 +26,17 @@ window.onerror = function () {
 };
 
 (function () {
-    const setGlobalVars = require('../dist/indexeddbshim-node.js'); // eslint-disable-line node/global-require
+    const setGlobalVars = require('../dist/indexeddbshim-node.js'); // eslint-disable-line n/global-require
     setGlobalVars(window, {addNonIDBGlobals: true});
 
-    require('./test-environment.js'); // eslint-disable-line node/global-require
-    require('./test-utils.js'); // eslint-disable-line node/global-require
+    require('./test-environment.js'); // eslint-disable-line n/global-require
+    require('./test-utils.js'); // eslint-disable-line n/global-require
 
     var tests; // eslint-disable-line no-var
 
-    if (process.env.npm_config_test) { // eslint-disable-line node/no-process-env
-        tests = [process.env.npm_config_test]; // eslint-disable-line node/no-process-env
-        console.log('Running test: ' + process.env.npm_config_test); // eslint-disable-line node/no-process-env
+    if (process.env.npm_config_test) { // eslint-disable-line n/no-process-env
+        tests = [process.env.npm_config_test]; // eslint-disable-line n/no-process-env
+        console.log('Running test: ' + process.env.npm_config_test); // eslint-disable-line n/no-process-env
     } else {
         tests = [
             'api-spec.js',
@@ -73,6 +73,6 @@ window.onerror = function () {
         ];
     }
     tests.forEach(function (path) {
-        require('./' + path); // eslint-disable-line import/no-dynamic-require, node/global-require
+        require('./' + path); // eslint-disable-line import/no-dynamic-require, n/global-require
     });
 }());

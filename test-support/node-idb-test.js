@@ -96,6 +96,7 @@ process.on('unhandledRejection', (reason, p) => {
 });
 */
 function exit () {
+    // eslint-disable-next-line n/no-process-exit
     process.exit();
 }
 async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, item = 0) {
@@ -509,7 +510,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         delete window.URL.createObjectURL;
         global.URL = window.URL;
         // Polyfill enough for our tests
-        const cou = require( // eslint-disable-line node/global-require
+        const cou = require( // eslint-disable-line n/global-require
             '../node_modules/typeson-registry/polyfills/createObjectURL.umd.js'
         );
         global.URL.createObjectURL = cou.createObjectURL;
