@@ -1,5 +1,15 @@
 # CHANGES for indexeddbshim
 
+## ?
+
+### User-impacting
+
+- chore: update `typeson`
+
+### Dev-impacting
+
+- npm: update devDeps
+
 ## 10.0.0
 
 - BREAKING: Requires Node 14
