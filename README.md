@@ -23,7 +23,7 @@
 
 <!--[![issuehunt-to-marktext](https://issuehunt.io/static/embed/issuehunt-button-v1.svg)](https://issuehunt.io/r/indexeddbshim/indexeddbshim)-->
 
-|[Live Demo (stable)!](https://raw.githack.com/indexeddbshim/indexeddbshim/v6.2.0/index.html) | [Live Demo (master)!](https://indexeddbshim.github.io/indexeddbshim/) |
+|[Live Demo (stable)!](https://raw.githack.com/indexeddbshim/indexeddbshim/v8.0.0/index.html) | [Live Demo (master)!](https://indexeddbshim.github.io/IndexedDBShim/) |
 | -------------- | ----------------- |
 
 __Use a single, indexable, offline storage API across all desktop and mobile
