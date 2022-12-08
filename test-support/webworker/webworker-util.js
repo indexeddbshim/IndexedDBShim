@@ -156,10 +156,10 @@ const WorkerLocation = function (url) {
     this.protocol = u.protocol.slice(0, -1);
     this.host = u.host;
     this.hostname = u.hostname;
-    this.port = (u.port) ? u.port : portForProto(this.protocol);
+    this.port = u.port || portForProto(this.protocol);
     this.pathname = (u.pathname) ? path.normalize(u.pathname) : '/';
-    this.search = (u.search) ? u.search : '';
-    this.hash = (u.hash) ? u.hash : '';
+    this.search = u.search || '';
+    this.hash = u.hash || '';
 };
 
 exports.WorkerLocation = WorkerLocation;

@@ -8,6 +8,7 @@ const rules = {
     'no-restricted-syntax': 0,
 
     // Disable until find time to address
+    'unicorn/prefer-top-level-await': 0,
     'default-case': 0,
     'max-len': 0,
     'no-console': 0,

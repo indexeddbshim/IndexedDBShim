@@ -1,4 +1,4 @@
-/*! indexeddbshim - v9.0.0 - 2/26/2022 */
+/*! indexeddbshim - v10.0.0 - 12/8/2022 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -6,6 +6,33 @@
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.IDBKeyUtils = {}));
 })(this, (function (exports) { 'use strict';
 
+  function _iterableToArrayLimit(arr, i) {
+    var _i = null == arr ? null : "undefined" != typeof Symbol && arr[Symbol.iterator] || arr["@@iterator"];
+    if (null != _i) {
+      var _s,
+        _e,
+        _x,
+        _r,
+        _arr = [],
+        _n = !0,
+        _d = !1;
+      try {
+        if (_x = (_i = _i.call(arr)).next, 0 === i) {
+          if (Object(_i) !== _i) return;
+          _n = !1;
+        } else for (; !(_n = (_s = _x.call(_i)).done) && (_arr.push(_s.value), _arr.length !== i); _n = !0);
+      } catch (err) {
+        _d = !0, _e = err;
+      } finally {
+        try {
+          if (!_n && null != _i.return && (_r = _i.return(), Object(_r) !== _r)) return;
+        } finally {
+          if (_d) throw _e;
+        }
+      }
+      return _arr;
+    }
+  }
   function _typeof(obj) {
     "@babel/helpers - typeof";
 
@@ -15,57 +42,21 @@
       return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
     }, _typeof(obj);
   }
-
   function _slicedToArray(arr, i) {
     return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
   }
-
   function _toConsumableArray(arr) {
     return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread();
   }
-
   function _arrayWithoutHoles(arr) {
     if (Array.isArray(arr)) return _arrayLikeToArray(arr);
   }
-
   function _arrayWithHoles(arr) {
     if (Array.isArray(arr)) return arr;
   }
-
   function _iterableToArray(iter) {
     if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter);
   }
-
-  function _iterableToArrayLimit(arr, i) {
-    var _i = arr == null ? null : typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"];
-
-    if (_i == null) return;
-    var _arr = [];
-    var _n = true;
-    var _d = false;
-
-    var _s, _e;
-
-    try {
-      for (_i = _i.call(arr); !(_n = (_s = _i.next()).done); _n = true) {
-        _arr.push(_s.value);
-
-        if (i && _arr.length === i) break;
-      }
-    } catch (err) {
-      _d = true;
-      _e = err;
-    } finally {
-      try {
-        if (!_n && _i["return"] != null) _i["return"]();
-      } finally {
-        if (_d) throw _e;
-      }
-    }
-
-    return _arr;
-  }
-
   function _unsupportedIterableToArray(o, minLen) {
     if (!o) return;
     if (typeof o === "string") return _arrayLikeToArray(o, minLen);
@@ -74,33 +65,24 @@
     if (n === "Map" || n === "Set") return Array.from(o);
     if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
   }
-
   function _arrayLikeToArray(arr, len) {
     if (len == null || len > arr.length) len = arr.length;
-
     for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
-
     return arr2;
   }
-
   function _nonIterableSpread() {
     throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
-
   function _nonIterableRest() {
     throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }
-
   function _createForOfIteratorHelper(o, allowArrayLike) {
     var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"];
-
     if (!it) {
       if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
         if (it) o = it;
         var i = 0;
-
         var F = function () {};
-
         return {
           s: F,
           n: function () {
@@ -118,13 +100,11 @@
           f: F
         };
       }
-
       throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
     }
-
     var normalCompletion = true,
-        didErr = false,
-        err;
+      didErr = false,
+      err;
     return {
       s: function () {
         it = it.call(o);
@@ -150,40 +130,54 @@
 
   var map = {};
   var CFG = {};
-  [// Boolean for verbose reporting
-  'DEBUG', // Effectively defaults to false (ignored unless `true`)
+  [
+  // Boolean for verbose reporting
+  'DEBUG',
+  // Effectively defaults to false (ignored unless `true`)
+
   // Boolean (effectively defaults to true) on whether to cache WebSQL
   //  `openDatabase` instances
-  'cacheDatabaseInstances', // Boolean on whether to auto-name databases (based on an
+  'cacheDatabaseInstances',
+  // Boolean on whether to auto-name databases (based on an
   //   auto-increment) when the empty string is supplied; useful with
   //   `memoryDatabase`; defaults to `false` which means the empty string
   //   will be used as the (valid) database name
-  'autoName', // Determines whether the slow-performing `Object.setPrototypeOf`
+  'autoName',
+  // Determines whether the slow-performing `Object.setPrototypeOf`
   //    calls required for full WebIDL compliance will be used. Probably
   //    only needed for testing or environments where full introspection
   //    on class relationships is required; see
   //    http://stackoverflow.com/questions/41927589/rationales-consequences-of-webidl-class-inheritance-requirements
-  'fullIDLSupport', // Effectively defaults to false (ignored unless `true`)
+  'fullIDLSupport',
+  // Effectively defaults to false (ignored unless `true`)
+
   // Boolean on whether to perform origin checks in `IDBFactory` methods
   // Effectively defaults to `true` (must be set to `false` to cancel checks)
-  'checkOrigin', // Used by `IDBCursor` continue methods for number of records to cache;
+  'checkOrigin',
+  // Used by `IDBCursor` continue methods for number of records to cache;
   //  Defaults to 100
-  'cursorPreloadPackSize', // See optional API (`shimIndexedDB.__setUnicodeIdentifiers`);
+  'cursorPreloadPackSize',
+  // See optional API (`shimIndexedDB.__setUnicodeIdentifiers`);
   //    or just use the Unicode builds which invoke this method
   //    automatically using the large, fully spec-compliant, regular
   //    expression strings of `src/UnicodeIdentifiers.js`)
   // In the non-Unicode builds, defaults to /[$A-Z_a-z]/
-  'UnicodeIDStart', // In the non-Unicode builds, defaults to /[$0-9A-Z_a-z]/
-  'UnicodeIDContinue', // Used by SCA.js for optional restructuring of typeson-registry
+  'UnicodeIDStart',
+  // In the non-Unicode builds, defaults to /[$0-9A-Z_a-z]/
+  'UnicodeIDContinue',
+  // Used by SCA.js for optional restructuring of typeson-registry
   //   Structured Cloning Algorithm; should only be needed for ensuring data
   //   created in 3.* versions of IndexedDBShim continue to work; see the
   //   library `typeson-registry-sca-reverter` to get a function to do this
-  'registerSCA', // BROWSER-SPECIFIC CONFIG
-  'avoidAutoShim', // Where WebSQL is detected but where `indexedDB` is
+  'registerSCA',
+  // BROWSER-SPECIFIC CONFIG
+  'avoidAutoShim',
+  // Where WebSQL is detected but where `indexedDB` is
   //    missing or poor support is known (non-Chrome Android or
   //    non-Safari iOS9), the shim will be auto-applied without
   //   `shimIndexedDB.__useShim()`. Set this to `true` to avoid forcing
   //    the shim for such cases.
+
   // -----------SQL CONFIG----------
   // Object (`window` in the browser) on which there may be an
   //  `openDatabase` method (if any) for WebSQL. (The browser
@@ -192,7 +186,8 @@
   // Defaults to `window` or `self` in browser builds or
   //  a singleton object with the `openDatabase` method set to
   //  the "websql" package in Node.
-  'win', // For internal `openDatabase` calls made by `IDBFactory` methods;
+  'win',
+  // For internal `openDatabase` calls made by `IDBFactory` methods;
   //  per the WebSQL spec, "User agents are expected to use the display name
   //  and the estimated database size to optimize the user experience.
   //  For example, a user agent could use the estimated size to suggest an
@@ -201,61 +196,73 @@
   //  of the user agent prompting the user for permission to increase the
   //  quota every five megabytes."
   // Defaults to (4 * 1024 * 1024) or (25 * 1024 * 1024) in Safari
-  'DEFAULT_DB_SIZE', // Whether to create indexes on SQLite tables (and also whether to try
+  'DEFAULT_DB_SIZE',
+  // Whether to create indexes on SQLite tables (and also whether to try
   //   dropping)
   // Effectively defaults to `false` (ignored unless `true`)
-  'useSQLiteIndexes', // NODE-IMPINGING SETTINGS (created for sake of limitations in Node
+  'useSQLiteIndexes',
+  // NODE-IMPINGING SETTINGS (created for sake of limitations in Node
   //    or desktop file system implementation but applied by default in
   //    browser for parity)
+
   // File system module with `unlink` to remove deleted database files
-  'fs', // Used when setting global shims to determine whether to try to add
+  'fs',
+  // Used when setting global shims to determine whether to try to add
   //   other globals shimmed by the library (`ShimDOMException`,
   //   `ShimDOMStringList`, `ShimEvent`, `ShimCustomEvent`, `ShimEventTarget`)
   // Effectively defaults to `false` (ignored unless `true`)
-  'addNonIDBGlobals', // Used when setting global shims to determine whether to try to overwrite
+  'addNonIDBGlobals',
+  // Used when setting global shims to determine whether to try to overwrite
   //   other globals shimmed by the library (`DOMException`, `DOMStringList`,
   //   `Event`, `CustomEvent`, `EventTarget`)
   // Effectively defaults to `false` (ignored unless `true`)
-  'replaceNonIDBGlobals', // Overcoming limitations with node-sqlite3/storing database name on
+  'replaceNonIDBGlobals',
+  // Overcoming limitations with node-sqlite3/storing database name on
   //   file systems
   // https://en.wikipedia.org/wiki/Filename#Reserved_characters_and_words
   // Defaults to prefixing database with `D_`, escaping
   //   `databaseCharacterEscapeList`, escaping NUL, and
   //   escaping upper case letters, as well as enforcing
   //   `databaseNameLengthLimit`
-  'escapeDatabaseName', // Not used internally; usable as a convenience method
-  'unescapeDatabaseName', // Defaults to global regex representing the following
+  'escapeDatabaseName',
+  // Not used internally; usable as a convenience method
+  'unescapeDatabaseName',
+  // Defaults to global regex representing the following
   //   (characters nevertheless commonly reserved in modern,
   //   Unicode-supporting systems): 0x00-0x1F 0x7F " * / : < > ? \ |
-  'databaseCharacterEscapeList', // Defaults to 254 (shortest typical modern file length limit)
-  'databaseNameLengthLimit', // Boolean defaulting to true on whether to escape NFD-escaping
+  'databaseCharacterEscapeList',
+  // Defaults to 254 (shortest typical modern file length limit)
+  'databaseNameLengthLimit',
+  // Boolean defaulting to true on whether to escape NFD-escaping
   //   characters to avoid clashes on MacOS which performs NFD on files
-  'escapeNFDForDatabaseNames', // Boolean on whether to add the `.sqlite` extension to file names;
+  'escapeNFDForDatabaseNames',
+  // Boolean on whether to add the `.sqlite` extension to file names;
   //   defaults to `true`
-  'addSQLiteExtension', // Various types of in-memory databases that can auto-delete
+  'addSQLiteExtension',
+  // Various types of in-memory databases that can auto-delete
   ['memoryDatabase', function (val) {
     if (!/^(?::memory:|file::memory:(\?(?:(?!#)[\s\S])*)?(#(?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?)?$/.test(val)) {
       throw new TypeError('`memoryDatabase` must be the empty string, ":memory:", or a ' + '"file::memory:[?queryString][#hash] URL".');
     }
-  }], // NODE-SPECIFIC CONFIG
+  }],
+  // NODE-SPECIFIC CONFIG
   // Boolean on whether to delete the database file itself after
   //   `deleteDatabase`; defaults to `true` as the database will be empty
-  'deleteDatabaseFiles', 'databaseBasePath', 'sysDatabaseBasePath', // NODE-SPECIFIC WEBSQL CONFIG
-  'sqlBusyTimeout', // Defaults to 1000
-  'sqlTrace', // Callback not used by default
+  'deleteDatabaseFiles', 'databaseBasePath', 'sysDatabaseBasePath',
+  // NODE-SPECIFIC WEBSQL CONFIG
+  'sqlBusyTimeout',
+  // Defaults to 1000
+  'sqlTrace',
+  // Callback not used by default
   'sqlProfile' // Callback not used by default
   ].forEach(function (prop) {
     var validator;
-
     if (Array.isArray(prop)) {
       var _prop = prop;
-
       var _prop2 = _slicedToArray(_prop, 2);
-
       prop = _prop2[0];
       validator = _prop2[1];
     }
-
     Object.defineProperty(CFG, prop, {
       get: function get() {
         return map[prop];
@@ -264,7 +271,6 @@
         if (validator) {
           validator(val);
         }
-
         map[prop] = val;
       }
     });
@@ -276,12 +282,11 @@
    * @param {string} message
    * @returns {DOMException}
    */
-
   function createNativeDOMException(name, message) {
     return new DOMException.prototype.constructor(message, name || 'DOMException');
-  } // From web-platform-tests testharness.js name_code_map (though not in new spec)
+  }
 
-
+  // From web-platform-tests testharness.js name_code_map (though not in new spec)
   var codes = {
     IndexSizeError: 1,
     HierarchyRequestError: 3,
@@ -343,27 +348,25 @@
     INVALID_NODE_TYPE_ERR: 24,
     DATA_CLONE_ERR: 25
   };
+
   /**
    *
    * @returns {DOMException}
    */
-
   function createNonNativeDOMExceptionClass() {
     function DOMException(message, name) {
       // const err = Error.prototype.constructor.call(this, message); // Any use to this? Won't set this.message
       this[Symbol.toStringTag] = 'DOMException';
       this._code = name in codes ? codes[name] : legacyCodes[name] || 0;
-      this._name = name || 'Error'; // We avoid `String()` in this next line as it converts Symbols
-
+      this._name = name || 'Error';
+      // We avoid `String()` in this next line as it converts Symbols
       this._message = message === undefined ? '' : '' + message; // eslint-disable-line no-implicit-coercion
-
       Object.defineProperty(this, 'code', {
         configurable: true,
         enumerable: true,
         writable: true,
         value: this._code
       });
-
       if (name !== undefined) {
         Object.defineProperty(this, 'name', {
           configurable: true,
@@ -372,7 +375,6 @@
           value: this._name
         });
       }
-
       if (message !== undefined) {
         Object.defineProperty(this, 'message', {
           configurable: true,
@@ -381,17 +383,14 @@
           value: this._message
         });
       }
-    } // Necessary for W3C tests which complains if `DOMException` has properties on its "own" prototype
+    }
+
+    // Necessary for W3C tests which complains if `DOMException` has properties on its "own" prototype
+
     // class DummyDOMException extends Error {}; // Sometimes causing problems in Node
     // eslint-disable-next-line func-name-matching
-
-
-    var DummyDOMException = function DOMException() {
-      /* */
-    };
-
+    var DummyDOMException = function DOMException() {/* */};
     DummyDOMException.prototype = Object.create(Error.prototype); // Intended for subclassing
-
     ['name', 'message'].forEach(function (prop) {
       Object.defineProperty(DummyDOMException.prototype, prop, {
         enumerable: true,
@@ -399,12 +398,11 @@
           if (!(this instanceof DOMException || this instanceof DummyDOMException || this instanceof Error)) {
             throw new TypeError('Illegal invocation');
           }
-
           return this['_' + prop];
         }
       });
-    }); // DOMException uses the same `toString` as `Error`
-
+    });
+    // DOMException uses the same `toString` as `Error`
     Object.defineProperty(DummyDOMException.prototype, 'code', {
       configurable: true,
       enumerable: true,
@@ -449,18 +447,18 @@
     });
     return DOMException;
   }
-
   var ShimNonNativeDOMException = createNonNativeDOMExceptionClass();
+
   /**
    * Creates a generic Error object.
    * @param {string} name
    * @param {string} message
    * @returns {Error}
    */
-
   function createNonNativeDOMException(name, message) {
     return new ShimNonNativeDOMException(message, name);
   }
+
   /**
    * Logs detailed error information to the console.
    * @param {string} name
@@ -468,37 +466,32 @@
    * @param {string|Error|null} error
    * @returns {void}
    */
-
-
   function logError(name, message, error) {
     if (CFG.DEBUG) {
       if (error && error.message) {
         error = error.message;
       }
-
       var method = typeof console.error === 'function' ? 'error' : 'log';
       console[method](name + ': ' + message + '. ' + (error || ''));
       console.trace && console.trace();
     }
   }
-
   function isErrorOrDOMErrorOrDOMException(obj) {
-    return obj && _typeof(obj) === 'object' && // We don't use util.isObj here as mutual dependency causing problems in Babel with browser
+    return obj && _typeof(obj) === 'object' &&
+    // We don't use util.isObj here as mutual dependency causing problems in Babel with browser
     typeof obj.name === 'string';
   }
-
   var test,
-      useNativeDOMException = false; // Test whether we can use the browser's native DOMException class
+    useNativeDOMException = false;
 
+  // Test whether we can use the browser's native DOMException class
   try {
     test = createNativeDOMException('test name', 'test message');
-
     if (isErrorOrDOMErrorOrDOMException(test) && test.name === 'test name' && test.message === 'test message') {
       // Native DOMException works as expected
       useNativeDOMException = true;
     }
   } catch (e) {}
-
   var createDOMException = useNativeDOMException ? function (name, message, error) {
     logError(name, message, error);
     return createNativeDOMException(name, message);
@@ -515,38 +508,32 @@
       if (unmatchedHighSurrogate) {
         return '^2' + unmatchedHighSurrogate.codePointAt().toString(16).padStart(4, '0');
       }
-
       return (precedingLow || '') + '^3' + unmatchedLowSurrogate.codePointAt().toString(16).padStart(4, '0');
     });
   }
 
-
+  // The escaping of unmatched surrogates was needed by Chrome but not Node
   function escapeSQLiteStatement(arg) {
     return escapeUnmatchedSurrogates(arg.replace(/\^/g, '^^').replace(/\0/g, '^0'));
   }
-
   function isObj(obj) {
     return obj && _typeof(obj) === 'object';
   }
-
   function isDate(obj) {
     return isObj(obj) && typeof obj.getDate === 'function';
   }
-
   function isBlob(obj) {
     return isObj(obj) && typeof obj.size === 'number' && typeof obj.slice === 'function' && !('lastModified' in obj);
   }
-
   function isFile(obj) {
     return isObj(obj) && typeof obj.name === 'string' && typeof obj.slice === 'function' && 'lastModified' in obj;
   }
-
   function isBinary(obj) {
-    return isObj(obj) && typeof obj.byteLength === 'number' && (typeof obj.slice === 'function' || // `TypedArray` (view on buffer) or `ArrayBuffer`
+    return isObj(obj) && typeof obj.byteLength === 'number' && (typeof obj.slice === 'function' ||
+    // `TypedArray` (view on buffer) or `ArrayBuffer`
     typeof obj.getFloat64 === 'function' // `DataView` (view on buffer)
     );
   }
-
   function isNullish(v) {
     return v === null || v === undefined;
   }
@@ -557,38 +544,32 @@
    * @param second
    * @returns {number}
    */
-
   function cmp(first, second) {
     var encodedKey1 = _encode(first);
     var encodedKey2 = _encode(second);
     var result = encodedKey1 > encodedKey2 ? 1 : encodedKey1 === encodedKey2 ? 0 : -1;
-
     if (CFG.DEBUG) {
       // verify that the keys encoded correctly
       var decodedKey1 = _decode(encodedKey1);
       var decodedKey2 = _decode(encodedKey2);
-
       if (_typeof(first) === 'object') {
         first = JSON.stringify(first);
         decodedKey1 = JSON.stringify(decodedKey1);
       }
-
       if (_typeof(second) === 'object') {
         second = JSON.stringify(second);
         decodedKey2 = JSON.stringify(decodedKey2);
-      } // Encoding/decoding mismatches are usually due to a loss of
+      }
+
+      // Encoding/decoding mismatches are usually due to a loss of
       //   floating-point precision
-
-
       if (decodedKey1 !== first) {
         console.warn(first + ' was incorrectly encoded as ' + decodedKey1);
       }
-
       if (decodedKey2 !== second) {
         console.warn(second + ' was incorrectly encoded as ' + decodedKey2);
       }
     }
-
     return result;
   }
 
@@ -600,7 +581,6 @@
    * Encodes the keys based on their types. This is required to maintain collations
    * We leave space for future keys.
    */
-
   var keyTypeToEncodedChar = {
     invalid: 100,
     number: 200,
@@ -617,6 +597,7 @@
     o[keyTypeToEncodedChar[k]] = k;
     return o;
   }, {});
+
   /**
    * The sign values for numbers, ordered from least to greatest.
    *  - "negativeInfinity": Sorts below all other values.
@@ -626,7 +607,6 @@
    *  - "largePositive": Positive values greater than or equal to one.
    *  - "positiveInfinity": Sorts above all other values.
    */
-
   var signValues = ['negativeInfinity', 'bigNegative', 'smallNegative', 'smallPositive', 'bigPositive', 'positiveInfinity'];
   var types = {
     invalid: {
@@ -651,21 +631,23 @@
       // The encode step checks for six numeric cases and generates 14-digit encoded
       // sign-exponent-mantissa strings.
       encode: function encode(key) {
-        var key32 = key === Number.MIN_VALUE // Mocha test `IDBFactory/cmp-spec.js` exposed problem for some
+        var key32 = key === Number.MIN_VALUE
+        // Mocha test `IDBFactory/cmp-spec.js` exposed problem for some
         //   Node (and Chrome) versions with `Number.MIN_VALUE` being treated
         //   as 0
         // https://stackoverflow.com/questions/43305403/number-min-value-and-tostring
-        ? '0.' + '0'.repeat(214) + '2' : Math.abs(key).toString(32); // Get the index of the decimal.
-
-        var decimalIndex = key32.indexOf('.'); // Remove the decimal.
-
-        key32 = decimalIndex !== -1 ? key32.replace('.', '') : key32; // Get the index of the first significant digit.
-
-        var significantDigitIndex = key32.search(/(?:(?!0)[\s\S])/); // Truncate leading zeros.
-
+        ? '0.' + '0'.repeat(214) + '2' : Math.abs(key).toString(32);
+        // Get the index of the decimal.
+        var decimalIndex = key32.indexOf('.');
+        // Remove the decimal.
+        key32 = decimalIndex !== -1 ? key32.replace('.', '') : key32;
+        // Get the index of the first significant digit.
+        var significantDigitIndex = key32.search(/(?:(?!0)[\s\S])/);
+        // Truncate leading zeros.
         key32 = key32.slice(significantDigitIndex);
-        var sign, exponent, mantissa; // Finite cases:
+        var sign, exponent, mantissa;
 
+        // Finite cases:
         if (Number.isFinite(Number(key))) {
           // Negative cases:
           if (key < 0) {
@@ -673,30 +655,31 @@
             if (key > -1) {
               sign = signValues.indexOf('smallNegative');
               exponent = padBase32Exponent(significantDigitIndex);
-              mantissa = flipBase32(padBase32Mantissa(key32)); // Non-negative exponent case:
+              mantissa = flipBase32(padBase32Mantissa(key32));
+              // Non-negative exponent case:
             } else {
               sign = signValues.indexOf('bigNegative');
               exponent = flipBase32(padBase32Exponent(decimalIndex !== -1 ? decimalIndex : key32.length));
               mantissa = flipBase32(padBase32Mantissa(key32));
-            } // Non-negative cases:
+            }
+            // Non-negative cases:
             // Negative exponent case:
-
           } else if (key < 1) {
             sign = signValues.indexOf('smallPositive');
             exponent = flipBase32(padBase32Exponent(significantDigitIndex));
-            mantissa = padBase32Mantissa(key32); // Non-negative exponent case:
+            mantissa = padBase32Mantissa(key32);
+            // Non-negative exponent case:
           } else {
             sign = signValues.indexOf('bigPositive');
             exponent = padBase32Exponent(decimalIndex !== -1 ? decimalIndex : key32.length);
             mantissa = padBase32Mantissa(key32);
-          } // Infinite cases:
-
+          }
+          // Infinite cases:
         } else {
           exponent = zeros(2);
           mantissa = zeros(11);
           sign = signValues.indexOf(key > 0 ? 'positiveInfinity' : 'negativeInfinity');
         }
-
         return keyTypeToEncodedChar.number + '-' + sign + exponent + mantissa;
       },
       // The decode step must interpret the sign, reflip values encoded as the 32's complements,
@@ -706,31 +689,24 @@
         var sign = Number(key.slice(2, 3));
         var exponent = key.slice(3, 5);
         var mantissa = key.slice(5, 16);
-
         switch (signValues[sign]) {
           case 'negativeInfinity':
             return Number.NEGATIVE_INFINITY;
-
           case 'positiveInfinity':
             return Number.POSITIVE_INFINITY;
-
           case 'bigPositive':
             return pow32(mantissa, exponent);
-
           case 'smallPositive':
             exponent = negate(flipBase32(exponent));
             return pow32(mantissa, exponent);
-
           case 'smallNegative':
             exponent = negate(exponent);
             mantissa = flipBase32(mantissa);
             return -pow32(mantissa, exponent);
-
           case 'bigNegative':
             exponent = flipBase32(exponent);
             mantissa = flipBase32(mantissa);
             return -pow32(mantissa, exponent);
-
           default:
             throw new Error('Invalid number.');
         }
@@ -750,17 +726,14 @@
           // prepend each character with a dash, and append a space to the end
           key = key.replace(/((?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, '-$1') + ' ';
         }
-
         return keyTypeToEncodedChar.string + '-' + key;
       },
       decode: function decode(key, inArray) {
         key = key.slice(2);
-
         if (inArray) {
           // remove the space at the end, and the dash before each character
           key = key.slice(0, -1).replace(/\x2D((?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, '$1');
         }
-
         return key;
       }
     },
@@ -770,19 +743,14 @@
     array: {
       encode: function encode(key) {
         var encoded = [];
-
         var _iterator = _createForOfIteratorHelper(key.entries()),
-            _step;
-
+          _step;
         try {
           for (_iterator.s(); !(_step = _iterator.n()).done;) {
             var _step$value = _slicedToArray(_step.value, 2),
-                i = _step$value[0],
-                item = _step$value[1];
-
+              i = _step$value[0],
+              item = _step$value[1];
             var encodedItem = _encode(item, true); // encode the array item
-
-
             encoded[i] = encodedItem;
           }
         } catch (err) {
@@ -790,24 +758,17 @@
         } finally {
           _iterator.f();
         }
-
         encoded.push(keyTypeToEncodedChar.invalid + '-'); // append an extra item, so empty arrays sort correctly
-
         return keyTypeToEncodedChar.array + '-' + JSON.stringify(encoded);
       },
       decode: function decode(key) {
         var decoded = JSON.parse(key.slice(2));
         decoded.pop(); // remove the extra item
-
         for (var i = 0; i < decoded.length; i++) {
           var item = decoded[i];
-
           var decodedItem = _decode(item, true); // decode the item
-
-
           decoded[i] = decodedItem;
         }
-
         return decoded;
       }
     },
@@ -841,39 +802,35 @@
       }
     }
   };
+
   /**
    * Return a padded base-32 exponent value.
    * @param {number} n
    * @returns {string}
    */
-
   function padBase32Exponent(n) {
     n = n.toString(32);
     return n.length === 1 ? '0' + n : n;
   }
+
   /**
    * Return a padded base-32 mantissa.
    * @param {string} s
    * @returns {string}
    */
-
-
   function padBase32Mantissa(s) {
     return (s + zeros(11)).slice(0, 11);
   }
+
   /**
    * Flips each digit of a base-32 encoded string.
    * @param {string} encoded
    * @returns {string}
    */
-
-
   function flipBase32(encoded) {
     var flipped = '';
-
     var _iterator2 = _createForOfIteratorHelper(encoded),
-        _step2;
-
+      _step2;
     try {
       for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
         var ch = _step2.value;
@@ -884,9 +841,9 @@
     } finally {
       _iterator2.f();
     }
-
     return flipped;
   }
+
   /**
    * Base-32 power function.
    * RESEARCH: This function does not precisely decode floats because it performs
@@ -899,15 +856,11 @@
    * @param {string} exponent
    * @returns {number}
    */
-
-
   function pow32(mantissa, exponent) {
     exponent = Number.parseInt(exponent, 32);
-
     if (exponent < 0) {
       return roundToPrecision(Number.parseInt(mantissa, 32) * Math.pow(32, exponent - 10));
     }
-
     if (exponent < 11) {
       var whole = mantissa.slice(0, exponent);
       whole = Number.parseInt(whole, 32);
@@ -915,41 +868,38 @@
       fraction = Number.parseInt(fraction, 32) * Math.pow(32, exponent - 11);
       return roundToPrecision(whole + fraction);
     }
-
     var expansion = mantissa + zeros(exponent - 11);
     return Number.parseInt(expansion, 32);
   }
+
   /**
    * @param {Float} num
    * @param {Float} [precision=16]
    * @returns {Float}
    */
-
-
   function roundToPrecision(num) {
     var precision = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 16;
     return Number.parseFloat(num.toPrecision(precision));
   }
+
   /**
    * Returns a string of n zeros.
    * @param {number} n
    * @returns {string}
    */
-
-
   function zeros(n) {
     return '0'.repeat(n);
   }
+
   /**
    * Negates numeric strings.
    * @param {string} s
    * @returns {string}
    */
-
-
   function negate(s) {
     return '-' + s;
   }
+
   /**
   * @typedef {"number"|"date"|"string"|"binary"|"array"} module:Key.KeyType
   */
@@ -958,17 +908,14 @@
    * @param key
    * @returns {module:Key.KeyType}
    */
-
-
   function getKeyType(key) {
     if (Array.isArray(key)) return 'array';
     if (isDate(key)) return 'date';
     if (isBinary(key)) return 'binary';
-
     var keyType = _typeof(key);
-
     return ['string', 'number'].includes(keyType) ? keyType : 'invalid';
   }
+
   /**
    * Keys must be strings, numbers (besides `NaN`), Dates (if value is not
    *   `NaN`), binary objects or Arrays.
@@ -976,21 +923,19 @@
    * @param {?(Array)} [seen] An array of already seen keys
    * @returns {module:Key.keyValueObject}
    */
-
-
   function convertValueToKey(input, seen) {
     return convertValueToKeyValueDecoded(input, seen, false, true);
   }
+
   /**
   * Currently not in use.
   * @param input
   * @returns {module:Key.keyValueObject}
   */
-
-
   function convertValueToMultiEntryKey(input) {
     return convertValueToKeyValueDecoded(input, null, true, true);
   }
+
   /**
    *
    * @param O
@@ -998,31 +943,25 @@
    * @see https://heycam.github.io/webidl/#ref-for-dfn-get-buffer-source-copy-2
    * @returns {Uint8Array}
    */
-
-
   function getCopyBytesHeldByBufferSource(O) {
     var offset = 0;
     var length = 0;
-
     if (ArrayBuffer.isView(O)) {
       // Has [[ViewedArrayBuffer]] internal slot
       var arrayBuffer = O.buffer;
-
       if (arrayBuffer === undefined) {
         throw new TypeError('Could not copy the bytes held by a buffer source as the buffer was undefined.');
       }
-
       offset = O.byteOffset; // [[ByteOffset]] (will also throw as desired if detached)
-
       length = O.byteLength; // [[ByteLength]] (will also throw as desired if detached)
     } else {
       length = O.byteLength; // [[ArrayBufferByteLength]] on ArrayBuffer (will also throw as desired if detached)
-    } // const octets = new Uint8Array(input);
+    }
+    // const octets = new Uint8Array(input);
     // const octets = types.binary.decode(types.binary.encode(input));
-
-
     return new Uint8Array(O.buffer || O, offset, length);
   }
+
   /**
   * @typedef {PlainObject} module:Key.keyValueObject
   * @property {module:Key.KeyType|"NaN"} type
@@ -1044,11 +983,8 @@
   * @todo Document other allowable `input`
   * @returns {module:Key.keyValueObject}
   */
-
-
   function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
     seen = seen || [];
-
     if (seen.includes(input)) {
       return {
         type: 'array',
@@ -1056,13 +992,11 @@
         message: 'An array key cannot be circular'
       };
     }
-
     var type = getKeyType(input);
     var ret = {
       type: type,
       value: input
     };
-
     switch (type) {
       case 'number':
         {
@@ -1073,15 +1007,12 @@
               invalid: true
             };
           }
-
           return ret;
         }
-
       case 'string':
         {
           return ret;
         }
-
       case 'binary':
         {
           // May throw (if detached)
@@ -1093,14 +1024,12 @@
             value: octets
           };
         }
-
       case 'array':
         {
           // May throw (from binary)
           var len = input.length;
           seen.push(input);
           var keys = [];
-
           for (var i = 0; i < len; i++) {
             // We cannot iterate here with array extras as we must ensure sparse arrays are invalidated
             if (!multiEntry && !Object.prototype.hasOwnProperty.call(input, i)) {
@@ -1110,17 +1039,14 @@
                 message: 'Does not have own index property'
               };
             }
-
             try {
               var _ret = function () {
                 var entry = input[i];
                 var key = convertValueToKeyValueDecoded(entry, seen, false, fullKeys); // Though steps do not list rethrowing, the next is returnifabrupt when not multiEntry
-
                 if (key.invalid) {
                   if (multiEntry) {
                     return "continue";
                   }
-
                   return {
                     v: {
                       type: type,
@@ -1129,7 +1055,6 @@
                     }
                   };
                 }
-
                 if (!multiEntry || !fullKeys && keys.every(function (k) {
                   return cmp(k, key.value) !== 0;
                 }) || fullKeys && keys.every(function (k) {
@@ -1138,7 +1063,6 @@
                   keys.push(fullKeys ? key : key.value);
                 }
               }();
-
               if (_ret === "continue") continue;
               if (_typeof(_ret) === "object") return _ret.v;
             } catch (err) {
@@ -1147,13 +1071,11 @@
               }
             }
           }
-
           return {
             type: type,
             value: keys
           };
         }
-
       case 'date':
         {
           if (!Number.isNaN(input.getTime())) {
@@ -1165,22 +1087,19 @@
               value: new Date(input.getTime())
             };
           }
-
           return {
             type: type,
             invalid: true,
             message: 'Not a valid date'
-          }; // Falls through
+          };
+          // Falls through
         }
-
       case 'invalid':
       default:
         {
           // Other `typeof` types which are not valid keys:
           //    'undefined', 'boolean', 'object' (including `null`), 'symbol', 'function
           var _type = input === null ? 'null' : _typeof(input); // Convert `null` for convenience of consumers in reporting errors
-
-
           return {
             type: _type,
             invalid: true,
@@ -1189,6 +1108,7 @@
         }
     }
   }
+
   /**
   * @typedef {*} module:Key.Key
   * @todo Specify possible value more precisely
@@ -1201,11 +1121,10 @@
    * @returns {module:Key.keyValueObject}
    * @todo Document other allowable `key`?
    */
-
-
   function convertValueToMultiEntryKeyDecoded(key, fullKeys) {
     return convertValueToKeyValueDecoded(key, null, true, fullKeys);
   }
+
   /**
   * An internal utility.
   * @param input
@@ -1213,17 +1132,14 @@
   * @throws {DOMException} `DataError`
   * @returns {module:Key.keyValueObject}
   */
-
-
   function convertValueToKeyRethrowingAndIfInvalid(input, seen) {
     var key = convertValueToKey(input, seen);
-
     if (key.invalid) {
       throw createDOMException('DataError', key.message || 'Not a valid key; type: ' + key.type);
     }
-
     return key;
   }
+
   /**
    *
    * @param value
@@ -1232,8 +1148,6 @@
    * @returns {module:Key.keyValueObject|module:Key.KeyPathEvaluateValue}
    * @todo Document other possible return?
    */
-
-
   function extractKeyFromValueUsingKeyPath(value, keyPath, multiEntry) {
     return extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry, true);
   }
@@ -1244,11 +1158,10 @@
   * @param {boolean} multiEntry
   * @returns {module:Key.KeyPathEvaluateValue}
   */
-
-
   function evaluateKeyPathOnValue(value, keyPath, multiEntry) {
     return evaluateKeyPathOnValueToDecodedValue(value, keyPath);
   }
+
   /**
   * May throw, return `{failure: true}` (e.g., non-object on keyPath resolution)
   *    or `{invalid: true}` (e.g., `NaN`).
@@ -1259,21 +1172,17 @@
   * @returns {module:Key.keyValueObject|module:Key.KeyPathEvaluateValue}
   * @todo Document other possible return?
   */
-
-
   function extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry, fullKeys) {
     var r = evaluateKeyPathOnValueToDecodedValue(value, keyPath);
-
     if (r.failure) {
       return r;
     }
-
     if (!multiEntry) {
       return convertValueToKeyValueDecoded(r.value, null, false, fullKeys);
     }
-
     return convertValueToMultiEntryKeyDecoded(r.value, fullKeys);
   }
+
   /**
   * @typedef {PlainObject} module:Key.KeyPathEvaluateFailure
   * @property {boolean} failure
@@ -1293,18 +1202,14 @@
    * @param {boolean} [fullKeys]
    * @returns {module:Key.KeyPathEvaluateValue}
    */
-
-
   function evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKeys) {
     if (Array.isArray(keyPath)) {
       var result = [];
       return keyPath.some(function (item) {
         var key = evaluateKeyPathOnValueToDecodedValue(value, item);
-
         if (key.failure) {
           return true;
         }
-
         result.push(key.value);
         return false;
       }) ? {
@@ -1313,13 +1218,11 @@
         value: result
       };
     }
-
     if (keyPath === '') {
       return {
         value: value
       };
     }
-
     var identifiers = keyPath.split('.');
     return identifiers.some(function (idntfr, i) {
       if (idntfr === 'length' && (typeof value === 'string' || Array.isArray(value))) {
@@ -1337,7 +1240,6 @@
           case 'lastModified':
             value = value[idntfr];
             break;
-
           case 'lastModifiedDate':
             value = new Date(value.lastModified);
             break;
@@ -1348,7 +1250,6 @@
         value = value[idntfr];
         return value === undefined;
       }
-
       return false;
     }) ? {
       failure: true
@@ -1356,6 +1257,7 @@
       value: value
     };
   }
+
   /**
    * Sets the inline key value.
    * @param {object} value
@@ -1363,22 +1265,19 @@
    * @param {string} keyPath
    * @returns {void}
    */
-
-
   function injectKeyIntoValueUsingKeyPath(value, key, keyPath) {
     var identifiers = keyPath.split('.');
     var last = identifiers.pop();
     identifiers.forEach(function (identifier) {
       var hop = Object.prototype.hasOwnProperty.call(value, identifier);
-
       if (!hop) {
         value[identifier] = {};
       }
-
       value = value[identifier];
     });
     value[last] = key; // key is already a `keyValue` in our processing so no need to convert
   }
+
   /**
    *
    * @param value
@@ -1386,29 +1285,21 @@
    * @see https://github.com/w3c/IndexedDB/pull/146
    * @returns {boolean}
    */
-
-
   function checkKeyCouldBeInjectedIntoValue(value, keyPath) {
     var identifiers = keyPath.split('.');
     identifiers.pop();
-
     var _iterator3 = _createForOfIteratorHelper(identifiers),
-        _step3;
-
+      _step3;
     try {
       for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
         var identifier = _step3.value;
-
         if (!isObj(value)) {
           return false;
         }
-
         var hop = Object.prototype.hasOwnProperty.call(value, identifier);
-
         if (!hop) {
           return true;
         }
-
         value = value[identifier];
       }
     } catch (err) {
@@ -1416,9 +1307,9 @@
     } finally {
       _iterator3.f();
     }
-
     return isObj(value);
   }
+
   /**
    *
    * @param {module:Key.Key} key
@@ -1426,93 +1317,73 @@
    * @param {boolean} checkCached
    * @returns {boolean}
    */
-
-
   function isKeyInRange(key, range, checkCached) {
     var lowerMatch = range.lower === undefined;
     var upperMatch = range.upper === undefined;
-
     var encodedKey = _encode(key, true);
-
     var lower = checkCached ? range.__lowerCached : _encode(range.lower, true);
     var upper = checkCached ? range.__upperCached : _encode(range.upper, true);
-
     if (range.lower !== undefined) {
       if (range.lowerOpen && encodedKey > lower) {
         lowerMatch = true;
       }
-
       if (!range.lowerOpen && encodedKey >= lower) {
         lowerMatch = true;
       }
     }
-
     if (range.upper !== undefined) {
       if (range.upperOpen && encodedKey < upper) {
         upperMatch = true;
       }
-
       if (!range.upperOpen && encodedKey <= upper) {
         upperMatch = true;
       }
     }
-
     return lowerMatch && upperMatch;
   }
+
   /**
    * Determines whether an index entry matches a multi-entry key value.
    * @param {string} encodedEntry     The entry value (already encoded)
    * @param {string} encodedKey       The full index key (already encoded)
    * @returns {boolean}
    */
-
-
   function isMultiEntryMatch(encodedEntry, encodedKey) {
     var keyType = encodedCharToKeyType[encodedKey.slice(0, 1)];
-
     if (keyType === 'array') {
       return encodedKey.indexOf(encodedEntry) > 1;
     }
-
     return encodedKey === encodedEntry;
   }
+
   /**
    *
    * @param {module:Key.Key} keyEntry
    * @param {IDBKeyRange} range
    * @returns {module:Key.Key[]}
    */
-
-
   function findMultiEntryMatches(keyEntry, range) {
     var matches = [];
-
     if (Array.isArray(keyEntry)) {
       var _iterator4 = _createForOfIteratorHelper(keyEntry),
-          _step4;
-
+        _step4;
       try {
         for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
           var key = _step4.value;
-
           if (Array.isArray(key)) {
             if (range && range.lower === range.upper) {
               continue;
             }
-
             if (key.length === 1) {
               key = key[0];
             } else {
               var nested = findMultiEntryMatches(key, range);
-
               if (nested.length > 0) {
                 matches.push(key);
               }
-
               continue;
             }
           }
-
           if (isNullish(range) || isKeyInRange(key, range, true)) {
             matches.push(key);
           }
@@ -1525,9 +1396,9 @@
     } else if (isNullish(range) || isKeyInRange(keyEntry, range, true)) {
       matches.push(keyEntry);
     }
-
     return matches;
   }
+
   /**
   * @typedef {number|string|Date|ArrayBuffer|module:Key.ValueTypes[]} module:Key.ValueTypes
   */
@@ -1538,71 +1409,61 @@
   * @throws {Error} Upon a "bad key"
   * @returns {module:Key.ValueTypes}
   */
-
-
   function convertKeyToValue(key) {
     var type = key.type,
-        value = key.value;
-
+      value = key.value;
     switch (type) {
       case 'number':
       case 'string':
         {
           return value;
         }
-
       case 'array':
         {
           var array = [];
           var len = value.length;
           var index = 0;
-
           while (index < len) {
             var entry = convertKeyToValue(value[index]);
             array[index] = entry;
             index++;
           }
-
           return array;
         }
-
       case 'date':
         {
           return new Date(value);
         }
-
       case 'binary':
         {
           var _len = value.length;
-          var buffer = new ArrayBuffer(_len); // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
-
+          var buffer = new ArrayBuffer(_len);
+          // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
           var uint8 = new Uint8Array(buffer, value.byteOffset || 0, value.byteLength);
           uint8.set(value);
           return buffer;
         }
-
       case 'invalid':
       default:
         throw new Error('Bad key');
     }
   }
+
   /**
    *
    * @param {module:Key.Key} key
    * @param {boolean} inArray
    * @returns {string|null}
    */
-
-
   function _encode(key, inArray) {
     // Bad keys like `null`, `object`, `boolean`, 'function', 'symbol' should not be passed here due to prior validation
     if (key === undefined) {
       return null;
-    } // array, date, number, string, binary (should already have detected "invalid")
-
-
+    }
+    // array, date, number, string, binary (should already have detected "invalid")
     return types[getKeyType(key)].encode(key, inArray);
   }
+
   /**
    *
    * @param {module:Key.Key} key
@@ -1610,27 +1471,22 @@
    * @throws {Error} Invalid number
    * @returns {undefined|module:Key.ValueTypes}
    */
-
-
   function _decode(key, inArray) {
     if (typeof key !== 'string') {
       return undefined;
     }
-
     return types[encodedCharToKeyType[key.slice(0, 1)]].decode(key, inArray);
   }
+
   /**
    *
    * @param {module:Key.Key} key
    * @param {boolean} inArray
    * @returns {undefined|module:Key.ValueTypes}
    */
-
-
   function roundTrip(key, inArray) {
     return _decode(_encode(key, inArray), inArray);
   }
-
   var MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `Number.MAX_SAFE_INTEGER + 1`)
 
   /**
@@ -1662,7 +1518,6 @@
    * @param {SQLFailureCallback} sqlFailCb
    * @returns {void}
    */
-
   function getCurrentNumber(tx, store, func, sqlFailCb) {
     tx.executeSql('SELECT "currNum" FROM __sys__ WHERE "name" = ?', [escapeSQLiteStatement(store.__currentName)], function (tx, data) {
       if (data.rows.length !== 1) {
@@ -1674,6 +1529,7 @@
       sqlFailCb(createDOMException('DataError', 'Could not get the auto increment value for key', error));
     });
   }
+
   /**
    *
    * @param {external:WebSQLTransaction} tx
@@ -1683,8 +1539,6 @@
    * @param {SQLFailureCallback} failCb
    * @returns {void}
    */
-
-
   function assignCurrentNumber(tx, store, num, successCb, failCb) {
     var sql = 'UPDATE __sys__ SET "currNum" = ? WHERE "name" = ?';
     var sqlValues = [num, escapeSQLiteStatement(store.__currentName)];
@@ -1695,6 +1549,7 @@
       failCb(createDOMException('UnknownError', 'Could not set the auto increment value for key', err));
     });
   }
+
   /**
    * Bump up the auto-inc counter if the key path-resolved value is valid
    *   (greater than old value and >=1) OR if a manually passed in key is
@@ -1706,13 +1561,12 @@
    * @param {SQLFailureCallback} failCb
    * @returns {void}
    */
-
-
   function setCurrentNumber(tx, store, num, successCb, failCb) {
     num = num === MAX_ALLOWED_CURRENT_NUMBER ? num + 2 // Since incrementing by one will have no effect in JavaScript on this unsafe max, we represent the max as a number incremented by two. The getting of the current number is never returned to the user and is only used in safe comparisons, so it is safe for us to represent it in this manner
     : num + 1;
     return assignCurrentNumber(tx, store, num, successCb, failCb);
   }
+
   /**
    * @callback KeyForStoreCallback
    * @param {"failure"|null} arg1
@@ -1729,28 +1583,25 @@
    * @param {SQLFailureCallback} sqlFailCb
    * @returns {void}
    */
-
-
   function generateKeyForStore(tx, store, cb, sqlFailCb) {
     getCurrentNumber(tx, store, function (key) {
       if (key > MAX_ALLOWED_CURRENT_NUMBER) {
         // 2 ^ 53 (See <https://github.com/w3c/IndexedDB/issues/147>)
-        cb('failure'); // eslint-disable-line node/no-callback-literal
-
+        cb('failure'); // eslint-disable-line n/no-callback-literal
         return;
-      } // Increment current number by 1 (we cannot leverage SQLite's
+      }
+      // Increment current number by 1 (we cannot leverage SQLite's
       //  autoincrement (and decrement when not needed), as decrementing
       //  will be overwritten/ignored upon the next insert)
-
-
       setCurrentNumber(tx, store, key, function () {
         cb(null, key, key);
       }, sqlFailCb);
     }, sqlFailCb);
-  } // Fractional or numbers exceeding the max do not get changed in the result
+  }
+
+  // Fractional or numbers exceeding the max do not get changed in the result
   //     per https://github.com/w3c/IndexedDB/issues/147
   //     so we do not return a key
-
   /**
    *
    * @param {external:WebSQLTransaction} tx
@@ -1760,8 +1611,6 @@
    * @param {SQLFailureCallback} sqlFailCb
    * @returns {void}
    */
-
-
   function possiblyUpdateKeyGenerator(tx, store, key, successCb, sqlFailCb) {
     // Per https://github.com/w3c/IndexedDB/issues/147 , non-finite numbers
     //   (or numbers larger than the max) are now to have the explicit effect of
@@ -1779,7 +1628,6 @@
       getCurrentNumber(tx, store, function (cn) {
         var value = Math.floor(Math.min(key, MAX_ALLOWED_CURRENT_NUMBER));
         var useNewKeyForAutoInc = value >= cn;
-
         if (useNewKeyForAutoInc) {
           setCurrentNumber(tx, store, value, function () {
             successCb(cn); // Supply old current number in case needs to be reverted
@@ -1812,8 +1660,6 @@
   exports.isMultiEntryMatch = isMultiEntryMatch;
   exports.possiblyUpdateKeyGenerator = possiblyUpdateKeyGenerator;
   exports.roundTrip = roundTrip;
-
-  Object.defineProperty(exports, '__esModule', { value: true });
 
 }));
 //# sourceMappingURL=indexeddbshim-Key.js.map
