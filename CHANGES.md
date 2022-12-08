@@ -1,6 +1,6 @@
 # CHANGES for indexeddbshim
 
-## ?
+## 10.1.0
 
 ### User-impacting
 
