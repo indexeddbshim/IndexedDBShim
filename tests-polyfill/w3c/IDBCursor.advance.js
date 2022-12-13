@@ -183,7 +183,7 @@ describe('W3C IDBCursor.advance Tests', function () {
             var db;
 
             before(function (done) {
-                open = indexedDB.open(support.getDBName());
+                const open = indexedDB.open(support.getDBName());
                 open.onupgradeneeded = function(e) {
                     db = e.target.result;
                     var objStore = db.createObjectStore("test");
@@ -409,7 +409,7 @@ describe('W3C IDBCursor.advance Tests', function () {
             var db;
 
             before(function (done) {
-                open = indexedDB.open(support.getDBName());
+                const open = indexedDB.open(support.getDBName());
                 open.onupgradeneeded = function(e) {
                     db = e.target.result;
                     var objStore = db.createObjectStore("test");

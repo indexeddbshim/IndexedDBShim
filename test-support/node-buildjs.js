@@ -1,13 +1,7 @@
-const fs = require('fs');
-const util = require('util');
-const path = require('path');
-const http = require('http');
-const {JSDOM} = require('jsdom');
-
-const readFile = util.promisify(fs.readFile);
-const writeFile = util.promisify(fs.writeFile);
-const readdir = util.promisify(fs.readdir);
-const mkdir = util.promisify(fs.mkdir);
+import {readFile, writeFile, readdir, mkdir} from 'node:fs/promises';
+import path from 'path';
+import http from 'http';
+import {JSDOM} from 'jsdom';
 
 const dirPath = process.argv[2] || 'web-platform-tests/IndexedDB';
 
@@ -20,13 +14,20 @@ const dirPath = process.argv[2] || 'web-platform-tests/IndexedDB';
     });
 
     // Known scripts
-    const testHarnessScripts = ['/resources/testharness.js', '/resources/testharnessreport.js'];
+    const testHarnessScripts = [
+        '/resources/testharness.js', '/resources/testharnessreport.js'
+    ];
     const supportScripts = [
         '/resources/testdriver.js',
         '/resources/testdriver-vendor.js',
         '/common/subset-tests.js',
-        'support.js', 'support-promises.js',
-        'nested-cloning-common.js', 'interleaved-cursors-common.js',
+        'resources/support.js',
+        'resources/support-promises.js',
+        'resources/nested-cloning-common.js',
+        'resources/interleaved-cursors-common.js',
+        'resources/reading-autoincrement-common.js',
+        'http://127.0.0.1:9999/dist/indexeddbshim-noninvasive.js',
+        'http://127.0.0.1:9999/node_modules/core-js-bundle/minified.js',
         '/common/get-host-info.sub.js' // 'web-platform-tests/IndexedDB/idbfactory-origin-isolation.html'
     ];
     const webIDLScripts = [

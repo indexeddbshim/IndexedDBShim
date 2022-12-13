@@ -102,6 +102,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
                 if (e.__legacyOutputDidListenersThrowError) {
                     logError('Error', 'An error occurred in a success handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
+                    // me.__active = false;
                     me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after success).'));
                     return;
                 }

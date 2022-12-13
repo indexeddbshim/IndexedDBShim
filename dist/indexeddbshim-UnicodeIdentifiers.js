@@ -1,4 +1,4 @@
-/*! indexeddbshim - v10.0.0 - 12/8/2022 */
+/*! indexeddbshim - v10.1.0 - 1/7/2023 */
 
 (function (factory) {
   typeof define === 'function' && define.amd ? define(factory) :
@@ -13,10 +13,17 @@
 
   var UnicodeIdentifiers = /*#__PURE__*/Object.freeze({
     __proto__: null,
-    UnicodeIDStart: UnicodeIDStart,
-    UnicodeIDContinue: UnicodeIDContinue
+    UnicodeIDContinue: UnicodeIDContinue,
+    UnicodeIDStart: UnicodeIDStart
   });
 
+  function _defineAccessor(type, obj, key, fn) {
+    var desc = {
+      configurable: !0,
+      enumerable: !0
+    };
+    return desc[type] = fn, Object.defineProperty(obj, key, desc);
+  }
   function _iterableToArrayLimit(arr, i) {
     var _i = null == arr ? null : "undefined" != typeof Symbol && arr[Symbol.iterator] || arr["@@iterator"];
     if (null != _i) {
@@ -416,7 +423,7 @@
       descriptor.enumerable = descriptor.enumerable || false;
       descriptor.configurable = true;
       if ("value" in descriptor) descriptor.writable = true;
-      Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor);
+      Object.defineProperty(target, _toPropertyKey$1(descriptor.key), descriptor);
     }
   }
   function _createClass$1(Constructor, protoProps, staticProps) {
@@ -427,27 +434,8 @@
     });
     return Constructor;
   }
-  function _defineEnumerableProperties(obj, descs) {
-    for (var key in descs) {
-      var desc = descs[key];
-      desc.configurable = desc.enumerable = true;
-      if ("value" in desc) desc.writable = true;
-      Object.defineProperty(obj, key, desc);
-    }
-    if (Object.getOwnPropertySymbols) {
-      var objectSymbols = Object.getOwnPropertySymbols(descs);
-      for (var i = 0; i < objectSymbols.length; i++) {
-        var sym = objectSymbols[i];
-        var desc = descs[sym];
-        desc.configurable = desc.enumerable = true;
-        if ("value" in desc) desc.writable = true;
-        Object.defineProperty(obj, sym, desc);
-      }
-    }
-    return obj;
-  }
   function _defineProperty$1(obj, key, value) {
-    key = _toPropertyKey(key);
+    key = _toPropertyKey$1(key);
     if (key in obj) {
       Object.defineProperty(obj, key, {
         value: value,
@@ -588,7 +576,7 @@
     }
     return (hint === "string" ? String : Number)(input);
   }
-  function _toPropertyKey(arg) {
+  function _toPropertyKey$1(arg) {
     var key = _toPrimitive(arg, "string");
     return typeof key === "symbol" ? key : String(key);
   }
@@ -1567,22 +1555,21 @@
   }
   function defineOuterInterface(obj, props) {
     props.forEach(function (prop) {
-      var _o, _mutatorMap;
-      var o = (_o = {}, _mutatorMap = {}, _mutatorMap[prop] = _mutatorMap[prop] || {}, _mutatorMap[prop].get = function () {
+      var _o;
+      var o = (_o = {}, _defineAccessor("get", _o, prop, function () {
         throw new TypeError('Illegal invocation');
-      }, _mutatorMap[prop] = _mutatorMap[prop] || {}, _mutatorMap[prop].set = function (val) {
+      }), _defineAccessor("set", _o, prop, function (val) {
         throw new TypeError('Illegal invocation');
-      }, _defineEnumerableProperties(_o, _mutatorMap), _o);
+      }), _o);
       var desc = Object.getOwnPropertyDescriptor(o, prop);
       Object.defineProperty(obj, prop, desc);
     });
   }
   function defineReadonlyOuterInterface(obj, props) {
     props.forEach(function (prop) {
-      var _o2, _mutatorMap2;
-      var o = (_o2 = {}, _mutatorMap2 = {}, _mutatorMap2[prop] = _mutatorMap2[prop] || {}, _mutatorMap2[prop].get = function () {
+      var o = _defineAccessor("get", {}, prop, function () {
         throw new TypeError('Illegal invocation');
-      }, _defineEnumerableProperties(_o2, _mutatorMap2), _o2);
+      });
       var desc = Object.getOwnPropertyDescriptor(o, prop);
       Object.defineProperty(obj, prop, desc);
     });
@@ -1590,12 +1577,12 @@
   function defineListenerProperties(obj, listeners) {
     listeners = typeof listeners === 'string' ? [listeners] : listeners;
     listeners.forEach(function (listener) {
-      var _o3, _mutatorMap3;
-      var o = (_o3 = {}, _mutatorMap3 = {}, _mutatorMap3[listener] = _mutatorMap3[listener] || {}, _mutatorMap3[listener].get = function () {
+      var _o3;
+      var o = (_o3 = {}, _defineAccessor("get", _o3, listener, function () {
         return obj['__' + listener];
-      }, _mutatorMap3[listener] = _mutatorMap3[listener] || {}, _mutatorMap3[listener].set = function (val) {
+      }), _defineAccessor("set", _o3, listener, function (val) {
         obj['__' + listener] = val;
-      }, _defineEnumerableProperties(_o3, _mutatorMap3), _o3);
+      }), _o3);
       var desc = Object.getOwnPropertyDescriptor(o, listener);
       // desc.enumerable = true; // Default
       // desc.configurable = true; // Default // Needed by support.js in W3C IndexedDB tests (for openListeners)
@@ -1613,7 +1600,6 @@
       if (getter && prop in getter) {
         o = getter[prop];
       } else {
-        var _o4, _mutatorMap4;
         Object.defineProperty(obj, '__' + prop, {
           enumerable: false,
           configurable: false,
@@ -1621,9 +1607,9 @@
         });
         // We must resort to this to get "get <name>" as
         //   the function `name` for proper IDL
-        o = (_o4 = {}, _mutatorMap4 = {}, _mutatorMap4[prop] = _mutatorMap4[prop] || {}, _mutatorMap4[prop].get = function () {
+        o = _defineAccessor("get", {}, prop, function () {
           return this['__' + prop];
-        }, _defineEnumerableProperties(_o4, _mutatorMap4), _o4);
+        });
       }
       var desc = Object.getOwnPropertyDescriptor(o, prop);
       // desc.enumerable = true; // Default
@@ -1743,14 +1729,13 @@
   IDBVersionChangeEvent.prototype = Object.create(ShimEvent.prototype);
   IDBVersionChangeEvent.prototype[Symbol.toStringTag] = 'IDBVersionChangeEventPrototype';
   readonlyProperties$6.forEach(function (prop) {
-    var _o, _mutatorMap;
     // Ensure for proper interface testing that "get <name>" is the function name
-    var o = (_o = {}, _mutatorMap = {}, _mutatorMap[prop] = _mutatorMap[prop] || {}, _mutatorMap[prop].get = function () {
+    var o = _defineAccessor("get", {}, prop, function () {
       if (!(this instanceof IDBVersionChangeEvent)) {
         throw new TypeError('Illegal invocation');
       }
       return this.__eventInitDict && this.__eventInitDict[prop] || (prop === 'oldVersion' ? 0 : null);
-    }, _defineEnumerableProperties(_o, _mutatorMap), _o);
+    });
     var desc = Object.getOwnPropertyDescriptor(o, prop);
     // desc.enumerable = true; // Default
     // desc.configurable = true; // Default
@@ -2822,46 +2807,49 @@
           var len = input.length;
           seen.push(input);
           var keys = [];
-          for (var i = 0; i < len; i++) {
+          var _loop = function _loop() {
             // We cannot iterate here with array extras as we must ensure sparse arrays are invalidated
             if (!multiEntry && !Object.prototype.hasOwnProperty.call(input, i)) {
               return {
-                type: type,
-                invalid: true,
-                message: 'Does not have own index property'
+                v: {
+                  type: type,
+                  invalid: true,
+                  message: 'Does not have own index property'
+                }
               };
             }
             try {
-              var _ret = function () {
-                var entry = input[i];
-                var key = convertValueToKeyValueDecoded(entry, seen, false, fullKeys); // Though steps do not list rethrowing, the next is returnifabrupt when not multiEntry
-                if (key.invalid) {
-                  if (multiEntry) {
-                    return "continue";
+              var entry = input[i];
+              var key = convertValueToKeyValueDecoded(entry, seen, false, fullKeys); // Though steps do not list rethrowing, the next is returnifabrupt when not multiEntry
+              if (key.invalid) {
+                if (multiEntry) {
+                  return "continue";
+                }
+                return {
+                  v: {
+                    type: type,
+                    invalid: true,
+                    message: 'Bad array entry value-to-key conversion'
                   }
-                  return {
-                    v: {
-                      type: type,
-                      invalid: true,
-                      message: 'Bad array entry value-to-key conversion'
-                    }
-                  };
-                }
-                if (!multiEntry || !fullKeys && keys.every(function (k) {
-                  return cmp(k, key.value) !== 0;
-                }) || fullKeys && keys.every(function (k) {
-                  return cmp(k, key) !== 0;
-                })) {
-                  keys.push(fullKeys ? key : key.value);
-                }
-              }();
-              if (_ret === "continue") continue;
-              if (_typeof$2(_ret) === "object") return _ret.v;
+                };
+              }
+              if (!multiEntry || !fullKeys && keys.every(function (k) {
+                return cmp(k, key.value) !== 0;
+              }) || fullKeys && keys.every(function (k) {
+                return cmp(k, key) !== 0;
+              })) {
+                keys.push(fullKeys ? key : key.value);
+              }
             } catch (err) {
               if (!multiEntry) {
                 throw err;
               }
             }
+          };
+          for (var i = 0; i < len; i++) {
+            var _ret = _loop();
+            if (_ret === "continue") continue;
+            if (_typeof$2(_ret) === "object") return _ret.v;
           }
           return {
             type: type,
@@ -3434,26 +3422,26 @@
 
   var Key = /*#__PURE__*/Object.freeze({
     __proto__: null,
-    encode: _encode,
-    decode: _decode,
-    roundTrip: roundTrip,
-    convertKeyToValue: convertKeyToValue,
-    convertValueToKeyValueDecoded: convertValueToKeyValueDecoded,
-    convertValueToMultiEntryKeyDecoded: convertValueToMultiEntryKeyDecoded,
-    convertValueToKey: convertValueToKey,
-    convertValueToMultiEntryKey: convertValueToMultiEntryKey,
-    convertValueToKeyRethrowingAndIfInvalid: convertValueToKeyRethrowingAndIfInvalid,
-    extractKeyFromValueUsingKeyPath: extractKeyFromValueUsingKeyPath,
-    evaluateKeyPathOnValue: evaluateKeyPathOnValue,
-    extractKeyValueDecodedFromValueUsingKeyPath: extractKeyValueDecodedFromValueUsingKeyPath,
-    injectKeyIntoValueUsingKeyPath: injectKeyIntoValueUsingKeyPath,
-    checkKeyCouldBeInjectedIntoValue: checkKeyCouldBeInjectedIntoValue,
-    isMultiEntryMatch: isMultiEntryMatch,
-    isKeyInRange: isKeyInRange,
-    findMultiEntryMatches: findMultiEntryMatches,
     assignCurrentNumber: assignCurrentNumber,
+    checkKeyCouldBeInjectedIntoValue: checkKeyCouldBeInjectedIntoValue,
+    convertKeyToValue: convertKeyToValue,
+    convertValueToKey: convertValueToKey,
+    convertValueToKeyRethrowingAndIfInvalid: convertValueToKeyRethrowingAndIfInvalid,
+    convertValueToKeyValueDecoded: convertValueToKeyValueDecoded,
+    convertValueToMultiEntryKey: convertValueToMultiEntryKey,
+    convertValueToMultiEntryKeyDecoded: convertValueToMultiEntryKeyDecoded,
+    decode: _decode,
+    encode: _encode,
+    evaluateKeyPathOnValue: evaluateKeyPathOnValue,
+    extractKeyFromValueUsingKeyPath: extractKeyFromValueUsingKeyPath,
+    extractKeyValueDecodedFromValueUsingKeyPath: extractKeyValueDecodedFromValueUsingKeyPath,
+    findMultiEntryMatches: findMultiEntryMatches,
     generateKeyForStore: generateKeyForStore,
-    possiblyUpdateKeyGenerator: possiblyUpdateKeyGenerator
+    injectKeyIntoValueUsingKeyPath: injectKeyIntoValueUsingKeyPath,
+    isKeyInRange: isKeyInRange,
+    isMultiEntryMatch: isMultiEntryMatch,
+    possiblyUpdateKeyGenerator: possiblyUpdateKeyGenerator,
+    roundTrip: roundTrip
   });
 
   var readonlyProperties$4 = ['lower', 'upper', 'lowerOpen', 'upperOpen'];
@@ -3542,20 +3530,19 @@
   };
   IDBKeyRange.prototype[Symbol.toStringTag] = 'IDBKeyRangePrototype';
   readonlyProperties$4.forEach(function (prop) {
-    var _o, _mutatorMap;
     Object.defineProperty(IDBKeyRange.prototype, '__' + prop, {
       enumerable: false,
       configurable: false,
       writable: true
     });
     // Ensure for proper interface testing that "get <name>" is the function name
-    var o = (_o = {}, _mutatorMap = {}, _mutatorMap[prop] = _mutatorMap[prop] || {}, _mutatorMap[prop].get = function () {
+    var o = _defineAccessor("get", {}, prop, function () {
       // We can't do a regular instanceof check as it will create a loop given our hasInstance implementation
       if (!isObj(this) || typeof this.__lowerOpen !== 'boolean') {
         throw new TypeError('Illegal invocation');
       }
       return this['__' + prop];
-    }, _defineEnumerableProperties(_o, _mutatorMap), _o);
+    });
     var desc = Object.getOwnPropertyDescriptor(o, prop);
     // desc.enumerable = true; // Default
     // desc.configurable = true; // Default
@@ -3710,24 +3697,22 @@
   }, _defineProperty$1(_DOMStringList$protot, Symbol.toStringTag, 'DOMStringListPrototype'), _defineProperty$1(_DOMStringList$protot, Symbol.iterator, /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
     var i;
     return _regeneratorRuntime().wrap(function _callee$(_context) {
-      while (1) {
-        switch (_context.prev = _context.next) {
-          case 0:
-            i = 0;
-          case 1:
-            if (!(i < this._items.length)) {
-              _context.next = 6;
-              break;
-            }
-            _context.next = 4;
-            return this._items[i++];
-          case 4:
-            _context.next = 1;
+      while (1) switch (_context.prev = _context.next) {
+        case 0:
+          i = 0;
+        case 1:
+          if (!(i < this._items.length)) {
+            _context.next = 6;
             break;
-          case 6:
-          case "end":
-            return _context.stop();
-        }
+          }
+          _context.next = 4;
+          return this._items[i++];
+        case 4:
+          _context.next = 1;
+          break;
+        case 6:
+        case "end":
+          return _context.stop();
       }
     }, _callee, this);
   })), _DOMStringList$protot);
@@ -3881,6 +3866,7 @@
         // Do not set __active flag to false yet: https://github.com/w3c/IndexedDB/issues/87
         if (e.__legacyOutputDidListenersThrowError) {
           logError('Error', 'An error occurred in a success handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
+          // me.__active = false;
           me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after success).'));
           return;
         }
@@ -4347,11 +4333,11 @@
     return e;
   }
   function _typeof(e) {
-    return (_typeof = "function" == typeof Symbol && "symbol" == _typeof$2(Symbol.iterator) ? function (e) {
+    return _typeof = "function" == typeof Symbol && "symbol" == _typeof$2(Symbol.iterator) ? function (e) {
       return _typeof$2(e);
     } : function (e) {
       return e && "function" == typeof Symbol && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : _typeof$2(e);
-    })(e);
+    }, _typeof(e);
   }
   function _classCallCheck(e, t) {
     if (!(e instanceof t)) throw new TypeError("Cannot call a class as a function");
@@ -4359,7 +4345,7 @@
   function _defineProperties(e, t) {
     for (var r = 0; r < t.length; r++) {
       var n = t[r];
-      n.enumerable = n.enumerable || !1, n.configurable = !0, "value" in n && (n.writable = !0), Object.defineProperty(e, n.key, n);
+      n.enumerable = n.enumerable || !1, n.configurable = !0, "value" in n && (n.writable = !0), Object.defineProperty(e, _toPropertyKey(n.key), n);
     }
   }
   function _createClass(e, t, r) {
@@ -4368,7 +4354,7 @@
     }), e;
   }
   function _defineProperty(e, t, r) {
-    return t in e ? Object.defineProperty(e, t, {
+    return (t = _toPropertyKey(t)) in e ? Object.defineProperty(e, t, {
       value: r,
       enumerable: !0,
       configurable: !0,
@@ -4383,23 +4369,26 @@
       if (null != r) {
         var n,
           a,
-          o = [],
-          i = !0,
-          c = !1;
+          o,
+          i,
+          c = [],
+          s = !0,
+          u = !1;
         try {
-          for (r = r.call(e); !(i = (n = r.next()).done) && (o.push(n.value), !t || o.length !== t); i = !0) {
-            ;
-          }
+          if (o = (r = r.call(e)).next, 0 === t) {
+            if (Object(r) !== r) return;
+            s = !1;
+          } else for (; !(s = (n = o.call(r)).done) && (c.push(n.value), c.length !== t); s = !0);
         } catch (e) {
-          c = !0, a = e;
+          u = !0, a = e;
         } finally {
           try {
-            i || null == r["return"] || r["return"]();
+            if (!s && null != r["return"] && (i = r["return"](), Object(i) !== i)) return;
           } finally {
-            if (c) throw a;
+            if (u) throw a;
           }
         }
-        return o;
+        return c;
       }
     }(e, t) || _unsupportedIterableToArray(e, t) || function _nonIterableRest() {
       throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
@@ -4414,10 +4403,21 @@
   }
   function _arrayLikeToArray(e, t) {
     (null == t || t > e.length) && (t = e.length);
-    for (var r = 0, n = new Array(t); r < t; r++) {
-      n[r] = e[r];
-    }
+    for (var r = 0, n = new Array(t); r < t; r++) n[r] = e[r];
     return n;
+  }
+  function _toPropertyKey(e) {
+    var t = function _toPrimitive(e, t) {
+      if ("object" != _typeof$2(e) || null === e) return e;
+      var r = e[Symbol.toPrimitive];
+      if (void 0 !== r) {
+        var n = r.call(e, t || "default");
+        if ("object" != _typeof$2(n)) return n;
+        throw new TypeError("@@toPrimitive must return a primitive value.");
+      }
+      return ("string" === t ? String : Number)(e);
+    }(e, "string");
+    return "symbol" == _typeof$2(t) ? t : String(t);
   }
   var e = _createClass(function TypesonPromise(e) {
     _classCallCheck(this, TypesonPromise), this.p = new Promise(e);
@@ -4479,10 +4479,10 @@
     return e && "object" === _typeof(e);
   }
   function escapeKeyPathComponent(e) {
-    return e.replace(/~/g, "~0").replace(/\./g, "~1");
+    return e.replace(/''/g, "''''").replace(/^$/, "''").replace(/~/g, "~0").replace(/\./g, "~1");
   }
   function unescapeKeyPathComponent(e) {
-    return e.replace(/~1/g, ".").replace(/~0/g, "~");
+    return e.replace(/~1/g, ".").replace(/~0/g, "~").replace(/^''$/, "").replace(/''''/g, "''");
   }
   function getByKeyPath(e, t) {
     if ("" === t) return e;
@@ -4510,9 +4510,7 @@
     s = ["type", "replaced", "iterateIn", "iterateUnsetNumeric"];
   function _async(e) {
     return function () {
-      for (var t = [], r = 0; r < arguments.length; r++) {
-        t[r] = arguments[r];
-      }
+      for (var t = [], r = 0; r < arguments.length; r++) t[r] = arguments[r];
       try {
         return Promise.resolve(e.apply(this, t));
       } catch (e) {
@@ -4709,14 +4707,14 @@
               !0 === a && (y.push(r), p.push(t));
             }
             var _,
-              A = isPlainObject(r),
-              w = i(r),
-              j = (A || w) && (!l.plainObjectReplacers.length || s.replaced) || s.iterateIn ? r : replace(t, r, s, u, A || w, null, O);
+              w = isPlainObject(r),
+              A = i(r),
+              j = (w || A) && (!l.plainObjectReplacers.length || s.replaced) || s.iterateIn ? r : replace(t, r, s, u, w || A, null, O);
             if (j !== r ? (h = j, g = {
               replaced: j
-            }) : "" === t && hasConstructorOf(r, e) ? (u.push([t, r, a, s, void 0, void 0, s.type]), h = r) : w && "object" !== s.iterateIn || "array" === s.iterateIn ? (_ = new Array(r.length), g = {
+            }) : "" === t && hasConstructorOf(r, e) ? (u.push([t, r, a, s, void 0, void 0, s.type]), h = r) : A && "object" !== s.iterateIn || "array" === s.iterateIn ? (_ = new Array(r.length), g = {
               clone: _
-            }) : (["function", "symbol"].includes(_typeof(r)) || "toJSON" in r || hasConstructorOf(r, e) || hasConstructorOf(r, Promise) || hasConstructorOf(r, ArrayBuffer)) && !A && "object" !== s.iterateIn ? h = r : (_ = {}, s.addLength && (_.length = r.length), g = {
+            }) : (["function", "symbol"].includes(_typeof(r)) || "toJSON" in r || hasConstructorOf(r, e) || hasConstructorOf(r, Promise) || hasConstructorOf(r, ArrayBuffer)) && !w && "object" !== s.iterateIn ? h = r : (_ = {}, s.addLength && (_.length = r.length), g = {
               clone: _
             }), O && O(), n.iterateNone) return _ || h;
             if (!_) return h;
@@ -4731,9 +4729,7 @@
                   hasConstructorOf(i, e) ? u.push([o, i, Boolean(a), s, _, n, s.type]) : void 0 !== i && (_[n] = i);
                 });
               };
-              for (var I in r) {
-                T(I);
-              }
+              for (var I in r) T(I);
               O && O({
                 endIterateIn: !0,
                 end: !0
@@ -4761,9 +4757,7 @@
                       hasConstructorOf(t, e) ? u.push([o, t, Boolean(a), s, _, n, s.type]) : void 0 !== t && (_[n] = t);
                     });
                   }
-                }, C = 0; C < P; C++) {
-                N(C);
-              }
+                }, C = 0; C < P; C++) N(C);
               O && O({
                 endIterateUnsetNumeric: !0,
                 end: !0
@@ -5000,14 +4994,10 @@
       _classCallCheck(this, Undefined);
     });
   l.__typeson__type__ = "TypesonUndefined";
-  for (var f = ["null", "boolean", "number", "string", "array", "object"], y = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", p = new Uint8Array(256), d = 0; d < y.length; d++) {
-    p[y.codePointAt(d)] = d;
-  }
+  for (var f = ["null", "boolean", "number", "string", "array", "object"], y = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", p = new Uint8Array(256), d = 0; d < y.length; d++) p[y.codePointAt(d)] = d;
   var v = function encode(e, t, r) {
       null == r && (r = e.byteLength);
-      for (var n = new Uint8Array(e, t || 0, r), a = n.length, o = "", i = 0; i < a; i += 3) {
-        o += y[n[i] >> 2], o += y[(3 & n[i]) << 4 | n[i + 1] >> 4], o += y[(15 & n[i + 1]) << 2 | n[i + 2] >> 6], o += y[63 & n[i + 2]];
-      }
+      for (var n = new Uint8Array(e, t || 0, r), a = n.length, o = "", i = 0; i < a; i += 3) o += y[n[i] >> 2], o += y[(3 & n[i]) << 4 | n[i + 1] >> 4], o += y[(15 & n[i + 1]) << 2 | n[i + 2] >> 6], o += y[63 & n[i + 2]];
       return a % 3 == 2 ? o = o.slice(0, -1) + "=" : a % 3 == 1 && (o = o.slice(0, -2) + "=="), o;
     },
     b = function decode(e) {
@@ -5019,9 +5009,7 @@
         i = .75 * e.length,
         c = 0;
       "=" === e[e.length - 1] && (i--, "=" === e[e.length - 2] && i--);
-      for (var s = new ArrayBuffer(i), u = new Uint8Array(s), l = 0; l < o; l += 4) {
-        t = p[e.codePointAt(l)], r = p[e.codePointAt(l + 1)], n = p[e.codePointAt(l + 2)], a = p[e.codePointAt(l + 3)], u[c++] = t << 2 | r >> 4, u[c++] = (15 & r) << 4 | n >> 2, u[c++] = (3 & n) << 6 | 63 & a;
-      }
+      for (var s = new ArrayBuffer(i), u = new Uint8Array(s), l = 0; l < o; l += 4) t = p[e.codePointAt(l)], r = p[e.codePointAt(l + 1)], n = p[e.codePointAt(l + 2)], a = p[e.codePointAt(l + 3)], u[c++] = t << 2 | r >> 4, u[c++] = (15 & r) << 4 | n >> 2, u[c++] = (3 & n) << 6 | 63 & a;
       return s;
     };
   var h = {
@@ -5065,9 +5053,7 @@
     };
   function string2arraybuffer(e) {
     var t = new Uint8Array(e.length);
-    for (var _r = 0; _r < e.length; _r++) {
-      t[_r] = e.charCodeAt(_r);
-    }
+    for (var _r = 0; _r < e.length; _r++) t[_r] = e.charCodeAt(_r);
     return t.buffer;
   }
   var O = {
@@ -5105,7 +5091,7 @@
       }
     }
   };
-  var A = {
+  var w = {
       cryptokey: {
         test: function test(e) {
           return "CryptoKey" === toStringTag(e) && e.extractable;
@@ -5115,30 +5101,28 @@
             var _ref3 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee(e, r) {
               var n;
               return _regeneratorRuntime().wrap(function _callee$(_context) {
-                while (1) {
-                  switch (_context.prev = _context.next) {
-                    case 0:
-                      _context.prev = 0;
-                      _context.next = 3;
-                      return crypto.subtle.exportKey("jwk", t);
-                    case 3:
-                      n = _context.sent;
-                      _context.next = 9;
-                      break;
-                    case 6:
-                      _context.prev = 6;
-                      _context.t0 = _context["catch"](0);
-                      return _context.abrupt("return", void r(_context.t0));
-                    case 9:
-                      e({
-                        jwk: n,
-                        algorithm: t.algorithm,
-                        usages: t.usages
-                      });
-                    case 10:
-                    case "end":
-                      return _context.stop();
-                  }
+                while (1) switch (_context.prev = _context.next) {
+                  case 0:
+                    _context.prev = 0;
+                    _context.next = 3;
+                    return crypto.subtle.exportKey("jwk", t);
+                  case 3:
+                    n = _context.sent;
+                    _context.next = 9;
+                    break;
+                  case 6:
+                    _context.prev = 6;
+                    _context.t0 = _context["catch"](0);
+                    return _context.abrupt("return", void r(_context.t0));
+                  case 9:
+                    e({
+                      jwk: n,
+                      algorithm: t.algorithm,
+                      usages: t.usages
+                    });
+                  case 10:
+                  case "end":
+                    return _context.stop();
                 }
               }, _callee, null, [[0, 6]]);
             }));
@@ -5155,7 +5139,7 @@
         }
       }
     },
-    w = {
+    A = {
       dataview: {
         test: function test(e) {
           return "DataView" === toStringTag(e);
@@ -5268,9 +5252,7 @@
         },
         replace: function replace(e) {
           var t = [];
-          for (var _r2 = 0; _r2 < e.length; _r2++) {
-            t[_r2] = e.item(_r2);
-          }
+          for (var _r2 = 0; _r2 < e.length; _r2++) t[_r2] = e.item(_r2);
           return t;
         },
         revive: function revive(e) {
@@ -5599,7 +5581,7 @@
       }
     }],
     X = [K, x, L],
-    te = [G, W, H, D, X, j, M, E, C, P, N, O].concat("function" == typeof Map ? U : [], "function" == typeof Set ? J : [], "function" == typeof ArrayBuffer ? h : [], "function" == typeof Uint8Array ? q : [], "function" == typeof DataView ? w : [], "undefined" != typeof Intl ? B : [], "undefined" != typeof crypto ? A : [], "undefined" != typeof BigInt ? [m, g] : []);
+    te = [G, W, H, D, X, j, M, E, C, P, N, O].concat("function" == typeof Map ? U : [], "function" == typeof Set ? J : [], "function" == typeof ArrayBuffer ? h : [], "function" == typeof Uint8Array ? q : [], "function" == typeof DataView ? A : [], "undefined" != typeof Intl ? B : [], "undefined" != typeof crypto ? w : [], "undefined" != typeof BigInt ? [m, g] : []);
   var re = te.concat({
     checkDataCloneException: {
       test: function test(e) {
@@ -5653,9 +5635,9 @@
 
   var Sca = /*#__PURE__*/Object.freeze({
     __proto__: null,
-    encode: encode,
-    decode: decode,
     clone: clone,
+    decode: decode,
+    encode: encode,
     register: register
   });
 
@@ -6187,10 +6169,10 @@
       if (index.multiEntry) {
         var escapedIndexNameForKeyCol = escapeIndexNameForSQLKeyColumn(index.name);
         var encodedKey = _encode(range, index.multiEntry);
-        var _loop = function _loop(i) {
+        var _loop = function _loop() {
           var row = data.rows.item(i);
           var rowKey = _decode(row[escapedIndexNameForKeyCol]);
-          var record = void 0;
+          var record;
           if (hasKey && (multiChecks && range.some(function (check) {
             return rowKey.includes(check);
           }) ||
@@ -6212,7 +6194,7 @@
           }
         };
         for (var i = 0; i < data.rows.length; i++) {
-          var _ret = _loop(i);
+          var _ret = _loop();
           if (_ret === "break") break;
         }
       } else {
@@ -7311,7 +7293,7 @@
       this.__objectStores = {};
       this.__objectStoreNames = DOMStringList.__createInstance();
       var itemCopy = {};
-      var _loop = function _loop(i) {
+      var _loop = function _loop() {
         var item = storeProperties.rows.item(i);
         // Safari implements `item` getter return object's properties
         //  as readonly, so we copy all its properties (except our
@@ -7332,7 +7314,7 @@
         _this.objectStoreNames.push(store.name);
       };
       for (var i = 0; i < storeProperties.rows.length; i++) {
-        _loop(i);
+        _loop();
       }
       this.__oldObjectStoreNames = this.objectStoreNames.clone();
     }
@@ -8891,10 +8873,9 @@
               desc.writable = true;
             }
           } else {
-            var _o, _mutatorMap;
-            var o = (_o = {}, _mutatorMap = {}, _mutatorMap[name] = _mutatorMap[name] || {}, _mutatorMap[name].get = function () {
+            var o = _defineAccessor("get", {}, name, function () {
               return propDesc.get.call(this);
-            }, _defineEnumerableProperties(_o, _mutatorMap), _o);
+            });
             desc = Object.getOwnPropertyDescriptor(o, name);
           }
           Object.defineProperty(IDB, name, desc);

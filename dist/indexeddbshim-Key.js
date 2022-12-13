@@ -1,4 +1,4 @@
-/*! indexeddbshim - v10.0.0 - 12/8/2022 */
+/*! indexeddbshim - v10.1.0 - 1/7/2023 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -1030,46 +1030,49 @@
           var len = input.length;
           seen.push(input);
           var keys = [];
-          for (var i = 0; i < len; i++) {
+          var _loop = function _loop() {
             // We cannot iterate here with array extras as we must ensure sparse arrays are invalidated
             if (!multiEntry && !Object.prototype.hasOwnProperty.call(input, i)) {
               return {
-                type: type,
-                invalid: true,
-                message: 'Does not have own index property'
+                v: {
+                  type: type,
+                  invalid: true,
+                  message: 'Does not have own index property'
+                }
               };
             }
             try {
-              var _ret = function () {
-                var entry = input[i];
-                var key = convertValueToKeyValueDecoded(entry, seen, false, fullKeys); // Though steps do not list rethrowing, the next is returnifabrupt when not multiEntry
-                if (key.invalid) {
-                  if (multiEntry) {
-                    return "continue";
+              var entry = input[i];
+              var key = convertValueToKeyValueDecoded(entry, seen, false, fullKeys); // Though steps do not list rethrowing, the next is returnifabrupt when not multiEntry
+              if (key.invalid) {
+                if (multiEntry) {
+                  return "continue";
+                }
+                return {
+                  v: {
+                    type: type,
+                    invalid: true,
+                    message: 'Bad array entry value-to-key conversion'
                   }
-                  return {
-                    v: {
-                      type: type,
-                      invalid: true,
-                      message: 'Bad array entry value-to-key conversion'
-                    }
-                  };
-                }
-                if (!multiEntry || !fullKeys && keys.every(function (k) {
-                  return cmp(k, key.value) !== 0;
-                }) || fullKeys && keys.every(function (k) {
-                  return cmp(k, key) !== 0;
-                })) {
-                  keys.push(fullKeys ? key : key.value);
-                }
-              }();
-              if (_ret === "continue") continue;
-              if (_typeof(_ret) === "object") return _ret.v;
+                };
+              }
+              if (!multiEntry || !fullKeys && keys.every(function (k) {
+                return cmp(k, key.value) !== 0;
+              }) || fullKeys && keys.every(function (k) {
+                return cmp(k, key) !== 0;
+              })) {
+                keys.push(fullKeys ? key : key.value);
+              }
             } catch (err) {
               if (!multiEntry) {
                 throw err;
               }
             }
+          };
+          for (var i = 0; i < len; i++) {
+            var _ret = _loop();
+            if (_ret === "continue") continue;
+            if (_typeof(_ret) === "object") return _ret.v;
           }
           return {
             type: type,

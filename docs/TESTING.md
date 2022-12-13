@@ -55,7 +55,7 @@ If you want to run the tests in a normal web browser, you'll need to
 spin-up a local web server and then open
 [`tests-mocha/index.html`](https://github.com/indexeddbshim/indexeddbshim/blob/master/tests-mocha/index.html)
 in your browser. You can also run `npm run dev` and point your
-browser to `http://localhost:9999/tests-mocha/index.html`.
+browser to `http://127.0.0.1:9999/tests-mocha/index.html`.
 
 Note that, for the Mocha tests, you probably wish to
 "Switch to IndexedDBShim" when doing

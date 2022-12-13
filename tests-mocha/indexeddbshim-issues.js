@@ -1,14 +1,16 @@
 /* eslint-env mocha */
 /* eslint-disable no-unused-expressions, n/no-sync */
+import fs from 'fs';
+import chai from 'chai';
+
 global.window = global;
-window.chai = require('chai');
-const fs = require('fs');
+window.chai = chai;
 
 const {expect, assert} = window.chai;
 
 describe('database config', function () {
-    it('should not err in cleaning up memory database resources', function (done) {
-        const setGlobalVars = require('../dist/indexeddbshim-node.js'); // eslint-disable-line n/global-require
+    it('should not err in cleaning up memory database resources', async function (done) {
+        const setGlobalVars = (await import('../dist/indexeddbshim-node.js')).default;
 
         setGlobalVars(null, {
             DEBUG: false,
@@ -33,8 +35,8 @@ describe('database config', function () {
         };
     });
 
-    it('should respect the `databaseBasePath` setting for deletions', function (done) {
-        const setGlobalVars = require('../dist/indexeddbshim-node.js'); // eslint-disable-line n/global-require
+    it('should respect the `databaseBasePath` setting for deletions', async function (done) {
+        const setGlobalVars = (await import('../dist/indexeddbshim-node.js')).default;
 
         if (!fs.existsSync('foo')) {
             fs.mkdirSync('foo');

@@ -25,6 +25,7 @@ function createdb_for_multiple_tests(dbname, version) {
     else
         rq_open = indexedDB.open(dbname);
 
+    let done;
     function auto_fail(evt) {
         /* Fail handlers, if we haven't set on/whatever/, don't
          * expect to get event whatever. */
@@ -194,7 +195,7 @@ function instanceOf (obj, Clss) {
     return Clss[Symbol.hasInstance](obj);
 }
 
-var support = {
+const support = {
     createdb: createdb,
     format_value: format_value,
     instanceOf: instanceOf,
@@ -204,6 +205,4 @@ var support = {
     assert_unreached: assert_unreached
 };
 
-if (typeof module !== 'undefined') {
-    module.exports = support;
-}
+export default support;

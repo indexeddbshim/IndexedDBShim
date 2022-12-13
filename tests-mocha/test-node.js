@@ -1,8 +1,11 @@
+import chai from 'chai';
+import sinon from 'sinon';
+
 global.window = global;
 window.location = {search: ''}; // useShim=true // This must go before sinon as well as before our test-environment.js.
 
-window.chai = require('chai');
-window.sinon = require('sinon');
+window.chai = chai;
+window.sinon = sinon;
 
 window.mocha = {setup () { /* */ }, globals () { /* */ }, checkLeaks () { /* */ }};
 
@@ -25,54 +28,53 @@ window.onerror = function () {
     console.log('Node onerror called');
 };
 
-(function () {
-    const setGlobalVars = require('../dist/indexeddbshim-node.js'); // eslint-disable-line n/global-require
-    setGlobalVars(window, {addNonIDBGlobals: true});
+const setGlobalVars = (await import('../src/node.js')).default;
+setGlobalVars(window, {addNonIDBGlobals: true});
 
-    require('./test-environment.js'); // eslint-disable-line n/global-require
-    require('./test-utils.js'); // eslint-disable-line n/global-require
+await import('./test-environment.js');
+await import('./test-utils.js');
 
-    var tests; // eslint-disable-line no-var
+var tests; // eslint-disable-line no-var
 
-    if (process.env.npm_config_test) { // eslint-disable-line n/no-process-env
-        tests = [process.env.npm_config_test]; // eslint-disable-line n/no-process-env
-        console.log('Running test: ' + process.env.npm_config_test); // eslint-disable-line n/no-process-env
-    } else {
-        tests = [
-            'api-spec.js',
-            'IDBCursor/delete-spec.js',
-            'IDBCursor/update-spec.js',
-            'IDBFactory/cmp-spec.js',
-            'IDBFactory/databases-spec.js',
-            'IDBFactory/deleteDatabase-spec.js',
-            'IDBFactory/open-spec.js',
-            'IDBDatabase/close-spec.js',
-            'IDBDatabase/createObjectStore-spec.js',
-            'IDBDatabase/deleteObjectStore-spec.js',
-            'IDBDatabase/transaction-spec.js',
-            'IDBIndex/count-spec.js',
-            'IDBIndex/get-spec.js',
-            'IDBIndex/getKey-spec.js',
-            'IDBIndex/openCursor-spec.js',
-            'IDBIndex/openKeyCursor-spec.js',
-            'IDBKeyRange/includes-spec.js',
-            'IDBObjectStore/add-put-spec.js',
-            'IDBObjectStore/add-spec.js',
-            'IDBObjectStore/clear-spec.js',
-            'IDBObjectStore/count-spec.js',
-            'IDBObjectStore/createIndex-spec.js',
-            'IDBObjectStore/delete-spec.js',
-            'IDBObjectStore/deleteIndex-spec.js',
-            'IDBObjectStore/get-spec.js',
-            'IDBObjectStore/index-spec.js',
-            'IDBObjectStore/indexNames-spec.js',
-            'IDBObjectStore/openKeyCursor-spec.js',
-            'IDBObjectStore/put-spec.js',
-            'IDBTransaction/objectStore-spec.js',
-            'IDBTransaction/events-spec.js'
-        ];
-    }
-    tests.forEach(function (path) {
-        require('./' + path); // eslint-disable-line import/no-dynamic-require, n/global-require
-    });
-}());
+if (process.env.npm_config_test) { // eslint-disable-line n/no-process-env
+    tests = [process.env.npm_config_test]; // eslint-disable-line n/no-process-env
+    console.log('Running test: ' + process.env.npm_config_test); // eslint-disable-line n/no-process-env
+} else {
+    tests = [
+        'api-spec.js',
+        'IDBCursor/delete-spec.js',
+        'IDBCursor/update-spec.js',
+        'IDBFactory/cmp-spec.js',
+        'IDBFactory/databases-spec.js',
+        'IDBFactory/deleteDatabase-spec.js',
+        'IDBFactory/open-spec.js',
+        'IDBDatabase/close-spec.js',
+        'IDBDatabase/createObjectStore-spec.js',
+        'IDBDatabase/deleteObjectStore-spec.js',
+        'IDBDatabase/transaction-spec.js',
+        'IDBIndex/count-spec.js',
+        'IDBIndex/get-spec.js',
+        'IDBIndex/getKey-spec.js',
+        'IDBIndex/openCursor-spec.js',
+        'IDBIndex/openKeyCursor-spec.js',
+        'IDBKeyRange/includes-spec.js',
+        'IDBObjectStore/add-put-spec.js',
+        'IDBObjectStore/add-spec.js',
+        'IDBObjectStore/clear-spec.js',
+        'IDBObjectStore/count-spec.js',
+        'IDBObjectStore/createIndex-spec.js',
+        'IDBObjectStore/delete-spec.js',
+        'IDBObjectStore/deleteIndex-spec.js',
+        'IDBObjectStore/get-spec.js',
+        'IDBObjectStore/index-spec.js',
+        'IDBObjectStore/indexNames-spec.js',
+        'IDBObjectStore/openKeyCursor-spec.js',
+        'IDBObjectStore/put-spec.js',
+        'IDBTransaction/objectStore-spec.js',
+        'IDBTransaction/events-spec.js'
+    ];
+}
+await Promise.all(tests.map(async function (path) {
+    // eslint-disable-next-line no-unsanitized/method -- Safe env.
+    return await import('./' + path);
+}));

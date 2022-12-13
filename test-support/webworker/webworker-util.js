@@ -1,33 +1,32 @@
 // Utilies and other common gook shared between the WebWorker master and
 // its constituent Workers.
-/* eslint-disable n/exports-style, compat/compat */
+/* eslint-disable compat/compat */
 
-const events = require('events');
-const path = require('path');
-const util = require('util');
-const BSON = require('bson');
+import events from 'events';
+import path from 'path';
+import util from 'util';
+
+import * as BSON from 'bson';
 
 // Some debugging functions
 const debugLevel = Number.parseInt(process.env.NODE_DEBUG, 16); // eslint-disable-line n/no-process-env
-const debug = (debugLevel & 0x8) // eslint-disable-line no-bitwise
+export const debug = (debugLevel & 0x8) // eslint-disable-line no-bitwise
     ? function (...args) { Reflect.apply(console.error, this, args); }
     : function () { /* */ };
-exports.debug = debug;
 
 // Extract meaning from stack traces
 const STACK_FRAME_RE = /.* \(?(.+:\d+:\d+)\)?$/;
 
 // Symbolic names for our messages types
-exports.MSGTYPE_NOOP = 0;
-exports.MSGTYPE_ERROR = 1;
-exports.MSGTYPE_CLOSE = 2;
-exports.MSGTYPE_USER = 100;
+export const MSGTYPE_NOOP = 0;
+export const MSGTYPE_ERROR = 1;
+export const MSGTYPE_CLOSE = 2;
+export const MSGTYPE_USER = 100;
 
 // Is the given message well-formed?
-const isValidMessage = function (msg) {
+export const isValidMessage = function (msg) {
     return (typeof msg[0] !== 'undefined' && typeof msg[1] !== 'undefined');
 };
-exports.isValidMessage = isValidMessage;
 
 // A simple messaging stream.
 //
@@ -38,7 +37,7 @@ exports.isValidMessage = isValidMessage;
 // message with which it was sent.
 //
 // Sending messages is done with the send() method.
-const MsgStream = function (s) {
+export const MsgStream = function (s) {
     const self = this; // eslint-disable-line consistent-this
 
     events.EventEmitter.call(self);
@@ -110,9 +109,8 @@ const MsgStream = function (s) {
 };
 
 util.inherits(MsgStream, events.EventEmitter);
-exports.MsgStream = MsgStream;
 
-exports.makeFileURL = function (workerConfig, dir) {
+export const makeFileURL = function (workerConfig, dir) {
     if (workerConfig.relativePathType === 'file') {
         return 'file://' + dir.replace(/\\/g, '/') + '/';
     }
@@ -123,7 +121,7 @@ exports.makeFileURL = function (workerConfig, dir) {
 // http://www.whatwg.org/specs/web-workers/current-work/#dom-workerlocation-href
 //   Leverage URL/URLSearchParams polyfill?
 // Todo: None of these properties are readonly as required by the spec.
-const WorkerLocation = function (url) {
+export const WorkerLocation = function (url) {
     const u = new URL(url);
 
     // https://url.spec.whatwg.org/#url-miscellaneous
@@ -162,12 +160,10 @@ const WorkerLocation = function (url) {
     this.hash = u.hash || '';
 };
 
-exports.WorkerLocation = WorkerLocation;
-
 // Get the error message for a given exception
 //
 // The first line of the stack trace seems to always be the message itself.
-exports.getErrorMessage = function (e) {
+export const getErrorMessage = function (e) {
     try {
         return e.message || e.stack.split('\n')[0].trim();
     } catch (e) {
@@ -176,7 +172,7 @@ exports.getErrorMessage = function (e) {
 };
 
 // Get the filename for a given exception
-exports.getErrorFilename = function (e) {
+export const getErrorFilename = function (e) {
     try {
         const m = e.stack.split('\n')[1].match(STACK_FRAME_RE);
         // eslint-disable-next-line unicorn/prefer-string-slice
@@ -190,7 +186,7 @@ exports.getErrorFilename = function (e) {
 };
 
 // Get the line number for a given exception
-exports.getErrorLine = function (e) {
+export const getErrorLine = function (e) {
     try {
         const m = e.stack.split('\n')[1].match(STACK_FRAME_RE);
         const parts = m[1].split(':');

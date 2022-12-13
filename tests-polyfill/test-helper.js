@@ -1,7 +1,7 @@
-global.window = global;
+import setGlobalVars from '../dist/indexeddbshim-node';
+// import setGlobalVars from '../dist/indexeddbshim-node.min';
 
-const setGlobalVars = require('../dist/indexeddbshim-node');
-// const setGlobalVars = require('../dist/indexeddbshim-node.min');
+global.window = global;
 
 setGlobalVars(null, {addNonIDBGlobals: true});
 // shimIndexedDB.__debug(true);
@@ -9,4 +9,4 @@ setGlobalVars(null, {addNonIDBGlobals: true});
 window.DOMException = ShimDOMException;
 window.Event = ShimEvent;
 
-module.exports = global.indexedDB;
+export default global.indexedDB;

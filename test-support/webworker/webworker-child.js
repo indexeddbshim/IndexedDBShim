@@ -11,25 +11,22 @@
 //      that is listening for connections. The <script> parameter is the
 //      path to the JavaScript source to be executed as the body of the
 //      worker.
-if (process.argv.length < 4) {
-    throw new Error('usage: node worker.js <sock> <script>');
-}
-const fs = require('fs');
-const path = require('path');
-const vm = require('vm');
-const util = require('util');
-const http = require('http');
-const WebSocket = require('ws');
-const XMLHttpRequest = require('local-xmlhttprequest');
-const Blob = require('w3c-blob'); // Needed by Node; uses native if available (browser)
-const fetch = require('isomorphic-fetch');
-const wwutil = require('./webworker-util.js');
+import fs from 'fs';
+import path from 'path';
+import vm from 'vm';
+import util from 'util';
+import http from 'http';
+import WebSocket from 'ws';
+import XMLHttpRequest from 'local-xmlhttprequest';
+import Blob from 'w3c-blob'; // Needed by Node; uses native if available (browser)
+import fetch from 'isomorphic-fetch';
+import * as wwutil from './webworker-util.js';
 // Had problems with npm and the following when requiring `webworkers`
 //   as a separate repository (due to indirect circular dependency?);
-// const indexeddbshim = require('indexeddbshim');
-const indexeddbshim = require('../../dist/indexeddbshim-UnicodeIdentifiers-node.js'); // require('../../');
-const Worker = require('./webworker.js');
-// const isDateObject = require('is-date-object'); // Not needed in worker tests as in main thread tests
+// import indexeddbshim from 'indexeddbshim';
+import indexeddbshim from '../../src/node-UnicodeIdentifiers.js';
+import Worker from './webworker.js';
+// import isDateObject from 'is-date-object'; // Not needed in worker tests as in main thread tests
 /*
 const permittedProtocols;
 try {
@@ -38,6 +35,10 @@ try {
     throw new Error('There was an error processing the permitted protocols argument (which must be a valid stringified JSON object)');
 }
 */
+
+if (process.argv.length < 4) {
+    throw new Error('usage: node worker.js <sock> <script>');
+}
 
 const workerCtx = {};
 const sockPath = process.argv[2];
@@ -227,7 +228,7 @@ prom.then((scriptSource) => {
     if (workerConfig.node) {
         workerCtx.global = workerCtx;
         workerCtx.process = process;
-        workerCtx.require = require;
+        // workerCtx.require = require;
         workerCtx.__filename = scriptLoc.pathname;
         workerCtx.__dirname = path.dirname(scriptLoc.pathname);
     }
@@ -246,12 +247,12 @@ prom.then((scriptSource) => {
     // Todo: In place of this, allow conditionally `SharedWorkerGlobalScope`, or `ServiceWorkerGlobalScope`
     workerCtx.DedicatedWorkerGlobalScope = workerCtx;
     // This was needed for testharness' `instanceof` check which requires it to be callable: `self instanceof DedicatedWorkerGlobalScope`
-    workerCtx.DedicatedWorkerGlobalScope[Symbol.hasInstance] = function (inst) { return inst.WorkerGlobalScope && !inst.SharedWorkerGlobalScope && !inst.ServiceWorkerGlobalScope; };
+    // workerCtx.DedicatedWorkerGlobalScope[Symbol.hasInstance] = function (inst) { return inst.WorkerGlobalScope && !inst.SharedWorkerGlobalScope && !inst.ServiceWorkerGlobalScope; };
 
     workerCtx.location = scriptLoc;
     workerCtx.closing = false;
     workerCtx.close = function () {
-        // eslint-disable-next-line n/no-process-exit, unicorn/no-process-exit
+        // eslint-disable-next-line unicorn/no-process-exit
         process.exit(0);
     };
     workerCtx.eventHandlers = {message: []};
@@ -344,7 +345,7 @@ prom.then((scriptSource) => {
     // We will otherwise miss these tests (though not sure this is the best solution):
     //   see test_primary_interface_of in idlharness.js
     workerCtx.Object = Object;
-    workerCtx.Object[Symbol.hasInstance] = function (inst) { return inst && typeof inst === 'object'; };
+    // workerCtx.Object[Symbol.hasInstance] = function (inst) { return inst && typeof inst === 'object'; };
 
     workerCtx.Function = Function; // idlharness.any.js with check for `DOMStringList`'s prototype being the same Function.prototype (still true?)
 

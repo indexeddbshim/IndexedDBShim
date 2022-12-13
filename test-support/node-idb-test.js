@@ -1,34 +1,39 @@
 /* eslint-disable compat/compat */
 // Todo: Reuse any relevant portions in this file or `node-buildjs.js` for adapting tests for browser shimming
-require('source-map-support').install({
-    // Needed along with sourcemap transform
-    environment: 'node'
-});
-const util = require('util');
-const fs = require('fs');
-const path = require('path');
-const vm = require('vm');
-// Requires `--experimental-worker` (as of 10.5.0)
-const {MessageChannel} = require('worker_threads');
 
-const jsdom = require('jsdom');
-const {ImageData, DOMPoint, DOMMatrix} = require('canvas');
-const colors = require('colors/safe');
+import {readFile, readdir, writeFile} from 'node:fs/promises';
+import path from 'node:path';
+import vm from 'node:vm';
+import {MessageChannel} from 'node:worker_threads';
+import {fileURLToPath} from 'node:url';
 
-const readFile = util.promisify(fs.readFile);
-const readdir = util.promisify(fs.readdir);
-const writeFile = util.promisify(fs.writeFile);
+// import sourceMapSupport from 'source-map-support/source-map-support.js';
 
-const {JSDOM} = jsdom;
-const CY = require('cyclonejs'); // Todo: Replace this with Sca (but need to make requireable)
-const XMLHttpRequestConstr = require('local-xmlhttprequest');
-const isDateObject = require('is-date-object');
-const fetch = require('isomorphic-fetch');
-const Worker = require('./webworker/webworker.js'); // Todo: We could export this `Worker` publicly for others looking for a Worker polyfill with IDB support
-const transformV8Stack = require('./transformV8Stack.js');
+import jsdom from 'jsdom';
+import {ImageData, DOMPoint, DOMMatrix} from 'canvas';
+import colors from 'colors/safe.js';
+
+import CY from 'cyclonejs'; // Todo: Replace this with Sca (but need to make requireable)
+import XMLHttpRequestConstr from 'local-xmlhttprequest';
+import isDateObject from 'is-date-object';
+import fetch from 'isomorphic-fetch';
+
+import indexeddbshim from '../src/node-UnicodeIdentifiers.js';
+import Worker from './webworker/webworker.js'; // Todo: We could export this `Worker` publicly for others looking for a Worker polyfill with IDB support
+import transformV8Stack from './transformV8Stack.js';
+import goodBad from './node-good-bad-files.js';
+
+// sourceMapSupport.install({
+//     // Needed along with sourcemap transform
+//     environment: 'node'
+// });
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 const {
     goodFiles, badFiles, notRunning, timeout, excludedWorkers, excludedNormal
-} = require('./node-good-bad-files.js');
+} = goodBad;
+
+const {JSDOM} = jsdom;
 
 // CONFIG
 const DEBUG = false;
@@ -41,17 +46,15 @@ const fileIndex = (/^-?\d+$/u).test(fileArg) ? fileArg : (process.argv[3] || und
 const endFileCount = (/^-?\d+$/u).test(fileArg) && (/^-?\d+$/u).test(process.argv[3]) ? process.argv[3] : (process.argv[4] || undefined);
 const dirPath = path.join('test-support', 'js');
 const idbTestPath = 'web-platform-tests';
-const indexeddbshim = require('../dist/indexeddbshim-UnicodeIdentifiers-node.js');
 
 const {createDOMException} = indexeddbshim;
 const workerFileRegex = /^(_service-worker-indexeddb\.https\.js|(_interface-objects-)?00\d(\.worker)?\.js)$/u;
-// const indexeddbshimNonUnicode = require('../dist/indexeddbshim-node');
+// import indexeddbshimNonUnicode from '../dist/indexeddbshim-node';
 
 // String replacements on code due, e.g., for lagging ES support in Node
 const nodeReplacementHacks = {
     'idb-binary-key-roundtrip.js': [/(`Binary keys can be supplied using the view type \$\{type\}`),/u, '$1'] // https://github.com/w3c/web-platform-tests/issues/4817
 };
-
 const jsonResults = true;
 const shimNS = {
     colors,
@@ -96,7 +99,7 @@ process.on('unhandledRejection', (reason, p) => {
 });
 */
 function exit () {
-    // eslint-disable-next-line n/no-process-exit
+    // eslint-disable-next-line unicorn/no-process-exit
     process.exit();
 }
 async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, item = 0) {
@@ -154,6 +157,22 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                             '\n  ]\n';
                     }, '\n')
                 );
+
+                const runFiles = Object.keys(shimNS.files).flatMap((status) => {
+                    return shimNS.files[status];
+                });
+
+                const removeable = [];
+                knownFiles.forEach((priorReportedFile) => {
+                    if (!runFiles.includes(priorReportedFile)) {
+                        removeable.push(priorReportedFile);
+                    }
+                });
+
+                // Don't show for small executions
+                if (shimNS.files['Files with all tests passing'].length > 1) {
+                    console.log('\nFiles that can be removed from our listings', removeable, '\n');
+                }
 
                 console.log('  Number of files processed: ' + (ct - excludedCount));
 
@@ -234,7 +253,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                             }, null, 2
                         ));
                     } catch (err) {
-                        console.log(err);
+                        console.error('Error1', err);
                         return;
                     }
                     console.log('Saved to ' + jsonOutputPath);
@@ -247,7 +266,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                     try {
                         await writeFile(jsonOutputPath, JSON.stringify(shimNS.jsonOutput, null, 2));
                     } catch (err) {
-                        console.log(err);
+                        console.error('Error 2', err);
                         return;
                     }
                     console.log('Saved to ' + jsonOutputPath);
@@ -277,7 +296,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
     try {
         content = await readFile(path.join(dirPath, shimNS.fileName), 'utf8');
     } catch (err) {
-        console.log(err);
+        console.error('Error 3', err);
         return;
     }
 
@@ -286,18 +305,35 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
     }
 
     const scripts = [];
+    const indexedDBSupported = [
+        'resources/support.js',
+        'resources/support-promises.js',
+        'resources/nested-cloning-common.js',
+        'resources/interleaved-cursors-common.js',
+        'resources/reading-autoincrement-common.js'
+    ];
     const supported = [
         'resources/testharness.js', 'resources/testharnessreport.js',
         'resources/idlharness.js', 'resources/WebIDLParser.js',
         'resources/testdriver.js', 'resources/testdriver-vendor.js',
         'common/subset-tests.js',
         'nested-cloning-common.js', 'interleaved-cursors-common.js',
-        'support.js', 'support-promises.js', 'service-workers/service-worker/resources/test-helpers.sub.js',
-        'common/get-host-info.sub.js'
+        'service-workers/service-worker/resources/test-helpers.sub.js',
+        'common/get-host-info.sub.js',
+        ...indexedDBSupported
     ];
     // Use paths set in node-buildjs.js (when extracting <script> tags and joining contents)
     content.replace(/beginscript::(.*?)::endscript/gu, (_, src) => {
         // Fix paths for known support files and report new ones (so we can decide how to handle)
+        if (
+            // Added this to suppress errors; may get through if wrapping
+            [
+                'http://127.0.0.1:9999/node_modules/core-js-bundle/minified.js',
+                'http://127.0.0.1:9999/dist/indexeddbshim-noninvasive.js'
+            ].includes(src)
+        ) {
+            return;
+        }
         if (supported.includes(src) || supported.includes(src.replace(/^\//u, '')) ||
             (src.startsWith('/IndexedDB') && src.endsWith('.any.js'))
         ) {
@@ -313,7 +349,8 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                 //   testing) we just map it to the source file which appears to be rendered
                 //   unmodified
                 // ? 'resources/webidl2/lib/webidl2.js' : ()
-                ((/^(service-workers|resources|IndexedDB|common\/)/u).test(src)
+                ((/^(service-workers|resources|IndexedDB|common\/)/u).test(src) &&
+                    !indexedDBSupported.includes(src)
                     ? src
                     : 'IndexedDB/' + src)
             ));
@@ -321,6 +358,18 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             console.log('missing?:' + src);
         }
     });
+
+    // Why is this missing now?
+    const code = await Promise.all([
+        'http://127.0.0.1:9999/dist/indexeddbshim.js'
+    ].map(async (url) => {
+        const resp = await fetch(url, {
+            mode: 'no-cors'
+        });
+        return await resp.text();
+    }));
+
+    content = code.join('\n\n') + content;
 
     const harnessContent = await readAndJoinFiles(scripts);
     // early envt't, harness, reporting env't, specific test
@@ -342,10 +391,14 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
     // Leverage the W3C server for interfaces test, assuming it is running;
     //   as we are overriding `XMLHttpRequest` below, we are not really using this at the moment,
     //   but to set up, see https://github.com/w3c/web-platform-tests
-    // const url = 'http://localhost:9999/web-platform-tests/IndexedDB/idlharness.any.html',
+    // const url = 'http://127.0.0.1:9999/web-platform-tests/IndexedDB/idlharness.any.html',
     // const url = 'file://' + basePath;
-    const url = 'http://localhost:8000/IndexedDB/idlharness.any.html';
+
+    // Necessary for certain tests, but seems might be worse on performance
+    const url = 'http://127.0.0.1:8000/IndexedDB/idlharness.any.html';
     const {window} = await JSDOM.fromURL(url);
+    // const {window} = new JSDOM();
+
     try {
         // Should only pass in safe objects
         const sandboxObj = {
@@ -380,9 +433,9 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             // We will otherwise miss these tests (though not sure this is the best solution):
             //   see test_primary_interface_of in idlharness.js
             window.Object = Object;
-            window.Object[Symbol.hasInstance] = function (inst) {
-                return inst && typeof inst === 'object';
-            };
+            // window.Object[Symbol.hasInstance] = function (inst) {
+            //     return inst && typeof inst === 'object';
+            // };
         }
 
         // See <https://github.com/axemclion/IndexedDBShim/issues/280>
@@ -486,15 +539,18 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             };
         }
 
-        // window.XMLHttpRequest = XMLHttpRequest({basePath: 'http://localhost:8000/IndexedDB/'}); // Todo: We should support this too
+        // window.XMLHttpRequest = XMLHttpRequest({basePath: 'http://127.0.0.1:8000/IndexedDB/'}); // Todo: We should support this too
         window.XMLHttpRequest = XMLHttpRequestConstr({basePath});
         window.XMLHttpRequest.prototype.overrideMimeType = function () { /* */ };
         window.fetch = function (...args) {
             if (args[0].startsWith('/')) {
-                args[0] = 'http://localhost:8000' + args[0];
+                args[0] = 'http://127.0.0.1:8000' + args[0];
             }
             return fetch(...args);
         };
+
+        // serialize-sharedarraybuffer-throws.https.js
+        window.crossOriginIsolated = true;
 
         global.ImageData = window.ImageData = ImageData;
         window.DOMPoint = DOMPoint;
@@ -505,27 +561,28 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                 // Testing
             };
 
+        // Polyfill enough for our tests
+        // const require = createRequire(import.meta.url);
+        // const cou = require('../node_modules/typeson-registry/polyfills/createObjectURL.umd.js');
+        const cou = await import('typeson-registry/polyfills/createObjectURL.js');
+
         global.XMLHttpRequest = window.XMLHttpRequest;
         // Expose the following to the `createObjectURL` polyfill
         delete window.URL.createObjectURL;
         global.URL = window.URL;
-        // Polyfill enough for our tests
-        const cou = require( // eslint-disable-line n/global-require
-            '../node_modules/typeson-registry/polyfills/createObjectURL.umd.js'
-        );
         global.URL.createObjectURL = cou.createObjectURL;
         global.XMLHttpRequest.prototype.overrideMimeType = cou.xmlHttpRequestOverrideMimeType({
             polyfillDataURLs: true
         });
 
-        delete require.cache[
-            Object.keys(require.cache).find((path) => path.includes('createObjectURL'))
-        ];
+        // delete require.cache[
+        //     Object.keys(require.cache).find((path) => path.includes('createObjectURL'))
+        // ];
 
         window.Promise = Promise;
-        window.Promise[Symbol.hasInstance] = function (inst) {
-            return inst && typeof inst === 'object' && typeof inst.then === 'function';
-        };
+        // window.Promise[Symbol.hasInstance] = function (inst) {
+        //     return inst && typeof inst === 'object' && typeof inst.then === 'function';
+        // };
 
         window.Function = Function; // idlharness.any.js with check for `DOMStringList`'s prototype being the same Function.prototype (still true?)
 
@@ -558,9 +615,9 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             rootPath,
             permittedProtocols: ['http', 'https', 'blob']
         });
-        window.Blob.prototype[Symbol.toStringTag] = 'Blob';
-        window.File.prototype[Symbol.toStringTag] = 'File';
-        window.FileList.prototype[Symbol.toStringTag] = 'FileList';
+        // window.Blob.prototype[Symbol.toStringTag] = 'Blob';
+        // window.File.prototype[Symbol.toStringTag] = 'File';
+        // window.FileList.prototype[Symbol.toStringTag] = 'FileList';
 
         // Needed by typeson-registry to revive clones
         // window.BigInt = global.BigInt;
@@ -581,7 +638,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             timeout: vmTimeout
         });
     } catch (err) {
-        console.log(err);
+        console.error('Error 4', err);
         // If there is an issue, save the last erring test along with our
         // custom test environment and the harness bundle; avoid some of our
         //  ESLint rules on this joined file to better notice any other
@@ -594,7 +651,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         try {
             await writeFile(path.join('test-support', 'latest-erring-bundled.js'), fileSave);
         } catch (err) {
-            console.log(err);
+            console.error('Error 5', err);
         }
         shimNS.finished();
     }
@@ -616,7 +673,7 @@ async function readAndEvaluateFiles (jsFiles, workers, recursing) {
     try {
         initial = await readFile(path.join('test-support', 'environment.js'), 'utf8');
     } catch (err) {
-        console.log(err);
+        console.error('Error 6', err);
         return;
     }
 
@@ -631,75 +688,73 @@ async function readAndEvaluateFiles (jsFiles, workers, recursing) {
     try {
         ending = await readFile(path.join('test-support', 'custom-reporter.js'), 'utf8');
     } catch (err) {
-        console.log(err);
+        console.error('Error 7', err);
         return;
     }
     await readAndEvaluate(jsFiles, initial, ending, workers);
 }
 
-(async () => {
-    try {
-        switch (fileArg) {
-        case 'good':
-            await readAndEvaluateFiles(goodFiles);
-            break;
-        case 'bad':
-            await readAndEvaluateFiles(badFiles);
-            break;
-        case 'timeout':
-            await readAndEvaluateFiles(timeout);
-            break;
-        case 'notRunning':
-            await readAndEvaluateFiles(notRunning);
-            break;
-        case 'domstringlist':
-            await readAndEvaluateFiles(['domstringlist.js']);
-            break;
-        case 'events': case 'event':
-            // Tests `EventTarget`, etc. shims
-            await readAndEvaluateFiles([
-                '../non-indexedDB/__event-interface.js',
-                '../non-indexedDB/interface-objects.js'
-            ]);
-            break;
-        case 'exceptions': case 'exception': case 'domexception':
-            await readAndEvaluateFiles([
-                '../non-indexedDB/DOMException-constructor.js',
-                '../non-indexedDB/DOMException-constants.js',
-                '../non-indexedDB/exceptions.js',
-                '../non-indexedDB/constructor-object.js'
-            ]);
-            break;
-        case 'workers': case 'worker': {
-            let jsFiles;
-            try {
-                jsFiles = (await readdir(dirPath)).filter((file) => file.match(workerFileRegex));
-            } catch (err) {
-                console.log(err);
-                return;
-            }
-            await readAndEvaluateFiles(jsFiles, true);
-            break;
-        } default: {
-            if (!fileIndex && fileArg && fileArg !== 'all') {
-                await readAndEvaluateFiles([fileArg], true); // Allow specific worker files to be passed
-                break;
-            }
-            let files;
-            try {
-                files = await readdir(dirPath);
-            } catch (err) {
-                console.log(err);
-                return;
-            }
-            await readAndEvaluateFiles(files);
+try {
+    switch (fileArg) {
+    case 'good':
+        await readAndEvaluateFiles(goodFiles);
+        break;
+    case 'bad':
+        await readAndEvaluateFiles(badFiles);
+        break;
+    case 'timeout':
+        await readAndEvaluateFiles(timeout);
+        break;
+    case 'notRunning':
+        await readAndEvaluateFiles(notRunning);
+        break;
+    case 'domstringlist':
+        await readAndEvaluateFiles(['domstringlist.js']);
+        break;
+    case 'events': case 'event':
+        // Tests `EventTarget`, etc. shims
+        await readAndEvaluateFiles([
+            '../non-indexedDB/__event-interface.js',
+            '../non-indexedDB/interface-objects.js'
+        ]);
+        break;
+    case 'exceptions': case 'exception': case 'domexception':
+        await readAndEvaluateFiles([
+            '../non-indexedDB/DOMException-constructor.js',
+            '../non-indexedDB/DOMException-constants.js',
+            '../non-indexedDB/exceptions.js',
+            '../non-indexedDB/constructor-object.js'
+        ]);
+        break;
+    case 'workers': case 'worker': {
+        let jsFiles;
+        try {
+            jsFiles = (await readdir(dirPath)).filter((file) => file.match(workerFileRegex));
+        } catch (err) {
+            console.error('Error 8', err);
             break;
         }
+        await readAndEvaluateFiles(jsFiles, true);
+        break;
+    } default: {
+        if (!fileIndex && fileArg && fileArg !== 'all') {
+            await readAndEvaluateFiles([fileArg], true); // Allow specific worker files to be passed
+            break;
         }
-    } catch (err) {
-        console.log(err);
+        let files;
+        try {
+            files = await readdir(dirPath);
+        } catch (err) {
+            console.error('Error 9', err);
+            break;
+        }
+        await readAndEvaluateFiles(files);
+        break;
     }
-})();
+    }
+} catch (err) {
+    console.error('Error 10', err);
+}
 
 async function readAndJoinFiles (arr, i = 0, str = '') {
     const filename = arr[i];
@@ -710,7 +765,7 @@ async function readAndJoinFiles (arr, i = 0, str = '') {
     try {
         data = await readFile(filename, 'utf8');
     } catch (err) {
-        console.log(err);
+        console.error('Error 11', err);
         throw err;
     }
     str += '/*jsfilename:' + filename + '*/\n\n' + data;

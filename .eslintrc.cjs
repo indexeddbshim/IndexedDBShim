@@ -34,6 +34,9 @@ module.exports = {
     extends: [
         'ash-nazg/sauron-node-overrides'
     ],
+    parserOptions: {
+        ecmaVersion: 2022
+    },
     env: {
         browser: true
     },
@@ -128,7 +131,10 @@ module.exports = {
         //   not a lower Node version
         {
             files: ['test-support/**', 'tests-mocha/**'],
-            extends: ['ash-nazg/sauron-node-script'],
+            extends: ['ash-nazg/sauron-node'],
+            parserOptions: {
+                ecmaVersion: 2022
+            },
             settings: {
                 polyfills: [
                     'ErrorEvent',
@@ -143,6 +149,7 @@ module.exports = {
                 'no-process-exit': 0,
                 // We want console in tests!
                 'no-console': 'off',
+                'import/unambiguous': 'off',
                 'object-shorthand': ['off'],
                 'prefer-destructuring': ['off'],
                 'require-unicode-regexp': ['off'],

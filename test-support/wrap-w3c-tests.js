@@ -1,14 +1,17 @@
 /* eslint-disable n/no-sync */
-const fs = require('fs');
-const path = require('path');
-const got = require('got');
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import fetch from 'isomorphic-fetch';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const indexedDBDir = path.join(__dirname, '../web-platform-tests/IndexedDB/');
 const loaderFile = '_indexeddbshim-loader.html';
 const shimLoaderPath = path.join(indexedDBDir, loaderFile);
 
 if (process.argv[2] === 'remove') {
-    fs.unlinkSync(shimLoaderPath);
+    // fs.unlinkSync(shimLoaderPath);
     fs.readdir(indexedDBDir, (err, files) => {
         if (err) {
             console.log('err', err);
@@ -25,8 +28,7 @@ if (process.argv[2] === 'remove') {
         `<!DOCTYPE html>
 <meta charset="utf-8" />
 <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon" />
-<script src="http://localhost:9999/node_modules/core-js-bundle/minified.js"></script>
-<script src="http://localhost:9999/dist/indexeddbshim-noninvasive.min.js"></script>
+<script src="http://127.0.0.1:9999/dist/indexeddbshim-noninvasive.min.js"></script>
 `);
 
     fs.readdir(indexedDBDir, (err, files) => {
@@ -114,8 +116,7 @@ loaderWin.addEventListener('DOMContentLoaded', function () {
 
         const htmlFiles = files.filter((f) => (/\.html?$/u).test(f));
         const polyfillScript = `
-<script src="http://localhost:9999/node_modules/core-js-bundle/minified.js"></script>
-<script src="http://localhost:9999/dist/indexeddbshim-noninvasive.js"></script>
+<script src="http://127.0.0.1:9999/dist/indexeddbshim-noninvasive.js"></script>
 <script>
     'use strict';
     // Override to better ensure transaction has expired
@@ -178,7 +179,8 @@ loaderWin.addEventListener('DOMContentLoaded', function () {
                 htmlFile,
                 'http://web-platform.test:8000/IndexedDB/'
             );
-            const {body: fileContents} = await got(urlPath.href);
+            const resp = await fetch(urlPath.href);
+            const fileContents = await resp.text();
             replace(htmlPath, fileContents, true);
         });
     });

@@ -30,16 +30,20 @@
 //                          via the WebWorker API generate this type of
 //                          message.
 
-const assert = require('assert');
-const childProcess = require('child_process');
-const fs = require('fs');
-const http = require('http');
-const path = require('path');
-const util = require('util');
-const os = require('os');
-const url = require('url');
-const WebSocketServer = require('ws').Server;
-const wwutil = require('./webworker-util.js');
+import assert from 'assert';
+import childProcess from 'child_process';
+import fs from 'fs';
+import http from 'http';
+import path, {dirname} from 'path';
+import util from 'util';
+import os from 'os';
+import url, {fileURLToPath} from 'url';
+import ws from 'ws';
+import * as wwutil from './webworker-util.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const WebSocketServer = ws.Server;
 
 const isWin = os.platform().startsWith('win');
 
@@ -59,7 +63,7 @@ let numWorkersCreated = 0;
 //   rootPath: The root path
 //   origin: Used for the `Origin` header (may be `null`); if `*` will cause cross-origin restrictions to be ignored
 // }
-module.exports = function (workerConfig) {
+function WebWorker (workerConfig) {
     workerConfig = workerConfig || {};
     if (workerConfig.permittedProtocols && !Array.isArray(workerConfig.permittedProtocols)) {
         throw new TypeError('The permittedProtocols argument must be an array');
@@ -92,7 +96,7 @@ module.exports = function (workerConfig) {
                 throw new TypeError('Absolute paths are not allowed when `rootPath` is `false`');
             }
             const {rootPath} = workerConfig;
-            basePath = 'http://localhost';
+            basePath = 'http://127.0.0.1';
             if (rootPath !== false) {
                 if (workerConfig.relativePathType === 'file') {
                     basePath = path.join(rootPath || process.cwd(), src);
@@ -110,7 +114,7 @@ module.exports = function (workerConfig) {
             if (basePath) {
                 basePath = wwutil.makeFileURL(workerConfig, basePath);
             }
-            basePath = basePath || wwutil.makeFileURL(workerConfig, process.cwd()) || 'http://localhost';
+            basePath = basePath || wwutil.makeFileURL(workerConfig, process.cwd()) || 'http://127.0.0.1';
             src = new URL(src, basePath);
             // const urlObj = url.parse(src);
         }
@@ -425,7 +429,9 @@ module.exports = function (workerConfig) {
         start();
     };
     return Worker;
-};
+}
+
+export default WebWorker;
 
 // Perform any one-time initialization
 try {

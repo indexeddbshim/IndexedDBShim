@@ -1,7 +1,8 @@
+import setGlobalVars from '../src/node-UnicodeIdentifiers.js';
+
 global.window = global;
 
-const setGlobalVars = require('../dist/indexeddbshim-UnicodeIdentifiers-node');
-// const setGlobalVars = require('../dist/indexeddbshim-node.min');
+// import setGlobalVars from '../dist/indexeddbshim-node.min';
 
 setGlobalVars(null, {addNonIDBGlobals: true});
 // shimIndexedDB.__debug(true);
@@ -9,4 +10,4 @@ setGlobalVars(null, {addNonIDBGlobals: true});
 window.DOMException = ShimDOMException;
 window.Event = ShimEvent;
 
-module.exports = global.indexedDB;
+export default global.indexedDB;

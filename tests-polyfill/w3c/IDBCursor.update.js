@@ -384,7 +384,9 @@ describe('W3C IDBCursor.update Tests', function () {
                 cursor_rq.onsuccess = function(e) {
                     var cursor = e.target.result;
 
-                    cursor.value = "new data!";
+                    try {
+                        cursor.value = "new data!";
+                    } catch (err) {}
                     cursor.update(cursor.value).onsuccess = function(e) {
                         assert.equal(e.target.result, "key");
                         done();
@@ -414,7 +416,9 @@ describe('W3C IDBCursor.update Tests', function () {
                     assert(cursor instanceof FDBCursor, "cursor exists");
 
                     db.deleteObjectStore("test");
-                    cursor.value += "_updated";
+                    try {
+                        cursor.value += "_updated";
+                    } catch (err) {}
                     support.throws(function() {
                         cursor.update(cursor.value);
                     }, 'InvalidStateError', "If the cursor's source or effective object store has been deleted, the implementation MUST throw a DOMException of type InvalidStateError");

@@ -1,16 +1,16 @@
-const fs = require('fs');
-const util = require('util');
-const {join} = require('path');
-const goodBad = require('./node-good-bad-files.js');
+import {readdir} from 'node:fs/promises';
+import {join, dirname} from 'node:path';
+import {fileURLToPath} from 'node:url';
 
-(async () => {
-    const readdir = util.promisify(fs.readdir);
-    let alreadyListedFiles = [];
-    Object.entries(goodBad).forEach(([key, arr]) => {
-        alreadyListedFiles = alreadyListedFiles.concat(arr);
-    });
-    const files = (await readdir(join(__dirname, 'js'))).filter((file) => {
-        return !alreadyListedFiles.includes(file);
-    });
-    console.log('files', files);
-})();
+import goodBad from './node-good-bad-files.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+let alreadyListedFiles = [];
+Object.entries(goodBad).forEach(([key, arr]) => {
+    alreadyListedFiles = alreadyListedFiles.concat(arr);
+});
+const files = (await readdir(join(__dirname, 'js'))).filter((file) => {
+    return !alreadyListedFiles.includes(file) && file !== '.DS_Store';
+});
+console.log('files', files);

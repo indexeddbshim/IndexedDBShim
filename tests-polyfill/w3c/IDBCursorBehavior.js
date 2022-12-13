@@ -625,7 +625,9 @@ describe('W3C IDBCursor Behavior Tests', function () {
                         assert.deepEqual(cursor.key, key, 'key after array push');
 
                         // But we can not change key (like readonly, just a bit different)
-                        cursor.key = 10;
+                        try {
+                            cursor.key = 10;
+                        } catch (err) {}
                         assert.deepEqual(cursor.key, key, 'key after assignment');
                     }
 
@@ -680,7 +682,9 @@ describe('W3C IDBCursor Behavior Tests', function () {
                         assert.deepEqual(cursor.primaryKey, key, 'primaryKey after array push');
 
                         // But we can not change key (like readonly, just a bit different)
-                        cursor.key = 10;
+                        try {
+                            cursor.key = 10;
+                        } catch (err) {}
                         assert.deepEqual(cursor.primaryKey, key, 'key after assignment');
                     }
 

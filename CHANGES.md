@@ -1,5 +1,22 @@
 # CHANGES for indexeddbshim
 
+## 11.0.0 (unreleased)
+
+### User-impacting changes
+
+- BREAKING feat: move to native ESM; uses `exports` in `package.json`
+- chore: Updates typeson/typeson-registry which, to
+    fix a bug, changes storage format for how emtpy
+    string paths are represented
+
+### Dev-impacting changes
+
+- chore: update devDeps.
+- test: adjust old W3C tests now that in modules with implicit strict mode and won't silently file with readonly
+- test: localhost->127.0.0.1 due to errors- test: logging
+- test: update goodBad files
+- test: report files that should be removeable
+
 ## 10.1.0
 
 ### User-impacting

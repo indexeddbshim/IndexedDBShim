@@ -1,4 +1,4 @@
-const gb = require('../test-support/node-good-bad-files.js');
+import gb from './node-good-bad-files.js';
 
 console.log(
     'Chrome',

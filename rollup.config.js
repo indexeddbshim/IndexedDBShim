@@ -1,13 +1,8 @@
-/* eslint-disable
-    import/default,
-    import/namespace,
-    import/no-deprecated,
-    import/no-named-as-default,
-    import/no-named-as-default-member */
+import {readFile} from 'node:fs/promises';
+
 import {nodeResolve} from '@rollup/plugin-node-resolve';
 import commonJS from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
-import replace from '@rollup/plugin-replace';
 
 import {babel} from '@rollup/plugin-babel';
 import globals from 'rollup-plugin-node-globals';
@@ -17,9 +12,11 @@ import terser from '@rollup/plugin-terser';
 
 import builtins from 'builtin-modules';
 
-import pkg from './package.json';
+const pkg = JSON.parse(await readFile(
+    new URL('package.json', import.meta.url)
+));
 
-const pkgName = pkg.name;
+const {name: pkgName} = pkg;
 
 const babelBrowserOptions = {
     // sourceMapsAbsolute: true,
@@ -62,26 +59,14 @@ const getRollupPlugins = (babelOptions, {addBuiltins, mainFields, min} = {}) => 
     if (addBuiltins) {
         ret.unshift(globals(), nodePolyfills());
     } else {
-        // Fix from https://github.com/rollup/rollup/issues/1507#issuecomment-340550539
-        ret.splice(1, 0, replace({
-            preventAssignment: true,
-            delimiters: ['', ''],
-            // Replacements:
-            'require(\'readable-stream/transform\')': 'require(\'stream\').Transform',
-            'require("readable-stream/transform")': 'require("stream").Transform',
-            'readable-stream': 'stream'
-        }));
-
         ret.unshift(json());
     }
     if (min) {
         ret.push(terser({
-            output: {
-                // Not apparently working per https://github.com/TrySound/rollup-plugin-terser/issues/68
-                comments (node, comment) {
-                    return (/\/*!/u).test(comment.value);
-                }
-            }
+            // // Not apparently working per https://github.com/TrySound/rollup-plugin-terser/issues/68
+            // comments (node, comment) {
+            //     return (/\/\*!/u).test(comment.value);
+            // }
         }));
     }
     return ret;
@@ -184,7 +169,7 @@ export default (commandLineArgs) => {
         }),
         ...nodeEnvironment({
             input: 'src/node-UnicodeIdentifiers.js',
-            output: `dist/${pkgName}-UnicodeIdentifiers-node.js`
+            output: `dist/${pkgName}-UnicodeIdentifiers-node.cjs`
         }),
         ...browserEnvironment({
             input: 'src/browser.js',
@@ -197,7 +182,7 @@ export default (commandLineArgs) => {
         }),
         ...nodeEnvironment({
             input: 'src/node.js',
-            output: `dist/${pkgName}-node.js`
+            output: `dist/${pkgName}-node.cjs`
         })
     ];
 };

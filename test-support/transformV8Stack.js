@@ -1,4 +1,6 @@
-const {transformSourceMapString} = require('sourcemap-transformer');
+import sourcemapTransformer from 'sourcemap-transformer';
+
+const {transformSourceMapString} = sourcemapTransformer;
 
 function transformW3CStack (stack) {
     return transformSourceMapString(stack, {
@@ -24,6 +26,4 @@ function transformW3CStack (stack) {
         }
     });
 }
-if (typeof module !== 'undefined') {
-    module.exports = transformW3CStack;
-}
+export default transformW3CStack;
