@@ -1,4 +1,4 @@
-/*! indexeddbshim - v11.0.0-beta.0 - 4/9/2023 */
+/*! indexeddbshim - v11.0.0 - 4/9/2023 */
 
 'use strict';
 
@@ -4131,14 +4131,14 @@ var u = function () {
             !0 === a && (y.push(r), p.push(t));
           }
           var _,
-            w = isPlainObject(r),
-            A = i(r),
-            j = (w || A) && (!l.plainObjectReplacers.length || s.replaced) || s.iterateIn ? r : replace(t, r, s, u, w || A, null, O);
+            A = isPlainObject(r),
+            w = i(r),
+            j = (A || w) && (!l.plainObjectReplacers.length || s.replaced) || s.iterateIn ? r : replace(t, r, s, u, A || w, null, O);
           if (j !== r ? (h = j, g = {
             replaced: j
-          }) : "" === t && hasConstructorOf(r, e) ? (u.push([t, r, a, s, void 0, void 0, s.type]), h = r) : A && "object" !== s.iterateIn || "array" === s.iterateIn ? (_ = new Array(r.length), g = {
+          }) : "" === t && hasConstructorOf(r, e) ? (u.push([t, r, a, s, void 0, void 0, s.type]), h = r) : w && "object" !== s.iterateIn || "array" === s.iterateIn ? (_ = new Array(r.length), g = {
             clone: _
-          }) : (["function", "symbol"].includes(_typeof(r)) || "toJSON" in r || hasConstructorOf(r, e) || hasConstructorOf(r, Promise) || hasConstructorOf(r, ArrayBuffer)) && !w && "object" !== s.iterateIn ? h = r : (_ = {}, s.addLength && (_.length = r.length), g = {
+          }) : (["function", "symbol"].includes(_typeof(r)) || "toJSON" in r || hasConstructorOf(r, e) || hasConstructorOf(r, Promise) || hasConstructorOf(r, ArrayBuffer)) && !A && "object" !== s.iterateIn ? h = r : (_ = {}, s.addLength && (_.length = r.length), g = {
             clone: _
           }), O && O(), n.iterateNone) return _ || h;
           if (!_) return h;
@@ -4171,7 +4171,7 @@ var u = function () {
             end: !0
           });
           if (s.iterateUnsetNumeric) {
-            for (var P = r.length, N = function _loop2(n) {
+            for (var N = r.length, P = function _loop2(n) {
                 if (!(n in r)) {
                   var o = t + (t ? "." : "") + n;
                   _adaptBuiltinStateObjectProperties(s, {
@@ -4181,7 +4181,7 @@ var u = function () {
                     hasConstructorOf(t, e) ? u.push([o, t, Boolean(a), s, _, n, s.type]) : void 0 !== t && (_[n] = t);
                   });
                 }
-              }, C = 0; C < P; C++) N(C);
+              }, E = 0; E < N; E++) P(E);
             O && O({
               endIterateUnsetNumeric: !0,
               end: !0
@@ -4502,7 +4502,7 @@ const O = {
     })
   }
 };
-const w = {
+const A = {
     cryptokey: {
       test: e => "CryptoKey" === toStringTag(e) && e.extractable,
       replaceAsync: t => new e( /*#__PURE__*/function () {
@@ -4530,7 +4530,7 @@ const w = {
       }) => crypto.subtle.importKey("jwk", e, t, !0, r)
     }
   },
-  A = {
+  w = {
     dataview: {
       test: e => "DataView" === toStringTag(e),
       replace({
@@ -4573,16 +4573,68 @@ const w = {
       revive: e => "NaN" === e ? new Date(Number.NaN) : new Date(e)
     }
   },
+  T = {
+    error: {
+      test: e => "Error" === toStringTag(e),
+      replace: ({
+        name: e,
+        message: t,
+        cause: r,
+        stack: n,
+        fileName: a,
+        lineNumber: o,
+        columnNumber: i
+      }) => ({
+        name: e,
+        message: t,
+        cause: r,
+        stack: n,
+        fileName: a,
+        lineNumber: o,
+        columnNumber: i
+      }),
+      revive(e) {
+        const t = new Error(e.message);
+        return ["name", "cause", "stack", "fileName", "lineNumber", "columnNumber"].forEach(r => {
+          t[r] = e[r];
+        }), t;
+      }
+    }
+  },
   I = {};
 function create$2(e) {
   I[e.name.toLowerCase()] = {
     test: t => hasConstructorOf(t, e),
-    replace: e => e.message,
-    revive: t => new e(t)
+    replace: ({
+      name: e,
+      message: t,
+      cause: r,
+      stack: n,
+      fileName: a,
+      lineNumber: o,
+      columnNumber: i,
+      errors: c
+    }) => ({
+      name: e,
+      message: t,
+      cause: r,
+      stack: n,
+      fileName: a,
+      lineNumber: o,
+      columnNumber: i,
+      errors: c
+    }),
+    revive(t) {
+      const r = "undefined" != typeof AggregateError && e === AggregateError,
+        n = r ? new e(t.errors, t.message) : new e(t.message);
+      return ["name", "cause", "stack", "fileName", "lineNumber", "columnNumber"].forEach(e => {
+        n[e] = t[e];
+      }), r && (n.errors = t.errors), n;
+    }
   };
 }
-[TypeError, RangeError, SyntaxError, ReferenceError, EvalError, URIError].forEach(e => create$2(e)), "function" == typeof InternalError && create$2(InternalError);
-const P = {
+[TypeError, RangeError, SyntaxError, ReferenceError, EvalError, URIError].forEach(e => create$2(e)), "undefined" != typeof AggregateError && create$2(AggregateError), "function" == typeof InternalError && create$2(InternalError);
+const N = {
     file: {
       test: e => "File" === toStringTag(e),
       replace(e) {
@@ -4619,8 +4671,8 @@ const P = {
       })
     }
   },
-  N = {
-    file: P.file,
+  P = {
+    file: N.file,
     filelist: {
       test: e => "FileList" === toStringTag(e),
       replace(e) {
@@ -4644,7 +4696,7 @@ const P = {
       }
     }
   },
-  C = {
+  E = {
     imagebitmap: {
       test: e => "ImageBitmap" === toStringTag(e) || e && e.dataset && "ImageBitmap" === e.dataset.toStringTag,
       replace(e) {
@@ -4669,7 +4721,7 @@ const P = {
       }
     }
   },
-  E = {
+  C = {
     imagedata: {
       test: e => "ImageData" === toStringTag(e),
       replace: e => ({
@@ -4843,7 +4895,7 @@ const W = {
     }
   }],
   X = [K, x, L],
-  te = [G, W, H, D, X, j, M, E, C, P, N, O].concat("function" == typeof Map ? U : [], "function" == typeof Set ? J : [], "function" == typeof ArrayBuffer ? h : [], "function" == typeof Uint8Array ? q : [], "function" == typeof DataView ? A : [], "undefined" != typeof Intl ? B : [], "undefined" != typeof crypto ? w : [], "undefined" != typeof BigInt ? [m, g] : []);
+  te = [G, W, H, D, X, j, M, C, E, N, P, O, T, I].concat("function" == typeof Map ? U : [], "function" == typeof Set ? J : [], "function" == typeof ArrayBuffer ? h : [], "function" == typeof Uint8Array ? q : [], "function" == typeof DataView ? w : [], "undefined" != typeof Intl ? B : [], "undefined" != typeof crypto ? A : [], "undefined" != typeof BigInt ? [m, g] : []);
 var re = te.concat({
   checkDataCloneException: {
     test(e) {

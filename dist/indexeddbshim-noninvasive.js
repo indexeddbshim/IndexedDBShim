@@ -1,4 +1,4 @@
-/*! indexeddbshim - v11.0.0-beta.0 - 4/9/2023 */
+/*! indexeddbshim - v11.0.0 - 4/9/2023 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -1391,7 +1391,7 @@
   'addSQLiteExtension',
   // Various types of in-memory databases that can auto-delete
   ['memoryDatabase', function (val) {
-    if (!/^(?::memory:|file::memory:(\?(?:(?!#)[\s\S])*)?(#(?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?)?$/.test(val)) {
+    if (!/^(?::memory:|file::memory:(\?(?:[\0-"\$-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?(#(?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?)?$/.test(val)) {
       throw new TypeError('`memoryDatabase` must be the empty string, ":memory:", or a ' + '"file::memory:[?queryString][#hash] URL".');
     }
   }],
@@ -1430,7 +1430,7 @@
 
   function escapeUnmatchedSurrogates(arg) {
     // http://stackoverflow.com/a/6701665/271577
-    return arg.replace(/((?:[\uD800-\uDBFF](?![\uDC00-\uDFFF])))(?!(?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))|(^|(?:(?![\uD800-\uDBFF](?![\uDC00-\uDFFF]))[\s\S]))((?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, function (_, unmatchedHighSurrogate, precedingLow, unmatchedLowSurrogate) {
+    return arg.replace(/((?:[\uD800-\uDBFF](?![\uDC00-\uDFFF])))(?!(?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))|(^|(?:[\0-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))((?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, function (_, unmatchedHighSurrogate, precedingLow, unmatchedLowSurrogate) {
       // Could add a corresponding surrogate for compatibility with `node-sqlite3`: http://bugs.python.org/issue12569 and http://stackoverflow.com/a/6701665/271577
       //   but Chrome having problems
       if (unmatchedHighSurrogate) {
@@ -2414,7 +2414,7 @@
         // Remove the decimal.
         key32 = decimalIndex !== -1 ? key32.replace('.', '') : key32;
         // Get the index of the first significant digit.
-        var significantDigitIndex = key32.search(/(?:(?!0)[\s\S])/);
+        var significantDigitIndex = key32.search(/(?:[\0-\/1-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])/);
         // Truncate leading zeros.
         key32 = key32.slice(significantDigitIndex);
         var sign, exponent, mantissa;
@@ -4702,14 +4702,14 @@
               !0 === a && (y.push(r), p.push(t));
             }
             var _,
-              w = isPlainObject(r),
-              A = i(r),
-              j = (w || A) && (!l.plainObjectReplacers.length || s.replaced) || s.iterateIn ? r : replace(t, r, s, u, w || A, null, O);
+              A = isPlainObject(r),
+              w = i(r),
+              j = (A || w) && (!l.plainObjectReplacers.length || s.replaced) || s.iterateIn ? r : replace(t, r, s, u, A || w, null, O);
             if (j !== r ? (h = j, g = {
               replaced: j
-            }) : "" === t && hasConstructorOf(r, e) ? (u.push([t, r, a, s, void 0, void 0, s.type]), h = r) : A && "object" !== s.iterateIn || "array" === s.iterateIn ? (_ = new Array(r.length), g = {
+            }) : "" === t && hasConstructorOf(r, e) ? (u.push([t, r, a, s, void 0, void 0, s.type]), h = r) : w && "object" !== s.iterateIn || "array" === s.iterateIn ? (_ = new Array(r.length), g = {
               clone: _
-            }) : (["function", "symbol"].includes(_typeof(r)) || "toJSON" in r || hasConstructorOf(r, e) || hasConstructorOf(r, Promise) || hasConstructorOf(r, ArrayBuffer)) && !w && "object" !== s.iterateIn ? h = r : (_ = {}, s.addLength && (_.length = r.length), g = {
+            }) : (["function", "symbol"].includes(_typeof(r)) || "toJSON" in r || hasConstructorOf(r, e) || hasConstructorOf(r, Promise) || hasConstructorOf(r, ArrayBuffer)) && !A && "object" !== s.iterateIn ? h = r : (_ = {}, s.addLength && (_.length = r.length), g = {
               clone: _
             }), O && O(), n.iterateNone) return _ || h;
             if (!_) return h;
@@ -4742,7 +4742,7 @@
               end: !0
             });
             if (s.iterateUnsetNumeric) {
-              for (var P = r.length, N = function _loop2(n) {
+              for (var N = r.length, P = function _loop2(n) {
                   if (!(n in r)) {
                     var o = t + (t ? "." : "") + n;
                     _adaptBuiltinStateObjectProperties(s, {
@@ -4752,7 +4752,7 @@
                       hasConstructorOf(t, e) ? u.push([o, t, Boolean(a), s, _, n, s.type]) : void 0 !== t && (_[n] = t);
                     });
                   }
-                }, C = 0; C < P; C++) N(C);
+                }, E = 0; E < N; E++) P(E);
               O && O({
                 endIterateUnsetNumeric: !0,
                 end: !0
@@ -5086,7 +5086,7 @@
       }
     }
   };
-  var w = {
+  var A = {
       cryptokey: {
         test: function test(e) {
           return "CryptoKey" === toStringTag(e) && e.extractable;
@@ -5134,7 +5134,7 @@
         }
       }
     },
-    A = {
+    w = {
       dataview: {
         test: function test(e) {
           return "DataView" === toStringTag(e);
@@ -5180,24 +5180,76 @@
         }
       }
     },
+    T = {
+      error: {
+        test: function test(e) {
+          return "Error" === toStringTag(e);
+        },
+        replace: function replace(_ref6) {
+          var e = _ref6.name,
+            t = _ref6.message,
+            r = _ref6.cause,
+            n = _ref6.stack,
+            a = _ref6.fileName,
+            o = _ref6.lineNumber,
+            i = _ref6.columnNumber;
+          return {
+            name: e,
+            message: t,
+            cause: r,
+            stack: n,
+            fileName: a,
+            lineNumber: o,
+            columnNumber: i
+          };
+        },
+        revive: function revive(e) {
+          var t = new Error(e.message);
+          return ["name", "cause", "stack", "fileName", "lineNumber", "columnNumber"].forEach(function (r) {
+            t[r] = e[r];
+          }), t;
+        }
+      }
+    },
     I = {};
   function create$2(e) {
     I[e.name.toLowerCase()] = {
       test: function test(t) {
         return hasConstructorOf(t, e);
       },
-      replace: function replace(e) {
-        return e.message;
+      replace: function replace(_ref7) {
+        var e = _ref7.name,
+          t = _ref7.message,
+          r = _ref7.cause,
+          n = _ref7.stack,
+          a = _ref7.fileName,
+          o = _ref7.lineNumber,
+          i = _ref7.columnNumber,
+          c = _ref7.errors;
+        return {
+          name: e,
+          message: t,
+          cause: r,
+          stack: n,
+          fileName: a,
+          lineNumber: o,
+          columnNumber: i,
+          errors: c
+        };
       },
       revive: function revive(t) {
-        return new e(t);
+        var r = "undefined" != typeof AggregateError && e === AggregateError,
+          n = r ? new e(t.errors, t.message) : new e(t.message);
+        return ["name", "cause", "stack", "fileName", "lineNumber", "columnNumber"].forEach(function (e) {
+          n[e] = t[e];
+        }), r && (n.errors = t.errors), n;
       }
     };
   }
   [TypeError, RangeError, SyntaxError, ReferenceError, EvalError, URIError].forEach(function (e) {
     return create$2(e);
-  }), "function" == typeof InternalError && create$2(InternalError);
-  var P = {
+  }), "undefined" != typeof AggregateError && create$2(AggregateError), "function" == typeof InternalError && create$2(InternalError);
+  var N = {
       file: {
         test: function test(e) {
           return "File" === toStringTag(e);
@@ -5239,8 +5291,8 @@
         }
       }
     },
-    N = {
-      file: P.file,
+    P = {
+      file: N.file,
       filelist: {
         test: function test(e) {
           return "FileList" === toStringTag(e);
@@ -5273,7 +5325,7 @@
         }
       }
     },
-    C = {
+    E = {
       imagebitmap: {
         test: function test(e) {
           return "ImageBitmap" === toStringTag(e) || e && e.dataset && "ImageBitmap" === e.dataset.toStringTag;
@@ -5300,7 +5352,7 @@
         }
       }
     },
-    E = {
+    C = {
       imagedata: {
         test: function test(e) {
           return "ImageData" === toStringTag(e);
@@ -5576,7 +5628,7 @@
       }
     }],
     X = [K, x, L],
-    te = [G, W, H, D, X, j, M, E, C, P, N, O].concat("function" == typeof Map ? U : [], "function" == typeof Set ? J : [], "function" == typeof ArrayBuffer ? h : [], "function" == typeof Uint8Array ? q : [], "function" == typeof DataView ? A : [], "undefined" != typeof Intl ? B : [], "undefined" != typeof crypto ? w : [], "undefined" != typeof BigInt ? [m, g] : []);
+    te = [G, W, H, D, X, j, M, C, E, N, P, O, T, I].concat("function" == typeof Map ? U : [], "function" == typeof Set ? J : [], "function" == typeof ArrayBuffer ? h : [], "function" == typeof Uint8Array ? q : [], "function" == typeof DataView ? w : [], "undefined" != typeof Intl ? B : [], "undefined" != typeof crypto ? A : [], "undefined" != typeof BigInt ? [m, g] : []);
   var re = te.concat({
     checkDataCloneException: {
       test: function test(e) {
