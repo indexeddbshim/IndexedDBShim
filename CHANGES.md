@@ -1,11 +1,11 @@
 # CHANGES for indexeddbshim
 
-## 11.0.0 (unreleased)
+## 11.0.0
 
 ### User-impacting changes
 
 - BREAKING feat: move to native ESM; uses `exports` in `package.json`
-- chore: Updates typeson/typeson-registry which, to
+- BREAKING chore: Updates typeson/typeson-registry which, to
     fix a bug, changes storage format for how emtpy
     string paths are represented
 

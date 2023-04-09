@@ -10,7 +10,7 @@ const {expect, assert} = window.chai;
 
 describe('database config', function () {
     it('should not err in cleaning up memory database resources', async function (done) {
-        const setGlobalVars = (await import('../dist/indexeddbshim-node.js')).default;
+        const setGlobalVars = (await import('../dist/indexeddbshim-node.cjs')).default;
 
         setGlobalVars(null, {
             DEBUG: false,
@@ -36,7 +36,7 @@ describe('database config', function () {
     });
 
     it('should respect the `databaseBasePath` setting for deletions', async function (done) {
-        const setGlobalVars = (await import('../dist/indexeddbshim-node.js')).default;
+        const setGlobalVars = (await import('../dist/indexeddbshim-node.cjs')).default;
 
         if (!fs.existsSync('foo')) {
             fs.mkdirSync('foo');
