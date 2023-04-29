@@ -1,4 +1,4 @@
-/*! indexeddbshim - v11.0.0 - 4/9/2023 */
+/*! indexeddbshim - v11.0.0 - 4/29/2023 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -1005,6 +1005,15 @@
             return {
               type: 'NaN',
               invalid: true
+            };
+          }
+
+          // https://github.com/w3c/IndexedDB/issues/375
+          // https://github.com/w3c/IndexedDB/pull/386
+          if (Object.is(input, -0)) {
+            return {
+              type: type,
+              value: 0
             };
           }
           return ret;

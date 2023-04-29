@@ -34,7 +34,7 @@ const babelNodeOptions = {...babelBrowserOptions,
     presets: [
         ['@babel/env', {
             targets: {
-                node: '6.9'
+                node: '16'
             }
         }]
     ]

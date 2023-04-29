@@ -428,6 +428,12 @@ function convertValueToKeyValueDecoded (input, seen, multiEntry, fullKeys) {
             // List as 'NaN' type for convenience of consumers in reporting errors
             return {type: 'NaN', invalid: true};
         }
+
+        // https://github.com/w3c/IndexedDB/issues/375
+        // https://github.com/w3c/IndexedDB/pull/386
+        if (Object.is(input, -0)) {
+            return {type, value: 0};
+        }
         return ret;
     } case 'string': {
         return ret;

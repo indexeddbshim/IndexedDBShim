@@ -1,90 +1,10 @@
-/*! indexeddbshim - v11.0.0 - 4/9/2023 */
+/*! indexeddbshim - v11.0.0 - 4/29/2023 */
 
 'use strict';
 
 var fs$1 = require('node:fs');
 var path = require('path');
 var customOpenDatabase = require('websql/custom/index.js');
-
-function ownKeys$1(object, enumerableOnly) {
-  var keys = Object.keys(object);
-  if (Object.getOwnPropertySymbols) {
-    var symbols = Object.getOwnPropertySymbols(object);
-    enumerableOnly && (symbols = symbols.filter(function (sym) {
-      return Object.getOwnPropertyDescriptor(object, sym).enumerable;
-    })), keys.push.apply(keys, symbols);
-  }
-  return keys;
-}
-function _objectSpread2$1(target) {
-  for (var i = 1; i < arguments.length; i++) {
-    var source = null != arguments[i] ? arguments[i] : {};
-    i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) {
-      _defineProperty$1(target, key, source[key]);
-    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) {
-      Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
-    });
-  }
-  return target;
-}
-function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
-  try {
-    var info = gen[key](arg);
-    var value = info.value;
-  } catch (error) {
-    reject(error);
-    return;
-  }
-  if (info.done) {
-    resolve(value);
-  } else {
-    Promise.resolve(value).then(_next, _throw);
-  }
-}
-function _asyncToGenerator(fn) {
-  return function () {
-    var self = this,
-      args = arguments;
-    return new Promise(function (resolve, reject) {
-      var gen = fn.apply(self, args);
-      function _next(value) {
-        asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value);
-      }
-      function _throw(err) {
-        asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err);
-      }
-      _next(undefined);
-    });
-  };
-}
-function _defineProperty$1(obj, key, value) {
-  key = _toPropertyKey$1(key);
-  if (key in obj) {
-    Object.defineProperty(obj, key, {
-      value: value,
-      enumerable: true,
-      configurable: true,
-      writable: true
-    });
-  } else {
-    obj[key] = value;
-  }
-  return obj;
-}
-function _toPrimitive(input, hint) {
-  if (typeof input !== "object" || input === null) return input;
-  var prim = input[Symbol.toPrimitive];
-  if (prim !== undefined) {
-    var res = prim.call(input, hint || "default");
-    if (typeof res !== "object") return res;
-    throw new TypeError("@@toPrimitive must return a primitive value.");
-  }
-  return (hint === "string" ? String : Number)(input);
-}
-function _toPropertyKey$1(arg) {
-  var key = _toPrimitive(arg, "string");
-  return typeof key === "symbol" ? key : String(key);
-}
 
 function _typeof$1(obj) {
   "@babel/helpers - typeof";
@@ -929,7 +849,11 @@ const CFG = {};
   });
 });
 
+function getDefaultExportFromCjs$1(x) {
+  return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
+}
 var regex = /[\xC0-\xC5\xC7-\xCF\xD1-\xD6\xD9-\xDD\xE0-\xE5\xE7-\xEF\xF1-\xF6\xF9-\xFD\xFF-\u010F\u0112-\u0125\u0128-\u0130\u0134-\u0137\u0139-\u013E\u0143-\u0148\u014C-\u0151\u0154-\u0165\u0168-\u017E\u01A0\u01A1\u01AF\u01B0\u01CD-\u01DC\u01DE-\u01E3\u01E6-\u01F0\u01F4\u01F5\u01F8-\u021B\u021E\u021F\u0226-\u0233\u0344\u0385\u0386\u0388-\u038A\u038C\u038E-\u0390\u03AA-\u03B0\u03CA-\u03CE\u03D3\u03D4\u0400\u0401\u0403\u0407\u040C-\u040E\u0419\u0439\u0450\u0451\u0453\u0457\u045C-\u045E\u0476\u0477\u04C1\u04C2\u04D0-\u04D3\u04D6\u04D7\u04DA-\u04DF\u04E2-\u04E7\u04EA-\u04F5\u04F8\u04F9\u0622-\u0626\u06C0\u06C2\u06D3\u0929\u0931\u0934\u0958-\u095F\u09CB\u09CC\u09DC\u09DD\u09DF\u0A33\u0A36\u0A59-\u0A5B\u0A5E\u0B48\u0B4B\u0B4C\u0B5C\u0B5D\u0B94\u0BCA-\u0BCC\u0C48\u0CC0\u0CC7\u0CC8\u0CCA\u0CCB\u0D4A-\u0D4C\u0DDA\u0DDC-\u0DDE\u0F43\u0F4D\u0F52\u0F57\u0F5C\u0F69\u0F73\u0F75\u0F76\u0F78\u0F81\u0F93\u0F9D\u0FA2\u0FA7\u0FAC\u0FB9\u1026\u1B06\u1B08\u1B0A\u1B0C\u1B0E\u1B12\u1B3B\u1B3D\u1B40\u1B41\u1B43\u1E00-\u1E99\u1E9B\u1EA0-\u1EF9\u1F00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FC1-\u1FC4\u1FC6-\u1FD3\u1FD6-\u1FDB\u1FDD-\u1FEE\u1FF2-\u1FF4\u1FF6-\u1FFC\u212B\u219A\u219B\u21AE\u21CD-\u21CF\u2204\u2209\u220C\u2224\u2226\u2241\u2244\u2247\u2249\u2260\u2262\u226D-\u2271\u2274\u2275\u2278\u2279\u2280\u2281\u2284\u2285\u2288\u2289\u22AC-\u22AF\u22E0-\u22E3\u22EA-\u22ED\u2ADC\u304C\u304E\u3050\u3052\u3054\u3056\u3058\u305A\u305C\u305E\u3060\u3062\u3065\u3067\u3069\u3070\u3071\u3073\u3074\u3076\u3077\u3079\u307A\u307C\u307D\u3094\u309E\u30AC\u30AE\u30B0\u30B2\u30B4\u30B6\u30B8\u30BA\u30BC\u30BE\u30C0\u30C2\u30C5\u30C7\u30C9\u30D0\u30D1\u30D3\u30D4\u30D6\u30D7\u30D9\u30DA\u30DC\u30DD\u30F4\u30F7-\u30FA\u30FE\uAC00-\uD7A3\uFB1D\uFB1F\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFB4E]|\uD804[\uDC9A\uDC9C\uDCAB\uDD2E\uDD2F\uDF4B\uDF4C]|\uD805[\uDCBB\uDCBC\uDCBE\uDDBA\uDDBB]|\uD806\uDD38|\uD834[\uDD5E-\uDD64\uDDBB-\uDDC0]/;
+var regex$1 = /*@__PURE__*/getDefaultExportFromCjs$1(regex);
 
 function escapeUnmatchedSurrogates(arg) {
   // http://stackoverflow.com/a/6701665/271577
@@ -986,7 +910,7 @@ function escapeDatabaseNameForSQLAndFiles(db) {
   db = 'D' + escapeNameForSQLiteIdentifier(db);
   if (CFG.escapeNFDForDatabaseNames !== false) {
     // ES6 copying of regex with different flags
-    db = db.replace(new RegExp(regex, 'gu'), function (expandable) {
+    db = db.replace(new RegExp(regex$1, 'gu'), function (expandable) {
       return '^4' + expandable.codePointAt().toString(16).padStart(6, '0');
     });
   }
@@ -1661,6 +1585,10 @@ Object.defineProperty(IDBOpenDBRequest, 'prototype', {
   writable: false
 });
 
+function getDefaultExportFromCjs (x) {
+	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
+}
+
 // Since [immediate](https://github.com/calvinmetcalf/immediate) is
 //   not doing the trick for our WebSQL transactions (at least in Node),
 //   we are forced to make the promises run fully synchronously.
@@ -1809,6 +1737,7 @@ SyncPromise.reject = function (val) {
   });
 };
 var syncPromiseCommonjs = SyncPromise;
+var SyncPromise$1 = /*@__PURE__*/getDefaultExportFromCjs(syncPromiseCommonjs);
 
 /**
  * Compares two keys.
@@ -2107,13 +2036,13 @@ function flipBase32(encoded) {
 function pow32(mantissa, exponent) {
   exponent = Number.parseInt(exponent, 32);
   if (exponent < 0) {
-    return roundToPrecision(Number.parseInt(mantissa, 32) * Math.pow(32, exponent - 10));
+    return roundToPrecision(Number.parseInt(mantissa, 32) * 32 ** (exponent - 10));
   }
   if (exponent < 11) {
     let whole = mantissa.slice(0, exponent);
     whole = Number.parseInt(whole, 32);
     let fraction = mantissa.slice(exponent);
-    fraction = Number.parseInt(fraction, 32) * Math.pow(32, exponent - 11);
+    fraction = Number.parseInt(fraction, 32) * 32 ** (exponent - 11);
     return roundToPrecision(whole + fraction);
   }
   const expansion = mantissa + zeros(exponent - 11);
@@ -2252,6 +2181,15 @@ function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
           return {
             type: 'NaN',
             invalid: true
+          };
+        }
+
+        // https://github.com/w3c/IndexedDB/issues/375
+        // https://github.com/w3c/IndexedDB/pull/386
+        if (Object.is(input, -0)) {
+          return {
+            type,
+            value: 0
           };
         }
         return ret;
@@ -3621,14 +3559,14 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
           bubbles: true,
           cancelable: true
         });
-        return new syncPromiseCommonjs(function (resolve) {
+        return new SyncPromise$1(function (resolve) {
           setTimeout(() => {
             q.req.dispatchEvent(reqEvt); // No need to catch errors
             resolve();
           });
         });
       });
-    }, syncPromiseCommonjs.resolve()).then(function () {
+    }, SyncPromise$1.resolve()).then(function () {
       // Also works when there are no pending requests
       const evt = createEvent('abort', err, {
         bubbles: true,
@@ -4119,7 +4057,7 @@ var u = function () {
                 type: o
               }));
             } : null;
-          if (["string", "boolean", "number", "undefined"].includes(m)) return void 0 === r || Number.isNaN(r) || r === Number.NEGATIVE_INFINITY || r === Number.POSITIVE_INFINITY ? (h = s.replaced ? r : replace(t, r, s, u, !1, d, O)) !== r && (g = {
+          if (["string", "boolean", "number", "undefined"].includes(m)) return void 0 === r || Number.isNaN(r) || r === Number.NEGATIVE_INFINITY || r === Number.POSITIVE_INFINITY || 0 === r ? (h = s.replaced ? r : replace(t, r, s, u, !1, d, O)) !== r && (g = {
             replaced: h
           }) : h = r, O && O(), h;
           if (null === r) return O && O(), r;
@@ -4505,24 +4443,19 @@ const O = {
 const A = {
     cryptokey: {
       test: e => "CryptoKey" === toStringTag(e) && e.extractable,
-      replaceAsync: t => new e( /*#__PURE__*/function () {
-        var _ref = _asyncToGenerator(function* (e, r) {
-          let n;
-          try {
-            n = yield crypto.subtle.exportKey("jwk", t);
-          } catch (e) {
-            return void r(e);
-          }
-          e({
-            jwk: n,
-            algorithm: t.algorithm,
-            usages: t.usages
-          });
+      replaceAsync: t => new e(async (e, r) => {
+        let n;
+        try {
+          n = await crypto.subtle.exportKey("jwk", t);
+        } catch (e) {
+          return void r(e);
+        }
+        e({
+          jwk: n,
+          algorithm: t.algorithm,
+          usages: t.usages
         });
-        return function (_x, _x2) {
-          return _ref.apply(this, arguments);
-        };
-      }()),
+      }),
       revive: ({
         jwk: e,
         algorithm: t,
@@ -4778,7 +4711,14 @@ const N = {
       revive: e => Number.NEGATIVE_INFINITY
     }
   },
-  D = {
+  F = {
+    negativeZero: {
+      test: e => Object.is(e, -0),
+      replace: e => 0,
+      revive: e => -0
+    }
+  },
+  M = {
     StringObject: {
       test: e => "String" === toStringTag(e) && "object" == typeof e,
       replace: String,
@@ -4795,7 +4735,7 @@ const N = {
       revive: e => new Number(e)
     }
   },
-  M = {
+  $ = {
     regexp: {
       test: e => "RegExp" === toStringTag(e),
       replace: e => ({
@@ -4808,26 +4748,26 @@ const N = {
       }) => new RegExp(e, t)
     }
   },
-  J = {
+  Y = {
     set: {
       test: e => "Set" === toStringTag(e),
       replace: e => [...e.values()],
       revive: e => new Set(e)
     }
   },
-  Y = {};
+  q = {};
 "function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array].forEach(e => function create$1(e) {
   const t = e.name;
-  Y[t.toLowerCase()] = {
+  q[t.toLowerCase()] = {
     test: e => toStringTag(e) === t,
     replace: e => (0 === e.byteOffset && e.byteLength === e.buffer.byteLength ? e : e.slice(0)).buffer,
     revive: t => "ArrayBuffer" === toStringTag(t) ? new e(t) : t
   };
 }(e));
-const q = {};
+const W = {};
 "function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array].forEach(e => function create(e) {
   const t = e.name;
-  q[t.toLowerCase()] = {
+  W[t.toLowerCase()] = {
     test: e => toStringTag(e) === t,
     replace({
       buffer: e,
@@ -4859,21 +4799,23 @@ const q = {};
     }
   };
 }(e));
-const W = {
+const G = {
     undef: {
       test: (e, t) => void 0 === e && (t.ownKeys || !("ownKeys" in t)),
       replace: e => 0,
       revive: e => new l()
     }
   },
-  G = {
+  H = {
     userObject: {
       test: (e, t) => isUserObject(e),
-      replace: e => _objectSpread2$1({}, e),
+      replace: e => ({
+        ...e
+      }),
       revive: e => e
     }
   },
-  H = [{
+  X = [{
     arrayNonindexKeys: {
       testPlainObjects: !0,
       test: (e, t) => !!Array.isArray(e) && (Object.keys(e).some(e => String(Number.parseInt(e)) !== e) && (t.iterateIn = "object", t.addLength = !0), !0),
@@ -4894,9 +4836,9 @@ const W = {
       revive(e) {}
     }
   }],
-  X = [K, x, L],
-  te = [G, W, H, D, X, j, M, C, E, N, P, O, T, I].concat("function" == typeof Map ? U : [], "function" == typeof Set ? J : [], "function" == typeof ArrayBuffer ? h : [], "function" == typeof Uint8Array ? q : [], "function" == typeof DataView ? w : [], "undefined" != typeof Intl ? B : [], "undefined" != typeof crypto ? A : [], "undefined" != typeof BigInt ? [m, g] : []);
-var re = te.concat({
+  Z = [K, x, L, F],
+  re = [H, G, X, M, Z, j, $, C, E, N, P, O, T, I].concat("function" == typeof Map ? U : [], "function" == typeof Set ? Y : [], "function" == typeof ArrayBuffer ? h : [], "function" == typeof Uint8Array ? W : [], "function" == typeof DataView ? w : [], "undefined" != typeof Intl ? B : [], "undefined" != typeof crypto ? A : [], "undefined" != typeof BigInt ? [m, g] : []);
+var ne = re.concat({
   checkDataCloneException: {
     test(e) {
       const t = {}.toString.call(e).slice(8, -1);
@@ -4908,9 +4850,9 @@ var re = te.concat({
 
 // See: http://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
 
-let typeson = new u().register(re);
+let typeson = new u().register(ne);
 function register(func) {
-  typeson = new u().register(func(re));
+  typeson = new u().register(func(ne));
 }
 
 // We are keeping the callback approach for now in case we wish to reexpose
@@ -5395,7 +5337,7 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
               return;
             }
             const indexCreations = colNamesToPreserve.slice(2) // Doing `key` separately and no need for index on `value`
-            .map(escapedIndexNameSQL => new syncPromiseCommonjs(function (resolve, reject) {
+            .map(escapedIndexNameSQL => new SyncPromise$1(function (resolve, reject) {
               const escapedIndexToRecreate = sqlQuote(escapedStoreNameSQL.slice(1, -1) + '^5' + escapedIndexNameSQL.slice(1, -1));
               // const sql = 'DROP INDEX IF EXISTS ' + escapedIndexToRecreate;
               // CFG.DEBUG && console.log(sql);
@@ -5410,7 +5352,7 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
               // });
             }));
 
-            indexCreations.push(new syncPromiseCommonjs(function (resolve, reject) {
+            indexCreations.push(new SyncPromise$1(function (resolve, reject) {
               const escapedIndexToRecreate = sqlQuote('sk_' + escapedStoreNameSQL.slice(1, -1));
               // Chrome erring here if not dropped first; Node does not
               const sql = 'DROP INDEX IF EXISTS ' + escapedIndexToRecreate;
@@ -5425,7 +5367,7 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                 reject(err);
               });
             }));
-            syncPromiseCommonjs.all(indexCreations).then(finish, error).catch(err => {
+            SyncPromise$1.all(indexCreations).then(finish, error).catch(err => {
               console.log('Index rename error');
               throw err;
             });
@@ -5888,7 +5830,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
     //   idea is to avoid, where possible, unnecessary delays (and
     //   consuming code ought to only see a difference in the browser
     //   where we can't control the transaction timeout anyways).
-    return new syncPromiseCommonjs((resolve, reject) => {
+    return new SyncPromise$1((resolve, reject) => {
       const index = me.__indexes[indexName];
       if (
       // `createIndex` was called synchronously after the current insertion was added to
@@ -5939,7 +5881,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
       }
     });
   });
-  return syncPromiseCommonjs.all(indexPromises).then(() => {
+  return SyncPromise$1.all(indexPromises).then(() => {
     const sqlStart = ['INSERT INTO', escapeStoreNameForSQL(me.__currentName), '('];
     const sqlEnd = [' VALUES ('];
     const insertSqlValues = [];
@@ -6407,7 +6349,9 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
   IDBTransaction.__assertVersionChange(this.__versionTransaction); // this.__versionTransaction may not exist if called mistakenly by user in onsuccess
   this.throwIfUpgradeTransactionNull();
   IDBTransaction.__assertActive(this.__versionTransaction);
-  createOptions = _objectSpread2$1({}, createOptions);
+  createOptions = {
+    ...createOptions
+  };
   let {
     keyPath
   } = createOptions;
@@ -6638,18 +6582,18 @@ function triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersio
         oldVersion,
         newVersion
       });
-      return new syncPromiseCommonjs(function (resolve) {
+      return new SyncPromise$1(function (resolve) {
         setTimeout(() => {
           entry.dispatchEvent(e); // No need to catch errors
           resolve();
         });
       });
     });
-  }, syncPromiseCommonjs.resolve()).then(function () {
+  }, SyncPromise$1.resolve()).then(function () {
     if (connectionsClosed()) {
       return undefined;
     }
-    return new syncPromiseCommonjs(function (resolve) {
+    return new SyncPromise$1(function (resolve) {
       const unblocking = {
         check() {
           if (connectionsClosed()) {
@@ -8178,9 +8122,10 @@ SQLiteDatabase.prototype.exec = function exec(queries, readOnly, callback) {
   doNext();
 };
 var SQLiteDatabase_1 = SQLiteDatabase;
+var SQLiteDatabase$1 = /*@__PURE__*/getDefaultExportFromCjs(SQLiteDatabase_1);
 
 function wrappedSQLiteDatabase(name) {
-  const db = new SQLiteDatabase_1(name);
+  const db = new SQLiteDatabase$1(name);
   if (CFG.sqlBusyTimeout) {
     db._db.configure('busyTimeout', CFG.sqlBusyTimeout); // Default is 1000
   }
@@ -8211,9 +8156,10 @@ CFG.win = {
   openDatabase: nodeWebSQL
 };
 const __setGlobalVars = function (idb, initialConfig = {}) {
-  const obj = setGlobalVars(idb, _objectSpread2$1({
-    fs: fs$1
-  }, initialConfig));
+  const obj = setGlobalVars(idb, {
+    fs: fs$1,
+    ...initialConfig
+  });
   obj.shimIndexedDB.__setUnicodeIdentifiers(UnicodeIdentifiers);
   return obj;
 };

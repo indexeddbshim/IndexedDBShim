@@ -1,5 +1,19 @@
 # CHANGES for indexeddbshim
 
+## 12.0.0
+
+### User-impacting changes
+
+Negative zero will now be stored differently and distinctly (though not as a key).
+
+- BREAKING fix: update typeson-registry to handle negative zero
+- chore: updates engines and build target to Node 16
+- chore: updates typeson
+
+### Dev-impacting changes
+
+- chore: updates devDeps.
+
 ## 11.0.0
 
 ### User-impacting changes
