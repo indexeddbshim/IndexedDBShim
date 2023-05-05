@@ -37,6 +37,10 @@ describe('IDBFactory.databases', function () {
         });
     });
 });
+
+/**
+ * @returns {Promise<IDBDatabase>}
+ */
 function openDb () {
     window.indexedDB.deleteDatabase(testData.DB.NAME);
     var dbOpenRequest = window.indexedDB.open(testData.DB.NAME);

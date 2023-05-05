@@ -53,29 +53,58 @@ const SOCK_DIR_PATH = path.join(os.tmpdir(), 'node-webworker-' + process.pid);
 // The number of workers created so far
 let numWorkersCreated = 0;
 
-// Our optional custom `workerConfig` options = {
-//   path: path to Node executable: defaults to `process.execPath` || process.argv[0]
-//   args: arguments to pass in opening Node process: defaults to [worker child, sockPath, Worker src argument, standard options type, standard options credentials, relativePathType, basePath, rootPath, origin]; if present, array values will have components spliced into the beginning; if non-array, will be converted to string and spliced onto the beginning
-//   permittedProtocols: indicates array of permitted explicit protocols ("file", "http", "https"); defaults to ["http", "https"]
-//   relativePathType: "file", "url" - determines Worker `src` argument interpretation; defaults to "url"
-//       relative paths will be relative to `basePath`
-//   basePath: The base path for pathType="url" defaults to `localhost`; the base path for pathType="file" defaults to the current working directory; if `false`, will throw upon relative paths
-//   rootPath: The root path
-//   origin: Used for the `Origin` header (may be `null`); if `*` will cause cross-origin restrictions to be ignored
-// }
+/**
+ * @param {object} [workerConfig]
+ * @param {string} [workerConfig.path] Path to Node executable: defaults to
+ *   `process.execPath` || process.argv[0]
+ * @param {[
+ *   string,
+ *   string,
+ *   string,
+ *   "classic"|"module",
+ *   "omit"|"include"|"same-origin",
+ *   string,
+ *   string,
+ *   string|null
+ * ]} [workerConfig.args] Arguments to pass in opening Node process:
+ *   defaults to [worker child, sockPath, Worker src argument,
+ *   standard options type, standard options credentials,
+ *   relativePathType, basePath, rootPath, origin];
+ *   if present, array values will have components spliced into the
+ *   beginning; if non-array, will be converted to string and spliced
+ *   onto the beginning
+ * @param {string[]} [workerConfig.permittedProtocols] Indicates array of
+ *   permitted explicit protocols ("file", "http", "https"); defaults to
+ *   ["http", "https"]
+ * @param {"file"|"url"} [workerConfig.relativePathType] Determines
+ *   Worker `src` argument interpretation; defaults to "url" relative paths
+ *   will be relative to `basePath`
+ * @param {string} [workerConfig.basePath] The base path for pathType="url"
+ *   defaults to `localhost`; the base path for pathType="file" defaults to
+ *   the current working directory; if `false`, will throw upon relative paths
+ * @param {string} [workerConfig.rootPath] The root path
+ * @param {string|null} [workerConfig.origin] Used for the `Origin` header
+ *   (may be `null`); if `*` will cause cross-origin restrictions to be ignored
+ * @throws {TypeError}
+ * @returns {Worker}
+ */
 function WebWorker (workerConfig) {
     workerConfig = workerConfig || {};
     if (workerConfig.permittedProtocols && !Array.isArray(workerConfig.permittedProtocols)) {
         throw new TypeError('The permittedProtocols argument must be an array');
     }
-    // A Web Worker
-    //
-    // Each worker communicates with the master over a UNIX domain socket rooted
-    // in SOCK_DIR_PATH.
-    // Standard options = {
-    //   type: "classic" (default), "module"
-    //   credentials: "omit" (if type=module), "include", "same-origin"
-    // }
+    /**
+     * A Web Worker
+     *
+     * Each worker communicates with the master over a UNIX domain socket rooted
+     * in SOCK_DIR_PATH.
+     * @param {string} src
+     * @param {{
+     *   type: "classic"|"module",
+     *   credentials: "omit"|"include"|"same-origin"
+     * }} opts Type defaults to `classic`; `credentials` is `omit` if type=module
+     * @returns {void}
+    */
     const Worker = function (src, opts) {
         // See https://html.spec.whatwg.org/multipage/workers.html#dom-worker
         const self = this; // eslint-disable-line consistent-this
@@ -185,10 +214,13 @@ function WebWorker (workerConfig) {
             msgStream.addListener('msg', handleMessage);
         });
 
-        // Begin worker execution
-        //
-        // First fires up the UNIX socket server, then spawns the child process
-        // and away we go.
+        /**
+         * Begin worker execution.
+         *
+         * First fires up the UNIX socket server, then spawns the child process
+         * and away we go.
+         * @returns {void}
+         */
         const start = function () {
             httpServer.listen(sockPath);
             httpServer.addListener('listening', function () {
@@ -338,7 +370,13 @@ function WebWorker (workerConfig) {
             }
         };
 
-        // Do the heavy lifting of posting a message
+        /**
+         * Do the heavy lifting of posting a message.
+         * @param {0|1|2|100} msgType
+         * @param {string} msg
+         * @param {FileDescriptor} fd
+         * @returns {void}
+         */
         const postMessageImpl = function (msgType, msg, fd) {
             assert.ok(!msgQueue || !msgStream);
 

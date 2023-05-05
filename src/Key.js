@@ -4,7 +4,43 @@ import cmp from './cmp.js';
 import CFG from './CFG.js';
 
 /**
- * @module Key
+ * @typedef {Int8Array|Int16Array|Int32Array|Uint8Array|Uint16Array|
+ *   Uint32Array|Uint8ClampedArray|BigInt64Array|BigUint64Array|
+ *   Float32Array|Float64Array|DataView} ArrayBufferView
+ */
+
+/**
+ * @typedef {ArrayBufferView|ArrayBuffer} BufferSource
+ */
+
+/**
+ * @typedef {"number"|"date"|"string"|"binary"|"array"} KeyType
+ */
+
+/**
+ * @typedef {any} Value
+ */
+
+/**
+ * @typedef {any} Key
+ * @todo Specify possible value more precisely
+ */
+
+/**
+ * @typedef {string|KeyPath[]} KeyPath
+ */
+
+/**
+* @typedef {object} KeyValueObject
+* @property {KeyType|"NaN"} type
+* @property {Value} [value]
+* @property {boolean} [invalid]
+* @property {string} [message]
+* @todo Specify acceptable `value` more precisely
+*/
+
+/**
+ * @typedef {number|string|Date|ArrayBuffer|ValueTypes[]} ValueTypes
  */
 
 /**
@@ -169,7 +205,7 @@ const types = {
         encode (key, inArray) {
             if (inArray) {
                 // prepend each character with a dash, and append a space to the end
-                key = key.replace(/(.)/gu, '-$1') + ' ';
+                key = key.replaceAll(/(.)/gu, '-$1') + ' ';
             }
             return keyTypeToEncodedChar.string + '-' + key;
         },
@@ -177,7 +213,7 @@ const types = {
             key = key.slice(2);
             if (inArray) {
                 // remove the space at the end, and the dash before each character
-                key = key.slice(0, -1).replace(/-(.)/gu, '$1');
+                key = key.slice(0, -1).replaceAll(/-(.)/gu, '$1');
             }
             return key;
         }
@@ -328,12 +364,8 @@ function negate (s) {
 }
 
 /**
-* @typedef {"number"|"date"|"string"|"binary"|"array"} module:Key.KeyType
-*/
-
-/**
- * @param key
- * @returns {module:Key.KeyType}
+ * @param {Key} key
+ * @returns {KeyType}
  */
 function getKeyType (key) {
     if (Array.isArray(key)) return 'array';
@@ -346,9 +378,9 @@ function getKeyType (key) {
 /**
  * Keys must be strings, numbers (besides `NaN`), Dates (if value is not
  *   `NaN`), binary objects or Arrays.
- * @param input The key input
+ * @param {Value} input The key input
  * @param {?(Array)} [seen] An array of already seen keys
- * @returns {module:Key.keyValueObject}
+ * @returns {KeyValueObject}
  */
 function convertValueToKey (input, seen) {
     return convertValueToKeyValueDecoded(input, seen, false, true);
@@ -356,8 +388,8 @@ function convertValueToKey (input, seen) {
 
 /**
 * Currently not in use.
-* @param input
-* @returns {module:Key.keyValueObject}
+* @param {Value} input
+* @returns {KeyValueObject}
 */
 function convertValueToMultiEntryKey (input) {
     return convertValueToKeyValueDecoded(input, null, true, true);
@@ -365,7 +397,7 @@ function convertValueToMultiEntryKey (input) {
 
 /**
  *
- * @param O
+ * @param {BufferSource} O
  * @throws {TypeError}
  * @see https://heycam.github.io/webidl/#ref-for-dfn-get-buffer-source-copy-2
  * @returns {Uint8Array}
@@ -391,25 +423,16 @@ function getCopyBytesHeldByBufferSource (O) {
 }
 
 /**
-* @typedef {PlainObject} module:Key.keyValueObject
-* @property {module:Key.KeyType|"NaN"} type
-* @property {*} [value]
-* @property {boolean} [invalid]
-* @property {string} [message]
-* @todo Specify acceptable `value` more precisely
-*/
-
-/**
 * Shortcut utility to avoid returning full keys from `convertValueToKey`
 *   and subsequent need to process in calling code unless `fullKeys` is
 *   set; may throw.
-* @param {module:Key.Key} input
-* @param {?(Array)} [seen]
+* @param {Value} input
+* @param {Value[]} [seen]
 * @param {boolean} [multiEntry]
 * @param {boolean} [fullKeys]
 * @throws {TypeError} See `getCopyBytesHeldByBufferSource`
 * @todo Document other allowable `input`
-* @returns {module:Key.keyValueObject}
+* @returns {KeyValueObject}
 */
 function convertValueToKeyValueDecoded (input, seen, multiEntry, fullKeys) {
     seen = seen || [];
@@ -490,15 +513,10 @@ function convertValueToKeyValueDecoded (input, seen, multiEntry, fullKeys) {
 }
 
 /**
-* @typedef {*} module:Key.Key
-* @todo Specify possible value more precisely
-*/
-
-/**
  *
- * @param {module:Key.Key} key
+ * @param {Key} key
  * @param {boolean} fullKeys
- * @returns {module:Key.keyValueObject}
+ * @returns {KeyValueObject}
  * @todo Document other allowable `key`?
  */
 function convertValueToMultiEntryKeyDecoded (key, fullKeys) {
@@ -507,10 +525,10 @@ function convertValueToMultiEntryKeyDecoded (key, fullKeys) {
 
 /**
 * An internal utility.
-* @param input
+* @param {Value} input
 * @param {boolean} seen
 * @throws {DOMException} `DataError`
-* @returns {module:Key.keyValueObject}
+* @returns {KeyValueObject}
 */
 function convertValueToKeyRethrowingAndIfInvalid (input, seen) {
     const key = convertValueToKey(input, seen);
@@ -522,10 +540,10 @@ function convertValueToKeyRethrowingAndIfInvalid (input, seen) {
 
 /**
  *
- * @param value
- * @param keyPath
+ * @param {Value} value
+ * @param {KeyPath} keyPath
  * @param {boolean} multiEntry
- * @returns {module:Key.keyValueObject|module:Key.KeyPathEvaluateValue}
+ * @returns {KeyValueObject|KeyPathEvaluateValue}
  * @todo Document other possible return?
  */
 function extractKeyFromValueUsingKeyPath (value, keyPath, multiEntry) {
@@ -533,10 +551,10 @@ function extractKeyFromValueUsingKeyPath (value, keyPath, multiEntry) {
 }
 /**
 * Not currently in use.
-* @param value
-* @param keyPath
+* @param {Value} value
+* @param {KeyPath} keyPath
 * @param {boolean} multiEntry
-* @returns {module:Key.KeyPathEvaluateValue}
+* @returns {KeyPathEvaluateValue}
 */
 function evaluateKeyPathOnValue (value, keyPath, multiEntry) {
     return evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, true);
@@ -545,11 +563,11 @@ function evaluateKeyPathOnValue (value, keyPath, multiEntry) {
 /**
 * May throw, return `{failure: true}` (e.g., non-object on keyPath resolution)
 *    or `{invalid: true}` (e.g., `NaN`).
-* @param value
-* @param keyPath
+* @param {Value} value
+* @param {KeyPath} keyPath
 * @param {boolean} multiEntry
 * @param {boolean} fullKeys
-* @returns {module:Key.keyValueObject|module:Key.KeyPathEvaluateValue}
+* @returns {KeyValueObject|KeyPathEvaluateValue}
 * @todo Document other possible return?
 */
 function extractKeyValueDecodedFromValueUsingKeyPath (value, keyPath, multiEntry, fullKeys) {
@@ -564,23 +582,24 @@ function extractKeyValueDecodedFromValueUsingKeyPath (value, keyPath, multiEntry
 }
 
 /**
-* @typedef {PlainObject} module:Key.KeyPathEvaluateFailure
-* @property {boolean} failure
-*/
+ * Unused?
+ * @typedef {object} KeyPathEvaluateFailure
+ * @property {boolean} failure
+ */
 
 /**
-* @typedef {PlainObject} module:Key.KeyPathEvaluateValue
-* @property {undefined|array|string} value
-*/
+ * @typedef {object} KeyPathEvaluateValue
+ * @property {undefined|array|string} value
+ */
 
 /**
  * Returns the value of an inline key based on a key path (wrapped in an
  *   object with key `value`) or `{failure: true}`
  * @param {object} value
- * @param {string|array} keyPath
+ * @param {KeyPath} keyPath
  * @param {boolean} multiEntry
  * @param {boolean} [fullKeys]
- * @returns {module:Key.KeyPathEvaluateValue}
+ * @returns {KeyPathEvaluateValue}
  */
 function evaluateKeyPathOnValueToDecodedValue (value, keyPath, multiEntry, fullKeys) {
     if (Array.isArray(keyPath)) {
@@ -635,7 +654,7 @@ function evaluateKeyPathOnValueToDecodedValue (value, keyPath, multiEntry, fullK
 /**
  * Sets the inline key value.
  * @param {object} value
- * @param {*} key
+ * @param {Key} key
  * @param {string} keyPath
  * @returns {void}
  */
@@ -654,8 +673,8 @@ function injectKeyIntoValueUsingKeyPath (value, key, keyPath) {
 
 /**
  *
- * @param value
- * @param keyPath
+ * @param {Value} value
+ * @param {string} keyPath
  * @see https://github.com/w3c/IndexedDB/pull/146
  * @returns {boolean}
  */
@@ -677,7 +696,7 @@ function checkKeyCouldBeInjectedIntoValue (value, keyPath) {
 
 /**
  *
- * @param {module:Key.Key} key
+ * @param {Key} key
  * @param {IDBKeyRange} range
  * @param {boolean} checkCached
  * @returns {boolean}
@@ -726,9 +745,9 @@ function isMultiEntryMatch (encodedEntry, encodedKey) {
 
 /**
  *
- * @param {module:Key.Key} keyEntry
+ * @param {Key} keyEntry
  * @param {IDBKeyRange} range
- * @returns {module:Key.Key[]}
+ * @returns {Key[]}
  */
 function findMultiEntryMatches (keyEntry, range) {
     const matches = [];
@@ -761,14 +780,10 @@ function findMultiEntryMatches (keyEntry, range) {
 }
 
 /**
-* @typedef {number|string|Date|ArrayBuffer|module:Key.ValueTypes[]} module:Key.ValueTypes
-*/
-
-/**
 * Not currently in use but keeping for spec parity.
-* @param {module:Key.Key} key
+* @param {Key} key
 * @throws {Error} Upon a "bad key"
-* @returns {module:Key.ValueTypes}
+* @returns {ValueTypes}
 */
 function convertKeyToValue (key) {
     const {type, value} = key;
@@ -801,7 +816,7 @@ function convertKeyToValue (key) {
 
 /**
  *
- * @param {module:Key.Key} key
+ * @param {Key} key
  * @param {boolean} inArray
  * @returns {string|null}
  */
@@ -816,10 +831,10 @@ function encode (key, inArray) {
 
 /**
  *
- * @param {module:Key.Key} key
+ * @param {Key} key
  * @param {boolean} inArray
  * @throws {Error} Invalid number
- * @returns {undefined|module:Key.ValueTypes}
+ * @returns {undefined|ValueTypes}
  */
 function decode (key, inArray) {
     if (typeof key !== 'string') {
@@ -830,19 +845,15 @@ function decode (key, inArray) {
 
 /**
  *
- * @param {module:Key.Key} key
+ * @param {Key} key
  * @param {boolean} inArray
- * @returns {undefined|module:Key.ValueTypes}
+ * @returns {undefined|ValueTypes}
  */
 function roundTrip (key, inArray) {
     return decode(encode(key, inArray), inArray);
 }
 
 const MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `Number.MAX_SAFE_INTEGER + 1`)
-
-/**
- * @external WebSQLTransaction
- */
 
 /**
 * @typedef {IDBObjectStore} IDBObjectStoreWithCurrentName
@@ -863,7 +874,7 @@ const MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `N
 
 /**
  *
- * @param {external:WebSQLTransaction} tx
+ * @param {SQLTransaction} tx
  * @param {IDBObjectStoreWithCurrentName} store
  * @param {CurrentNumberCallback} func
  * @param {SQLFailureCallback} sqlFailCb
@@ -889,7 +900,7 @@ function getCurrentNumber (tx, store, func, sqlFailCb) {
 
 /**
  *
- * @param {external:WebSQLTransaction} tx
+ * @param {SQLTransaction} tx
  * @param {IDBObjectStoreWithCurrentName} store
  * @param {Integer} num
  * @param {CurrentNumberCallback} successCb
@@ -911,7 +922,7 @@ function assignCurrentNumber (tx, store, num, successCb, failCb) {
  * Bump up the auto-inc counter if the key path-resolved value is valid
  *   (greater than old value and >=1) OR if a manually passed in key is
  *   valid (numeric and >= 1) and >= any primaryKey.
- * @param {external:WebSQLTransaction} tx
+ * @param {SQLTransaction} tx
  * @param {IDBObjectStoreWithCurrentName} store
  * @param {Integer} num
  * @param {CurrentNumberCallback} successCb
@@ -935,7 +946,7 @@ function setCurrentNumber (tx, store, num, successCb, failCb) {
 
 /**
  *
- * @param {external:WebSQLTransaction} tx
+ * @param {SQLTransaction} tx
  * @param {IDBObjectStoreWithCurrentName} store
  * @param {KeyForStoreCallback} cb
  * @param {SQLFailureCallback} sqlFailCb
@@ -965,7 +976,7 @@ function generateKeyForStore (tx, store, cb, sqlFailCb) {
 //     so we do not return a key
 /**
  *
- * @param {external:WebSQLTransaction} tx
+ * @param {SQLTransaction} tx
  * @param {IDBObjectStoreWithCurrentName} store
  * @param {*|Integer} key
  * @param {CurrentNumberCallback|void} successCb

@@ -77,7 +77,10 @@ describe('IDBDatabase.deleteObjectStore', function () {
                 }
                 transaction1();
 
-                // Create some object stores
+                /**
+                 * Create some object stores.
+                 * @returns {void}
+                 */
                 function transaction1 () {
                     var open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
@@ -95,7 +98,10 @@ describe('IDBDatabase.deleteObjectStore', function () {
                     };
                 }
 
-                // Delete an object store
+                /**
+                 * Delete an object store.
+                 * @returns {void}
+                 */
                 function transaction2 () {
                     var open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
@@ -181,7 +187,12 @@ describe('IDBDatabase.deleteObjectStore', function () {
                 }
             );
 
-            // Re-open the database, delete some object stores, then close the database
+            /**
+             * Re-open the database, delete some object stores, then
+             *   close the database.
+             * @param {string} name
+             * @returns {void}
+             */
             function deleteObjectStores (name) {
                 var open = indexedDB.open(name, 2);
                 open.onerror = open.onblocked = done;
@@ -201,7 +212,12 @@ describe('IDBDatabase.deleteObjectStore', function () {
                 };
             }
 
-            // Re-open the database, and verify that the object stores are gone
+            /**
+             * Re-open the database, and verify that the object stores
+             *   are gone.
+             * @param {string} name
+             * @returns {void}
+             */
             function verifyDatabaseSchema (name) {
                 var open = indexedDB.open(name, 2);
                 open.onerror = open.onblocked = done;
@@ -237,6 +253,16 @@ describe('IDBDatabase.deleteObjectStore', function () {
                 };
             }
 
+            /**
+             * @param {IDBObjectStore} obj
+             * @param {{
+             *   name: string,
+             *   keyPath: null|string|string[],
+             *   autoIncrement: boolean,
+             *   indexNames: string[]
+             * }} schema
+             * @returns {void}
+             */
             function verifySchema (obj, schema) {
                 Object.entries(schema).forEach(([prop, schemaValue]) => {
                     var objValue = obj[prop];

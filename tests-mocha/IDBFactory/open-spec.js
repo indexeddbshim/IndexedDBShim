@@ -208,6 +208,9 @@ describe('IDBFactory.open', function () {
                 }
                 createVersion1();
 
+                /**
+                 * @returns {void}
+                 */
                 function createVersion1 () {
                     var open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
@@ -229,6 +232,9 @@ describe('IDBFactory.open', function () {
                     };
                 }
 
+                /**
+                 * @returns {void}
+                 */
                 function createVersion2 () {
                     var open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
@@ -258,6 +264,9 @@ describe('IDBFactory.open', function () {
                 }
                 createVersion1();
 
+                /**
+                 * @returns {void}
+                 */
                 function createVersion1 () {
                     var open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
@@ -279,6 +288,9 @@ describe('IDBFactory.open', function () {
                     };
                 }
 
+                /**
+                 * @returns {void}
+                 */
                 function createVersion2 () {
                     var open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
@@ -297,6 +309,9 @@ describe('IDBFactory.open', function () {
                     };
                 }
 
+                /**
+                 * @returns {void}
+                 */
                 function createVersion3 () {
                     var open = indexedDB.open(name, 3);
                     open.onerror = open.onblocked = done;
@@ -326,6 +341,9 @@ describe('IDBFactory.open', function () {
                 }
                 createVersion1();
 
+                /**
+                 * @returns {void}
+                 */
                 function createVersion1 () {
                     var open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
@@ -347,6 +365,9 @@ describe('IDBFactory.open', function () {
                     };
                 }
 
+                /**
+                 * @returns {void}
+                 */
                 function createVersion5 () {
                     var open = indexedDB.open(name, 5);
                     open.onerror = open.onblocked = done;
@@ -379,6 +400,9 @@ describe('IDBFactory.open', function () {
                 }
                 createVersion7();
 
+                /**
+                 * @returns {void}
+                 */
                 function createVersion7 () {
                     var open = indexedDB.open(name, 7);
                     open.onerror = open.onblocked = done;
@@ -389,6 +413,9 @@ describe('IDBFactory.open', function () {
                     };
                 }
 
+                /**
+                 * @returns {void}
+                 */
                 function createVersion4 () {
                     var open = indexedDB.open(name, 4);
                     open.onupgradeneeded = sinon.spy();
@@ -440,6 +467,14 @@ describe('IDBFactory.open', function () {
                 tryToOpen(['a', 'b', 'c']);
             }
 
+            /**
+             * @typedef {number} Integer
+             */
+
+            /**
+             * @param {Integer} version
+             * @returns {void}
+             */
             function tryToOpen (version) {
                 var err = null;
 

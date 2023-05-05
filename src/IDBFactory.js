@@ -1,6 +1,6 @@
 /* globals location */
 import path from 'path';
-import SyncPromise from 'sync-promise';
+import SyncPromise from 'sync-promise-expanded';
 
 import {createEvent} from './Event.js';
 import IDBVersionChangeEvent from './IDBVersionChangeEvent.js';
@@ -28,12 +28,21 @@ const hasNullOrigin = () => CFG.checkOrigin !== false && (getOrigin() === 'null'
 //  `SharedWorker`
 const connectionQueue = {};
 
+/**
+ * @param {} name
+ * @param {} origin
+ * @returns {void}
+ */
 function processNextInConnectionQueue (name, origin = getOrigin()) {
     const queueItems = connectionQueue[origin][name];
     if (!queueItems[0]) { // Nothing left to process
         return;
     }
     const {req, cb} = queueItems[0]; // Keep in queue to prevent continuation
+
+    /**
+     * @returns {void}
+     */
     function removeFromQueue () {
         queueItems.shift();
         processNextInConnectionQueue(name, origin);
@@ -43,8 +52,16 @@ function processNextInConnectionQueue (name, origin = getOrigin()) {
     cb(req);
 }
 
-// eslint-disable-next-line default-param-last
+/* eslint-disable default-param-last */
+/**
+ * @param {} req
+ * @param {string} name
+ * @param {} origin
+ * @param {} cb
+ * @returns {void}
+ */
 function addRequestToConnectionQueue (req, name, origin = getOrigin(), cb) {
+    /* eslint-enable default-param-last */
     if (!connectionQueue[origin][name]) {
         connectionQueue[origin][name] = [];
     }
@@ -55,6 +72,13 @@ function addRequestToConnectionQueue (req, name, origin = getOrigin(), cb) {
     }
 }
 
+/**
+ * @param {} openConnections
+ * @param {} req
+ * @param {} oldVersion
+ * @param {} newVersion
+ * @returns {SyncPromise}
+ */
 function triggerAnyVersionChangeAndBlockedEvents (openConnections, req, oldVersion, newVersion) {
     // Todo: For Node (and in browser using service workers if available?) the
     //    connections ought to involve those in any process; should also
@@ -113,6 +137,10 @@ const websqlDBCache = {};
 let sysdb;
 let nameCounter = 0;
 
+/**
+ * @param {string} name
+ * @returns {Integer}
+ */
 function getLatestCachedWebSQLVersion (name) {
     return Object.keys(websqlDBCache[name]).map(Number).reduce(
         (prev, curr) => {
@@ -121,12 +149,24 @@ function getLatestCachedWebSQLVersion (name) {
     );
 }
 
+/**
+ * @param {string} name
+ * @returns {WebSQLDb}
+ */
 function getLatestCachedWebSQLDB (name) {
     return websqlDBCache[name] && websqlDBCache[name][
         getLatestCachedWebSQLVersion(name)
     ];
 }
 
+/**
+ * @param {} __openDatabase
+ * @param {} name
+ * @param {} escapedDatabaseName
+ * @param {} databaseDeleted
+ * @param {} dbError
+ * @returns {void}
+ */
 function cleanupDatabaseResources (__openDatabase, name, escapedDatabaseName, databaseDeleted, dbError) {
     const useMemoryDatabase = typeof CFG.memoryDatabase === 'string';
     if (useMemoryDatabase) {
@@ -212,6 +252,12 @@ function cleanupDatabaseResources (__openDatabase, name, escapedDatabaseName, da
  * @returns {void}
  */
 function createSysDB (__openDatabase, success, failure) {
+    /**
+     *
+     * @param {} tx
+     * @param {} err
+     * @returns {void}
+     */
     function sysDbCreateError (tx, err) {
         err = webSQLErrback(err || tx);
         CFG.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
@@ -255,7 +301,13 @@ function IDBFactory () {
     throw new TypeError('Illegal constructor');
 }
 const IDBFactoryAlias = IDBFactory;
+/**
+ * @returns {IDBFactory}
+ */
 IDBFactory.__createInstance = function () {
+    /**
+     * @class
+     */
     function IDBFactory () {
         this[Symbol.toStringTag] = 'IDBFactory';
         this.__connections = {};
@@ -315,6 +367,12 @@ IDBFactory.prototype.open = function (name /* , version */) {
         throw err; // new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
     }
 
+    /**
+     *
+     * @param {} tx
+     * @param {} err
+     * @returns {void}
+     */
     function dbCreateError (tx, err) {
         if (calledDbCreateError) {
             return;
@@ -329,8 +387,18 @@ IDBFactory.prototype.open = function (name /* , version */) {
         req.dispatchEvent(evt);
     }
 
+    /**
+     *
+     * @param {} tx
+     * @param {} db
+     * @param {} oldVersion
+     * @returns {void}
+     */
     function setupDatabase (tx, db, oldVersion) {
         tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList" FROM __sys__', [], function (tx, data) {
+            /**
+             * @returns {void}
+             */
             function finishRequest () {
                 req.__result = connection;
                 req.__done = true;
@@ -345,6 +413,13 @@ IDBFactory.prototype.open = function (name /* , version */) {
                 const openConnections = me.__connections[name].slice(0, -1);
                 triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersion, version).then(function () {
                     // DB Upgrade in progress
+                    /**
+                     *
+                     * @param {} systx
+                     * @param {} err
+                     * @param {} cb
+                     * @returns {void}
+                     */
                     let sysdbFinishedCb = function (systx, err, cb) {
                         if (err) {
                             try {
@@ -353,6 +428,12 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                 // Browser may fail with expired transaction above so
                                 //     no choice but to manually revert
                                 sysdb.transaction(function (systx) {
+                                    /**
+                                     *
+                                     * @param {} msg
+                                     * @throws {Error}
+                                     * @returns {never}
+                                     */
                                     function reportError (msg) {
                                         throw new Error('Unable to roll back upgrade transaction!' + (msg || ''));
                                     }
@@ -374,6 +455,9 @@ IDBFactory.prototype.open = function (name /* , version */) {
                     };
 
                     sysdb.transaction(function (systx) {
+                        /**
+                         * @returns {void}
+                         */
                         function versionSet () {
                             const e = new IDBVersionChangeEvent('upgradeneeded', {oldVersion, newVersion: version});
                             req.__result = connection;
@@ -487,6 +571,11 @@ IDBFactory.prototype.open = function (name /* , version */) {
         }, dbCreateError);
     }
 
+    /**
+     *
+     * @param {} oldVersion
+     * @returns {void}
+     */
     function openDB (oldVersion) {
         let db;
         if ((useMemoryDatabase || useDatabaseCache) && name in websqlDBCache && websqlDBCache[name][version]) {
@@ -523,6 +612,9 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
         db.transaction(function (tx) {
             tx.executeSql('CREATE TABLE IF NOT EXISTS __sys__ (name BLOB, keyPath BLOB, autoInc BOOLEAN, indexList BLOB, currNum INTEGER)', [], function () {
+                /**
+                 * @returns {void}
+                 */
                 function setup () {
                     setupDatabase(tx, db, oldVersion);
                 }
@@ -600,6 +692,12 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     let calledDBError = false;
     let version = 0;
 
+    /**
+     *
+     * @param {} err
+     * @param {} cb
+     * @returns {void}
+     */
     let sysdbFinishedCbDelete = function (err, cb) {
         cb(err);
     };
@@ -607,6 +705,12 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     // Although the spec has no specific conditions where an error
     //  may occur in `deleteDatabase`, it does provide for
     //  `UnknownError` as we may require upon a SQL deletion error
+    /**
+     *
+     * @param {} tx
+     * @param {} err
+     * @returns {void}
+     */
     function dbError (tx, err) {
         if (calledDBError || err === true) {
             return;
@@ -628,6 +732,9 @@ IDBFactory.prototype.deleteDatabase = function (name) {
             // function callback (cb) { cb(); }
             // callback(function () {
 
+            /**
+             * @returns {void}
+             */
             function completeDatabaseDelete () {
                 req.__result = undefined;
                 req.__done = true;
@@ -635,6 +742,9 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                 req.dispatchEvent(e);
             }
 
+            /**
+             * @returns {void}
+             */
             function databaseDeleted () {
                 sysdbFinishedCbDelete(false, function () {
                     if (useDatabaseCache && name in websqlDBCache) {
@@ -692,6 +802,13 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     return req;
 };
 
+/**
+ *
+ * @param {} key1
+ * @param {} key2
+ * @throws {TypeError}
+ * @returns {number}
+ */
 IDBFactory.prototype.cmp = function (key1, key2) {
     if (!(this instanceof IDBFactory)) {
         throw new TypeError('Illegal invocation');
@@ -721,6 +838,12 @@ IDBFactory.prototype.databases = function () {
         if (hasNullOrigin()) {
             throw createDOMException('SecurityError', 'Cannot get IndexedDB database names from an opaque origin.');
         }
+        /**
+         *
+         * @param {} tx
+         * @param {} err
+         * @returns {void}
+         */
         function dbGetDatabaseNamesError (tx, err) {
             if (calledDbCreateError) {
                 return;
@@ -760,6 +883,11 @@ IDBFactory.prototype.databases = function () {
 */
 IDBFactory.prototype.__forceClose = function (dbName, connIdx, msg) {
     const me = this;
+    /**
+     *
+     * @param {} conn
+     * @returns {void}
+     */
     function forceClose (conn) {
         conn.__forceClose(msg);
     }
@@ -783,6 +911,11 @@ IDBFactory.prototype.__forceClose = function (dbName, connIdx, msg) {
     }
 };
 
+/**
+ *
+ * @param {} origin
+ * @returns {void}
+ */
 IDBFactory.prototype.__setConnectionQueueOrigin = function (origin = getOrigin()) {
     connectionQueue[origin] = {};
 };

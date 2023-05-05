@@ -598,6 +598,10 @@ describe('IDBIndex.count', function () {
                 tryToCount(store);
                 tryToCount(index);
 
+                /**
+                 * @param {IDBObjectStore|IDBIndex} obj
+                 * @returns {void}
+                 */
                 function tryToCount (obj) {
                     var err = null;
 

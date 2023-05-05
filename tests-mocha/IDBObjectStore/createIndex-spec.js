@@ -151,6 +151,9 @@ describe('IDBObjectStore.createIndex', function () {
                 }
                 createVersion1();
 
+                /**
+                 * @returns {void}
+                 */
                 function createVersion1 () {
                     var open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
@@ -171,6 +174,9 @@ describe('IDBObjectStore.createIndex', function () {
                     };
                 }
 
+                /**
+                 * @returns {void}
+                 */
                 function createVersion2 () {
                     var open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
@@ -217,7 +223,11 @@ describe('IDBObjectStore.createIndex', function () {
                 }
             );
 
-            // Re-open the database, and verify that the schema is the same
+            /**
+             * Re-open the database, and verify that the schema is the same.
+             * @param {string} name
+             * @returns {void}
+             */
             function verifyDatabaseSchema (name) {
                 var open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
@@ -257,6 +267,17 @@ describe('IDBObjectStore.createIndex', function () {
                 };
             }
 
+            /**
+             * @param {IDBIndex} obj
+             * @param {{
+             *   name: string,
+             *   objectStore: IDBObjectStore,
+             *   keyPath: string|string[],
+             *   multiEntry: boolean,
+             *   unique: boolean
+             * }} schema
+             * @returns {void}
+             */
             function verifySchema (obj, schema) {
                 Object.entries(schema).forEach(([prop, schemaValue]) => {
                     var objValue = obj[prop];
@@ -414,6 +435,9 @@ describe('IDBObjectStore.createIndex', function () {
                 }
                 createVersion1();
 
+                /**
+                 * @returns {void}
+                 */
                 function createVersion1 () {
                     var open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
@@ -430,6 +454,9 @@ describe('IDBObjectStore.createIndex', function () {
                     };
                 }
 
+                /**
+                 * @returns {void}
+                 */
                 function createVersion2 () {
                     var open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;

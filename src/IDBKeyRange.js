@@ -8,10 +8,10 @@ const readonlyProperties = ['lower', 'upper', 'lowerOpen', 'upperOpen'];
 /**
  * The IndexedDB KeyRange object.
  * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#dfn-key-range
- * @param {Object} lower
- * @param {Object} upper
- * @param {Object} lowerOpen
- * @param {Object} upperOpen
+ * @param {import('./Key.js').Key|null} lower
+ * @param {import('./Key.js').Key|null} upper
+ * @param {boolean} lowerOpen
+ * @param {boolean} upperOpen
  * @throws {TypeError}
  * @class
  */
@@ -20,7 +20,18 @@ function IDBKeyRange () {
     throw new TypeError('Illegal constructor');
 }
 const IDBKeyRangeAlias = IDBKeyRange;
+
+/**
+ * @param {} lower
+ * @param {} upper
+ * @param {} lowerOpen
+ * @param {} upperOpen
+ * @returns {IDBKeyRange}
+ */
 IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
+    /**
+     * @class
+     */
     function IDBKeyRange () {
         this[Symbol.toStringTag] = 'IDBKeyRange';
         if (lower === undefined && upper === undefined) {
@@ -49,6 +60,11 @@ IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
     IDBKeyRange.prototype = IDBKeyRangeAlias.prototype;
     return new IDBKeyRange();
 };
+
+/**
+ * @param {import('./Key.js').Key} key
+ * @returns {boolean}
+ */
 IDBKeyRange.prototype.includes = function (key) {
     // We can't do a regular instanceof check as it will create a loop given our hasInstance implementation
     if (!util.isObj(this) || typeof this.__lowerOpen !== 'boolean') {
@@ -61,6 +77,10 @@ IDBKeyRange.prototype.includes = function (key) {
     return Key.isKeyInRange(key, this);
 };
 
+/**
+ * @param {import('./Key.js').Value} value
+ * @returns {IDBKeyRange}
+ */
 IDBKeyRange.only = function (value) {
     if (!arguments.length) {
         throw new TypeError('IDBKeyRange.only requires a value argument');
@@ -68,6 +88,10 @@ IDBKeyRange.only = function (value) {
     return IDBKeyRange.__createInstance(value, value, false, false);
 };
 
+/**
+ * @param {import('./Key.js').Value} value
+ * @returns {IDBKeyRange}
+ */
 IDBKeyRange.lowerBound = function (value /*, open */) {
     if (!arguments.length) {
         throw new TypeError('IDBKeyRange.lowerBound requires a value argument');
@@ -75,6 +99,11 @@ IDBKeyRange.lowerBound = function (value /*, open */) {
     // eslint-disable-next-line prefer-rest-params
     return IDBKeyRange.__createInstance(value, undefined, arguments[1], true);
 };
+
+/**
+ * @param {import('./Key.js').Value} value
+ * @returns {IDBKeyRange}
+ */
 IDBKeyRange.upperBound = function (value /*, open */) {
     if (!arguments.length) {
         throw new TypeError('IDBKeyRange.upperBound requires a value argument');
@@ -82,6 +111,12 @@ IDBKeyRange.upperBound = function (value /*, open */) {
     // eslint-disable-next-line prefer-rest-params
     return IDBKeyRange.__createInstance(undefined, value, true, arguments[1]);
 };
+
+/**
+ * @param {import('./Key.js').Value} lower
+ * @param {import('./Key.js').Value} upper
+ * @returns {IDBKeyRange}
+ */
 IDBKeyRange.bound = function (lower, upper /* , lowerOpen, upperOpen */) {
     if (arguments.length <= 1) {
         throw new TypeError('IDBKeyRange.bound requires lower and upper arguments');
@@ -121,7 +156,18 @@ Object.defineProperty(IDBKeyRange, 'prototype', {
     writable: false
 });
 
-function setSQLForKeyRange (range, quotedKeyColumnName, sql, sqlValues, addAnd, checkCached) {
+/**
+ * @param {IDBKeyRange} range
+ * @param {string} quotedKeyColumnName
+ * @param {string[]} sql
+ * @param {string[]} sqlValues
+ * @param {boolean} addAnd
+ * @param {boolean} checkCached
+ * @returns {void}
+ */
+function setSQLForKeyRange (
+    range, quotedKeyColumnName, sql, sqlValues, addAnd, checkCached
+) {
     if (range && (range.lower !== undefined || range.upper !== undefined)) {
         if (addAnd) sql.push('AND');
         let encodedLowerKey, encodedUpperKey;
@@ -149,6 +195,12 @@ function setSQLForKeyRange (range, quotedKeyColumnName, sql, sqlValues, addAnd, 
     }
 }
 
+/**
+ * @param {import('./Key.js').Value} value
+ * @param {boolean} nullDisallowed
+ * @throws {DOMException}
+ * @returns {IDBKeyRange}
+ */
 function convertValueToKeyRange (value, nullDisallowed) {
     if (util.instanceOf(value, IDBKeyRange)) {
         // We still need to validate IDBKeyRange-like objects (the above check is based on loose duck-typing)

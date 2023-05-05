@@ -1,4 +1,4 @@
-import SyncPromise from 'sync-promise';
+import SyncPromise from 'sync-promise-expanded';
 import {createDOMException} from './DOMException.js';
 import {IDBCursor, IDBCursorWithValue} from './IDBCursor.js';
 import {setSQLForKeyRange, convertValueToKeyRange} from './IDBKeyRange.js';
@@ -25,7 +25,16 @@ function IDBObjectStore () {
     throw new TypeError('Illegal constructor');
 }
 const IDBObjectStoreAlias = IDBObjectStore;
+/**
+ *
+ * @param {} storeProperties
+ * @param {} transaction
+ * @returns {}
+ */
 IDBObjectStore.__createInstance = function (storeProperties, transaction) {
+    /**
+     * @class
+     */
     function IDBObjectStore () {
         const me = this;
         me[Symbol.toStringTag] = 'IDBObjectStore';
@@ -44,7 +53,7 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
         me.__indexNames = DOMStringList.__createInstance();
         const {indexList} = storeProperties;
         for (const indexName in indexList) {
-            if (util.hasOwn(indexList, indexName)) {
+            if (Object.hasOwn(indexList, indexName)) {
                 const index = IDBIndex.__createInstance(me, indexList[indexName]);
                 me.__indexes[index.name] = index;
                 if (!index.__deleted) {
@@ -139,6 +148,13 @@ IDBObjectStore.__clone = function (store, transaction) {
     return newStore;
 };
 
+/**
+ *
+ * @param {} store
+ * @param {} msg
+ * @throws {DOMException}
+ * @returns {void}
+ */
 IDBObjectStore.__invalidStateIfDeleted = function (store, msg) {
     if (store.__deleted || store.__pendingDelete || (store.__pendingCreate && (store.transaction && store.transaction.__errored))) {
         throw createDOMException('InvalidStateError', msg || 'This store has been deleted');
@@ -172,6 +188,11 @@ IDBObjectStore.__createObjectStore = function (db, store) {
     }
 
     transaction.__addNonRequestToTransactionQueue(function createObjectStore (tx, args, success, failure) {
+        /**
+         * @param {SQLTransaction} tx
+         * @param {SQLError} err
+         * @returns {void}
+         */
         function error (tx, err) {
             CFG.DEBUG && console.log(err);
             failure(createDOMException('UnknownError', 'Could not create object store "' + storeName + '"', err));
@@ -182,6 +203,9 @@ IDBObjectStore.__createObjectStore = function (db, store) {
         const sql = ['CREATE TABLE', escapedStoreNameSQL, '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
         CFG.DEBUG && console.log(sql);
         tx.executeSql(sql, [], function (tx, data) {
+            /**
+             * @returns {void}
+             */
             function insertStoreInfo () {
                 const encodedKeyPath = JSON.stringify(store.keyPath);
                 tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [
@@ -235,6 +259,11 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
     // Remove the object store from WebSQL
     const transaction = db.__versionTransaction;
     transaction.__addNonRequestToTransactionQueue(function deleteObjectStore (tx, args, success, failure) {
+        /**
+         * @param {SQLTransaction} tx
+         * @param {SQLError} err
+         * @returns {void}
+         */
         function error (tx, err) {
             CFG.DEBUG && console.log(err);
             failure(createDOMException('UnknownError', 'Could not delete ObjectStore', err));
@@ -260,8 +289,8 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
 
 /**
 * @typedef {GenericArray} KeyValueArray
-* @property {module:Key.Key} 0
-* @property {*} 1
+* @property {import('./Key.js').Key} 0
+* @property {import('./Key.js').Value} 1
 */
 
 // Todo: Although we may end up needing to do cloning genuinely asynchronously (for Blobs and FileLists),
@@ -275,8 +304,8 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
 /**
  * Determines whether the given inline or out-of-line key is valid,
  *   according to the object store's schema.
- * @param {*} value Used for inline keys
- * @param {*} key Used for out-of-line keys
+ * @param {import('./Key.js').Value} value Used for inline keys
+ * @param {import('./Key.js').Key} key Used for out-of-line keys
  * @param {boolean} cursorUpdate
  * @throws {DOMException}
  * @returns {KeyValueArray}
@@ -330,17 +359,21 @@ IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, k
  *   the object store
  * If the table has auto increment, get the current number (unless it has
  *   a keyPath leading to a valid but non-numeric or < 1 key).
- * @param {Object} tx
- * @param {Object} value
- * @param {Object} key
- * @param {function} success
- * @param {function} failCb
+ * @param {SQLTransaction} tx
+ * @param {import('./Key.js').Value} value
+ * @param {import('./Key.js').Key} key
+ * @param {(key: import('./Key.js').Key, cn: Integer) => void} success
+ * @param {import('./Key.js').SQLFailureCallback} failCb
  * @returns {void}
  */
 IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb) {
     const me = this;
 
     // Only run if cloning is needed
+    /**
+     * @param {Integer} oldCn
+     * @returns {void}
+     */
     function keyCloneThenSuccess (oldCn) { // We want to return the original key, so we don't need to accept an argument here
         Sca.encode(key, function (key) {
             key = Sca.decode(key);
@@ -371,6 +404,17 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb
     }
 };
 
+/**
+ *
+ * @param {} tx
+ * @param {} encoded
+ * @param {} value
+ * @param {} clonedKeyOrCurrentNumber
+ * @param {} oldCn
+ * @param {} success
+ * @param {} error
+ * @returns {}
+ */
 IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyOrCurrentNumber, oldCn, success, error) {
     const me = this;
     // The `ConstraintError` to occur for `add` upon a duplicate will occur naturally in attempting an insert
@@ -417,6 +461,10 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
                 return;
             }
             indexKey = indexKey.value;
+            /**
+             * @param {IDBIndex} index
+             * @returns {void}
+             */
             function setIndexInfo (index) {
                 if (indexKey === undefined) {
                     return;
@@ -480,6 +528,9 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
         });
         return undefined;
     }).catch(function (err) {
+        /**
+         * @returns {void}
+         */
         function fail () {
             // Todo: Add a different error object here if `assignCurrentNumber`
             //  fails in reverting?
@@ -493,6 +544,11 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
     });
 };
 
+/**
+ *
+ * @param {} value
+ * @returns {}
+ */
 IDBObjectStore.prototype.add = function (value /* , key */) {
     const me = this;
     // eslint-disable-next-line prefer-rest-params
@@ -513,6 +569,12 @@ IDBObjectStore.prototype.add = function (value /* , key */) {
     return request;
 };
 
+/**
+ *
+ * @param {} value
+ * @throws {TypeError}
+ * @returns {}
+ */
 IDBObjectStore.prototype.put = function (value /*, key */) {
     const me = this;
     // eslint-disable-next-line prefer-rest-params
@@ -533,6 +595,14 @@ IDBObjectStore.prototype.put = function (value /*, key */) {
     return request;
 };
 
+/**
+ *
+ * @param {} tx
+ * @param {} key
+ * @param {} cb
+ * @param {} error
+ * @returns {void}
+ */
 IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
     const me = this;
     // First try to delete if the record exists
@@ -547,12 +617,25 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
     });
 };
 
+/**
+ *
+ * @param {} request
+ * @param {} store
+ * @param {} invalidateCache
+ * @param {} value
+ * @param {} noOverwrite
+ * @returns {void}
+ */
 IDBObjectStore.__storingRecordObjectStore = function (request, store, invalidateCache, value, noOverwrite /* , key */) {
     // eslint-disable-next-line prefer-rest-params
     const key = arguments[5];
     store.transaction.__pushToQueue(request, function (tx, args, success, error) {
         store.__deriveKey(tx, value, key, function (clonedKeyOrCurrentNumber, oldCn) {
             Sca.encode(value, function (encoded) {
+                /**
+                 * @param {SQLTransaction} tx
+                 * @returns {void}
+                 */
                 function insert (tx) {
                     store.__insertData(tx, encoded, value, clonedKeyOrCurrentNumber, oldCn, function (...args) {
                         if (invalidateCache) {
@@ -573,6 +656,14 @@ IDBObjectStore.__storingRecordObjectStore = function (request, store, invalidate
     });
 };
 
+/**
+ *
+ * @param {} query
+ * @param {} getKey
+ * @param {} getAll
+ * @param {} count
+ * @returns {}
+ */
 IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
     const me = this;
     if (count !== undefined) {
@@ -644,6 +735,12 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
     }, undefined, me);
 };
 
+/**
+ *
+ * @param {} query
+ * @throws {TypeError}
+ * @returns {}
+ */
 IDBObjectStore.prototype.get = function (query) {
     if (!arguments.length) {
         throw new TypeError('A parameter was missing for `IDBObjectStore.get`.');
@@ -651,6 +748,11 @@ IDBObjectStore.prototype.get = function (query) {
     return this.__get(query);
 };
 
+/**
+ *
+ * @param {} query
+ * @returns {}
+ */
 IDBObjectStore.prototype.getKey = function (query) {
     if (!arguments.length) {
         throw new TypeError('A parameter was missing for `IDBObjectStore.getKey`.');
@@ -658,18 +760,30 @@ IDBObjectStore.prototype.getKey = function (query) {
     return this.__get(query, true);
 };
 
+/**
+ * @returns {}
+ */
 IDBObjectStore.prototype.getAll = function (/* query, count */) {
     // eslint-disable-next-line prefer-rest-params
     const [query, count] = arguments;
     return this.__get(query, false, true, count);
 };
 
+/**
+ * @returns {}
+ */
 IDBObjectStore.prototype.getAllKeys = function (/* query, count */) {
     // eslint-disable-next-line prefer-rest-params
     const [query, count] = arguments;
     return this.__get(query, true, true, count);
 };
 
+/**
+ *
+ * @param {} query
+ * @throws {TypeError}
+ * @returns {}
+ */
 IDBObjectStore.prototype.delete = function (query) {
     const me = this;
     if (!(this instanceof IDBObjectStore)) {
@@ -704,6 +818,9 @@ IDBObjectStore.prototype.delete = function (query) {
     }, undefined, me);
 };
 
+/**
+ * @returns {}
+ */
 IDBObjectStore.prototype.clear = function () {
     const me = this;
     if (!(this instanceof IDBObjectStore)) {
@@ -726,6 +843,9 @@ IDBObjectStore.prototype.clear = function () {
     }, undefined, me);
 };
 
+/**
+ * @returns {}
+ */
 IDBObjectStore.prototype.count = function (/* query */) {
     const me = this;
     // eslint-disable-next-line prefer-rest-params
@@ -740,6 +860,9 @@ IDBObjectStore.prototype.count = function (/* query */) {
     return IDBCursorWithValue.__createInstance(query, 'next', me, me, 'key', 'value', true).__request;
 };
 
+/**
+ * @returns {}
+ */
 IDBObjectStore.prototype.openCursor = function (/* query, direction */) {
     const me = this;
     // eslint-disable-next-line prefer-rest-params
@@ -753,6 +876,9 @@ IDBObjectStore.prototype.openCursor = function (/* query, direction */) {
     return cursor.__request;
 };
 
+/**
+ * @returns {}
+ */
 IDBObjectStore.prototype.openKeyCursor = function (/* query, direction */) {
     const me = this;
     if (!(me instanceof IDBObjectStore)) {
@@ -766,6 +892,11 @@ IDBObjectStore.prototype.openKeyCursor = function (/* query, direction */) {
     return cursor.__request;
 };
 
+/**
+ *
+ * @param {} indexName
+ * @returns {}
+ */
 IDBObjectStore.prototype.index = function (indexName) {
     const me = this;
     if (!(me instanceof IDBObjectStore)) {
@@ -794,7 +925,7 @@ IDBObjectStore.prototype.index = function (indexName) {
 /**
  * Creates a new index on the object store.
  * @param {string} indexName
- * @param {string} keyPath
+ * @param {string|string[]} keyPath
  * @param {object} optionalParameters
  * @returns {IDBIndex}
  */
@@ -843,6 +974,11 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath /* , optiona
     return index;
 };
 
+/**
+ *
+ * @param {} name
+ * @returns {void}
+ */
 IDBObjectStore.prototype.deleteIndex = function (name) {
     const me = this;
     if (!(me instanceof IDBObjectStore)) {

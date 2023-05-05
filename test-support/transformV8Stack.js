@@ -2,6 +2,10 @@ import sourcemapTransformer from 'sourcemap-transformer';
 
 const {transformSourceMapString} = sourcemapTransformer;
 
+/**
+ * @param {string} stack
+ * @returns {string}
+ */
 function transformW3CStack (stack) {
     return transformSourceMapString(stack, {
         // at /Users/brett/IndexedDBShim/dist/indexeddbshim-UnicodeIdentifiers-node.js:6626:32

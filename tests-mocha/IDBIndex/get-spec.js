@@ -199,6 +199,9 @@ describe('IDBIndex.get', function () {
             }
             transaction1();
 
+            /**
+             * @returns {void}
+             */
             function transaction1 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
@@ -210,6 +213,9 @@ describe('IDBIndex.get', function () {
                 store.add({id: 3});
             }
 
+            /**
+             * @returns {void}
+             */
             function transaction2 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
@@ -223,6 +229,9 @@ describe('IDBIndex.get', function () {
             var storeGet1, storeGet2, storeGet3, storeGet4, storeGet5,
                 indexGet1, indexGet2, indexGet3, indexGet4, indexGet5;
 
+            /**
+             * @returns {void}
+             */
             function transaction3 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
@@ -243,6 +252,9 @@ describe('IDBIndex.get', function () {
                 indexGet5 = index.get(5);
             }
 
+            /**
+             * @returns {void}
+             */
             function checkResults () {
                 expect(storeGet1.result).to.deep.equal({id: 1});
                 expect(storeGet2.result).to.deep.equal({id: 2});
@@ -694,6 +706,10 @@ describe('IDBIndex.get', function () {
                 getKey([new Date(2005, 6, 7)]); // array of Dates
             }
 
+            /**
+             * @param {import('../../src/Key.js').Key} key
+             * @returns {void}
+             */
             function getKey (key) {
                 gettingCounter++;
                 var storeGet = store.get(key);
@@ -742,6 +758,11 @@ describe('IDBIndex.get', function () {
                 tryToGet(/^regex$/); // RegExp
             }
 
+            /**
+             * @param {import('../../src/Key.js').Key} key
+             * @param {IDBObjectStore|IDBIndex} IDBObj
+             * @returns {void}
+             */
             function tryToGet (key, IDBObj) {
                 if (!IDBObj) {
                     tryToGet(key, store);

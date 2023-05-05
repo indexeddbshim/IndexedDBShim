@@ -1,5 +1,5 @@
 import {EventTargetFactory} from 'eventtargeter';
-import SyncPromise from 'sync-promise';
+import SyncPromise from 'sync-promise-expanded';
 import {createEvent} from './Event.js';
 import {logError, findError, webSQLErrback, createDOMException} from './DOMException.js';
 import {IDBRequest} from './IDBRequest.js';
@@ -25,7 +25,17 @@ function IDBTransaction () {
     throw new TypeError('Illegal constructor');
 }
 const IDBTransactionAlias = IDBTransaction;
+/**
+ *
+ * @param {} db
+ * @param {} storeNames
+ * @param {} mode
+ * @returns {IDBTransaction}
+ */
 IDBTransaction.__createInstance = function (db, storeNames, mode) {
+    /**
+     * @class
+     */
     function IDBTransaction () {
         const me = this;
         me[Symbol.toStringTag] = 'IDBTransaction';
@@ -64,9 +74,18 @@ IDBTransaction.prototype = EventTargetFactory.createInstance({
     extraProperties: ['complete']
 });
 
+/**
+ *
+ * @param {} err
+ * @param {} cb
+ * @returns {void}
+ */
 IDBTransaction.prototype.__transFinishedCb = function (err, cb) {
     cb(Boolean(err));
 };
+/**
+ * @returns {void}
+ */
 IDBTransaction.prototype.__executeRequests = function () {
     const me = this;
     if (me.__running) {
@@ -81,6 +100,15 @@ IDBTransaction.prototype.__executeRequests = function () {
             me.__tx = tx;
             let q = null, i = -1;
 
+            /**
+             * @typedef {any} IDBRequestResult
+             */
+
+            /**
+             * @param {IDBRequestResult} result
+             * @param {IDBRequest} req
+             * @returns {void}
+             */
             function success (result, req) {
                 if (me.__errored || me.__requestsFinished) {
                     // We've already called "onerror", "onabort", or thrown within the transaction, so don't do it again.
@@ -109,6 +137,10 @@ IDBTransaction.prototype.__executeRequests = function () {
                 executeNextRequest();
             }
 
+            /**
+             * @param {[tx: SQLTransaction, err: SQLError]} args
+             * @returns {void}
+             */
             function error (...args /* tx, err */) {
                 if (me.__errored || me.__requestsFinished) {
                     // We've already called "onerror", "onabort", or thrown within
@@ -148,6 +180,9 @@ IDBTransaction.prototype.__executeRequests = function () {
                 }
             }
 
+            /**
+             * @returns {void}
+             */
             function executeNextRequest () {
                 if (me.__errored || me.__requestsFinished) {
                     // We've already called "onerror", "onabort", or thrown within the transaction, so don't do it again.
@@ -219,10 +254,17 @@ IDBTransaction.prototype.__executeRequests = function () {
         }
     );
 
+    /**
+     * @returns {void}
+     */
     function requestsFinished () {
         me.__active = false;
         me.__requestsFinished = true;
 
+        /**
+         * @throws {Error}
+         * @returns {void}
+         */
         function complete () {
             me.__completed = true;
             CFG.DEBUG && console.log('Transaction completed');
@@ -277,9 +319,18 @@ IDBTransaction.prototype.__createRequest = function (source) {
 };
 
 /**
+ * @typedef {(
+ *   tx: SQLTransaction,
+ *   args: ObjectArray,
+ *   success: () => void,
+ *   error: (tx: SQLTransaction, err: SQLError) => void
+ * ) => void} SQLCallback
+ */
+
+/**
  * Adds a callback function to the transaction queue.
- * @param {function} callback
- * @param {*} args
+ * @param {SQLCallback} callback
+ * @param {ObjectArray} args
  * @param {IDBDatabase} source
  * @returns {IDBRequest}
  * @protected
@@ -293,8 +344,8 @@ IDBTransaction.prototype.__addToTransactionQueue = function (callback, args, sou
 /**
  * Adds a callback function to the transaction queue without generating a
  *   request.
- * @param {function} callback
- * @param {*} args
+ * @param {SQLCallback} callback
+ * @param {ObjectArray} args
  * @param {IDBDatabase} source
  * @returns {void}
  * @protected
@@ -306,8 +357,8 @@ IDBTransaction.prototype.__addNonRequestToTransactionQueue = function (callback,
 /**
  * Adds an IDBRequest to the transaction queue.
  * @param {IDBRequest} request
- * @param {function} callback
- * @param {*} args
+ * @param {SQLCallback} callback
+ * @param {ObjectArray} args
  * @protected
  * @returns {void}
  */
@@ -320,18 +371,29 @@ IDBTransaction.prototype.__pushToQueue = function (request, callback, args) {
     });
 };
 
+/**
+ * @throws {DOMException}
+ * @returns {void}
+ */
 IDBTransaction.prototype.__assertActive = function () {
     if (!this.__active) {
         throw createDOMException('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
 };
 
+/**
+ * @throws {DOMException}
+ * @returns {void}
+ */
 IDBTransaction.prototype.__assertWritable = function () {
     if (this.mode === 'readonly') {
         throw createDOMException('ReadOnlyError', 'The transaction is read only');
     }
 };
 
+/**
+ * @returns {void}
+ */
 IDBTransaction.prototype.__assertVersionChange = function () {
     IDBTransaction.__assertVersionChange(this);
 };
@@ -368,6 +430,11 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
     return me.__storeHandles[objectStoreName];
 };
 
+/**
+ *
+ * @param {} err
+ * @returns {void}
+ */
 IDBTransaction.prototype.__abortTransaction = function (err) {
     const me = this;
     logError('Error', 'An error occurred in a transaction', err);
@@ -419,6 +486,11 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         }, 0);
     }
 
+    /**
+     * @param {SQLTransaction} tx
+     * @param {SQLError|{code: 0}} errOrResult
+     * @returns {void}
+     */
     function abort (tx, errOrResult) {
         if (!tx) {
             CFG.DEBUG && console.log('Rollback not possible due to missing transaction', me);
@@ -490,6 +562,9 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
     });
 };
 
+/**
+ * @returns {void}
+ */
 IDBTransaction.prototype.abort = function () {
     const me = this;
     if (!(me instanceof IDBTransaction)) {
@@ -502,17 +577,34 @@ IDBTransaction.prototype.abort = function () {
 
 IDBTransaction.prototype[Symbol.toStringTag] = 'IDBTransactionPrototype';
 
+/**
+ *
+ * @param {} tx
+ * @returns {void}
+ */
 IDBTransaction.__assertVersionChange = function (tx) {
     if (!tx || tx.mode !== 'versionchange') {
         throw createDOMException('InvalidStateError', 'Not a version transaction');
     }
 };
+/**
+ *
+ * @param {} tx
+ * @throws {DOMException}
+ * @returns {void}
+ */
 IDBTransaction.__assertNotVersionChange = function (tx) {
     if (tx && tx.mode === 'versionchange') {
         throw createDOMException('InvalidStateError', 'Cannot be called during a version transaction');
     }
 };
 
+/**
+ *
+ * @param {} tx
+ * @throws {DOMException}
+ * @returns {void}
+ */
 IDBTransaction.__assertNotFinished = function (tx) {
     if (!tx || tx.__completed || tx.__abortFinished || tx.__errored) {
         throw createDOMException('InvalidStateError', 'Transaction finished by commit or abort');
@@ -520,6 +612,11 @@ IDBTransaction.__assertNotFinished = function (tx) {
 };
 
 // object store methods behave differently: see https://github.com/w3c/IndexedDB/issues/192
+/**
+ *
+ * @param {} tx
+ * @returns {void}
+ */
 IDBTransaction.__assertNotFinishedObjectStoreMethod = function (tx) {
     try {
         IDBTransaction.__assertNotFinished(tx);
@@ -531,6 +628,12 @@ IDBTransaction.__assertNotFinishedObjectStoreMethod = function (tx) {
     }
 };
 
+/**
+ *
+ * @param {} tx
+ * @throws {DOMException}
+ * @returns {void}
+ */
 IDBTransaction.__assertActive = function (tx) {
     if (!tx || !tx.__active) {
         throw createDOMException('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');

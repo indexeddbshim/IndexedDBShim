@@ -17,17 +17,41 @@ const rules = {
     'prefer-named-capture-group': 0,
     'eslint-comments/require-description': 0,
 
-    // These should definitely be enabled at some point
-    'jsdoc/require-jsdoc': 0,
-    'jsdoc/require-param-type': 0,
-    'jsdoc/check-types': 0,
-
     'n/prefer-promises/fs': 0,
     'promise/prefer-await-to-callbacks': 0,
     'promise/prefer-await-to-then': 0,
     'unicorn/no-unsafe-regex': 0,
     'unicorn/no-this-assignment': 0,
-    'unicorn/prefer-spread': 0
+    'unicorn/prefer-spread': 0,
+
+    'jsdoc/require-throws': 'error',
+    'jsdoc/require-returns': ['error', {
+        forceRequireReturn: true,
+        forceReturnsWithAsync: true
+    }],
+
+    'jsdoc/require-jsdoc': ['warn', {
+        contexts: [
+            'Program > VariableDeclaration > ' +
+            'Program > VariableDeclaration > ' +
+            'VariableDeclarator > ArrowFunctionExpression',
+            'VariableDeclarator > FunctionExpression',
+            'ExportNamedDeclaration > VariableDeclaration > ' +
+            'VariableDeclarator > ArrowFunctionExpression',
+            'ExportNamedDeclaration > VariableDeclaration > ' +
+            'VariableDeclarator > FunctionExpression',
+            'ExportDefaultDeclaration > ArrowFunctionExpression',
+            'ExportDefaultDeclaration > FunctionExpression',
+
+            'Program > ExpressionStatement > ' +
+            'AssignmentExpression > FunctionExpression',
+
+            'ClassDeclaration',
+            'ClassExpression',
+            'FunctionDeclaration', // Default is true
+            'MethodDefinition'
+        ]
+    }]
 };
 
 module.exports = {
@@ -85,6 +109,7 @@ module.exports = {
             'Uint8Array'
         ],
         jsdoc: {
+            mode: 'typescript',
             additionalTagNames: {
                 // In case we need to extend
                 customTags: []

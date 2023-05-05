@@ -1,4 +1,4 @@
-/*! indexeddbshim - v11.0.0 - 4/29/2023 */
+/*! indexeddbshim - v12.0.0 - 5/17/2023 */
 
 (function (factory) {
   typeof define === 'function' && define.amd ? define(factory) :
@@ -1431,15 +1431,19 @@
     });
   });
 
-  function getDefaultExportFromCjs$1(x) {
+  function getDefaultExportFromCjs(x) {
     return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
   }
   var regex = /[\xC0-\xC5\xC7-\xCF\xD1-\xD6\xD9-\xDD\xE0-\xE5\xE7-\xEF\xF1-\xF6\xF9-\xFD\xFF-\u010F\u0112-\u0125\u0128-\u0130\u0134-\u0137\u0139-\u013E\u0143-\u0148\u014C-\u0151\u0154-\u0165\u0168-\u017E\u01A0\u01A1\u01AF\u01B0\u01CD-\u01DC\u01DE-\u01E3\u01E6-\u01F0\u01F4\u01F5\u01F8-\u021B\u021E\u021F\u0226-\u0233\u0344\u0385\u0386\u0388-\u038A\u038C\u038E-\u0390\u03AA-\u03B0\u03CA-\u03CE\u03D3\u03D4\u0400\u0401\u0403\u0407\u040C-\u040E\u0419\u0439\u0450\u0451\u0453\u0457\u045C-\u045E\u0476\u0477\u04C1\u04C2\u04D0-\u04D3\u04D6\u04D7\u04DA-\u04DF\u04E2-\u04E7\u04EA-\u04F5\u04F8\u04F9\u0622-\u0626\u06C0\u06C2\u06D3\u0929\u0931\u0934\u0958-\u095F\u09CB\u09CC\u09DC\u09DD\u09DF\u0A33\u0A36\u0A59-\u0A5B\u0A5E\u0B48\u0B4B\u0B4C\u0B5C\u0B5D\u0B94\u0BCA-\u0BCC\u0C48\u0CC0\u0CC7\u0CC8\u0CCA\u0CCB\u0D4A-\u0D4C\u0DDA\u0DDC-\u0DDE\u0F43\u0F4D\u0F52\u0F57\u0F5C\u0F69\u0F73\u0F75\u0F76\u0F78\u0F81\u0F93\u0F9D\u0FA2\u0FA7\u0FAC\u0FB9\u1026\u1B06\u1B08\u1B0A\u1B0C\u1B0E\u1B12\u1B3B\u1B3D\u1B40\u1B41\u1B43\u1E00-\u1E99\u1E9B\u1EA0-\u1EF9\u1F00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FC1-\u1FC4\u1FC6-\u1FD3\u1FD6-\u1FDB\u1FDD-\u1FEE\u1FF2-\u1FF4\u1FF6-\u1FFC\u212B\u219A\u219B\u21AE\u21CD-\u21CF\u2204\u2209\u220C\u2224\u2226\u2241\u2244\u2247\u2249\u2260\u2262\u226D-\u2271\u2274\u2275\u2278\u2279\u2280\u2281\u2284\u2285\u2288\u2289\u22AC-\u22AF\u22E0-\u22E3\u22EA-\u22ED\u2ADC\u304C\u304E\u3050\u3052\u3054\u3056\u3058\u305A\u305C\u305E\u3060\u3062\u3065\u3067\u3069\u3070\u3071\u3073\u3074\u3076\u3077\u3079\u307A\u307C\u307D\u3094\u309E\u30AC\u30AE\u30B0\u30B2\u30B4\u30B6\u30B8\u30BA\u30BC\u30BE\u30C0\u30C2\u30C5\u30C7\u30C9\u30D0\u30D1\u30D3\u30D4\u30D6\u30D7\u30D9\u30DA\u30DC\u30DD\u30F4\u30F7-\u30FA\u30FE\uAC00-\uD7A3\uFB1D\uFB1F\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFB4E]|\uD804[\uDC9A\uDC9C\uDCAB\uDD2E\uDD2F\uDF4B\uDF4C]|\uD805[\uDCBB\uDCBC\uDCBE\uDDBA\uDDBB]|\uD806\uDD38|\uD834[\uDD5E-\uDD64\uDDBB-\uDDC0]/;
-  var regex$1 = /*@__PURE__*/getDefaultExportFromCjs$1(regex);
+  var regex$1 = /*@__PURE__*/getDefaultExportFromCjs(regex);
 
+  /**
+   * @param {string} arg
+   * @returns {string}
+   */
   function escapeUnmatchedSurrogates(arg) {
     // http://stackoverflow.com/a/6701665/271577
-    return arg.replace(/((?:[\uD800-\uDBFF](?![\uDC00-\uDFFF])))(?!(?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))|(^|(?:[\0-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))((?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, function (_, unmatchedHighSurrogate, precedingLow, unmatchedLowSurrogate) {
+    return arg.replaceAll(/((?:[\uD800-\uDBFF](?![\uDC00-\uDFFF])))(?!(?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))|(^|(?:[\0-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))((?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, function (_, unmatchedHighSurrogate, precedingLow, unmatchedLowSurrogate) {
       // Could add a corresponding surrogate for compatibility with `node-sqlite3`: http://bugs.python.org/issue12569 and http://stackoverflow.com/a/6701665/271577
       //   but Chrome having problems
       if (unmatchedHighSurrogate) {
@@ -1448,39 +1452,69 @@
       return (precedingLow || '') + '^3' + unmatchedLowSurrogate.codePointAt().toString(16).padStart(4, '0');
     });
   }
+
+  /**
+   * @param {string} arg
+   * @returns {string}
+   */
   function escapeNameForSQLiteIdentifier(arg) {
     // http://stackoverflow.com/a/6701665/271577
     return '_' +
     // Prevent empty string
-    escapeUnmatchedSurrogates(arg.replace(/\^/g, '^^') // Escape our escape
+    escapeUnmatchedSurrogates(arg.replaceAll('^', '^^') // Escape our escape
     // http://www.sqlite.org/src/tktview?name=57c971fc74
-    .replace(/\0/g, '^0')
+    .replaceAll('\0', '^0')
     // We need to avoid identifiers being treated as duplicates based on SQLite's ASCII-only case-insensitive table and column names
     // (For SQL in general, however, see http://stackoverflow.com/a/17215009/271577
     // See also https://www.sqlite.org/faq.html#q18 re: Unicode (non-ASCII) case-insensitive not working
-    .replace(/([A-Z])/g, '^$1'));
+    .replaceAll(/([A-Z])/g, '^$1'));
   }
 
-  // The escaping of unmatched surrogates was needed by Chrome but not Node
+  /**
+   * The escaping of unmatched surrogates was needed by Chrome but not Node.
+   * @param {string} arg
+   * @returns {string}
+   */
   function escapeSQLiteStatement(arg) {
-    return escapeUnmatchedSurrogates(arg.replace(/\^/g, '^^').replace(/\0/g, '^0'));
+    return escapeUnmatchedSurrogates(arg.replaceAll('^', '^^').replaceAll('\0', '^0'));
   }
+
+  /**
+   * @param {string} arg
+   * @returns {string}
+   */
   function unescapeSQLiteResponse(arg) {
-    return unescapeUnmatchedSurrogates(arg).replace(/(\^+)0/g, function (_, esc) {
+    return unescapeUnmatchedSurrogates(arg).replaceAll(/(\^+)0/g, function (_, esc) {
       return esc.length % 2 ? esc.slice(1) + '\0' : _;
-    }).replace(/\^\^/g, '^');
+    }).replaceAll('^^', '^');
   }
+
+  /**
+   * @param {string} arg
+   * @returns {string}
+   */
   function sqlEscape(arg) {
     // https://www.sqlite.org/lang_keywords.html
     // http://stackoverflow.com/a/6701665/271577
     // There is no need to escape ', `, or [], as
     //   we should always be within double quotes
     // NUL should have already been stripped
-    return arg.replace(/"/g, '""');
+    return arg.replaceAll('"', '""');
   }
+
+  /**
+   * @param {string} arg
+   * @returns {string}
+   */
   function sqlQuote(arg) {
     return '"' + sqlEscape(arg) + '"';
   }
+
+  /**
+   * @param {string} db
+   * @throws {Error}
+   * @returns {string}
+   */
   function escapeDatabaseNameForSQLAndFiles(db) {
     if (CFG.escapeDatabaseName) {
       // We at least ensure NUL is escaped by default, but we need to still
@@ -1492,7 +1526,7 @@
     db = 'D' + escapeNameForSQLiteIdentifier(db);
     if (CFG.escapeNFDForDatabaseNames !== false) {
       // ES6 copying of regex with different flags
-      db = db.replace(new RegExp(regex$1, 'gu'), function (expandable) {
+      db = db.replaceAll(new RegExp(regex$1, 'gu'), function (expandable) {
         return '^4' + expandable.codePointAt().toString(16).padStart(6, '0');
       });
     }
@@ -1510,43 +1544,97 @@
     return db + (CFG.addSQLiteExtension !== false ? '.sqlite' : ''); // Shouldn't have quoting (do we even need NUL/case escaping here?)
   }
 
+  /**
+   * @param {string} arg
+   * @returns {string}
+   */
   function unescapeUnmatchedSurrogates(arg) {
-    return arg.replace(/(\^+)3(d[0-9a-f]{3})/g, function (_, esc, lowSurr) {
+    return arg.replaceAll(/(\^+)3(d[0-9a-f]{3})/g, function (_, esc, lowSurr) {
       return esc.length % 2 ? esc.slice(1) + String.fromCodePoint(Number.parseInt(lowSurr, 16)) : _;
-    }).replace(/(\^+)2(d[0-9a-f]{3})/g, function (_, esc, highSurr) {
+    }).replaceAll(/(\^+)2(d[0-9a-f]{3})/g, function (_, esc, highSurr) {
       return esc.length % 2 ? esc.slice(1) + String.fromCodePoint(Number.parseInt(highSurr, 16)) : _;
     });
   }
+
+  /**
+   * @param {string} store
+   * @returns {string}
+   */
   function escapeStoreNameForSQL(store) {
     return sqlQuote('S' + escapeNameForSQLiteIdentifier(store));
   }
+
+  /**
+   * @param {string} index
+   * @returns {string}
+   */
   function escapeIndexNameForSQL(index) {
     return sqlQuote('I' + escapeNameForSQLiteIdentifier(index));
   }
+
+  /**
+   * @param {string} index
+   * @returns {string}
+   */
   function escapeIndexNameForSQLKeyColumn(index) {
     return 'I' + escapeNameForSQLiteIdentifier(index);
   }
+
+  /**
+   * @param {string} str
+   * @returns {string}
+   */
   function sqlLIKEEscape(str) {
     // https://www.sqlite.org/lang_expr.html#like
-    return sqlEscape(str).replace(/\^/g, '^^');
+    return sqlEscape(str).replaceAll('^', '^^');
   }
 
   // Babel doesn't seem to provide a means of using the `instanceof` operator with Symbol.hasInstance (yet?)
+  /**
+   *
+   * @param obj
+   * @param Clss
+   */
   function instanceOf(obj, Clss) {
     return Clss[Symbol.hasInstance](obj);
   }
+
+  /**
+   *
+   * @param obj
+   */
   function isObj(obj) {
     return obj && _typeof$2(obj) === 'object';
   }
+
+  /**
+   *
+   * @param obj
+   */
   function isDate(obj) {
     return isObj(obj) && typeof obj.getDate === 'function';
   }
+
+  /**
+   *
+   * @param obj
+   */
   function isBlob(obj) {
     return isObj(obj) && typeof obj.size === 'number' && typeof obj.slice === 'function' && !('lastModified' in obj);
   }
+
+  /**
+   *
+   * @param obj
+   */
   function isFile(obj) {
     return isObj(obj) && typeof obj.name === 'string' && typeof obj.slice === 'function' && 'lastModified' in obj;
   }
+
+  /**
+   *
+   * @param obj
+   */
   function isBinary(obj) {
     return isObj(obj) && typeof obj.byteLength === 'number' && (typeof obj.slice === 'function' ||
     // `TypedArray` (view on buffer) or `ArrayBuffer`
@@ -1554,9 +1642,19 @@
     );
   }
 
+  /**
+   *
+   * @param obj
+   */
   function isIterable(obj) {
     return isObj(obj) && typeof obj[Symbol.iterator] === 'function';
   }
+
+  /**
+   *
+   * @param obj
+   * @param props
+   */
   function defineOuterInterface(obj, props) {
     props.forEach(function (prop) {
       var _o;
@@ -1569,6 +1667,12 @@
       Object.defineProperty(obj, prop, desc);
     });
   }
+
+  /**
+   *
+   * @param obj
+   * @param props
+   */
   function defineReadonlyOuterInterface(obj, props) {
     props.forEach(function (prop) {
       var o = _defineAccessor("get", {}, prop, function () {
@@ -1578,6 +1682,12 @@
       Object.defineProperty(obj, prop, desc);
     });
   }
+
+  /**
+   *
+   * @param obj
+   * @param listeners
+   */
   function defineListenerProperties(obj, listeners) {
     listeners = typeof listeners === 'string' ? [listeners] : listeners;
     listeners.forEach(function (listener) {
@@ -1596,6 +1706,13 @@
       obj[l] = null;
     });
   }
+
+  /**
+   *
+   * @param obj
+   * @param props
+   * @param getter
+   */
   function defineReadonlyProperties(obj, props) {
     var getter = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
     props = typeof props === 'string' ? [props] : props;
@@ -1621,6 +1738,11 @@
       Object.defineProperty(obj, prop, desc);
     });
   }
+
+  /**
+   *
+   * @param item
+   */
   function isIdentifier(item) {
     // For load-time and run-time performance, we don't provide the complete regular
     //   expression for identifiers, but these can be passed in, using the expressions
@@ -1633,11 +1755,21 @@
     var IdentifierPart = '(?:' + UnicodeIDContinue + "|[$_\u200C\u200D])";
     return new RegExp('^' + IdentifierStart + IdentifierPart + '*$', 'u').test(item);
   }
+
+  /**
+   *
+   * @param keyPathString
+   */
   function isValidKeyPathString(keyPathString) {
     return typeof keyPathString === 'string' && (keyPathString === '' || isIdentifier(keyPathString) || keyPathString.split('.').every(function (pathComponent) {
       return isIdentifier(pathComponent);
     }));
   }
+
+  /**
+   *
+   * @param keyPath
+   */
   function isValidKeyPath(keyPath) {
     return isValidKeyPathString(keyPath) || Array.isArray(keyPath) && keyPath.length &&
     // Convert array from sparse to dense http://www.2ality.com/2012/06/dense-arrays.html
@@ -1646,6 +1778,13 @@
       return isValidKeyPathString(pathComponent);
     });
   }
+
+  /**
+   * @param {number} number
+   * @param {"unsigned long long"|"unsigned long"} type
+   * @throws {Error|TypeError}
+   * @returns {number}
+   */
   function enforceRange(number, type) {
     number = Math.floor(Number(number));
     var max, min;
@@ -1670,15 +1809,34 @@
     }
     return number;
   }
+
+  /**
+   * @typedef {any} AnyValue
+   */
+
+  /**
+   * @param {AnyValue} v
+   * @param {boolean} [treatNullAs]
+   * @returns {string}
+   */
   function convertToDOMString(v, treatNullAs) {
     return v === null && treatNullAs ? '' : ToString(v);
   }
+
+  /**
+   * @param {AnyValue} o
+   * @returns {string}
+   */
   function ToString(o) {
     // Todo: See `es-abstract/es7`
     // `String()` will not throw with Symbols
     return '' + o; // eslint-disable-line no-implicit-coercion
   }
 
+  /**
+   *
+   * @param val
+   */
   function convertToSequenceDOMString(val) {
     // Per <https://heycam.github.io/webidl/#idl-sequence>, converting to a sequence works with iterables
     if (isIterable(val)) {
@@ -1690,17 +1848,23 @@
     }
     return ToString(val);
   }
+
+  /**
+   * @param {AnyValue} v
+   * @returns {boolean}
+   */
   function isNullish(v) {
     return v === null || v === undefined;
   }
-  function hasOwn(obj, prop) {
-    return Object.prototype.hasOwnProperty.call(obj, prop);
-  }
+
+  /**
+   * @typedef {Error} DebuggingError
+   */
 
   /**
    *
    * @param {string} type
-   * @param {Any} debug
+   * @param {DebuggingError} debug
    * @param {EventInit} evInit
    * @returns {Event}
    */
@@ -1719,7 +1883,12 @@
 
   var readonlyProperties$6 = ['oldVersion', 'newVersion'];
 
-  // Babel apparently having a problem adding `hasInstance` to a class, so we are redefining as a function
+  /**
+   * Babel apparently having a problem adding `hasInstance` to a class,
+   * so we are redefining as a function.
+   * @class
+   * @param {string} type
+   */
   function IDBVersionChangeEvent(type /* , eventInitDict */) {
     // eventInitDict is a IDBVersionChangeEventInit (but is not defined as a global)
     ShimEvent.call(this, type);
@@ -1771,6 +1940,20 @@
   }
 
   // From web-platform-tests testharness.js name_code_map (though not in new spec)
+
+  /**
+   * @typedef {"IndexSizeError"|"HierarchyRequestError"|"WrongDocumentError"|
+   * "InvalidCharacterError"|"NoModificationAllowedError"|"NotFoundError"|
+   * "NotSupportedError"|"InUseAttributeError"|"InvalidStateError"|
+   * "SyntaxError"|"InvalidModificationError"|"NamespaceError"|
+   * "InvalidAccessError"|"TypeMismatchError"|"SecurityError"|
+   * "NetworkError"|"AbortError"|"URLMismatchError"|"QuotaExceededError"|
+   * "TimeoutError"|"InvalidNodeTypeError"|"DataCloneError"|"EncodingError"|
+   * "NotReadableError"|"UnknownError"|"ConstraintError"|"DataError"|
+   * "TransactionInactiveError"|"ReadOnlyError"|"VersionError"|
+   * "OperationError"|"NotAllowedError"} Code
+   */
+
   var codes = {
     IndexSizeError: 1,
     HierarchyRequestError: 3,
@@ -1805,6 +1988,18 @@
     OperationError: 0,
     NotAllowedError: 0
   };
+
+  /**
+   * @typedef {"INDEX_SIZE_ERR"|"DOMSTRING_SIZE_ERR"|"HIERARCHY_REQUEST_ERR"|
+   * "WRONG_DOCUMENT_ERR"|"INVALID_CHARACTER_ERR"|"NO_DATA_ALLOWED_ERR"|
+   * "NO_MODIFICATION_ALLOWED_ERR"|"NOT_FOUND_ERR"|"NOT_SUPPORTED_ERR"|
+   * "INUSE_ATTRIBUTE_ERR"|"INVALID_STATE_ERR"|"SYNTAX_ERR"|
+   * "INVALID_MODIFICATION_ERR"|"NAMESPACE_ERR"|"INVALID_ACCESS_ERR"|
+   * "VALIDATION_ERR"|"TYPE_MISMATCH_ERR"|"SECURITY_ERR"|"NETWORK_ERR"|
+   * "ABORT_ERR"|"URL_MISMATCH_ERR"|"QUOTA_EXCEEDED_ERR"|"TIMEOUT_ERR"|
+   * "INVALID_NODE_TYPE_ERR"|"DATA_CLONE_ERR"} LegacyCode
+   */
+
   var legacyCodes = {
     INDEX_SIZE_ERR: 1,
     DOMSTRING_SIZE_ERR: 2,
@@ -1838,6 +2033,11 @@
    * @returns {DOMException}
    */
   function createNonNativeDOMExceptionClass() {
+    /**
+     * @param {string|undefined} message
+     * @param {Code|LegacyCode} name
+     * @returns {void}
+     */
     function DOMException(message, name) {
       // const err = Error.prototype.constructor.call(this, message); // Any use to this? Won't set this.message
       this[Symbol.toStringTag] = 'DOMException';
@@ -1872,8 +2072,12 @@
     // Necessary for W3C tests which complains if `DOMException` has properties on its "own" prototype
 
     // class DummyDOMException extends Error {}; // Sometimes causing problems in Node
-    // eslint-disable-next-line func-name-matching
+    /* eslint-disable func-name-matching */
+    /**
+     * @class
+     */
     var DummyDOMException = function DOMException() {/* */};
+    /* eslint-enable func-name-matching */
     DummyDOMException.prototype = Object.create(Error.prototype); // Intended for subclassing
     ['name', 'message'].forEach(function (prop) {
       Object.defineProperty(DummyDOMException.prototype, prop, {
@@ -1960,6 +2164,15 @@
       console.trace && console.trace();
     }
   }
+
+  /**
+   * @typedef {any} ArbitraryValue
+   */
+
+  /**
+   * @param {ArbitraryValue} obj
+   * @returns {boolean}
+   */
   function isErrorOrDOMErrorOrDOMException(obj) {
     return obj && _typeof$2(obj) === 'object' &&
     // We don't use util.isObj here as mutual dependency causing problems in Babel with browser
@@ -1970,7 +2183,7 @@
    * Finds the error argument.  This is useful because some WebSQL callbacks
    * pass the error as the first argument, and some pass it as the second
    * argument.
-   * @param {Array} args
+   * @param {(Error|{message?: string, name?: string}|any)[]} args
    * @returns {Error|DOMException|undefined}
    */
   function findError(args) {
@@ -2001,8 +2214,12 @@
   }
 
   /**
+   * @typedef {Error} SQLError
+   */
+
+  /**
    *
-   * @param {external:WebSQLError} webSQLErr
+   * @param {SQLError} webSQLErr
    * @returns {DOMException}
    */
   function webSQLErrback(webSQLErr) {
@@ -2068,7 +2285,11 @@
   function IDBRequest() {
     throw new TypeError('Illegal constructor');
   }
-  // eslint-disable-next-line func-name-matching
+
+  /* eslint-disable func-name-matching -- Polyfill */
+  /**
+   * @class
+   */
   IDBRequest.__super = function IDBRequest() {
     var _this = this;
     this[Symbol.toStringTag] = 'IDBRequest';
@@ -2105,6 +2326,11 @@
     this.__error = this.__source = this.__transaction = null;
     this.__done = false;
   };
+  /* eslint-enable func-name-matching -- Polyfill */
+
+  /**
+   *
+   */
   IDBRequest.__createInstance = function () {
     return new IDBRequest.__super();
   };
@@ -2112,6 +2338,10 @@
     extraProperties: ['debug']
   });
   IDBRequest.prototype[Symbol.toStringTag] = 'IDBRequestPrototype';
+
+  /**
+   *
+   */
   IDBRequest.prototype.__getParent = function () {
     if (this.toString() === '[object IDBOpenDBRequest]') {
       return null;
@@ -2150,7 +2380,13 @@
     value: IDBOpenDBRequest
   });
   var IDBOpenDBRequestAlias = IDBOpenDBRequest;
+  /**
+   *
+   */
   IDBOpenDBRequest.__createInstance = function () {
+    /**
+     * @class
+     */
     function IDBOpenDBRequest() {
       IDBRequest.__super.call(this);
       this[Symbol.toStringTag] = 'IDBOpenDBRequest';
@@ -2170,19 +2406,69 @@
     writable: false
   });
 
-  function getDefaultExportFromCjs (x) {
-  	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
-  }
-
+  /* eslint-disable promise/prefer-await-to-callbacks -- Needed for API */
+  /* eslint-disable promise/catch-or-return, n/callback-return,
+      promise/always-return -- Not needed */
+  /* eslint-disable unicorn/no-this-assignment -- Clarity */
   // Since [immediate](https://github.com/calvinmetcalf/immediate) is
   //   not doing the trick for our WebSQL transactions (at least in Node),
   //   we are forced to make the promises run fully synchronously.
 
+  // Todo: Use ES6 classes
+
+  /**
+   * @typedef {any} ArbitraryValue
+   */
+
+  /**
+   * @callback Resolve
+   * @param {ArbitraryValue} val
+   * @returns {void}
+   */
+  /**
+   * @callback Reject
+   * @param {ArbitraryValue} reason
+   * @returns {void}
+   */
+  /**
+   * @callback Settle
+   * @returns {void}
+   */
+
+  /**
+   * @callback ResolveReject
+   * @param {Resolve} resolve
+   * @param {Reject} reject
+   * @returns {void}
+   */
+
+  /**
+   * @callback OnFulfilled
+   * @param {ArbitraryValue} resolve
+   * @returns {void}
+   */
+
+  /**
+   * @typedef {[(Settle|Resolve)[], (Settle|Reject)[]]} Callbacks
+   */
+
+  /**
+   *
+   * @param {PromiseLike<ArbitraryValue>} p
+   * @returns {boolean}
+   */
   function isPromise(p) {
     return p && typeof p.then === 'function';
   }
+  /**
+   *
+   * @param {PromiseLike<ArbitraryValue>} prom
+   * @param {(err: Error) => void} reject
+   * @returns {void}
+   */
   function addReject(prom, reject) {
-    prom.then(null, reject); // Use this style for sake of non-Promise thenables (e.g., jQuery Deferred)
+    // Use this style for sake of non-Promise thenables (e.g., jQuery Deferred)
+    prom.then(null, reject);
   }
 
   // States
@@ -2190,32 +2476,59 @@
     FULFILLED = 0,
     // We later abuse these as array indices
     REJECTED = 1;
+
+  /**
+   * @class
+   * @param {(
+   *   resolve: (value: ArbitraryValue | PromiseLike<ArbitraryValue>) => void,
+   *   reject: (reason?: any) => void
+   * ) => void} fn
+   */
   function SyncPromise(fn) {
-    var self = this;
-    self.v = 0; // Value, this will be set to either a resolved value or rejected reason
-    self.s = PENDING; // State of the promise
-    self.c = [[], []]; // Callbacks c[0] is fulfillment and c[1] contains rejection callbacks
+    var that = this;
+    // Value, this will be set to either a resolved value or rejected reason
+    that.v = 0;
+    // State of the promise
+    that.s = PENDING;
+    // Callbacks c[0] is fulfillment and c[1] contains rejection callbacks
+    /** @type {Callbacks|null} */
+    that.c = [[], []];
+    /**
+     *
+     * @param {ArbitraryValue} val
+     * @param {0|1} state
+     * @returns {void}
+     */
     function transist(val, state) {
-      self.v = val;
-      self.s = state;
-      self.c[state].forEach(function (fn) {
-        fn(val);
+      that.v = val;
+      that.s = state;
+
+      // console.log('state', state);
+      /** @type {Callbacks} */
+      that.c[state].forEach(function (func) {
+        func(val);
       });
       // Release memory, but if no handlers have been added, as we
       //   assume that we will resolve/reject (truly) synchronously
       //   and thus we avoid flagging checks about whether we've
       //   already resolved/rejected.
-      if (self.c[state].length) self.c = null;
+      if ( /** @type {Callbacks} */that.c[state].length) {
+        that.c = null;
+      }
     }
+
+    /** @type {Resolve} */
     function resolve(val) {
-      if (!self.c) ; else if (isPromise(val)) {
+      if (!that.c) ; else if (isPromise(val)) {
         addReject(val.then(resolve), reject);
       } else {
         transist(val, FULFILLED);
       }
     }
+
+    /** @type {Reject} */
     function reject(reason) {
-      if (!self.c) ; else if (isPromise(reason)) {
+      if (!that.c) ; else if (isPromise(reason)) {
         addReject(reason.then(reject), reject);
       } else {
         transist(reason, REJECTED);
@@ -2227,60 +2540,88 @@
       reject(err);
     }
   }
-  var prot = SyncPromise.prototype;
-  prot.then = function (cb, errBack) {
-    var self = this;
-    return new SyncPromise(function (resolve, reject) {
+
+  /* eslint-disable unicorn/no-thenable -- Promise API */
+  /**
+   * @param {((value: ArbitraryValue) => ArbitraryValue)|null|undefined} [cb]
+   * @param {(reason: any) => PromiseLike<never>} [errBack]
+   * @returns {SyncPromise}
+   */
+  SyncPromise.prototype.then = function (cb, errBack) {
+    /* eslint-enable unicorn/no-thenable -- Promise API */
+    var that = this;
+    return new SyncPromise( /** @type {ResolveReject} */
+    function (resolve, reject) {
       var rej = typeof errBack === 'function' ? errBack : reject;
+
+      /** @type {Settle} */
       function settle() {
         try {
-          resolve(cb ? cb(self.v) : self.v);
+          resolve(cb ? cb(that.v) : that.v);
         } catch (e) {
           rej(e);
         }
       }
-      if (self.s === FULFILLED) {
+      if (that.s === FULFILLED) {
         settle();
-      } else if (self.s === REJECTED) {
-        rej(self.v);
+      } else if (that.s === REJECTED) {
+        rej(that.v);
       } else {
-        self.c[FULFILLED].push(settle);
-        self.c[REJECTED].push(rej);
+        /** @type {Callbacks} */that.c[FULFILLED].push(settle);
+        /** @type {Callbacks} */
+        that.c[REJECTED].push(rej);
       }
     });
   };
-  prot["catch"] = function (cb) {
-    var self = this;
-    return new SyncPromise(function (resolve, reject) {
+
+  /**
+   * @param {(reason: any) => PromiseLike<never>|null|undefined} cb
+   * @returns {SyncPromise}
+   */
+  SyncPromise.prototype["catch"] = function (cb) {
+    var that = this;
+    return new SyncPromise( /** @type {ResolveReject} */
+    function (resolve, reject) {
+      /**
+       * @returns {void}
+       */
       function settle() {
         try {
-          resolve(cb(self.v));
+          resolve(cb(that.v));
         } catch (e) {
           reject(e);
         }
       }
-      if (self.s === REJECTED) {
+      if (that.s === REJECTED) {
         settle();
-      } else if (self.s === FULFILLED) {
-        resolve(self.v);
+      } else if (that.s === FULFILLED) {
+        resolve(that.v);
       } else {
-        self.c[REJECTED].push(settle);
-        self.c[FULFILLED].push(resolve);
+        /** @type {Callbacks} */that.c[REJECTED].push(settle);
+        /** @type {Callbacks} */
+        that.c[FULFILLED].push(resolve);
       }
     });
   };
+
+  /**
+   * @param {unknown[]|[]} promises
+   * @returns {SyncPromise}
+   */
   SyncPromise.all = function (promises) {
-    return new SyncPromise(function (resolve, reject, l) {
-      l = promises.length;
-      var hasPromises = false;
+    return new SyncPromise( /** @type {ResolveReject} */
+    function (resolve, reject) {
+      var l = promises.length;
+      /** @type {ArbitraryValue[]} */
       var newPromises = [];
       if (!l) {
         resolve(newPromises);
         return;
       }
       promises.forEach(function (p, i) {
-        if (isPromise(p)) {
-          addReject(p.then(function (res) {
+        if (isPromise( /** @type {PromiseLike<any>} */p)) {
+          addReject( /** @type {PromiseLike<any>} */p.then( /** @type {OnFulfilled} */
+          function (res) {
             newPromises[i] = res;
             --l || resolve(newPromises);
           }), reject);
@@ -2291,43 +2632,64 @@
       });
     });
   };
+
+  /**
+   * @param {unknown[]|[]} promises
+   * @returns {SyncPromise}
+   */
   SyncPromise.race = function (promises) {
     var resolved = false;
-    return new SyncPromise(function (resolve, reject) {
+    return new SyncPromise( /** @type {ResolveReject} */
+    function (resolve, reject) {
       promises.some(function (p, i) {
-        if (isPromise(p)) {
-          addReject(p.then(function (res) {
+        if (isPromise( /** @type {PromiseLike<any>} */p)) {
+          addReject( /** @type {PromiseLike<any>} */p.then( /** @type {OnFulfilled} */
+          function (res) {
             if (resolved) {
               return;
             }
             resolve(res);
             resolved = true;
           }), reject);
-        } else {
-          resolve(p);
-          resolved = true;
-          return true;
+          return false;
         }
+        resolve(p);
+        resolved = true;
+        return true;
       });
     });
   };
+
+  /**
+   * @param {ArbitraryValue} val
+   * @returns {SyncPromise}
+   */
   SyncPromise.resolve = function (val) {
-    return new SyncPromise(function (resolve, reject) {
+    return new SyncPromise( /** @type {ResolveReject} */
+    function (resolve, reject) {
       resolve(val);
     });
   };
+
+  /**
+   * @param {ArbitraryValue} val
+   * @returns {SyncPromise}
+   */
   SyncPromise.reject = function (val) {
-    return new SyncPromise(function (resolve, reject) {
+    return new SyncPromise( /** @type {ResolveReject} */
+    function (resolve, reject) {
       reject(val);
     });
   };
-  var syncPromiseCommonjs = SyncPromise;
-  var SyncPromise$1 = /*@__PURE__*/getDefaultExportFromCjs(syncPromiseCommonjs);
+
+  /**
+   * @typedef {any} AnyValue
+   */
 
   /**
    * Compares two keys.
-   * @param first
-   * @param second
+   * @param {AnyValue} first
+   * @param {AnyValue} second
    * @returns {number}
    */
   function cmp(first, second) {
@@ -2360,7 +2722,43 @@
   }
 
   /**
-   * @module Key
+   * @typedef {Int8Array|Int16Array|Int32Array|Uint8Array|Uint16Array|
+   *   Uint32Array|Uint8ClampedArray|BigInt64Array|BigUint64Array|
+   *   Float32Array|Float64Array|DataView} ArrayBufferView
+   */
+
+  /**
+   * @typedef {ArrayBufferView|ArrayBuffer} BufferSource
+   */
+
+  /**
+   * @typedef {"number"|"date"|"string"|"binary"|"array"} KeyType
+   */
+
+  /**
+   * @typedef {any} Value
+   */
+
+  /**
+   * @typedef {any} Key
+   * @todo Specify possible value more precisely
+   */
+
+  /**
+   * @typedef {string|KeyPath[]} KeyPath
+   */
+
+  /**
+  * @typedef {object} KeyValueObject
+  * @property {KeyType|"NaN"} type
+  * @property {Value} [value]
+  * @property {boolean} [invalid]
+  * @property {string} [message]
+  * @todo Specify acceptable `value` more precisely
+  */
+
+  /**
+   * @typedef {number|string|Date|ArrayBuffer|ValueTypes[]} ValueTypes
    */
 
   /**
@@ -2510,7 +2908,7 @@
       encode: function encode(key, inArray) {
         if (inArray) {
           // prepend each character with a dash, and append a space to the end
-          key = key.replace(/((?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, '-$1') + ' ';
+          key = key.replaceAll(/((?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, '-$1') + ' ';
         }
         return keyTypeToEncodedChar.string + '-' + key;
       },
@@ -2518,7 +2916,7 @@
         key = key.slice(2);
         if (inArray) {
           // remove the space at the end, and the dash before each character
-          key = key.slice(0, -1).replace(/\x2D((?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, '$1');
+          key = key.slice(0, -1).replaceAll(/\x2D((?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, '$1');
         }
         return key;
       }
@@ -2687,12 +3085,8 @@
   }
 
   /**
-  * @typedef {"number"|"date"|"string"|"binary"|"array"} module:Key.KeyType
-  */
-
-  /**
-   * @param key
-   * @returns {module:Key.KeyType}
+   * @param {Key} key
+   * @returns {KeyType}
    */
   function getKeyType(key) {
     if (Array.isArray(key)) return 'array';
@@ -2705,9 +3099,9 @@
   /**
    * Keys must be strings, numbers (besides `NaN`), Dates (if value is not
    *   `NaN`), binary objects or Arrays.
-   * @param input The key input
+   * @param {Value} input The key input
    * @param {?(Array)} [seen] An array of already seen keys
-   * @returns {module:Key.keyValueObject}
+   * @returns {KeyValueObject}
    */
   function convertValueToKey(input, seen) {
     return convertValueToKeyValueDecoded(input, seen, false, true);
@@ -2715,8 +3109,8 @@
 
   /**
   * Currently not in use.
-  * @param input
-  * @returns {module:Key.keyValueObject}
+  * @param {Value} input
+  * @returns {KeyValueObject}
   */
   function convertValueToMultiEntryKey(input) {
     return convertValueToKeyValueDecoded(input, null, true, true);
@@ -2724,7 +3118,7 @@
 
   /**
    *
-   * @param O
+   * @param {BufferSource} O
    * @throws {TypeError}
    * @see https://heycam.github.io/webidl/#ref-for-dfn-get-buffer-source-copy-2
    * @returns {Uint8Array}
@@ -2749,25 +3143,16 @@
   }
 
   /**
-  * @typedef {PlainObject} module:Key.keyValueObject
-  * @property {module:Key.KeyType|"NaN"} type
-  * @property {*} [value]
-  * @property {boolean} [invalid]
-  * @property {string} [message]
-  * @todo Specify acceptable `value` more precisely
-  */
-
-  /**
   * Shortcut utility to avoid returning full keys from `convertValueToKey`
   *   and subsequent need to process in calling code unless `fullKeys` is
   *   set; may throw.
-  * @param {module:Key.Key} input
-  * @param {?(Array)} [seen]
+  * @param {Value} input
+  * @param {Value[]} [seen]
   * @param {boolean} [multiEntry]
   * @param {boolean} [fullKeys]
   * @throws {TypeError} See `getCopyBytesHeldByBufferSource`
   * @todo Document other allowable `input`
-  * @returns {module:Key.keyValueObject}
+  * @returns {KeyValueObject}
   */
   function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
     seen = seen || [];
@@ -2908,15 +3293,10 @@
   }
 
   /**
-  * @typedef {*} module:Key.Key
-  * @todo Specify possible value more precisely
-  */
-
-  /**
    *
-   * @param {module:Key.Key} key
+   * @param {Key} key
    * @param {boolean} fullKeys
-   * @returns {module:Key.keyValueObject}
+   * @returns {KeyValueObject}
    * @todo Document other allowable `key`?
    */
   function convertValueToMultiEntryKeyDecoded(key, fullKeys) {
@@ -2925,10 +3305,10 @@
 
   /**
   * An internal utility.
-  * @param input
+  * @param {Value} input
   * @param {boolean} seen
   * @throws {DOMException} `DataError`
-  * @returns {module:Key.keyValueObject}
+  * @returns {KeyValueObject}
   */
   function convertValueToKeyRethrowingAndIfInvalid(input, seen) {
     var key = convertValueToKey(input, seen);
@@ -2940,10 +3320,10 @@
 
   /**
    *
-   * @param value
-   * @param keyPath
+   * @param {Value} value
+   * @param {KeyPath} keyPath
    * @param {boolean} multiEntry
-   * @returns {module:Key.keyValueObject|module:Key.KeyPathEvaluateValue}
+   * @returns {KeyValueObject|KeyPathEvaluateValue}
    * @todo Document other possible return?
    */
   function extractKeyFromValueUsingKeyPath(value, keyPath, multiEntry) {
@@ -2951,10 +3331,10 @@
   }
   /**
   * Not currently in use.
-  * @param value
-  * @param keyPath
+  * @param {Value} value
+  * @param {KeyPath} keyPath
   * @param {boolean} multiEntry
-  * @returns {module:Key.KeyPathEvaluateValue}
+  * @returns {KeyPathEvaluateValue}
   */
   function evaluateKeyPathOnValue(value, keyPath, multiEntry) {
     return evaluateKeyPathOnValueToDecodedValue(value, keyPath);
@@ -2963,11 +3343,11 @@
   /**
   * May throw, return `{failure: true}` (e.g., non-object on keyPath resolution)
   *    or `{invalid: true}` (e.g., `NaN`).
-  * @param value
-  * @param keyPath
+  * @param {Value} value
+  * @param {KeyPath} keyPath
   * @param {boolean} multiEntry
   * @param {boolean} fullKeys
-  * @returns {module:Key.keyValueObject|module:Key.KeyPathEvaluateValue}
+  * @returns {KeyValueObject|KeyPathEvaluateValue}
   * @todo Document other possible return?
   */
   function extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry, fullKeys) {
@@ -2982,23 +3362,24 @@
   }
 
   /**
-  * @typedef {PlainObject} module:Key.KeyPathEvaluateFailure
-  * @property {boolean} failure
-  */
+   * Unused?
+   * @typedef {object} KeyPathEvaluateFailure
+   * @property {boolean} failure
+   */
 
   /**
-  * @typedef {PlainObject} module:Key.KeyPathEvaluateValue
-  * @property {undefined|array|string} value
-  */
+   * @typedef {object} KeyPathEvaluateValue
+   * @property {undefined|array|string} value
+   */
 
   /**
    * Returns the value of an inline key based on a key path (wrapped in an
    *   object with key `value`) or `{failure: true}`
    * @param {object} value
-   * @param {string|array} keyPath
+   * @param {KeyPath} keyPath
    * @param {boolean} multiEntry
    * @param {boolean} [fullKeys]
-   * @returns {module:Key.KeyPathEvaluateValue}
+   * @returns {KeyPathEvaluateValue}
    */
   function evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKeys) {
     if (Array.isArray(keyPath)) {
@@ -3059,7 +3440,7 @@
   /**
    * Sets the inline key value.
    * @param {object} value
-   * @param {*} key
+   * @param {Key} key
    * @param {string} keyPath
    * @returns {void}
    */
@@ -3078,8 +3459,8 @@
 
   /**
    *
-   * @param value
-   * @param keyPath
+   * @param {Value} value
+   * @param {string} keyPath
    * @see https://github.com/w3c/IndexedDB/pull/146
    * @returns {boolean}
    */
@@ -3110,7 +3491,7 @@
 
   /**
    *
-   * @param {module:Key.Key} key
+   * @param {Key} key
    * @param {IDBKeyRange} range
    * @param {boolean} checkCached
    * @returns {boolean}
@@ -3156,9 +3537,9 @@
 
   /**
    *
-   * @param {module:Key.Key} keyEntry
+   * @param {Key} keyEntry
    * @param {IDBKeyRange} range
-   * @returns {module:Key.Key[]}
+   * @returns {Key[]}
    */
   function findMultiEntryMatches(keyEntry, range) {
     var matches = [];
@@ -3198,14 +3579,10 @@
   }
 
   /**
-  * @typedef {number|string|Date|ArrayBuffer|module:Key.ValueTypes[]} module:Key.ValueTypes
-  */
-
-  /**
   * Not currently in use but keeping for spec parity.
-  * @param {module:Key.Key} key
+  * @param {Key} key
   * @throws {Error} Upon a "bad key"
-  * @returns {module:Key.ValueTypes}
+  * @returns {ValueTypes}
   */
   function convertKeyToValue(key) {
     var type = key.type,
@@ -3249,7 +3626,7 @@
 
   /**
    *
-   * @param {module:Key.Key} key
+   * @param {Key} key
    * @param {boolean} inArray
    * @returns {string|null}
    */
@@ -3264,10 +3641,10 @@
 
   /**
    *
-   * @param {module:Key.Key} key
+   * @param {Key} key
    * @param {boolean} inArray
    * @throws {Error} Invalid number
-   * @returns {undefined|module:Key.ValueTypes}
+   * @returns {undefined|ValueTypes}
    */
   function _decode(key, inArray) {
     if (typeof key !== 'string') {
@@ -3278,18 +3655,14 @@
 
   /**
    *
-   * @param {module:Key.Key} key
+   * @param {Key} key
    * @param {boolean} inArray
-   * @returns {undefined|module:Key.ValueTypes}
+   * @returns {undefined|ValueTypes}
    */
   function roundTrip(key, inArray) {
     return _decode(_encode(key, inArray), inArray);
   }
   var MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `Number.MAX_SAFE_INTEGER + 1`)
-
-  /**
-   * @external WebSQLTransaction
-   */
 
   /**
   * @typedef {IDBObjectStore} IDBObjectStoreWithCurrentName
@@ -3310,7 +3683,7 @@
 
   /**
    *
-   * @param {external:WebSQLTransaction} tx
+   * @param {SQLTransaction} tx
    * @param {IDBObjectStoreWithCurrentName} store
    * @param {CurrentNumberCallback} func
    * @param {SQLFailureCallback} sqlFailCb
@@ -3330,7 +3703,7 @@
 
   /**
    *
-   * @param {external:WebSQLTransaction} tx
+   * @param {SQLTransaction} tx
    * @param {IDBObjectStoreWithCurrentName} store
    * @param {Integer} num
    * @param {CurrentNumberCallback} successCb
@@ -3352,7 +3725,7 @@
    * Bump up the auto-inc counter if the key path-resolved value is valid
    *   (greater than old value and >=1) OR if a manually passed in key is
    *   valid (numeric and >= 1) and >= any primaryKey.
-   * @param {external:WebSQLTransaction} tx
+   * @param {SQLTransaction} tx
    * @param {IDBObjectStoreWithCurrentName} store
    * @param {Integer} num
    * @param {CurrentNumberCallback} successCb
@@ -3375,7 +3748,7 @@
 
   /**
    *
-   * @param {external:WebSQLTransaction} tx
+   * @param {SQLTransaction} tx
    * @param {IDBObjectStoreWithCurrentName} store
    * @param {KeyForStoreCallback} cb
    * @param {SQLFailureCallback} sqlFailCb
@@ -3402,7 +3775,7 @@
   //     so we do not return a key
   /**
    *
-   * @param {external:WebSQLTransaction} tx
+   * @param {SQLTransaction} tx
    * @param {IDBObjectStoreWithCurrentName} store
    * @param {*|Integer} key
    * @param {CurrentNumberCallback|void} successCb
@@ -3468,10 +3841,10 @@
   /**
    * The IndexedDB KeyRange object.
    * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#dfn-key-range
-   * @param {Object} lower
-   * @param {Object} upper
-   * @param {Object} lowerOpen
-   * @param {Object} upperOpen
+   * @param {import('./Key.js').Key|null} lower
+   * @param {import('./Key.js').Key|null} upper
+   * @param {boolean} lowerOpen
+   * @param {boolean} upperOpen
    * @throws {TypeError}
    * @class
    */
@@ -3480,7 +3853,18 @@
     throw new TypeError('Illegal constructor');
   }
   var IDBKeyRangeAlias = IDBKeyRange;
+
+  /**
+   * @param {} lower
+   * @param {} upper
+   * @param {} lowerOpen
+   * @param {} upperOpen
+   * @returns {IDBKeyRange}
+   */
   IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
+    /**
+     * @class
+     */
     function IDBKeyRange() {
       this[Symbol.toStringTag] = 'IDBKeyRange';
       if (lower === undefined && upper === undefined) {
@@ -3508,6 +3892,11 @@
     IDBKeyRange.prototype = IDBKeyRangeAlias.prototype;
     return new IDBKeyRange();
   };
+
+  /**
+   * @param {import('./Key.js').Key} key
+   * @returns {boolean}
+   */
   IDBKeyRange.prototype.includes = function (key) {
     // We can't do a regular instanceof check as it will create a loop given our hasInstance implementation
     if (!isObj(this) || typeof this.__lowerOpen !== 'boolean') {
@@ -3519,12 +3908,22 @@
     convertValueToKeyRethrowingAndIfInvalid(key);
     return isKeyInRange(key, this);
   };
+
+  /**
+   * @param {import('./Key.js').Value} value
+   * @returns {IDBKeyRange}
+   */
   IDBKeyRange.only = function (value) {
     if (!arguments.length) {
       throw new TypeError('IDBKeyRange.only requires a value argument');
     }
     return IDBKeyRange.__createInstance(value, value, false, false);
   };
+
+  /**
+   * @param {import('./Key.js').Value} value
+   * @returns {IDBKeyRange}
+   */
   IDBKeyRange.lowerBound = function (value /*, open */) {
     if (!arguments.length) {
       throw new TypeError('IDBKeyRange.lowerBound requires a value argument');
@@ -3532,6 +3931,11 @@
     // eslint-disable-next-line prefer-rest-params
     return IDBKeyRange.__createInstance(value, undefined, arguments[1], true);
   };
+
+  /**
+   * @param {import('./Key.js').Value} value
+   * @returns {IDBKeyRange}
+   */
   IDBKeyRange.upperBound = function (value /*, open */) {
     if (!arguments.length) {
       throw new TypeError('IDBKeyRange.upperBound requires a value argument');
@@ -3539,6 +3943,12 @@
     // eslint-disable-next-line prefer-rest-params
     return IDBKeyRange.__createInstance(undefined, value, true, arguments[1]);
   };
+
+  /**
+   * @param {import('./Key.js').Value} lower
+   * @param {import('./Key.js').Value} upper
+   * @returns {IDBKeyRange}
+   */
   IDBKeyRange.bound = function (lower, upper /* , lowerOpen, upperOpen */) {
     if (arguments.length <= 1) {
       throw new TypeError('IDBKeyRange.bound requires lower and upper arguments');
@@ -3574,6 +3984,16 @@
   Object.defineProperty(IDBKeyRange, 'prototype', {
     writable: false
   });
+
+  /**
+   * @param {IDBKeyRange} range
+   * @param {string} quotedKeyColumnName
+   * @param {string[]} sql
+   * @param {string[]} sqlValues
+   * @param {boolean} addAnd
+   * @param {boolean} checkCached
+   * @returns {void}
+   */
   function setSQLForKeyRange(range, quotedKeyColumnName, sql, sqlValues, addAnd, checkCached) {
     if (range && (range.lower !== undefined || range.upper !== undefined)) {
       if (addAnd) sql.push('AND');
@@ -3601,6 +4021,13 @@
       }
     }
   }
+
+  /**
+   * @param {import('./Key.js').Value} value
+   * @param {boolean} nullDisallowed
+   * @throws {DOMException}
+   * @returns {IDBKeyRange}
+   */
   function convertValueToKeyRange(value, nullDisallowed) {
     if (instanceOf(value, IDBKeyRange)) {
       // We still need to validate IDBKeyRange-like objects (the above check is based on loose duck-typing)
@@ -3742,6 +4169,9 @@
   var DOMStringListAlias = DOMStringList;
   Object.defineProperty(DOMStringList, '__createInstance', {
     value: function value() {
+      /**
+       * @class
+       */
       var DOMStringList = function DOMStringList() {
         this.toString = function () {
           return '[object DOMStringList]';
@@ -3806,7 +4236,16 @@
     throw new TypeError('Illegal constructor');
   }
   var IDBTransactionAlias = IDBTransaction;
+  /**
+   *
+   * @param db
+   * @param storeNames
+   * @param mode
+   */
   IDBTransaction.__createInstance = function (db, storeNames, mode) {
+    /**
+     * @class
+     */
     function IDBTransaction() {
       var _this = this;
       var me = this;
@@ -3846,9 +4285,18 @@
     // Ensure EventTarget preserves our properties
     extraProperties: ['complete']
   });
+
+  /**
+   *
+   * @param err
+   * @param cb
+   */
   IDBTransaction.prototype.__transFinishedCb = function (err, cb) {
     cb(Boolean(err));
   };
+  /**
+   *
+   */
   IDBTransaction.prototype.__executeRequests = function () {
     var me = this;
     if (me.__running) {
@@ -3862,6 +4310,16 @@
       me.__tx = tx;
       var q = null,
         i = -1;
+
+      /**
+       * @typedef {any} IDBRequestResult
+       */
+
+      /**
+       * @param {IDBRequestResult} result
+       * @param {IDBRequest} req
+       * @returns {void}
+       */
       function success(result, req) {
         if (me.__errored || me.__requestsFinished) {
           // We've already called "onerror", "onabort", or thrown within the transaction, so don't do it again.
@@ -3890,6 +4348,11 @@
         }
         executeNextRequest();
       }
+
+      /**
+       * @param {[tx: SQLTransaction, err: SQLError]} args
+       * @returns {void}
+       */
       function error() {
         if (me.__errored || me.__requestsFinished) {
           // We've already called "onerror", "onabort", or thrown within
@@ -3934,6 +4397,10 @@
           me.__abortTransaction(createDOMException('AbortError', 'A request was aborted (in user handler after error).'));
         }
       }
+
+      /**
+       * @returns {void}
+       */
       function executeNextRequest() {
         if (me.__errored || me.__requestsFinished) {
           // We've already called "onerror", "onabort", or thrown within the transaction, so don't do it again.
@@ -4002,9 +4469,18 @@
       }
       return false;
     });
+
+    /**
+     * @returns {void}
+     */
     function requestsFinished() {
       me.__active = false;
       me.__requestsFinished = true;
+
+      /**
+       * @throws {Error}
+       * @returns {void}
+       */
       function complete() {
         me.__completed = true;
         CFG.DEBUG && console.log('Transaction completed');
@@ -4059,9 +4535,18 @@
   };
 
   /**
+   * @typedef {(
+   *   tx: SQLTransaction,
+   *   args: ObjectArray,
+   *   success: () => void,
+   *   error: (tx: SQLTransaction, err: SQLError) => void
+   * ) => void} SQLCallback
+   */
+
+  /**
    * Adds a callback function to the transaction queue.
-   * @param {function} callback
-   * @param {*} args
+   * @param {SQLCallback} callback
+   * @param {ObjectArray} args
    * @param {IDBDatabase} source
    * @returns {IDBRequest}
    * @protected
@@ -4075,8 +4560,8 @@
   /**
    * Adds a callback function to the transaction queue without generating a
    *   request.
-   * @param {function} callback
-   * @param {*} args
+   * @param {SQLCallback} callback
+   * @param {ObjectArray} args
    * @param {IDBDatabase} source
    * @returns {void}
    * @protected
@@ -4088,8 +4573,8 @@
   /**
    * Adds an IDBRequest to the transaction queue.
    * @param {IDBRequest} request
-   * @param {function} callback
-   * @param {*} args
+   * @param {SQLCallback} callback
+   * @param {ObjectArray} args
    * @protected
    * @returns {void}
    */
@@ -4101,16 +4586,28 @@
       req: request
     });
   };
+
+  /**
+   *
+   */
   IDBTransaction.prototype.__assertActive = function () {
     if (!this.__active) {
       throw createDOMException('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
     }
   };
+
+  /**
+   *
+   */
   IDBTransaction.prototype.__assertWritable = function () {
     if (this.mode === 'readonly') {
       throw createDOMException('ReadOnlyError', 'The transaction is read only');
     }
   };
+
+  /**
+   *
+   */
   IDBTransaction.prototype.__assertVersionChange = function () {
     IDBTransaction.__assertVersionChange(this);
   };
@@ -4145,6 +4642,11 @@
     }
     return me.__storeHandles[objectStoreName];
   };
+
+  /**
+   *
+   * @param err
+   */
   IDBTransaction.prototype.__abortTransaction = function (err) {
     var me = this;
     logError('Error', 'An error occurred in a transaction', err);
@@ -4188,6 +4690,12 @@
         throw err;
       }, 0);
     }
+
+    /**
+     * @param {SQLTransaction} tx
+     * @param {SQLError|{code: 0}} errOrResult
+     * @returns {void}
+     */
     function abort(tx, errOrResult) {
       if (!tx) {
         CFG.DEBUG && console.log('Rollback not possible due to missing transaction', me);
@@ -4215,14 +4723,14 @@
             bubbles: true,
             cancelable: true
           });
-          return new SyncPromise$1(function (resolve) {
+          return new SyncPromise(function (resolve) {
             setTimeout(function () {
               q.req.dispatchEvent(reqEvt); // No need to catch errors
               resolve();
             });
           });
         });
-      }, SyncPromise$1.resolve()).then(function () {
+      }, SyncPromise.resolve()).then(function () {
         // Also works when there are no pending requests
         var evt = createEvent('abort', err, {
           bubbles: true,
@@ -4267,6 +4775,10 @@
       }
     });
   };
+
+  /**
+   *
+   */
   IDBTransaction.prototype.abort = function () {
     var me = this;
     if (!(me instanceof IDBTransaction)) {
@@ -4277,16 +4789,30 @@
     me.__abortTransaction(null);
   };
   IDBTransaction.prototype[Symbol.toStringTag] = 'IDBTransactionPrototype';
+
+  /**
+   *
+   * @param tx
+   */
   IDBTransaction.__assertVersionChange = function (tx) {
     if (!tx || tx.mode !== 'versionchange') {
       throw createDOMException('InvalidStateError', 'Not a version transaction');
     }
   };
+  /**
+   *
+   * @param tx
+   */
   IDBTransaction.__assertNotVersionChange = function (tx) {
     if (tx && tx.mode === 'versionchange') {
       throw createDOMException('InvalidStateError', 'Cannot be called during a version transaction');
     }
   };
+
+  /**
+   *
+   * @param tx
+   */
   IDBTransaction.__assertNotFinished = function (tx) {
     if (!tx || tx.__completed || tx.__abortFinished || tx.__errored) {
       throw createDOMException('InvalidStateError', 'Transaction finished by commit or abort');
@@ -4294,6 +4820,10 @@
   };
 
   // object store methods behave differently: see https://github.com/w3c/IndexedDB/issues/192
+  /**
+   *
+   * @param tx
+   */
   IDBTransaction.__assertNotFinishedObjectStoreMethod = function (tx) {
     try {
       IDBTransaction.__assertNotFinished(tx);
@@ -4304,6 +4834,11 @@
       throw err;
     }
   };
+
+  /**
+   *
+   * @param tx
+   */
   IDBTransaction.__assertActive = function (tx) {
     if (!tx || !tx.__active) {
       throw createDOMException('TransactionInactiveError', 'A request was placed against a transaction which is currently not active, or which is finished');
@@ -4386,24 +4921,24 @@
       var r = null == e ? null : "undefined" != typeof Symbol && e[Symbol.iterator] || e["@@iterator"];
       if (null != r) {
         var n,
-          a,
           o,
+          a,
           i,
           c = [],
           s = !0,
           u = !1;
         try {
-          if (o = (r = r.call(e)).next, 0 === t) {
+          if (a = (r = r.call(e)).next, 0 === t) {
             if (Object(r) !== r) return;
             s = !1;
-          } else for (; !(s = (n = o.call(r)).done) && (c.push(n.value), c.length !== t); s = !0);
+          } else for (; !(s = (n = a.call(r)).done) && (c.push(n.value), c.length !== t); s = !0);
         } catch (e) {
-          u = !0, a = e;
+          u = !0, o = e;
         } finally {
           try {
             if (!s && null != r["return"] && (i = r["return"](), Object(i) !== i)) return;
           } finally {
-            if (u) throw a;
+            if (u) throw o;
           }
         }
         return c;
@@ -4440,17 +4975,21 @@
   var e = _createClass(function TypesonPromise(e) {
     _classCallCheck(this, TypesonPromise), this.p = new Promise(e);
   });
-  e.__typeson__type__ = "TypesonPromise", "undefined" != typeof Symbol && (e.prototype[Symbol.toStringTag] = "TypesonPromise"), e.prototype.then = function (t, r) {
+  e.__typeson__type__ = "TypesonPromise", "undefined" != typeof Symbol && Object.defineProperty(e.prototype, Symbol.toStringTag, {
+    get: function get() {
+      return "TypesonPromise";
+    }
+  }), e.prototype.then = function (t, r) {
     var n = this;
-    return new e(function (e, a) {
+    return new e(function (e, o) {
       n.p.then(function (r) {
         e(t ? t(r) : r);
       })["catch"](function (e) {
         return r ? r(e) : Promise.reject(e);
-      }).then(e, a);
+      }).then(e, o);
     });
   }, e.prototype["catch"] = function (e) {
-    return this.then(null, e);
+    return this.then(function () {}, e);
   }, e.resolve = function (t) {
     return new e(function (e) {
       e(t);
@@ -4459,42 +4998,50 @@
     return new e(function (e, r) {
       r(t);
     });
-  }, ["all", "race", "allSettled"].forEach(function (t) {
-    e[t] = function (r) {
-      return new e(function (e, n) {
-        Promise[t](r.map(function (e) {
-          return e && e.constructor && "TypesonPromise" === e.constructor.__typeson__type__ ? e.p : e;
-        })).then(e, n);
-      });
-    };
-  });
-  var t = {}.toString,
-    r = {}.hasOwnProperty,
-    n = Object.getPrototypeOf,
-    a = r.toString;
+  }, e.all = function (t) {
+    return new e(function (e, r) {
+      Promise.all(t.map(function (e) {
+        return null != e && e.constructor && "__typeson__type__" in e.constructor && "TypesonPromise" === e.constructor.__typeson__type__ ? e.p : e;
+      })).then(e, r);
+    });
+  }, e.race = function (t) {
+    return new e(function (e, r) {
+      Promise.race(t.map(function (e) {
+        return null != e && e.constructor && "__typeson__type__" in e.constructor && "TypesonPromise" === e.constructor.__typeson__type__ ? e.p : e;
+      })).then(e, r);
+    });
+  }, e.allSettled = function (t) {
+    return new e(function (e, r) {
+      Promise.allSettled(t.map(function (e) {
+        return null != e && e.constructor && "__typeson__type__" in e.constructor && "TypesonPromise" === e.constructor.__typeson__type__ ? e.p : e;
+      })).then(e, r);
+    });
+  };
+  var t = Object.hasOwn,
+    r = Object.getPrototypeOf;
   function isThenable(e, t) {
     return isObject(e) && "function" == typeof e.then && (!t || "function" == typeof e["catch"]);
   }
   function toStringTag(e) {
-    return t.call(e).slice(8, -1);
+    return Object.prototype.toString.call(e).slice(8, -1);
   }
-  function hasConstructorOf(e, t) {
+  function hasConstructorOf(e, n) {
     if (!e || "object" !== _typeof(e)) return !1;
-    var o = n(e);
-    if (!o) return null === t;
-    var i = r.call(o, "constructor") && o.constructor;
-    return "function" != typeof i ? null === t : t === i || null !== t && a.call(i) === a.call(t) || "function" == typeof t && "string" == typeof i.__typeson__type__ && i.__typeson__type__ === t.__typeson__type__;
+    var o = r(e);
+    if (!o) return null === n;
+    var a = t(o, "constructor") && o.constructor;
+    return "function" != typeof a ? null === n : n === a || null !== n && Function.prototype.toString.call(a) === Function.prototype.toString.call(n) || "function" == typeof n && "string" == typeof a.__typeson__type__ && a.__typeson__type__ === n.__typeson__type__;
   }
   function isPlainObject(e) {
-    return !(!e || "Object" !== toStringTag(e)) && (!n(e) || hasConstructorOf(e, Object));
+    return !(!e || "Object" !== toStringTag(e)) && (!r(e) || hasConstructorOf(e, Object));
   }
   function isUserObject(e) {
     if (!e || "Object" !== toStringTag(e)) return !1;
-    var t = n(e);
+    var t = r(e);
     return !t || hasConstructorOf(e, Object) || isUserObject(t);
   }
   function isObject(e) {
-    return e && "object" === _typeof(e);
+    return null !== e && "object" === _typeof(e);
   }
   function escapeKeyPathComponent(e) {
     return e.replace(/''/g, "''''").replace(/^$/, "''").replace(/~/g, "~0").replace(/\./g, "~1");
@@ -4504,6 +5051,7 @@
   }
   function getByKeyPath(e, t) {
     if ("" === t) return e;
+    if (null === e || "object" !== _typeof(e)) throw new TypeError("Unexpected non-object type");
     var r = t.indexOf(".");
     if (r > -1) {
       var n = e[unescapeKeyPathComponent(t.slice(0, r))];
@@ -4513,6 +5061,7 @@
   }
   function setAtKeyPath(e, t, r) {
     if ("" === t) return r;
+    if (!e || "object" !== _typeof(e)) throw new TypeError("Unexpected non-object type");
     var n = t.indexOf(".");
     return n > -1 ? setAtKeyPath(e[unescapeKeyPathComponent(t.slice(0, n))], t.slice(n + 1), r) : (e[unescapeKeyPathComponent(t)] = r, e);
   }
@@ -4522,10 +5071,10 @@
   function _await(e, t, r) {
     return r ? t ? t(e) : e : (e && e.then || (e = Promise.resolve(e)), t ? e.then(t) : e);
   }
-  var o = Object.keys,
-    i = Array.isArray,
-    c = {}.hasOwnProperty,
-    s = ["type", "replaced", "iterateIn", "iterateUnsetNumeric"];
+  var n = Object.keys,
+    o = Object.hasOwn,
+    a = Array.isArray,
+    i = ["type", "replaced", "iterateIn", "iterateUnsetNumeric", "addLength"];
   function _async(e) {
     return function () {
       for (var t = [], r = 0; r < arguments.length; r++) t[r] = arguments[r];
@@ -4537,12 +5086,13 @@
     };
   }
   function nestedPathsFirst(e, t) {
+    var r, n;
     if ("" === e.keypath) return -1;
-    var r = e.keypath.match(/\./g) || 0,
-      n = t.keypath.match(/\./g) || 0;
-    return r && (r = r.length), n && (n = n.length), r > n ? -1 : r < n ? 1 : e.keypath < t.keypath ? -1 : e.keypath > t.keypath;
+    var o = null !== (r = e.keypath.match(/\./g)) && void 0 !== r ? r : 0,
+      a = null !== (n = t.keypath.match(/\./g)) && void 0 !== n ? n : 0;
+    return o && (o = o.length), a && (a = a.length), o > a ? -1 : o < a ? 1 : e.keypath < t.keypath ? -1 : e.keypath > t.keypath ? 1 : 0;
   }
-  var u = function () {
+  var c = function () {
       function Typeson(e) {
         _classCallCheck(this, Typeson), this.options = e, this.plainObjectReplacers = [], this.nonplainObjectReplacers = [], this.revivers = {}, this.types = {};
       }
@@ -4552,8 +5102,8 @@
           n = _objectSpread2(_objectSpread2(_objectSpread2({}, this.options), n), {}, {
             stringification: !0
           });
-          var a = this.encapsulate(e, null, n);
-          return i(a) ? JSON.stringify(a[0], t, r) : a.then(function (e) {
+          var o = this.encapsulate(e, null, n);
+          return a(o) ? JSON.stringify(o[0], t, r) : o.then(function (e) {
             return JSON.stringify(e, t, r);
           });
         }
@@ -4614,201 +5164,211 @@
         }
       }, {
         key: "encapsulate",
-        value: function encapsulate(t, r, n) {
-          var a = _async(function (t, r) {
+        value: function encapsulate(t, r, c) {
+          var s = this,
+            u = _objectSpread2(_objectSpread2({
+              sync: !0
+            }, this.options), c),
+            l = u.sync,
+            f = {},
+            y = [],
+            p = [],
+            d = [],
+            v = !("cyclic" in u) || u.cyclic,
+            b = u.encapsulateObserver,
+            h = function finish(e) {
+              var t = Object.values(f);
+              if (u.iterateNone) return t.length ? t[0] : getJSONType(e);
+              if (t.length) {
+                if (u.returnTypeNames) return function _toConsumableArray(e) {
+                  return function _arrayWithoutHoles(e) {
+                    if (Array.isArray(e)) return _arrayLikeToArray(e);
+                  }(e) || function _iterableToArray(e) {
+                    if ("undefined" != typeof Symbol && null != e[Symbol.iterator] || null != e["@@iterator"]) return Array.from(e);
+                  }(e) || _unsupportedIterableToArray(e) || function _nonIterableSpread() {
+                    throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+                  }();
+                }(new Set(t));
+                e && isPlainObject(e) && !o(e, "$types") ? e.$types = f : e = {
+                  $: e,
+                  $types: {
+                    $: f
+                  }
+                };
+              } else isObject(e) && o(e, "$types") && (e = {
+                $: e,
+                $types: !0
+              });
+              return !u.returnTypeNames && e;
+            },
+            g = _async(function (t, r) {
               return _await(Promise.all(r.map(function (e) {
                 return e[1].p;
               })), function (n) {
                 return _await(Promise.all(n.map(_async(function (n) {
                   var o = !1,
-                    i = [],
-                    c = _slicedToArray(r.splice(0, 1), 1),
-                    s = _slicedToArray(c[0], 7),
-                    u = s[0],
-                    l = s[2],
-                    f = s[3],
-                    y = s[4],
-                    p = s[5],
-                    d = s[6],
-                    v = _encapsulate(u, n, l, f, i, !0, d),
-                    b = hasConstructorOf(v, e);
+                    a = [],
+                    i = _slicedToArray(r.splice(0, 1), 1),
+                    c = _slicedToArray(i[0], 7),
+                    s = c[0],
+                    u = c[2],
+                    l = c[3],
+                    f = c[4],
+                    y = c[5],
+                    p = c[6],
+                    d = _(s, n, u, l, a, !0, p),
+                    v = hasConstructorOf(d, e);
                   return function _invoke(e, t) {
                     var r = e();
                     return r && r.then ? r.then(t) : t(r);
                   }(function () {
-                    if (u && b) return _await(v.p, function (e) {
-                      y[p] = e;
-                      var r = a(t, i);
+                    if (s && v) return _await(d.p, function (e) {
+                      f[y] = e;
+                      var r = g(t, a);
                       return o = !0, r;
                     });
                   }, function (e) {
-                    return o ? e : (u ? y[p] = v : t = b ? v.p : v, a(t, i));
+                    return o ? e : (s ? f[y] = d : t = v ? d.p : d, g(t, a));
                   });
                 }))), function () {
                   return t;
                 });
               });
             }),
-            u = (n = _objectSpread2(_objectSpread2({
-              sync: !0
-            }, this.options), n)).sync,
-            l = this,
-            f = {},
-            y = [],
-            p = [],
-            d = [],
-            v = !("cyclic" in n) || n.cyclic,
-            b = n.encapsulateObserver,
-            h = _encapsulate("", t, v, r || {}, d);
-          function finish(e) {
-            var t = Object.values(f);
-            if (n.iterateNone) return t.length ? t[0] : getJSONType(e);
-            if (t.length) {
-              if (n.returnTypeNames) return function _toConsumableArray(e) {
-                return function _arrayWithoutHoles(e) {
-                  if (Array.isArray(e)) return _arrayLikeToArray(e);
-                }(e) || function _iterableToArray(e) {
-                  if ("undefined" != typeof Symbol && null != e[Symbol.iterator] || null != e["@@iterator"]) return Array.from(e);
-                }(e) || _unsupportedIterableToArray(e) || function _nonIterableSpread() {
-                  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-                }();
-              }(new Set(t));
-              e && isPlainObject(e) && !c.call(e, "$types") ? e.$types = f : e = {
-                $: e,
-                $types: {
-                  $: f
-                }
-              };
-            } else isObject(e) && c.call(e, "$types") && (e = {
-              $: e,
-              $types: !0
-            });
-            return !n.returnTypeNames && e;
-          }
-          function _adaptBuiltinStateObjectProperties(e, t, r) {
-            Object.assign(e, t);
-            var n = s.map(function (t) {
-              var r = e[t];
-              return delete e[t], r;
-            });
-            r(), s.forEach(function (t, r) {
-              e[t] = n[r];
-            });
-          }
-          function _encapsulate(t, r, a, s, u, d, v) {
-            var h,
-              g = {},
-              m = _typeof(r),
-              O = b ? function (n) {
-                var o = v || s.type || getJSONType(r);
-                b(Object.assign(n || g, {
-                  keypath: t,
-                  value: r,
-                  cyclic: a,
-                  stateObj: s,
-                  promisesData: u,
-                  resolvingTypesonPromise: d,
-                  awaitingTypesonPromise: hasConstructorOf(r, e)
-                }, {
-                  type: o
-                }));
-              } : null;
-            if (["string", "boolean", "number", "undefined"].includes(m)) return void 0 === r || Number.isNaN(r) || r === Number.NEGATIVE_INFINITY || r === Number.POSITIVE_INFINITY || 0 === r ? (h = s.replaced ? r : replace(t, r, s, u, !1, d, O)) !== r && (g = {
-              replaced: h
-            }) : h = r, O && O(), h;
-            if (null === r) return O && O(), r;
-            if (a && !s.iterateIn && !s.iterateUnsetNumeric && r && "object" === _typeof(r)) {
-              var S = y.indexOf(r);
-              if (!(S < 0)) return f[t] = "#", O && O({
-                cyclicKeypath: p[S]
-              }), "#" + p[S];
-              !0 === a && (y.push(r), p.push(t));
-            }
-            var _,
-              A = isPlainObject(r),
-              w = i(r),
-              j = (A || w) && (!l.plainObjectReplacers.length || s.replaced) || s.iterateIn ? r : replace(t, r, s, u, A || w, null, O);
-            if (j !== r ? (h = j, g = {
-              replaced: j
-            }) : "" === t && hasConstructorOf(r, e) ? (u.push([t, r, a, s, void 0, void 0, s.type]), h = r) : w && "object" !== s.iterateIn || "array" === s.iterateIn ? (_ = new Array(r.length), g = {
-              clone: _
-            }) : (["function", "symbol"].includes(_typeof(r)) || "toJSON" in r || hasConstructorOf(r, e) || hasConstructorOf(r, Promise) || hasConstructorOf(r, ArrayBuffer)) && !A && "object" !== s.iterateIn ? h = r : (_ = {}, s.addLength && (_.length = r.length), g = {
-              clone: _
-            }), O && O(), n.iterateNone) return _ || h;
-            if (!_) return h;
-            if (s.iterateIn) {
-              var T = function _loop(n) {
-                var o = {
-                  ownKeys: c.call(r, n)
-                };
-                _adaptBuiltinStateObjectProperties(s, o, function () {
-                  var o = t + (t ? "." : "") + escapeKeyPathComponent(n),
-                    i = _encapsulate(o, r[n], Boolean(a), s, u, d);
-                  hasConstructorOf(i, e) ? u.push([o, i, Boolean(a), s, _, n, s.type]) : void 0 !== i && (_[n] = i);
-                });
-              };
-              for (var I in r) T(I);
-              O && O({
-                endIterateIn: !0,
-                end: !0
+            m = function _adaptBuiltinStateObjectProperties(e, t, r) {
+              Object.assign(e, t);
+              var n = i.map(function (t) {
+                var r = e[t];
+                return delete e[t], r;
               });
-            } else o(r).forEach(function (n) {
-              var o = t + (t ? "." : "") + escapeKeyPathComponent(n);
-              _adaptBuiltinStateObjectProperties(s, {
-                ownKeys: !0
-              }, function () {
-                var t = _encapsulate(o, r[n], Boolean(a), s, u, d);
-                hasConstructorOf(t, e) ? u.push([o, t, Boolean(a), s, _, n, s.type]) : void 0 !== t && (_[n] = t);
+              r(), i.forEach(function (t, r) {
+                e[t] = n[r];
               });
-            }), O && O({
-              endIterateOwn: !0,
-              end: !0
-            });
-            if (s.iterateUnsetNumeric) {
-              for (var N = r.length, P = function _loop2(n) {
-                  if (!(n in r)) {
-                    var o = t + (t ? "." : "") + n;
-                    _adaptBuiltinStateObjectProperties(s, {
-                      ownKeys: !1
-                    }, function () {
-                      var t = _encapsulate(o, void 0, Boolean(a), s, u, d);
-                      hasConstructorOf(t, e) ? u.push([o, t, Boolean(a), s, _, n, s.type]) : void 0 !== t && (_[n] = t);
-                    });
-                  }
-                }, E = 0; E < N; E++) P(E);
-              O && O({
-                endIterateUnsetNumeric: !0,
-                end: !0
-              });
-            }
-            return _;
-          }
-          function replace(e, t, r, n, a, o, i) {
-            for (var c = a ? l.plainObjectReplacers : l.nonplainObjectReplacers, s = c.length; s--;) {
-              var y = c[s];
-              if (y.test(t, r)) {
-                var p = y.type;
-                if (l.revivers[p]) {
-                  var d = f[e];
-                  f[e] = d ? [p].concat(d) : p;
-                }
-                return Object.assign(r, {
-                  type: p,
-                  replaced: !0
-                }), !u && y.replaceAsync || y.replace ? (i && i({
-                  replacing: !0
-                }), _encapsulate(e, y[u || !y.replaceAsync ? "replace" : "replaceAsync"](t, r), v && "readonly", r, n, o, p)) : (i && i({
-                  typeDetected: !0
-                }), _encapsulate(e, t, v && "readonly", r, n, o, p));
+            },
+            _ = function _encapsulate(t, r, i, c, l, d, v) {
+              var h,
+                g = {},
+                _ = _typeof(r),
+                w = b ? function (n) {
+                  var o,
+                    a = null !== (o = null != v ? v : c.type) && void 0 !== o ? o : getJSONType(r);
+                  b(Object.assign(null != n ? n : g, {
+                    keypath: t,
+                    value: r,
+                    cyclic: i,
+                    stateObj: c,
+                    promisesData: l,
+                    resolvingTypesonPromise: d,
+                    awaitingTypesonPromise: hasConstructorOf(r, e)
+                  }, {
+                    type: a
+                  }));
+                } : null;
+              if (["string", "boolean", "number", "undefined"].includes(_)) return void 0 === r || Number.isNaN(r) || r === Number.NEGATIVE_INFINITY || r === Number.POSITIVE_INFINITY || 0 === r ? (h = c.replaced ? r : O(t, r, c, l, !1, d, w)) !== r && (g = {
+                replaced: h
+              }) : h = r, w && w(), h;
+              if (null === r) return w && w(), r;
+              if (i && !c.iterateIn && !c.iterateUnsetNumeric && r && "object" === _typeof(r)) {
+                var A = y.indexOf(r);
+                if (!(A < 0)) return f[t] = "#", w && w({
+                  cyclicKeypath: p[A]
+                }), "#" + p[A];
+                !0 === i && (y.push(r), p.push(t));
               }
-            }
-            return t;
-          }
-          return d.length ? u && n.throwOnBadSyncType ? function () {
+              var S,
+                j,
+                T = isPlainObject(r),
+                I = a(r),
+                N = (T || I) && (!s.plainObjectReplacers.length || c.replaced) || c.iterateIn ? r : O(t, r, c, l, T || I, null, w);
+              if (N !== r ? (h = N, g = {
+                replaced: N
+              }) : "" === t && hasConstructorOf(r, e) ? (l.push([t, r, i, c, void 0, void 0, c.type]), h = r) : I && "object" !== c.iterateIn || "array" === c.iterateIn ? (S = new Array(r.length), g = {
+                clone: S
+              }) : (["function", "symbol"].includes(_typeof(r)) || "toJSON" in r || hasConstructorOf(r, e) || hasConstructorOf(r, Promise) || hasConstructorOf(r, ArrayBuffer)) && !T && "object" !== c.iterateIn ? h = r : (S = {}, c.addLength && (S.length = r.length), g = {
+                clone: S
+              }), w && w(), u.iterateNone) return null !== (j = S) && void 0 !== j ? j : h;
+              if (!S) return h;
+              if (c.iterateIn) {
+                var P = function _loop(n) {
+                  var a = {
+                    ownKeys: o(r, n)
+                  };
+                  m(c, a, function () {
+                    var o = t + (t ? "." : "") + escapeKeyPathComponent(n),
+                      a = _encapsulate(o, r[n], Boolean(i), c, l, d);
+                    hasConstructorOf(a, e) ? l.push([o, a, Boolean(i), c, S, n, c.type]) : void 0 !== a && (S[n] = a);
+                  });
+                };
+                for (var E in r) P(E);
+                w && w({
+                  endIterateIn: !0,
+                  end: !0
+                });
+              } else n(r).forEach(function (n) {
+                var o = t + (t ? "." : "") + escapeKeyPathComponent(n);
+                m(c, {
+                  ownKeys: !0
+                }, function () {
+                  var t = _encapsulate(o, r[n], Boolean(i), c, l, d);
+                  hasConstructorOf(t, e) ? l.push([o, t, Boolean(i), c, S, n, c.type]) : void 0 !== t && (S[n] = t);
+                });
+              }), w && w({
+                endIterateOwn: !0,
+                end: !0
+              });
+              if (c.iterateUnsetNumeric) {
+                for (var C = r.length, x = function _loop2(n) {
+                    if (!(n in r)) {
+                      var o = "".concat(t).concat(t ? "." : "").concat(n);
+                      m(c, {
+                        ownKeys: !1
+                      }, function () {
+                        var t = _encapsulate(o, void 0, Boolean(i), c, l, d);
+                        hasConstructorOf(t, e) ? l.push([o, t, Boolean(i), c, S, n, c.type]) : void 0 !== t && (S[n] = t);
+                      });
+                    }
+                  }, k = 0; k < C; k++) x(k);
+                w && w({
+                  endIterateUnsetNumeric: !0,
+                  end: !0
+                });
+              }
+              return S;
+            },
+            O = function replace(e, t, r, n, o, a, i) {
+              for (var c = o ? s.plainObjectReplacers : s.nonplainObjectReplacers, u = c.length; u--;) {
+                var y = c[u];
+                if (y.test(t, r)) {
+                  var p = y.type;
+                  if (s.revivers[p]) {
+                    var d = f[e];
+                    f[e] = d ? [p].concat(d) : p;
+                  }
+                  if (Object.assign(r, {
+                    type: p,
+                    replaced: !0
+                  }), (l || !y.replaceAsync) && !y.replace) return i && i({
+                    typeDetected: !0
+                  }), _(e, t, v && "readonly", r, n, a, p);
+                  i && i({
+                    replacing: !0
+                  });
+                  var b = void 0;
+                  if (l || !y.replaceAsync) {
+                    if (void 0 === y.replace) throw new TypeError("Missing replacer");
+                    b = y.replace(t, r);
+                  } else b = y.replaceAsync(t, r);
+                  return _(e, b, v && "readonly", r, n, a, p);
+                }
+              }
+              return t;
+            },
+            w = _("", t, v, null != r ? r : {}, d);
+          if (d.length) return l && u.throwOnBadSyncType ? function () {
             throw new TypeError("Sync method requested but async result obtained");
-          }() : Promise.resolve(a(h, d)).then(finish) : !u && n.throwOnBadSyncType ? function () {
-            throw new TypeError("Async method requested but sync result obtained");
-          }() : n.stringification && u ? [finish(h)] : u ? finish(h) : Promise.resolve(finish(h));
+          }() : Promise.resolve(g(w, d)).then(h);
+          if (!l && u.throwOnBadSyncType) throw new TypeError("Async method requested but sync result obtained");
+          return u.stringification && l ? [h(w)] : l ? h(w) : Promise.resolve(h(w));
         }
       }, {
         key: "encapsulateSync",
@@ -4831,104 +5391,119 @@
       }, {
         key: "revive",
         value: function revive(t, r) {
-          var n = t && t.$types;
-          if (!n) return t;
-          if (!0 === n) return t.$;
-          var a = (r = _objectSpread2(_objectSpread2({
+          var o = this,
+            i = _objectSpread2(_objectSpread2({
               sync: !0
-            }, this.options), r)).sync,
-            c = [],
-            s = {},
-            u = !0;
-          n.$ && isPlainObject(n.$) && (t = t.$, n = n.$, u = !1);
-          var f = this;
-          function executeReviver(e, t) {
-            var r = _slicedToArray(f.revivers[e] || [], 1)[0];
-            if (!r) throw new Error("Unregistered type: " + e);
-            return a && !("revive" in r) ? t : r[a && r.revive ? "revive" : !a && r.reviveAsync ? "reviveAsync" : "revive"](t, s);
+            }, this.options), r),
+            c = i.sync;
+          function finishRevival(e) {
+            if (c) return e;
+            if (i.throwOnBadSyncType) throw new TypeError("Async method requested but sync result obtained");
+            return Promise.resolve(e);
           }
-          var y = [];
+          if (!t || "object" !== _typeof(t) || Array.isArray(t)) return finishRevival(t);
+          var u = t.$types;
+          if (!0 === u) return finishRevival(t.$);
+          if (!u || "object" !== _typeof(u) || Array.isArray(u)) return finishRevival(t);
+          var l = [],
+            f = {},
+            y = !0;
+          u.$ && isPlainObject(u.$) && (t = t.$, u = u.$, y = !1);
+          var p = function executeReviver(e, t) {
+              var r,
+                n = _slicedToArray(null !== (r = o.revivers[e]) && void 0 !== r ? r : [], 1)[0];
+              if (!n) throw new Error("Unregistered type: " + e);
+              if (c && !("revive" in n)) return t;
+              if (!c && n.reviveAsync) return n.reviveAsync(t, f);
+              if (n.revive) return n.revive(t, f);
+              throw new Error("Missing reviver");
+            },
+            d = [];
           function checkUndefined(e) {
-            return hasConstructorOf(e, l) ? void 0 : e;
+            return hasConstructorOf(e, s) ? void 0 : e;
           }
-          var p,
-            d = function revivePlainObjects() {
+          var v,
+            b = function revivePlainObjects() {
               var r = [];
-              if (Object.entries(n).forEach(function (e) {
+              if (!u) throw new Error("Found bad `types`");
+              if (Object.entries(u).forEach(function (e) {
                 var t = _slicedToArray(e, 2),
-                  a = t[0],
-                  o = t[1];
-                "#" !== o && [].concat(o).forEach(function (e) {
-                  _slicedToArray(f.revivers[e] || [null, {}], 2)[1].plain && (r.push({
-                    keypath: a,
+                  n = t[0],
+                  a = t[1];
+                "#" !== a && [].concat(a).forEach(function (e) {
+                  var t;
+                  _slicedToArray(null !== (t = o.revivers[e]) && void 0 !== t ? t : [null, {}], 2)[1].plain && (r.push({
+                    keypath: n,
                     type: e
-                  }), delete n[a]);
+                  }), delete u[n]);
                 });
               }), r.length) return r.sort(nestedPathsFirst).reduce(function reducer(r, n) {
-                var a = n.keypath,
-                  o = n.type;
+                var o = n.keypath,
+                  a = n.type;
                 if (isThenable(r)) return r.then(function (e) {
                   return reducer(e, {
-                    keypath: a,
-                    type: o
+                    keypath: o,
+                    type: a
                   });
                 });
-                var i = getByKeyPath(t, a);
-                if (hasConstructorOf(i = executeReviver(o, i), e)) return i.then(function (e) {
-                  var r = setAtKeyPath(t, a, e);
+                var i = getByKeyPath(t, o);
+                if (hasConstructorOf(i = p(a, i), e)) return i.then(function (e) {
+                  var r = setAtKeyPath(t, o, e);
                   r === e && (t = r);
                 });
-                var c = setAtKeyPath(t, a, i);
+                var c = setAtKeyPath(t, o, i);
                 c === i && (t = c);
               }, void 0);
             }();
-          return hasConstructorOf(d, e) ? p = d.then(function () {
+          return hasConstructorOf(b, e) ? v = b.then(function () {
             return t;
-          }) : (p = function _revive(t, r, a, s, f) {
-            if (!u || "$types" !== t) {
-              var p = n[t],
-                d = i(r);
-              if (d || isPlainObject(r)) {
-                var v = d ? new Array(r.length) : {};
-                for (o(r).forEach(function (n) {
-                  var o = _revive(t + (t ? "." : "") + escapeKeyPathComponent(n), r[n], a || v, v, n),
+          }) : (v = function _revive(t, r, o, i, c) {
+            if (!y || "$types" !== t) {
+              var f = u[t],
+                v = a(r);
+              if (v || isPlainObject(r)) {
+                var b = v ? new Array(r.length) : {};
+                for (n(r).forEach(function (n) {
+                  var a = _revive(t + (t ? "." : "") + escapeKeyPathComponent(n), r[n], null != o ? o : b, b, n),
                     i = function set(e) {
-                      return hasConstructorOf(e, l) ? v[n] = void 0 : void 0 !== e && (v[n] = e), e;
+                      return hasConstructorOf(e, s) ? b[n] = void 0 : void 0 !== e && (b[n] = e), e;
                     };
-                  hasConstructorOf(o, e) ? y.push(o.then(function (e) {
+                  hasConstructorOf(a, e) ? d.push(a.then(function (e) {
                     return i(e);
-                  })) : i(o);
-                }), r = v; c.length;) {
-                  var b = _slicedToArray(c[0], 4),
-                    h = b[0],
-                    g = b[1],
-                    m = b[2],
-                    O = b[3],
-                    S = getByKeyPath(h, g);
-                  if (void 0 === S) break;
-                  m[O] = S, c.splice(0, 1);
+                  })) : i(a);
+                }), r = b; l.length;) {
+                  var h = _slicedToArray(l[0], 4),
+                    g = h[0],
+                    m = h[1],
+                    _ = h[2],
+                    O = h[3],
+                    w = getByKeyPath(g, m);
+                  if (void 0 === w) break;
+                  _[O] = w, l.splice(0, 1);
                 }
               }
-              if (!p) return r;
-              if ("#" === p) {
-                var _ = getByKeyPath(a, r.slice(1));
-                return void 0 === _ && c.push([a, r.slice(1), s, f]), _;
+              if (!f) return r;
+              if ("#" === f) {
+                var A = getByKeyPath(o, r.slice(1));
+                return void 0 === A && l.push([o, r.slice(1), i, c]), A;
               }
-              return [].concat(p).reduce(function reducer(t, r) {
-                return hasConstructorOf(t, e) ? t.then(function (e) {
+              return [].concat(f).reduce(function reducer(t, r) {
+                if (hasConstructorOf(t, e)) return t.then(function (e) {
                   return reducer(e, r);
-                }) : executeReviver(r, t);
+                });
+                if ("string" != typeof r) throw new TypeError("Bad type JSON");
+                return p(r, t);
               }, r);
             }
-          }("", t, null), y.length && (p = e.resolve(p).then(function (t) {
-            return e.all([t].concat(y));
+          }("", t, null), d.length && (v = e.resolve(v).then(function (t) {
+            return e.all([t].concat(d));
           }).then(function (e) {
             return _slicedToArray(e, 1)[0];
-          }))), isThenable(p) ? a && r.throwOnBadSyncType ? function () {
+          }))), isThenable(v) ? c && i.throwOnBadSyncType ? function () {
             throw new TypeError("Sync method requested but async result obtained");
-          }() : hasConstructorOf(p, e) ? p.p.then(checkUndefined) : p : !a && r.throwOnBadSyncType ? function () {
+          }() : hasConstructorOf(v, e) ? v.p.then(checkUndefined) : v : !c && i.throwOnBadSyncType ? function () {
             throw new TypeError("Async method requested but sync result obtained");
-          }() : a ? checkUndefined(p) : Promise.resolve(checkUndefined(p));
+          }() : c ? checkUndefined(v) : Promise.resolve(checkUndefined(v));
         }
       }, {
         key: "reviveSync",
@@ -4951,86 +5526,88 @@
       }, {
         key: "register",
         value: function register(e, t) {
-          var r = this;
-          t = t || {};
-          var n = function R(e) {
-            i(e) ? e.forEach(function (e) {
-              return R(e);
-            }) : e && o(e).forEach(function (n) {
-              if ("#" === n) throw new TypeError("# cannot be used as a type name as it is reserved for cyclic objects");
-              if (f.includes(n)) throw new TypeError("Plain JSON object types are reserved as type names");
-              var a = e[n],
-                o = a && a.testPlainObjects ? r.plainObjectReplacers : r.nonplainObjectReplacers,
-                c = o.filter(function (e) {
-                  return e.type === n;
-                });
-              if (c.length && (o.splice(o.indexOf(c[0]), 1), delete r.revivers[n], delete r.types[n]), "function" == typeof a) {
-                var s = a;
-                a = {
-                  test: function test(e) {
-                    return e && e.constructor === s;
-                  },
-                  replace: function replace(e) {
-                    return _objectSpread2({}, e);
-                  },
-                  revive: function revive(e) {
-                    return Object.assign(Object.create(s.prototype), e);
-                  }
-                };
-              } else if (i(a)) {
-                var u = _slicedToArray(a, 3);
-                a = {
-                  test: u[0],
-                  replace: u[1],
-                  revive: u[2]
-                };
-              }
-              if (a && a.test) {
-                var l = {
-                  type: n,
-                  test: a.test.bind(a)
-                };
-                a.replace && (l.replace = a.replace.bind(a)), a.replaceAsync && (l.replaceAsync = a.replaceAsync.bind(a));
-                var y = "number" == typeof t.fallback ? t.fallback : t.fallback ? 0 : Number.POSITIVE_INFINITY;
-                if (a.testPlainObjects ? r.plainObjectReplacers.splice(y, 0, l) : r.nonplainObjectReplacers.splice(y, 0, l), a.revive || a.reviveAsync) {
-                  var p = {};
-                  a.revive && (p.revive = a.revive.bind(a)), a.reviveAsync && (p.reviveAsync = a.reviveAsync.bind(a)), r.revivers[n] = [p, {
-                    plain: a.testPlainObjects
-                  }];
+          var r = this,
+            o = null != t ? t : {},
+            i = function R(e) {
+              a(e) ? e.forEach(function (e) {
+                return R(e);
+              }) : n(e).forEach(function (t) {
+                var n;
+                if ("#" === t) throw new TypeError("# cannot be used as a type name as it is reserved for cyclic objects");
+                if (u.includes(t)) throw new TypeError("Plain JSON object types are reserved as type names");
+                var i = e[t],
+                  c = i && "function" != typeof i && !Array.isArray(i) && i.testPlainObjects ? r.plainObjectReplacers : r.nonplainObjectReplacers,
+                  s = c.filter(function (e) {
+                    return e.type === t;
+                  });
+                if (s.length && (c.splice(c.indexOf(s[0]), 1), delete r.revivers[t], delete r.types[t]), "function" == typeof i) {
+                  var l = i;
+                  i = {
+                    test: function test(e) {
+                      return e && e.constructor === l;
+                    },
+                    replace: function replace(e) {
+                      return _objectSpread2({}, e);
+                    },
+                    revive: function revive(e) {
+                      return Object.assign(Object.create(l.prototype), e);
+                    }
+                  };
+                } else if (a(i)) {
+                  var f = _slicedToArray(i, 3);
+                  i = {
+                    test: f[0],
+                    replace: f[1],
+                    revive: f[2]
+                  };
                 }
-                r.types[n] = a;
-              }
-            });
-          };
+                if (null !== (n = i) && void 0 !== n && n.test) {
+                  var y = {
+                    type: t,
+                    test: i.test.bind(i)
+                  };
+                  i.replace && (y.replace = i.replace.bind(i)), i.replaceAsync && (y.replaceAsync = i.replaceAsync.bind(i));
+                  var p = "number" == typeof o.fallback ? o.fallback : o.fallback ? 0 : Number.POSITIVE_INFINITY;
+                  if (i.testPlainObjects ? r.plainObjectReplacers.splice(p, 0, y) : r.nonplainObjectReplacers.splice(p, 0, y), i.revive || i.reviveAsync) {
+                    var d = {};
+                    i.revive && (d.revive = i.revive.bind(i)), i.reviveAsync && (d.reviveAsync = i.reviveAsync.bind(i)), r.revivers[t] = [d, {
+                      plain: i.testPlainObjects
+                    }];
+                  }
+                  r.types[t] = i;
+                }
+              });
+            };
           return [].concat(e).forEach(function (e) {
-            return n(e);
+            return i(e);
           }), this;
         }
       }]), Typeson;
     }(),
-    l = _createClass(function Undefined() {
+    s = _createClass(function Undefined() {
       _classCallCheck(this, Undefined);
     });
-  l.__typeson__type__ = "TypesonUndefined";
-  for (var f = ["null", "boolean", "number", "string", "array", "object"], y = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", p = new Uint8Array(256), d = 0; d < y.length; d++) p[y.codePointAt(d)] = d;
-  var v = function encode(e, t, r) {
+  s.__typeson__type__ = "TypesonUndefined";
+  for (var u = ["null", "boolean", "number", "string", "array", "object"], l = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", f = new Uint8Array(256), y = 0; y < 64; y++) f[l.codePointAt(y)] = y;
+  var p = function encode(e, t, r) {
       null == r && (r = e.byteLength);
-      for (var n = new Uint8Array(e, t || 0, r), a = n.length, o = "", i = 0; i < a; i += 3) o += y[n[i] >> 2], o += y[(3 & n[i]) << 4 | n[i + 1] >> 4], o += y[(15 & n[i + 1]) << 2 | n[i + 2] >> 6], o += y[63 & n[i + 2]];
-      return a % 3 == 2 ? o = o.slice(0, -1) + "=" : a % 3 == 1 && (o = o.slice(0, -2) + "=="), o;
+      for (var n = new Uint8Array(e, t || 0, r), o = n.length, a = "", i = 0; i < o; i += 3) a += l[n[i] >> 2], a += l[(3 & n[i]) << 4 | n[i + 1] >> 4], a += l[(15 & n[i + 1]) << 2 | n[i + 2] >> 6], a += l[63 & n[i + 2]];
+      return o % 3 == 2 ? a = a.slice(0, -1) + "=" : o % 3 == 1 && (a = a.slice(0, -2) + "=="), a;
     },
-    b = function decode(e) {
-      var t,
-        r,
+    d = function decode(e) {
+      var t = e.length;
+      if (t % 4) throw new Error("Bad base64 length: not divisible by four");
+      var r,
         n,
+        o,
         a,
-        o = e.length,
         i = .75 * e.length,
         c = 0;
       "=" === e[e.length - 1] && (i--, "=" === e[e.length - 2] && i--);
-      for (var s = new ArrayBuffer(i), u = new Uint8Array(s), l = 0; l < o; l += 4) t = p[e.codePointAt(l)], r = p[e.codePointAt(l + 1)], n = p[e.codePointAt(l + 2)], a = p[e.codePointAt(l + 3)], u[c++] = t << 2 | r >> 4, u[c++] = (15 & r) << 4 | n >> 2, u[c++] = (3 & n) << 6 | 63 & a;
+      for (var s = new ArrayBuffer(i), u = new Uint8Array(s), l = 0; l < t; l += 4) r = f[e.codePointAt(l)], n = f[e.codePointAt(l + 1)], o = f[e.codePointAt(l + 2)], a = f[e.codePointAt(l + 3)], u[c++] = r << 2 | n >> 4, u[c++] = (15 & n) << 4 | o >> 2, u[c++] = (3 & o) << 6 | 63 & a;
       return s;
     };
-  var h = {
+  var v = {
       arraybuffer: {
         test: function test(e) {
           return "ArrayBuffer" === toStringTag(e);
@@ -5040,16 +5617,16 @@
           var r = t.buffers.indexOf(e);
           return r > -1 ? {
             index: r
-          } : (t.buffers.push(e), v(e));
+          } : (t.buffers.push(e), p(e));
         },
         revive: function revive(e, t) {
           if (t.buffers || (t.buffers = []), "object" == _typeof$2(e)) return t.buffers[e.index];
-          var r = b(e);
+          var r = d(e);
           return t.buffers.push(r), r;
         }
       }
     },
-    g = {
+    b = {
       bigintObject: {
         test: function test(e) {
           return "object" == _typeof$2(e) && hasConstructorOf(e, BigInt);
@@ -5060,13 +5637,15 @@
         }
       }
     },
-    m = {
+    h = {
       bigint: {
         test: function test(e) {
           return "bigint" == typeof e;
         },
         replace: String,
-        revive: BigInt
+        revive: function revive(e) {
+          return BigInt(e);
+        }
       }
     };
   function string2arraybuffer(e) {
@@ -5074,7 +5653,7 @@
     for (var _r = 0; _r < e.length; _r++) t[_r] = e.charCodeAt(_r);
     return t.buffer;
   }
-  var O = {
+  var g = {
     blob: {
       test: function test(e) {
         return "Blob" === toStringTag(e);
@@ -5087,11 +5666,11 @@
           stringContents: t.responseText
         };
       },
-      revive: function revive(_ref) {
-        var e = _ref.type,
-          t = _ref.stringContents;
-        return new Blob([string2arraybuffer(t)], {
-          type: e
+      revive: function revive(e) {
+        var t = e.type,
+          r = e.stringContents;
+        return new Blob([string2arraybuffer(r)], {
+          type: t
         });
       },
       replaceAsync: function replaceAsync(t) {
@@ -5109,14 +5688,14 @@
       }
     }
   };
-  var A = {
+  var O = {
       cryptokey: {
         test: function test(e) {
           return "CryptoKey" === toStringTag(e) && e.extractable;
         },
         replaceAsync: function replaceAsync(t) {
           return new e( /*#__PURE__*/function () {
-            var _ref3 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee(e, r) {
+            var _ref = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee(e, r) {
               var n;
               return _regeneratorRuntime().wrap(function _callee$(_context) {
                 while (1) switch (_context.prev = _context.next) {
@@ -5145,15 +5724,15 @@
               }, _callee, null, [[0, 6]]);
             }));
             return function (_x, _x2) {
-              return _ref3.apply(this, arguments);
+              return _ref.apply(this, arguments);
             };
           }());
         },
-        revive: function revive(_ref4) {
-          var e = _ref4.jwk,
-            t = _ref4.algorithm,
-            r = _ref4.usages;
-          return crypto.subtle.importKey("jwk", e, t, !0, r);
+        revive: function revive(e) {
+          var t = e.jwk,
+            r = e.algorithm,
+            n = e.usages;
+          return crypto.subtle.importKey("jwk", t, r, !0, n);
         }
       }
     },
@@ -5162,18 +5741,18 @@
         test: function test(e) {
           return "DataView" === toStringTag(e);
         },
-        replace: function replace(_ref5, n) {
-          var e = _ref5.buffer,
-            t = _ref5.byteOffset,
-            r = _ref5.byteLength;
+        replace: function replace(_ref2, n) {
+          var e = _ref2.buffer,
+            t = _ref2.byteOffset,
+            r = _ref2.byteLength;
           n.buffers || (n.buffers = []);
-          var a = n.buffers.indexOf(e);
-          return a > -1 ? {
-            index: a,
+          var o = n.buffers.indexOf(e);
+          return o > -1 ? {
+            index: o,
             byteOffset: t,
             byteLength: r
           } : (n.buffers.push(e), {
-            encoded: v(e),
+            encoded: p(e),
             byteOffset: t,
             byteLength: r
           });
@@ -5182,14 +5761,14 @@
           t.buffers || (t.buffers = []);
           var r = e.byteOffset,
             n = e.byteLength,
-            a = e.encoded,
-            o = e.index;
+            o = e.encoded,
+            a = e.index;
           var i;
-          return "index" in e ? i = t.buffers[o] : (i = b(a), t.buffers.push(i)), new DataView(i, r, n);
+          return "index" in e ? i = t.buffers[a] : (i = d(o), t.buffers.push(i)), new DataView(i, r, n);
         }
       }
     },
-    j = {
+    A = {
       date: {
         test: function test(e) {
           return "Date" === toStringTag(e);
@@ -5203,59 +5782,57 @@
         }
       }
     },
-    T = {
+    S = {
       error: {
         test: function test(e) {
           return "Error" === toStringTag(e);
         },
-        replace: function replace(_ref6) {
-          var e = _ref6.name,
-            t = _ref6.message,
-            r = _ref6.cause,
-            n = _ref6.stack,
-            a = _ref6.fileName,
-            o = _ref6.lineNumber,
-            i = _ref6.columnNumber;
+        replace: function replace(_ref3) {
+          var e = _ref3.name,
+            t = _ref3.message,
+            r = _ref3.cause,
+            n = _ref3.stack,
+            o = _ref3.fileName,
+            a = _ref3.lineNumber,
+            i = _ref3.columnNumber;
           return {
             name: e,
             message: t,
             cause: r,
             stack: n,
-            fileName: a,
-            lineNumber: o,
+            fileName: o,
+            lineNumber: a,
             columnNumber: i
           };
         },
         revive: function revive(e) {
           var t = new Error(e.message);
-          return ["name", "cause", "stack", "fileName", "lineNumber", "columnNumber"].forEach(function (r) {
-            t[r] = e[r];
-          }), t;
+          return t.name = e.name, t.cause = e.cause, t.stack = e.stack, t.fileName = e.fileName, t.lineNumber = e.lineNumber, t.columnNumber = e.columnNumber, t;
         }
       }
     },
-    I = {};
+    j = {};
   function create$2(e) {
-    I[e.name.toLowerCase()] = {
+    j[e.name.toLowerCase()] = {
       test: function test(t) {
         return hasConstructorOf(t, e);
       },
-      replace: function replace(_ref7) {
-        var e = _ref7.name,
-          t = _ref7.message,
-          r = _ref7.cause,
-          n = _ref7.stack,
-          a = _ref7.fileName,
-          o = _ref7.lineNumber,
-          i = _ref7.columnNumber,
-          c = _ref7.errors;
+      replace: function replace(_ref4) {
+        var e = _ref4.name,
+          t = _ref4.message,
+          r = _ref4.cause,
+          n = _ref4.stack,
+          o = _ref4.fileName,
+          a = _ref4.lineNumber,
+          i = _ref4.columnNumber,
+          c = _ref4.errors;
         return {
           name: e,
           message: t,
           cause: r,
           stack: n,
-          fileName: a,
-          lineNumber: o,
+          fileName: o,
+          lineNumber: a,
           columnNumber: i,
           errors: c
         };
@@ -5263,16 +5840,14 @@
       revive: function revive(t) {
         var r = "undefined" != typeof AggregateError && e === AggregateError,
           n = r ? new e(t.errors, t.message) : new e(t.message);
-        return ["name", "cause", "stack", "fileName", "lineNumber", "columnNumber"].forEach(function (e) {
-          n[e] = t[e];
-        }), r && (n.errors = t.errors), n;
+        return n.name = t.name, n.cause = t.cause, n.stack = t.stack, n.fileName = t.fileName, n.lineNumber = t.lineNumber, n.columnNumber = t.columnNumber, r && (n.errors = t.errors), n;
       }
     };
   }
   [TypeError, RangeError, SyntaxError, ReferenceError, EvalError, URIError].forEach(function (e) {
     return create$2(e);
   }), "undefined" != typeof AggregateError && create$2(AggregateError), "function" == typeof InternalError && create$2(InternalError);
-  var N = {
+  var T = {
       file: {
         test: function test(e) {
           return "File" === toStringTag(e);
@@ -5287,11 +5862,11 @@
             lastModified: e.lastModified
           };
         },
-        revive: function revive(_ref8) {
-          var e = _ref8.name,
-            t = _ref8.type,
-            r = _ref8.stringContents,
-            n = _ref8.lastModified;
+        revive: function revive(_ref5) {
+          var e = _ref5.name,
+            t = _ref5.type,
+            r = _ref5.stringContents,
+            n = _ref5.lastModified;
           return new File([string2arraybuffer(r)], e, {
             type: t,
             lastModified: n
@@ -5314,8 +5889,8 @@
         }
       }
     },
-    P = {
-      file: N.file,
+    I = {
+      file: T.file,
       filelist: {
         test: function test(e) {
           return "FileList" === toStringTag(e);
@@ -5348,7 +5923,7 @@
         }
       }
     },
-    E = {
+    N = {
       imagebitmap: {
         test: function test(e) {
           return "ImageBitmap" === toStringTag(e) || e && e.dataset && "ImageBitmap" === e.dataset.toStringTag;
@@ -5365,17 +5940,44 @@
             r.drawImage(n, 0, 0);
           }), n.src = e, t;
         },
-        reviveAsync: function reviveAsync(e) {
-          var t = document.createElement("canvas"),
-            r = t.getContext("2d"),
-            n = document.createElement("img");
-          return n.addEventListener("load", function () {
-            r.drawImage(n, 0, 0);
-          }), n.src = e, createImageBitmap(t);
+        reviveAsync: function reviveAsync(t) {
+          var r = document.createElement("canvas"),
+            n = r.getContext("2d"),
+            o = document.createElement("img");
+          return o.addEventListener("load", function () {
+            n.drawImage(o, 0, 0);
+          }), o.src = t, new e( /*#__PURE__*/function () {
+            var _ref6 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2(e, t) {
+              return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+                while (1) switch (_context2.prev = _context2.next) {
+                  case 0:
+                    _context2.prev = 0;
+                    _context2.t0 = e;
+                    _context2.next = 4;
+                    return createImageBitmap(r);
+                  case 4:
+                    _context2.t1 = _context2.sent;
+                    (0, _context2.t0)(_context2.t1);
+                    _context2.next = 11;
+                    break;
+                  case 8:
+                    _context2.prev = 8;
+                    _context2.t2 = _context2["catch"](0);
+                    t(_context2.t2);
+                  case 11:
+                  case "end":
+                    return _context2.stop();
+                }
+              }, _callee2, null, [[0, 8]]);
+            }));
+            return function (_x3, _x4) {
+              return _ref6.apply(this, arguments);
+            };
+          }());
         }
       }
     },
-    C = {
+    P = {
       imagedata: {
         test: function test(e) {
           return "ImageData" === toStringTag(e);
@@ -5392,7 +5994,7 @@
         }
       }
     },
-    x = {
+    E = {
       infinity: {
         test: function test(e) {
           return e === Number.POSITIVE_INFINITY;
@@ -5405,7 +6007,7 @@
         }
       }
     },
-    k = {
+    C = {
       test: function test(e) {
         return hasConstructorOf(e, Intl.Collator);
       },
@@ -5416,8 +6018,8 @@
         return new Intl.Collator(e.locale, e);
       }
     },
-    B = {
-      IntlCollator: k,
+    x = {
+      IntlCollator: C,
       IntlDateTimeFormat: {
         test: function test(e) {
           return hasConstructorOf(e, Intl.DateTimeFormat);
@@ -5441,7 +6043,7 @@
         }
       }
     },
-    U = {
+    k = {
       map: {
         test: function test(e) {
           return "Map" === toStringTag(e);
@@ -5454,7 +6056,7 @@
         }
       }
     },
-    K = {
+    B = {
       nan: {
         test: function test(e) {
           return Number.isNaN(e);
@@ -5467,7 +6069,7 @@
         }
       }
     },
-    L = {
+    U = {
       negativeInfinity: {
         test: function test(e) {
           return e === Number.NEGATIVE_INFINITY;
@@ -5480,7 +6082,7 @@
         }
       }
     },
-    F = {
+    K = {
       negativeZero: {
         test: function test(e) {
           return Object.is(e, -0);
@@ -5493,7 +6095,7 @@
         }
       }
     },
-    M = {
+    F = {
       StringObject: {
         test: function test(e) {
           return "String" === toStringTag(e) && "object" == _typeof$2(e);
@@ -5522,7 +6124,7 @@
         }
       }
     },
-    $ = {
+    M = {
       regexp: {
         test: function test(e) {
           return "RegExp" === toStringTag(e);
@@ -5533,14 +6135,14 @@
             flags: (e.global ? "g" : "") + (e.ignoreCase ? "i" : "") + (e.multiline ? "m" : "") + (e.sticky ? "y" : "") + (e.unicode ? "u" : "")
           };
         },
-        revive: function revive(_ref9) {
-          var e = _ref9.source,
-            t = _ref9.flags;
+        revive: function revive(_ref7) {
+          var e = _ref7.source,
+            t = _ref7.flags;
           return new RegExp(e, t);
         }
       }
     },
-    Y = {
+    J = {
       set: {
         test: function test(e) {
           return "Set" === toStringTag(e);
@@ -5553,11 +6155,11 @@
         }
       }
     },
-    q = {};
-  "function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array].forEach(function (e) {
+    V = {};
+  "function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array].concat(_toConsumableArray("function" == typeof BigInt64Array ? [BigInt64Array, BigUint64Array] : [])).forEach(function (e) {
     return function create$1(e) {
       var t = e.name;
-      q[t.toLowerCase()] = {
+      V[t.toLowerCase()] = {
         test: function test(e) {
           return toStringTag(e) === t;
         },
@@ -5570,26 +6172,26 @@
       };
     }(e);
   });
-  var W = {};
-  "function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array].forEach(function (e) {
+  var Y = {};
+  "function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array].concat(_toConsumableArray("function" == typeof BigInt64Array ? [BigInt64Array, BigUint64Array] : [])).forEach(function (e) {
     return function create(e) {
       var t = e.name;
-      W[t.toLowerCase()] = {
+      Y[t.toLowerCase()] = {
         test: function test(e) {
           return toStringTag(e) === t;
         },
-        replace: function replace(_ref10, n) {
-          var e = _ref10.buffer,
-            t = _ref10.byteOffset,
-            r = _ref10.length;
+        replace: function replace(_ref8, n) {
+          var e = _ref8.buffer,
+            t = _ref8.byteOffset,
+            r = _ref8.length;
           n.buffers || (n.buffers = []);
-          var a = n.buffers.indexOf(e);
-          return a > -1 ? {
-            index: a,
+          var o = n.buffers.indexOf(e);
+          return o > -1 ? {
+            index: o,
             byteOffset: t,
             length: r
           } : (n.buffers.push(e), {
-            encoded: v(e),
+            encoded: p(e),
             byteOffset: t,
             length: r
           });
@@ -5597,16 +6199,16 @@
         revive: function revive(t, r) {
           r.buffers || (r.buffers = []);
           var n = t.byteOffset,
-            a = t.length,
-            o = t.encoded,
+            o = t.length,
+            a = t.encoded,
             i = t.index;
           var c;
-          return "index" in t ? c = r.buffers[i] : (c = b(o), r.buffers.push(c)), new e(c, n, a);
+          return "index" in t ? c = r.buffers[i] : (c = d(a), r.buffers.push(c)), new e(c, n, o);
         }
       };
     }(e);
   });
-  var G = {
+  var q = {
       undef: {
         test: function test(e, t) {
           return void 0 === e && (t.ownKeys || !("ownKeys" in t));
@@ -5615,11 +6217,11 @@
           return 0;
         },
         revive: function revive(e) {
-          return new l();
+          return new s();
         }
       }
     },
-    H = {
+    W = {
       userObject: {
         test: function test(e, t) {
           return isUserObject(e);
@@ -5632,7 +6234,7 @@
         }
       }
     },
-    X = [{
+    G = [{
       arrayNonindexKeys: {
         testPlainObjects: !0,
         test: function test(e, t) {
@@ -5646,9 +6248,11 @@
         revive: function revive(e) {
           if (Array.isArray(e)) return e;
           var t = [];
-          return Object.keys(e).forEach(function (r) {
-            var n = e[r];
-            t[r] = n;
+          return Object.entries(e).forEach(function (_ref9) {
+            var _ref10 = _slicedToArray$1(_ref9, 2),
+              e = _ref10[0],
+              r = _ref10[1];
+            t[e] = r;
           }), t;
         }
       }
@@ -5663,28 +6267,40 @@
         revive: function revive(e) {}
       }
     }],
-    Z = [K, x, L, F],
-    re = [H, G, X, M, Z, j, $, C, E, N, P, O, T, I].concat("function" == typeof Map ? U : [], "function" == typeof Set ? Y : [], "function" == typeof ArrayBuffer ? h : [], "function" == typeof Uint8Array ? W : [], "function" == typeof DataView ? w : [], "undefined" != typeof Intl ? B : [], "undefined" != typeof crypto ? A : [], "undefined" != typeof BigInt ? [m, g] : []);
-  var ne = re.concat({
-    checkDataCloneException: {
-      test: function test(e) {
-        var t = {}.toString.call(e).slice(8, -1);
-        if (["symbol", "function"].includes(_typeof$2(e)) || ["Arguments", "Module", "Error", "Promise", "WeakMap", "WeakSet", "Event", "MessageChannel"].includes(t) || e && "object" == _typeof$2(e) && "number" == typeof e.nodeType && "function" == typeof e.insertBefore) throw new DOMException("The object cannot be cloned.", "DataCloneError");
-        return !1;
+    H = [B, E, U, K],
+    ee = [W, q, G, F, H, A, M, P, N, T, I, g, S, j].concat("function" == typeof Map ? k : [], "function" == typeof Set ? J : [], "function" == typeof ArrayBuffer ? v : [], "function" == typeof Uint8Array ? Y : [], "function" == typeof DataView ? w : [], "undefined" != typeof Intl ? x : [], "undefined" != typeof crypto ? O : [], "undefined" != typeof BigInt ? [h, b] : []),
+    te = ee.concat({
+      checkDataCloneException: {
+        test: function test(e) {
+          var t = {}.toString.call(e).slice(8, -1);
+          if (["symbol", "function"].includes(_typeof$2(e)) || ["Arguments", "Module", "Error", "Promise", "WeakMap", "WeakSet", "Event", "MessageChannel"].includes(t) || e && "object" == _typeof$2(e) && "number" == typeof e.nodeType && "function" == typeof e.insertBefore) throw new DOMException("The object cannot be cloned.", "DataCloneError");
+          return !1;
+        }
       }
-    }
-  });
+    });
 
   // See: http://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
 
-  var typeson = new u().register(ne);
+  var typeson = new c().register(te);
+
+  /**
+   * @param {(preset: import('typeson-registry').Preset) =>
+   *   import('typeson-registry').Preset} func
+   * @returns {void}
+   */
   function register(func) {
-    typeson = new u().register(func(ne));
+    typeson = new c().register(func(te));
   }
 
-  // We are keeping the callback approach for now in case we wish to reexpose
-  //   `Blob`, `File`, `FileList` asynchronously (though in such a case, we
-  //   should probably refactor as a Promise)
+  /**
+   * We are keeping the callback approach for now in case we wish to reexpose
+   * `Blob`, `File`, `FileList` asynchronously (though in such a case, we
+   * should probably refactor as a Promise).
+   * @param {import('../src/Key.js').Value} obj
+   * @param {(str: string) => void} func
+   * @throws {Error}
+   * @returns {string}
+   */
   function encode(obj, func) {
     var ret;
     try {
@@ -5704,12 +6320,24 @@
       //  throwing getters (as in the W3C test, key-conversion-exceptions.htm)
       throw err;
     }
-    if (func) func(ret);
+    if (func) {
+      func(ret);
+    }
     return ret;
   }
+
+  /**
+   * @param {string} obj
+   * @returns {import('typeson').Value}
+   */
   function decode(obj) {
     return typeson.parse(obj);
   }
+
+  /**
+   * @param {import('typeson').Value} val
+   * @returns {import('typeson').Value}
+   */
   function clone(val) {
     // We don't return the intermediate `encode` as we'll need to reencode
     //   the clone as it may differ
@@ -5739,7 +6367,15 @@
     throw new TypeError('Illegal constructor');
   }
   var IDBIndexAlias = IDBIndex;
+  /**
+   *
+   * @param store
+   * @param indexProperties
+   */
   IDBIndex.__createInstance = function (store, indexProperties) {
+    /**
+     * @class
+     */
     function IDBIndex() {
       var me = this;
       me[Symbol.toStringTag] = 'IDBIndex';
@@ -5804,6 +6440,12 @@
     IDBIndex.prototype = IDBIndexAlias.prototype;
     return new IDBIndex();
   };
+
+  /**
+   *
+   * @param index
+   * @param msg
+   */
   IDBIndex.__invalidStateIfDeleted = function (index, msg) {
     if (index.__deleted || index.__pendingDelete || index.__pendingCreate && index.objectStore.transaction && index.objectStore.transaction.__errored) {
       throw createDOMException('InvalidStateError', msg || 'This index has been deleted');
@@ -5859,9 +6501,20 @@
     transaction.__addNonRequestToTransactionQueue(function createIndex(tx, args, success, failure) {
       var columnExists = idx && (idx.__deleted || idx.__recreated); // This check must occur here rather than earlier as properties may not have been set yet otherwise
       var indexValues = {};
+
+      /**
+       * @param {SQLTransaction} tx
+       * @param {import('./DOMException.js').SQLError} err
+       * @returns {void}
+       */
       function error(tx, err) {
         failure(createDOMException('UnknownError', 'Could not create index "' + indexName + '"' + err.code + '::' + err.message, err));
       }
+
+      /**
+       * @param {SQLTransaction} tx
+       * @returns {void}
+       */
       function applyIndex(tx) {
         // Update the object store's index list
         IDBIndex.__updateIndexList(store, tx, function () {
@@ -5869,6 +6522,11 @@
           tx.executeSql('SELECT "key", "value" FROM ' + escapeStoreNameForSQL(storeName), [], function (tx, data) {
             CFG.DEBUG && console.log('Adding existing ' + storeName + ' records to the ' + indexName + ' index');
             addIndexEntry(0);
+
+            /**
+             * @param {Integer} i
+             * @returns {void}
+             */
             function addIndexEntry(i) {
               if (i < data.rows.length) {
                 try {
@@ -5912,6 +6570,11 @@
       }
       var escapedStoreNameSQL = escapeStoreNameForSQL(storeName);
       var escapedIndexNameSQL = escapeIndexNameForSQL(index.name);
+
+      /**
+       * @param {SQLTransaction} tx
+       * @returns {void}
+       */
       function addIndexSQL(tx) {
         if (!CFG.useSQLiteIndexes) {
           applyIndex(tx);
@@ -5956,9 +6619,18 @@
     // Remove the index in WebSQL
     var transaction = store.transaction;
     transaction.__addNonRequestToTransactionQueue(function deleteIndex(tx, args, success, failure) {
+      /**
+       * @param {SQLTransaction} tx
+       * @param {SQLError} err
+       * @returns {void}
+       */
       function error(tx, err) {
         failure(createDOMException('UnknownError', 'Could not delete index "' + index.name + '"', err));
       }
+
+      /**
+       * @returns {void}
+       */
       function finishDeleteIndex() {
         // Update the object store's index list
         IDBIndex.__updateIndexList(store, tx, function (store) {
@@ -5984,8 +6656,11 @@
    * Updates index list for the given object store.
    * @param {IDBObjectStore} store
    * @param {object} tx
-   * @param {function} success
-   * @param {function} failure
+   * @param {(store: IDBObjectStore) => void} success
+   * @param {(
+   *   tx: SQLTransaction,
+   *   err: import('./DOMException.js').SQLError
+   * ) => boolean} failure
    * @returns {void}
    */
   IDBIndex.__updateIndexList = function (store, tx, success, failure) {
@@ -6080,6 +6755,11 @@
     me.__objectStore.__cursors.push(cursor);
     return cursor.__request;
   };
+
+  /**
+   *
+   * @param query
+   */
   IDBIndex.prototype.get = function (query) {
     if (!arguments.length) {
       // Per https://heycam.github.io/webidl/
@@ -6087,6 +6767,11 @@
     }
     return this.__fetchIndexData(query, 'value', true);
   };
+
+  /**
+   *
+   * @param query
+   */
   IDBIndex.prototype.getKey = function (query) {
     if (!arguments.length) {
       // Per https://heycam.github.io/webidl/
@@ -6094,6 +6779,10 @@
     }
     return this.__fetchIndexData(query, 'key', true);
   };
+
+  /**
+   *
+   */
   IDBIndex.prototype.getAll = function /* query, count */
   () {
     // eslint-disable-next-line prefer-rest-params
@@ -6102,6 +6791,10 @@
       count = _arguments3[1];
     return this.__fetchIndexData(query, 'value', false, count);
   };
+
+  /**
+   *
+   */
   IDBIndex.prototype.getAllKeys = function /* query, count */
   () {
     // eslint-disable-next-line prefer-rest-params
@@ -6110,6 +6803,10 @@
       count = _arguments4[1];
     return this.__fetchIndexData(query, 'key', false, count);
   };
+
+  /**
+   *
+   */
   IDBIndex.prototype.count = function /* query */
   () {
     var me = this;
@@ -6127,6 +6824,15 @@
     }
     return me.__fetchIndexData(query, 'count', false);
   };
+
+  /**
+   *
+   * @param store
+   * @param oldName
+   * @param newName
+   * @param colInfoToPreserveArr
+   * @param cb
+   */
   IDBIndex.prototype.__renameIndex = function (store, oldName, newName) {
     var colInfoToPreserveArr = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
     var cb = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
@@ -6147,9 +6853,17 @@
     // We could adapt the approach at http://stackoverflow.com/a/8430746/271577
     //    to make the approach reusable without passing column names, but it is a bit fragile
     store.transaction.__addNonRequestToTransactionQueue(function renameIndex(tx, args, success, error) {
+      /**
+       * @param {SQLTransaction} tx
+       * @param {SQLError} err
+       * @returns {void}
+       */
       function sqlError(tx, err) {
         error(err);
       }
+      /**
+       * @returns {void}
+       */
       function finish() {
         if (cb) {
           cb(tx, success);
@@ -6178,7 +6892,7 @@
               }
               var indexCreations = colNamesToPreserve.slice(2) // Doing `key` separately and no need for index on `value`
               .map(function (escapedIndexNameSQL) {
-                return new SyncPromise$1(function (resolve, reject) {
+                return new SyncPromise(function (resolve, reject) {
                   var escapedIndexToRecreate = sqlQuote(escapedStoreNameSQL.slice(1, -1) + '^5' + escapedIndexNameSQL.slice(1, -1));
                   // const sql = 'DROP INDEX IF EXISTS ' + escapedIndexToRecreate;
                   // CFG.DEBUG && console.log(sql);
@@ -6194,7 +6908,7 @@
                 });
               });
 
-              indexCreations.push(new SyncPromise$1(function (resolve, reject) {
+              indexCreations.push(new SyncPromise(function (resolve, reject) {
                 var escapedIndexToRecreate = sqlQuote('sk_' + escapedStoreNameSQL.slice(1, -1));
                 // Chrome erring here if not dropped first; Node does not
                 var sql = 'DROP INDEX IF EXISTS ' + escapedIndexToRecreate;
@@ -6209,7 +6923,7 @@
                   reject(err);
                 });
               }));
-              SyncPromise$1.all(indexCreations).then(finish, error)["catch"](function (err) {
+              SyncPromise.all(indexCreations).then(finish, error)["catch"](function (err) {
                 console.log('Index rename error');
                 throw err;
               });
@@ -6230,6 +6944,23 @@
   Object.defineProperty(IDBIndex, 'prototype', {
     writable: false
   });
+
+  /**
+   * @param {number} count
+   * @param {boolean} unboundedDisallowed
+   * @param {IDBIndex} index
+   * @param {boolean} hasKey
+   * @param {import('./Key.js').Value|import('./Key.js').Key} range
+   * @param {"value"|"key"|"count"} opType
+   * @param {boolean} multiChecks
+   * @param {string[]} sql
+   * @param {string[]} sqlValues
+   * @param {SQLTransaction} tx
+   * @param {undefined} args
+   * @param {() => void} success
+   * @param {(tx: SQLTransaction, err: SQLError) => void} error
+   * @returns {void}
+   */
   function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range, opType, multiChecks, sql, sqlValues, tx, args, success, error) {
     if (unboundedDisallowed) {
       count = 1;
@@ -6298,6 +7029,24 @@
       }
     }, error);
   }
+
+  /**
+   * @param {boolean} nullDisallowed
+   * @param {IDBIndex} index
+   * @param {import('./Key.js').Value|import('./Key.js').Key} range
+   * @param {"value"|"key"|"count"} opType
+   * @param {boolean} multiChecks
+   * @returns {[
+   *   nullDisallowed: boolean,
+   *   index: IDBIndex,
+   *   hasRange: boolean,
+   *   range: import('./Key.js').Value|import('./Key.js').Key,
+   *   opType: "value"|"key"|"count",
+   *   multiChecks: boolean,
+   *   sql: string[],
+   *   sqlValues: string[]
+   * ]}
+   */
   function buildFetchIndexDataSQL(nullDisallowed, index, range, opType, multiChecks) {
     var hasRange = nullDisallowed || !isNullish(range);
     var col = opType === 'count' ? 'key' : opType; // It doesn't matter which column we use for 'count' as long as it is valid
@@ -6338,7 +7087,15 @@
     throw new TypeError('Illegal constructor');
   }
   var IDBObjectStoreAlias = IDBObjectStore;
+  /**
+   *
+   * @param storeProperties
+   * @param transaction
+   */
   IDBObjectStore.__createInstance = function (storeProperties, transaction) {
+    /**
+     * @class
+     */
     function IDBObjectStore() {
       var me = this;
       me[Symbol.toStringTag] = 'IDBObjectStore';
@@ -6356,7 +7113,7 @@
       me.__indexNames = DOMStringList.__createInstance();
       var indexList = storeProperties.indexList;
       for (var indexName in indexList) {
-        if (hasOwn(indexList, indexName)) {
+        if (Object.hasOwn(indexList, indexName)) {
           var index = IDBIndex.__createInstance(me, indexList[indexName]);
           me.__indexes[index.name] = index;
           if (!index.__deleted) {
@@ -6445,6 +7202,12 @@
     });
     return newStore;
   };
+
+  /**
+   *
+   * @param store
+   * @param msg
+   */
   IDBObjectStore.__invalidStateIfDeleted = function (store, msg) {
     if (store.__deleted || store.__pendingDelete || store.__pendingCreate && store.transaction && store.transaction.__errored) {
       throw createDOMException('InvalidStateError', msg || 'This store has been deleted');
@@ -6475,6 +7238,11 @@
       storeHandles[storeName] = IDBObjectStore.__clone(store, transaction);
     }
     transaction.__addNonRequestToTransactionQueue(function createObjectStore(tx, args, success, failure) {
+      /**
+       * @param {SQLTransaction} tx
+       * @param {SQLError} err
+       * @returns {void}
+       */
       function error(tx, err) {
         CFG.DEBUG && console.log(err);
         failure(createDOMException('UnknownError', 'Could not create object store "' + storeName + '"', err));
@@ -6484,6 +7252,9 @@
       var sql = ['CREATE TABLE', escapedStoreNameSQL, '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
       CFG.DEBUG && console.log(sql);
       tx.executeSql(sql, [], function (tx, data) {
+        /**
+         * @returns {void}
+         */
         function insertStoreInfo() {
           var encodedKeyPath = JSON.stringify(store.keyPath);
           tx.executeSql('INSERT INTO __sys__ VALUES (?,?,?,?,?)', [escapeSQLiteStatement(storeName), encodedKeyPath,
@@ -6528,6 +7299,11 @@
     // Remove the object store from WebSQL
     var transaction = db.__versionTransaction;
     transaction.__addNonRequestToTransactionQueue(function deleteObjectStore(tx, args, success, failure) {
+      /**
+       * @param {SQLTransaction} tx
+       * @param {SQLError} err
+       * @returns {void}
+       */
       function error(tx, err) {
         CFG.DEBUG && console.log(err);
         failure(createDOMException('UnknownError', 'Could not delete ObjectStore', err));
@@ -6552,8 +7328,8 @@
 
   /**
   * @typedef {GenericArray} KeyValueArray
-  * @property {module:Key.Key} 0
-  * @property {*} 1
+  * @property {import('./Key.js').Key} 0
+  * @property {import('./Key.js').Value} 1
   */
 
   // Todo: Although we may end up needing to do cloning genuinely asynchronously (for Blobs and FileLists),
@@ -6567,8 +7343,8 @@
   /**
    * Determines whether the given inline or out-of-line key is valid,
    *   according to the object store's schema.
-   * @param {*} value Used for inline keys
-   * @param {*} key Used for out-of-line keys
+   * @param {import('./Key.js').Value} value Used for inline keys
+   * @param {import('./Key.js').Key} key Used for out-of-line keys
    * @param {boolean} cursorUpdate
    * @throws {DOMException}
    * @returns {KeyValueArray}
@@ -6622,17 +7398,21 @@
    *   the object store
    * If the table has auto increment, get the current number (unless it has
    *   a keyPath leading to a valid but non-numeric or < 1 key).
-   * @param {Object} tx
-   * @param {Object} value
-   * @param {Object} key
-   * @param {function} success
-   * @param {function} failCb
+   * @param {SQLTransaction} tx
+   * @param {import('./Key.js').Value} value
+   * @param {import('./Key.js').Key} key
+   * @param {(key: import('./Key.js').Key, cn: Integer) => void} success
+   * @param {import('./Key.js').SQLFailureCallback} failCb
    * @returns {void}
    */
   IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb) {
     var me = this;
 
     // Only run if cloning is needed
+    /**
+     * @param {Integer} oldCn
+     * @returns {void}
+     */
     function keyCloneThenSuccess(oldCn) {
       // We want to return the original key, so we don't need to accept an argument here
       encode(key, function (key) {
@@ -6662,6 +7442,17 @@
       keyCloneThenSuccess();
     }
   };
+
+  /**
+   *
+   * @param tx
+   * @param encoded
+   * @param value
+   * @param clonedKeyOrCurrentNumber
+   * @param oldCn
+   * @param success
+   * @param error
+   */
   IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyOrCurrentNumber, oldCn, success, error) {
     var me = this;
     // The `ConstraintError` to occur for `add` upon a duplicate will occur naturally in attempting an insert
@@ -6678,7 +7469,7 @@
       //   idea is to avoid, where possible, unnecessary delays (and
       //   consuming code ought to only see a difference in the browser
       //   where we can't control the transaction timeout anyways).
-      return new SyncPromise$1(function (resolve, reject) {
+      return new SyncPromise(function (resolve, reject) {
         var index = me.__indexes[indexName];
         if (
         // `createIndex` was called synchronously after the current insertion was added to
@@ -6706,6 +7497,10 @@
           return;
         }
         indexKey = indexKey.value;
+        /**
+         * @param {IDBIndex} index
+         * @returns {void}
+         */
         function setIndexInfo(index) {
           if (indexKey === undefined) {
             return;
@@ -6729,7 +7524,7 @@
         }
       });
     });
-    return SyncPromise$1.all(indexPromises).then(function () {
+    return SyncPromise.all(indexPromises).then(function () {
       var sqlStart = ['INSERT INTO', escapeStoreNameForSQL(me.__currentName), '('];
       var sqlEnd = [' VALUES ('];
       var insertSqlValues = [];
@@ -6761,6 +7556,9 @@
       });
       return undefined;
     })["catch"](function (err) {
+      /**
+       * @returns {void}
+       */
       function fail() {
         // Todo: Add a different error object here if `assignCurrentNumber`
         //  fails in reverting?
@@ -6773,6 +7571,11 @@
       fail();
     });
   };
+
+  /**
+   *
+   * @param value
+   */
   IDBObjectStore.prototype.add = function (value /* , key */) {
     var me = this;
     // eslint-disable-next-line prefer-rest-params
@@ -6794,6 +7597,11 @@
     IDBObjectStore.__storingRecordObjectStore(request, me, true, clonedValue, true, ky);
     return request;
   };
+
+  /**
+   *
+   * @param value
+   */
   IDBObjectStore.prototype.put = function (value /*, key */) {
     var me = this;
     // eslint-disable-next-line prefer-rest-params
@@ -6815,6 +7623,14 @@
     IDBObjectStore.__storingRecordObjectStore(request, me, true, clonedValue, false, ky);
     return request;
   };
+
+  /**
+   *
+   * @param tx
+   * @param key
+   * @param cb
+   * @param error
+   */
   IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
     var me = this;
     // First try to delete if the record exists
@@ -6828,12 +7644,25 @@
       error(err);
     });
   };
+
+  /**
+   *
+   * @param request
+   * @param store
+   * @param invalidateCache
+   * @param value
+   * @param noOverwrite
+   */
   IDBObjectStore.__storingRecordObjectStore = function (request, store, invalidateCache, value, noOverwrite /* , key */) {
     // eslint-disable-next-line prefer-rest-params
     var key = arguments[5];
     store.transaction.__pushToQueue(request, function (tx, args, success, error) {
       store.__deriveKey(tx, value, key, function (clonedKeyOrCurrentNumber, oldCn) {
         encode(value, function (encoded) {
+          /**
+           * @param {SQLTransaction} tx
+           * @returns {void}
+           */
           function insert(tx) {
             store.__insertData(tx, encoded, value, clonedKeyOrCurrentNumber, oldCn, function () {
               if (invalidateCache) {
@@ -6853,6 +7682,14 @@
       }, error);
     });
   };
+
+  /**
+   *
+   * @param query
+   * @param getKey
+   * @param getAll
+   * @param count
+   */
   IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
     var me = this;
     if (count !== undefined) {
@@ -6917,18 +7754,32 @@
       });
     }, undefined, me);
   };
+
+  /**
+   *
+   * @param query
+   */
   IDBObjectStore.prototype.get = function (query) {
     if (!arguments.length) {
       throw new TypeError('A parameter was missing for `IDBObjectStore.get`.');
     }
     return this.__get(query);
   };
+
+  /**
+   *
+   * @param query
+   */
   IDBObjectStore.prototype.getKey = function (query) {
     if (!arguments.length) {
       throw new TypeError('A parameter was missing for `IDBObjectStore.getKey`.');
     }
     return this.__get(query, true);
   };
+
+  /**
+   *
+   */
   IDBObjectStore.prototype.getAll = function /* query, count */
   () {
     // eslint-disable-next-line prefer-rest-params
@@ -6937,6 +7788,10 @@
       count = _arguments[1];
     return this.__get(query, false, true, count);
   };
+
+  /**
+   *
+   */
   IDBObjectStore.prototype.getAllKeys = function /* query, count */
   () {
     // eslint-disable-next-line prefer-rest-params
@@ -6945,6 +7800,11 @@
       count = _arguments2[1];
     return this.__get(query, true, true, count);
   };
+
+  /**
+   *
+   * @param query
+   */
   IDBObjectStore.prototype["delete"] = function (query) {
     var me = this;
     if (!(this instanceof IDBObjectStore)) {
@@ -6975,6 +7835,10 @@
       });
     }, undefined, me);
   };
+
+  /**
+   *
+   */
   IDBObjectStore.prototype.clear = function () {
     var me = this;
     if (!(this instanceof IDBObjectStore)) {
@@ -6996,6 +7860,10 @@
       });
     }, undefined, me);
   };
+
+  /**
+   *
+   */
   IDBObjectStore.prototype.count = function /* query */
   () {
     var me = this;
@@ -7010,6 +7878,10 @@
     // We don't need to add to cursors array since has the count parameter which won't cache
     return IDBCursorWithValue.__createInstance(query, 'next', me, me, 'key', 'value', true).__request;
   };
+
+  /**
+   *
+   */
   IDBObjectStore.prototype.openCursor = function /* query, direction */
   () {
     var me = this;
@@ -7025,6 +7897,10 @@
     me.__cursors.push(cursor);
     return cursor.__request;
   };
+
+  /**
+   *
+   */
   IDBObjectStore.prototype.openKeyCursor = function /* query, direction */
   () {
     var me = this;
@@ -7040,6 +7916,11 @@
     me.__cursors.push(cursor);
     return cursor.__request;
   };
+
+  /**
+   *
+   * @param indexName
+   */
   IDBObjectStore.prototype.index = function (indexName) {
     var me = this;
     if (!(me instanceof IDBObjectStore)) {
@@ -7064,7 +7945,7 @@
   /**
    * Creates a new index on the object store.
    * @param {string} indexName
-   * @param {string} keyPath
+   * @param {string|string[]} keyPath
    * @param {object} optionalParameters
    * @returns {IDBIndex}
    */
@@ -7110,6 +7991,11 @@
     IDBIndex.__createIndex(me, index);
     return index;
   };
+
+  /**
+   *
+   * @param name
+   */
   IDBObjectStore.prototype.deleteIndex = function (name) {
     var me = this;
     if (!(me instanceof IDBObjectStore)) {
@@ -7356,7 +8242,19 @@
     throw new TypeError('Illegal constructor');
   }
   var IDBDatabaseAlias = IDBDatabase;
+
+  /**
+   * @param {} db
+   * @param {} name
+   * @param {} oldVersion
+   * @param {} version
+   * @param {} storeProperties
+   * @returns {IDBDatabase}
+   */
   IDBDatabase.__createInstance = function (db, name, oldVersion, version, storeProperties) {
+    /**
+     * @class
+     */
     function IDBDatabase() {
       var _this = this;
       this[Symbol.toStringTag] = 'IDBDatabase';
@@ -7477,6 +8375,11 @@
     }
     IDBObjectStore.__deleteObjectStore(this, store);
   };
+
+  /**
+   * @throws {TypeError}
+   * @returns {void}
+   */
   IDBDatabase.prototype.close = function () {
     if (!(this instanceof IDBDatabase)) {
       throw new TypeError('Illegal invocation');
@@ -7548,7 +8451,11 @@
     return trans;
   };
 
-  // See https://github.com/w3c/IndexedDB/issues/192
+  /**
+   * @see https://github.com/w3c/IndexedDB/issues/192
+   * @throws {DOMException}
+   * @returns {void}
+   */
   IDBDatabase.prototype.throwIfUpgradeTransactionNull = function () {
     if (this.__upgradeTransaction === null) {
       throw createDOMException('InvalidStateError', 'No upgrade transaction associated with database.');
@@ -7606,6 +8513,12 @@
   //  origin could vary; in the browser, this might be through a
   //  `SharedWorker`
   var connectionQueue = {};
+
+  /**
+   * @param {} name
+   * @param {} origin
+   * @returns {void}
+   */
   function processNextInConnectionQueue(name) {
     var origin = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : getOrigin();
     var queueItems = connectionQueue[origin][name];
@@ -7616,6 +8529,10 @@
     var _queueItems$ = queueItems[0],
       req = _queueItems$.req,
       cb = _queueItems$.cb; // Keep in queue to prevent continuation
+
+    /**
+     * @returns {void}
+     */
     function removeFromQueue() {
       queueItems.shift();
       processNextInConnectionQueue(name, origin);
@@ -7625,10 +8542,18 @@
     cb(req);
   }
 
-  // eslint-disable-next-line default-param-last
+  /* eslint-disable default-param-last */
+  /**
+   * @param {} req
+   * @param {string} name
+   * @param {} origin
+   * @param {} cb
+   * @returns {void}
+   */
   function addRequestToConnectionQueue(req, name) {
     var origin = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : getOrigin();
     var cb = arguments.length > 3 ? arguments[3] : undefined;
+    /* eslint-enable default-param-last */
     if (!connectionQueue[origin][name]) {
       connectionQueue[origin][name] = [];
     }
@@ -7641,6 +8566,14 @@
       processNextInConnectionQueue(name, origin);
     }
   }
+
+  /**
+   * @param {} openConnections
+   * @param {} req
+   * @param {} oldVersion
+   * @param {} newVersion
+   * @returns {}
+   */
   function triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersion, newVersion) {
     // Todo: For Node (and in browser using service workers if available?) the
     //    connections ought to involve those in any process; should also
@@ -7666,18 +8599,18 @@
           oldVersion: oldVersion,
           newVersion: newVersion
         });
-        return new SyncPromise$1(function (resolve) {
+        return new SyncPromise(function (resolve) {
           setTimeout(function () {
             entry.dispatchEvent(e); // No need to catch errors
             resolve();
           });
         });
       });
-    }, SyncPromise$1.resolve()).then(function () {
+    }, SyncPromise.resolve()).then(function () {
       if (connectionsClosed()) {
         return undefined;
       }
-      return new SyncPromise$1(function (resolve) {
+      return new SyncPromise(function (resolve) {
         var unblocking = {
           check: function check() {
             if (connectionsClosed()) {
@@ -7707,14 +8640,33 @@
   var websqlDBCache = {};
   var sysdb;
   var nameCounter = 0;
+
+  /**
+   * @param {string} name
+   * @returns {Integer}
+   */
   function getLatestCachedWebSQLVersion(name) {
     return Object.keys(websqlDBCache[name]).map(Number).reduce(function (prev, curr) {
       return curr > prev ? curr : prev;
     }, 0);
   }
+
+  /**
+   * @param {string} name
+   * @returns {WebSQLDb}
+   */
   function getLatestCachedWebSQLDB(name) {
     return websqlDBCache[name] && websqlDBCache[name][getLatestCachedWebSQLVersion(name)];
   }
+
+  /**
+   * @param {} __openDatabase
+   * @param {} name
+   * @param {} escapedDatabaseName
+   * @param {} databaseDeleted
+   * @param {} dbError
+   * @returns {void}
+   */
   function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, databaseDeleted, dbError) {
     var useMemoryDatabase = typeof CFG.memoryDatabase === 'string';
     if (useMemoryDatabase) {
@@ -7793,6 +8745,11 @@
    * @returns {void}
    */
   function createSysDB(__openDatabase, success, failure) {
+    /**
+     *
+     * @param tx
+     * @param err
+     */
     function sysDbCreateError(tx, err) {
       err = webSQLErrback(err || tx);
       CFG.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
@@ -7823,7 +8780,13 @@
     throw new TypeError('Illegal constructor');
   }
   var IDBFactoryAlias = IDBFactory;
+  /**
+   *
+   */
   IDBFactory.__createInstance = function () {
+    /**
+     *
+     */
     function IDBFactory() {
       this[Symbol.toStringTag] = 'IDBFactory';
       this.__connections = {};
@@ -7878,6 +8841,11 @@
       throw err; // new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
     }
 
+    /**
+     *
+     * @param tx
+     * @param err
+     */
     function dbCreateError(tx, err) {
       if (calledDbCreateError) {
         return;
@@ -7894,8 +8862,18 @@
       req.__result = undefined; // Must be undefined if an error per `result` getter
       req.dispatchEvent(evt);
     }
+
+    /**
+     *
+     * @param tx
+     * @param db
+     * @param oldVersion
+     */
     function setupDatabase(tx, db, oldVersion) {
       tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList" FROM __sys__', [], function (tx, data) {
+        /**
+         *
+         */
         function finishRequest() {
           req.__result = connection;
           req.__done = true;
@@ -7909,6 +8887,12 @@
           var openConnections = me.__connections[name].slice(0, -1);
           triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersion, version).then(function () {
             // DB Upgrade in progress
+            /**
+             *
+             * @param systx
+             * @param err
+             * @param cb
+             */
             var sysdbFinishedCb = function sysdbFinishedCb(systx, err, cb) {
               if (err) {
                 try {
@@ -7917,6 +8901,10 @@
                   // Browser may fail with expired transaction above so
                   //     no choice but to manually revert
                   sysdb.transaction(function (systx) {
+                    /**
+                     *
+                     * @param msg
+                     */
                     function reportError(msg) {
                       throw new Error('Unable to roll back upgrade transaction!' + (msg || ''));
                     }
@@ -7938,6 +8926,9 @@
             };
 
             sysdb.transaction(function (systx) {
+              /**
+               *
+               */
               function versionSet() {
                 var e = new IDBVersionChangeEvent('upgradeneeded', {
                   oldVersion: oldVersion,
@@ -8048,6 +9039,11 @@
         }
       }, dbCreateError);
     }
+
+    /**
+     *
+     * @param oldVersion
+     */
     function openDB(oldVersion) {
       var db;
       if ((useMemoryDatabase || useDatabaseCache) && name in websqlDBCache && websqlDBCache[name][version]) {
@@ -8077,6 +9073,9 @@
       }
       db.transaction(function (tx) {
         tx.executeSql('CREATE TABLE IF NOT EXISTS __sys__ (name BLOB, keyPath BLOB, autoInc BOOLEAN, indexList BLOB, currNum INTEGER)', [], function () {
+          /**
+           *
+           */
           function setup() {
             setupDatabase(tx, db, oldVersion);
           }
@@ -8148,6 +9147,12 @@
     var req = IDBOpenDBRequest.__createInstance();
     var calledDBError = false;
     var version = 0;
+
+    /**
+     *
+     * @param err
+     * @param cb
+     */
     var sysdbFinishedCbDelete = function sysdbFinishedCbDelete(err, cb) {
       cb(err);
     };
@@ -8155,6 +9160,11 @@
     // Although the spec has no specific conditions where an error
     //  may occur in `deleteDatabase`, it does provide for
     //  `UnknownError` as we may require upon a SQL deletion error
+    /**
+     *
+     * @param tx
+     * @param err
+     */
     function dbError(tx, err) {
       if (calledDBError || err === true) {
         return;
@@ -8178,6 +9188,9 @@
         // function callback (cb) { cb(); }
         // callback(function () {
 
+        /**
+         * @returns {void}
+         */
         function completeDatabaseDelete() {
           req.__result = undefined;
           req.__done = true;
@@ -8187,6 +9200,10 @@
           });
           req.dispatchEvent(e);
         }
+
+        /**
+         * @returns {void}
+         */
         function databaseDeleted() {
           sysdbFinishedCbDelete(false, function () {
             if (useDatabaseCache && name in websqlDBCache) {
@@ -8243,6 +9260,12 @@
     });
     return req;
   };
+
+  /**
+   *
+   * @param key1
+   * @param key2
+   */
   IDBFactory.prototype.cmp = function (key1, key2) {
     if (!(this instanceof IDBFactory)) {
       throw new TypeError('Illegal invocation');
@@ -8273,6 +9296,11 @@
       if (hasNullOrigin()) {
         throw createDOMException('SecurityError', 'Cannot get IndexedDB database names from an opaque origin.');
       }
+      /**
+       *
+       * @param tx
+       * @param err
+       */
       function dbGetDatabaseNamesError(tx, err) {
         if (calledDbCreateError) {
           return;
@@ -8314,6 +9342,10 @@
   */
   IDBFactory.prototype.__forceClose = function (dbName, connIdx, msg) {
     var me = this;
+    /**
+     *
+     * @param conn
+     */
     function forceClose(conn) {
       conn.__forceClose(msg);
     }
@@ -8333,6 +9365,11 @@
       forceClose(me.__connections[dbName][connIdx]);
     }
   };
+
+  /**
+   *
+   * @param origin
+   */
   IDBFactory.prototype.__setConnectionQueueOrigin = function () {
     var origin = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : getOrigin();
     connectionQueue[origin] = {};
@@ -8343,6 +9380,9 @@
   });
   var shimIndexedDB$1 = IDBFactory.__createInstance();
 
+  /**
+   * @class
+   */
   function IDBCursor() {
     throw new TypeError('Illegal constructor');
   }
@@ -8408,6 +9448,11 @@
     this.__gotValue = true;
     this["continue"]();
   };
+
+  /**
+   *
+   * @param {...any} args
+   */
   IDBCursor.__createInstance = function () {
     var IDBCursor = IDBCursorAlias.__super;
     IDBCursor.prototype = IDBCursorAlias.prototype;
@@ -8416,6 +9461,11 @@
     }
     return _construct(IDBCursor, args);
   };
+
+  /**
+   *
+   * @param {...any} args
+   */
   IDBCursor.prototype.__find = function () {
     if (this.__multiEntryIndex) {
       this.__findMultiEntry.apply(this, arguments);
@@ -8423,6 +9473,16 @@
       this.__findBasic.apply(this, arguments);
     }
   };
+
+  /**
+   *
+   * @param key
+   * @param primaryKey
+   * @param tx
+   * @param success
+   * @param error
+   * @param recordsToLoad
+   */
   IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error, recordsToLoad) {
     var continueCall = recordsToLoad !== undefined;
     recordsToLoad = recordsToLoad || 1;
@@ -8493,6 +9553,15 @@
     });
   };
   var leftBracketRegex = /\[/g;
+
+  /**
+   *
+   * @param key
+   * @param primaryKey
+   * @param tx
+   * @param success
+   * @param error
+   */
   IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, error) {
     var me = this;
     if (me.__prefetchedData && me.__prefetchedData.length === me.__prefetchedIndex) {
@@ -8588,10 +9657,10 @@
         }
         var reverse = me.direction.indexOf('prev') === 0;
         rows.sort(function (a, b) {
-          if (a.matchingKey.replace(leftBracketRegex, 'z') < b.matchingKey.replace(leftBracketRegex, 'z')) {
+          if (a.matchingKey.replaceAll(leftBracketRegex, 'z') < b.matchingKey.replaceAll(leftBracketRegex, 'z')) {
             return reverse ? 1 : -1;
           }
-          if (a.matchingKey.replace(leftBracketRegex, 'z') > b.matchingKey.replace(leftBracketRegex, 'z')) {
+          if (a.matchingKey.replaceAll(leftBracketRegex, 'z') > b.matchingKey.replaceAll(leftBracketRegex, 'z')) {
             return reverse ? -1 : 1;
           }
           if (a.key < b.key) {
@@ -8631,25 +9700,33 @@
   };
 
   /**
-  * @callback module:IDBCursor.SuccessArg
-  * @param value
+   * @typedef {any} StructuredCloneValue
+   */
+
+  /**
+   * @typedef {any} IndexedDBKey
+   */
+
+  /**
+  * @callback IDBCursor.SuccessArg
+  * @param {StructuredCloneValue} value
   * @param {IDBRequest} req
   * @returns {void}
   */
 
   /**
-  * @callback module:IDBCursor.SuccessCallback
-  * @param key
-  * @param value
-  * @param primaryKey
+  * @callback IDBCursor.SuccessCallback
+  * @param {IndexedDBKey} key
+  * @param {StructuredCloneValue} value
+  * @param {IndexedDBKey} primaryKey
   * @returns {void}
   */
 
   /**
    * Creates an "onsuccess" callback.
    * @private
-   * @param {module:IDBCursor.SuccessArg} success
-   * @returns {module:IDBCursor.SuccessCallback}
+   * @param {IDBCursor.SuccessArg} success
+   * @returns {IDBCursor.SuccessCallback}
    */
   IDBCursor.prototype.__onsuccess = function (success) {
     var me = this;
@@ -8668,6 +9745,12 @@
       }
     };
   };
+
+  /**
+   *
+   * @param rowItem
+   * @param callback
+   */
   IDBCursor.prototype.__decode = function (rowItem, callback) {
     var me = this;
     if (me.__multiEntryIndex && me.__unique) {
@@ -8689,13 +9772,26 @@
     callback(key, val, primaryKey, encKey /*, encVal, encPrimaryKey */);
   };
 
+  /**
+   *
+   */
   IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
     IDBObjectStore.__invalidStateIfDeleted(this.__store, "The cursor's effective object store has been deleted");
     if (this.__indexSource) IDBIndex.__invalidStateIfDeleted(this.source, "The cursor's index source has been deleted");
   };
+
+  /**
+   *
+   */
   IDBCursor.prototype.__invalidateCache = function () {
     this.__prefetchedData = null;
   };
+
+  /**
+   *
+   * @param key
+   * @param advanceContinue
+   */
   IDBCursor.prototype.__continue = function (key, advanceContinue) {
     var me = this;
     var advanceState = me.__advanceCount !== undefined;
@@ -8713,12 +9809,25 @@
     }
     this.__continueFinish(key, undefined, advanceState);
   };
+
+  /**
+   *
+   * @param key
+   * @param primaryKey
+   * @param advanceState
+   */
   IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) {
     var me = this;
     var recordsToPreloadOnContinue = me.__advanceCount || CFG.cursorPreloadPackSize || 100;
     me.__gotValue = false;
     me.__request.__done = false;
     me.__store.transaction.__pushToQueue(me.__request, function cursorContinue(tx, args, success, error, executeNextRequest) {
+      /**
+       * @param {import('../../src/Key.js').Key} k
+       * @param {import('../../src/Key.js').Value} val
+       * @param {import('../../src/Key.js').Key} primKey
+       * @returns {void}
+       */
       function triggerSuccess(k, val, primKey) {
         if (advanceState) {
           if (me.__advanceCount >= 2 && k !== undefined) {
@@ -8737,6 +9846,9 @@
         me.__prefetchedIndex++;
         if (me.__prefetchedIndex < me.__prefetchedData.length) {
           me.__decode(me.__prefetchedData.item(me.__prefetchedIndex), function (k, val, primKey, encKey) {
+            /**
+             * @returns {void}
+             */
             function checkKey() {
               var cmpResult = key === undefined || cmp(k, key);
               if (cmpResult > 0 || cmpResult === 0 && (me.__unique || primaryKey === undefined || cmp(primKey, primaryKey) >= 0)) {
@@ -8762,11 +9874,21 @@
       }, recordsToPreloadOnContinue);
     });
   };
+
+  /**
+   *
+   */
   IDBCursor.prototype["continue"] = function /* key */
   () {
     // eslint-disable-next-line prefer-rest-params
     this.__continue(arguments[0]);
   };
+
+  /**
+   *
+   * @param key
+   * @param primaryKey
+   */
   IDBCursor.prototype.continuePrimaryKey = function (key, primaryKey) {
     var me = this;
     IDBTransaction.__assertActive(me.__store.transaction);
@@ -8786,6 +9908,10 @@
     if (me.direction === 'next' && cmpResult === -1 || me.direction === 'prev' && cmpResult === 1) {
       throw createDOMException('DataError', 'Cannot continue the cursor in an unexpected direction');
     }
+
+    /**
+     * @returns {void}
+     */
     function noErrors() {
       me.__continueFinish(key, primaryKey, false);
     }
@@ -8802,6 +9928,11 @@
       noErrors();
     }
   };
+
+  /**
+   *
+   * @param count
+   */
   IDBCursor.prototype.advance = function (count) {
     var me = this;
     count = enforceRange(count, 'unsigned long');
@@ -8814,6 +9945,11 @@
     }
     me.__continue();
   };
+
+  /**
+   *
+   * @param valueToUpdate
+   */
   IDBCursor.prototype.update = function (valueToUpdate) {
     var me = this;
     if (!arguments.length) throw new TypeError('A value must be passed to update()');
@@ -8828,6 +9964,11 @@
     }
     var request = me.__store.transaction.__createRequest(me);
     var key = me.primaryKey;
+
+    /**
+     * @param {import('../../src/Key.js').Value} clonedValue
+     * @returns {void}
+     */
     function addToQueue(clonedValue) {
       // We set the `invalidateCache` argument to `false` since the old value shouldn't be accessed
       IDBObjectStore.__storingRecordObjectStore(request, me.__store, false, clonedValue, false, key);
@@ -8847,6 +9988,10 @@
     }
     return request;
   };
+
+  /**
+   *
+   */
   IDBCursor.prototype["delete"] = function () {
     var me = this;
     IDBTransaction.__assertActive(me.__store.transaction);
@@ -8882,6 +10027,10 @@
   Object.defineProperty(IDBCursor, 'prototype', {
     writable: false
   });
+
+  /**
+   * @class
+   */
   function IDBCursorWithValue() {
     throw new TypeError('Illegal constructor');
   }
@@ -8893,10 +10042,17 @@
     value: IDBCursorWithValue
   });
   var IDBCursorWithValueAlias = IDBCursorWithValue;
+  /**
+   *
+   * @param {...any} args
+   */
   IDBCursorWithValue.__createInstance = function () {
     for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
       args[_key2] = arguments[_key2];
     }
+    /**
+     * @class
+     */
     function IDBCursorWithValue() {
       var _IDBCursor$__super;
       (_IDBCursor$__super = IDBCursor.__super).call.apply(_IDBCursor$__super, [this].concat(args));
@@ -8912,6 +10068,11 @@
     writable: false
   });
 
+  /**
+   *
+   * @param prop
+   * @param val
+   */
   function setConfig(prop, val) {
     if (prop && _typeof$2(prop) === 'object') {
       Object.entries(prop).forEach(function (_ref) {
@@ -8930,11 +10091,23 @@
       register(val);
     }
   }
+
+  /**
+   *
+   * @param idb
+   * @param initialConfig
+   */
   function setGlobalVars(idb, initialConfig) {
     if (initialConfig) {
       setConfig(initialConfig);
     }
     var IDB = idb || (typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : typeof global !== 'undefined' ? global : {});
+    /**
+     *
+     * @param name
+     * @param value
+     * @param propDesc
+     */
     function shim(name, value, propDesc) {
       if (!propDesc || !Object.defineProperty) {
         try {
@@ -8980,6 +10153,10 @@
     }
     if (IDB.shimIndexedDB) {
       IDB.shimIndexedDB.__useShim = function () {
+        /**
+         *
+         * @param prefix
+         */
         function setNonIDBGlobals() {
           var prefix = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
           shim(prefix + 'DOMException', ShimDOMException);
@@ -9137,12 +10314,17 @@
   }
 
   /* eslint-env browser, worker */
+  /* global shimIndexedDB */
   CFG.win = typeof window !== 'undefined' ? window : self; // For Web Workers
 
   setGlobalVars();
   // END: Same code as in browser.js
 
   var __setUnicodeIdentifiers = shimIndexedDB.__setUnicodeIdentifiers.bind(shimIndexedDB);
+
+  /**
+   * @returns {void}
+   */
   shimIndexedDB.__setUnicodeIdentifiers = function () {
     __setUnicodeIdentifiers(UnicodeIdentifiers);
   };

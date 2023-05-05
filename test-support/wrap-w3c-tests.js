@@ -67,7 +67,7 @@ ifr.setAttribute('scrolling', 'no');
 
 var loaderWin = ifr.contentWindow;
 loaderWin.addEventListener('DOMContentLoaded', function () {
-    var ifr = createIframe('${htmlFile.replace(/'/gu, "\\'")}', loaderWin);
+    var ifr = createIframe('${htmlFile.replaceAll('\'', "\\'")}', loaderWin);
     var testWin = ifr.contentWindow;
 
     var style = document.createElement('style');

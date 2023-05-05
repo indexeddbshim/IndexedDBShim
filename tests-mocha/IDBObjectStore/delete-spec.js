@@ -197,6 +197,9 @@ describe('IDBObjectStore.delete', function () {
 
             transaction1();
 
+            /**
+             * @returns {void}
+             */
             function transaction1 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
@@ -208,6 +211,9 @@ describe('IDBObjectStore.delete', function () {
                 store.add({id: 3});
             }
 
+            /**
+             * @returns {void}
+             */
             function transaction2 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
@@ -227,6 +233,9 @@ describe('IDBObjectStore.delete', function () {
                 });
             }
 
+            /**
+             * @returns {void}
+             */
             function transaction3 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
@@ -249,6 +258,9 @@ describe('IDBObjectStore.delete', function () {
                 });
             }
 
+            /**
+             * @returns {void}
+             */
             function checkResults () {
                 // Make sure all 5 records existed before the delete
                 expect(allData).to.have.same.deep.members([
@@ -698,6 +710,10 @@ describe('IDBObjectStore.delete', function () {
                 deleteKey([new Date(2005, 6, 7)]); // array of Dates
             }
 
+            /**
+             * @param {import('../../src/Key.js').Key} key
+             * @returns {void}
+             */
             function deleteKey (key) {
                 deletingCounter++;
                 var del = store.delete(key);
@@ -744,6 +760,10 @@ describe('IDBObjectStore.delete', function () {
                 tryToDelete(/^regex$/); // RegExp
             }
 
+            /**
+             * @param {import('../../src/Key.js').Key} key
+             * @returns {void}
+             */
             function tryToDelete (key) {
                 var err = null;
 

@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "lib": ["DOM", "es2022"],
+    "moduleResolution": "node",
+    "module": "NodeNext",
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "declarationMap": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "target": "es6",
+    "outDir": "dist"
+  },
+  "include": ["src/**/*.js"],
+  "exclude": ["node_modules", "web-platform-tests", "test-support/js"]
+}

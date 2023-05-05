@@ -98,17 +98,47 @@ process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
 });
 */
+
+/**
+ * @returns {void}
+ */
 function exit () {
     // eslint-disable-next-line unicorn/no-process-exit
     process.exit();
 }
+
+/**
+ * @typedef {number} Integer
+ */
+
+/**
+ * @param {string[]} jsFiles
+ * @param {string} initial
+ * @param {string} ending
+ * @param {boolean} workers
+ * @param {Integer} item
+ * @returns {Promise<void>}
+ */
 async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = false, item = 0) {
     shimNS.fileName = jsFiles[item];
     shimNS.finished = async () => {
         ct += 1;
+
+        /**
+         * @returns {Promise<void>}
+         */
         async function finishedCheck () {
-            function cleanJSONOutput (...args) {
-                return JSON.stringify(...args).replace(/"/gu, "'").replace(/','/gu, "', '");
+            /**
+             * @typedef {any} JSONValue
+             */
+            /**
+             * @param {JSONValue} value
+             * @param {null} [replacer]
+             * @param {string|number|undefined} [space]
+             * @returns {string}
+             */
+            function cleanJSONOutput (value, replacer, space) {
+                return JSON.stringify(value, replacer, space).replaceAll('"', "'").replaceAll('\',\'', "', '");
             }
             if (ct < jsFiles.length) {
                 // Todo: Have the test environment script itself report back time-outs and
@@ -323,7 +353,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         ...indexedDBSupported
     ];
     // Use paths set in node-buildjs.js (when extracting <script> tags and joining contents)
-    content.replace(/beginscript::(.*?)::endscript/gu, (_, src) => {
+    content.replaceAll(/beginscript::(.*?)::endscript/gu, (_, src) => {
         // Fix paths for known support files and report new ones (so we can decide how to handle)
         if (
             // Added this to suppress errors; may get through if wrapping
@@ -657,6 +687,12 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
     }
 }
 
+/**
+ * @param {string[]} jsFiles
+ * @param {boolean} workers
+ * @param {boolean} recursing
+ * @returns {Promise<void>}
+ */
 async function readAndEvaluateFiles (jsFiles, workers, recursing) {
     jsFiles = jsFiles.filter((jsFile) => (/\.js/u).test(jsFile));
     if (!recursing && fileIndex) { // Start at a particular file count
@@ -756,6 +792,12 @@ try {
     console.error('Error 10', err);
 }
 
+/**
+ * @param {string[]} arr
+ * @param {Integer} i
+ * @param {string} str
+ * @returns {Promise<string>}
+ */
 async function readAndJoinFiles (arr, i = 0, str = '') {
     const filename = arr[i];
     if (!filename) { // || i === arr.length - 1) {

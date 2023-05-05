@@ -1,9 +1,13 @@
 import CFG from './CFG.js';
 import expandsOnNFD from './unicode-regex.js';
 
+/**
+ * @param {string} arg
+ * @returns {string}
+ */
 function escapeUnmatchedSurrogates (arg) {
     // http://stackoverflow.com/a/6701665/271577
-    return arg.replace(
+    return arg.replaceAll(
         /([\uD800-\uDBFF])(?![\uDC00-\uDFFF])|(^|[^\uD800-\uDBFF])([\uDC00-\uDFFF])/gu,
         function (_, unmatchedHighSurrogate, precedingLow, unmatchedLowSurrogate) {
             // Could add a corresponding surrogate for compatibility with `node-sqlite3`: http://bugs.python.org/issue12569 and http://stackoverflow.com/a/6701665/271577
@@ -18,47 +22,73 @@ function escapeUnmatchedSurrogates (arg) {
     );
 }
 
+/**
+ * @param {string} arg
+ * @returns {string}
+ */
 function escapeNameForSQLiteIdentifier (arg) {
     // http://stackoverflow.com/a/6701665/271577
     return '_' + // Prevent empty string
         escapeUnmatchedSurrogates(
-            arg.replace(/\^/gu, '^^') // Escape our escape
+            arg.replaceAll('^', '^^') // Escape our escape
                 // http://www.sqlite.org/src/tktview?name=57c971fc74
-                .replace(/\0/gu, '^0')
+                .replaceAll('\0', '^0')
                 // We need to avoid identifiers being treated as duplicates based on SQLite's ASCII-only case-insensitive table and column names
                 // (For SQL in general, however, see http://stackoverflow.com/a/17215009/271577
                 // See also https://www.sqlite.org/faq.html#q18 re: Unicode (non-ASCII) case-insensitive not working
-                .replace(/([A-Z])/gu, '^$1')
+                .replaceAll(/([A-Z])/gu, '^$1')
         );
 }
 
-// The escaping of unmatched surrogates was needed by Chrome but not Node
+/**
+ * The escaping of unmatched surrogates was needed by Chrome but not Node.
+ * @param {string} arg
+ * @returns {string}
+ */
 function escapeSQLiteStatement (arg) {
-    return escapeUnmatchedSurrogates(arg.replace(/\^/gu, '^^').replace(/\0/gu, '^0'));
+    return escapeUnmatchedSurrogates(arg.replaceAll('^', '^^').replaceAll('\0', '^0'));
 }
+
+/**
+ * @param {string} arg
+ * @returns {string}
+ */
 function unescapeSQLiteResponse (arg) {
     return unescapeUnmatchedSurrogates(arg)
-        .replace(/(\^+)0/gu, (_, esc) => {
+        .replaceAll(/(\^+)0/gu, (_, esc) => {
             return esc.length % 2
                 ? esc.slice(1) + '\0'
                 : _;
         })
-        .replace(/\^\^/gu, '^');
+        .replaceAll('^^', '^');
 }
 
+/**
+ * @param {string} arg
+ * @returns {string}
+ */
 function sqlEscape (arg) {
     // https://www.sqlite.org/lang_keywords.html
     // http://stackoverflow.com/a/6701665/271577
     // There is no need to escape ', `, or [], as
     //   we should always be within double quotes
     // NUL should have already been stripped
-    return arg.replace(/"/gu, '""');
+    return arg.replaceAll('"', '""');
 }
 
+/**
+ * @param {string} arg
+ * @returns {string}
+ */
 function sqlQuote (arg) {
     return '"' + sqlEscape(arg) + '"';
 }
 
+/**
+ * @param {string} db
+ * @throws {Error}
+ * @returns {string}
+ */
 function escapeDatabaseNameForSQLAndFiles (db) {
     if (CFG.escapeDatabaseName) {
         // We at least ensure NUL is escaped by default, but we need to still
@@ -70,7 +100,7 @@ function escapeDatabaseNameForSQLAndFiles (db) {
     db = 'D' + escapeNameForSQLiteIdentifier(db);
     if (CFG.escapeNFDForDatabaseNames !== false) {
         // ES6 copying of regex with different flags
-        db = db.replace(new RegExp(expandsOnNFD, 'gu'), function (expandable) {
+        db = db.replaceAll(new RegExp(expandsOnNFD, 'gu'), function (expandable) {
             return '^4' + expandable.codePointAt().toString(16).padStart(6, '0');
         });
     }
@@ -95,20 +125,28 @@ function escapeDatabaseNameForSQLAndFiles (db) {
     return db + (CFG.addSQLiteExtension !== false ? '.sqlite' : ''); // Shouldn't have quoting (do we even need NUL/case escaping here?)
 }
 
+/**
+ * @param {string} arg
+ * @returns {string}
+ */
 function unescapeUnmatchedSurrogates (arg) {
     return arg
-        .replace(/(\^+)3(d[0-9a-f]{3})/gu, (_, esc, lowSurr) => {
+        .replaceAll(/(\^+)3(d[0-9a-f]{3})/gu, (_, esc, lowSurr) => {
             return esc.length % 2
                 ? esc.slice(1) + String.fromCodePoint(Number.parseInt(lowSurr, 16))
                 : _;
-        }).replace(/(\^+)2(d[0-9a-f]{3})/gu, (_, esc, highSurr) => {
+        }).replaceAll(/(\^+)2(d[0-9a-f]{3})/gu, (_, esc, highSurr) => {
             return esc.length % 2
                 ? esc.slice(1) + String.fromCodePoint(Number.parseInt(highSurr, 16))
                 : _;
         });
 }
 
-// Not in use internally but supplied for convenience
+/**
+ * Not in use internally but supplied for convenience.
+ * @param {string} db
+ * @returns {string}
+ */
 function unescapeDatabaseNameForSQLAndFiles (db) {
     if (CFG.unescapeDatabaseName) {
         // We at least ensure NUL is unescaped by default, but we need to still
@@ -121,70 +159,122 @@ function unescapeDatabaseNameForSQLAndFiles (db) {
     return unescapeUnmatchedSurrogates(
         db.slice(2) // D_
             // CFG.databaseCharacterEscapeList
-            .replace(/(\^+)1([0-9a-f]{2})/gu, (_, esc, hex) => {
+            .replaceAll(/(\^+)1([0-9a-f]{2})/gu, (_, esc, hex) => {
                 return esc.length % 2
                     ? esc.slice(1) + String.fromCodePoint(Number.parseInt(hex, 16))
                     : _;
             // CFG.escapeNFDForDatabaseNames
-            }).replace(/(\^+)4([0-9a-f]{6})/gu, (_, esc, hex) => {
+            }).replaceAll(/(\^+)4([0-9a-f]{6})/gu, (_, esc, hex) => {
                 return esc.length % 2
                     ? esc.slice(1) + String.fromCodePoint(Number.parseInt(hex, 16))
                     : _;
             })
     // escapeNameForSQLiteIdentifier (including unescapeUnmatchedSurrogates() above)
-    ).replace(/(\^+)([A-Z])/gu, (_, esc, upperCase) => {
+    ).replaceAll(/(\^+)([A-Z])/gu, (_, esc, upperCase) => {
         return esc.length % 2
             ? esc.slice(1) + upperCase
             : _;
-    }).replace(/(\^+)0/gu, (_, esc) => {
+    }).replaceAll(/(\^+)0/gu, (_, esc) => {
         return esc.length % 2
             ? esc.slice(1) + '\0'
             : _;
-    }).replace(/\^\^/gu, '^');
+    }).replaceAll('^^', '^');
 }
 
+/**
+ * @param {string} store
+ * @returns {string}
+ */
 function escapeStoreNameForSQL (store) {
     return sqlQuote('S' + escapeNameForSQLiteIdentifier(store));
 }
 
+/**
+ * @param {string} index
+ * @returns {string}
+ */
 function escapeIndexNameForSQL (index) {
     return sqlQuote('I' + escapeNameForSQLiteIdentifier(index));
 }
 
+/**
+ * @param {string} index
+ * @returns {string}
+ */
 function escapeIndexNameForSQLKeyColumn (index) {
     return 'I' + escapeNameForSQLiteIdentifier(index);
 }
 
+/**
+ * @param {string} str
+ * @returns {string}
+ */
 function sqlLIKEEscape (str) {
     // https://www.sqlite.org/lang_expr.html#like
-    return sqlEscape(str).replace(/\^/gu, '^^');
+    return sqlEscape(str).replaceAll('^', '^^');
 }
 
 // Babel doesn't seem to provide a means of using the `instanceof` operator with Symbol.hasInstance (yet?)
+/**
+ *
+ * @param {} obj
+ * @param {} Clss
+ * @returns {boolean}
+ */
 function instanceOf (obj, Clss) {
     return Clss[Symbol.hasInstance](obj);
 }
 
+/**
+ *
+ * @param {} obj
+ * @returns {boolean}
+ */
 function isObj (obj) {
     return obj && typeof obj === 'object';
 }
 
+/**
+ *
+ * @param {} obj
+ * @returns {boolean}
+ */
 function isDate (obj) {
     return isObj(obj) && typeof obj.getDate === 'function';
 }
 
+/**
+ *
+ * @param {} obj
+ * @returns {boolean}
+ */
 function isBlob (obj) {
     return isObj(obj) && typeof obj.size === 'number' && typeof obj.slice === 'function' && !('lastModified' in obj);
 }
 
+/**
+ *
+ * @param {} obj
+ * @returns {boolean}
+ */
 function isRegExp (obj) {
     return isObj(obj) && typeof obj.flags === 'string' && typeof obj.exec === 'function';
 }
 
+/**
+ *
+ * @param {} obj
+ * @returns {boolean}
+ */
 function isFile (obj) {
     return isObj(obj) && typeof obj.name === 'string' && typeof obj.slice === 'function' && 'lastModified' in obj;
 }
 
+/**
+ *
+ * @param {} obj
+ * @returns {boolean}
+ */
 function isBinary (obj) {
     return isObj(obj) && typeof obj.byteLength === 'number' && (
         typeof obj.slice === 'function' || // `TypedArray` (view on buffer) or `ArrayBuffer`
@@ -192,10 +282,21 @@ function isBinary (obj) {
     );
 }
 
+/**
+ *
+ * @param {} obj
+ * @returns {boolean}
+ */
 function isIterable (obj) {
     return isObj(obj) && typeof obj[Symbol.iterator] === 'function';
 }
 
+/**
+ *
+ * @param {} obj
+ * @param {} props
+ * @returns {void}
+ */
 function defineOuterInterface (obj, props) {
     props.forEach((prop) => {
         const o = {
@@ -211,6 +312,12 @@ function defineOuterInterface (obj, props) {
     });
 }
 
+/**
+ *
+ * @param {} obj
+ * @param {} props
+ * @returns {void}
+ */
 function defineReadonlyOuterInterface (obj, props) {
     props.forEach((prop) => {
         const o = {
@@ -223,6 +330,12 @@ function defineReadonlyOuterInterface (obj, props) {
     });
 }
 
+/**
+ *
+ * @param {} obj
+ * @param {} listeners
+ * @returns {void}
+ */
 function defineListenerProperties (obj, listeners) {
     listeners = typeof listeners === 'string' ? [listeners] : listeners;
     listeners.forEach((listener) => {
@@ -244,6 +357,13 @@ function defineListenerProperties (obj, listeners) {
     });
 }
 
+/**
+ *
+ * @param {} obj
+ * @param {} props
+ * @param {} getter
+ * @returns {void}
+ */
 function defineReadonlyProperties (obj, props, getter = null) {
     props = typeof props === 'string' ? [props] : props;
     props.forEach(function (prop) {
@@ -272,6 +392,11 @@ function defineReadonlyProperties (obj, props, getter = null) {
     });
 }
 
+/**
+ *
+ * @param {} item
+ * @returns {boolean}
+ */
 function isIdentifier (item) {
     // For load-time and run-time performance, we don't provide the complete regular
     //   expression for identifiers, but these can be passed in, using the expressions
@@ -285,6 +410,11 @@ function isIdentifier (item) {
     return (new RegExp('^' + IdentifierStart + IdentifierPart + '*$', 'u')).test(item);
 }
 
+/**
+ *
+ * @param {} keyPathString
+ * @returns {boolean}
+ */
 function isValidKeyPathString (keyPathString) {
     return typeof keyPathString === 'string' &&
         (keyPathString === '' || isIdentifier(keyPathString) || keyPathString.split('.').every((pathComponent) => {
@@ -292,6 +422,11 @@ function isValidKeyPathString (keyPathString) {
         }));
 }
 
+/**
+ *
+ * @param {} keyPath
+ * @returns {boolean}
+ */
 function isValidKeyPath (keyPath) {
     return isValidKeyPathString(keyPath) || (
         Array.isArray(keyPath) && keyPath.length &&
@@ -303,6 +438,12 @@ function isValidKeyPath (keyPath) {
     );
 }
 
+/**
+ * @param {number} number
+ * @param {"unsigned long long"|"unsigned long"} type
+ * @throws {Error|TypeError}
+ * @returns {number}
+ */
 function enforceRange (number, type) {
     number = Math.floor(Number(number));
     let max, min;
@@ -328,15 +469,33 @@ function enforceRange (number, type) {
     return number;
 }
 
+/**
+ * @typedef {any} AnyValue
+ */
+
+/**
+ * @param {AnyValue} v
+ * @param {boolean} [treatNullAs]
+ * @returns {string}
+ */
 function convertToDOMString (v, treatNullAs) {
     return v === null && treatNullAs ? '' : ToString(v);
 }
 
+/**
+ * @param {AnyValue} o
+ * @returns {string}
+ */
 function ToString (o) { // Todo: See `es-abstract/es7`
     // `String()` will not throw with Symbols
     return '' + o; // eslint-disable-line no-implicit-coercion
 }
 
+/**
+ *
+ * @param {} val
+ * @returns {string}
+ */
 function convertToSequenceDOMString (val) {
     // Per <https://heycam.github.io/webidl/#idl-sequence>, converting to a sequence works with iterables
     if (isIterable(val)) { // We don't want conversion to array to convert primitives
@@ -348,12 +507,12 @@ function convertToSequenceDOMString (val) {
     return ToString(val);
 }
 
+/**
+ * @param {AnyValue} v
+ * @returns {boolean}
+ */
 function isNullish (v) {
     return v === null || v === undefined;
-}
-
-function hasOwn (obj, prop) {
-    return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
 export {escapeSQLiteStatement, unescapeSQLiteResponse,
@@ -366,4 +525,4 @@ export {escapeSQLiteStatement, unescapeSQLiteResponse,
     defineListenerProperties, defineReadonlyProperties,
     isValidKeyPath, enforceRange,
     convertToDOMString, convertToSequenceDOMString,
-    isNullish, hasOwn};
+    isNullish};

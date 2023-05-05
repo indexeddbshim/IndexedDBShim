@@ -174,6 +174,9 @@ describe('IDBIndex.getKey', function () {
             }
             transaction1();
 
+            /**
+             * @returns {void}
+             */
             function transaction1 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
@@ -185,6 +188,9 @@ describe('IDBIndex.getKey', function () {
                 store.add({id: 3});
             }
 
+            /**
+             * @returns {void}
+             */
             function transaction2 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
@@ -196,6 +202,9 @@ describe('IDBIndex.getKey', function () {
             }
 
             var key1, key2, key3, key4, key5;
+            /**
+             * @returns {void}
+             */
             function transaction3 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
@@ -210,6 +219,9 @@ describe('IDBIndex.getKey', function () {
                 key5 = index.getKey(5);
             }
 
+            /**
+             * @returns {void}
+             */
             function checkResults () {
                 expect(key1.result).to.deep.equal(1);
                 expect(key2.result).to.deep.equal(2);
@@ -576,6 +588,10 @@ describe('IDBIndex.getKey', function () {
                 getKey([new Date(2005, 6, 7)]); // array of Dates
             }
 
+            /**
+             * @param {import('../../src/Key.js').Key} theKey
+             * @returns {void}
+             */
             function getKey (theKey) {
                 gettingCounter++;
                 var key = index.getKey(theKey);
@@ -623,6 +639,10 @@ describe('IDBIndex.getKey', function () {
                 tryToGet(/^regex$/); // RegExp
             }
 
+            /**
+             * @param {import('../../src/Key.js').Key} key
+             * @returns {void}
+             */
             function tryToGet (key) {
                 var err = null;
 

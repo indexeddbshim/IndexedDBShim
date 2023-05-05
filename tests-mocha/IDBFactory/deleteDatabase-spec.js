@@ -169,6 +169,10 @@ describe('IDBFactory.deleteDatabase', function () {
             deleteDatabase(null);
         }
 
+        /**
+         * @param {string} name
+         * @returns {void}
+         */
         function deleteDatabase (name) {
             deletingCounter++;
             var del = indexedDB.deleteDatabase(name);

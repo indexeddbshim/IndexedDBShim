@@ -10,6 +10,14 @@
     var util;
 
     /**
+     * @typedef {number} Integer
+     */
+
+    /**
+     * @typedef {(err: Error, db?: IDBDatabase) => void} Done
+     */
+
+    /**
      * This function runs before every test.
      */
     beforeEach(function () {
@@ -53,7 +61,7 @@
          * Skips the given test if the given condition is true.
          * @param {boolean} condition
          * @param {string} title
-         * @param {function} test
+         * @param {(done?: () => void) => void} test
          * @returns {void}
          */
         skipIf (condition, title, test) {
@@ -68,12 +76,13 @@
          * Creates a test database with one or more pre-defined schema items.
          *
          * @param {...string} schema One or more pre-defined schema items. (see {@link createSchemaItem})
-         * @param {function} done `function(err, db)`
+         * @param {Done} done
          * @returns {void}
          */
         createDatabase (schema, done) {
             /* eslint-disable prefer-rest-params */
             schema = Array.prototype.slice.call(arguments, 0, -1);
+            // eslint-disable-next-line unicorn/prefer-at -- Not available here
             done = arguments[arguments.length - 1];
             /* eslint-enable prefer-rest-params */
 
@@ -109,8 +118,8 @@
         /**
          * Returns all data in the given object store or index.
          *
-         * @param   {IDBObjectStore|IDBIndex}   store   The object store or index
-         * @param   {function}                  done    `function(err, data)`
+         * @param {IDBObjectStore|IDBIndex} store The object store or index
+         * @param {(err: Error, db:? IDBDatabase) => void} done
          * @returns {void}
          */
         getAll (store, done) {
@@ -122,8 +131,8 @@
          *
          * @param   {IDBObjectStore|IDBIndex}   store       The object store or index
          * @param   {IDBKeyRange}               [keyRange]  The key or key range to query
-         * @param   {string}                    [direction] The direction of the cursor
-         * @param   {function}                  done        `function(err, data)`
+         * @param   {"next"|"prev"|"nextunique"|"prevunique"} [direction] The direction of the cursor
+         * @param   {Done} done
          * @returns {void}
          */
         query (store, keyRange, direction, done) {
@@ -181,7 +190,7 @@
          * wait to delete databases until garbage collection occurs.  So attempting to re-use a database name
          * that is pending deletion will cause runtime errors.
          *
-         * @param   {function}  done    `function(err, dbName)`
+         * @param   {Done}  done
          * @returns {void}
          */
         generateDatabaseName (done) {
@@ -210,9 +219,9 @@
         /**
          * An asynchronous for-each loop.
          *
-         * @param   {array}     array       The array to loop through
-         * @param   {function}  done        Callback function (when the loop is finished or an error occurs)
-         * @param   {function}  iterator
+         * @param   {string[]}     array       The array to loop through
+         * @param   {Done}  done        Callback function (when the loop is finished or an error occurs)
+         * @param   {(item: string, idx: Integer, next: (err: Error) => void) => IDBRequest|IDBTransaction}  iterator
          * The logic for each iteration.  Signature is `function(item, index, next)`.
          * Call `next()` to continue to the next item.  Call `next(Error)` to throw an error and cancel the loop.
          * Or don't call `next` at all to break out of the loop.
@@ -225,6 +234,10 @@
             var i = 0;
             return next();
 
+            /**
+             * @param {Error} err
+             * @returns {void}
+             */
             function next (err) {
                 if (err) {
                     done(err);
@@ -363,7 +376,13 @@
             throw new Error(schemaItem + ' is not one of the pre-defined schema items');
         }
 
-        // Creates an index on all object stores
+        /**
+         * Creates an index on all object stores.
+         * @param {string} name
+         * @param {string|string[]} keyPath
+         * @param {IDBIndexParameters} options
+         * @returns {void}
+         */
         function createIndex (name, keyPath, options) {
             for (var i = 0; i < tx.db.objectStoreNames.length; i++) {
                 var store = tx.objectStore(tx.db.objectStoreNames[i]);

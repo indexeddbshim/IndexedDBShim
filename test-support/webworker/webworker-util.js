@@ -23,7 +23,11 @@ export const MSGTYPE_ERROR = 1;
 export const MSGTYPE_CLOSE = 2;
 export const MSGTYPE_USER = 100;
 
-// Is the given message well-formed?
+/**
+ * Is the given message well-formed?
+ * @param {[0|1|2|100, FileDescriptor]} msg
+ * @returns {boolean}
+ */
 export const isValidMessage = function (msg) {
     return (typeof msg[0] !== 'undefined' && typeof msg[1] !== 'undefined');
 };
@@ -37,6 +41,10 @@ export const isValidMessage = function (msg) {
 // message with which it was sent.
 //
 // Sending messages is done with the send() method.
+/**
+ * @class
+ * @param {} s
+ */
 export const MsgStream = function (s) {
     const self = this; // eslint-disable-line consistent-this
 
@@ -52,6 +60,12 @@ export const MsgStream = function (s) {
     const fdWaitingForMsg = {};
 
     // Get the JS object representing message 'v' with fd 'fd'.
+    /**
+     *
+     * @param {} v
+     * @param {} fd
+     * @returns {[]}
+     */
     const getMsgObj = function (v, fd) {
         return [(fd !== undefined) ? ++fdsSeqnoSent : 0, v];
     };
@@ -110,9 +124,15 @@ export const MsgStream = function (s) {
 
 util.inherits(MsgStream, events.EventEmitter);
 
+/**
+ *
+ * @param {} workerConfig
+ * @param {} dir
+ * @returns {string|false}
+ */
 export const makeFileURL = function (workerConfig, dir) {
     if (workerConfig.relativePathType === 'file') {
-        return 'file://' + dir.replace(/\\/g, '/') + '/';
+        return 'file://' + dir.replaceAll('\\', '/') + '/';
     }
     return false;
 };
@@ -121,10 +141,20 @@ export const makeFileURL = function (workerConfig, dir) {
 // http://www.whatwg.org/specs/web-workers/current-work/#dom-workerlocation-href
 //   Leverage URL/URLSearchParams polyfill?
 // Todo: None of these properties are readonly as required by the spec.
+/**
+ *
+ * @param {} url
+ * @returns {void}
+ */
 export const WorkerLocation = function (url) {
     const u = new URL(url);
 
     // https://url.spec.whatwg.org/#url-miscellaneous
+    /**
+     *
+     * @param {} proto
+     * @returns {void}
+     */
     const portForProto = function (proto) {
         switch (proto) {
         case 'http': case 'ws':
@@ -163,6 +193,11 @@ export const WorkerLocation = function (url) {
 // Get the error message for a given exception
 //
 // The first line of the stack trace seems to always be the message itself.
+/**
+ *
+ * @param {} e
+ * @returns {string}
+ */
 export const getErrorMessage = function (e) {
     try {
         return e.message || e.stack.split('\n')[0].trim();
@@ -172,6 +207,11 @@ export const getErrorMessage = function (e) {
 };
 
 // Get the filename for a given exception
+/**
+ *
+ * @param {Error} e
+ * @returns {string}
+ */
 export const getErrorFilename = function (e) {
     try {
         const m = e.stack.split('\n')[1].match(STACK_FRAME_RE);
@@ -186,11 +226,16 @@ export const getErrorFilename = function (e) {
 };
 
 // Get the line number for a given exception
+/**
+ *
+ * @param {Error} e
+ * @returns {Integer}
+ */
 export const getErrorLine = function (e) {
     try {
         const m = e.stack.split('\n')[1].match(STACK_FRAME_RE);
         const parts = m[1].split(':');
-        return Number.parseInt(parts[parts.length - 2]);
+        return Number.parseInt(parts.at(-2));
     } catch (e) {
         return -1;
     }

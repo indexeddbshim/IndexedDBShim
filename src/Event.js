@@ -2,9 +2,13 @@ import {ShimEventTarget, ShimEvent, ShimCustomEvent} from 'eventtargeter';
 import * as util from './util.js';
 
 /**
+ * @typedef {Error} DebuggingError
+ */
+
+/**
  *
  * @param {string} type
- * @param {Any} debug
+ * @param {DebuggingError} debug
  * @param {EventInit} evInit
  * @returns {Event}
  */

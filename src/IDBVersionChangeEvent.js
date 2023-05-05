@@ -3,7 +3,12 @@ import * as util from './util.js';
 
 const readonlyProperties = ['oldVersion', 'newVersion'];
 
-// Babel apparently having a problem adding `hasInstance` to a class, so we are redefining as a function
+/**
+ * Babel apparently having a problem adding `hasInstance` to a class,
+ * so we are redefining as a function.
+ * @class
+ * @param {string} type
+ */
 function IDBVersionChangeEvent (type /* , eventInitDict */) { // eventInitDict is a IDBVersionChangeEventInit (but is not defined as a global)
     ShimEvent.call(this, type);
     this[Symbol.toStringTag] = 'IDBVersionChangeEvent';

@@ -140,6 +140,10 @@ prom.then((scriptSource) => {
     const ws = new WebSocket('ws+unix://' + sockPath);
     const ms = new wwutil.MsgStream(ws);
 
+    /**
+     * @param {Error} e
+     * @returns {void}
+     */
     const exceptionHandler = function (e) {
         if (!inErrorHandler && workerCtx.onerror) {
             inErrorHandler = true;
@@ -159,7 +163,12 @@ prom.then((scriptSource) => {
         }]);
     };
 
-    // Message handling function for messages from the master
+    /**
+     * Message handling function for messages from the master.
+     * @param {[0|1|2|100]} msg
+     * @param {FileDescriptor} fd
+     * @returns {void}
+     */
     const handleMessage = function (msg, fd) {
         if (!wwutil.isValidMessage(msg)) {
             wwutil.debug('Received invalid message: ' + util.inspect(msg));

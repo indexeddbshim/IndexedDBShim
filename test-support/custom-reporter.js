@@ -75,6 +75,11 @@
             .replace(/&amp;/g, '&');
     }
     */
+    /**
+     * @param {string} statusText
+     * @param {string} status
+     * @returns {void}
+     */
     function write (statusText, status) {
         const color = colors[Object.keys(theme)[status]];
         let msg = color(statusText);
@@ -84,6 +89,17 @@
     }
 
     const {fileName} = shimNS;
+
+    /**
+     * @param {{
+     *   status: number,
+     *   name: string,
+     *   message: string,
+     *   stack: string
+     * }[]} tests
+     * @param {string} harnessStatus Unused
+     * @returns {void}
+     */
     function reportResults (tests, harnessStatus) {
         // Todo: Look instead on `id=log` and possibly `id=summary` or
         //      `id=metadata_cache` if we add one (and `id=metadata_cache`?)

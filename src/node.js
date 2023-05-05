@@ -6,6 +6,11 @@ import CFG from './CFG.js';
 
 CFG.win = {openDatabase: nodeWebSQL};
 
+/**
+ * @param {null|{}|Window} idb
+ * @param {import('./CFG.js').CFG} initialConfig
+ * @returns {{}|Window}
+ */
 const __setGlobalVars = function (idb, initialConfig = {}) {
     return setGlobalVars(idb, {fs, ...initialConfig});
 };

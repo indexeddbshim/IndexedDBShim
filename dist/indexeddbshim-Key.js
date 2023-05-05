@@ -1,4 +1,4 @@
-/*! indexeddbshim - v11.0.0 - 4/29/2023 */
+/*! indexeddbshim - v12.0.0 - 5/17/2023 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -287,6 +287,20 @@
   }
 
   // From web-platform-tests testharness.js name_code_map (though not in new spec)
+
+  /**
+   * @typedef {"IndexSizeError"|"HierarchyRequestError"|"WrongDocumentError"|
+   * "InvalidCharacterError"|"NoModificationAllowedError"|"NotFoundError"|
+   * "NotSupportedError"|"InUseAttributeError"|"InvalidStateError"|
+   * "SyntaxError"|"InvalidModificationError"|"NamespaceError"|
+   * "InvalidAccessError"|"TypeMismatchError"|"SecurityError"|
+   * "NetworkError"|"AbortError"|"URLMismatchError"|"QuotaExceededError"|
+   * "TimeoutError"|"InvalidNodeTypeError"|"DataCloneError"|"EncodingError"|
+   * "NotReadableError"|"UnknownError"|"ConstraintError"|"DataError"|
+   * "TransactionInactiveError"|"ReadOnlyError"|"VersionError"|
+   * "OperationError"|"NotAllowedError"} Code
+   */
+
   var codes = {
     IndexSizeError: 1,
     HierarchyRequestError: 3,
@@ -321,6 +335,18 @@
     OperationError: 0,
     NotAllowedError: 0
   };
+
+  /**
+   * @typedef {"INDEX_SIZE_ERR"|"DOMSTRING_SIZE_ERR"|"HIERARCHY_REQUEST_ERR"|
+   * "WRONG_DOCUMENT_ERR"|"INVALID_CHARACTER_ERR"|"NO_DATA_ALLOWED_ERR"|
+   * "NO_MODIFICATION_ALLOWED_ERR"|"NOT_FOUND_ERR"|"NOT_SUPPORTED_ERR"|
+   * "INUSE_ATTRIBUTE_ERR"|"INVALID_STATE_ERR"|"SYNTAX_ERR"|
+   * "INVALID_MODIFICATION_ERR"|"NAMESPACE_ERR"|"INVALID_ACCESS_ERR"|
+   * "VALIDATION_ERR"|"TYPE_MISMATCH_ERR"|"SECURITY_ERR"|"NETWORK_ERR"|
+   * "ABORT_ERR"|"URL_MISMATCH_ERR"|"QUOTA_EXCEEDED_ERR"|"TIMEOUT_ERR"|
+   * "INVALID_NODE_TYPE_ERR"|"DATA_CLONE_ERR"} LegacyCode
+   */
+
   var legacyCodes = {
     INDEX_SIZE_ERR: 1,
     DOMSTRING_SIZE_ERR: 2,
@@ -354,6 +380,11 @@
    * @returns {DOMException}
    */
   function createNonNativeDOMExceptionClass() {
+    /**
+     * @param {string|undefined} message
+     * @param {Code|LegacyCode} name
+     * @returns {void}
+     */
     function DOMException(message, name) {
       // const err = Error.prototype.constructor.call(this, message); // Any use to this? Won't set this.message
       this[Symbol.toStringTag] = 'DOMException';
@@ -388,8 +419,12 @@
     // Necessary for W3C tests which complains if `DOMException` has properties on its "own" prototype
 
     // class DummyDOMException extends Error {}; // Sometimes causing problems in Node
-    // eslint-disable-next-line func-name-matching
+    /* eslint-disable func-name-matching */
+    /**
+     * @class
+     */
     var DummyDOMException = function DOMException() {/* */};
+    /* eslint-enable func-name-matching */
     DummyDOMException.prototype = Object.create(Error.prototype); // Intended for subclassing
     ['name', 'message'].forEach(function (prop) {
       Object.defineProperty(DummyDOMException.prototype, prop, {
@@ -476,6 +511,15 @@
       console.trace && console.trace();
     }
   }
+
+  /**
+   * @typedef {any} ArbitraryValue
+   */
+
+  /**
+   * @param {ArbitraryValue} obj
+   * @returns {boolean}
+   */
   function isErrorOrDOMErrorOrDOMException(obj) {
     return obj && _typeof(obj) === 'object' &&
     // We don't use util.isObj here as mutual dependency causing problems in Babel with browser
@@ -500,9 +544,13 @@
     return createNonNativeDOMException(name, message);
   };
 
+  /**
+   * @param {string} arg
+   * @returns {string}
+   */
   function escapeUnmatchedSurrogates(arg) {
     // http://stackoverflow.com/a/6701665/271577
-    return arg.replace(/((?:[\uD800-\uDBFF](?![\uDC00-\uDFFF])))(?!(?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))|(^|(?:[\0-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))((?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, function (_, unmatchedHighSurrogate, precedingLow, unmatchedLowSurrogate) {
+    return arg.replaceAll(/((?:[\uD800-\uDBFF](?![\uDC00-\uDFFF])))(?!(?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))|(^|(?:[\0-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))((?:(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, function (_, unmatchedHighSurrogate, precedingLow, unmatchedLowSurrogate) {
       // Could add a corresponding surrogate for compatibility with `node-sqlite3`: http://bugs.python.org/issue12569 and http://stackoverflow.com/a/6701665/271577
       //   but Chrome having problems
       if (unmatchedHighSurrogate) {
@@ -512,36 +560,74 @@
     });
   }
 
-  // The escaping of unmatched surrogates was needed by Chrome but not Node
+  /**
+   * The escaping of unmatched surrogates was needed by Chrome but not Node.
+   * @param {string} arg
+   * @returns {string}
+   */
   function escapeSQLiteStatement(arg) {
-    return escapeUnmatchedSurrogates(arg.replace(/\^/g, '^^').replace(/\0/g, '^0'));
+    return escapeUnmatchedSurrogates(arg.replaceAll('^', '^^').replaceAll('\0', '^0'));
   }
+
+  /**
+   *
+   * @param obj
+   */
   function isObj(obj) {
     return obj && _typeof(obj) === 'object';
   }
+
+  /**
+   *
+   * @param obj
+   */
   function isDate(obj) {
     return isObj(obj) && typeof obj.getDate === 'function';
   }
+
+  /**
+   *
+   * @param obj
+   */
   function isBlob(obj) {
     return isObj(obj) && typeof obj.size === 'number' && typeof obj.slice === 'function' && !('lastModified' in obj);
   }
+
+  /**
+   *
+   * @param obj
+   */
   function isFile(obj) {
     return isObj(obj) && typeof obj.name === 'string' && typeof obj.slice === 'function' && 'lastModified' in obj;
   }
+
+  /**
+   *
+   * @param obj
+   */
   function isBinary(obj) {
     return isObj(obj) && typeof obj.byteLength === 'number' && (typeof obj.slice === 'function' ||
     // `TypedArray` (view on buffer) or `ArrayBuffer`
     typeof obj.getFloat64 === 'function' // `DataView` (view on buffer)
     );
   }
+
+  /**
+   * @param {AnyValue} v
+   * @returns {boolean}
+   */
   function isNullish(v) {
     return v === null || v === undefined;
   }
 
   /**
+   * @typedef {any} AnyValue
+   */
+
+  /**
    * Compares two keys.
-   * @param first
-   * @param second
+   * @param {AnyValue} first
+   * @param {AnyValue} second
    * @returns {number}
    */
   function cmp(first, second) {
@@ -574,7 +660,43 @@
   }
 
   /**
-   * @module Key
+   * @typedef {Int8Array|Int16Array|Int32Array|Uint8Array|Uint16Array|
+   *   Uint32Array|Uint8ClampedArray|BigInt64Array|BigUint64Array|
+   *   Float32Array|Float64Array|DataView} ArrayBufferView
+   */
+
+  /**
+   * @typedef {ArrayBufferView|ArrayBuffer} BufferSource
+   */
+
+  /**
+   * @typedef {"number"|"date"|"string"|"binary"|"array"} KeyType
+   */
+
+  /**
+   * @typedef {any} Value
+   */
+
+  /**
+   * @typedef {any} Key
+   * @todo Specify possible value more precisely
+   */
+
+  /**
+   * @typedef {string|KeyPath[]} KeyPath
+   */
+
+  /**
+  * @typedef {object} KeyValueObject
+  * @property {KeyType|"NaN"} type
+  * @property {Value} [value]
+  * @property {boolean} [invalid]
+  * @property {string} [message]
+  * @todo Specify acceptable `value` more precisely
+  */
+
+  /**
+   * @typedef {number|string|Date|ArrayBuffer|ValueTypes[]} ValueTypes
    */
 
   /**
@@ -724,7 +846,7 @@
       encode: function encode(key, inArray) {
         if (inArray) {
           // prepend each character with a dash, and append a space to the end
-          key = key.replace(/((?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, '-$1') + ' ';
+          key = key.replaceAll(/((?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, '-$1') + ' ';
         }
         return keyTypeToEncodedChar.string + '-' + key;
       },
@@ -732,7 +854,7 @@
         key = key.slice(2);
         if (inArray) {
           // remove the space at the end, and the dash before each character
-          key = key.slice(0, -1).replace(/\x2D((?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, '$1');
+          key = key.slice(0, -1).replaceAll(/\x2D((?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, '$1');
         }
         return key;
       }
@@ -901,12 +1023,8 @@
   }
 
   /**
-  * @typedef {"number"|"date"|"string"|"binary"|"array"} module:Key.KeyType
-  */
-
-  /**
-   * @param key
-   * @returns {module:Key.KeyType}
+   * @param {Key} key
+   * @returns {KeyType}
    */
   function getKeyType(key) {
     if (Array.isArray(key)) return 'array';
@@ -919,9 +1037,9 @@
   /**
    * Keys must be strings, numbers (besides `NaN`), Dates (if value is not
    *   `NaN`), binary objects or Arrays.
-   * @param input The key input
+   * @param {Value} input The key input
    * @param {?(Array)} [seen] An array of already seen keys
-   * @returns {module:Key.keyValueObject}
+   * @returns {KeyValueObject}
    */
   function convertValueToKey(input, seen) {
     return convertValueToKeyValueDecoded(input, seen, false, true);
@@ -929,8 +1047,8 @@
 
   /**
   * Currently not in use.
-  * @param input
-  * @returns {module:Key.keyValueObject}
+  * @param {Value} input
+  * @returns {KeyValueObject}
   */
   function convertValueToMultiEntryKey(input) {
     return convertValueToKeyValueDecoded(input, null, true, true);
@@ -938,7 +1056,7 @@
 
   /**
    *
-   * @param O
+   * @param {BufferSource} O
    * @throws {TypeError}
    * @see https://heycam.github.io/webidl/#ref-for-dfn-get-buffer-source-copy-2
    * @returns {Uint8Array}
@@ -963,25 +1081,16 @@
   }
 
   /**
-  * @typedef {PlainObject} module:Key.keyValueObject
-  * @property {module:Key.KeyType|"NaN"} type
-  * @property {*} [value]
-  * @property {boolean} [invalid]
-  * @property {string} [message]
-  * @todo Specify acceptable `value` more precisely
-  */
-
-  /**
   * Shortcut utility to avoid returning full keys from `convertValueToKey`
   *   and subsequent need to process in calling code unless `fullKeys` is
   *   set; may throw.
-  * @param {module:Key.Key} input
-  * @param {?(Array)} [seen]
+  * @param {Value} input
+  * @param {Value[]} [seen]
   * @param {boolean} [multiEntry]
   * @param {boolean} [fullKeys]
   * @throws {TypeError} See `getCopyBytesHeldByBufferSource`
   * @todo Document other allowable `input`
-  * @returns {module:Key.keyValueObject}
+  * @returns {KeyValueObject}
   */
   function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
     seen = seen || [];
@@ -1122,15 +1231,10 @@
   }
 
   /**
-  * @typedef {*} module:Key.Key
-  * @todo Specify possible value more precisely
-  */
-
-  /**
    *
-   * @param {module:Key.Key} key
+   * @param {Key} key
    * @param {boolean} fullKeys
-   * @returns {module:Key.keyValueObject}
+   * @returns {KeyValueObject}
    * @todo Document other allowable `key`?
    */
   function convertValueToMultiEntryKeyDecoded(key, fullKeys) {
@@ -1139,10 +1243,10 @@
 
   /**
   * An internal utility.
-  * @param input
+  * @param {Value} input
   * @param {boolean} seen
   * @throws {DOMException} `DataError`
-  * @returns {module:Key.keyValueObject}
+  * @returns {KeyValueObject}
   */
   function convertValueToKeyRethrowingAndIfInvalid(input, seen) {
     var key = convertValueToKey(input, seen);
@@ -1154,10 +1258,10 @@
 
   /**
    *
-   * @param value
-   * @param keyPath
+   * @param {Value} value
+   * @param {KeyPath} keyPath
    * @param {boolean} multiEntry
-   * @returns {module:Key.keyValueObject|module:Key.KeyPathEvaluateValue}
+   * @returns {KeyValueObject|KeyPathEvaluateValue}
    * @todo Document other possible return?
    */
   function extractKeyFromValueUsingKeyPath(value, keyPath, multiEntry) {
@@ -1165,10 +1269,10 @@
   }
   /**
   * Not currently in use.
-  * @param value
-  * @param keyPath
+  * @param {Value} value
+  * @param {KeyPath} keyPath
   * @param {boolean} multiEntry
-  * @returns {module:Key.KeyPathEvaluateValue}
+  * @returns {KeyPathEvaluateValue}
   */
   function evaluateKeyPathOnValue(value, keyPath, multiEntry) {
     return evaluateKeyPathOnValueToDecodedValue(value, keyPath);
@@ -1177,11 +1281,11 @@
   /**
   * May throw, return `{failure: true}` (e.g., non-object on keyPath resolution)
   *    or `{invalid: true}` (e.g., `NaN`).
-  * @param value
-  * @param keyPath
+  * @param {Value} value
+  * @param {KeyPath} keyPath
   * @param {boolean} multiEntry
   * @param {boolean} fullKeys
-  * @returns {module:Key.keyValueObject|module:Key.KeyPathEvaluateValue}
+  * @returns {KeyValueObject|KeyPathEvaluateValue}
   * @todo Document other possible return?
   */
   function extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry, fullKeys) {
@@ -1196,23 +1300,24 @@
   }
 
   /**
-  * @typedef {PlainObject} module:Key.KeyPathEvaluateFailure
-  * @property {boolean} failure
-  */
+   * Unused?
+   * @typedef {object} KeyPathEvaluateFailure
+   * @property {boolean} failure
+   */
 
   /**
-  * @typedef {PlainObject} module:Key.KeyPathEvaluateValue
-  * @property {undefined|array|string} value
-  */
+   * @typedef {object} KeyPathEvaluateValue
+   * @property {undefined|array|string} value
+   */
 
   /**
    * Returns the value of an inline key based on a key path (wrapped in an
    *   object with key `value`) or `{failure: true}`
    * @param {object} value
-   * @param {string|array} keyPath
+   * @param {KeyPath} keyPath
    * @param {boolean} multiEntry
    * @param {boolean} [fullKeys]
-   * @returns {module:Key.KeyPathEvaluateValue}
+   * @returns {KeyPathEvaluateValue}
    */
   function evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKeys) {
     if (Array.isArray(keyPath)) {
@@ -1273,7 +1378,7 @@
   /**
    * Sets the inline key value.
    * @param {object} value
-   * @param {*} key
+   * @param {Key} key
    * @param {string} keyPath
    * @returns {void}
    */
@@ -1292,8 +1397,8 @@
 
   /**
    *
-   * @param value
-   * @param keyPath
+   * @param {Value} value
+   * @param {string} keyPath
    * @see https://github.com/w3c/IndexedDB/pull/146
    * @returns {boolean}
    */
@@ -1324,7 +1429,7 @@
 
   /**
    *
-   * @param {module:Key.Key} key
+   * @param {Key} key
    * @param {IDBKeyRange} range
    * @param {boolean} checkCached
    * @returns {boolean}
@@ -1370,9 +1475,9 @@
 
   /**
    *
-   * @param {module:Key.Key} keyEntry
+   * @param {Key} keyEntry
    * @param {IDBKeyRange} range
-   * @returns {module:Key.Key[]}
+   * @returns {Key[]}
    */
   function findMultiEntryMatches(keyEntry, range) {
     var matches = [];
@@ -1412,14 +1517,10 @@
   }
 
   /**
-  * @typedef {number|string|Date|ArrayBuffer|module:Key.ValueTypes[]} module:Key.ValueTypes
-  */
-
-  /**
   * Not currently in use but keeping for spec parity.
-  * @param {module:Key.Key} key
+  * @param {Key} key
   * @throws {Error} Upon a "bad key"
-  * @returns {module:Key.ValueTypes}
+  * @returns {ValueTypes}
   */
   function convertKeyToValue(key) {
     var type = key.type,
@@ -1463,7 +1564,7 @@
 
   /**
    *
-   * @param {module:Key.Key} key
+   * @param {Key} key
    * @param {boolean} inArray
    * @returns {string|null}
    */
@@ -1478,10 +1579,10 @@
 
   /**
    *
-   * @param {module:Key.Key} key
+   * @param {Key} key
    * @param {boolean} inArray
    * @throws {Error} Invalid number
-   * @returns {undefined|module:Key.ValueTypes}
+   * @returns {undefined|ValueTypes}
    */
   function _decode(key, inArray) {
     if (typeof key !== 'string') {
@@ -1492,18 +1593,14 @@
 
   /**
    *
-   * @param {module:Key.Key} key
+   * @param {Key} key
    * @param {boolean} inArray
-   * @returns {undefined|module:Key.ValueTypes}
+   * @returns {undefined|ValueTypes}
    */
   function roundTrip(key, inArray) {
     return _decode(_encode(key, inArray), inArray);
   }
   var MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `Number.MAX_SAFE_INTEGER + 1`)
-
-  /**
-   * @external WebSQLTransaction
-   */
 
   /**
   * @typedef {IDBObjectStore} IDBObjectStoreWithCurrentName
@@ -1524,7 +1621,7 @@
 
   /**
    *
-   * @param {external:WebSQLTransaction} tx
+   * @param {SQLTransaction} tx
    * @param {IDBObjectStoreWithCurrentName} store
    * @param {CurrentNumberCallback} func
    * @param {SQLFailureCallback} sqlFailCb
@@ -1544,7 +1641,7 @@
 
   /**
    *
-   * @param {external:WebSQLTransaction} tx
+   * @param {SQLTransaction} tx
    * @param {IDBObjectStoreWithCurrentName} store
    * @param {Integer} num
    * @param {CurrentNumberCallback} successCb
@@ -1566,7 +1663,7 @@
    * Bump up the auto-inc counter if the key path-resolved value is valid
    *   (greater than old value and >=1) OR if a manually passed in key is
    *   valid (numeric and >= 1) and >= any primaryKey.
-   * @param {external:WebSQLTransaction} tx
+   * @param {SQLTransaction} tx
    * @param {IDBObjectStoreWithCurrentName} store
    * @param {Integer} num
    * @param {CurrentNumberCallback} successCb
@@ -1589,7 +1686,7 @@
 
   /**
    *
-   * @param {external:WebSQLTransaction} tx
+   * @param {SQLTransaction} tx
    * @param {IDBObjectStoreWithCurrentName} store
    * @param {KeyForStoreCallback} cb
    * @param {SQLFailureCallback} sqlFailCb
@@ -1616,7 +1713,7 @@
   //     so we do not return a key
   /**
    *
-   * @param {external:WebSQLTransaction} tx
+   * @param {SQLTransaction} tx
    * @param {IDBObjectStoreWithCurrentName} store
    * @param {*|Integer} key
    * @param {CurrentNumberCallback|void} successCb

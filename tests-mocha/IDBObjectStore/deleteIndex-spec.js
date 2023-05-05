@@ -118,7 +118,10 @@ describe('IDBObjectStore.deleteIndex', function () {
                 }
                 transaction1();
 
-                // Create some indexes
+                /**
+                 * Create some indexes.
+                 * @returns {void}
+                 */
                 function transaction1 () {
                     var open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
@@ -137,7 +140,10 @@ describe('IDBObjectStore.deleteIndex', function () {
                     };
                 }
 
-                // Delete an index
+                /**
+                 * Delete an index.
+                 * @returns {void}
+                 */
                 function transaction2 () {
                     var open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
@@ -224,7 +230,11 @@ describe('IDBObjectStore.deleteIndex', function () {
                 }
             );
 
-            // Re-open the database, delete some indexes, then close the database
+            /**
+             * Re-open the database, delete some indexes, then close the database.
+             * @param {string} name
+             * @returns {void}
+             */
             function deleteObjectStores (name) {
                 var open = indexedDB.open(name, 2);
                 open.onerror = open.onblocked = done;
@@ -245,7 +255,11 @@ describe('IDBObjectStore.deleteIndex', function () {
                 };
             }
 
-            // Re-open the database, and verify that the indexes are gone
+            /**
+             * Re-open the database, and verify that the indexes are gone.
+             * @param {string} name
+             * @returns {void}
+             */
             function verifyDatabaseSchema (name) {
                 var open = indexedDB.open(name, 2);
                 open.onerror = open.onblocked = done;
@@ -281,6 +295,17 @@ describe('IDBObjectStore.deleteIndex', function () {
                 };
             }
 
+            /**
+             * @param {IDBIndex} obj
+             * @param {{
+             *   name: string,
+             *   objectStore: IDBObjectStore,
+             *   keyPath: string|string[],
+             *   multiEntry: boolean,
+             *   unique: boolean
+             * }} schema
+             * @returns {void}
+             */
             function verifySchema (obj, schema) {
                 Object.entries(schema).forEach(([prop, schemaValue]) => {
                     var objValue = obj[prop];

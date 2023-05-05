@@ -4,7 +4,15 @@
 describe('IndexedDB API', function () {
     'use strict';
 
-    // Determines whether the given thing is a class
+    /**
+     * @typedef {any} ArbitraryValue
+     */
+
+    /**
+     * Determines whether the given thing is a class.
+     * @param {ArbitraryValue} thing
+     * @returns {boolean}
+     */
     function isAClass (thing) {
         return (typeof thing === 'function' ||
             (typeof thing === 'object' && (thing.__proto__ || thing.prototype))); // eslint-disable-line no-proto

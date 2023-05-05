@@ -18,7 +18,19 @@ function IDBDatabase () {
     throw new TypeError('Illegal constructor');
 }
 const IDBDatabaseAlias = IDBDatabase;
+
+/**
+ * @param {} db
+ * @param {} name
+ * @param {} oldVersion
+ * @param {} version
+ * @param {} storeProperties
+ * @returns {IDBDatabase}
+ */
 IDBDatabase.__createInstance = function (db, name, oldVersion, version, storeProperties) {
+    /**
+     * @class
+     */
     function IDBDatabase () {
         this[Symbol.toStringTag] = 'IDBDatabase';
         util.defineReadonlyProperties(this, readonlyProperties);
@@ -141,6 +153,10 @@ IDBDatabase.prototype.deleteObjectStore = function (storeName) {
     IDBObjectStore.__deleteObjectStore(this, store);
 };
 
+/**
+ * @throws {TypeError}
+ * @returns {void}
+ */
 IDBDatabase.prototype.close = function () {
     if (!(this instanceof IDBDatabase)) {
         throw new TypeError('Illegal invocation');
@@ -214,7 +230,11 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
     return trans;
 };
 
-// See https://github.com/w3c/IndexedDB/issues/192
+/**
+ * @see https://github.com/w3c/IndexedDB/issues/192
+ * @throws {DOMException}
+ * @returns {void}
+ */
 IDBDatabase.prototype.throwIfUpgradeTransactionNull = function () {
     if (this.__upgradeTransaction === null) {
         throw createDOMException('InvalidStateError', 'No upgrade transaction associated with database.');

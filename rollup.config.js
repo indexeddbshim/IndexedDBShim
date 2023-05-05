@@ -134,13 +134,9 @@ const nodeEnvironment = ({input, name, output: file}) => {
 };
 
 /**
-* @external Rollup
-*/
-
-/**
  * @param {PlainObject} commandLineArgs Object allowing user-defined `config*`,
  * e.g., `configBrowserOnly`
- * @returns {external:Rollup[]}
+ * @returns {Rollup[]}
  */
 export default (commandLineArgs) => {
     // if (commandLineArgs.configBrowserOnly) {

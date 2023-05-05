@@ -107,6 +107,9 @@ Object.defineProperty(DOMStringList, Symbol.hasInstance, {
 const DOMStringListAlias = DOMStringList;
 Object.defineProperty(DOMStringList, '__createInstance', {
     value () {
+        /**
+         * @class
+         */
         const DOMStringList = function DOMStringList () {
             this.toString = function () {
                 return '[object DOMStringList]';

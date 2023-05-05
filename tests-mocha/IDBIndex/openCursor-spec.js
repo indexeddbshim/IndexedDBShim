@@ -413,6 +413,9 @@ describe('IDBIndex.openCursor', function () {
             var storeCursor, indexCursor, storeCounter = 0, indexCounter = 0;
             transaction1();
 
+            /**
+             * @returns {void}
+             */
             function transaction1 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
@@ -424,6 +427,9 @@ describe('IDBIndex.openCursor', function () {
                 store.add({id: 3});
             }
 
+            /**
+             * @returns {void}
+             */
             function transaction2 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
@@ -434,6 +440,9 @@ describe('IDBIndex.openCursor', function () {
                 store.add({id: 5});
             }
 
+            /**
+             * @returns {void}
+             */
             function transaction3 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
@@ -501,6 +510,10 @@ describe('IDBIndex.openCursor', function () {
                 getKey(undefined); // undefined
             }
 
+            /**
+             * @param {import('../../src/Key.js').Key} key
+             * @returns {void}
+             */
             function getKey (key) {
                 gettingCounter++;
                 var storeCursor = store.openCursor(key);
@@ -548,6 +561,11 @@ describe('IDBIndex.openCursor', function () {
                 tryToGet(/^regex$/); // RegExp
             }
 
+            /**
+             * @param {import('../../src/Key.js').Key} key
+             * @param {IDBObjectStore|IDBIndex} IDBObj
+             * @returns {void}
+             */
             function tryToGet (key, IDBObj) {
                 if (!IDBObj) {
                     tryToGet(key, store);
@@ -577,6 +595,17 @@ describe('IDBIndex.openCursor', function () {
     describe('queries', function () {
         var queries, queriesCompleted;
 
+        /**
+         * @param {IDBObjectStore|IDBIndex} source
+         * @param {IDBKeyRange} keyRange
+         * @param {"next"|"prev"|"nextunique"|"prevunique"} direction
+         * @param {number|{
+         *   primaryKey: import('../../src/Key.js').Key,
+         *   key: import('../../src/Key.js').Key,
+         *   value: import('../../src/Key.js').Value
+         * }[]} expected
+         * @returns {void}
+         */
         function query (source, keyRange, direction, expected) {
             queries++;
             if (arguments.length === 2) {

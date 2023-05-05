@@ -16,6 +16,13 @@ import shimIDBDatabase from './IDBDatabase.js';
 import CFG from './CFG.js';
 import {isNullish} from './util.js';
 
+/**
+ *
+ * @param {} prop
+ * @param {} val
+ * @throws {Error}
+ * @returns {void}
+ */
 function setConfig (prop, val) {
     if (prop && typeof prop === 'object') {
         Object.entries(prop).forEach(([p, val]) => {
@@ -32,11 +39,24 @@ function setConfig (prop, val) {
     }
 }
 
+/**
+ *
+ * @param {} idb
+ * @param {} initialConfig
+ * @returns {Window|object}
+ */
 function setGlobalVars (idb, initialConfig) {
     if (initialConfig) {
         setConfig(initialConfig);
     }
     const IDB = idb || (typeof window !== 'undefined' ? window : (typeof self !== 'undefined' ? self : (typeof global !== 'undefined' ? global : {})));
+    /**
+     *
+     * @param {} name
+     * @param {} value
+     * @param {} propDesc
+     * @returns {void}
+     */
     function shim (name, value, propDesc) {
         if (!propDesc || !Object.defineProperty) {
             try {
@@ -84,6 +104,11 @@ function setGlobalVars (idb, initialConfig) {
     }
     if (IDB.shimIndexedDB) {
         IDB.shimIndexedDB.__useShim = function () {
+            /**
+             *
+             * @param {} prefix
+             * @returns {void}
+             */
             function setNonIDBGlobals (prefix = '') {
                 shim(prefix + 'DOMException', ShimDOMException);
                 shim(prefix + 'DOMStringList', DOMStringList, {

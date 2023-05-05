@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "lib": ["DOM", "es2022"],
+    "moduleResolution": "node",
+    "module": "esnext",
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "declaration": true,
+    "declarationMap": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "target": "es6",
+    "outDir": "dist"
+  },
+  // , "test-support/**/*.js", "tests-mocha/**/*.js", "tests-polyfill/**/*.js"
+  "include": ["src/**/*.js"],
+  "exclude": ["node_modules", "web-platform-tests", "test-support/js"]
+}

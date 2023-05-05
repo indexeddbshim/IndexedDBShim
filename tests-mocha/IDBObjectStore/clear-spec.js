@@ -149,6 +149,9 @@ describe('IDBObjectStore.clear', function () {
 
             transaction1();
 
+            /**
+             * @returns {void}
+             */
             function transaction1 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
@@ -160,6 +163,9 @@ describe('IDBObjectStore.clear', function () {
                 store.add({id: 3});
             }
 
+            /**
+             * @returns {void}
+             */
             function transaction2 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
@@ -179,6 +185,9 @@ describe('IDBObjectStore.clear', function () {
                 });
             }
 
+            /**
+             * @returns {void}
+             */
             function transaction3 () {
                 var tx = db.transaction('inline', 'readwrite');
                 var store = tx.objectStore('inline');
@@ -199,6 +208,9 @@ describe('IDBObjectStore.clear', function () {
                 });
             }
 
+            /**
+             * @returns {void}
+             */
             function checkResults () {
                 // Make sure all 5 records existed before the clear
                 expect(allData).to.have.same.deep.members([

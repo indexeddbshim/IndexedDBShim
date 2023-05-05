@@ -1,7 +1,11 @@
-import customOpenDatabase from 'websql/custom/index.js';
-import SQLiteDatabase from 'websql/lib/sqlite/SQLiteDatabase.js';
+import customOpenDatabase from 'websql-configurable/custom/index.js';
+import SQLiteDatabase from 'websql-configurable/lib/sqlite/SQLiteDatabase.js';
 import CFG from './CFG.js';
 
+/**
+ * @param {string} name
+ * @returns {SQLiteDatabase}
+ */
 function wrappedSQLiteDatabase (name) {
     const db = new SQLiteDatabase(name);
     if (CFG.sqlBusyTimeout) {

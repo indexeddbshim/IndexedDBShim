@@ -10,6 +10,9 @@ import * as Sca from './Sca.js';
 import IDBIndex from './IDBIndex.js'; // eslint-disable-line import/no-named-as-default
 import CFG from './CFG.js';
 
+/**
+ * @class
+ */
 function IDBCursor () {
     throw new TypeError('Illegal constructor');
 }
@@ -73,12 +76,22 @@ IDBCursor.__super = function IDBCursor (query, direction, store, source, keyColu
     this.continue();
 };
 
+/**
+ *
+ * @param {...any} args
+ * @returns {IDBCursor}
+ */
 IDBCursor.__createInstance = function (...args) {
     const IDBCursor = IDBCursorAlias.__super;
     IDBCursor.prototype = IDBCursorAlias.prototype;
     return new IDBCursor(...args);
 };
 
+/**
+ *
+ * @param {...any} args
+ * @returns {void}
+ */
 IDBCursor.prototype.__find = function (...args /* key, tx, success, error, recordsToLoad */) {
     if (this.__multiEntryIndex) {
         this.__findMultiEntry(...args);
@@ -87,6 +100,16 @@ IDBCursor.prototype.__find = function (...args /* key, tx, success, error, recor
     }
 };
 
+/**
+ *
+ * @param {} key
+ * @param {} primaryKey
+ * @param {} tx
+ * @param {} success
+ * @param {} error
+ * @param {} recordsToLoad
+ * @returns {void}
+ */
 IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error, recordsToLoad) {
     const continueCall = recordsToLoad !== undefined;
     recordsToLoad = recordsToLoad || 1;
@@ -164,6 +187,15 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
 
 const leftBracketRegex = /\[/gu;
 
+/**
+ *
+ * @param {} key
+ * @param {} primaryKey
+ * @param {} tx
+ * @param {} success
+ * @param {} error
+ * @returns {void}
+ */
 IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, error) {
     const me = this;
 
@@ -254,10 +286,10 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
             }
             const reverse = me.direction.indexOf('prev') === 0;
             rows.sort(function (a, b) {
-                if (a.matchingKey.replace(leftBracketRegex, 'z') < b.matchingKey.replace(leftBracketRegex, 'z')) {
+                if (a.matchingKey.replaceAll(leftBracketRegex, 'z') < b.matchingKey.replaceAll(leftBracketRegex, 'z')) {
                     return reverse ? 1 : -1;
                 }
-                if (a.matchingKey.replace(leftBracketRegex, 'z') > b.matchingKey.replace(leftBracketRegex, 'z')) {
+                if (a.matchingKey.replaceAll(leftBracketRegex, 'z') > b.matchingKey.replaceAll(leftBracketRegex, 'z')) {
                     return reverse ? -1 : 1;
                 }
                 if (a.key < b.key) {
@@ -298,25 +330,33 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
 };
 
 /**
-* @callback module:IDBCursor.SuccessArg
-* @param value
+ * @typedef {any} StructuredCloneValue
+ */
+
+/**
+ * @typedef {any} IndexedDBKey
+ */
+
+/**
+* @callback IDBCursor.SuccessArg
+* @param {StructuredCloneValue} value
 * @param {IDBRequest} req
 * @returns {void}
 */
 
 /**
-* @callback module:IDBCursor.SuccessCallback
-* @param key
-* @param value
-* @param primaryKey
+* @callback IDBCursor.SuccessCallback
+* @param {IndexedDBKey} key
+* @param {StructuredCloneValue} value
+* @param {IndexedDBKey} primaryKey
 * @returns {void}
 */
 
 /**
  * Creates an "onsuccess" callback.
  * @private
- * @param {module:IDBCursor.SuccessArg} success
- * @returns {module:IDBCursor.SuccessCallback}
+ * @param {IDBCursor.SuccessArg} success
+ * @returns {IDBCursor.SuccessCallback}
  */
 IDBCursor.prototype.__onsuccess = function (success) {
     const me = this;
@@ -336,6 +376,12 @@ IDBCursor.prototype.__onsuccess = function (success) {
     };
 };
 
+/**
+ *
+ * @param {} rowItem
+ * @param {} callback
+ * @returns {void}
+ */
 IDBCursor.prototype.__decode = function (rowItem, callback) {
     const me = this;
     if (me.__multiEntryIndex && me.__unique) {
@@ -365,15 +411,27 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
     callback(key, val, primaryKey, encKey /*, encVal, encPrimaryKey */);
 };
 
+/**
+ * @returns {void}
+ */
 IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
     IDBObjectStore.__invalidStateIfDeleted(this.__store, "The cursor's effective object store has been deleted");
     if (this.__indexSource) IDBIndex.__invalidStateIfDeleted(this.source, "The cursor's index source has been deleted");
 };
 
+/**
+ * @returns {void}
+ */
 IDBCursor.prototype.__invalidateCache = function () {
     this.__prefetchedData = null;
 };
 
+/**
+ *
+ * @param {} key
+ * @param {} advanceContinue
+ * @returns {void}
+ */
 IDBCursor.prototype.__continue = function (key, advanceContinue) {
     const me = this;
     const advanceState = me.__advanceCount !== undefined;
@@ -395,6 +453,13 @@ IDBCursor.prototype.__continue = function (key, advanceContinue) {
     this.__continueFinish(key, undefined, advanceState);
 };
 
+/**
+ *
+ * @param {} key
+ * @param {} primaryKey
+ * @param {} advanceState
+ * @returns {void}
+ */
 IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) {
     const me = this;
     const recordsToPreloadOnContinue = me.__advanceCount || CFG.cursorPreloadPackSize || 100;
@@ -402,6 +467,12 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
     me.__request.__done = false;
 
     me.__store.transaction.__pushToQueue(me.__request, function cursorContinue (tx, args, success, error, executeNextRequest) {
+        /**
+         * @param {import('../../src/Key.js').Key} k
+         * @param {import('../../src/Key.js').Value} val
+         * @param {import('../../src/Key.js').Key} primKey
+         * @returns {void}
+         */
         function triggerSuccess (k, val, primKey) {
             if (advanceState) {
                 if (me.__advanceCount >= 2 && k !== undefined) {
@@ -420,6 +491,9 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
             me.__prefetchedIndex++;
             if (me.__prefetchedIndex < me.__prefetchedData.length) {
                 me.__decode(me.__prefetchedData.item(me.__prefetchedIndex), function (k, val, primKey, encKey) {
+                    /**
+                     * @returns {void}
+                     */
                     function checkKey () {
                         const cmpResult = key === undefined || cmp(k, key);
                         if (cmpResult > 0 || (
@@ -451,11 +525,20 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
     });
 };
 
+/**
+ * @returns {void}
+ */
 IDBCursor.prototype.continue = function (/* key */) {
     // eslint-disable-next-line prefer-rest-params
     this.__continue(arguments[0]);
 };
 
+/**
+ *
+ * @param {} key
+ * @param {} primaryKey
+ * @returns {void}
+ */
 IDBCursor.prototype.continuePrimaryKey = function (key, primaryKey) {
     const me = this;
     IDBTransaction.__assertActive(me.__store.transaction);
@@ -479,6 +562,10 @@ IDBCursor.prototype.continuePrimaryKey = function (key, primaryKey) {
     ) {
         throw createDOMException('DataError', 'Cannot continue the cursor in an unexpected direction');
     }
+
+    /**
+     * @returns {void}
+     */
     function noErrors () {
         me.__continueFinish(key, primaryKey, false);
     }
@@ -499,6 +586,11 @@ IDBCursor.prototype.continuePrimaryKey = function (key, primaryKey) {
     }
 };
 
+/**
+ *
+ * @param {} count
+ * @returns {void}
+ */
 IDBCursor.prototype.advance = function (count) {
     const me = this;
     count = util.enforceRange(count, 'unsigned long');
@@ -511,6 +603,11 @@ IDBCursor.prototype.advance = function (count) {
     me.__continue();
 };
 
+/**
+ *
+ * @param {} valueToUpdate
+ * @returns {IDBRequest}
+ */
 IDBCursor.prototype.update = function (valueToUpdate) {
     const me = this;
     if (!arguments.length) throw new TypeError('A value must be passed to update()');
@@ -525,6 +622,11 @@ IDBCursor.prototype.update = function (valueToUpdate) {
     }
     const request = me.__store.transaction.__createRequest(me);
     const key = me.primaryKey;
+
+    /**
+     * @param {import('../../src/Key.js').Value} clonedValue
+     * @returns {void}
+     */
     function addToQueue (clonedValue) {
         // We set the `invalidateCache` argument to `false` since the old value shouldn't be accessed
         IDBObjectStore.__storingRecordObjectStore(request, me.__store, false, clonedValue, false, key);
@@ -542,6 +644,9 @@ IDBCursor.prototype.update = function (valueToUpdate) {
     return request;
 };
 
+/**
+ * @returns {IDBRequest}
+ */
 IDBCursor.prototype.delete = function () {
     const me = this;
     IDBTransaction.__assertActive(me.__store.transaction);
@@ -583,6 +688,9 @@ Object.defineProperty(IDBCursor, 'prototype', {
     writable: false
 });
 
+/**
+ * @class
+ */
 function IDBCursorWithValue () {
     throw new TypeError('Illegal constructor');
 }
@@ -596,7 +704,15 @@ Object.defineProperty(IDBCursorWithValue.prototype, 'constructor', {
 });
 
 const IDBCursorWithValueAlias = IDBCursorWithValue;
+/**
+ *
+ * @param {...any} args
+ * @returns {IDBCursorWithValue}
+ */
 IDBCursorWithValue.__createInstance = function (...args) {
+    /**
+     * @class
+     */
     function IDBCursorWithValue () {
         IDBCursor.__super.call(this, ...args);
         this[Symbol.toStringTag] = 'IDBCursorWithValue';

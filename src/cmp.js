@@ -2,9 +2,13 @@ import CFG from './CFG.js';
 import {encode as keyEncode, decode as keyDecode} from './Key.js';
 
 /**
+ * @typedef {any} AnyValue
+ */
+
+/**
  * Compares two keys.
- * @param first
- * @param second
+ * @param {AnyValue} first
+ * @param {AnyValue} second
  * @returns {number}
  */
 function cmp (first, second) {

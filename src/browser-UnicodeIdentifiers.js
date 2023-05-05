@@ -14,6 +14,10 @@ setGlobalVars();
 const __setUnicodeIdentifiers = shimIndexedDB.__setUnicodeIdentifiers.bind(
     shimIndexedDB
 );
+
+/**
+ * @returns {void}
+ */
 shimIndexedDB.__setUnicodeIdentifiers = function () {
     __setUnicodeIdentifiers(UnicodeIdentifiers);
 };

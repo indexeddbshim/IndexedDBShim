@@ -48,6 +48,10 @@
         /* eslint-env mocha */
         document.addEventListener('deviceready', onDeviceReady, false);
 
+        /**
+         * Injects scripts when device is ready.
+         * @returns {void}
+         */
         function onDeviceReady () {
             addScript('api-spec.js');
             addScript('IDBFactory/cmp-spec.js');
@@ -75,11 +79,20 @@
             setTimeout(runTests, 2000);
         }
 
+        /**
+         * Begins Mocha tests.
+         * @returns {void}
+         */
         function runTests () {
             mocha.checkLeaks();
             mocha.run();
         }
 
+        /**
+         * Injects a script.
+         * @param {string} url
+         * @returns {void}
+         */
         function addScript (url) {
             const scriptElem = document.createElement('script');
             scriptElem.src = url;

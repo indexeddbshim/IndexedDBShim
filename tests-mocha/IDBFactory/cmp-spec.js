@@ -14,7 +14,13 @@ describe('IDBFactory.cmp', function () {
     results[0] = ', but they were equal';
     results[1] = ', but it was greater';
 
-    // Asserts that a is less than b, and that b is greater than a
+    /**
+     * Asserts that a is less than b, and that b is greater than a.
+     * @param {import('../../src/Key.js').Value} a
+     * @param {import('../../src/Key.js').Value} b
+     * @throws {Error}
+     * @returns {void}
+     */
     function compare (a, b) {
         var result = indexedDB.cmp(a, b);
         if (result !== -1) {
@@ -27,7 +33,13 @@ describe('IDBFactory.cmp', function () {
         }
     }
 
-    // Asserts that a equals b, and that b equals a
+    /**
+     * Asserts that a equals b, and that b equals a.
+     * @param {import('../../src/Key.js').Value} a
+     * @param {import('../../src/Key.js').Value} b
+     * @throws {Error}
+     * @returns {void}
+     */
     function equal (a, b) {
         if (arguments.length === 1) {
             b = a;
@@ -284,6 +296,10 @@ describe('IDBFactory.cmp', function () {
                 tryToCompare(/asdf/); // RegExp literal
             }
 
+            /**
+             * @param {import('../../src/Key.js').Value} x
+             * @returns {void}
+             */
             function tryToCompare (x) {
                 var err;
                 try {

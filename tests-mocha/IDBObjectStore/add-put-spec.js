@@ -5,6 +5,8 @@
  *     This file contains tests that are THE SAME for
  *       IDBObjectStore.add and IDBObjectStore.put
  *********************************************************/
+
+/** @type {"put"|"add"} */
 ['put', 'add'].forEach(function (save) {
     'use strict';
 
@@ -371,6 +373,10 @@
                         saveKey([new Date(2005, 6, 7)]); // array of Dates
                     }
 
+                    /**
+                     * @param {string|number|Date|(string|number|Date)[]} key
+                     * @returns {void}
+                     */
                     function saveKey (key) {
                         savingCounter++;
                         var saving = store[save]({foo: key}, key);
@@ -431,6 +437,14 @@
                         tryToSaveKey(/^regex$/); // RegExp
                     }
 
+                    /**
+                     * @typedef {any} BadArgument
+                     */
+
+                    /**
+                     * @param {BadArgument} key
+                     * @returns {void}
+                     */
                     function tryToSaveKey (key) {
                         var err = null;
 
@@ -496,6 +510,10 @@
                         saveData(null); // null
                     }
 
+                    /**
+                     * @param {import('../../src/Key.js').Value} data
+                     * @returns {void}
+                     */
                     function saveData (data) {
                         savingCounter++;
                         var saving = store[save](data);
@@ -820,6 +838,10 @@
                         saveKey([new Date(2005, 6, 7)]); // array of Dates
                     }
 
+                    /**
+                     * @param {import('../../src/Key.js').Key} key
+                     * @returns {void}
+                     */
                     function saveKey (key) {
                         savingCounter++;
                         var saving = store[save]({id: key});
@@ -880,6 +902,10 @@
                         tryToSaveKey(null); // null
                     }
 
+                    /**
+                     * @param {import('../../src/Key.js').Key} key
+                     * @returns {void}
+                     */
                     function tryToSaveKey (key) {
                         var err = null;
 
@@ -930,6 +956,10 @@
                         saveData(/^regex$/); // RegExp
                     }
 
+                    /**
+                     * @param {import('../../src/Key.js').Value} data
+                     * @returns {void}
+                     */
                     function saveData (data) {
                         savingCounter++;
                         var saving = store[save](data);
@@ -1000,6 +1030,10 @@
                         tryToSaveData(null); // null
                     }
 
+                    /**
+                     * @param {import('../../src/Key.js').Value} value
+                     * @returns {void}
+                     */
                     function tryToSaveData (value) {
                         var err;
 
@@ -1475,6 +1509,10 @@
                         saveKey(util.sampleData.veryLongString); // very long string
                     }
 
+                    /**
+                     * @param {string|number|Date|(string|number|Date)[]} key
+                     * @returns {void}
+                     */
                     function saveKey (key) {
                         savingCounter++;
                         var saving = store[save]({id: 1, name: {first: 'abc', last: key}});
@@ -1535,6 +1573,10 @@
                         tryToSaveKey(null); // null
                     }
 
+                    /**
+                     * @param {import('../../src/Key.js').Key} key
+                     * @returns {void}
+                     */
                     function tryToSaveKey (key) {
                         var err = null;
 

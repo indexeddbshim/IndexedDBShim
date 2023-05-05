@@ -89,6 +89,10 @@ describe('IDBTransaction.objectStore', function () {
             tryToOpen('inline');
             tryToOpen('out-of-line');
 
+            /**
+             * @param {string} store
+             * @returns {void}
+             */
             function tryToOpen (store) {
                 var err = null;
                 try {

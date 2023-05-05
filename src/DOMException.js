@@ -15,6 +15,20 @@ function createNativeDOMException (name, message) {
 }
 
 // From web-platform-tests testharness.js name_code_map (though not in new spec)
+
+/**
+ * @typedef {"IndexSizeError"|"HierarchyRequestError"|"WrongDocumentError"|
+ * "InvalidCharacterError"|"NoModificationAllowedError"|"NotFoundError"|
+ * "NotSupportedError"|"InUseAttributeError"|"InvalidStateError"|
+ * "SyntaxError"|"InvalidModificationError"|"NamespaceError"|
+ * "InvalidAccessError"|"TypeMismatchError"|"SecurityError"|
+ * "NetworkError"|"AbortError"|"URLMismatchError"|"QuotaExceededError"|
+ * "TimeoutError"|"InvalidNodeTypeError"|"DataCloneError"|"EncodingError"|
+ * "NotReadableError"|"UnknownError"|"ConstraintError"|"DataError"|
+ * "TransactionInactiveError"|"ReadOnlyError"|"VersionError"|
+ * "OperationError"|"NotAllowedError"} Code
+ */
+
 const codes = {
     IndexSizeError: 1,
     HierarchyRequestError: 3,
@@ -51,6 +65,17 @@ const codes = {
     NotAllowedError: 0
 };
 
+/**
+ * @typedef {"INDEX_SIZE_ERR"|"DOMSTRING_SIZE_ERR"|"HIERARCHY_REQUEST_ERR"|
+ * "WRONG_DOCUMENT_ERR"|"INVALID_CHARACTER_ERR"|"NO_DATA_ALLOWED_ERR"|
+ * "NO_MODIFICATION_ALLOWED_ERR"|"NOT_FOUND_ERR"|"NOT_SUPPORTED_ERR"|
+ * "INUSE_ATTRIBUTE_ERR"|"INVALID_STATE_ERR"|"SYNTAX_ERR"|
+ * "INVALID_MODIFICATION_ERR"|"NAMESPACE_ERR"|"INVALID_ACCESS_ERR"|
+ * "VALIDATION_ERR"|"TYPE_MISMATCH_ERR"|"SECURITY_ERR"|"NETWORK_ERR"|
+ * "ABORT_ERR"|"URL_MISMATCH_ERR"|"QUOTA_EXCEEDED_ERR"|"TIMEOUT_ERR"|
+ * "INVALID_NODE_TYPE_ERR"|"DATA_CLONE_ERR"} LegacyCode
+ */
+
 const legacyCodes = {
     INDEX_SIZE_ERR: 1,
     DOMSTRING_SIZE_ERR: 2,
@@ -84,6 +109,11 @@ const legacyCodes = {
  * @returns {DOMException}
  */
 function createNonNativeDOMExceptionClass () {
+    /**
+     * @param {string|undefined} message
+     * @param {Code|LegacyCode} name
+     * @returns {void}
+     */
     function DOMException (message, name) {
         // const err = Error.prototype.constructor.call(this, message); // Any use to this? Won't set this.message
         this[Symbol.toStringTag] = 'DOMException';
@@ -118,8 +148,12 @@ function createNonNativeDOMExceptionClass () {
     // Necessary for W3C tests which complains if `DOMException` has properties on its "own" prototype
 
     // class DummyDOMException extends Error {}; // Sometimes causing problems in Node
-    // eslint-disable-next-line func-name-matching
+    /* eslint-disable func-name-matching */
+    /**
+     * @class
+     */
     const DummyDOMException = function DOMException () { /* */ };
+    /* eslint-enable func-name-matching */
     DummyDOMException.prototype = Object.create(Error.prototype); // Intended for subclassing
     ['name', 'message'].forEach((prop) => {
         Object.defineProperty(DummyDOMException.prototype, prop, {
@@ -214,6 +248,14 @@ function logError (name, message, error) {
     }
 }
 
+/**
+ * @typedef {any} ArbitraryValue
+ */
+
+/**
+ * @param {ArbitraryValue} obj
+ * @returns {boolean}
+ */
 function isErrorOrDOMErrorOrDOMException (obj) {
     return obj && typeof obj === 'object' && // We don't use util.isObj here as mutual dependency causing problems in Babel with browser
         typeof obj.name === 'string';
@@ -223,7 +265,7 @@ function isErrorOrDOMErrorOrDOMException (obj) {
  * Finds the error argument.  This is useful because some WebSQL callbacks
  * pass the error as the first argument, and some pass it as the second
  * argument.
- * @param {Array} args
+ * @param {(Error|{message?: string, name?: string}|any)[]} args
  * @returns {Error|DOMException|undefined}
  */
 function findError (args) {
@@ -245,8 +287,12 @@ function findError (args) {
 }
 
 /**
+ * @typedef {Error} SQLError
+ */
+
+/**
  *
- * @param {external:WebSQLError} webSQLErr
+ * @param {SQLError} webSQLErr
  * @returns {DOMException}
  */
 function webSQLErrback (webSQLErr) {

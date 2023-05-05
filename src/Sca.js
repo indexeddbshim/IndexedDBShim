@@ -8,13 +8,24 @@ import {createDOMException, ShimDOMException} from './DOMException.js';
 
 let typeson = new Typeson().register(structuredCloningThrowing);
 
+/**
+ * @param {(preset: import('typeson-registry').Preset) =>
+ *   import('typeson-registry').Preset} func
+ * @returns {void}
+ */
 function register (func) {
     typeson = new Typeson().register(func(structuredCloningThrowing));
 }
 
-// We are keeping the callback approach for now in case we wish to reexpose
-//   `Blob`, `File`, `FileList` asynchronously (though in such a case, we
-//   should probably refactor as a Promise)
+/**
+ * We are keeping the callback approach for now in case we wish to reexpose
+ * `Blob`, `File`, `FileList` asynchronously (though in such a case, we
+ * should probably refactor as a Promise).
+ * @param {import('../src/Key.js').Value} obj
+ * @param {(str: string) => void} func
+ * @throws {Error}
+ * @returns {string}
+ */
 function encode (obj, func) {
     let ret;
     try {
@@ -34,14 +45,24 @@ function encode (obj, func) {
         //  throwing getters (as in the W3C test, key-conversion-exceptions.htm)
         throw err;
     }
-    if (func) func(ret);
+    if (func) {
+        func(ret);
+    }
     return ret;
 }
 
+/**
+ * @param {string} obj
+ * @returns {import('typeson').Value}
+ */
 function decode (obj) {
     return typeson.parse(obj);
 }
 
+/**
+ * @param {import('typeson').Value} val
+ * @returns {import('typeson').Value}
+ */
 function clone (val) {
     // We don't return the intermediate `encode` as we'll need to reencode
     //   the clone as it may differ

@@ -14,7 +14,11 @@ const doneFlagGetters = ['result', 'error'];
 function IDBRequest () {
     throw new TypeError('Illegal constructor');
 }
-// eslint-disable-next-line func-name-matching
+
+/* eslint-disable func-name-matching -- Polyfill */
+/**
+ * @class
+ */
 IDBRequest.__super = function IDBRequest () {
     this[Symbol.toStringTag] = 'IDBRequest';
     this.__setOptions({
@@ -50,7 +54,11 @@ IDBRequest.__super = function IDBRequest () {
     this.__error = this.__source = this.__transaction = null;
     this.__done = false;
 };
+/* eslint-enable func-name-matching -- Polyfill */
 
+/**
+ * @returns {IDBRequest}
+ */
 IDBRequest.__createInstance = function () {
     return new IDBRequest.__super();
 };
@@ -58,6 +66,9 @@ IDBRequest.__createInstance = function () {
 IDBRequest.prototype = EventTargetFactory.createInstance({extraProperties: ['debug']});
 IDBRequest.prototype[Symbol.toStringTag] = 'IDBRequestPrototype';
 
+/**
+ * @returns {IDBTransaction}
+ */
 IDBRequest.prototype.__getParent = function () {
     if (this.toString() === '[object IDBOpenDBRequest]') {
         return null;
@@ -102,7 +113,13 @@ Object.defineProperty(IDBOpenDBRequest.prototype, 'constructor', {
 });
 
 const IDBOpenDBRequestAlias = IDBOpenDBRequest;
+/**
+ * @returns {IDBOpenDBRequest}
+ */
 IDBOpenDBRequest.__createInstance = function () {
+    /**
+     * @class
+     */
     function IDBOpenDBRequest () {
         IDBRequest.__super.call(this);
 

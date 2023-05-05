@@ -1,4 +1,4 @@
-import SyncPromise from 'sync-promise';
+import SyncPromise from 'sync-promise-expanded';
 import {createDOMException} from './DOMException.js';
 import {IDBCursor, IDBCursorWithValue} from './IDBCursor.js';
 import * as util from './util.js';
@@ -24,7 +24,16 @@ function IDBIndex () {
     throw new TypeError('Illegal constructor');
 }
 const IDBIndexAlias = IDBIndex;
+/**
+ *
+ * @param {} store
+ * @param {} indexProperties
+ * @returns {IDBIndex}
+ */
 IDBIndex.__createInstance = function (store, indexProperties) {
+    /**
+     * @class
+     */
     function IDBIndex () {
         const me = this;
         me[Symbol.toStringTag] = 'IDBIndex';
@@ -100,6 +109,13 @@ IDBIndex.__createInstance = function (store, indexProperties) {
     return new IDBIndex();
 };
 
+/**
+ *
+ * @param {} index
+ * @param {} msg
+ * @throws {DOMException}
+ * @returns {void}
+ */
 IDBIndex.__invalidStateIfDeleted = function (index, msg) {
     if (index.__deleted || index.__pendingDelete || (
         index.__pendingCreate && index.objectStore.transaction && index.objectStore.transaction.__errored
@@ -164,10 +180,19 @@ IDBIndex.__createIndex = function (store, index) {
         const columnExists = idx && (idx.__deleted || idx.__recreated); // This check must occur here rather than earlier as properties may not have been set yet otherwise
         let indexValues = {};
 
+        /**
+         * @param {SQLTransaction} tx
+         * @param {import('./DOMException.js').SQLError} err
+         * @returns {void}
+         */
         function error (tx, err) {
             failure(createDOMException('UnknownError', 'Could not create index "' + indexName + '"' + err.code + '::' + err.message, err));
         }
 
+        /**
+         * @param {SQLTransaction} tx
+         * @returns {void}
+         */
         function applyIndex (tx) {
             // Update the object store's index list
             IDBIndex.__updateIndexList(store, tx, function () {
@@ -176,6 +201,10 @@ IDBIndex.__createIndex = function (store, index) {
                     CFG.DEBUG && console.log('Adding existing ' + storeName + ' records to the ' + indexName + ' index');
                     addIndexEntry(0);
 
+                    /**
+                     * @param {Integer} i
+                     * @returns {void}
+                     */
                     function addIndexEntry (i) {
                         if (i < data.rows.length) {
                             try {
@@ -229,6 +258,10 @@ IDBIndex.__createIndex = function (store, index) {
         const escapedStoreNameSQL = util.escapeStoreNameForSQL(storeName);
         const escapedIndexNameSQL = util.escapeIndexNameForSQL(index.name);
 
+        /**
+         * @param {SQLTransaction} tx
+         * @returns {void}
+         */
         function addIndexSQL (tx) {
             if (!CFG.useSQLiteIndexes) {
                 applyIndex(tx);
@@ -281,10 +314,18 @@ IDBIndex.__deleteIndex = function (store, index) {
     // Remove the index in WebSQL
     const {transaction} = store;
     transaction.__addNonRequestToTransactionQueue(function deleteIndex (tx, args, success, failure) {
+        /**
+         * @param {SQLTransaction} tx
+         * @param {SQLError} err
+         * @returns {void}
+         */
         function error (tx, err) {
             failure(createDOMException('UnknownError', 'Could not delete index "' + index.name + '"', err));
         }
 
+        /**
+         * @returns {void}
+         */
         function finishDeleteIndex () {
             // Update the object store's index list
             IDBIndex.__updateIndexList(store, tx, function (store) {
@@ -320,8 +361,11 @@ IDBIndex.__deleteIndex = function (store, index) {
  * Updates index list for the given object store.
  * @param {IDBObjectStore} store
  * @param {object} tx
- * @param {function} success
- * @param {function} failure
+ * @param {(store: IDBObjectStore) => void} success
+ * @param {(
+ *   tx: SQLTransaction,
+ *   err: import('./DOMException.js').SQLError
+ * ) => boolean} failure
  * @returns {void}
  */
 IDBIndex.__updateIndexList = function (store, tx, success, failure) {
@@ -412,6 +456,12 @@ IDBIndex.prototype.openKeyCursor = function (/* query, direction */) {
     return cursor.__request;
 };
 
+/**
+ *
+ * @param {} query
+ * @throws {TypeError}
+ * @returns {}
+ */
 IDBIndex.prototype.get = function (query) {
     if (!arguments.length) { // Per https://heycam.github.io/webidl/
         throw new TypeError('A parameter was missing for `IDBIndex.get`.');
@@ -419,6 +469,12 @@ IDBIndex.prototype.get = function (query) {
     return this.__fetchIndexData(query, 'value', true);
 };
 
+/**
+ *
+ * @param {} query
+ * @throws {TypeError}
+ * @returns {}
+ */
 IDBIndex.prototype.getKey = function (query) {
     if (!arguments.length) { // Per https://heycam.github.io/webidl/
         throw new TypeError('A parameter was missing for `IDBIndex.getKey`.');
@@ -426,18 +482,27 @@ IDBIndex.prototype.getKey = function (query) {
     return this.__fetchIndexData(query, 'key', true);
 };
 
+/**
+ * @returns {}
+ */
 IDBIndex.prototype.getAll = function (/* query, count */) {
     // eslint-disable-next-line prefer-rest-params
     const [query, count] = arguments;
     return this.__fetchIndexData(query, 'value', false, count);
 };
 
+/**
+ * @returns {}
+ */
 IDBIndex.prototype.getAllKeys = function (/* query, count */) {
     // eslint-disable-next-line prefer-rest-params
     const [query, count] = arguments;
     return this.__fetchIndexData(query, 'key', false, count);
 };
 
+/**
+ * @returns {}
+ */
 IDBIndex.prototype.count = function (/* query */) {
     const me = this;
     // eslint-disable-next-line prefer-rest-params
@@ -454,6 +519,15 @@ IDBIndex.prototype.count = function (/* query */) {
     return me.__fetchIndexData(query, 'count', false);
 };
 
+/**
+ *
+ * @param {} store
+ * @param {} oldName
+ * @param {} newName
+ * @param {} colInfoToPreserveArr
+ * @param {} cb
+ * @returns {void}
+ */
 IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToPreserveArr = [], cb = null) {
     const newNameType = 'BLOB';
     const storeName = store.__currentName;
@@ -468,9 +542,17 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
     // We could adapt the approach at http://stackoverflow.com/a/8430746/271577
     //    to make the approach reusable without passing column names, but it is a bit fragile
     store.transaction.__addNonRequestToTransactionQueue(function renameIndex (tx, args, success, error) {
+        /**
+         * @param {SQLTransaction} tx
+         * @param {SQLError} err
+         * @returns {void}
+         */
         function sqlError (tx, err) {
             error(err);
         }
+        /**
+         * @returns {void}
+         */
         function finish () {
             if (cb) {
                 cb(tx, success);
@@ -561,7 +643,26 @@ Object.defineProperty(IDBIndex, 'prototype', {
     writable: false
 });
 
-function executeFetchIndexData (count, unboundedDisallowed, index, hasKey, range, opType, multiChecks, sql, sqlValues, tx, args, success, error) {
+/**
+ * @param {number} count
+ * @param {boolean} unboundedDisallowed
+ * @param {IDBIndex} index
+ * @param {boolean} hasKey
+ * @param {import('./Key.js').Value|import('./Key.js').Key} range
+ * @param {"value"|"key"|"count"} opType
+ * @param {boolean} multiChecks
+ * @param {string[]} sql
+ * @param {string[]} sqlValues
+ * @param {SQLTransaction} tx
+ * @param {undefined} args
+ * @param {() => void} success
+ * @param {(tx: SQLTransaction, err: SQLError) => void} error
+ * @returns {void}
+ */
+function executeFetchIndexData (
+    count, unboundedDisallowed, index, hasKey, range, opType,
+    multiChecks, sql, sqlValues, tx, args, success, error
+) {
     if (unboundedDisallowed) {
         count = 1;
     }
@@ -628,7 +729,26 @@ function executeFetchIndexData (count, unboundedDisallowed, index, hasKey, range
     }, error);
 }
 
-function buildFetchIndexDataSQL (nullDisallowed, index, range, opType, multiChecks) {
+/**
+ * @param {boolean} nullDisallowed
+ * @param {IDBIndex} index
+ * @param {import('./Key.js').Value|import('./Key.js').Key} range
+ * @param {"value"|"key"|"count"} opType
+ * @param {boolean} multiChecks
+ * @returns {[
+ *   nullDisallowed: boolean,
+ *   index: IDBIndex,
+ *   hasRange: boolean,
+ *   range: import('./Key.js').Value|import('./Key.js').Key,
+ *   opType: "value"|"key"|"count",
+ *   multiChecks: boolean,
+ *   sql: string[],
+ *   sqlValues: string[]
+ * ]}
+ */
+function buildFetchIndexDataSQL (
+    nullDisallowed, index, range, opType, multiChecks
+) {
     const hasRange = nullDisallowed || !util.isNullish(range);
     const col = opType === 'count' ? 'key' : opType; // It doesn't matter which column we use for 'count' as long as it is valid
     const sql = [

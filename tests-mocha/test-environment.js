@@ -76,7 +76,7 @@
     /**
      * Intercept the first call to Mocha's `describe` function, and use it to initialize the test environment.
      * @param {string} name
-     * @param {function} testSuite
+     * @param {() => void} testSuite
      * @returns {void}
      */
     window.describe = function (name, testSuite) {
@@ -204,8 +204,8 @@
     }
 
     /**
-    * @typedef {PlainObject} SimulatedElement
-    * @property {PlainObject} style
+    * @typedef {object} SimulatedElement
+    * @property {{}} style
     * @property {string} [className]
     */
     /**
@@ -372,6 +372,9 @@
                 var transaction = db.transaction([DB.OBJECT_STORE_1], 'readwrite');
                 var objectStore = transaction.objectStore(DB.OBJECT_STORE_1);
                 var counter = 0, max = 15;
+                /**
+                 * @returns {void}
+                 */
                 var success = function () {
                     expect(true, 'Data added to store').to.be.true;
                     if (++counter >= max) {
@@ -380,6 +383,10 @@
                         cb();
                     }
                 };
+                /**
+                 * @param {Event} e
+                 * @returns {void}
+                 */
                 var error = function (e) {
                     expect(false, 'Could not add data').to.be.true;
                     if (++counter >= 10) {
