@@ -11,33 +11,101 @@ let uniqueID = 0;
 const listeners = ['onabort', 'oncomplete', 'onerror'];
 const readonlyProperties = ['objectStoreNames', 'mode', 'db', 'error'];
 
-/* eslint-disable jsdoc/check-param-names */
+/**
+ * @typedef {number} Integer
+ */
+
+/**
+ * @typedef {{
+ *   op: SQLCallback,
+ *   args: ObjectArray,
+ *   req: import('./IDBRequest.js').IDBRequestFull|null
+ * }} RequestInfo
+ */
+
+/**
+ * @typedef {EventTarget & {
+ *   mode: "readonly"|"readwrite"|"versionchange",
+ *   db: import('./IDBDatabase.js').IDBDatabaseFull,
+ *   on__abort: () => void,
+ *   on__complete: () => void,
+ *   on__beforecomplete: (ev: Event & {
+ *     complete: () => void
+ *   }) => void,
+ *   on__preabort: () => void,
+ *   __abortTransaction: (err: Error|DOMException|null) => void,
+ *   __executeRequests: () => void,
+ *   __tx: SQLTransaction,
+ *   __id: Integer,
+ *   __active: boolean,
+ *   __running: boolean,
+ *   __errored: boolean,
+ *   __requests: RequestInfo[],
+ *   __db: import('./IDBDatabase.js').IDBDatabaseFull,
+ *   __mode: string,
+ *   __error: null|DOMException|Error,
+ *   __objectStoreNames: import('./DOMStringList.js').DOMStringListFull,
+ *   __storeHandles: {
+ *     [key: string]: import('./IDBObjectStore.js').IDBObjectStoreFull
+ *   },
+ *   __requestsFinished: boolean,
+ *   __transFinishedCb: (err: boolean, cb: ((bool?: boolean) => void)) => void,
+ *   __transactionEndCallback: () => void,
+ *   __transactionFinished: boolean,
+ *   __completed: boolean,
+ *   __internal: boolean,
+ *   __abortFinished: boolean,
+ *   __createRequest: (
+ *     source: import('./IDBDatabase.js').IDBDatabaseFull|
+ *       import('./IDBObjectStore.js').IDBObjectStoreFull|
+ *       import('./IDBIndex.js').IDBIndexFull|
+ *       import('./IDBCursor.js').IDBCursorFull
+ *   ) => import('./IDBRequest.js').IDBRequestFull,
+ *   __pushToQueue: (
+ *     request: import('./IDBRequest.js').IDBRequestFull|null,
+ *     callback: SQLCallback,
+ *     args?: ObjectArray
+ *   ) => void,
+ *   __assertActive: () => void,
+ *   __addNonRequestToTransactionQueue: (
+ *     callback: SQLCallback,
+ *     args?: ObjectArray
+ *   ) => void
+ *   __addToTransactionQueue: (
+ *     callback: SQLCallback,
+ *     args: ObjectArray|undefined,
+ *     source: import('./IDBDatabase.js').IDBDatabaseFull|
+ *       import('./IDBObjectStore.js').IDBObjectStoreFull|
+ *       import('./IDBIndex.js').IDBIndexFull|
+ *       import('./IDBCursor.js').IDBCursorFull
+ *   ) => import('./IDBRequest.js').IDBRequestFull
+ *   __assertWritable: () => void,
+ * }} IDBTransactionFull
+ */
+
 /**
  * The IndexedDB Transaction.
  * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBTransaction
- * @param {IDBDatabase} db
- * @param {string[]} storeNames
- * @param {string} mode
  * @class
  */
 function IDBTransaction () {
-    /* eslint-enable jsdoc/check-param-names */
     throw new TypeError('Illegal constructor');
 }
 const IDBTransactionAlias = IDBTransaction;
 /**
- *
- * @param {} db
- * @param {} storeNames
- * @param {} mode
- * @returns {IDBTransaction}
+ * @param {import('./IDBDatabase.js').IDBDatabaseFull} db
+ * @param {import('./DOMStringList.js').DOMStringListFull} storeNames
+ * @param {string} mode
+ * @returns {IDBTransactionFull}
  */
 IDBTransaction.__createInstance = function (db, storeNames, mode) {
     /**
      * @class
+     * @this {IDBTransactionFull}
      */
     function IDBTransaction () {
         const me = this;
+        // @ts-expect-error It's ok
         me[Symbol.toStringTag] = 'IDBTransaction';
         util.defineReadonlyProperties(me, readonlyProperties);
         me.__id = ++uniqueID; // for debugging simultaneous transactions
@@ -49,6 +117,7 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
         me.__mode = mode;
         me.__db = db;
         me.__error = null;
+        // @ts-expect-error Part of `ShimEventTarget`
         me.__setOptions({
             legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
         });
@@ -65,9 +134,12 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
         setTimeout(() => { me.__executeRequests(); }, 0);
     }
     IDBTransaction.prototype = IDBTransactionAlias.prototype;
+
+    // @ts-expect-error It's ok
     return new IDBTransaction();
 };
 
+// @ts-expect-error It's ok
 IDBTransaction.prototype = EventTargetFactory.createInstance({
     defaultSync: true,
     // Ensure EventTarget preserves our properties
@@ -76,14 +148,15 @@ IDBTransaction.prototype = EventTargetFactory.createInstance({
 
 /**
  *
- * @param {} err
- * @param {} cb
+ * @param {boolean} err
+ * @param {(bool: boolean) => void} cb
  * @returns {void}
  */
 IDBTransaction.prototype.__transFinishedCb = function (err, cb) {
     cb(Boolean(err));
 };
 /**
+ * @this {IDBTransactionFull}
  * @returns {void}
  */
 IDBTransaction.prototype.__executeRequests = function () {
@@ -98,15 +171,17 @@ IDBTransaction.prototype.__executeRequests = function () {
     me.db.__db[me.mode === 'readonly' ? 'readTransaction' : 'transaction']( // `readTransaction` is optimized, at least in `node-websql`
         function executeRequests (tx) {
             me.__tx = tx;
-            let q = null, i = -1;
+            /** @type {RequestInfo} */
+            let q,
+                i = -1;
 
             /**
              * @typedef {any} IDBRequestResult
              */
 
             /**
-             * @param {IDBRequestResult} result
-             * @param {IDBRequest} req
+             * @param {IDBRequestResult} [result]
+             * @param {import('./IDBRequest.js').IDBRequestFull} [req]
              * @returns {void}
              */
             function success (result, req) {
@@ -116,6 +191,9 @@ IDBTransaction.prototype.__executeRequests = function () {
                 }
                 if (req) {
                     q.req = req; // Need to do this in case of cursors
+                }
+                if (!q.req) { // TS guard
+                    return;
                 }
                 if (q.req.__done) { // Avoid continuing with aborted requests
                     return;
@@ -138,7 +216,7 @@ IDBTransaction.prototype.__executeRequests = function () {
             }
 
             /**
-             * @param {[tx: SQLTransaction, err: SQLError]} args
+             * @param {[tx: SQLTransaction|DOMException|Error|SQLError, err?: SQLError]} args
              * @returns {void}
              */
             function error (...args /* tx, err */) {
@@ -150,7 +228,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                 if (q.req && q.req.__done) { // Avoid continuing with aborted requests
                     return;
                 }
-                const err = findError(args);
+                const err = /** @type {Error|DOMException} */ (findError(args));
                 if (!q.req) {
                     me.__abortTransaction(err);
                     return;
@@ -166,6 +244,9 @@ IDBTransaction.prototype.__executeRequests = function () {
                     }
                 });
                 q.req.addDefaultEventListener('error', function () {
+                    if (!q.req) { // TS guard
+                        return;
+                    }
                     me.__abortTransaction(q.req.__error);
                 });
 
@@ -207,7 +288,7 @@ IDBTransaction.prototype.__executeRequests = function () {
                         }
                         q.op(tx, q.args, success, error, executeNextRequest);
                     } catch (e) {
-                        error(e);
+                        error(/** @type {Error} */ (e));
                     }
                 }
             }
@@ -215,10 +296,11 @@ IDBTransaction.prototype.__executeRequests = function () {
             executeNextRequest();
         },
         function webSQLError (webSQLErr) {
+            // @ts-expect-error It's ok
             if (webSQLErr === true) { // Not a genuine SQL error
                 return;
             }
-            const err = webSQLErrback(webSQLErr);
+            const err = webSQLErrback(/** @type {SQLError} */ (webSQLErr));
             me.__abortTransaction(err);
         },
         function () {
@@ -297,7 +379,9 @@ IDBTransaction.prototype.__executeRequests = function () {
             complete();
             return;
         }
-        const ev = createEvent('__beforecomplete');
+        const ev = /** @type {Event & {complete: () => void}} */ (
+            createEvent('__beforecomplete')
+        );
         ev.complete = complete;
         me.dispatchEvent(ev);
     }
@@ -306,9 +390,9 @@ IDBTransaction.prototype.__executeRequests = function () {
 /**
  * Creates a new IDBRequest for the transaction.
  * NOTE: The transaction is not queued until you call {@link IDBTransaction#__pushToQueue}.
- * @param {IDBDatabase} source
+ * @param {import('./IDBDatabase.js').IDBDatabaseFull} source
+ * @this {IDBTransactionFull}
  * @returns {IDBRequest}
- * @protected
  */
 IDBTransaction.prototype.__createRequest = function (source) {
     const me = this;
@@ -322,8 +406,9 @@ IDBTransaction.prototype.__createRequest = function (source) {
  * @typedef {(
  *   tx: SQLTransaction,
  *   args: ObjectArray,
- *   success: () => void,
- *   error: (tx: SQLTransaction, err: SQLError) => void
+ *   success: (result?: any, req?: import('./IDBRequest.js').IDBRequestFull) => void,
+ *   error: (tx: SQLTransaction|Error|DOMException|SQLError, err?: SQLError) => void,
+ *   executeNextRequest?: () => void
  * ) => void} SQLCallback
  */
 
@@ -331,9 +416,11 @@ IDBTransaction.prototype.__createRequest = function (source) {
  * Adds a callback function to the transaction queue.
  * @param {SQLCallback} callback
  * @param {ObjectArray} args
- * @param {IDBDatabase} source
- * @returns {IDBRequest}
- * @protected
+ * @param {import('./IDBDatabase.js').IDBDatabaseFull|
+ *   import('./IDBObjectStore.js').IDBObjectStoreFull|
+ *   import('./IDBIndex.js').IDBIndexFull} source
+ * @this {IDBTransactionFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBTransaction.prototype.__addToTransactionQueue = function (callback, args, source) {
     const request = this.__createRequest(source);
@@ -346,20 +433,19 @@ IDBTransaction.prototype.__addToTransactionQueue = function (callback, args, sou
  *   request.
  * @param {SQLCallback} callback
  * @param {ObjectArray} args
- * @param {IDBDatabase} source
+ * @this {IDBTransactionFull}
  * @returns {void}
- * @protected
  */
-IDBTransaction.prototype.__addNonRequestToTransactionQueue = function (callback, args, source) {
+IDBTransaction.prototype.__addNonRequestToTransactionQueue = function (callback, args) {
     this.__pushToQueue(null, callback, args);
 };
 
 /**
  * Adds an IDBRequest to the transaction queue.
- * @param {IDBRequest} request
+ * @param {import('./IDBRequest.js').IDBRequestFull|null} request
  * @param {SQLCallback} callback
  * @param {ObjectArray} args
- * @protected
+ * @this {IDBTransactionFull}
  * @returns {void}
  */
 IDBTransaction.prototype.__pushToQueue = function (request, callback, args) {
@@ -383,6 +469,7 @@ IDBTransaction.prototype.__assertActive = function () {
 
 /**
  * @throws {DOMException}
+ * @this {IDBTransactionFull}
  * @returns {void}
  */
 IDBTransaction.prototype.__assertWritable = function () {
@@ -392,6 +479,7 @@ IDBTransaction.prototype.__assertWritable = function () {
 };
 
 /**
+ * @this {IDBTransactionFull}
  * @returns {void}
  */
 IDBTransaction.prototype.__assertVersionChange = function () {
@@ -401,6 +489,7 @@ IDBTransaction.prototype.__assertVersionChange = function () {
 /**
  * Returns the specified object store.
  * @param {string} objectStoreName
+ * @this {IDBTransactionFull}
  * @returns {IDBObjectStore}
  */
 IDBTransaction.prototype.objectStore = function (objectStoreName) {
@@ -432,7 +521,8 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
 
 /**
  *
- * @param {} err
+ * @param {Error|DOMException|null} err
+ * @this {IDBTransactionFull}
  * @returns {void}
  */
 IDBTransaction.prototype.__abortTransaction = function (err) {
@@ -487,14 +577,14 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
     }
 
     /**
-     * @param {SQLTransaction} tx
-     * @param {SQLError|{code: 0}} errOrResult
+     * @param {SQLTransaction|null} [tx]
+     * @param {SQLResultSet|SQLError|{code: 0}} [errOrResult]
      * @returns {void}
      */
     function abort (tx, errOrResult) {
         if (!tx) {
             CFG.DEBUG && console.log('Rollback not possible due to missing transaction', me);
-        } else if (errOrResult && typeof errOrResult.code === 'number') {
+        } else if (errOrResult && 'code' in errOrResult && typeof errOrResult.code === 'number') {
             CFG.DEBUG && console.log('Rollback erred; feature is probably not supported as per WebSQL', me);
         } else {
             CFG.DEBUG && console.log('Rollback succeeded', me);
@@ -511,18 +601,27 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
             //  behaves first-in-first-out with the same timeout so we could
             //  just use a `forEach`.
             return promises.then(function () {
+                if (!q.req) { // TS guard
+                    throw new Error('Missing request');
+                }
                 q.req.__done = true;
                 q.req.__result = undefined;
                 q.req.__error = createDOMException('AbortError', 'A request was aborted (an unfinished request).');
                 const reqEvt = createEvent('error', q.req.__error, {bubbles: true, cancelable: true});
-                return new SyncPromise(function (resolve) {
-                    setTimeout(() => {
-                        q.req.dispatchEvent(reqEvt); // No need to catch errors
-                        resolve();
-                    });
-                });
+                return new SyncPromise(
+                    /** @type {() => void} */
+                    (resolve) => {
+                        setTimeout(() => {
+                            if (!q.req) { // TS guard
+                                throw new Error('Missing request');
+                            }
+                            q.req.dispatchEvent(reqEvt); // No need to catch errors
+                            resolve();
+                        });
+                    }
+                );
             });
-        }, SyncPromise.resolve()).then(function () { // Also works when there are no pending requests
+        }, SyncPromise.resolve(undefined)).then(function () { // Also works when there are no pending requests
             const evt = createEvent('abort', err, {bubbles: true, cancelable: false});
             setTimeout(() => {
                 me.__abortFinished = true;
@@ -550,7 +649,12 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
                 return;
             }
             try {
-                me.__tx.executeSql('ROLLBACK', [], abort, abort); // Not working in some circumstances, even in Node
+                me.__tx.executeSql(
+                    'ROLLBACK',
+                    [],
+                    abort,
+                    /** @type {SQLStatementErrorCallback} */ (abort)
+                ); // Not working in some circumstances, even in Node
             } catch (err) {
                 // Browser errs when transaction has ended and since it most likely already erred here,
                 //   we call to abort
@@ -563,6 +667,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
 };
 
 /**
+ * @this {IDBTransactionFull}
  * @returns {void}
  */
 IDBTransaction.prototype.abort = function () {
@@ -579,7 +684,7 @@ IDBTransaction.prototype[Symbol.toStringTag] = 'IDBTransactionPrototype';
 
 /**
  *
- * @param {} tx
+ * @param {IDBTransactionFull|undefined} tx
  * @returns {void}
  */
 IDBTransaction.__assertVersionChange = function (tx) {
@@ -589,7 +694,7 @@ IDBTransaction.__assertVersionChange = function (tx) {
 };
 /**
  *
- * @param {} tx
+ * @param {IDBTransactionFull} tx
  * @throws {DOMException}
  * @returns {void}
  */
@@ -601,7 +706,7 @@ IDBTransaction.__assertNotVersionChange = function (tx) {
 
 /**
  *
- * @param {} tx
+ * @param {IDBTransactionFull|undefined} tx
  * @throws {DOMException}
  * @returns {void}
  */
@@ -614,7 +719,7 @@ IDBTransaction.__assertNotFinished = function (tx) {
 // object store methods behave differently: see https://github.com/w3c/IndexedDB/issues/192
 /**
  *
- * @param {} tx
+ * @param {IDBTransactionFull} tx
  * @returns {void}
  */
 IDBTransaction.__assertNotFinishedObjectStoreMethod = function (tx) {
@@ -630,7 +735,7 @@ IDBTransaction.__assertNotFinishedObjectStoreMethod = function (tx) {
 
 /**
  *
- * @param {} tx
+ * @param {IDBTransactionFull|undefined} tx
  * @throws {DOMException}
  * @returns {void}
  */
@@ -642,7 +747,8 @@ IDBTransaction.__assertActive = function (tx) {
 
 /**
 * Used by our `EventTarget.prototype` library to implement bubbling/capturing.
-* @returns {IDBDatabase}
+ * @this {IDBTransactionFull}
+* @returns {import('./IDBDatabase.js').IDBDatabaseFull}
 */
 IDBTransaction.prototype.__getParent = function () {
     return this.db;

@@ -1,4 +1,4 @@
-/*! indexeddbshim - v12.0.0 - 5/17/2023 */
+/*! indexeddbshim - v12.0.0 - 6/7/2023 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -128,8 +128,73 @@
     };
   }
 
+  /* eslint-disable jsdoc/valid-types -- https://github.com/jsdoc-type-pratt-parser/jsdoc-type-pratt-parser/issues/147 */
+  /**
+   * @typedef {T[keyof T]} ValueOf<T>
+   * @template T
+   */
+  /* eslint-enable jsdoc/valid-types -- https://github.com/jsdoc-type-pratt-parser/jsdoc-type-pratt-parser/issues/147 */
+
+  /**
+   * @typedef {{unlink: (path: string, cb: import('fs').NoParamCallback) => void}} FSApi
+   */
+
+  /**
+   * @typedef {{
+   *   DEBUG: boolean,
+   *   cacheDatabaseInstances: boolean,
+   *   autoName: boolean,
+   *   fullIDLSupport: boolean,
+   *   checkOrigin: boolean,
+   *   cursorPreloadPackSize: number,
+   *   UnicodeIDStart: string,
+   *   UnicodeIDContinue: string,
+   *   registerSCA: (
+   *     preset: import('typeson').Preset
+   *   ) => import('typeson').Preset,
+   *   avoidAutoShim: boolean,
+   *   win: {
+   *     openDatabase: (name: string, version: string, displayName: string, estimatedSize: number) => import('websql-configurable').default
+   *   },
+   *   DEFAULT_DB_SIZE: number,
+   *   useSQLiteIndexes: boolean,
+   *   fs: FSApi,
+   *   addNonIDBGlobals: boolean,
+   *   replaceNonIDBGlobals: boolean,
+   *   escapeDatabaseName: (name: string) => string,
+   *   unescapeDatabaseName: (name: string) => string,
+   *   databaseCharacterEscapeList: string|false,
+   *   databaseNameLengthLimit: number|false,
+   *   escapeNFDForDatabaseNames: boolean,
+   *   addSQLiteExtension: boolean,
+   *   memoryDatabase: string,
+   *   deleteDatabaseFiles: boolean,
+   *   databaseBasePath: string,
+   *   sysDatabaseBasePath: string,
+   *   sqlBusyTimeout: number,
+   *   sqlTrace: () => void,
+   *   sqlProfile: () => void,
+   *   createIndexes: boolean
+   * }} ConfigValues
+   */
+
+  /**
+   * @typedef {ValueOf<ConfigValues>} ConfigValue
+   */
+
+  /** @type {{[key: string]: ConfigValue}} */
   var map = {};
-  var CFG = {};
+  var CFG = /** @type {ConfigValues} */{};
+
+  /**
+   * @typedef {keyof ConfigValues} KeyofConfigValues
+   */
+
+  /**
+   * @typedef {KeyofConfigValues[]} Config
+   */
+
+  /** @type {Config} */
   [
   // Boolean for verbose reporting
   'DEBUG',
@@ -240,8 +305,14 @@
   //   defaults to `true`
   'addSQLiteExtension',
   // Various types of in-memory databases that can auto-delete
-  ['memoryDatabase', function (val) {
-    if (!/^(?::memory:|file::memory:(\?(?:[\0-"\$-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?(#(?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?)?$/.test(val)) {
+  ['memoryDatabase',
+  /**
+   * @param {string} val
+   * @throws {TypeError}
+   * @returns {void}
+   */
+  function (val) {
+    if (!/^(?::memory:|file::memory:(\?(?:[\0-"\$-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?(#(?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?)?$/.test( /** @type {string} */val)) {
       throw new TypeError('`memoryDatabase` must be the empty string, ":memory:", or a ' + '"file::memory:[?queryString][#hash] URL".');
     }
   }],
@@ -254,8 +325,11 @@
   // Defaults to 1000
   'sqlTrace',
   // Callback not used by default
-  'sqlProfile' // Callback not used by default
-  ].forEach(function (prop) {
+  'sqlProfile',
+  // Callback not used by default
+
+  'createIndexes'].forEach(function (prop) {
+    /** @type {(val: any) => void} */
     var validator;
     if (Array.isArray(prop)) {
       var _prop = prop;
@@ -283,6 +357,7 @@
    * @returns {DOMException}
    */
   function createNativeDOMException(name, message) {
+    // @ts-expect-error It's ok
     return new DOMException.prototype.constructor(message, name || 'DOMException');
   }
 
@@ -377,7 +452,7 @@
 
   /**
    *
-   * @returns {DOMException}
+   * @returns {typeof DOMException}
    */
   function createNonNativeDOMExceptionClass() {
     /**
@@ -388,7 +463,7 @@
     function DOMException(message, name) {
       // const err = Error.prototype.constructor.call(this, message); // Any use to this? Won't set this.message
       this[Symbol.toStringTag] = 'DOMException';
-      this._code = name in codes ? codes[name] : legacyCodes[name] || 0;
+      this._code = name in codes ? codes[/** @type {Code} */name] : legacyCodes[/** @type {LegacyCode} */name] || 0;
       this._name = name || 'Error';
       // We avoid `String()` in this next line as it converts Symbols
       this._message = message === undefined ? '' : '' + message; // eslint-disable-line no-implicit-coercion
@@ -426,14 +501,23 @@
     var DummyDOMException = function DOMException() {/* */};
     /* eslint-enable func-name-matching */
     DummyDOMException.prototype = Object.create(Error.prototype); // Intended for subclassing
+    /** @type {const} */
     ['name', 'message'].forEach(function (prop) {
       Object.defineProperty(DummyDOMException.prototype, prop, {
         enumerable: true,
+        /**
+         * @this {DOMException}
+         * @returns {string}
+         */
         get: function get() {
-          if (!(this instanceof DOMException || this instanceof DummyDOMException || this instanceof Error)) {
+          if (!(this instanceof DOMException ||
+          // @ts-expect-error Just checking
+          this instanceof DummyDOMException ||
+          // @ts-expect-error Just checking
+          this instanceof Error)) {
             throw new TypeError('Illegal invocation');
           }
-          return this['_' + prop];
+          return this[prop === 'name' ? '_name' : '_message'];
         }
       });
     });
@@ -445,12 +529,16 @@
         throw new TypeError('Illegal invocation');
       }
     });
+    // @ts-expect-error It's ok
     DOMException.prototype = new DummyDOMException();
     DOMException.prototype[Symbol.toStringTag] = 'DOMExceptionPrototype';
     Object.defineProperty(DOMException, 'prototype', {
       writable: false
     });
-    Object.keys(codes).forEach(function (codeName) {
+    var keys = Object.keys(codes);
+
+    /** @type {(keyof codes)[]} */
+    keys.forEach(function (codeName) {
       Object.defineProperty(DOMException.prototype, codeName, {
         enumerable: true,
         configurable: false,
@@ -462,6 +550,7 @@
         value: codes[codeName]
       });
     });
+    /** @type {(keyof legacyCodes)[]} */
     Object.keys(legacyCodes).forEach(function (codeName) {
       Object.defineProperty(DOMException.prototype, codeName, {
         enumerable: true,
@@ -480,6 +569,8 @@
       enumerable: false,
       value: DOMException
     });
+
+    // @ts-expect-error We don't need all its properties
     return DOMException;
   }
   var ShimNonNativeDOMException = createNonNativeDOMExceptionClass();
@@ -495,19 +586,23 @@
   }
 
   /**
+   * @typedef {{
+   *   message: string|DOMString
+   * }} ErrorLike
+   */
+
+  /**
    * Logs detailed error information to the console.
    * @param {string} name
    * @param {string} message
-   * @param {string|Error|null} error
+   * @param {string|ErrorLike|boolean|null} [error]
    * @returns {void}
    */
   function logError(name, message, error) {
     if (CFG.DEBUG) {
-      if (error && error.message) {
-        error = error.message;
-      }
+      var msg = error && _typeof(error) === 'object' && error.message ? error.message : /** @type {string} */error;
       var method = typeof console.error === 'function' ? 'error' : 'log';
-      console[method](name + ': ' + message + '. ' + (error || ''));
+      console[method](name + ': ' + message + '. ' + (msg || ''));
       console.trace && console.trace();
     }
   }
@@ -536,13 +631,35 @@
       useNativeDOMException = true;
     }
   } catch (e) {}
-  var createDOMException = useNativeDOMException ? function (name, message, error) {
+  var createDOMException = useNativeDOMException
+  // eslint-disable-next-line operator-linebreak -- Need JSDoc
+  ?
+  /**
+  * @param {string} name
+  * @param {string} message
+  * @param {ErrorLike} [error]
+  * @returns {DOMException}
+  */
+  function (name, message, error) {
     logError(name, message, error);
     return createNativeDOMException(name, message);
-  } : function (name, message, error) {
+  }
+  // eslint-disable-next-line operator-linebreak -- Need JSDoc
+  :
+  /**
+  * @param {string} name
+  * @param {string} message
+  * @param {ErrorLike} [error]
+  * @returns {Error}
+  */
+  function (name, message, error) {
     logError(name, message, error);
     return createNonNativeDOMException(name, message);
   };
+
+  /**
+   * @typedef {number} Integer
+   */
 
   /**
    * @param {string} arg
@@ -571,68 +688,69 @@
 
   /**
    *
-   * @param obj
+   * @param {AnyValue} obj
+   * @returns {obj is object}
    */
   function isObj(obj) {
-    return obj && _typeof(obj) === 'object';
+    return obj !== null && _typeof(obj) === 'object';
   }
 
   /**
    *
-   * @param obj
+   * @param {object} obj
+   * @returns {boolean}
    */
   function isDate(obj) {
-    return isObj(obj) && typeof obj.getDate === 'function';
+    return isObj(obj) && 'getDate' in obj && typeof obj.getDate === 'function';
   }
 
   /**
    *
-   * @param obj
+   * @param {object} obj
+   * @returns {boolean}
    */
   function isBlob(obj) {
-    return isObj(obj) && typeof obj.size === 'number' && typeof obj.slice === 'function' && !('lastModified' in obj);
+    return isObj(obj) && 'size' in obj && typeof obj.size === 'number' && 'slice' in obj && typeof obj.slice === 'function' && !('lastModified' in obj);
   }
 
   /**
    *
-   * @param obj
+   * @param {object} obj
+   * @returns {boolean}
    */
   function isFile(obj) {
-    return isObj(obj) && typeof obj.name === 'string' && typeof obj.slice === 'function' && 'lastModified' in obj;
+    return isObj(obj) && 'name' in obj && typeof obj.name === 'string' && 'slice' in obj && typeof obj.slice === 'function' && 'lastModified' in obj;
   }
 
   /**
    *
-   * @param obj
+   * @param {AnyValue} obj
+   * @returns {boolean}
    */
   function isBinary(obj) {
-    return isObj(obj) && typeof obj.byteLength === 'number' && (typeof obj.slice === 'function' ||
+    return isObj(obj) && 'byteLength' in obj && typeof obj.byteLength === 'number' && ('slice' in obj && typeof obj.slice === 'function' ||
     // `TypedArray` (view on buffer) or `ArrayBuffer`
-    typeof obj.getFloat64 === 'function' // `DataView` (view on buffer)
+    'getFloat64' in obj && typeof obj.getFloat64 === 'function' // `DataView` (view on buffer)
     );
   }
 
   /**
    * @param {AnyValue} v
-   * @returns {boolean}
+   * @returns {v is null|undefined}
    */
   function isNullish(v) {
     return v === null || v === undefined;
   }
 
   /**
-   * @typedef {any} AnyValue
-   */
-
-  /**
    * Compares two keys.
-   * @param {AnyValue} first
-   * @param {AnyValue} second
-   * @returns {number}
+   * @param {import('./Key.js').Key} first
+   * @param {import('./Key.js').Key} second
+   * @returns {0|1|-1}
    */
   function cmp(first, second) {
-    var encodedKey1 = _encode(first);
-    var encodedKey2 = _encode(second);
+    var encodedKey1 = /** @type {string} */_encode(first);
+    var encodedKey2 = /** @type {string} */_encode(second);
     var result = encodedKey1 > encodedKey2 ? 1 : encodedKey1 === encodedKey2 ? 0 : -1;
     if (CFG.DEBUG) {
       // verify that the keys encoded correctly
@@ -660,9 +778,7 @@
   }
 
   /**
-   * @typedef {Int8Array|Int16Array|Int32Array|Uint8Array|Uint16Array|
-   *   Uint32Array|Uint8ClampedArray|BigInt64Array|BigUint64Array|
-   *   Float32Array|Float64Array|DataView} ArrayBufferView
+   * @typedef {NodeJS.TypedArray|DataView} ArrayBufferView
    */
 
   /**
@@ -683,12 +799,16 @@
    */
 
   /**
-   * @typedef {string|KeyPath[]} KeyPath
+   * @typedef {KeyPath[]} KeyPathArray
+   */
+  /**
+   * @typedef {string|KeyPathArray} KeyPath
    */
 
   /**
   * @typedef {object} KeyValueObject
-  * @property {KeyType|"NaN"} type
+  * @property {KeyType|"NaN"|"null"|"undefined"|"boolean"|"object"|"symbol"|
+  *   "function"|"bigint"} type If not `KeyType`, indicates invalid value
   * @property {Value} [value]
   * @property {boolean} [invalid]
   * @property {string} [message]
@@ -696,12 +816,19 @@
   */
 
   /**
-   * @typedef {number|string|Date|ArrayBuffer|ValueTypes[]} ValueTypes
+   * @typedef {number|string|Date|ArrayBuffer} ValueTypePrimitive
+   */
+  /**
+   * @typedef {ValueType[]} ValueTypeArray
+   */
+  /**
+   * @typedef {ValueTypePrimitive|ValueTypeArray} ValueType
    */
 
   /**
    * Encodes the keys based on their types. This is required to maintain collations
    * We leave space for future keys.
+   * @type {{[key: string]: Integer|string}}
    */
   var keyTypeToEncodedChar = {
     invalid: 100,
@@ -711,14 +838,14 @@
     binary: 500,
     array: 600
   };
-  var keyTypes = Object.keys(keyTypeToEncodedChar);
+  var keyTypes = /** @type {(KeyType|"invalid")[]} */Object.keys(keyTypeToEncodedChar);
   keyTypes.forEach(function (k) {
-    keyTypeToEncodedChar[k] = String.fromCodePoint(keyTypeToEncodedChar[k]);
+    keyTypeToEncodedChar[k] = String.fromCodePoint( /** @type {number} */keyTypeToEncodedChar[k]);
   });
   var encodedCharToKeyType = keyTypes.reduce(function (o, k) {
     o[keyTypeToEncodedChar[k]] = k;
     return o;
-  }, {});
+  }, /** @type {{[key: string]: KeyType|"invalid"}} */{});
 
   /**
    * The sign values for numbers, ordered from least to greatest.
@@ -730,12 +857,25 @@
    *  - "positiveInfinity": Sorts above all other values.
    */
   var signValues = ['negativeInfinity', 'bigNegative', 'smallNegative', 'smallPositive', 'bigPositive', 'positiveInfinity'];
+
+  /**
+   * @typedef {any} AnyValue
+   */
+
   var types = {
     invalid: {
-      encode: function encode(key) {
+      /**
+       * @param {AnyValue} _key
+       * @returns {string}
+       */
+      encode: function encode(_key) {
         return keyTypeToEncodedChar.invalid + '-';
       },
-      decode: function decode(key) {
+      /**
+       * @param {string} _key
+       * @returns {undefined}
+       */
+      decode: function decode(_key) {
         return undefined;
       }
     },
@@ -752,6 +892,10 @@
     number: {
       // The encode step checks for six numeric cases and generates 14-digit encoded
       // sign-exponent-mantissa strings.
+      /**
+       * @param {number} key
+       * @returns {string}
+       */
       encode: function encode(key) {
         var key32 = key === Number.MIN_VALUE
         // Mocha test `IDBFactory/cmp-spec.js` exposed problem for some
@@ -807,6 +951,10 @@
       // The decode step must interpret the sign, reflip values encoded as the 32's complements,
       // apply signs to the exponent and mantissa, do the base-32 power operation, and return
       // the original JavaScript number values.
+      /**
+       * @param {string} key
+       * @returns {number}
+       */
       decode: function decode(key) {
         var sign = Number(key.slice(2, 3));
         var exponent = key.slice(3, 5);
@@ -843,6 +991,11 @@
     // This effectively doubles the size of every string, but it ensures that when two arrays of strings are compared,
     // the indexes of each string's characters line up with each other.
     string: {
+      /**
+       * @param {string} key
+       * @param {boolean} [inArray]
+       * @returns {string}
+       */
       encode: function encode(key, inArray) {
         if (inArray) {
           // prepend each character with a dash, and append a space to the end
@@ -850,6 +1003,11 @@
         }
         return keyTypeToEncodedChar.string + '-' + key;
       },
+      /**
+       * @param {string} key
+       * @param {boolean} [inArray]
+       * @returns {string}
+       */
       decode: function decode(key, inArray) {
         key = key.slice(2);
         if (inArray) {
@@ -863,6 +1021,10 @@
     // An extra, value is added to each array during encoding to make
     //  empty arrays sort correctly.
     array: {
+      /**
+       * @param {ValueTypeArray} key
+       * @returns {string}
+       */
       encode: function encode(key) {
         var encoded = [];
         var _iterator = _createForOfIteratorHelper(key.entries()),
@@ -883,6 +1045,10 @@
         encoded.push(keyTypeToEncodedChar.invalid + '-'); // append an extra item, so empty arrays sort correctly
         return keyTypeToEncodedChar.array + '-' + JSON.stringify(encoded);
       },
+      /**
+       * @param {string} key
+       * @returns {ValueTypeArray}
+       */
       decode: function decode(key) {
         var decoded = JSON.parse(key.slice(2));
         decoded.pop(); // remove the extra item
@@ -896,21 +1062,37 @@
     },
     // Dates are encoded as ISO 8601 strings, in UTC time zone.
     date: {
+      /**
+       * @param {Date} key
+       * @returns {string}
+       */
       encode: function encode(key) {
         return keyTypeToEncodedChar.date + '-' + key.toJSON();
       },
+      /**
+       * @param {string} key
+       * @returns {Date}
+       */
       decode: function decode(key) {
         return new Date(key.slice(2));
       }
     },
     binary: {
       // `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
+      /**
+       * @param {BufferSource} key
+       * @returns {string}
+       */
       encode: function encode(key) {
         return keyTypeToEncodedChar.binary + '-' + (key.byteLength ? _toConsumableArray(getCopyBytesHeldByBufferSource(key)).map(function (b) {
           return String(b).padStart(3, '0');
         }) // e.g., '255,005,254,000,001,033'
         : '');
       },
+      /**
+       * @param {string} key
+       * @returns {ArrayBuffer}
+       */
       decode: function decode(key) {
         // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
         var k = key.slice(2);
@@ -931,8 +1113,8 @@
    * @returns {string}
    */
   function padBase32Exponent(n) {
-    n = n.toString(32);
-    return n.length === 1 ? '0' + n : n;
+    var exp = n.toString(32);
+    return exp.length === 1 ? '0' + exp : exp;
   }
 
   /**
@@ -979,24 +1161,28 @@
    * @returns {number}
    */
   function pow32(mantissa, exponent) {
-    exponent = Number.parseInt(exponent, 32);
-    if (exponent < 0) {
-      return roundToPrecision(Number.parseInt(mantissa, 32) * Math.pow(32, exponent - 10));
+    var exp = Number.parseInt(exponent, 32);
+    if (exp < 0) {
+      return roundToPrecision(Number.parseInt(mantissa, 32) * Math.pow(32, exp - 10));
     }
-    if (exponent < 11) {
-      var whole = mantissa.slice(0, exponent);
-      whole = Number.parseInt(whole, 32);
-      var fraction = mantissa.slice(exponent);
-      fraction = Number.parseInt(fraction, 32) * Math.pow(32, exponent - 11);
-      return roundToPrecision(whole + fraction);
+    if (exp < 11) {
+      var whole = mantissa.slice(0, exp);
+      var wholeNum = Number.parseInt(whole, 32);
+      var fraction = mantissa.slice(exp);
+      var fractionNum = Number.parseInt(fraction, 32) * Math.pow(32, exp - 11);
+      return roundToPrecision(wholeNum + fractionNum);
     }
-    var expansion = mantissa + zeros(exponent - 11);
+    var expansion = mantissa + zeros(exp - 11);
     return Number.parseInt(expansion, 32);
   }
 
   /**
+   * @typedef {number} Float
+   */
+
+  /**
    * @param {Float} num
-   * @param {Float} [precision=16]
+   * @param {Float} [precision]
    * @returns {Float}
    */
   function roundToPrecision(num) {
@@ -1024,21 +1210,21 @@
 
   /**
    * @param {Key} key
-   * @returns {KeyType}
+   * @returns {KeyType|"invalid"}
    */
   function getKeyType(key) {
     if (Array.isArray(key)) return 'array';
     if (isDate(key)) return 'date';
     if (isBinary(key)) return 'binary';
     var keyType = _typeof(key);
-    return ['string', 'number'].includes(keyType) ? keyType : 'invalid';
+    return ['string', 'number'].includes(keyType) ? /** @type {"string"|"number"} */keyType : 'invalid';
   }
 
   /**
    * Keys must be strings, numbers (besides `NaN`), Dates (if value is not
    *   `NaN`), binary objects or Arrays.
    * @param {Value} input The key input
-   * @param {?(Array)} [seen] An array of already seen keys
+   * @param {Value[]|null|undefined} [seen] An array of already seen keys
    * @returns {KeyValueObject}
    */
   function convertValueToKey(input, seen) {
@@ -1077,7 +1263,10 @@
     }
     // const octets = new Uint8Array(input);
     // const octets = types.binary.decode(types.binary.encode(input));
-    return new Uint8Array(O.buffer || O, offset, length);
+    return new Uint8Array(
+    // Should allow DataView
+    /** @type {ArrayBuffer} */
+    'buffer' in O && O.buffer || O, offset, length);
   }
 
   /**
@@ -1085,7 +1274,7 @@
   *   and subsequent need to process in calling code unless `fullKeys` is
   *   set; may throw.
   * @param {Value} input
-  * @param {Value[]} [seen]
+  * @param {Value[]|null} [seen]
   * @param {boolean} [multiEntry]
   * @param {boolean} [fullKeys]
   * @throws {TypeError} See `getCopyBytesHeldByBufferSource`
@@ -1125,18 +1314,20 @@
               value: 0
             };
           }
-          return ret;
+          return (/** @type {{type: KeyType; value: Value}} */ret
+          );
         }
       case 'string':
         {
-          return ret;
+          return (/** @type {{type: KeyType; value: Value}} */ret
+          );
         }
       case 'binary':
         {
           // May throw (if detached)
           // Get a copy of the bytes held by the buffer source
           // https://heycam.github.io/webidl/#ref-for-dfn-get-buffer-source-copy-2
-          var octets = getCopyBytesHeldByBufferSource(input);
+          var octets = getCopyBytesHeldByBufferSource( /** @type {BufferSource} */input);
           return {
             type: 'binary',
             value: octets
@@ -1145,12 +1336,15 @@
       case 'array':
         {
           // May throw (from binary)
-          var len = input.length;
+          var arr = /** @type {Array<any>} */input;
+          var len = arr.length;
           seen.push(input);
+
+          /** @type {(KeyValueObject|Value)[]} */
           var keys = [];
           var _loop = function _loop() {
             // We cannot iterate here with array extras as we must ensure sparse arrays are invalidated
-            if (!multiEntry && !Object.prototype.hasOwnProperty.call(input, i)) {
+            if (!multiEntry && !Object.hasOwn(arr, i)) {
               return {
                 v: {
                   type: type,
@@ -1160,7 +1354,7 @@
               };
             }
             try {
-              var entry = input[i];
+              var entry = arr[i];
               var key = convertValueToKeyValueDecoded(entry, seen, false, fullKeys); // Though steps do not list rethrowing, the next is returnifabrupt when not multiEntry
               if (key.invalid) {
                 if (multiEntry) {
@@ -1199,13 +1393,14 @@
         }
       case 'date':
         {
-          if (!Number.isNaN(input.getTime())) {
+          var date = /** @type {Date} */input;
+          if (!Number.isNaN(date.getTime())) {
             return fullKeys ? {
               type: type,
-              value: input.getTime()
+              value: date.getTime()
             } : {
               type: type,
-              value: new Date(input.getTime())
+              value: new Date(date.getTime())
             };
           }
           return {
@@ -1219,7 +1414,7 @@
       default:
         {
           // Other `typeof` types which are not valid keys:
-          //    'undefined', 'boolean', 'object' (including `null`), 'symbol', 'function
+          //    'undefined', 'boolean', 'object' (including `null`), 'symbol', 'function'
           var _type = input === null ? 'null' : _typeof(input); // Convert `null` for convenience of consumers in reporting errors
           return {
             type: _type,
@@ -1233,7 +1428,7 @@
   /**
    *
    * @param {Key} key
-   * @param {boolean} fullKeys
+   * @param {boolean} [fullKeys]
    * @returns {KeyValueObject}
    * @todo Document other allowable `key`?
    */
@@ -1244,7 +1439,7 @@
   /**
   * An internal utility.
   * @param {Value} input
-  * @param {boolean} seen
+  * @param {Value[]|null|undefined} [seen]
   * @throws {DOMException} `DataError`
   * @returns {KeyValueObject}
   */
@@ -1283,8 +1478,8 @@
   *    or `{invalid: true}` (e.g., `NaN`).
   * @param {Value} value
   * @param {KeyPath} keyPath
-  * @param {boolean} multiEntry
-  * @param {boolean} fullKeys
+  * @param {boolean} [multiEntry]
+  * @param {boolean} [fullKeys]
   * @returns {KeyValueObject|KeyPathEvaluateValue}
   * @todo Document other possible return?
   */
@@ -1306,21 +1501,31 @@
    */
 
   /**
+   * @typedef {KeyPathEvaluateValueValue[]} KeyPathEvaluateValueValueArray
+   */
+
+  /**
+   * @typedef {undefined|number|string|Date|object|KeyPathEvaluateValueValueArray} KeyPathEvaluateValueValue
+   */
+
+  /**
    * @typedef {object} KeyPathEvaluateValue
-   * @property {undefined|array|string} value
+   * @property {KeyPathEvaluateValueValue} [value]
+   * @property {boolean} [failure]
    */
 
   /**
    * Returns the value of an inline key based on a key path (wrapped in an
    *   object with key `value`) or `{failure: true}`
-   * @param {object} value
+   * @param {Value} value
    * @param {KeyPath} keyPath
-   * @param {boolean} multiEntry
+   * @param {boolean} [multiEntry]
    * @param {boolean} [fullKeys]
    * @returns {KeyPathEvaluateValue}
    */
   function evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKeys) {
     if (Array.isArray(keyPath)) {
+      /** @type {KeyPathEvaluateValueValueArray} */
       var result = [];
       return keyPath.some(function (item) {
         var key = evaluateKeyPathOnValueToDecodedValue(value, item);
@@ -1348,23 +1553,23 @@
         switch (idntfr) {
           case 'size':
           case 'type':
-            value = value[idntfr];
+            value = /** @type {Blob} */value[idntfr];
             break;
         }
       } else if (isFile(value)) {
         switch (idntfr) {
           case 'name':
           case 'lastModified':
-            value = value[idntfr];
+            value = /** @type {File} */value[idntfr];
             break;
           case 'lastModifiedDate':
-            value = new Date(value.lastModified);
+            value = new Date( /** @type {File} */value.lastModified);
             break;
         }
-      } else if (!isObj(value) || !Object.prototype.hasOwnProperty.call(value, idntfr)) {
+      } else if (!isObj(value) || !Object.hasOwn(value, idntfr)) {
         return true;
       } else {
-        value = value[idntfr];
+        value = /** @type {{[key: string]: KeyPathEvaluateValueValue}} */value[idntfr];
         return value === undefined;
       }
       return false;
@@ -1377,7 +1582,7 @@
 
   /**
    * Sets the inline key value.
-   * @param {object} value
+   * @param {{[key: string]: AnyValue}} value
    * @param {Key} key
    * @param {string} keyPath
    * @returns {void}
@@ -1386,13 +1591,13 @@
     var identifiers = keyPath.split('.');
     var last = identifiers.pop();
     identifiers.forEach(function (identifier) {
-      var hop = Object.prototype.hasOwnProperty.call(value, identifier);
+      var hop = Object.hasOwn(value, identifier);
       if (!hop) {
         value[identifier] = {};
       }
       value = value[identifier];
     });
-    value[last] = key; // key is already a `keyValue` in our processing so no need to convert
+    value[/** @type {string} */last] = key; // key is already a `keyValue` in our processing so no need to convert
   }
 
   /**
@@ -1413,11 +1618,11 @@
         if (!isObj(value)) {
           return false;
         }
-        var hop = Object.prototype.hasOwnProperty.call(value, identifier);
+        var hop = Object.hasOwn(value, identifier);
         if (!hop) {
           return true;
         }
-        value = value[identifier];
+        value = /** @type {{[key: string]: Value}} */value[identifier];
       }
     } catch (err) {
       _iterator3.e(err);
@@ -1430,8 +1635,8 @@
   /**
    *
    * @param {Key} key
-   * @param {IDBKeyRange} range
-   * @param {boolean} checkCached
+   * @param {import('./IDBKeyRange.js').IDBKeyRangeFull} range
+   * @param {boolean} [checkCached]
    * @returns {boolean}
    */
   function isKeyInRange(key, range, checkCached) {
@@ -1440,21 +1645,11 @@
     var encodedKey = _encode(key, true);
     var lower = checkCached ? range.__lowerCached : _encode(range.lower, true);
     var upper = checkCached ? range.__upperCached : _encode(range.upper, true);
-    if (range.lower !== undefined) {
-      if (range.lowerOpen && encodedKey > lower) {
-        lowerMatch = true;
-      }
-      if (!range.lowerOpen && encodedKey >= lower) {
-        lowerMatch = true;
-      }
+    if (!lowerMatch && (range.lowerOpen && encodedKey !== null && lower !== null && encodedKey > lower || !range.lowerOpen && (!encodedKey && !lower || encodedKey !== null && lower !== null && encodedKey >= lower))) {
+      lowerMatch = true;
     }
-    if (range.upper !== undefined) {
-      if (range.upperOpen && encodedKey < upper) {
-        upperMatch = true;
-      }
-      if (!range.upperOpen && encodedKey <= upper) {
-        upperMatch = true;
-      }
+    if (!upperMatch && (range.upperOpen && encodedKey !== null && upper !== null && encodedKey < upper || !range.upperOpen && (!encodedKey && !upper || encodedKey !== null && upper !== null && encodedKey <= upper))) {
+      upperMatch = true;
     }
     return lowerMatch && upperMatch;
   }
@@ -1476,7 +1671,7 @@
   /**
    *
    * @param {Key} keyEntry
-   * @param {IDBKeyRange} range
+   * @param {import('./IDBKeyRange.js').IDBKeyRangeFull|undefined} range
    * @returns {Key[]}
    */
   function findMultiEntryMatches(keyEntry, range) {
@@ -1520,7 +1715,7 @@
   * Not currently in use but keeping for spec parity.
   * @param {Key} key
   * @throws {Error} Upon a "bad key"
-  * @returns {ValueTypes}
+  * @returns {ValueType}
   */
   function convertKeyToValue(key) {
     var type = key.type,
@@ -1565,7 +1760,7 @@
   /**
    *
    * @param {Key} key
-   * @param {boolean} inArray
+   * @param {boolean} [inArray]
    * @returns {string|null}
    */
   function _encode(key, inArray) {
@@ -1580,9 +1775,9 @@
   /**
    *
    * @param {Key} key
-   * @param {boolean} inArray
+   * @param {boolean} [inArray]
    * @throws {Error} Invalid number
-   * @returns {undefined|ValueTypes}
+   * @returns {undefined|ValueType}
    */
   function _decode(key, inArray) {
     if (typeof key !== 'string') {
@@ -1594,8 +1789,8 @@
   /**
    *
    * @param {Key} key
-   * @param {boolean} inArray
-   * @returns {undefined|ValueTypes}
+   * @param {boolean} [inArray]
+   * @returns {undefined|ValueType}
    */
   function roundTrip(key, inArray) {
     return _decode(_encode(key, inArray), inArray);
@@ -1603,26 +1798,25 @@
   var MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `Number.MAX_SAFE_INTEGER + 1`)
 
   /**
-  * @typedef {IDBObjectStore} IDBObjectStoreWithCurrentName
-  * @property {string} __currentName
-  */
+   * @typedef {number} Integer
+   */
 
   /**
    * @callback CurrentNumberCallback
-   * @param {Integer} The current number
+   * @param {Integer} cn The current number
    * @returns {void}
    */
 
   /**
   * @callback SQLFailureCallback
-  * @param {DOMException} exception
+  * @param {DOMException|Error} exception
   * @returns {void}
   */
 
   /**
    *
    * @param {SQLTransaction} tx
-   * @param {IDBObjectStoreWithCurrentName} store
+   * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
    * @param {CurrentNumberCallback} func
    * @param {SQLFailureCallback} sqlFailCb
    * @returns {void}
@@ -1636,13 +1830,14 @@
       }
     }, function (tx, error) {
       sqlFailCb(createDOMException('DataError', 'Could not get the auto increment value for key', error));
+      return true;
     });
   }
 
   /**
    *
    * @param {SQLTransaction} tx
-   * @param {IDBObjectStoreWithCurrentName} store
+   * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
    * @param {Integer} num
    * @param {CurrentNumberCallback} successCb
    * @param {SQLFailureCallback} failCb
@@ -1656,6 +1851,7 @@
       successCb(num);
     }, function (tx, err) {
       failCb(createDOMException('UnknownError', 'Could not set the auto increment value for key', err));
+      return true;
     });
   }
 
@@ -1664,7 +1860,7 @@
    *   (greater than old value and >=1) OR if a manually passed in key is
    *   valid (numeric and >= 1) and >= any primaryKey.
    * @param {SQLTransaction} tx
-   * @param {IDBObjectStoreWithCurrentName} store
+   * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
    * @param {Integer} num
    * @param {CurrentNumberCallback} successCb
    * @param {SQLFailureCallback} failCb
@@ -1687,7 +1883,7 @@
   /**
    *
    * @param {SQLTransaction} tx
-   * @param {IDBObjectStoreWithCurrentName} store
+   * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
    * @param {KeyForStoreCallback} cb
    * @param {SQLFailureCallback} sqlFailCb
    * @returns {void}
@@ -1714,9 +1910,9 @@
   /**
    *
    * @param {SQLTransaction} tx
-   * @param {IDBObjectStoreWithCurrentName} store
-   * @param {*|Integer} key
-   * @param {CurrentNumberCallback|void} successCb
+   * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
+   * @param {import('./Key.js').Key} key
+   * @param {(num?: Integer) => void} successCb
    * @param {SQLFailureCallback} sqlFailCb
    * @returns {void}
    */

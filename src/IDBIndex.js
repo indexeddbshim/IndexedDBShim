@@ -11,31 +11,70 @@ import IDBObjectStore from './IDBObjectStore.js';
 
 const readonlyProperties = ['objectStore', 'keyPath', 'multiEntry', 'unique'];
 
-/* eslint-disable jsdoc/check-param-names */
+/**
+ * @typedef {number} Integer
+ */
+
+/**
+ * @typedef {{
+ *   columnName: string,
+ *   keyPath: import('./Key.js').KeyPath,
+ *   optionalParams: {
+ *     unique: boolean,
+ *     multiEntry: boolean
+ *   }
+ *   deleted?: boolean,
+ *   __deleted?: boolean,
+ *   cursors?: import('./IDBCursor.js').IDBCursorWithValueFull[],
+ * }} IDBIndexProperties
+ */
+
 /**
  * IDB Index.
  * @see http://www.w3.org/TR/IndexedDB/#idl-def-IDBIndex
- * @param {IDBObjectStore} store
- * @param {IDBIndexProperties} indexProperties
  * @class
  */
 function IDBIndex () {
-    /* eslint-enable jsdoc/check-param-names */
     throw new TypeError('Illegal constructor');
 }
 const IDBIndexAlias = IDBIndex;
+
+/**
+ * @typedef {IDBIndex & {
+ *   name: string,
+ *   keyPath: import('./Key.js').KeyPath,
+ *   multiEntry: boolean,
+ *   unique: boolean,
+ *   objectStore: import('./IDBObjectStore.js').IDBObjectStoreFull,
+ *   __pendingCreate?: boolean,
+ *   __deleted?: boolean,
+ *   __originalName: string,
+ *   __currentName: string,
+ *   __pendingName?: string,
+ *   __pendingDelete?: boolean,
+ *   __name: string,
+ *   __multiEntry: boolean,
+ *   __unique: boolean,
+ *   __objectStore: import('./IDBObjectStore.js').IDBObjectStoreFull,
+ *   __keyPath: import('./Key.js').KeyPath,
+ *   __recreated?: boolean
+ * }} IDBIndexFull
+ */
+
 /**
  *
- * @param {} store
- * @param {} indexProperties
- * @returns {IDBIndex}
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
+ * @param {IDBIndexProperties} indexProperties
+ * @returns {IDBIndexFull}
  */
 IDBIndex.__createInstance = function (store, indexProperties) {
     /**
      * @class
+     * @this {IDBIndexFull}
      */
     function IDBIndex () {
         const me = this;
+        // @ts-expect-error It's ok
         me[Symbol.toStringTag] = 'IDBIndex';
         util.defineReadonlyProperties(me, readonlyProperties);
         me.__objectStore = store;
@@ -47,16 +86,31 @@ IDBIndex.__createInstance = function (store, indexProperties) {
         me.__deleted = Boolean(indexProperties.__deleted);
         me.__objectStore.__cursors = indexProperties.cursors || [];
         Object.defineProperty(me, '__currentName', {
+            /**
+             * @this {IDBIndexFull}
+             * @returns {string}
+             */
             get () {
-                return '__pendingName' in me ? me.__pendingName : me.name;
+                return '__pendingName' in me
+                    ? /** @type {string} */ (me.__pendingName)
+                    : me.name;
             }
         });
         Object.defineProperty(me, 'name', {
             enumerable: false,
             configurable: false,
+            /**
+             * @this {IDBIndexFull}
+             * @returns {string}
+             */
             get () {
                 return this.__name;
             },
+            /**
+             * @param {string} newName
+             * @this {IDBIndexFull}
+             * @returns {void}
+             */
             set (newName) {
                 const me = this;
                 newName = util.convertToDOMString(newName);
@@ -81,7 +135,9 @@ IDBIndex.__createInstance = function (store, indexProperties) {
                 objectStore.__indexes[newName] = me;
                 objectStore.indexNames.splice(objectStore.indexNames.indexOf(oldName), 1, newName);
 
-                const storeHandle = objectStore.transaction.__storeHandles[objectStore.name];
+                const storeHandle = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
+                    objectStore.transaction
+                ).__storeHandles[objectStore.name];
                 const oldIndexHandle = storeHandle.__indexHandles[oldName];
                 oldIndexHandle.__name = newName; // Fix old references
                 storeHandle.__indexHandles[newName] = oldIndexHandle; // Ensure new reference accessible
@@ -91,28 +147,34 @@ IDBIndex.__createInstance = function (store, indexProperties) {
                     ['key', 'BLOB ' + (objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')],
                     ['value', 'BLOB']
                 ].concat(
+                    // @ts-expect-error Has numeric indexes instead of iterator
                     [...objectStore.indexNames]
                         .filter((indexName) => indexName !== newName)
                         .map((indexName) => [util.escapeIndexNameForSQL(indexName), 'BLOB'])
                 );
 
-                me.__renameIndex(objectStore, oldName, newName, colInfoToPreserveArr, function (tx, success) {
-                    IDBIndexAlias.__updateIndexList(store, tx, function (store) {
-                        delete storeHandle.__pendingName;
-                        success(store);
-                    });
-                });
+                me.__renameIndex(
+                    objectStore, oldName, newName, colInfoToPreserveArr,
+                    function (tx, success) {
+                        IDBIndexAlias.__updateIndexList(store, tx, function (store) {
+                            delete storeHandle.__pendingName;
+                            success(store);
+                        });
+                    }
+                );
             }
         });
     }
     IDBIndex.prototype = IDBIndexAlias.prototype;
+
+    // @ts-expect-error It's ok
     return new IDBIndex();
 };
 
 /**
  *
- * @param {} index
- * @param {} msg
+ * @param {IDBIndexFull} index
+ * @param {string} [msg]
  * @throws {DOMException}
  * @returns {void}
  */
@@ -126,10 +188,9 @@ IDBIndex.__invalidStateIfDeleted = function (index, msg) {
 
 /**
  * Clones an IDBIndex instance for a different IDBObjectStore instance.
- * @param {IDBIndex} index
- * @param {IDBObjectStore} store
- * @protected
- * @returns {IDBIndex}
+ * @param {IDBIndexFull} index
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
+ * @returns {IDBIndexFull}
  */
 IDBIndex.__clone = function (index, store) {
     const idx = IDBIndex.__createInstance(store, {
@@ -140,7 +201,11 @@ IDBIndex.__clone = function (index, store) {
             unique: index.unique
         }
     });
-    ['__pendingCreate', '__pendingDelete', '__deleted', '__originalName', '__recreated'].forEach((p) => {
+    /** @type {const} */ ([
+        '__pendingCreate', '__pendingDelete', '__deleted',
+        '__originalName', '__recreated'
+    ]).forEach((p) => {
+        // @ts-expect-error Why is this type "never"?
         idx[p] = index[p];
     });
     return idx;
@@ -148,10 +213,9 @@ IDBIndex.__clone = function (index, store) {
 
 /**
  * Creates a new index on an object store.
- * @param {IDBObjectStore} store
- * @param {IDBIndex} index
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
+ * @param {IDBIndexFull} index
  * @returns {void}
- * @protected
  */
 IDBIndex.__createIndex = function (store, index) {
     const indexName = index.name;
@@ -176,13 +240,17 @@ IDBIndex.__createIndex = function (store, index) {
 
     // Create the index in WebSQL
     const {transaction} = store;
-    transaction.__addNonRequestToTransactionQueue(function createIndex (tx, args, success, failure) {
+    /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
+        transaction
+    ).__addNonRequestToTransactionQueue(function createIndex (tx, args, success, failure) {
         const columnExists = idx && (idx.__deleted || idx.__recreated); // This check must occur here rather than earlier as properties may not have been set yet otherwise
+
+        /** @type {{[key: string]: boolean}} */
         let indexValues = {};
 
         /**
          * @param {SQLTransaction} tx
-         * @param {import('./DOMException.js').SQLError} err
+         * @param {SQLError} err
          * @returns {void}
          */
         function error (tx, err) {
@@ -209,13 +277,18 @@ IDBIndex.__createIndex = function (store, index) {
                         if (i < data.rows.length) {
                             try {
                                 const value = Sca.decode(util.unescapeSQLiteResponse(data.rows.item(i).value));
-                                let indexKey = Key.extractKeyValueDecodedFromValueUsingKeyPath(value, index.keyPath, index.multiEntry); // Todo: Do we need this stricter error checking?
-                                if (indexKey.invalid || indexKey.failure) { // Todo: Do we need invalid checks and should we instead treat these as being duplicates?
+                                const indexKey = Key.extractKeyValueDecodedFromValueUsingKeyPath(value, index.keyPath, index.multiEntry); // Todo: Do we need this stricter error checking?
+                                if (
+                                    ('invalid' in indexKey && indexKey.invalid) ||
+                                    ('failure' in indexKey && indexKey.failure)
+                                ) { // Todo: Do we need invalid checks and should we instead treat these as being duplicates?
                                     throw new Error('Go to catch; ignore bad indexKey');
                                 }
-                                indexKey = Key.encode(indexKey.value, index.multiEntry);
+                                const indexKeyStr = /** @type {string} */ (
+                                    Key.encode(indexKey.value, index.multiEntry)
+                                );
                                 if (index.unique) {
-                                    if (indexValues[indexKey]) {
+                                    if (indexValues[indexKeyStr]) {
                                         indexValues = {};
                                         failure(createDOMException(
                                             'ConstraintError',
@@ -223,16 +296,17 @@ IDBIndex.__createIndex = function (store, index) {
                                         ));
                                         return;
                                     }
-                                    indexValues[indexKey] = true;
+                                    indexValues[indexKeyStr] = true;
                                 }
 
                                 tx.executeSql(
                                     'UPDATE ' + util.escapeStoreNameForSQL(storeName) + ' SET ' +
                                         util.escapeIndexNameForSQL(indexName) + ' = ? WHERE "key" = ?',
-                                    [util.escapeSQLiteStatement(indexKey), data.rows.item(i).key],
+                                    [util.escapeSQLiteStatement(indexKeyStr), data.rows.item(i).key],
                                     function (tx, data) {
                                         addIndexEntry(i + 1);
-                                    }, error
+                                    },
+                                    /** @type {SQLStatementErrorCallback} */ (error)
                                 );
                             } catch (e) {
                                 // Not a valid value to insert into index, so just continue
@@ -251,8 +325,8 @@ IDBIndex.__createIndex = function (store, index) {
                             success(store);
                         }
                     }
-                }, error);
-            }, error);
+                }, /** @type {SQLStatementErrorCallback} */ (error));
+            }, /** @type {SQLStatementErrorCallback} */ (error));
         }
 
         const escapedStoreNameSQL = util.escapeStoreNameForSQL(storeName);
@@ -277,7 +351,7 @@ IDBIndex.__createIndex = function (store, index) {
                     '" ON ' + escapedStoreNameSQL + '(' + escapedIndexNameSQL + ')',
                 [],
                 applyIndex,
-                error
+                /** @type {SQLStatementErrorCallback} */ (error)
             );
         }
 
@@ -289,16 +363,17 @@ IDBIndex.__createIndex = function (store, index) {
             // For a new index, add a new column to the object store, then apply the index
             const sql = ['ALTER TABLE', escapedStoreNameSQL, 'ADD', escapedIndexNameSQL, 'BLOB'].join(' ');
             CFG.DEBUG && console.log(sql);
-            tx.executeSql(sql, [], addIndexSQL, error);
+            tx.executeSql(
+                sql, [], addIndexSQL, /** @type {SQLStatementErrorCallback} */ (error)
+            );
         }
-    }, undefined, store);
+    });
 };
 
 /**
  * Deletes an index from an object store.
- * @param {IDBObjectStore} store
- * @param {IDBIndex} index
- * @protected
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
+ * @param {IDBIndexFull} index
  * @returns {void}
  */
 IDBIndex.__deleteIndex = function (store, index) {
@@ -313,7 +388,9 @@ IDBIndex.__deleteIndex = function (store, index) {
 
     // Remove the index in WebSQL
     const {transaction} = store;
-    transaction.__addNonRequestToTransactionQueue(function deleteIndex (tx, args, success, failure) {
+    /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
+        transaction
+    ).__addNonRequestToTransactionQueue(function deleteIndex (tx, args, success, failure) {
         /**
          * @param {SQLTransaction} tx
          * @param {SQLError} err
@@ -337,7 +414,7 @@ IDBIndex.__deleteIndex = function (store, index) {
                     delete indexHandle.__pendingDelete;
                 }
                 success(store);
-            }, error);
+            }, /** @type {SQLStatementErrorCallback} */ (error));
         }
 
         if (!CFG.useSQLiteIndexes) {
@@ -352,27 +429,31 @@ IDBIndex.__deleteIndex = function (store, index) {
                 ),
             [],
             finishDeleteIndex,
-            error
+            /** @type {SQLStatementErrorCallback} */ (error)
         );
-    }, undefined, store);
+    });
 };
 
 /**
+ * @typedef {{[key: string]: IDBIndexProperties}} IndexList
+ */
+
+/**
  * Updates index list for the given object store.
- * @param {IDBObjectStore} store
- * @param {object} tx
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
+ * @param {SQLTransaction} tx
  * @param {(store: IDBObjectStore) => void} success
  * @param {(
  *   tx: SQLTransaction,
- *   err: import('./DOMException.js').SQLError
- * ) => boolean} failure
+ *   err: SQLError
+ * ) => boolean} [failure]
  * @returns {void}
  */
 IDBIndex.__updateIndexList = function (store, tx, success, failure) {
+    /** @type {IndexList} **/
     const indexList = {};
     for (let i = 0; i < store.indexNames.length; i++) {
         const idx = store.__indexes[store.indexNames[i]];
-        /** @type {IDBIndexProperties} **/
         indexList[idx.name] = {
             columnName: idx.name,
             keyPath: idx.keyPath,
@@ -380,24 +461,28 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
                 unique: idx.unique,
                 multiEntry: idx.multiEntry
             },
-            deleted: Boolean(idx.deleted)
+            deleted: Boolean(idx.__deleted)
         };
     }
 
     CFG.DEBUG && console.log('Updating the index list for ' + store.__currentName, indexList);
     tx.executeSql('UPDATE __sys__ SET "indexList" = ? WHERE "name" = ?', [JSON.stringify(indexList), util.escapeSQLiteStatement(store.__currentName)], function () {
         success(store);
-    }, failure);
+    }, /** @type {SQLStatementErrorCallback} */ (failure));
 };
 
 /**
+ * @typedef {any|IDBKeyRange} Query
+ */
+
+/**
  * Retrieves index data for the given key.
- * @param {*|IDBKeyRange} range
- * @param {string} opType
+ * @param {Query} range
+ * @param {"value"|"key"|"count"} opType
  * @param {boolean} nullDisallowed
- * @param {number} count
- * @returns {IDBRequest}
- * @private
+ * @param {number} [count]
+ * @this {IDBIndexFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, count) {
     const me = this;
@@ -417,20 +502,24 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
     }
 
     const fetchArgs = buildFetchIndexDataSQL(nullDisallowed, me, range, opType, false);
-    return me.objectStore.transaction.__addToTransactionQueue(function (...args) {
-        executeFetchIndexData(count, ...fetchArgs, ...args);
+    return /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
+        me.objectStore.transaction
+    ).__addToTransactionQueue(function (...args) {
+        executeFetchIndexData(
+            count,
+            ...fetchArgs,
+            // @ts-expect-error It's ok
+            ...args
+        );
     }, undefined, me);
 };
 
-/* eslint-disable jsdoc/check-param-names */
 /**
  * Opens a cursor over the given key range.
- * @param {*|IDBKeyRange} query
- * @param {string} direction
- * @returns {IDBRequest}
+ * @this {IDBIndexFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBIndex.prototype.openCursor = function (/* query, direction */) {
-    /* eslint-enable jsdoc/check-param-names */
     const me = this;
     // eslint-disable-next-line prefer-rest-params
     const [query, direction] = arguments;
@@ -439,15 +528,12 @@ IDBIndex.prototype.openCursor = function (/* query, direction */) {
     return cursor.__request;
 };
 
-/* eslint-disable jsdoc/check-param-names */
 /**
  * Opens a cursor over the given key range.  The cursor only includes key values, not data.
- * @param {*|IDBKeyRange} query
- * @param {string} direction
- * @returns {IDBRequest}
+ * @this {IDBIndexFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBIndex.prototype.openKeyCursor = function (/* query, direction */) {
-    /* eslint-enable jsdoc/check-param-names */
     const me = this;
     // eslint-disable-next-line prefer-rest-params
     const [query, direction] = arguments;
@@ -458,9 +544,10 @@ IDBIndex.prototype.openKeyCursor = function (/* query, direction */) {
 
 /**
  *
- * @param {} query
+ * @param {Query} query
  * @throws {TypeError}
- * @returns {}
+ * @this {IDBIndexFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBIndex.prototype.get = function (query) {
     if (!arguments.length) { // Per https://heycam.github.io/webidl/
@@ -471,9 +558,10 @@ IDBIndex.prototype.get = function (query) {
 
 /**
  *
- * @param {} query
+ * @param {Query} query
  * @throws {TypeError}
- * @returns {}
+ * @this {IDBIndexFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBIndex.prototype.getKey = function (query) {
     if (!arguments.length) { // Per https://heycam.github.io/webidl/
@@ -483,7 +571,8 @@ IDBIndex.prototype.getKey = function (query) {
 };
 
 /**
- * @returns {}
+ * @this {IDBIndexFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBIndex.prototype.getAll = function (/* query, count */) {
     // eslint-disable-next-line prefer-rest-params
@@ -492,7 +581,8 @@ IDBIndex.prototype.getAll = function (/* query, count */) {
 };
 
 /**
- * @returns {}
+ * @this {IDBIndexFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBIndex.prototype.getAllKeys = function (/* query, count */) {
     // eslint-disable-next-line prefer-rest-params
@@ -501,7 +591,8 @@ IDBIndex.prototype.getAllKeys = function (/* query, count */) {
 };
 
 /**
- * @returns {}
+ * @this {IDBIndexFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBIndex.prototype.count = function (/* query */) {
     const me = this;
@@ -521,11 +612,15 @@ IDBIndex.prototype.count = function (/* query */) {
 
 /**
  *
- * @param {} store
- * @param {} oldName
- * @param {} newName
- * @param {} colInfoToPreserveArr
- * @param {} cb
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
+ * @param {string} oldName
+ * @param {string} newName
+ * @param {string[][]} colInfoToPreserveArr
+ * @param {null|((
+ *   tx: SQLTransaction,
+ *   success: ((store: IDBObjectStore) => void)
+ * ) => void)} cb
+ * @this {IDBIndexFull}
  * @returns {void}
  */
 IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToPreserveArr = [], cb = null) {
@@ -541,7 +636,9 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
 
     // We could adapt the approach at http://stackoverflow.com/a/8430746/271577
     //    to make the approach reusable without passing column names, but it is a bit fragile
-    store.transaction.__addNonRequestToTransactionQueue(function renameIndex (tx, args, success, error) {
+    /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
+        store.transaction
+    ).__addNonRequestToTransactionQueue(function renameIndex (tx, args, success, error) {
         /**
          * @param {SQLTransaction} tx
          * @param {SQLError} err
@@ -594,9 +691,17 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                                 const sql = 'CREATE INDEX ' +
                                     escapedIndexToRecreate + ' ON ' + escapedStoreNameSQL + '(' + escapedIndexNameSQL + ')';
                                 CFG.DEBUG && console.log(sql);
-                                tx.executeSql(sql, [], resolve, function (tx, err) {
-                                    reject(err);
-                                });
+                                tx.executeSql(
+                                    sql,
+                                    [],
+                                    resolve,
+                                    /* eslint-disable no-extra-parens -- TS */
+                                    /** @type {SQLStatementErrorCallback} */
+                                    (function (tx, err) {
+                                        reject(err);
+                                    })
+                                    /* eslint-enable no-extra-parens -- TS */
+                                );
                                 // }, function (tx, err) {
                                 //    reject(err);
                                 // });
@@ -607,31 +712,59 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                                 // Chrome erring here if not dropped first; Node does not
                                 const sql = 'DROP INDEX IF EXISTS ' + escapedIndexToRecreate;
                                 CFG.DEBUG && console.log(sql);
-                                tx.executeSql(sql, [], function () {
-                                    const sql = 'CREATE INDEX ' + escapedIndexToRecreate +
-                                        ' ON ' + escapedStoreNameSQL + '("key")';
-                                    CFG.DEBUG && console.log(sql);
-                                    tx.executeSql(sql, [], resolve, function (tx, err) {
+                                tx.executeSql(
+                                    sql, [], function () {
+                                        const sql = 'CREATE INDEX ' + escapedIndexToRecreate +
+                                            ' ON ' + escapedStoreNameSQL + '("key")';
+                                        CFG.DEBUG && console.log(sql);
+                                        tx.executeSql(
+                                            sql, [], resolve,
+                                            /* eslint-disable no-extra-parens -- TS */
+                                            /** @type {SQLStatementErrorCallback} */
+                                            (function (tx, err) {
+                                                /* eslint-enable no-extra-parens -- TS */
+                                                reject(err);
+                                            })
+                                        );
+                                    },
+                                    /* eslint-disable no-extra-parens -- TS */
+                                    /** @type {SQLStatementErrorCallback} */
+                                    (function (tx, err) {
+                                        /* eslint-enable no-extra-parens -- TS */
                                         reject(err);
-                                    });
-                                }, function (tx, err) {
-                                    reject(err);
-                                });
+                                    })
+                                );
                             })
                         );
-                        SyncPromise.all(indexCreations).then(finish, error).catch((err) => {
+                        SyncPromise.all(indexCreations).then(
+                            finish,
+                            /** @type {(reason: any) => PromiseLike<never>} */
+                            (error)
+                        ).catch((err) => {
                             console.log('Index rename error');
                             throw err;
                         });
-                    }, sqlError);
-                }, sqlError);
-            }, sqlError);
-        }, sqlError);
+                    }, /** @type {SQLStatementErrorCallback} */ (sqlError));
+                }, /** @type {SQLStatementErrorCallback} */ (sqlError));
+            }, /** @type {SQLStatementErrorCallback} */ (sqlError));
+        }, /** @type {SQLStatementErrorCallback} */ (sqlError));
     });
 };
 
+/**
+ * @typedef {any} AnyValue
+ */
+
 Object.defineProperty(IDBIndex, Symbol.hasInstance, {
-    value: (obj) => util.isObj(obj) && typeof obj.openCursor === 'function' && typeof obj.multiEntry === 'boolean'
+    /**
+     * @param {AnyValue} obj
+     * @returns {boolean}
+     */
+    value: (obj) => util.isObj(obj) &&
+        'openCursor' in obj &&
+        typeof obj.openCursor === 'function' &&
+        'multiEntry' in obj &&
+        typeof obj.multiEntry === 'boolean'
 });
 
 util.defineReadonlyOuterInterface(IDBIndex.prototype, readonlyProperties);
@@ -644,9 +777,9 @@ Object.defineProperty(IDBIndex, 'prototype', {
 });
 
 /**
- * @param {number} count
+ * @param {number|null} count
  * @param {boolean} unboundedDisallowed
- * @param {IDBIndex} index
+ * @param {IDBIndexFull} index
  * @param {boolean} hasKey
  * @param {import('./Key.js').Value|import('./Key.js').Key} range
  * @param {"value"|"key"|"count"} opType
@@ -654,8 +787,8 @@ Object.defineProperty(IDBIndex, 'prototype', {
  * @param {string[]} sql
  * @param {string[]} sqlValues
  * @param {SQLTransaction} tx
- * @param {undefined} args
- * @param {() => void} success
+ * @param {null|undefined} args
+ * @param {(result: number|undefined|[]|AnyValue|AnyValue[]) => void} success
  * @param {(tx: SQLTransaction, err: SQLError) => void} error
  * @returns {void}
  */
@@ -667,7 +800,7 @@ function executeFetchIndexData (
         count = 1;
     }
     if (count) {
-        sql.push('LIMIT', count);
+        sql.push('LIMIT', String(count));
     }
     const isCount = opType === 'count';
     CFG.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
@@ -677,11 +810,27 @@ function executeFetchIndexData (
         const decode = isCount
             ? () => { /* */ }
             : (opType === 'key'
-                ? (record) => {
+                // eslint-disable-next-line operator-linebreak -- JSDoc
+                ?
+                /**
+                 * @param {{
+                 *   key: string
+                 * }} record
+                 * @returns {import('./Key.js').ValueType|undefined}
+                 */
+                (record) => {
                     // Key.convertValueToKey(record.key); // Already validated before storage
                     return Key.decode(util.unescapeSQLiteResponse(record.key));
                 }
-                : (record) => { // when opType is value
+                // eslint-disable-next-line operator-linebreak -- JSDoc
+                :
+                /**
+                 * @param {{
+                 *   value: string
+                 * }} record
+                 * @returns {AnyValue}
+                 */
+                (record) => { // when opType is value
                     return Sca.decode(util.unescapeSQLiteResponse(record.value));
                 });
         if (index.multiEntry) {
@@ -689,11 +838,23 @@ function executeFetchIndexData (
             const encodedKey = Key.encode(range, index.multiEntry);
             for (let i = 0; i < data.rows.length; i++) {
                 const row = data.rows.item(i);
-                const rowKey = Key.decode(row[escapedIndexNameForKeyCol]);
+                const rowKey = /** @type {import('./Key.js').ValueTypeArray} */ (
+                    Key.decode(row[escapedIndexNameForKeyCol])
+                );
                 let record;
                 if (hasKey && (
-                    (multiChecks && range.some((check) => rowKey.includes(check))) || // More precise than our SQL
-                    Key.isMultiEntryMatch(encodedKey, row[escapedIndexNameForKeyCol])
+                    (multiChecks && range.some(
+                        /**
+                         * @param {string} check
+                         * @returns {boolean}
+                         */
+                        (check) => rowKey.includes(check)
+                    )) || // More precise than our SQL
+                    Key.isMultiEntryMatch(
+                        /** @type {string} */
+                        (encodedKey),
+                        row[escapedIndexNameForKeyCol]
+                    )
                 )) {
                     recordCount++;
                     record = row;
@@ -726,18 +887,18 @@ function executeFetchIndexData (
         } else {
             success(unboundedDisallowed ? records[0] : records);
         }
-    }, error);
+    }, /** @type {SQLStatementErrorCallback} */ (error));
 }
 
 /**
  * @param {boolean} nullDisallowed
- * @param {IDBIndex} index
+ * @param {IDBIndexFull} index
  * @param {import('./Key.js').Value|import('./Key.js').Key} range
  * @param {"value"|"key"|"count"} opType
  * @param {boolean} multiChecks
  * @returns {[
  *   nullDisallowed: boolean,
- *   index: IDBIndex,
+ *   index: IDBIndexFull,
  *   hasRange: boolean,
  *   range: import('./Key.js').Value|import('./Key.js').Key,
  *   opType: "value"|"key"|"count",
@@ -758,19 +919,27 @@ function buildFetchIndexDataSQL (
         'FROM', util.escapeStoreNameForSQL(index.objectStore.__currentName),
         'WHERE', util.escapeIndexNameForSQL(index.name), 'NOT NULL'
     ];
+
+    /** @type {string[]} */
     const sqlValues = [];
     if (hasRange) {
         if (multiChecks) {
             sql.push('AND (');
-            range.forEach((innerKey, i) => {
+            /** @type {import('./Key.js').KeyPathArray} */ (
+                range
+            ).forEach((innerKey, i) => {
                 if (i > 0) sql.push('OR');
                 sql.push(util.escapeIndexNameForSQL(index.name), "LIKE ? ESCAPE '^' ");
-                sqlValues.push('%' + util.sqlLIKEEscape(Key.encode(innerKey, index.multiEntry)) + '%');
+                sqlValues.push('%' + util.sqlLIKEEscape(
+                    /** @type {string} */ (Key.encode(innerKey, index.multiEntry))
+                ) + '%');
             });
             sql.push(')');
         } else if (index.multiEntry) {
             sql.push('AND', util.escapeIndexNameForSQL(index.name), "LIKE ? ESCAPE '^'");
-            sqlValues.push('%' + util.sqlLIKEEscape(Key.encode(range, index.multiEntry)) + '%');
+            sqlValues.push('%' + util.sqlLIKEEscape(
+                /** @type {string} */ (Key.encode(range, index.multiEntry))
+            ) + '%');
         } else {
             const convertedRange = convertValueToKeyRange(range, nullDisallowed);
             setSQLForKeyRange(convertedRange, util.escapeIndexNameForSQL(index.name), sql, sqlValues, true, false);

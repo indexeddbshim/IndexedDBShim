@@ -95,6 +95,7 @@ module.exports = {
             'Object.defineProperties',
             'Object.getOwnPropertyDescriptor',
             'Object.entries',
+            'Object.hasOwn',
             'Object.keys',
             'Object.setPrototypeOf',
             'Object.values',

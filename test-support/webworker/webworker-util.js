@@ -43,7 +43,7 @@ export const isValidMessage = function (msg) {
 // Sending messages is done with the send() method.
 /**
  * @class
- * @param {} s
+ * @param {WebSocket} s
  */
 export const MsgStream = function (s) {
     const self = this; // eslint-disable-line consistent-this
@@ -62,8 +62,8 @@ export const MsgStream = function (s) {
     // Get the JS object representing message 'v' with fd 'fd'.
     /**
      *
-     * @param {} v
-     * @param {} fd
+     * @param {[msgType: 0|1|2|100, msg: string]} v
+     * @param {FileDescriptor} fd
      * @returns {[]}
      */
     const getMsgObj = function (v, fd) {
@@ -126,8 +126,8 @@ util.inherits(MsgStream, events.EventEmitter);
 
 /**
  *
- * @param {} workerConfig
- * @param {} dir
+ * @param {import('./webworker.js').WorkerConfig} workerConfig
+ * @param {string} dir
  * @returns {string|false}
  */
 export const makeFileURL = function (workerConfig, dir) {
@@ -143,7 +143,7 @@ export const makeFileURL = function (workerConfig, dir) {
 // Todo: None of these properties are readonly as required by the spec.
 /**
  *
- * @param {} url
+ * @param {string} url
  * @returns {void}
  */
 export const WorkerLocation = function (url) {
@@ -152,7 +152,7 @@ export const WorkerLocation = function (url) {
     // https://url.spec.whatwg.org/#url-miscellaneous
     /**
      *
-     * @param {} proto
+     * @param {string} proto
      * @returns {void}
      */
     const portForProto = function (proto) {
@@ -195,7 +195,7 @@ export const WorkerLocation = function (url) {
 // The first line of the stack trace seems to always be the message itself.
 /**
  *
- * @param {} e
+ * @param {Error} e
  * @returns {string}
  */
 export const getErrorMessage = function (e) {

@@ -7,8 +7,8 @@ import CFG from './CFG.js';
 CFG.win = {openDatabase: nodeWebSQL};
 
 /**
- * @param {null|{}|Window} idb
- * @param {import('./CFG.js').CFG} initialConfig
+ * @param {import('./setGlobalVars.js').ShimmedObject} idb
+ * @param {import('./CFG.js').default} initialConfig
  * @returns {{}|Window}
  */
 const __setGlobalVars = function (idb, initialConfig = {}) {

@@ -1,7 +1,72 @@
-const map = {};
-const CFG = {};
+/* eslint-disable jsdoc/valid-types -- https://github.com/jsdoc-type-pratt-parser/jsdoc-type-pratt-parser/issues/147 */
+/**
+ * @typedef {T[keyof T]} ValueOf<T>
+ * @template T
+ */
+/* eslint-enable jsdoc/valid-types -- https://github.com/jsdoc-type-pratt-parser/jsdoc-type-pratt-parser/issues/147 */
 
-[
+/**
+ * @typedef {{unlink: (path: string, cb: import('fs').NoParamCallback) => void}} FSApi
+ */
+
+/**
+ * @typedef {{
+ *   DEBUG: boolean,
+ *   cacheDatabaseInstances: boolean,
+ *   autoName: boolean,
+ *   fullIDLSupport: boolean,
+ *   checkOrigin: boolean,
+ *   cursorPreloadPackSize: number,
+ *   UnicodeIDStart: string,
+ *   UnicodeIDContinue: string,
+ *   registerSCA: (
+ *     preset: import('typeson').Preset
+ *   ) => import('typeson').Preset,
+ *   avoidAutoShim: boolean,
+ *   win: {
+ *     openDatabase: (name: string, version: string, displayName: string, estimatedSize: number) => import('websql-configurable').default
+ *   },
+ *   DEFAULT_DB_SIZE: number,
+ *   useSQLiteIndexes: boolean,
+ *   fs: FSApi,
+ *   addNonIDBGlobals: boolean,
+ *   replaceNonIDBGlobals: boolean,
+ *   escapeDatabaseName: (name: string) => string,
+ *   unescapeDatabaseName: (name: string) => string,
+ *   databaseCharacterEscapeList: string|false,
+ *   databaseNameLengthLimit: number|false,
+ *   escapeNFDForDatabaseNames: boolean,
+ *   addSQLiteExtension: boolean,
+ *   memoryDatabase: string,
+ *   deleteDatabaseFiles: boolean,
+ *   databaseBasePath: string,
+ *   sysDatabaseBasePath: string,
+ *   sqlBusyTimeout: number,
+ *   sqlTrace: () => void,
+ *   sqlProfile: () => void,
+ *   createIndexes: boolean
+ * }} ConfigValues
+ */
+
+/**
+ * @typedef {ValueOf<ConfigValues>} ConfigValue
+ */
+
+/** @type {{[key: string]: ConfigValue}} */
+const map = {};
+
+const CFG = /** @type {ConfigValues} */ ({});
+
+/**
+ * @typedef {keyof ConfigValues} KeyofConfigValues
+ */
+
+/**
+ * @typedef {KeyofConfigValues[]} Config
+ */
+
+/** @type {Config} */
+([
     // Boolean for verbose reporting
     'DEBUG', // Effectively defaults to false (ignored unless `true`)
 
@@ -121,14 +186,24 @@ const CFG = {};
     //   defaults to `true`
     'addSQLiteExtension',
     // Various types of in-memory databases that can auto-delete
-    ['memoryDatabase', (val) => {
-        if (!(/^(?::memory:|file::memory:(\?[^#]*)?(#.*)?)?$/u).test(val)) {
-            throw new TypeError(
-                '`memoryDatabase` must be the empty string, ":memory:", or a ' +
-                '"file::memory:[?queryString][#hash] URL".'
-            );
+    [
+        'memoryDatabase',
+        /**
+         * @param {string} val
+         * @throws {TypeError}
+         * @returns {void}
+         */
+        (val) => {
+            if (!(/^(?::memory:|file::memory:(\?[^#]*)?(#.*)?)?$/u).test(
+                /** @type {string} */ (val)
+            )) {
+                throw new TypeError(
+                    '`memoryDatabase` must be the empty string, ":memory:", or a ' +
+                    '"file::memory:[?queryString][#hash] URL".'
+                );
+            }
         }
-    }],
+    ],
 
     // NODE-SPECIFIC CONFIG
     // Boolean on whether to delete the database file itself after
@@ -140,8 +215,11 @@ const CFG = {};
     // NODE-SPECIFIC WEBSQL CONFIG
     'sqlBusyTimeout', // Defaults to 1000
     'sqlTrace', // Callback not used by default
-    'sqlProfile' // Callback not used by default
-].forEach((prop) => {
+    'sqlProfile', // Callback not used by default
+
+    'createIndexes'
+]).forEach((prop) => {
+    /** @type {(val: any) => void} */
     let validator;
     if (Array.isArray(prop)) {
         [prop, validator] = prop;

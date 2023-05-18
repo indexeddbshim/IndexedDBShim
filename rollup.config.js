@@ -145,6 +145,7 @@ export default (commandLineArgs) => {
         {
             input: 'node_modules/@unicode/unicode-13.0.0/Binary_Property/Expands_On_NFD/regex.js',
             output: {
+                banner: '// @ts-nocheck\n',
                 file: 'src/unicode-regex.js',
                 format: 'esm'
             },

@@ -54,10 +54,10 @@ const SOCK_DIR_PATH = path.join(os.tmpdir(), 'node-webworker-' + process.pid);
 let numWorkersCreated = 0;
 
 /**
- * @param {object} [workerConfig]
- * @param {string} [workerConfig.path] Path to Node executable: defaults to
+ * @typedef {object} WorkerConfig
+ * @property {string} [path] Path to Node executable: defaults to
  *   `process.execPath` || process.argv[0]
- * @param {[
+ * @property {[
  *   string,
  *   string,
  *   string,
@@ -66,25 +66,29 @@ let numWorkersCreated = 0;
  *   string,
  *   string,
  *   string|null
- * ]} [workerConfig.args] Arguments to pass in opening Node process:
+ * ]} [args] Arguments to pass in opening Node process:
  *   defaults to [worker child, sockPath, Worker src argument,
  *   standard options type, standard options credentials,
  *   relativePathType, basePath, rootPath, origin];
  *   if present, array values will have components spliced into the
  *   beginning; if non-array, will be converted to string and spliced
  *   onto the beginning
- * @param {string[]} [workerConfig.permittedProtocols] Indicates array of
+ * @property {string[]} [permittedProtocols] Indicates array of
  *   permitted explicit protocols ("file", "http", "https"); defaults to
  *   ["http", "https"]
- * @param {"file"|"url"} [workerConfig.relativePathType] Determines
+ * @property {"file"|"url"} [relativePathType] Determines
  *   Worker `src` argument interpretation; defaults to "url" relative paths
  *   will be relative to `basePath`
- * @param {string} [workerConfig.basePath] The base path for pathType="url"
+ * @property {string} [basePath] The base path for pathType="url"
  *   defaults to `localhost`; the base path for pathType="file" defaults to
  *   the current working directory; if `false`, will throw upon relative paths
- * @param {string} [workerConfig.rootPath] The root path
- * @param {string|null} [workerConfig.origin] Used for the `Origin` header
+ * @property {string} [rootPath] The root path
+ * @property {string|null} [origin] Used for the `Origin` header
  *   (may be `null`); if `*` will cause cross-origin restrictions to be ignored
+ */
+
+/**
+ * @param {WorkerConfig} workerConfig
  * @throws {TypeError}
  * @returns {Worker}
  */

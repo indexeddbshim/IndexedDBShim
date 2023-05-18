@@ -1,4 +1,3 @@
-/* globals self */
 import {setPrototypeOfCustomEvent} from 'eventtargeter';
 import shimIDBVersionChangeEvent from './IDBVersionChangeEvent.js';
 import {IDBCursor as shimIDBCursor, IDBCursorWithValue as shimIDBCursorWithValue} from './IDBCursor.js';
@@ -17,56 +16,134 @@ import CFG from './CFG.js';
 import {isNullish} from './util.js';
 
 /**
- *
- * @param {} prop
- * @param {} val
+ * @typedef {any} AnyValue
+ */
+
+/**
+ * @callback SetConfig
+ * @param {import('./CFG.js').KeyofConfigValues|
+ *   Partial<import('./CFG.js').ConfigValues>} prop
+ * @param {AnyValue} [val]
  * @throws {Error}
  * @returns {void}
  */
+
+/** @type {SetConfig} */
 function setConfig (prop, val) {
     if (prop && typeof prop === 'object') {
         Object.entries(prop).forEach(([p, val]) => {
-            setConfig(p, val);
+            setConfig(
+                /** @type {import('./CFG.js').KeyofConfigValues} */
+                (p),
+                val
+            );
         });
         return;
     }
     if (!(prop in CFG)) {
         throw new Error(prop + ' is not a valid configuration property');
     }
+    // @ts-expect-error Should not be `never` here!
     CFG[prop] = val;
     if (prop === 'registerSCA' && typeof val === 'function') {
-        register(val);
+        register(
+            /**
+             * @type {(
+             *   preset: import('typeson').Preset
+             * ) => import('typeson').Preset}
+             */ (
+                val
+            )
+        );
     }
 }
 
 /**
+ * @typedef {(
+ *   prop: import('./CFG.js').KeyofConfigValues
+ * ) => import('../src/CFG.js').ConfigValue} GetConfig
+ */
+
+/**
+ * @typedef {(cfg: {
+ *   UnicodeIDStart: string,
+ *   UnicodeIDContinue: string
+ * }) => void} SetUnicodeIdentifiers
+ */
+
+/**
+ * @typedef {(IDBFactory|object) & {
+ *     __useShim: () => void,
+ *     __debug: (val: boolean) => void,
+ *     __setConfig: SetConfig,
+ *     __getConfig: GetConfig,
+ *     __setUnicodeIdentifiers: SetUnicodeIdentifiers,
+ *     __setConnectionQueueOrigin: (origin?: string) => void
+ *   }} ShimIndexedDB
+ */
+
+/**
+ * @typedef {number} Integer
+ */
+
+/**
+ * @typedef {(typeof globalThis|object) & {
+ *   indexedDB?: Partial<IDBFactory>,
+ *   IDBFactory: typeof IDBFactory,
+ *   IDBOpenDBRequest: typeof IDBOpenDBRequest,
+ *   IDBRequest: typeof IDBRequest,
+ *   IDBCursorWithValue: typeof IDBCursorWithValue,
+ *   IDBCursor: typeof IDBCursor,
+ *   IDBDatabase: typeof IDBDatabase,
+ *   IDBTransaction: typeof IDBTransaction,
+ *   IDBKeyRange: typeof IDBKeyRange,
+ *   shimIndexedDB?: ShimIndexedDB
+ * }} ShimmedObject
+ */
+
+/**
  *
- * @param {} idb
- * @param {} initialConfig
- * @returns {Window|object}
+ * @param {ShimmedObject} [idb]
+ * @param {import('./CFG.js').ConfigValues} [initialConfig]
+ * @returns {ShimmedObject}
  */
 function setGlobalVars (idb, initialConfig) {
     if (initialConfig) {
         setConfig(initialConfig);
     }
-    const IDB = idb || (typeof window !== 'undefined' ? window : (typeof self !== 'undefined' ? self : (typeof global !== 'undefined' ? global : {})));
+    const IDB = idb || globalThis || {};
     /**
-     *
-     * @param {} name
-     * @param {} value
-     * @param {} propDesc
+     * @typedef {any} AnyClass
+     */
+    /**
+     * @typedef {any} AnyValue
+     */
+    /**
+     * @typedef {Function} AnyFunction
+     */
+    /**
+     * @param {string} name
+     * @param {AnyClass} value
+     * @param {PropertyDescriptor & {
+     *   shimNS?: object
+     * }|undefined} [propDesc]
      * @returns {void}
      */
     function shim (name, value, propDesc) {
         if (!propDesc || !Object.defineProperty) {
             try {
                 // Try setting the property. This will fail if the property is read-only.
+                // @ts-expect-error It's ok
                 IDB[name] = value;
             } catch (e) {
                 console.log(e);
             }
         }
-        if (IDB[name] !== value && Object.defineProperty) {
+        if (
+            // @ts-expect-error It's ok
+            IDB[name] !== value &&
+            Object.defineProperty
+        ) {
             // Setting a read-only property failed, so try re-defining the property
             try {
                 let desc = propDesc || {};
@@ -79,11 +156,20 @@ function setGlobalVars (idb, initialConfig) {
                     }
                 } else {
                     const o = {
+                        /**
+                         * @returns {AnyValue}
+                         */
                         get [name] () {
-                            return propDesc.get.call(this);
+                            return /** @type {AnyFunction} */ (
+                                /** @type {PropertyDescriptor} */ (
+                                    propDesc
+                                ).get
+                            ).call(this);
                         }
                     };
-                    desc = Object.getOwnPropertyDescriptor(o, name);
+                    desc = /** @type {PropertyDescriptor} */ (
+                        Object.getOwnPropertyDescriptor(o, name)
+                    );
                 }
                 Object.defineProperty(IDB, name, desc);
             } catch (e) {
@@ -92,6 +178,8 @@ function setGlobalVars (idb, initialConfig) {
                 //  get here since no WebSQL to use for shimming)
             }
         }
+
+        // @ts-expect-error It's ok
         if (IDB[name] !== value) {
             typeof console !== 'undefined' && console.warn && console.warn('Unable to shim ' + name);
         }
@@ -102,11 +190,11 @@ function setGlobalVars (idb, initialConfig) {
             configurable: true
         });
     }
-    if (IDB.shimIndexedDB) {
+    if ('shimIndexedDB' in IDB && IDB.shimIndexedDB) {
         IDB.shimIndexedDB.__useShim = function () {
             /**
              *
-             * @param {} prefix
+             * @param {"Shim"|""} [prefix]
              * @returns {void}
              */
             function setNonIDBGlobals (prefix = '') {
@@ -150,7 +238,8 @@ function setGlobalVars (idb, initialConfig) {
                         return shimIndexedDB;
                     }
                 });
-                [
+                /** @type {[string, any][]} */
+                ([
                     ['IDBFactory', shimIDBFactory],
                     ['IDBDatabase', shimIDBDatabase],
                     ['IDBObjectStore', shimIDBObjectStore],
@@ -162,7 +251,7 @@ function setGlobalVars (idb, initialConfig) {
                     ['IDBRequest', shimIDBRequest],
                     ['IDBOpenDBRequest', shimIDBOpenDBRequest],
                     ['IDBVersionChangeEvent', shimIDBVersionChangeEvent]
-                ].forEach(([prop, obj]) => {
+                ]).forEach(([prop, obj]) => {
                     shim(prop, obj, {
                         enumerable: false,
                         configurable: true
@@ -197,6 +286,10 @@ function setGlobalVars (idb, initialConfig) {
                         setNonIDBGlobals();
                     }
                 }
+                /* istanbul ignore next -- TS guard */
+                if (!IDB.shimIndexedDB) {
+                    return;
+                }
                 IDB.shimIndexedDB.__setConnectionQueueOrigin();
             }
         };
@@ -205,22 +298,31 @@ function setGlobalVars (idb, initialConfig) {
             CFG.DEBUG = val;
         };
         IDB.shimIndexedDB.__setConfig = setConfig;
+
+        /** @type {GetConfig} */
         IDB.shimIndexedDB.__getConfig = function (prop) {
             if (!(prop in CFG)) {
                 throw new Error(prop + ' is not a valid configuration property');
             }
             return CFG[prop];
         };
-        IDB.shimIndexedDB.__setUnicodeIdentifiers = function ({UnicodeIDStart, UnicodeIDContinue}) {
+
+        /** @type {SetUnicodeIdentifiers} */
+        IDB.shimIndexedDB.__setUnicodeIdentifiers = function ({
+            UnicodeIDStart, UnicodeIDContinue
+        }) {
             setConfig({UnicodeIDStart, UnicodeIDContinue});
         };
     } else {
         // We no-op the harmless set-up properties and methods with a warning; the `IDBFactory` methods,
         //    however (including our non-standard methods), are not stubbed as they ought
         //    to fail earlier rather than potentially having side effects.
-        IDB.shimIndexedDB = {};
-        ['__useShim', '__debug', '__setConfig', '__getConfig', '__setUnicodeIdentifiers'].forEach((prop) => {
-            IDB.shimIndexedDB[prop] = function () {
+        IDB.shimIndexedDB = /** @type {ShimIndexedDB} */ ({});
+        /** @type {const} */ ([
+            '__useShim', '__debug', '__setConfig',
+            '__getConfig', '__setUnicodeIdentifiers'
+        ]).forEach((prop) => {
+            /** @type {ShimIndexedDB} */ (IDB.shimIndexedDB)[prop] = /** @type {() => any} */ function () {
                 console.warn('This browser does not have WebSQL to shim.');
             };
         });
@@ -228,7 +330,11 @@ function setGlobalVars (idb, initialConfig) {
 
     // Workaround to prevent an error in Firefox
     if (!('indexedDB' in IDB) && typeof window !== 'undefined') { // 2nd condition avoids problems in Node
-        IDB.indexedDB = IDB.indexedDB || IDB.webkitIndexedDB || IDB.mozIndexedDB || IDB.oIndexedDB || IDB.msIndexedDB;
+        IDB.indexedDB = /** @type {IDBFactory} */ (IDB.indexedDB ||
+            ('webkitIndexedDB' in IDB && IDB.webkitIndexedDB) ||
+            ('mozIndexedDB' in IDB && IDB.mozIndexedDB) ||
+            ('oIndexedDB' in IDB && IDB.oIndexedDB) ||
+            ('msIndexedDB' in IDB && IDB.msIndexedDB));
     }
 
     // Detect browsers with known IndexedDB issues (e.g. Android pre-4.4)
@@ -249,7 +355,7 @@ function setGlobalVars (idb, initialConfig) {
                 // Detect iOS: http://stackoverflow.com/questions/9038625/detect-if-device-is-ios/9039885#9039885
                 // and detect version 9: http://stackoverflow.com/a/26363560/271577
                 (/(iPad|iPhone|iPod).* os 9_/ui).test(navigator.userAgent) &&
-                !window.MSStream // But avoid IE11
+                !('MSStream' in window) // But avoid IE11
             )
         )
     ) {
@@ -276,12 +382,16 @@ function setGlobalVars (idb, initialConfig) {
     ) {
         IDB.shimIndexedDB.__useShim();
     } else {
-        IDB.IDBDatabase = IDB.IDBDatabase || IDB.webkitIDBDatabase;
-        IDB.IDBTransaction = IDB.IDBTransaction || IDB.webkitIDBTransaction || {};
-        IDB.IDBCursor = IDB.IDBCursor || IDB.webkitIDBCursor;
-        IDB.IDBKeyRange = IDB.IDBKeyRange || IDB.webkitIDBKeyRange;
+        IDB.IDBDatabase = IDB.IDBDatabase ||
+            ('webkitIDBDatabase' in IDB && IDB.webkitIDBDatabase);
+        IDB.IDBTransaction = IDB.IDBTransaction ||
+            ('webkitIDBTransaction' in IDB && IDB.webkitIDBTransaction) || {};
+        IDB.IDBCursor = IDB.IDBCursor ||
+            ('webkitIDBCursor' in IDB && IDB.webkitIDBCursor);
+        IDB.IDBKeyRange = IDB.IDBKeyRange ||
+            ('webkitIDBKeyRange' in IDB && IDB.webkitIDBKeyRange);
     }
-    return IDB;
+    return /** @type {ShimmedObject} */ (IDB);
 }
 
 // Expose for ease in simulating such exceptions during testing

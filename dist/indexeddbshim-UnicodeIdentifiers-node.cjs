@@ -1,46 +1,118 @@
-/*! indexeddbshim - v12.0.0 - 5/17/2023 */
+/*! indexeddbshim - v12.0.0 - 6/7/2023 */
 
 'use strict';
 
 var fs$1 = require('node:fs');
 var path = require('path');
+var require$$0 = require('url');
+var require$$0$1 = require('fs');
+var require$$3 = require('mock-aws-s3');
+var require$$4 = require('os');
+var require$$5$1 = require('aws-sdk');
+var require$$6 = require('nock');
+var require$$2 = require('stream');
+var require$$0$2 = require('util');
+var require$$2$1 = require('events');
+var require$$1 = require('readable-stream');
+var require$$5$2 = require('assert');
+var require$$0$3 = require('child_process');
 
 function _typeof$1(obj) {
   "@babel/helpers - typeof";
 
-  if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
-    _typeof$1 = function (obj) {
-      return typeof obj;
-    };
-  } else {
-    _typeof$1 = function (obj) {
-      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-    };
-  }
-  return _typeof$1(obj);
+  return _typeof$1 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) {
+    return typeof obj;
+  } : function (obj) {
+    return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+  }, _typeof$1(obj);
 }
 
-/* eslint-disable no-sync, no-restricted-syntax */
+/* eslint-disable n/no-sync -- Want sync naming */
+/* eslint-disable no-restricted-syntax -- Instanceof checks */
+/* eslint-disable unicorn/no-this-assignment -- TS */
+
+/**
+ * @typedef {number} Integer
+ */
+
+/**
+ * @callback InvokeCurrentListeners
+ * @param {AllListeners} listeners
+ * @param {EventWithProps} eventCopy
+ * @param {string} type
+ * @param {boolean} [checkOnListeners]
+ * @returns {boolean}
+ */
+
+/**
+ * @typedef {{
+ *   defaultSync?: boolean,
+ *   extraProperties?: string[],
+ *   legacyOutputDidListenersThrowFlag?: boolean
+ * }} CustomOptions
+ */
+/**
+ * @typedef {{
+ *   __legacyOutputDidListenersThrowError: unknown,
+ *   target: EventTarget & {
+ *     invokeCurrentListeners: InvokeCurrentListeners,
+ *     _earlyListeners: AllListeners,
+ *     _listeners: AllListeners,
+ *     _lateListeners: AllListeners,
+ *     _defaultListeners: AllListeners
+ *   },
+ *   composed: boolean,
+ *   currentTarget: EventTarget,
+ *   eventPhase: 0|1|2|3
+ *   defaultPrevented: boolean,
+ *   type: string,
+ *   bubbles: boolean,
+ *   cancelable: boolean,
+ *   isTrusted: boolean,
+ *   timeStamp: Integer,
+ *   initEvent: (type: string, bubbles: boolean, cancelable: boolean) => void,
+ *   preventDefault: () => void,
+ *   composedPath: () => void,
+ *   detail: any,
+ *   initCustomEvent: (
+ *     type: string, canBubble: boolean, cancelable: boolean,
+ *     detail: any
+ *   ) => void
+ * }} EventWithProps
+ */
+
 // Todo: Switch to ES6 classes
+
 var phases = {
   NONE: 0,
   CAPTURING_PHASE: 1,
   AT_TARGET: 2,
   BUBBLING_PHASE: 3
 };
-var ShimDOMException$1 = typeof DOMException === 'undefined' // Todo: Better polyfill (if even needed here)
-// eslint-disable-next-line no-shadow
-? function DOMException(msg, name) {
+var ShimDOMException$1 = typeof DOMException === 'undefined'
+// Todo: Better polyfill (if even needed here)
+/* eslint-disable no-shadow -- Polyfill */
+// eslint-disable-next-line operator-linebreak -- TS/JSDoc needs
+?
+/**
+ * @param {string} msg
+ * @param {string} name
+ * @returns {Error}
+ */
+function DOMException(msg, name) {
   // No need for `toString` as same as for `Error`
+  /* eslint-enable no-shadow -- Polyfill */
   var err = new Error(msg);
   err.name = name;
   return err;
 } : DOMException;
 var ev = new WeakMap();
-var evCfg = new WeakMap(); // Todo: Set _ev argument outside of this function
+var evCfg = new WeakMap();
 
-/* eslint-disable func-name-matching, no-shadow */
+// Todo: Set _ev argument outside of this function
 
+/* eslint-disable func-name-matching -- Shim vs. Polyfill */
+/* eslint-disable no-shadow -- Polyfilling */
 /**
 * We use an adapter class rather than a proxy not only for compatibility
 * but also since we have to clone native event properties anyways in order
@@ -50,15 +122,17 @@ var evCfg = new WeakMap(); // Todo: Set _ev argument outside of this function
 * @class
 * @param {string} type
 */
-
-var ShimEvent = function Event(type) {
-  /* eslint-enable func-name-matching, no-shadow */
+var ShimEvent = /** @type {unknown} */function Event(type) {
+  var _this = this;
+  /* eslint-enable func-name-matching -- Shim vs. Polyfill */
+  /* eslint-enable no-shadow -- Polyfilling */
   // For WebIDL checks of function's `length`, we check `arguments` for the optional arguments
+  // @ts-expect-error
   this[Symbol.toStringTag] = 'Event';
   this.toString = function () {
     return '[object Event]';
-  }; // eslint-disable-next-line prefer-rest-params
-
+  };
+  // eslint-disable-next-line prefer-rest-params -- Don't want to change signature
   var _arguments = Array.prototype.slice.call(arguments),
     evInit = _arguments[1],
     _ev = _arguments[2];
@@ -67,27 +141,33 @@ var ShimEvent = function Event(type) {
   }
   evInit = evInit || {};
   _ev = _ev || {};
+
+  /** @type {EventWithProps} */
   var _evCfg = {};
   if ('composed' in evInit) {
     _evCfg.composed = evInit.composed;
-  } // _evCfg.isTrusted = true; // We are not always using this for user-created events
+  }
+
+  // _evCfg.isTrusted = true; // We are not always using this for user-created events
   // _evCfg.timeStamp = new Date().valueOf(); // This is no longer a timestamp, but monotonic (elapsed?)
 
   ev.set(this, _ev);
   evCfg.set(this, _evCfg);
-  this.initEvent(type, evInit.bubbles, evInit.cancelable);
-  Object.defineProperties(this, ['target', 'currentTarget', 'eventPhase', 'defaultPrevented'].reduce(function (obj, prop) {
-    obj[prop] = {
+  var that = /** @type {unknown} */this;
+  /** @type {ShimEvent} */
+  that.initEvent(type, evInit.bubbles, evInit.cancelable);
+  ['target', 'currentTarget', 'eventPhase', 'defaultPrevented'].forEach(function (pr) {
+    var prop = /** @type {"target"|"currentTarget"|"eventPhase"|"defaultPrevented"} */
+    pr;
+    Object.defineProperty(_this, prop, {
       get: function get() {
-        return (/* prop in _evCfg && */
-          _evCfg[prop] !== undefined ? _evCfg[prop] : prop in _ev ? _ev[prop] :
+        return (/* prop in _evCfg && */_evCfg[prop] !== undefined ? _evCfg[prop] : prop in _ev ? _ev[prop] :
           // Defaults
           prop === 'eventPhase' ? 0 : prop === 'defaultPrevented' ? false : null
         );
       }
-    };
-    return obj;
-  }, {}));
+    });
+  });
   var props = [
   // Event
   'type', 'bubbles', 'cancelable',
@@ -98,16 +178,27 @@ var ShimEvent = function Event(type) {
   if (this.toString() === '[object CustomEvent]') {
     props.push('detail', 'initCustomEvent');
   }
-  Object.defineProperties(this, props.reduce(function (obj, prop) {
+  Object.defineProperties(this, props.reduce(function (obj, pr) {
+    var prop =
+    /**
+     * @type {"type"|"bubbles"|"cancelable"|"isTrusted"|
+     *   "timeStamp"|"initEvent"|"composedPath"|"composed"|
+     *   "detail"|"initCustomEvent"
+     * }
+     */
+    pr;
     obj[prop] = {
       get: function get() {
         return prop in _evCfg ? _evCfg[prop] : prop in _ev ? _ev[prop] : ['bubbles', 'cancelable', 'composed'].includes(prop) ? false : undefined;
       }
     };
     return obj;
-  }, {}));
+  }, /** @type {{[key: string]: any}} */{}));
 };
+
+// @ts-expect-error Casting doesn't work
 ShimEvent.prototype.preventDefault = function () {
+  // @ts-expect-error Needed for exporting
   if (!(this instanceof ShimEvent)) {
     throw new TypeError('Illegal invocation');
   }
@@ -121,14 +212,20 @@ ShimEvent.prototype.preventDefault = function () {
     }
   }
 };
+
+// @ts-expect-error Casting doesn't work
 ShimEvent.prototype.stopImmediatePropagation = function () {
   var _evCfg = evCfg.get(this);
   _evCfg._stopImmediatePropagation = true;
 };
+
+// @ts-expect-error Casting doesn't work
 ShimEvent.prototype.stopPropagation = function () {
   var _evCfg = evCfg.get(this);
   _evCfg._stopPropagation = true;
 };
+
+// @ts-expect-error Casting doesn't work
 ShimEvent.prototype.initEvent = function (type, bubbles, cancelable) {
   // Chrome currently has function length 1 only but WebIDL says 3
   // const bubbles = arguments[1];
@@ -137,6 +234,27 @@ ShimEvent.prototype.initEvent = function (type, bubbles, cancelable) {
   if (_evCfg._dispatched) {
     return;
   }
+  Object.defineProperty(this, 'type', {
+    enumerable: true,
+    configurable: true,
+    get: function get() {
+      return type;
+    }
+  });
+  Object.defineProperty(this, 'bubbles', {
+    enumerable: true,
+    configurable: true,
+    get: function get() {
+      return bubbles;
+    }
+  });
+  Object.defineProperty(this, 'cancelable', {
+    enumerable: true,
+    configurable: true,
+    get: function get() {
+      return cancelable;
+    }
+  });
   _evCfg.type = type;
   if (bubbles !== undefined) {
     _evCfg.bubbles = bubbles;
@@ -146,6 +264,7 @@ ShimEvent.prototype.initEvent = function (type, bubbles, cancelable) {
   }
 };
 ['type', 'target', 'currentTarget'].forEach(function (prop) {
+  // @ts-expect-error Casting doesn't work
   Object.defineProperty(ShimEvent.prototype, prop, {
     enumerable: true,
     configurable: true,
@@ -155,6 +274,7 @@ ShimEvent.prototype.initEvent = function (type, bubbles, cancelable) {
   });
 });
 ['eventPhase', 'defaultPrevented', 'bubbles', 'cancelable', 'timeStamp'].forEach(function (prop) {
+  // @ts-expect-error Casting doesn't work
   Object.defineProperty(ShimEvent.prototype, prop, {
     enumerable: true,
     configurable: true,
@@ -169,54 +289,67 @@ ShimEvent.prototype.initEvent = function (type, bubbles, cancelable) {
     writable: false,
     value: i
   });
+  // @ts-expect-error Casting doesn't work
   Object.defineProperty(ShimEvent.prototype, prop, {
     writable: false,
     value: i
   });
 });
+// @ts-expect-error Casting doesn't work
 ShimEvent[Symbol.toStringTag] = 'Function';
+
+// @ts-expect-error Casting doesn't work
 ShimEvent.prototype[Symbol.toStringTag] = 'EventPrototype';
 Object.defineProperty(ShimEvent, 'prototype', {
   writable: false
 });
-/* eslint-disable func-name-matching, no-shadow */
 
+/* eslint-disable func-name-matching -- Polyfill */
+/* eslint-disable no-shadow -- Polyfill */
 /**
- *
- * @param {string} type
  * @class
+ * @param {string} type
  */
+var ShimCustomEvent = /** @type {unknown} */function CustomEvent(type) {
+  /* eslint-enable func-name-matching -- Polyfill */
+  /* eslint-enable no-shadow -- Polyfill */
 
-var ShimCustomEvent = function CustomEvent(type) {
-  /* eslint-enable func-name-matching, no-shadow */
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- Keep signature
   var _arguments2 = Array.prototype.slice.call(arguments),
     evInit = _arguments2[1],
     _ev = _arguments2[2];
+  // @ts-expect-error Casting doesn't work
   ShimEvent.call(this, type, evInit, _ev);
+  // @ts-expect-error
   this[Symbol.toStringTag] = 'CustomEvent';
   this.toString = function () {
     return '[object CustomEvent]';
-  }; // var _evCfg = evCfg.get(this);
-
+  };
+  // var _evCfg = evCfg.get(this);
   evInit = evInit || {};
+  // @ts-ignore
   this.initCustomEvent(type, evInit.bubbles, evInit.cancelable, 'detail' in evInit ? evInit.detail : null);
 };
+// @ts-expect-error Casting doesn't work
 Object.defineProperty(ShimCustomEvent.prototype, 'constructor', {
   enumerable: false,
   writable: true,
   configurable: true,
   value: ShimCustomEvent
 });
+// @ts-expect-error Casting doesn't work
 ShimCustomEvent.prototype.initCustomEvent = function (type, bubbles, cancelable, detail) {
+  // @ts-expect-error Needed for exporting
   if (!(this instanceof ShimCustomEvent)) {
     throw new TypeError('Illegal invocation');
   }
   var _evCfg = evCfg.get(this);
+  // @ts-expect-error Casting doesn't work
   ShimCustomEvent.call(this, type, {
     bubbles: bubbles,
     cancelable: cancelable,
-    detail: detail // eslint-disable-next-line prefer-rest-params
+    detail: detail
+    // eslint-disable-next-line prefer-rest-params -- Keep signature
   }, arguments[4]);
   if (_evCfg._dispatched) {
     return;
@@ -230,8 +363,12 @@ ShimCustomEvent.prototype.initCustomEvent = function (type, bubbles, cancelable,
     }
   });
 };
+// @ts-expect-error Casting doesn't work
 ShimCustomEvent[Symbol.toStringTag] = 'Function';
+// @ts-expect-error Casting doesn't work
 ShimCustomEvent.prototype[Symbol.toStringTag] = 'CustomEventPrototype';
+
+// @ts-expect-error Casting doesn't work
 Object.defineProperty(ShimCustomEvent.prototype, 'detail', {
   enumerable: true,
   configurable: true,
@@ -242,44 +379,47 @@ Object.defineProperty(ShimCustomEvent.prototype, 'detail', {
 Object.defineProperty(ShimCustomEvent, 'prototype', {
   writable: false
 });
+
 /**
  *
- * @param {Event} e
- * @returns {ShimEvent}
+ * @param {EventWithProps} e
+ * @returns {EventWithProps}
  */
-
 function copyEvent(e) {
   var bubbles = e.bubbles,
     cancelable = e.cancelable,
     detail = e.detail,
     type = e.type;
   if ('detail' in e) {
+    // @ts-expect-error Casting doesn't work
     return new ShimCustomEvent(type, {
       bubbles: bubbles,
       cancelable: cancelable,
       detail: detail
     }, e);
   }
+  // @ts-expect-error Casting doesn't work
   return new ShimEvent(type, {
     bubbles: bubbles,
     cancelable: cancelable
   }, e);
 }
+
 /**
-* @typedef {PlainObject} ListenerOptions
-* @property {boolean} once Remove listener after invoking once
-* @property {boolean} passive Don't allow `preventDefault`
-* @property {boolean} capture Use `_children` and set `eventPhase`
+* @typedef {object} ListenerOptions
+* @property {boolean} [once] Remove listener after invoking once
+* @property {boolean} [passive] Don't allow `preventDefault`
+* @property {boolean} [capture] Use `_children` and set `eventPhase`
 */
 
 /**
-* @typedef {PlainObject} ListenerAndOptions
-* @property {listener} listener
+* @typedef {object} ListenerAndOptions
+* @property {Listener} listener
 * @property {ListenerOptions} options
 */
 
 /**
-* @typedef {PlainObject} ListenerInfo
+* @typedef {object} ListenerInfo
 * @property {ListenerAndOptions[]} listenersByTypeOptions
 * @property {ListenerOptions} options
 * @property {ListenerAndOptions[]} listenersByType
@@ -287,45 +427,57 @@ function copyEvent(e) {
 
 /**
 * @callback Listener
-* @param {Event} e
+* @param {EventWithProps} e
 * @returns {boolean}
 */
 
 /**
  * Keys are event types.
- * @typedef {Object<string,Listener[]>} Listeners
-*/
+ * @typedef {{[key: string]: Listener[]}} Listeners
+ */
+
+/**
+ * @typedef {{
+ *   [type: string]: ListenerAndOptions[]
+ * }} AllListeners
+ */
 
 /**
  *
- * @param {Listeners} listeners
+ * @param {AllListeners} listeners
  * @param {string} type
  * @param {boolean|ListenerOptions} options
  * @returns {ListenerInfo}
  */
-
 function getListenersOptions(listeners, type, options) {
   var listenersByType = listeners[type];
   if (listenersByType === undefined) listeners[type] = listenersByType = [];
-  options = typeof options === 'boolean' ? {
+  var opts = typeof options === 'boolean' ? {
     capture: options
   } : options || {};
-  var stringifiedOptions = JSON.stringify(options);
+  var stringifiedOptions = JSON.stringify(opts);
   var listenersByTypeOptions = listenersByType.filter(function (obj) {
     return stringifiedOptions === JSON.stringify(obj.options);
   });
   return {
     listenersByTypeOptions: listenersByTypeOptions,
-    options: options,
+    options: opts,
     listenersByType: listenersByType
   };
 }
 var methods = {
+  /**
+   * @param {AllListeners} listeners
+   * @param {Listener} listener
+   * @param {string} type
+   * @param {boolean|ListenerOptions} options
+   * @returns {void}
+   */
   addListener: function addListener(listeners, listener, type, options) {
-    var listenerOptions = getListenersOptions(listeners, type, options);
-    var listenersByTypeOptions = listenerOptions.listenersByTypeOptions;
-    options = listenerOptions.options;
-    var listenersByType = listenerOptions.listenersByType;
+    var listenersOptions = getListenersOptions(listeners, type, options);
+    var listenersByTypeOptions = listenersOptions.listenersByTypeOptions;
+    options = listenersOptions.options;
+    var listenersByType = listenersOptions.listenersByType;
     if (listenersByTypeOptions.some(function (l) {
       return l.listener === listener;
     })) return;
@@ -334,10 +486,17 @@ var methods = {
       options: options
     });
   },
+  /**
+   * @param {AllListeners} listeners
+   * @param {Listener} listener
+   * @param {string} type
+   * @param {boolean|ListenerOptions} options
+   * @returns {void}
+   */
   removeListener: function removeListener(listeners, listener, type, options) {
-    var listenerOptions = getListenersOptions(listeners, type, options);
-    var listenersByType = listenerOptions.listenersByType;
-    var stringifiedOptions = JSON.stringify(listenerOptions.options);
+    var listenersOptions = getListenersOptions(listeners, type, options);
+    var listenersByType = listenersOptions.listenersByType;
+    var stringifiedOptions = JSON.stringify(listenersOptions.options);
     listenersByType.some(function (l, i) {
       if (l.listener === listener && stringifiedOptions === JSON.stringify(l.options)) {
         listenersByType.splice(i, 1);
@@ -347,60 +506,97 @@ var methods = {
       return false;
     });
   },
+  /**
+   *
+   * @param {AllListeners} listeners
+   * @param {Listener} listener
+   * @param {string} type
+   * @param {boolean|ListenerOptions} options
+   * @returns {boolean}
+   */
   hasListener: function hasListener(listeners, listener, type, options) {
-    var listenerOptions = getListenersOptions(listeners, type, options);
-    var listenersByTypeOptions = listenerOptions.listenersByTypeOptions;
+    var listenersOptions = getListenersOptions(listeners, type, options);
+    var listenersByTypeOptions = listenersOptions.listenersByTypeOptions;
     return listenersByTypeOptions.some(function (l) {
       return l.listener === listener;
     });
   }
 };
-/* eslint-disable no-shadow */
 
+/* eslint-disable no-shadow -- Polyfill */
 /**
  * @class
  */
-
 function EventTarget() {
-  /* eslint-enable no-shadow */
+  /* eslint-enable no-shadow -- Polyfill */
   throw new TypeError('Illegal constructor');
 }
-Object.assign(EventTarget.prototype, ['Early', '', 'Late', 'Default'].reduce(function (obj, listenerType) {
-  ['add', 'remove', 'has'].forEach(function (method) {
-    obj[method + listenerType + 'EventListener'] = function (type, listener) {
-      // eslint-disable-next-line prefer-rest-params
-      var options = arguments[2]; // We keep the listener `length` as per WebIDL
 
+/**
+ * @typedef {"addEarlyEventListener"|"removeEarlyEventListener"|"hasEarlyEventListener"|
+ *   "addEventListener"|"removeEventListener"|"hasEventListener"|
+ *   "addLateEventListener"|"removeLateEventListener"|"hasLateEventListener"|
+ *   "addDefaultEventListener"|"removeDefaultEventListener"|"hasDefaultEventListener"
+ * } ListenerName
+ */
+Object.assign(EventTarget.prototype, ['Early', '', 'Late', 'Default'].reduce(function ( /** @type {{[key: string]: Function}} */
+obj, listenerType) {
+  ['add', 'remove', 'has'].forEach(function (method) {
+    var mainMethod = /** @type {ListenerName} */method + listenerType + 'EventListener';
+    /**
+     * @param {string} type
+     * @param {Listener|{handleEvent: Listener}} listener
+     * @this {EventTarget & {
+     *   _earlyListeners: AllListeners,
+     *   _listeners: AllListeners,
+     *   _lateListeners: AllListeners,
+     *   _defaultListeners: AllListeners,
+     * }}
+     * @returns {boolean|void}
+     */
+    obj[mainMethod] = function (type, listener) {
+      // eslint-disable-next-line prefer-rest-params -- Keep signature
+      var options = arguments[2]; // We keep the listener `length` as per WebIDL
       if (arguments.length < 2) throw new TypeError('2 or more arguments required');
       if (typeof type !== 'string') {
+        // @ts-expect-error It's ok to construct
         throw new ShimDOMException$1('UNSPECIFIED_EVENT_TYPE_ERR', 'UNSPECIFIED_EVENT_TYPE_ERR');
       }
       try {
         // As per code such as the following, handleEvent may throw,
         //  but is uncaught
         // https://github.com/web-platform-tests/wpt/blob/master/IndexedDB/fire-error-event-exception.html#L54-L56
-        if (listener.handleEvent && listener.handleEvent.bind) {
+        if ('handleEvent' in listener && listener.handleEvent.bind) {
           listener = listener.handleEvent.bind(listener);
         }
       } catch (err) {
-        // eslint-disable-next-line no-console
+        // eslint-disable-next-line no-console -- Feedback to user
         console.log('Uncaught `handleEvent` error', err);
       }
-      var arrStr = '_' + listenerType.toLowerCase() + (listenerType === '' ? 'l' : 'L') + 'isteners';
+      var arrStr = /** @type {"_earlyListeners"|"_listeners"|"_lateListeners"|"_defaultListeners"} */
+      '_' + listenerType.toLowerCase() + (listenerType === '' ? 'l' : 'L') + 'isteners';
       if (!this[arrStr]) {
         Object.defineProperty(this, arrStr, {
           value: {}
         });
       }
-      return methods[method + 'Listener'](this[arrStr], listener, type, options);
+      var meth = /** @type {"addListener"|"removeListener"|"hasListener"} */
+      method + 'Listener';
+      return methods[meth](this[arrStr], /** @type {Listener} */listener, type, options);
     };
   });
   return obj;
 }, {}));
 Object.assign(EventTarget.prototype, {
+  _legacyOutputDidListenersThrowCheck: undefined,
+  /**
+   * @param {CustomOptions} customOptions
+   * @this {EventTarget.prototype}
+   * @returns {void}
+   */
   __setOptions: function __setOptions(customOptions) {
-    customOptions = customOptions || {}; // Todo: Make into event properties?
-
+    customOptions = customOptions || {};
+    // Todo: Make into event properties?
     this._defaultSync = customOptions.defaultSync;
     this._extraProperties = customOptions.extraProperties || [];
     if (customOptions.legacyOutputDidListenersThrowFlag) {
@@ -409,23 +605,45 @@ Object.assign(EventTarget.prototype, {
       this._extraProperties.push('__legacyOutputDidListenersThrowError');
     }
   },
+  /**
+   * @param {ShimEvent} e
+   * @this {EventTarget & {
+   *   _dispatchEvent: (e: ShimEvent|ShimCustomEvent, setTarget: boolean) => boolean,
+  * }}
+   * @returns {boolean}
+   */
   dispatchEvent: function dispatchEvent(e) {
     return this._dispatchEvent(e, true);
   },
+  /**
+   * @param {EventWithProps} e
+   * @param {boolean} setTarget
+   * @this {EventTarget.prototype & {
+   *   _earlyListeners: AllListeners,
+   *   _listeners: AllListeners,
+   *   _lateListeners: AllListeners,
+   *   _defaultListeners: AllListeners,
+   * }}
+   * @returns {boolean}
+   */
   _dispatchEvent: function _dispatchEvent(e, setTarget) {
-    var _this = this;
+    var _this2 = this;
     ['early', '', 'late', 'default'].forEach(function (listenerType) {
-      var arrStr = '_' + listenerType + (listenerType === '' ? 'l' : 'L') + 'isteners';
-      if (!_this[arrStr]) {
-        Object.defineProperty(_this, arrStr, {
+      var arrStr = /** @type {"_earlyListeners"|"_listeners"|"_lateListeners"|"_defaultListeners"} */
+      '_' + listenerType + (listenerType === '' ? 'l' : 'L') + 'isteners';
+      if (!_this2[arrStr]) {
+        Object.defineProperty(_this2, arrStr, {
           value: {}
         });
       }
     });
     var _evCfg = evCfg.get(e);
     if (_evCfg && setTarget && _evCfg._dispatched) {
+      // @ts-expect-error It's ok to construct
       throw new ShimDOMException$1('The object is in an invalid state.', 'InvalidStateError');
     }
+
+    /** @type {EventWithProps} */
     var eventCopy;
     if (_evCfg) {
       eventCopy = e;
@@ -433,20 +651,22 @@ Object.assign(EventTarget.prototype, {
       eventCopy = copyEvent(e);
       _evCfg = evCfg.get(eventCopy);
       _evCfg._dispatched = true;
+
+      /** @type {string[]} */
       this._extraProperties.forEach(function (prop) {
         if (prop in e) {
-          eventCopy[prop] = e[prop]; // Todo: Put internal to `ShimEvent`?
+          /** @type {{[key: string]: any}} */eventCopy[prop] = /** @type {{[key: string]: any}} */e[prop]; // Todo: Put internal to `ShimEvent`?
         }
       });
     }
 
     var _eventCopy = eventCopy,
       type = _eventCopy.type;
+
     /**
      *
      * @returns {void}
      */
-
     function finishEventDispatch() {
       _evCfg.eventPhase = phases.NONE;
       _evCfg.currentTarget = null;
@@ -456,16 +676,14 @@ Object.assign(EventTarget.prototype, {
      *
      * @returns {void}
      */
-
     function invokeDefaults() {
       // Ignore stopPropagation from defaults
       _evCfg._stopImmediatePropagation = undefined;
-      _evCfg._stopPropagation = undefined; // We check here for whether we should invoke since may have changed since timeout (if late listener prevented default)
-
+      _evCfg._stopPropagation = undefined;
+      // We check here for whether we should invoke since may have changed since timeout (if late listener prevented default)
       if (!eventCopy.defaultPrevented || !_evCfg.cancelable) {
         // 2nd check should be redundant
         _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke default listeners
-
         eventCopy.target.invokeCurrentListeners(eventCopy.target._defaultListeners, eventCopy, type);
       }
       finishEventDispatch();
@@ -474,50 +692,22 @@ Object.assign(EventTarget.prototype, {
       // Ignore stop propagation of user now
       _evCfg._stopImmediatePropagation = undefined;
       _evCfg._stopPropagation = undefined;
-      if (!_this._defaultSync) {
+      if (!_this2._defaultSync) {
         setTimeout(invokeDefaults, 0);
       } else invokeDefaults();
       _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke late listeners
       // Sync default might have stopped
-
       if (!_evCfg._stopPropagation) {
         _evCfg._stopImmediatePropagation = undefined;
-        _evCfg._stopPropagation = undefined; // We could allow stopPropagation by only executing upon (_evCfg._stopPropagation)
-
+        _evCfg._stopPropagation = undefined;
+        // We could allow stopPropagation by only executing upon (_evCfg._stopPropagation)
         eventCopy.target.invokeCurrentListeners(eventCopy.target._lateListeners, eventCopy, type);
       }
       finishEventDispatch();
       return !eventCopy.defaultPrevented;
     };
     if (setTarget) _evCfg.target = this;
-    switch (eventCopy.eventPhase) {
-      default:
-      case phases.NONE:
-        {
-          _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke early listeners
-
-          this.invokeCurrentListeners(this._earlyListeners, eventCopy, type);
-          if (!this.__getParent) {
-            _evCfg.eventPhase = phases.AT_TARGET;
-            return this._dispatchEvent(eventCopy, false);
-          }
-          /* eslint-disable consistent-this */
-
-          var par = this;
-          var root = this;
-          /* eslint-enable consistent-this */
-
-          while (par.__getParent && (par = par.__getParent()) !== null) {
-            if (!_evCfg._children) {
-              _evCfg._children = [];
-            }
-            _evCfg._children.push(root);
-            root = par;
-          }
-          root._defaultSync = this._defaultSync;
-          _evCfg.eventPhase = phases.CAPTURING_PHASE;
-          return root._dispatchEvent(eventCopy, false);
-        }
+    switch ('eventPhase' in eventCopy && eventCopy.eventPhase) {
       case phases.CAPTURING_PHASE:
         {
           if (_evCfg._stopPropagation) {
@@ -554,22 +744,52 @@ Object.assign(EventTarget.prototype, {
           parent._defaultSync = this._defaultSync;
           return parent._dispatchEvent(eventCopy, false);
         }
+      case phases.NONE:
+      default:
+        {
+          _evCfg.eventPhase = phases.AT_TARGET; // Temporarily set before we invoke early listeners
+          this.invokeCurrentListeners(this._earlyListeners, eventCopy, type);
+          if (!('__getParent' in this)) {
+            _evCfg.eventPhase = phases.AT_TARGET;
+            return this._dispatchEvent(eventCopy, false);
+          }
+
+          /* eslint-disable consistent-this -- Readability */
+          var par = this;
+          var root_ = this;
+          /* eslint-enable consistent-this -- Readability */
+          while (par.__getParent && (par = par.__getParent()) !== null) {
+            if (!_evCfg._children) {
+              _evCfg._children = [];
+            }
+            _evCfg._children.push(root_);
+            root_ = par;
+          }
+          root_._defaultSync = this._defaultSync;
+          _evCfg.eventPhase = phases.CAPTURING_PHASE;
+          return root_._dispatchEvent(eventCopy, false);
+        }
     }
   },
+  /**
+   * @type {InvokeCurrentListeners}
+   * @this {EventTarget.prototype & {[key: string]: Listener}}
+   */
   invokeCurrentListeners: function invokeCurrentListeners(listeners, eventCopy, type, checkOnListeners) {
-    var _this2 = this;
+    var _this3 = this;
     var _evCfg = evCfg.get(eventCopy);
     _evCfg.currentTarget = this;
     var listOpts = getListenersOptions(listeners, type, {});
+    // eslint-disable-next-line unicorn/prefer-spread -- Performance?
     var listenersByType = listOpts.listenersByType.concat();
     var dummyIPos = listenersByType.length ? 1 : 0;
     listenersByType.some(function (listenerObj, i) {
-      var onListener = checkOnListeners ? _this2['on' + type] : null;
+      var onListener = checkOnListeners ? _this3['on' + type] : null;
       if (_evCfg._stopImmediatePropagation) return true;
       if (i === dummyIPos && typeof onListener === 'function') {
         // We don't splice this in as could be overwritten; executes here per
         //    https://html.spec.whatwg.org/multipage/webappapis.html#event-handler-attributes:event-handlers-14
-        _this2.tryCatch(eventCopy, function () {
+        _this3.tryCatch(eventCopy, function () {
           var ret = onListener.call(eventCopy.currentTarget, eventCopy);
           if (ret === false) {
             eventCopy.preventDefault();
@@ -583,20 +803,19 @@ Object.assign(EventTarget.prototype, {
       _evCfg._passive = passive;
       if (capture && eventCopy.target !== eventCopy.currentTarget && eventCopy.eventPhase === phases.CAPTURING_PHASE || eventCopy.eventPhase === phases.AT_TARGET || !capture && eventCopy.target !== eventCopy.currentTarget && eventCopy.eventPhase === phases.BUBBLING_PHASE) {
         var listener = listenerObj.listener;
-        _this2.tryCatch(eventCopy, function () {
+        _this3.tryCatch(eventCopy, function () {
           listener.call(eventCopy.currentTarget, eventCopy);
         });
         if (once) {
-          _this2.removeEventListener(type, listener, options);
+          _this3.removeEventListener(type, listener, options);
         }
       }
       return false;
     });
     this.tryCatch(eventCopy, function () {
-      var onListener = checkOnListeners ? _this2['on' + type] : null;
+      var onListener = checkOnListeners ? _this3['on' + type] : null;
       if (typeof onListener === 'function' && listenersByType.length < 2) {
         var ret = onListener.call(eventCopy.currentTarget, eventCopy); // Won't have executed if too short
-
         if (ret === false) {
           eventCopy.preventDefault();
         }
@@ -604,19 +823,30 @@ Object.assign(EventTarget.prototype, {
     });
     return !eventCopy.defaultPrevented;
   },
-  // eslint-disable-next-line promise/prefer-await-to-callbacks
+  /* eslint-disable promise/prefer-await-to-callbacks -- Try-catch */
+  /**
+   * @param {EventWithProps} evt
+   * @param {() => void} cb
+   * @returns {void}
+   */
   tryCatch: function tryCatch(evt, cb) {
+    /* eslint-enable promise/prefer-await-to-callbacks -- Try-catch */
     try {
       // Per MDN: Exceptions thrown by event handlers are reported
       //    as uncaught exceptions; the event handlers run on a nested
       //    callstack: they block the caller until they complete, but
       //    exceptions do not propagate to the caller.
-      // eslint-disable-next-line promise/prefer-await-to-callbacks, callback-return
+      // eslint-disable-next-line promise/prefer-await-to-callbacks, n/callback-return --  Try-catch
       cb();
     } catch (err) {
       this.triggerErrorEvent(err, evt);
     }
   },
+  /**
+   * @param {unknown} err
+   * @param {EventWithProps} evt
+   * @returns {void}
+   */
   triggerErrorEvent: function triggerErrorEvent(err, evt) {
     var error = err;
     if (typeof err === 'string') {
@@ -637,32 +867,37 @@ Object.assign(EventTarget.prototype, {
       triggerGlobalErrorEvent = function triggerGlobalErrorEvent() {
         // See https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onerror
         //     and https://github.com/w3c/IndexedDB/issues/49
+
         // Note that a regular Event will properly trigger
         //     `window.addEventListener('error')` handlers, but it will not trigger
         //     `window.onerror` as per https://html.spec.whatwg.org/multipage/webappapis.html#handler-onerror
         // Note also that the following line won't handle `window.addEventListener` handlers
         //        if (window.onerror) window.onerror(error.message, err.fileName, err.lineNumber, error.columnNumber, error);
+
         // `ErrorEvent` properly triggers `window.onerror` and `window.addEventListener('error')` handlers
         var errEv = new ErrorEvent('error', {
           error: err,
-          message: error.message || '',
+          message: /** @type {Error} */error.message || '',
           // We can't get the actually useful user's values!
-          filename: error.fileName || '',
-          lineno: error.lineNumber || 0,
-          colno: error.columnNumber || 0
+          filename: /** @type {Error & {fileName: string}} */error.fileName || '',
+          lineno: /** @type {Error & {lineNumber: Integer}} */error.lineNumber || 0,
+          colno: /** @type {Error & {columnNumber: Integer}} */error.columnNumber || 0
         });
-        window.dispatchEvent(errEv); // console.log(err); // Should we auto-log for user?
+        window.dispatchEvent(errEv);
+        // console.log(err); // Should we auto-log for user?
       };
-    } // Todo: This really should always run here but as we can't set the global
+    }
+
+    // Todo: This really should always run here but as we can't set the global
     //     `window` (e.g., using jsdom) since `setGlobalVars` becomes unable to
     //     shim `indexedDB` in such a case currently (apparently due to
     //     <https://github.com/axemclion/IndexedDBShim/issues/280>), we can't
     //     avoid the above Node implementation (which, while providing some
     //     fallback mechanism, is unstable)
+    if (!useNodeImpl || !this._legacyOutputDidListenersThrowCheck) triggerGlobalErrorEvent();
 
-    if (!useNodeImpl || !this._legacyOutputDidListenersThrowCheck) triggerGlobalErrorEvent(); // See https://dom.spec.whatwg.org/#concept-event-listener-inner-invoke and
+    // See https://dom.spec.whatwg.org/#concept-event-listener-inner-invoke and
     //    https://github.com/w3c/IndexedDB/issues/140 (also https://github.com/w3c/IndexedDB/issues/49 )
-
     if (this._legacyOutputDidListenersThrowCheck) {
       evt.__legacyOutputDidListenersThrowError = error;
     }
@@ -674,18 +909,26 @@ Object.defineProperty(EventTarget, 'prototype', {
 });
 var ShimEventTarget = EventTarget;
 var EventTargetFactory = {
+  /**
+   * @param {CustomOptions} customOptions
+   * @returns {EventTarget}
+   */
   createInstance: function createInstance(customOptions) {
-    /* eslint-disable no-shadow */
-
+    /* eslint-disable func-name-matching -- Shim vs. Polyfill */
+    /* eslint-disable no-shadow -- Polyfill */
     /**
      * @class
+     * @this {typeof ShimEventTarget.prototype}
      */
-    function EventTarget() {
-      /* eslint-enable no-shadow */
+    var ET = /** @type {unknown} */function EventTarget() {
+      /* eslint-enable no-shadow -- Polyfill */
+      /* eslint-enable func-name-matching -- Shim vs. Polyfill */
       this.__setOptions(customOptions);
-    }
-    EventTarget.prototype = ShimEventTarget.prototype;
-    return new EventTarget();
+    };
+    // @ts-expect-error Casting doesn't work
+    ET.prototype = ShimEventTarget.prototype;
+    // @ts-expect-error Casting doesn't work
+    return new ET();
   }
 };
 EventTarget.ShimEvent = ShimEvent;
@@ -693,18 +936,84 @@ EventTarget.ShimCustomEvent = ShimCustomEvent;
 EventTarget.ShimDOMException = ShimDOMException$1;
 EventTarget.ShimEventTarget = EventTarget;
 EventTarget.EventTargetFactory = EventTargetFactory;
+
 /**
  * @returns {void}
  */
-
 function setPrototypeOfCustomEvent() {
   // TODO: IDL needs but reported as slow!
-  Object.setPrototypeOf(ShimCustomEvent, ShimEvent);
+  Object.setPrototypeOf(ShimCustomEvent, /** @type {object} */ShimEvent);
+  // @ts-expect-error How to overcome?
   Object.setPrototypeOf(ShimCustomEvent.prototype, ShimEvent.prototype);
-} // Todo: Move to own library (but allowing WeakMaps to be passed in for sharing here)
+}
 
+/* eslint-disable jsdoc/valid-types -- https://github.com/jsdoc-type-pratt-parser/jsdoc-type-pratt-parser/issues/147 */
+/**
+ * @typedef {T[keyof T]} ValueOf<T>
+ * @template T
+ */
+/* eslint-enable jsdoc/valid-types -- https://github.com/jsdoc-type-pratt-parser/jsdoc-type-pratt-parser/issues/147 */
+
+/**
+ * @typedef {{unlink: (path: string, cb: import('fs').NoParamCallback) => void}} FSApi
+ */
+
+/**
+ * @typedef {{
+ *   DEBUG: boolean,
+ *   cacheDatabaseInstances: boolean,
+ *   autoName: boolean,
+ *   fullIDLSupport: boolean,
+ *   checkOrigin: boolean,
+ *   cursorPreloadPackSize: number,
+ *   UnicodeIDStart: string,
+ *   UnicodeIDContinue: string,
+ *   registerSCA: (
+ *     preset: import('typeson').Preset
+ *   ) => import('typeson').Preset,
+ *   avoidAutoShim: boolean,
+ *   win: {
+ *     openDatabase: (name: string, version: string, displayName: string, estimatedSize: number) => import('websql-configurable').default
+ *   },
+ *   DEFAULT_DB_SIZE: number,
+ *   useSQLiteIndexes: boolean,
+ *   fs: FSApi,
+ *   addNonIDBGlobals: boolean,
+ *   replaceNonIDBGlobals: boolean,
+ *   escapeDatabaseName: (name: string) => string,
+ *   unescapeDatabaseName: (name: string) => string,
+ *   databaseCharacterEscapeList: string|false,
+ *   databaseNameLengthLimit: number|false,
+ *   escapeNFDForDatabaseNames: boolean,
+ *   addSQLiteExtension: boolean,
+ *   memoryDatabase: string,
+ *   deleteDatabaseFiles: boolean,
+ *   databaseBasePath: string,
+ *   sysDatabaseBasePath: string,
+ *   sqlBusyTimeout: number,
+ *   sqlTrace: () => void,
+ *   sqlProfile: () => void,
+ *   createIndexes: boolean
+ * }} ConfigValues
+ */
+
+/**
+ * @typedef {ValueOf<ConfigValues>} ConfigValue
+ */
+
+/** @type {{[key: string]: ConfigValue}} */
 const map = {};
-const CFG = {};
+const CFG = /** @type {ConfigValues} */{};
+
+/**
+ * @typedef {keyof ConfigValues} KeyofConfigValues
+ */
+
+/**
+ * @typedef {KeyofConfigValues[]} Config
+ */
+
+/** @type {Config} */
 [
 // Boolean for verbose reporting
 'DEBUG',
@@ -815,8 +1124,14 @@ const CFG = {};
 //   defaults to `true`
 'addSQLiteExtension',
 // Various types of in-memory databases that can auto-delete
-['memoryDatabase', val => {
-  if (!/^(?::memory:|file::memory:(\?[^#]*)?(#.*)?)?$/u.test(val)) {
+['memoryDatabase',
+/**
+ * @param {string} val
+ * @throws {TypeError}
+ * @returns {void}
+ */
+val => {
+  if (!/^(?::memory:|file::memory:(\?[^#]*)?(#.*)?)?$/u.test( /** @type {string} */val)) {
     throw new TypeError('`memoryDatabase` must be the empty string, ":memory:", or a ' + '"file::memory:[?queryString][#hash] URL".');
   }
 }],
@@ -829,8 +1144,11 @@ const CFG = {};
 // Defaults to 1000
 'sqlTrace',
 // Callback not used by default
-'sqlProfile' // Callback not used by default
-].forEach(prop => {
+'sqlProfile',
+// Callback not used by default
+
+'createIndexes'].forEach(prop => {
+  /** @type {(val: any) => void} */
   let validator;
   if (Array.isArray(prop)) {
     [prop, validator] = prop;
@@ -848,11 +1166,17 @@ const CFG = {};
   });
 });
 
+// @ts-nocheck
+
 function getDefaultExportFromCjs$1(x) {
   return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
 }
 var regex = /[\xC0-\xC5\xC7-\xCF\xD1-\xD6\xD9-\xDD\xE0-\xE5\xE7-\xEF\xF1-\xF6\xF9-\xFD\xFF-\u010F\u0112-\u0125\u0128-\u0130\u0134-\u0137\u0139-\u013E\u0143-\u0148\u014C-\u0151\u0154-\u0165\u0168-\u017E\u01A0\u01A1\u01AF\u01B0\u01CD-\u01DC\u01DE-\u01E3\u01E6-\u01F0\u01F4\u01F5\u01F8-\u021B\u021E\u021F\u0226-\u0233\u0344\u0385\u0386\u0388-\u038A\u038C\u038E-\u0390\u03AA-\u03B0\u03CA-\u03CE\u03D3\u03D4\u0400\u0401\u0403\u0407\u040C-\u040E\u0419\u0439\u0450\u0451\u0453\u0457\u045C-\u045E\u0476\u0477\u04C1\u04C2\u04D0-\u04D3\u04D6\u04D7\u04DA-\u04DF\u04E2-\u04E7\u04EA-\u04F5\u04F8\u04F9\u0622-\u0626\u06C0\u06C2\u06D3\u0929\u0931\u0934\u0958-\u095F\u09CB\u09CC\u09DC\u09DD\u09DF\u0A33\u0A36\u0A59-\u0A5B\u0A5E\u0B48\u0B4B\u0B4C\u0B5C\u0B5D\u0B94\u0BCA-\u0BCC\u0C48\u0CC0\u0CC7\u0CC8\u0CCA\u0CCB\u0D4A-\u0D4C\u0DDA\u0DDC-\u0DDE\u0F43\u0F4D\u0F52\u0F57\u0F5C\u0F69\u0F73\u0F75\u0F76\u0F78\u0F81\u0F93\u0F9D\u0FA2\u0FA7\u0FAC\u0FB9\u1026\u1B06\u1B08\u1B0A\u1B0C\u1B0E\u1B12\u1B3B\u1B3D\u1B40\u1B41\u1B43\u1E00-\u1E99\u1E9B\u1EA0-\u1EF9\u1F00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FC1-\u1FC4\u1FC6-\u1FD3\u1FD6-\u1FDB\u1FDD-\u1FEE\u1FF2-\u1FF4\u1FF6-\u1FFC\u212B\u219A\u219B\u21AE\u21CD-\u21CF\u2204\u2209\u220C\u2224\u2226\u2241\u2244\u2247\u2249\u2260\u2262\u226D-\u2271\u2274\u2275\u2278\u2279\u2280\u2281\u2284\u2285\u2288\u2289\u22AC-\u22AF\u22E0-\u22E3\u22EA-\u22ED\u2ADC\u304C\u304E\u3050\u3052\u3054\u3056\u3058\u305A\u305C\u305E\u3060\u3062\u3065\u3067\u3069\u3070\u3071\u3073\u3074\u3076\u3077\u3079\u307A\u307C\u307D\u3094\u309E\u30AC\u30AE\u30B0\u30B2\u30B4\u30B6\u30B8\u30BA\u30BC\u30BE\u30C0\u30C2\u30C5\u30C7\u30C9\u30D0\u30D1\u30D3\u30D4\u30D6\u30D7\u30D9\u30DA\u30DC\u30DD\u30F4\u30F7-\u30FA\u30FE\uAC00-\uD7A3\uFB1D\uFB1F\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFB4E]|\uD804[\uDC9A\uDC9C\uDCAB\uDD2E\uDD2F\uDF4B\uDF4C]|\uD805[\uDCBB\uDCBC\uDCBE\uDDBA\uDDBB]|\uD806\uDD38|\uD834[\uDD5E-\uDD64\uDDBB-\uDDC0]/;
 var regex$1 = /*@__PURE__*/getDefaultExportFromCjs$1(regex);
+
+/**
+ * @typedef {number} Integer
+ */
 
 /**
  * @param {string} arg
@@ -944,7 +1268,7 @@ function escapeDatabaseNameForSQLAndFiles(db) {
   if (CFG.escapeNFDForDatabaseNames !== false) {
     // ES6 copying of regex with different flags
     db = db.replaceAll(new RegExp(regex$1, 'gu'), function (expandable) {
-      return '^4' + expandable.codePointAt().toString(16).padStart(6, '0');
+      return '^4' + /** @type {Integer} */expandable.codePointAt(0).toString(16).padStart(6, '0');
     });
   }
   if (CFG.databaseCharacterEscapeList !== false) {
@@ -952,7 +1276,7 @@ function escapeDatabaseNameForSQLAndFiles(db) {
     // eslint-disable-line no-control-regex
     function (n0) {
       // eslint-disable-next-line unicorn/prefer-code-point -- Switch to `codePointAt`?
-      return '^1' + n0.charCodeAt().toString(16).padStart(2, '0');
+      return '^1' + n0.charCodeAt(0).toString(16).padStart(2, '0');
     });
   }
   if (CFG.databaseNameLengthLimit !== false && db.length >= (CFG.databaseNameLengthLimit || 254) - (CFG.addSQLiteExtension !== false ? 7 /* '.sqlite'.length */ : 0)) {
@@ -1006,11 +1330,16 @@ function sqlLIKEEscape(str) {
   return sqlEscape(str).replaceAll('^', '^^');
 }
 
+/**
+ * @typedef {Function} AnyClass
+ */
+
 // Babel doesn't seem to provide a means of using the `instanceof` operator with Symbol.hasInstance (yet?)
 /**
  *
- * @param obj
- * @param Clss
+ * @param {AnyValue} obj
+ * @param {AnyClass} Clss
+ * @returns {boolean}
  */
 function instanceOf(obj, Clss) {
   return Clss[Symbol.hasInstance](obj);
@@ -1018,59 +1347,66 @@ function instanceOf(obj, Clss) {
 
 /**
  *
- * @param obj
+ * @param {AnyValue} obj
+ * @returns {obj is object}
  */
 function isObj(obj) {
-  return obj && typeof obj === 'object';
+  return obj !== null && typeof obj === 'object';
 }
 
 /**
  *
- * @param obj
+ * @param {object} obj
+ * @returns {boolean}
  */
 function isDate(obj) {
-  return isObj(obj) && typeof obj.getDate === 'function';
+  return isObj(obj) && 'getDate' in obj && typeof obj.getDate === 'function';
 }
 
 /**
  *
- * @param obj
+ * @param {object} obj
+ * @returns {boolean}
  */
 function isBlob(obj) {
-  return isObj(obj) && typeof obj.size === 'number' && typeof obj.slice === 'function' && !('lastModified' in obj);
+  return isObj(obj) && 'size' in obj && typeof obj.size === 'number' && 'slice' in obj && typeof obj.slice === 'function' && !('lastModified' in obj);
 }
 
 /**
  *
- * @param obj
+ * @param {object} obj
+ * @returns {boolean}
  */
 function isFile(obj) {
-  return isObj(obj) && typeof obj.name === 'string' && typeof obj.slice === 'function' && 'lastModified' in obj;
+  return isObj(obj) && 'name' in obj && typeof obj.name === 'string' && 'slice' in obj && typeof obj.slice === 'function' && 'lastModified' in obj;
 }
 
 /**
  *
- * @param obj
+ * @param {AnyValue} obj
+ * @returns {boolean}
  */
 function isBinary(obj) {
-  return isObj(obj) && typeof obj.byteLength === 'number' && (typeof obj.slice === 'function' ||
+  return isObj(obj) && 'byteLength' in obj && typeof obj.byteLength === 'number' && ('slice' in obj && typeof obj.slice === 'function' ||
   // `TypedArray` (view on buffer) or `ArrayBuffer`
-  typeof obj.getFloat64 === 'function' // `DataView` (view on buffer)
+  'getFloat64' in obj && typeof obj.getFloat64 === 'function' // `DataView` (view on buffer)
   );
 }
 
 /**
  *
- * @param obj
+ * @param {AnyValue} obj
+ * @returns {boolean}
  */
 function isIterable(obj) {
-  return isObj(obj) && typeof obj[Symbol.iterator] === 'function';
+  return isObj(obj) && Symbol.iterator in obj && typeof obj[Symbol.iterator] === 'function';
 }
 
 /**
  *
- * @param obj
- * @param props
+ * @param {object} obj
+ * @param {string[]} props
+ * @returns {void}
  */
 function defineOuterInterface(obj, props) {
   props.forEach(prop => {
@@ -1078,19 +1414,22 @@ function defineOuterInterface(obj, props) {
       get [prop]() {
         throw new TypeError('Illegal invocation');
       },
+      // @ts-expect-error Deliberately errs
       set [prop](val) {
         throw new TypeError('Illegal invocation');
       }
     };
-    const desc = Object.getOwnPropertyDescriptor(o, prop);
+    const desc = /** @type {PropertyDescriptor} */
+    Object.getOwnPropertyDescriptor(o, prop);
     Object.defineProperty(obj, prop, desc);
   });
 }
 
 /**
  *
- * @param obj
- * @param props
+ * @param {object} obj
+ * @param {string[]} props
+ * @returns {void}
  */
 function defineReadonlyOuterInterface(obj, props) {
   props.forEach(prop => {
@@ -1099,15 +1438,19 @@ function defineReadonlyOuterInterface(obj, props) {
         throw new TypeError('Illegal invocation');
       }
     };
-    const desc = Object.getOwnPropertyDescriptor(o, prop);
+    const desc = /** @type {PropertyDescriptor} */
+    Object.getOwnPropertyDescriptor(o, prop);
     Object.defineProperty(obj, prop, desc);
   });
 }
 
 /**
  *
- * @param obj
- * @param listeners
+ * @param {object & {
+ *   [key: string]: any
+ * }} obj
+ * @param {string[]} listeners
+ * @returns {void}
  */
 function defineListenerProperties(obj, listeners) {
   listeners = typeof listeners === 'string' ? [listeners] : listeners;
@@ -1116,11 +1459,16 @@ function defineListenerProperties(obj, listeners) {
       get [listener]() {
         return obj['__' + listener];
       },
+      /**
+       * @param {AnyValue} val
+       * @returns {void}
+       */
       set [listener](val) {
         obj['__' + listener] = val;
       }
     };
-    const desc = Object.getOwnPropertyDescriptor(o, listener);
+    const desc = /** @type {PropertyDescriptor} */
+    Object.getOwnPropertyDescriptor(o, listener);
     // desc.enumerable = true; // Default
     // desc.configurable = true; // Default // Needed by support.js in W3C IndexedDB tests (for openListeners)
     Object.defineProperty(obj, listener, desc);
@@ -1132,9 +1480,12 @@ function defineListenerProperties(obj, listeners) {
 
 /**
  *
- * @param obj
- * @param props
- * @param getter
+ * @param {object} obj
+ * @param {string|string[]} props
+ * @param {null|{
+ *   [key: string]: any
+ * }} getter
+ * @returns {void}
  */
 function defineReadonlyProperties(obj, props, getter = null) {
   props = typeof props === 'string' ? [props] : props;
@@ -1156,7 +1507,8 @@ function defineReadonlyProperties(obj, props, getter = null) {
         }
       };
     }
-    const desc = Object.getOwnPropertyDescriptor(o, prop);
+    const desc = /** @type {PropertyDescriptor} */
+    Object.getOwnPropertyDescriptor(o, prop);
     // desc.enumerable = true; // Default
     // desc.configurable = true; // Default
     Object.defineProperty(obj, prop, desc);
@@ -1165,7 +1517,8 @@ function defineReadonlyProperties(obj, props, getter = null) {
 
 /**
  *
- * @param item
+ * @param {string} item
+ * @returns {boolean}
  */
 function isIdentifier(item) {
   // For load-time and run-time performance, we don't provide the complete regular
@@ -1182,7 +1535,8 @@ function isIdentifier(item) {
 
 /**
  *
- * @param keyPathString
+ * @param {string|string[]} keyPathString
+ * @returns {boolean}
  */
 function isValidKeyPathString(keyPathString) {
   return typeof keyPathString === 'string' && (keyPathString === '' || isIdentifier(keyPathString) || keyPathString.split('.').every(pathComponent => {
@@ -1192,10 +1546,11 @@ function isValidKeyPathString(keyPathString) {
 
 /**
  *
- * @param keyPath
+ * @param {string|string[]} keyPath
+ * @returns {boolean}
  */
 function isValidKeyPath(keyPath) {
-  return isValidKeyPathString(keyPath) || Array.isArray(keyPath) && keyPath.length &&
+  return isValidKeyPathString(keyPath) || Array.isArray(keyPath) && Boolean(keyPath.length) &&
   // Convert array from sparse to dense http://www.2ality.com/2012/06/dense-arrays.html
   // See also https://heycam.github.io/webidl/#idl-DOMString
   [...keyPath].every(pathComponent => {
@@ -1259,7 +1614,8 @@ function ToString(o) {
 
 /**
  *
- * @param val
+ * @param {AnyValue} val
+ * @returns {string|string[]}
  */
 function convertToSequenceDOMString(val) {
   // Per <https://heycam.github.io/webidl/#idl-sequence>, converting to a sequence works with iterables
@@ -1275,7 +1631,7 @@ function convertToSequenceDOMString(val) {
 
 /**
  * @param {AnyValue} v
- * @returns {boolean}
+ * @returns {v is null|undefined}
  */
 function isNullish(v) {
   return v === null || v === undefined;
@@ -1288,11 +1644,14 @@ function isNullish(v) {
 /**
  *
  * @param {string} type
- * @param {DebuggingError} debug
- * @param {EventInit} evInit
- * @returns {Event}
+ * @param {DebuggingError|null} [debug]
+ * @param {EventInit} [evInit]
+ * @returns {Event & {
+ *   __legacyOutputDidListenersThrowError?: boolean
+ * }}
  */
 function createEvent(type, debug, evInit) {
+  // @ts-expect-error It's ok
   const ev = new ShimEvent(type, evInit);
   ev.debug = debug;
   return ev;
@@ -1300,7 +1659,15 @@ function createEvent(type, debug, evInit) {
 
 // We don't add within polyfill repo as might not always be the desired implementation
 Object.defineProperty(ShimEvent, Symbol.hasInstance, {
-  value: obj => isObj(obj) && 'target' in obj && typeof obj.bubbles === 'boolean'
+  /**
+   * @typedef {any} AnyValue
+   */
+  value:
+  /**
+   * @param {AnyValue} obj
+   * @returns {boolean}
+   */
+  obj => isObj(obj) && 'target' in obj && 'bubbles' in obj && typeof obj.bubbles === 'boolean'
 });
 
 const readonlyProperties$6 = ['oldVersion', 'newVersion'];
@@ -1313,6 +1680,7 @@ const readonlyProperties$6 = ['oldVersion', 'newVersion'];
  */
 function IDBVersionChangeEvent(type /* , eventInitDict */) {
   // eventInitDict is a IDBVersionChangeEventInit (but is not defined as a global)
+  // @ts-expect-error It's passing only one!
   ShimEvent.call(this, type);
   this[Symbol.toStringTag] = 'IDBVersionChangeEvent';
   this.toString = function () {
@@ -1321,11 +1689,21 @@ function IDBVersionChangeEvent(type /* , eventInitDict */) {
   // eslint-disable-next-line prefer-rest-params
   this.__eventInitDict = arguments[1] || {};
 }
+
+// @ts-expect-error It's ok
 IDBVersionChangeEvent.prototype = Object.create(ShimEvent.prototype);
 IDBVersionChangeEvent.prototype[Symbol.toStringTag] = 'IDBVersionChangeEventPrototype';
+
+/**
+ * @typedef {number} Integer
+ */
+
 readonlyProperties$6.forEach(prop => {
   // Ensure for proper interface testing that "get <name>" is the function name
   const o = {
+    /**
+     * @returns {Integer|null}
+     */
     get [prop]() {
       if (!(this instanceof IDBVersionChangeEvent)) {
         throw new TypeError('Illegal invocation');
@@ -1333,13 +1711,22 @@ readonlyProperties$6.forEach(prop => {
       return this.__eventInitDict && this.__eventInitDict[prop] || (prop === 'oldVersion' ? 0 : null);
     }
   };
-  const desc = Object.getOwnPropertyDescriptor(o, prop);
+  const desc = /** @type {PropertyDescriptor} */
+  Object.getOwnPropertyDescriptor(o, prop);
   // desc.enumerable = true; // Default
   // desc.configurable = true; // Default
   Object.defineProperty(IDBVersionChangeEvent.prototype, prop, desc);
 });
 Object.defineProperty(IDBVersionChangeEvent, Symbol.hasInstance, {
-  value: obj => isObj(obj) && 'oldVersion' in obj && typeof obj.defaultPrevented === 'boolean'
+  /**
+   * @typedef {any} AnyValue
+   */
+  value:
+  /**
+   * @param {AnyValue} obj
+   * @returns {boolean}
+   */
+  obj => isObj(obj) && 'oldVersion' in obj && 'defaultPrevented' in obj && typeof obj.defaultPrevented === 'boolean'
 });
 Object.defineProperty(IDBVersionChangeEvent.prototype, 'constructor', {
   enumerable: false,
@@ -1360,6 +1747,7 @@ Object.defineProperty(IDBVersionChangeEvent, 'prototype', {
  * @returns {DOMException}
  */
 function createNativeDOMException(name, message) {
+  // @ts-expect-error It's ok
   return new DOMException.prototype.constructor(message, name || 'DOMException');
 }
 
@@ -1454,7 +1842,7 @@ const legacyCodes = {
 
 /**
  *
- * @returns {DOMException}
+ * @returns {typeof DOMException}
  */
 function createNonNativeDOMExceptionClass() {
   /**
@@ -1465,7 +1853,7 @@ function createNonNativeDOMExceptionClass() {
   function DOMException(message, name) {
     // const err = Error.prototype.constructor.call(this, message); // Any use to this? Won't set this.message
     this[Symbol.toStringTag] = 'DOMException';
-    this._code = name in codes ? codes[name] : legacyCodes[name] || 0;
+    this._code = name in codes ? codes[/** @type {Code} */name] : legacyCodes[/** @type {LegacyCode} */name] || 0;
     this._name = name || 'Error';
     // We avoid `String()` in this next line as it converts Symbols
     this._message = message === undefined ? '' : '' + message; // eslint-disable-line no-implicit-coercion
@@ -1503,14 +1891,23 @@ function createNonNativeDOMExceptionClass() {
   const DummyDOMException = function DOMException() {/* */};
   /* eslint-enable func-name-matching */
   DummyDOMException.prototype = Object.create(Error.prototype); // Intended for subclassing
+  /** @type {const} */
   ['name', 'message'].forEach(prop => {
     Object.defineProperty(DummyDOMException.prototype, prop, {
       enumerable: true,
+      /**
+       * @this {DOMException}
+       * @returns {string}
+       */
       get() {
-        if (!(this instanceof DOMException || this instanceof DummyDOMException || this instanceof Error)) {
+        if (!(this instanceof DOMException ||
+        // @ts-expect-error Just checking
+        this instanceof DummyDOMException ||
+        // @ts-expect-error Just checking
+        this instanceof Error)) {
           throw new TypeError('Illegal invocation');
         }
-        return this['_' + prop];
+        return this[prop === 'name' ? '_name' : '_message'];
       }
     });
   });
@@ -1522,12 +1919,16 @@ function createNonNativeDOMExceptionClass() {
       throw new TypeError('Illegal invocation');
     }
   });
+  // @ts-expect-error It's ok
   DOMException.prototype = new DummyDOMException();
   DOMException.prototype[Symbol.toStringTag] = 'DOMExceptionPrototype';
   Object.defineProperty(DOMException, 'prototype', {
     writable: false
   });
-  Object.keys(codes).forEach(codeName => {
+  const keys = Object.keys(codes);
+
+  /** @type {(keyof codes)[]} */
+  keys.forEach(codeName => {
     Object.defineProperty(DOMException.prototype, codeName, {
       enumerable: true,
       configurable: false,
@@ -1539,6 +1940,7 @@ function createNonNativeDOMExceptionClass() {
       value: codes[codeName]
     });
   });
+  /** @type {(keyof legacyCodes)[]} */
   Object.keys(legacyCodes).forEach(codeName => {
     Object.defineProperty(DOMException.prototype, codeName, {
       enumerable: true,
@@ -1557,6 +1959,8 @@ function createNonNativeDOMExceptionClass() {
     enumerable: false,
     value: DOMException
   });
+
+  // @ts-expect-error We don't need all its properties
   return DOMException;
 }
 const ShimNonNativeDOMException = createNonNativeDOMExceptionClass();
@@ -1572,19 +1976,23 @@ function createNonNativeDOMException(name, message) {
 }
 
 /**
+ * @typedef {{
+ *   message: string|DOMString
+ * }} ErrorLike
+ */
+
+/**
  * Logs detailed error information to the console.
  * @param {string} name
  * @param {string} message
- * @param {string|Error|null} error
+ * @param {string|ErrorLike|boolean|null} [error]
  * @returns {void}
  */
 function logError(name, message, error) {
   if (CFG.DEBUG) {
-    if (error && error.message) {
-      error = error.message;
-    }
+    const msg = error && typeof error === 'object' && error.message ? error.message : /** @type {string} */error;
     const method = typeof console.error === 'function' ? 'error' : 'log';
-    console[method](name + ': ' + message + '. ' + (error || ''));
+    console[method](name + ': ' + message + '. ' + (msg || ''));
     console.trace && console.trace();
   }
 }
@@ -1629,13 +2037,11 @@ function findError(args) {
 }
 
 /**
- * @typedef {Error} SQLError
- */
-
-/**
  *
  * @param {SQLError} webSQLErr
- * @returns {DOMException}
+ * @returns {(DOMException|Error) & {
+ *   sqlError: SQLError
+ * }}
  */
 function webSQLErrback(webSQLErr) {
   let name, message;
@@ -1664,7 +2070,13 @@ function webSQLErrback(webSQLErr) {
       }
   }
   message += ' (' + webSQLErr.message + ')--(' + webSQLErr.code + ')';
-  const err = createDOMException(name, message);
+  const err =
+  /**
+   * @type {(Error | DOMException) & {
+   *   sqlError: SQLError
+   * }}
+   */
+  createDOMException(name, message);
   err.sqlError = webSQLErr;
   return err;
 }
@@ -1679,10 +2091,28 @@ try {
     useNativeDOMException = true;
   }
 } catch (e) {}
-const createDOMException = useNativeDOMException ? function (name, message, error) {
+const createDOMException = useNativeDOMException
+// eslint-disable-next-line operator-linebreak -- Need JSDoc
+?
+/**
+* @param {string} name
+* @param {string} message
+* @param {ErrorLike} [error]
+* @returns {DOMException}
+*/
+function (name, message, error) {
   logError(name, message, error);
   return createNativeDOMException(name, message);
-} : function (name, message, error) {
+}
+// eslint-disable-next-line operator-linebreak -- Need JSDoc
+:
+/**
+* @param {string} name
+* @param {string} message
+* @param {ErrorLike} [error]
+* @returns {Error}
+*/
+function (name, message, error) {
   logError(name, message, error);
   return createNonNativeDOMException(name, message);
 };
@@ -1701,12 +2131,35 @@ function IDBRequest() {
   throw new TypeError('Illegal constructor');
 }
 
+/**
+ * @typedef {IDBRequest & EventTarget & import('eventtargeter').ShimEventTarget & {
+ *   transaction: import('./IDBTransaction.js').IDBTransactionFull,
+ *   __done: boolean,
+ *   __result: import('./IDBDatabase.js').IDBDatabaseFull|undefined,
+ *   __error: null|DOMException|Error,
+ *   __source: null|import('./IDBDatabase.js').IDBDatabaseFull|
+ *     import('./IDBObjectStore.js').IDBObjectStoreFull|
+ *     import('./IDBIndex.js').IDBIndexFull,
+ *   __transaction: undefined|null|
+ *     import('./IDBTransaction.js').IDBTransactionFull,
+ *   addLateEventListener: (ev: string, listener: (e: Event & {
+ *     __legacyOutputDidListenersThrowError: boolean
+ *   }) => void) => void
+ *   addDefaultEventListener: (ev: string, listener: (e: Event & {
+ *     __legacyOutputDidListenersThrowError: boolean
+ *   }) => void) => void
+ * }} IDBRequestFull
+ */
+
 /* eslint-disable func-name-matching -- Polyfill */
 /**
  * @class
+ * @this {IDBRequestFull}
  */
 IDBRequest.__super = function IDBRequest() {
+  // @ts-expect-error It's ok
   this[Symbol.toStringTag] = 'IDBRequest';
+  // @ts-expect-error Part of `ShimEventTarget`
   this.__setOptions({
     legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
   });
@@ -1730,6 +2183,10 @@ IDBRequest.__super = function IDBRequest() {
   });
   defineReadonlyProperties(this, readonlyProperties$5, {
     readyState: {
+      /**
+       * @this {IDBRequestFull}
+       * @returns {"done"|"pending"}
+       */
       get readyState() {
         return this.__done ? 'done' : 'pending';
       }
@@ -1743,18 +2200,22 @@ IDBRequest.__super = function IDBRequest() {
 /* eslint-enable func-name-matching -- Polyfill */
 
 /**
- *
+ * @returns {IDBRequestFull}
  */
 IDBRequest.__createInstance = function () {
+  // @ts-expect-error Casting this causes other errors
   return new IDBRequest.__super();
 };
+
+// @ts-expect-error It's ok
 IDBRequest.prototype = EventTargetFactory.createInstance({
   extraProperties: ['debug']
 });
 IDBRequest.prototype[Symbol.toStringTag] = 'IDBRequestPrototype';
 
 /**
- *
+ * @this {IDBRequestFull}
+ * @returns {import('./IDBTransaction.js').IDBTransactionFull|null|undefined}
  */
 IDBRequest.prototype.__getParent = function () {
   if (this.toString() === '[object IDBOpenDBRequest]') {
@@ -1780,12 +2241,18 @@ Object.defineProperty(IDBRequest, 'prototype', {
 const openListeners = ['onblocked', 'onupgradeneeded'];
 
 /**
+ * @typedef {IDBRequestFull & IDBOpenDBRequest & {}} IDBOpenDBRequestFull
+ */
+
+/**
  * The IDBOpenDBRequest called when a database is opened.
  * @class
  */
 function IDBOpenDBRequest() {
   throw new TypeError('Illegal constructor');
 }
+
+// @ts-expect-error It's ok
 IDBOpenDBRequest.prototype = Object.create(IDBRequest.prototype);
 Object.defineProperty(IDBOpenDBRequest.prototype, 'constructor', {
   enumerable: false,
@@ -1795,15 +2262,19 @@ Object.defineProperty(IDBOpenDBRequest.prototype, 'constructor', {
 });
 const IDBOpenDBRequestAlias = IDBOpenDBRequest;
 /**
- *
+ * @returns {IDBRequestFull & IDBOpenDBRequest}
  */
 IDBOpenDBRequest.__createInstance = function () {
   /**
    * @class
+   * @this {IDBOpenDBRequestFull}
    */
   function IDBOpenDBRequest() {
     IDBRequest.__super.call(this);
+
+    // @ts-expect-error It's ok
     this[Symbol.toStringTag] = 'IDBOpenDBRequest';
+    // @ts-expect-error It's ok
     this.__setOptions({
       legacyOutputDidListenersThrowFlag: true,
       // Event hook for IndexedB
@@ -1812,6 +2283,8 @@ IDBOpenDBRequest.__createInstance = function () {
     defineListenerProperties(this, openListeners);
   }
   IDBOpenDBRequest.prototype = IDBOpenDBRequestAlias.prototype;
+
+  // @ts-expect-error It's ok
   return new IDBOpenDBRequest();
 };
 defineOuterInterface(IDBOpenDBRequest.prototype, openListeners);
@@ -2097,18 +2570,14 @@ SyncPromise.reject = function (val) {
 };
 
 /**
- * @typedef {any} AnyValue
- */
-
-/**
  * Compares two keys.
- * @param {AnyValue} first
- * @param {AnyValue} second
- * @returns {number}
+ * @param {import('./Key.js').Key} first
+ * @param {import('./Key.js').Key} second
+ * @returns {0|1|-1}
  */
 function cmp(first, second) {
-  const encodedKey1 = encode$1(first);
-  const encodedKey2 = encode$1(second);
+  const encodedKey1 = /** @type {string} */encode$1(first);
+  const encodedKey2 = /** @type {string} */encode$1(second);
   const result = encodedKey1 > encodedKey2 ? 1 : encodedKey1 === encodedKey2 ? 0 : -1;
   if (CFG.DEBUG) {
     // verify that the keys encoded correctly
@@ -2136,9 +2605,7 @@ function cmp(first, second) {
 }
 
 /**
- * @typedef {Int8Array|Int16Array|Int32Array|Uint8Array|Uint16Array|
- *   Uint32Array|Uint8ClampedArray|BigInt64Array|BigUint64Array|
- *   Float32Array|Float64Array|DataView} ArrayBufferView
+ * @typedef {NodeJS.TypedArray|DataView} ArrayBufferView
  */
 
 /**
@@ -2159,12 +2626,16 @@ function cmp(first, second) {
  */
 
 /**
- * @typedef {string|KeyPath[]} KeyPath
+ * @typedef {KeyPath[]} KeyPathArray
+ */
+/**
+ * @typedef {string|KeyPathArray} KeyPath
  */
 
 /**
 * @typedef {object} KeyValueObject
-* @property {KeyType|"NaN"} type
+* @property {KeyType|"NaN"|"null"|"undefined"|"boolean"|"object"|"symbol"|
+*   "function"|"bigint"} type If not `KeyType`, indicates invalid value
 * @property {Value} [value]
 * @property {boolean} [invalid]
 * @property {string} [message]
@@ -2172,12 +2643,19 @@ function cmp(first, second) {
 */
 
 /**
- * @typedef {number|string|Date|ArrayBuffer|ValueTypes[]} ValueTypes
+ * @typedef {number|string|Date|ArrayBuffer} ValueTypePrimitive
+ */
+/**
+ * @typedef {ValueType[]} ValueTypeArray
+ */
+/**
+ * @typedef {ValueTypePrimitive|ValueTypeArray} ValueType
  */
 
 /**
  * Encodes the keys based on their types. This is required to maintain collations
  * We leave space for future keys.
+ * @type {{[key: string]: Integer|string}}
  */
 const keyTypeToEncodedChar = {
   invalid: 100,
@@ -2187,14 +2665,14 @@ const keyTypeToEncodedChar = {
   binary: 500,
   array: 600
 };
-const keyTypes = Object.keys(keyTypeToEncodedChar);
+const keyTypes = /** @type {(KeyType|"invalid")[]} */Object.keys(keyTypeToEncodedChar);
 keyTypes.forEach(k => {
-  keyTypeToEncodedChar[k] = String.fromCodePoint(keyTypeToEncodedChar[k]);
+  keyTypeToEncodedChar[k] = String.fromCodePoint( /** @type {number} */keyTypeToEncodedChar[k]);
 });
 const encodedCharToKeyType = keyTypes.reduce((o, k) => {
   o[keyTypeToEncodedChar[k]] = k;
   return o;
-}, {});
+}, /** @type {{[key: string]: KeyType|"invalid"}} */{});
 
 /**
  * The sign values for numbers, ordered from least to greatest.
@@ -2206,12 +2684,25 @@ const encodedCharToKeyType = keyTypes.reduce((o, k) => {
  *  - "positiveInfinity": Sorts above all other values.
  */
 const signValues = ['negativeInfinity', 'bigNegative', 'smallNegative', 'smallPositive', 'bigPositive', 'positiveInfinity'];
-const types$1 = {
+
+/**
+ * @typedef {any} AnyValue
+ */
+
+const types$2 = {
   invalid: {
-    encode(key) {
+    /**
+     * @param {AnyValue} _key
+     * @returns {string}
+     */
+    encode(_key) {
       return keyTypeToEncodedChar.invalid + '-';
     },
-    decode(key) {
+    /**
+     * @param {string} _key
+     * @returns {undefined}
+     */
+    decode(_key) {
       return undefined;
     }
   },
@@ -2228,6 +2719,10 @@ const types$1 = {
   number: {
     // The encode step checks for six numeric cases and generates 14-digit encoded
     // sign-exponent-mantissa strings.
+    /**
+     * @param {number} key
+     * @returns {string}
+     */
     encode(key) {
       let key32 = key === Number.MIN_VALUE
       // Mocha test `IDBFactory/cmp-spec.js` exposed problem for some
@@ -2283,6 +2778,10 @@ const types$1 = {
     // The decode step must interpret the sign, reflip values encoded as the 32's complements,
     // apply signs to the exponent and mantissa, do the base-32 power operation, and return
     // the original JavaScript number values.
+    /**
+     * @param {string} key
+     * @returns {number}
+     */
     decode(key) {
       const sign = Number(key.slice(2, 3));
       let exponent = key.slice(3, 5);
@@ -2319,6 +2818,11 @@ const types$1 = {
   // This effectively doubles the size of every string, but it ensures that when two arrays of strings are compared,
   // the indexes of each string's characters line up with each other.
   string: {
+    /**
+     * @param {string} key
+     * @param {boolean} [inArray]
+     * @returns {string}
+     */
     encode(key, inArray) {
       if (inArray) {
         // prepend each character with a dash, and append a space to the end
@@ -2326,6 +2830,11 @@ const types$1 = {
       }
       return keyTypeToEncodedChar.string + '-' + key;
     },
+    /**
+     * @param {string} key
+     * @param {boolean} [inArray]
+     * @returns {string}
+     */
     decode(key, inArray) {
       key = key.slice(2);
       if (inArray) {
@@ -2339,6 +2848,10 @@ const types$1 = {
   // An extra, value is added to each array during encoding to make
   //  empty arrays sort correctly.
   array: {
+    /**
+     * @param {ValueTypeArray} key
+     * @returns {string}
+     */
     encode(key) {
       const encoded = [];
       for (const [i, item] of key.entries()) {
@@ -2348,6 +2861,10 @@ const types$1 = {
       encoded.push(keyTypeToEncodedChar.invalid + '-'); // append an extra item, so empty arrays sort correctly
       return keyTypeToEncodedChar.array + '-' + JSON.stringify(encoded);
     },
+    /**
+     * @param {string} key
+     * @returns {ValueTypeArray}
+     */
     decode(key) {
       const decoded = JSON.parse(key.slice(2));
       decoded.pop(); // remove the extra item
@@ -2361,19 +2878,35 @@ const types$1 = {
   },
   // Dates are encoded as ISO 8601 strings, in UTC time zone.
   date: {
+    /**
+     * @param {Date} key
+     * @returns {string}
+     */
     encode(key) {
       return keyTypeToEncodedChar.date + '-' + key.toJSON();
     },
+    /**
+     * @param {string} key
+     * @returns {Date}
+     */
     decode(key) {
       return new Date(key.slice(2));
     }
   },
   binary: {
     // `ArrayBuffer`/Views on buffers (`TypedArray` or `DataView`)
+    /**
+     * @param {BufferSource} key
+     * @returns {string}
+     */
     encode(key) {
       return keyTypeToEncodedChar.binary + '-' + (key.byteLength ? [...getCopyBytesHeldByBufferSource(key)].map(b => String(b).padStart(3, '0')) // e.g., '255,005,254,000,001,033'
       : '');
     },
+    /**
+     * @param {string} key
+     * @returns {ArrayBuffer}
+     */
     decode(key) {
       // Set the entries in buffer's [[ArrayBufferData]] to those in `value`
       const k = key.slice(2);
@@ -2392,8 +2925,8 @@ const types$1 = {
  * @returns {string}
  */
 function padBase32Exponent(n) {
-  n = n.toString(32);
-  return n.length === 1 ? '0' + n : n;
+  const exp = n.toString(32);
+  return exp.length === 1 ? '0' + exp : exp;
 }
 
 /**
@@ -2431,24 +2964,28 @@ function flipBase32(encoded) {
  * @returns {number}
  */
 function pow32(mantissa, exponent) {
-  exponent = Number.parseInt(exponent, 32);
-  if (exponent < 0) {
-    return roundToPrecision(Number.parseInt(mantissa, 32) * 32 ** (exponent - 10));
+  const exp = Number.parseInt(exponent, 32);
+  if (exp < 0) {
+    return roundToPrecision(Number.parseInt(mantissa, 32) * 32 ** (exp - 10));
   }
-  if (exponent < 11) {
-    let whole = mantissa.slice(0, exponent);
-    whole = Number.parseInt(whole, 32);
-    let fraction = mantissa.slice(exponent);
-    fraction = Number.parseInt(fraction, 32) * 32 ** (exponent - 11);
-    return roundToPrecision(whole + fraction);
+  if (exp < 11) {
+    const whole = mantissa.slice(0, exp);
+    const wholeNum = Number.parseInt(whole, 32);
+    const fraction = mantissa.slice(exp);
+    const fractionNum = Number.parseInt(fraction, 32) * 32 ** (exp - 11);
+    return roundToPrecision(wholeNum + fractionNum);
   }
-  const expansion = mantissa + zeros(exponent - 11);
+  const expansion = mantissa + zeros(exp - 11);
   return Number.parseInt(expansion, 32);
 }
 
 /**
+ * @typedef {number} Float
+ */
+
+/**
  * @param {Float} num
- * @param {Float} [precision=16]
+ * @param {Float} [precision]
  * @returns {Float}
  */
 function roundToPrecision(num, precision = 16) {
@@ -2475,21 +3012,21 @@ function negate(s) {
 
 /**
  * @param {Key} key
- * @returns {KeyType}
+ * @returns {KeyType|"invalid"}
  */
 function getKeyType(key) {
   if (Array.isArray(key)) return 'array';
   if (isDate(key)) return 'date';
   if (isBinary(key)) return 'binary';
   const keyType = typeof key;
-  return ['string', 'number'].includes(keyType) ? keyType : 'invalid';
+  return ['string', 'number'].includes(keyType) ? /** @type {"string"|"number"} */keyType : 'invalid';
 }
 
 /**
  * Keys must be strings, numbers (besides `NaN`), Dates (if value is not
  *   `NaN`), binary objects or Arrays.
  * @param {Value} input The key input
- * @param {?(Array)} [seen] An array of already seen keys
+ * @param {Value[]|null|undefined} [seen] An array of already seen keys
  * @returns {KeyValueObject}
  */
 function convertValueToKey(input, seen) {
@@ -2528,7 +3065,10 @@ function getCopyBytesHeldByBufferSource(O) {
   }
   // const octets = new Uint8Array(input);
   // const octets = types.binary.decode(types.binary.encode(input));
-  return new Uint8Array(O.buffer || O, offset, length);
+  return new Uint8Array(
+  // Should allow DataView
+  /** @type {ArrayBuffer} */
+  'buffer' in O && O.buffer || O, offset, length);
 }
 
 /**
@@ -2536,7 +3076,7 @@ function getCopyBytesHeldByBufferSource(O) {
 *   and subsequent need to process in calling code unless `fullKeys` is
 *   set; may throw.
 * @param {Value} input
-* @param {Value[]} [seen]
+* @param {Value[]|null} [seen]
 * @param {boolean} [multiEntry]
 * @param {boolean} [fullKeys]
 * @throws {TypeError} See `getCopyBytesHeldByBufferSource`
@@ -2576,18 +3116,20 @@ function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
             value: 0
           };
         }
-        return ret;
+        return (/** @type {{type: KeyType; value: Value}} */ret
+        );
       }
     case 'string':
       {
-        return ret;
+        return (/** @type {{type: KeyType; value: Value}} */ret
+        );
       }
     case 'binary':
       {
         // May throw (if detached)
         // Get a copy of the bytes held by the buffer source
         // https://heycam.github.io/webidl/#ref-for-dfn-get-buffer-source-copy-2
-        const octets = getCopyBytesHeldByBufferSource(input);
+        const octets = getCopyBytesHeldByBufferSource( /** @type {BufferSource} */input);
         return {
           type: 'binary',
           value: octets
@@ -2596,12 +3138,15 @@ function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
     case 'array':
       {
         // May throw (from binary)
-        const len = input.length;
+        const arr = /** @type {Array<any>} */input;
+        const len = arr.length;
         seen.push(input);
+
+        /** @type {(KeyValueObject|Value)[]} */
         const keys = [];
         for (let i = 0; i < len; i++) {
           // We cannot iterate here with array extras as we must ensure sparse arrays are invalidated
-          if (!multiEntry && !Object.prototype.hasOwnProperty.call(input, i)) {
+          if (!multiEntry && !Object.hasOwn(arr, i)) {
             return {
               type,
               invalid: true,
@@ -2609,7 +3154,7 @@ function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
             };
           }
           try {
-            const entry = input[i];
+            const entry = arr[i];
             const key = convertValueToKeyValueDecoded(entry, seen, false, fullKeys); // Though steps do not list rethrowing, the next is returnifabrupt when not multiEntry
             if (key.invalid) {
               if (multiEntry) {
@@ -2637,13 +3182,14 @@ function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
       }
     case 'date':
       {
-        if (!Number.isNaN(input.getTime())) {
+        const date = /** @type {Date} */input;
+        if (!Number.isNaN(date.getTime())) {
           return fullKeys ? {
             type,
-            value: input.getTime()
+            value: date.getTime()
           } : {
             type,
-            value: new Date(input.getTime())
+            value: new Date(date.getTime())
           };
         }
         return {
@@ -2657,7 +3203,7 @@ function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
     default:
       {
         // Other `typeof` types which are not valid keys:
-        //    'undefined', 'boolean', 'object' (including `null`), 'symbol', 'function
+        //    'undefined', 'boolean', 'object' (including `null`), 'symbol', 'function'
         const type = input === null ? 'null' : typeof input; // Convert `null` for convenience of consumers in reporting errors
         return {
           type,
@@ -2671,7 +3217,7 @@ function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
 /**
  *
  * @param {Key} key
- * @param {boolean} fullKeys
+ * @param {boolean} [fullKeys]
  * @returns {KeyValueObject}
  * @todo Document other allowable `key`?
  */
@@ -2682,7 +3228,7 @@ function convertValueToMultiEntryKeyDecoded(key, fullKeys) {
 /**
 * An internal utility.
 * @param {Value} input
-* @param {boolean} seen
+* @param {Value[]|null|undefined} [seen]
 * @throws {DOMException} `DataError`
 * @returns {KeyValueObject}
 */
@@ -2721,8 +3267,8 @@ function evaluateKeyPathOnValue(value, keyPath, multiEntry) {
 *    or `{invalid: true}` (e.g., `NaN`).
 * @param {Value} value
 * @param {KeyPath} keyPath
-* @param {boolean} multiEntry
-* @param {boolean} fullKeys
+* @param {boolean} [multiEntry]
+* @param {boolean} [fullKeys]
 * @returns {KeyValueObject|KeyPathEvaluateValue}
 * @todo Document other possible return?
 */
@@ -2744,21 +3290,31 @@ function extractKeyValueDecodedFromValueUsingKeyPath(value, keyPath, multiEntry,
  */
 
 /**
+ * @typedef {KeyPathEvaluateValueValue[]} KeyPathEvaluateValueValueArray
+ */
+
+/**
+ * @typedef {undefined|number|string|Date|object|KeyPathEvaluateValueValueArray} KeyPathEvaluateValueValue
+ */
+
+/**
  * @typedef {object} KeyPathEvaluateValue
- * @property {undefined|array|string} value
+ * @property {KeyPathEvaluateValueValue} [value]
+ * @property {boolean} [failure]
  */
 
 /**
  * Returns the value of an inline key based on a key path (wrapped in an
  *   object with key `value`) or `{failure: true}`
- * @param {object} value
+ * @param {Value} value
  * @param {KeyPath} keyPath
- * @param {boolean} multiEntry
+ * @param {boolean} [multiEntry]
  * @param {boolean} [fullKeys]
  * @returns {KeyPathEvaluateValue}
  */
 function evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKeys) {
   if (Array.isArray(keyPath)) {
+    /** @type {KeyPathEvaluateValueValueArray} */
     const result = [];
     return keyPath.some(item => {
       const key = evaluateKeyPathOnValueToDecodedValue(value, item);
@@ -2786,23 +3342,23 @@ function evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKe
       switch (idntfr) {
         case 'size':
         case 'type':
-          value = value[idntfr];
+          value = /** @type {Blob} */value[idntfr];
           break;
       }
     } else if (isFile(value)) {
       switch (idntfr) {
         case 'name':
         case 'lastModified':
-          value = value[idntfr];
+          value = /** @type {File} */value[idntfr];
           break;
         case 'lastModifiedDate':
-          value = new Date(value.lastModified);
+          value = new Date( /** @type {File} */value.lastModified);
           break;
       }
-    } else if (!isObj(value) || !Object.prototype.hasOwnProperty.call(value, idntfr)) {
+    } else if (!isObj(value) || !Object.hasOwn(value, idntfr)) {
       return true;
     } else {
-      value = value[idntfr];
+      value = /** @type {{[key: string]: KeyPathEvaluateValueValue}} */value[idntfr];
       return value === undefined;
     }
     return false;
@@ -2815,7 +3371,7 @@ function evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKe
 
 /**
  * Sets the inline key value.
- * @param {object} value
+ * @param {{[key: string]: AnyValue}} value
  * @param {Key} key
  * @param {string} keyPath
  * @returns {void}
@@ -2824,13 +3380,13 @@ function injectKeyIntoValueUsingKeyPath(value, key, keyPath) {
   const identifiers = keyPath.split('.');
   const last = identifiers.pop();
   identifiers.forEach(identifier => {
-    const hop = Object.prototype.hasOwnProperty.call(value, identifier);
+    const hop = Object.hasOwn(value, identifier);
     if (!hop) {
       value[identifier] = {};
     }
     value = value[identifier];
   });
-  value[last] = key; // key is already a `keyValue` in our processing so no need to convert
+  value[/** @type {string} */last] = key; // key is already a `keyValue` in our processing so no need to convert
 }
 
 /**
@@ -2847,11 +3403,11 @@ function checkKeyCouldBeInjectedIntoValue(value, keyPath) {
     if (!isObj(value)) {
       return false;
     }
-    const hop = Object.prototype.hasOwnProperty.call(value, identifier);
+    const hop = Object.hasOwn(value, identifier);
     if (!hop) {
       return true;
     }
-    value = value[identifier];
+    value = /** @type {{[key: string]: Value}} */value[identifier];
   }
   return isObj(value);
 }
@@ -2859,8 +3415,8 @@ function checkKeyCouldBeInjectedIntoValue(value, keyPath) {
 /**
  *
  * @param {Key} key
- * @param {IDBKeyRange} range
- * @param {boolean} checkCached
+ * @param {import('./IDBKeyRange.js').IDBKeyRangeFull} range
+ * @param {boolean} [checkCached]
  * @returns {boolean}
  */
 function isKeyInRange(key, range, checkCached) {
@@ -2869,21 +3425,11 @@ function isKeyInRange(key, range, checkCached) {
   const encodedKey = encode$1(key, true);
   const lower = checkCached ? range.__lowerCached : encode$1(range.lower, true);
   const upper = checkCached ? range.__upperCached : encode$1(range.upper, true);
-  if (range.lower !== undefined) {
-    if (range.lowerOpen && encodedKey > lower) {
-      lowerMatch = true;
-    }
-    if (!range.lowerOpen && encodedKey >= lower) {
-      lowerMatch = true;
-    }
+  if (!lowerMatch && (range.lowerOpen && encodedKey !== null && lower !== null && encodedKey > lower || !range.lowerOpen && (!encodedKey && !lower || encodedKey !== null && lower !== null && encodedKey >= lower))) {
+    lowerMatch = true;
   }
-  if (range.upper !== undefined) {
-    if (range.upperOpen && encodedKey < upper) {
-      upperMatch = true;
-    }
-    if (!range.upperOpen && encodedKey <= upper) {
-      upperMatch = true;
-    }
+  if (!upperMatch && (range.upperOpen && encodedKey !== null && upper !== null && encodedKey < upper || !range.upperOpen && (!encodedKey && !upper || encodedKey !== null && upper !== null && encodedKey <= upper))) {
+    upperMatch = true;
   }
   return lowerMatch && upperMatch;
 }
@@ -2905,7 +3451,7 @@ function isMultiEntryMatch(encodedEntry, encodedKey) {
 /**
  *
  * @param {Key} keyEntry
- * @param {IDBKeyRange} range
+ * @param {import('./IDBKeyRange.js').IDBKeyRangeFull|undefined} range
  * @returns {Key[]}
  */
 function findMultiEntryMatches(keyEntry, range) {
@@ -2940,7 +3486,7 @@ function findMultiEntryMatches(keyEntry, range) {
 * Not currently in use but keeping for spec parity.
 * @param {Key} key
 * @throws {Error} Upon a "bad key"
-* @returns {ValueTypes}
+* @returns {ValueType}
 */
 function convertKeyToValue(key) {
   const {
@@ -2987,7 +3533,7 @@ function convertKeyToValue(key) {
 /**
  *
  * @param {Key} key
- * @param {boolean} inArray
+ * @param {boolean} [inArray]
  * @returns {string|null}
  */
 function encode$1(key, inArray) {
@@ -2996,28 +3542,28 @@ function encode$1(key, inArray) {
     return null;
   }
   // array, date, number, string, binary (should already have detected "invalid")
-  return types$1[getKeyType(key)].encode(key, inArray);
+  return types$2[getKeyType(key)].encode(key, inArray);
 }
 
 /**
  *
  * @param {Key} key
- * @param {boolean} inArray
+ * @param {boolean} [inArray]
  * @throws {Error} Invalid number
- * @returns {undefined|ValueTypes}
+ * @returns {undefined|ValueType}
  */
 function decode$1(key, inArray) {
   if (typeof key !== 'string') {
     return undefined;
   }
-  return types$1[encodedCharToKeyType[key.slice(0, 1)]].decode(key, inArray);
+  return types$2[encodedCharToKeyType[key.slice(0, 1)]].decode(key, inArray);
 }
 
 /**
  *
  * @param {Key} key
- * @param {boolean} inArray
- * @returns {undefined|ValueTypes}
+ * @param {boolean} [inArray]
+ * @returns {undefined|ValueType}
  */
 function roundTrip(key, inArray) {
   return decode$1(encode$1(key, inArray), inArray);
@@ -3025,26 +3571,25 @@ function roundTrip(key, inArray) {
 const MAX_ALLOWED_CURRENT_NUMBER = 9007199254740992; // 2 ^ 53 (Also equal to `Number.MAX_SAFE_INTEGER + 1`)
 
 /**
-* @typedef {IDBObjectStore} IDBObjectStoreWithCurrentName
-* @property {string} __currentName
-*/
+ * @typedef {number} Integer
+ */
 
 /**
  * @callback CurrentNumberCallback
- * @param {Integer} The current number
+ * @param {Integer} cn The current number
  * @returns {void}
  */
 
 /**
 * @callback SQLFailureCallback
-* @param {DOMException} exception
+* @param {DOMException|Error} exception
 * @returns {void}
 */
 
 /**
  *
  * @param {SQLTransaction} tx
- * @param {IDBObjectStoreWithCurrentName} store
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
  * @param {CurrentNumberCallback} func
  * @param {SQLFailureCallback} sqlFailCb
  * @returns {void}
@@ -3058,13 +3603,14 @@ function getCurrentNumber(tx, store, func, sqlFailCb) {
     }
   }, function (tx, error) {
     sqlFailCb(createDOMException('DataError', 'Could not get the auto increment value for key', error));
+    return true;
   });
 }
 
 /**
  *
  * @param {SQLTransaction} tx
- * @param {IDBObjectStoreWithCurrentName} store
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
  * @param {Integer} num
  * @param {CurrentNumberCallback} successCb
  * @param {SQLFailureCallback} failCb
@@ -3078,6 +3624,7 @@ function assignCurrentNumber(tx, store, num, successCb, failCb) {
     successCb(num);
   }, function (tx, err) {
     failCb(createDOMException('UnknownError', 'Could not set the auto increment value for key', err));
+    return true;
   });
 }
 
@@ -3086,7 +3633,7 @@ function assignCurrentNumber(tx, store, num, successCb, failCb) {
  *   (greater than old value and >=1) OR if a manually passed in key is
  *   valid (numeric and >= 1) and >= any primaryKey.
  * @param {SQLTransaction} tx
- * @param {IDBObjectStoreWithCurrentName} store
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
  * @param {Integer} num
  * @param {CurrentNumberCallback} successCb
  * @param {SQLFailureCallback} failCb
@@ -3109,7 +3656,7 @@ function setCurrentNumber(tx, store, num, successCb, failCb) {
 /**
  *
  * @param {SQLTransaction} tx
- * @param {IDBObjectStoreWithCurrentName} store
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
  * @param {KeyForStoreCallback} cb
  * @param {SQLFailureCallback} sqlFailCb
  * @returns {void}
@@ -3136,9 +3683,9 @@ function generateKeyForStore(tx, store, cb, sqlFailCb) {
 /**
  *
  * @param {SQLTransaction} tx
- * @param {IDBObjectStoreWithCurrentName} store
- * @param {*|Integer} key
- * @param {CurrentNumberCallback|void} successCb
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
+ * @param {import('./Key.js').Key} key
+ * @param {(num?: Integer) => void} successCb
  * @param {SQLFailureCallback} sqlFailCb
  * @returns {void}
  */
@@ -3195,31 +3742,35 @@ var Key = /*#__PURE__*/Object.freeze({
   roundTrip: roundTrip
 });
 
-const readonlyProperties$4 = ['lower', 'upper', 'lowerOpen', 'upperOpen'];
+const readonlyProperties$4 = /** @type {const} */['lower', 'upper', 'lowerOpen', 'upperOpen'];
 
-/* eslint-disable jsdoc/check-param-names */
+/**
+ * @typedef {globalThis.IDBKeyRange & {
+*   __lowerCached: string|null|false,
+*   __upperCached: string|null|false,
+*   __lowerOpen: boolean,
+* }} IDBKeyRangeFull
+*/
+
 /**
  * The IndexedDB KeyRange object.
  * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#dfn-key-range
- * @param {import('./Key.js').Key|null} lower
- * @param {import('./Key.js').Key|null} upper
- * @param {boolean} lowerOpen
- * @param {boolean} upperOpen
  * @throws {TypeError}
  * @class
  */
 function IDBKeyRange() {
-  /* eslint-enable jsdoc/check-param-names */
+  this.__lowerOpen = false;
+  this.__upperOpen = false;
   throw new TypeError('Illegal constructor');
 }
 const IDBKeyRangeAlias = IDBKeyRange;
 
 /**
- * @param {} lower
- * @param {} upper
- * @param {} lowerOpen
- * @param {} upperOpen
- * @returns {IDBKeyRange}
+ * @param {import('./Key.js').Key|null} lower
+ * @param {import('./Key.js').Key|null} upper
+ * @param {boolean} lowerOpen
+ * @param {boolean} upperOpen
+ * @returns {import('./IDBKeyRange.js').IDBKeyRangeFull}
  */
 IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
   /**
@@ -3240,7 +3791,7 @@ IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
       convertValueToKeyRethrowingAndIfInvalid(upper);
     }
     if (lower !== undefined && upper !== undefined && lower !== upper) {
-      if (encode$1(lower) > encode$1(upper)) {
+      if ( /** @type {string} */encode$1(lower) > /** @type {string} */encode$1(upper)) {
         throw createDOMException('DataError', '`lower` must not be greater than `upper` argument in `bound()` call.');
       }
     }
@@ -3250,11 +3801,14 @@ IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
     this.__upperOpen = Boolean(upperOpen);
   }
   IDBKeyRange.prototype = IDBKeyRangeAlias.prototype;
+
+  // @ts-expect-error Properties added by `defineProperty/ies`
   return new IDBKeyRange();
 };
 
 /**
  * @param {import('./Key.js').Key} key
+ * @this {IDBKeyRangeFull}
  * @returns {boolean}
  */
 IDBKeyRange.prototype.includes = function (key) {
@@ -3271,7 +3825,7 @@ IDBKeyRange.prototype.includes = function (key) {
 
 /**
  * @param {import('./Key.js').Value} value
- * @returns {IDBKeyRange}
+ * @returns {import('./IDBKeyRange.js').IDBKeyRangeFull}
  */
 IDBKeyRange.only = function (value) {
   if (!arguments.length) {
@@ -3282,7 +3836,7 @@ IDBKeyRange.only = function (value) {
 
 /**
  * @param {import('./Key.js').Value} value
- * @returns {IDBKeyRange}
+ * @returns {globalThis.IDBKeyRange}
  */
 IDBKeyRange.lowerBound = function (value /*, open */) {
   if (!arguments.length) {
@@ -3294,7 +3848,7 @@ IDBKeyRange.lowerBound = function (value /*, open */) {
 
 /**
  * @param {import('./Key.js').Value} value
- * @returns {IDBKeyRange}
+ * @returns {globalThis.IDBKeyRange}
  */
 IDBKeyRange.upperBound = function (value /*, open */) {
   if (!arguments.length) {
@@ -3307,7 +3861,7 @@ IDBKeyRange.upperBound = function (value /*, open */) {
 /**
  * @param {import('./Key.js').Value} lower
  * @param {import('./Key.js').Value} upper
- * @returns {IDBKeyRange}
+ * @returns {globalThis.IDBKeyRange}
  */
 IDBKeyRange.bound = function (lower, upper /* , lowerOpen, upperOpen */) {
   if (arguments.length <= 1) {
@@ -3325,6 +3879,9 @@ readonlyProperties$4.forEach(prop => {
   });
   // Ensure for proper interface testing that "get <name>" is the function name
   const o = {
+    /**
+     * @returns {import('./Key.js').Key|null|boolean}
+     */
     get [prop]() {
       // We can't do a regular instanceof check as it will create a loop given our hasInstance implementation
       if (!isObj(this) || typeof this.__lowerOpen !== 'boolean') {
@@ -3333,25 +3890,31 @@ readonlyProperties$4.forEach(prop => {
       return this['__' + prop];
     }
   };
-  const desc = Object.getOwnPropertyDescriptor(o, prop);
+  const desc = /** @type {PropertyDescriptor} */
+  Object.getOwnPropertyDescriptor(o, prop);
   // desc.enumerable = true; // Default
   // desc.configurable = true; // Default
   Object.defineProperty(IDBKeyRange.prototype, prop, desc);
 });
 Object.defineProperty(IDBKeyRange, Symbol.hasInstance, {
-  value: obj => isObj(obj) && 'upper' in obj && typeof obj.lowerOpen === 'boolean'
+  value:
+  /**
+   * @param {object} obj
+   * @returns {boolean}
+   */
+  obj => isObj(obj) && 'upper' in obj && 'lowerOpen' in obj && typeof obj.lowerOpen === 'boolean'
 });
 Object.defineProperty(IDBKeyRange, 'prototype', {
   writable: false
 });
 
 /**
- * @param {IDBKeyRange} range
+ * @param {IDBKeyRangeFull|undefined} range
  * @param {string} quotedKeyColumnName
  * @param {string[]} sql
  * @param {string[]} sqlValues
- * @param {boolean} addAnd
- * @param {boolean} checkCached
+ * @param {boolean} [addAnd]
+ * @param {boolean} [checkCached]
  * @returns {void}
  */
 function setSQLForKeyRange(range, quotedKeyColumnName, sql, sqlValues, addAnd, checkCached) {
@@ -3367,7 +3930,7 @@ function setSQLForKeyRange(range, quotedKeyColumnName, sql, sqlValues, addAnd, c
       encodedUpperKey = checkCached ? range.__upperCached : encode$1(range.upper);
     }
     if (hasLower) {
-      sqlValues.push(escapeSQLiteStatement(encodedLowerKey));
+      sqlValues.push(escapeSQLiteStatement( /** @type {string} */encodedLowerKey));
       if (hasUpper && encodedLowerKey === encodedUpperKey && !range.lowerOpen && !range.upperOpen) {
         sql.push(quotedKeyColumnName, '=', '?');
         return;
@@ -3377,16 +3940,16 @@ function setSQLForKeyRange(range, quotedKeyColumnName, sql, sqlValues, addAnd, c
     hasLower && hasUpper && sql.push('AND');
     if (hasUpper) {
       sql.push(quotedKeyColumnName, range.upperOpen ? '<' : '<=', '?');
-      sqlValues.push(escapeSQLiteStatement(encodedUpperKey));
+      sqlValues.push(escapeSQLiteStatement( /** @type {string} */encodedUpperKey));
     }
   }
 }
 
 /**
  * @param {import('./Key.js').Value} value
- * @param {boolean} nullDisallowed
+ * @param {boolean} [nullDisallowed]
  * @throws {DOMException}
- * @returns {IDBKeyRange}
+ * @returns {import('./IDBKeyRange.js').IDBKeyRangeFull|undefined}
  */
 function convertValueToKeyRange(value, nullDisallowed) {
   if (instanceOf(value, IDBKeyRange)) {
@@ -3406,6 +3969,26 @@ function convertValueToKeyRange(value, nullDisallowed) {
   convertValueToKeyRethrowingAndIfInvalid(value);
   return IDBKeyRange.only(value);
 }
+
+/**
+ * @typedef {number} Integer
+ */
+
+/**
+ * @typedef {{
+ *   _items: string[],
+ *   _length: Integer,
+ *   [key: number]: string,
+ *   addIndexes: () => void,
+ *   sortList: () => string[],
+ *   push: (item: string) => void,
+ *   clone: () => DOMStringListFull,
+ *   contains: (str: string) => boolean,
+ *   indexOf: (str: string) => Integer,
+ *   splice: (index: Integer, howmany: Integer, ...args: any) => void
+ *   length: Integer
+ * }} DOMStringListFull
+ */
 
 let cleanInterface = false;
 const testObject = {
@@ -3431,17 +4014,32 @@ if (Object.defineProperty) {
  * @class
  */
 const DOMStringList = function () {
+  /** @type {string[]} */
+  this._items = [];
+  /** @type {Integer} */
+  this._length = 0;
   throw new TypeError('Illegal constructor');
 };
+
+// @ts-expect-error It's ok
 DOMStringList.prototype = {
   constructor: DOMStringList,
   // Interface.
+
+  /**
+   * @param {string} str
+   * @returns {boolean}
+   */
   contains(str) {
     if (!arguments.length) {
       throw new TypeError('DOMStringList.contains must be supplied a value');
     }
     return this._items.includes(str);
   },
+  /**
+   * @param {number} key
+   * @returns {string|null}
+   */
   item(key) {
     if (!arguments.length) {
       throw new TypeError('DOMStringList.item must be supplied a value');
@@ -3452,6 +4050,9 @@ DOMStringList.prototype = {
     return this._items[key];
   },
   // Helpers. Should only be used internally.
+  /**
+   * @returns {DOMStringListFull}
+   */
   clone() {
     const stringList = DOMStringList.__createInstance();
     stringList._items = this._items.slice();
@@ -3459,11 +4060,19 @@ DOMStringList.prototype = {
     stringList.addIndexes();
     return stringList;
   },
+  /**
+   * @this {DOMStringListFull}
+   * @returns {void}
+   */
   addIndexes() {
     for (let i = 0; i < this._items.length; i++) {
       this[i] = this._items[i];
     }
   },
+  /**
+   * @this {DOMStringListFull}
+   * @returns {string[]}
+   */
   sortList() {
     // http://w3c.github.io/IndexedDB/#sorted-list
     // https://tc39.github.io/ecma262/#sec-abstract-relational-comparison
@@ -3471,22 +4080,49 @@ DOMStringList.prototype = {
     this.addIndexes();
     return this._items;
   },
+  /**
+   * @param {(value: string, i: Integer, arr: string[]) => void} cb
+   * @param {object} thisArg
+   * @returns {void}
+   */
   forEach(cb, thisArg) {
     // eslint-disable-next-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument
     this._items.forEach(cb, thisArg);
   },
+  /**
+   * @param {(value: string, i: Integer, arr: string[]) => any[]} cb
+   * @param {object} thisArg
+   * @returns {any[]}
+   */
   map(cb, thisArg) {
     // eslint-disable-next-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument
     return this._items.map(cb, thisArg);
   },
+  /**
+   * @param {string} str
+   * @returns {Integer}
+   */
   indexOf(str) {
     return this._items.indexOf(str);
   },
+  /**
+   * @param {string} item
+   * @this {DOMStringListFull}
+   * @returns {void}
+   */
   push(item) {
     this._items.push(item);
     this._length++;
     this.sortList();
   },
+  /**
+   * @typedef {any} AnyArgs
+   */
+  /**
+   * @param {[index: Integer, howmany: Integer, ...args: any]} args
+   * @this {DOMStringListFull}
+   * @returns {void}
+   */
   splice(...args /* index, howmany, item1, ..., itemX */) {
     this._items.splice(...args);
     this._length = this._items.length;
@@ -3510,16 +4146,28 @@ DOMStringList.prototype = {
     }
   }
 };
+
+/**
+ * @typedef {any} AnyValue
+ */
 Object.defineProperty(DOMStringList, Symbol.hasInstance, {
+  /**
+   * @param {AnyValue} obj
+   * @returns {boolean}
+   */
   value(obj) {
     return Object.prototype.toString.call(obj) === 'DOMStringListPrototype';
   }
 });
 const DOMStringListAlias = DOMStringList;
 Object.defineProperty(DOMStringList, '__createInstance', {
+  /**
+   * @returns {DOMStringListFull}
+   */
   value() {
     /**
      * @class
+     * @this {DOMStringList}
      */
     const DOMStringList = function DOMStringList() {
       this.toString = function () {
@@ -3532,11 +4180,12 @@ Object.defineProperty(DOMStringList, '__createInstance', {
           return this._length;
         }
       });
-      this._items = [];
+      this._items = /** @type {string[]} */[];
       this._length = 0;
     };
     DOMStringList.prototype = DOMStringListAlias.prototype;
-    return new DOMStringList();
+    return (/** @type {DOMStringListFull} */new DOMStringList()
+    );
   }
 });
 if (cleanInterface) {
@@ -3551,6 +4200,7 @@ if (cleanInterface) {
   });
 
   // Illegal invocations
+  // @ts-expect-error No return value
   Object.defineProperty(DOMStringList.prototype, 'length', {
     configurable: true,
     enumerable: true,
@@ -3571,32 +4221,101 @@ let uniqueID = 0;
 const listeners$1 = ['onabort', 'oncomplete', 'onerror'];
 const readonlyProperties$3 = ['objectStoreNames', 'mode', 'db', 'error'];
 
-/* eslint-disable jsdoc/check-param-names */
+/**
+ * @typedef {number} Integer
+ */
+
+/**
+ * @typedef {{
+ *   op: SQLCallback,
+ *   args: ObjectArray,
+ *   req: import('./IDBRequest.js').IDBRequestFull|null
+ * }} RequestInfo
+ */
+
+/**
+ * @typedef {EventTarget & {
+ *   mode: "readonly"|"readwrite"|"versionchange",
+ *   db: import('./IDBDatabase.js').IDBDatabaseFull,
+ *   on__abort: () => void,
+ *   on__complete: () => void,
+ *   on__beforecomplete: (ev: Event & {
+ *     complete: () => void
+ *   }) => void,
+ *   on__preabort: () => void,
+ *   __abortTransaction: (err: Error|DOMException|null) => void,
+ *   __executeRequests: () => void,
+ *   __tx: SQLTransaction,
+ *   __id: Integer,
+ *   __active: boolean,
+ *   __running: boolean,
+ *   __errored: boolean,
+ *   __requests: RequestInfo[],
+ *   __db: import('./IDBDatabase.js').IDBDatabaseFull,
+ *   __mode: string,
+ *   __error: null|DOMException|Error,
+ *   __objectStoreNames: import('./DOMStringList.js').DOMStringListFull,
+ *   __storeHandles: {
+ *     [key: string]: import('./IDBObjectStore.js').IDBObjectStoreFull
+ *   },
+ *   __requestsFinished: boolean,
+ *   __transFinishedCb: (err: boolean, cb: ((bool?: boolean) => void)) => void,
+ *   __transactionEndCallback: () => void,
+ *   __transactionFinished: boolean,
+ *   __completed: boolean,
+ *   __internal: boolean,
+ *   __abortFinished: boolean,
+ *   __createRequest: (
+ *     source: import('./IDBDatabase.js').IDBDatabaseFull|
+ *       import('./IDBObjectStore.js').IDBObjectStoreFull|
+ *       import('./IDBIndex.js').IDBIndexFull|
+ *       import('./IDBCursor.js').IDBCursorFull
+ *   ) => import('./IDBRequest.js').IDBRequestFull,
+ *   __pushToQueue: (
+ *     request: import('./IDBRequest.js').IDBRequestFull|null,
+ *     callback: SQLCallback,
+ *     args?: ObjectArray
+ *   ) => void,
+ *   __assertActive: () => void,
+ *   __addNonRequestToTransactionQueue: (
+ *     callback: SQLCallback,
+ *     args?: ObjectArray
+ *   ) => void
+ *   __addToTransactionQueue: (
+ *     callback: SQLCallback,
+ *     args: ObjectArray|undefined,
+ *     source: import('./IDBDatabase.js').IDBDatabaseFull|
+ *       import('./IDBObjectStore.js').IDBObjectStoreFull|
+ *       import('./IDBIndex.js').IDBIndexFull|
+ *       import('./IDBCursor.js').IDBCursorFull
+ *   ) => import('./IDBRequest.js').IDBRequestFull
+ *   __assertWritable: () => void,
+ * }} IDBTransactionFull
+ */
+
 /**
  * The IndexedDB Transaction.
  * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBTransaction
- * @param {IDBDatabase} db
- * @param {string[]} storeNames
- * @param {string} mode
  * @class
  */
 function IDBTransaction() {
-  /* eslint-enable jsdoc/check-param-names */
   throw new TypeError('Illegal constructor');
 }
 const IDBTransactionAlias = IDBTransaction;
 /**
- *
- * @param db
- * @param storeNames
- * @param mode
+ * @param {import('./IDBDatabase.js').IDBDatabaseFull} db
+ * @param {import('./DOMStringList.js').DOMStringListFull} storeNames
+ * @param {string} mode
+ * @returns {IDBTransactionFull}
  */
 IDBTransaction.__createInstance = function (db, storeNames, mode) {
   /**
    * @class
+   * @this {IDBTransactionFull}
    */
   function IDBTransaction() {
     const me = this;
+    // @ts-expect-error It's ok
     me[Symbol.toStringTag] = 'IDBTransaction';
     defineReadonlyProperties(me, readonlyProperties$3);
     me.__id = ++uniqueID; // for debugging simultaneous transactions
@@ -3608,6 +4327,7 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
     me.__mode = mode;
     me.__db = db;
     me.__error = null;
+    // @ts-expect-error Part of `ShimEventTarget`
     me.__setOptions({
       legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
     });
@@ -3626,8 +4346,12 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
     }, 0);
   }
   IDBTransaction.prototype = IDBTransactionAlias.prototype;
+
+  // @ts-expect-error It's ok
   return new IDBTransaction();
 };
+
+// @ts-expect-error It's ok
 IDBTransaction.prototype = EventTargetFactory.createInstance({
   defaultSync: true,
   // Ensure EventTarget preserves our properties
@@ -3636,14 +4360,16 @@ IDBTransaction.prototype = EventTargetFactory.createInstance({
 
 /**
  *
- * @param err
- * @param cb
+ * @param {boolean} err
+ * @param {(bool: boolean) => void} cb
+ * @returns {void}
  */
 IDBTransaction.prototype.__transFinishedCb = function (err, cb) {
   cb(Boolean(err));
 };
 /**
- *
+ * @this {IDBTransactionFull}
+ * @returns {void}
  */
 IDBTransaction.prototype.__executeRequests = function () {
   const me = this;
@@ -3656,7 +4382,8 @@ IDBTransaction.prototype.__executeRequests = function () {
   // `readTransaction` is optimized, at least in `node-websql`
   function executeRequests(tx) {
     me.__tx = tx;
-    let q = null,
+    /** @type {RequestInfo} */
+    let q,
       i = -1;
 
     /**
@@ -3664,8 +4391,8 @@ IDBTransaction.prototype.__executeRequests = function () {
      */
 
     /**
-     * @param {IDBRequestResult} result
-     * @param {IDBRequest} req
+     * @param {IDBRequestResult} [result]
+     * @param {import('./IDBRequest.js').IDBRequestFull} [req]
      * @returns {void}
      */
     function success(result, req) {
@@ -3677,6 +4404,10 @@ IDBTransaction.prototype.__executeRequests = function () {
         q.req = req; // Need to do this in case of cursors
       }
 
+      if (!q.req) {
+        // TS guard
+        return;
+      }
       if (q.req.__done) {
         // Avoid continuing with aborted requests
         return;
@@ -3698,7 +4429,7 @@ IDBTransaction.prototype.__executeRequests = function () {
     }
 
     /**
-     * @param {[tx: SQLTransaction, err: SQLError]} args
+     * @param {[tx: SQLTransaction|DOMException|Error|SQLError, err?: SQLError]} args
      * @returns {void}
      */
     function error(...args /* tx, err */) {
@@ -3711,7 +4442,7 @@ IDBTransaction.prototype.__executeRequests = function () {
         // Avoid continuing with aborted requests
         return;
       }
-      const err = findError(args);
+      const err = /** @type {Error|DOMException} */findError(args);
       if (!q.req) {
         me.__abortTransaction(err);
         return;
@@ -3727,6 +4458,10 @@ IDBTransaction.prototype.__executeRequests = function () {
         }
       });
       q.req.addDefaultEventListener('error', function () {
+        if (!q.req) {
+          // TS guard
+          return;
+        }
         me.__abortTransaction(q.req.__error);
       });
       me.__active = true;
@@ -3771,17 +4506,18 @@ IDBTransaction.prototype.__executeRequests = function () {
           }
           q.op(tx, q.args, success, error, executeNextRequest);
         } catch (e) {
-          error(e);
+          error( /** @type {Error} */e);
         }
       }
     }
     executeNextRequest();
   }, function webSQLError(webSQLErr) {
+    // @ts-expect-error It's ok
     if (webSQLErr === true) {
       // Not a genuine SQL error
       return;
     }
-    const err = webSQLErrback(webSQLErr);
+    const err = webSQLErrback( /** @type {SQLError} */webSQLErr);
     me.__abortTransaction(err);
   }, function () {
     // For Node, we don't need to try running here as we can keep
@@ -3858,7 +4594,8 @@ IDBTransaction.prototype.__executeRequests = function () {
       complete();
       return;
     }
-    const ev = createEvent('__beforecomplete');
+    const ev = /** @type {Event & {complete: () => void}} */
+    createEvent('__beforecomplete');
     ev.complete = complete;
     me.dispatchEvent(ev);
   }
@@ -3867,9 +4604,9 @@ IDBTransaction.prototype.__executeRequests = function () {
 /**
  * Creates a new IDBRequest for the transaction.
  * NOTE: The transaction is not queued until you call {@link IDBTransaction#__pushToQueue}.
- * @param {IDBDatabase} source
+ * @param {import('./IDBDatabase.js').IDBDatabaseFull} source
+ * @this {IDBTransactionFull}
  * @returns {IDBRequest}
- * @protected
  */
 IDBTransaction.prototype.__createRequest = function (source) {
   const me = this;
@@ -3883,8 +4620,9 @@ IDBTransaction.prototype.__createRequest = function (source) {
  * @typedef {(
  *   tx: SQLTransaction,
  *   args: ObjectArray,
- *   success: () => void,
- *   error: (tx: SQLTransaction, err: SQLError) => void
+ *   success: (result?: any, req?: import('./IDBRequest.js').IDBRequestFull) => void,
+ *   error: (tx: SQLTransaction|Error|DOMException|SQLError, err?: SQLError) => void,
+ *   executeNextRequest?: () => void
  * ) => void} SQLCallback
  */
 
@@ -3892,9 +4630,11 @@ IDBTransaction.prototype.__createRequest = function (source) {
  * Adds a callback function to the transaction queue.
  * @param {SQLCallback} callback
  * @param {ObjectArray} args
- * @param {IDBDatabase} source
- * @returns {IDBRequest}
- * @protected
+ * @param {import('./IDBDatabase.js').IDBDatabaseFull|
+ *   import('./IDBObjectStore.js').IDBObjectStoreFull|
+ *   import('./IDBIndex.js').IDBIndexFull} source
+ * @this {IDBTransactionFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBTransaction.prototype.__addToTransactionQueue = function (callback, args, source) {
   const request = this.__createRequest(source);
@@ -3907,20 +4647,19 @@ IDBTransaction.prototype.__addToTransactionQueue = function (callback, args, sou
  *   request.
  * @param {SQLCallback} callback
  * @param {ObjectArray} args
- * @param {IDBDatabase} source
+ * @this {IDBTransactionFull}
  * @returns {void}
- * @protected
  */
-IDBTransaction.prototype.__addNonRequestToTransactionQueue = function (callback, args, source) {
+IDBTransaction.prototype.__addNonRequestToTransactionQueue = function (callback, args) {
   this.__pushToQueue(null, callback, args);
 };
 
 /**
  * Adds an IDBRequest to the transaction queue.
- * @param {IDBRequest} request
+ * @param {import('./IDBRequest.js').IDBRequestFull|null} request
  * @param {SQLCallback} callback
  * @param {ObjectArray} args
- * @protected
+ * @this {IDBTransactionFull}
  * @returns {void}
  */
 IDBTransaction.prototype.__pushToQueue = function (request, callback, args) {
@@ -3933,7 +4672,8 @@ IDBTransaction.prototype.__pushToQueue = function (request, callback, args) {
 };
 
 /**
- *
+ * @throws {DOMException}
+ * @returns {void}
  */
 IDBTransaction.prototype.__assertActive = function () {
   if (!this.__active) {
@@ -3942,7 +4682,9 @@ IDBTransaction.prototype.__assertActive = function () {
 };
 
 /**
- *
+ * @throws {DOMException}
+ * @this {IDBTransactionFull}
+ * @returns {void}
  */
 IDBTransaction.prototype.__assertWritable = function () {
   if (this.mode === 'readonly') {
@@ -3951,7 +4693,8 @@ IDBTransaction.prototype.__assertWritable = function () {
 };
 
 /**
- *
+ * @this {IDBTransactionFull}
+ * @returns {void}
  */
 IDBTransaction.prototype.__assertVersionChange = function () {
   IDBTransaction.__assertVersionChange(this);
@@ -3960,6 +4703,7 @@ IDBTransaction.prototype.__assertVersionChange = function () {
 /**
  * Returns the specified object store.
  * @param {string} objectStoreName
+ * @this {IDBTransactionFull}
  * @returns {IDBObjectStore}
  */
 IDBTransaction.prototype.objectStore = function (objectStoreName) {
@@ -3990,7 +4734,9 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
 
 /**
  *
- * @param err
+ * @param {Error|DOMException|null} err
+ * @this {IDBTransactionFull}
+ * @returns {void}
  */
 IDBTransaction.prototype.__abortTransaction = function (err) {
   const me = this;
@@ -4037,14 +4783,14 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
   }
 
   /**
-   * @param {SQLTransaction} tx
-   * @param {SQLError|{code: 0}} errOrResult
+   * @param {SQLTransaction|null} [tx]
+   * @param {SQLResultSet|SQLError|{code: 0}} [errOrResult]
    * @returns {void}
    */
   function abort(tx, errOrResult) {
     if (!tx) {
       CFG.DEBUG && console.log('Rollback not possible due to missing transaction', me);
-    } else if (errOrResult && typeof errOrResult.code === 'number') {
+    } else if (errOrResult && 'code' in errOrResult && typeof errOrResult.code === 'number') {
       CFG.DEBUG && console.log('Rollback erred; feature is probably not supported as per WebSQL', me);
     } else {
       CFG.DEBUG && console.log('Rollback succeeded', me);
@@ -4059,6 +4805,10 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
       //  behaves first-in-first-out with the same timeout so we could
       //  just use a `forEach`.
       return promises.then(function () {
+        if (!q.req) {
+          // TS guard
+          throw new Error('Missing request');
+        }
         q.req.__done = true;
         q.req.__result = undefined;
         q.req.__error = createDOMException('AbortError', 'A request was aborted (an unfinished request).');
@@ -4066,14 +4816,19 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
           bubbles: true,
           cancelable: true
         });
-        return new SyncPromise(function (resolve) {
+        return new SyncPromise( /** @type {() => void} */
+        resolve => {
           setTimeout(() => {
+            if (!q.req) {
+              // TS guard
+              throw new Error('Missing request');
+            }
             q.req.dispatchEvent(reqEvt); // No need to catch errors
             resolve();
           });
         });
       });
-    }, SyncPromise.resolve()).then(function () {
+    }, SyncPromise.resolve(undefined)).then(function () {
       // Also works when there are no pending requests
       const evt = createEvent('abort', err, {
         bubbles: true,
@@ -4105,7 +4860,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         return;
       }
       try {
-        me.__tx.executeSql('ROLLBACK', [], abort, abort); // Not working in some circumstances, even in Node
+        me.__tx.executeSql('ROLLBACK', [], abort, /** @type {SQLStatementErrorCallback} */abort); // Not working in some circumstances, even in Node
       } catch (err) {
         // Browser errs when transaction has ended and since it most likely already erred here,
         //   we call to abort
@@ -4120,7 +4875,8 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
 };
 
 /**
- *
+ * @this {IDBTransactionFull}
+ * @returns {void}
  */
 IDBTransaction.prototype.abort = function () {
   const me = this;
@@ -4135,7 +4891,8 @@ IDBTransaction.prototype[Symbol.toStringTag] = 'IDBTransactionPrototype';
 
 /**
  *
- * @param tx
+ * @param {IDBTransactionFull|undefined} tx
+ * @returns {void}
  */
 IDBTransaction.__assertVersionChange = function (tx) {
   if (!tx || tx.mode !== 'versionchange') {
@@ -4144,7 +4901,9 @@ IDBTransaction.__assertVersionChange = function (tx) {
 };
 /**
  *
- * @param tx
+ * @param {IDBTransactionFull} tx
+ * @throws {DOMException}
+ * @returns {void}
  */
 IDBTransaction.__assertNotVersionChange = function (tx) {
   if (tx && tx.mode === 'versionchange') {
@@ -4154,7 +4913,9 @@ IDBTransaction.__assertNotVersionChange = function (tx) {
 
 /**
  *
- * @param tx
+ * @param {IDBTransactionFull|undefined} tx
+ * @throws {DOMException}
+ * @returns {void}
  */
 IDBTransaction.__assertNotFinished = function (tx) {
   if (!tx || tx.__completed || tx.__abortFinished || tx.__errored) {
@@ -4165,7 +4926,8 @@ IDBTransaction.__assertNotFinished = function (tx) {
 // object store methods behave differently: see https://github.com/w3c/IndexedDB/issues/192
 /**
  *
- * @param tx
+ * @param {IDBTransactionFull} tx
+ * @returns {void}
  */
 IDBTransaction.__assertNotFinishedObjectStoreMethod = function (tx) {
   try {
@@ -4180,7 +4942,9 @@ IDBTransaction.__assertNotFinishedObjectStoreMethod = function (tx) {
 
 /**
  *
- * @param tx
+ * @param {IDBTransactionFull|undefined} tx
+ * @throws {DOMException}
+ * @returns {void}
  */
 IDBTransaction.__assertActive = function (tx) {
   if (!tx || !tx.__active) {
@@ -4190,7 +4954,8 @@ IDBTransaction.__assertActive = function (tx) {
 
 /**
 * Used by our `EventTarget.prototype` library to implement bubbling/capturing.
-* @returns {IDBDatabase}
+ * @this {IDBTransactionFull}
+* @returns {import('./IDBDatabase.js').IDBDatabaseFull}
 */
 IDBTransaction.prototype.__getParent = function () {
   return this.db;
@@ -5448,8 +6213,8 @@ function register(func) {
  * We are keeping the callback approach for now in case we wish to reexpose
  * `Blob`, `File`, `FileList` asynchronously (though in such a case, we
  * should probably refactor as a Promise).
- * @param {import('../src/Key.js').Value} obj
- * @param {(str: string) => void} func
+ * @param {AnyValue} obj
+ * @param {(str: string) => void} [func]
  * @throws {Error}
  * @returns {string}
  */
@@ -5479,16 +6244,20 @@ function encode(obj, func) {
 }
 
 /**
+ * @typedef {any} AnyValue
+ */
+
+/**
  * @param {string} obj
- * @returns {import('typeson').Value}
+ * @returns {AnyValue}
  */
 function decode(obj) {
   return typeson.parse(obj);
 }
 
 /**
- * @param {import('typeson').Value} val
- * @returns {import('typeson').Value}
+ * @param {AnyValue} val
+ * @returns {AnyValue}
  */
 function clone(val) {
   // We don't return the intermediate `encode` as we'll need to reencode
@@ -5506,30 +6275,70 @@ var Sca = /*#__PURE__*/Object.freeze({
 
 const readonlyProperties$2 = ['objectStore', 'keyPath', 'multiEntry', 'unique'];
 
-/* eslint-disable jsdoc/check-param-names */
+/**
+ * @typedef {number} Integer
+ */
+
+/**
+ * @typedef {{
+ *   columnName: string,
+ *   keyPath: import('./Key.js').KeyPath,
+ *   optionalParams: {
+ *     unique: boolean,
+ *     multiEntry: boolean
+ *   }
+ *   deleted?: boolean,
+ *   __deleted?: boolean,
+ *   cursors?: import('./IDBCursor.js').IDBCursorWithValueFull[],
+ * }} IDBIndexProperties
+ */
+
 /**
  * IDB Index.
  * @see http://www.w3.org/TR/IndexedDB/#idl-def-IDBIndex
- * @param {IDBObjectStore} store
- * @param {IDBIndexProperties} indexProperties
  * @class
  */
 function IDBIndex() {
-  /* eslint-enable jsdoc/check-param-names */
   throw new TypeError('Illegal constructor');
 }
 const IDBIndexAlias = IDBIndex;
+
+/**
+ * @typedef {IDBIndex & {
+ *   name: string,
+ *   keyPath: import('./Key.js').KeyPath,
+ *   multiEntry: boolean,
+ *   unique: boolean,
+ *   objectStore: import('./IDBObjectStore.js').IDBObjectStoreFull,
+ *   __pendingCreate?: boolean,
+ *   __deleted?: boolean,
+ *   __originalName: string,
+ *   __currentName: string,
+ *   __pendingName?: string,
+ *   __pendingDelete?: boolean,
+ *   __name: string,
+ *   __multiEntry: boolean,
+ *   __unique: boolean,
+ *   __objectStore: import('./IDBObjectStore.js').IDBObjectStoreFull,
+ *   __keyPath: import('./Key.js').KeyPath,
+ *   __recreated?: boolean
+ * }} IDBIndexFull
+ */
+
 /**
  *
- * @param store
- * @param indexProperties
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
+ * @param {IDBIndexProperties} indexProperties
+ * @returns {IDBIndexFull}
  */
 IDBIndex.__createInstance = function (store, indexProperties) {
   /**
    * @class
+   * @this {IDBIndexFull}
    */
   function IDBIndex() {
     const me = this;
+    // @ts-expect-error It's ok
     me[Symbol.toStringTag] = 'IDBIndex';
     defineReadonlyProperties(me, readonlyProperties$2);
     me.__objectStore = store;
@@ -5543,16 +6352,29 @@ IDBIndex.__createInstance = function (store, indexProperties) {
     me.__deleted = Boolean(indexProperties.__deleted);
     me.__objectStore.__cursors = indexProperties.cursors || [];
     Object.defineProperty(me, '__currentName', {
+      /**
+       * @this {IDBIndexFull}
+       * @returns {string}
+       */
       get() {
-        return '__pendingName' in me ? me.__pendingName : me.name;
+        return '__pendingName' in me ? /** @type {string} */me.__pendingName : me.name;
       }
     });
     Object.defineProperty(me, 'name', {
       enumerable: false,
       configurable: false,
+      /**
+       * @this {IDBIndexFull}
+       * @returns {string}
+       */
       get() {
         return this.__name;
       },
+      /**
+       * @param {string} newName
+       * @this {IDBIndexFull}
+       * @returns {void}
+       */
       set(newName) {
         const me = this;
         newName = convertToDOMString(newName);
@@ -5574,12 +6396,14 @@ IDBIndex.__createInstance = function (store, indexProperties) {
         delete objectStore.__indexes[oldName];
         objectStore.__indexes[newName] = me;
         objectStore.indexNames.splice(objectStore.indexNames.indexOf(oldName), 1, newName);
-        const storeHandle = objectStore.transaction.__storeHandles[objectStore.name];
+        const storeHandle = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */objectStore.transaction.__storeHandles[objectStore.name];
         const oldIndexHandle = storeHandle.__indexHandles[oldName];
         oldIndexHandle.__name = newName; // Fix old references
         storeHandle.__indexHandles[newName] = oldIndexHandle; // Ensure new reference accessible
         me.__pendingName = oldName;
-        const colInfoToPreserveArr = [['key', 'BLOB ' + (objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')], ['value', 'BLOB']].concat([...objectStore.indexNames].filter(indexName => indexName !== newName).map(indexName => [escapeIndexNameForSQL(indexName), 'BLOB']));
+        const colInfoToPreserveArr = [['key', 'BLOB ' + (objectStore.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY')], ['value', 'BLOB']].concat(
+        // @ts-expect-error Has numeric indexes instead of iterator
+        [...objectStore.indexNames].filter(indexName => indexName !== newName).map(indexName => [escapeIndexNameForSQL(indexName), 'BLOB']));
         me.__renameIndex(objectStore, oldName, newName, colInfoToPreserveArr, function (tx, success) {
           IDBIndexAlias.__updateIndexList(store, tx, function (store) {
             delete storeHandle.__pendingName;
@@ -5590,13 +6414,17 @@ IDBIndex.__createInstance = function (store, indexProperties) {
     });
   }
   IDBIndex.prototype = IDBIndexAlias.prototype;
+
+  // @ts-expect-error It's ok
   return new IDBIndex();
 };
 
 /**
  *
- * @param index
- * @param msg
+ * @param {IDBIndexFull} index
+ * @param {string} [msg]
+ * @throws {DOMException}
+ * @returns {void}
  */
 IDBIndex.__invalidStateIfDeleted = function (index, msg) {
   if (index.__deleted || index.__pendingDelete || index.__pendingCreate && index.objectStore.transaction && index.objectStore.transaction.__errored) {
@@ -5606,10 +6434,9 @@ IDBIndex.__invalidStateIfDeleted = function (index, msg) {
 
 /**
  * Clones an IDBIndex instance for a different IDBObjectStore instance.
- * @param {IDBIndex} index
- * @param {IDBObjectStore} store
- * @protected
- * @returns {IDBIndex}
+ * @param {IDBIndexFull} index
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
+ * @returns {IDBIndexFull}
  */
 IDBIndex.__clone = function (index, store) {
   const idx = IDBIndex.__createInstance(store, {
@@ -5620,7 +6447,9 @@ IDBIndex.__clone = function (index, store) {
       unique: index.unique
     }
   });
+  /** @type {const} */
   ['__pendingCreate', '__pendingDelete', '__deleted', '__originalName', '__recreated'].forEach(p => {
+    // @ts-expect-error Why is this type "never"?
     idx[p] = index[p];
   });
   return idx;
@@ -5628,10 +6457,9 @@ IDBIndex.__clone = function (index, store) {
 
 /**
  * Creates a new index on an object store.
- * @param {IDBObjectStore} store
- * @param {IDBIndex} index
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
+ * @param {IDBIndexFull} index
  * @returns {void}
- * @protected
  */
 IDBIndex.__createIndex = function (store, index) {
   const indexName = index.name;
@@ -5652,13 +6480,16 @@ IDBIndex.__createIndex = function (store, index) {
   const {
     transaction
   } = store;
+  /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
   transaction.__addNonRequestToTransactionQueue(function createIndex(tx, args, success, failure) {
     const columnExists = idx && (idx.__deleted || idx.__recreated); // This check must occur here rather than earlier as properties may not have been set yet otherwise
+
+    /** @type {{[key: string]: boolean}} */
     let indexValues = {};
 
     /**
      * @param {SQLTransaction} tx
-     * @param {import('./DOMException.js').SQLError} err
+     * @param {SQLError} err
      * @returns {void}
      */
     function error(tx, err) {
@@ -5685,23 +6516,24 @@ IDBIndex.__createIndex = function (store, index) {
             if (i < data.rows.length) {
               try {
                 const value = decode(unescapeSQLiteResponse(data.rows.item(i).value));
-                let indexKey = extractKeyValueDecodedFromValueUsingKeyPath(value, index.keyPath, index.multiEntry); // Todo: Do we need this stricter error checking?
-                if (indexKey.invalid || indexKey.failure) {
+                const indexKey = extractKeyValueDecodedFromValueUsingKeyPath(value, index.keyPath, index.multiEntry); // Todo: Do we need this stricter error checking?
+                if ('invalid' in indexKey && indexKey.invalid || 'failure' in indexKey && indexKey.failure) {
                   // Todo: Do we need invalid checks and should we instead treat these as being duplicates?
                   throw new Error('Go to catch; ignore bad indexKey');
                 }
-                indexKey = encode$1(indexKey.value, index.multiEntry);
+                const indexKeyStr = /** @type {string} */
+                encode$1(indexKey.value, index.multiEntry);
                 if (index.unique) {
-                  if (indexValues[indexKey]) {
+                  if (indexValues[indexKeyStr]) {
                     indexValues = {};
                     failure(createDOMException('ConstraintError', 'Duplicate values already exist within the store'));
                     return;
                   }
-                  indexValues[indexKey] = true;
+                  indexValues[indexKeyStr] = true;
                 }
-                tx.executeSql('UPDATE ' + escapeStoreNameForSQL(storeName) + ' SET ' + escapeIndexNameForSQL(indexName) + ' = ? WHERE "key" = ?', [escapeSQLiteStatement(indexKey), data.rows.item(i).key], function (tx, data) {
+                tx.executeSql('UPDATE ' + escapeStoreNameForSQL(storeName) + ' SET ' + escapeIndexNameForSQL(indexName) + ' = ? WHERE "key" = ?', [escapeSQLiteStatement(indexKeyStr), data.rows.item(i).key], function (tx, data) {
                   addIndexEntry(i + 1);
-                }, error);
+                }, /** @type {SQLStatementErrorCallback} */error);
               } catch (e) {
                 // Not a valid value to insert into index, so just continue
                 addIndexEntry(i + 1);
@@ -5719,8 +6551,8 @@ IDBIndex.__createIndex = function (store, index) {
               success(store);
             }
           }
-        }, error);
-      }, error);
+        }, /** @type {SQLStatementErrorCallback} */error);
+      }, /** @type {SQLStatementErrorCallback} */error);
     }
     const escapedStoreNameSQL = escapeStoreNameForSQL(storeName);
     const escapedIndexNameSQL = escapeIndexNameForSQL(index.name);
@@ -5739,7 +6571,7 @@ IDBIndex.__createIndex = function (store, index) {
       //    so we prefix with store name; as prefixed, will also not conflict with
       //    index on `key`
       // Avoid quotes and separate with special escape sequence
-      escapedStoreNameSQL.slice(1, -1) + '^5' + escapedIndexNameSQL.slice(1, -1) + '" ON ' + escapedStoreNameSQL + '(' + escapedIndexNameSQL + ')', [], applyIndex, error);
+      escapedStoreNameSQL.slice(1, -1) + '^5' + escapedIndexNameSQL.slice(1, -1) + '" ON ' + escapedStoreNameSQL + '(' + escapedIndexNameSQL + ')', [], applyIndex, /** @type {SQLStatementErrorCallback} */error);
     }
     if (columnExists) {
       // For a previously existing index, just update the index entries in the existing column;
@@ -5749,16 +6581,15 @@ IDBIndex.__createIndex = function (store, index) {
       // For a new index, add a new column to the object store, then apply the index
       const sql = ['ALTER TABLE', escapedStoreNameSQL, 'ADD', escapedIndexNameSQL, 'BLOB'].join(' ');
       CFG.DEBUG && console.log(sql);
-      tx.executeSql(sql, [], addIndexSQL, error);
+      tx.executeSql(sql, [], addIndexSQL, /** @type {SQLStatementErrorCallback} */error);
     }
-  }, undefined, store);
+  });
 };
 
 /**
  * Deletes an index from an object store.
- * @param {IDBObjectStore} store
- * @param {IDBIndex} index
- * @protected
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
+ * @param {IDBIndexFull} index
  * @returns {void}
  */
 IDBIndex.__deleteIndex = function (store, index) {
@@ -5774,6 +6605,7 @@ IDBIndex.__deleteIndex = function (store, index) {
   const {
     transaction
   } = store;
+  /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
   transaction.__addNonRequestToTransactionQueue(function deleteIndex(tx, args, success, failure) {
     /**
      * @param {SQLTransaction} tx
@@ -5798,32 +6630,36 @@ IDBIndex.__deleteIndex = function (store, index) {
           delete indexHandle.__pendingDelete;
         }
         success(store);
-      }, error);
+      }, /** @type {SQLStatementErrorCallback} */error);
     }
     if (!CFG.useSQLiteIndexes) {
       finishDeleteIndex();
       return;
     }
-    tx.executeSql('DROP INDEX IF EXISTS ' + sqlQuote(escapeStoreNameForSQL(store.name).slice(1, -1) + '^5' + escapeIndexNameForSQL(index.name).slice(1, -1)), [], finishDeleteIndex, error);
-  }, undefined, store);
+    tx.executeSql('DROP INDEX IF EXISTS ' + sqlQuote(escapeStoreNameForSQL(store.name).slice(1, -1) + '^5' + escapeIndexNameForSQL(index.name).slice(1, -1)), [], finishDeleteIndex, /** @type {SQLStatementErrorCallback} */error);
+  });
 };
 
 /**
+ * @typedef {{[key: string]: IDBIndexProperties}} IndexList
+ */
+
+/**
  * Updates index list for the given object store.
- * @param {IDBObjectStore} store
- * @param {object} tx
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
+ * @param {SQLTransaction} tx
  * @param {(store: IDBObjectStore) => void} success
  * @param {(
  *   tx: SQLTransaction,
- *   err: import('./DOMException.js').SQLError
- * ) => boolean} failure
+ *   err: SQLError
+ * ) => boolean} [failure]
  * @returns {void}
  */
 IDBIndex.__updateIndexList = function (store, tx, success, failure) {
+  /** @type {IndexList} **/
   const indexList = {};
   for (let i = 0; i < store.indexNames.length; i++) {
     const idx = store.__indexes[store.indexNames[i]];
-    /** @type {IDBIndexProperties} **/
     indexList[idx.name] = {
       columnName: idx.name,
       keyPath: idx.keyPath,
@@ -5831,23 +6667,27 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
         unique: idx.unique,
         multiEntry: idx.multiEntry
       },
-      deleted: Boolean(idx.deleted)
+      deleted: Boolean(idx.__deleted)
     };
   }
   CFG.DEBUG && console.log('Updating the index list for ' + store.__currentName, indexList);
   tx.executeSql('UPDATE __sys__ SET "indexList" = ? WHERE "name" = ?', [JSON.stringify(indexList), escapeSQLiteStatement(store.__currentName)], function () {
     success(store);
-  }, failure);
+  }, /** @type {SQLStatementErrorCallback} */failure);
 };
 
 /**
+ * @typedef {any|IDBKeyRange} Query
+ */
+
+/**
  * Retrieves index data for the given key.
- * @param {*|IDBKeyRange} range
- * @param {string} opType
+ * @param {Query} range
+ * @param {"value"|"key"|"count"} opType
  * @param {boolean} nullDisallowed
- * @param {number} count
- * @returns {IDBRequest}
- * @private
+ * @param {number} [count]
+ * @this {IDBIndexFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, count) {
   const me = this;
@@ -5864,21 +6704,21 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
     throw createDOMException('DataError', 'No key or range was specified');
   }
   const fetchArgs = buildFetchIndexDataSQL(nullDisallowed, me, range, opType, false);
-  return me.objectStore.transaction.__addToTransactionQueue(function (...args) {
-    executeFetchIndexData(count, ...fetchArgs, ...args);
-  }, undefined, me);
+  return (/** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.objectStore.transaction.__addToTransactionQueue(function (...args) {
+      executeFetchIndexData(count, ...fetchArgs,
+      // @ts-expect-error It's ok
+      ...args);
+    }, undefined, me)
+  );
 };
 
-/* eslint-disable jsdoc/check-param-names */
 /**
  * Opens a cursor over the given key range.
- * @param {*|IDBKeyRange} query
- * @param {string} direction
- * @returns {IDBRequest}
+ * @this {IDBIndexFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBIndex.prototype.openCursor = function /* query, direction */
 () {
-  /* eslint-enable jsdoc/check-param-names */
   const me = this;
   // eslint-disable-next-line prefer-rest-params
   const [query, direction] = arguments;
@@ -5887,16 +6727,13 @@ IDBIndex.prototype.openCursor = function /* query, direction */
   return cursor.__request;
 };
 
-/* eslint-disable jsdoc/check-param-names */
 /**
  * Opens a cursor over the given key range.  The cursor only includes key values, not data.
- * @param {*|IDBKeyRange} query
- * @param {string} direction
- * @returns {IDBRequest}
+ * @this {IDBIndexFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBIndex.prototype.openKeyCursor = function /* query, direction */
 () {
-  /* eslint-enable jsdoc/check-param-names */
   const me = this;
   // eslint-disable-next-line prefer-rest-params
   const [query, direction] = arguments;
@@ -5907,7 +6744,10 @@ IDBIndex.prototype.openKeyCursor = function /* query, direction */
 
 /**
  *
- * @param query
+ * @param {Query} query
+ * @throws {TypeError}
+ * @this {IDBIndexFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBIndex.prototype.get = function (query) {
   if (!arguments.length) {
@@ -5919,7 +6759,10 @@ IDBIndex.prototype.get = function (query) {
 
 /**
  *
- * @param query
+ * @param {Query} query
+ * @throws {TypeError}
+ * @this {IDBIndexFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBIndex.prototype.getKey = function (query) {
   if (!arguments.length) {
@@ -5930,7 +6773,8 @@ IDBIndex.prototype.getKey = function (query) {
 };
 
 /**
- *
+ * @this {IDBIndexFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBIndex.prototype.getAll = function /* query, count */
 () {
@@ -5940,7 +6784,8 @@ IDBIndex.prototype.getAll = function /* query, count */
 };
 
 /**
- *
+ * @this {IDBIndexFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBIndex.prototype.getAllKeys = function /* query, count */
 () {
@@ -5950,7 +6795,8 @@ IDBIndex.prototype.getAllKeys = function /* query, count */
 };
 
 /**
- *
+ * @this {IDBIndexFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBIndex.prototype.count = function /* query */
 () {
@@ -5972,11 +6818,16 @@ IDBIndex.prototype.count = function /* query */
 
 /**
  *
- * @param store
- * @param oldName
- * @param newName
- * @param colInfoToPreserveArr
- * @param cb
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
+ * @param {string} oldName
+ * @param {string} newName
+ * @param {string[][]} colInfoToPreserveArr
+ * @param {null|((
+ *   tx: SQLTransaction,
+ *   success: ((store: IDBObjectStore) => void)
+ * ) => void)} cb
+ * @this {IDBIndexFull}
+ * @returns {void}
  */
 IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToPreserveArr = [], cb = null) {
   const newNameType = 'BLOB';
@@ -5991,6 +6842,7 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
 
   // We could adapt the approach at http://stackoverflow.com/a/8430746/271577
   //    to make the approach reusable without passing column names, but it is a bit fragile
+  /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
   store.transaction.__addNonRequestToTransactionQueue(function renameIndex(tx, args, success, error) {
     /**
      * @param {SQLTransaction} tx
@@ -6037,9 +6889,12 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
               // tx.executeSql(sql, [], function () {
               const sql = 'CREATE INDEX ' + escapedIndexToRecreate + ' ON ' + escapedStoreNameSQL + '(' + escapedIndexNameSQL + ')';
               CFG.DEBUG && console.log(sql);
-              tx.executeSql(sql, [], resolve, function (tx, err) {
+              tx.executeSql(sql, [], resolve, /* eslint-disable no-extra-parens -- TS */
+              /** @type {SQLStatementErrorCallback} */
+              function (tx, err) {
                 reject(err);
-              });
+              }
+              /* eslint-enable no-extra-parens -- TS */);
               // }, function (tx, err) {
               //    reject(err);
               // });
@@ -6053,25 +6908,41 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
               tx.executeSql(sql, [], function () {
                 const sql = 'CREATE INDEX ' + escapedIndexToRecreate + ' ON ' + escapedStoreNameSQL + '("key")';
                 CFG.DEBUG && console.log(sql);
-                tx.executeSql(sql, [], resolve, function (tx, err) {
+                tx.executeSql(sql, [], resolve, /* eslint-disable no-extra-parens -- TS */
+                /** @type {SQLStatementErrorCallback} */
+                function (tx, err) {
+                  /* eslint-enable no-extra-parens -- TS */
                   reject(err);
                 });
-              }, function (tx, err) {
+              }, /* eslint-disable no-extra-parens -- TS */
+              /** @type {SQLStatementErrorCallback} */
+              function (tx, err) {
+                /* eslint-enable no-extra-parens -- TS */
                 reject(err);
               });
             }));
-            SyncPromise.all(indexCreations).then(finish, error).catch(err => {
+            SyncPromise.all(indexCreations).then(finish, /** @type {(reason: any) => PromiseLike<never>} */
+            error).catch(err => {
               console.log('Index rename error');
               throw err;
             });
-          }, sqlError);
-        }, sqlError);
-      }, sqlError);
-    }, sqlError);
+          }, /** @type {SQLStatementErrorCallback} */sqlError);
+        }, /** @type {SQLStatementErrorCallback} */sqlError);
+      }, /** @type {SQLStatementErrorCallback} */sqlError);
+    }, /** @type {SQLStatementErrorCallback} */sqlError);
   });
 };
+
+/**
+ * @typedef {any} AnyValue
+ */
+
 Object.defineProperty(IDBIndex, Symbol.hasInstance, {
-  value: obj => isObj(obj) && typeof obj.openCursor === 'function' && typeof obj.multiEntry === 'boolean'
+  /**
+   * @param {AnyValue} obj
+   * @returns {boolean}
+   */
+  value: obj => isObj(obj) && 'openCursor' in obj && typeof obj.openCursor === 'function' && 'multiEntry' in obj && typeof obj.multiEntry === 'boolean'
 });
 defineReadonlyOuterInterface(IDBIndex.prototype, readonlyProperties$2);
 defineOuterInterface(IDBIndex.prototype, ['name']);
@@ -6081,9 +6952,9 @@ Object.defineProperty(IDBIndex, 'prototype', {
 });
 
 /**
- * @param {number} count
+ * @param {number|null} count
  * @param {boolean} unboundedDisallowed
- * @param {IDBIndex} index
+ * @param {IDBIndexFull} index
  * @param {boolean} hasKey
  * @param {import('./Key.js').Value|import('./Key.js').Key} range
  * @param {"value"|"key"|"count"} opType
@@ -6091,8 +6962,8 @@ Object.defineProperty(IDBIndex, 'prototype', {
  * @param {string[]} sql
  * @param {string[]} sqlValues
  * @param {SQLTransaction} tx
- * @param {undefined} args
- * @param {() => void} success
+ * @param {null|undefined} args
+ * @param {(result: number|undefined|[]|AnyValue|AnyValue[]) => void} success
  * @param {(tx: SQLTransaction, err: SQLError) => void} error
  * @returns {void}
  */
@@ -6101,17 +6972,35 @@ function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range,
     count = 1;
   }
   if (count) {
-    sql.push('LIMIT', count);
+    sql.push('LIMIT', String(count));
   }
   const isCount = opType === 'count';
   CFG.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
   tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
     const records = [];
     let recordCount = 0;
-    const decode$2 = isCount ? () => {/* */} : opType === 'key' ? record => {
+    const decode$2 = isCount ? () => {/* */} : opType === 'key'
+    // eslint-disable-next-line operator-linebreak -- JSDoc
+    ?
+    /**
+     * @param {{
+     *   key: string
+     * }} record
+     * @returns {import('./Key.js').ValueType|undefined}
+     */
+    record => {
       // Key.convertValueToKey(record.key); // Already validated before storage
       return decode$1(unescapeSQLiteResponse(record.key));
-    } : record => {
+    }
+    // eslint-disable-next-line operator-linebreak -- JSDoc
+    :
+    /**
+     * @param {{
+     *   value: string
+     * }} record
+     * @returns {AnyValue}
+     */
+    record => {
       // when opType is value
       return decode(unescapeSQLiteResponse(record.value));
     };
@@ -6120,11 +7009,18 @@ function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range,
       const encodedKey = encode$1(range, index.multiEntry);
       for (let i = 0; i < data.rows.length; i++) {
         const row = data.rows.item(i);
-        const rowKey = decode$1(row[escapedIndexNameForKeyCol]);
+        const rowKey = /** @type {import('./Key.js').ValueTypeArray} */
+        decode$1(row[escapedIndexNameForKeyCol]);
         let record;
-        if (hasKey && (multiChecks && range.some(check => rowKey.includes(check)) ||
+        if (hasKey && (multiChecks && range.some(
+        /**
+         * @param {string} check
+         * @returns {boolean}
+         */
+        check => rowKey.includes(check)) ||
         // More precise than our SQL
-        isMultiEntryMatch(encodedKey, row[escapedIndexNameForKeyCol]))) {
+        isMultiEntryMatch( /** @type {string} */
+        encodedKey, row[escapedIndexNameForKeyCol]))) {
           recordCount++;
           record = row;
         } else if (!hasKey && !multiChecks) {
@@ -6156,18 +7052,18 @@ function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range,
     } else {
       success(unboundedDisallowed ? records[0] : records);
     }
-  }, error);
+  }, /** @type {SQLStatementErrorCallback} */error);
 }
 
 /**
  * @param {boolean} nullDisallowed
- * @param {IDBIndex} index
+ * @param {IDBIndexFull} index
  * @param {import('./Key.js').Value|import('./Key.js').Key} range
  * @param {"value"|"key"|"count"} opType
  * @param {boolean} multiChecks
  * @returns {[
  *   nullDisallowed: boolean,
- *   index: IDBIndex,
+ *   index: IDBIndexFull,
  *   hasRange: boolean,
  *   range: import('./Key.js').Value|import('./Key.js').Key,
  *   opType: "value"|"key"|"count",
@@ -6180,19 +7076,22 @@ function buildFetchIndexDataSQL(nullDisallowed, index, range, opType, multiCheck
   const hasRange = nullDisallowed || !isNullish(range);
   const col = opType === 'count' ? 'key' : opType; // It doesn't matter which column we use for 'count' as long as it is valid
   const sql = ['SELECT', sqlQuote(col) + (index.multiEntry ? ', ' + escapeIndexNameForSQL(index.name) : ''), 'FROM', escapeStoreNameForSQL(index.objectStore.__currentName), 'WHERE', escapeIndexNameForSQL(index.name), 'NOT NULL'];
+
+  /** @type {string[]} */
   const sqlValues = [];
   if (hasRange) {
     if (multiChecks) {
       sql.push('AND (');
+      /** @type {import('./Key.js').KeyPathArray} */
       range.forEach((innerKey, i) => {
         if (i > 0) sql.push('OR');
         sql.push(escapeIndexNameForSQL(index.name), "LIKE ? ESCAPE '^' ");
-        sqlValues.push('%' + sqlLIKEEscape(encode$1(innerKey, index.multiEntry)) + '%');
+        sqlValues.push('%' + sqlLIKEEscape( /** @type {string} */encode$1(innerKey, index.multiEntry)) + '%');
       });
       sql.push(')');
     } else if (index.multiEntry) {
       sql.push('AND', escapeIndexNameForSQL(index.name), "LIKE ? ESCAPE '^'");
-      sqlValues.push('%' + sqlLIKEEscape(encode$1(range, index.multiEntry)) + '%');
+      sqlValues.push('%' + sqlLIKEEscape( /** @type {string} */encode$1(range, index.multiEntry)) + '%');
     } else {
       const convertedRange = convertValueToKeyRange(range, nullDisallowed);
       setSQLForKeyRange(convertedRange, escapeIndexNameForSQL(index.name), sql, sqlValues, true, false);
@@ -6203,30 +7102,63 @@ function buildFetchIndexDataSQL(nullDisallowed, index, range, opType, multiCheck
 
 const readonlyProperties$1 = ['keyPath', 'indexNames', 'transaction', 'autoIncrement'];
 
-/* eslint-disable jsdoc/check-param-names */
+/**
+ * @typedef {number} Integer
+ */
+
 /**
  * IndexedDB Object Store.
  * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBObjectStore
- * @param {IDBObjectStoreProperties} storeProperties
- * @param {IDBTransaction} transaction
  * @class
  */
 function IDBObjectStore() {
-  /* eslint-enable jsdoc/check-param-names */
   throw new TypeError('Illegal constructor');
 }
 const IDBObjectStoreAlias = IDBObjectStore;
+
+/**
+ * @typedef {IDBObjectStore & {
+ *   name: string,
+ *   keyPath: import('./Key.js').KeyPath,
+ *   transaction?: import('./IDBTransaction.js').IDBTransactionFull,
+ *   indexNames: import('./DOMStringList.js').DOMStringListFull,
+ *   autoIncrement: boolean,
+ *   __autoIncrement: boolean,
+ *   __indexes: {[key: string]: import('./IDBIndex.js').IDBIndexFull},
+ *   __indexHandles: {[key: string]: import('./IDBIndex.js').IDBIndexFull},
+ *   __indexNames: import('./DOMStringList.js').DOMStringListFull,
+ *   __oldIndexNames: import('./DOMStringList.js').DOMStringListFull,
+ *   __transaction?: import('./IDBTransaction.js').IDBTransactionFull,
+ *   __name: string,
+ *   __keyPath: import('./Key.js').KeyPath,
+ *   __originalName: string,
+ *   __currentName: string,
+ *   __pendingName?: string,
+ *   __pendingDelete?: boolean,
+ *   __pendingCreate?: boolean,
+ *   __deleted?: boolean,
+ *   __cursors: (
+ *     import('./IDBCursor.js').IDBCursorFull|
+ *     import('./IDBCursor.js').IDBCursorWithValueFull
+ *   )[],
+ *   __idbdb: import('./IDBDatabase.js').IDBDatabaseFull,
+ * }} IDBObjectStoreFull
+ */
+
 /**
  *
- * @param storeProperties
- * @param transaction
+ * @param {import('./IDBDatabase.js').IDBObjectStoreProperties} storeProperties
+ * @param {import('./IDBTransaction.js').IDBTransactionFull} [transaction]
+ * @returns {IDBObjectStoreFull}
  */
 IDBObjectStore.__createInstance = function (storeProperties, transaction) {
   /**
    * @class
+   * @this {IDBObjectStoreFull}
    */
   function IDBObjectStore() {
     const me = this;
+    // @ts-expect-error It's ok
     me[Symbol.toStringTag] = 'IDBObjectStore';
     defineReadonlyProperties(this, readonlyProperties$1);
     me.__name = me.__originalName = storeProperties.name;
@@ -6261,9 +7193,18 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
     Object.defineProperty(this, 'name', {
       enumerable: false,
       configurable: false,
+      /**
+       * @this {IDBObjectStoreFull}
+       * @returns {string}
+       */
       get() {
         return this.__name;
       },
+      /**
+       * @param {string} name
+       * @this {IDBObjectStoreFull}
+       * @returns {void}
+       */
       set(name) {
         const me = this;
         name = convertToDOMString(name);
@@ -6284,14 +7225,17 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
         delete me.__idbdb.__objectStores[oldName]; // Ensure won't be found
 
         me.__idbdb.objectStoreNames.splice(me.__idbdb.objectStoreNames.indexOf(oldName), 1, name);
-        const oldHandle = me.transaction.__storeHandles[oldName];
+        const oldHandle = /** @type {IDBObjectStoreFull} */
+        /** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction.__storeHandles[oldName];
         oldHandle.__name = name; // Fix old references
+        /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
         me.transaction.__storeHandles[name] = oldHandle; // Ensure new reference accessible
 
         me.__pendingName = oldName;
         const sql = 'UPDATE __sys__ SET "name" = ? WHERE "name" = ?';
         const sqlValues = [escapeSQLiteStatement(name), escapeSQLiteStatement(oldName)];
         CFG.DEBUG && console.log(sql, sqlValues);
+        /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
         me.transaction.__addNonRequestToTransactionQueue(function objectStoreClear(tx, args, success, error) {
           tx.executeSql(sql, sqlValues, function (tx, data) {
             // This SQL preserves indexes per https://www.sqlite.org/lang_altertable.html
@@ -6303,21 +7247,23 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
             });
           }, function (tx, err) {
             error(err);
+            return true;
           });
         });
       }
     });
   }
   IDBObjectStore.prototype = IDBObjectStoreAlias.prototype;
+
+  // @ts-expect-error It's ok
   return new IDBObjectStore();
 };
 
 /**
  * Clones an IDBObjectStore instance for a different IDBTransaction instance.
- * @param {IDBObjectStore} store
- * @param {IDBTransaction} transaction
- * @protected
- * @returns {IDBObjectStore}
+ * @param {IDBObjectStoreFull} store
+ * @param {import('./IDBTransaction.js').IDBTransactionFull} transaction
+ * @returns {IDBObjectStoreFull}
  */
 IDBObjectStore.__clone = function (store, transaction) {
   const newStore = IDBObjectStore.__createInstance({
@@ -6328,7 +7274,10 @@ IDBObjectStore.__clone = function (store, transaction) {
     idbdb: store.__idbdb,
     cursors: store.__cursors
   }, transaction);
+
+  /** @type {const} */
   ['__indexes', '__indexNames', '__oldIndexNames', '__deleted', '__pendingDelete', '__pendingCreate', '__originalName'].forEach(p => {
+    // @ts-expect-error It's ok
     newStore[p] = store[p];
   });
   return newStore;
@@ -6336,20 +7285,21 @@ IDBObjectStore.__clone = function (store, transaction) {
 
 /**
  *
- * @param store
- * @param msg
+ * @param {IDBObjectStoreFull|import('./IDBIndex.js').IDBIndexFull} store
+ * @param {string} [msg]
+ * @throws {DOMException}
+ * @returns {void}
  */
 IDBObjectStore.__invalidStateIfDeleted = function (store, msg) {
-  if (store.__deleted || store.__pendingDelete || store.__pendingCreate && store.transaction && store.transaction.__errored) {
+  if (store.__deleted || store.__pendingDelete || store.__pendingCreate && 'transaction' in store && store.transaction && store.transaction.__errored) {
     throw createDOMException('InvalidStateError', msg || 'This store has been deleted');
   }
 };
 
 /**
  * Creates a new object store in the database.
- * @param {IDBDatabase} db
- * @param {IDBObjectStore} store
- * @protected
+ * @param {import('./IDBDatabase.js').IDBDatabaseFull} db
+ * @param {IDBObjectStoreFull} store
  * @returns {IDBObjectStore}
  */
 IDBObjectStore.__createObjectStore = function (db, store) {
@@ -6360,7 +7310,8 @@ IDBObjectStore.__createObjectStore = function (db, store) {
   db.objectStoreNames.push(storeName);
 
   // Add the object store to WebSQL
-  const transaction = db.__versionTransaction;
+  const transaction = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
+  db.__versionTransaction;
   const storeHandles = transaction.__storeHandles;
   if (!storeHandles[storeName] ||
   // These latter conditions are to allow store
@@ -6371,12 +7322,13 @@ IDBObjectStore.__createObjectStore = function (db, store) {
   transaction.__addNonRequestToTransactionQueue(function createObjectStore(tx, args, success, failure) {
     /**
      * @param {SQLTransaction} tx
-     * @param {SQLError} err
-     * @returns {void}
+     * @param {SQLError} [err]
+     * @returns {boolean}
      */
     function error(tx, err) {
       CFG.DEBUG && console.log(err);
       failure(createDOMException('UnknownError', 'Could not create object store "' + storeName + '"', err));
+      return true;
     }
     const escapedStoreNameSQL = escapeStoreNameForSQL(storeName);
     // key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
@@ -6410,9 +7362,8 @@ IDBObjectStore.__createObjectStore = function (db, store) {
 
 /**
  * Deletes an object store from the database.
- * @param {IDBDatabase} db
- * @param {IDBObjectStore} store
- * @protected
+ * @param {import('./IDBDatabase.js').IDBDatabaseFull} db
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
  * @returns {void}
  */
 IDBObjectStore.__deleteObjectStore = function (db, store) {
@@ -6428,16 +7379,18 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
   }
 
   // Remove the object store from WebSQL
-  const transaction = db.__versionTransaction;
+  const transaction = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
+  db.__versionTransaction;
   transaction.__addNonRequestToTransactionQueue(function deleteObjectStore(tx, args, success, failure) {
     /**
      * @param {SQLTransaction} tx
-     * @param {SQLError} err
-     * @returns {void}
+     * @param {SQLError} [err]
+     * @returns {boolean}
      */
     function error(tx, err) {
       CFG.DEBUG && console.log(err);
       failure(createDOMException('UnknownError', 'Could not delete ObjectStore', err));
+      return true;
     }
     tx.executeSql('SELECT "name" FROM __sys__ WHERE "name" = ?', [escapeSQLiteStatement(store.__currentName)], function (tx, data) {
       if (data.rows.length > 0) {
@@ -6458,10 +7411,8 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
 };
 
 /**
-* @typedef {GenericArray} KeyValueArray
-* @property {import('./Key.js').Key} 0
-* @property {import('./Key.js').Value} 1
-*/
+ * @typedef {[import('./Key.js').Key, import('./Key.js').Value]} KeyValueArray
+ */
 
 // Todo: Although we may end up needing to do cloning genuinely asynchronously (for Blobs and FileLists),
 //   and we'll want to ensure the queue starts up synchronously, we nevertheless do the cloning
@@ -6478,14 +7429,14 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
  * @param {import('./Key.js').Key} key Used for out-of-line keys
  * @param {boolean} cursorUpdate
  * @throws {DOMException}
+ * @this {IDBObjectStoreFull}
  * @returns {KeyValueArray}
- * @private
  */
 IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, key, cursorUpdate) {
   const me = this;
   if (me.keyPath !== null) {
     if (key !== undefined) {
-      throw createDOMException('DataError', 'The object store uses in-line keys and the key parameter was provided', me);
+      throw createDOMException('DataError', 'The object store uses in-line keys and the key parameter was provided');
     }
     // Todo Binary: Avoid blobs loading async to ensure cloning (and errors therein)
     //   occurs sync; then can make cloning and this method without callbacks (except where ok
@@ -6500,7 +7451,8 @@ IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, k
         if (!me.autoIncrement) {
           throw createDOMException('DataError', 'Could not evaluate a key from keyPath and there is no key generator');
         }
-        if (!checkKeyCouldBeInjectedIntoValue(clonedValue, me.keyPath)) {
+        // Todo: Could the keyPath not be an array?
+        if (!checkKeyCouldBeInjectedIntoValue(clonedValue, /** @type {string} */me.keyPath)) {
           throw createDOMException('DataError', 'A key could not be injected into a value');
         }
         // A key will be generated
@@ -6513,7 +7465,7 @@ IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, k
   }
   if (key === undefined) {
     if (!me.autoIncrement) {
-      throw createDOMException('DataError', 'The object store uses out-of-line keys and has no key generator and the key parameter was not provided.', me);
+      throw createDOMException('DataError', 'The object store uses out-of-line keys and has no key generator and the key parameter was not provided.');
     }
     // A key will be generated
     key = undefined;
@@ -6532,8 +7484,9 @@ IDBObjectStore.prototype.__validateKeyAndValueAndCloneValue = function (value, k
  * @param {SQLTransaction} tx
  * @param {import('./Key.js').Value} value
  * @param {import('./Key.js').Key} key
- * @param {(key: import('./Key.js').Key, cn: Integer) => void} success
+ * @param {(key: import('./Key.js').Key, cn?: Integer) => void} success
  * @param {import('./Key.js').SQLFailureCallback} failCb
+ * @this {IDBObjectStoreFull}
  * @returns {void}
  */
 IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb) {
@@ -6541,7 +7494,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb
 
   // Only run if cloning is needed
   /**
-   * @param {Integer} oldCn
+   * @param {Integer} [oldCn]
    * @returns {void}
    */
   function keyCloneThenSuccess(oldCn) {
@@ -6561,7 +7514,8 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb
         }
         if (me.keyPath !== null) {
           // Should not throw now as checked earlier
-          injectKeyIntoValueUsingKeyPath(value, key, me.keyPath);
+          // Todo: Could this not be an array here?
+          injectKeyIntoValueUsingKeyPath(value, key, /** @type {string} */me.keyPath);
         }
         success(key, oldCn);
       }, failCb);
@@ -6576,18 +7530,23 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb
 
 /**
  *
- * @param tx
- * @param encoded
- * @param value
- * @param clonedKeyOrCurrentNumber
- * @param oldCn
- * @param success
- * @param error
+ * @param {SQLTransaction} tx
+ * @param {string} encoded
+ * @param {import('./Key.js').Value} value
+ * @param {import('./Key.js').Key|Integer} clonedKeyOrCurrentNumber
+ * @param {Integer|undefined} oldCn
+ * @param {(
+ *   clonedKeyOrCurrentNumber: import('./Key.js').Key|Integer
+ * ) => void} success
+ * @param {(err: Error|DOMException) => void} error
+ * @this {IDBObjectStoreFull}
+ * @returns {SyncPromise}
  */
 IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyOrCurrentNumber, oldCn, success, error) {
   const me = this;
   // The `ConstraintError` to occur for `add` upon a duplicate will occur naturally in attempting an insert
   // We process the index information first as it will stored in the same table as the store
+  /** @type {{[key: string]: string}} */
   const paramMap = {};
   const indexPromises = Object.keys(
   // We do not iterate `indexNames` as those can be modified synchronously (e.g.,
@@ -6614,29 +7573,34 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
       // If already deleted (and not just slated for deletion (by `__pendingDelete`
       //  after this add), we avoid checks
       index.__deleted) {
-        resolve();
+        resolve(undefined);
         return;
       }
+      /**
+       * @type {import('./Key.js').KeyValueObject|
+       *   import('./Key.js').KeyPathEvaluateValue}
+       */
       let indexKey;
       try {
         indexKey = extractKeyValueDecodedFromValueUsingKeyPath(value, index.keyPath, index.multiEntry); // Add as necessary to this and skip past this index if exceptions here)
-        if (indexKey.invalid || indexKey.failure) {
+        if ('invalid' in indexKey && indexKey.invalid || 'failure' in indexKey && indexKey.failure) {
           throw new Error('Go to catch');
         }
       } catch (err) {
-        resolve();
+        resolve(undefined);
         return;
       }
       indexKey = indexKey.value;
       /**
-       * @param {IDBIndex} index
+       * @param {import('./IDBIndex.js').IDBIndexFull} index
        * @returns {void}
        */
       function setIndexInfo(index) {
         if (indexKey === undefined) {
           return;
         }
-        paramMap[index.__currentName] = encode$1(indexKey, index.multiEntry);
+        paramMap[index.__currentName] = /** @type {string} */
+        encode$1(indexKey, index.multiEntry);
       }
       if (index.unique) {
         const multiCheck = index.multiEntry && Array.isArray(indexKey);
@@ -6644,14 +7608,14 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
         executeFetchIndexData(null, ...fetchArgs, tx, null, function success(key) {
           if (key === undefined) {
             setIndexInfo(index);
-            resolve();
+            resolve(undefined);
             return;
           }
           reject(createDOMException('ConstraintError', 'Index already contains a record equal to ' + (multiCheck ? 'one of the subkeys of' : '') + '`indexKey`'));
         }, reject);
       } else {
         setIndexInfo(index);
-        resolve();
+        resolve(undefined);
       }
     });
   });
@@ -6663,7 +7627,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
       // Key.convertValueToKey(primaryKey); // Already run
       sqlStart.push(sqlQuote('key'), ',');
       sqlEnd.push('?,');
-      insertSqlValues.push(escapeSQLiteStatement(encode$1(clonedKeyOrCurrentNumber)));
+      insertSqlValues.push(escapeSQLiteStatement( /** @type {string} */encode$1(clonedKeyOrCurrentNumber)));
     }
     Object.entries(paramMap).forEach(([key, stmt]) => {
       sqlStart.push(escapeIndexNameForSQL(key) + ',');
@@ -6680,7 +7644,8 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
       success(clonedKeyOrCurrentNumber);
     }, function (tx, err) {
       // Should occur for `add` operation
-      error(createDOMException('ConstraintError', err.message, err));
+      error(createDOMException('ConstraintError', /** @type {string} */err.message, err));
+      return true;
     });
     return undefined;
   }).catch(function (err) {
@@ -6694,15 +7659,18 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
     }
     if (typeof oldCn === 'number') {
       assignCurrentNumber(tx, me, oldCn, fail, fail);
-      return;
+      return null;
     }
     fail();
+    return null;
   });
 };
 
 /**
  *
- * @param value
+ * @param {import('./Key.js').Value} value
+ * @this {IDBObjectStoreFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBObjectStore.prototype.add = function (value /* , key */) {
   const me = this;
@@ -6716,8 +7684,9 @@ IDBObjectStore.prototype.add = function (value /* , key */) {
   }
   IDBObjectStore.__invalidStateIfDeleted(me);
   IDBTransaction.__assertActive(me.transaction);
+  /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
   me.transaction.__assertWritable();
-  const request = me.transaction.__createRequest(me);
+  const request = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction.__createRequest(me);
   const [ky, clonedValue] = me.__validateKeyAndValueAndCloneValue(value, key, false);
   IDBObjectStore.__storingRecordObjectStore(request, me, true, clonedValue, true, ky);
   return request;
@@ -6725,7 +7694,10 @@ IDBObjectStore.prototype.add = function (value /* , key */) {
 
 /**
  *
- * @param value
+ * @param {import('./Key.js').Value} value
+ * @throws {TypeError}
+ * @this {IDBObjectStoreFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBObjectStore.prototype.put = function (value /*, key */) {
   const me = this;
@@ -6739,8 +7711,9 @@ IDBObjectStore.prototype.put = function (value /*, key */) {
   }
   IDBObjectStore.__invalidStateIfDeleted(me);
   IDBTransaction.__assertActive(me.transaction);
+  /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
   me.transaction.__assertWritable();
-  const request = me.transaction.__createRequest(me);
+  const request = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction.__createRequest(me);
   const [ky, clonedValue] = me.__validateKeyAndValueAndCloneValue(value, key, false);
   IDBObjectStore.__storingRecordObjectStore(request, me, true, clonedValue, false, ky);
   return request;
@@ -6748,36 +7721,41 @@ IDBObjectStore.prototype.put = function (value /*, key */) {
 
 /**
  *
- * @param tx
- * @param key
- * @param cb
- * @param error
+ * @param {SQLTransaction} tx
+ * @param {import('./Key.js').Key} key
+ * @param {(tx: SQLTransaction) => void} cb
+ * @param {(err: SQLError) => void} error
+ * @this {IDBObjectStoreFull}
+ * @returns {void}
  */
 IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
   const me = this;
   // First try to delete if the record exists
   // Key.convertValueToKey(key); // Already run
   const sql = 'DELETE FROM ' + escapeStoreNameForSQL(me.__currentName) + ' WHERE "key" = ?';
-  const encodedKey = encode$1(key);
+  const encodedKey = /** @type {string} */encode$1(key);
   tx.executeSql(sql, [escapeSQLiteStatement(encodedKey)], function (tx, data) {
     CFG.DEBUG && console.log('Did the row with the', key, 'exist?', data.rowsAffected);
     cb(tx);
   }, function (tx, err) {
     error(err);
+    return true;
   });
 };
 
 /**
  *
- * @param request
- * @param store
- * @param invalidateCache
- * @param value
- * @param noOverwrite
+ * @param {import('./IDBRequest.js').IDBRequestFull} request
+ * @param {IDBObjectStoreFull} store
+ * @param {boolean} invalidateCache
+ * @param {import('./Key.js').Value} value
+ * @param {boolean} noOverwrite
+ * @returns {void}
  */
 IDBObjectStore.__storingRecordObjectStore = function (request, store, invalidateCache, value, noOverwrite /* , key */) {
   // eslint-disable-next-line prefer-rest-params
   const key = arguments[5];
+  /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
   store.transaction.__pushToQueue(request, function (tx, args, success, error) {
     store.__deriveKey(tx, value, key, function (clonedKeyOrCurrentNumber, oldCn) {
       encode(value, function (encoded) {
@@ -6807,10 +7785,12 @@ IDBObjectStore.__storingRecordObjectStore = function (request, store, invalidate
 
 /**
  *
- * @param query
- * @param getKey
- * @param getAll
- * @param count
+ * @param {import('./Key.js').Value} query
+ * @param {boolean} [getKey]
+ * @param {boolean} [getAll]
+ * @param {Integer} [count]
+ * @this {IDBObjectStoreFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
   const me = this;
@@ -6821,7 +7801,8 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
   IDBTransaction.__assertActive(me.transaction);
   const range = convertValueToKeyRange(query, !getAll);
   const col = getKey ? 'key' : 'value';
-  let sql = ['SELECT', sqlQuote(col), 'FROM', escapeStoreNameForSQL(me.__currentName)];
+  const sql = ['SELECT', sqlQuote(col), 'FROM', escapeStoreNameForSQL(me.__currentName)];
+  /** @type {string[]} */
   const sqlValues = [];
   if (range !== undefined) {
     sql.push('WHERE');
@@ -6834,52 +7815,57 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
     if (!Number.isFinite(count)) {
       throw new TypeError('The count parameter must be a finite number');
     }
-    sql.push('LIMIT', count);
+    sql.push('LIMIT', String(count));
   }
-  sql = sql.join(' ');
-  return me.transaction.__addToTransactionQueue(function objectStoreGet(tx, args, success, error) {
-    CFG.DEBUG && console.log('Fetching', me.__currentName, sqlValues);
-    tx.executeSql(sql, sqlValues, function (tx, data) {
-      CFG.DEBUG && console.log('Fetched data', data);
-      let ret;
-      try {
-        // Opera can't deal with the try-catch here.
-        if (data.rows.length === 0) {
-          if (getAll) {
-            success([]);
+  const sqlStr = sql.join(' ');
+  return (/** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction.__addToTransactionQueue(function objectStoreGet(tx, args, success, error) {
+      CFG.DEBUG && console.log('Fetching', me.__currentName, sqlValues);
+      tx.executeSql(sqlStr, sqlValues, function (tx, data) {
+        CFG.DEBUG && console.log('Fetched data', data);
+        let ret;
+        try {
+          // Opera can't deal with the try-catch here.
+          if (data.rows.length === 0) {
+            if (getAll) {
+              success([]);
+            } else {
+              success();
+            }
+            return;
+          }
+          ret = [];
+          if (getKey) {
+            for (let i = 0; i < data.rows.length; i++) {
+              // Key.convertValueToKey(data.rows.item(i).key); // Already validated before storage
+              ret.push(decode$1(unescapeSQLiteResponse(data.rows.item(i).key), false));
+            }
           } else {
-            success();
+            for (let i = 0; i < data.rows.length; i++) {
+              ret.push(decode(unescapeSQLiteResponse(data.rows.item(i).value)));
+            }
           }
-          return;
-        }
-        ret = [];
-        if (getKey) {
-          for (let i = 0; i < data.rows.length; i++) {
-            // Key.convertValueToKey(data.rows.item(i).key); // Already validated before storage
-            ret.push(decode$1(unescapeSQLiteResponse(data.rows.item(i).key), false));
+          if (!getAll) {
+            ret = ret[0];
           }
-        } else {
-          for (let i = 0; i < data.rows.length; i++) {
-            ret.push(decode(unescapeSQLiteResponse(data.rows.item(i).value)));
-          }
+        } catch (e) {
+          // If no result is returned, or error occurs when parsing JSON
+          CFG.DEBUG && console.log(e);
         }
-        if (!getAll) {
-          ret = ret[0];
-        }
-      } catch (e) {
-        // If no result is returned, or error occurs when parsing JSON
-        CFG.DEBUG && console.log(e);
-      }
-      success(ret);
-    }, function (tx, err) {
-      error(err);
-    });
-  }, undefined, me);
+        success(ret);
+      }, function (tx, err) {
+        error(err);
+        return true;
+      });
+    }, undefined, me)
+  );
 };
 
 /**
  *
- * @param query
+ * @param {import('./Key.js').Value} query
+ * @throws {TypeError}
+ * @this {IDBObjectStoreFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBObjectStore.prototype.get = function (query) {
   if (!arguments.length) {
@@ -6890,7 +7876,9 @@ IDBObjectStore.prototype.get = function (query) {
 
 /**
  *
- * @param query
+ * @param {import('./Key.js').Value} query
+ * @this {IDBObjectStoreFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBObjectStore.prototype.getKey = function (query) {
   if (!arguments.length) {
@@ -6900,7 +7888,8 @@ IDBObjectStore.prototype.getKey = function (query) {
 };
 
 /**
- *
+ * @this {IDBObjectStoreFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBObjectStore.prototype.getAll = function /* query, count */
 () {
@@ -6910,7 +7899,8 @@ IDBObjectStore.prototype.getAll = function /* query, count */
 };
 
 /**
- *
+ * @this {IDBObjectStoreFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBObjectStore.prototype.getAllKeys = function /* query, count */
 () {
@@ -6921,7 +7911,10 @@ IDBObjectStore.prototype.getAllKeys = function /* query, count */
 
 /**
  *
- * @param query
+ * @param {import('./Key.js').Value} query
+ * @throws {TypeError}
+ * @this {IDBObjectStoreFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBObjectStore.prototype.delete = function (query) {
   const me = this;
@@ -6933,29 +7926,34 @@ IDBObjectStore.prototype.delete = function (query) {
   }
   IDBObjectStore.__invalidStateIfDeleted(me);
   IDBTransaction.__assertActive(me.transaction);
+  /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
   me.transaction.__assertWritable();
   const range = convertValueToKeyRange(query, true);
   const sqlArr = ['DELETE FROM', escapeStoreNameForSQL(me.__currentName), 'WHERE'];
+  /** @type {string[]} */
   const sqlValues = [];
   setSQLForKeyRange(range, sqlQuote('key'), sqlArr, sqlValues);
   const sql = sqlArr.join(' ');
-  return me.transaction.__addToTransactionQueue(function objectStoreDelete(tx, args, success, error) {
-    CFG.DEBUG && console.log('Deleting', me.__currentName, sqlValues);
-    tx.executeSql(sql, sqlValues, function (tx, data) {
-      CFG.DEBUG && console.log('Deleted from database', data.rowsAffected);
-      me.__cursors.forEach(cursor => {
-        cursor.__invalidateCache(); // Delete
-      });
+  return (/** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction.__addToTransactionQueue(function objectStoreDelete(tx, args, success, error) {
+      CFG.DEBUG && console.log('Deleting', me.__currentName, sqlValues);
+      tx.executeSql(sql, sqlValues, function (tx, data) {
+        CFG.DEBUG && console.log('Deleted from database', data.rowsAffected);
+        me.__cursors.forEach(cursor => {
+          cursor.__invalidateCache(); // Delete
+        });
 
-      success();
-    }, function (tx, err) {
-      error(err);
-    });
-  }, undefined, me);
+        success();
+      }, function (tx, err) {
+        error(err);
+        return true;
+      });
+    }, undefined, me)
+  );
 };
 
 /**
- *
+ * @this {IDBObjectStoreFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBObjectStore.prototype.clear = function () {
   const me = this;
@@ -6964,23 +7962,27 @@ IDBObjectStore.prototype.clear = function () {
   }
   IDBObjectStore.__invalidStateIfDeleted(me);
   IDBTransaction.__assertActive(me.transaction);
+  /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
   me.transaction.__assertWritable();
-  return me.transaction.__addToTransactionQueue(function objectStoreClear(tx, args, success, error) {
-    tx.executeSql('DELETE FROM ' + escapeStoreNameForSQL(me.__currentName), [], function (tx, data) {
-      CFG.DEBUG && console.log('Cleared all records from database', data.rowsAffected);
-      me.__cursors.forEach(cursor => {
-        cursor.__invalidateCache(); // Clear
-      });
+  return (/** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction.__addToTransactionQueue(function objectStoreClear(tx, args, success, error) {
+      tx.executeSql('DELETE FROM ' + escapeStoreNameForSQL(me.__currentName), [], function (tx, data) {
+        CFG.DEBUG && console.log('Cleared all records from database', data.rowsAffected);
+        me.__cursors.forEach(cursor => {
+          cursor.__invalidateCache(); // Clear
+        });
 
-      success();
-    }, function (tx, err) {
-      error(err);
-    });
-  }, undefined, me);
+        success();
+      }, function (tx, err) {
+        error(err);
+        return true;
+      });
+    }, undefined, me)
+  );
 };
 
 /**
- *
+ * @this {IDBObjectStoreFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBObjectStore.prototype.count = function /* query */
 () {
@@ -6998,7 +8000,8 @@ IDBObjectStore.prototype.count = function /* query */
 };
 
 /**
- *
+ * @this {IDBObjectStoreFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBObjectStore.prototype.openCursor = function /* query, direction */
 () {
@@ -7015,7 +8018,8 @@ IDBObjectStore.prototype.openCursor = function /* query, direction */
 };
 
 /**
- *
+ * @this {IDBObjectStoreFull}
+ * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBObjectStore.prototype.openKeyCursor = function /* query, direction */
 () {
@@ -7033,7 +8037,9 @@ IDBObjectStore.prototype.openKeyCursor = function /* query, direction */
 
 /**
  *
- * @param indexName
+ * @param {string} indexName
+ * @this {IDBObjectStoreFull}
+ * @returns {import('./IDBIndex.js').IDBIndexFull}
  */
 IDBObjectStore.prototype.index = function (indexName) {
   const me = this;
@@ -7055,16 +8061,14 @@ IDBObjectStore.prototype.index = function (indexName) {
   return me.__indexHandles[indexName];
 };
 
-/* eslint-disable jsdoc/check-param-names */
 /**
  * Creates a new index on the object store.
  * @param {string} indexName
  * @param {string|string[]} keyPath
- * @param {object} optionalParameters
+ * @this {IDBObjectStoreFull}
  * @returns {IDBIndex}
  */
 IDBObjectStore.prototype.createIndex = function (indexName, keyPath /* , optionalParameters */) {
-  /* eslint-enable jsdoc/check-param-names */
   const me = this;
   // eslint-disable-next-line prefer-rest-params
   let optionalParameters = arguments[2];
@@ -7092,7 +8096,7 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath /* , optiona
     throw createDOMException('InvalidAccessError', 'The keyPath argument was an array and the multiEntry option is true.');
   }
   optionalParameters = optionalParameters || {};
-  /** @name IDBIndexProperties */
+  /** @type {import('./IDBIndex.js').IDBIndexProperties} */
   const indexProperties = {
     columnName: indexName,
     keyPath,
@@ -7108,7 +8112,9 @@ IDBObjectStore.prototype.createIndex = function (indexName, keyPath /* , optiona
 
 /**
  *
- * @param name
+ * @param {string} name
+ * @this {IDBObjectStoreFull}
+ * @returns {void}
  */
 IDBObjectStore.prototype.deleteIndex = function (name) {
   const me = this;
@@ -7138,28 +8144,74 @@ const listeners = ['onabort', 'onclose', 'onerror', 'onversionchange'];
 const readonlyProperties = ['name', 'version', 'objectStoreNames'];
 
 /**
+ * @typedef {{
+ *   name: string,
+ *   keyPath: import('./Key.js').KeyPath,
+ *   autoInc: boolean,
+ *   indexList: {[key: string]: import('./IDBIndex.js').IDBIndexProperties},
+ *   idbdb: IDBDatabaseFull,
+ *   cursors?: (import('./IDBCursor.js').IDBCursorFull|
+ *     import('./IDBCursor.js').IDBCursorWithValueFull)[],
+ * }} IDBObjectStoreProperties
+ */
+
+/**
  * IDB Database Object.
  * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
  * @class
  */
 function IDBDatabase() {
+  this.__versionTransaction = null;
+  this.__objectStores = null;
   throw new TypeError('Illegal constructor');
 }
 const IDBDatabaseAlias = IDBDatabase;
 
 /**
- * @param {} db
- * @param {} name
- * @param {} oldVersion
- * @param {} version
- * @param {} storeProperties
- * @returns {IDBDatabase}
+ * @typedef {number} Integer
+ */
+
+/**
+ * @typedef {IDBDatabase & EventTarget & {
+ *   createObjectStore: (storeName: string) => IDBObjectStore,
+ *   deleteObjectStore: (storeName: string) => void,
+ *   close: () => void,
+ *   transaction: (storeNames: string|string[], mode: string) => IDBTransaction,
+ *   throwIfUpgradeTransactionNull: () => void,
+ *   objectStoreNames: import('./DOMStringList.js').DOMStringListFull,
+ *   name: string,
+ *   __forceClose: (msg: string) => void,
+ *   __db: import('websql-configurable/lib/websql/WebSQLDatabase.js').default,
+ *   __oldVersion: Integer,
+ *   __version: Integer,
+ *   __name: string,
+ *   __upgradeTransaction: null|import('./IDBTransaction.js').IDBTransactionFull,
+ *   __versionTransaction: import('./IDBTransaction.js').IDBTransactionFull,
+ *   __transactions: import('./IDBTransaction.js').IDBTransactionFull[],
+ *   __objectStores: {[key: string]: IDBObjectStore},
+ *   __objectStoreNames: import('./DOMStringList.js').DOMStringListFull,
+ *   __oldObjectStoreNames: import('./DOMStringList.js').DOMStringListFull,
+ *   __unblocking: {
+ *     check: () => void
+ *   }
+ * }} IDBDatabaseFull
+ */
+
+/**
+ * @param {import('websql-configurable').default} db
+ * @param {string} name
+ * @param {Integer} oldVersion
+ * @param {Integer} version
+ * @param {SQLResultSet} storeProperties
+ * @returns {IDBDatabaseFull}
  */
 IDBDatabase.__createInstance = function (db, name, oldVersion, version, storeProperties) {
   /**
    * @class
+   * @this {IDBDatabaseFull}
    */
   function IDBDatabase() {
+    // @ts-expect-error It's ok
     this[Symbol.toStringTag] = 'IDBDatabase';
     defineReadonlyProperties(this, readonlyProperties);
     this.__db = db;
@@ -7169,13 +8221,20 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
     this.__name = name;
     this.__upgradeTransaction = null;
     defineListenerProperties(this, listeners);
+    // @ts-expect-error Part of `ShimEventTarget`
     this.__setOptions({
       legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
     });
 
     this.__transactions = [];
+
+    /** @type {{[key: string]: IDBObjectStore}} */
     this.__objectStores = {};
     this.__objectStoreNames = DOMStringList.__createInstance();
+
+    /**
+     * @type {IDBObjectStoreProperties}
+     */
     const itemCopy = {};
     for (let i = 0; i < storeProperties.rows.length; i++) {
       const item = storeProperties.rows.item(i);
@@ -7189,7 +8248,8 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
       // and should thus be parsed into a number here (0 or 1),
       // `IDBObjectStore.__createInstance` will convert to a boolean
       // when setting the store's `autoIncrement`.
-      ['autoInc', 'indexList'].forEach(function (prop) {
+      /** @type {const} */
+      ['autoInc', 'indexList'].forEach(prop => {
         itemCopy[prop] = JSON.parse(item[prop]);
       });
       itemCopy.idbdb = this;
@@ -7200,20 +8260,22 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
     this.__oldObjectStoreNames = this.objectStoreNames.clone();
   }
   IDBDatabase.prototype = IDBDatabaseAlias.prototype;
+
+  // @ts-expect-error It's ok
   return new IDBDatabase();
 };
+
+// @ts-expect-error It's ok
 IDBDatabase.prototype = EventTargetFactory.createInstance();
 IDBDatabase.prototype[Symbol.toStringTag] = 'IDBDatabasePrototype';
 
-/* eslint-disable jsdoc/check-param-names */
 /**
  * Creates a new object store.
  * @param {string} storeName
- * @param {object} [createOptions]
+ * @this {IDBDatabaseFull}
  * @returns {IDBObjectStore}
  */
 IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions */) {
-  /* eslint-enable jsdoc/check-param-names */
   // eslint-disable-next-line prefer-rest-params
   let createOptions = arguments[1];
   storeName = String(storeName); // W3C test within IDBObjectStore.js seems to accept string conversion
@@ -7244,7 +8306,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
     throw createDOMException('InvalidAccessError', 'With autoIncrement set, the keyPath argument must not be an array or empty string.');
   }
 
-  /** @name IDBObjectStoreProperties */
+  /** @type {IDBObjectStoreProperties} */
   const storeProperties = {
     name: storeName,
     keyPath,
@@ -7260,6 +8322,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
  * Deletes an object store.
  * @param {string} storeName
  * @throws {TypeError|DOMException}
+ * @this {IDBDatabaseFull}
  * @returns {void}
  */
 IDBDatabase.prototype.deleteObjectStore = function (storeName) {
@@ -7281,6 +8344,7 @@ IDBDatabase.prototype.deleteObjectStore = function (storeName) {
 
 /**
  * @throws {TypeError}
+ * @this {IDBDatabaseFull}
  * @returns {void}
  */
 IDBDatabase.prototype.close = function () {
@@ -7293,15 +8357,13 @@ IDBDatabase.prototype.close = function () {
   }
 };
 
-/* eslint-disable jsdoc/check-param-names */
 /**
  * Starts a new transaction.
  * @param {string|string[]} storeNames
- * @param {string} mode
- * @returns {IDBTransaction}
+ * @this {IDBDatabaseFull}
+ * @returns {import('./IDBTransaction.js').IDBTransactionFull}
  */
 IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
-  /* eslint-enable jsdoc/check-param-names */
   if (arguments.length === 0) {
     throw new TypeError('You must supply a valid `storeNames` to `IDBDatabase.transaction`');
   }
@@ -7356,6 +8418,7 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
 /**
  * @see https://github.com/w3c/IndexedDB/issues/192
  * @throws {DOMException}
+ * @this {IDBDatabaseFull}
  * @returns {void}
  */
 IDBDatabase.prototype.throwIfUpgradeTransactionNull = function () {
@@ -7368,6 +8431,7 @@ IDBDatabase.prototype.throwIfUpgradeTransactionNull = function () {
 /**
  *
  * @param {string} msg
+ * @this {IDBDatabaseFull}
  * @returns {void}
  */
 IDBDatabase.prototype.__forceClose = function (msg) {
@@ -7401,10 +8465,30 @@ Object.defineProperty(IDBDatabase, 'prototype', {
 });
 
 /* globals location */
+
+/**
+ * @typedef {number} Integer
+ */
+
+/**
+ * @callback DatabaseDeleted
+ * @returns {void}
+ */
+
+/** @type {import('./CFG.js').FSApi} */
 let fs;
+
+/**
+ * @param {import('./CFG.js').FSApi} _fs
+ * @returns {void}
+ */
 const setFS = _fs => {
   fs = _fs;
 };
+
+/**
+ * @returns {string}
+ */
 const getOrigin = () => {
   return typeof location !== 'object' || !location ? 'null' : location.origin;
 };
@@ -7413,11 +8497,22 @@ const hasNullOrigin = () => CFG.checkOrigin !== false && getOrigin() === 'null';
 // Todo: This really should be process and tab-independent so the
 //  origin could vary; in the browser, this might be through a
 //  `SharedWorker`
+
+/**
+ * @type {{
+ *   [key: string]: {
+ *     [key: string]: {
+ *       req: import('./IDBRequest.js').IDBOpenDBRequestFull,
+ *       cb: (req: import('./IDBRequest.js').IDBRequestFull) => void,
+ *     }[]
+ *   }
+ * }}
+ */
 const connectionQueue = {};
 
 /**
- * @param {} name
- * @param {} origin
+ * @param {string} name
+ * @param {string} origin
  * @returns {void}
  */
 function processNextInConnectionQueue(name, origin = getOrigin()) {
@@ -7445,10 +8540,10 @@ function processNextInConnectionQueue(name, origin = getOrigin()) {
 
 /* eslint-disable default-param-last */
 /**
- * @param {} req
+ * @param {import('./IDBRequest.js').IDBOpenDBRequestFull} req
  * @param {string} name
- * @param {} origin
- * @param {} cb
+ * @param {string} origin
+ * @param {(req: import('./IDBRequest.js').IDBOpenDBRequestFull) => void} cb
  * @returns {void}
  */
 function addRequestToConnectionQueue(req, name, origin = getOrigin(), cb) {
@@ -7467,16 +8562,21 @@ function addRequestToConnectionQueue(req, name, origin = getOrigin(), cb) {
 }
 
 /**
- * @param {} openConnections
- * @param {} req
- * @param {} oldVersion
- * @param {} newVersion
- * @returns {}
+ * @param {import('./IDBDatabase.js').IDBDatabaseFull[]} openConnections
+ * @param {import('./IDBRequest.js').IDBRequestFull} req
+ * @param {Integer} oldVersion
+ * @param {Integer|null} newVersion
+ * @returns {SyncPromise}
  */
 function triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersion, newVersion) {
   // Todo: For Node (and in browser using service workers if available?) the
   //    connections ought to involve those in any process; should also
   //    auto-close if unloading
+
+  /**
+   * @param {IDBDatabase} connection
+   * @returns {boolean|undefined}
+   */
   const connectionIsClosed = connection => connection.__closePending;
   const connectionsClosed = () => openConnections.every(conn => {
     return connectionIsClosed(conn);
@@ -7490,18 +8590,19 @@ function triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersio
         // Prior onversionchange must have caused this connection to be closed
         return undefined;
       }
-      const e = new IDBVersionChangeEvent('versionchange', {
+      const e = /** @type {Event & IDBVersionChangeEvent} */
+      new IDBVersionChangeEvent('versionchange', {
         oldVersion,
         newVersion
       });
       return new SyncPromise(function (resolve) {
         setTimeout(() => {
           entry.dispatchEvent(e); // No need to catch errors
-          resolve();
+          resolve(undefined);
         });
       });
     });
-  }, SyncPromise.resolve()).then(function () {
+  }, SyncPromise.resolve(undefined)).then(function () {
     if (connectionsClosed()) {
       return undefined;
     }
@@ -7509,11 +8610,12 @@ function triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersio
       const unblocking = {
         check() {
           if (connectionsClosed()) {
-            resolve();
+            resolve(undefined);
           }
         }
       };
-      const e = new IDBVersionChangeEvent('blocked', {
+      const e = /** @type {Event & IDBVersionChangeEvent} */
+      new IDBVersionChangeEvent('blocked', {
         oldVersion,
         newVersion
       });
@@ -7526,13 +8628,33 @@ function triggerAnyVersionChangeAndBlockedEvents(openConnections, req, oldVersio
             }
           });
         } else {
-          resolve();
+          resolve(undefined);
         }
       });
     });
   });
 }
+
+/**
+ * @typedef {import('websql-configurable/lib/websql/WebSQLDatabase.js').default & {
+ *   _db: {
+ *     _db: {
+ *       close: (errBack: (err: Error) => void) => void
+ *     }
+ *   }
+ * }} DatabaseFull
+ */
+
+/**
+ * @type {{
+ *   [key: string]: {
+ *     [key: string]: DatabaseFull
+ *   }
+ * }}
+ */
 const websqlDBCache = {};
+
+/** @type {import('websql-configurable/lib/websql/WebSQLDatabase.js').default} */
 let sysdb;
 let nameCounter = 0;
 
@@ -7548,18 +8670,18 @@ function getLatestCachedWebSQLVersion(name) {
 
 /**
  * @param {string} name
- * @returns {WebSQLDb}
+ * @returns {DatabaseFull}
  */
 function getLatestCachedWebSQLDB(name) {
   return websqlDBCache[name] && websqlDBCache[name][getLatestCachedWebSQLVersion(name)];
 }
 
 /**
- * @param {} __openDatabase
- * @param {} name
- * @param {} escapedDatabaseName
- * @param {} databaseDeleted
- * @param {} dbError
+ * @param {OpenDatabase} __openDatabase
+ * @param {string} name
+ * @param {string} escapedDatabaseName
+ * @param {DatabaseDeleted} databaseDeleted
+ * @param {(tx: SQLTransaction|Error|SQLError, err?: SQLError) => boolean} dbError
  * @returns {void}
  */
 function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, databaseDeleted, dbError) {
@@ -7576,7 +8698,12 @@ function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, dat
       console.error('The `openDatabase` implementation does not have the expected `._db._db.close` method for closing the database');
       return;
     }
-    sqliteDB.close(function (err) {
+    sqliteDB.close(
+    /**
+     * @param {Error} err
+     * @returns {void}
+     */
+    err => {
       if (err) {
         console.warn('Error closing (destroying) memory database');
         return;
@@ -7599,7 +8726,7 @@ function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, dat
     });
     return;
   }
-  const sqliteDB = __openDatabase(path.join(CFG.databaseBasePath || '', escapedDatabaseName), 1, name, CFG.DEFAULT_DB_SIZE);
+  const sqliteDB = __openDatabase(path.join(CFG.databaseBasePath || '', escapedDatabaseName), '1', name, CFG.DEFAULT_DB_SIZE);
   sqliteDB.transaction(function (tx) {
     tx.executeSql('SELECT "name" FROM __sys__', [], function (tx, data) {
       const tables = data.rows;
@@ -7617,51 +8744,54 @@ function cleanupDatabaseResources(__openDatabase, name, escapedDatabaseName, dat
             deleteTables(i + 1);
           }, function () {
             deleteTables(i + 1);
+            return true;
           });
         }
       })(0);
     }, function (e) {
       // __sys__ table does not exist, but that does not mean delete did not happen
       databaseDeleted();
+      return true;
     });
   });
 }
 
 /**
-* @callback CreateSysDBSuccessCallback
-* @returns {void}
-*/
+ * @callback CreateSysDBSuccessCallback
+ * @returns {void}
+ */
 
 /**
  * Creates the sysDB to keep track of version numbers for databases.
- * @param {openDatabase} __openDatabase
+ * @param {OpenDatabase} __openDatabase
  * @param {CreateSysDBSuccessCallback} success
- * @param {DOMException} failure
+ * @param {(tx: SQLTransaction|SQLError|Error, err?: SQLError) => void} failure
  * @returns {void}
  */
 function createSysDB(__openDatabase, success, failure) {
   /**
    *
-   * @param tx
-   * @param err
+   * @param {boolean|SQLTransaction|SQLError} tx
+   * @param {SQLError} [err]
+   * @returns {void}
    */
   function sysDbCreateError(tx, err) {
-    err = webSQLErrback(err || tx);
+    const er = webSQLErrback( /** @type {SQLError} */err || tx);
     CFG.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
-    failure(err);
+    failure(er);
   }
   if (sysdb) {
     success();
   } else {
-    sysdb = __openDatabase(typeof CFG.memoryDatabase === 'string' ? CFG.memoryDatabase : path.join(typeof CFG.sysDatabaseBasePath === 'string' ? CFG.sysDatabaseBasePath : CFG.databaseBasePath || '', '__sysdb__' + (CFG.addSQLiteExtension !== false ? '.sqlite' : '')), 1, 'System Database', CFG.DEFAULT_DB_SIZE);
+    sysdb = __openDatabase(typeof CFG.memoryDatabase === 'string' ? CFG.memoryDatabase : path.join(typeof CFG.sysDatabaseBasePath === 'string' ? CFG.sysDatabaseBasePath : CFG.databaseBasePath || '', '__sysdb__' + (CFG.addSQLiteExtension !== false ? '.sqlite' : '')), '1', 'System Database', CFG.DEFAULT_DB_SIZE);
     sysdb.transaction(function (systx) {
       systx.executeSql('CREATE TABLE IF NOT EXISTS dbVersions (name BLOB, version INT);', [], function (systx) {
         if (!CFG.useSQLiteIndexes) {
           success();
           return;
         }
-        systx.executeSql('CREATE INDEX IF NOT EXISTS dbvname ON dbVersions(name)', [], success, sysDbCreateError);
-      }, sysDbCreateError);
+        systx.executeSql('CREATE INDEX IF NOT EXISTS dbvname ON dbVersions(name)', [], success, /** @type {SQLStatementErrorCallback} */sysDbCreateError);
+      }, /** @type {SQLStatementErrorCallback} */sysDbCreateError);
     }, sysDbCreateError);
   }
 }
@@ -7674,32 +8804,48 @@ function createSysDB(__openDatabase, success, failure) {
 function IDBFactory() {
   throw new TypeError('Illegal constructor');
 }
+
+/**
+ * @typedef {(
+ *   name: string, version: string, displayName: string, estimatedSize: number
+ * ) => import('websql-configurable/lib/websql/WebSQLDatabase.js').default} OpenDatabase
+ */
+
+/**
+ * @typedef {globalThis.IDBFactory & {
+ *   __openDatabase: OpenDatabase,
+ *   __connections: {
+ *     [key: string]: import('./IDBDatabase.js').IDBDatabaseFull[]
+ *   }
+* }} IDBFactoryFull
+ */
+
 const IDBFactoryAlias = IDBFactory;
 /**
- *
+ * @returns {IDBFactoryFull}
  */
 IDBFactory.__createInstance = function () {
   /**
-   *
+   * @class
    */
   function IDBFactory() {
     this[Symbol.toStringTag] = 'IDBFactory';
     this.__connections = {};
   }
   IDBFactory.prototype = IDBFactoryAlias.prototype;
+
+  // @ts-expect-error It's ok
   return new IDBFactory();
 };
 
-/* eslint-disable jsdoc/check-param-names */
 /**
  * The IndexedDB Method to create a new database and return the DB.
  * @param {string} name
- * @param {number} version
+ * @this {IDBFactoryFull}
  * @throws {TypeError} Illegal invocation or no arguments (for database name)
  * @returns {IDBOpenDBRequest}
  */
 IDBFactory.prototype.open = function (name /* , version */) {
-  /* eslint-enable jsdoc/check-param-names */
   const me = this;
   if (!(me instanceof IDBFactory)) {
     throw new TypeError('Illegal invocation');
@@ -7727,6 +8873,8 @@ IDBFactory.prototype.open = function (name /* , version */) {
   const sqlSafeName = escapeSQLiteStatement(name);
   const useMemoryDatabase = typeof CFG.memoryDatabase === 'string';
   const useDatabaseCache = CFG.cacheDatabaseInstances !== false || useMemoryDatabase;
+
+  /** @type {string} */
   let escapedDatabaseName;
   // eslint-disable-next-line no-useless-catch
   try {
@@ -7738,36 +8886,39 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
   /**
    *
-   * @param tx
-   * @param err
+   * @param {SQLTransaction|Error|SQLError} tx
+   * @param {SQLError} [err]
+   * @returns {boolean}
    */
   function dbCreateError(tx, err) {
     if (calledDbCreateError) {
-      return;
+      return true;
     }
-    err = err ? webSQLErrback(err) : tx;
+    const er = err ? webSQLErrback(err) : /** @type {Error} */tx;
     calledDbCreateError = true;
     // Re: why bubbling here (and how cancelable is only really relevant for `window.onerror`) see: https://github.com/w3c/IndexedDB/issues/86
-    const evt = createEvent('error', err, {
+    const evt = createEvent('error', er, {
       bubbles: true,
       cancelable: true
     });
     req.__done = true;
-    req.__error = err;
+    req.__error = er;
     req.__result = undefined; // Must be undefined if an error per `result` getter
     req.dispatchEvent(evt);
+    return true;
   }
 
   /**
    *
-   * @param tx
-   * @param db
-   * @param oldVersion
+   * @param {SQLTransaction} tx
+   * @param {DatabaseFull} db
+   * @param {Integer} oldVersion
+   * @returns {void}
    */
   function setupDatabase(tx, db, oldVersion) {
     tx.executeSql('SELECT "name", "keyPath", "autoInc", "indexList" FROM __sys__', [], function (tx, data) {
       /**
-       *
+       * @returns {void}
        */
       function finishRequest() {
         req.__result = connection;
@@ -7784,9 +8935,10 @@ IDBFactory.prototype.open = function (name /* , version */) {
           // DB Upgrade in progress
           /**
            *
-           * @param systx
-           * @param err
-           * @param cb
+           * @param {SQLTransaction} systx
+           * @param {boolean|SQLError|DOMException|Error} err
+           * @param {(tx?: SQLTransaction|SQLError, err?: SQLError|SQLResultSet) => boolean} cb
+           * @returns {void}
            */
           let sysdbFinishedCb = function (systx, err, cb) {
             if (err) {
@@ -7798,7 +8950,9 @@ IDBFactory.prototype.open = function (name /* , version */) {
                 sysdb.transaction(function (systx) {
                   /**
                    *
-                   * @param msg
+                   * @param {string} msg
+                   * @throws {Error}
+                   * @returns {never}
                    */
                   function reportError(msg) {
                     throw new Error('Unable to roll back upgrade transaction!' + (msg || ''));
@@ -7807,10 +8961,15 @@ IDBFactory.prototype.open = function (name /* , version */) {
                   // Attempt to revert
                   if (oldVersion === 0) {
                     systx.executeSql('DELETE FROM dbVersions WHERE "name" = ?', [sqlSafeName], function () {
+                      // @ts-expect-error Force to work
                       cb(reportError); // eslint-disable-line promise/no-callback-in-promise
-                    }, reportError);
+                    },
+                    // @ts-expect-error Force to work
+                    reportError);
                   } else {
-                    systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [oldVersion, sqlSafeName], cb, reportError);
+                    systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [oldVersion, sqlSafeName], cb,
+                    // @ts-expect-error Force to work
+                    reportError);
                   }
                 });
               }
@@ -7822,10 +8981,11 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
           sysdb.transaction(function (systx) {
             /**
-             *
+             * @returns {void}
              */
             function versionSet() {
-              const e = new IDBVersionChangeEvent('upgradeneeded', {
+              const e = /** @type {import('eventtargeter').EventWithProps & Event & IDBVersionChangeEvent} */
+              new IDBVersionChangeEvent('upgradeneeded', {
                 oldVersion,
                 newVersion: version
               });
@@ -7835,7 +8995,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
               req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded(tx, args, finished, error) {
                 req.dispatchEvent(e);
                 if (e.__legacyOutputDidListenersThrowError) {
-                  logError('Error', 'An error occurred in an upgradeneeded handler attached to request chain', e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
+                  logError('Error', 'An error occurred in an upgradeneeded handler attached to request chain', /** @type {Error} */e.__legacyOutputDidListenersThrowError); // We do nothing else with this error as per spec
                   req.transaction.__abortTransaction(createDOMException('AbortError', 'A request was aborted.'));
                   return;
                 }
@@ -7843,12 +9003,14 @@ IDBFactory.prototype.open = function (name /* , version */) {
               });
               req.transaction.on__beforecomplete = function (ev) {
                 connection.__upgradeTransaction = null;
+                /** @type {import('./IDBDatabase.js').IDBDatabaseFull} */
                 req.__result.__versionTransaction = null;
                 sysdbFinishedCb(systx, false, function () {
                   req.transaction.__transFinishedCb(false, function () {
                     ev.complete();
                     req.__transaction = null;
                   });
+                  return true;
                 });
               };
               req.transaction.on__preabort = function () {
@@ -7870,15 +9032,18 @@ IDBFactory.prototype.open = function (name /* , version */) {
                   const err = createDOMException('AbortError', 'The upgrade transaction was aborted.');
                   sysdbFinishedCb(systx, err, function (reportError) {
                     if (oldVersion === 0) {
-                      cleanupDatabaseResources(me.__openDatabase, name, escapedDatabaseName, dbCreateError.bind(null, err), reportError || dbCreateError);
-                      return;
+                      cleanupDatabaseResources(me.__openDatabase, name, escapedDatabaseName, dbCreateError.bind(null, err),
+                      // @ts-expect-error It's ok
+                      reportError || dbCreateError);
+                      return true;
                     }
                     dbCreateError(err);
+                    return true;
                   });
                 });
               };
               req.transaction.on__complete = function () {
-                if (req.__result.__closePending) {
+                if ( /** @type {import('./IDBDatabase.js').IDBDatabaseFull} */req.__result.__closePending) {
                   req.__transaction = null;
                   const err = createDOMException('AbortError', 'The connection has been closed.');
                   dbCreateError(err);
@@ -7909,7 +9074,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
             } else {
               systx.executeSql('UPDATE dbVersions SET "version" = ? WHERE "name" = ?', [version, sqlSafeName], versionSet, dbCreateError);
             }
-          }, dbCreateError, null, function (currentTask, err, done, rollback, commit) {
+          }, dbCreateError, undefined, function (currentTask, err, done, rollback, commit) {
             if (currentTask.readOnly || err) {
               return true;
             }
@@ -7937,14 +9102,16 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
   /**
    *
-   * @param oldVersion
+   * @param {Integer} oldVersion
+   * @returns {void}
    */
   function openDB(oldVersion) {
+    /** @type {DatabaseFull} */
     let db;
     if ((useMemoryDatabase || useDatabaseCache) && name in websqlDBCache && websqlDBCache[name][version]) {
       db = websqlDBCache[name][version];
     } else {
-      db = me.__openDatabase(useMemoryDatabase ? CFG.memoryDatabase : path.join(CFG.databaseBasePath || '', escapedDatabaseName), 1, name, CFG.DEFAULT_DB_SIZE);
+      db = me.__openDatabase(useMemoryDatabase ? CFG.memoryDatabase : path.join(CFG.databaseBasePath || '', escapedDatabaseName), '1', name, CFG.DEFAULT_DB_SIZE);
       if (useDatabaseCache) {
         if (!(name in websqlDBCache)) {
           websqlDBCache[name] = {};
@@ -7969,7 +9136,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
     db.transaction(function (tx) {
       tx.executeSql('CREATE TABLE IF NOT EXISTS __sys__ (name BLOB, keyPath BLOB, autoInc BOOLEAN, indexList BLOB, currNum INTEGER)', [], function () {
         /**
-         *
+         * @returns {void}
          */
         function setup() {
           setupDatabase(tx, db, oldVersion);
@@ -7979,7 +9146,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
           return;
         }
         tx.executeSql('CREATE INDEX IF NOT EXISTS sysname ON __sys__(name)', [], setup, dbCreateError);
-      }, dbCreateError);
+      }, /** @type {SQLStatementErrorCallback} */dbCreateError);
     }, dbCreateError);
   }
   addRequestToConnectionQueue(req, name, /* origin */undefined, function (req) {
@@ -8013,6 +9180,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
 /**
  * Deletes a database.
  * @param {string} name
+ * @this {IDBFactoryFull}
  * @returns {IDBOpenDBRequest}
  */
 IDBFactory.prototype.deleteDatabase = function (name) {
@@ -8028,6 +9196,8 @@ IDBFactory.prototype.deleteDatabase = function (name) {
   }
   name = String(name); // cast to a string
   const sqlSafeName = escapeSQLiteStatement(name);
+
+  /** @type {string} */
   let escapedDatabaseName;
   // eslint-disable-next-line no-useless-catch
   try {
@@ -8045,8 +9215,9 @@ IDBFactory.prototype.deleteDatabase = function (name) {
 
   /**
    *
-   * @param err
-   * @param cb
+   * @param {boolean} err
+   * @param {(erred?: boolean) => void} cb
+   * @returns {void}
    */
   let sysdbFinishedCbDelete = function (err, cb) {
     cb(err);
@@ -8057,26 +9228,28 @@ IDBFactory.prototype.deleteDatabase = function (name) {
   //  `UnknownError` as we may require upon a SQL deletion error
   /**
    *
-   * @param tx
-   * @param err
+   * @param {SQLTransaction|SQLError|Error} tx
+   * @param {SQLError|boolean} [err]
+   * @returns {boolean}
    */
   function dbError(tx, err) {
     if (calledDBError || err === true) {
-      return;
+      return true;
     }
-    err = webSQLErrback(err || tx);
+    const er = webSQLErrback( /** @type {SQLError} */err || tx);
     sysdbFinishedCbDelete(true, function () {
       req.__done = true;
-      req.__error = err;
+      req.__error = er;
       req.__result = undefined; // Must be undefined if an error per `result` getter
       // Re: why bubbling here (and how cancelable is only really relevant for `window.onerror`) see: https://github.com/w3c/IndexedDB/issues/86
-      const e = createEvent('error', err, {
+      const e = createEvent('error', er, {
         bubbles: true,
         cancelable: true
       });
       req.dispatchEvent(e);
       calledDBError = true;
     });
+    return true;
   }
   addRequestToConnectionQueue(req, name, /* origin */undefined, function (req) {
     createSysDB(me.__openDatabase, function () {
@@ -8089,16 +9262,15 @@ IDBFactory.prototype.deleteDatabase = function (name) {
       function completeDatabaseDelete() {
         req.__result = undefined;
         req.__done = true;
-        const e = new IDBVersionChangeEvent('success', {
+        const e = /** @type {Event & IDBVersionChangeEvent} */
+        new IDBVersionChangeEvent('success', {
           oldVersion: version,
           newVersion: null
         });
         req.dispatchEvent(e);
       }
 
-      /**
-       * @returns {void}
-       */
+      /** @type {DatabaseDeleted} */
       function databaseDeleted() {
         sysdbFinishedCbDelete(false, function () {
           if (useDatabaseCache && name in websqlDBCache) {
@@ -8134,7 +9306,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                 //    above code with `DELETE FROM dbVersions`)
                 cleanupDatabaseResources(me.__openDatabase, name, escapedDatabaseName, databaseDeleted, dbError);
               }, dbError);
-            }, dbError, null, function (currentTask, err, done, rollback, commit) {
+            }, dbError, undefined, function (currentTask, err, done, rollback, commit) {
               if (currentTask.readOnly || err) {
                 return true;
               }
@@ -8148,6 +9320,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
               return false;
             });
             return undefined;
+            // @ts-expect-error It's ok
           }, dbError);
           return undefined;
         }, dbError);
@@ -8159,8 +9332,10 @@ IDBFactory.prototype.deleteDatabase = function (name) {
 
 /**
  *
- * @param key1
- * @param key2
+ * @param {import('./Key.js').Key} key1
+ * @param {import('./Key.js').Key} key2
+ * @throws {TypeError}
+ * @returns {0|1|-1}
  */
 IDBFactory.prototype.cmp = function (key1, key2) {
   if (!(this instanceof IDBFactory)) {
@@ -8179,7 +9354,11 @@ IDBFactory.prototype.cmp = function (key1, key2) {
 /**
 * May return outdated information if a database has since been deleted.
 * @see https://github.com/w3c/IndexedDB/pull/240/files
-* @returns {Promise<string[]>}
+* @this {IDBFactoryFull}
+* @returns {Promise<{
+*   name: string,
+*   version: Integer
+* }[]>}
 */
 IDBFactory.prototype.databases = function () {
   const me = this;
@@ -8194,16 +9373,18 @@ IDBFactory.prototype.databases = function () {
     }
     /**
      *
-     * @param tx
-     * @param err
+     * @param {true|SQLTransaction|SQLError|DOMException|Error} tx
+     * @param {SQLError|DOMException|Error} [err]
+     * @returns {boolean}
      */
     function dbGetDatabaseNamesError(tx, err) {
       if (calledDbCreateError) {
-        return;
+        return true;
       }
-      err = err ? webSQLErrback(err) : tx;
+      const er = err ? webSQLErrback( /** @type {SQLError} */err) : tx;
       calledDbCreateError = true;
-      reject(err);
+      reject(er);
+      return true;
     }
     createSysDB(me.__openDatabase, function () {
       sysdb.readTransaction(function (sysReadTx) {
@@ -8235,19 +9416,22 @@ IDBFactory.prototype.databases = function () {
 * @param {Integer} connIdx
 * @param {string} msg
 * @throws {TypeError}
+* @this {IDBFactoryFull}
 * @returns {void}
 */
 IDBFactory.prototype.__forceClose = function (dbName, connIdx, msg) {
   const me = this;
   /**
    *
-   * @param conn
+   * @param {import('./IDBDatabase.js').IDBDatabaseFull} conn
+   * @returns {void}
    */
   function forceClose(conn) {
     conn.__forceClose(msg);
   }
   if (isNullish(dbName)) {
     Object.values(me.__connections).forEach(conn => {
+      // @ts-expect-error It's ok
       forceClose(conn);
     });
   } else if (!me.__connections[dbName]) {
@@ -8265,7 +9449,8 @@ IDBFactory.prototype.__forceClose = function (dbName, connIdx, msg) {
 
 /**
  *
- * @param origin
+ * @param {string} [origin]
+ * @returns {void}
  */
 IDBFactory.prototype.__setConnectionQueueOrigin = function (origin = getOrigin()) {
   connectionQueue[origin] = {};
@@ -8275,6 +9460,52 @@ Object.defineProperty(IDBFactory, 'prototype', {
   writable: false
 });
 const shimIndexedDB = IDBFactory.__createInstance();
+
+/**
+ * @typedef {number} Integer
+ */
+
+/**
+ * @typedef {IDBCursor & {
+ *   primaryKey: import('./Key.js').Key,
+ *   key:  import('./Key.js').Key,
+ *   direction: string,
+ *   source: import('./IDBObjectStore.js').IDBObjectStoreFull|
+ *     import('./IDBIndex.js').IDBIndexFull,
+ *   __request: import('./IDBRequest.js').IDBRequestFull,
+ *   __advanceCount: Integer|undefined,
+ *   __indexSource: boolean,
+ *   __key: import('./Key.js').Key,
+ *   __primaryKey: import('./Key.js').Key,
+ *   __value: import('./Key.js').Value,
+ *   __store: import('./IDBObjectStore.js').IDBObjectStoreFull,
+ *   __range: import('./IDBKeyRange.js').IDBKeyRangeFull|undefined,
+ *   __keyColumnName: string,
+ *   __valueColumnName: string,
+ *   __keyOnly: boolean,
+ *   __valueDecoder: {
+ *     decode: (str: string) => any,
+ *   },
+ *   __count: boolean,
+ *   __prefetchedIndex: Integer,
+ *   __prefetchedData: null|SQLResultSetRowList|{
+ *     data: RowItemNonNull[],
+ *     length: Integer,
+ *     item: (index: Integer) => RowItemNonNull
+ *   },
+ *   __multiEntryIndex: boolean,
+ *   __unique: boolean,
+ *   __sqlDirection: "DESC"|"ASC",
+ *   __matchedKeys: {[key: string]: true},
+ *   __invalidateCache: () => void
+ * }} IDBCursorFull
+ */
+
+/**
+ * @typedef {IDBCursorFull & {
+ *   __request: import('./IDBRequest.js').IDBRequestFull,
+ * }} IDBCursorWithValueFull
+ */
 
 /**
  * @class
@@ -8290,20 +9521,25 @@ const IDBCursorAlias = IDBCursor;
  * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBCursor
  * @param {IDBKeyRange} query
  * @param {string} direction
- * @param {IDBObjectStore} store
- * @param {IDBObjectStore|IDBIndex} source
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
+ * @param {import('./IDBObjectStore.js').IDBObjectStoreFull|
+ *   import('./IDBIndex.js').IDBIndexFull} source
  * @param {string} keyColumnName
  * @param {string} valueColumnName
  * @param {boolean} count
+ * @this {IDBCursorFull}
  * @returns {void}
  */
 IDBCursor.__super = function IDBCursor(query, direction, store, source, keyColumnName, valueColumnName, count) {
   /* eslint-enable func-name-matching */
+  // @ts-expect-error Should be ok
   this[Symbol.toStringTag] = 'IDBCursor';
   defineReadonlyProperties(this, ['key', 'primaryKey', 'request']);
   IDBObjectStore.__invalidStateIfDeleted(store);
   this.__indexSource = instanceOf(source, IDBIndex);
-  if (this.__indexSource) IDBIndex.__invalidStateIfDeleted(source);
+  if (this.__indexSource) {
+    IDBIndex.__invalidStateIfDeleted( /** @type {import('./IDBIndex.js').IDBIndexFull} */source);
+  }
   IDBTransaction.__assertActive(store.transaction);
   const range = convertValueToKeyRange(query);
   if (direction !== undefined && !['next', 'prev', 'nextunique', 'prevunique'].includes(direction)) {
@@ -8333,7 +9569,7 @@ IDBCursor.__super = function IDBCursor(query, direction, store, source, keyColum
   this.__valueDecoder = this.__keyOnly ? Key : Sca;
   this.__count = count;
   this.__prefetchedIndex = -1;
-  this.__multiEntryIndex = this.__indexSource ? source.multiEntry : false;
+  this.__multiEntryIndex = this.__indexSource ? 'multiEntry' in source && source.multiEntry : false;
   this.__unique = this.direction.includes('unique');
   this.__sqlDirection = ['prev', 'prevunique'].includes(this.direction) ? 'DESC' : 'ASC';
   if (range !== undefined) {
@@ -8348,33 +9584,54 @@ IDBCursor.__super = function IDBCursor(query, direction, store, source, keyColum
 /**
  *
  * @param {...any} args
+ * @returns {IDBCursorFull}
  */
 IDBCursor.__createInstance = function (...args) {
   const IDBCursor = IDBCursorAlias.__super;
   IDBCursor.prototype = IDBCursorAlias.prototype;
+
+  // @ts-expect-error It's ok
   return new IDBCursor(...args);
 };
 
 /**
  *
  * @param {...any} args
+ * @this {IDBCursorFull}
+ * @returns {void}
  */
 IDBCursor.prototype.__find = function (...args /* key, tx, success, error, recordsToLoad */) {
   if (this.__multiEntryIndex) {
-    this.__findMultiEntry(...args);
+    const [key, primaryKey, tx, success, error] = args;
+    this.__findMultiEntry(key, primaryKey, tx, success, error);
   } else {
-    this.__findBasic(...args);
+    const [key, primaryKey, tx, success, error, recordsToLoad] = args;
+    this.__findBasic(key, primaryKey, tx, success, error, recordsToLoad);
   }
 };
 
 /**
+ * @typedef {(
+ *   k: import('./Key.js').Key,
+ *   val: import('./Key.js').Value,
+ *   primKey: import('./Key.js').Key
+ * ) => void} KeySuccess
+ */
+
+/**
+ * @typedef {(tx: SQLTransaction|Error|DOMException|SQLError, err?: SQLError) => void} FindError
+ */
+
+/**
  *
- * @param key
- * @param primaryKey
- * @param tx
- * @param success
- * @param error
- * @param recordsToLoad
+ * @param {undefined|import('./Key.js').Key} key
+ * @param {undefined|import('./Key.js').Key} primaryKey
+ * @param {SQLTransaction} tx
+ * @param {KeySuccess} success
+ * @param {FindError} error
+ * @param {Integer|undefined} recordsToLoad
+ * @this {IDBCursorFull}
+ * @returns {void}
  */
 IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error, recordsToLoad) {
   const continueCall = recordsToLoad !== undefined;
@@ -8382,7 +9639,9 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
   const me = this;
   const quotedKeyColumnName = sqlQuote(me.__keyColumnName);
   const quotedKey = sqlQuote('key');
-  let sql = ['SELECT * FROM', escapeStoreNameForSQL(me.__store.__currentName)];
+  const sql = ['SELECT * FROM', escapeStoreNameForSQL(me.__store.__currentName)];
+
+  /** @type {string[]} */
   const sqlValues = [];
   sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
   setSQLForKeyRange(me.__range, quotedKeyColumnName, sql, sqlValues, true, true);
@@ -8393,16 +9652,16 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
   if (primaryKey !== undefined) {
     sql.push('AND', quotedKey, op + '= ?');
     // Key.convertValueToKey(primaryKey); // Already checked by `continuePrimaryKey`
-    sqlValues.push(encode$1(primaryKey));
+    sqlValues.push( /** @type {string} */encode$1(primaryKey));
   }
   if (key !== undefined) {
     sql.push('AND', quotedKeyColumnName, op + '= ?');
     // Key.convertValueToKey(key); // Already checked by `continue` or `continuePrimaryKey`
-    sqlValues.push(encode$1(key));
+    sqlValues.push( /** @type {string} */encode$1(key));
   } else if (continueCall && me.__key !== undefined) {
     sql.push('AND', quotedKeyColumnName, op + ' ?');
     // Key.convertValueToKey(me.__key); // Already checked when stored
-    sqlValues.push(encode$1(me.__key));
+    sqlValues.push( /** @type {string} */encode$1(me.__key));
   }
   if (!me.__count) {
     // 1. Sort by key
@@ -8422,11 +9681,11 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
       // 4. Sort by object store position (if defined and not unique)
       sql.push(',', sqlQuote(me.__valueColumnName), direction);
     }
-    sql.push('LIMIT', recordsToLoad);
+    sql.push('LIMIT', String(recordsToLoad));
   }
-  sql = sql.join(' ');
-  CFG.DEBUG && console.log(sql, sqlValues);
-  tx.executeSql(sql, sqlValues, function (tx, data) {
+  const sqlStr = sql.join(' ');
+  CFG.DEBUG && console.log(sqlStr, sqlValues);
+  tx.executeSql(sqlStr, sqlValues, function (tx, data) {
     if (me.__count) {
       success(undefined, data.rows.length, undefined);
     } else if (data.rows.length > 1) {
@@ -8441,19 +9700,22 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
       success(undefined, undefined, undefined);
     }
   }, function (tx, err) {
-    CFG.DEBUG && console.log('Could not execute Cursor.continue', sql, sqlValues);
+    CFG.DEBUG && console.log('Could not execute Cursor.continue', sqlStr, sqlValues);
     error(err);
+    return true;
   });
 };
 const leftBracketRegex = /\[/gu;
 
 /**
  *
- * @param key
- * @param primaryKey
- * @param tx
- * @param success
- * @param error
+ * @param {undefined|import('./Key.js').Key} key
+ * @param {undefined|import('./Key.js').Key} primaryKey
+ * @param {SQLTransaction} tx
+ * @param {KeySuccess} success
+ * @param {FindError} error
+ * @this {IDBCursorFull}
+ * @returns {void}
  */
 IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, error) {
   const me = this;
@@ -8463,13 +9725,14 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
     return;
   }
   const quotedKeyColumnName = sqlQuote(me.__keyColumnName);
-  let sql = ['SELECT * FROM', escapeStoreNameForSQL(me.__store.__currentName)];
+  const sql = ['SELECT * FROM', escapeStoreNameForSQL(me.__store.__currentName)];
+  /** @type {string[]} */
   const sqlValues = [];
   sql.push('WHERE', quotedKeyColumnName, 'NOT NULL');
   if (me.__range && me.__range.lower !== undefined && Array.isArray(me.__range.upper)) {
     if (me.__range.upper.indexOf(me.__range.lower) === 0) {
       sql.push('AND', quotedKeyColumnName, "LIKE ? ESCAPE '^'");
-      sqlValues.push('%' + sqlLIKEEscape(me.__range.__lowerCached.slice(0, -1)) + '%');
+      sqlValues.push('%' + sqlLIKEEscape( /** @type {string} */me.__range.__lowerCached.slice(0, -1)) + '%');
     }
   }
 
@@ -8480,16 +9743,16 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
   if (primaryKey !== undefined) {
     sql.push('AND', quotedKey, op + '= ?');
     // Key.convertValueToKey(primaryKey); // Already checked by `continuePrimaryKey`
-    sqlValues.push(encode$1(primaryKey));
+    sqlValues.push( /** @type {string} */encode$1(primaryKey));
   }
   if (key !== undefined) {
     sql.push('AND', quotedKeyColumnName, op + '= ?');
     // Key.convertValueToKey(key); // Already checked by `continue` or `continuePrimaryKey`
-    sqlValues.push(encode$1(key));
+    sqlValues.push( /** @type {string} */encode$1(key));
   } else if (me.__key !== undefined) {
     sql.push('AND', quotedKeyColumnName, op + ' ?');
     // Key.convertValueToKey(me.__key); // Already checked when entered
-    sqlValues.push(encode$1(me.__key));
+    sqlValues.push( /** @type {string} */encode$1(me.__key));
   }
   if (!me.__count) {
     // 1. Sort by key
@@ -8508,9 +9771,9 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
       sql.push(',', sqlQuote(me.__valueColumnName), direction);
     }
   }
-  sql = sql.join(' ');
-  CFG.DEBUG && console.log(sql, sqlValues);
-  tx.executeSql(sql, sqlValues, function (tx, data) {
+  const sqlStr = sql.join(' ');
+  CFG.DEBUG && console.log(sqlStr, sqlValues);
+  tx.executeSql(sqlStr, sqlValues, function (tx, data) {
     if (data.rows.length > 0) {
       if (me.__count) {
         // Avoid caching and other processing below
@@ -8530,8 +9793,12 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
         const rowKey = decode$1(rowItem[me.__keyColumnName], true);
         const matches = findMultiEntryMatches(rowKey, me.__range);
         for (const matchingKey of matches) {
+          /**
+           * @type {RowItemNonNull}
+           */
           const clone = {
-            matchingKey: encode$1(matchingKey, true),
+            matchingKey: /** @type {string} */
+            encode$1(matchingKey, true),
             key: rowItem.key
           };
           clone[me.__keyColumnName] = rowItem[me.__keyColumnName];
@@ -8560,6 +9827,10 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
         me.__prefetchedData = {
           data: rows,
           length: rows.length,
+          /**
+           * @param {Integer} index
+           * @returns {RowItemNonNull}
+           */
           item(index) {
             return this.data[index];
           }
@@ -8578,8 +9849,9 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
       success(undefined, undefined, undefined);
     }
   }, function (tx, err) {
-    CFG.DEBUG && console.log('Could not execute Cursor.continue', sql, sqlValues);
+    CFG.DEBUG && console.log('Could not execute Cursor.continue', sqlStr, sqlValues);
     error(err);
+    return true;
   });
 };
 
@@ -8592,14 +9864,14 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
  */
 
 /**
-* @callback IDBCursor.SuccessArg
+* @callback SuccessArg
 * @param {StructuredCloneValue} value
-* @param {IDBRequest} req
+* @param {import('./IDBRequest.js').IDBRequestFull} req
 * @returns {void}
 */
 
 /**
-* @callback IDBCursor.SuccessCallback
+* @callback SuccessCallback
 * @param {IndexedDBKey} key
 * @param {StructuredCloneValue} value
 * @param {IndexedDBKey} primaryKey
@@ -8608,9 +9880,9 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
 
 /**
  * Creates an "onsuccess" callback.
- * @private
- * @param {IDBCursor.SuccessArg} success
- * @returns {IDBCursor.SuccessCallback}
+ * @param {SuccessArg} success
+ * @this {IDBCursorFull}
+ * @returns {SuccessCallback}
  */
 IDBCursor.prototype.__onsuccess = function (success) {
   const me = this;
@@ -8631,9 +9903,24 @@ IDBCursor.prototype.__onsuccess = function (success) {
 };
 
 /**
+ * @typedef {{
+*   matchingKey: string,
+*   key: string,
+*   [k: string]: string
+* }} RowItemNonNull
+*/
+
+/**
  *
- * @param rowItem
- * @param callback
+ * @param {RowItemNonNull} rowItem
+ * @param {(
+ *   key: import('./Key.js').Key,
+ *   val: import('./Key.js').Value,
+ *   primaryKey: import('./Key.js').Key,
+ *   encKey?: string
+ * ) => void} callback
+ * @this {IDBCursorFull}
+ * @returns {void}
  */
 IDBCursor.prototype.__decode = function (rowItem, callback) {
   const me = this;
@@ -8657,24 +9944,31 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
 };
 
 /**
- *
+ * @this {IDBCursorFull}
+ * @returns {void}
  */
 IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
   IDBObjectStore.__invalidStateIfDeleted(this.__store, "The cursor's effective object store has been deleted");
-  if (this.__indexSource) IDBIndex.__invalidStateIfDeleted(this.source, "The cursor's index source has been deleted");
+  if (this.__indexSource) {
+    IDBIndex.__invalidStateIfDeleted( /** @type {import('./IDBIndex.js').IDBIndexFull} */this.source, "The cursor's index source has been deleted");
+  }
 };
 
 /**
- *
+ * @this {IDBCursorFull}
+ * @returns {void}
  */
 IDBCursor.prototype.__invalidateCache = function () {
+  // @ts-expect-error Why is this not being found?
   this.__prefetchedData = null;
 };
 
 /**
  *
- * @param key
- * @param advanceContinue
+ * @param {import('./Key.js').Key} [key]
+ * @param {boolean} [advanceContinue]
+ * @this {IDBCursorFull}
+ * @returns {void}
  */
 IDBCursor.prototype.__continue = function (key, advanceContinue) {
   const me = this;
@@ -8696,28 +9990,33 @@ IDBCursor.prototype.__continue = function (key, advanceContinue) {
 
 /**
  *
- * @param key
- * @param primaryKey
- * @param advanceState
+ * @param {import('./Key.js').Key} key
+ * @param {import('./Key.js').Key} primaryKey
+ * @param {boolean} advanceState
+ * @this {IDBCursorFull}
+ * @returns {void}
  */
 IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) {
   const me = this;
   const recordsToPreloadOnContinue = me.__advanceCount || CFG.cursorPreloadPackSize || 100;
   me.__gotValue = false;
   me.__request.__done = false;
+
+  /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
   me.__store.transaction.__pushToQueue(me.__request, function cursorContinue(tx, args, success, error, executeNextRequest) {
     /**
-     * @param {import('../../src/Key.js').Key} k
-     * @param {import('../../src/Key.js').Value} val
-     * @param {import('../../src/Key.js').Key} primKey
+     * @param {import('./Key.js').Key} k
+     * @param {import('./Key.js').Value} val
+     * @param {import('./Key.js').Key} primKey
      * @returns {void}
      */
     function triggerSuccess(k, val, primKey) {
       if (advanceState) {
-        if (me.__advanceCount >= 2 && k !== undefined) {
+        if (me.__advanceCount && me.__advanceCount >= 2 && k !== undefined) {
           me.__advanceCount--;
           me.__key = k;
           me.__continue(undefined, true);
+          /** @type {() => void} */
           executeNextRequest(); // We don't call success yet but do need to advance the transaction queue
           return;
         }
@@ -8734,7 +10033,7 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
            * @returns {void}
            */
           function checkKey() {
-            const cmpResult = key === undefined || cmp(k, key);
+            const cmpResult = Number(key === undefined) || cmp(k, key);
             if (cmpResult > 0 || cmpResult === 0 && (me.__unique || primaryKey === undefined || cmp(primKey, primaryKey) >= 0)) {
               triggerSuccess(k, val, primKey);
               return;
@@ -8752,15 +10051,18 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
     }
 
     // No (or not enough) pre-fetched data, do query
-    me.__find(key, primaryKey, tx, triggerSuccess, function (...args) {
+    me.__find(key, primaryKey, tx, triggerSuccess, /** @type {FindError} */
+    function (...args) {
       me.__advanceCount = undefined;
-      error(...args);
+      const [t, err] = args;
+      error(t, err);
     }, recordsToPreloadOnContinue);
   });
 };
 
 /**
- *
+ * @this {IDBCursorFull}
+ * @returns {void}
  */
 IDBCursor.prototype.continue = function /* key */
 () {
@@ -8770,8 +10072,10 @@ IDBCursor.prototype.continue = function /* key */
 
 /**
  *
- * @param key
- * @param primaryKey
+ * @param {import('./Key.js').Key} key
+ * @param {import('./Key.js').Key} primaryKey
+ * @this {IDBCursorFull}
+ * @returns {void}
  */
 IDBCursor.prototype.continuePrimaryKey = function (key, primaryKey) {
   const me = this;
@@ -8815,7 +10119,9 @@ IDBCursor.prototype.continuePrimaryKey = function (key, primaryKey) {
 
 /**
  *
- * @param count
+ * @param {Integer} count
+ * @this {IDBCursorFull}
+ * @returns {void}
  */
 IDBCursor.prototype.advance = function (count) {
   const me = this;
@@ -8831,13 +10137,20 @@ IDBCursor.prototype.advance = function (count) {
 };
 
 /**
+ * @typedef {any} AnyValue
+ */
+
+/**
  *
- * @param valueToUpdate
+ * @param {AnyValue} valueToUpdate
+ * @this {IDBCursorFull}
+ * @returns {IDBRequest}
  */
 IDBCursor.prototype.update = function (valueToUpdate) {
   const me = this;
   if (!arguments.length) throw new TypeError('A value must be passed to update()');
   IDBTransaction.__assertActive(me.__store.transaction);
+  /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
   me.__store.transaction.__assertWritable();
   me.__sourceOrEffectiveObjStoreDeleted();
   if (!me.__gotValue) {
@@ -8846,11 +10159,11 @@ IDBCursor.prototype.update = function (valueToUpdate) {
   if (me.__keyOnly) {
     throw createDOMException('InvalidStateError', 'This cursor method cannot be called when the key only flag has been set.');
   }
-  const request = me.__store.transaction.__createRequest(me);
+  const request = /** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.__store.transaction.__createRequest(me);
   const key = me.primaryKey;
 
   /**
-   * @param {import('../../src/Key.js').Value} clonedValue
+   * @param {import('./Key.js').Value} clonedValue
    * @returns {void}
    */
   function addToQueue(clonedValue) {
@@ -8871,11 +10184,13 @@ IDBCursor.prototype.update = function (valueToUpdate) {
 };
 
 /**
- *
+ * @this {IDBCursorFull}
+ * @returns {IDBRequest}
  */
 IDBCursor.prototype.delete = function () {
   const me = this;
   IDBTransaction.__assertActive(me.__store.transaction);
+  /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
   me.__store.transaction.__assertWritable();
   me.__sourceOrEffectiveObjStoreDeleted();
   if (!me.__gotValue) {
@@ -8884,24 +10199,28 @@ IDBCursor.prototype.delete = function () {
   if (me.__keyOnly) {
     throw createDOMException('InvalidStateError', 'This cursor method cannot be called when the key only flag has been set.');
   }
-  return this.__store.transaction.__addToTransactionQueue(function cursorDelete(tx, args, success, error) {
-    me.__find(undefined, undefined, tx, function (key, value, primaryKey) {
-      const sql = 'DELETE FROM  ' + escapeStoreNameForSQL(me.__store.__currentName) + ' WHERE "key" = ?';
-      CFG.DEBUG && console.log(sql, key, primaryKey);
-      // Key.convertValueToKey(primaryKey); // Already checked when entered
-      tx.executeSql(sql, [escapeSQLiteStatement(encode$1(primaryKey))], function (tx, data) {
-        if (data.rowsAffected === 1) {
-          // We don't invalidate the cache (as we don't access it anymore
-          //    and it will set the index off)
-          success(undefined);
-        } else {
-          error('No rows with key found' + key);
-        }
-      }, function (tx, data) {
-        error(data);
-      });
-    }, error);
-  }, undefined, me);
+  return (/** @type {import('./IDBTransaction.js').IDBTransactionFull} */this.__store.transaction.__addToTransactionQueue(function cursorDelete(tx, args, success, error) {
+      me.__find(undefined, undefined, tx, /** @type {KeySuccess} */
+      function (key, value, primaryKey) {
+        const sql = 'DELETE FROM  ' + escapeStoreNameForSQL(me.__store.__currentName) + ' WHERE "key" = ?';
+        CFG.DEBUG && console.log(sql, key, primaryKey);
+        // Key.convertValueToKey(primaryKey); // Already checked when entered
+        tx.executeSql(sql, [escapeSQLiteStatement( /** @type {string} */encode$1(primaryKey))], function (tx, data) {
+          if (data.rowsAffected === 1) {
+            // We don't invalidate the cache (as we don't access it anymore
+            //    and it will set the index off)
+            success(undefined);
+          } else {
+            // @ts-expect-error Apparently ok
+            error('No rows with key found' + key);
+          }
+        }, function (tx, data) {
+          error(data);
+          return true;
+        });
+      }, error);
+    }, undefined, me)
+  );
 };
 IDBCursor.prototype[Symbol.toStringTag] = 'IDBCursorPrototype';
 defineReadonlyOuterInterface(IDBCursor.prototype, ['source', 'direction', 'key', 'primaryKey', 'request']);
@@ -8915,6 +10234,8 @@ Object.defineProperty(IDBCursor, 'prototype', {
 function IDBCursorWithValue() {
   throw new TypeError('Illegal constructor');
 }
+
+// @ts-expect-error It's ok
 IDBCursorWithValue.prototype = Object.create(IDBCursor.prototype);
 Object.defineProperty(IDBCursorWithValue.prototype, 'constructor', {
   enumerable: false,
@@ -8926,17 +10247,23 @@ const IDBCursorWithValueAlias = IDBCursorWithValue;
 /**
  *
  * @param {...any} args
+ * @returns {IDBCursorWithValueFull}
  */
 IDBCursorWithValue.__createInstance = function (...args) {
   /**
    * @class
+   * @this {IDBCursorWithValueFull}
    */
   function IDBCursorWithValue() {
-    IDBCursor.__super.call(this, ...args);
+    const [query, direction, store, source, keyColumnName, valueColumnName, count] = args;
+    IDBCursor.__super.call(this, query, direction, store, source, keyColumnName, valueColumnName, count);
+    // @ts-expect-error It's ok
     this[Symbol.toStringTag] = 'IDBCursorWithValue';
     defineReadonlyProperties(this, 'value');
   }
   IDBCursorWithValue.prototype = IDBCursorWithValueAlias.prototype;
+
+  // @ts-expect-error It's ok
   return new IDBCursorWithValue();
 };
 defineReadonlyOuterInterface(IDBCursorWithValue.prototype, ['value']);
@@ -8945,55 +10272,128 @@ Object.defineProperty(IDBCursorWithValue, 'prototype', {
   writable: false
 });
 
-/* globals self */
+/**
+ * @typedef {any} AnyValue
+ */
 
 /**
- *
- * @param prop
- * @param val
+ * @callback SetConfig
+ * @param {import('./CFG.js').KeyofConfigValues|
+ *   Partial<import('./CFG.js').ConfigValues>} prop
+ * @param {AnyValue} [val]
+ * @throws {Error}
+ * @returns {void}
  */
+
+/** @type {SetConfig} */
 function setConfig(prop, val) {
   if (prop && typeof prop === 'object') {
     Object.entries(prop).forEach(([p, val]) => {
-      setConfig(p, val);
+      setConfig( /** @type {import('./CFG.js').KeyofConfigValues} */
+      p, val);
     });
     return;
   }
   if (!(prop in CFG)) {
     throw new Error(prop + ' is not a valid configuration property');
   }
+  // @ts-expect-error Should not be `never` here!
   CFG[prop] = val;
   if (prop === 'registerSCA' && typeof val === 'function') {
-    register(val);
+    register(
+    /**
+     * @type {(
+     *   preset: import('typeson').Preset
+     * ) => import('typeson').Preset}
+     */
+    val);
   }
 }
 
 /**
+ * @typedef {(
+ *   prop: import('./CFG.js').KeyofConfigValues
+ * ) => import('../src/CFG.js').ConfigValue} GetConfig
+ */
+
+/**
+ * @typedef {(cfg: {
+ *   UnicodeIDStart: string,
+ *   UnicodeIDContinue: string
+ * }) => void} SetUnicodeIdentifiers
+ */
+
+/**
+ * @typedef {(IDBFactory|object) & {
+ *     __useShim: () => void,
+ *     __debug: (val: boolean) => void,
+ *     __setConfig: SetConfig,
+ *     __getConfig: GetConfig,
+ *     __setUnicodeIdentifiers: SetUnicodeIdentifiers,
+ *     __setConnectionQueueOrigin: (origin?: string) => void
+ *   }} ShimIndexedDB
+ */
+
+/**
+ * @typedef {number} Integer
+ */
+
+/**
+ * @typedef {(typeof globalThis|object) & {
+ *   indexedDB?: Partial<IDBFactory>,
+ *   IDBFactory: typeof IDBFactory,
+ *   IDBOpenDBRequest: typeof IDBOpenDBRequest,
+ *   IDBRequest: typeof IDBRequest,
+ *   IDBCursorWithValue: typeof IDBCursorWithValue,
+ *   IDBCursor: typeof IDBCursor,
+ *   IDBDatabase: typeof IDBDatabase,
+ *   IDBTransaction: typeof IDBTransaction,
+ *   IDBKeyRange: typeof IDBKeyRange,
+ *   shimIndexedDB?: ShimIndexedDB
+ * }} ShimmedObject
+ */
+
+/**
  *
- * @param idb
- * @param initialConfig
+ * @param {ShimmedObject} [idb]
+ * @param {import('./CFG.js').ConfigValues} [initialConfig]
+ * @returns {ShimmedObject}
  */
 function setGlobalVars(idb, initialConfig) {
   if (initialConfig) {
     setConfig(initialConfig);
   }
-  const IDB = idb || (typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : typeof global !== 'undefined' ? global : {});
+  const IDB = idb || globalThis || {};
   /**
-   *
-   * @param name
-   * @param value
-   * @param propDesc
+   * @typedef {any} AnyClass
+   */
+  /**
+   * @typedef {any} AnyValue
+   */
+  /**
+   * @typedef {Function} AnyFunction
+   */
+  /**
+   * @param {string} name
+   * @param {AnyClass} value
+   * @param {PropertyDescriptor & {
+   *   shimNS?: object
+   * }|undefined} [propDesc]
+   * @returns {void}
    */
   function shim(name, value, propDesc) {
     if (!propDesc || !Object.defineProperty) {
       try {
         // Try setting the property. This will fail if the property is read-only.
+        // @ts-expect-error It's ok
         IDB[name] = value;
       } catch (e) {
         console.log(e);
       }
     }
-    if (IDB[name] !== value && Object.defineProperty) {
+    if (
+    // @ts-expect-error It's ok
+    IDB[name] !== value && Object.defineProperty) {
       // Setting a read-only property failed, so try re-defining the property
       try {
         let desc = propDesc || {};
@@ -9006,11 +10406,16 @@ function setGlobalVars(idb, initialConfig) {
           }
         } else {
           const o = {
+            /**
+             * @returns {AnyValue}
+             */
             get [name]() {
-              return propDesc.get.call(this);
+              return (/** @type {AnyFunction} */ /** @type {PropertyDescriptor} */propDesc.get.call(this)
+              );
             }
           };
-          desc = Object.getOwnPropertyDescriptor(o, name);
+          desc = /** @type {PropertyDescriptor} */
+          Object.getOwnPropertyDescriptor(o, name);
         }
         Object.defineProperty(IDB, name, desc);
       } catch (e) {
@@ -9019,6 +10424,8 @@ function setGlobalVars(idb, initialConfig) {
         //  get here since no WebSQL to use for shimming)
       }
     }
+
+    // @ts-expect-error It's ok
     if (IDB[name] !== value) {
       typeof console !== 'undefined' && console.warn && console.warn('Unable to shim ' + name);
     }
@@ -9029,11 +10436,12 @@ function setGlobalVars(idb, initialConfig) {
       configurable: true
     });
   }
-  if (IDB.shimIndexedDB) {
+  if ('shimIndexedDB' in IDB && IDB.shimIndexedDB) {
     IDB.shimIndexedDB.__useShim = function () {
       /**
        *
-       * @param prefix
+       * @param {"Shim"|""} [prefix]
+       * @returns {void}
        */
       function setNonIDBGlobals(prefix = '') {
         shim(prefix + 'DOMException', ShimDOMException);
@@ -9077,6 +10485,7 @@ function setGlobalVars(idb, initialConfig) {
             return shimIndexedDB;
           }
         });
+        /** @type {[string, any][]} */
         [['IDBFactory', shimIDBFactory], ['IDBDatabase', IDBDatabase], ['IDBObjectStore', IDBObjectStore], ['IDBIndex', IDBIndex], ['IDBTransaction', IDBTransaction], ['IDBCursor', IDBCursor], ['IDBCursorWithValue', IDBCursorWithValue], ['IDBKeyRange', IDBKeyRange], ['IDBRequest', IDBRequest], ['IDBOpenDBRequest', IDBOpenDBRequest], ['IDBVersionChangeEvent', IDBVersionChangeEvent]].forEach(([prop, obj]) => {
           shim(prop, obj, {
             enumerable: false,
@@ -9111,6 +10520,10 @@ function setGlobalVars(idb, initialConfig) {
             setNonIDBGlobals();
           }
         }
+        /* istanbul ignore next -- TS guard */
+        if (!IDB.shimIndexedDB) {
+          return;
+        }
         IDB.shimIndexedDB.__setConnectionQueueOrigin();
       }
     };
@@ -9118,12 +10531,16 @@ function setGlobalVars(idb, initialConfig) {
       CFG.DEBUG = val;
     };
     IDB.shimIndexedDB.__setConfig = setConfig;
+
+    /** @type {GetConfig} */
     IDB.shimIndexedDB.__getConfig = function (prop) {
       if (!(prop in CFG)) {
         throw new Error(prop + ' is not a valid configuration property');
       }
       return CFG[prop];
     };
+
+    /** @type {SetUnicodeIdentifiers} */
     IDB.shimIndexedDB.__setUnicodeIdentifiers = function ({
       UnicodeIDStart,
       UnicodeIDContinue
@@ -9137,9 +10554,10 @@ function setGlobalVars(idb, initialConfig) {
     // We no-op the harmless set-up properties and methods with a warning; the `IDBFactory` methods,
     //    however (including our non-standard methods), are not stubbed as they ought
     //    to fail earlier rather than potentially having side effects.
-    IDB.shimIndexedDB = {};
+    IDB.shimIndexedDB = /** @type {ShimIndexedDB} */{};
+    /** @type {const} */
     ['__useShim', '__debug', '__setConfig', '__getConfig', '__setUnicodeIdentifiers'].forEach(prop => {
-      IDB.shimIndexedDB[prop] = function () {
+      /** @type {ShimIndexedDB} */IDB.shimIndexedDB[prop] = /** @type {() => any} */function () {
         console.warn('This browser does not have WebSQL to shim.');
       };
     });
@@ -9148,7 +10566,7 @@ function setGlobalVars(idb, initialConfig) {
   // Workaround to prevent an error in Firefox
   if (!('indexedDB' in IDB) && typeof window !== 'undefined') {
     // 2nd condition avoids problems in Node
-    IDB.indexedDB = IDB.indexedDB || IDB.webkitIndexedDB || IDB.mozIndexedDB || IDB.oIndexedDB || IDB.msIndexedDB;
+    IDB.indexedDB = /** @type {IDBFactory} */IDB.indexedDB || 'webkitIndexedDB' in IDB && IDB.webkitIndexedDB || 'mozIndexedDB' in IDB && IDB.mozIndexedDB || 'oIndexedDB' in IDB && IDB.oIndexedDB || 'msIndexedDB' in IDB && IDB.msIndexedDB;
   }
 
   // Detect browsers with known IndexedDB issues (e.g. Android pre-4.4)
@@ -9164,7 +10582,7 @@ function setGlobalVars(idb, initialConfig) {
   // Exclude genuine Safari: http://stackoverflow.com/a/7768006/271577
   // Detect iOS: http://stackoverflow.com/questions/9038625/detect-if-device-is-ios/9039885#9039885
   // and detect version 9: http://stackoverflow.com/a/26363560/271577
-  /(iPad|iPhone|iPod).* os 9_/ui.test(navigator.userAgent) && !window.MSStream // But avoid IE11
+  /(iPad|iPhone|iPod).* os 9_/ui.test(navigator.userAgent) && !('MSStream' in window) // But avoid IE11
   )) {
     poorIndexedDbSupport = true;
   }
@@ -9180,12 +10598,13 @@ function setGlobalVars(idb, initialConfig) {
   if (!CFG.avoidAutoShim && (!IDB.indexedDB || poorIndexedDbSupport) && CFG.win.openDatabase !== undefined) {
     IDB.shimIndexedDB.__useShim();
   } else {
-    IDB.IDBDatabase = IDB.IDBDatabase || IDB.webkitIDBDatabase;
-    IDB.IDBTransaction = IDB.IDBTransaction || IDB.webkitIDBTransaction || {};
-    IDB.IDBCursor = IDB.IDBCursor || IDB.webkitIDBCursor;
-    IDB.IDBKeyRange = IDB.IDBKeyRange || IDB.webkitIDBKeyRange;
+    IDB.IDBDatabase = IDB.IDBDatabase || 'webkitIDBDatabase' in IDB && IDB.webkitIDBDatabase;
+    IDB.IDBTransaction = IDB.IDBTransaction || 'webkitIDBTransaction' in IDB && IDB.webkitIDBTransaction || {};
+    IDB.IDBCursor = IDB.IDBCursor || 'webkitIDBCursor' in IDB && IDB.webkitIDBCursor;
+    IDB.IDBKeyRange = IDB.IDBKeyRange || 'webkitIDBKeyRange' in IDB && IDB.webkitIDBKeyRange;
   }
-  return IDB;
+  return (/** @type {ShimmedObject} */IDB
+  );
 }
 
 var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
@@ -9289,7 +10708,7 @@ timeout.install = function (t) {
   };
 };
 
-var types = [nextTick$1, queueMicrotask, mutation, messageChannel, stateChange, timeout];
+var types$1 = [nextTick$1, queueMicrotask, mutation, messageChannel, stateChange, timeout];
 var draining;
 var currentQueue;
 var queueIndex = -1;
@@ -9335,10 +10754,10 @@ function nextTick() {
 }
 var scheduleDrain;
 var i = -1;
-var len = types.length;
+var len = types$1.length;
 while (++i < len) {
-  if (types[i] && types[i].test && types[i].test()) {
-    scheduleDrain = types[i].install(nextTick);
+  if (types$1[i] && types$1[i].test && types$1[i].test()) {
+    scheduleDrain = types$1[i].install(nextTick);
     break;
   }
 }
@@ -9363,8 +10782,8 @@ Item.prototype.run = function () {
       return fun.apply(null, array);
   }
 };
-var lib = immediate$3;
-function immediate$3(task) {
+var lib$1 = immediate;
+function immediate(task) {
   var args = new Array(arguments.length - 1);
   if (arguments.length > 1) {
     for (var i = 1; i < arguments.length; i++) {
@@ -9377,31 +10796,15 @@ function immediate$3(task) {
     scheduleDrain();
   }
 }
-
-var argsarray$1 = argsArray;
-function argsArray(fun) {
-  return function () {
-    var len = arguments.length;
-    if (len) {
-      var args = [];
-      var i = -1;
-      while (++i < len) {
-        args[i] = arguments[i];
-      }
-      return fun.call(this, args);
-    } else {
-      return fun.call(this, []);
-    }
-  };
-}
+var immediate$1 = /*@__PURE__*/getDefaultExportFromCjs(lib$1);
 
 // Simple FIFO queue implementation to avoid having to do shift()
 // on an array, which is slow.
 
-function Queue$2() {
+function Queue() {
   this.length = 0;
 }
-Queue$2.prototype.push = function (item) {
+Queue.prototype.push = function (item) {
   var node = {
     item: item
   };
@@ -9412,7 +10815,7 @@ Queue$2.prototype.push = function (item) {
   }
   this.length++;
 };
-Queue$2.prototype.shift = function () {
+Queue.prototype.shift = function () {
   var node = this.first;
   if (node) {
     this.first = node.next;
@@ -9422,7 +10825,7 @@ Queue$2.prototype.shift = function () {
     return node.item;
   }
 };
-Queue$2.prototype.slice = function (start, end) {
+Queue.prototype.slice = function (start, end) {
   start = typeof start === 'undefined' ? 0 : start;
   end = typeof end === 'undefined' ? Infinity : end;
   var output = [];
@@ -9436,9 +10839,11 @@ Queue$2.prototype.slice = function (start, end) {
   }
   return output;
 };
-var tinyQueue = Queue$2;
+var tinyQueue = Queue;
+var Queue$1 = /*@__PURE__*/getDefaultExportFromCjs(tinyQueue);
 
 var noopFn = function () {};
+var noop = /*@__PURE__*/getDefaultExportFromCjs(noopFn);
 
 function WebSQLRows(array) {
   this._array = array;
@@ -9447,17 +10852,12 @@ function WebSQLRows(array) {
 WebSQLRows.prototype.item = function (i) {
   return this._array[i];
 };
-function WebSQLResultSet$1(insertId, rowsAffected, rows) {
+function WebSQLResultSet(insertId, rowsAffected, rows) {
   this.insertId = insertId;
   this.rowsAffected = rowsAffected;
   this.rows = new WebSQLRows(rows);
 }
-var WebSQLResultSet_1 = WebSQLResultSet$1;
 
-var noop$1 = noopFn;
-var Queue$1 = tinyQueue;
-var immediate$2 = lib;
-var WebSQLResultSet = WebSQLResultSet_1;
 function errorUnhandled() {
   return true; // a non-truthy return indicates error was handled
 }
@@ -9553,34 +10953,36 @@ function executeSql(self, sql, args, sqlCallback, sqlErrorCallback, executeDelay
     runAllSql(self);
   });
 }
-function WebSQLTransaction$1(websqlDatabase, executeDelay) {
+function WebSQLTransaction(websqlDatabase, executeDelay) {
   this._websqlDatabase = websqlDatabase;
   this._error = null;
   this._complete = false;
   this._runningTimeout = false;
-  this._executeDelay = executeDelay || immediate$2;
+  this._executeDelay = executeDelay || immediate$1;
   this._sqlQueue = new Queue$1();
   if (!websqlDatabase._currentTask.readOnly) {
     // Since we serialize all access to the database, there is no need to
     // run read-only tasks in a transaction. This is a perf boost.
-    this._sqlQueue.push(new SQLTask('BEGIN;', [], noop$1, noop$1));
+    this._sqlQueue.push(new SQLTask('BEGIN;', [], noop, noop));
   }
 }
-WebSQLTransaction$1.prototype.executeSql = function (sql, args, sqlCallback, sqlErrorCallback) {
+
+/**
+ * @param {string} sql
+ * @param {ObjectArray} args
+ * @param {SQLStatementCallback} sqlCallback
+ * @param {SQLStatementErrorCallback} sqlErrorCallback
+ */
+WebSQLTransaction.prototype.executeSql = function (sql, args, sqlCallback, sqlErrorCallback) {
   args = Array.isArray(args) ? args : [];
-  sqlCallback = typeof sqlCallback === 'function' ? sqlCallback : noop$1;
+  sqlCallback = typeof sqlCallback === 'function' ? sqlCallback : noop;
   sqlErrorCallback = typeof sqlErrorCallback === 'function' ? sqlErrorCallback : errorUnhandled;
   executeSql(this, sql, args, sqlCallback, sqlErrorCallback, this._executeDelay);
 };
-WebSQLTransaction$1.prototype._checkDone = function () {
+WebSQLTransaction.prototype._checkDone = function () {
   runAllSql(this);
 };
-var WebSQLTransaction_1 = WebSQLTransaction$1;
 
-var Queue = tinyQueue;
-var immediate$1 = lib;
-var noop = noopFn;
-var WebSQLTransaction = WebSQLTransaction_1;
 var ROLLBACK = [{
   sql: 'ROLLBACK;',
   args: []
@@ -9598,16 +11000,16 @@ function TransactionTask(readOnly, txnCallback, errorCallback, successCallback, 
   this.successCallback = successCallback;
   this.nonstandardTransCb = nonstandardTransCb;
 }
-function WebSQLDatabase$1(dbVersion, db, webSQLOverrides) {
+function WebSQLDatabase(dbVersion, db, webSQLOverrides) {
   this.version = dbVersion;
   this._db = db;
-  this._txnQueue = new Queue();
+  this._txnQueue = new Queue$1();
   this._running = false;
   this._currentTask = null;
   this._transactionDelay = webSQLOverrides.transactionDelay || immediate$1;
   this._executeDelay = webSQLOverrides.executeDelay;
 }
-WebSQLDatabase$1.prototype._onTransactionComplete = function (err) {
+WebSQLDatabase.prototype._onTransactionComplete = function (err) {
   var self = this;
   function done(er) {
     if (er) {
@@ -9649,7 +11051,7 @@ WebSQLDatabase$1.prototype._onTransactionComplete = function (err) {
     commit();
   }
 };
-WebSQLDatabase$1.prototype._runTransaction = function () {
+WebSQLDatabase.prototype._runTransaction = function () {
   var self = this;
   var txn = new WebSQLTransaction(self, this._executeDelay);
   this._transactionDelay(function () {
@@ -9657,7 +11059,7 @@ WebSQLDatabase$1.prototype._runTransaction = function () {
     txn._checkDone();
   });
 };
-WebSQLDatabase$1.prototype._runNextTransaction = function () {
+WebSQLDatabase.prototype._runNextTransaction = function () {
   if (this._running) {
     return;
   }
@@ -9669,7 +11071,7 @@ WebSQLDatabase$1.prototype._runNextTransaction = function () {
   this._running = true;
   this._runTransaction();
 };
-WebSQLDatabase$1.prototype._createTransaction = function (readOnly, txnCallback, errorCallback, successCallback, nonstandardTransCb) {
+WebSQLDatabase.prototype._createTransaction = function (readOnly, txnCallback, errorCallback, successCallback, nonstandardTransCb) {
   errorCallback = errorCallback || noop;
   successCallback = successCallback || noop;
   if (typeof txnCallback !== 'function') {
@@ -9678,22 +11080,37 @@ WebSQLDatabase$1.prototype._createTransaction = function (readOnly, txnCallback,
   this._txnQueue.push(new TransactionTask(readOnly, txnCallback, errorCallback, successCallback, nonstandardTransCb));
   this._runNextTransaction();
 };
-WebSQLDatabase$1.prototype.transaction = function (txnCallback, errorCallback, successCallback, nonstandardTransCb) {
+
+/**
+ * @param {(trans: import('./WebSQLTransaction.js').default) => void} txnCallback
+ * @param {(err: SQLError) => void} [errorCallback]
+ * @param {() => void} [successCallback]
+ * @param {(
+ *   currentTask: TransactionTask,
+ *   err: Error,
+ *   done: () => void,
+ *   rollback: (err: boolean|Error|SQLError, cb: () => void) => void,
+ *   commit: (cb: () => void) => void
+ * ) => boolean} [nonstandardTransCb]
+ */
+WebSQLDatabase.prototype.transaction = function (txnCallback, errorCallback, successCallback, nonstandardTransCb) {
   this._createTransaction(false, txnCallback, errorCallback, successCallback, nonstandardTransCb);
 };
-WebSQLDatabase$1.prototype.readTransaction = function (txnCallback, errorCallback, successCallback) {
+
+/**
+ * @param {(trans: import('./WebSQLTransaction.js').default) => void} txnCallback
+ * @param {(err: Error) => void} [errorCallback]
+ * @param {() => void} [successCallback]
+ */
+WebSQLDatabase.prototype.readTransaction = function (txnCallback, errorCallback, successCallback) {
   this._createTransaction(true, txnCallback, errorCallback, successCallback);
 };
-var WebSQLDatabase_1 = WebSQLDatabase$1;
 
-var immediate = lib;
-var argsarray = argsarray$1;
-var WebSQLDatabase = WebSQLDatabase_1;
-function customOpenDatabase$1(SQLiteDatabase, opts) {
+function customOpenDatabase(SQLiteDatabase, opts) {
   opts = opts || {};
   var sqliteOpts = opts.sqlite;
   var webSQLOverrides = opts.websql || {};
-  var openDelay = webSQLOverrides.openDelay || immediate;
+  var openDelay = webSQLOverrides.openDelay || immediate$1;
   function createDb(dbName, dbVersion) {
     var sqliteDatabase = new SQLiteDatabase(dbName, sqliteOpts);
     return new WebSQLDatabase(dbVersion, sqliteDatabase, webSQLOverrides);
@@ -9714,23 +11131,12823 @@ function customOpenDatabase$1(SQLiteDatabase, opts) {
     }
     return db;
   }
-  return argsarray(openDatabase);
+  return (...args) => openDatabase(args);
 }
-var custom$1 = customOpenDatabase$1;
 
-var custom = custom$1;
-var customOpenDatabase = /*@__PURE__*/getDefaultExportFromCjs(custom);
+var sqlite3$1 = {exports: {}};
 
-function SQLiteResult$1(error, insertId, rowsAffected, rows) {
+function commonjsRequire(path) {
+	throw new Error('Could not dynamically require "' + path + '". Please configure the dynamicRequireTargets or/and ignoreDynamicRequires option of @rollup/plugin-commonjs appropriately for this require call to work.');
+}
+
+var sqlite3Binding = {exports: {}};
+
+var nodePreGyp = {exports: {}};
+
+var s3_setup = {exports: {}};
+
+(function (module, exports) {
+
+  module.exports = exports;
+  const url = require$$0;
+  const fs = require$$0$1;
+  const path$1 = path;
+  module.exports.detect = function (opts, config) {
+    const to = opts.hosted_path;
+    const uri = url.parse(to);
+    config.prefix = !uri.pathname || uri.pathname === '/' ? '' : uri.pathname.replace('/', '');
+    if (opts.bucket && opts.region) {
+      config.bucket = opts.bucket;
+      config.region = opts.region;
+      config.endpoint = opts.host;
+      config.s3ForcePathStyle = opts.s3ForcePathStyle;
+    } else {
+      const parts = uri.hostname.split('.s3');
+      const bucket = parts[0];
+      if (!bucket) {
+        return;
+      }
+      if (!config.bucket) {
+        config.bucket = bucket;
+      }
+      if (!config.region) {
+        const region = parts[1].slice(1).split('.')[0];
+        if (region === 'amazonaws') {
+          config.region = 'us-east-1';
+        } else {
+          config.region = region;
+        }
+      }
+    }
+  };
+  module.exports.get_s3 = function (config) {
+    if (process.env.node_pre_gyp_mock_s3) {
+      // here we're mocking. node_pre_gyp_mock_s3 is the scratch directory
+      // for the mock code.
+      const AWSMock = require$$3;
+      const os = require$$4;
+      AWSMock.config.basePath = `${os.tmpdir()}/mock`;
+      const s3 = AWSMock.S3();
+
+      // wrapped callback maker. fs calls return code of ENOENT but AWS.S3 returns
+      // NotFound.
+      const wcb = fn => (err, ...args) => {
+        if (err && err.code === 'ENOENT') {
+          err.code = 'NotFound';
+        }
+        return fn(err, ...args);
+      };
+      return {
+        listObjects(params, callback) {
+          return s3.listObjects(params, wcb(callback));
+        },
+        headObject(params, callback) {
+          return s3.headObject(params, wcb(callback));
+        },
+        deleteObject(params, callback) {
+          return s3.deleteObject(params, wcb(callback));
+        },
+        putObject(params, callback) {
+          return s3.putObject(params, wcb(callback));
+        }
+      };
+    }
+
+    // if not mocking then setup real s3.
+    const AWS = require$$5$1;
+    AWS.config.update(config);
+    const s3 = new AWS.S3();
+
+    // need to change if additional options need to be specified.
+    return {
+      listObjects(params, callback) {
+        return s3.listObjects(params, callback);
+      },
+      headObject(params, callback) {
+        return s3.headObject(params, callback);
+      },
+      deleteObject(params, callback) {
+        return s3.deleteObject(params, callback);
+      },
+      putObject(params, callback) {
+        return s3.putObject(params, callback);
+      }
+    };
+  };
+
+  //
+  // function to get the mocking control function. if not mocking it returns a no-op.
+  //
+  // if mocking it sets up the mock http interceptors that use the mocked s3 file system
+  // to fulfill reponses.
+  module.exports.get_mockS3Http = function () {
+    let mock_s3 = false;
+    if (!process.env.node_pre_gyp_mock_s3) {
+      return () => mock_s3;
+    }
+    const nock = require$$6;
+    // the bucket used for testing, as addressed by https.
+    const host = 'https://mapbox-node-pre-gyp-public-testing-bucket.s3.us-east-1.amazonaws.com';
+    const mockDir = process.env.node_pre_gyp_mock_s3 + '/mapbox-node-pre-gyp-public-testing-bucket';
+
+    // function to setup interceptors. they are "turned off" by setting mock_s3 to false.
+    const mock_http = () => {
+      // eslint-disable-next-line no-unused-vars
+      function get(uri, requestBody) {
+        const filepath = path$1.join(mockDir, uri.replace('%2B', '+'));
+        try {
+          fs.accessSync(filepath, fs.constants.R_OK);
+        } catch (e) {
+          return [404, 'not found\n'];
+        }
+
+        // the mock s3 functions just write to disk, so just read from it.
+        return [200, fs.createReadStream(filepath)];
+      }
+
+      // eslint-disable-next-line no-unused-vars
+      return nock(host).persist().get(() => mock_s3) // mock any uri for s3 when true
+      .reply(get);
+    };
+
+    // setup interceptors. they check the mock_s3 flag to determine whether to intercept.
+    mock_http();
+    // function to turn matching all requests to s3 on/off.
+    const mockS3Http = action => {
+      const previous = mock_s3;
+      if (action === 'off') {
+        mock_s3 = false;
+      } else if (action === 'on') {
+        mock_s3 = true;
+      } else if (action !== 'get') {
+        throw new Error(`illegal action for setMockHttp ${action}`);
+      }
+      return previous;
+    };
+
+    // call mockS3Http with the argument
+    // - 'on' - turn it on
+    // - 'off' - turn it off (used by fetch.test.js so it doesn't interfere with redirects)
+    // - 'get' - return true or false for 'on' or 'off'
+    return mockS3Http;
+  };
+})(s3_setup, s3_setup.exports);
+var s3_setupExports = s3_setup.exports;
+
+var nopt = {exports: {}};
+
+var abbrev = {exports: {}};
+
+(function (module, exports) {
+  module.exports = abbrev.abbrev = abbrev;
+  abbrev.monkeyPatch = monkeyPatch;
+  function monkeyPatch() {
+    Object.defineProperty(Array.prototype, 'abbrev', {
+      value: function () {
+        return abbrev(this);
+      },
+      enumerable: false,
+      configurable: true,
+      writable: true
+    });
+    Object.defineProperty(Object.prototype, 'abbrev', {
+      value: function () {
+        return abbrev(Object.keys(this));
+      },
+      enumerable: false,
+      configurable: true,
+      writable: true
+    });
+  }
+  function abbrev(list) {
+    if (arguments.length !== 1 || !Array.isArray(list)) {
+      list = Array.prototype.slice.call(arguments, 0);
+    }
+    for (var i = 0, l = list.length, args = []; i < l; i++) {
+      args[i] = typeof list[i] === "string" ? list[i] : String(list[i]);
+    }
+
+    // sort them lexicographically, so that they're next to their nearest kin
+    args = args.sort(lexSort);
+
+    // walk through each, seeing how much it has in common with the next and previous
+    var abbrevs = {},
+      prev = "";
+    for (var i = 0, l = args.length; i < l; i++) {
+      var current = args[i],
+        next = args[i + 1] || "",
+        nextMatches = true,
+        prevMatches = true;
+      if (current === next) continue;
+      for (var j = 0, cl = current.length; j < cl; j++) {
+        var curChar = current.charAt(j);
+        nextMatches = nextMatches && curChar === next.charAt(j);
+        prevMatches = prevMatches && curChar === prev.charAt(j);
+        if (!nextMatches && !prevMatches) {
+          j++;
+          break;
+        }
+      }
+      prev = current;
+      if (j === cl) {
+        abbrevs[current] = current;
+        continue;
+      }
+      for (var a = current.substr(0, j); j <= cl; j++) {
+        abbrevs[a] = current;
+        a += current.charAt(j);
+      }
+    }
+    return abbrevs;
+  }
+  function lexSort(a, b) {
+    return a === b ? 0 : a > b ? 1 : -1;
+  }
+})(abbrev);
+var abbrevExports = abbrev.exports;
+
+(function (module, exports) {
+  // info about each config option.
+
+  var debug = process.env.DEBUG_NOPT || process.env.NOPT_DEBUG ? function () {
+    console.error.apply(console, arguments);
+  } : function () {};
+  var url = require$$0,
+    path$1 = path,
+    Stream = require$$2.Stream,
+    abbrev = abbrevExports,
+    os = require$$4;
+  module.exports = exports = nopt;
+  exports.clean = clean;
+  exports.typeDefs = {
+    String: {
+      type: String,
+      validate: validateString
+    },
+    Boolean: {
+      type: Boolean,
+      validate: validateBoolean
+    },
+    url: {
+      type: url,
+      validate: validateUrl
+    },
+    Number: {
+      type: Number,
+      validate: validateNumber
+    },
+    path: {
+      type: path$1,
+      validate: validatePath
+    },
+    Stream: {
+      type: Stream,
+      validate: validateStream
+    },
+    Date: {
+      type: Date,
+      validate: validateDate
+    }
+  };
+  function nopt(types, shorthands, args, slice) {
+    args = args || process.argv;
+    types = types || {};
+    shorthands = shorthands || {};
+    if (typeof slice !== "number") slice = 2;
+    debug(types, shorthands, args, slice);
+    args = args.slice(slice);
+    var data = {},
+      argv = {
+        remain: [],
+        cooked: args,
+        original: args.slice(0)
+      };
+    parse(args, data, argv.remain, types, shorthands);
+    // now data is full
+    clean(data, types, exports.typeDefs);
+    data.argv = argv;
+    Object.defineProperty(data.argv, 'toString', {
+      value: function () {
+        return this.original.map(JSON.stringify).join(" ");
+      },
+      enumerable: false
+    });
+    return data;
+  }
+  function clean(data, types, typeDefs) {
+    typeDefs = typeDefs || exports.typeDefs;
+    var remove = {},
+      typeDefault = [false, true, null, String, Array];
+    Object.keys(data).forEach(function (k) {
+      if (k === "argv") return;
+      var val = data[k],
+        isArray = Array.isArray(val),
+        type = types[k];
+      if (!isArray) val = [val];
+      if (!type) type = typeDefault;
+      if (type === Array) type = typeDefault.concat(Array);
+      if (!Array.isArray(type)) type = [type];
+      debug("val=%j", val);
+      debug("types=", type);
+      val = val.map(function (val) {
+        // if it's an unknown value, then parse false/true/null/numbers/dates
+        if (typeof val === "string") {
+          debug("string %j", val);
+          val = val.trim();
+          if (val === "null" && ~type.indexOf(null) || val === "true" && (~type.indexOf(true) || ~type.indexOf(Boolean)) || val === "false" && (~type.indexOf(false) || ~type.indexOf(Boolean))) {
+            val = JSON.parse(val);
+            debug("jsonable %j", val);
+          } else if (~type.indexOf(Number) && !isNaN(val)) {
+            debug("convert to number", val);
+            val = +val;
+          } else if (~type.indexOf(Date) && !isNaN(Date.parse(val))) {
+            debug("convert to date", val);
+            val = new Date(val);
+          }
+        }
+        if (!types.hasOwnProperty(k)) {
+          return val;
+        }
+
+        // allow `--no-blah` to set 'blah' to null if null is allowed
+        if (val === false && ~type.indexOf(null) && !(~type.indexOf(false) || ~type.indexOf(Boolean))) {
+          val = null;
+        }
+        var d = {};
+        d[k] = val;
+        debug("prevalidated val", d, val, types[k]);
+        if (!validate(d, k, val, types[k], typeDefs)) {
+          if (exports.invalidHandler) {
+            exports.invalidHandler(k, val, types[k], data);
+          } else if (exports.invalidHandler !== false) {
+            debug("invalid: " + k + "=" + val, types[k]);
+          }
+          return remove;
+        }
+        debug("validated val", d, val, types[k]);
+        return d[k];
+      }).filter(function (val) {
+        return val !== remove;
+      });
+
+      // if we allow Array specifically, then an empty array is how we
+      // express 'no value here', not null.  Allow it.
+      if (!val.length && type.indexOf(Array) === -1) {
+        debug('VAL HAS NO LENGTH, DELETE IT', val, k, type.indexOf(Array));
+        delete data[k];
+      } else if (isArray) {
+        debug(isArray, data[k], val);
+        data[k] = val;
+      } else data[k] = val[0];
+      debug("k=%s val=%j", k, val, data[k]);
+    });
+  }
+  function validateString(data, k, val) {
+    data[k] = String(val);
+  }
+  function validatePath(data, k, val) {
+    if (val === true) return false;
+    if (val === null) return true;
+    val = String(val);
+    var isWin = process.platform === 'win32',
+      homePattern = isWin ? /^~(\/|\\)/ : /^~\//,
+      home = os.homedir();
+    if (home && val.match(homePattern)) {
+      data[k] = path$1.resolve(home, val.substr(2));
+    } else {
+      data[k] = path$1.resolve(val);
+    }
+    return true;
+  }
+  function validateNumber(data, k, val) {
+    debug("validate Number %j %j %j", k, val, isNaN(val));
+    if (isNaN(val)) return false;
+    data[k] = +val;
+  }
+  function validateDate(data, k, val) {
+    var s = Date.parse(val);
+    debug("validate Date %j %j %j", k, val, s);
+    if (isNaN(s)) return false;
+    data[k] = new Date(val);
+  }
+  function validateBoolean(data, k, val) {
+    if (val instanceof Boolean) val = val.valueOf();else if (typeof val === "string") {
+      if (!isNaN(val)) val = !!+val;else if (val === "null" || val === "false") val = false;else val = true;
+    } else val = !!val;
+    data[k] = val;
+  }
+  function validateUrl(data, k, val) {
+    val = url.parse(String(val));
+    if (!val.host) return false;
+    data[k] = val.href;
+  }
+  function validateStream(data, k, val) {
+    if (!(val instanceof Stream)) return false;
+    data[k] = val;
+  }
+  function validate(data, k, val, type, typeDefs) {
+    // arrays are lists of types.
+    if (Array.isArray(type)) {
+      for (var i = 0, l = type.length; i < l; i++) {
+        if (type[i] === Array) continue;
+        if (validate(data, k, val, type[i], typeDefs)) return true;
+      }
+      delete data[k];
+      return false;
+    }
+
+    // an array of anything?
+    if (type === Array) return true;
+
+    // NaN is poisonous.  Means that something is not allowed.
+    if (type !== type) {
+      debug("Poison NaN", k, val, type);
+      delete data[k];
+      return false;
+    }
+
+    // explicit list of values
+    if (val === type) {
+      debug("Explicitly allowed %j", val);
+      // if (isArray) (data[k] = data[k] || []).push(val)
+      // else data[k] = val
+      data[k] = val;
+      return true;
+    }
+
+    // now go through the list of typeDefs, validate against each one.
+    var ok = false,
+      types = Object.keys(typeDefs);
+    for (var i = 0, l = types.length; i < l; i++) {
+      debug("test type %j %j %j", k, val, types[i]);
+      var t = typeDefs[types[i]];
+      if (t && (type && type.name && t.type && t.type.name ? type.name === t.type.name : type === t.type)) {
+        var d = {};
+        ok = false !== t.validate(d, k, val);
+        val = d[k];
+        if (ok) {
+          // if (isArray) (data[k] = data[k] || []).push(val)
+          // else data[k] = val
+          data[k] = val;
+          break;
+        }
+      }
+    }
+    debug("OK? %j (%j %j %j)", ok, k, val, types[i]);
+    if (!ok) delete data[k];
+    return ok;
+  }
+  function parse(args, data, remain, types, shorthands) {
+    debug("parse", args, data, remain);
+    var abbrevs = abbrev(Object.keys(types)),
+      shortAbbr = abbrev(Object.keys(shorthands));
+    for (var i = 0; i < args.length; i++) {
+      var arg = args[i];
+      debug("arg", arg);
+      if (arg.match(/^-{2,}$/)) {
+        // done with keys.
+        // the rest are args.
+        remain.push.apply(remain, args.slice(i + 1));
+        args[i] = "--";
+        break;
+      }
+      var hadEq = false;
+      if (arg.charAt(0) === "-" && arg.length > 1) {
+        var at = arg.indexOf('=');
+        if (at > -1) {
+          hadEq = true;
+          var v = arg.substr(at + 1);
+          arg = arg.substr(0, at);
+          args.splice(i, 1, arg, v);
+        }
+
+        // see if it's a shorthand
+        // if so, splice and back up to re-parse it.
+        var shRes = resolveShort(arg, shorthands, shortAbbr, abbrevs);
+        debug("arg=%j shRes=%j", arg, shRes);
+        if (shRes) {
+          debug(arg, shRes);
+          args.splice.apply(args, [i, 1].concat(shRes));
+          if (arg !== shRes[0]) {
+            i--;
+            continue;
+          }
+        }
+        arg = arg.replace(/^-+/, "");
+        var no = null;
+        while (arg.toLowerCase().indexOf("no-") === 0) {
+          no = !no;
+          arg = arg.substr(3);
+        }
+        if (abbrevs[arg]) arg = abbrevs[arg];
+        var argType = types[arg];
+        var isTypeArray = Array.isArray(argType);
+        if (isTypeArray && argType.length === 1) {
+          isTypeArray = false;
+          argType = argType[0];
+        }
+        var isArray = argType === Array || isTypeArray && argType.indexOf(Array) !== -1;
+
+        // allow unknown things to be arrays if specified multiple times.
+        if (!types.hasOwnProperty(arg) && data.hasOwnProperty(arg)) {
+          if (!Array.isArray(data[arg])) data[arg] = [data[arg]];
+          isArray = true;
+        }
+        var val,
+          la = args[i + 1];
+        var isBool = typeof no === 'boolean' || argType === Boolean || isTypeArray && argType.indexOf(Boolean) !== -1 || typeof argType === 'undefined' && !hadEq || la === "false" && (argType === null || isTypeArray && ~argType.indexOf(null));
+        if (isBool) {
+          // just set and move along
+          val = !no;
+          // however, also support --bool true or --bool false
+          if (la === "true" || la === "false") {
+            val = JSON.parse(la);
+            la = null;
+            if (no) val = !val;
+            i++;
+          }
+
+          // also support "foo":[Boolean, "bar"] and "--foo bar"
+          if (isTypeArray && la) {
+            if (~argType.indexOf(la)) {
+              // an explicit type
+              val = la;
+              i++;
+            } else if (la === "null" && ~argType.indexOf(null)) {
+              // null allowed
+              val = null;
+              i++;
+            } else if (!la.match(/^-{2,}[^-]/) && !isNaN(la) && ~argType.indexOf(Number)) {
+              // number
+              val = +la;
+              i++;
+            } else if (!la.match(/^-[^-]/) && ~argType.indexOf(String)) {
+              // string
+              val = la;
+              i++;
+            }
+          }
+          if (isArray) (data[arg] = data[arg] || []).push(val);else data[arg] = val;
+          continue;
+        }
+        if (argType === String) {
+          if (la === undefined) {
+            la = "";
+          } else if (la.match(/^-{1,2}[^-]+/)) {
+            la = "";
+            i--;
+          }
+        }
+        if (la && la.match(/^-{2,}$/)) {
+          la = undefined;
+          i--;
+        }
+        val = la === undefined ? true : la;
+        if (isArray) (data[arg] = data[arg] || []).push(val);else data[arg] = val;
+        i++;
+        continue;
+      }
+      remain.push(arg);
+    }
+  }
+  function resolveShort(arg, shorthands, shortAbbr, abbrevs) {
+    // handle single-char shorthands glommed together, like
+    // npm ls -glp, but only if there is one dash, and only if
+    // all of the chars are single-char shorthands, and it's
+    // not a match to some other abbrev.
+    arg = arg.replace(/^-+/, '');
+
+    // if it's an exact known option, then don't go any further
+    if (abbrevs[arg] === arg) return null;
+
+    // if it's an exact known shortopt, same deal
+    if (shorthands[arg]) {
+      // make it an array, if it's a list of words
+      if (shorthands[arg] && !Array.isArray(shorthands[arg])) shorthands[arg] = shorthands[arg].split(/\s+/);
+      return shorthands[arg];
+    }
+
+    // first check to see if this arg is a set of single-char shorthands
+    var singles = shorthands.___singles;
+    if (!singles) {
+      singles = Object.keys(shorthands).filter(function (s) {
+        return s.length === 1;
+      }).reduce(function (l, r) {
+        l[r] = true;
+        return l;
+      }, {});
+      shorthands.___singles = singles;
+      debug('shorthand singles', singles);
+    }
+    var chrs = arg.split("").filter(function (c) {
+      return singles[c];
+    });
+    if (chrs.join("") === arg) return chrs.map(function (c) {
+      return shorthands[c];
+    }).reduce(function (l, r) {
+      return l.concat(r);
+    }, []);
+
+    // if it's an arg abbrev, and not a literal shorthand, then prefer the arg
+    if (abbrevs[arg] && !shorthands[arg]) return null;
+
+    // if it's an abbr for a shorthand, then use that
+    if (shortAbbr[arg]) arg = shortAbbr[arg];
+
+    // make it an array, if it's a list of words
+    if (shorthands[arg] && !Array.isArray(shorthands[arg])) shorthands[arg] = shorthands[arg].split(/\s+/);
+    return shorthands[arg];
+  }
+})(nopt, nopt.exports);
+var noptExports = nopt.exports;
+
+var log = {exports: {}};
+
+var lib = {};
+
+var trackerGroup = {exports: {}};
+
+var trackerBase = {exports: {}};
+
+var EventEmitter = require$$2$1.EventEmitter;
+var util$4 = require$$0$2;
+var trackerId = 0;
+var TrackerBase$2 = trackerBase.exports = function (name) {
+  EventEmitter.call(this);
+  this.id = ++trackerId;
+  this.name = name;
+};
+util$4.inherits(TrackerBase$2, EventEmitter);
+var trackerBaseExports = trackerBase.exports;
+
+var tracker = {exports: {}};
+
+var util$3 = require$$0$2;
+var TrackerBase$1 = trackerBaseExports;
+var Tracker$2 = tracker.exports = function (name, todo) {
+  TrackerBase$1.call(this, name);
+  this.workDone = 0;
+  this.workTodo = todo || 0;
+};
+util$3.inherits(Tracker$2, TrackerBase$1);
+Tracker$2.prototype.completed = function () {
+  return this.workTodo === 0 ? 0 : this.workDone / this.workTodo;
+};
+Tracker$2.prototype.addWork = function (work) {
+  this.workTodo += work;
+  this.emit('change', this.name, this.completed(), this);
+};
+Tracker$2.prototype.completeWork = function (work) {
+  this.workDone += work;
+  if (this.workDone > this.workTodo) {
+    this.workDone = this.workTodo;
+  }
+  this.emit('change', this.name, this.completed(), this);
+};
+Tracker$2.prototype.finish = function () {
+  this.workTodo = this.workDone = 1;
+  this.emit('change', this.name, 1, this);
+};
+var trackerExports = tracker.exports;
+
+var trackerStream = {exports: {}};
+
+/**
+ * Expose `Delegator`.
+ */
+
+var delegates = Delegator;
+
+/**
+ * Initialize a delegator.
+ *
+ * @param {Object} proto
+ * @param {String} target
+ * @api public
+ */
+
+function Delegator(proto, target) {
+  if (!(this instanceof Delegator)) return new Delegator(proto, target);
+  this.proto = proto;
+  this.target = target;
+  this.methods = [];
+  this.getters = [];
+  this.setters = [];
+  this.fluents = [];
+}
+
+/**
+ * Delegate method `name`.
+ *
+ * @param {String} name
+ * @return {Delegator} self
+ * @api public
+ */
+
+Delegator.prototype.method = function (name) {
+  var proto = this.proto;
+  var target = this.target;
+  this.methods.push(name);
+  proto[name] = function () {
+    return this[target][name].apply(this[target], arguments);
+  };
+  return this;
+};
+
+/**
+ * Delegator accessor `name`.
+ *
+ * @param {String} name
+ * @return {Delegator} self
+ * @api public
+ */
+
+Delegator.prototype.access = function (name) {
+  return this.getter(name).setter(name);
+};
+
+/**
+ * Delegator getter `name`.
+ *
+ * @param {String} name
+ * @return {Delegator} self
+ * @api public
+ */
+
+Delegator.prototype.getter = function (name) {
+  var proto = this.proto;
+  var target = this.target;
+  this.getters.push(name);
+  proto.__defineGetter__(name, function () {
+    return this[target][name];
+  });
+  return this;
+};
+
+/**
+ * Delegator setter `name`.
+ *
+ * @param {String} name
+ * @return {Delegator} self
+ * @api public
+ */
+
+Delegator.prototype.setter = function (name) {
+  var proto = this.proto;
+  var target = this.target;
+  this.setters.push(name);
+  proto.__defineSetter__(name, function (val) {
+    return this[target][name] = val;
+  });
+  return this;
+};
+
+/**
+ * Delegator fluent accessor
+ *
+ * @param {String} name
+ * @return {Delegator} self
+ * @api public
+ */
+
+Delegator.prototype.fluent = function (name) {
+  var proto = this.proto;
+  var target = this.target;
+  this.fluents.push(name);
+  proto[name] = function (val) {
+    if ('undefined' != typeof val) {
+      this[target][name] = val;
+      return this;
+    } else {
+      return this[target][name];
+    }
+  };
+  return this;
+};
+
+var util$2 = require$$0$2;
+var stream = require$$1;
+var delegate = delegates;
+var Tracker$1 = trackerExports;
+var TrackerStream$1 = trackerStream.exports = function (name, size, options) {
+  stream.Transform.call(this, options);
+  this.tracker = new Tracker$1(name, size);
+  this.name = name;
+  this.id = this.tracker.id;
+  this.tracker.on('change', delegateChange(this));
+};
+util$2.inherits(TrackerStream$1, stream.Transform);
+function delegateChange(trackerStream) {
+  return function (name, completion, tracker) {
+    trackerStream.emit('change', name, completion, trackerStream);
+  };
+}
+TrackerStream$1.prototype._transform = function (data, encoding, cb) {
+  this.tracker.completeWork(data.length ? data.length : 1);
+  this.push(data);
+  cb();
+};
+TrackerStream$1.prototype._flush = function (cb) {
+  this.tracker.finish();
+  cb();
+};
+delegate(TrackerStream$1.prototype, 'tracker').method('completed').method('addWork').method('finish');
+var trackerStreamExports = trackerStream.exports;
+
+var util$1 = require$$0$2;
+var TrackerBase = trackerBaseExports;
+var Tracker = trackerExports;
+var TrackerStream = trackerStreamExports;
+var TrackerGroup = trackerGroup.exports = function (name) {
+  TrackerBase.call(this, name);
+  this.parentGroup = null;
+  this.trackers = [];
+  this.completion = {};
+  this.weight = {};
+  this.totalWeight = 0;
+  this.finished = false;
+  this.bubbleChange = bubbleChange(this);
+};
+util$1.inherits(TrackerGroup, TrackerBase);
+function bubbleChange(trackerGroup) {
+  return function (name, completed, tracker) {
+    trackerGroup.completion[tracker.id] = completed;
+    if (trackerGroup.finished) {
+      return;
+    }
+    trackerGroup.emit('change', name || trackerGroup.name, trackerGroup.completed(), trackerGroup);
+  };
+}
+TrackerGroup.prototype.nameInTree = function () {
+  var names = [];
+  var from = this;
+  while (from) {
+    names.unshift(from.name);
+    from = from.parentGroup;
+  }
+  return names.join('/');
+};
+TrackerGroup.prototype.addUnit = function (unit, weight) {
+  if (unit.addUnit) {
+    var toTest = this;
+    while (toTest) {
+      if (unit === toTest) {
+        throw new Error('Attempted to add tracker group ' + unit.name + ' to tree that already includes it ' + this.nameInTree(this));
+      }
+      toTest = toTest.parentGroup;
+    }
+    unit.parentGroup = this;
+  }
+  this.weight[unit.id] = weight || 1;
+  this.totalWeight += this.weight[unit.id];
+  this.trackers.push(unit);
+  this.completion[unit.id] = unit.completed();
+  unit.on('change', this.bubbleChange);
+  if (!this.finished) {
+    this.emit('change', unit.name, this.completion[unit.id], unit);
+  }
+  return unit;
+};
+TrackerGroup.prototype.completed = function () {
+  if (this.trackers.length === 0) {
+    return 0;
+  }
+  var valPerWeight = 1 / this.totalWeight;
+  var completed = 0;
+  for (var ii = 0; ii < this.trackers.length; ii++) {
+    var trackerId = this.trackers[ii].id;
+    completed += valPerWeight * this.weight[trackerId] * this.completion[trackerId];
+  }
+  return completed;
+};
+TrackerGroup.prototype.newGroup = function (name, weight) {
+  return this.addUnit(new TrackerGroup(name), weight);
+};
+TrackerGroup.prototype.newItem = function (name, todo, weight) {
+  return this.addUnit(new Tracker(name, todo), weight);
+};
+TrackerGroup.prototype.newStream = function (name, todo, weight) {
+  return this.addUnit(new TrackerStream(name, todo), weight);
+};
+TrackerGroup.prototype.finish = function () {
+  this.finished = true;
+  if (!this.trackers.length) {
+    this.addUnit(new Tracker(), 1, true);
+  }
+  for (var ii = 0; ii < this.trackers.length; ii++) {
+    var tracker = this.trackers[ii];
+    tracker.finish();
+    tracker.removeListener('change', this.bubbleChange);
+  }
+  this.emit('change', this.name, 1, this);
+};
+var buffer = '                                  ';
+TrackerGroup.prototype.debug = function (depth) {
+  depth = depth || 0;
+  var indent = depth ? buffer.substr(0, depth) : '';
+  var output = indent + (this.name || 'top') + ': ' + this.completed() + '\n';
+  this.trackers.forEach(function (tracker) {
+    if (tracker instanceof TrackerGroup) {
+      output += tracker.debug(depth + 1);
+    } else {
+      output += indent + ' ' + tracker.name + ': ' + tracker.completed() + '\n';
+    }
+  });
+  return output;
+};
+var trackerGroupExports = trackerGroup.exports;
+
+lib.TrackerGroup = trackerGroupExports;
+lib.Tracker = trackerExports;
+lib.TrackerStream = trackerStreamExports;
+
+var plumbing = {exports: {}};
+
+var consoleControlStrings = {};
+
+// These tables borrowed from `ansi`
+
+var prefix = '\x1b[';
+consoleControlStrings.up = function up(num) {
+  return prefix + (num || '') + 'A';
+};
+consoleControlStrings.down = function down(num) {
+  return prefix + (num || '') + 'B';
+};
+consoleControlStrings.forward = function forward(num) {
+  return prefix + (num || '') + 'C';
+};
+consoleControlStrings.back = function back(num) {
+  return prefix + (num || '') + 'D';
+};
+consoleControlStrings.nextLine = function nextLine(num) {
+  return prefix + (num || '') + 'E';
+};
+consoleControlStrings.previousLine = function previousLine(num) {
+  return prefix + (num || '') + 'F';
+};
+consoleControlStrings.horizontalAbsolute = function horizontalAbsolute(num) {
+  if (num == null) throw new Error('horizontalAboslute requires a column to position to');
+  return prefix + num + 'G';
+};
+consoleControlStrings.eraseData = function eraseData() {
+  return prefix + 'J';
+};
+consoleControlStrings.eraseLine = function eraseLine() {
+  return prefix + 'K';
+};
+consoleControlStrings.goto = function (x, y) {
+  return prefix + y + ';' + x + 'H';
+};
+consoleControlStrings.gotoSOL = function () {
+  return '\r';
+};
+consoleControlStrings.beep = function () {
+  return '\x07';
+};
+consoleControlStrings.hideCursor = function hideCursor() {
+  return prefix + '?25l';
+};
+consoleControlStrings.showCursor = function showCursor() {
+  return prefix + '?25h';
+};
+var colors = {
+  reset: 0,
+  // styles
+  bold: 1,
+  italic: 3,
+  underline: 4,
+  inverse: 7,
+  // resets
+  stopBold: 22,
+  stopItalic: 23,
+  stopUnderline: 24,
+  stopInverse: 27,
+  // colors
+  white: 37,
+  black: 30,
+  blue: 34,
+  cyan: 36,
+  green: 32,
+  magenta: 35,
+  red: 31,
+  yellow: 33,
+  bgWhite: 47,
+  bgBlack: 40,
+  bgBlue: 44,
+  bgCyan: 46,
+  bgGreen: 42,
+  bgMagenta: 45,
+  bgRed: 41,
+  bgYellow: 43,
+  grey: 90,
+  brightBlack: 90,
+  brightRed: 91,
+  brightGreen: 92,
+  brightYellow: 93,
+  brightBlue: 94,
+  brightMagenta: 95,
+  brightCyan: 96,
+  brightWhite: 97,
+  bgGrey: 100,
+  bgBrightBlack: 100,
+  bgBrightRed: 101,
+  bgBrightGreen: 102,
+  bgBrightYellow: 103,
+  bgBrightBlue: 104,
+  bgBrightMagenta: 105,
+  bgBrightCyan: 106,
+  bgBrightWhite: 107
+};
+consoleControlStrings.color = function color(colorWith) {
+  if (arguments.length !== 1 || !Array.isArray(colorWith)) {
+    colorWith = Array.prototype.slice.call(arguments);
+  }
+  return prefix + colorWith.map(colorNameToCode).join(';') + 'm';
+};
+function colorNameToCode(color) {
+  if (colors[color] != null) return colors[color];
+  throw new Error('Unknown color or style name: ' + color);
+}
+
+var renderTemplate$3 = {exports: {}};
+
+var align$1 = {};
+
+var stringWidth$5 = {exports: {}};
+
+var ansiRegex$1 = ({
+  onlyFirst = false
+} = {}) => {
+  const pattern = ['[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)', '(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))'].join('|');
+  return new RegExp(pattern, onlyFirst ? undefined : 'g');
+};
+
+const ansiRegex = ansiRegex$1;
+var stripAnsi$2 = string => typeof string === 'string' ? string.replace(ansiRegex(), '') : string;
+
+var isFullwidthCodePoint$2 = {exports: {}};
+
+/* eslint-disable yoda */
+const isFullwidthCodePoint$1 = codePoint => {
+  if (Number.isNaN(codePoint)) {
+    return false;
+  }
+
+  // Code points are derived from:
+  // http://www.unix.org/Public/UNIDATA/EastAsianWidth.txt
+  if (codePoint >= 0x1100 && (codePoint <= 0x115F ||
+  // Hangul Jamo
+  codePoint === 0x2329 ||
+  // LEFT-POINTING ANGLE BRACKET
+  codePoint === 0x232A ||
+  // RIGHT-POINTING ANGLE BRACKET
+  // CJK Radicals Supplement .. Enclosed CJK Letters and Months
+  0x2E80 <= codePoint && codePoint <= 0x3247 && codePoint !== 0x303F ||
+  // Enclosed CJK Letters and Months .. CJK Unified Ideographs Extension A
+  0x3250 <= codePoint && codePoint <= 0x4DBF ||
+  // CJK Unified Ideographs .. Yi Radicals
+  0x4E00 <= codePoint && codePoint <= 0xA4C6 ||
+  // Hangul Jamo Extended-A
+  0xA960 <= codePoint && codePoint <= 0xA97C ||
+  // Hangul Syllables
+  0xAC00 <= codePoint && codePoint <= 0xD7A3 ||
+  // CJK Compatibility Ideographs
+  0xF900 <= codePoint && codePoint <= 0xFAFF ||
+  // Vertical Forms
+  0xFE10 <= codePoint && codePoint <= 0xFE19 ||
+  // CJK Compatibility Forms .. Small Form Variants
+  0xFE30 <= codePoint && codePoint <= 0xFE6B ||
+  // Halfwidth and Fullwidth Forms
+  0xFF01 <= codePoint && codePoint <= 0xFF60 || 0xFFE0 <= codePoint && codePoint <= 0xFFE6 ||
+  // Kana Supplement
+  0x1B000 <= codePoint && codePoint <= 0x1B001 ||
+  // Enclosed Ideographic Supplement
+  0x1F200 <= codePoint && codePoint <= 0x1F251 ||
+  // CJK Unified Ideographs Extension B .. Tertiary Ideographic Plane
+  0x20000 <= codePoint && codePoint <= 0x3FFFD)) {
+    return true;
+  }
+  return false;
+};
+isFullwidthCodePoint$2.exports = isFullwidthCodePoint$1;
+isFullwidthCodePoint$2.exports.default = isFullwidthCodePoint$1;
+var isFullwidthCodePointExports = isFullwidthCodePoint$2.exports;
+
+var emojiRegex$1 = function () {
+  // https://mths.be/emoji
+  return /\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62(?:\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67|\uDB40\uDC73\uDB40\uDC63\uDB40\uDC74|\uDB40\uDC77\uDB40\uDC6C\uDB40\uDC73)\uDB40\uDC7F|\uD83D\uDC68(?:\uD83C\uDFFC\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68\uD83C\uDFFB|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFF\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB-\uDFFE])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFE\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB-\uDFFD])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFD\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB\uDFFC])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\u200D(?:\u2764\uFE0F\u200D(?:\uD83D\uDC8B\u200D)?\uD83D\uDC68|(?:\uD83D[\uDC68\uDC69])\u200D(?:\uD83D\uDC66\u200D\uD83D\uDC66|\uD83D\uDC67\u200D(?:\uD83D[\uDC66\uDC67]))|\uD83D\uDC66\u200D\uD83D\uDC66|\uD83D\uDC67\u200D(?:\uD83D[\uDC66\uDC67])|(?:\uD83D[\uDC68\uDC69])\u200D(?:\uD83D[\uDC66\uDC67])|[\u2695\u2696\u2708]\uFE0F|\uD83D[\uDC66\uDC67]|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|(?:\uD83C\uDFFB\u200D[\u2695\u2696\u2708]|\uD83C\uDFFF\u200D[\u2695\u2696\u2708]|\uD83C\uDFFE\u200D[\u2695\u2696\u2708]|\uD83C\uDFFD\u200D[\u2695\u2696\u2708]|\uD83C\uDFFC\u200D[\u2695\u2696\u2708])\uFE0F|\uD83C\uDFFB\u200D(?:\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C[\uDFFB-\uDFFF])|(?:\uD83E\uDDD1\uD83C\uDFFB\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1|\uD83D\uDC69\uD83C\uDFFC\u200D\uD83E\uDD1D\u200D\uD83D\uDC69)\uD83C\uDFFB|\uD83E\uDDD1(?:\uD83C\uDFFF\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1(?:\uD83C[\uDFFB-\uDFFF])|\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1)|(?:\uD83E\uDDD1\uD83C\uDFFE\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1|\uD83D\uDC69\uD83C\uDFFF\u200D\uD83E\uDD1D\u200D(?:\uD83D[\uDC68\uDC69]))(?:\uD83C[\uDFFB-\uDFFE])|(?:\uD83E\uDDD1\uD83C\uDFFC\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1|\uD83D\uDC69\uD83C\uDFFD\u200D\uD83E\uDD1D\u200D\uD83D\uDC69)(?:\uD83C[\uDFFB\uDFFC])|\uD83D\uDC69(?:\uD83C\uDFFE\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB-\uDFFD\uDFFF])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFC\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB\uDFFD-\uDFFF])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFB\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFC-\uDFFF])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFD\u200D(?:\uD83E\uDD1D\u200D\uD83D\uDC68(?:\uD83C[\uDFFB\uDFFC\uDFFE\uDFFF])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\u200D(?:\u2764\uFE0F\u200D(?:\uD83D\uDC8B\u200D(?:\uD83D[\uDC68\uDC69])|\uD83D[\uDC68\uDC69])|\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD])|\uD83C\uDFFF\u200D(?:\uD83C[\uDF3E\uDF73\uDF93\uDFA4\uDFA8\uDFEB\uDFED]|\uD83D[\uDCBB\uDCBC\uDD27\uDD2C\uDE80\uDE92]|\uD83E[\uDDAF-\uDDB3\uDDBC\uDDBD]))|\uD83D\uDC69\u200D\uD83D\uDC69\u200D(?:\uD83D\uDC66\u200D\uD83D\uDC66|\uD83D\uDC67\u200D(?:\uD83D[\uDC66\uDC67]))|(?:\uD83E\uDDD1\uD83C\uDFFD\u200D\uD83E\uDD1D\u200D\uD83E\uDDD1|\uD83D\uDC69\uD83C\uDFFE\u200D\uD83E\uDD1D\u200D\uD83D\uDC69)(?:\uD83C[\uDFFB-\uDFFD])|\uD83D\uDC69\u200D\uD83D\uDC66\u200D\uD83D\uDC66|\uD83D\uDC69\u200D\uD83D\uDC69\u200D(?:\uD83D[\uDC66\uDC67])|(?:\uD83D\uDC41\uFE0F\u200D\uD83D\uDDE8|\uD83D\uDC69(?:\uD83C\uDFFF\u200D[\u2695\u2696\u2708]|\uD83C\uDFFE\u200D[\u2695\u2696\u2708]|\uD83C\uDFFC\u200D[\u2695\u2696\u2708]|\uD83C\uDFFB\u200D[\u2695\u2696\u2708]|\uD83C\uDFFD\u200D[\u2695\u2696\u2708]|\u200D[\u2695\u2696\u2708])|(?:(?:\u26F9|\uD83C[\uDFCB\uDFCC]|\uD83D\uDD75)\uFE0F|\uD83D\uDC6F|\uD83E[\uDD3C\uDDDE\uDDDF])\u200D[\u2640\u2642]|(?:\u26F9|\uD83C[\uDFCB\uDFCC]|\uD83D\uDD75)(?:\uD83C[\uDFFB-\uDFFF])\u200D[\u2640\u2642]|(?:\uD83C[\uDFC3\uDFC4\uDFCA]|\uD83D[\uDC6E\uDC71\uDC73\uDC77\uDC81\uDC82\uDC86\uDC87\uDE45-\uDE47\uDE4B\uDE4D\uDE4E\uDEA3\uDEB4-\uDEB6]|\uD83E[\uDD26\uDD37-\uDD39\uDD3D\uDD3E\uDDB8\uDDB9\uDDCD-\uDDCF\uDDD6-\uDDDD])(?:(?:\uD83C[\uDFFB-\uDFFF])\u200D[\u2640\u2642]|\u200D[\u2640\u2642])|\uD83C\uDFF4\u200D\u2620)\uFE0F|\uD83D\uDC69\u200D\uD83D\uDC67\u200D(?:\uD83D[\uDC66\uDC67])|\uD83C\uDFF3\uFE0F\u200D\uD83C\uDF08|\uD83D\uDC15\u200D\uD83E\uDDBA|\uD83D\uDC69\u200D\uD83D\uDC66|\uD83D\uDC69\u200D\uD83D\uDC67|\uD83C\uDDFD\uD83C\uDDF0|\uD83C\uDDF4\uD83C\uDDF2|\uD83C\uDDF6\uD83C\uDDE6|[#\*0-9]\uFE0F\u20E3|\uD83C\uDDE7(?:\uD83C[\uDDE6\uDDE7\uDDE9-\uDDEF\uDDF1-\uDDF4\uDDF6-\uDDF9\uDDFB\uDDFC\uDDFE\uDDFF])|\uD83C\uDDF9(?:\uD83C[\uDDE6\uDDE8\uDDE9\uDDEB-\uDDED\uDDEF-\uDDF4\uDDF7\uDDF9\uDDFB\uDDFC\uDDFF])|\uD83C\uDDEA(?:\uD83C[\uDDE6\uDDE8\uDDEA\uDDEC\uDDED\uDDF7-\uDDFA])|\uD83E\uDDD1(?:\uD83C[\uDFFB-\uDFFF])|\uD83C\uDDF7(?:\uD83C[\uDDEA\uDDF4\uDDF8\uDDFA\uDDFC])|\uD83D\uDC69(?:\uD83C[\uDFFB-\uDFFF])|\uD83C\uDDF2(?:\uD83C[\uDDE6\uDDE8-\uDDED\uDDF0-\uDDFF])|\uD83C\uDDE6(?:\uD83C[\uDDE8-\uDDEC\uDDEE\uDDF1\uDDF2\uDDF4\uDDF6-\uDDFA\uDDFC\uDDFD\uDDFF])|\uD83C\uDDF0(?:\uD83C[\uDDEA\uDDEC-\uDDEE\uDDF2\uDDF3\uDDF5\uDDF7\uDDFC\uDDFE\uDDFF])|\uD83C\uDDED(?:\uD83C[\uDDF0\uDDF2\uDDF3\uDDF7\uDDF9\uDDFA])|\uD83C\uDDE9(?:\uD83C[\uDDEA\uDDEC\uDDEF\uDDF0\uDDF2\uDDF4\uDDFF])|\uD83C\uDDFE(?:\uD83C[\uDDEA\uDDF9])|\uD83C\uDDEC(?:\uD83C[\uDDE6\uDDE7\uDDE9-\uDDEE\uDDF1-\uDDF3\uDDF5-\uDDFA\uDDFC\uDDFE])|\uD83C\uDDF8(?:\uD83C[\uDDE6-\uDDEA\uDDEC-\uDDF4\uDDF7-\uDDF9\uDDFB\uDDFD-\uDDFF])|\uD83C\uDDEB(?:\uD83C[\uDDEE-\uDDF0\uDDF2\uDDF4\uDDF7])|\uD83C\uDDF5(?:\uD83C[\uDDE6\uDDEA-\uDDED\uDDF0-\uDDF3\uDDF7-\uDDF9\uDDFC\uDDFE])|\uD83C\uDDFB(?:\uD83C[\uDDE6\uDDE8\uDDEA\uDDEC\uDDEE\uDDF3\uDDFA])|\uD83C\uDDF3(?:\uD83C[\uDDE6\uDDE8\uDDEA-\uDDEC\uDDEE\uDDF1\uDDF4\uDDF5\uDDF7\uDDFA\uDDFF])|\uD83C\uDDE8(?:\uD83C[\uDDE6\uDDE8\uDDE9\uDDEB-\uDDEE\uDDF0-\uDDF5\uDDF7\uDDFA-\uDDFF])|\uD83C\uDDF1(?:\uD83C[\uDDE6-\uDDE8\uDDEE\uDDF0\uDDF7-\uDDFB\uDDFE])|\uD83C\uDDFF(?:\uD83C[\uDDE6\uDDF2\uDDFC])|\uD83C\uDDFC(?:\uD83C[\uDDEB\uDDF8])|\uD83C\uDDFA(?:\uD83C[\uDDE6\uDDEC\uDDF2\uDDF3\uDDF8\uDDFE\uDDFF])|\uD83C\uDDEE(?:\uD83C[\uDDE8-\uDDEA\uDDF1-\uDDF4\uDDF6-\uDDF9])|\uD83C\uDDEF(?:\uD83C[\uDDEA\uDDF2\uDDF4\uDDF5])|(?:\uD83C[\uDFC3\uDFC4\uDFCA]|\uD83D[\uDC6E\uDC71\uDC73\uDC77\uDC81\uDC82\uDC86\uDC87\uDE45-\uDE47\uDE4B\uDE4D\uDE4E\uDEA3\uDEB4-\uDEB6]|\uD83E[\uDD26\uDD37-\uDD39\uDD3D\uDD3E\uDDB8\uDDB9\uDDCD-\uDDCF\uDDD6-\uDDDD])(?:\uD83C[\uDFFB-\uDFFF])|(?:\u26F9|\uD83C[\uDFCB\uDFCC]|\uD83D\uDD75)(?:\uD83C[\uDFFB-\uDFFF])|(?:[\u261D\u270A-\u270D]|\uD83C[\uDF85\uDFC2\uDFC7]|\uD83D[\uDC42\uDC43\uDC46-\uDC50\uDC66\uDC67\uDC6B-\uDC6D\uDC70\uDC72\uDC74-\uDC76\uDC78\uDC7C\uDC83\uDC85\uDCAA\uDD74\uDD7A\uDD90\uDD95\uDD96\uDE4C\uDE4F\uDEC0\uDECC]|\uD83E[\uDD0F\uDD18-\uDD1C\uDD1E\uDD1F\uDD30-\uDD36\uDDB5\uDDB6\uDDBB\uDDD2-\uDDD5])(?:\uD83C[\uDFFB-\uDFFF])|(?:[\u231A\u231B\u23E9-\u23EC\u23F0\u23F3\u25FD\u25FE\u2614\u2615\u2648-\u2653\u267F\u2693\u26A1\u26AA\u26AB\u26BD\u26BE\u26C4\u26C5\u26CE\u26D4\u26EA\u26F2\u26F3\u26F5\u26FA\u26FD\u2705\u270A\u270B\u2728\u274C\u274E\u2753-\u2755\u2757\u2795-\u2797\u27B0\u27BF\u2B1B\u2B1C\u2B50\u2B55]|\uD83C[\uDC04\uDCCF\uDD8E\uDD91-\uDD9A\uDDE6-\uDDFF\uDE01\uDE1A\uDE2F\uDE32-\uDE36\uDE38-\uDE3A\uDE50\uDE51\uDF00-\uDF20\uDF2D-\uDF35\uDF37-\uDF7C\uDF7E-\uDF93\uDFA0-\uDFCA\uDFCF-\uDFD3\uDFE0-\uDFF0\uDFF4\uDFF8-\uDFFF]|\uD83D[\uDC00-\uDC3E\uDC40\uDC42-\uDCFC\uDCFF-\uDD3D\uDD4B-\uDD4E\uDD50-\uDD67\uDD7A\uDD95\uDD96\uDDA4\uDDFB-\uDE4F\uDE80-\uDEC5\uDECC\uDED0-\uDED2\uDED5\uDEEB\uDEEC\uDEF4-\uDEFA\uDFE0-\uDFEB]|\uD83E[\uDD0D-\uDD3A\uDD3C-\uDD45\uDD47-\uDD71\uDD73-\uDD76\uDD7A-\uDDA2\uDDA5-\uDDAA\uDDAE-\uDDCA\uDDCD-\uDDFF\uDE70-\uDE73\uDE78-\uDE7A\uDE80-\uDE82\uDE90-\uDE95])|(?:[#\*0-9\xA9\xAE\u203C\u2049\u2122\u2139\u2194-\u2199\u21A9\u21AA\u231A\u231B\u2328\u23CF\u23E9-\u23F3\u23F8-\u23FA\u24C2\u25AA\u25AB\u25B6\u25C0\u25FB-\u25FE\u2600-\u2604\u260E\u2611\u2614\u2615\u2618\u261D\u2620\u2622\u2623\u2626\u262A\u262E\u262F\u2638-\u263A\u2640\u2642\u2648-\u2653\u265F\u2660\u2663\u2665\u2666\u2668\u267B\u267E\u267F\u2692-\u2697\u2699\u269B\u269C\u26A0\u26A1\u26AA\u26AB\u26B0\u26B1\u26BD\u26BE\u26C4\u26C5\u26C8\u26CE\u26CF\u26D1\u26D3\u26D4\u26E9\u26EA\u26F0-\u26F5\u26F7-\u26FA\u26FD\u2702\u2705\u2708-\u270D\u270F\u2712\u2714\u2716\u271D\u2721\u2728\u2733\u2734\u2744\u2747\u274C\u274E\u2753-\u2755\u2757\u2763\u2764\u2795-\u2797\u27A1\u27B0\u27BF\u2934\u2935\u2B05-\u2B07\u2B1B\u2B1C\u2B50\u2B55\u3030\u303D\u3297\u3299]|\uD83C[\uDC04\uDCCF\uDD70\uDD71\uDD7E\uDD7F\uDD8E\uDD91-\uDD9A\uDDE6-\uDDFF\uDE01\uDE02\uDE1A\uDE2F\uDE32-\uDE3A\uDE50\uDE51\uDF00-\uDF21\uDF24-\uDF93\uDF96\uDF97\uDF99-\uDF9B\uDF9E-\uDFF0\uDFF3-\uDFF5\uDFF7-\uDFFF]|\uD83D[\uDC00-\uDCFD\uDCFF-\uDD3D\uDD49-\uDD4E\uDD50-\uDD67\uDD6F\uDD70\uDD73-\uDD7A\uDD87\uDD8A-\uDD8D\uDD90\uDD95\uDD96\uDDA4\uDDA5\uDDA8\uDDB1\uDDB2\uDDBC\uDDC2-\uDDC4\uDDD1-\uDDD3\uDDDC-\uDDDE\uDDE1\uDDE3\uDDE8\uDDEF\uDDF3\uDDFA-\uDE4F\uDE80-\uDEC5\uDECB-\uDED2\uDED5\uDEE0-\uDEE5\uDEE9\uDEEB\uDEEC\uDEF0\uDEF3-\uDEFA\uDFE0-\uDFEB]|\uD83E[\uDD0D-\uDD3A\uDD3C-\uDD45\uDD47-\uDD71\uDD73-\uDD76\uDD7A-\uDDA2\uDDA5-\uDDAA\uDDAE-\uDDCA\uDDCD-\uDDFF\uDE70-\uDE73\uDE78-\uDE7A\uDE80-\uDE82\uDE90-\uDE95])\uFE0F|(?:[\u261D\u26F9\u270A-\u270D]|\uD83C[\uDF85\uDFC2-\uDFC4\uDFC7\uDFCA-\uDFCC]|\uD83D[\uDC42\uDC43\uDC46-\uDC50\uDC66-\uDC78\uDC7C\uDC81-\uDC83\uDC85-\uDC87\uDC8F\uDC91\uDCAA\uDD74\uDD75\uDD7A\uDD90\uDD95\uDD96\uDE45-\uDE47\uDE4B-\uDE4F\uDEA3\uDEB4-\uDEB6\uDEC0\uDECC]|\uD83E[\uDD0F\uDD18-\uDD1F\uDD26\uDD30-\uDD39\uDD3C-\uDD3E\uDDB5\uDDB6\uDDB8\uDDB9\uDDBB\uDDCD-\uDDCF\uDDD1-\uDDDD])/g;
+};
+
+const stripAnsi$1 = stripAnsi$2;
+const isFullwidthCodePoint = isFullwidthCodePointExports;
+const emojiRegex = emojiRegex$1;
+const stringWidth$4 = string => {
+  if (typeof string !== 'string' || string.length === 0) {
+    return 0;
+  }
+  string = stripAnsi$1(string);
+  if (string.length === 0) {
+    return 0;
+  }
+  string = string.replace(emojiRegex(), '  ');
+  let width = 0;
+  for (let i = 0; i < string.length; i++) {
+    const code = string.codePointAt(i);
+
+    // Ignore control characters
+    if (code <= 0x1F || code >= 0x7F && code <= 0x9F) {
+      continue;
+    }
+
+    // Ignore combining characters
+    if (code >= 0x300 && code <= 0x36F) {
+      continue;
+    }
+
+    // Surrogates
+    if (code > 0xFFFF) {
+      i++;
+    }
+    width += isFullwidthCodePoint(code) ? 2 : 1;
+  }
+  return width;
+};
+stringWidth$5.exports = stringWidth$4;
+// TODO: remove this in the next major version
+stringWidth$5.exports.default = stringWidth$4;
+var stringWidthExports = stringWidth$5.exports;
+
+var stringWidth$3 = stringWidthExports;
+align$1.center = alignCenter;
+align$1.left = alignLeft;
+align$1.right = alignRight;
+
+// lodash's way of generating pad characters.
+
+function createPadding(width) {
+  var result = '';
+  var string = ' ';
+  var n = width;
+  do {
+    if (n % 2) {
+      result += string;
+    }
+    n = Math.floor(n / 2);
+    string += string;
+  } while (n);
+  return result;
+}
+function alignLeft(str, width) {
+  var trimmed = str.trimRight();
+  if (trimmed.length === 0 && str.length >= width) return str;
+  var padding = '';
+  var strWidth = stringWidth$3(trimmed);
+  if (strWidth < width) {
+    padding = createPadding(width - strWidth);
+  }
+  return trimmed + padding;
+}
+function alignRight(str, width) {
+  var trimmed = str.trimLeft();
+  if (trimmed.length === 0 && str.length >= width) return str;
+  var padding = '';
+  var strWidth = stringWidth$3(trimmed);
+  if (strWidth < width) {
+    padding = createPadding(width - strWidth);
+  }
+  return padding + trimmed;
+}
+function alignCenter(str, width) {
+  var trimmed = str.trim();
+  if (trimmed.length === 0 && str.length >= width) return str;
+  var padLeft = '';
+  var padRight = '';
+  var strWidth = stringWidth$3(trimmed);
+  if (strWidth < width) {
+    var padLeftBy = parseInt((width - strWidth) / 2, 10);
+    padLeft = createPadding(padLeftBy);
+    padRight = createPadding(width - (strWidth + padLeftBy));
+  }
+  return padLeft + trimmed + padRight;
+}
+
+var aproba = validate$3;
+function isArguments(thingy) {
+  return thingy != null && typeof thingy === 'object' && thingy.hasOwnProperty('callee');
+}
+const types = {
+  '*': {
+    label: 'any',
+    check: () => true
+  },
+  A: {
+    label: 'array',
+    check: _ => Array.isArray(_) || isArguments(_)
+  },
+  S: {
+    label: 'string',
+    check: _ => typeof _ === 'string'
+  },
+  N: {
+    label: 'number',
+    check: _ => typeof _ === 'number'
+  },
+  F: {
+    label: 'function',
+    check: _ => typeof _ === 'function'
+  },
+  O: {
+    label: 'object',
+    check: _ => typeof _ === 'object' && _ != null && !types.A.check(_) && !types.E.check(_)
+  },
+  B: {
+    label: 'boolean',
+    check: _ => typeof _ === 'boolean'
+  },
+  E: {
+    label: 'error',
+    check: _ => _ instanceof Error
+  },
+  Z: {
+    label: 'null',
+    check: _ => _ == null
+  }
+};
+function addSchema(schema, arity) {
+  const group = arity[schema.length] = arity[schema.length] || [];
+  if (group.indexOf(schema) === -1) group.push(schema);
+}
+function validate$3(rawSchemas, args) {
+  if (arguments.length !== 2) throw wrongNumberOfArgs(['SA'], arguments.length);
+  if (!rawSchemas) throw missingRequiredArg(0);
+  if (!args) throw missingRequiredArg(1);
+  if (!types.S.check(rawSchemas)) throw invalidType(0, ['string'], rawSchemas);
+  if (!types.A.check(args)) throw invalidType(1, ['array'], args);
+  const schemas = rawSchemas.split('|');
+  const arity = {};
+  schemas.forEach(schema => {
+    for (let ii = 0; ii < schema.length; ++ii) {
+      const type = schema[ii];
+      if (!types[type]) throw unknownType(ii, type);
+    }
+    if (/E.*E/.test(schema)) throw moreThanOneError(schema);
+    addSchema(schema, arity);
+    if (/E/.test(schema)) {
+      addSchema(schema.replace(/E.*$/, 'E'), arity);
+      addSchema(schema.replace(/E/, 'Z'), arity);
+      if (schema.length === 1) addSchema('', arity);
+    }
+  });
+  let matching = arity[args.length];
+  if (!matching) {
+    throw wrongNumberOfArgs(Object.keys(arity), args.length);
+  }
+  for (let ii = 0; ii < args.length; ++ii) {
+    let newMatching = matching.filter(schema => {
+      const type = schema[ii];
+      const typeCheck = types[type].check;
+      return typeCheck(args[ii]);
+    });
+    if (!newMatching.length) {
+      const labels = matching.map(_ => types[_[ii]].label).filter(_ => _ != null);
+      throw invalidType(ii, labels, args[ii]);
+    }
+    matching = newMatching;
+  }
+}
+function missingRequiredArg(num) {
+  return newException('EMISSINGARG', 'Missing required argument #' + (num + 1));
+}
+function unknownType(num, type) {
+  return newException('EUNKNOWNTYPE', 'Unknown type ' + type + ' in argument #' + (num + 1));
+}
+function invalidType(num, expectedTypes, value) {
+  let valueType;
+  Object.keys(types).forEach(typeCode => {
+    if (types[typeCode].check(value)) valueType = types[typeCode].label;
+  });
+  return newException('EINVALIDTYPE', 'Argument #' + (num + 1) + ': Expected ' + englishList(expectedTypes) + ' but got ' + valueType);
+}
+function englishList(list) {
+  return list.join(', ').replace(/, ([^,]+)$/, ' or $1');
+}
+function wrongNumberOfArgs(expected, got) {
+  const english = englishList(expected);
+  const args = expected.every(ex => ex.length === 1) ? 'argument' : 'arguments';
+  return newException('EWRONGARGCOUNT', 'Expected ' + english + ' ' + args + ' but got ' + got);
+}
+function moreThanOneError(schema) {
+  return newException('ETOOMANYERRORTYPES', 'Only one error type per argument signature is allowed, more than one found in "' + schema + '"');
+}
+function newException(code, msg) {
+  const err = new Error(msg);
+  err.code = code;
+  /* istanbul ignore else */
+  if (Error.captureStackTrace) Error.captureStackTrace(err, validate$3);
+  return err;
+}
+
+var stringWidth$2 = stringWidthExports;
+var stripAnsi = stripAnsi$2;
+var wideTruncate_1 = wideTruncate$2;
+function wideTruncate$2(str, target) {
+  if (stringWidth$2(str) === 0) return str;
+  if (target <= 0) return '';
+  if (stringWidth$2(str) <= target) return str;
+
+  // We compute the number of bytes of ansi sequences here and add
+  // that to our initial truncation to ensure that we don't slice one
+  // that we want to keep in half.
+  var noAnsi = stripAnsi(str);
+  var ansiSize = str.length + noAnsi.length;
+  var truncated = str.slice(0, target + ansiSize);
+
+  // we have to shrink the result to account for our ansi sequence buffer
+  // (if an ansi sequence was truncated) and double width characters.
+  while (stringWidth$2(truncated) > target) {
+    truncated = truncated.slice(0, -1);
+  }
+  return truncated;
+}
+
+var error$1 = {};
+
+var util = require$$0$2;
+var User = error$1.User = function User(msg) {
+  var err = new Error(msg);
+  Error.captureStackTrace(err, User);
+  err.code = 'EGAUGE';
+  return err;
+};
+error$1.MissingTemplateValue = function MissingTemplateValue(item, values) {
+  var err = new User(util.format('Missing template value "%s"', item.type));
+  Error.captureStackTrace(err, MissingTemplateValue);
+  err.template = item;
+  err.values = values;
+  return err;
+};
+error$1.Internal = function Internal(msg) {
+  var err = new Error(msg);
+  Error.captureStackTrace(err, Internal);
+  err.code = 'EGAUGEINTERNAL';
+  return err;
+};
+
+var stringWidth$1 = stringWidthExports;
+var templateItem = TemplateItem$1;
+function isPercent(num) {
+  if (typeof num !== 'string') return false;
+  return num.slice(-1) === '%';
+}
+function percent(num) {
+  return Number(num.slice(0, -1)) / 100;
+}
+function TemplateItem$1(values, outputLength) {
+  this.overallOutputLength = outputLength;
+  this.finished = false;
+  this.type = null;
+  this.value = null;
+  this.length = null;
+  this.maxLength = null;
+  this.minLength = null;
+  this.kerning = null;
+  this.align = 'left';
+  this.padLeft = 0;
+  this.padRight = 0;
+  this.index = null;
+  this.first = null;
+  this.last = null;
+  if (typeof values === 'string') {
+    this.value = values;
+  } else {
+    for (var prop in values) this[prop] = values[prop];
+  }
+  // Realize percents
+  if (isPercent(this.length)) {
+    this.length = Math.round(this.overallOutputLength * percent(this.length));
+  }
+  if (isPercent(this.minLength)) {
+    this.minLength = Math.round(this.overallOutputLength * percent(this.minLength));
+  }
+  if (isPercent(this.maxLength)) {
+    this.maxLength = Math.round(this.overallOutputLength * percent(this.maxLength));
+  }
+  return this;
+}
+TemplateItem$1.prototype = {};
+TemplateItem$1.prototype.getBaseLength = function () {
+  var length = this.length;
+  if (length == null && typeof this.value === 'string' && this.maxLength == null && this.minLength == null) {
+    length = stringWidth$1(this.value);
+  }
+  return length;
+};
+TemplateItem$1.prototype.getLength = function () {
+  var length = this.getBaseLength();
+  if (length == null) return null;
+  return length + this.padLeft + this.padRight;
+};
+TemplateItem$1.prototype.getMaxLength = function () {
+  if (this.maxLength == null) return null;
+  return this.maxLength + this.padLeft + this.padRight;
+};
+TemplateItem$1.prototype.getMinLength = function () {
+  if (this.minLength == null) return null;
+  return this.minLength + this.padLeft + this.padRight;
+};
+
+var align = align$1;
+var validate$2 = aproba;
+var wideTruncate$1 = wideTruncate_1;
+var error = error$1;
+var TemplateItem = templateItem;
+function renderValueWithValues(values) {
+  return function (item) {
+    return renderValue(item, values);
+  };
+}
+var renderTemplate$2 = renderTemplate$3.exports = function (width, template, values) {
+  var items = prepareItems(width, template, values);
+  var rendered = items.map(renderValueWithValues(values)).join('');
+  return align.left(wideTruncate$1(rendered, width), width);
+};
+function preType(item) {
+  var cappedTypeName = item.type[0].toUpperCase() + item.type.slice(1);
+  return 'pre' + cappedTypeName;
+}
+function postType(item) {
+  var cappedTypeName = item.type[0].toUpperCase() + item.type.slice(1);
+  return 'post' + cappedTypeName;
+}
+function hasPreOrPost(item, values) {
+  if (!item.type) return;
+  return values[preType(item)] || values[postType(item)];
+}
+function generatePreAndPost(baseItem, parentValues) {
+  var item = Object.assign({}, baseItem);
+  var values = Object.create(parentValues);
+  var template = [];
+  var pre = preType(item);
+  var post = postType(item);
+  if (values[pre]) {
+    template.push({
+      value: values[pre]
+    });
+    values[pre] = null;
+  }
+  item.minLength = null;
+  item.length = null;
+  item.maxLength = null;
+  template.push(item);
+  values[item.type] = values[item.type];
+  if (values[post]) {
+    template.push({
+      value: values[post]
+    });
+    values[post] = null;
+  }
+  return function ($1, $2, length) {
+    return renderTemplate$2(length, template, values);
+  };
+}
+function prepareItems(width, template, values) {
+  function cloneAndObjectify(item, index, arr) {
+    var cloned = new TemplateItem(item, width);
+    var type = cloned.type;
+    if (cloned.value == null) {
+      if (!(type in values)) {
+        if (cloned.default == null) {
+          throw new error.MissingTemplateValue(cloned, values);
+        } else {
+          cloned.value = cloned.default;
+        }
+      } else {
+        cloned.value = values[type];
+      }
+    }
+    if (cloned.value == null || cloned.value === '') return null;
+    cloned.index = index;
+    cloned.first = index === 0;
+    cloned.last = index === arr.length - 1;
+    if (hasPreOrPost(cloned, values)) cloned.value = generatePreAndPost(cloned, values);
+    return cloned;
+  }
+  var output = template.map(cloneAndObjectify).filter(function (item) {
+    return item != null;
+  });
+  var remainingSpace = width;
+  var variableCount = output.length;
+  function consumeSpace(length) {
+    if (length > remainingSpace) length = remainingSpace;
+    remainingSpace -= length;
+  }
+  function finishSizing(item, length) {
+    if (item.finished) throw new error.Internal('Tried to finish template item that was already finished');
+    if (length === Infinity) throw new error.Internal('Length of template item cannot be infinity');
+    if (length != null) item.length = length;
+    item.minLength = null;
+    item.maxLength = null;
+    --variableCount;
+    item.finished = true;
+    if (item.length == null) item.length = item.getBaseLength();
+    if (item.length == null) throw new error.Internal('Finished template items must have a length');
+    consumeSpace(item.getLength());
+  }
+  output.forEach(function (item) {
+    if (!item.kerning) return;
+    var prevPadRight = item.first ? 0 : output[item.index - 1].padRight;
+    if (!item.first && prevPadRight < item.kerning) item.padLeft = item.kerning - prevPadRight;
+    if (!item.last) item.padRight = item.kerning;
+  });
+
+  // Finish any that have a fixed (literal or intuited) length
+  output.forEach(function (item) {
+    if (item.getBaseLength() == null) return;
+    finishSizing(item);
+  });
+  var resized = 0;
+  var resizing;
+  var hunkSize;
+  do {
+    resizing = false;
+    hunkSize = Math.round(remainingSpace / variableCount);
+    output.forEach(function (item) {
+      if (item.finished) return;
+      if (!item.maxLength) return;
+      if (item.getMaxLength() < hunkSize) {
+        finishSizing(item, item.maxLength);
+        resizing = true;
+      }
+    });
+  } while (resizing && resized++ < output.length);
+  if (resizing) throw new error.Internal('Resize loop iterated too many times while determining maxLength');
+  resized = 0;
+  do {
+    resizing = false;
+    hunkSize = Math.round(remainingSpace / variableCount);
+    output.forEach(function (item) {
+      if (item.finished) return;
+      if (!item.minLength) return;
+      if (item.getMinLength() >= hunkSize) {
+        finishSizing(item, item.minLength);
+        resizing = true;
+      }
+    });
+  } while (resizing && resized++ < output.length);
+  if (resizing) throw new error.Internal('Resize loop iterated too many times while determining minLength');
+  hunkSize = Math.round(remainingSpace / variableCount);
+  output.forEach(function (item) {
+    if (item.finished) return;
+    finishSizing(item, hunkSize);
+  });
+  return output;
+}
+function renderFunction(item, values, length) {
+  validate$2('OON', arguments);
+  if (item.type) {
+    return item.value(values, values[item.type + 'Theme'] || {}, length);
+  } else {
+    return item.value(values, {}, length);
+  }
+}
+function renderValue(item, values) {
+  var length = item.getBaseLength();
+  var value = typeof item.value === 'function' ? renderFunction(item, values, length) : item.value;
+  if (value == null || value === '') return '';
+  var alignWith = align[item.align] || align.left;
+  var leftPadding = item.padLeft ? align.left('', item.padLeft) : '';
+  var rightPadding = item.padRight ? align.right('', item.padRight) : '';
+  var truncated = wideTruncate$1(String(value), length);
+  var aligned = alignWith(truncated, length);
+  return leftPadding + aligned + rightPadding;
+}
+var renderTemplateExports = renderTemplate$3.exports;
+
+var consoleControl = consoleControlStrings;
+var renderTemplate$1 = renderTemplateExports;
+var validate$1 = aproba;
+var Plumbing$1 = plumbing.exports = function (theme, template, width) {
+  if (!width) width = 80;
+  validate$1('OAN', [theme, template, width]);
+  this.showing = false;
+  this.theme = theme;
+  this.width = width;
+  this.template = template;
+};
+Plumbing$1.prototype = {};
+Plumbing$1.prototype.setTheme = function (theme) {
+  validate$1('O', [theme]);
+  this.theme = theme;
+};
+Plumbing$1.prototype.setTemplate = function (template) {
+  validate$1('A', [template]);
+  this.template = template;
+};
+Plumbing$1.prototype.setWidth = function (width) {
+  validate$1('N', [width]);
+  this.width = width;
+};
+Plumbing$1.prototype.hide = function () {
+  return consoleControl.gotoSOL() + consoleControl.eraseLine();
+};
+Plumbing$1.prototype.hideCursor = consoleControl.hideCursor;
+Plumbing$1.prototype.showCursor = consoleControl.showCursor;
+Plumbing$1.prototype.show = function (status) {
+  var values = Object.create(this.theme);
+  for (var key in status) {
+    values[key] = status[key];
+  }
+  return renderTemplate$1(this.width, this.template, values).trim() + consoleControl.color('reset') + consoleControl.eraseLine() + consoleControl.gotoSOL();
+};
+var plumbingExports = plumbing.exports;
+
+var hasUnicode$1 = {exports: {}};
+
+var os = require$$4;
+hasUnicode$1.exports = function () {
+  // Recent Win32 platforms (>XP) CAN support unicode in the console but
+  // don't have to, and in non-english locales often use traditional local
+  // code pages. There's no way, short of windows system calls or execing
+  // the chcp command line program to figure this out. As such, we default
+  // this to false and encourage your users to override it via config if
+  // appropriate.
+  if (os.type() == "Windows_NT") {
+    return false;
+  }
+  var isUTF8 = /UTF-?8$/i;
+  var ctype = process.env.LC_ALL || process.env.LC_CTYPE || process.env.LANG;
+  return isUTF8.test(ctype);
+};
+var hasUnicodeExports = hasUnicode$1.exports;
+
+// call it on itself so we can test the export val for basic stuff
+var colorSupport_1 = colorSupport$1({
+  alwaysReturn: true
+}, colorSupport$1);
+function hasNone(obj, options) {
+  obj.level = 0;
+  obj.hasBasic = false;
+  obj.has256 = false;
+  obj.has16m = false;
+  if (!options.alwaysReturn) {
+    return false;
+  }
+  return obj;
+}
+function hasBasic(obj) {
+  obj.hasBasic = true;
+  obj.has256 = false;
+  obj.has16m = false;
+  obj.level = 1;
+  return obj;
+}
+function has256(obj) {
+  obj.hasBasic = true;
+  obj.has256 = true;
+  obj.has16m = false;
+  obj.level = 2;
+  return obj;
+}
+function has16m(obj) {
+  obj.hasBasic = true;
+  obj.has256 = true;
+  obj.has16m = true;
+  obj.level = 3;
+  return obj;
+}
+function colorSupport$1(options, obj) {
+  options = options || {};
+  obj = obj || {};
+
+  // if just requesting a specific level, then return that.
+  if (typeof options.level === 'number') {
+    switch (options.level) {
+      case 0:
+        return hasNone(obj, options);
+      case 1:
+        return hasBasic(obj);
+      case 2:
+        return has256(obj);
+      case 3:
+        return has16m(obj);
+    }
+  }
+  obj.level = 0;
+  obj.hasBasic = false;
+  obj.has256 = false;
+  obj.has16m = false;
+  if (typeof process === 'undefined' || !process || !process.stdout || !process.env || !process.platform) {
+    return hasNone(obj, options);
+  }
+  var env = options.env || process.env;
+  var stream = options.stream || process.stdout;
+  var term = options.term || env.TERM || '';
+  var platform = options.platform || process.platform;
+  if (!options.ignoreTTY && !stream.isTTY) {
+    return hasNone(obj, options);
+  }
+  if (!options.ignoreDumb && term === 'dumb' && !env.COLORTERM) {
+    return hasNone(obj, options);
+  }
+  if (platform === 'win32') {
+    return hasBasic(obj);
+  }
+  if (env.TMUX) {
+    return has256(obj);
+  }
+  if (!options.ignoreCI && (env.CI || env.TEAMCITY_VERSION)) {
+    if (env.TRAVIS) {
+      return has256(obj);
+    } else {
+      return hasNone(obj, options);
+    }
+  }
+
+  // TODO: add more term programs
+  switch (env.TERM_PROGRAM) {
+    case 'iTerm.app':
+      var ver = env.TERM_PROGRAM_VERSION || '0.';
+      if (/^[0-2]\./.test(ver)) {
+        return has256(obj);
+      } else {
+        return has16m(obj);
+      }
+    case 'HyperTerm':
+    case 'Hyper':
+      return has16m(obj);
+    case 'MacTerm':
+      return has16m(obj);
+    case 'Apple_Terminal':
+      return has256(obj);
+  }
+  if (/^xterm-256/.test(term)) {
+    return has256(obj);
+  }
+  if (/^screen|^xterm|^vt100|color|ansi|cygwin|linux/i.test(term)) {
+    return hasBasic(obj);
+  }
+  if (env.COLORTERM) {
+    return hasBasic(obj);
+  }
+  return hasNone(obj, options);
+}
+
+var colorSupport = colorSupport_1;
+var hasColor$1 = colorSupport().hasBasic;
+
+var signalExit = {exports: {}};
+
+var signals$1 = {exports: {}};
+
+var hasRequiredSignals;
+function requireSignals() {
+  if (hasRequiredSignals) return signals$1.exports;
+  hasRequiredSignals = 1;
+  (function (module) {
+    // This is not the set of all possible signals.
+    //
+    // It IS, however, the set of all signals that trigger
+    // an exit on either Linux or BSD systems.  Linux is a
+    // superset of the signal names supported on BSD, and
+    // the unknown signals just fail to register, so we can
+    // catch that easily enough.
+    //
+    // Don't bother with SIGKILL.  It's uncatchable, which
+    // means that we can't fire any callbacks anyway.
+    //
+    // If a user does happen to register a handler on a non-
+    // fatal signal like SIGWINCH or something, and then
+    // exit, it'll end up firing `process.emit('exit')`, so
+    // the handler will be fired anyway.
+    //
+    // SIGBUS, SIGFPE, SIGSEGV and SIGILL, when not raised
+    // artificially, inherently leave the process in a
+    // state from which it is not safe to try and enter JS
+    // listeners.
+    module.exports = ['SIGABRT', 'SIGALRM', 'SIGHUP', 'SIGINT', 'SIGTERM'];
+    if (process.platform !== 'win32') {
+      module.exports.push('SIGVTALRM', 'SIGXCPU', 'SIGXFSZ', 'SIGUSR2', 'SIGTRAP', 'SIGSYS', 'SIGQUIT', 'SIGIOT'
+      // should detect profiler and enable/disable accordingly.
+      // see #21
+      // 'SIGPROF'
+      );
+    }
+
+    if (process.platform === 'linux') {
+      module.exports.push('SIGIO', 'SIGPOLL', 'SIGPWR', 'SIGSTKFLT', 'SIGUNUSED');
+    }
+  })(signals$1);
+  return signals$1.exports;
+}
+
+// Note: since nyc uses this module to output coverage, any lines
+// that are in the direct sync flow of nyc's outputCoverage are
+// ignored, since we can never get coverage for them.
+// grab a reference to node's real process object right away
+var process$3 = commonjsGlobal.process;
+const processOk = function (process) {
+  return process && typeof process === 'object' && typeof process.removeListener === 'function' && typeof process.emit === 'function' && typeof process.reallyExit === 'function' && typeof process.listeners === 'function' && typeof process.kill === 'function' && typeof process.pid === 'number' && typeof process.on === 'function';
+};
+
+// some kind of non-node environment, just no-op
+/* istanbul ignore if */
+if (!processOk(process$3)) {
+  signalExit.exports = function () {
+    return function () {};
+  };
+} else {
+  var assert = require$$5$2;
+  var signals = requireSignals();
+  var isWin = /^win/i.test(process$3.platform);
+  var EE = require$$2$1;
+  /* istanbul ignore if */
+  if (typeof EE !== 'function') {
+    EE = EE.EventEmitter;
+  }
+  var emitter;
+  if (process$3.__signal_exit_emitter__) {
+    emitter = process$3.__signal_exit_emitter__;
+  } else {
+    emitter = process$3.__signal_exit_emitter__ = new EE();
+    emitter.count = 0;
+    emitter.emitted = {};
+  }
+
+  // Because this emitter is a global, we have to check to see if a
+  // previous version of this library failed to enable infinite listeners.
+  // I know what you're about to say.  But literally everything about
+  // signal-exit is a compromise with evil.  Get used to it.
+  if (!emitter.infinite) {
+    emitter.setMaxListeners(Infinity);
+    emitter.infinite = true;
+  }
+  signalExit.exports = function (cb, opts) {
+    /* istanbul ignore if */
+    if (!processOk(commonjsGlobal.process)) {
+      return function () {};
+    }
+    assert.equal(typeof cb, 'function', 'a callback must be provided for exit handler');
+    if (loaded === false) {
+      load();
+    }
+    var ev = 'exit';
+    if (opts && opts.alwaysLast) {
+      ev = 'afterexit';
+    }
+    var remove = function () {
+      emitter.removeListener(ev, cb);
+      if (emitter.listeners('exit').length === 0 && emitter.listeners('afterexit').length === 0) {
+        unload();
+      }
+    };
+    emitter.on(ev, cb);
+    return remove;
+  };
+  var unload = function unload() {
+    if (!loaded || !processOk(commonjsGlobal.process)) {
+      return;
+    }
+    loaded = false;
+    signals.forEach(function (sig) {
+      try {
+        process$3.removeListener(sig, sigListeners[sig]);
+      } catch (er) {}
+    });
+    process$3.emit = originalProcessEmit;
+    process$3.reallyExit = originalProcessReallyExit;
+    emitter.count -= 1;
+  };
+  signalExit.exports.unload = unload;
+  var emit = function emit(event, code, signal) {
+    /* istanbul ignore if */
+    if (emitter.emitted[event]) {
+      return;
+    }
+    emitter.emitted[event] = true;
+    emitter.emit(event, code, signal);
+  };
+
+  // { <signal>: <listener fn>, ... }
+  var sigListeners = {};
+  signals.forEach(function (sig) {
+    sigListeners[sig] = function listener() {
+      /* istanbul ignore if */
+      if (!processOk(commonjsGlobal.process)) {
+        return;
+      }
+      // If there are no other listeners, an exit is coming!
+      // Simplest way: remove us and then re-send the signal.
+      // We know that this will kill the process, so we can
+      // safely emit now.
+      var listeners = process$3.listeners(sig);
+      if (listeners.length === emitter.count) {
+        unload();
+        emit('exit', null, sig);
+        /* istanbul ignore next */
+        emit('afterexit', null, sig);
+        /* istanbul ignore next */
+        if (isWin && sig === 'SIGHUP') {
+          // "SIGHUP" throws an `ENOSYS` error on Windows,
+          // so use a supported signal instead
+          sig = 'SIGINT';
+        }
+        /* istanbul ignore next */
+        process$3.kill(process$3.pid, sig);
+      }
+    };
+  });
+  signalExit.exports.signals = function () {
+    return signals;
+  };
+  var loaded = false;
+  var load = function load() {
+    if (loaded || !processOk(commonjsGlobal.process)) {
+      return;
+    }
+    loaded = true;
+
+    // This is the number of onSignalExit's that are in play.
+    // It's important so that we can count the correct number of
+    // listeners on signals, and don't wait for the other one to
+    // handle it instead of us.
+    emitter.count += 1;
+    signals = signals.filter(function (sig) {
+      try {
+        process$3.on(sig, sigListeners[sig]);
+        return true;
+      } catch (er) {
+        return false;
+      }
+    });
+    process$3.emit = processEmit;
+    process$3.reallyExit = processReallyExit;
+  };
+  signalExit.exports.load = load;
+  var originalProcessReallyExit = process$3.reallyExit;
+  var processReallyExit = function processReallyExit(code) {
+    /* istanbul ignore if */
+    if (!processOk(commonjsGlobal.process)) {
+      return;
+    }
+    process$3.exitCode = code || /* istanbul ignore next */0;
+    emit('exit', process$3.exitCode, null);
+    /* istanbul ignore next */
+    emit('afterexit', process$3.exitCode, null);
+    /* istanbul ignore next */
+    originalProcessReallyExit.call(process$3, process$3.exitCode);
+  };
+  var originalProcessEmit = process$3.emit;
+  var processEmit = function processEmit(ev, arg) {
+    if (ev === 'exit' && processOk(commonjsGlobal.process)) {
+      /* istanbul ignore else */
+      if (arg !== undefined) {
+        process$3.exitCode = arg;
+      }
+      var ret = originalProcessEmit.apply(this, arguments);
+      /* istanbul ignore next */
+      emit('exit', process$3.exitCode, null);
+      /* istanbul ignore next */
+      emit('afterexit', process$3.exitCode, null);
+      /* istanbul ignore next */
+      return ret;
+    } else {
+      return originalProcessEmit.apply(this, arguments);
+    }
+  };
+}
+var signalExitExports = signalExit.exports;
+
+var themes$1 = {exports: {}};
+
+/*
+object-assign
+(c) Sindre Sorhus
+@license MIT
+*/
+/* eslint-disable no-unused-vars */
+var getOwnPropertySymbols = Object.getOwnPropertySymbols;
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+var propIsEnumerable = Object.prototype.propertyIsEnumerable;
+function toObject(val) {
+  if (val === null || val === undefined) {
+    throw new TypeError('Object.assign cannot be called with null or undefined');
+  }
+  return Object(val);
+}
+function shouldUseNative() {
+  try {
+    if (!Object.assign) {
+      return false;
+    }
+
+    // Detect buggy property enumeration order in older V8 versions.
+
+    // https://bugs.chromium.org/p/v8/issues/detail?id=4118
+    var test1 = new String('abc'); // eslint-disable-line no-new-wrappers
+    test1[5] = 'de';
+    if (Object.getOwnPropertyNames(test1)[0] === '5') {
+      return false;
+    }
+
+    // https://bugs.chromium.org/p/v8/issues/detail?id=3056
+    var test2 = {};
+    for (var i = 0; i < 10; i++) {
+      test2['_' + String.fromCharCode(i)] = i;
+    }
+    var order2 = Object.getOwnPropertyNames(test2).map(function (n) {
+      return test2[n];
+    });
+    if (order2.join('') !== '0123456789') {
+      return false;
+    }
+
+    // https://bugs.chromium.org/p/v8/issues/detail?id=3056
+    var test3 = {};
+    'abcdefghijklmnopqrst'.split('').forEach(function (letter) {
+      test3[letter] = letter;
+    });
+    if (Object.keys(Object.assign({}, test3)).join('') !== 'abcdefghijklmnopqrst') {
+      return false;
+    }
+    return true;
+  } catch (err) {
+    // We don't expect any of the above to throw, but better to be safe.
+    return false;
+  }
+}
+var objectAssign$1 = shouldUseNative() ? Object.assign : function (target, source) {
+  var from;
+  var to = toObject(target);
+  var symbols;
+  for (var s = 1; s < arguments.length; s++) {
+    from = Object(arguments[s]);
+    for (var key in from) {
+      if (hasOwnProperty.call(from, key)) {
+        to[key] = from[key];
+      }
+    }
+    if (getOwnPropertySymbols) {
+      symbols = getOwnPropertySymbols(from);
+      for (var i = 0; i < symbols.length; i++) {
+        if (propIsEnumerable.call(from, symbols[i])) {
+          to[symbols[i]] = from[symbols[i]];
+        }
+      }
+    }
+  }
+  return to;
+};
+
+var spin$1 = function spin(spinstr, spun) {
+  return spinstr[spun % spinstr.length];
+};
+
+var validate = aproba;
+var renderTemplate = renderTemplateExports;
+var wideTruncate = wideTruncate_1;
+var stringWidth = stringWidthExports;
+var progressBar$1 = function (theme, width, completed) {
+  validate('ONN', [theme, width, completed]);
+  if (completed < 0) completed = 0;
+  if (completed > 1) completed = 1;
+  if (width <= 0) return '';
+  var sofar = Math.round(width * completed);
+  var rest = width - sofar;
+  var template = [{
+    type: 'complete',
+    value: repeat(theme.complete, sofar),
+    length: sofar
+  }, {
+    type: 'remaining',
+    value: repeat(theme.remaining, rest),
+    length: rest
+  }];
+  return renderTemplate(width, template, theme);
+};
+
+// lodash's way of repeating
+function repeat(string, width) {
+  var result = '';
+  var n = width;
+  do {
+    if (n % 2) {
+      result += string;
+    }
+    n = Math.floor(n / 2);
+    /* eslint no-self-assign: 0 */
+    string += string;
+  } while (n && stringWidth(result) < width);
+  return wideTruncate(result, width);
+}
+
+var spin = spin$1;
+var progressBar = progressBar$1;
+var baseTheme = {
+  activityIndicator: function (values, theme, width) {
+    if (values.spun == null) return;
+    return spin(theme, values.spun);
+  },
+  progressbar: function (values, theme, width) {
+    if (values.completed == null) return;
+    return progressBar(theme, width, values.completed);
+  }
+};
+
+var objectAssign = objectAssign$1;
+var themeSet = function () {
+  return ThemeSetProto.newThemeSet();
+};
+var ThemeSetProto = {};
+ThemeSetProto.baseTheme = baseTheme;
+ThemeSetProto.newTheme = function (parent, theme) {
+  if (!theme) {
+    theme = parent;
+    parent = this.baseTheme;
+  }
+  return objectAssign({}, parent, theme);
+};
+ThemeSetProto.getThemeNames = function () {
+  return Object.keys(this.themes);
+};
+ThemeSetProto.addTheme = function (name, parent, theme) {
+  this.themes[name] = this.newTheme(parent, theme);
+};
+ThemeSetProto.addToAllThemes = function (theme) {
+  var themes = this.themes;
+  Object.keys(themes).forEach(function (name) {
+    objectAssign(themes[name], theme);
+  });
+  objectAssign(this.baseTheme, theme);
+};
+ThemeSetProto.getTheme = function (name) {
+  if (!this.themes[name]) throw this.newMissingThemeError(name);
+  return this.themes[name];
+};
+ThemeSetProto.setDefault = function (opts, name) {
+  if (name == null) {
+    name = opts;
+    opts = {};
+  }
+  var platform = opts.platform == null ? 'fallback' : opts.platform;
+  var hasUnicode = !!opts.hasUnicode;
+  var hasColor = !!opts.hasColor;
+  if (!this.defaults[platform]) this.defaults[platform] = {
+    true: {},
+    false: {}
+  };
+  this.defaults[platform][hasUnicode][hasColor] = name;
+};
+ThemeSetProto.getDefault = function (opts) {
+  if (!opts) opts = {};
+  var platformName = opts.platform || process.platform;
+  var platform = this.defaults[platformName] || this.defaults.fallback;
+  var hasUnicode = !!opts.hasUnicode;
+  var hasColor = !!opts.hasColor;
+  if (!platform) throw this.newMissingDefaultThemeError(platformName, hasUnicode, hasColor);
+  if (!platform[hasUnicode][hasColor]) {
+    if (hasUnicode && hasColor && platform[!hasUnicode][hasColor]) {
+      hasUnicode = false;
+    } else if (hasUnicode && hasColor && platform[hasUnicode][!hasColor]) {
+      hasColor = false;
+    } else if (hasUnicode && hasColor && platform[!hasUnicode][!hasColor]) {
+      hasUnicode = false;
+      hasColor = false;
+    } else if (hasUnicode && !hasColor && platform[!hasUnicode][hasColor]) {
+      hasUnicode = false;
+    } else if (!hasUnicode && hasColor && platform[hasUnicode][!hasColor]) {
+      hasColor = false;
+    } else if (platform === this.defaults.fallback) {
+      throw this.newMissingDefaultThemeError(platformName, hasUnicode, hasColor);
+    }
+  }
+  if (platform[hasUnicode][hasColor]) {
+    return this.getTheme(platform[hasUnicode][hasColor]);
+  } else {
+    return this.getDefault(objectAssign({}, opts, {
+      platform: 'fallback'
+    }));
+  }
+};
+ThemeSetProto.newMissingThemeError = function newMissingThemeError(name) {
+  var err = new Error('Could not find a gauge theme named "' + name + '"');
+  Error.captureStackTrace.call(err, newMissingThemeError);
+  err.theme = name;
+  err.code = 'EMISSINGTHEME';
+  return err;
+};
+ThemeSetProto.newMissingDefaultThemeError = function newMissingDefaultThemeError(platformName, hasUnicode, hasColor) {
+  var err = new Error('Could not find a gauge theme for your platform/unicode/color use combo:\n' + '    platform = ' + platformName + '\n' + '    hasUnicode = ' + hasUnicode + '\n' + '    hasColor = ' + hasColor);
+  Error.captureStackTrace.call(err, newMissingDefaultThemeError);
+  err.platform = platformName;
+  err.hasUnicode = hasUnicode;
+  err.hasColor = hasColor;
+  err.code = 'EMISSINGTHEME';
+  return err;
+};
+ThemeSetProto.newThemeSet = function () {
+  var themeset = function (opts) {
+    return themeset.getDefault(opts);
+  };
+  return objectAssign(themeset, ThemeSetProto, {
+    themes: objectAssign({}, this.themes),
+    baseTheme: objectAssign({}, this.baseTheme),
+    defaults: JSON.parse(JSON.stringify(this.defaults || {}))
+  });
+};
+
+var color = consoleControlStrings.color;
+var ThemeSet = themeSet;
+var themes = themes$1.exports = new ThemeSet();
+themes.addTheme('ASCII', {
+  preProgressbar: '[',
+  postProgressbar: ']',
+  progressbarTheme: {
+    complete: '#',
+    remaining: '.'
+  },
+  activityIndicatorTheme: '-\\|/',
+  preSubsection: '>'
+});
+themes.addTheme('colorASCII', themes.getTheme('ASCII'), {
+  progressbarTheme: {
+    preComplete: color('bgBrightWhite', 'brightWhite'),
+    complete: '#',
+    postComplete: color('reset'),
+    preRemaining: color('bgBrightBlack', 'brightBlack'),
+    remaining: '.',
+    postRemaining: color('reset')
+  }
+});
+themes.addTheme('brailleSpinner', {
+  preProgressbar: '⸨',
+  postProgressbar: '⸩',
+  progressbarTheme: {
+    complete: '#',
+    remaining: '⠂'
+  },
+  activityIndicatorTheme: '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏',
+  preSubsection: '>'
+});
+themes.addTheme('colorBrailleSpinner', themes.getTheme('brailleSpinner'), {
+  progressbarTheme: {
+    preComplete: color('bgBrightWhite', 'brightWhite'),
+    complete: '#',
+    postComplete: color('reset'),
+    preRemaining: color('bgBrightBlack', 'brightBlack'),
+    remaining: '⠂',
+    postRemaining: color('reset')
+  }
+});
+themes.setDefault({}, 'ASCII');
+themes.setDefault({
+  hasColor: true
+}, 'colorASCII');
+themes.setDefault({
+  platform: 'darwin',
+  hasUnicode: true
+}, 'brailleSpinner');
+themes.setDefault({
+  platform: 'darwin',
+  hasUnicode: true,
+  hasColor: true
+}, 'colorBrailleSpinner');
+themes.setDefault({
+  platform: 'linux',
+  hasUnicode: true
+}, 'brailleSpinner');
+themes.setDefault({
+  platform: 'linux',
+  hasUnicode: true,
+  hasColor: true
+}, 'colorBrailleSpinner');
+var themesExports = themes$1.exports;
+
+// this exists so we can replace it during testing
+var setInterval_1 = setInterval;
+
+// this exists so we can replace it during testing
+var process_1$1 = process;
+
+var setImmediate$2 = {exports: {}};
+
+var process$2 = process_1$1;
+try {
+  setImmediate$2.exports = setImmediate;
+} catch (ex) {
+  setImmediate$2.exports = process$2.nextTick;
+}
+var setImmediateExports = setImmediate$2.exports;
+
+var Plumbing = plumbingExports;
+var hasUnicode = hasUnicodeExports;
+var hasColor = hasColor$1;
+var onExit = signalExitExports;
+var defaultThemes = themesExports;
+var setInterval$1 = setInterval_1;
+var process$1 = process_1$1;
+var setImmediate$1 = setImmediateExports;
+var gauge = Gauge;
+function callWith(obj, method) {
+  return function () {
+    return method.call(obj);
+  };
+}
+function Gauge(arg1, arg2) {
+  var options, writeTo;
+  if (arg1 && arg1.write) {
+    writeTo = arg1;
+    options = arg2 || {};
+  } else if (arg2 && arg2.write) {
+    writeTo = arg2;
+    options = arg1 || {};
+  } else {
+    writeTo = process$1.stderr;
+    options = arg1 || arg2 || {};
+  }
+  this._status = {
+    spun: 0,
+    section: '',
+    subsection: ''
+  };
+  this._paused = false; // are we paused for back pressure?
+  this._disabled = true; // are all progress bar updates disabled?
+  this._showing = false; // do we WANT the progress bar on screen
+  this._onScreen = false; // IS the progress bar on screen
+  this._needsRedraw = false; // should we print something at next tick?
+  this._hideCursor = options.hideCursor == null ? true : options.hideCursor;
+  this._fixedFramerate = options.fixedFramerate == null ? !/^v0\.8\./.test(process$1.version) : options.fixedFramerate;
+  this._lastUpdateAt = null;
+  this._updateInterval = options.updateInterval == null ? 50 : options.updateInterval;
+  this._themes = options.themes || defaultThemes;
+  this._theme = options.theme;
+  var theme = this._computeTheme(options.theme);
+  var template = options.template || [{
+    type: 'progressbar',
+    length: 20
+  }, {
+    type: 'activityIndicator',
+    kerning: 1,
+    length: 1
+  }, {
+    type: 'section',
+    kerning: 1,
+    default: ''
+  }, {
+    type: 'subsection',
+    kerning: 1,
+    default: ''
+  }];
+  this.setWriteTo(writeTo, options.tty);
+  var PlumbingClass = options.Plumbing || Plumbing;
+  this._gauge = new PlumbingClass(theme, template, this.getWidth());
+  this._$$doRedraw = callWith(this, this._doRedraw);
+  this._$$handleSizeChange = callWith(this, this._handleSizeChange);
+  this._cleanupOnExit = options.cleanupOnExit == null || options.cleanupOnExit;
+  this._removeOnExit = null;
+  if (options.enabled || options.enabled == null && this._tty && this._tty.isTTY) {
+    this.enable();
+  } else {
+    this.disable();
+  }
+}
+Gauge.prototype = {};
+Gauge.prototype.isEnabled = function () {
+  return !this._disabled;
+};
+Gauge.prototype.setTemplate = function (template) {
+  this._gauge.setTemplate(template);
+  if (this._showing) this._requestRedraw();
+};
+Gauge.prototype._computeTheme = function (theme) {
+  if (!theme) theme = {};
+  if (typeof theme === 'string') {
+    theme = this._themes.getTheme(theme);
+  } else if (theme && (Object.keys(theme).length === 0 || theme.hasUnicode != null || theme.hasColor != null)) {
+    var useUnicode = theme.hasUnicode == null ? hasUnicode() : theme.hasUnicode;
+    var useColor = theme.hasColor == null ? hasColor : theme.hasColor;
+    theme = this._themes.getDefault({
+      hasUnicode: useUnicode,
+      hasColor: useColor,
+      platform: theme.platform
+    });
+  }
+  return theme;
+};
+Gauge.prototype.setThemeset = function (themes) {
+  this._themes = themes;
+  this.setTheme(this._theme);
+};
+Gauge.prototype.setTheme = function (theme) {
+  this._gauge.setTheme(this._computeTheme(theme));
+  if (this._showing) this._requestRedraw();
+  this._theme = theme;
+};
+Gauge.prototype._requestRedraw = function () {
+  this._needsRedraw = true;
+  if (!this._fixedFramerate) this._doRedraw();
+};
+Gauge.prototype.getWidth = function () {
+  return (this._tty && this._tty.columns || 80) - 1;
+};
+Gauge.prototype.setWriteTo = function (writeTo, tty) {
+  var enabled = !this._disabled;
+  if (enabled) this.disable();
+  this._writeTo = writeTo;
+  this._tty = tty || writeTo === process$1.stderr && process$1.stdout.isTTY && process$1.stdout || writeTo.isTTY && writeTo || this._tty;
+  if (this._gauge) this._gauge.setWidth(this.getWidth());
+  if (enabled) this.enable();
+};
+Gauge.prototype.enable = function () {
+  if (!this._disabled) return;
+  this._disabled = false;
+  if (this._tty) this._enableEvents();
+  if (this._showing) this.show();
+};
+Gauge.prototype.disable = function () {
+  if (this._disabled) return;
+  if (this._showing) {
+    this._lastUpdateAt = null;
+    this._showing = false;
+    this._doRedraw();
+    this._showing = true;
+  }
+  this._disabled = true;
+  if (this._tty) this._disableEvents();
+};
+Gauge.prototype._enableEvents = function () {
+  if (this._cleanupOnExit) {
+    this._removeOnExit = onExit(callWith(this, this.disable));
+  }
+  this._tty.on('resize', this._$$handleSizeChange);
+  if (this._fixedFramerate) {
+    this.redrawTracker = setInterval$1(this._$$doRedraw, this._updateInterval);
+    if (this.redrawTracker.unref) this.redrawTracker.unref();
+  }
+};
+Gauge.prototype._disableEvents = function () {
+  this._tty.removeListener('resize', this._$$handleSizeChange);
+  if (this._fixedFramerate) clearInterval(this.redrawTracker);
+  if (this._removeOnExit) this._removeOnExit();
+};
+Gauge.prototype.hide = function (cb) {
+  if (this._disabled) return cb && process$1.nextTick(cb);
+  if (!this._showing) return cb && process$1.nextTick(cb);
+  this._showing = false;
+  this._doRedraw();
+  cb && setImmediate$1(cb);
+};
+Gauge.prototype.show = function (section, completed) {
+  this._showing = true;
+  if (typeof section === 'string') {
+    this._status.section = section;
+  } else if (typeof section === 'object') {
+    var sectionKeys = Object.keys(section);
+    for (var ii = 0; ii < sectionKeys.length; ++ii) {
+      var key = sectionKeys[ii];
+      this._status[key] = section[key];
+    }
+  }
+  if (completed != null) this._status.completed = completed;
+  if (this._disabled) return;
+  this._requestRedraw();
+};
+Gauge.prototype.pulse = function (subsection) {
+  this._status.subsection = subsection || '';
+  this._status.spun++;
+  if (this._disabled) return;
+  if (!this._showing) return;
+  this._requestRedraw();
+};
+Gauge.prototype._handleSizeChange = function () {
+  this._gauge.setWidth(this._tty.columns - 1);
+  this._requestRedraw();
+};
+Gauge.prototype._doRedraw = function () {
+  if (this._disabled || this._paused) return;
+  if (!this._fixedFramerate) {
+    var now = Date.now();
+    if (this._lastUpdateAt && now - this._lastUpdateAt < this._updateInterval) return;
+    this._lastUpdateAt = now;
+  }
+  if (!this._showing && this._onScreen) {
+    this._onScreen = false;
+    var result = this._gauge.hide();
+    if (this._hideCursor) {
+      result += this._gauge.showCursor();
+    }
+    return this._writeTo.write(result);
+  }
+  if (!this._showing && !this._onScreen) return;
+  if (this._showing && !this._onScreen) {
+    this._onScreen = true;
+    this._needsRedraw = true;
+    if (this._hideCursor) {
+      this._writeTo.write(this._gauge.hideCursor());
+    }
+  }
+  if (!this._needsRedraw) return;
+  if (!this._writeTo.write(this._gauge.show(this._status))) {
+    this._paused = true;
+    this._writeTo.on('drain', callWith(this, function () {
+      this._paused = false;
+      this._doRedraw();
+    }));
+  }
+};
+
+var setBlocking = function (blocking) {
+  [process.stdout, process.stderr].forEach(function (stream) {
+    if (stream._handle && stream.isTTY && typeof stream._handle.setBlocking === 'function') {
+      stream._handle.setBlocking(blocking);
+    }
+  });
+};
+
+(function (module, exports) {
+
+  var Progress = lib;
+  var Gauge = gauge;
+  var EE = require$$2$1.EventEmitter;
+  var log = module.exports = new EE();
+  var util = require$$0$2;
+  var setBlocking$1 = setBlocking;
+  var consoleControl = consoleControlStrings;
+  setBlocking$1(true);
+  var stream = process.stderr;
+  Object.defineProperty(log, 'stream', {
+    set: function (newStream) {
+      stream = newStream;
+      if (this.gauge) {
+        this.gauge.setWriteTo(stream, stream);
+      }
+    },
+    get: function () {
+      return stream;
+    }
+  });
+
+  // by default, decide based on tty-ness.
+  var colorEnabled;
+  log.useColor = function () {
+    return colorEnabled != null ? colorEnabled : stream.isTTY;
+  };
+  log.enableColor = function () {
+    colorEnabled = true;
+    this.gauge.setTheme({
+      hasColor: colorEnabled,
+      hasUnicode: unicodeEnabled
+    });
+  };
+  log.disableColor = function () {
+    colorEnabled = false;
+    this.gauge.setTheme({
+      hasColor: colorEnabled,
+      hasUnicode: unicodeEnabled
+    });
+  };
+
+  // default level
+  log.level = 'info';
+  log.gauge = new Gauge(stream, {
+    enabled: false,
+    // no progress bars unless asked
+    theme: {
+      hasColor: log.useColor()
+    },
+    template: [{
+      type: 'progressbar',
+      length: 20
+    }, {
+      type: 'activityIndicator',
+      kerning: 1,
+      length: 1
+    }, {
+      type: 'section',
+      default: ''
+    }, ':', {
+      type: 'logline',
+      kerning: 1,
+      default: ''
+    }]
+  });
+  log.tracker = new Progress.TrackerGroup();
+
+  // we track this separately as we may need to temporarily disable the
+  // display of the status bar for our own loggy purposes.
+  log.progressEnabled = log.gauge.isEnabled();
+  var unicodeEnabled;
+  log.enableUnicode = function () {
+    unicodeEnabled = true;
+    this.gauge.setTheme({
+      hasColor: this.useColor(),
+      hasUnicode: unicodeEnabled
+    });
+  };
+  log.disableUnicode = function () {
+    unicodeEnabled = false;
+    this.gauge.setTheme({
+      hasColor: this.useColor(),
+      hasUnicode: unicodeEnabled
+    });
+  };
+  log.setGaugeThemeset = function (themes) {
+    this.gauge.setThemeset(themes);
+  };
+  log.setGaugeTemplate = function (template) {
+    this.gauge.setTemplate(template);
+  };
+  log.enableProgress = function () {
+    if (this.progressEnabled) {
+      return;
+    }
+    this.progressEnabled = true;
+    this.tracker.on('change', this.showProgress);
+    if (this._paused) {
+      return;
+    }
+    this.gauge.enable();
+  };
+  log.disableProgress = function () {
+    if (!this.progressEnabled) {
+      return;
+    }
+    this.progressEnabled = false;
+    this.tracker.removeListener('change', this.showProgress);
+    this.gauge.disable();
+  };
+  var trackerConstructors = ['newGroup', 'newItem', 'newStream'];
+  var mixinLog = function (tracker) {
+    // mixin the public methods from log into the tracker
+    // (except: conflicts and one's we handle specially)
+    Object.keys(log).forEach(function (P) {
+      if (P[0] === '_') {
+        return;
+      }
+      if (trackerConstructors.filter(function (C) {
+        return C === P;
+      }).length) {
+        return;
+      }
+      if (tracker[P]) {
+        return;
+      }
+      if (typeof log[P] !== 'function') {
+        return;
+      }
+      var func = log[P];
+      tracker[P] = function () {
+        return func.apply(log, arguments);
+      };
+    });
+    // if the new tracker is a group, make sure any subtrackers get
+    // mixed in too
+    if (tracker instanceof Progress.TrackerGroup) {
+      trackerConstructors.forEach(function (C) {
+        var func = tracker[C];
+        tracker[C] = function () {
+          return mixinLog(func.apply(tracker, arguments));
+        };
+      });
+    }
+    return tracker;
+  };
+
+  // Add tracker constructors to the top level log object
+  trackerConstructors.forEach(function (C) {
+    log[C] = function () {
+      return mixinLog(this.tracker[C].apply(this.tracker, arguments));
+    };
+  });
+  log.clearProgress = function (cb) {
+    if (!this.progressEnabled) {
+      return cb && process.nextTick(cb);
+    }
+    this.gauge.hide(cb);
+  };
+  log.showProgress = function (name, completed) {
+    if (!this.progressEnabled) {
+      return;
+    }
+    var values = {};
+    if (name) {
+      values.section = name;
+    }
+    var last = log.record[log.record.length - 1];
+    if (last) {
+      values.subsection = last.prefix;
+      var disp = log.disp[last.level] || last.level;
+      var logline = this._format(disp, log.style[last.level]);
+      if (last.prefix) {
+        logline += ' ' + this._format(last.prefix, this.prefixStyle);
+      }
+      logline += ' ' + last.message.split(/\r?\n/)[0];
+      values.logline = logline;
+    }
+    values.completed = completed || this.tracker.completed();
+    this.gauge.show(values);
+  }.bind(log); // bind for use in tracker's on-change listener
+
+  // temporarily stop emitting, but don't drop
+  log.pause = function () {
+    this._paused = true;
+    if (this.progressEnabled) {
+      this.gauge.disable();
+    }
+  };
+  log.resume = function () {
+    if (!this._paused) {
+      return;
+    }
+    this._paused = false;
+    var b = this._buffer;
+    this._buffer = [];
+    b.forEach(function (m) {
+      this.emitLog(m);
+    }, this);
+    if (this.progressEnabled) {
+      this.gauge.enable();
+    }
+  };
+  log._buffer = [];
+  var id = 0;
+  log.record = [];
+  log.maxRecordSize = 10000;
+  log.log = function (lvl, prefix, message) {
+    var l = this.levels[lvl];
+    if (l === undefined) {
+      return this.emit('error', new Error(util.format('Undefined log level: %j', lvl)));
+    }
+    var a = new Array(arguments.length - 2);
+    var stack = null;
+    for (var i = 2; i < arguments.length; i++) {
+      var arg = a[i - 2] = arguments[i];
+
+      // resolve stack traces to a plain string.
+      if (typeof arg === 'object' && arg instanceof Error && arg.stack) {
+        Object.defineProperty(arg, 'stack', {
+          value: stack = arg.stack + '',
+          enumerable: true,
+          writable: true
+        });
+      }
+    }
+    if (stack) {
+      a.unshift(stack + '\n');
+    }
+    message = util.format.apply(util, a);
+    var m = {
+      id: id++,
+      level: lvl,
+      prefix: String(prefix || ''),
+      message: message,
+      messageRaw: a
+    };
+    this.emit('log', m);
+    this.emit('log.' + lvl, m);
+    if (m.prefix) {
+      this.emit(m.prefix, m);
+    }
+    this.record.push(m);
+    var mrs = this.maxRecordSize;
+    var n = this.record.length - mrs;
+    if (n > mrs / 10) {
+      var newSize = Math.floor(mrs * 0.9);
+      this.record = this.record.slice(-1 * newSize);
+    }
+    this.emitLog(m);
+  }.bind(log);
+  log.emitLog = function (m) {
+    if (this._paused) {
+      this._buffer.push(m);
+      return;
+    }
+    if (this.progressEnabled) {
+      this.gauge.pulse(m.prefix);
+    }
+    var l = this.levels[m.level];
+    if (l === undefined) {
+      return;
+    }
+    if (l < this.levels[this.level]) {
+      return;
+    }
+    if (l > 0 && !isFinite(l)) {
+      return;
+    }
+
+    // If 'disp' is null or undefined, use the lvl as a default
+    // Allows: '', 0 as valid disp
+    var disp = log.disp[m.level] != null ? log.disp[m.level] : m.level;
+    this.clearProgress();
+    m.message.split(/\r?\n/).forEach(function (line) {
+      if (this.heading) {
+        this.write(this.heading, this.headingStyle);
+        this.write(' ');
+      }
+      this.write(disp, log.style[m.level]);
+      var p = m.prefix || '';
+      if (p) {
+        this.write(' ');
+      }
+      this.write(p, this.prefixStyle);
+      this.write(' ' + line + '\n');
+    }, this);
+    this.showProgress();
+  };
+  log._format = function (msg, style) {
+    if (!stream) {
+      return;
+    }
+    var output = '';
+    if (this.useColor()) {
+      style = style || {};
+      var settings = [];
+      if (style.fg) {
+        settings.push(style.fg);
+      }
+      if (style.bg) {
+        settings.push('bg' + style.bg[0].toUpperCase() + style.bg.slice(1));
+      }
+      if (style.bold) {
+        settings.push('bold');
+      }
+      if (style.underline) {
+        settings.push('underline');
+      }
+      if (style.inverse) {
+        settings.push('inverse');
+      }
+      if (settings.length) {
+        output += consoleControl.color(settings);
+      }
+      if (style.beep) {
+        output += consoleControl.beep();
+      }
+    }
+    output += msg;
+    if (this.useColor()) {
+      output += consoleControl.color('reset');
+    }
+    return output;
+  };
+  log.write = function (msg, style) {
+    if (!stream) {
+      return;
+    }
+    stream.write(this._format(msg, style));
+  };
+  log.addLevel = function (lvl, n, style, disp) {
+    // If 'disp' is null or undefined, use the lvl as a default
+    if (disp == null) {
+      disp = lvl;
+    }
+    this.levels[lvl] = n;
+    this.style[lvl] = style;
+    if (!this[lvl]) {
+      this[lvl] = function () {
+        var a = new Array(arguments.length + 1);
+        a[0] = lvl;
+        for (var i = 0; i < arguments.length; i++) {
+          a[i + 1] = arguments[i];
+        }
+        return this.log.apply(this, a);
+      }.bind(this);
+    }
+    this.disp[lvl] = disp;
+  };
+  log.prefixStyle = {
+    fg: 'magenta'
+  };
+  log.headingStyle = {
+    fg: 'white',
+    bg: 'black'
+  };
+  log.style = {};
+  log.levels = {};
+  log.disp = {};
+  log.addLevel('silly', -Infinity, {
+    inverse: true
+  }, 'sill');
+  log.addLevel('verbose', 1000, {
+    fg: 'blue',
+    bg: 'black'
+  }, 'verb');
+  log.addLevel('info', 2000, {
+    fg: 'green'
+  });
+  log.addLevel('timing', 2500, {
+    fg: 'green',
+    bg: 'black'
+  });
+  log.addLevel('http', 3000, {
+    fg: 'green',
+    bg: 'black'
+  });
+  log.addLevel('notice', 3500, {
+    fg: 'blue',
+    bg: 'black'
+  });
+  log.addLevel('warn', 4000, {
+    fg: 'black',
+    bg: 'yellow'
+  }, 'WARN');
+  log.addLevel('error', 5000, {
+    fg: 'red',
+    bg: 'black'
+  }, 'ERR!');
+  log.addLevel('silent', Infinity);
+
+  // allow 'error' prefix
+  log.on('error', function () {});
+})(log);
+var logExports = log.exports;
+
+var napi = {exports: {}};
+
+var old = {};
+
+var hasRequiredOld;
+function requireOld() {
+  if (hasRequiredOld) return old;
+  hasRequiredOld = 1;
+  // Copyright Joyent, Inc. and other Node contributors.
+  //
+  // Permission is hereby granted, free of charge, to any person obtaining a
+  // copy of this software and associated documentation files (the
+  // "Software"), to deal in the Software without restriction, including
+  // without limitation the rights to use, copy, modify, merge, publish,
+  // distribute, sublicense, and/or sell copies of the Software, and to permit
+  // persons to whom the Software is furnished to do so, subject to the
+  // following conditions:
+  //
+  // The above copyright notice and this permission notice shall be included
+  // in all copies or substantial portions of the Software.
+  //
+  // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+  // OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  // MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+  // NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+  // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+  // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+  // USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+  var pathModule = path;
+  var isWindows = process.platform === 'win32';
+  var fs = require$$0$1;
+
+  // JavaScript implementation of realpath, ported from node pre-v6
+
+  var DEBUG = process.env.NODE_DEBUG && /fs/.test(process.env.NODE_DEBUG);
+  function rethrow() {
+    // Only enable in debug mode. A backtrace uses ~1000 bytes of heap space and
+    // is fairly slow to generate.
+    var callback;
+    if (DEBUG) {
+      var backtrace = new Error();
+      callback = debugCallback;
+    } else callback = missingCallback;
+    return callback;
+    function debugCallback(err) {
+      if (err) {
+        backtrace.message = err.message;
+        err = backtrace;
+        missingCallback(err);
+      }
+    }
+    function missingCallback(err) {
+      if (err) {
+        if (process.throwDeprecation) throw err; // Forgot a callback but don't know where? Use NODE_DEBUG=fs
+        else if (!process.noDeprecation) {
+          var msg = 'fs: missing callback ' + (err.stack || err.message);
+          if (process.traceDeprecation) console.trace(msg);else console.error(msg);
+        }
+      }
+    }
+  }
+  function maybeCallback(cb) {
+    return typeof cb === 'function' ? cb : rethrow();
+  }
+  pathModule.normalize;
+
+  // Regexp that finds the next partion of a (partial) path
+  // result is [base_with_slash, base], e.g. ['somedir/', 'somedir']
+  if (isWindows) {
+    var nextPartRe = /(.*?)(?:[\/\\]+|$)/g;
+  } else {
+    var nextPartRe = /(.*?)(?:[\/]+|$)/g;
+  }
+
+  // Regex to find the device root, including trailing slash. E.g. 'c:\\'.
+  if (isWindows) {
+    var splitRootRe = /^(?:[a-zA-Z]:|[\\\/]{2}[^\\\/]+[\\\/][^\\\/]+)?[\\\/]*/;
+  } else {
+    var splitRootRe = /^[\/]*/;
+  }
+  old.realpathSync = function realpathSync(p, cache) {
+    // make p is absolute
+    p = pathModule.resolve(p);
+    if (cache && Object.prototype.hasOwnProperty.call(cache, p)) {
+      return cache[p];
+    }
+    var original = p,
+      seenLinks = {},
+      knownHard = {};
+
+    // current character position in p
+    var pos;
+    // the partial path so far, including a trailing slash if any
+    var current;
+    // the partial path without a trailing slash (except when pointing at a root)
+    var base;
+    // the partial path scanned in the previous round, with slash
+    var previous;
+    start();
+    function start() {
+      // Skip over roots
+      var m = splitRootRe.exec(p);
+      pos = m[0].length;
+      current = m[0];
+      base = m[0];
+      previous = '';
+
+      // On windows, check that the root exists. On unix there is no need.
+      if (isWindows && !knownHard[base]) {
+        fs.lstatSync(base);
+        knownHard[base] = true;
+      }
+    }
+
+    // walk down the path, swapping out linked pathparts for their real
+    // values
+    // NB: p.length changes.
+    while (pos < p.length) {
+      // find the next part
+      nextPartRe.lastIndex = pos;
+      var result = nextPartRe.exec(p);
+      previous = current;
+      current += result[0];
+      base = previous + result[1];
+      pos = nextPartRe.lastIndex;
+
+      // continue if not a symlink
+      if (knownHard[base] || cache && cache[base] === base) {
+        continue;
+      }
+      var resolvedLink;
+      if (cache && Object.prototype.hasOwnProperty.call(cache, base)) {
+        // some known symbolic link.  no need to stat again.
+        resolvedLink = cache[base];
+      } else {
+        var stat = fs.lstatSync(base);
+        if (!stat.isSymbolicLink()) {
+          knownHard[base] = true;
+          if (cache) cache[base] = base;
+          continue;
+        }
+
+        // read the link if it wasn't read before
+        // dev/ino always return 0 on windows, so skip the check.
+        var linkTarget = null;
+        if (!isWindows) {
+          var id = stat.dev.toString(32) + ':' + stat.ino.toString(32);
+          if (seenLinks.hasOwnProperty(id)) {
+            linkTarget = seenLinks[id];
+          }
+        }
+        if (linkTarget === null) {
+          fs.statSync(base);
+          linkTarget = fs.readlinkSync(base);
+        }
+        resolvedLink = pathModule.resolve(previous, linkTarget);
+        // track this, if given a cache.
+        if (cache) cache[base] = resolvedLink;
+        if (!isWindows) seenLinks[id] = linkTarget;
+      }
+
+      // resolve the link, then start over
+      p = pathModule.resolve(resolvedLink, p.slice(pos));
+      start();
+    }
+    if (cache) cache[original] = p;
+    return p;
+  };
+  old.realpath = function realpath(p, cache, cb) {
+    if (typeof cb !== 'function') {
+      cb = maybeCallback(cache);
+      cache = null;
+    }
+
+    // make p is absolute
+    p = pathModule.resolve(p);
+    if (cache && Object.prototype.hasOwnProperty.call(cache, p)) {
+      return process.nextTick(cb.bind(null, null, cache[p]));
+    }
+    var original = p,
+      seenLinks = {},
+      knownHard = {};
+
+    // current character position in p
+    var pos;
+    // the partial path so far, including a trailing slash if any
+    var current;
+    // the partial path without a trailing slash (except when pointing at a root)
+    var base;
+    // the partial path scanned in the previous round, with slash
+    var previous;
+    start();
+    function start() {
+      // Skip over roots
+      var m = splitRootRe.exec(p);
+      pos = m[0].length;
+      current = m[0];
+      base = m[0];
+      previous = '';
+
+      // On windows, check that the root exists. On unix there is no need.
+      if (isWindows && !knownHard[base]) {
+        fs.lstat(base, function (err) {
+          if (err) return cb(err);
+          knownHard[base] = true;
+          LOOP();
+        });
+      } else {
+        process.nextTick(LOOP);
+      }
+    }
+
+    // walk down the path, swapping out linked pathparts for their real
+    // values
+    function LOOP() {
+      // stop if scanned past end of path
+      if (pos >= p.length) {
+        if (cache) cache[original] = p;
+        return cb(null, p);
+      }
+
+      // find the next part
+      nextPartRe.lastIndex = pos;
+      var result = nextPartRe.exec(p);
+      previous = current;
+      current += result[0];
+      base = previous + result[1];
+      pos = nextPartRe.lastIndex;
+
+      // continue if not a symlink
+      if (knownHard[base] || cache && cache[base] === base) {
+        return process.nextTick(LOOP);
+      }
+      if (cache && Object.prototype.hasOwnProperty.call(cache, base)) {
+        // known symbolic link.  no need to stat again.
+        return gotResolvedLink(cache[base]);
+      }
+      return fs.lstat(base, gotStat);
+    }
+    function gotStat(err, stat) {
+      if (err) return cb(err);
+
+      // if not a symlink, skip to the next path part
+      if (!stat.isSymbolicLink()) {
+        knownHard[base] = true;
+        if (cache) cache[base] = base;
+        return process.nextTick(LOOP);
+      }
+
+      // stat & read the link if not read before
+      // call gotTarget as soon as the link target is known
+      // dev/ino always return 0 on windows, so skip the check.
+      if (!isWindows) {
+        var id = stat.dev.toString(32) + ':' + stat.ino.toString(32);
+        if (seenLinks.hasOwnProperty(id)) {
+          return gotTarget(null, seenLinks[id], base);
+        }
+      }
+      fs.stat(base, function (err) {
+        if (err) return cb(err);
+        fs.readlink(base, function (err, target) {
+          if (!isWindows) seenLinks[id] = target;
+          gotTarget(err, target);
+        });
+      });
+    }
+    function gotTarget(err, target, base) {
+      if (err) return cb(err);
+      var resolvedLink = pathModule.resolve(previous, target);
+      if (cache) cache[base] = resolvedLink;
+      gotResolvedLink(resolvedLink);
+    }
+    function gotResolvedLink(resolvedLink) {
+      // resolve the link, then start over
+      p = pathModule.resolve(resolvedLink, p.slice(pos));
+      start();
+    }
+  };
+  return old;
+}
+
+var fs_realpath;
+var hasRequiredFs_realpath;
+function requireFs_realpath() {
+  if (hasRequiredFs_realpath) return fs_realpath;
+  hasRequiredFs_realpath = 1;
+  fs_realpath = realpath;
+  realpath.realpath = realpath;
+  realpath.sync = realpathSync;
+  realpath.realpathSync = realpathSync;
+  realpath.monkeypatch = monkeypatch;
+  realpath.unmonkeypatch = unmonkeypatch;
+  var fs = require$$0$1;
+  var origRealpath = fs.realpath;
+  var origRealpathSync = fs.realpathSync;
+  var version = process.version;
+  var ok = /^v[0-5]\./.test(version);
+  var old = requireOld();
+  function newError(er) {
+    return er && er.syscall === 'realpath' && (er.code === 'ELOOP' || er.code === 'ENOMEM' || er.code === 'ENAMETOOLONG');
+  }
+  function realpath(p, cache, cb) {
+    if (ok) {
+      return origRealpath(p, cache, cb);
+    }
+    if (typeof cache === 'function') {
+      cb = cache;
+      cache = null;
+    }
+    origRealpath(p, cache, function (er, result) {
+      if (newError(er)) {
+        old.realpath(p, cache, cb);
+      } else {
+        cb(er, result);
+      }
+    });
+  }
+  function realpathSync(p, cache) {
+    if (ok) {
+      return origRealpathSync(p, cache);
+    }
+    try {
+      return origRealpathSync(p, cache);
+    } catch (er) {
+      if (newError(er)) {
+        return old.realpathSync(p, cache);
+      } else {
+        throw er;
+      }
+    }
+  }
+  function monkeypatch() {
+    fs.realpath = realpath;
+    fs.realpathSync = realpathSync;
+  }
+  function unmonkeypatch() {
+    fs.realpath = origRealpath;
+    fs.realpathSync = origRealpathSync;
+  }
+  return fs_realpath;
+}
+
+var concatMap;
+var hasRequiredConcatMap;
+function requireConcatMap() {
+  if (hasRequiredConcatMap) return concatMap;
+  hasRequiredConcatMap = 1;
+  concatMap = function (xs, fn) {
+    var res = [];
+    for (var i = 0; i < xs.length; i++) {
+      var x = fn(xs[i], i);
+      if (isArray(x)) res.push.apply(res, x);else res.push(x);
+    }
+    return res;
+  };
+  var isArray = Array.isArray || function (xs) {
+    return Object.prototype.toString.call(xs) === '[object Array]';
+  };
+  return concatMap;
+}
+
+var balancedMatch;
+var hasRequiredBalancedMatch;
+function requireBalancedMatch() {
+  if (hasRequiredBalancedMatch) return balancedMatch;
+  hasRequiredBalancedMatch = 1;
+  balancedMatch = balanced;
+  function balanced(a, b, str) {
+    if (a instanceof RegExp) a = maybeMatch(a, str);
+    if (b instanceof RegExp) b = maybeMatch(b, str);
+    var r = range(a, b, str);
+    return r && {
+      start: r[0],
+      end: r[1],
+      pre: str.slice(0, r[0]),
+      body: str.slice(r[0] + a.length, r[1]),
+      post: str.slice(r[1] + b.length)
+    };
+  }
+  function maybeMatch(reg, str) {
+    var m = str.match(reg);
+    return m ? m[0] : null;
+  }
+  balanced.range = range;
+  function range(a, b, str) {
+    var begs, beg, left, right, result;
+    var ai = str.indexOf(a);
+    var bi = str.indexOf(b, ai + 1);
+    var i = ai;
+    if (ai >= 0 && bi > 0) {
+      if (a === b) {
+        return [ai, bi];
+      }
+      begs = [];
+      left = str.length;
+      while (i >= 0 && !result) {
+        if (i == ai) {
+          begs.push(i);
+          ai = str.indexOf(a, i + 1);
+        } else if (begs.length == 1) {
+          result = [begs.pop(), bi];
+        } else {
+          beg = begs.pop();
+          if (beg < left) {
+            left = beg;
+            right = bi;
+          }
+          bi = str.indexOf(b, i + 1);
+        }
+        i = ai < bi && ai >= 0 ? ai : bi;
+      }
+      if (begs.length) {
+        result = [left, right];
+      }
+    }
+    return result;
+  }
+  return balancedMatch;
+}
+
+var braceExpansion;
+var hasRequiredBraceExpansion;
+function requireBraceExpansion() {
+  if (hasRequiredBraceExpansion) return braceExpansion;
+  hasRequiredBraceExpansion = 1;
+  var concatMap = requireConcatMap();
+  var balanced = requireBalancedMatch();
+  braceExpansion = expandTop;
+  var escSlash = '\0SLASH' + Math.random() + '\0';
+  var escOpen = '\0OPEN' + Math.random() + '\0';
+  var escClose = '\0CLOSE' + Math.random() + '\0';
+  var escComma = '\0COMMA' + Math.random() + '\0';
+  var escPeriod = '\0PERIOD' + Math.random() + '\0';
+  function numeric(str) {
+    return parseInt(str, 10) == str ? parseInt(str, 10) : str.charCodeAt(0);
+  }
+  function escapeBraces(str) {
+    return str.split('\\\\').join(escSlash).split('\\{').join(escOpen).split('\\}').join(escClose).split('\\,').join(escComma).split('\\.').join(escPeriod);
+  }
+  function unescapeBraces(str) {
+    return str.split(escSlash).join('\\').split(escOpen).join('{').split(escClose).join('}').split(escComma).join(',').split(escPeriod).join('.');
+  }
+
+  // Basically just str.split(","), but handling cases
+  // where we have nested braced sections, which should be
+  // treated as individual members, like {a,{b,c},d}
+  function parseCommaParts(str) {
+    if (!str) return [''];
+    var parts = [];
+    var m = balanced('{', '}', str);
+    if (!m) return str.split(',');
+    var pre = m.pre;
+    var body = m.body;
+    var post = m.post;
+    var p = pre.split(',');
+    p[p.length - 1] += '{' + body + '}';
+    var postParts = parseCommaParts(post);
+    if (post.length) {
+      p[p.length - 1] += postParts.shift();
+      p.push.apply(p, postParts);
+    }
+    parts.push.apply(parts, p);
+    return parts;
+  }
+  function expandTop(str) {
+    if (!str) return [];
+
+    // I don't know why Bash 4.3 does this, but it does.
+    // Anything starting with {} will have the first two bytes preserved
+    // but *only* at the top level, so {},a}b will not expand to anything,
+    // but a{},b}c will be expanded to [a}c,abc].
+    // One could argue that this is a bug in Bash, but since the goal of
+    // this module is to match Bash's rules, we escape a leading {}
+    if (str.substr(0, 2) === '{}') {
+      str = '\\{\\}' + str.substr(2);
+    }
+    return expand(escapeBraces(str), true).map(unescapeBraces);
+  }
+  function embrace(str) {
+    return '{' + str + '}';
+  }
+  function isPadded(el) {
+    return /^-?0\d/.test(el);
+  }
+  function lte(i, y) {
+    return i <= y;
+  }
+  function gte(i, y) {
+    return i >= y;
+  }
+  function expand(str, isTop) {
+    var expansions = [];
+    var m = balanced('{', '}', str);
+    if (!m || /\$$/.test(m.pre)) return [str];
+    var isNumericSequence = /^-?\d+\.\.-?\d+(?:\.\.-?\d+)?$/.test(m.body);
+    var isAlphaSequence = /^[a-zA-Z]\.\.[a-zA-Z](?:\.\.-?\d+)?$/.test(m.body);
+    var isSequence = isNumericSequence || isAlphaSequence;
+    var isOptions = m.body.indexOf(',') >= 0;
+    if (!isSequence && !isOptions) {
+      // {a},b}
+      if (m.post.match(/,.*\}/)) {
+        str = m.pre + '{' + m.body + escClose + m.post;
+        return expand(str);
+      }
+      return [str];
+    }
+    var n;
+    if (isSequence) {
+      n = m.body.split(/\.\./);
+    } else {
+      n = parseCommaParts(m.body);
+      if (n.length === 1) {
+        // x{{a,b}}y ==> x{a}y x{b}y
+        n = expand(n[0], false).map(embrace);
+        if (n.length === 1) {
+          var post = m.post.length ? expand(m.post, false) : [''];
+          return post.map(function (p) {
+            return m.pre + n[0] + p;
+          });
+        }
+      }
+    }
+
+    // at this point, n is the parts, and we know it's not a comma set
+    // with a single entry.
+
+    // no need to expand pre, since it is guaranteed to be free of brace-sets
+    var pre = m.pre;
+    var post = m.post.length ? expand(m.post, false) : [''];
+    var N;
+    if (isSequence) {
+      var x = numeric(n[0]);
+      var y = numeric(n[1]);
+      var width = Math.max(n[0].length, n[1].length);
+      var incr = n.length == 3 ? Math.abs(numeric(n[2])) : 1;
+      var test = lte;
+      var reverse = y < x;
+      if (reverse) {
+        incr *= -1;
+        test = gte;
+      }
+      var pad = n.some(isPadded);
+      N = [];
+      for (var i = x; test(i, y); i += incr) {
+        var c;
+        if (isAlphaSequence) {
+          c = String.fromCharCode(i);
+          if (c === '\\') c = '';
+        } else {
+          c = String(i);
+          if (pad) {
+            var need = width - c.length;
+            if (need > 0) {
+              var z = new Array(need + 1).join('0');
+              if (i < 0) c = '-' + z + c.slice(1);else c = z + c;
+            }
+          }
+        }
+        N.push(c);
+      }
+    } else {
+      N = concatMap(n, function (el) {
+        return expand(el, false);
+      });
+    }
+    for (var j = 0; j < N.length; j++) {
+      for (var k = 0; k < post.length; k++) {
+        var expansion = pre + N[j] + post[k];
+        if (!isTop || isSequence || expansion) expansions.push(expansion);
+      }
+    }
+    return expansions;
+  }
+  return braceExpansion;
+}
+
+var minimatch_1;
+var hasRequiredMinimatch;
+function requireMinimatch() {
+  if (hasRequiredMinimatch) return minimatch_1;
+  hasRequiredMinimatch = 1;
+  minimatch_1 = minimatch;
+  minimatch.Minimatch = Minimatch;
+  var path = function () {
+    try {
+      return require('path');
+    } catch (e) {}
+  }() || {
+    sep: '/'
+  };
+  minimatch.sep = path.sep;
+  var GLOBSTAR = minimatch.GLOBSTAR = Minimatch.GLOBSTAR = {};
+  var expand = requireBraceExpansion();
+  var plTypes = {
+    '!': {
+      open: '(?:(?!(?:',
+      close: '))[^/]*?)'
+    },
+    '?': {
+      open: '(?:',
+      close: ')?'
+    },
+    '+': {
+      open: '(?:',
+      close: ')+'
+    },
+    '*': {
+      open: '(?:',
+      close: ')*'
+    },
+    '@': {
+      open: '(?:',
+      close: ')'
+    }
+  };
+
+  // any single thing other than /
+  // don't need to escape / when using new RegExp()
+  var qmark = '[^/]';
+
+  // * => any number of characters
+  var star = qmark + '*?';
+
+  // ** when dots are allowed.  Anything goes, except .. and .
+  // not (^ or / followed by one or two dots followed by $ or /),
+  // followed by anything, any number of times.
+  var twoStarDot = '(?:(?!(?:\\\/|^)(?:\\.{1,2})($|\\\/)).)*?';
+
+  // not a ^ or / followed by a dot,
+  // followed by anything, any number of times.
+  var twoStarNoDot = '(?:(?!(?:\\\/|^)\\.).)*?';
+
+  // characters that need to be escaped in RegExp.
+  var reSpecials = charSet('().*{}+?[]^$\\!');
+
+  // "abc" -> { a:true, b:true, c:true }
+  function charSet(s) {
+    return s.split('').reduce(function (set, c) {
+      set[c] = true;
+      return set;
+    }, {});
+  }
+
+  // normalizes slashes.
+  var slashSplit = /\/+/;
+  minimatch.filter = filter;
+  function filter(pattern, options) {
+    options = options || {};
+    return function (p, i, list) {
+      return minimatch(p, pattern, options);
+    };
+  }
+  function ext(a, b) {
+    b = b || {};
+    var t = {};
+    Object.keys(a).forEach(function (k) {
+      t[k] = a[k];
+    });
+    Object.keys(b).forEach(function (k) {
+      t[k] = b[k];
+    });
+    return t;
+  }
+  minimatch.defaults = function (def) {
+    if (!def || typeof def !== 'object' || !Object.keys(def).length) {
+      return minimatch;
+    }
+    var orig = minimatch;
+    var m = function minimatch(p, pattern, options) {
+      return orig(p, pattern, ext(def, options));
+    };
+    m.Minimatch = function Minimatch(pattern, options) {
+      return new orig.Minimatch(pattern, ext(def, options));
+    };
+    m.Minimatch.defaults = function defaults(options) {
+      return orig.defaults(ext(def, options)).Minimatch;
+    };
+    m.filter = function filter(pattern, options) {
+      return orig.filter(pattern, ext(def, options));
+    };
+    m.defaults = function defaults(options) {
+      return orig.defaults(ext(def, options));
+    };
+    m.makeRe = function makeRe(pattern, options) {
+      return orig.makeRe(pattern, ext(def, options));
+    };
+    m.braceExpand = function braceExpand(pattern, options) {
+      return orig.braceExpand(pattern, ext(def, options));
+    };
+    m.match = function (list, pattern, options) {
+      return orig.match(list, pattern, ext(def, options));
+    };
+    return m;
+  };
+  Minimatch.defaults = function (def) {
+    return minimatch.defaults(def).Minimatch;
+  };
+  function minimatch(p, pattern, options) {
+    assertValidPattern(pattern);
+    if (!options) options = {};
+
+    // shortcut: comments match nothing.
+    if (!options.nocomment && pattern.charAt(0) === '#') {
+      return false;
+    }
+    return new Minimatch(pattern, options).match(p);
+  }
+  function Minimatch(pattern, options) {
+    if (!(this instanceof Minimatch)) {
+      return new Minimatch(pattern, options);
+    }
+    assertValidPattern(pattern);
+    if (!options) options = {};
+    pattern = pattern.trim();
+
+    // windows support: need to use /, not \
+    if (!options.allowWindowsEscape && path.sep !== '/') {
+      pattern = pattern.split(path.sep).join('/');
+    }
+    this.options = options;
+    this.set = [];
+    this.pattern = pattern;
+    this.regexp = null;
+    this.negate = false;
+    this.comment = false;
+    this.empty = false;
+    this.partial = !!options.partial;
+
+    // make the set of regexps etc.
+    this.make();
+  }
+  Minimatch.prototype.debug = function () {};
+  Minimatch.prototype.make = make;
+  function make() {
+    var pattern = this.pattern;
+    var options = this.options;
+
+    // empty patterns and comments match nothing.
+    if (!options.nocomment && pattern.charAt(0) === '#') {
+      this.comment = true;
+      return;
+    }
+    if (!pattern) {
+      this.empty = true;
+      return;
+    }
+
+    // step 1: figure out negation, etc.
+    this.parseNegate();
+
+    // step 2: expand braces
+    var set = this.globSet = this.braceExpand();
+    if (options.debug) this.debug = function debug() {
+      console.error.apply(console, arguments);
+    };
+    this.debug(this.pattern, set);
+
+    // step 3: now we have a set, so turn each one into a series of path-portion
+    // matching patterns.
+    // These will be regexps, except in the case of "**", which is
+    // set to the GLOBSTAR object for globstar behavior,
+    // and will not contain any / characters
+    set = this.globParts = set.map(function (s) {
+      return s.split(slashSplit);
+    });
+    this.debug(this.pattern, set);
+
+    // glob --> regexps
+    set = set.map(function (s, si, set) {
+      return s.map(this.parse, this);
+    }, this);
+    this.debug(this.pattern, set);
+
+    // filter out everything that didn't compile properly.
+    set = set.filter(function (s) {
+      return s.indexOf(false) === -1;
+    });
+    this.debug(this.pattern, set);
+    this.set = set;
+  }
+  Minimatch.prototype.parseNegate = parseNegate;
+  function parseNegate() {
+    var pattern = this.pattern;
+    var negate = false;
+    var options = this.options;
+    var negateOffset = 0;
+    if (options.nonegate) return;
+    for (var i = 0, l = pattern.length; i < l && pattern.charAt(i) === '!'; i++) {
+      negate = !negate;
+      negateOffset++;
+    }
+    if (negateOffset) this.pattern = pattern.substr(negateOffset);
+    this.negate = negate;
+  }
+
+  // Brace expansion:
+  // a{b,c}d -> abd acd
+  // a{b,}c -> abc ac
+  // a{0..3}d -> a0d a1d a2d a3d
+  // a{b,c{d,e}f}g -> abg acdfg acefg
+  // a{b,c}d{e,f}g -> abdeg acdeg abdeg abdfg
+  //
+  // Invalid sets are not expanded.
+  // a{2..}b -> a{2..}b
+  // a{b}c -> a{b}c
+  minimatch.braceExpand = function (pattern, options) {
+    return braceExpand(pattern, options);
+  };
+  Minimatch.prototype.braceExpand = braceExpand;
+  function braceExpand(pattern, options) {
+    if (!options) {
+      if (this instanceof Minimatch) {
+        options = this.options;
+      } else {
+        options = {};
+      }
+    }
+    pattern = typeof pattern === 'undefined' ? this.pattern : pattern;
+    assertValidPattern(pattern);
+
+    // Thanks to Yeting Li <https://github.com/yetingli> for
+    // improving this regexp to avoid a ReDOS vulnerability.
+    if (options.nobrace || !/\{(?:(?!\{).)*\}/.test(pattern)) {
+      // shortcut. no need to expand.
+      return [pattern];
+    }
+    return expand(pattern);
+  }
+  var MAX_PATTERN_LENGTH = 1024 * 64;
+  var assertValidPattern = function (pattern) {
+    if (typeof pattern !== 'string') {
+      throw new TypeError('invalid pattern');
+    }
+    if (pattern.length > MAX_PATTERN_LENGTH) {
+      throw new TypeError('pattern is too long');
+    }
+  };
+
+  // parse a component of the expanded set.
+  // At this point, no pattern may contain "/" in it
+  // so we're going to return a 2d array, where each entry is the full
+  // pattern, split on '/', and then turned into a regular expression.
+  // A regexp is made at the end which joins each array with an
+  // escaped /, and another full one which joins each regexp with |.
+  //
+  // Following the lead of Bash 4.1, note that "**" only has special meaning
+  // when it is the *only* thing in a path portion.  Otherwise, any series
+  // of * is equivalent to a single *.  Globstar behavior is enabled by
+  // default, and can be disabled by setting options.noglobstar.
+  Minimatch.prototype.parse = parse;
+  var SUBPARSE = {};
+  function parse(pattern, isSub) {
+    assertValidPattern(pattern);
+    var options = this.options;
+
+    // shortcuts
+    if (pattern === '**') {
+      if (!options.noglobstar) return GLOBSTAR;else pattern = '*';
+    }
+    if (pattern === '') return '';
+    var re = '';
+    var hasMagic = !!options.nocase;
+    var escaping = false;
+    // ? => one single character
+    var patternListStack = [];
+    var negativeLists = [];
+    var stateChar;
+    var inClass = false;
+    var reClassStart = -1;
+    var classStart = -1;
+    // . and .. never match anything that doesn't start with .,
+    // even when options.dot is set.
+    var patternStart = pattern.charAt(0) === '.' ? '' // anything
+    // not (start or / followed by . or .. followed by / or end)
+    : options.dot ? '(?!(?:^|\\\/)\\.{1,2}(?:$|\\\/))' : '(?!\\.)';
+    var self = this;
+    function clearStateChar() {
+      if (stateChar) {
+        // we had some state-tracking character
+        // that wasn't consumed by this pass.
+        switch (stateChar) {
+          case '*':
+            re += star;
+            hasMagic = true;
+            break;
+          case '?':
+            re += qmark;
+            hasMagic = true;
+            break;
+          default:
+            re += '\\' + stateChar;
+            break;
+        }
+        self.debug('clearStateChar %j %j', stateChar, re);
+        stateChar = false;
+      }
+    }
+    for (var i = 0, len = pattern.length, c; i < len && (c = pattern.charAt(i)); i++) {
+      this.debug('%s\t%s %s %j', pattern, i, re, c);
+
+      // skip over any that are escaped.
+      if (escaping && reSpecials[c]) {
+        re += '\\' + c;
+        escaping = false;
+        continue;
+      }
+      switch (c) {
+        /* istanbul ignore next */
+        case '/':
+          {
+            // completely not allowed, even escaped.
+            // Should already be path-split by now.
+            return false;
+          }
+        case '\\':
+          clearStateChar();
+          escaping = true;
+          continue;
+
+        // the various stateChar values
+        // for the "extglob" stuff.
+        case '?':
+        case '*':
+        case '+':
+        case '@':
+        case '!':
+          this.debug('%s\t%s %s %j <-- stateChar', pattern, i, re, c);
+
+          // all of those are literals inside a class, except that
+          // the glob [!a] means [^a] in regexp
+          if (inClass) {
+            this.debug('  in class');
+            if (c === '!' && i === classStart + 1) c = '^';
+            re += c;
+            continue;
+          }
+
+          // if we already have a stateChar, then it means
+          // that there was something like ** or +? in there.
+          // Handle the stateChar, then proceed with this one.
+          self.debug('call clearStateChar %j', stateChar);
+          clearStateChar();
+          stateChar = c;
+          // if extglob is disabled, then +(asdf|foo) isn't a thing.
+          // just clear the statechar *now*, rather than even diving into
+          // the patternList stuff.
+          if (options.noext) clearStateChar();
+          continue;
+        case '(':
+          if (inClass) {
+            re += '(';
+            continue;
+          }
+          if (!stateChar) {
+            re += '\\(';
+            continue;
+          }
+          patternListStack.push({
+            type: stateChar,
+            start: i - 1,
+            reStart: re.length,
+            open: plTypes[stateChar].open,
+            close: plTypes[stateChar].close
+          });
+          // negation is (?:(?!js)[^/]*)
+          re += stateChar === '!' ? '(?:(?!(?:' : '(?:';
+          this.debug('plType %j %j', stateChar, re);
+          stateChar = false;
+          continue;
+        case ')':
+          if (inClass || !patternListStack.length) {
+            re += '\\)';
+            continue;
+          }
+          clearStateChar();
+          hasMagic = true;
+          var pl = patternListStack.pop();
+          // negation is (?:(?!js)[^/]*)
+          // The others are (?:<pattern>)<type>
+          re += pl.close;
+          if (pl.type === '!') {
+            negativeLists.push(pl);
+          }
+          pl.reEnd = re.length;
+          continue;
+        case '|':
+          if (inClass || !patternListStack.length || escaping) {
+            re += '\\|';
+            escaping = false;
+            continue;
+          }
+          clearStateChar();
+          re += '|';
+          continue;
+
+        // these are mostly the same in regexp and glob
+        case '[':
+          // swallow any state-tracking char before the [
+          clearStateChar();
+          if (inClass) {
+            re += '\\' + c;
+            continue;
+          }
+          inClass = true;
+          classStart = i;
+          reClassStart = re.length;
+          re += c;
+          continue;
+        case ']':
+          //  a right bracket shall lose its special
+          //  meaning and represent itself in
+          //  a bracket expression if it occurs
+          //  first in the list.  -- POSIX.2 2.8.3.2
+          if (i === classStart + 1 || !inClass) {
+            re += '\\' + c;
+            escaping = false;
+            continue;
+          }
+
+          // handle the case where we left a class open.
+          // "[z-a]" is valid, equivalent to "\[z-a\]"
+          // split where the last [ was, make sure we don't have
+          // an invalid re. if so, re-walk the contents of the
+          // would-be class to re-translate any characters that
+          // were passed through as-is
+          // TODO: It would probably be faster to determine this
+          // without a try/catch and a new RegExp, but it's tricky
+          // to do safely.  For now, this is safe and works.
+          var cs = pattern.substring(classStart + 1, i);
+          try {
+            RegExp('[' + cs + ']');
+          } catch (er) {
+            // not a valid class!
+            var sp = this.parse(cs, SUBPARSE);
+            re = re.substr(0, reClassStart) + '\\[' + sp[0] + '\\]';
+            hasMagic = hasMagic || sp[1];
+            inClass = false;
+            continue;
+          }
+
+          // finish up the class.
+          hasMagic = true;
+          inClass = false;
+          re += c;
+          continue;
+        default:
+          // swallow any state char that wasn't consumed
+          clearStateChar();
+          if (escaping) {
+            // no need
+            escaping = false;
+          } else if (reSpecials[c] && !(c === '^' && inClass)) {
+            re += '\\';
+          }
+          re += c;
+      } // switch
+    } // for
+
+    // handle the case where we left a class open.
+    // "[abc" is valid, equivalent to "\[abc"
+    if (inClass) {
+      // split where the last [ was, and escape it
+      // this is a huge pita.  We now have to re-walk
+      // the contents of the would-be class to re-translate
+      // any characters that were passed through as-is
+      cs = pattern.substr(classStart + 1);
+      sp = this.parse(cs, SUBPARSE);
+      re = re.substr(0, reClassStart) + '\\[' + sp[0];
+      hasMagic = hasMagic || sp[1];
+    }
+
+    // handle the case where we had a +( thing at the *end*
+    // of the pattern.
+    // each pattern list stack adds 3 chars, and we need to go through
+    // and escape any | chars that were passed through as-is for the regexp.
+    // Go through and escape them, taking care not to double-escape any
+    // | chars that were already escaped.
+    for (pl = patternListStack.pop(); pl; pl = patternListStack.pop()) {
+      var tail = re.slice(pl.reStart + pl.open.length);
+      this.debug('setting tail', re, pl);
+      // maybe some even number of \, then maybe 1 \, followed by a |
+      tail = tail.replace(/((?:\\{2}){0,64})(\\?)\|/g, function (_, $1, $2) {
+        if (!$2) {
+          // the | isn't already escaped, so escape it.
+          $2 = '\\';
+        }
+
+        // need to escape all those slashes *again*, without escaping the
+        // one that we need for escaping the | character.  As it works out,
+        // escaping an even number of slashes can be done by simply repeating
+        // it exactly after itself.  That's why this trick works.
+        //
+        // I am sorry that you have to see this.
+        return $1 + $1 + $2 + '|';
+      });
+      this.debug('tail=%j\n   %s', tail, tail, pl, re);
+      var t = pl.type === '*' ? star : pl.type === '?' ? qmark : '\\' + pl.type;
+      hasMagic = true;
+      re = re.slice(0, pl.reStart) + t + '\\(' + tail;
+    }
+
+    // handle trailing things that only matter at the very end.
+    clearStateChar();
+    if (escaping) {
+      // trailing \\
+      re += '\\\\';
+    }
+
+    // only need to apply the nodot start if the re starts with
+    // something that could conceivably capture a dot
+    var addPatternStart = false;
+    switch (re.charAt(0)) {
+      case '[':
+      case '.':
+      case '(':
+        addPatternStart = true;
+    }
+
+    // Hack to work around lack of negative lookbehind in JS
+    // A pattern like: *.!(x).!(y|z) needs to ensure that a name
+    // like 'a.xyz.yz' doesn't match.  So, the first negative
+    // lookahead, has to look ALL the way ahead, to the end of
+    // the pattern.
+    for (var n = negativeLists.length - 1; n > -1; n--) {
+      var nl = negativeLists[n];
+      var nlBefore = re.slice(0, nl.reStart);
+      var nlFirst = re.slice(nl.reStart, nl.reEnd - 8);
+      var nlLast = re.slice(nl.reEnd - 8, nl.reEnd);
+      var nlAfter = re.slice(nl.reEnd);
+      nlLast += nlAfter;
+
+      // Handle nested stuff like *(*.js|!(*.json)), where open parens
+      // mean that we should *not* include the ) in the bit that is considered
+      // "after" the negated section.
+      var openParensBefore = nlBefore.split('(').length - 1;
+      var cleanAfter = nlAfter;
+      for (i = 0; i < openParensBefore; i++) {
+        cleanAfter = cleanAfter.replace(/\)[+*?]?/, '');
+      }
+      nlAfter = cleanAfter;
+      var dollar = '';
+      if (nlAfter === '' && isSub !== SUBPARSE) {
+        dollar = '$';
+      }
+      var newRe = nlBefore + nlFirst + nlAfter + dollar + nlLast;
+      re = newRe;
+    }
+
+    // if the re is not "" at this point, then we need to make sure
+    // it doesn't match against an empty path part.
+    // Otherwise a/* will match a/, which it should not.
+    if (re !== '' && hasMagic) {
+      re = '(?=.)' + re;
+    }
+    if (addPatternStart) {
+      re = patternStart + re;
+    }
+
+    // parsing just a piece of a larger pattern.
+    if (isSub === SUBPARSE) {
+      return [re, hasMagic];
+    }
+
+    // skip the regexp for non-magical patterns
+    // unescape anything in it, though, so that it'll be
+    // an exact match against a file etc.
+    if (!hasMagic) {
+      return globUnescape(pattern);
+    }
+    var flags = options.nocase ? 'i' : '';
+    try {
+      var regExp = new RegExp('^' + re + '$', flags);
+    } catch (er) /* istanbul ignore next - should be impossible */{
+      // If it was an invalid regular expression, then it can't match
+      // anything.  This trick looks for a character after the end of
+      // the string, which is of course impossible, except in multi-line
+      // mode, but it's not a /m regex.
+      return new RegExp('$.');
+    }
+    regExp._glob = pattern;
+    regExp._src = re;
+    return regExp;
+  }
+  minimatch.makeRe = function (pattern, options) {
+    return new Minimatch(pattern, options || {}).makeRe();
+  };
+  Minimatch.prototype.makeRe = makeRe;
+  function makeRe() {
+    if (this.regexp || this.regexp === false) return this.regexp;
+
+    // at this point, this.set is a 2d array of partial
+    // pattern strings, or "**".
+    //
+    // It's better to use .match().  This function shouldn't
+    // be used, really, but it's pretty convenient sometimes,
+    // when you just want to work with a regex.
+    var set = this.set;
+    if (!set.length) {
+      this.regexp = false;
+      return this.regexp;
+    }
+    var options = this.options;
+    var twoStar = options.noglobstar ? star : options.dot ? twoStarDot : twoStarNoDot;
+    var flags = options.nocase ? 'i' : '';
+    var re = set.map(function (pattern) {
+      return pattern.map(function (p) {
+        return p === GLOBSTAR ? twoStar : typeof p === 'string' ? regExpEscape(p) : p._src;
+      }).join('\\\/');
+    }).join('|');
+
+    // must match entire pattern
+    // ending in a * or ** will make it less strict.
+    re = '^(?:' + re + ')$';
+
+    // can match anything, as long as it's not this.
+    if (this.negate) re = '^(?!' + re + ').*$';
+    try {
+      this.regexp = new RegExp(re, flags);
+    } catch (ex) /* istanbul ignore next - should be impossible */{
+      this.regexp = false;
+    }
+    return this.regexp;
+  }
+  minimatch.match = function (list, pattern, options) {
+    options = options || {};
+    var mm = new Minimatch(pattern, options);
+    list = list.filter(function (f) {
+      return mm.match(f);
+    });
+    if (mm.options.nonull && !list.length) {
+      list.push(pattern);
+    }
+    return list;
+  };
+  Minimatch.prototype.match = function match(f, partial) {
+    if (typeof partial === 'undefined') partial = this.partial;
+    this.debug('match', f, this.pattern);
+    // short-circuit in the case of busted things.
+    // comments, etc.
+    if (this.comment) return false;
+    if (this.empty) return f === '';
+    if (f === '/' && partial) return true;
+    var options = this.options;
+
+    // windows: need to use /, not \
+    if (path.sep !== '/') {
+      f = f.split(path.sep).join('/');
+    }
+
+    // treat the test path as a set of pathparts.
+    f = f.split(slashSplit);
+    this.debug(this.pattern, 'split', f);
+
+    // just ONE of the pattern sets in this.set needs to match
+    // in order for it to be valid.  If negating, then just one
+    // match means that we have failed.
+    // Either way, return on the first hit.
+
+    var set = this.set;
+    this.debug(this.pattern, 'set', set);
+
+    // Find the basename of the path by looking for the last non-empty segment
+    var filename;
+    var i;
+    for (i = f.length - 1; i >= 0; i--) {
+      filename = f[i];
+      if (filename) break;
+    }
+    for (i = 0; i < set.length; i++) {
+      var pattern = set[i];
+      var file = f;
+      if (options.matchBase && pattern.length === 1) {
+        file = [filename];
+      }
+      var hit = this.matchOne(file, pattern, partial);
+      if (hit) {
+        if (options.flipNegate) return true;
+        return !this.negate;
+      }
+    }
+
+    // didn't get any hits.  this is success if it's a negative
+    // pattern, failure otherwise.
+    if (options.flipNegate) return false;
+    return this.negate;
+  };
+
+  // set partial to true to test if, for example,
+  // "/a/b" matches the start of "/*/b/*/d"
+  // Partial means, if you run out of file before you run
+  // out of pattern, then that's fine, as long as all
+  // the parts match.
+  Minimatch.prototype.matchOne = function (file, pattern, partial) {
+    var options = this.options;
+    this.debug('matchOne', {
+      'this': this,
+      file: file,
+      pattern: pattern
+    });
+    this.debug('matchOne', file.length, pattern.length);
+    for (var fi = 0, pi = 0, fl = file.length, pl = pattern.length; fi < fl && pi < pl; fi++, pi++) {
+      this.debug('matchOne loop');
+      var p = pattern[pi];
+      var f = file[fi];
+      this.debug(pattern, p, f);
+
+      // should be impossible.
+      // some invalid regexp stuff in the set.
+      /* istanbul ignore if */
+      if (p === false) return false;
+      if (p === GLOBSTAR) {
+        this.debug('GLOBSTAR', [pattern, p, f]);
+
+        // "**"
+        // a/**/b/**/c would match the following:
+        // a/b/x/y/z/c
+        // a/x/y/z/b/c
+        // a/b/x/b/x/c
+        // a/b/c
+        // To do this, take the rest of the pattern after
+        // the **, and see if it would match the file remainder.
+        // If so, return success.
+        // If not, the ** "swallows" a segment, and try again.
+        // This is recursively awful.
+        //
+        // a/**/b/**/c matching a/b/x/y/z/c
+        // - a matches a
+        // - doublestar
+        //   - matchOne(b/x/y/z/c, b/**/c)
+        //     - b matches b
+        //     - doublestar
+        //       - matchOne(x/y/z/c, c) -> no
+        //       - matchOne(y/z/c, c) -> no
+        //       - matchOne(z/c, c) -> no
+        //       - matchOne(c, c) yes, hit
+        var fr = fi;
+        var pr = pi + 1;
+        if (pr === pl) {
+          this.debug('** at the end');
+          // a ** at the end will just swallow the rest.
+          // We have found a match.
+          // however, it will not swallow /.x, unless
+          // options.dot is set.
+          // . and .. are *never* matched by **, for explosively
+          // exponential reasons.
+          for (; fi < fl; fi++) {
+            if (file[fi] === '.' || file[fi] === '..' || !options.dot && file[fi].charAt(0) === '.') return false;
+          }
+          return true;
+        }
+
+        // ok, let's see if we can swallow whatever we can.
+        while (fr < fl) {
+          var swallowee = file[fr];
+          this.debug('\nglobstar while', file, fr, pattern, pr, swallowee);
+
+          // XXX remove this slice.  Just pass the start index.
+          if (this.matchOne(file.slice(fr), pattern.slice(pr), partial)) {
+            this.debug('globstar found match!', fr, fl, swallowee);
+            // found a match.
+            return true;
+          } else {
+            // can't swallow "." or ".." ever.
+            // can only swallow ".foo" when explicitly asked.
+            if (swallowee === '.' || swallowee === '..' || !options.dot && swallowee.charAt(0) === '.') {
+              this.debug('dot detected!', file, fr, pattern, pr);
+              break;
+            }
+
+            // ** swallows a segment, and continue.
+            this.debug('globstar swallow a segment, and continue');
+            fr++;
+          }
+        }
+
+        // no match was found.
+        // However, in partial mode, we can't say this is necessarily over.
+        // If there's more *pattern* left, then
+        /* istanbul ignore if */
+        if (partial) {
+          // ran out of file
+          this.debug('\n>>> no match, partial?', file, fr, pattern, pr);
+          if (fr === fl) return true;
+        }
+        return false;
+      }
+
+      // something other than **
+      // non-magic patterns just have to match exactly
+      // patterns with magic have been turned into regexps.
+      var hit;
+      if (typeof p === 'string') {
+        hit = f === p;
+        this.debug('string match', p, f, hit);
+      } else {
+        hit = f.match(p);
+        this.debug('pattern match', p, f, hit);
+      }
+      if (!hit) return false;
+    }
+
+    // Note: ending in / means that we'll get a final ""
+    // at the end of the pattern.  This can only match a
+    // corresponding "" at the end of the file.
+    // If the file ends in /, then it can only match a
+    // a pattern that ends in /, unless the pattern just
+    // doesn't have any more for it. But, a/b/ should *not*
+    // match "a/b/*", even though "" matches against the
+    // [^/]*? pattern, except in partial mode, where it might
+    // simply not be reached yet.
+    // However, a/b/ should still satisfy a/*
+
+    // now either we fell off the end of the pattern, or we're done.
+    if (fi === fl && pi === pl) {
+      // ran out of pattern and filename at the same time.
+      // an exact hit!
+      return true;
+    } else if (fi === fl) {
+      // ran out of file, but still had pattern left.
+      // this is ok if we're doing the match as part of
+      // a glob fs traversal.
+      return partial;
+    } else /* istanbul ignore else */if (pi === pl) {
+        // ran out of pattern, still have file left.
+        // this is only acceptable if we're on the very last
+        // empty segment of a file with a trailing slash.
+        // a/* should match a/b/
+        return fi === fl - 1 && file[fi] === '';
+      }
+
+    // should be unreachable.
+    /* istanbul ignore next */
+    throw new Error('wtf?');
+  };
+
+  // replace stuff like \* with *
+  function globUnescape(s) {
+    return s.replace(/\\(.)/g, '$1');
+  }
+  function regExpEscape(s) {
+    return s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+  }
+  return minimatch_1;
+}
+
+var inherits = {exports: {}};
+
+var inherits_browser = {exports: {}};
+
+var hasRequiredInherits_browser;
+function requireInherits_browser() {
+  if (hasRequiredInherits_browser) return inherits_browser.exports;
+  hasRequiredInherits_browser = 1;
+  if (typeof Object.create === 'function') {
+    // implementation from standard node.js 'util' module
+    inherits_browser.exports = function inherits(ctor, superCtor) {
+      if (superCtor) {
+        ctor.super_ = superCtor;
+        ctor.prototype = Object.create(superCtor.prototype, {
+          constructor: {
+            value: ctor,
+            enumerable: false,
+            writable: true,
+            configurable: true
+          }
+        });
+      }
+    };
+  } else {
+    // old school shim for old browsers
+    inherits_browser.exports = function inherits(ctor, superCtor) {
+      if (superCtor) {
+        ctor.super_ = superCtor;
+        var TempCtor = function () {};
+        TempCtor.prototype = superCtor.prototype;
+        ctor.prototype = new TempCtor();
+        ctor.prototype.constructor = ctor;
+      }
+    };
+  }
+  return inherits_browser.exports;
+}
+
+var hasRequiredInherits;
+function requireInherits() {
+  if (hasRequiredInherits) return inherits.exports;
+  hasRequiredInherits = 1;
+  try {
+    var util = require('util');
+    /* istanbul ignore next */
+    if (typeof util.inherits !== 'function') throw '';
+    inherits.exports = util.inherits;
+  } catch (e) {
+    /* istanbul ignore next */
+    inherits.exports = requireInherits_browser();
+  }
+  return inherits.exports;
+}
+
+var pathIsAbsolute = {exports: {}};
+
+var hasRequiredPathIsAbsolute;
+function requirePathIsAbsolute() {
+  if (hasRequiredPathIsAbsolute) return pathIsAbsolute.exports;
+  hasRequiredPathIsAbsolute = 1;
+  function posix(path) {
+    return path.charAt(0) === '/';
+  }
+  function win32(path) {
+    // https://github.com/nodejs/node/blob/b3fcc245fb25539909ef1d5eaa01dbf92e168633/lib/path.js#L56
+    var splitDeviceRe = /^([a-zA-Z]:|[\\\/]{2}[^\\\/]+[\\\/]+[^\\\/]+)?([\\\/])?([\s\S]*?)$/;
+    var result = splitDeviceRe.exec(path);
+    var device = result[1] || '';
+    var isUnc = Boolean(device && device.charAt(1) !== ':');
+
+    // UNC paths are always absolute
+    return Boolean(result[2] || isUnc);
+  }
+  pathIsAbsolute.exports = process.platform === 'win32' ? win32 : posix;
+  pathIsAbsolute.exports.posix = posix;
+  pathIsAbsolute.exports.win32 = win32;
+  return pathIsAbsolute.exports;
+}
+
+var common = {};
+
+var hasRequiredCommon;
+function requireCommon() {
+  if (hasRequiredCommon) return common;
+  hasRequiredCommon = 1;
+  common.setopts = setopts;
+  common.ownProp = ownProp;
+  common.makeAbs = makeAbs;
+  common.finish = finish;
+  common.mark = mark;
+  common.isIgnored = isIgnored;
+  common.childrenIgnored = childrenIgnored;
+  function ownProp(obj, field) {
+    return Object.prototype.hasOwnProperty.call(obj, field);
+  }
+  var fs = require$$0$1;
+  var path$1 = path;
+  var minimatch = requireMinimatch();
+  var isAbsolute = requirePathIsAbsolute();
+  var Minimatch = minimatch.Minimatch;
+  function alphasort(a, b) {
+    return a.localeCompare(b, 'en');
+  }
+  function setupIgnores(self, options) {
+    self.ignore = options.ignore || [];
+    if (!Array.isArray(self.ignore)) self.ignore = [self.ignore];
+    if (self.ignore.length) {
+      self.ignore = self.ignore.map(ignoreMap);
+    }
+  }
+
+  // ignore patterns are always in dot:true mode.
+  function ignoreMap(pattern) {
+    var gmatcher = null;
+    if (pattern.slice(-3) === '/**') {
+      var gpattern = pattern.replace(/(\/\*\*)+$/, '');
+      gmatcher = new Minimatch(gpattern, {
+        dot: true
+      });
+    }
+    return {
+      matcher: new Minimatch(pattern, {
+        dot: true
+      }),
+      gmatcher: gmatcher
+    };
+  }
+  function setopts(self, pattern, options) {
+    if (!options) options = {};
+
+    // base-matching: just use globstar for that.
+    if (options.matchBase && -1 === pattern.indexOf("/")) {
+      if (options.noglobstar) {
+        throw new Error("base matching requires globstar");
+      }
+      pattern = "**/" + pattern;
+    }
+    self.silent = !!options.silent;
+    self.pattern = pattern;
+    self.strict = options.strict !== false;
+    self.realpath = !!options.realpath;
+    self.realpathCache = options.realpathCache || Object.create(null);
+    self.follow = !!options.follow;
+    self.dot = !!options.dot;
+    self.mark = !!options.mark;
+    self.nodir = !!options.nodir;
+    if (self.nodir) self.mark = true;
+    self.sync = !!options.sync;
+    self.nounique = !!options.nounique;
+    self.nonull = !!options.nonull;
+    self.nosort = !!options.nosort;
+    self.nocase = !!options.nocase;
+    self.stat = !!options.stat;
+    self.noprocess = !!options.noprocess;
+    self.absolute = !!options.absolute;
+    self.fs = options.fs || fs;
+    self.maxLength = options.maxLength || Infinity;
+    self.cache = options.cache || Object.create(null);
+    self.statCache = options.statCache || Object.create(null);
+    self.symlinks = options.symlinks || Object.create(null);
+    setupIgnores(self, options);
+    self.changedCwd = false;
+    var cwd = process.cwd();
+    if (!ownProp(options, "cwd")) self.cwd = cwd;else {
+      self.cwd = path$1.resolve(options.cwd);
+      self.changedCwd = self.cwd !== cwd;
+    }
+    self.root = options.root || path$1.resolve(self.cwd, "/");
+    self.root = path$1.resolve(self.root);
+    if (process.platform === "win32") self.root = self.root.replace(/\\/g, "/");
+
+    // TODO: is an absolute `cwd` supposed to be resolved against `root`?
+    // e.g. { cwd: '/test', root: __dirname } === path.join(__dirname, '/test')
+    self.cwdAbs = isAbsolute(self.cwd) ? self.cwd : makeAbs(self, self.cwd);
+    if (process.platform === "win32") self.cwdAbs = self.cwdAbs.replace(/\\/g, "/");
+    self.nomount = !!options.nomount;
+
+    // disable comments and negation in Minimatch.
+    // Note that they are not supported in Glob itself anyway.
+    options.nonegate = true;
+    options.nocomment = true;
+    // always treat \ in patterns as escapes, not path separators
+    options.allowWindowsEscape = false;
+    self.minimatch = new Minimatch(pattern, options);
+    self.options = self.minimatch.options;
+  }
+  function finish(self) {
+    var nou = self.nounique;
+    var all = nou ? [] : Object.create(null);
+    for (var i = 0, l = self.matches.length; i < l; i++) {
+      var matches = self.matches[i];
+      if (!matches || Object.keys(matches).length === 0) {
+        if (self.nonull) {
+          // do like the shell, and spit out the literal glob
+          var literal = self.minimatch.globSet[i];
+          if (nou) all.push(literal);else all[literal] = true;
+        }
+      } else {
+        // had matches
+        var m = Object.keys(matches);
+        if (nou) all.push.apply(all, m);else m.forEach(function (m) {
+          all[m] = true;
+        });
+      }
+    }
+    if (!nou) all = Object.keys(all);
+    if (!self.nosort) all = all.sort(alphasort);
+
+    // at *some* point we statted all of these
+    if (self.mark) {
+      for (var i = 0; i < all.length; i++) {
+        all[i] = self._mark(all[i]);
+      }
+      if (self.nodir) {
+        all = all.filter(function (e) {
+          var notDir = !/\/$/.test(e);
+          var c = self.cache[e] || self.cache[makeAbs(self, e)];
+          if (notDir && c) notDir = c !== 'DIR' && !Array.isArray(c);
+          return notDir;
+        });
+      }
+    }
+    if (self.ignore.length) all = all.filter(function (m) {
+      return !isIgnored(self, m);
+    });
+    self.found = all;
+  }
+  function mark(self, p) {
+    var abs = makeAbs(self, p);
+    var c = self.cache[abs];
+    var m = p;
+    if (c) {
+      var isDir = c === 'DIR' || Array.isArray(c);
+      var slash = p.slice(-1) === '/';
+      if (isDir && !slash) m += '/';else if (!isDir && slash) m = m.slice(0, -1);
+      if (m !== p) {
+        var mabs = makeAbs(self, m);
+        self.statCache[mabs] = self.statCache[abs];
+        self.cache[mabs] = self.cache[abs];
+      }
+    }
+    return m;
+  }
+
+  // lotta situps...
+  function makeAbs(self, f) {
+    var abs = f;
+    if (f.charAt(0) === '/') {
+      abs = path$1.join(self.root, f);
+    } else if (isAbsolute(f) || f === '') {
+      abs = f;
+    } else if (self.changedCwd) {
+      abs = path$1.resolve(self.cwd, f);
+    } else {
+      abs = path$1.resolve(f);
+    }
+    if (process.platform === 'win32') abs = abs.replace(/\\/g, '/');
+    return abs;
+  }
+
+  // Return true, if pattern ends with globstar '**', for the accompanying parent directory.
+  // Ex:- If node_modules/** is the pattern, add 'node_modules' to ignore list along with it's contents
+  function isIgnored(self, path) {
+    if (!self.ignore.length) return false;
+    return self.ignore.some(function (item) {
+      return item.matcher.match(path) || !!(item.gmatcher && item.gmatcher.match(path));
+    });
+  }
+  function childrenIgnored(self, path) {
+    if (!self.ignore.length) return false;
+    return self.ignore.some(function (item) {
+      return !!(item.gmatcher && item.gmatcher.match(path));
+    });
+  }
+  return common;
+}
+
+var sync;
+var hasRequiredSync;
+function requireSync() {
+  if (hasRequiredSync) return sync;
+  hasRequiredSync = 1;
+  sync = globSync;
+  globSync.GlobSync = GlobSync;
+  var rp = requireFs_realpath();
+  var minimatch = requireMinimatch();
+  minimatch.Minimatch;
+  requireGlob().Glob;
+  var path$1 = path;
+  var assert = require$$5$2;
+  var isAbsolute = requirePathIsAbsolute();
+  var common = requireCommon();
+  var setopts = common.setopts;
+  var ownProp = common.ownProp;
+  var childrenIgnored = common.childrenIgnored;
+  var isIgnored = common.isIgnored;
+  function globSync(pattern, options) {
+    if (typeof options === 'function' || arguments.length === 3) throw new TypeError('callback provided to sync glob\n' + 'See: https://github.com/isaacs/node-glob/issues/167');
+    return new GlobSync(pattern, options).found;
+  }
+  function GlobSync(pattern, options) {
+    if (!pattern) throw new Error('must provide pattern');
+    if (typeof options === 'function' || arguments.length === 3) throw new TypeError('callback provided to sync glob\n' + 'See: https://github.com/isaacs/node-glob/issues/167');
+    if (!(this instanceof GlobSync)) return new GlobSync(pattern, options);
+    setopts(this, pattern, options);
+    if (this.noprocess) return this;
+    var n = this.minimatch.set.length;
+    this.matches = new Array(n);
+    for (var i = 0; i < n; i++) {
+      this._process(this.minimatch.set[i], i, false);
+    }
+    this._finish();
+  }
+  GlobSync.prototype._finish = function () {
+    assert.ok(this instanceof GlobSync);
+    if (this.realpath) {
+      var self = this;
+      this.matches.forEach(function (matchset, index) {
+        var set = self.matches[index] = Object.create(null);
+        for (var p in matchset) {
+          try {
+            p = self._makeAbs(p);
+            var real = rp.realpathSync(p, self.realpathCache);
+            set[real] = true;
+          } catch (er) {
+            if (er.syscall === 'stat') set[self._makeAbs(p)] = true;else throw er;
+          }
+        }
+      });
+    }
+    common.finish(this);
+  };
+  GlobSync.prototype._process = function (pattern, index, inGlobStar) {
+    assert.ok(this instanceof GlobSync);
+
+    // Get the first [n] parts of pattern that are all strings.
+    var n = 0;
+    while (typeof pattern[n] === 'string') {
+      n++;
+    }
+    // now n is the index of the first one that is *not* a string.
+
+    // See if there's anything else
+    var prefix;
+    switch (n) {
+      // if not, then this is rather simple
+      case pattern.length:
+        this._processSimple(pattern.join('/'), index);
+        return;
+      case 0:
+        // pattern *starts* with some non-trivial item.
+        // going to readdir(cwd), but not include the prefix in matches.
+        prefix = null;
+        break;
+      default:
+        // pattern has some string bits in the front.
+        // whatever it starts with, whether that's 'absolute' like /foo/bar,
+        // or 'relative' like '../baz'
+        prefix = pattern.slice(0, n).join('/');
+        break;
+    }
+    var remain = pattern.slice(n);
+
+    // get the list of entries.
+    var read;
+    if (prefix === null) read = '.';else if (isAbsolute(prefix) || isAbsolute(pattern.map(function (p) {
+      return typeof p === 'string' ? p : '[*]';
+    }).join('/'))) {
+      if (!prefix || !isAbsolute(prefix)) prefix = '/' + prefix;
+      read = prefix;
+    } else read = prefix;
+    var abs = this._makeAbs(read);
+
+    //if ignored, skip processing
+    if (childrenIgnored(this, read)) return;
+    var isGlobStar = remain[0] === minimatch.GLOBSTAR;
+    if (isGlobStar) this._processGlobStar(prefix, read, abs, remain, index, inGlobStar);else this._processReaddir(prefix, read, abs, remain, index, inGlobStar);
+  };
+  GlobSync.prototype._processReaddir = function (prefix, read, abs, remain, index, inGlobStar) {
+    var entries = this._readdir(abs, inGlobStar);
+
+    // if the abs isn't a dir, then nothing can match!
+    if (!entries) return;
+
+    // It will only match dot entries if it starts with a dot, or if
+    // dot is set.  Stuff like @(.foo|.bar) isn't allowed.
+    var pn = remain[0];
+    var negate = !!this.minimatch.negate;
+    var rawGlob = pn._glob;
+    var dotOk = this.dot || rawGlob.charAt(0) === '.';
+    var matchedEntries = [];
+    for (var i = 0; i < entries.length; i++) {
+      var e = entries[i];
+      if (e.charAt(0) !== '.' || dotOk) {
+        var m;
+        if (negate && !prefix) {
+          m = !e.match(pn);
+        } else {
+          m = e.match(pn);
+        }
+        if (m) matchedEntries.push(e);
+      }
+    }
+    var len = matchedEntries.length;
+    // If there are no matched entries, then nothing matches.
+    if (len === 0) return;
+
+    // if this is the last remaining pattern bit, then no need for
+    // an additional stat *unless* the user has specified mark or
+    // stat explicitly.  We know they exist, since readdir returned
+    // them.
+
+    if (remain.length === 1 && !this.mark && !this.stat) {
+      if (!this.matches[index]) this.matches[index] = Object.create(null);
+      for (var i = 0; i < len; i++) {
+        var e = matchedEntries[i];
+        if (prefix) {
+          if (prefix.slice(-1) !== '/') e = prefix + '/' + e;else e = prefix + e;
+        }
+        if (e.charAt(0) === '/' && !this.nomount) {
+          e = path$1.join(this.root, e);
+        }
+        this._emitMatch(index, e);
+      }
+      // This was the last one, and no stats were needed
+      return;
+    }
+
+    // now test all matched entries as stand-ins for that part
+    // of the pattern.
+    remain.shift();
+    for (var i = 0; i < len; i++) {
+      var e = matchedEntries[i];
+      var newPattern;
+      if (prefix) newPattern = [prefix, e];else newPattern = [e];
+      this._process(newPattern.concat(remain), index, inGlobStar);
+    }
+  };
+  GlobSync.prototype._emitMatch = function (index, e) {
+    if (isIgnored(this, e)) return;
+    var abs = this._makeAbs(e);
+    if (this.mark) e = this._mark(e);
+    if (this.absolute) {
+      e = abs;
+    }
+    if (this.matches[index][e]) return;
+    if (this.nodir) {
+      var c = this.cache[abs];
+      if (c === 'DIR' || Array.isArray(c)) return;
+    }
+    this.matches[index][e] = true;
+    if (this.stat) this._stat(e);
+  };
+  GlobSync.prototype._readdirInGlobStar = function (abs) {
+    // follow all symlinked directories forever
+    // just proceed as if this is a non-globstar situation
+    if (this.follow) return this._readdir(abs, false);
+    var entries;
+    var lstat;
+    try {
+      lstat = this.fs.lstatSync(abs);
+    } catch (er) {
+      if (er.code === 'ENOENT') {
+        // lstat failed, doesn't exist
+        return null;
+      }
+    }
+    var isSym = lstat && lstat.isSymbolicLink();
+    this.symlinks[abs] = isSym;
+
+    // If it's not a symlink or a dir, then it's definitely a regular file.
+    // don't bother doing a readdir in that case.
+    if (!isSym && lstat && !lstat.isDirectory()) this.cache[abs] = 'FILE';else entries = this._readdir(abs, false);
+    return entries;
+  };
+  GlobSync.prototype._readdir = function (abs, inGlobStar) {
+    if (inGlobStar && !ownProp(this.symlinks, abs)) return this._readdirInGlobStar(abs);
+    if (ownProp(this.cache, abs)) {
+      var c = this.cache[abs];
+      if (!c || c === 'FILE') return null;
+      if (Array.isArray(c)) return c;
+    }
+    try {
+      return this._readdirEntries(abs, this.fs.readdirSync(abs));
+    } catch (er) {
+      this._readdirError(abs, er);
+      return null;
+    }
+  };
+  GlobSync.prototype._readdirEntries = function (abs, entries) {
+    // if we haven't asked to stat everything, then just
+    // assume that everything in there exists, so we can avoid
+    // having to stat it a second time.
+    if (!this.mark && !this.stat) {
+      for (var i = 0; i < entries.length; i++) {
+        var e = entries[i];
+        if (abs === '/') e = abs + e;else e = abs + '/' + e;
+        this.cache[e] = true;
+      }
+    }
+    this.cache[abs] = entries;
+
+    // mark and cache dir-ness
+    return entries;
+  };
+  GlobSync.prototype._readdirError = function (f, er) {
+    // handle errors, and cache the information
+    switch (er.code) {
+      case 'ENOTSUP': // https://github.com/isaacs/node-glob/issues/205
+      case 'ENOTDIR':
+        // totally normal. means it *does* exist.
+        var abs = this._makeAbs(f);
+        this.cache[abs] = 'FILE';
+        if (abs === this.cwdAbs) {
+          var error = new Error(er.code + ' invalid cwd ' + this.cwd);
+          error.path = this.cwd;
+          error.code = er.code;
+          throw error;
+        }
+        break;
+      case 'ENOENT': // not terribly unusual
+      case 'ELOOP':
+      case 'ENAMETOOLONG':
+      case 'UNKNOWN':
+        this.cache[this._makeAbs(f)] = false;
+        break;
+      default:
+        // some unusual error.  Treat as failure.
+        this.cache[this._makeAbs(f)] = false;
+        if (this.strict) throw er;
+        if (!this.silent) console.error('glob error', er);
+        break;
+    }
+  };
+  GlobSync.prototype._processGlobStar = function (prefix, read, abs, remain, index, inGlobStar) {
+    var entries = this._readdir(abs, inGlobStar);
+
+    // no entries means not a dir, so it can never have matches
+    // foo.txt/** doesn't match foo.txt
+    if (!entries) return;
+
+    // test without the globstar, and with every child both below
+    // and replacing the globstar.
+    var remainWithoutGlobStar = remain.slice(1);
+    var gspref = prefix ? [prefix] : [];
+    var noGlobStar = gspref.concat(remainWithoutGlobStar);
+
+    // the noGlobStar pattern exits the inGlobStar state
+    this._process(noGlobStar, index, false);
+    var len = entries.length;
+    var isSym = this.symlinks[abs];
+
+    // If it's a symlink, and we're in a globstar, then stop
+    if (isSym && inGlobStar) return;
+    for (var i = 0; i < len; i++) {
+      var e = entries[i];
+      if (e.charAt(0) === '.' && !this.dot) continue;
+
+      // these two cases enter the inGlobStar state
+      var instead = gspref.concat(entries[i], remainWithoutGlobStar);
+      this._process(instead, index, true);
+      var below = gspref.concat(entries[i], remain);
+      this._process(below, index, true);
+    }
+  };
+  GlobSync.prototype._processSimple = function (prefix, index) {
+    // XXX review this.  Shouldn't it be doing the mounting etc
+    // before doing stat?  kinda weird?
+    var exists = this._stat(prefix);
+    if (!this.matches[index]) this.matches[index] = Object.create(null);
+
+    // If it doesn't exist, then just mark the lack of results
+    if (!exists) return;
+    if (prefix && isAbsolute(prefix) && !this.nomount) {
+      var trail = /[\/\\]$/.test(prefix);
+      if (prefix.charAt(0) === '/') {
+        prefix = path$1.join(this.root, prefix);
+      } else {
+        prefix = path$1.resolve(this.root, prefix);
+        if (trail) prefix += '/';
+      }
+    }
+    if (process.platform === 'win32') prefix = prefix.replace(/\\/g, '/');
+
+    // Mark this as a match
+    this._emitMatch(index, prefix);
+  };
+
+  // Returns either 'DIR', 'FILE', or false
+  GlobSync.prototype._stat = function (f) {
+    var abs = this._makeAbs(f);
+    var needDir = f.slice(-1) === '/';
+    if (f.length > this.maxLength) return false;
+    if (!this.stat && ownProp(this.cache, abs)) {
+      var c = this.cache[abs];
+      if (Array.isArray(c)) c = 'DIR';
+
+      // It exists, but maybe not how we need it
+      if (!needDir || c === 'DIR') return c;
+      if (needDir && c === 'FILE') return false;
+
+      // otherwise we have to stat, because maybe c=true
+      // if we know it exists, but not what it is.
+    }
+    var stat = this.statCache[abs];
+    if (!stat) {
+      var lstat;
+      try {
+        lstat = this.fs.lstatSync(abs);
+      } catch (er) {
+        if (er && (er.code === 'ENOENT' || er.code === 'ENOTDIR')) {
+          this.statCache[abs] = false;
+          return false;
+        }
+      }
+      if (lstat && lstat.isSymbolicLink()) {
+        try {
+          stat = this.fs.statSync(abs);
+        } catch (er) {
+          stat = lstat;
+        }
+      } else {
+        stat = lstat;
+      }
+    }
+    this.statCache[abs] = stat;
+    var c = true;
+    if (stat) c = stat.isDirectory() ? 'DIR' : 'FILE';
+    this.cache[abs] = this.cache[abs] || c;
+    if (needDir && c === 'FILE') return false;
+    return c;
+  };
+  GlobSync.prototype._mark = function (p) {
+    return common.mark(this, p);
+  };
+  GlobSync.prototype._makeAbs = function (f) {
+    return common.makeAbs(this, f);
+  };
+  return sync;
+}
+
+var wrappy_1;
+var hasRequiredWrappy;
+function requireWrappy() {
+  if (hasRequiredWrappy) return wrappy_1;
+  hasRequiredWrappy = 1;
+  // Returns a wrapper function that returns a wrapped callback
+  // The wrapper function should do some stuff, and return a
+  // presumably different callback function.
+  // This makes sure that own properties are retained, so that
+  // decorations and such are not lost along the way.
+  wrappy_1 = wrappy;
+  function wrappy(fn, cb) {
+    if (fn && cb) return wrappy(fn)(cb);
+    if (typeof fn !== 'function') throw new TypeError('need wrapper function');
+    Object.keys(fn).forEach(function (k) {
+      wrapper[k] = fn[k];
+    });
+    return wrapper;
+    function wrapper() {
+      var args = new Array(arguments.length);
+      for (var i = 0; i < args.length; i++) {
+        args[i] = arguments[i];
+      }
+      var ret = fn.apply(this, args);
+      var cb = args[args.length - 1];
+      if (typeof ret === 'function' && ret !== cb) {
+        Object.keys(cb).forEach(function (k) {
+          ret[k] = cb[k];
+        });
+      }
+      return ret;
+    }
+  }
+  return wrappy_1;
+}
+
+var once = {exports: {}};
+
+var hasRequiredOnce;
+function requireOnce() {
+  if (hasRequiredOnce) return once.exports;
+  hasRequiredOnce = 1;
+  var wrappy = requireWrappy();
+  once.exports = wrappy(once$1);
+  once.exports.strict = wrappy(onceStrict);
+  once$1.proto = once$1(function () {
+    Object.defineProperty(Function.prototype, 'once', {
+      value: function () {
+        return once$1(this);
+      },
+      configurable: true
+    });
+    Object.defineProperty(Function.prototype, 'onceStrict', {
+      value: function () {
+        return onceStrict(this);
+      },
+      configurable: true
+    });
+  });
+  function once$1(fn) {
+    var f = function () {
+      if (f.called) return f.value;
+      f.called = true;
+      return f.value = fn.apply(this, arguments);
+    };
+    f.called = false;
+    return f;
+  }
+  function onceStrict(fn) {
+    var f = function () {
+      if (f.called) throw new Error(f.onceError);
+      f.called = true;
+      return f.value = fn.apply(this, arguments);
+    };
+    var name = fn.name || 'Function wrapped with `once`';
+    f.onceError = name + " shouldn't be called more than once";
+    f.called = false;
+    return f;
+  }
+  return once.exports;
+}
+
+var inflight_1;
+var hasRequiredInflight;
+function requireInflight() {
+  if (hasRequiredInflight) return inflight_1;
+  hasRequiredInflight = 1;
+  var wrappy = requireWrappy();
+  var reqs = Object.create(null);
+  var once = requireOnce();
+  inflight_1 = wrappy(inflight);
+  function inflight(key, cb) {
+    if (reqs[key]) {
+      reqs[key].push(cb);
+      return null;
+    } else {
+      reqs[key] = [cb];
+      return makeres(key);
+    }
+  }
+  function makeres(key) {
+    return once(function RES() {
+      var cbs = reqs[key];
+      var len = cbs.length;
+      var args = slice(arguments);
+
+      // XXX It's somewhat ambiguous whether a new callback added in this
+      // pass should be queued for later execution if something in the
+      // list of callbacks throws, or if it should just be discarded.
+      // However, it's such an edge case that it hardly matters, and either
+      // choice is likely as surprising as the other.
+      // As it happens, we do go ahead and schedule it for later execution.
+      try {
+        for (var i = 0; i < len; i++) {
+          cbs[i].apply(null, args);
+        }
+      } finally {
+        if (cbs.length > len) {
+          // added more in the interim.
+          // de-zalgo, just in case, but don't call again.
+          cbs.splice(0, len);
+          process.nextTick(function () {
+            RES.apply(null, args);
+          });
+        } else {
+          delete reqs[key];
+        }
+      }
+    });
+  }
+  function slice(args) {
+    var length = args.length;
+    var array = [];
+    for (var i = 0; i < length; i++) array[i] = args[i];
+    return array;
+  }
+  return inflight_1;
+}
+
+var glob_1;
+var hasRequiredGlob;
+function requireGlob() {
+  if (hasRequiredGlob) return glob_1;
+  hasRequiredGlob = 1;
+  // Approach:
+  //
+  // 1. Get the minimatch set
+  // 2. For each pattern in the set, PROCESS(pattern, false)
+  // 3. Store matches per-set, then uniq them
+  //
+  // PROCESS(pattern, inGlobStar)
+  // Get the first [n] items from pattern that are all strings
+  // Join these together.  This is PREFIX.
+  //   If there is no more remaining, then stat(PREFIX) and
+  //   add to matches if it succeeds.  END.
+  //
+  // If inGlobStar and PREFIX is symlink and points to dir
+  //   set ENTRIES = []
+  // else readdir(PREFIX) as ENTRIES
+  //   If fail, END
+  //
+  // with ENTRIES
+  //   If pattern[n] is GLOBSTAR
+  //     // handle the case where the globstar match is empty
+  //     // by pruning it out, and testing the resulting pattern
+  //     PROCESS(pattern[0..n] + pattern[n+1 .. $], false)
+  //     // handle other cases.
+  //     for ENTRY in ENTRIES (not dotfiles)
+  //       // attach globstar + tail onto the entry
+  //       // Mark that this entry is a globstar match
+  //       PROCESS(pattern[0..n] + ENTRY + pattern[n .. $], true)
+  //
+  //   else // not globstar
+  //     for ENTRY in ENTRIES (not dotfiles, unless pattern[n] is dot)
+  //       Test ENTRY against pattern[n]
+  //       If fails, continue
+  //       If passes, PROCESS(pattern[0..n] + item + pattern[n+1 .. $])
+  //
+  // Caveat:
+  //   Cache all stats and readdirs results to minimize syscall.  Since all
+  //   we ever care about is existence and directory-ness, we can just keep
+  //   `true` for files, and [children,...] for directories, or `false` for
+  //   things that don't exist.
+
+  glob_1 = glob;
+  var rp = requireFs_realpath();
+  var minimatch = requireMinimatch();
+  minimatch.Minimatch;
+  var inherits = requireInherits();
+  var EE = require$$2$1.EventEmitter;
+  var path$1 = path;
+  var assert = require$$5$2;
+  var isAbsolute = requirePathIsAbsolute();
+  var globSync = requireSync();
+  var common = requireCommon();
+  var setopts = common.setopts;
+  var ownProp = common.ownProp;
+  var inflight = requireInflight();
+  var childrenIgnored = common.childrenIgnored;
+  var isIgnored = common.isIgnored;
+  var once = requireOnce();
+  function glob(pattern, options, cb) {
+    if (typeof options === 'function') cb = options, options = {};
+    if (!options) options = {};
+    if (options.sync) {
+      if (cb) throw new TypeError('callback provided to sync glob');
+      return globSync(pattern, options);
+    }
+    return new Glob(pattern, options, cb);
+  }
+  glob.sync = globSync;
+  var GlobSync = glob.GlobSync = globSync.GlobSync;
+
+  // old api surface
+  glob.glob = glob;
+  function extend(origin, add) {
+    if (add === null || typeof add !== 'object') {
+      return origin;
+    }
+    var keys = Object.keys(add);
+    var i = keys.length;
+    while (i--) {
+      origin[keys[i]] = add[keys[i]];
+    }
+    return origin;
+  }
+  glob.hasMagic = function (pattern, options_) {
+    var options = extend({}, options_);
+    options.noprocess = true;
+    var g = new Glob(pattern, options);
+    var set = g.minimatch.set;
+    if (!pattern) return false;
+    if (set.length > 1) return true;
+    for (var j = 0; j < set[0].length; j++) {
+      if (typeof set[0][j] !== 'string') return true;
+    }
+    return false;
+  };
+  glob.Glob = Glob;
+  inherits(Glob, EE);
+  function Glob(pattern, options, cb) {
+    if (typeof options === 'function') {
+      cb = options;
+      options = null;
+    }
+    if (options && options.sync) {
+      if (cb) throw new TypeError('callback provided to sync glob');
+      return new GlobSync(pattern, options);
+    }
+    if (!(this instanceof Glob)) return new Glob(pattern, options, cb);
+    setopts(this, pattern, options);
+    this._didRealPath = false;
+
+    // process each pattern in the minimatch set
+    var n = this.minimatch.set.length;
+
+    // The matches are stored as {<filename>: true,...} so that
+    // duplicates are automagically pruned.
+    // Later, we do an Object.keys() on these.
+    // Keep them as a list so we can fill in when nonull is set.
+    this.matches = new Array(n);
+    if (typeof cb === 'function') {
+      cb = once(cb);
+      this.on('error', cb);
+      this.on('end', function (matches) {
+        cb(null, matches);
+      });
+    }
+    var self = this;
+    this._processing = 0;
+    this._emitQueue = [];
+    this._processQueue = [];
+    this.paused = false;
+    if (this.noprocess) return this;
+    if (n === 0) return done();
+    var sync = true;
+    for (var i = 0; i < n; i++) {
+      this._process(this.minimatch.set[i], i, false, done);
+    }
+    sync = false;
+    function done() {
+      --self._processing;
+      if (self._processing <= 0) {
+        if (sync) {
+          process.nextTick(function () {
+            self._finish();
+          });
+        } else {
+          self._finish();
+        }
+      }
+    }
+  }
+  Glob.prototype._finish = function () {
+    assert(this instanceof Glob);
+    if (this.aborted) return;
+    if (this.realpath && !this._didRealpath) return this._realpath();
+    common.finish(this);
+    this.emit('end', this.found);
+  };
+  Glob.prototype._realpath = function () {
+    if (this._didRealpath) return;
+    this._didRealpath = true;
+    var n = this.matches.length;
+    if (n === 0) return this._finish();
+    var self = this;
+    for (var i = 0; i < this.matches.length; i++) this._realpathSet(i, next);
+    function next() {
+      if (--n === 0) self._finish();
+    }
+  };
+  Glob.prototype._realpathSet = function (index, cb) {
+    var matchset = this.matches[index];
+    if (!matchset) return cb();
+    var found = Object.keys(matchset);
+    var self = this;
+    var n = found.length;
+    if (n === 0) return cb();
+    var set = this.matches[index] = Object.create(null);
+    found.forEach(function (p, i) {
+      // If there's a problem with the stat, then it means that
+      // one or more of the links in the realpath couldn't be
+      // resolved.  just return the abs value in that case.
+      p = self._makeAbs(p);
+      rp.realpath(p, self.realpathCache, function (er, real) {
+        if (!er) set[real] = true;else if (er.syscall === 'stat') set[p] = true;else self.emit('error', er); // srsly wtf right here
+
+        if (--n === 0) {
+          self.matches[index] = set;
+          cb();
+        }
+      });
+    });
+  };
+  Glob.prototype._mark = function (p) {
+    return common.mark(this, p);
+  };
+  Glob.prototype._makeAbs = function (f) {
+    return common.makeAbs(this, f);
+  };
+  Glob.prototype.abort = function () {
+    this.aborted = true;
+    this.emit('abort');
+  };
+  Glob.prototype.pause = function () {
+    if (!this.paused) {
+      this.paused = true;
+      this.emit('pause');
+    }
+  };
+  Glob.prototype.resume = function () {
+    if (this.paused) {
+      this.emit('resume');
+      this.paused = false;
+      if (this._emitQueue.length) {
+        var eq = this._emitQueue.slice(0);
+        this._emitQueue.length = 0;
+        for (var i = 0; i < eq.length; i++) {
+          var e = eq[i];
+          this._emitMatch(e[0], e[1]);
+        }
+      }
+      if (this._processQueue.length) {
+        var pq = this._processQueue.slice(0);
+        this._processQueue.length = 0;
+        for (var i = 0; i < pq.length; i++) {
+          var p = pq[i];
+          this._processing--;
+          this._process(p[0], p[1], p[2], p[3]);
+        }
+      }
+    }
+  };
+  Glob.prototype._process = function (pattern, index, inGlobStar, cb) {
+    assert(this instanceof Glob);
+    assert(typeof cb === 'function');
+    if (this.aborted) return;
+    this._processing++;
+    if (this.paused) {
+      this._processQueue.push([pattern, index, inGlobStar, cb]);
+      return;
+    }
+
+    //console.error('PROCESS %d', this._processing, pattern)
+
+    // Get the first [n] parts of pattern that are all strings.
+    var n = 0;
+    while (typeof pattern[n] === 'string') {
+      n++;
+    }
+    // now n is the index of the first one that is *not* a string.
+
+    // see if there's anything else
+    var prefix;
+    switch (n) {
+      // if not, then this is rather simple
+      case pattern.length:
+        this._processSimple(pattern.join('/'), index, cb);
+        return;
+      case 0:
+        // pattern *starts* with some non-trivial item.
+        // going to readdir(cwd), but not include the prefix in matches.
+        prefix = null;
+        break;
+      default:
+        // pattern has some string bits in the front.
+        // whatever it starts with, whether that's 'absolute' like /foo/bar,
+        // or 'relative' like '../baz'
+        prefix = pattern.slice(0, n).join('/');
+        break;
+    }
+    var remain = pattern.slice(n);
+
+    // get the list of entries.
+    var read;
+    if (prefix === null) read = '.';else if (isAbsolute(prefix) || isAbsolute(pattern.map(function (p) {
+      return typeof p === 'string' ? p : '[*]';
+    }).join('/'))) {
+      if (!prefix || !isAbsolute(prefix)) prefix = '/' + prefix;
+      read = prefix;
+    } else read = prefix;
+    var abs = this._makeAbs(read);
+
+    //if ignored, skip _processing
+    if (childrenIgnored(this, read)) return cb();
+    var isGlobStar = remain[0] === minimatch.GLOBSTAR;
+    if (isGlobStar) this._processGlobStar(prefix, read, abs, remain, index, inGlobStar, cb);else this._processReaddir(prefix, read, abs, remain, index, inGlobStar, cb);
+  };
+  Glob.prototype._processReaddir = function (prefix, read, abs, remain, index, inGlobStar, cb) {
+    var self = this;
+    this._readdir(abs, inGlobStar, function (er, entries) {
+      return self._processReaddir2(prefix, read, abs, remain, index, inGlobStar, entries, cb);
+    });
+  };
+  Glob.prototype._processReaddir2 = function (prefix, read, abs, remain, index, inGlobStar, entries, cb) {
+    // if the abs isn't a dir, then nothing can match!
+    if (!entries) return cb();
+
+    // It will only match dot entries if it starts with a dot, or if
+    // dot is set.  Stuff like @(.foo|.bar) isn't allowed.
+    var pn = remain[0];
+    var negate = !!this.minimatch.negate;
+    var rawGlob = pn._glob;
+    var dotOk = this.dot || rawGlob.charAt(0) === '.';
+    var matchedEntries = [];
+    for (var i = 0; i < entries.length; i++) {
+      var e = entries[i];
+      if (e.charAt(0) !== '.' || dotOk) {
+        var m;
+        if (negate && !prefix) {
+          m = !e.match(pn);
+        } else {
+          m = e.match(pn);
+        }
+        if (m) matchedEntries.push(e);
+      }
+    }
+
+    //console.error('prd2', prefix, entries, remain[0]._glob, matchedEntries)
+
+    var len = matchedEntries.length;
+    // If there are no matched entries, then nothing matches.
+    if (len === 0) return cb();
+
+    // if this is the last remaining pattern bit, then no need for
+    // an additional stat *unless* the user has specified mark or
+    // stat explicitly.  We know they exist, since readdir returned
+    // them.
+
+    if (remain.length === 1 && !this.mark && !this.stat) {
+      if (!this.matches[index]) this.matches[index] = Object.create(null);
+      for (var i = 0; i < len; i++) {
+        var e = matchedEntries[i];
+        if (prefix) {
+          if (prefix !== '/') e = prefix + '/' + e;else e = prefix + e;
+        }
+        if (e.charAt(0) === '/' && !this.nomount) {
+          e = path$1.join(this.root, e);
+        }
+        this._emitMatch(index, e);
+      }
+      // This was the last one, and no stats were needed
+      return cb();
+    }
+
+    // now test all matched entries as stand-ins for that part
+    // of the pattern.
+    remain.shift();
+    for (var i = 0; i < len; i++) {
+      var e = matchedEntries[i];
+      if (prefix) {
+        if (prefix !== '/') e = prefix + '/' + e;else e = prefix + e;
+      }
+      this._process([e].concat(remain), index, inGlobStar, cb);
+    }
+    cb();
+  };
+  Glob.prototype._emitMatch = function (index, e) {
+    if (this.aborted) return;
+    if (isIgnored(this, e)) return;
+    if (this.paused) {
+      this._emitQueue.push([index, e]);
+      return;
+    }
+    var abs = isAbsolute(e) ? e : this._makeAbs(e);
+    if (this.mark) e = this._mark(e);
+    if (this.absolute) e = abs;
+    if (this.matches[index][e]) return;
+    if (this.nodir) {
+      var c = this.cache[abs];
+      if (c === 'DIR' || Array.isArray(c)) return;
+    }
+    this.matches[index][e] = true;
+    var st = this.statCache[abs];
+    if (st) this.emit('stat', e, st);
+    this.emit('match', e);
+  };
+  Glob.prototype._readdirInGlobStar = function (abs, cb) {
+    if (this.aborted) return;
+
+    // follow all symlinked directories forever
+    // just proceed as if this is a non-globstar situation
+    if (this.follow) return this._readdir(abs, false, cb);
+    var lstatkey = 'lstat\0' + abs;
+    var self = this;
+    var lstatcb = inflight(lstatkey, lstatcb_);
+    if (lstatcb) self.fs.lstat(abs, lstatcb);
+    function lstatcb_(er, lstat) {
+      if (er && er.code === 'ENOENT') return cb();
+      var isSym = lstat && lstat.isSymbolicLink();
+      self.symlinks[abs] = isSym;
+
+      // If it's not a symlink or a dir, then it's definitely a regular file.
+      // don't bother doing a readdir in that case.
+      if (!isSym && lstat && !lstat.isDirectory()) {
+        self.cache[abs] = 'FILE';
+        cb();
+      } else self._readdir(abs, false, cb);
+    }
+  };
+  Glob.prototype._readdir = function (abs, inGlobStar, cb) {
+    if (this.aborted) return;
+    cb = inflight('readdir\0' + abs + '\0' + inGlobStar, cb);
+    if (!cb) return;
+
+    //console.error('RD %j %j', +inGlobStar, abs)
+    if (inGlobStar && !ownProp(this.symlinks, abs)) return this._readdirInGlobStar(abs, cb);
+    if (ownProp(this.cache, abs)) {
+      var c = this.cache[abs];
+      if (!c || c === 'FILE') return cb();
+      if (Array.isArray(c)) return cb(null, c);
+    }
+    var self = this;
+    self.fs.readdir(abs, readdirCb(this, abs, cb));
+  };
+  function readdirCb(self, abs, cb) {
+    return function (er, entries) {
+      if (er) self._readdirError(abs, er, cb);else self._readdirEntries(abs, entries, cb);
+    };
+  }
+  Glob.prototype._readdirEntries = function (abs, entries, cb) {
+    if (this.aborted) return;
+
+    // if we haven't asked to stat everything, then just
+    // assume that everything in there exists, so we can avoid
+    // having to stat it a second time.
+    if (!this.mark && !this.stat) {
+      for (var i = 0; i < entries.length; i++) {
+        var e = entries[i];
+        if (abs === '/') e = abs + e;else e = abs + '/' + e;
+        this.cache[e] = true;
+      }
+    }
+    this.cache[abs] = entries;
+    return cb(null, entries);
+  };
+  Glob.prototype._readdirError = function (f, er, cb) {
+    if (this.aborted) return;
+
+    // handle errors, and cache the information
+    switch (er.code) {
+      case 'ENOTSUP': // https://github.com/isaacs/node-glob/issues/205
+      case 'ENOTDIR':
+        // totally normal. means it *does* exist.
+        var abs = this._makeAbs(f);
+        this.cache[abs] = 'FILE';
+        if (abs === this.cwdAbs) {
+          var error = new Error(er.code + ' invalid cwd ' + this.cwd);
+          error.path = this.cwd;
+          error.code = er.code;
+          this.emit('error', error);
+          this.abort();
+        }
+        break;
+      case 'ENOENT': // not terribly unusual
+      case 'ELOOP':
+      case 'ENAMETOOLONG':
+      case 'UNKNOWN':
+        this.cache[this._makeAbs(f)] = false;
+        break;
+      default:
+        // some unusual error.  Treat as failure.
+        this.cache[this._makeAbs(f)] = false;
+        if (this.strict) {
+          this.emit('error', er);
+          // If the error is handled, then we abort
+          // if not, we threw out of here
+          this.abort();
+        }
+        if (!this.silent) console.error('glob error', er);
+        break;
+    }
+    return cb();
+  };
+  Glob.prototype._processGlobStar = function (prefix, read, abs, remain, index, inGlobStar, cb) {
+    var self = this;
+    this._readdir(abs, inGlobStar, function (er, entries) {
+      self._processGlobStar2(prefix, read, abs, remain, index, inGlobStar, entries, cb);
+    });
+  };
+  Glob.prototype._processGlobStar2 = function (prefix, read, abs, remain, index, inGlobStar, entries, cb) {
+    //console.error('pgs2', prefix, remain[0], entries)
+
+    // no entries means not a dir, so it can never have matches
+    // foo.txt/** doesn't match foo.txt
+    if (!entries) return cb();
+
+    // test without the globstar, and with every child both below
+    // and replacing the globstar.
+    var remainWithoutGlobStar = remain.slice(1);
+    var gspref = prefix ? [prefix] : [];
+    var noGlobStar = gspref.concat(remainWithoutGlobStar);
+
+    // the noGlobStar pattern exits the inGlobStar state
+    this._process(noGlobStar, index, false, cb);
+    var isSym = this.symlinks[abs];
+    var len = entries.length;
+
+    // If it's a symlink, and we're in a globstar, then stop
+    if (isSym && inGlobStar) return cb();
+    for (var i = 0; i < len; i++) {
+      var e = entries[i];
+      if (e.charAt(0) === '.' && !this.dot) continue;
+
+      // these two cases enter the inGlobStar state
+      var instead = gspref.concat(entries[i], remainWithoutGlobStar);
+      this._process(instead, index, true, cb);
+      var below = gspref.concat(entries[i], remain);
+      this._process(below, index, true, cb);
+    }
+    cb();
+  };
+  Glob.prototype._processSimple = function (prefix, index, cb) {
+    // XXX review this.  Shouldn't it be doing the mounting etc
+    // before doing stat?  kinda weird?
+    var self = this;
+    this._stat(prefix, function (er, exists) {
+      self._processSimple2(prefix, index, er, exists, cb);
+    });
+  };
+  Glob.prototype._processSimple2 = function (prefix, index, er, exists, cb) {
+    //console.error('ps2', prefix, exists)
+
+    if (!this.matches[index]) this.matches[index] = Object.create(null);
+
+    // If it doesn't exist, then just mark the lack of results
+    if (!exists) return cb();
+    if (prefix && isAbsolute(prefix) && !this.nomount) {
+      var trail = /[\/\\]$/.test(prefix);
+      if (prefix.charAt(0) === '/') {
+        prefix = path$1.join(this.root, prefix);
+      } else {
+        prefix = path$1.resolve(this.root, prefix);
+        if (trail) prefix += '/';
+      }
+    }
+    if (process.platform === 'win32') prefix = prefix.replace(/\\/g, '/');
+
+    // Mark this as a match
+    this._emitMatch(index, prefix);
+    cb();
+  };
+
+  // Returns either 'DIR', 'FILE', or false
+  Glob.prototype._stat = function (f, cb) {
+    var abs = this._makeAbs(f);
+    var needDir = f.slice(-1) === '/';
+    if (f.length > this.maxLength) return cb();
+    if (!this.stat && ownProp(this.cache, abs)) {
+      var c = this.cache[abs];
+      if (Array.isArray(c)) c = 'DIR';
+
+      // It exists, but maybe not how we need it
+      if (!needDir || c === 'DIR') return cb(null, c);
+      if (needDir && c === 'FILE') return cb();
+
+      // otherwise we have to stat, because maybe c=true
+      // if we know it exists, but not what it is.
+    }
+    var stat = this.statCache[abs];
+    if (stat !== undefined) {
+      if (stat === false) return cb(null, stat);else {
+        var type = stat.isDirectory() ? 'DIR' : 'FILE';
+        if (needDir && type === 'FILE') return cb();else return cb(null, type, stat);
+      }
+    }
+    var self = this;
+    var statcb = inflight('stat\0' + abs, lstatcb_);
+    if (statcb) self.fs.lstat(abs, statcb);
+    function lstatcb_(er, lstat) {
+      if (lstat && lstat.isSymbolicLink()) {
+        // If it's a symlink, then treat it as the target, unless
+        // the target does not exist, then treat it as a file.
+        return self.fs.stat(abs, function (er, stat) {
+          if (er) self._stat2(f, abs, null, lstat, cb);else self._stat2(f, abs, er, stat, cb);
+        });
+      } else {
+        self._stat2(f, abs, er, lstat, cb);
+      }
+    }
+  };
+  Glob.prototype._stat2 = function (f, abs, er, stat, cb) {
+    if (er && (er.code === 'ENOENT' || er.code === 'ENOTDIR')) {
+      this.statCache[abs] = false;
+      return cb();
+    }
+    var needDir = f.slice(-1) === '/';
+    this.statCache[abs] = stat;
+    if (abs.slice(-1) === '/' && stat && !stat.isDirectory()) return cb(null, false, stat);
+    var c = true;
+    if (stat) c = stat.isDirectory() ? 'DIR' : 'FILE';
+    this.cache[abs] = this.cache[abs] || c;
+    if (needDir && c === 'FILE') return cb();
+    return cb(null, c, stat);
+  };
+  return glob_1;
+}
+
+var rimraf_1;
+var hasRequiredRimraf;
+function requireRimraf() {
+  if (hasRequiredRimraf) return rimraf_1;
+  hasRequiredRimraf = 1;
+  const assert = require$$5$2;
+  const path$1 = path;
+  const fs = require$$0$1;
+  let glob = undefined;
+  try {
+    glob = requireGlob();
+  } catch (_err) {
+    // treat glob as optional.
+  }
+  const defaultGlobOpts = {
+    nosort: true,
+    silent: true
+  };
+
+  // for EMFILE handling
+  let timeout = 0;
+  const isWindows = process.platform === "win32";
+  const defaults = options => {
+    const methods = ['unlink', 'chmod', 'stat', 'lstat', 'rmdir', 'readdir'];
+    methods.forEach(m => {
+      options[m] = options[m] || fs[m];
+      m = m + 'Sync';
+      options[m] = options[m] || fs[m];
+    });
+    options.maxBusyTries = options.maxBusyTries || 3;
+    options.emfileWait = options.emfileWait || 1000;
+    if (options.glob === false) {
+      options.disableGlob = true;
+    }
+    if (options.disableGlob !== true && glob === undefined) {
+      throw Error('glob dependency not found, set `options.disableGlob = true` if intentional');
+    }
+    options.disableGlob = options.disableGlob || false;
+    options.glob = options.glob || defaultGlobOpts;
+  };
+  const rimraf = (p, options, cb) => {
+    if (typeof options === 'function') {
+      cb = options;
+      options = {};
+    }
+    assert(p, 'rimraf: missing path');
+    assert.equal(typeof p, 'string', 'rimraf: path should be a string');
+    assert.equal(typeof cb, 'function', 'rimraf: callback function required');
+    assert(options, 'rimraf: invalid options argument provided');
+    assert.equal(typeof options, 'object', 'rimraf: options should be object');
+    defaults(options);
+    let busyTries = 0;
+    let errState = null;
+    let n = 0;
+    const next = er => {
+      errState = errState || er;
+      if (--n === 0) cb(errState);
+    };
+    const afterGlob = (er, results) => {
+      if (er) return cb(er);
+      n = results.length;
+      if (n === 0) return cb();
+      results.forEach(p => {
+        const CB = er => {
+          if (er) {
+            if ((er.code === "EBUSY" || er.code === "ENOTEMPTY" || er.code === "EPERM") && busyTries < options.maxBusyTries) {
+              busyTries++;
+              // try again, with the same exact callback as this one.
+              return setTimeout(() => rimraf_(p, options, CB), busyTries * 100);
+            }
+
+            // this one won't happen if graceful-fs is used.
+            if (er.code === "EMFILE" && timeout < options.emfileWait) {
+              return setTimeout(() => rimraf_(p, options, CB), timeout++);
+            }
+
+            // already gone
+            if (er.code === "ENOENT") er = null;
+          }
+          timeout = 0;
+          next(er);
+        };
+        rimraf_(p, options, CB);
+      });
+    };
+    if (options.disableGlob || !glob.hasMagic(p)) return afterGlob(null, [p]);
+    options.lstat(p, (er, stat) => {
+      if (!er) return afterGlob(null, [p]);
+      glob(p, options.glob, afterGlob);
+    });
+  };
+
+  // Two possible strategies.
+  // 1. Assume it's a file.  unlink it, then do the dir stuff on EPERM or EISDIR
+  // 2. Assume it's a directory.  readdir, then do the file stuff on ENOTDIR
+  //
+  // Both result in an extra syscall when you guess wrong.  However, there
+  // are likely far more normal files in the world than directories.  This
+  // is based on the assumption that a the average number of files per
+  // directory is >= 1.
+  //
+  // If anyone ever complains about this, then I guess the strategy could
+  // be made configurable somehow.  But until then, YAGNI.
+  const rimraf_ = (p, options, cb) => {
+    assert(p);
+    assert(options);
+    assert(typeof cb === 'function');
+
+    // sunos lets the root user unlink directories, which is... weird.
+    // so we have to lstat here and make sure it's not a dir.
+    options.lstat(p, (er, st) => {
+      if (er && er.code === "ENOENT") return cb(null);
+
+      // Windows can EPERM on stat.  Life is suffering.
+      if (er && er.code === "EPERM" && isWindows) fixWinEPERM(p, options, er, cb);
+      if (st && st.isDirectory()) return rmdir(p, options, er, cb);
+      options.unlink(p, er => {
+        if (er) {
+          if (er.code === "ENOENT") return cb(null);
+          if (er.code === "EPERM") return isWindows ? fixWinEPERM(p, options, er, cb) : rmdir(p, options, er, cb);
+          if (er.code === "EISDIR") return rmdir(p, options, er, cb);
+        }
+        return cb(er);
+      });
+    });
+  };
+  const fixWinEPERM = (p, options, er, cb) => {
+    assert(p);
+    assert(options);
+    assert(typeof cb === 'function');
+    options.chmod(p, 0o666, er2 => {
+      if (er2) cb(er2.code === "ENOENT" ? null : er);else options.stat(p, (er3, stats) => {
+        if (er3) cb(er3.code === "ENOENT" ? null : er);else if (stats.isDirectory()) rmdir(p, options, er, cb);else options.unlink(p, cb);
+      });
+    });
+  };
+  const fixWinEPERMSync = (p, options, er) => {
+    assert(p);
+    assert(options);
+    try {
+      options.chmodSync(p, 0o666);
+    } catch (er2) {
+      if (er2.code === "ENOENT") return;else throw er;
+    }
+    let stats;
+    try {
+      stats = options.statSync(p);
+    } catch (er3) {
+      if (er3.code === "ENOENT") return;else throw er;
+    }
+    if (stats.isDirectory()) rmdirSync(p, options, er);else options.unlinkSync(p);
+  };
+  const rmdir = (p, options, originalEr, cb) => {
+    assert(p);
+    assert(options);
+    assert(typeof cb === 'function');
+
+    // try to rmdir first, and only readdir on ENOTEMPTY or EEXIST (SunOS)
+    // if we guessed wrong, and it's not a directory, then
+    // raise the original error.
+    options.rmdir(p, er => {
+      if (er && (er.code === "ENOTEMPTY" || er.code === "EEXIST" || er.code === "EPERM")) rmkids(p, options, cb);else if (er && er.code === "ENOTDIR") cb(originalEr);else cb(er);
+    });
+  };
+  const rmkids = (p, options, cb) => {
+    assert(p);
+    assert(options);
+    assert(typeof cb === 'function');
+    options.readdir(p, (er, files) => {
+      if (er) return cb(er);
+      let n = files.length;
+      if (n === 0) return options.rmdir(p, cb);
+      let errState;
+      files.forEach(f => {
+        rimraf(path$1.join(p, f), options, er => {
+          if (errState) return;
+          if (er) return cb(errState = er);
+          if (--n === 0) options.rmdir(p, cb);
+        });
+      });
+    });
+  };
+
+  // this looks simpler, and is strictly *faster*, but will
+  // tie up the JavaScript thread and fail on excessively
+  // deep directory trees.
+  const rimrafSync = (p, options) => {
+    options = options || {};
+    defaults(options);
+    assert(p, 'rimraf: missing path');
+    assert.equal(typeof p, 'string', 'rimraf: path should be a string');
+    assert(options, 'rimraf: missing options');
+    assert.equal(typeof options, 'object', 'rimraf: options should be object');
+    let results;
+    if (options.disableGlob || !glob.hasMagic(p)) {
+      results = [p];
+    } else {
+      try {
+        options.lstatSync(p);
+        results = [p];
+      } catch (er) {
+        results = glob.sync(p, options.glob);
+      }
+    }
+    if (!results.length) return;
+    for (let i = 0; i < results.length; i++) {
+      const p = results[i];
+      let st;
+      try {
+        st = options.lstatSync(p);
+      } catch (er) {
+        if (er.code === "ENOENT") return;
+
+        // Windows can EPERM on stat.  Life is suffering.
+        if (er.code === "EPERM" && isWindows) fixWinEPERMSync(p, options, er);
+      }
+      try {
+        // sunos lets the root user unlink directories, which is... weird.
+        if (st && st.isDirectory()) rmdirSync(p, options, null);else options.unlinkSync(p);
+      } catch (er) {
+        if (er.code === "ENOENT") return;
+        if (er.code === "EPERM") return isWindows ? fixWinEPERMSync(p, options, er) : rmdirSync(p, options, er);
+        if (er.code !== "EISDIR") throw er;
+        rmdirSync(p, options, er);
+      }
+    }
+  };
+  const rmdirSync = (p, options, originalEr) => {
+    assert(p);
+    assert(options);
+    try {
+      options.rmdirSync(p);
+    } catch (er) {
+      if (er.code === "ENOENT") return;
+      if (er.code === "ENOTDIR") throw originalEr;
+      if (er.code === "ENOTEMPTY" || er.code === "EEXIST" || er.code === "EPERM") rmkidsSync(p, options);
+    }
+  };
+  const rmkidsSync = (p, options) => {
+    assert(p);
+    assert(options);
+    options.readdirSync(p).forEach(f => rimrafSync(path$1.join(p, f), options));
+
+    // We only end up here once we got ENOTEMPTY at least once, and
+    // at this point, we are guaranteed to have removed all the kids.
+    // So, we know that it won't be ENOENT or ENOTDIR or anything else.
+    // try really hard to delete stuff on windows, because it has a
+    // PROFOUNDLY annoying habit of not closing handles promptly when
+    // files are deleted, resulting in spurious ENOTEMPTY errors.
+    const retries = isWindows ? 100 : 1;
+    let i = 0;
+    do {
+      let threw = true;
+      try {
+        const ret = options.rmdirSync(p, options);
+        threw = false;
+        return ret;
+      } finally {
+        if (++i < retries && threw) continue;
+      }
+    } while (true);
+  };
+  rimraf_1 = rimraf;
+  rimraf.sync = rimrafSync;
+  return rimraf_1;
+}
+
+napi.exports;
+var hasRequiredNapi;
+function requireNapi() {
+  if (hasRequiredNapi) return napi.exports;
+  hasRequiredNapi = 1;
+  (function (module, exports) {
+
+    const fs = require$$0$1;
+    module.exports = exports;
+    const versionArray = process.version.substr(1).replace(/-.*$/, '').split('.').map(item => {
+      return +item;
+    });
+    const napi_multiple_commands = ['build', 'clean', 'configure', 'package', 'publish', 'reveal', 'testbinary', 'testpackage', 'unpublish'];
+    const napi_build_version_tag = 'napi_build_version=';
+    module.exports.get_napi_version = function () {
+      // returns the non-zero numeric napi version or undefined if napi is not supported.
+      // correctly supporting target requires an updated cross-walk
+      let version = process.versions.napi; // can be undefined
+      if (!version) {
+        // this code should never need to be updated
+        if (versionArray[0] === 9 && versionArray[1] >= 3) version = 2; // 9.3.0+
+        else if (versionArray[0] === 8) version = 1; // 8.0.0+
+      }
+
+      return version;
+    };
+    module.exports.get_napi_version_as_string = function (target) {
+      // returns the napi version as a string or an empty string if napi is not supported.
+      const version = module.exports.get_napi_version(target);
+      return version ? '' + version : '';
+    };
+    module.exports.validate_package_json = function (package_json, opts) {
+      // throws Error
+
+      const binary = package_json.binary;
+      const module_path_ok = pathOK(binary.module_path);
+      const remote_path_ok = pathOK(binary.remote_path);
+      const package_name_ok = pathOK(binary.package_name);
+      const napi_build_versions = module.exports.get_napi_build_versions(package_json, opts, true);
+      const napi_build_versions_raw = module.exports.get_napi_build_versions_raw(package_json);
+      if (napi_build_versions) {
+        napi_build_versions.forEach(napi_build_version => {
+          if (!(parseInt(napi_build_version, 10) === napi_build_version && napi_build_version > 0)) {
+            throw new Error('All values specified in napi_versions must be positive integers.');
+          }
+        });
+      }
+      if (napi_build_versions && (!module_path_ok || !remote_path_ok && !package_name_ok)) {
+        throw new Error('When napi_versions is specified; module_path and either remote_path or ' + "package_name must contain the substitution string '{napi_build_version}`.");
+      }
+      if ((module_path_ok || remote_path_ok || package_name_ok) && !napi_build_versions_raw) {
+        throw new Error("When the substitution string '{napi_build_version}` is specified in " + 'module_path, remote_path, or package_name; napi_versions must also be specified.');
+      }
+      if (napi_build_versions && !module.exports.get_best_napi_build_version(package_json, opts) && module.exports.build_napi_only(package_json)) {
+        throw new Error('The Node-API version of this Node instance is ' + module.exports.get_napi_version(opts ? opts.target : undefined) + '. ' + 'This module supports Node-API version(s) ' + module.exports.get_napi_build_versions_raw(package_json) + '. ' + 'This Node instance cannot run this module.');
+      }
+      if (napi_build_versions_raw && !napi_build_versions && module.exports.build_napi_only(package_json)) {
+        throw new Error('The Node-API version of this Node instance is ' + module.exports.get_napi_version(opts ? opts.target : undefined) + '. ' + 'This module supports Node-API version(s) ' + module.exports.get_napi_build_versions_raw(package_json) + '. ' + 'This Node instance cannot run this module.');
+      }
+    };
+    function pathOK(path) {
+      return path && (path.indexOf('{napi_build_version}') !== -1 || path.indexOf('{node_napi_label}') !== -1);
+    }
+    module.exports.expand_commands = function (package_json, opts, commands) {
+      const expanded_commands = [];
+      const napi_build_versions = module.exports.get_napi_build_versions(package_json, opts);
+      commands.forEach(command => {
+        if (napi_build_versions && command.name === 'install') {
+          const napi_build_version = module.exports.get_best_napi_build_version(package_json, opts);
+          const args = napi_build_version ? [napi_build_version_tag + napi_build_version] : [];
+          expanded_commands.push({
+            name: command.name,
+            args: args
+          });
+        } else if (napi_build_versions && napi_multiple_commands.indexOf(command.name) !== -1) {
+          napi_build_versions.forEach(napi_build_version => {
+            const args = command.args.slice();
+            args.push(napi_build_version_tag + napi_build_version);
+            expanded_commands.push({
+              name: command.name,
+              args: args
+            });
+          });
+        } else {
+          expanded_commands.push(command);
+        }
+      });
+      return expanded_commands;
+    };
+    module.exports.get_napi_build_versions = function (package_json, opts, warnings) {
+      // opts may be undefined
+      const log = logExports;
+      let napi_build_versions = [];
+      const supported_napi_version = module.exports.get_napi_version(opts ? opts.target : undefined);
+      // remove duplicates, verify each napi version can actaully be built
+      if (package_json.binary && package_json.binary.napi_versions) {
+        package_json.binary.napi_versions.forEach(napi_version => {
+          const duplicated = napi_build_versions.indexOf(napi_version) !== -1;
+          if (!duplicated && supported_napi_version && napi_version <= supported_napi_version) {
+            napi_build_versions.push(napi_version);
+          } else if (warnings && !duplicated && supported_napi_version) {
+            log.info('This Node instance does not support builds for Node-API version', napi_version);
+          }
+        });
+      }
+      if (opts && opts['build-latest-napi-version-only']) {
+        let latest_version = 0;
+        napi_build_versions.forEach(napi_version => {
+          if (napi_version > latest_version) latest_version = napi_version;
+        });
+        napi_build_versions = latest_version ? [latest_version] : [];
+      }
+      return napi_build_versions.length ? napi_build_versions : undefined;
+    };
+    module.exports.get_napi_build_versions_raw = function (package_json) {
+      const napi_build_versions = [];
+      // remove duplicates
+      if (package_json.binary && package_json.binary.napi_versions) {
+        package_json.binary.napi_versions.forEach(napi_version => {
+          if (napi_build_versions.indexOf(napi_version) === -1) {
+            napi_build_versions.push(napi_version);
+          }
+        });
+      }
+      return napi_build_versions.length ? napi_build_versions : undefined;
+    };
+    module.exports.get_command_arg = function (napi_build_version) {
+      return napi_build_version_tag + napi_build_version;
+    };
+    module.exports.get_napi_build_version_from_command_args = function (command_args) {
+      for (let i = 0; i < command_args.length; i++) {
+        const arg = command_args[i];
+        if (arg.indexOf(napi_build_version_tag) === 0) {
+          return parseInt(arg.substr(napi_build_version_tag.length), 10);
+        }
+      }
+      return undefined;
+    };
+    module.exports.swap_build_dir_out = function (napi_build_version) {
+      if (napi_build_version) {
+        const rm = requireRimraf();
+        rm.sync(module.exports.get_build_dir(napi_build_version));
+        fs.renameSync('build', module.exports.get_build_dir(napi_build_version));
+      }
+    };
+    module.exports.swap_build_dir_in = function (napi_build_version) {
+      if (napi_build_version) {
+        const rm = requireRimraf();
+        rm.sync('build');
+        fs.renameSync(module.exports.get_build_dir(napi_build_version), 'build');
+      }
+    };
+    module.exports.get_build_dir = function (napi_build_version) {
+      return 'build-tmp-napi-v' + napi_build_version;
+    };
+    module.exports.get_best_napi_build_version = function (package_json, opts) {
+      let best_napi_build_version = 0;
+      const napi_build_versions = module.exports.get_napi_build_versions(package_json, opts);
+      if (napi_build_versions) {
+        const our_napi_version = module.exports.get_napi_version(opts ? opts.target : undefined);
+        napi_build_versions.forEach(napi_build_version => {
+          if (napi_build_version > best_napi_build_version && napi_build_version <= our_napi_version) {
+            best_napi_build_version = napi_build_version;
+          }
+        });
+      }
+      return best_napi_build_version === 0 ? undefined : best_napi_build_version;
+    };
+    module.exports.build_napi_only = function (package_json) {
+      return package_json.binary && package_json.binary.package_name && package_json.binary.package_name.indexOf('{node_napi_label}') === -1;
+    };
+  })(napi, napi.exports);
+  return napi.exports;
+}
+
+var preBinding = {exports: {}};
+
+var versioning = {exports: {}};
+
+var re = {exports: {}};
+
+var constants;
+var hasRequiredConstants;
+function requireConstants() {
+  if (hasRequiredConstants) return constants;
+  hasRequiredConstants = 1;
+  // Note: this is the semver.org version of the spec that it implements
+  // Not necessarily the package version of this code.
+  const SEMVER_SPEC_VERSION = '2.0.0';
+  const MAX_LENGTH = 256;
+  const MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER || /* istanbul ignore next */9007199254740991;
+
+  // Max safe segment length for coercion.
+  const MAX_SAFE_COMPONENT_LENGTH = 16;
+  const RELEASE_TYPES = ['major', 'premajor', 'minor', 'preminor', 'patch', 'prepatch', 'prerelease'];
+  constants = {
+    MAX_LENGTH,
+    MAX_SAFE_COMPONENT_LENGTH,
+    MAX_SAFE_INTEGER,
+    RELEASE_TYPES,
+    SEMVER_SPEC_VERSION,
+    FLAG_INCLUDE_PRERELEASE: 0b001,
+    FLAG_LOOSE: 0b010
+  };
+  return constants;
+}
+
+var debug_1;
+var hasRequiredDebug;
+function requireDebug() {
+  if (hasRequiredDebug) return debug_1;
+  hasRequiredDebug = 1;
+  const debug = typeof process === 'object' && process.env && process.env.NODE_DEBUG && /\bsemver\b/i.test(process.env.NODE_DEBUG) ? (...args) => console.error('SEMVER', ...args) : () => {};
+  debug_1 = debug;
+  return debug_1;
+}
+
+var hasRequiredRe;
+function requireRe() {
+  if (hasRequiredRe) return re.exports;
+  hasRequiredRe = 1;
+  (function (module, exports) {
+    const {
+      MAX_SAFE_COMPONENT_LENGTH
+    } = requireConstants();
+    const debug = requireDebug();
+    exports = module.exports = {};
+
+    // The actual regexps go on exports.re
+    const re = exports.re = [];
+    const src = exports.src = [];
+    const t = exports.t = {};
+    let R = 0;
+    const createToken = (name, value, isGlobal) => {
+      const index = R++;
+      debug(name, index, value);
+      t[name] = index;
+      src[index] = value;
+      re[index] = new RegExp(value, isGlobal ? 'g' : undefined);
+    };
+
+    // The following Regular Expressions can be used for tokenizing,
+    // validating, and parsing SemVer version strings.
+
+    // ## Numeric Identifier
+    // A single `0`, or a non-zero digit followed by zero or more digits.
+
+    createToken('NUMERICIDENTIFIER', '0|[1-9]\\d*');
+    createToken('NUMERICIDENTIFIERLOOSE', '[0-9]+');
+
+    // ## Non-numeric Identifier
+    // Zero or more digits, followed by a letter or hyphen, and then zero or
+    // more letters, digits, or hyphens.
+
+    createToken('NONNUMERICIDENTIFIER', '\\d*[a-zA-Z-][a-zA-Z0-9-]*');
+
+    // ## Main Version
+    // Three dot-separated numeric identifiers.
+
+    createToken('MAINVERSION', `(${src[t.NUMERICIDENTIFIER]})\\.` + `(${src[t.NUMERICIDENTIFIER]})\\.` + `(${src[t.NUMERICIDENTIFIER]})`);
+    createToken('MAINVERSIONLOOSE', `(${src[t.NUMERICIDENTIFIERLOOSE]})\\.` + `(${src[t.NUMERICIDENTIFIERLOOSE]})\\.` + `(${src[t.NUMERICIDENTIFIERLOOSE]})`);
+
+    // ## Pre-release Version Identifier
+    // A numeric identifier, or a non-numeric identifier.
+
+    createToken('PRERELEASEIDENTIFIER', `(?:${src[t.NUMERICIDENTIFIER]}|${src[t.NONNUMERICIDENTIFIER]})`);
+    createToken('PRERELEASEIDENTIFIERLOOSE', `(?:${src[t.NUMERICIDENTIFIERLOOSE]}|${src[t.NONNUMERICIDENTIFIER]})`);
+
+    // ## Pre-release Version
+    // Hyphen, followed by one or more dot-separated pre-release version
+    // identifiers.
+
+    createToken('PRERELEASE', `(?:-(${src[t.PRERELEASEIDENTIFIER]}(?:\\.${src[t.PRERELEASEIDENTIFIER]})*))`);
+    createToken('PRERELEASELOOSE', `(?:-?(${src[t.PRERELEASEIDENTIFIERLOOSE]}(?:\\.${src[t.PRERELEASEIDENTIFIERLOOSE]})*))`);
+
+    // ## Build Metadata Identifier
+    // Any combination of digits, letters, or hyphens.
+
+    createToken('BUILDIDENTIFIER', '[0-9A-Za-z-]+');
+
+    // ## Build Metadata
+    // Plus sign, followed by one or more period-separated build metadata
+    // identifiers.
+
+    createToken('BUILD', `(?:\\+(${src[t.BUILDIDENTIFIER]}(?:\\.${src[t.BUILDIDENTIFIER]})*))`);
+
+    // ## Full Version String
+    // A main version, followed optionally by a pre-release version and
+    // build metadata.
+
+    // Note that the only major, minor, patch, and pre-release sections of
+    // the version string are capturing groups.  The build metadata is not a
+    // capturing group, because it should not ever be used in version
+    // comparison.
+
+    createToken('FULLPLAIN', `v?${src[t.MAINVERSION]}${src[t.PRERELEASE]}?${src[t.BUILD]}?`);
+    createToken('FULL', `^${src[t.FULLPLAIN]}$`);
+
+    // like full, but allows v1.2.3 and =1.2.3, which people do sometimes.
+    // also, 1.0.0alpha1 (prerelease without the hyphen) which is pretty
+    // common in the npm registry.
+    createToken('LOOSEPLAIN', `[v=\\s]*${src[t.MAINVERSIONLOOSE]}${src[t.PRERELEASELOOSE]}?${src[t.BUILD]}?`);
+    createToken('LOOSE', `^${src[t.LOOSEPLAIN]}$`);
+    createToken('GTLT', '((?:<|>)?=?)');
+
+    // Something like "2.*" or "1.2.x".
+    // Note that "x.x" is a valid xRange identifer, meaning "any version"
+    // Only the first item is strictly required.
+    createToken('XRANGEIDENTIFIERLOOSE', `${src[t.NUMERICIDENTIFIERLOOSE]}|x|X|\\*`);
+    createToken('XRANGEIDENTIFIER', `${src[t.NUMERICIDENTIFIER]}|x|X|\\*`);
+    createToken('XRANGEPLAIN', `[v=\\s]*(${src[t.XRANGEIDENTIFIER]})` + `(?:\\.(${src[t.XRANGEIDENTIFIER]})` + `(?:\\.(${src[t.XRANGEIDENTIFIER]})` + `(?:${src[t.PRERELEASE]})?${src[t.BUILD]}?` + `)?)?`);
+    createToken('XRANGEPLAINLOOSE', `[v=\\s]*(${src[t.XRANGEIDENTIFIERLOOSE]})` + `(?:\\.(${src[t.XRANGEIDENTIFIERLOOSE]})` + `(?:\\.(${src[t.XRANGEIDENTIFIERLOOSE]})` + `(?:${src[t.PRERELEASELOOSE]})?${src[t.BUILD]}?` + `)?)?`);
+    createToken('XRANGE', `^${src[t.GTLT]}\\s*${src[t.XRANGEPLAIN]}$`);
+    createToken('XRANGELOOSE', `^${src[t.GTLT]}\\s*${src[t.XRANGEPLAINLOOSE]}$`);
+
+    // Coercion.
+    // Extract anything that could conceivably be a part of a valid semver
+    createToken('COERCE', `${'(^|[^\\d])' + '(\\d{1,'}${MAX_SAFE_COMPONENT_LENGTH}})` + `(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?` + `(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?` + `(?:$|[^\\d])`);
+    createToken('COERCERTL', src[t.COERCE], true);
+
+    // Tilde ranges.
+    // Meaning is "reasonably at or greater than"
+    createToken('LONETILDE', '(?:~>?)');
+    createToken('TILDETRIM', `(\\s*)${src[t.LONETILDE]}\\s+`, true);
+    exports.tildeTrimReplace = '$1~';
+    createToken('TILDE', `^${src[t.LONETILDE]}${src[t.XRANGEPLAIN]}$`);
+    createToken('TILDELOOSE', `^${src[t.LONETILDE]}${src[t.XRANGEPLAINLOOSE]}$`);
+
+    // Caret ranges.
+    // Meaning is "at least and backwards compatible with"
+    createToken('LONECARET', '(?:\\^)');
+    createToken('CARETTRIM', `(\\s*)${src[t.LONECARET]}\\s+`, true);
+    exports.caretTrimReplace = '$1^';
+    createToken('CARET', `^${src[t.LONECARET]}${src[t.XRANGEPLAIN]}$`);
+    createToken('CARETLOOSE', `^${src[t.LONECARET]}${src[t.XRANGEPLAINLOOSE]}$`);
+
+    // A simple gt/lt/eq thing, or just "" to indicate "any version"
+    createToken('COMPARATORLOOSE', `^${src[t.GTLT]}\\s*(${src[t.LOOSEPLAIN]})$|^$`);
+    createToken('COMPARATOR', `^${src[t.GTLT]}\\s*(${src[t.FULLPLAIN]})$|^$`);
+
+    // An expression to strip any whitespace between the gtlt and the thing
+    // it modifies, so that `> 1.2.3` ==> `>1.2.3`
+    createToken('COMPARATORTRIM', `(\\s*)${src[t.GTLT]}\\s*(${src[t.LOOSEPLAIN]}|${src[t.XRANGEPLAIN]})`, true);
+    exports.comparatorTrimReplace = '$1$2$3';
+
+    // Something like `1.2.3 - 1.2.4`
+    // Note that these all use the loose form, because they'll be
+    // checked against either the strict or loose comparator form
+    // later.
+    createToken('HYPHENRANGE', `^\\s*(${src[t.XRANGEPLAIN]})` + `\\s+-\\s+` + `(${src[t.XRANGEPLAIN]})` + `\\s*$`);
+    createToken('HYPHENRANGELOOSE', `^\\s*(${src[t.XRANGEPLAINLOOSE]})` + `\\s+-\\s+` + `(${src[t.XRANGEPLAINLOOSE]})` + `\\s*$`);
+
+    // Star ranges basically just allow anything at all.
+    createToken('STAR', '(<|>)?=?\\s*\\*');
+    // >=0.0.0 is like a star
+    createToken('GTE0', '^\\s*>=\\s*0\\.0\\.0\\s*$');
+    createToken('GTE0PRE', '^\\s*>=\\s*0\\.0\\.0-0\\s*$');
+  })(re, re.exports);
+  return re.exports;
+}
+
+var parseOptions_1;
+var hasRequiredParseOptions;
+function requireParseOptions() {
+  if (hasRequiredParseOptions) return parseOptions_1;
+  hasRequiredParseOptions = 1;
+  // parse out just the options we care about
+  const looseOption = Object.freeze({
+    loose: true
+  });
+  const emptyOpts = Object.freeze({});
+  const parseOptions = options => {
+    if (!options) {
+      return emptyOpts;
+    }
+    if (typeof options !== 'object') {
+      return looseOption;
+    }
+    return options;
+  };
+  parseOptions_1 = parseOptions;
+  return parseOptions_1;
+}
+
+var identifiers;
+var hasRequiredIdentifiers;
+function requireIdentifiers() {
+  if (hasRequiredIdentifiers) return identifiers;
+  hasRequiredIdentifiers = 1;
+  const numeric = /^[0-9]+$/;
+  const compareIdentifiers = (a, b) => {
+    const anum = numeric.test(a);
+    const bnum = numeric.test(b);
+    if (anum && bnum) {
+      a = +a;
+      b = +b;
+    }
+    return a === b ? 0 : anum && !bnum ? -1 : bnum && !anum ? 1 : a < b ? -1 : 1;
+  };
+  const rcompareIdentifiers = (a, b) => compareIdentifiers(b, a);
+  identifiers = {
+    compareIdentifiers,
+    rcompareIdentifiers
+  };
+  return identifiers;
+}
+
+var semver$1;
+var hasRequiredSemver$1;
+function requireSemver$1() {
+  if (hasRequiredSemver$1) return semver$1;
+  hasRequiredSemver$1 = 1;
+  const debug = requireDebug();
+  const {
+    MAX_LENGTH,
+    MAX_SAFE_INTEGER
+  } = requireConstants();
+  const {
+    re,
+    t
+  } = requireRe();
+  const parseOptions = requireParseOptions();
+  const {
+    compareIdentifiers
+  } = requireIdentifiers();
+  class SemVer {
+    constructor(version, options) {
+      options = parseOptions(options);
+      if (version instanceof SemVer) {
+        if (version.loose === !!options.loose && version.includePrerelease === !!options.includePrerelease) {
+          return version;
+        } else {
+          version = version.version;
+        }
+      } else if (typeof version !== 'string') {
+        throw new TypeError(`Invalid version. Must be a string. Got type "${typeof version}".`);
+      }
+      if (version.length > MAX_LENGTH) {
+        throw new TypeError(`version is longer than ${MAX_LENGTH} characters`);
+      }
+      debug('SemVer', version, options);
+      this.options = options;
+      this.loose = !!options.loose;
+      // this isn't actually relevant for versions, but keep it so that we
+      // don't run into trouble passing this.options around.
+      this.includePrerelease = !!options.includePrerelease;
+      const m = version.trim().match(options.loose ? re[t.LOOSE] : re[t.FULL]);
+      if (!m) {
+        throw new TypeError(`Invalid Version: ${version}`);
+      }
+      this.raw = version;
+
+      // these are actually numbers
+      this.major = +m[1];
+      this.minor = +m[2];
+      this.patch = +m[3];
+      if (this.major > MAX_SAFE_INTEGER || this.major < 0) {
+        throw new TypeError('Invalid major version');
+      }
+      if (this.minor > MAX_SAFE_INTEGER || this.minor < 0) {
+        throw new TypeError('Invalid minor version');
+      }
+      if (this.patch > MAX_SAFE_INTEGER || this.patch < 0) {
+        throw new TypeError('Invalid patch version');
+      }
+
+      // numberify any prerelease numeric ids
+      if (!m[4]) {
+        this.prerelease = [];
+      } else {
+        this.prerelease = m[4].split('.').map(id => {
+          if (/^[0-9]+$/.test(id)) {
+            const num = +id;
+            if (num >= 0 && num < MAX_SAFE_INTEGER) {
+              return num;
+            }
+          }
+          return id;
+        });
+      }
+      this.build = m[5] ? m[5].split('.') : [];
+      this.format();
+    }
+    format() {
+      this.version = `${this.major}.${this.minor}.${this.patch}`;
+      if (this.prerelease.length) {
+        this.version += `-${this.prerelease.join('.')}`;
+      }
+      return this.version;
+    }
+    toString() {
+      return this.version;
+    }
+    compare(other) {
+      debug('SemVer.compare', this.version, this.options, other);
+      if (!(other instanceof SemVer)) {
+        if (typeof other === 'string' && other === this.version) {
+          return 0;
+        }
+        other = new SemVer(other, this.options);
+      }
+      if (other.version === this.version) {
+        return 0;
+      }
+      return this.compareMain(other) || this.comparePre(other);
+    }
+    compareMain(other) {
+      if (!(other instanceof SemVer)) {
+        other = new SemVer(other, this.options);
+      }
+      return compareIdentifiers(this.major, other.major) || compareIdentifiers(this.minor, other.minor) || compareIdentifiers(this.patch, other.patch);
+    }
+    comparePre(other) {
+      if (!(other instanceof SemVer)) {
+        other = new SemVer(other, this.options);
+      }
+
+      // NOT having a prerelease is > having one
+      if (this.prerelease.length && !other.prerelease.length) {
+        return -1;
+      } else if (!this.prerelease.length && other.prerelease.length) {
+        return 1;
+      } else if (!this.prerelease.length && !other.prerelease.length) {
+        return 0;
+      }
+      let i = 0;
+      do {
+        const a = this.prerelease[i];
+        const b = other.prerelease[i];
+        debug('prerelease compare', i, a, b);
+        if (a === undefined && b === undefined) {
+          return 0;
+        } else if (b === undefined) {
+          return 1;
+        } else if (a === undefined) {
+          return -1;
+        } else if (a === b) {
+          continue;
+        } else {
+          return compareIdentifiers(a, b);
+        }
+      } while (++i);
+    }
+    compareBuild(other) {
+      if (!(other instanceof SemVer)) {
+        other = new SemVer(other, this.options);
+      }
+      let i = 0;
+      do {
+        const a = this.build[i];
+        const b = other.build[i];
+        debug('prerelease compare', i, a, b);
+        if (a === undefined && b === undefined) {
+          return 0;
+        } else if (b === undefined) {
+          return 1;
+        } else if (a === undefined) {
+          return -1;
+        } else if (a === b) {
+          continue;
+        } else {
+          return compareIdentifiers(a, b);
+        }
+      } while (++i);
+    }
+
+    // preminor will bump the version up to the next minor release, and immediately
+    // down to pre-release. premajor and prepatch work the same way.
+    inc(release, identifier, identifierBase) {
+      switch (release) {
+        case 'premajor':
+          this.prerelease.length = 0;
+          this.patch = 0;
+          this.minor = 0;
+          this.major++;
+          this.inc('pre', identifier, identifierBase);
+          break;
+        case 'preminor':
+          this.prerelease.length = 0;
+          this.patch = 0;
+          this.minor++;
+          this.inc('pre', identifier, identifierBase);
+          break;
+        case 'prepatch':
+          // If this is already a prerelease, it will bump to the next version
+          // drop any prereleases that might already exist, since they are not
+          // relevant at this point.
+          this.prerelease.length = 0;
+          this.inc('patch', identifier, identifierBase);
+          this.inc('pre', identifier, identifierBase);
+          break;
+        // If the input is a non-prerelease version, this acts the same as
+        // prepatch.
+        case 'prerelease':
+          if (this.prerelease.length === 0) {
+            this.inc('patch', identifier, identifierBase);
+          }
+          this.inc('pre', identifier, identifierBase);
+          break;
+        case 'major':
+          // If this is a pre-major version, bump up to the same major version.
+          // Otherwise increment major.
+          // 1.0.0-5 bumps to 1.0.0
+          // 1.1.0 bumps to 2.0.0
+          if (this.minor !== 0 || this.patch !== 0 || this.prerelease.length === 0) {
+            this.major++;
+          }
+          this.minor = 0;
+          this.patch = 0;
+          this.prerelease = [];
+          break;
+        case 'minor':
+          // If this is a pre-minor version, bump up to the same minor version.
+          // Otherwise increment minor.
+          // 1.2.0-5 bumps to 1.2.0
+          // 1.2.1 bumps to 1.3.0
+          if (this.patch !== 0 || this.prerelease.length === 0) {
+            this.minor++;
+          }
+          this.patch = 0;
+          this.prerelease = [];
+          break;
+        case 'patch':
+          // If this is not a pre-release version, it will increment the patch.
+          // If it is a pre-release it will bump up to the same patch version.
+          // 1.2.0-5 patches to 1.2.0
+          // 1.2.0 patches to 1.2.1
+          if (this.prerelease.length === 0) {
+            this.patch++;
+          }
+          this.prerelease = [];
+          break;
+        // This probably shouldn't be used publicly.
+        // 1.0.0 'pre' would become 1.0.0-0 which is the wrong direction.
+        case 'pre':
+          {
+            const base = Number(identifierBase) ? 1 : 0;
+            if (!identifier && identifierBase === false) {
+              throw new Error('invalid increment argument: identifier is empty');
+            }
+            if (this.prerelease.length === 0) {
+              this.prerelease = [base];
+            } else {
+              let i = this.prerelease.length;
+              while (--i >= 0) {
+                if (typeof this.prerelease[i] === 'number') {
+                  this.prerelease[i]++;
+                  i = -2;
+                }
+              }
+              if (i === -1) {
+                // didn't increment anything
+                if (identifier === this.prerelease.join('.') && identifierBase === false) {
+                  throw new Error('invalid increment argument: identifier already exists');
+                }
+                this.prerelease.push(base);
+              }
+            }
+            if (identifier) {
+              // 1.2.0-beta.1 bumps to 1.2.0-beta.2,
+              // 1.2.0-beta.fooblz or 1.2.0-beta bumps to 1.2.0-beta.0
+              let prerelease = [identifier, base];
+              if (identifierBase === false) {
+                prerelease = [identifier];
+              }
+              if (compareIdentifiers(this.prerelease[0], identifier) === 0) {
+                if (isNaN(this.prerelease[1])) {
+                  this.prerelease = prerelease;
+                }
+              } else {
+                this.prerelease = prerelease;
+              }
+            }
+            break;
+          }
+        default:
+          throw new Error(`invalid increment argument: ${release}`);
+      }
+      this.format();
+      this.raw = this.version;
+      return this;
+    }
+  }
+  semver$1 = SemVer;
+  return semver$1;
+}
+
+var parse_1;
+var hasRequiredParse;
+function requireParse() {
+  if (hasRequiredParse) return parse_1;
+  hasRequiredParse = 1;
+  const SemVer = requireSemver$1();
+  const parse = (version, options, throwErrors = false) => {
+    if (version instanceof SemVer) {
+      return version;
+    }
+    try {
+      return new SemVer(version, options);
+    } catch (er) {
+      if (!throwErrors) {
+        return null;
+      }
+      throw er;
+    }
+  };
+  parse_1 = parse;
+  return parse_1;
+}
+
+var valid_1;
+var hasRequiredValid$1;
+function requireValid$1() {
+  if (hasRequiredValid$1) return valid_1;
+  hasRequiredValid$1 = 1;
+  const parse = requireParse();
+  const valid = (version, options) => {
+    const v = parse(version, options);
+    return v ? v.version : null;
+  };
+  valid_1 = valid;
+  return valid_1;
+}
+
+var clean_1;
+var hasRequiredClean;
+function requireClean() {
+  if (hasRequiredClean) return clean_1;
+  hasRequiredClean = 1;
+  const parse = requireParse();
+  const clean = (version, options) => {
+    const s = parse(version.trim().replace(/^[=v]+/, ''), options);
+    return s ? s.version : null;
+  };
+  clean_1 = clean;
+  return clean_1;
+}
+
+var inc_1;
+var hasRequiredInc;
+function requireInc() {
+  if (hasRequiredInc) return inc_1;
+  hasRequiredInc = 1;
+  const SemVer = requireSemver$1();
+  const inc = (version, release, options, identifier, identifierBase) => {
+    if (typeof options === 'string') {
+      identifierBase = identifier;
+      identifier = options;
+      options = undefined;
+    }
+    try {
+      return new SemVer(version instanceof SemVer ? version.version : version, options).inc(release, identifier, identifierBase).version;
+    } catch (er) {
+      return null;
+    }
+  };
+  inc_1 = inc;
+  return inc_1;
+}
+
+var diff_1;
+var hasRequiredDiff;
+function requireDiff() {
+  if (hasRequiredDiff) return diff_1;
+  hasRequiredDiff = 1;
+  const parse = requireParse();
+  const diff = (version1, version2) => {
+    const v1 = parse(version1, null, true);
+    const v2 = parse(version2, null, true);
+    const comparison = v1.compare(v2);
+    if (comparison === 0) {
+      return null;
+    }
+    const v1Higher = comparison > 0;
+    const highVersion = v1Higher ? v1 : v2;
+    const lowVersion = v1Higher ? v2 : v1;
+    const highHasPre = !!highVersion.prerelease.length;
+
+    // add the `pre` prefix if we are going to a prerelease version
+    const prefix = highHasPre ? 'pre' : '';
+    if (v1.major !== v2.major) {
+      return prefix + 'major';
+    }
+    if (v1.minor !== v2.minor) {
+      return prefix + 'minor';
+    }
+    if (v1.patch !== v2.patch) {
+      return prefix + 'patch';
+    }
+
+    // at this point we know stable versions match but overall versions are not equal,
+    // so either they are both prereleases, or the lower version is a prerelease
+
+    if (highHasPre) {
+      // high and low are preleases
+      return 'prerelease';
+    }
+    if (lowVersion.patch) {
+      // anything higher than a patch bump would result in the wrong version
+      return 'patch';
+    }
+    if (lowVersion.minor) {
+      // anything higher than a minor bump would result in the wrong version
+      return 'minor';
+    }
+
+    // bumping major/minor/patch all have same result
+    return 'major';
+  };
+  diff_1 = diff;
+  return diff_1;
+}
+
+var major_1;
+var hasRequiredMajor;
+function requireMajor() {
+  if (hasRequiredMajor) return major_1;
+  hasRequiredMajor = 1;
+  const SemVer = requireSemver$1();
+  const major = (a, loose) => new SemVer(a, loose).major;
+  major_1 = major;
+  return major_1;
+}
+
+var minor_1;
+var hasRequiredMinor;
+function requireMinor() {
+  if (hasRequiredMinor) return minor_1;
+  hasRequiredMinor = 1;
+  const SemVer = requireSemver$1();
+  const minor = (a, loose) => new SemVer(a, loose).minor;
+  minor_1 = minor;
+  return minor_1;
+}
+
+var patch_1;
+var hasRequiredPatch;
+function requirePatch() {
+  if (hasRequiredPatch) return patch_1;
+  hasRequiredPatch = 1;
+  const SemVer = requireSemver$1();
+  const patch = (a, loose) => new SemVer(a, loose).patch;
+  patch_1 = patch;
+  return patch_1;
+}
+
+var prerelease_1;
+var hasRequiredPrerelease;
+function requirePrerelease() {
+  if (hasRequiredPrerelease) return prerelease_1;
+  hasRequiredPrerelease = 1;
+  const parse = requireParse();
+  const prerelease = (version, options) => {
+    const parsed = parse(version, options);
+    return parsed && parsed.prerelease.length ? parsed.prerelease : null;
+  };
+  prerelease_1 = prerelease;
+  return prerelease_1;
+}
+
+var compare_1;
+var hasRequiredCompare;
+function requireCompare() {
+  if (hasRequiredCompare) return compare_1;
+  hasRequiredCompare = 1;
+  const SemVer = requireSemver$1();
+  const compare = (a, b, loose) => new SemVer(a, loose).compare(new SemVer(b, loose));
+  compare_1 = compare;
+  return compare_1;
+}
+
+var rcompare_1;
+var hasRequiredRcompare;
+function requireRcompare() {
+  if (hasRequiredRcompare) return rcompare_1;
+  hasRequiredRcompare = 1;
+  const compare = requireCompare();
+  const rcompare = (a, b, loose) => compare(b, a, loose);
+  rcompare_1 = rcompare;
+  return rcompare_1;
+}
+
+var compareLoose_1;
+var hasRequiredCompareLoose;
+function requireCompareLoose() {
+  if (hasRequiredCompareLoose) return compareLoose_1;
+  hasRequiredCompareLoose = 1;
+  const compare = requireCompare();
+  const compareLoose = (a, b) => compare(a, b, true);
+  compareLoose_1 = compareLoose;
+  return compareLoose_1;
+}
+
+var compareBuild_1;
+var hasRequiredCompareBuild;
+function requireCompareBuild() {
+  if (hasRequiredCompareBuild) return compareBuild_1;
+  hasRequiredCompareBuild = 1;
+  const SemVer = requireSemver$1();
+  const compareBuild = (a, b, loose) => {
+    const versionA = new SemVer(a, loose);
+    const versionB = new SemVer(b, loose);
+    return versionA.compare(versionB) || versionA.compareBuild(versionB);
+  };
+  compareBuild_1 = compareBuild;
+  return compareBuild_1;
+}
+
+var sort_1;
+var hasRequiredSort;
+function requireSort() {
+  if (hasRequiredSort) return sort_1;
+  hasRequiredSort = 1;
+  const compareBuild = requireCompareBuild();
+  const sort = (list, loose) => list.sort((a, b) => compareBuild(a, b, loose));
+  sort_1 = sort;
+  return sort_1;
+}
+
+var rsort_1;
+var hasRequiredRsort;
+function requireRsort() {
+  if (hasRequiredRsort) return rsort_1;
+  hasRequiredRsort = 1;
+  const compareBuild = requireCompareBuild();
+  const rsort = (list, loose) => list.sort((a, b) => compareBuild(b, a, loose));
+  rsort_1 = rsort;
+  return rsort_1;
+}
+
+var gt_1;
+var hasRequiredGt;
+function requireGt() {
+  if (hasRequiredGt) return gt_1;
+  hasRequiredGt = 1;
+  const compare = requireCompare();
+  const gt = (a, b, loose) => compare(a, b, loose) > 0;
+  gt_1 = gt;
+  return gt_1;
+}
+
+var lt_1;
+var hasRequiredLt;
+function requireLt() {
+  if (hasRequiredLt) return lt_1;
+  hasRequiredLt = 1;
+  const compare = requireCompare();
+  const lt = (a, b, loose) => compare(a, b, loose) < 0;
+  lt_1 = lt;
+  return lt_1;
+}
+
+var eq_1;
+var hasRequiredEq;
+function requireEq() {
+  if (hasRequiredEq) return eq_1;
+  hasRequiredEq = 1;
+  const compare = requireCompare();
+  const eq = (a, b, loose) => compare(a, b, loose) === 0;
+  eq_1 = eq;
+  return eq_1;
+}
+
+var neq_1;
+var hasRequiredNeq;
+function requireNeq() {
+  if (hasRequiredNeq) return neq_1;
+  hasRequiredNeq = 1;
+  const compare = requireCompare();
+  const neq = (a, b, loose) => compare(a, b, loose) !== 0;
+  neq_1 = neq;
+  return neq_1;
+}
+
+var gte_1;
+var hasRequiredGte;
+function requireGte() {
+  if (hasRequiredGte) return gte_1;
+  hasRequiredGte = 1;
+  const compare = requireCompare();
+  const gte = (a, b, loose) => compare(a, b, loose) >= 0;
+  gte_1 = gte;
+  return gte_1;
+}
+
+var lte_1;
+var hasRequiredLte;
+function requireLte() {
+  if (hasRequiredLte) return lte_1;
+  hasRequiredLte = 1;
+  const compare = requireCompare();
+  const lte = (a, b, loose) => compare(a, b, loose) <= 0;
+  lte_1 = lte;
+  return lte_1;
+}
+
+var cmp_1;
+var hasRequiredCmp;
+function requireCmp() {
+  if (hasRequiredCmp) return cmp_1;
+  hasRequiredCmp = 1;
+  const eq = requireEq();
+  const neq = requireNeq();
+  const gt = requireGt();
+  const gte = requireGte();
+  const lt = requireLt();
+  const lte = requireLte();
+  const cmp = (a, op, b, loose) => {
+    switch (op) {
+      case '===':
+        if (typeof a === 'object') {
+          a = a.version;
+        }
+        if (typeof b === 'object') {
+          b = b.version;
+        }
+        return a === b;
+      case '!==':
+        if (typeof a === 'object') {
+          a = a.version;
+        }
+        if (typeof b === 'object') {
+          b = b.version;
+        }
+        return a !== b;
+      case '':
+      case '=':
+      case '==':
+        return eq(a, b, loose);
+      case '!=':
+        return neq(a, b, loose);
+      case '>':
+        return gt(a, b, loose);
+      case '>=':
+        return gte(a, b, loose);
+      case '<':
+        return lt(a, b, loose);
+      case '<=':
+        return lte(a, b, loose);
+      default:
+        throw new TypeError(`Invalid operator: ${op}`);
+    }
+  };
+  cmp_1 = cmp;
+  return cmp_1;
+}
+
+var coerce_1;
+var hasRequiredCoerce;
+function requireCoerce() {
+  if (hasRequiredCoerce) return coerce_1;
+  hasRequiredCoerce = 1;
+  const SemVer = requireSemver$1();
+  const parse = requireParse();
+  const {
+    re,
+    t
+  } = requireRe();
+  const coerce = (version, options) => {
+    if (version instanceof SemVer) {
+      return version;
+    }
+    if (typeof version === 'number') {
+      version = String(version);
+    }
+    if (typeof version !== 'string') {
+      return null;
+    }
+    options = options || {};
+    let match = null;
+    if (!options.rtl) {
+      match = version.match(re[t.COERCE]);
+    } else {
+      // Find the right-most coercible string that does not share
+      // a terminus with a more left-ward coercible string.
+      // Eg, '1.2.3.4' wants to coerce '2.3.4', not '3.4' or '4'
+      //
+      // Walk through the string checking with a /g regexp
+      // Manually set the index so as to pick up overlapping matches.
+      // Stop when we get a match that ends at the string end, since no
+      // coercible string can be more right-ward without the same terminus.
+      let next;
+      while ((next = re[t.COERCERTL].exec(version)) && (!match || match.index + match[0].length !== version.length)) {
+        if (!match || next.index + next[0].length !== match.index + match[0].length) {
+          match = next;
+        }
+        re[t.COERCERTL].lastIndex = next.index + next[1].length + next[2].length;
+      }
+      // leave it in a clean state
+      re[t.COERCERTL].lastIndex = -1;
+    }
+    if (match === null) {
+      return null;
+    }
+    return parse(`${match[2]}.${match[3] || '0'}.${match[4] || '0'}`, options);
+  };
+  coerce_1 = coerce;
+  return coerce_1;
+}
+
+var iterator;
+var hasRequiredIterator;
+function requireIterator() {
+  if (hasRequiredIterator) return iterator;
+  hasRequiredIterator = 1;
+  iterator = function (Yallist) {
+    Yallist.prototype[Symbol.iterator] = function* () {
+      for (let walker = this.head; walker; walker = walker.next) {
+        yield walker.value;
+      }
+    };
+  };
+  return iterator;
+}
+
+var yallist;
+var hasRequiredYallist;
+function requireYallist() {
+  if (hasRequiredYallist) return yallist;
+  hasRequiredYallist = 1;
+  yallist = Yallist;
+  Yallist.Node = Node;
+  Yallist.create = Yallist;
+  function Yallist(list) {
+    var self = this;
+    if (!(self instanceof Yallist)) {
+      self = new Yallist();
+    }
+    self.tail = null;
+    self.head = null;
+    self.length = 0;
+    if (list && typeof list.forEach === 'function') {
+      list.forEach(function (item) {
+        self.push(item);
+      });
+    } else if (arguments.length > 0) {
+      for (var i = 0, l = arguments.length; i < l; i++) {
+        self.push(arguments[i]);
+      }
+    }
+    return self;
+  }
+  Yallist.prototype.removeNode = function (node) {
+    if (node.list !== this) {
+      throw new Error('removing node which does not belong to this list');
+    }
+    var next = node.next;
+    var prev = node.prev;
+    if (next) {
+      next.prev = prev;
+    }
+    if (prev) {
+      prev.next = next;
+    }
+    if (node === this.head) {
+      this.head = next;
+    }
+    if (node === this.tail) {
+      this.tail = prev;
+    }
+    node.list.length--;
+    node.next = null;
+    node.prev = null;
+    node.list = null;
+    return next;
+  };
+  Yallist.prototype.unshiftNode = function (node) {
+    if (node === this.head) {
+      return;
+    }
+    if (node.list) {
+      node.list.removeNode(node);
+    }
+    var head = this.head;
+    node.list = this;
+    node.next = head;
+    if (head) {
+      head.prev = node;
+    }
+    this.head = node;
+    if (!this.tail) {
+      this.tail = node;
+    }
+    this.length++;
+  };
+  Yallist.prototype.pushNode = function (node) {
+    if (node === this.tail) {
+      return;
+    }
+    if (node.list) {
+      node.list.removeNode(node);
+    }
+    var tail = this.tail;
+    node.list = this;
+    node.prev = tail;
+    if (tail) {
+      tail.next = node;
+    }
+    this.tail = node;
+    if (!this.head) {
+      this.head = node;
+    }
+    this.length++;
+  };
+  Yallist.prototype.push = function () {
+    for (var i = 0, l = arguments.length; i < l; i++) {
+      push(this, arguments[i]);
+    }
+    return this.length;
+  };
+  Yallist.prototype.unshift = function () {
+    for (var i = 0, l = arguments.length; i < l; i++) {
+      unshift(this, arguments[i]);
+    }
+    return this.length;
+  };
+  Yallist.prototype.pop = function () {
+    if (!this.tail) {
+      return undefined;
+    }
+    var res = this.tail.value;
+    this.tail = this.tail.prev;
+    if (this.tail) {
+      this.tail.next = null;
+    } else {
+      this.head = null;
+    }
+    this.length--;
+    return res;
+  };
+  Yallist.prototype.shift = function () {
+    if (!this.head) {
+      return undefined;
+    }
+    var res = this.head.value;
+    this.head = this.head.next;
+    if (this.head) {
+      this.head.prev = null;
+    } else {
+      this.tail = null;
+    }
+    this.length--;
+    return res;
+  };
+  Yallist.prototype.forEach = function (fn, thisp) {
+    thisp = thisp || this;
+    for (var walker = this.head, i = 0; walker !== null; i++) {
+      fn.call(thisp, walker.value, i, this);
+      walker = walker.next;
+    }
+  };
+  Yallist.prototype.forEachReverse = function (fn, thisp) {
+    thisp = thisp || this;
+    for (var walker = this.tail, i = this.length - 1; walker !== null; i--) {
+      fn.call(thisp, walker.value, i, this);
+      walker = walker.prev;
+    }
+  };
+  Yallist.prototype.get = function (n) {
+    for (var i = 0, walker = this.head; walker !== null && i < n; i++) {
+      // abort out of the list early if we hit a cycle
+      walker = walker.next;
+    }
+    if (i === n && walker !== null) {
+      return walker.value;
+    }
+  };
+  Yallist.prototype.getReverse = function (n) {
+    for (var i = 0, walker = this.tail; walker !== null && i < n; i++) {
+      // abort out of the list early if we hit a cycle
+      walker = walker.prev;
+    }
+    if (i === n && walker !== null) {
+      return walker.value;
+    }
+  };
+  Yallist.prototype.map = function (fn, thisp) {
+    thisp = thisp || this;
+    var res = new Yallist();
+    for (var walker = this.head; walker !== null;) {
+      res.push(fn.call(thisp, walker.value, this));
+      walker = walker.next;
+    }
+    return res;
+  };
+  Yallist.prototype.mapReverse = function (fn, thisp) {
+    thisp = thisp || this;
+    var res = new Yallist();
+    for (var walker = this.tail; walker !== null;) {
+      res.push(fn.call(thisp, walker.value, this));
+      walker = walker.prev;
+    }
+    return res;
+  };
+  Yallist.prototype.reduce = function (fn, initial) {
+    var acc;
+    var walker = this.head;
+    if (arguments.length > 1) {
+      acc = initial;
+    } else if (this.head) {
+      walker = this.head.next;
+      acc = this.head.value;
+    } else {
+      throw new TypeError('Reduce of empty list with no initial value');
+    }
+    for (var i = 0; walker !== null; i++) {
+      acc = fn(acc, walker.value, i);
+      walker = walker.next;
+    }
+    return acc;
+  };
+  Yallist.prototype.reduceReverse = function (fn, initial) {
+    var acc;
+    var walker = this.tail;
+    if (arguments.length > 1) {
+      acc = initial;
+    } else if (this.tail) {
+      walker = this.tail.prev;
+      acc = this.tail.value;
+    } else {
+      throw new TypeError('Reduce of empty list with no initial value');
+    }
+    for (var i = this.length - 1; walker !== null; i--) {
+      acc = fn(acc, walker.value, i);
+      walker = walker.prev;
+    }
+    return acc;
+  };
+  Yallist.prototype.toArray = function () {
+    var arr = new Array(this.length);
+    for (var i = 0, walker = this.head; walker !== null; i++) {
+      arr[i] = walker.value;
+      walker = walker.next;
+    }
+    return arr;
+  };
+  Yallist.prototype.toArrayReverse = function () {
+    var arr = new Array(this.length);
+    for (var i = 0, walker = this.tail; walker !== null; i++) {
+      arr[i] = walker.value;
+      walker = walker.prev;
+    }
+    return arr;
+  };
+  Yallist.prototype.slice = function (from, to) {
+    to = to || this.length;
+    if (to < 0) {
+      to += this.length;
+    }
+    from = from || 0;
+    if (from < 0) {
+      from += this.length;
+    }
+    var ret = new Yallist();
+    if (to < from || to < 0) {
+      return ret;
+    }
+    if (from < 0) {
+      from = 0;
+    }
+    if (to > this.length) {
+      to = this.length;
+    }
+    for (var i = 0, walker = this.head; walker !== null && i < from; i++) {
+      walker = walker.next;
+    }
+    for (; walker !== null && i < to; i++, walker = walker.next) {
+      ret.push(walker.value);
+    }
+    return ret;
+  };
+  Yallist.prototype.sliceReverse = function (from, to) {
+    to = to || this.length;
+    if (to < 0) {
+      to += this.length;
+    }
+    from = from || 0;
+    if (from < 0) {
+      from += this.length;
+    }
+    var ret = new Yallist();
+    if (to < from || to < 0) {
+      return ret;
+    }
+    if (from < 0) {
+      from = 0;
+    }
+    if (to > this.length) {
+      to = this.length;
+    }
+    for (var i = this.length, walker = this.tail; walker !== null && i > to; i--) {
+      walker = walker.prev;
+    }
+    for (; walker !== null && i > from; i--, walker = walker.prev) {
+      ret.push(walker.value);
+    }
+    return ret;
+  };
+  Yallist.prototype.splice = function (start, deleteCount, ...nodes) {
+    if (start > this.length) {
+      start = this.length - 1;
+    }
+    if (start < 0) {
+      start = this.length + start;
+    }
+    for (var i = 0, walker = this.head; walker !== null && i < start; i++) {
+      walker = walker.next;
+    }
+    var ret = [];
+    for (var i = 0; walker && i < deleteCount; i++) {
+      ret.push(walker.value);
+      walker = this.removeNode(walker);
+    }
+    if (walker === null) {
+      walker = this.tail;
+    }
+    if (walker !== this.head && walker !== this.tail) {
+      walker = walker.prev;
+    }
+    for (var i = 0; i < nodes.length; i++) {
+      walker = insert(this, walker, nodes[i]);
+    }
+    return ret;
+  };
+  Yallist.prototype.reverse = function () {
+    var head = this.head;
+    var tail = this.tail;
+    for (var walker = head; walker !== null; walker = walker.prev) {
+      var p = walker.prev;
+      walker.prev = walker.next;
+      walker.next = p;
+    }
+    this.head = tail;
+    this.tail = head;
+    return this;
+  };
+  function insert(self, node, value) {
+    var inserted = node === self.head ? new Node(value, null, node, self) : new Node(value, node, node.next, self);
+    if (inserted.next === null) {
+      self.tail = inserted;
+    }
+    if (inserted.prev === null) {
+      self.head = inserted;
+    }
+    self.length++;
+    return inserted;
+  }
+  function push(self, item) {
+    self.tail = new Node(item, self.tail, null, self);
+    if (!self.head) {
+      self.head = self.tail;
+    }
+    self.length++;
+  }
+  function unshift(self, item) {
+    self.head = new Node(item, null, self.head, self);
+    if (!self.tail) {
+      self.tail = self.head;
+    }
+    self.length++;
+  }
+  function Node(value, prev, next, list) {
+    if (!(this instanceof Node)) {
+      return new Node(value, prev, next, list);
+    }
+    this.list = list;
+    this.value = value;
+    if (prev) {
+      prev.next = this;
+      this.prev = prev;
+    } else {
+      this.prev = null;
+    }
+    if (next) {
+      next.prev = this;
+      this.next = next;
+    } else {
+      this.next = null;
+    }
+  }
+  try {
+    // add if support for Symbol.iterator is present
+    requireIterator()(Yallist);
+  } catch (er) {}
+  return yallist;
+}
+
+var lruCache;
+var hasRequiredLruCache;
+function requireLruCache() {
+  if (hasRequiredLruCache) return lruCache;
+  hasRequiredLruCache = 1;
+
+  // A linked list to keep track of recently-used-ness
+  const Yallist = requireYallist();
+  const MAX = Symbol('max');
+  const LENGTH = Symbol('length');
+  const LENGTH_CALCULATOR = Symbol('lengthCalculator');
+  const ALLOW_STALE = Symbol('allowStale');
+  const MAX_AGE = Symbol('maxAge');
+  const DISPOSE = Symbol('dispose');
+  const NO_DISPOSE_ON_SET = Symbol('noDisposeOnSet');
+  const LRU_LIST = Symbol('lruList');
+  const CACHE = Symbol('cache');
+  const UPDATE_AGE_ON_GET = Symbol('updateAgeOnGet');
+  const naiveLength = () => 1;
+
+  // lruList is a yallist where the head is the youngest
+  // item, and the tail is the oldest.  the list contains the Hit
+  // objects as the entries.
+  // Each Hit object has a reference to its Yallist.Node.  This
+  // never changes.
+  //
+  // cache is a Map (or PseudoMap) that matches the keys to
+  // the Yallist.Node object.
+  class LRUCache {
+    constructor(options) {
+      if (typeof options === 'number') options = {
+        max: options
+      };
+      if (!options) options = {};
+      if (options.max && (typeof options.max !== 'number' || options.max < 0)) throw new TypeError('max must be a non-negative number');
+      // Kind of weird to have a default max of Infinity, but oh well.
+      this[MAX] = options.max || Infinity;
+      const lc = options.length || naiveLength;
+      this[LENGTH_CALCULATOR] = typeof lc !== 'function' ? naiveLength : lc;
+      this[ALLOW_STALE] = options.stale || false;
+      if (options.maxAge && typeof options.maxAge !== 'number') throw new TypeError('maxAge must be a number');
+      this[MAX_AGE] = options.maxAge || 0;
+      this[DISPOSE] = options.dispose;
+      this[NO_DISPOSE_ON_SET] = options.noDisposeOnSet || false;
+      this[UPDATE_AGE_ON_GET] = options.updateAgeOnGet || false;
+      this.reset();
+    }
+
+    // resize the cache when the max changes.
+    set max(mL) {
+      if (typeof mL !== 'number' || mL < 0) throw new TypeError('max must be a non-negative number');
+      this[MAX] = mL || Infinity;
+      trim(this);
+    }
+    get max() {
+      return this[MAX];
+    }
+    set allowStale(allowStale) {
+      this[ALLOW_STALE] = !!allowStale;
+    }
+    get allowStale() {
+      return this[ALLOW_STALE];
+    }
+    set maxAge(mA) {
+      if (typeof mA !== 'number') throw new TypeError('maxAge must be a non-negative number');
+      this[MAX_AGE] = mA;
+      trim(this);
+    }
+    get maxAge() {
+      return this[MAX_AGE];
+    }
+
+    // resize the cache when the lengthCalculator changes.
+    set lengthCalculator(lC) {
+      if (typeof lC !== 'function') lC = naiveLength;
+      if (lC !== this[LENGTH_CALCULATOR]) {
+        this[LENGTH_CALCULATOR] = lC;
+        this[LENGTH] = 0;
+        this[LRU_LIST].forEach(hit => {
+          hit.length = this[LENGTH_CALCULATOR](hit.value, hit.key);
+          this[LENGTH] += hit.length;
+        });
+      }
+      trim(this);
+    }
+    get lengthCalculator() {
+      return this[LENGTH_CALCULATOR];
+    }
+    get length() {
+      return this[LENGTH];
+    }
+    get itemCount() {
+      return this[LRU_LIST].length;
+    }
+    rforEach(fn, thisp) {
+      thisp = thisp || this;
+      for (let walker = this[LRU_LIST].tail; walker !== null;) {
+        const prev = walker.prev;
+        forEachStep(this, fn, walker, thisp);
+        walker = prev;
+      }
+    }
+    forEach(fn, thisp) {
+      thisp = thisp || this;
+      for (let walker = this[LRU_LIST].head; walker !== null;) {
+        const next = walker.next;
+        forEachStep(this, fn, walker, thisp);
+        walker = next;
+      }
+    }
+    keys() {
+      return this[LRU_LIST].toArray().map(k => k.key);
+    }
+    values() {
+      return this[LRU_LIST].toArray().map(k => k.value);
+    }
+    reset() {
+      if (this[DISPOSE] && this[LRU_LIST] && this[LRU_LIST].length) {
+        this[LRU_LIST].forEach(hit => this[DISPOSE](hit.key, hit.value));
+      }
+      this[CACHE] = new Map(); // hash of items by key
+      this[LRU_LIST] = new Yallist(); // list of items in order of use recency
+      this[LENGTH] = 0; // length of items in the list
+    }
+
+    dump() {
+      return this[LRU_LIST].map(hit => isStale(this, hit) ? false : {
+        k: hit.key,
+        v: hit.value,
+        e: hit.now + (hit.maxAge || 0)
+      }).toArray().filter(h => h);
+    }
+    dumpLru() {
+      return this[LRU_LIST];
+    }
+    set(key, value, maxAge) {
+      maxAge = maxAge || this[MAX_AGE];
+      if (maxAge && typeof maxAge !== 'number') throw new TypeError('maxAge must be a number');
+      const now = maxAge ? Date.now() : 0;
+      const len = this[LENGTH_CALCULATOR](value, key);
+      if (this[CACHE].has(key)) {
+        if (len > this[MAX]) {
+          del(this, this[CACHE].get(key));
+          return false;
+        }
+        const node = this[CACHE].get(key);
+        const item = node.value;
+
+        // dispose of the old one before overwriting
+        // split out into 2 ifs for better coverage tracking
+        if (this[DISPOSE]) {
+          if (!this[NO_DISPOSE_ON_SET]) this[DISPOSE](key, item.value);
+        }
+        item.now = now;
+        item.maxAge = maxAge;
+        item.value = value;
+        this[LENGTH] += len - item.length;
+        item.length = len;
+        this.get(key);
+        trim(this);
+        return true;
+      }
+      const hit = new Entry(key, value, len, now, maxAge);
+
+      // oversized objects fall out of cache automatically.
+      if (hit.length > this[MAX]) {
+        if (this[DISPOSE]) this[DISPOSE](key, value);
+        return false;
+      }
+      this[LENGTH] += hit.length;
+      this[LRU_LIST].unshift(hit);
+      this[CACHE].set(key, this[LRU_LIST].head);
+      trim(this);
+      return true;
+    }
+    has(key) {
+      if (!this[CACHE].has(key)) return false;
+      const hit = this[CACHE].get(key).value;
+      return !isStale(this, hit);
+    }
+    get(key) {
+      return get(this, key, true);
+    }
+    peek(key) {
+      return get(this, key, false);
+    }
+    pop() {
+      const node = this[LRU_LIST].tail;
+      if (!node) return null;
+      del(this, node);
+      return node.value;
+    }
+    del(key) {
+      del(this, this[CACHE].get(key));
+    }
+    load(arr) {
+      // reset the cache
+      this.reset();
+      const now = Date.now();
+      // A previous serialized cache has the most recent items first
+      for (let l = arr.length - 1; l >= 0; l--) {
+        const hit = arr[l];
+        const expiresAt = hit.e || 0;
+        if (expiresAt === 0)
+          // the item was created without expiration in a non aged cache
+          this.set(hit.k, hit.v);else {
+          const maxAge = expiresAt - now;
+          // dont add already expired items
+          if (maxAge > 0) {
+            this.set(hit.k, hit.v, maxAge);
+          }
+        }
+      }
+    }
+    prune() {
+      this[CACHE].forEach((value, key) => get(this, key, false));
+    }
+  }
+  const get = (self, key, doUse) => {
+    const node = self[CACHE].get(key);
+    if (node) {
+      const hit = node.value;
+      if (isStale(self, hit)) {
+        del(self, node);
+        if (!self[ALLOW_STALE]) return undefined;
+      } else {
+        if (doUse) {
+          if (self[UPDATE_AGE_ON_GET]) node.value.now = Date.now();
+          self[LRU_LIST].unshiftNode(node);
+        }
+      }
+      return hit.value;
+    }
+  };
+  const isStale = (self, hit) => {
+    if (!hit || !hit.maxAge && !self[MAX_AGE]) return false;
+    const diff = Date.now() - hit.now;
+    return hit.maxAge ? diff > hit.maxAge : self[MAX_AGE] && diff > self[MAX_AGE];
+  };
+  const trim = self => {
+    if (self[LENGTH] > self[MAX]) {
+      for (let walker = self[LRU_LIST].tail; self[LENGTH] > self[MAX] && walker !== null;) {
+        // We know that we're about to delete this one, and also
+        // what the next least recently used key will be, so just
+        // go ahead and set it now.
+        const prev = walker.prev;
+        del(self, walker);
+        walker = prev;
+      }
+    }
+  };
+  const del = (self, node) => {
+    if (node) {
+      const hit = node.value;
+      if (self[DISPOSE]) self[DISPOSE](hit.key, hit.value);
+      self[LENGTH] -= hit.length;
+      self[CACHE].delete(hit.key);
+      self[LRU_LIST].removeNode(node);
+    }
+  };
+  class Entry {
+    constructor(key, value, length, now, maxAge) {
+      this.key = key;
+      this.value = value;
+      this.length = length;
+      this.now = now;
+      this.maxAge = maxAge || 0;
+    }
+  }
+  const forEachStep = (self, fn, node, thisp) => {
+    let hit = node.value;
+    if (isStale(self, hit)) {
+      del(self, node);
+      if (!self[ALLOW_STALE]) hit = undefined;
+    }
+    if (hit) fn.call(thisp, hit.value, hit.key, self);
+  };
+  lruCache = LRUCache;
+  return lruCache;
+}
+
+var range;
+var hasRequiredRange;
+function requireRange() {
+  if (hasRequiredRange) return range;
+  hasRequiredRange = 1;
+  // hoisted class for cyclic dependency
+  class Range {
+    constructor(range, options) {
+      options = parseOptions(options);
+      if (range instanceof Range) {
+        if (range.loose === !!options.loose && range.includePrerelease === !!options.includePrerelease) {
+          return range;
+        } else {
+          return new Range(range.raw, options);
+        }
+      }
+      if (range instanceof Comparator) {
+        // just put it in the set and return
+        this.raw = range.value;
+        this.set = [[range]];
+        this.format();
+        return this;
+      }
+      this.options = options;
+      this.loose = !!options.loose;
+      this.includePrerelease = !!options.includePrerelease;
+
+      // First, split based on boolean or ||
+      this.raw = range;
+      this.set = range.split('||')
+      // map the range to a 2d array of comparators
+      .map(r => this.parseRange(r.trim()))
+      // throw out any comparator lists that are empty
+      // this generally means that it was not a valid range, which is allowed
+      // in loose mode, but will still throw if the WHOLE range is invalid.
+      .filter(c => c.length);
+      if (!this.set.length) {
+        throw new TypeError(`Invalid SemVer Range: ${range}`);
+      }
+
+      // if we have any that are not the null set, throw out null sets.
+      if (this.set.length > 1) {
+        // keep the first one, in case they're all null sets
+        const first = this.set[0];
+        this.set = this.set.filter(c => !isNullSet(c[0]));
+        if (this.set.length === 0) {
+          this.set = [first];
+        } else if (this.set.length > 1) {
+          // if we have any that are *, then the range is just *
+          for (const c of this.set) {
+            if (c.length === 1 && isAny(c[0])) {
+              this.set = [c];
+              break;
+            }
+          }
+        }
+      }
+      this.format();
+    }
+    format() {
+      this.range = this.set.map(comps => {
+        return comps.join(' ').trim();
+      }).join('||').trim();
+      return this.range;
+    }
+    toString() {
+      return this.range;
+    }
+    parseRange(range) {
+      range = range.trim();
+
+      // memoize range parsing for performance.
+      // this is a very hot path, and fully deterministic.
+      const memoOpts = (this.options.includePrerelease && FLAG_INCLUDE_PRERELEASE) | (this.options.loose && FLAG_LOOSE);
+      const memoKey = memoOpts + ':' + range;
+      const cached = cache.get(memoKey);
+      if (cached) {
+        return cached;
+      }
+      const loose = this.options.loose;
+      // `1.2.3 - 1.2.4` => `>=1.2.3 <=1.2.4`
+      const hr = loose ? re[t.HYPHENRANGELOOSE] : re[t.HYPHENRANGE];
+      range = range.replace(hr, hyphenReplace(this.options.includePrerelease));
+      debug('hyphen replace', range);
+      // `> 1.2.3 < 1.2.5` => `>1.2.3 <1.2.5`
+      range = range.replace(re[t.COMPARATORTRIM], comparatorTrimReplace);
+      debug('comparator trim', range);
+
+      // `~ 1.2.3` => `~1.2.3`
+      range = range.replace(re[t.TILDETRIM], tildeTrimReplace);
+
+      // `^ 1.2.3` => `^1.2.3`
+      range = range.replace(re[t.CARETTRIM], caretTrimReplace);
+
+      // normalize spaces
+      range = range.split(/\s+/).join(' ');
+
+      // At this point, the range is completely trimmed and
+      // ready to be split into comparators.
+
+      let rangeList = range.split(' ').map(comp => parseComparator(comp, this.options)).join(' ').split(/\s+/)
+      // >=0.0.0 is equivalent to *
+      .map(comp => replaceGTE0(comp, this.options));
+      if (loose) {
+        // in loose mode, throw out any that are not valid comparators
+        rangeList = rangeList.filter(comp => {
+          debug('loose invalid filter', comp, this.options);
+          return !!comp.match(re[t.COMPARATORLOOSE]);
+        });
+      }
+      debug('range list', rangeList);
+
+      // if any comparators are the null set, then replace with JUST null set
+      // if more than one comparator, remove any * comparators
+      // also, don't include the same comparator more than once
+      const rangeMap = new Map();
+      const comparators = rangeList.map(comp => new Comparator(comp, this.options));
+      for (const comp of comparators) {
+        if (isNullSet(comp)) {
+          return [comp];
+        }
+        rangeMap.set(comp.value, comp);
+      }
+      if (rangeMap.size > 1 && rangeMap.has('')) {
+        rangeMap.delete('');
+      }
+      const result = [...rangeMap.values()];
+      cache.set(memoKey, result);
+      return result;
+    }
+    intersects(range, options) {
+      if (!(range instanceof Range)) {
+        throw new TypeError('a Range is required');
+      }
+      return this.set.some(thisComparators => {
+        return isSatisfiable(thisComparators, options) && range.set.some(rangeComparators => {
+          return isSatisfiable(rangeComparators, options) && thisComparators.every(thisComparator => {
+            return rangeComparators.every(rangeComparator => {
+              return thisComparator.intersects(rangeComparator, options);
+            });
+          });
+        });
+      });
+    }
+
+    // if ANY of the sets match ALL of its comparators, then pass
+    test(version) {
+      if (!version) {
+        return false;
+      }
+      if (typeof version === 'string') {
+        try {
+          version = new SemVer(version, this.options);
+        } catch (er) {
+          return false;
+        }
+      }
+      for (let i = 0; i < this.set.length; i++) {
+        if (testSet(this.set[i], version, this.options)) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+  range = Range;
+  const LRU = requireLruCache();
+  const cache = new LRU({
+    max: 1000
+  });
+  const parseOptions = requireParseOptions();
+  const Comparator = requireComparator();
+  const debug = requireDebug();
+  const SemVer = requireSemver$1();
+  const {
+    re,
+    t,
+    comparatorTrimReplace,
+    tildeTrimReplace,
+    caretTrimReplace
+  } = requireRe();
+  const {
+    FLAG_INCLUDE_PRERELEASE,
+    FLAG_LOOSE
+  } = requireConstants();
+  const isNullSet = c => c.value === '<0.0.0-0';
+  const isAny = c => c.value === '';
+
+  // take a set of comparators and determine whether there
+  // exists a version which can satisfy it
+  const isSatisfiable = (comparators, options) => {
+    let result = true;
+    const remainingComparators = comparators.slice();
+    let testComparator = remainingComparators.pop();
+    while (result && remainingComparators.length) {
+      result = remainingComparators.every(otherComparator => {
+        return testComparator.intersects(otherComparator, options);
+      });
+      testComparator = remainingComparators.pop();
+    }
+    return result;
+  };
+
+  // comprised of xranges, tildes, stars, and gtlt's at this point.
+  // already replaced the hyphen ranges
+  // turn into a set of JUST comparators.
+  const parseComparator = (comp, options) => {
+    debug('comp', comp, options);
+    comp = replaceCarets(comp, options);
+    debug('caret', comp);
+    comp = replaceTildes(comp, options);
+    debug('tildes', comp);
+    comp = replaceXRanges(comp, options);
+    debug('xrange', comp);
+    comp = replaceStars(comp, options);
+    debug('stars', comp);
+    return comp;
+  };
+  const isX = id => !id || id.toLowerCase() === 'x' || id === '*';
+
+  // ~, ~> --> * (any, kinda silly)
+  // ~2, ~2.x, ~2.x.x, ~>2, ~>2.x ~>2.x.x --> >=2.0.0 <3.0.0-0
+  // ~2.0, ~2.0.x, ~>2.0, ~>2.0.x --> >=2.0.0 <2.1.0-0
+  // ~1.2, ~1.2.x, ~>1.2, ~>1.2.x --> >=1.2.0 <1.3.0-0
+  // ~1.2.3, ~>1.2.3 --> >=1.2.3 <1.3.0-0
+  // ~1.2.0, ~>1.2.0 --> >=1.2.0 <1.3.0-0
+  // ~0.0.1 --> >=0.0.1 <0.1.0-0
+  const replaceTildes = (comp, options) => comp.trim().split(/\s+/).map(c => {
+    return replaceTilde(c, options);
+  }).join(' ');
+  const replaceTilde = (comp, options) => {
+    const r = options.loose ? re[t.TILDELOOSE] : re[t.TILDE];
+    return comp.replace(r, (_, M, m, p, pr) => {
+      debug('tilde', comp, _, M, m, p, pr);
+      let ret;
+      if (isX(M)) {
+        ret = '';
+      } else if (isX(m)) {
+        ret = `>=${M}.0.0 <${+M + 1}.0.0-0`;
+      } else if (isX(p)) {
+        // ~1.2 == >=1.2.0 <1.3.0-0
+        ret = `>=${M}.${m}.0 <${M}.${+m + 1}.0-0`;
+      } else if (pr) {
+        debug('replaceTilde pr', pr);
+        ret = `>=${M}.${m}.${p}-${pr} <${M}.${+m + 1}.0-0`;
+      } else {
+        // ~1.2.3 == >=1.2.3 <1.3.0-0
+        ret = `>=${M}.${m}.${p} <${M}.${+m + 1}.0-0`;
+      }
+      debug('tilde return', ret);
+      return ret;
+    });
+  };
+
+  // ^ --> * (any, kinda silly)
+  // ^2, ^2.x, ^2.x.x --> >=2.0.0 <3.0.0-0
+  // ^2.0, ^2.0.x --> >=2.0.0 <3.0.0-0
+  // ^1.2, ^1.2.x --> >=1.2.0 <2.0.0-0
+  // ^1.2.3 --> >=1.2.3 <2.0.0-0
+  // ^1.2.0 --> >=1.2.0 <2.0.0-0
+  // ^0.0.1 --> >=0.0.1 <0.0.2-0
+  // ^0.1.0 --> >=0.1.0 <0.2.0-0
+  const replaceCarets = (comp, options) => comp.trim().split(/\s+/).map(c => {
+    return replaceCaret(c, options);
+  }).join(' ');
+  const replaceCaret = (comp, options) => {
+    debug('caret', comp, options);
+    const r = options.loose ? re[t.CARETLOOSE] : re[t.CARET];
+    const z = options.includePrerelease ? '-0' : '';
+    return comp.replace(r, (_, M, m, p, pr) => {
+      debug('caret', comp, _, M, m, p, pr);
+      let ret;
+      if (isX(M)) {
+        ret = '';
+      } else if (isX(m)) {
+        ret = `>=${M}.0.0${z} <${+M + 1}.0.0-0`;
+      } else if (isX(p)) {
+        if (M === '0') {
+          ret = `>=${M}.${m}.0${z} <${M}.${+m + 1}.0-0`;
+        } else {
+          ret = `>=${M}.${m}.0${z} <${+M + 1}.0.0-0`;
+        }
+      } else if (pr) {
+        debug('replaceCaret pr', pr);
+        if (M === '0') {
+          if (m === '0') {
+            ret = `>=${M}.${m}.${p}-${pr} <${M}.${m}.${+p + 1}-0`;
+          } else {
+            ret = `>=${M}.${m}.${p}-${pr} <${M}.${+m + 1}.0-0`;
+          }
+        } else {
+          ret = `>=${M}.${m}.${p}-${pr} <${+M + 1}.0.0-0`;
+        }
+      } else {
+        debug('no pr');
+        if (M === '0') {
+          if (m === '0') {
+            ret = `>=${M}.${m}.${p}${z} <${M}.${m}.${+p + 1}-0`;
+          } else {
+            ret = `>=${M}.${m}.${p}${z} <${M}.${+m + 1}.0-0`;
+          }
+        } else {
+          ret = `>=${M}.${m}.${p} <${+M + 1}.0.0-0`;
+        }
+      }
+      debug('caret return', ret);
+      return ret;
+    });
+  };
+  const replaceXRanges = (comp, options) => {
+    debug('replaceXRanges', comp, options);
+    return comp.split(/\s+/).map(c => {
+      return replaceXRange(c, options);
+    }).join(' ');
+  };
+  const replaceXRange = (comp, options) => {
+    comp = comp.trim();
+    const r = options.loose ? re[t.XRANGELOOSE] : re[t.XRANGE];
+    return comp.replace(r, (ret, gtlt, M, m, p, pr) => {
+      debug('xRange', comp, ret, gtlt, M, m, p, pr);
+      const xM = isX(M);
+      const xm = xM || isX(m);
+      const xp = xm || isX(p);
+      const anyX = xp;
+      if (gtlt === '=' && anyX) {
+        gtlt = '';
+      }
+
+      // if we're including prereleases in the match, then we need
+      // to fix this to -0, the lowest possible prerelease value
+      pr = options.includePrerelease ? '-0' : '';
+      if (xM) {
+        if (gtlt === '>' || gtlt === '<') {
+          // nothing is allowed
+          ret = '<0.0.0-0';
+        } else {
+          // nothing is forbidden
+          ret = '*';
+        }
+      } else if (gtlt && anyX) {
+        // we know patch is an x, because we have any x at all.
+        // replace X with 0
+        if (xm) {
+          m = 0;
+        }
+        p = 0;
+        if (gtlt === '>') {
+          // >1 => >=2.0.0
+          // >1.2 => >=1.3.0
+          gtlt = '>=';
+          if (xm) {
+            M = +M + 1;
+            m = 0;
+            p = 0;
+          } else {
+            m = +m + 1;
+            p = 0;
+          }
+        } else if (gtlt === '<=') {
+          // <=0.7.x is actually <0.8.0, since any 0.7.x should
+          // pass.  Similarly, <=7.x is actually <8.0.0, etc.
+          gtlt = '<';
+          if (xm) {
+            M = +M + 1;
+          } else {
+            m = +m + 1;
+          }
+        }
+        if (gtlt === '<') {
+          pr = '-0';
+        }
+        ret = `${gtlt + M}.${m}.${p}${pr}`;
+      } else if (xm) {
+        ret = `>=${M}.0.0${pr} <${+M + 1}.0.0-0`;
+      } else if (xp) {
+        ret = `>=${M}.${m}.0${pr} <${M}.${+m + 1}.0-0`;
+      }
+      debug('xRange return', ret);
+      return ret;
+    });
+  };
+
+  // Because * is AND-ed with everything else in the comparator,
+  // and '' means "any version", just remove the *s entirely.
+  const replaceStars = (comp, options) => {
+    debug('replaceStars', comp, options);
+    // Looseness is ignored here.  star is always as loose as it gets!
+    return comp.trim().replace(re[t.STAR], '');
+  };
+  const replaceGTE0 = (comp, options) => {
+    debug('replaceGTE0', comp, options);
+    return comp.trim().replace(re[options.includePrerelease ? t.GTE0PRE : t.GTE0], '');
+  };
+
+  // This function is passed to string.replace(re[t.HYPHENRANGE])
+  // M, m, patch, prerelease, build
+  // 1.2 - 3.4.5 => >=1.2.0 <=3.4.5
+  // 1.2.3 - 3.4 => >=1.2.0 <3.5.0-0 Any 3.4.x will do
+  // 1.2 - 3.4 => >=1.2.0 <3.5.0-0
+  const hyphenReplace = incPr => ($0, from, fM, fm, fp, fpr, fb, to, tM, tm, tp, tpr, tb) => {
+    if (isX(fM)) {
+      from = '';
+    } else if (isX(fm)) {
+      from = `>=${fM}.0.0${incPr ? '-0' : ''}`;
+    } else if (isX(fp)) {
+      from = `>=${fM}.${fm}.0${incPr ? '-0' : ''}`;
+    } else if (fpr) {
+      from = `>=${from}`;
+    } else {
+      from = `>=${from}${incPr ? '-0' : ''}`;
+    }
+    if (isX(tM)) {
+      to = '';
+    } else if (isX(tm)) {
+      to = `<${+tM + 1}.0.0-0`;
+    } else if (isX(tp)) {
+      to = `<${tM}.${+tm + 1}.0-0`;
+    } else if (tpr) {
+      to = `<=${tM}.${tm}.${tp}-${tpr}`;
+    } else if (incPr) {
+      to = `<${tM}.${tm}.${+tp + 1}-0`;
+    } else {
+      to = `<=${to}`;
+    }
+    return `${from} ${to}`.trim();
+  };
+  const testSet = (set, version, options) => {
+    for (let i = 0; i < set.length; i++) {
+      if (!set[i].test(version)) {
+        return false;
+      }
+    }
+    if (version.prerelease.length && !options.includePrerelease) {
+      // Find the set of versions that are allowed to have prereleases
+      // For example, ^1.2.3-pr.1 desugars to >=1.2.3-pr.1 <2.0.0
+      // That should allow `1.2.3-pr.2` to pass.
+      // However, `1.2.4-alpha.notready` should NOT be allowed,
+      // even though it's within the range set by the comparators.
+      for (let i = 0; i < set.length; i++) {
+        debug(set[i].semver);
+        if (set[i].semver === Comparator.ANY) {
+          continue;
+        }
+        if (set[i].semver.prerelease.length > 0) {
+          const allowed = set[i].semver;
+          if (allowed.major === version.major && allowed.minor === version.minor && allowed.patch === version.patch) {
+            return true;
+          }
+        }
+      }
+
+      // Version has a -pre, but it's not one of the ones we like.
+      return false;
+    }
+    return true;
+  };
+  return range;
+}
+
+var comparator;
+var hasRequiredComparator;
+function requireComparator() {
+  if (hasRequiredComparator) return comparator;
+  hasRequiredComparator = 1;
+  const ANY = Symbol('SemVer ANY');
+  // hoisted class for cyclic dependency
+  class Comparator {
+    static get ANY() {
+      return ANY;
+    }
+    constructor(comp, options) {
+      options = parseOptions(options);
+      if (comp instanceof Comparator) {
+        if (comp.loose === !!options.loose) {
+          return comp;
+        } else {
+          comp = comp.value;
+        }
+      }
+      debug('comparator', comp, options);
+      this.options = options;
+      this.loose = !!options.loose;
+      this.parse(comp);
+      if (this.semver === ANY) {
+        this.value = '';
+      } else {
+        this.value = this.operator + this.semver.version;
+      }
+      debug('comp', this);
+    }
+    parse(comp) {
+      const r = this.options.loose ? re[t.COMPARATORLOOSE] : re[t.COMPARATOR];
+      const m = comp.match(r);
+      if (!m) {
+        throw new TypeError(`Invalid comparator: ${comp}`);
+      }
+      this.operator = m[1] !== undefined ? m[1] : '';
+      if (this.operator === '=') {
+        this.operator = '';
+      }
+
+      // if it literally is just '>' or '' then allow anything.
+      if (!m[2]) {
+        this.semver = ANY;
+      } else {
+        this.semver = new SemVer(m[2], this.options.loose);
+      }
+    }
+    toString() {
+      return this.value;
+    }
+    test(version) {
+      debug('Comparator.test', version, this.options.loose);
+      if (this.semver === ANY || version === ANY) {
+        return true;
+      }
+      if (typeof version === 'string') {
+        try {
+          version = new SemVer(version, this.options);
+        } catch (er) {
+          return false;
+        }
+      }
+      return cmp(version, this.operator, this.semver, this.options);
+    }
+    intersects(comp, options) {
+      if (!(comp instanceof Comparator)) {
+        throw new TypeError('a Comparator is required');
+      }
+      if (this.operator === '') {
+        if (this.value === '') {
+          return true;
+        }
+        return new Range(comp.value, options).test(this.value);
+      } else if (comp.operator === '') {
+        if (comp.value === '') {
+          return true;
+        }
+        return new Range(this.value, options).test(comp.semver);
+      }
+      options = parseOptions(options);
+
+      // Special cases where nothing can possibly be lower
+      if (options.includePrerelease && (this.value === '<0.0.0-0' || comp.value === '<0.0.0-0')) {
+        return false;
+      }
+      if (!options.includePrerelease && (this.value.startsWith('<0.0.0') || comp.value.startsWith('<0.0.0'))) {
+        return false;
+      }
+
+      // Same direction increasing (> or >=)
+      if (this.operator.startsWith('>') && comp.operator.startsWith('>')) {
+        return true;
+      }
+      // Same direction decreasing (< or <=)
+      if (this.operator.startsWith('<') && comp.operator.startsWith('<')) {
+        return true;
+      }
+      // same SemVer and both sides are inclusive (<= or >=)
+      if (this.semver.version === comp.semver.version && this.operator.includes('=') && comp.operator.includes('=')) {
+        return true;
+      }
+      // opposite directions less than
+      if (cmp(this.semver, '<', comp.semver, options) && this.operator.startsWith('>') && comp.operator.startsWith('<')) {
+        return true;
+      }
+      // opposite directions greater than
+      if (cmp(this.semver, '>', comp.semver, options) && this.operator.startsWith('<') && comp.operator.startsWith('>')) {
+        return true;
+      }
+      return false;
+    }
+  }
+  comparator = Comparator;
+  const parseOptions = requireParseOptions();
+  const {
+    re,
+    t
+  } = requireRe();
+  const cmp = requireCmp();
+  const debug = requireDebug();
+  const SemVer = requireSemver$1();
+  const Range = requireRange();
+  return comparator;
+}
+
+var satisfies_1;
+var hasRequiredSatisfies;
+function requireSatisfies() {
+  if (hasRequiredSatisfies) return satisfies_1;
+  hasRequiredSatisfies = 1;
+  const Range = requireRange();
+  const satisfies = (version, range, options) => {
+    try {
+      range = new Range(range, options);
+    } catch (er) {
+      return false;
+    }
+    return range.test(version);
+  };
+  satisfies_1 = satisfies;
+  return satisfies_1;
+}
+
+var toComparators_1;
+var hasRequiredToComparators;
+function requireToComparators() {
+  if (hasRequiredToComparators) return toComparators_1;
+  hasRequiredToComparators = 1;
+  const Range = requireRange();
+
+  // Mostly just for testing and legacy API reasons
+  const toComparators = (range, options) => new Range(range, options).set.map(comp => comp.map(c => c.value).join(' ').trim().split(' '));
+  toComparators_1 = toComparators;
+  return toComparators_1;
+}
+
+var maxSatisfying_1;
+var hasRequiredMaxSatisfying;
+function requireMaxSatisfying() {
+  if (hasRequiredMaxSatisfying) return maxSatisfying_1;
+  hasRequiredMaxSatisfying = 1;
+  const SemVer = requireSemver$1();
+  const Range = requireRange();
+  const maxSatisfying = (versions, range, options) => {
+    let max = null;
+    let maxSV = null;
+    let rangeObj = null;
+    try {
+      rangeObj = new Range(range, options);
+    } catch (er) {
+      return null;
+    }
+    versions.forEach(v => {
+      if (rangeObj.test(v)) {
+        // satisfies(v, range, options)
+        if (!max || maxSV.compare(v) === -1) {
+          // compare(max, v, true)
+          max = v;
+          maxSV = new SemVer(max, options);
+        }
+      }
+    });
+    return max;
+  };
+  maxSatisfying_1 = maxSatisfying;
+  return maxSatisfying_1;
+}
+
+var minSatisfying_1;
+var hasRequiredMinSatisfying;
+function requireMinSatisfying() {
+  if (hasRequiredMinSatisfying) return minSatisfying_1;
+  hasRequiredMinSatisfying = 1;
+  const SemVer = requireSemver$1();
+  const Range = requireRange();
+  const minSatisfying = (versions, range, options) => {
+    let min = null;
+    let minSV = null;
+    let rangeObj = null;
+    try {
+      rangeObj = new Range(range, options);
+    } catch (er) {
+      return null;
+    }
+    versions.forEach(v => {
+      if (rangeObj.test(v)) {
+        // satisfies(v, range, options)
+        if (!min || minSV.compare(v) === 1) {
+          // compare(min, v, true)
+          min = v;
+          minSV = new SemVer(min, options);
+        }
+      }
+    });
+    return min;
+  };
+  minSatisfying_1 = minSatisfying;
+  return minSatisfying_1;
+}
+
+var minVersion_1;
+var hasRequiredMinVersion;
+function requireMinVersion() {
+  if (hasRequiredMinVersion) return minVersion_1;
+  hasRequiredMinVersion = 1;
+  const SemVer = requireSemver$1();
+  const Range = requireRange();
+  const gt = requireGt();
+  const minVersion = (range, loose) => {
+    range = new Range(range, loose);
+    let minver = new SemVer('0.0.0');
+    if (range.test(minver)) {
+      return minver;
+    }
+    minver = new SemVer('0.0.0-0');
+    if (range.test(minver)) {
+      return minver;
+    }
+    minver = null;
+    for (let i = 0; i < range.set.length; ++i) {
+      const comparators = range.set[i];
+      let setMin = null;
+      comparators.forEach(comparator => {
+        // Clone to avoid manipulating the comparator's semver object.
+        const compver = new SemVer(comparator.semver.version);
+        switch (comparator.operator) {
+          case '>':
+            if (compver.prerelease.length === 0) {
+              compver.patch++;
+            } else {
+              compver.prerelease.push(0);
+            }
+            compver.raw = compver.format();
+          /* fallthrough */
+          case '':
+          case '>=':
+            if (!setMin || gt(compver, setMin)) {
+              setMin = compver;
+            }
+            break;
+          case '<':
+          case '<=':
+            /* Ignore maximum versions */
+            break;
+          /* istanbul ignore next */
+          default:
+            throw new Error(`Unexpected operation: ${comparator.operator}`);
+        }
+      });
+      if (setMin && (!minver || gt(minver, setMin))) {
+        minver = setMin;
+      }
+    }
+    if (minver && range.test(minver)) {
+      return minver;
+    }
+    return null;
+  };
+  minVersion_1 = minVersion;
+  return minVersion_1;
+}
+
+var valid;
+var hasRequiredValid;
+function requireValid() {
+  if (hasRequiredValid) return valid;
+  hasRequiredValid = 1;
+  const Range = requireRange();
+  const validRange = (range, options) => {
+    try {
+      // Return '*' instead of '' so that truthiness works.
+      // This will throw if it's invalid anyway
+      return new Range(range, options).range || '*';
+    } catch (er) {
+      return null;
+    }
+  };
+  valid = validRange;
+  return valid;
+}
+
+var outside_1;
+var hasRequiredOutside;
+function requireOutside() {
+  if (hasRequiredOutside) return outside_1;
+  hasRequiredOutside = 1;
+  const SemVer = requireSemver$1();
+  const Comparator = requireComparator();
+  const {
+    ANY
+  } = Comparator;
+  const Range = requireRange();
+  const satisfies = requireSatisfies();
+  const gt = requireGt();
+  const lt = requireLt();
+  const lte = requireLte();
+  const gte = requireGte();
+  const outside = (version, range, hilo, options) => {
+    version = new SemVer(version, options);
+    range = new Range(range, options);
+    let gtfn, ltefn, ltfn, comp, ecomp;
+    switch (hilo) {
+      case '>':
+        gtfn = gt;
+        ltefn = lte;
+        ltfn = lt;
+        comp = '>';
+        ecomp = '>=';
+        break;
+      case '<':
+        gtfn = lt;
+        ltefn = gte;
+        ltfn = gt;
+        comp = '<';
+        ecomp = '<=';
+        break;
+      default:
+        throw new TypeError('Must provide a hilo val of "<" or ">"');
+    }
+
+    // If it satisfies the range it is not outside
+    if (satisfies(version, range, options)) {
+      return false;
+    }
+
+    // From now on, variable terms are as if we're in "gtr" mode.
+    // but note that everything is flipped for the "ltr" function.
+
+    for (let i = 0; i < range.set.length; ++i) {
+      const comparators = range.set[i];
+      let high = null;
+      let low = null;
+      comparators.forEach(comparator => {
+        if (comparator.semver === ANY) {
+          comparator = new Comparator('>=0.0.0');
+        }
+        high = high || comparator;
+        low = low || comparator;
+        if (gtfn(comparator.semver, high.semver, options)) {
+          high = comparator;
+        } else if (ltfn(comparator.semver, low.semver, options)) {
+          low = comparator;
+        }
+      });
+
+      // If the edge version comparator has a operator then our version
+      // isn't outside it
+      if (high.operator === comp || high.operator === ecomp) {
+        return false;
+      }
+
+      // If the lowest version comparator has an operator and our version
+      // is less than it then it isn't higher than the range
+      if ((!low.operator || low.operator === comp) && ltefn(version, low.semver)) {
+        return false;
+      } else if (low.operator === ecomp && ltfn(version, low.semver)) {
+        return false;
+      }
+    }
+    return true;
+  };
+  outside_1 = outside;
+  return outside_1;
+}
+
+var gtr_1;
+var hasRequiredGtr;
+function requireGtr() {
+  if (hasRequiredGtr) return gtr_1;
+  hasRequiredGtr = 1;
+  // Determine if version is greater than all the versions possible in the range.
+  const outside = requireOutside();
+  const gtr = (version, range, options) => outside(version, range, '>', options);
+  gtr_1 = gtr;
+  return gtr_1;
+}
+
+var ltr_1;
+var hasRequiredLtr;
+function requireLtr() {
+  if (hasRequiredLtr) return ltr_1;
+  hasRequiredLtr = 1;
+  const outside = requireOutside();
+  // Determine if version is less than all the versions possible in the range
+  const ltr = (version, range, options) => outside(version, range, '<', options);
+  ltr_1 = ltr;
+  return ltr_1;
+}
+
+var intersects_1;
+var hasRequiredIntersects;
+function requireIntersects() {
+  if (hasRequiredIntersects) return intersects_1;
+  hasRequiredIntersects = 1;
+  const Range = requireRange();
+  const intersects = (r1, r2, options) => {
+    r1 = new Range(r1, options);
+    r2 = new Range(r2, options);
+    return r1.intersects(r2, options);
+  };
+  intersects_1 = intersects;
+  return intersects_1;
+}
+
+var simplify;
+var hasRequiredSimplify;
+function requireSimplify() {
+  if (hasRequiredSimplify) return simplify;
+  hasRequiredSimplify = 1;
+  // given a set of versions and a range, create a "simplified" range
+  // that includes the same versions that the original range does
+  // If the original range is shorter than the simplified one, return that.
+  const satisfies = requireSatisfies();
+  const compare = requireCompare();
+  simplify = (versions, range, options) => {
+    const set = [];
+    let first = null;
+    let prev = null;
+    const v = versions.sort((a, b) => compare(a, b, options));
+    for (const version of v) {
+      const included = satisfies(version, range, options);
+      if (included) {
+        prev = version;
+        if (!first) {
+          first = version;
+        }
+      } else {
+        if (prev) {
+          set.push([first, prev]);
+        }
+        prev = null;
+        first = null;
+      }
+    }
+    if (first) {
+      set.push([first, null]);
+    }
+    const ranges = [];
+    for (const [min, max] of set) {
+      if (min === max) {
+        ranges.push(min);
+      } else if (!max && min === v[0]) {
+        ranges.push('*');
+      } else if (!max) {
+        ranges.push(`>=${min}`);
+      } else if (min === v[0]) {
+        ranges.push(`<=${max}`);
+      } else {
+        ranges.push(`${min} - ${max}`);
+      }
+    }
+    const simplified = ranges.join(' || ');
+    const original = typeof range.raw === 'string' ? range.raw : String(range);
+    return simplified.length < original.length ? simplified : range;
+  };
+  return simplify;
+}
+
+var subset_1;
+var hasRequiredSubset;
+function requireSubset() {
+  if (hasRequiredSubset) return subset_1;
+  hasRequiredSubset = 1;
+  const Range = requireRange();
+  const Comparator = requireComparator();
+  const {
+    ANY
+  } = Comparator;
+  const satisfies = requireSatisfies();
+  const compare = requireCompare();
+
+  // Complex range `r1 || r2 || ...` is a subset of `R1 || R2 || ...` iff:
+  // - Every simple range `r1, r2, ...` is a null set, OR
+  // - Every simple range `r1, r2, ...` which is not a null set is a subset of
+  //   some `R1, R2, ...`
+  //
+  // Simple range `c1 c2 ...` is a subset of simple range `C1 C2 ...` iff:
+  // - If c is only the ANY comparator
+  //   - If C is only the ANY comparator, return true
+  //   - Else if in prerelease mode, return false
+  //   - else replace c with `[>=0.0.0]`
+  // - If C is only the ANY comparator
+  //   - if in prerelease mode, return true
+  //   - else replace C with `[>=0.0.0]`
+  // - Let EQ be the set of = comparators in c
+  // - If EQ is more than one, return true (null set)
+  // - Let GT be the highest > or >= comparator in c
+  // - Let LT be the lowest < or <= comparator in c
+  // - If GT and LT, and GT.semver > LT.semver, return true (null set)
+  // - If any C is a = range, and GT or LT are set, return false
+  // - If EQ
+  //   - If GT, and EQ does not satisfy GT, return true (null set)
+  //   - If LT, and EQ does not satisfy LT, return true (null set)
+  //   - If EQ satisfies every C, return true
+  //   - Else return false
+  // - If GT
+  //   - If GT.semver is lower than any > or >= comp in C, return false
+  //   - If GT is >=, and GT.semver does not satisfy every C, return false
+  //   - If GT.semver has a prerelease, and not in prerelease mode
+  //     - If no C has a prerelease and the GT.semver tuple, return false
+  // - If LT
+  //   - If LT.semver is greater than any < or <= comp in C, return false
+  //   - If LT is <=, and LT.semver does not satisfy every C, return false
+  //   - If GT.semver has a prerelease, and not in prerelease mode
+  //     - If no C has a prerelease and the LT.semver tuple, return false
+  // - Else return true
+
+  const subset = (sub, dom, options = {}) => {
+    if (sub === dom) {
+      return true;
+    }
+    sub = new Range(sub, options);
+    dom = new Range(dom, options);
+    let sawNonNull = false;
+    OUTER: for (const simpleSub of sub.set) {
+      for (const simpleDom of dom.set) {
+        const isSub = simpleSubset(simpleSub, simpleDom, options);
+        sawNonNull = sawNonNull || isSub !== null;
+        if (isSub) {
+          continue OUTER;
+        }
+      }
+      // the null set is a subset of everything, but null simple ranges in
+      // a complex range should be ignored.  so if we saw a non-null range,
+      // then we know this isn't a subset, but if EVERY simple range was null,
+      // then it is a subset.
+      if (sawNonNull) {
+        return false;
+      }
+    }
+    return true;
+  };
+  const minimumVersionWithPreRelease = [new Comparator('>=0.0.0-0')];
+  const minimumVersion = [new Comparator('>=0.0.0')];
+  const simpleSubset = (sub, dom, options) => {
+    if (sub === dom) {
+      return true;
+    }
+    if (sub.length === 1 && sub[0].semver === ANY) {
+      if (dom.length === 1 && dom[0].semver === ANY) {
+        return true;
+      } else if (options.includePrerelease) {
+        sub = minimumVersionWithPreRelease;
+      } else {
+        sub = minimumVersion;
+      }
+    }
+    if (dom.length === 1 && dom[0].semver === ANY) {
+      if (options.includePrerelease) {
+        return true;
+      } else {
+        dom = minimumVersion;
+      }
+    }
+    const eqSet = new Set();
+    let gt, lt;
+    for (const c of sub) {
+      if (c.operator === '>' || c.operator === '>=') {
+        gt = higherGT(gt, c, options);
+      } else if (c.operator === '<' || c.operator === '<=') {
+        lt = lowerLT(lt, c, options);
+      } else {
+        eqSet.add(c.semver);
+      }
+    }
+    if (eqSet.size > 1) {
+      return null;
+    }
+    let gtltComp;
+    if (gt && lt) {
+      gtltComp = compare(gt.semver, lt.semver, options);
+      if (gtltComp > 0) {
+        return null;
+      } else if (gtltComp === 0 && (gt.operator !== '>=' || lt.operator !== '<=')) {
+        return null;
+      }
+    }
+
+    // will iterate one or zero times
+    for (const eq of eqSet) {
+      if (gt && !satisfies(eq, String(gt), options)) {
+        return null;
+      }
+      if (lt && !satisfies(eq, String(lt), options)) {
+        return null;
+      }
+      for (const c of dom) {
+        if (!satisfies(eq, String(c), options)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    let higher, lower;
+    let hasDomLT, hasDomGT;
+    // if the subset has a prerelease, we need a comparator in the superset
+    // with the same tuple and a prerelease, or it's not a subset
+    let needDomLTPre = lt && !options.includePrerelease && lt.semver.prerelease.length ? lt.semver : false;
+    let needDomGTPre = gt && !options.includePrerelease && gt.semver.prerelease.length ? gt.semver : false;
+    // exception: <1.2.3-0 is the same as <1.2.3
+    if (needDomLTPre && needDomLTPre.prerelease.length === 1 && lt.operator === '<' && needDomLTPre.prerelease[0] === 0) {
+      needDomLTPre = false;
+    }
+    for (const c of dom) {
+      hasDomGT = hasDomGT || c.operator === '>' || c.operator === '>=';
+      hasDomLT = hasDomLT || c.operator === '<' || c.operator === '<=';
+      if (gt) {
+        if (needDomGTPre) {
+          if (c.semver.prerelease && c.semver.prerelease.length && c.semver.major === needDomGTPre.major && c.semver.minor === needDomGTPre.minor && c.semver.patch === needDomGTPre.patch) {
+            needDomGTPre = false;
+          }
+        }
+        if (c.operator === '>' || c.operator === '>=') {
+          higher = higherGT(gt, c, options);
+          if (higher === c && higher !== gt) {
+            return false;
+          }
+        } else if (gt.operator === '>=' && !satisfies(gt.semver, String(c), options)) {
+          return false;
+        }
+      }
+      if (lt) {
+        if (needDomLTPre) {
+          if (c.semver.prerelease && c.semver.prerelease.length && c.semver.major === needDomLTPre.major && c.semver.minor === needDomLTPre.minor && c.semver.patch === needDomLTPre.patch) {
+            needDomLTPre = false;
+          }
+        }
+        if (c.operator === '<' || c.operator === '<=') {
+          lower = lowerLT(lt, c, options);
+          if (lower === c && lower !== lt) {
+            return false;
+          }
+        } else if (lt.operator === '<=' && !satisfies(lt.semver, String(c), options)) {
+          return false;
+        }
+      }
+      if (!c.operator && (lt || gt) && gtltComp !== 0) {
+        return false;
+      }
+    }
+
+    // if there was a < or >, and nothing in the dom, then must be false
+    // UNLESS it was limited by another range in the other direction.
+    // Eg, >1.0.0 <1.0.1 is still a subset of <2.0.0
+    if (gt && hasDomLT && !lt && gtltComp !== 0) {
+      return false;
+    }
+    if (lt && hasDomGT && !gt && gtltComp !== 0) {
+      return false;
+    }
+
+    // we needed a prerelease range in a specific tuple, but didn't get one
+    // then this isn't a subset.  eg >=1.2.3-pre is not a subset of >=1.0.0,
+    // because it includes prereleases in the 1.2.3 tuple
+    if (needDomGTPre || needDomLTPre) {
+      return false;
+    }
+    return true;
+  };
+
+  // >=1.2.3 is lower than >1.2.3
+  const higherGT = (a, b, options) => {
+    if (!a) {
+      return b;
+    }
+    const comp = compare(a.semver, b.semver, options);
+    return comp > 0 ? a : comp < 0 ? b : b.operator === '>' && a.operator === '>=' ? b : a;
+  };
+
+  // <=1.2.3 is higher than <1.2.3
+  const lowerLT = (a, b, options) => {
+    if (!a) {
+      return b;
+    }
+    const comp = compare(a.semver, b.semver, options);
+    return comp < 0 ? a : comp > 0 ? b : b.operator === '<' && a.operator === '<=' ? b : a;
+  };
+  subset_1 = subset;
+  return subset_1;
+}
+
+var semver;
+var hasRequiredSemver;
+function requireSemver() {
+  if (hasRequiredSemver) return semver;
+  hasRequiredSemver = 1;
+  // just pre-load all the stuff that index.js lazily exports
+  const internalRe = requireRe();
+  const constants = requireConstants();
+  const SemVer = requireSemver$1();
+  const identifiers = requireIdentifiers();
+  const parse = requireParse();
+  const valid = requireValid$1();
+  const clean = requireClean();
+  const inc = requireInc();
+  const diff = requireDiff();
+  const major = requireMajor();
+  const minor = requireMinor();
+  const patch = requirePatch();
+  const prerelease = requirePrerelease();
+  const compare = requireCompare();
+  const rcompare = requireRcompare();
+  const compareLoose = requireCompareLoose();
+  const compareBuild = requireCompareBuild();
+  const sort = requireSort();
+  const rsort = requireRsort();
+  const gt = requireGt();
+  const lt = requireLt();
+  const eq = requireEq();
+  const neq = requireNeq();
+  const gte = requireGte();
+  const lte = requireLte();
+  const cmp = requireCmp();
+  const coerce = requireCoerce();
+  const Comparator = requireComparator();
+  const Range = requireRange();
+  const satisfies = requireSatisfies();
+  const toComparators = requireToComparators();
+  const maxSatisfying = requireMaxSatisfying();
+  const minSatisfying = requireMinSatisfying();
+  const minVersion = requireMinVersion();
+  const validRange = requireValid();
+  const outside = requireOutside();
+  const gtr = requireGtr();
+  const ltr = requireLtr();
+  const intersects = requireIntersects();
+  const simplifyRange = requireSimplify();
+  const subset = requireSubset();
+  semver = {
+    parse,
+    valid,
+    clean,
+    inc,
+    diff,
+    major,
+    minor,
+    patch,
+    prerelease,
+    compare,
+    rcompare,
+    compareLoose,
+    compareBuild,
+    sort,
+    rsort,
+    gt,
+    lt,
+    eq,
+    neq,
+    gte,
+    lte,
+    cmp,
+    coerce,
+    Comparator,
+    Range,
+    satisfies,
+    toComparators,
+    maxSatisfying,
+    minSatisfying,
+    minVersion,
+    validRange,
+    outside,
+    gtr,
+    ltr,
+    intersects,
+    simplifyRange,
+    subset,
+    SemVer,
+    re: internalRe.re,
+    src: internalRe.src,
+    tokens: internalRe.t,
+    SEMVER_SPEC_VERSION: constants.SEMVER_SPEC_VERSION,
+    RELEASE_TYPES: constants.RELEASE_TYPES,
+    compareIdentifiers: identifiers.compareIdentifiers,
+    rcompareIdentifiers: identifiers.rcompareIdentifiers
+  };
+  return semver;
+}
+
+var process_1;
+var hasRequiredProcess;
+function requireProcess() {
+  if (hasRequiredProcess) return process_1;
+  hasRequiredProcess = 1;
+  const isLinux = () => process.platform === 'linux';
+  let report = null;
+  const getReport = () => {
+    if (!report) {
+      /* istanbul ignore next */
+      report = isLinux() && process.report ? process.report.getReport() : {};
+    }
+    return report;
+  };
+  process_1 = {
+    isLinux,
+    getReport
+  };
+  return process_1;
+}
+
+var detectLibc;
+var hasRequiredDetectLibc;
+function requireDetectLibc() {
+  if (hasRequiredDetectLibc) return detectLibc;
+  hasRequiredDetectLibc = 1;
+  const childProcess = require$$0$3;
+  const {
+    isLinux,
+    getReport
+  } = requireProcess();
+  const command = 'getconf GNU_LIBC_VERSION 2>&1 || true; ldd --version 2>&1 || true';
+  let commandOut = '';
+  const safeCommand = () => {
+    if (!commandOut) {
+      return new Promise(resolve => {
+        childProcess.exec(command, (err, out) => {
+          commandOut = err ? ' ' : out;
+          resolve(commandOut);
+        });
+      });
+    }
+    return commandOut;
+  };
+  const safeCommandSync = () => {
+    if (!commandOut) {
+      try {
+        commandOut = childProcess.execSync(command, {
+          encoding: 'utf8'
+        });
+      } catch (_err) {
+        commandOut = ' ';
+      }
+    }
+    return commandOut;
+  };
+
+  /**
+   * A String constant containing the value `glibc`.
+   * @type {string}
+   * @public
+   */
+  const GLIBC = 'glibc';
+
+  /**
+   * A String constant containing the value `musl`.
+   * @type {string}
+   * @public
+   */
+  const MUSL = 'musl';
+  const isFileMusl = f => f.includes('libc.musl-') || f.includes('ld-musl-');
+  const familyFromReport = () => {
+    const report = getReport();
+    if (report.header && report.header.glibcVersionRuntime) {
+      return GLIBC;
+    }
+    if (Array.isArray(report.sharedObjects)) {
+      if (report.sharedObjects.some(isFileMusl)) {
+        return MUSL;
+      }
+    }
+    return null;
+  };
+  const familyFromCommand = out => {
+    const [getconf, ldd1] = out.split(/[\r\n]+/);
+    if (getconf && getconf.includes(GLIBC)) {
+      return GLIBC;
+    }
+    if (ldd1 && ldd1.includes(MUSL)) {
+      return MUSL;
+    }
+    return null;
+  };
+
+  /**
+   * Resolves with the libc family when it can be determined, `null` otherwise.
+   * @returns {Promise<?string>}
+   */
+  const family = async () => {
+    let family = null;
+    if (isLinux()) {
+      family = familyFromReport();
+      if (!family) {
+        const out = await safeCommand();
+        family = familyFromCommand(out);
+      }
+    }
+    return family;
+  };
+
+  /**
+   * Returns the libc family when it can be determined, `null` otherwise.
+   * @returns {?string}
+   */
+  const familySync = () => {
+    let family = null;
+    if (isLinux()) {
+      family = familyFromReport();
+      if (!family) {
+        const out = safeCommandSync();
+        family = familyFromCommand(out);
+      }
+    }
+    return family;
+  };
+
+  /**
+   * Resolves `true` only when the platform is Linux and the libc family is not `glibc`.
+   * @returns {Promise<boolean>}
+   */
+  const isNonGlibcLinux = async () => isLinux() && (await family()) !== GLIBC;
+
+  /**
+   * Returns `true` only when the platform is Linux and the libc family is not `glibc`.
+   * @returns {boolean}
+   */
+  const isNonGlibcLinuxSync = () => isLinux() && familySync() !== GLIBC;
+  const versionFromReport = () => {
+    const report = getReport();
+    if (report.header && report.header.glibcVersionRuntime) {
+      return report.header.glibcVersionRuntime;
+    }
+    return null;
+  };
+  const versionSuffix = s => s.trim().split(/\s+/)[1];
+  const versionFromCommand = out => {
+    const [getconf, ldd1, ldd2] = out.split(/[\r\n]+/);
+    if (getconf && getconf.includes(GLIBC)) {
+      return versionSuffix(getconf);
+    }
+    if (ldd1 && ldd2 && ldd1.includes(MUSL)) {
+      return versionSuffix(ldd2);
+    }
+    return null;
+  };
+
+  /**
+   * Resolves with the libc version when it can be determined, `null` otherwise.
+   * @returns {Promise<?string>}
+   */
+  const version = async () => {
+    let version = null;
+    if (isLinux()) {
+      version = versionFromReport();
+      if (!version) {
+        const out = await safeCommand();
+        version = versionFromCommand(out);
+      }
+    }
+    return version;
+  };
+
+  /**
+   * Returns the libc version when it can be determined, `null` otherwise.
+   * @returns {?string}
+   */
+  const versionSync = () => {
+    let version = null;
+    if (isLinux()) {
+      version = versionFromReport();
+      if (!version) {
+        const out = safeCommandSync();
+        version = versionFromCommand(out);
+      }
+    }
+    return version;
+  };
+  detectLibc = {
+    GLIBC,
+    MUSL,
+    family,
+    familySync,
+    isNonGlibcLinux,
+    isNonGlibcLinuxSync,
+    version,
+    versionSync
+  };
+  return detectLibc;
+}
+
+var require$$5 = {
+	"0.1.14": {
+	node_abi: null,
+	v8: "1.3"
+},
+	"0.1.15": {
+	node_abi: null,
+	v8: "1.3"
+},
+	"0.1.16": {
+	node_abi: null,
+	v8: "1.3"
+},
+	"0.1.17": {
+	node_abi: null,
+	v8: "1.3"
+},
+	"0.1.18": {
+	node_abi: null,
+	v8: "1.3"
+},
+	"0.1.19": {
+	node_abi: null,
+	v8: "2.0"
+},
+	"0.1.20": {
+	node_abi: null,
+	v8: "2.0"
+},
+	"0.1.21": {
+	node_abi: null,
+	v8: "2.0"
+},
+	"0.1.22": {
+	node_abi: null,
+	v8: "2.0"
+},
+	"0.1.23": {
+	node_abi: null,
+	v8: "2.0"
+},
+	"0.1.24": {
+	node_abi: null,
+	v8: "2.0"
+},
+	"0.1.25": {
+	node_abi: null,
+	v8: "2.0"
+},
+	"0.1.26": {
+	node_abi: null,
+	v8: "2.0"
+},
+	"0.1.27": {
+	node_abi: null,
+	v8: "2.1"
+},
+	"0.1.28": {
+	node_abi: null,
+	v8: "2.1"
+},
+	"0.1.29": {
+	node_abi: null,
+	v8: "2.1"
+},
+	"0.1.30": {
+	node_abi: null,
+	v8: "2.1"
+},
+	"0.1.31": {
+	node_abi: null,
+	v8: "2.1"
+},
+	"0.1.32": {
+	node_abi: null,
+	v8: "2.1"
+},
+	"0.1.33": {
+	node_abi: null,
+	v8: "2.1"
+},
+	"0.1.90": {
+	node_abi: null,
+	v8: "2.2"
+},
+	"0.1.91": {
+	node_abi: null,
+	v8: "2.2"
+},
+	"0.1.92": {
+	node_abi: null,
+	v8: "2.2"
+},
+	"0.1.93": {
+	node_abi: null,
+	v8: "2.2"
+},
+	"0.1.94": {
+	node_abi: null,
+	v8: "2.2"
+},
+	"0.1.95": {
+	node_abi: null,
+	v8: "2.2"
+},
+	"0.1.96": {
+	node_abi: null,
+	v8: "2.2"
+},
+	"0.1.97": {
+	node_abi: null,
+	v8: "2.2"
+},
+	"0.1.98": {
+	node_abi: null,
+	v8: "2.2"
+},
+	"0.1.99": {
+	node_abi: null,
+	v8: "2.2"
+},
+	"0.1.100": {
+	node_abi: null,
+	v8: "2.2"
+},
+	"0.1.101": {
+	node_abi: null,
+	v8: "2.3"
+},
+	"0.1.102": {
+	node_abi: null,
+	v8: "2.3"
+},
+	"0.1.103": {
+	node_abi: null,
+	v8: "2.3"
+},
+	"0.1.104": {
+	node_abi: null,
+	v8: "2.3"
+},
+	"0.2.0": {
+	node_abi: 1,
+	v8: "2.3"
+},
+	"0.2.1": {
+	node_abi: 1,
+	v8: "2.3"
+},
+	"0.2.2": {
+	node_abi: 1,
+	v8: "2.3"
+},
+	"0.2.3": {
+	node_abi: 1,
+	v8: "2.3"
+},
+	"0.2.4": {
+	node_abi: 1,
+	v8: "2.3"
+},
+	"0.2.5": {
+	node_abi: 1,
+	v8: "2.3"
+},
+	"0.2.6": {
+	node_abi: 1,
+	v8: "2.3"
+},
+	"0.3.0": {
+	node_abi: 1,
+	v8: "2.5"
+},
+	"0.3.1": {
+	node_abi: 1,
+	v8: "2.5"
+},
+	"0.3.2": {
+	node_abi: 1,
+	v8: "3.0"
+},
+	"0.3.3": {
+	node_abi: 1,
+	v8: "3.0"
+},
+	"0.3.4": {
+	node_abi: 1,
+	v8: "3.0"
+},
+	"0.3.5": {
+	node_abi: 1,
+	v8: "3.0"
+},
+	"0.3.6": {
+	node_abi: 1,
+	v8: "3.0"
+},
+	"0.3.7": {
+	node_abi: 1,
+	v8: "3.0"
+},
+	"0.3.8": {
+	node_abi: 1,
+	v8: "3.1"
+},
+	"0.4.0": {
+	node_abi: 1,
+	v8: "3.1"
+},
+	"0.4.1": {
+	node_abi: 1,
+	v8: "3.1"
+},
+	"0.4.2": {
+	node_abi: 1,
+	v8: "3.1"
+},
+	"0.4.3": {
+	node_abi: 1,
+	v8: "3.1"
+},
+	"0.4.4": {
+	node_abi: 1,
+	v8: "3.1"
+},
+	"0.4.5": {
+	node_abi: 1,
+	v8: "3.1"
+},
+	"0.4.6": {
+	node_abi: 1,
+	v8: "3.1"
+},
+	"0.4.7": {
+	node_abi: 1,
+	v8: "3.1"
+},
+	"0.4.8": {
+	node_abi: 1,
+	v8: "3.1"
+},
+	"0.4.9": {
+	node_abi: 1,
+	v8: "3.1"
+},
+	"0.4.10": {
+	node_abi: 1,
+	v8: "3.1"
+},
+	"0.4.11": {
+	node_abi: 1,
+	v8: "3.1"
+},
+	"0.4.12": {
+	node_abi: 1,
+	v8: "3.1"
+},
+	"0.5.0": {
+	node_abi: 1,
+	v8: "3.1"
+},
+	"0.5.1": {
+	node_abi: 1,
+	v8: "3.4"
+},
+	"0.5.2": {
+	node_abi: 1,
+	v8: "3.4"
+},
+	"0.5.3": {
+	node_abi: 1,
+	v8: "3.4"
+},
+	"0.5.4": {
+	node_abi: 1,
+	v8: "3.5"
+},
+	"0.5.5": {
+	node_abi: 1,
+	v8: "3.5"
+},
+	"0.5.6": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.5.7": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.5.8": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.5.9": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.5.10": {
+	node_abi: 1,
+	v8: "3.7"
+},
+	"0.6.0": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.6.1": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.6.2": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.6.3": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.6.4": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.6.5": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.6.6": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.6.7": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.6.8": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.6.9": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.6.10": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.6.11": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.6.12": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.6.13": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.6.14": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.6.15": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.6.16": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.6.17": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.6.18": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.6.19": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.6.20": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.6.21": {
+	node_abi: 1,
+	v8: "3.6"
+},
+	"0.7.0": {
+	node_abi: 1,
+	v8: "3.8"
+},
+	"0.7.1": {
+	node_abi: 1,
+	v8: "3.8"
+},
+	"0.7.2": {
+	node_abi: 1,
+	v8: "3.8"
+},
+	"0.7.3": {
+	node_abi: 1,
+	v8: "3.9"
+},
+	"0.7.4": {
+	node_abi: 1,
+	v8: "3.9"
+},
+	"0.7.5": {
+	node_abi: 1,
+	v8: "3.9"
+},
+	"0.7.6": {
+	node_abi: 1,
+	v8: "3.9"
+},
+	"0.7.7": {
+	node_abi: 1,
+	v8: "3.9"
+},
+	"0.7.8": {
+	node_abi: 1,
+	v8: "3.9"
+},
+	"0.7.9": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.7.10": {
+	node_abi: 1,
+	v8: "3.9"
+},
+	"0.7.11": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.7.12": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.0": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.1": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.2": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.3": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.4": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.5": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.6": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.7": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.8": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.9": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.10": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.11": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.12": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.13": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.14": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.15": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.16": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.17": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.18": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.19": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.20": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.21": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.22": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.23": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.24": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.25": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.26": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.27": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.8.28": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.9.0": {
+	node_abi: 1,
+	v8: "3.11"
+},
+	"0.9.1": {
+	node_abi: 10,
+	v8: "3.11"
+},
+	"0.9.2": {
+	node_abi: 10,
+	v8: "3.11"
+},
+	"0.9.3": {
+	node_abi: 10,
+	v8: "3.13"
+},
+	"0.9.4": {
+	node_abi: 10,
+	v8: "3.13"
+},
+	"0.9.5": {
+	node_abi: 10,
+	v8: "3.13"
+},
+	"0.9.6": {
+	node_abi: 10,
+	v8: "3.15"
+},
+	"0.9.7": {
+	node_abi: 10,
+	v8: "3.15"
+},
+	"0.9.8": {
+	node_abi: 10,
+	v8: "3.15"
+},
+	"0.9.9": {
+	node_abi: 11,
+	v8: "3.15"
+},
+	"0.9.10": {
+	node_abi: 11,
+	v8: "3.15"
+},
+	"0.9.11": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.9.12": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.0": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.1": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.2": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.3": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.4": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.5": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.6": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.7": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.8": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.9": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.10": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.11": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.12": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.13": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.14": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.15": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.16": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.17": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.18": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.19": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.20": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.21": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.22": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.23": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.24": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.25": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.26": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.27": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.28": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.29": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.30": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.31": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.32": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.33": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.34": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.35": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.36": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.37": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.38": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.39": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.40": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.41": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.42": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.43": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.44": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.45": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.46": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.47": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.10.48": {
+	node_abi: 11,
+	v8: "3.14"
+},
+	"0.11.0": {
+	node_abi: 12,
+	v8: "3.17"
+},
+	"0.11.1": {
+	node_abi: 12,
+	v8: "3.18"
+},
+	"0.11.2": {
+	node_abi: 12,
+	v8: "3.19"
+},
+	"0.11.3": {
+	node_abi: 12,
+	v8: "3.19"
+},
+	"0.11.4": {
+	node_abi: 12,
+	v8: "3.20"
+},
+	"0.11.5": {
+	node_abi: 12,
+	v8: "3.20"
+},
+	"0.11.6": {
+	node_abi: 12,
+	v8: "3.20"
+},
+	"0.11.7": {
+	node_abi: 12,
+	v8: "3.20"
+},
+	"0.11.8": {
+	node_abi: 13,
+	v8: "3.21"
+},
+	"0.11.9": {
+	node_abi: 13,
+	v8: "3.22"
+},
+	"0.11.10": {
+	node_abi: 13,
+	v8: "3.22"
+},
+	"0.11.11": {
+	node_abi: 14,
+	v8: "3.22"
+},
+	"0.11.12": {
+	node_abi: 14,
+	v8: "3.22"
+},
+	"0.11.13": {
+	node_abi: 14,
+	v8: "3.25"
+},
+	"0.11.14": {
+	node_abi: 14,
+	v8: "3.26"
+},
+	"0.11.15": {
+	node_abi: 14,
+	v8: "3.28"
+},
+	"0.11.16": {
+	node_abi: 14,
+	v8: "3.28"
+},
+	"0.12.0": {
+	node_abi: 14,
+	v8: "3.28"
+},
+	"0.12.1": {
+	node_abi: 14,
+	v8: "3.28"
+},
+	"0.12.2": {
+	node_abi: 14,
+	v8: "3.28"
+},
+	"0.12.3": {
+	node_abi: 14,
+	v8: "3.28"
+},
+	"0.12.4": {
+	node_abi: 14,
+	v8: "3.28"
+},
+	"0.12.5": {
+	node_abi: 14,
+	v8: "3.28"
+},
+	"0.12.6": {
+	node_abi: 14,
+	v8: "3.28"
+},
+	"0.12.7": {
+	node_abi: 14,
+	v8: "3.28"
+},
+	"0.12.8": {
+	node_abi: 14,
+	v8: "3.28"
+},
+	"0.12.9": {
+	node_abi: 14,
+	v8: "3.28"
+},
+	"0.12.10": {
+	node_abi: 14,
+	v8: "3.28"
+},
+	"0.12.11": {
+	node_abi: 14,
+	v8: "3.28"
+},
+	"0.12.12": {
+	node_abi: 14,
+	v8: "3.28"
+},
+	"0.12.13": {
+	node_abi: 14,
+	v8: "3.28"
+},
+	"0.12.14": {
+	node_abi: 14,
+	v8: "3.28"
+},
+	"0.12.15": {
+	node_abi: 14,
+	v8: "3.28"
+},
+	"0.12.16": {
+	node_abi: 14,
+	v8: "3.28"
+},
+	"0.12.17": {
+	node_abi: 14,
+	v8: "3.28"
+},
+	"0.12.18": {
+	node_abi: 14,
+	v8: "3.28"
+},
+	"1.0.0": {
+	node_abi: 42,
+	v8: "3.31"
+},
+	"1.0.1": {
+	node_abi: 42,
+	v8: "3.31"
+},
+	"1.0.2": {
+	node_abi: 42,
+	v8: "3.31"
+},
+	"1.0.3": {
+	node_abi: 42,
+	v8: "4.1"
+},
+	"1.0.4": {
+	node_abi: 42,
+	v8: "4.1"
+},
+	"1.1.0": {
+	node_abi: 43,
+	v8: "4.1"
+},
+	"1.2.0": {
+	node_abi: 43,
+	v8: "4.1"
+},
+	"1.3.0": {
+	node_abi: 43,
+	v8: "4.1"
+},
+	"1.4.1": {
+	node_abi: 43,
+	v8: "4.1"
+},
+	"1.4.2": {
+	node_abi: 43,
+	v8: "4.1"
+},
+	"1.4.3": {
+	node_abi: 43,
+	v8: "4.1"
+},
+	"1.5.0": {
+	node_abi: 43,
+	v8: "4.1"
+},
+	"1.5.1": {
+	node_abi: 43,
+	v8: "4.1"
+},
+	"1.6.0": {
+	node_abi: 43,
+	v8: "4.1"
+},
+	"1.6.1": {
+	node_abi: 43,
+	v8: "4.1"
+},
+	"1.6.2": {
+	node_abi: 43,
+	v8: "4.1"
+},
+	"1.6.3": {
+	node_abi: 43,
+	v8: "4.1"
+},
+	"1.6.4": {
+	node_abi: 43,
+	v8: "4.1"
+},
+	"1.7.1": {
+	node_abi: 43,
+	v8: "4.1"
+},
+	"1.8.1": {
+	node_abi: 43,
+	v8: "4.1"
+},
+	"1.8.2": {
+	node_abi: 43,
+	v8: "4.1"
+},
+	"1.8.3": {
+	node_abi: 43,
+	v8: "4.1"
+},
+	"1.8.4": {
+	node_abi: 43,
+	v8: "4.1"
+},
+	"2.0.0": {
+	node_abi: 44,
+	v8: "4.2"
+},
+	"2.0.1": {
+	node_abi: 44,
+	v8: "4.2"
+},
+	"2.0.2": {
+	node_abi: 44,
+	v8: "4.2"
+},
+	"2.1.0": {
+	node_abi: 44,
+	v8: "4.2"
+},
+	"2.2.0": {
+	node_abi: 44,
+	v8: "4.2"
+},
+	"2.2.1": {
+	node_abi: 44,
+	v8: "4.2"
+},
+	"2.3.0": {
+	node_abi: 44,
+	v8: "4.2"
+},
+	"2.3.1": {
+	node_abi: 44,
+	v8: "4.2"
+},
+	"2.3.2": {
+	node_abi: 44,
+	v8: "4.2"
+},
+	"2.3.3": {
+	node_abi: 44,
+	v8: "4.2"
+},
+	"2.3.4": {
+	node_abi: 44,
+	v8: "4.2"
+},
+	"2.4.0": {
+	node_abi: 44,
+	v8: "4.2"
+},
+	"2.5.0": {
+	node_abi: 44,
+	v8: "4.2"
+},
+	"3.0.0": {
+	node_abi: 45,
+	v8: "4.4"
+},
+	"3.1.0": {
+	node_abi: 45,
+	v8: "4.4"
+},
+	"3.2.0": {
+	node_abi: 45,
+	v8: "4.4"
+},
+	"3.3.0": {
+	node_abi: 45,
+	v8: "4.4"
+},
+	"3.3.1": {
+	node_abi: 45,
+	v8: "4.4"
+},
+	"4.0.0": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.1.0": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.1.1": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.1.2": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.2.0": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.2.1": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.2.2": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.2.3": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.2.4": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.2.5": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.2.6": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.3.0": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.3.1": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.3.2": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.4.0": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.4.1": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.4.2": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.4.3": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.4.4": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.4.5": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.4.6": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.4.7": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.5.0": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.6.0": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.6.1": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.6.2": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.7.0": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.7.1": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.7.2": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.7.3": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.8.0": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.8.1": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.8.2": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.8.3": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.8.4": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.8.5": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.8.6": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.8.7": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.9.0": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"4.9.1": {
+	node_abi: 46,
+	v8: "4.5"
+},
+	"5.0.0": {
+	node_abi: 47,
+	v8: "4.6"
+},
+	"5.1.0": {
+	node_abi: 47,
+	v8: "4.6"
+},
+	"5.1.1": {
+	node_abi: 47,
+	v8: "4.6"
+},
+	"5.2.0": {
+	node_abi: 47,
+	v8: "4.6"
+},
+	"5.3.0": {
+	node_abi: 47,
+	v8: "4.6"
+},
+	"5.4.0": {
+	node_abi: 47,
+	v8: "4.6"
+},
+	"5.4.1": {
+	node_abi: 47,
+	v8: "4.6"
+},
+	"5.5.0": {
+	node_abi: 47,
+	v8: "4.6"
+},
+	"5.6.0": {
+	node_abi: 47,
+	v8: "4.6"
+},
+	"5.7.0": {
+	node_abi: 47,
+	v8: "4.6"
+},
+	"5.7.1": {
+	node_abi: 47,
+	v8: "4.6"
+},
+	"5.8.0": {
+	node_abi: 47,
+	v8: "4.6"
+},
+	"5.9.0": {
+	node_abi: 47,
+	v8: "4.6"
+},
+	"5.9.1": {
+	node_abi: 47,
+	v8: "4.6"
+},
+	"5.10.0": {
+	node_abi: 47,
+	v8: "4.6"
+},
+	"5.10.1": {
+	node_abi: 47,
+	v8: "4.6"
+},
+	"5.11.0": {
+	node_abi: 47,
+	v8: "4.6"
+},
+	"5.11.1": {
+	node_abi: 47,
+	v8: "4.6"
+},
+	"5.12.0": {
+	node_abi: 47,
+	v8: "4.6"
+},
+	"6.0.0": {
+	node_abi: 48,
+	v8: "5.0"
+},
+	"6.1.0": {
+	node_abi: 48,
+	v8: "5.0"
+},
+	"6.2.0": {
+	node_abi: 48,
+	v8: "5.0"
+},
+	"6.2.1": {
+	node_abi: 48,
+	v8: "5.0"
+},
+	"6.2.2": {
+	node_abi: 48,
+	v8: "5.0"
+},
+	"6.3.0": {
+	node_abi: 48,
+	v8: "5.0"
+},
+	"6.3.1": {
+	node_abi: 48,
+	v8: "5.0"
+},
+	"6.4.0": {
+	node_abi: 48,
+	v8: "5.0"
+},
+	"6.5.0": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.6.0": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.7.0": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.8.0": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.8.1": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.9.0": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.9.1": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.9.2": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.9.3": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.9.4": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.9.5": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.10.0": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.10.1": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.10.2": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.10.3": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.11.0": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.11.1": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.11.2": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.11.3": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.11.4": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.11.5": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.12.0": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.12.1": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.12.2": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.12.3": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.13.0": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.13.1": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.14.0": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.14.1": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.14.2": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.14.3": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.14.4": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.15.0": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.15.1": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.16.0": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.17.0": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"6.17.1": {
+	node_abi: 48,
+	v8: "5.1"
+},
+	"7.0.0": {
+	node_abi: 51,
+	v8: "5.4"
+},
+	"7.1.0": {
+	node_abi: 51,
+	v8: "5.4"
+},
+	"7.2.0": {
+	node_abi: 51,
+	v8: "5.4"
+},
+	"7.2.1": {
+	node_abi: 51,
+	v8: "5.4"
+},
+	"7.3.0": {
+	node_abi: 51,
+	v8: "5.4"
+},
+	"7.4.0": {
+	node_abi: 51,
+	v8: "5.4"
+},
+	"7.5.0": {
+	node_abi: 51,
+	v8: "5.4"
+},
+	"7.6.0": {
+	node_abi: 51,
+	v8: "5.5"
+},
+	"7.7.0": {
+	node_abi: 51,
+	v8: "5.5"
+},
+	"7.7.1": {
+	node_abi: 51,
+	v8: "5.5"
+},
+	"7.7.2": {
+	node_abi: 51,
+	v8: "5.5"
+},
+	"7.7.3": {
+	node_abi: 51,
+	v8: "5.5"
+},
+	"7.7.4": {
+	node_abi: 51,
+	v8: "5.5"
+},
+	"7.8.0": {
+	node_abi: 51,
+	v8: "5.5"
+},
+	"7.9.0": {
+	node_abi: 51,
+	v8: "5.5"
+},
+	"7.10.0": {
+	node_abi: 51,
+	v8: "5.5"
+},
+	"7.10.1": {
+	node_abi: 51,
+	v8: "5.5"
+},
+	"8.0.0": {
+	node_abi: 57,
+	v8: "5.8"
+},
+	"8.1.0": {
+	node_abi: 57,
+	v8: "5.8"
+},
+	"8.1.1": {
+	node_abi: 57,
+	v8: "5.8"
+},
+	"8.1.2": {
+	node_abi: 57,
+	v8: "5.8"
+},
+	"8.1.3": {
+	node_abi: 57,
+	v8: "5.8"
+},
+	"8.1.4": {
+	node_abi: 57,
+	v8: "5.8"
+},
+	"8.2.0": {
+	node_abi: 57,
+	v8: "5.8"
+},
+	"8.2.1": {
+	node_abi: 57,
+	v8: "5.8"
+},
+	"8.3.0": {
+	node_abi: 57,
+	v8: "6.0"
+},
+	"8.4.0": {
+	node_abi: 57,
+	v8: "6.0"
+},
+	"8.5.0": {
+	node_abi: 57,
+	v8: "6.0"
+},
+	"8.6.0": {
+	node_abi: 57,
+	v8: "6.0"
+},
+	"8.7.0": {
+	node_abi: 57,
+	v8: "6.1"
+},
+	"8.8.0": {
+	node_abi: 57,
+	v8: "6.1"
+},
+	"8.8.1": {
+	node_abi: 57,
+	v8: "6.1"
+},
+	"8.9.0": {
+	node_abi: 57,
+	v8: "6.1"
+},
+	"8.9.1": {
+	node_abi: 57,
+	v8: "6.1"
+},
+	"8.9.2": {
+	node_abi: 57,
+	v8: "6.1"
+},
+	"8.9.3": {
+	node_abi: 57,
+	v8: "6.1"
+},
+	"8.9.4": {
+	node_abi: 57,
+	v8: "6.1"
+},
+	"8.10.0": {
+	node_abi: 57,
+	v8: "6.2"
+},
+	"8.11.0": {
+	node_abi: 57,
+	v8: "6.2"
+},
+	"8.11.1": {
+	node_abi: 57,
+	v8: "6.2"
+},
+	"8.11.2": {
+	node_abi: 57,
+	v8: "6.2"
+},
+	"8.11.3": {
+	node_abi: 57,
+	v8: "6.2"
+},
+	"8.11.4": {
+	node_abi: 57,
+	v8: "6.2"
+},
+	"8.12.0": {
+	node_abi: 57,
+	v8: "6.2"
+},
+	"8.13.0": {
+	node_abi: 57,
+	v8: "6.2"
+},
+	"8.14.0": {
+	node_abi: 57,
+	v8: "6.2"
+},
+	"8.14.1": {
+	node_abi: 57,
+	v8: "6.2"
+},
+	"8.15.0": {
+	node_abi: 57,
+	v8: "6.2"
+},
+	"8.15.1": {
+	node_abi: 57,
+	v8: "6.2"
+},
+	"8.16.0": {
+	node_abi: 57,
+	v8: "6.2"
+},
+	"8.16.1": {
+	node_abi: 57,
+	v8: "6.2"
+},
+	"8.16.2": {
+	node_abi: 57,
+	v8: "6.2"
+},
+	"8.17.0": {
+	node_abi: 57,
+	v8: "6.2"
+},
+	"9.0.0": {
+	node_abi: 59,
+	v8: "6.2"
+},
+	"9.1.0": {
+	node_abi: 59,
+	v8: "6.2"
+},
+	"9.2.0": {
+	node_abi: 59,
+	v8: "6.2"
+},
+	"9.2.1": {
+	node_abi: 59,
+	v8: "6.2"
+},
+	"9.3.0": {
+	node_abi: 59,
+	v8: "6.2"
+},
+	"9.4.0": {
+	node_abi: 59,
+	v8: "6.2"
+},
+	"9.5.0": {
+	node_abi: 59,
+	v8: "6.2"
+},
+	"9.6.0": {
+	node_abi: 59,
+	v8: "6.2"
+},
+	"9.6.1": {
+	node_abi: 59,
+	v8: "6.2"
+},
+	"9.7.0": {
+	node_abi: 59,
+	v8: "6.2"
+},
+	"9.7.1": {
+	node_abi: 59,
+	v8: "6.2"
+},
+	"9.8.0": {
+	node_abi: 59,
+	v8: "6.2"
+},
+	"9.9.0": {
+	node_abi: 59,
+	v8: "6.2"
+},
+	"9.10.0": {
+	node_abi: 59,
+	v8: "6.2"
+},
+	"9.10.1": {
+	node_abi: 59,
+	v8: "6.2"
+},
+	"9.11.0": {
+	node_abi: 59,
+	v8: "6.2"
+},
+	"9.11.1": {
+	node_abi: 59,
+	v8: "6.2"
+},
+	"9.11.2": {
+	node_abi: 59,
+	v8: "6.2"
+},
+	"10.0.0": {
+	node_abi: 64,
+	v8: "6.6"
+},
+	"10.1.0": {
+	node_abi: 64,
+	v8: "6.6"
+},
+	"10.2.0": {
+	node_abi: 64,
+	v8: "6.6"
+},
+	"10.2.1": {
+	node_abi: 64,
+	v8: "6.6"
+},
+	"10.3.0": {
+	node_abi: 64,
+	v8: "6.6"
+},
+	"10.4.0": {
+	node_abi: 64,
+	v8: "6.7"
+},
+	"10.4.1": {
+	node_abi: 64,
+	v8: "6.7"
+},
+	"10.5.0": {
+	node_abi: 64,
+	v8: "6.7"
+},
+	"10.6.0": {
+	node_abi: 64,
+	v8: "6.7"
+},
+	"10.7.0": {
+	node_abi: 64,
+	v8: "6.7"
+},
+	"10.8.0": {
+	node_abi: 64,
+	v8: "6.7"
+},
+	"10.9.0": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.10.0": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.11.0": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.12.0": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.13.0": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.14.0": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.14.1": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.14.2": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.15.0": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.15.1": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.15.2": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.15.3": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.16.0": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.16.1": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.16.2": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.16.3": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.17.0": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.18.0": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.18.1": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.19.0": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.20.0": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.20.1": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.21.0": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.22.0": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.22.1": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.23.0": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.23.1": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.23.2": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.23.3": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.24.0": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"10.24.1": {
+	node_abi: 64,
+	v8: "6.8"
+},
+	"11.0.0": {
+	node_abi: 67,
+	v8: "7.0"
+},
+	"11.1.0": {
+	node_abi: 67,
+	v8: "7.0"
+},
+	"11.2.0": {
+	node_abi: 67,
+	v8: "7.0"
+},
+	"11.3.0": {
+	node_abi: 67,
+	v8: "7.0"
+},
+	"11.4.0": {
+	node_abi: 67,
+	v8: "7.0"
+},
+	"11.5.0": {
+	node_abi: 67,
+	v8: "7.0"
+},
+	"11.6.0": {
+	node_abi: 67,
+	v8: "7.0"
+},
+	"11.7.0": {
+	node_abi: 67,
+	v8: "7.0"
+},
+	"11.8.0": {
+	node_abi: 67,
+	v8: "7.0"
+},
+	"11.9.0": {
+	node_abi: 67,
+	v8: "7.0"
+},
+	"11.10.0": {
+	node_abi: 67,
+	v8: "7.0"
+},
+	"11.10.1": {
+	node_abi: 67,
+	v8: "7.0"
+},
+	"11.11.0": {
+	node_abi: 67,
+	v8: "7.0"
+},
+	"11.12.0": {
+	node_abi: 67,
+	v8: "7.0"
+},
+	"11.13.0": {
+	node_abi: 67,
+	v8: "7.0"
+},
+	"11.14.0": {
+	node_abi: 67,
+	v8: "7.0"
+},
+	"11.15.0": {
+	node_abi: 67,
+	v8: "7.0"
+},
+	"12.0.0": {
+	node_abi: 72,
+	v8: "7.4"
+},
+	"12.1.0": {
+	node_abi: 72,
+	v8: "7.4"
+},
+	"12.2.0": {
+	node_abi: 72,
+	v8: "7.4"
+},
+	"12.3.0": {
+	node_abi: 72,
+	v8: "7.4"
+},
+	"12.3.1": {
+	node_abi: 72,
+	v8: "7.4"
+},
+	"12.4.0": {
+	node_abi: 72,
+	v8: "7.4"
+},
+	"12.5.0": {
+	node_abi: 72,
+	v8: "7.5"
+},
+	"12.6.0": {
+	node_abi: 72,
+	v8: "7.5"
+},
+	"12.7.0": {
+	node_abi: 72,
+	v8: "7.5"
+},
+	"12.8.0": {
+	node_abi: 72,
+	v8: "7.5"
+},
+	"12.8.1": {
+	node_abi: 72,
+	v8: "7.5"
+},
+	"12.9.0": {
+	node_abi: 72,
+	v8: "7.6"
+},
+	"12.9.1": {
+	node_abi: 72,
+	v8: "7.6"
+},
+	"12.10.0": {
+	node_abi: 72,
+	v8: "7.6"
+},
+	"12.11.0": {
+	node_abi: 72,
+	v8: "7.7"
+},
+	"12.11.1": {
+	node_abi: 72,
+	v8: "7.7"
+},
+	"12.12.0": {
+	node_abi: 72,
+	v8: "7.7"
+},
+	"12.13.0": {
+	node_abi: 72,
+	v8: "7.7"
+},
+	"12.13.1": {
+	node_abi: 72,
+	v8: "7.7"
+},
+	"12.14.0": {
+	node_abi: 72,
+	v8: "7.7"
+},
+	"12.14.1": {
+	node_abi: 72,
+	v8: "7.7"
+},
+	"12.15.0": {
+	node_abi: 72,
+	v8: "7.7"
+},
+	"12.16.0": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.16.1": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.16.2": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.16.3": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.17.0": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.18.0": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.18.1": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.18.2": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.18.3": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.18.4": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.19.0": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.19.1": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.20.0": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.20.1": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.20.2": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.21.0": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.22.0": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.22.1": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.22.2": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.22.3": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.22.4": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.22.5": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.22.6": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"12.22.7": {
+	node_abi: 72,
+	v8: "7.8"
+},
+	"13.0.0": {
+	node_abi: 79,
+	v8: "7.8"
+},
+	"13.0.1": {
+	node_abi: 79,
+	v8: "7.8"
+},
+	"13.1.0": {
+	node_abi: 79,
+	v8: "7.8"
+},
+	"13.2.0": {
+	node_abi: 79,
+	v8: "7.9"
+},
+	"13.3.0": {
+	node_abi: 79,
+	v8: "7.9"
+},
+	"13.4.0": {
+	node_abi: 79,
+	v8: "7.9"
+},
+	"13.5.0": {
+	node_abi: 79,
+	v8: "7.9"
+},
+	"13.6.0": {
+	node_abi: 79,
+	v8: "7.9"
+},
+	"13.7.0": {
+	node_abi: 79,
+	v8: "7.9"
+},
+	"13.8.0": {
+	node_abi: 79,
+	v8: "7.9"
+},
+	"13.9.0": {
+	node_abi: 79,
+	v8: "7.9"
+},
+	"13.10.0": {
+	node_abi: 79,
+	v8: "7.9"
+},
+	"13.10.1": {
+	node_abi: 79,
+	v8: "7.9"
+},
+	"13.11.0": {
+	node_abi: 79,
+	v8: "7.9"
+},
+	"13.12.0": {
+	node_abi: 79,
+	v8: "7.9"
+},
+	"13.13.0": {
+	node_abi: 79,
+	v8: "7.9"
+},
+	"13.14.0": {
+	node_abi: 79,
+	v8: "7.9"
+},
+	"14.0.0": {
+	node_abi: 83,
+	v8: "8.1"
+},
+	"14.1.0": {
+	node_abi: 83,
+	v8: "8.1"
+},
+	"14.2.0": {
+	node_abi: 83,
+	v8: "8.1"
+},
+	"14.3.0": {
+	node_abi: 83,
+	v8: "8.1"
+},
+	"14.4.0": {
+	node_abi: 83,
+	v8: "8.1"
+},
+	"14.5.0": {
+	node_abi: 83,
+	v8: "8.3"
+},
+	"14.6.0": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.7.0": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.8.0": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.9.0": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.10.0": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.10.1": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.11.0": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.12.0": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.13.0": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.13.1": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.14.0": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.15.0": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.15.1": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.15.2": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.15.3": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.15.4": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.15.5": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.16.0": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.16.1": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.17.0": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.17.1": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.17.2": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.17.3": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.17.4": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.17.5": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.17.6": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.18.0": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"14.18.1": {
+	node_abi: 83,
+	v8: "8.4"
+},
+	"15.0.0": {
+	node_abi: 88,
+	v8: "8.6"
+},
+	"15.0.1": {
+	node_abi: 88,
+	v8: "8.6"
+},
+	"15.1.0": {
+	node_abi: 88,
+	v8: "8.6"
+},
+	"15.2.0": {
+	node_abi: 88,
+	v8: "8.6"
+},
+	"15.2.1": {
+	node_abi: 88,
+	v8: "8.6"
+},
+	"15.3.0": {
+	node_abi: 88,
+	v8: "8.6"
+},
+	"15.4.0": {
+	node_abi: 88,
+	v8: "8.6"
+},
+	"15.5.0": {
+	node_abi: 88,
+	v8: "8.6"
+},
+	"15.5.1": {
+	node_abi: 88,
+	v8: "8.6"
+},
+	"15.6.0": {
+	node_abi: 88,
+	v8: "8.6"
+},
+	"15.7.0": {
+	node_abi: 88,
+	v8: "8.6"
+},
+	"15.8.0": {
+	node_abi: 88,
+	v8: "8.6"
+},
+	"15.9.0": {
+	node_abi: 88,
+	v8: "8.6"
+},
+	"15.10.0": {
+	node_abi: 88,
+	v8: "8.6"
+},
+	"15.11.0": {
+	node_abi: 88,
+	v8: "8.6"
+},
+	"15.12.0": {
+	node_abi: 88,
+	v8: "8.6"
+},
+	"15.13.0": {
+	node_abi: 88,
+	v8: "8.6"
+},
+	"15.14.0": {
+	node_abi: 88,
+	v8: "8.6"
+},
+	"16.0.0": {
+	node_abi: 93,
+	v8: "9.0"
+},
+	"16.1.0": {
+	node_abi: 93,
+	v8: "9.0"
+},
+	"16.2.0": {
+	node_abi: 93,
+	v8: "9.0"
+},
+	"16.3.0": {
+	node_abi: 93,
+	v8: "9.0"
+},
+	"16.4.0": {
+	node_abi: 93,
+	v8: "9.1"
+},
+	"16.4.1": {
+	node_abi: 93,
+	v8: "9.1"
+},
+	"16.4.2": {
+	node_abi: 93,
+	v8: "9.1"
+},
+	"16.5.0": {
+	node_abi: 93,
+	v8: "9.1"
+},
+	"16.6.0": {
+	node_abi: 93,
+	v8: "9.2"
+},
+	"16.6.1": {
+	node_abi: 93,
+	v8: "9.2"
+},
+	"16.6.2": {
+	node_abi: 93,
+	v8: "9.2"
+},
+	"16.7.0": {
+	node_abi: 93,
+	v8: "9.2"
+},
+	"16.8.0": {
+	node_abi: 93,
+	v8: "9.2"
+},
+	"16.9.0": {
+	node_abi: 93,
+	v8: "9.3"
+},
+	"16.9.1": {
+	node_abi: 93,
+	v8: "9.3"
+},
+	"16.10.0": {
+	node_abi: 93,
+	v8: "9.3"
+},
+	"16.11.0": {
+	node_abi: 93,
+	v8: "9.4"
+},
+	"16.11.1": {
+	node_abi: 93,
+	v8: "9.4"
+},
+	"16.12.0": {
+	node_abi: 93,
+	v8: "9.4"
+},
+	"16.13.0": {
+	node_abi: 93,
+	v8: "9.4"
+},
+	"17.0.0": {
+	node_abi: 102,
+	v8: "9.5"
+},
+	"17.0.1": {
+	node_abi: 102,
+	v8: "9.5"
+},
+	"17.1.0": {
+	node_abi: 102,
+	v8: "9.5"
+}
+};
+
+var hasRequiredVersioning;
+function requireVersioning() {
+  if (hasRequiredVersioning) return versioning.exports;
+  hasRequiredVersioning = 1;
+  (function (module, exports) {
+
+    module.exports = exports;
+    const path$1 = path;
+    const semver = requireSemver();
+    const url = require$$0;
+    const detect_libc = requireDetectLibc();
+    const napi = requireNapi();
+    let abi_crosswalk;
+
+    // This is used for unit testing to provide a fake
+    // ABI crosswalk that emulates one that is not updated
+    // for the current version
+    if (process.env.NODE_PRE_GYP_ABI_CROSSWALK) {
+      abi_crosswalk = commonjsRequire(process.env.NODE_PRE_GYP_ABI_CROSSWALK);
+    } else {
+      abi_crosswalk = require$$5;
+    }
+    const major_versions = {};
+    Object.keys(abi_crosswalk).forEach(v => {
+      const major = v.split('.')[0];
+      if (!major_versions[major]) {
+        major_versions[major] = v;
+      }
+    });
+    function get_electron_abi(runtime, target_version) {
+      if (!runtime) {
+        throw new Error('get_electron_abi requires valid runtime arg');
+      }
+      if (typeof target_version === 'undefined') {
+        // erroneous CLI call
+        throw new Error('Empty target version is not supported if electron is the target.');
+      }
+      // Electron guarantees that patch version update won't break native modules.
+      const sem_ver = semver.parse(target_version);
+      return runtime + '-v' + sem_ver.major + '.' + sem_ver.minor;
+    }
+    module.exports.get_electron_abi = get_electron_abi;
+    function get_node_webkit_abi(runtime, target_version) {
+      if (!runtime) {
+        throw new Error('get_node_webkit_abi requires valid runtime arg');
+      }
+      if (typeof target_version === 'undefined') {
+        // erroneous CLI call
+        throw new Error('Empty target version is not supported if node-webkit is the target.');
+      }
+      return runtime + '-v' + target_version;
+    }
+    module.exports.get_node_webkit_abi = get_node_webkit_abi;
+    function get_node_abi(runtime, versions) {
+      if (!runtime) {
+        throw new Error('get_node_abi requires valid runtime arg');
+      }
+      if (!versions) {
+        throw new Error('get_node_abi requires valid process.versions object');
+      }
+      const sem_ver = semver.parse(versions.node);
+      if (sem_ver.major === 0 && sem_ver.minor % 2) {
+        // odd series
+        // https://github.com/mapbox/node-pre-gyp/issues/124
+        return runtime + '-v' + versions.node;
+      } else {
+        // process.versions.modules added in >= v0.10.4 and v0.11.7
+        // https://github.com/joyent/node/commit/ccabd4a6fa8a6eb79d29bc3bbe9fe2b6531c2d8e
+        return versions.modules ? runtime + '-v' + +versions.modules : 'v8-' + versions.v8.split('.').slice(0, 2).join('.');
+      }
+    }
+    module.exports.get_node_abi = get_node_abi;
+    function get_runtime_abi(runtime, target_version) {
+      if (!runtime) {
+        throw new Error('get_runtime_abi requires valid runtime arg');
+      }
+      if (runtime === 'node-webkit') {
+        return get_node_webkit_abi(runtime, target_version || process.versions['node-webkit']);
+      } else if (runtime === 'electron') {
+        return get_electron_abi(runtime, target_version || process.versions.electron);
+      } else {
+        if (runtime !== 'node') {
+          throw new Error("Unknown Runtime: '" + runtime + "'");
+        }
+        if (!target_version) {
+          return get_node_abi(runtime, process.versions);
+        } else {
+          let cross_obj;
+          // abi_crosswalk generated with ./scripts/abi_crosswalk.js
+          if (abi_crosswalk[target_version]) {
+            cross_obj = abi_crosswalk[target_version];
+          } else {
+            const target_parts = target_version.split('.').map(i => {
+              return +i;
+            });
+            if (target_parts.length !== 3) {
+              // parse failed
+              throw new Error('Unknown target version: ' + target_version);
+            }
+            /*
+                        The below code tries to infer the last known ABI compatible version
+                        that we have recorded in the abi_crosswalk.json when an exact match
+                        is not possible. The reasons for this to exist are complicated:
+                            - We support passing --target to be able to allow developers to package binaries for versions of node
+                             that are not the same one as they are running. This might also be used in combination with the
+                             --target_arch or --target_platform flags to also package binaries for alternative platforms
+                           - When --target is passed we can't therefore determine the ABI (process.versions.modules) from the node
+                             version that is running in memory
+                           - So, therefore node-pre-gyp keeps an "ABI crosswalk" (lib/util/abi_crosswalk.json) to be able to look
+                             this info up for all versions
+                           - But we cannot easily predict what the future ABI will be for released versions
+                           - And node-pre-gyp needs to be a `bundledDependency` in apps that depend on it in order to work correctly
+                             by being fully available at install time.
+                           - So, the speed of node releases and the bundled nature of node-pre-gyp mean that a new node-pre-gyp release
+                             need to happen for every node.js/io.js/node-webkit/nw.js/atom-shell/etc release that might come online if
+                             you want the `--target` flag to keep working for the latest version
+                           - Which is impractical ^^
+                           - Hence the below code guesses about future ABI to make the need to update node-pre-gyp less demanding.
+                         In practice then you can have a dependency of your app like `node-sqlite3` that bundles a `node-pre-gyp` that
+                        only knows about node v0.10.33 in the `abi_crosswalk.json` but target node v0.10.34 (which is assumed to be
+                        ABI compatible with v0.10.33).
+                         TODO: use semver module instead of custom version parsing
+                    */
+            const major = target_parts[0];
+            let minor = target_parts[1];
+            let patch = target_parts[2];
+            // io.js: yeah if node.js ever releases 1.x this will break
+            // but that is unlikely to happen: https://github.com/iojs/io.js/pull/253#issuecomment-69432616
+            if (major === 1) {
+              // look for last release that is the same major version
+              // e.g. we assume io.js 1.x is ABI compatible with >= 1.0.0
+              while (true) {
+                if (minor > 0) --minor;
+                if (patch > 0) --patch;
+                const new_iojs_target = '' + major + '.' + minor + '.' + patch;
+                if (abi_crosswalk[new_iojs_target]) {
+                  cross_obj = abi_crosswalk[new_iojs_target];
+                  console.log('Warning: node-pre-gyp could not find exact match for ' + target_version);
+                  console.log('Warning: but node-pre-gyp successfully choose ' + new_iojs_target + ' as ABI compatible target');
+                  break;
+                }
+                if (minor === 0 && patch === 0) {
+                  break;
+                }
+              }
+            } else if (major >= 2) {
+              // look for last release that is the same major version
+              if (major_versions[major]) {
+                cross_obj = abi_crosswalk[major_versions[major]];
+                console.log('Warning: node-pre-gyp could not find exact match for ' + target_version);
+                console.log('Warning: but node-pre-gyp successfully choose ' + major_versions[major] + ' as ABI compatible target');
+              }
+            } else if (major === 0) {
+              // node.js
+              if (target_parts[1] % 2 === 0) {
+                // for stable/even node.js series
+                // look for the last release that is the same minor release
+                // e.g. we assume node 0.10.x is ABI compatible with >= 0.10.0
+                while (--patch > 0) {
+                  const new_node_target = '' + major + '.' + minor + '.' + patch;
+                  if (abi_crosswalk[new_node_target]) {
+                    cross_obj = abi_crosswalk[new_node_target];
+                    console.log('Warning: node-pre-gyp could not find exact match for ' + target_version);
+                    console.log('Warning: but node-pre-gyp successfully choose ' + new_node_target + ' as ABI compatible target');
+                    break;
+                  }
+                }
+              }
+            }
+          }
+          if (!cross_obj) {
+            throw new Error('Unsupported target version: ' + target_version);
+          }
+          // emulate process.versions
+          const versions_obj = {
+            node: target_version,
+            v8: cross_obj.v8 + '.0',
+            // abi_crosswalk uses 1 for node versions lacking process.versions.modules
+            // process.versions.modules added in >= v0.10.4 and v0.11.7
+            modules: cross_obj.node_abi > 1 ? cross_obj.node_abi : undefined
+          };
+          return get_node_abi(runtime, versions_obj);
+        }
+      }
+    }
+    module.exports.get_runtime_abi = get_runtime_abi;
+    const required_parameters = ['module_name', 'module_path', 'host'];
+    function validate_config(package_json, opts) {
+      const msg = package_json.name + ' package.json is not node-pre-gyp ready:\n';
+      const missing = [];
+      if (!package_json.main) {
+        missing.push('main');
+      }
+      if (!package_json.version) {
+        missing.push('version');
+      }
+      if (!package_json.name) {
+        missing.push('name');
+      }
+      if (!package_json.binary) {
+        missing.push('binary');
+      }
+      const o = package_json.binary;
+      if (o) {
+        required_parameters.forEach(p => {
+          if (!o[p] || typeof o[p] !== 'string') {
+            missing.push('binary.' + p);
+          }
+        });
+      }
+      if (missing.length >= 1) {
+        throw new Error(msg + 'package.json must declare these properties: \n' + missing.join('\n'));
+      }
+      if (o) {
+        // enforce https over http
+        const protocol = url.parse(o.host).protocol;
+        if (protocol === 'http:') {
+          throw new Error("'host' protocol (" + protocol + ") is invalid - only 'https:' is accepted");
+        }
+      }
+      napi.validate_package_json(package_json, opts);
+    }
+    module.exports.validate_config = validate_config;
+    function eval_template(template, opts) {
+      Object.keys(opts).forEach(key => {
+        const pattern = '{' + key + '}';
+        while (template.indexOf(pattern) > -1) {
+          template = template.replace(pattern, opts[key]);
+        }
+      });
+      return template;
+    }
+
+    // url.resolve needs single trailing slash
+    // to behave correctly, otherwise a double slash
+    // may end up in the url which breaks requests
+    // and a lacking slash may not lead to proper joining
+    function fix_slashes(pathname) {
+      if (pathname.slice(-1) !== '/') {
+        return pathname + '/';
+      }
+      return pathname;
+    }
+
+    // remove double slashes
+    // note: path.normalize will not work because
+    // it will convert forward to back slashes
+    function drop_double_slashes(pathname) {
+      return pathname.replace(/\/\//g, '/');
+    }
+    function get_process_runtime(versions) {
+      let runtime = 'node';
+      if (versions['node-webkit']) {
+        runtime = 'node-webkit';
+      } else if (versions.electron) {
+        runtime = 'electron';
+      }
+      return runtime;
+    }
+    module.exports.get_process_runtime = get_process_runtime;
+    const default_package_name = '{module_name}-v{version}-{node_abi}-{platform}-{arch}.tar.gz';
+    const default_remote_path = '';
+    module.exports.evaluate = function (package_json, options, napi_build_version) {
+      options = options || {};
+      validate_config(package_json, options); // options is a suitable substitute for opts in this case
+      const v = package_json.version;
+      const module_version = semver.parse(v);
+      const runtime = options.runtime || get_process_runtime(process.versions);
+      const opts = {
+        name: package_json.name,
+        configuration: options.debug ? 'Debug' : 'Release',
+        debug: options.debug,
+        module_name: package_json.binary.module_name,
+        version: module_version.version,
+        prerelease: module_version.prerelease.length ? module_version.prerelease.join('.') : '',
+        build: module_version.build.length ? module_version.build.join('.') : '',
+        major: module_version.major,
+        minor: module_version.minor,
+        patch: module_version.patch,
+        runtime: runtime,
+        node_abi: get_runtime_abi(runtime, options.target),
+        node_abi_napi: napi.get_napi_version(options.target) ? 'napi' : get_runtime_abi(runtime, options.target),
+        napi_version: napi.get_napi_version(options.target),
+        // non-zero numeric, undefined if unsupported
+        napi_build_version: napi_build_version || '',
+        node_napi_label: napi_build_version ? 'napi-v' + napi_build_version : get_runtime_abi(runtime, options.target),
+        target: options.target || '',
+        platform: options.target_platform || process.platform,
+        target_platform: options.target_platform || process.platform,
+        arch: options.target_arch || process.arch,
+        target_arch: options.target_arch || process.arch,
+        libc: options.target_libc || detect_libc.familySync() || 'unknown',
+        module_main: package_json.main,
+        toolset: options.toolset || '',
+        // address https://github.com/mapbox/node-pre-gyp/issues/119
+        bucket: package_json.binary.bucket,
+        region: package_json.binary.region,
+        s3ForcePathStyle: package_json.binary.s3ForcePathStyle || false
+      };
+      // support host mirror with npm config `--{module_name}_binary_host_mirror`
+      // e.g.: https://github.com/node-inspector/v8-profiler/blob/master/package.json#L25
+      // > npm install v8-profiler --profiler_binary_host_mirror=https://npm.taobao.org/mirrors/node-inspector/
+      const validModuleName = opts.module_name.replace('-', '_');
+      const host = process.env['npm_config_' + validModuleName + '_binary_host_mirror'] || package_json.binary.host;
+      opts.host = fix_slashes(eval_template(host, opts));
+      opts.module_path = eval_template(package_json.binary.module_path, opts);
+      // now we resolve the module_path to ensure it is absolute so that binding.gyp variables work predictably
+      if (options.module_root) {
+        // resolve relative to known module root: works for pre-binding require
+        opts.module_path = path$1.join(options.module_root, opts.module_path);
+      } else {
+        // resolve relative to current working directory: works for node-pre-gyp commands
+        opts.module_path = path$1.resolve(opts.module_path);
+      }
+      opts.module = path$1.join(opts.module_path, opts.module_name + '.node');
+      opts.remote_path = package_json.binary.remote_path ? drop_double_slashes(fix_slashes(eval_template(package_json.binary.remote_path, opts))) : default_remote_path;
+      const package_name = package_json.binary.package_name ? package_json.binary.package_name : default_package_name;
+      opts.package_name = eval_template(package_name, opts);
+      opts.staged_tarball = path$1.join('build/stage', opts.remote_path, opts.package_name);
+      opts.hosted_path = url.resolve(opts.host, opts.remote_path);
+      opts.hosted_tarball = url.resolve(opts.hosted_path, opts.package_name);
+      return opts;
+    };
+  })(versioning, versioning.exports);
+  return versioning.exports;
+}
+
+var hasRequiredPreBinding;
+function requirePreBinding() {
+  if (hasRequiredPreBinding) return preBinding.exports;
+  hasRequiredPreBinding = 1;
+  (function (module, exports) {
+
+    const npg = requireNodePreGyp();
+    const versioning = requireVersioning();
+    const napi = requireNapi();
+    const existsSync = require$$0$1.existsSync || path.existsSync;
+    const path$1 = path;
+    module.exports = exports;
+    exports.usage = 'Finds the require path for the node-pre-gyp installed module';
+    exports.validate = function (package_json, opts) {
+      versioning.validate_config(package_json, opts);
+    };
+    exports.find = function (package_json_path, opts) {
+      if (!existsSync(package_json_path)) {
+        throw new Error(package_json_path + 'does not exist');
+      }
+      const prog = new npg.Run({
+        package_json_path,
+        argv: process.argv
+      });
+      prog.setBinaryHostProperty();
+      const package_json = prog.package_json;
+      versioning.validate_config(package_json, opts);
+      let napi_build_version;
+      if (napi.get_napi_build_versions(package_json, opts)) {
+        napi_build_version = napi.get_best_napi_build_version(package_json, opts);
+      }
+      opts = opts || {};
+      if (!opts.module_root) opts.module_root = path$1.dirname(package_json_path);
+      const meta = versioning.evaluate(package_json, opts, napi_build_version);
+      return meta.module;
+    };
+  })(preBinding, preBinding.exports);
+  return preBinding.exports;
+}
+
+var name = "@mapbox/node-pre-gyp";
+var description = "Node.js native addon binary install tool";
+var version = "1.0.10";
+var keywords = [
+	"native",
+	"addon",
+	"module",
+	"c",
+	"c++",
+	"bindings",
+	"binary"
+];
+var license = "BSD-3-Clause";
+var author = "Dane Springmeyer <dane@mapbox.com>";
+var repository = {
+	type: "git",
+	url: "git://github.com/mapbox/node-pre-gyp.git"
+};
+var bin = "./bin/node-pre-gyp";
+var main = "./lib/node-pre-gyp.js";
+var dependencies = {
+	"detect-libc": "^2.0.0",
+	"https-proxy-agent": "^5.0.0",
+	"make-dir": "^3.1.0",
+	"node-fetch": "^2.6.7",
+	nopt: "^5.0.0",
+	npmlog: "^5.0.1",
+	rimraf: "^3.0.2",
+	semver: "^7.3.5",
+	tar: "^6.1.11"
+};
+var devDependencies = {
+	"@mapbox/cloudfriend": "^5.1.0",
+	"@mapbox/eslint-config-mapbox": "^3.0.0",
+	"aws-sdk": "^2.1087.0",
+	codecov: "^3.8.3",
+	eslint: "^7.32.0",
+	"eslint-plugin-node": "^11.1.0",
+	"mock-aws-s3": "^4.0.2",
+	nock: "^12.0.3",
+	"node-addon-api": "^4.3.0",
+	nyc: "^15.1.0",
+	tape: "^5.5.2",
+	"tar-fs": "^2.1.1"
+};
+var nyc = {
+	all: true,
+	"skip-full": false,
+	exclude: [
+		"test/**"
+	]
+};
+var scripts = {
+	coverage: "nyc --all --include index.js --include lib/ npm test",
+	"upload-coverage": "nyc report --reporter json && codecov --clear --flags=unit --file=./coverage/coverage-final.json",
+	lint: "eslint bin/node-pre-gyp lib/*js lib/util/*js test/*js scripts/*js",
+	fix: "npm run lint -- --fix",
+	"update-crosswalk": "node scripts/abi_crosswalk.js",
+	test: "tape test/*test.js"
+};
+var require$$9 = {
+	name: name,
+	description: description,
+	version: version,
+	keywords: keywords,
+	license: license,
+	author: author,
+	repository: repository,
+	bin: bin,
+	main: main,
+	dependencies: dependencies,
+	devDependencies: devDependencies,
+	nyc: nyc,
+	scripts: scripts
+};
+
+var hasRequiredNodePreGyp;
+function requireNodePreGyp() {
+  if (hasRequiredNodePreGyp) return nodePreGyp.exports;
+  hasRequiredNodePreGyp = 1;
+  (function (module, exports) {
+
+    /**
+     * Module exports.
+     */
+    module.exports = exports;
+
+    /**
+     * Module dependencies.
+     */
+
+    // load mocking control function for accessing s3 via https. the function is a noop always returning
+    // false if not mocking.
+    exports.mockS3Http = s3_setupExports.get_mockS3Http();
+    exports.mockS3Http('on');
+    const mocking = exports.mockS3Http('get');
+    const fs = require$$0$1;
+    const path$1 = path;
+    const nopt = noptExports;
+    const log = logExports;
+    log.disableProgress();
+    const napi = requireNapi();
+    const EE = require$$2$1.EventEmitter;
+    const inherits = require$$0$2.inherits;
+    const cli_commands = ['clean', 'install', 'reinstall', 'build', 'rebuild', 'package', 'testpackage', 'publish', 'unpublish', 'info', 'testbinary', 'reveal', 'configure'];
+    const aliases = {};
+
+    // differentiate node-pre-gyp's logs from npm's
+    log.heading = 'node-pre-gyp';
+    if (mocking) {
+      log.warn(`mocking s3 to ${process.env.node_pre_gyp_mock_s3}`);
+    }
+
+    // this is a getter to avoid circular reference warnings with node v14.
+    Object.defineProperty(exports, 'find', {
+      get: function () {
+        return requirePreBinding().find;
+      },
+      enumerable: true
+    });
+
+    // in the following, "my_module" is using node-pre-gyp to
+    // prebuild and install pre-built binaries. "main_module"
+    // is using "my_module".
+    //
+    // "bin/node-pre-gyp" invokes Run() without a path. the
+    // expectation is that the working directory is the package
+    // root "my_module". this is true because in all cases npm is
+    // executing a script in the context of "my_module".
+    //
+    // "pre-binding.find()" is executed by "my_module" but in the
+    // context of "main_module". this is because "main_module" is
+    // executing and requires "my_module" which is then executing
+    // "pre-binding.find()" via "node-pre-gyp.find()", so the working
+    // directory is that of "main_module".
+    //
+    // that's why "find()" must pass the path to package.json.
+    //
+    function Run({
+      package_json_path = './package.json',
+      argv
+    }) {
+      this.package_json_path = package_json_path;
+      this.commands = {};
+      const self = this;
+      cli_commands.forEach(command => {
+        self.commands[command] = function (argvx, callback) {
+          log.verbose('command', command, argvx);
+          return commonjsRequire('./' + command)(self, argvx, callback);
+        };
+      });
+      this.parseArgv(argv);
+
+      // this is set to true after the binary.host property was set to
+      // either staging_host or production_host.
+      this.binaryHostSet = false;
+    }
+    inherits(Run, EE);
+    exports.Run = Run;
+    const proto = Run.prototype;
+
+    /**
+     * Export the contents of the package.json.
+     */
+
+    proto.package = require$$9;
+
+    /**
+     * nopt configuration definitions
+     */
+
+    proto.configDefs = {
+      help: Boolean,
+      // everywhere
+      arch: String,
+      // 'configure'
+      debug: Boolean,
+      // 'build'
+      directory: String,
+      // bin
+      proxy: String,
+      // 'install'
+      loglevel: String // everywhere
+    };
+
+    /**
+     * nopt shorthands
+     */
+
+    proto.shorthands = {
+      release: '--no-debug',
+      C: '--directory',
+      debug: '--debug',
+      j: '--jobs',
+      silent: '--loglevel=silent',
+      silly: '--loglevel=silly',
+      verbose: '--loglevel=verbose'
+    };
+
+    /**
+     * expose the command aliases for the bin file to use.
+     */
+
+    proto.aliases = aliases;
+
+    /**
+     * Parses the given argv array and sets the 'opts', 'argv',
+     * 'command', and 'package_json' properties.
+     */
+
+    proto.parseArgv = function parseOpts(argv) {
+      this.opts = nopt(this.configDefs, this.shorthands, argv);
+      this.argv = this.opts.argv.remain.slice();
+      const commands = this.todo = [];
+
+      // create a copy of the argv array with aliases mapped
+      argv = this.argv.map(arg => {
+        // is this an alias?
+        if (arg in this.aliases) {
+          arg = this.aliases[arg];
+        }
+        return arg;
+      });
+
+      // process the mapped args into "command" objects ("name" and "args" props)
+      argv.slice().forEach(arg => {
+        if (arg in this.commands) {
+          const args = argv.splice(0, argv.indexOf(arg));
+          argv.shift();
+          if (commands.length > 0) {
+            commands[commands.length - 1].args = args;
+          }
+          commands.push({
+            name: arg,
+            args: []
+          });
+        }
+      });
+      if (commands.length > 0) {
+        commands[commands.length - 1].args = argv.splice(0);
+      }
+
+      // if a directory was specified package.json is assumed to be relative
+      // to it.
+      let package_json_path = this.package_json_path;
+      if (this.opts.directory) {
+        package_json_path = path$1.join(this.opts.directory, package_json_path);
+      }
+      this.package_json = JSON.parse(fs.readFileSync(package_json_path));
+
+      // expand commands entries for multiple napi builds
+      this.todo = napi.expand_commands(this.package_json, this.opts, commands);
+
+      // support for inheriting config env variables from npm
+      const npm_config_prefix = 'npm_config_';
+      Object.keys(process.env).forEach(name => {
+        if (name.indexOf(npm_config_prefix) !== 0) return;
+        const val = process.env[name];
+        if (name === npm_config_prefix + 'loglevel') {
+          log.level = val;
+        } else {
+          // add the user-defined options to the config
+          name = name.substring(npm_config_prefix.length);
+          // avoid npm argv clobber already present args
+          // which avoids problem of 'npm test' calling
+          // script that runs unique npm install commands
+          if (name === 'argv') {
+            if (this.opts.argv && this.opts.argv.remain && this.opts.argv.remain.length) ; else {
+              this.opts[name] = val;
+            }
+          } else {
+            this.opts[name] = val;
+          }
+        }
+      });
+      if (this.opts.loglevel) {
+        log.level = this.opts.loglevel;
+      }
+      log.resume();
+    };
+
+    /**
+     * allow the binary.host property to be set at execution time.
+     *
+     * for this to take effect requires all the following to be true.
+     * - binary is a property in package.json
+     * - binary.host is falsey
+     * - binary.staging_host is not empty
+     * - binary.production_host is not empty
+     *
+     * if any of the previous checks fail then the function returns an empty string
+     * and makes no changes to package.json's binary property.
+     *
+     *
+     * if command is "publish" then the default is set to "binary.staging_host"
+     * if command is not "publish" the the default is set to "binary.production_host"
+     *
+     * if the command-line option '--s3_host' is set to "staging" or "production" then
+     * "binary.host" is set to the specified "staging_host" or "production_host". if
+     * '--s3_host' is any other value an exception is thrown.
+     *
+     * if '--s3_host' is not present then "binary.host" is set to the default as above.
+     *
+     * this strategy was chosen so that any command other than "publish" or "unpublish" uses "production"
+     * as the default without requiring any command-line options but that "publish" and "unpublish" require
+     * '--s3_host production_host' to be specified in order to *really* publish (or unpublish). publishing
+     * to staging can be done freely without worrying about disturbing any production releases.
+     */
+    proto.setBinaryHostProperty = function (command) {
+      if (this.binaryHostSet) {
+        return this.package_json.binary.host;
+      }
+      const p = this.package_json;
+      // don't set anything if host is present. it must be left blank to trigger this.
+      if (!p || !p.binary || p.binary.host) {
+        return '';
+      }
+      // and both staging and production must be present. errors will be reported later.
+      if (!p.binary.staging_host || !p.binary.production_host) {
+        return '';
+      }
+      let target = 'production_host';
+      if (command === 'publish' || command === 'unpublish') {
+        target = 'staging_host';
+      }
+      // the environment variable has priority over the default or the command line. if
+      // either the env var or the command line option are invalid throw an error.
+      const npg_s3_host = process.env.node_pre_gyp_s3_host;
+      if (npg_s3_host === 'staging' || npg_s3_host === 'production') {
+        target = `${npg_s3_host}_host`;
+      } else if (this.opts['s3_host'] === 'staging' || this.opts['s3_host'] === 'production') {
+        target = `${this.opts['s3_host']}_host`;
+      } else if (this.opts['s3_host'] || npg_s3_host) {
+        throw new Error(`invalid s3_host ${this.opts['s3_host'] || npg_s3_host}`);
+      }
+      p.binary.host = p.binary[target];
+      this.binaryHostSet = true;
+      return p.binary.host;
+    };
+
+    /**
+     * Returns the usage instructions for node-pre-gyp.
+     */
+
+    proto.usage = function usage() {
+      const str = ['', '  Usage: node-pre-gyp <command> [options]', '', '  where <command> is one of:', cli_commands.map(c => {
+        return '    - ' + c + ' - ' + commonjsRequire('./' + c).usage;
+      }).join('\n'), '', 'node-pre-gyp@' + this.version + '  ' + path$1.resolve(__dirname, '..'), 'node@' + process.versions.node].join('\n');
+      return str;
+    };
+
+    /**
+     * Version number getter.
+     */
+
+    Object.defineProperty(proto, 'version', {
+      get: function () {
+        return this.package.version;
+      },
+      enumerable: true
+    });
+  })(nodePreGyp, nodePreGyp.exports);
+  return nodePreGyp.exports;
+}
+
+(function (module, exports) {
+  const binary = requireNodePreGyp();
+  const path$1 = path;
+  const binding_path = binary.find(path$1.resolve(path$1.join(__dirname, '../package.json')));
+  const binding = commonjsRequire(binding_path);
+  module.exports = binding;
+})(sqlite3Binding);
+var sqlite3BindingExports = sqlite3Binding.exports;
+
+var trace = {};
+
+var hasRequiredTrace;
+function requireTrace() {
+  if (hasRequiredTrace) return trace;
+  hasRequiredTrace = 1;
+  // Inspired by https://github.com/tlrobinson/long-stack-traces
+  const util = require$$0$2;
+  function extendTrace(object, property, pos) {
+    const old = object[property];
+    object[property] = function () {
+      const error = new Error();
+      const name = object.constructor.name + '#' + property + '(' + Array.prototype.slice.call(arguments).map(function (el) {
+        return util.inspect(el, false, 0);
+      }).join(', ') + ')';
+      if (typeof pos === 'undefined') pos = -1;
+      if (pos < 0) pos += arguments.length;
+      const cb = arguments[pos];
+      if (typeof arguments[pos] === 'function') {
+        arguments[pos] = function replacement() {
+          const err = arguments[0];
+          if (err && err.stack && !err.__augmented) {
+            err.stack = filter(err).join('\n');
+            err.stack += '\n--> in ' + name;
+            err.stack += '\n' + filter(error).slice(1).join('\n');
+            err.__augmented = true;
+          }
+          return cb.apply(this, arguments);
+        };
+      }
+      return old.apply(this, arguments);
+    };
+  }
+  trace.extendTrace = extendTrace;
+  function filter(error) {
+    return error.stack.split('\n').filter(function (line) {
+      return line.indexOf(__filename) < 0;
+    });
+  }
+  return trace;
+}
+
+(function (module, exports) {
+  const path$1 = path;
+  const sqlite3 = sqlite3BindingExports;
+  const EventEmitter = require$$2$1.EventEmitter;
+  module.exports = sqlite3;
+  function normalizeMethod(fn) {
+    return function (sql) {
+      let errBack;
+      const args = Array.prototype.slice.call(arguments, 1);
+      if (typeof args[args.length - 1] === 'function') {
+        const callback = args[args.length - 1];
+        errBack = function (err) {
+          if (err) {
+            callback(err);
+          }
+        };
+      }
+      const statement = new Statement(this, sql, errBack);
+      return fn.call(this, statement, args);
+    };
+  }
+  function inherits(target, source) {
+    for (const k in source.prototype) target.prototype[k] = source.prototype[k];
+  }
+  sqlite3.cached = {
+    Database: function (file, a, b) {
+      if (file === '' || file === ':memory:') {
+        // Don't cache special databases.
+        return new Database(file, a, b);
+      }
+      let db;
+      file = path$1.resolve(file);
+      if (!sqlite3.cached.objects[file]) {
+        db = sqlite3.cached.objects[file] = new Database(file, a, b);
+      } else {
+        // Make sure the callback is called.
+        db = sqlite3.cached.objects[file];
+        const callback = typeof a === 'number' ? b : a;
+        if (typeof callback === 'function') {
+          function cb() {
+            callback.call(db, null);
+          }
+          if (db.open) process.nextTick(cb);else db.once('open', cb);
+        }
+      }
+      return db;
+    },
+    objects: {}
+  };
+  const Database = sqlite3.Database;
+  const Statement = sqlite3.Statement;
+  const Backup = sqlite3.Backup;
+  inherits(Database, EventEmitter);
+  inherits(Statement, EventEmitter);
+  inherits(Backup, EventEmitter);
+
+  // Database#prepare(sql, [bind1, bind2, ...], [callback])
+  Database.prototype.prepare = normalizeMethod(function (statement, params) {
+    return params.length ? statement.bind.apply(statement, params) : statement;
+  });
+
+  // Database#run(sql, [bind1, bind2, ...], [callback])
+  Database.prototype.run = normalizeMethod(function (statement, params) {
+    statement.run.apply(statement, params).finalize();
+    return this;
+  });
+
+  // Database#get(sql, [bind1, bind2, ...], [callback])
+  Database.prototype.get = normalizeMethod(function (statement, params) {
+    statement.get.apply(statement, params).finalize();
+    return this;
+  });
+
+  // Database#all(sql, [bind1, bind2, ...], [callback])
+  Database.prototype.all = normalizeMethod(function (statement, params) {
+    statement.all.apply(statement, params).finalize();
+    return this;
+  });
+
+  // Database#each(sql, [bind1, bind2, ...], [callback], [complete])
+  Database.prototype.each = normalizeMethod(function (statement, params) {
+    statement.each.apply(statement, params).finalize();
+    return this;
+  });
+  Database.prototype.map = normalizeMethod(function (statement, params) {
+    statement.map.apply(statement, params).finalize();
+    return this;
+  });
+
+  // Database#backup(filename, [callback])
+  // Database#backup(filename, destName, sourceName, filenameIsDest, [callback])
+  Database.prototype.backup = function () {
+    let backup;
+    if (arguments.length <= 2) {
+      // By default, we write the main database out to the main database of the named file.
+      // This is the most likely use of the backup api.
+      backup = new Backup(this, arguments[0], 'main', 'main', true, arguments[1]);
+    } else {
+      // Otherwise, give the user full control over the sqlite3_backup_init arguments.
+      backup = new Backup(this, arguments[0], arguments[1], arguments[2], arguments[3], arguments[4]);
+    }
+    // Per the sqlite docs, exclude the following errors as non-fatal by default.
+    backup.retryErrors = [sqlite3.BUSY, sqlite3.LOCKED];
+    return backup;
+  };
+  Statement.prototype.map = function () {
+    const params = Array.prototype.slice.call(arguments);
+    const callback = params.pop();
+    params.push(function (err, rows) {
+      if (err) return callback(err);
+      const result = {};
+      if (rows.length) {
+        const keys = Object.keys(rows[0]);
+        const key = keys[0];
+        if (keys.length > 2) {
+          // Value is an object
+          for (let i = 0; i < rows.length; i++) {
+            result[rows[i][key]] = rows[i];
+          }
+        } else {
+          const value = keys[1];
+          // Value is a plain value
+          for (let i = 0; i < rows.length; i++) {
+            result[rows[i][key]] = rows[i][value];
+          }
+        }
+      }
+      callback(err, result);
+    });
+    return this.all.apply(this, params);
+  };
+  let isVerbose = false;
+  const supportedEvents = ['trace', 'profile', 'change'];
+  Database.prototype.addListener = Database.prototype.on = function (type) {
+    const val = EventEmitter.prototype.addListener.apply(this, arguments);
+    if (supportedEvents.indexOf(type) >= 0) {
+      this.configure(type, true);
+    }
+    return val;
+  };
+  Database.prototype.removeListener = function (type) {
+    const val = EventEmitter.prototype.removeListener.apply(this, arguments);
+    if (supportedEvents.indexOf(type) >= 0 && !this._events[type]) {
+      this.configure(type, false);
+    }
+    return val;
+  };
+  Database.prototype.removeAllListeners = function (type) {
+    const val = EventEmitter.prototype.removeAllListeners.apply(this, arguments);
+    if (supportedEvents.indexOf(type) >= 0) {
+      this.configure(type, false);
+    }
+    return val;
+  };
+
+  // Save the stack trace over EIO callbacks.
+  sqlite3.verbose = function () {
+    if (!isVerbose) {
+      const trace = requireTrace();
+      ['prepare', 'get', 'run', 'all', 'each', 'map', 'close', 'exec'].forEach(function (name) {
+        trace.extendTrace(Database.prototype, name);
+      });
+      ['bind', 'get', 'run', 'all', 'each', 'map', 'reset', 'finalize'].forEach(function (name) {
+        trace.extendTrace(Statement.prototype, name);
+      });
+      isVerbose = true;
+    }
+    return sqlite3;
+  };
+})(sqlite3$1);
+var sqlite3Exports = sqlite3$1.exports;
+var sqlite3 = /*@__PURE__*/getDefaultExportFromCjs(sqlite3Exports);
+
+function SQLiteResult(error, insertId, rowsAffected, rows) {
   this.error = error;
   this.insertId = insertId;
   this.rowsAffected = rowsAffected;
   this.rows = rows;
 }
-var SQLiteResult_1 = SQLiteResult$1;
 
-var sqlite3 = require('sqlite3');
-var SQLiteResult = SQLiteResult_1;
 var READ_ONLY_ERROR = new Error('could not prepare statement (23 not authorized)');
 function SQLiteDatabase(name, opts) {
   opts = opts || {};
@@ -9811,28 +24028,28 @@ SQLiteDatabase.prototype.exec = function exec(queries, readOnly, callback) {
   }
   doNext();
 };
-var SQLiteDatabase_1 = SQLiteDatabase;
-var SQLiteDatabase$1 = /*@__PURE__*/getDefaultExportFromCjs(SQLiteDatabase_1);
 
 /**
  * @param {string} name
  * @returns {SQLiteDatabase}
  */
 function wrappedSQLiteDatabase(name) {
-  const db = new SQLiteDatabase$1(name);
+  const db = new SQLiteDatabase(name, {});
   if (CFG.sqlBusyTimeout) {
-    db._db.configure('busyTimeout', CFG.sqlBusyTimeout); // Default is 1000
+    db._db.configure('busyTimeout', /** @type {number} */CFG.sqlBusyTimeout); // Default is 1000
   }
 
   if (CFG.sqlTrace) {
+    // @ts-expect-error native API?
     db._db.configure('trace', CFG.sqlTrace);
   }
   if (CFG.sqlProfile) {
+    // @ts-expect-error native API?
     db._db.configure('profile', CFG.sqlProfile);
   }
   return db;
 }
-const nodeWebSQL = customOpenDatabase(wrappedSQLiteDatabase);
+const nodeWebSQL = customOpenDatabase(wrappedSQLiteDatabase, {});
 
 // ID_Start (includes Other_ID_Start)
 const UnicodeIDStart = '(?:[$A-Z_a-z\\xAA\\xB5\\xBA\\xC0-\\xD6\\xD8-\\xF6\\xF8-\\u02C1\\u02C6-\\u02D1\\u02E0-\\u02E4\\u02EC\\u02EE\\u0370-\\u0374\\u0376\\u0377\\u037A-\\u037D\\u037F\\u0386\\u0388-\\u038A\\u038C\\u038E-\\u03A1\\u03A3-\\u03F5\\u03F7-\\u0481\\u048A-\\u052F\\u0531-\\u0556\\u0559\\u0561-\\u0587\\u05D0-\\u05EA\\u05F0-\\u05F2\\u0620-\\u064A\\u066E\\u066F\\u0671-\\u06D3\\u06D5\\u06E5\\u06E6\\u06EE\\u06EF\\u06FA-\\u06FC\\u06FF\\u0710\\u0712-\\u072F\\u074D-\\u07A5\\u07B1\\u07CA-\\u07EA\\u07F4\\u07F5\\u07FA\\u0800-\\u0815\\u081A\\u0824\\u0828\\u0840-\\u0858\\u08A0-\\u08B4\\u08B6-\\u08BD\\u0904-\\u0939\\u093D\\u0950\\u0958-\\u0961\\u0971-\\u0980\\u0985-\\u098C\\u098F\\u0990\\u0993-\\u09A8\\u09AA-\\u09B0\\u09B2\\u09B6-\\u09B9\\u09BD\\u09CE\\u09DC\\u09DD\\u09DF-\\u09E1\\u09F0\\u09F1\\u0A05-\\u0A0A\\u0A0F\\u0A10\\u0A13-\\u0A28\\u0A2A-\\u0A30\\u0A32\\u0A33\\u0A35\\u0A36\\u0A38\\u0A39\\u0A59-\\u0A5C\\u0A5E\\u0A72-\\u0A74\\u0A85-\\u0A8D\\u0A8F-\\u0A91\\u0A93-\\u0AA8\\u0AAA-\\u0AB0\\u0AB2\\u0AB3\\u0AB5-\\u0AB9\\u0ABD\\u0AD0\\u0AE0\\u0AE1\\u0AF9\\u0B05-\\u0B0C\\u0B0F\\u0B10\\u0B13-\\u0B28\\u0B2A-\\u0B30\\u0B32\\u0B33\\u0B35-\\u0B39\\u0B3D\\u0B5C\\u0B5D\\u0B5F-\\u0B61\\u0B71\\u0B83\\u0B85-\\u0B8A\\u0B8E-\\u0B90\\u0B92-\\u0B95\\u0B99\\u0B9A\\u0B9C\\u0B9E\\u0B9F\\u0BA3\\u0BA4\\u0BA8-\\u0BAA\\u0BAE-\\u0BB9\\u0BD0\\u0C05-\\u0C0C\\u0C0E-\\u0C10\\u0C12-\\u0C28\\u0C2A-\\u0C39\\u0C3D\\u0C58-\\u0C5A\\u0C60\\u0C61\\u0C80\\u0C85-\\u0C8C\\u0C8E-\\u0C90\\u0C92-\\u0CA8\\u0CAA-\\u0CB3\\u0CB5-\\u0CB9\\u0CBD\\u0CDE\\u0CE0\\u0CE1\\u0CF1\\u0CF2\\u0D05-\\u0D0C\\u0D0E-\\u0D10\\u0D12-\\u0D3A\\u0D3D\\u0D4E\\u0D54-\\u0D56\\u0D5F-\\u0D61\\u0D7A-\\u0D7F\\u0D85-\\u0D96\\u0D9A-\\u0DB1\\u0DB3-\\u0DBB\\u0DBD\\u0DC0-\\u0DC6\\u0E01-\\u0E30\\u0E32\\u0E33\\u0E40-\\u0E46\\u0E81\\u0E82\\u0E84\\u0E87\\u0E88\\u0E8A\\u0E8D\\u0E94-\\u0E97\\u0E99-\\u0E9F\\u0EA1-\\u0EA3\\u0EA5\\u0EA7\\u0EAA\\u0EAB\\u0EAD-\\u0EB0\\u0EB2\\u0EB3\\u0EBD\\u0EC0-\\u0EC4\\u0EC6\\u0EDC-\\u0EDF\\u0F00\\u0F40-\\u0F47\\u0F49-\\u0F6C\\u0F88-\\u0F8C\\u1000-\\u102A\\u103F\\u1050-\\u1055\\u105A-\\u105D\\u1061\\u1065\\u1066\\u106E-\\u1070\\u1075-\\u1081\\u108E\\u10A0-\\u10C5\\u10C7\\u10CD\\u10D0-\\u10FA\\u10FC-\\u1248\\u124A-\\u124D\\u1250-\\u1256\\u1258\\u125A-\\u125D\\u1260-\\u1288\\u128A-\\u128D\\u1290-\\u12B0\\u12B2-\\u12B5\\u12B8-\\u12BE\\u12C0\\u12C2-\\u12C5\\u12C8-\\u12D6\\u12D8-\\u1310\\u1312-\\u1315\\u1318-\\u135A\\u1380-\\u138F\\u13A0-\\u13F5\\u13F8-\\u13FD\\u1401-\\u166C\\u166F-\\u167F\\u1681-\\u169A\\u16A0-\\u16EA\\u16EE-\\u16F8\\u1700-\\u170C\\u170E-\\u1711\\u1720-\\u1731\\u1740-\\u1751\\u1760-\\u176C\\u176E-\\u1770\\u1780-\\u17B3\\u17D7\\u17DC\\u1820-\\u1877\\u1880-\\u18A8\\u18AA\\u18B0-\\u18F5\\u1900-\\u191E\\u1950-\\u196D\\u1970-\\u1974\\u1980-\\u19AB\\u19B0-\\u19C9\\u1A00-\\u1A16\\u1A20-\\u1A54\\u1AA7\\u1B05-\\u1B33\\u1B45-\\u1B4B\\u1B83-\\u1BA0\\u1BAE\\u1BAF\\u1BBA-\\u1BE5\\u1C00-\\u1C23\\u1C4D-\\u1C4F\\u1C5A-\\u1C7D\\u1C80-\\u1C88\\u1CE9-\\u1CEC\\u1CEE-\\u1CF1\\u1CF5\\u1CF6\\u1D00-\\u1DBF\\u1E00-\\u1F15\\u1F18-\\u1F1D\\u1F20-\\u1F45\\u1F48-\\u1F4D\\u1F50-\\u1F57\\u1F59\\u1F5B\\u1F5D\\u1F5F-\\u1F7D\\u1F80-\\u1FB4\\u1FB6-\\u1FBC\\u1FBE\\u1FC2-\\u1FC4\\u1FC6-\\u1FCC\\u1FD0-\\u1FD3\\u1FD6-\\u1FDB\\u1FE0-\\u1FEC\\u1FF2-\\u1FF4\\u1FF6-\\u1FFC\\u2071\\u207F\\u2090-\\u209C\\u2102\\u2107\\u210A-\\u2113\\u2115\\u2118-\\u211D\\u2124\\u2126\\u2128\\u212A-\\u2139\\u213C-\\u213F\\u2145-\\u2149\\u214E\\u2160-\\u2188\\u2C00-\\u2C2E\\u2C30-\\u2C5E\\u2C60-\\u2CE4\\u2CEB-\\u2CEE\\u2CF2\\u2CF3\\u2D00-\\u2D25\\u2D27\\u2D2D\\u2D30-\\u2D67\\u2D6F\\u2D80-\\u2D96\\u2DA0-\\u2DA6\\u2DA8-\\u2DAE\\u2DB0-\\u2DB6\\u2DB8-\\u2DBE\\u2DC0-\\u2DC6\\u2DC8-\\u2DCE\\u2DD0-\\u2DD6\\u2DD8-\\u2DDE\\u3005-\\u3007\\u3021-\\u3029\\u3031-\\u3035\\u3038-\\u303C\\u3041-\\u3096\\u309B-\\u309F\\u30A1-\\u30FA\\u30FC-\\u30FF\\u3105-\\u312D\\u3131-\\u318E\\u31A0-\\u31BA\\u31F0-\\u31FF\\u3400-\\u4DB5\\u4E00-\\u9FD5\\uA000-\\uA48C\\uA4D0-\\uA4FD\\uA500-\\uA60C\\uA610-\\uA61F\\uA62A\\uA62B\\uA640-\\uA66E\\uA67F-\\uA69D\\uA6A0-\\uA6EF\\uA717-\\uA71F\\uA722-\\uA788\\uA78B-\\uA7AE\\uA7B0-\\uA7B7\\uA7F7-\\uA801\\uA803-\\uA805\\uA807-\\uA80A\\uA80C-\\uA822\\uA840-\\uA873\\uA882-\\uA8B3\\uA8F2-\\uA8F7\\uA8FB\\uA8FD\\uA90A-\\uA925\\uA930-\\uA946\\uA960-\\uA97C\\uA984-\\uA9B2\\uA9CF\\uA9E0-\\uA9E4\\uA9E6-\\uA9EF\\uA9FA-\\uA9FE\\uAA00-\\uAA28\\uAA40-\\uAA42\\uAA44-\\uAA4B\\uAA60-\\uAA76\\uAA7A\\uAA7E-\\uAAAF\\uAAB1\\uAAB5\\uAAB6\\uAAB9-\\uAABD\\uAAC0\\uAAC2\\uAADB-\\uAADD\\uAAE0-\\uAAEA\\uAAF2-\\uAAF4\\uAB01-\\uAB06\\uAB09-\\uAB0E\\uAB11-\\uAB16\\uAB20-\\uAB26\\uAB28-\\uAB2E\\uAB30-\\uAB5A\\uAB5C-\\uAB65\\uAB70-\\uABE2\\uAC00-\\uD7A3\\uD7B0-\\uD7C6\\uD7CB-\\uD7FB\\uF900-\\uFA6D\\uFA70-\\uFAD9\\uFB00-\\uFB06\\uFB13-\\uFB17\\uFB1D\\uFB1F-\\uFB28\\uFB2A-\\uFB36\\uFB38-\\uFB3C\\uFB3E\\uFB40\\uFB41\\uFB43\\uFB44\\uFB46-\\uFBB1\\uFBD3-\\uFD3D\\uFD50-\\uFD8F\\uFD92-\\uFDC7\\uFDF0-\\uFDFB\\uFE70-\\uFE74\\uFE76-\\uFEFC\\uFF21-\\uFF3A\\uFF41-\\uFF5A\\uFF66-\\uFFBE\\uFFC2-\\uFFC7\\uFFCA-\\uFFCF\\uFFD2-\\uFFD7\\uFFDA-\\uFFDC]|\\uD800[\\uDC00-\\uDC0B\\uDC0D-\\uDC26\\uDC28-\\uDC3A\\uDC3C\\uDC3D\\uDC3F-\\uDC4D\\uDC50-\\uDC5D\\uDC80-\\uDCFA\\uDD40-\\uDD74\\uDE80-\\uDE9C\\uDEA0-\\uDED0\\uDF00-\\uDF1F\\uDF30-\\uDF4A\\uDF50-\\uDF75\\uDF80-\\uDF9D\\uDFA0-\\uDFC3\\uDFC8-\\uDFCF\\uDFD1-\\uDFD5]|\\uD801[\\uDC00-\\uDC9D\\uDCB0-\\uDCD3\\uDCD8-\\uDCFB\\uDD00-\\uDD27\\uDD30-\\uDD63\\uDE00-\\uDF36\\uDF40-\\uDF55\\uDF60-\\uDF67]|\\uD802[\\uDC00-\\uDC05\\uDC08\\uDC0A-\\uDC35\\uDC37\\uDC38\\uDC3C\\uDC3F-\\uDC55\\uDC60-\\uDC76\\uDC80-\\uDC9E\\uDCE0-\\uDCF2\\uDCF4\\uDCF5\\uDD00-\\uDD15\\uDD20-\\uDD39\\uDD80-\\uDDB7\\uDDBE\\uDDBF\\uDE00\\uDE10-\\uDE13\\uDE15-\\uDE17\\uDE19-\\uDE33\\uDE60-\\uDE7C\\uDE80-\\uDE9C\\uDEC0-\\uDEC7\\uDEC9-\\uDEE4\\uDF00-\\uDF35\\uDF40-\\uDF55\\uDF60-\\uDF72\\uDF80-\\uDF91]|\\uD803[\\uDC00-\\uDC48\\uDC80-\\uDCB2\\uDCC0-\\uDCF2]|\\uD804[\\uDC03-\\uDC37\\uDC83-\\uDCAF\\uDCD0-\\uDCE8\\uDD03-\\uDD26\\uDD50-\\uDD72\\uDD76\\uDD83-\\uDDB2\\uDDC1-\\uDDC4\\uDDDA\\uDDDC\\uDE00-\\uDE11\\uDE13-\\uDE2B\\uDE80-\\uDE86\\uDE88\\uDE8A-\\uDE8D\\uDE8F-\\uDE9D\\uDE9F-\\uDEA8\\uDEB0-\\uDEDE\\uDF05-\\uDF0C\\uDF0F\\uDF10\\uDF13-\\uDF28\\uDF2A-\\uDF30\\uDF32\\uDF33\\uDF35-\\uDF39\\uDF3D\\uDF50\\uDF5D-\\uDF61]|\\uD805[\\uDC00-\\uDC34\\uDC47-\\uDC4A\\uDC80-\\uDCAF\\uDCC4\\uDCC5\\uDCC7\\uDD80-\\uDDAE\\uDDD8-\\uDDDB\\uDE00-\\uDE2F\\uDE44\\uDE80-\\uDEAA\\uDF00-\\uDF19]|\\uD806[\\uDCA0-\\uDCDF\\uDCFF\\uDEC0-\\uDEF8]|\\uD807[\\uDC00-\\uDC08\\uDC0A-\\uDC2E\\uDC40\\uDC72-\\uDC8F]|\\uD808[\\uDC00-\\uDF99]|\\uD809[\\uDC00-\\uDC6E\\uDC80-\\uDD43]|[\\uD80C\\uD81C-\\uD820\\uD840-\\uD868\\uD86A-\\uD86C\\uD86F-\\uD872][\\uDC00-\\uDFFF]|\\uD80D[\\uDC00-\\uDC2E]|\\uD811[\\uDC00-\\uDE46]|\\uD81A[\\uDC00-\\uDE38\\uDE40-\\uDE5E\\uDED0-\\uDEED\\uDF00-\\uDF2F\\uDF40-\\uDF43\\uDF63-\\uDF77\\uDF7D-\\uDF8F]|\\uD81B[\\uDF00-\\uDF44\\uDF50\\uDF93-\\uDF9F\\uDFE0]|\\uD821[\\uDC00-\\uDFEC]|\\uD822[\\uDC00-\\uDEF2]|\\uD82C[\\uDC00\\uDC01]|\\uD82F[\\uDC00-\\uDC6A\\uDC70-\\uDC7C\\uDC80-\\uDC88\\uDC90-\\uDC99]|\\uD835[\\uDC00-\\uDC54\\uDC56-\\uDC9C\\uDC9E\\uDC9F\\uDCA2\\uDCA5\\uDCA6\\uDCA9-\\uDCAC\\uDCAE-\\uDCB9\\uDCBB\\uDCBD-\\uDCC3\\uDCC5-\\uDD05\\uDD07-\\uDD0A\\uDD0D-\\uDD14\\uDD16-\\uDD1C\\uDD1E-\\uDD39\\uDD3B-\\uDD3E\\uDD40-\\uDD44\\uDD46\\uDD4A-\\uDD50\\uDD52-\\uDEA5\\uDEA8-\\uDEC0\\uDEC2-\\uDEDA\\uDEDC-\\uDEFA\\uDEFC-\\uDF14\\uDF16-\\uDF34\\uDF36-\\uDF4E\\uDF50-\\uDF6E\\uDF70-\\uDF88\\uDF8A-\\uDFA8\\uDFAA-\\uDFC2\\uDFC4-\\uDFCB]|\\uD83A[\\uDC00-\\uDCC4\\uDD00-\\uDD43]|\\uD83B[\\uDE00-\\uDE03\\uDE05-\\uDE1F\\uDE21\\uDE22\\uDE24\\uDE27\\uDE29-\\uDE32\\uDE34-\\uDE37\\uDE39\\uDE3B\\uDE42\\uDE47\\uDE49\\uDE4B\\uDE4D-\\uDE4F\\uDE51\\uDE52\\uDE54\\uDE57\\uDE59\\uDE5B\\uDE5D\\uDE5F\\uDE61\\uDE62\\uDE64\\uDE67-\\uDE6A\\uDE6C-\\uDE72\\uDE74-\\uDE77\\uDE79-\\uDE7C\\uDE7E\\uDE80-\\uDE89\\uDE8B-\\uDE9B\\uDEA1-\\uDEA3\\uDEA5-\\uDEA9\\uDEAB-\\uDEBB]|\\uD869[\\uDC00-\\uDED6\\uDF00-\\uDFFF]|\\uD86D[\\uDC00-\\uDF34\\uDF40-\\uDFFF]|\\uD86E[\\uDC00-\\uDC1D\\uDC20-\\uDFFF]|\\uD873[\\uDC00-\\uDEA1]|\\uD87E[\\uDC00-\\uDE1D])';
@@ -9851,8 +24068,8 @@ CFG.win = {
 };
 
 /**
- * @param {null|{}|Window} idb
- * @param {import('./CFG.js').CFG} initialConfig
+ * @param {import('./setGlobalVars.js').ShimmedObject} idb
+ * @param {import('./CFG.js').default} initialConfig
  * @returns {{}|Window}
  */
 const __setGlobalVars = function (idb, initialConfig = {}) {
@@ -9860,6 +24077,10 @@ const __setGlobalVars = function (idb, initialConfig = {}) {
     fs: fs$1,
     ...initialConfig
   });
+  /* istanbul ignore next -- TS guard */
+  if (!obj.shimIndexedDB) {
+    return obj;
+  }
   obj.shimIndexedDB.__setUnicodeIdentifiers(UnicodeIdentifiers);
   return obj;
 };

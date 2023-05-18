@@ -10,6 +10,7 @@ const readonlyProperties = ['oldVersion', 'newVersion'];
  * @param {string} type
  */
 function IDBVersionChangeEvent (type /* , eventInitDict */) { // eventInitDict is a IDBVersionChangeEventInit (but is not defined as a global)
+    // @ts-expect-error It's passing only one!
     ShimEvent.call(this, type);
     this[Symbol.toStringTag] = 'IDBVersionChangeEvent';
     this.toString = function () {
@@ -19,13 +20,21 @@ function IDBVersionChangeEvent (type /* , eventInitDict */) { // eventInitDict i
     this.__eventInitDict = arguments[1] || {};
 }
 
+// @ts-expect-error It's ok
 IDBVersionChangeEvent.prototype = Object.create(ShimEvent.prototype);
 
 IDBVersionChangeEvent.prototype[Symbol.toStringTag] = 'IDBVersionChangeEventPrototype';
 
+/**
+ * @typedef {number} Integer
+ */
+
 readonlyProperties.forEach((prop) => {
     // Ensure for proper interface testing that "get <name>" is the function name
     const o = {
+        /**
+         * @returns {Integer|null}
+         */
         get [prop] () {
             if (!(this instanceof IDBVersionChangeEvent)) {
                 throw new TypeError('Illegal invocation');
@@ -33,14 +42,25 @@ readonlyProperties.forEach((prop) => {
             return (this.__eventInitDict && this.__eventInitDict[prop]) || (prop === 'oldVersion' ? 0 : null);
         }
     };
-    const desc = Object.getOwnPropertyDescriptor(o, prop);
+    const desc = /** @type {PropertyDescriptor} */ (
+        Object.getOwnPropertyDescriptor(o, prop)
+    );
     // desc.enumerable = true; // Default
     // desc.configurable = true; // Default
     Object.defineProperty(IDBVersionChangeEvent.prototype, prop, desc);
 });
 
 Object.defineProperty(IDBVersionChangeEvent, Symbol.hasInstance, {
-    value: (obj) => util.isObj(obj) && 'oldVersion' in obj && typeof obj.defaultPrevented === 'boolean'
+    /**
+     * @typedef {any} AnyValue
+     */
+    value:
+        /**
+         * @param {AnyValue} obj
+         * @returns {boolean}
+         */
+        (obj) => util.isObj(obj) && 'oldVersion' in obj &&
+        'defaultPrevented' in obj && typeof obj.defaultPrevented === 'boolean'
 });
 
 Object.defineProperty(IDBVersionChangeEvent.prototype, 'constructor', {

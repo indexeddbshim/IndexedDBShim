@@ -8,6 +8,7 @@ import CFG from './CFG.js';
  * @returns {DOMException}
  */
 function createNativeDOMException (name, message) {
+    // @ts-expect-error It's ok
     return new DOMException.prototype.constructor(
         message,
         name || 'DOMException'
@@ -106,7 +107,7 @@ const legacyCodes = {
 
 /**
  *
- * @returns {DOMException}
+ * @returns {typeof DOMException}
  */
 function createNonNativeDOMExceptionClass () {
     /**
@@ -117,7 +118,9 @@ function createNonNativeDOMExceptionClass () {
     function DOMException (message, name) {
         // const err = Error.prototype.constructor.call(this, message); // Any use to this? Won't set this.message
         this[Symbol.toStringTag] = 'DOMException';
-        this._code = name in codes ? codes[name] : (legacyCodes[name] || 0);
+        this._code = name in codes
+            ? codes[/** @type {Code} */ (name)]
+            : (legacyCodes[/** @type {LegacyCode} */ (name)] || 0);
         this._name = name || 'Error';
         // We avoid `String()` in this next line as it converts Symbols
         this._message = message === undefined ? '' : ('' + message); // eslint-disable-line no-implicit-coercion
@@ -155,16 +158,22 @@ function createNonNativeDOMExceptionClass () {
     const DummyDOMException = function DOMException () { /* */ };
     /* eslint-enable func-name-matching */
     DummyDOMException.prototype = Object.create(Error.prototype); // Intended for subclassing
-    ['name', 'message'].forEach((prop) => {
+    /** @type {const} */ (['name', 'message']).forEach((prop) => {
         Object.defineProperty(DummyDOMException.prototype, prop, {
             enumerable: true,
+            /**
+             * @this {DOMException}
+             * @returns {string}
+             */
             get () {
                 if (!(this instanceof DOMException ||
+                    // @ts-expect-error Just checking
                     this instanceof DummyDOMException ||
+                    // @ts-expect-error Just checking
                     this instanceof Error)) {
                     throw new TypeError('Illegal invocation');
                 }
-                return this['_' + prop];
+                return this[prop === 'name' ? '_name' : '_message'];
             }
         });
     });
@@ -176,6 +185,7 @@ function createNonNativeDOMExceptionClass () {
             throw new TypeError('Illegal invocation');
         }
     });
+    // @ts-expect-error It's ok
     DOMException.prototype = new DummyDOMException();
 
     DOMException.prototype[Symbol.toStringTag] = 'DOMExceptionPrototype';
@@ -183,19 +193,25 @@ function createNonNativeDOMExceptionClass () {
         writable: false
     });
 
-    Object.keys(codes).forEach((codeName) => {
-        Object.defineProperty(DOMException.prototype, codeName, {
-            enumerable: true,
-            configurable: false,
-            value: codes[codeName]
-        });
-        Object.defineProperty(DOMException, codeName, {
-            enumerable: true,
-            configurable: false,
-            value: codes[codeName]
-        });
-    });
-    Object.keys(legacyCodes).forEach((codeName) => {
+    const keys = Object.keys(codes);
+
+    /** @type {(keyof codes)[]} */ (keys).forEach(
+        (codeName) => {
+            Object.defineProperty(DOMException.prototype, codeName, {
+                enumerable: true,
+                configurable: false,
+                value: codes[codeName]
+            });
+            Object.defineProperty(DOMException, codeName, {
+                enumerable: true,
+                configurable: false,
+                value: codes[codeName]
+            });
+        }
+    );
+    /** @type {(keyof legacyCodes)[]} */ (Object.keys(legacyCodes)).forEach((
+        codeName
+    ) => {
         Object.defineProperty(DOMException.prototype, codeName, {
             enumerable: true,
             configurable: false,
@@ -214,6 +230,7 @@ function createNonNativeDOMExceptionClass () {
         value: DOMException
     });
 
+    // @ts-expect-error We don't need all its properties
     return DOMException;
 }
 
@@ -230,20 +247,26 @@ function createNonNativeDOMException (name, message) {
 }
 
 /**
+ * @typedef {{
+ *   message: string|DOMString
+ * }} ErrorLike
+ */
+
+/**
  * Logs detailed error information to the console.
  * @param {string} name
  * @param {string} message
- * @param {string|Error|null} error
+ * @param {string|ErrorLike|boolean|null} [error]
  * @returns {void}
  */
 function logError (name, message, error) {
     if (CFG.DEBUG) {
-        if (error && error.message) {
-            error = error.message;
-        }
+        const msg = error && typeof error === 'object' && error.message
+            ? error.message
+            : /** @type {string} */ (error);
 
         const method = typeof (console.error) === 'function' ? 'error' : 'log';
-        console[method](name + ': ' + message + '. ' + (error || ''));
+        console[method](name + ': ' + message + '. ' + (msg || ''));
         console.trace && console.trace();
     }
 }
@@ -287,13 +310,11 @@ function findError (args) {
 }
 
 /**
- * @typedef {Error} SQLError
- */
-
-/**
  *
  * @param {SQLError} webSQLErr
- * @returns {DOMException}
+ * @returns {(DOMException|Error) & {
+ *   sqlError: SQLError
+ * }}
  */
 function webSQLErrback (webSQLErr) {
     let name, message;
@@ -321,7 +342,13 @@ function webSQLErrback (webSQLErr) {
     }
     }
     message += ' (' + webSQLErr.message + ')--(' + webSQLErr.code + ')';
-    const err = createDOMException(name, message);
+    const err =
+        /**
+         * @type {(Error | DOMException) & {
+         *   sqlError: SQLError
+         * }}
+         */
+        (createDOMException(name, message));
     err.sqlError = webSQLErr;
     return err;
 }
@@ -338,11 +365,25 @@ try {
 } catch (e) {}
 
 const createDOMException = useNativeDOMException
-    ? function (name, message, error) {
+    // eslint-disable-next-line operator-linebreak -- Need JSDoc
+    ? /**
+     * @param {string} name
+     * @param {string} message
+     * @param {ErrorLike} [error]
+     * @returns {DOMException}
+     */
+    function (name, message, error) {
         logError(name, message, error);
         return createNativeDOMException(name, message);
     }
-    : function (name, message, error) {
+    // eslint-disable-next-line operator-linebreak -- Need JSDoc
+    : /**
+    * @param {string} name
+    * @param {string} message
+    * @param {ErrorLike} [error]
+    * @returns {Error}
+    */
+    function (name, message, error) {
         logError(name, message, error);
         return createNonNativeDOMException(name, message);
     };

@@ -2,31 +2,35 @@ import {createDOMException} from './DOMException.js';
 import * as Key from './Key.js';
 import * as util from './util.js';
 
-const readonlyProperties = ['lower', 'upper', 'lowerOpen', 'upperOpen'];
+const readonlyProperties = /** @type {const} */ (['lower', 'upper', 'lowerOpen', 'upperOpen']);
 
-/* eslint-disable jsdoc/check-param-names */
+/**
+ * @typedef {globalThis.IDBKeyRange & {
+*   __lowerCached: string|null|false,
+*   __upperCached: string|null|false,
+*   __lowerOpen: boolean,
+* }} IDBKeyRangeFull
+*/
+
 /**
  * The IndexedDB KeyRange object.
  * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#dfn-key-range
- * @param {import('./Key.js').Key|null} lower
- * @param {import('./Key.js').Key|null} upper
- * @param {boolean} lowerOpen
- * @param {boolean} upperOpen
  * @throws {TypeError}
  * @class
  */
 function IDBKeyRange () {
-    /* eslint-enable jsdoc/check-param-names */
+    this.__lowerOpen = false;
+    this.__upperOpen = false;
     throw new TypeError('Illegal constructor');
 }
 const IDBKeyRangeAlias = IDBKeyRange;
 
 /**
- * @param {} lower
- * @param {} upper
- * @param {} lowerOpen
- * @param {} upperOpen
- * @returns {IDBKeyRange}
+ * @param {import('./Key.js').Key|null} lower
+ * @param {import('./Key.js').Key|null} upper
+ * @param {boolean} lowerOpen
+ * @param {boolean} upperOpen
+ * @returns {import('./IDBKeyRange.js').IDBKeyRangeFull}
  */
 IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
     /**
@@ -47,7 +51,10 @@ IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
             Key.convertValueToKeyRethrowingAndIfInvalid(upper);
         }
         if (lower !== undefined && upper !== undefined && lower !== upper) {
-            if (Key.encode(lower) > Key.encode(upper)) {
+            if (
+                /** @type {string} */ (Key.encode(lower)) >
+                /** @type {string} */ (Key.encode(upper))
+            ) {
                 throw createDOMException('DataError', '`lower` must not be greater than `upper` argument in `bound()` call.');
             }
         }
@@ -58,11 +65,14 @@ IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
         this.__upperOpen = Boolean(upperOpen);
     }
     IDBKeyRange.prototype = IDBKeyRangeAlias.prototype;
+
+    // @ts-expect-error Properties added by `defineProperty/ies`
     return new IDBKeyRange();
 };
 
 /**
  * @param {import('./Key.js').Key} key
+ * @this {IDBKeyRangeFull}
  * @returns {boolean}
  */
 IDBKeyRange.prototype.includes = function (key) {
@@ -79,7 +89,7 @@ IDBKeyRange.prototype.includes = function (key) {
 
 /**
  * @param {import('./Key.js').Value} value
- * @returns {IDBKeyRange}
+ * @returns {import('./IDBKeyRange.js').IDBKeyRangeFull}
  */
 IDBKeyRange.only = function (value) {
     if (!arguments.length) {
@@ -90,7 +100,7 @@ IDBKeyRange.only = function (value) {
 
 /**
  * @param {import('./Key.js').Value} value
- * @returns {IDBKeyRange}
+ * @returns {globalThis.IDBKeyRange}
  */
 IDBKeyRange.lowerBound = function (value /*, open */) {
     if (!arguments.length) {
@@ -102,7 +112,7 @@ IDBKeyRange.lowerBound = function (value /*, open */) {
 
 /**
  * @param {import('./Key.js').Value} value
- * @returns {IDBKeyRange}
+ * @returns {globalThis.IDBKeyRange}
  */
 IDBKeyRange.upperBound = function (value /*, open */) {
     if (!arguments.length) {
@@ -115,7 +125,7 @@ IDBKeyRange.upperBound = function (value /*, open */) {
 /**
  * @param {import('./Key.js').Value} lower
  * @param {import('./Key.js').Value} upper
- * @returns {IDBKeyRange}
+ * @returns {globalThis.IDBKeyRange}
  */
 IDBKeyRange.bound = function (lower, upper /* , lowerOpen, upperOpen */) {
     if (arguments.length <= 1) {
@@ -134,6 +144,9 @@ readonlyProperties.forEach((prop) => {
     });
     // Ensure for proper interface testing that "get <name>" is the function name
     const o = {
+        /**
+         * @returns {import('./Key.js').Key|null|boolean}
+         */
         get [prop] () {
             // We can't do a regular instanceof check as it will create a loop given our hasInstance implementation
             if (!util.isObj(this) || typeof this.__lowerOpen !== 'boolean') {
@@ -142,14 +155,22 @@ readonlyProperties.forEach((prop) => {
             return this['__' + prop];
         }
     };
-    const desc = Object.getOwnPropertyDescriptor(o, prop);
+    const desc = /** @type {PropertyDescriptor} */ (
+        Object.getOwnPropertyDescriptor(o, prop)
+    );
     // desc.enumerable = true; // Default
     // desc.configurable = true; // Default
     Object.defineProperty(IDBKeyRange.prototype, prop, desc);
 });
 
 Object.defineProperty(IDBKeyRange, Symbol.hasInstance, {
-    value: (obj) => util.isObj(obj) && 'upper' in obj && typeof obj.lowerOpen === 'boolean'
+    value:
+        /**
+         * @param {object} obj
+         * @returns {boolean}
+         */
+        (obj) => util.isObj(obj) && 'upper' in obj && 'lowerOpen' in obj &&
+            typeof obj.lowerOpen === 'boolean'
 });
 
 Object.defineProperty(IDBKeyRange, 'prototype', {
@@ -157,12 +178,12 @@ Object.defineProperty(IDBKeyRange, 'prototype', {
 });
 
 /**
- * @param {IDBKeyRange} range
+ * @param {IDBKeyRangeFull|undefined} range
  * @param {string} quotedKeyColumnName
  * @param {string[]} sql
  * @param {string[]} sqlValues
- * @param {boolean} addAnd
- * @param {boolean} checkCached
+ * @param {boolean} [addAnd]
+ * @param {boolean} [checkCached]
  * @returns {void}
  */
 function setSQLForKeyRange (
@@ -180,7 +201,7 @@ function setSQLForKeyRange (
             encodedUpperKey = checkCached ? range.__upperCached : Key.encode(range.upper);
         }
         if (hasLower) {
-            sqlValues.push(util.escapeSQLiteStatement(encodedLowerKey));
+            sqlValues.push(util.escapeSQLiteStatement(/** @type {string} */ (encodedLowerKey)));
             if (hasUpper && encodedLowerKey === encodedUpperKey && !range.lowerOpen && !range.upperOpen) {
                 sql.push(quotedKeyColumnName, '=', '?');
                 return;
@@ -190,16 +211,16 @@ function setSQLForKeyRange (
         (hasLower && hasUpper) && sql.push('AND');
         if (hasUpper) {
             sql.push(quotedKeyColumnName, (range.upperOpen ? '<' : '<='), '?');
-            sqlValues.push(util.escapeSQLiteStatement(encodedUpperKey));
+            sqlValues.push(util.escapeSQLiteStatement(/** @type {string} */ (encodedUpperKey)));
         }
     }
 }
 
 /**
  * @param {import('./Key.js').Value} value
- * @param {boolean} nullDisallowed
+ * @param {boolean} [nullDisallowed]
  * @throws {DOMException}
- * @returns {IDBKeyRange}
+ * @returns {import('./IDBKeyRange.js').IDBKeyRangeFull|undefined}
  */
 function convertValueToKeyRange (value, nullDisallowed) {
     if (util.instanceOf(value, IDBKeyRange)) {

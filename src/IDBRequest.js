@@ -15,12 +15,35 @@ function IDBRequest () {
     throw new TypeError('Illegal constructor');
 }
 
+/**
+ * @typedef {IDBRequest & EventTarget & import('eventtargeter').ShimEventTarget & {
+ *   transaction: import('./IDBTransaction.js').IDBTransactionFull,
+ *   __done: boolean,
+ *   __result: import('./IDBDatabase.js').IDBDatabaseFull|undefined,
+ *   __error: null|DOMException|Error,
+ *   __source: null|import('./IDBDatabase.js').IDBDatabaseFull|
+ *     import('./IDBObjectStore.js').IDBObjectStoreFull|
+ *     import('./IDBIndex.js').IDBIndexFull,
+ *   __transaction: undefined|null|
+ *     import('./IDBTransaction.js').IDBTransactionFull,
+ *   addLateEventListener: (ev: string, listener: (e: Event & {
+ *     __legacyOutputDidListenersThrowError: boolean
+ *   }) => void) => void
+ *   addDefaultEventListener: (ev: string, listener: (e: Event & {
+ *     __legacyOutputDidListenersThrowError: boolean
+ *   }) => void) => void
+ * }} IDBRequestFull
+ */
+
 /* eslint-disable func-name-matching -- Polyfill */
 /**
  * @class
+ * @this {IDBRequestFull}
  */
 IDBRequest.__super = function IDBRequest () {
+    // @ts-expect-error It's ok
     this[Symbol.toStringTag] = 'IDBRequest';
+    // @ts-expect-error Part of `ShimEventTarget`
     this.__setOptions({
         legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
     });
@@ -43,6 +66,10 @@ IDBRequest.__super = function IDBRequest () {
     });
     util.defineReadonlyProperties(this, readonlyProperties, {
         readyState: {
+            /**
+             * @this {IDBRequestFull}
+             * @returns {"done"|"pending"}
+             */
             get readyState () {
                 return this.__done ? 'done' : 'pending';
             }
@@ -57,17 +84,20 @@ IDBRequest.__super = function IDBRequest () {
 /* eslint-enable func-name-matching -- Polyfill */
 
 /**
- * @returns {IDBRequest}
+ * @returns {IDBRequestFull}
  */
 IDBRequest.__createInstance = function () {
+    // @ts-expect-error Casting this causes other errors
     return new IDBRequest.__super();
 };
 
+// @ts-expect-error It's ok
 IDBRequest.prototype = EventTargetFactory.createInstance({extraProperties: ['debug']});
 IDBRequest.prototype[Symbol.toStringTag] = 'IDBRequestPrototype';
 
 /**
- * @returns {IDBTransaction}
+ * @this {IDBRequestFull}
+ * @returns {import('./IDBTransaction.js').IDBTransactionFull|null|undefined}
  */
 IDBRequest.prototype.__getParent = function () {
     if (this.toString() === '[object IDBOpenDBRequest]') {
@@ -97,12 +127,18 @@ Object.defineProperty(IDBRequest, 'prototype', {
 const openListeners = ['onblocked', 'onupgradeneeded'];
 
 /**
+ * @typedef {IDBRequestFull & IDBOpenDBRequest & {}} IDBOpenDBRequestFull
+ */
+
+/**
  * The IDBOpenDBRequest called when a database is opened.
  * @class
  */
 function IDBOpenDBRequest () {
     throw new TypeError('Illegal constructor');
 }
+
+// @ts-expect-error It's ok
 IDBOpenDBRequest.prototype = Object.create(IDBRequest.prototype);
 
 Object.defineProperty(IDBOpenDBRequest.prototype, 'constructor', {
@@ -114,16 +150,19 @@ Object.defineProperty(IDBOpenDBRequest.prototype, 'constructor', {
 
 const IDBOpenDBRequestAlias = IDBOpenDBRequest;
 /**
- * @returns {IDBOpenDBRequest}
+ * @returns {IDBRequestFull & IDBOpenDBRequest}
  */
 IDBOpenDBRequest.__createInstance = function () {
     /**
      * @class
+     * @this {IDBOpenDBRequestFull}
      */
     function IDBOpenDBRequest () {
         IDBRequest.__super.call(this);
 
+        // @ts-expect-error It's ok
         this[Symbol.toStringTag] = 'IDBOpenDBRequest';
+        // @ts-expect-error It's ok
         this.__setOptions({
             legacyOutputDidListenersThrowFlag: true, // Event hook for IndexedB
             extraProperties: ['oldVersion', 'newVersion', 'debug']
@@ -131,6 +170,8 @@ IDBOpenDBRequest.__createInstance = function () {
         util.defineListenerProperties(this, openListeners);
     }
     IDBOpenDBRequest.prototype = IDBOpenDBRequestAlias.prototype;
+
+    // @ts-expect-error It's ok
     return new IDBOpenDBRequest();
 };
 

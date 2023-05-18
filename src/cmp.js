@@ -2,18 +2,14 @@ import CFG from './CFG.js';
 import {encode as keyEncode, decode as keyDecode} from './Key.js';
 
 /**
- * @typedef {any} AnyValue
- */
-
-/**
  * Compares two keys.
- * @param {AnyValue} first
- * @param {AnyValue} second
- * @returns {number}
+ * @param {import('./Key.js').Key} first
+ * @param {import('./Key.js').Key} second
+ * @returns {0|1|-1}
  */
 function cmp (first, second) {
-    const encodedKey1 = keyEncode(first);
-    const encodedKey2 = keyEncode(second);
+    const encodedKey1 = /** @type {string} */ (keyEncode(first));
+    const encodedKey2 = /** @type {string} */ (keyEncode(second));
     const result = encodedKey1 > encodedKey2
         ? 1
         : encodedKey1 === encodedKey2 ? 0 : -1;

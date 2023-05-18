@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "lib": ["DOM", "es2022"],
-    "moduleResolution": "node",
-    "module": "esnext",
+    "moduleResolution": "nodenext",
+    "module": "NodeNext",
     "allowJs": true,
     "checkJs": true,
     "noEmit": true,
@@ -10,10 +10,10 @@
     "declarationMap": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
-    "target": "es6",
+    "target": "es2017",
     "outDir": "dist"
   },
   // , "test-support/**/*.js", "tests-mocha/**/*.js", "tests-polyfill/**/*.js"
-  "include": ["src/**/*.js"],
+  "include": ["src/**/*.js", "typings/shimIndexedDB.d.ts"],
   "exclude": ["node_modules", "web-platform-tests", "test-support/js"]
 }

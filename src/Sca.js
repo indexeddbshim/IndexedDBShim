@@ -21,8 +21,8 @@ function register (func) {
  * We are keeping the callback approach for now in case we wish to reexpose
  * `Blob`, `File`, `FileList` asynchronously (though in such a case, we
  * should probably refactor as a Promise).
- * @param {import('../src/Key.js').Value} obj
- * @param {(str: string) => void} func
+ * @param {AnyValue} obj
+ * @param {(str: string) => void} [func]
  * @throws {Error}
  * @returns {string}
  */
@@ -52,16 +52,20 @@ function encode (obj, func) {
 }
 
 /**
+ * @typedef {any} AnyValue
+ */
+
+/**
  * @param {string} obj
- * @returns {import('typeson').Value}
+ * @returns {AnyValue}
  */
 function decode (obj) {
     return typeson.parse(obj);
 }
 
 /**
- * @param {import('typeson').Value} val
- * @returns {import('typeson').Value}
+ * @param {AnyValue} val
+ * @returns {AnyValue}
  */
 function clone (val) {
     // We don't return the intermediate `encode` as we'll need to reencode

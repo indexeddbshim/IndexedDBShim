@@ -2,6 +2,10 @@ import CFG from './CFG.js';
 import expandsOnNFD from './unicode-regex.js';
 
 /**
+ * @typedef {number} Integer
+ */
+
+/**
  * @param {string} arg
  * @returns {string}
  */
@@ -101,7 +105,7 @@ function escapeDatabaseNameForSQLAndFiles (db) {
     if (CFG.escapeNFDForDatabaseNames !== false) {
         // ES6 copying of regex with different flags
         db = db.replaceAll(new RegExp(expandsOnNFD, 'gu'), function (expandable) {
-            return '^4' + expandable.codePointAt().toString(16).padStart(6, '0');
+            return '^4' + /** @type {Integer} */ (expandable.codePointAt(0)).toString(16).padStart(6, '0');
         });
     }
     if (CFG.databaseCharacterEscapeList !== false) {
@@ -111,7 +115,7 @@ function escapeDatabaseNameForSQLAndFiles (db) {
                 : /[\u0000-\u001F\u007F"*/:<>?\\|]/gu), // eslint-disable-line no-control-regex
             function (n0) {
                 // eslint-disable-next-line unicorn/prefer-code-point -- Switch to `codePointAt`?
-                return '^1' + n0.charCodeAt().toString(16).padStart(2, '0');
+                return '^1' + n0.charCodeAt(0).toString(16).padStart(2, '0');
             }
         );
     }
@@ -214,11 +218,15 @@ function sqlLIKEEscape (str) {
     return sqlEscape(str).replaceAll('^', '^^');
 }
 
+/**
+ * @typedef {Function} AnyClass
+ */
+
 // Babel doesn't seem to provide a means of using the `instanceof` operator with Symbol.hasInstance (yet?)
 /**
  *
- * @param {} obj
- * @param {} Clss
+ * @param {AnyValue} obj
+ * @param {AnyClass} Clss
  * @returns {boolean}
  */
 function instanceOf (obj, Clss) {
@@ -227,74 +235,78 @@ function instanceOf (obj, Clss) {
 
 /**
  *
- * @param {} obj
- * @returns {boolean}
+ * @param {AnyValue} obj
+ * @returns {obj is object}
  */
 function isObj (obj) {
-    return obj && typeof obj === 'object';
+    return obj !== null && typeof obj === 'object';
 }
 
 /**
  *
- * @param {} obj
+ * @param {object} obj
  * @returns {boolean}
  */
 function isDate (obj) {
-    return isObj(obj) && typeof obj.getDate === 'function';
+    return isObj(obj) && 'getDate' in obj && typeof obj.getDate === 'function';
 }
 
 /**
  *
- * @param {} obj
+ * @param {object} obj
  * @returns {boolean}
  */
 function isBlob (obj) {
-    return isObj(obj) && typeof obj.size === 'number' && typeof obj.slice === 'function' && !('lastModified' in obj);
+    return isObj(obj) && 'size' in obj && typeof obj.size === 'number' &&
+    'slice' in obj && typeof obj.slice === 'function' && !('lastModified' in obj);
 }
 
 /**
  *
- * @param {} obj
+ * @param {object} obj
  * @returns {boolean}
  */
 function isRegExp (obj) {
-    return isObj(obj) && typeof obj.flags === 'string' && typeof obj.exec === 'function';
+    return isObj(obj) && 'flags' in obj && typeof obj.flags === 'string' &&
+    'exec' in obj && typeof obj.exec === 'function';
 }
 
 /**
  *
- * @param {} obj
+ * @param {object} obj
  * @returns {boolean}
  */
 function isFile (obj) {
-    return isObj(obj) && typeof obj.name === 'string' && typeof obj.slice === 'function' && 'lastModified' in obj;
+    return isObj(obj) && 'name' in obj && typeof obj.name === 'string' &&
+    'slice' in obj && typeof obj.slice === 'function' && 'lastModified' in obj;
 }
 
 /**
  *
- * @param {} obj
+ * @param {AnyValue} obj
  * @returns {boolean}
  */
 function isBinary (obj) {
-    return isObj(obj) && typeof obj.byteLength === 'number' && (
-        typeof obj.slice === 'function' || // `TypedArray` (view on buffer) or `ArrayBuffer`
-        typeof obj.getFloat64 === 'function' // `DataView` (view on buffer)
+    return isObj(obj) && 'byteLength' in obj && typeof obj.byteLength === 'number' && (
+        ('slice' in obj && typeof obj.slice === 'function') || // `TypedArray` (view on buffer) or `ArrayBuffer`
+        ('getFloat64' in obj && typeof obj.getFloat64 === 'function') // `DataView` (view on buffer)
     );
 }
 
 /**
  *
- * @param {} obj
+ * @param {AnyValue} obj
  * @returns {boolean}
  */
 function isIterable (obj) {
-    return isObj(obj) && typeof obj[Symbol.iterator] === 'function';
+    return isObj(obj) && Symbol.iterator in obj &&
+        typeof obj[Symbol.iterator] === 'function';
 }
 
 /**
  *
- * @param {} obj
- * @param {} props
+ * @param {object} obj
+ * @param {string[]} props
  * @returns {void}
  */
 function defineOuterInterface (obj, props) {
@@ -303,19 +315,22 @@ function defineOuterInterface (obj, props) {
             get [prop] () {
                 throw new TypeError('Illegal invocation');
             },
+            // @ts-expect-error Deliberately errs
             set [prop] (val) {
                 throw new TypeError('Illegal invocation');
             }
         };
-        const desc = Object.getOwnPropertyDescriptor(o, prop);
+        const desc = /** @type {PropertyDescriptor} */ (
+            Object.getOwnPropertyDescriptor(o, prop)
+        );
         Object.defineProperty(obj, prop, desc);
     });
 }
 
 /**
  *
- * @param {} obj
- * @param {} props
+ * @param {object} obj
+ * @param {string[]} props
  * @returns {void}
  */
 function defineReadonlyOuterInterface (obj, props) {
@@ -325,15 +340,19 @@ function defineReadonlyOuterInterface (obj, props) {
                 throw new TypeError('Illegal invocation');
             }
         };
-        const desc = Object.getOwnPropertyDescriptor(o, prop);
+        const desc = /** @type {PropertyDescriptor} */ (
+            Object.getOwnPropertyDescriptor(o, prop)
+        );
         Object.defineProperty(obj, prop, desc);
     });
 }
 
 /**
  *
- * @param {} obj
- * @param {} listeners
+ * @param {object & {
+ *   [key: string]: any
+ * }} obj
+ * @param {string[]} listeners
  * @returns {void}
  */
 function defineListenerProperties (obj, listeners) {
@@ -343,11 +362,17 @@ function defineListenerProperties (obj, listeners) {
             get [listener] () {
                 return obj['__' + listener];
             },
+            /**
+             * @param {AnyValue} val
+             * @returns {void}
+             */
             set [listener] (val) {
                 obj['__' + listener] = val;
             }
         };
-        const desc = Object.getOwnPropertyDescriptor(o, listener);
+        const desc = /** @type {PropertyDescriptor} */ (
+            Object.getOwnPropertyDescriptor(o, listener)
+        );
         // desc.enumerable = true; // Default
         // desc.configurable = true; // Default // Needed by support.js in W3C IndexedDB tests (for openListeners)
         Object.defineProperty(obj, listener, desc);
@@ -359,9 +384,11 @@ function defineListenerProperties (obj, listeners) {
 
 /**
  *
- * @param {} obj
- * @param {} props
- * @param {} getter
+ * @param {object} obj
+ * @param {string|string[]} props
+ * @param {null|{
+ *   [key: string]: any
+ * }} getter
  * @returns {void}
  */
 function defineReadonlyProperties (obj, props, getter = null) {
@@ -385,7 +412,9 @@ function defineReadonlyProperties (obj, props, getter = null) {
             };
         }
 
-        const desc = Object.getOwnPropertyDescriptor(o, prop);
+        const desc = /** @type {PropertyDescriptor} */ (
+            Object.getOwnPropertyDescriptor(o, prop)
+        );
         // desc.enumerable = true; // Default
         // desc.configurable = true; // Default
         Object.defineProperty(obj, prop, desc);
@@ -394,7 +423,7 @@ function defineReadonlyProperties (obj, props, getter = null) {
 
 /**
  *
- * @param {} item
+ * @param {string} item
  * @returns {boolean}
  */
 function isIdentifier (item) {
@@ -412,7 +441,7 @@ function isIdentifier (item) {
 
 /**
  *
- * @param {} keyPathString
+ * @param {string|string[]} keyPathString
  * @returns {boolean}
  */
 function isValidKeyPathString (keyPathString) {
@@ -424,12 +453,12 @@ function isValidKeyPathString (keyPathString) {
 
 /**
  *
- * @param {} keyPath
+ * @param {string|string[]} keyPath
  * @returns {boolean}
  */
 function isValidKeyPath (keyPath) {
     return isValidKeyPathString(keyPath) || (
-        Array.isArray(keyPath) && keyPath.length &&
+        Array.isArray(keyPath) && Boolean(keyPath.length) &&
             // Convert array from sparse to dense http://www.2ality.com/2012/06/dense-arrays.html
             // See also https://heycam.github.io/webidl/#idl-DOMString
             [...keyPath].every((pathComponent) => {
@@ -493,8 +522,8 @@ function ToString (o) { // Todo: See `es-abstract/es7`
 
 /**
  *
- * @param {} val
- * @returns {string}
+ * @param {AnyValue} val
+ * @returns {string|string[]}
  */
 function convertToSequenceDOMString (val) {
     // Per <https://heycam.github.io/webidl/#idl-sequence>, converting to a sequence works with iterables
@@ -509,7 +538,7 @@ function convertToSequenceDOMString (val) {
 
 /**
  * @param {AnyValue} v
- * @returns {boolean}
+ * @returns {v is null|undefined}
  */
 function isNullish (v) {
     return v === null || v === undefined;

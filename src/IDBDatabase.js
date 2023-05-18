@@ -10,28 +10,74 @@ const listeners = ['onabort', 'onclose', 'onerror', 'onversionchange'];
 const readonlyProperties = ['name', 'version', 'objectStoreNames'];
 
 /**
+ * @typedef {{
+ *   name: string,
+ *   keyPath: import('./Key.js').KeyPath,
+ *   autoInc: boolean,
+ *   indexList: {[key: string]: import('./IDBIndex.js').IDBIndexProperties},
+ *   idbdb: IDBDatabaseFull,
+ *   cursors?: (import('./IDBCursor.js').IDBCursorFull|
+ *     import('./IDBCursor.js').IDBCursorWithValueFull)[],
+ * }} IDBObjectStoreProperties
+ */
+
+/**
  * IDB Database Object.
  * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#database-interface
  * @class
  */
 function IDBDatabase () {
+    this.__versionTransaction = null;
+    this.__objectStores = null;
     throw new TypeError('Illegal constructor');
 }
 const IDBDatabaseAlias = IDBDatabase;
 
 /**
- * @param {} db
- * @param {} name
- * @param {} oldVersion
- * @param {} version
- * @param {} storeProperties
- * @returns {IDBDatabase}
+ * @typedef {number} Integer
+ */
+
+/**
+ * @typedef {IDBDatabase & EventTarget & {
+ *   createObjectStore: (storeName: string) => IDBObjectStore,
+ *   deleteObjectStore: (storeName: string) => void,
+ *   close: () => void,
+ *   transaction: (storeNames: string|string[], mode: string) => IDBTransaction,
+ *   throwIfUpgradeTransactionNull: () => void,
+ *   objectStoreNames: import('./DOMStringList.js').DOMStringListFull,
+ *   name: string,
+ *   __forceClose: (msg: string) => void,
+ *   __db: import('websql-configurable/lib/websql/WebSQLDatabase.js').default,
+ *   __oldVersion: Integer,
+ *   __version: Integer,
+ *   __name: string,
+ *   __upgradeTransaction: null|import('./IDBTransaction.js').IDBTransactionFull,
+ *   __versionTransaction: import('./IDBTransaction.js').IDBTransactionFull,
+ *   __transactions: import('./IDBTransaction.js').IDBTransactionFull[],
+ *   __objectStores: {[key: string]: IDBObjectStore},
+ *   __objectStoreNames: import('./DOMStringList.js').DOMStringListFull,
+ *   __oldObjectStoreNames: import('./DOMStringList.js').DOMStringListFull,
+ *   __unblocking: {
+ *     check: () => void
+ *   }
+ * }} IDBDatabaseFull
+ */
+
+/**
+ * @param {import('websql-configurable').default} db
+ * @param {string} name
+ * @param {Integer} oldVersion
+ * @param {Integer} version
+ * @param {SQLResultSet} storeProperties
+ * @returns {IDBDatabaseFull}
  */
 IDBDatabase.__createInstance = function (db, name, oldVersion, version, storeProperties) {
     /**
      * @class
+     * @this {IDBDatabaseFull}
      */
     function IDBDatabase () {
+        // @ts-expect-error It's ok
         this[Symbol.toStringTag] = 'IDBDatabase';
         util.defineReadonlyProperties(this, readonlyProperties);
         this.__db = db;
@@ -41,13 +87,20 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
         this.__name = name;
         this.__upgradeTransaction = null;
         util.defineListenerProperties(this, listeners);
+        // @ts-expect-error Part of `ShimEventTarget`
         this.__setOptions({
             legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
         });
 
         this.__transactions = [];
+
+        /** @type {{[key: string]: IDBObjectStore}} */
         this.__objectStores = {};
         this.__objectStoreNames = DOMStringList.__createInstance();
+
+        /**
+         * @type {IDBObjectStoreProperties}
+         */
         const itemCopy = {};
         for (let i = 0; i < storeProperties.rows.length; i++) {
             const item = storeProperties.rows.item(i);
@@ -61,9 +114,10 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
             // and should thus be parsed into a number here (0 or 1),
             // `IDBObjectStore.__createInstance` will convert to a boolean
             // when setting the store's `autoIncrement`.
-            ['autoInc', 'indexList'].forEach(function (prop) {
+            /** @type {const} */ (['autoInc', 'indexList']).forEach((prop) => {
                 itemCopy[prop] = JSON.parse(item[prop]);
             });
+
             itemCopy.idbdb = this;
             const store = IDBObjectStore.__createInstance(itemCopy);
             this.__objectStores[store.name] = store;
@@ -72,21 +126,22 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
         this.__oldObjectStoreNames = this.objectStoreNames.clone();
     }
     IDBDatabase.prototype = IDBDatabaseAlias.prototype;
+
+    // @ts-expect-error It's ok
     return new IDBDatabase();
 };
 
+// @ts-expect-error It's ok
 IDBDatabase.prototype = EventTargetFactory.createInstance();
 IDBDatabase.prototype[Symbol.toStringTag] = 'IDBDatabasePrototype';
 
-/* eslint-disable jsdoc/check-param-names */
 /**
  * Creates a new object store.
  * @param {string} storeName
- * @param {object} [createOptions]
+ * @this {IDBDatabaseFull}
  * @returns {IDBObjectStore}
  */
 IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions */) {
-    /* eslint-enable jsdoc/check-param-names */
     // eslint-disable-next-line prefer-rest-params
     let createOptions = arguments[1];
     storeName = String(storeName); // W3C test within IDBObjectStore.js seems to accept string conversion
@@ -116,7 +171,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
         throw createDOMException('InvalidAccessError', 'With autoIncrement set, the keyPath argument must not be an array or empty string.');
     }
 
-    /** @name IDBObjectStoreProperties */
+    /** @type {IDBObjectStoreProperties} */
     const storeProperties = {
         name: storeName,
         keyPath,
@@ -132,6 +187,7 @@ IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions
  * Deletes an object store.
  * @param {string} storeName
  * @throws {TypeError|DOMException}
+ * @this {IDBDatabaseFull}
  * @returns {void}
  */
 IDBDatabase.prototype.deleteObjectStore = function (storeName) {
@@ -155,6 +211,7 @@ IDBDatabase.prototype.deleteObjectStore = function (storeName) {
 
 /**
  * @throws {TypeError}
+ * @this {IDBDatabaseFull}
  * @returns {void}
  */
 IDBDatabase.prototype.close = function () {
@@ -167,15 +224,13 @@ IDBDatabase.prototype.close = function () {
     }
 };
 
-/* eslint-disable jsdoc/check-param-names */
 /**
  * Starts a new transaction.
  * @param {string|string[]} storeNames
- * @param {string} mode
- * @returns {IDBTransaction}
+ * @this {IDBDatabaseFull}
+ * @returns {import('./IDBTransaction.js').IDBTransactionFull}
  */
 IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
-    /* eslint-enable jsdoc/check-param-names */
     if (arguments.length === 0) {
         throw new TypeError('You must supply a valid `storeNames` to `IDBDatabase.transaction`');
     }
@@ -233,6 +288,7 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
 /**
  * @see https://github.com/w3c/IndexedDB/issues/192
  * @throws {DOMException}
+ * @this {IDBDatabaseFull}
  * @returns {void}
  */
 IDBDatabase.prototype.throwIfUpgradeTransactionNull = function () {
@@ -245,6 +301,7 @@ IDBDatabase.prototype.throwIfUpgradeTransactionNull = function () {
 /**
  *
  * @param {string} msg
+ * @this {IDBDatabaseFull}
  * @returns {void}
  */
 IDBDatabase.prototype.__forceClose = function (msg) {
