@@ -122,6 +122,11 @@
         "require": "./dist/indexeddbshim-noninvasive.js"
       }
     },
+    "./src/Key.js": {
+      "types": "./dist/Key.d.ts",
+      "import": "./src/Key.js",
+      "require": "./dist/indexeddbshim-Key.js"
+    },
     "./*": "./*"
   },
   "keywords": [
