@@ -98,7 +98,6 @@ declare class IDBDatabase {
      * @returns {void}
      */
     __forceClose(this: IDBDatabaseFull, msg: string): void;
-    constructor: typeof IDBDatabase;
 }
 declare namespace IDBDatabase {
     /**

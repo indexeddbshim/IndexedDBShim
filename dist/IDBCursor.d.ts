@@ -275,7 +275,6 @@ export namespace IDBCursor {
  */
 export function IDBCursorWithValue(): void;
 export class IDBCursorWithValue {
-    constructor: typeof IDBCursorWithValue;
 }
 export namespace IDBCursorWithValue {
     /**

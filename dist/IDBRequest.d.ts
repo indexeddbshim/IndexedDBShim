@@ -25,7 +25,6 @@ export class IDBRequest {
      * @returns {import('./IDBTransaction.js').IDBTransactionFull|null|undefined}
      */
     __getParent(this: IDBRequestFull): import('./IDBTransaction.js').IDBTransactionFull | null | undefined;
-    constructor: typeof IDBRequest;
 }
 export namespace IDBRequest {
     /**
@@ -66,7 +65,6 @@ export namespace IDBRequest {
  */
 export function IDBOpenDBRequest(): void;
 export class IDBOpenDBRequest {
-    constructor: typeof IDBOpenDBRequest;
 }
 export namespace IDBOpenDBRequest {
     /**

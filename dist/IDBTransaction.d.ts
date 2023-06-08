@@ -222,7 +222,6 @@ declare class IDBTransaction {
     * @returns {import('./IDBDatabase.js').IDBDatabaseFull}
     */
     __getParent(this: IDBTransactionFull): import('./IDBDatabase.js').IDBDatabaseFull;
-    constructor: typeof IDBTransaction;
 }
 declare namespace IDBTransaction {
     /**

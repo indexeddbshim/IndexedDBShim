@@ -17,7 +17,6 @@ declare class IDBVersionChangeEvent {
     constructor(type: string, ...args: any[]);
     toString: () => string;
     __eventInitDict: any;
-    constructor: typeof IDBVersionChangeEvent;
     [Symbol.toStringTag]: string;
 }
 //# sourceMappingURL=IDBVersionChangeEvent.d.ts.map
