@@ -162,7 +162,7 @@
     "eventtargeter": "0.9.0",
     "sync-promise-expanded": "^1.0.0",
     "typeson": "9.0.3",
-    "typeson-registry": "8.0.0",
+    "typeson-registry": "9.0.0",
     "websql-configurable": "^3.0.3"
   },
   "devDependencies": {

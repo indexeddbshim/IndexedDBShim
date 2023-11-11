@@ -1,5 +1,12 @@
 # CHANGES for indexeddbshim
 
+## 13.0.0 (unreleased)
+
+BREAKING: typeson-registry drops `Intl` serialization
+
+- feat: TypeScript
+- chore: switch to `websql-configurable`; update typeson, typeson-registry, devDeps.
+
 ## 12.0.0
 
 ### User-impacting changes
