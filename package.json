@@ -227,6 +227,7 @@
     "sinon": "^15.1.0",
     "source-map-support": "0.5.21",
     "sourcemap-transformer": "git+https://github.com/brettz9/sourcemap-transformer.git",
+    "typescript": "^5.2.2",
     "w3c-blob": "0.0.1",
     "ws": "^8.13.0"
   }
