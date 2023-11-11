@@ -127,12 +127,12 @@ describe('IDBTransaction events', function () {
                 sinon.assert.calledOnce(add.onerror); // <-- request.onerror HAS fired
                 sinon.assert.notCalled(db.onerror); // <-- database.onerror HAS NOT fired YET
                 // if (!env.browser.isFirefox) sinon.assert.notCalled(window.onerror);     // <-- window.onerror HAS NOT fired YET
-                if (env.browser.isFirefox) e.preventDefault(); // Firefox reaches here unless preventDefault() is called (which will also cause our tests to fail)
-                else expect(windowOnerrorState.erred).equal(false);
+                if (env.browser.isFirefox) { e.preventDefault(); } // Firefox reaches here unless preventDefault() is called (which will also cause our tests to fail)
+                else { expect(windowOnerrorState.erred).equal(false); }
             });
-            tx.oncomplete = sinon.spy(function (e) {
+            tx.oncomplete = sinon.spy(function () {
                 db.close();
-                if (!env.browser.isFirefox) done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key'));
+                if (!env.browser.isFirefox) { done(new Error('IDBObjectStore.add() should have thrown an error when two records were added with the same primary key')); }
             });
 
             // IDBDatabase events

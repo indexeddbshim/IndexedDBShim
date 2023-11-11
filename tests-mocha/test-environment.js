@@ -1,5 +1,5 @@
 /* eslint-env mocha */
-/* globals chai, expect, shimIndexedDB, location, IDBFactory */
+/* globals chai, expect, shimIndexedDB */
 /* eslint-disable no-var, no-unused-expressions */
 (function () {
     'use strict';
@@ -75,11 +75,9 @@
 
     /**
      * Intercept the first call to Mocha's `describe` function, and use it to initialize the test environment.
-     * @param {string} name
-     * @param {() => void} testSuite
      * @returns {void}
      */
-    window.describe = function (name, testSuite) {
+    window.describe = function (/* name, testSuite */) {
         initTestEnvironment();
         mocha.checkLeaks();
         window.describe = describe;
@@ -266,17 +264,17 @@
                 }
                 db.close();
                 var dbOpenRequest = window.indexedDB.open(DB.NAME, 2);
-                dbOpenRequest.onsuccess = function (e) {
+                dbOpenRequest.onsuccess = function () {
                     expect(true, 'Database Opened successfully').to.be.true;
                     var newDb = dbOpenRequest.result;
                     var transaction = newDb.transaction([DB.OBJECT_STORE_1], 'readwrite');
                     var objectStore = transaction.objectStore(DB.OBJECT_STORE_1);
                     cb(null, [objectStore, newDb]);
                 };
-                dbOpenRequest.onerror = function (e) {
+                dbOpenRequest.onerror = function () {
                     cb(new Error('Database NOT Opened successfully'));
                 };
-                dbOpenRequest.onupgradeneeded = function (e) {
+                dbOpenRequest.onupgradeneeded = function () {
                     expect(true, 'Database Upgraded successfully').to.be.true;
                     // var db = dbOpenRequest.result;
                     var objectStore1 = dbOpenRequest.transaction.objectStore(DB.OBJECT_STORE_1);
@@ -288,7 +286,7 @@
                     var index2 = objectStore1.createIndex('String.Index', 'String'); // eslint-disable-line no-unused-vars
                     expect(objectStore1.indexNames, '2 Indexes on object store successfully created').to.have.lengthOf(2);
                 };
-                dbOpenRequest.onblocked = function (e) {
+                dbOpenRequest.onblocked = function () {
                     cb(new Error('Opening database blocked'));
                 };
             });
@@ -302,7 +300,7 @@
                     return;
                 }
                 var addReq = objectStore.add(value, key);
-                addReq.onsuccess = function (e) {
+                addReq.onsuccess = function () {
                     expect(addReq.result, 'Data successfully added').to.equal(key);
                     cb(null, [key, value, objectStore, db]);
                 };
@@ -323,7 +321,7 @@
             };
             delReq.onsuccess = () => {
                 var dbOpenRequest = window.indexedDB.open(DB.NAME, 1);
-                dbOpenRequest.onsuccess = function (e) {
+                dbOpenRequest.onsuccess = function () {
                     expect(true, 'Database opened successfully with version ' + dbOpenRequest.result.version).to.be.true;
                     var db = dbOpenRequest.result;
                     var transaction = db.transaction([
@@ -337,7 +335,7 @@
                     expect(false, 'Database NOT Opened successfully').to.be.true;
                     cb(e);
                 };
-                dbOpenRequest.onupgradeneeded = function (e) {
+                dbOpenRequest.onupgradeneeded = function () {
                     expect(true, 'Database Upgraded successfully').to.be.true;
                     var db = dbOpenRequest.result;
                     db.createObjectStore(DB.OBJECT_STORE_1);
@@ -366,7 +364,7 @@
         },
         addObjectStoreData (cb) {
             var dbOpenRequest = window.indexedDB.open(DB.NAME);
-            dbOpenRequest.onsuccess = function (e) {
+            dbOpenRequest.onsuccess = function () {
                 expect(true, 'Database Opened successfully').to.be.true;
                 var db = dbOpenRequest.result;
                 var transaction = db.transaction([DB.OBJECT_STORE_1], 'readwrite');
@@ -412,7 +410,7 @@
         // eslint-disable-next-line default-param-last
         openObjectStore (storeName = DB.OBJECT_STORE_1, cb) {
             var dbOpenRequest = window.indexedDB.open(DB.NAME);
-            dbOpenRequest.onsuccess = function (e) {
+            dbOpenRequest.onsuccess = function () {
                 var db = dbOpenRequest.result;
                 var transaction = db.transaction([
                     DB.OBJECT_STORE_1, DB.OBJECT_STORE_2,
@@ -427,4 +425,4 @@
             };
         }
     };
-})();
+}());

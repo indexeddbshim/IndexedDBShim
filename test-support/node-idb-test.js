@@ -14,12 +14,12 @@ import {ImageData, DOMPoint, DOMMatrix} from 'canvas';
 import colors from 'colors/safe.js';
 
 import CY from 'cyclonejs'; // Todo: Replace this with Sca (but need to make requireable)
-import XMLHttpRequestConstr from 'local-xmlhttprequest';
+import xmlHttpRequestConstr from 'local-xmlhttprequest';
 import isDateObject from 'is-date-object';
 import fetch from 'isomorphic-fetch';
 
 import indexeddbshim from '../src/node-UnicodeIdentifiers.js';
-import Worker from './webworker/webworker.js'; // Todo: We could export this `Worker` publicly for others looking for a Worker polyfill with IDB support
+import worker from './webworker/webworker.js'; // Todo: We could export this `Worker` publicly for others looking for a Worker polyfill with IDB support
 import transformV8Stack from './transformV8Stack.js';
 import goodBad from './node-good-bad-files.js';
 
@@ -62,7 +62,11 @@ const shimNS = {
     finished () { throw new Error('Finished callback not set'); },
     isDateObject,
     write (msg) {
-        (process && process.stdout && process.stdout.isTTY) ? process.stdout.write(msg) : console.log(msg);
+        if (process && process.stdout && process.stdout.isTTY) {
+            process.stdout.write(msg);
+        } else {
+            console.log(msg);
+        }
     },
     writeStack (msg, stack) {
         console.log(msg + transformV8Stack(stack));
@@ -103,7 +107,6 @@ process.on('unhandledRejection', (reason, p) => {
  * @returns {void}
  */
 function exit () {
-    // eslint-disable-next-line unicorn/no-process-exit
     process.exit();
 }
 
@@ -241,7 +244,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                     console.log(
                         '  ' + '(' + failedFiles.length + '): [\n    ' + cleanJSONOutput(failedFiles).slice(1, -1) + '\n  ]\n'
                     );
-                } else console.log('(None)');
+                } else { console.log('(None)'); }
 
                 if (shimNS.fileMap) {
                     console.log(
@@ -570,7 +573,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         }
 
         // window.XMLHttpRequest = XMLHttpRequest({basePath: 'http://127.0.0.1:8000/IndexedDB/'}); // Todo: We should support this too
-        window.XMLHttpRequest = XMLHttpRequestConstr({basePath});
+        window.XMLHttpRequest = xmlHttpRequestConstr({basePath});
         window.XMLHttpRequest.prototype.overrideMimeType = function () { /* */ };
         window.fetch = function (...args) {
             if (args[0].startsWith('/')) {
@@ -637,7 +640,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
             }
             _postMessage(...args);
         };
-        window.Worker = Worker({
+        window.Worker = worker({
             relativePathType: 'file', // Todo: We need to change this to "url" when implemented
             // Todo: We might auto-detect this by looking at window.location
             basePath, // Todo: We need to change this to our server's base URL when implemented

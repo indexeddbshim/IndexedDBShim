@@ -1,11 +1,11 @@
 /* eslint-env mocha */
-/* globals expect, sinon, util, env, IDBRequest, IDBCursor, IDBKeyRange, testHelper  */
+/* globals expect, sinon, util, env, testHelper  */
 /* eslint-disable no-var, no-unused-expressions */
 describe('IDBIndex.openCursor', function () {
     'use strict';
 
     it('Index Cursor', function (done) {
-        testHelper.createIndexesAndData((error, [key, value, objectStore, db]) => {
+        testHelper.createIndexesAndData((error, [, , objectStore, db]) => {
             if (error) {
                 done(error);
                 return;
@@ -118,7 +118,7 @@ describe('IDBIndex.openCursor', function () {
             storeCursor.onerror = sinon.spy();
             indexCursor.onerror = sinon.spy();
 
-            storeCursor.onsuccess = sinon.spy(function (event) {
+            storeCursor.onsuccess = sinon.spy(function () {
                 expect(storeCursor.result).to.be.an.instanceOf(IDBCursor);
                 expect(storeCursor.result.source).to.equal(store);
                 expect(storeCursor.result.direction).to.equal('next');
@@ -127,7 +127,7 @@ describe('IDBIndex.openCursor', function () {
                 expect(storeCursor.result.value).to.deep.equal({id: 1, name: 'John Doe'});
             });
 
-            indexCursor.onsuccess = sinon.spy(function (event) {
+            indexCursor.onsuccess = sinon.spy(function () {
                 expect(indexCursor.result).to.be.an.instanceOf(IDBCursor);
                 expect(indexCursor.result.source).to.equal(index);
                 expect(indexCursor.result.direction).to.equal('next');
@@ -167,11 +167,11 @@ describe('IDBIndex.openCursor', function () {
             storeCursor.onerror = sinon.spy();
             indexCursor.onerror = sinon.spy();
 
-            storeCursor.onsuccess = sinon.spy(function (event) {
+            storeCursor.onsuccess = sinon.spy(function () {
                 expect(storeCursor.result).equal(null);
             });
 
-            indexCursor.onsuccess = sinon.spy(function (event) {
+            indexCursor.onsuccess = sinon.spy(function () {
                 expect(indexCursor.result).equal(null);
             });
 
@@ -209,7 +209,7 @@ describe('IDBIndex.openCursor', function () {
             storeCursor.onerror = sinon.spy();
             indexCursor.onerror = sinon.spy();
 
-            storeCursor.onsuccess = sinon.spy(function (event) {
+            storeCursor.onsuccess = sinon.spy(function () {
                 expect(storeCursor.result).to.be.an.instanceOf(IDBCursor);
                 expect(storeCursor.result.source).to.equal(store);
                 expect(storeCursor.result.direction).to.equal('next');
@@ -218,7 +218,7 @@ describe('IDBIndex.openCursor', function () {
                 expect(storeCursor.result.value).to.deep.equal({id: 1, name: 'John Doe'});
             });
 
-            indexCursor.onsuccess = sinon.spy(function (event) {
+            indexCursor.onsuccess = sinon.spy(function () {
                 expect(indexCursor.result).to.be.an.instanceOf(IDBCursor);
                 expect(indexCursor.result.source).to.equal(index);
                 expect(indexCursor.result.direction).to.equal('next');
@@ -261,7 +261,7 @@ describe('IDBIndex.openCursor', function () {
             var indexCursor = index.openCursor();
             var storeCounter = 0, indexCounter = 0;
 
-            storeCursor.onsuccess = sinon.spy(function (event) {
+            storeCursor.onsuccess = sinon.spy(function () {
                 if (storeCursor.result) {
                     storeCounter++;
                     expect(storeCursor.result.source).to.equal(store);
@@ -273,7 +273,7 @@ describe('IDBIndex.openCursor', function () {
                 }
             });
 
-            indexCursor.onsuccess = sinon.spy(function (event) {
+            indexCursor.onsuccess = sinon.spy(function () {
                 if (indexCursor.result) {
                     indexCounter++;
                     expect(indexCursor.result.source).to.equal(index);
@@ -322,14 +322,14 @@ describe('IDBIndex.openCursor', function () {
 
             var counter1 = 1, counter2 = 5;
 
-            cursor1.onsuccess = sinon.spy(function (event) {
+            cursor1.onsuccess = sinon.spy(function () {
                 if (cursor1.result) {
                     expect(cursor1.result.key).to.equal(counter1++);
                     cursor1.result.continue();
                 }
             });
 
-            cursor2.onsuccess = sinon.spy(function (event) {
+            cursor2.onsuccess = sinon.spy(function () {
                 if (cursor2.result) {
                     expect(cursor2.result.key).to.equal(counter2--);
                     cursor2.result.continue();
@@ -370,7 +370,7 @@ describe('IDBIndex.openCursor', function () {
             var indexCursor = index.openCursor();
             var storeCounter = 0, indexCounter = 0;
 
-            storeCursor.onsuccess = sinon.spy(function (event) {
+            storeCursor.onsuccess = sinon.spy(function () {
                 if (storeCursor.result) {
                     storeCounter++;
                     expect(storeCursor.result.source).to.equal(store);
@@ -382,7 +382,7 @@ describe('IDBIndex.openCursor', function () {
                 }
             });
 
-            indexCursor.onsuccess = sinon.spy(function (event) {
+            indexCursor.onsuccess = sinon.spy(function () {
                 if (indexCursor.result) {
                     indexCounter++;
                     expect(indexCursor.result.source).to.equal(index);
@@ -452,14 +452,14 @@ describe('IDBIndex.openCursor', function () {
                 storeCursor = store.openCursor();
                 indexCursor = index.openCursor();
 
-                storeCursor.onsuccess = sinon.spy(function (event) {
+                storeCursor.onsuccess = sinon.spy(function () {
                     if (storeCursor.result) {
                         expect(storeCursor.result.key).to.equal(++storeCounter);
                         storeCursor.result.continue();
                     }
                 });
 
-                indexCursor.onsuccess = sinon.spy(function (event) {
+                indexCursor.onsuccess = sinon.spy(function () {
                     if (indexCursor.result) {
                         expect(indexCursor.result.key).to.equal(++indexCounter);
                         indexCursor.result.continue();
@@ -1242,10 +1242,10 @@ describe('IDBIndex.openCursor', function () {
                         indexErr = e;
                     }
 
-                    if (!env.browser.isFirefox) expect(storeErr).to.be.an.instanceOf(env.DOMException);
+                    if (!env.browser.isFirefox) { expect(storeErr).to.be.an.instanceOf(env.DOMException); }
                     expect(storeErr.name).to.equal('TransactionInactiveError');
 
-                    if (!env.browser.isFirefox) expect(indexErr).to.be.an.instanceOf(env.DOMException);
+                    if (!env.browser.isFirefox) { expect(indexErr).to.be.an.instanceOf(env.DOMException); }
                     expect(indexErr.name).to.equal('TransactionInactiveError');
 
                     db.close();

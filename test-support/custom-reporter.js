@@ -97,10 +97,9 @@
      *   message: string,
      *   stack: string
      * }[]} tests
-     * @param {string} harnessStatus Unused
      * @returns {void}
      */
-    function reportResults (tests, harnessStatus) {
+    function reportResults (tests) {
         // Todo: Look instead on `id=log` and possibly `id=summary` or
         //      `id=metadata_cache` if we add one (and `id=metadata_cache`?)
         // Insert our own reporting to be ready once tests evaluate
@@ -121,9 +120,9 @@
                 assertions = undefined;
             }
             write(statusText, test.status);
-            if (!shimNS.files[statusText].includes(fileName)) shimNS.files[statusText].push(fileName);
+            if (!shimNS.files[statusText].includes(fileName)) { shimNS.files[statusText].push(fileName); }
             if (shimNS.fileMap) {
-                if (!shimNS.fileMap.has(fileName)) shimNS.fileMap.set(fileName, [0, 0]);
+                if (!shimNS.fileMap.has(fileName)) { shimNS.fileMap.set(fileName, [0, 0]); }
                 const [pass, total] = shimNS.fileMap.get(fileName);
                 shimNS.fileMap.set(fileName, [pass + (test.status === 0), total + 1]);
             }
@@ -135,10 +134,12 @@
                 });
             }
             shimNS.writeln(' (' + fileName + '): ' + test.name);
-            if (assertions) shimNS.writeln(assertions);
-            if (test.message && test.stack) shimNS.writeStack(test.message || ' ', test.stack);
+            if (assertions) { shimNS.writeln(assertions); }
+            if (test.message && test.stack) {
+                shimNS.writeStack(test.message || ' ', test.stack);
+            }
         });
-        if (shimNS.jsonOutput) shimNS.jsonOutput.results.push(jsonOutput);
+        if (shimNS.jsonOutput) { shimNS.jsonOutput.results.push(jsonOutput); }
         shimNS.finished();
     }
     add_completion_callback((...args) => {

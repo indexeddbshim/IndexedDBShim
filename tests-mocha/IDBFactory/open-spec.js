@@ -1,5 +1,5 @@
 /* eslint-env mocha */
-/* globals expect, sinon, util, env, IDBOpenDBRequest, IDBTransaction, IDBVersionChangeEvent, IDBDatabase */
+/* globals expect, sinon, util, env */
 /* eslint-disable no-var */
 describe('IDBFactory.open', function () {
     'use strict';

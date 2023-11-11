@@ -7,7 +7,7 @@ import goodBad from './node-good-bad-files.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 let alreadyListedFiles = [];
-Object.entries(goodBad).forEach(([key, arr]) => {
+Object.entries(goodBad).forEach(([, arr]) => {
     alreadyListedFiles = alreadyListedFiles.concat(arr);
 });
 const files = (await readdir(join(__dirname, 'js'))).filter((file) => {

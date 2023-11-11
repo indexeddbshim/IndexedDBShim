@@ -46,7 +46,7 @@ function openDb () {
     var dbOpenRequest = window.indexedDB.open(testData.DB.NAME);
     // eslint-disable-next-line promise/avoid-new
     return new Promise((resolve, reject) => {
-        dbOpenRequest.onsuccess = function (e) {
+        dbOpenRequest.onsuccess = function () {
             var db = dbOpenRequest.result;
             resolve(db);
         };

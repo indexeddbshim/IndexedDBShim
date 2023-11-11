@@ -2170,7 +2170,7 @@ function wrapFunction(func, originalFunc) {
     // Do not change this to use an eval. Projects that depend on sinon block the use of eval.
     // ref: https://github.com/sinonjs/sinon/issues/710
     switch (arity) {
-        /*eslint-disable no-unused-vars, max-len*/
+        /*eslint-disable no-unused-vars, @stylistic/max-len*/
         case 0:
             p = function proxy() {
                 return p.invoke(func, this, slice(arguments));

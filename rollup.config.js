@@ -134,11 +134,9 @@ const nodeEnvironment = ({input, name, output: file}) => {
 };
 
 /**
- * @param {PlainObject} commandLineArgs Object allowing user-defined `config*`,
- * e.g., `configBrowserOnly`
  * @returns {Rollup[]}
  */
-export default (commandLineArgs) => {
+export default () => {
     // if (commandLineArgs.configBrowserOnly) {
 
     return [

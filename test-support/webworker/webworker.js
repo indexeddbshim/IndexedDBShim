@@ -299,7 +299,7 @@ function WebWorker (workerConfig) {
                     }
 
                     // remove the socket
-                    fs.unlink(sockFilePath, function (e) {
+                    fs.unlink(sockFilePath, function () {
                         try {
                             // try removing the socket directory
                             fs.rmdirSync(path.dirname(sockFilePath));

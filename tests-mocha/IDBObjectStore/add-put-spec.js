@@ -1,10 +1,10 @@
 /* eslint-env mocha */
-/* globals expect, sinon, util, env, IDBRequest */
+/* globals expect, sinon, util, env */
 /* eslint-disable no-var, no-unused-expressions, unicorn/no-for-loop */
-/*********************************************************
- *     This file contains tests that are THE SAME for
- *       IDBObjectStore.add and IDBObjectStore.put
- *********************************************************/
+/**
+ * This file contains tests that are THE SAME for
+ *  IDBObjectStore.add and IDBObjectStore.put.
+ */
 
 /** @type {"put"|"add"} */
 ['put', 'add'].forEach(function (save) {

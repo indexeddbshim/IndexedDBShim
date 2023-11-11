@@ -1,16 +1,18 @@
 'use strict';
 
 const rules = {
-    indent: ['error', 4],
+    '@stylistic/indent': ['error', 4, {SwitchCase: 0}],
+    '@stylistic/dot-location': ['error', 'property'],
     'consistent-this': ['error', 'me'],
     // We use `instanceof` otherwise prohibited by `eslint-config-ash-nazg`,
     //  with `Symbol.hasInstance`
     'no-restricted-syntax': 0,
 
     // Disable until find time to address
+    '@stylistic/max-len': 0,
+    '@stylistic/brace-style': 0,
     'unicorn/prefer-top-level-await': 0,
     'default-case': 0,
-    'max-len': 0,
     'no-console': 0,
     'no-shadow': 0,
     'no-sync': 0,

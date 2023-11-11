@@ -1,11 +1,11 @@
 /* eslint-env mocha */
-/* globals expect, sinon, util, env, IDBRequest, testHelper */
+/* globals expect, sinon, util, env, testHelper */
 /* eslint-disable no-var, no-unused-expressions */
 describe('IDBIndex.get', function () {
     'use strict';
 
     it('Index Get', function (done) {
-        testHelper.createIndexesAndData((error, [key, value, objectStore, db]) => {
+        testHelper.createIndexesAndData((error, [, value, objectStore, db]) => {
             if (error) {
                 done(error);
                 return;

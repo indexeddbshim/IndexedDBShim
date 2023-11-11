@@ -181,7 +181,9 @@ function setGlobalVars (idb, initialConfig) {
 
         // @ts-expect-error It's ok
         if (IDB[name] !== value) {
-            typeof console !== 'undefined' && console.warn && console.warn('Unable to shim ' + name);
+            if (typeof console !== 'undefined' && console.warn) {
+                console.warn('Unable to shim ' + name);
+            }
         }
     }
     if (CFG.win.openDatabase !== undefined) {

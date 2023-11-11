@@ -238,7 +238,7 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
         sql.push('LIMIT', String(recordsToLoad));
     }
     const sqlStr = sql.join(' ');
-    CFG.DEBUG && console.log(sqlStr, sqlValues);
+    if (CFG.DEBUG) { console.log(sqlStr, sqlValues); }
 
     tx.executeSql(sqlStr, sqlValues, function (tx, data) {
         if (me.__count) {
@@ -246,16 +246,16 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
         } else if (data.rows.length > 1) {
             me.__prefetchedIndex = 0;
             me.__prefetchedData = data.rows;
-            CFG.DEBUG && console.log('Preloaded ' + me.__prefetchedData.length + ' records for cursor');
+            if (CFG.DEBUG) { console.log('Preloaded ' + me.__prefetchedData.length + ' records for cursor'); }
             me.__decode(data.rows.item(0), success);
         } else if (data.rows.length === 1) {
             me.__decode(data.rows.item(0), success);
         } else {
-            CFG.DEBUG && console.log('Reached end of cursors');
+            if (CFG.DEBUG) { console.log('Reached end of cursors'); }
             success(undefined, undefined, undefined);
         }
     }, function (tx, err) {
-        CFG.DEBUG && console.log('Could not execute Cursor.continue', sqlStr, sqlValues);
+        if (CFG.DEBUG) { console.log('Could not execute Cursor.continue', sqlStr, sqlValues); }
         error(err);
         return true;
     });
@@ -277,7 +277,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
     const me = this;
 
     if (me.__prefetchedData && me.__prefetchedData.length === me.__prefetchedIndex) {
-        CFG.DEBUG && console.log('Reached end of multiEntry cursor');
+        if (CFG.DEBUG) { console.log('Reached end of multiEntry cursor'); }
         success(undefined, undefined, undefined);
         return;
     }
@@ -335,7 +335,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
         }
     }
     const sqlStr = sql.join(' ');
-    CFG.DEBUG && console.log(sqlStr, sqlValues);
+    if (CFG.DEBUG) { console.log(sqlStr, sqlValues); }
 
     tx.executeSql(sqlStr, sqlValues, function (tx, data) {
         if (data.rows.length > 0) {
@@ -401,21 +401,21 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
                         return this.data[index];
                     }
                 };
-                CFG.DEBUG && console.log('Preloaded ' + me.__prefetchedData.length + ' records for multiEntry cursor');
+                if (CFG.DEBUG) { console.log('Preloaded ' + me.__prefetchedData.length + ' records for multiEntry cursor'); }
                 me.__decode(rows[0], success);
             } else if (rows.length === 1) {
-                CFG.DEBUG && console.log('Reached end of multiEntry cursor');
+                if (CFG.DEBUG) { console.log('Reached end of multiEntry cursor'); }
                 me.__decode(rows[0], success);
             } else {
-                CFG.DEBUG && console.log('Reached end of multiEntry cursor');
+                if (CFG.DEBUG) { console.log('Reached end of multiEntry cursor'); }
                 success(undefined, undefined, undefined);
             }
         } else {
-            CFG.DEBUG && console.log('Reached end of multiEntry cursor');
+            if (CFG.DEBUG) { console.log('Reached end of multiEntry cursor'); }
             success(undefined, undefined, undefined);
         }
     }, function (tx, err) {
-        CFG.DEBUG && console.log('Could not execute Cursor.continue', sqlStr, sqlValues);
+        if (CFG.DEBUG) { console.log('Could not execute Cursor.continue', sqlStr, sqlValues); }
         error(err);
         return true;
     });
@@ -514,7 +514,7 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
     );
     const val = me.__valueDecoder.decode(encVal);
     const primaryKey = Key.decode(encPrimaryKey);
-    callback(key, val, primaryKey, encKey /*, encVal, encPrimaryKey */);
+    callback(key, val, primaryKey, encKey /* , encVal, encPrimaryKey */);
 };
 
 /**
@@ -743,7 +743,9 @@ IDBCursor.prototype.advance = function (count) {
  */
 IDBCursor.prototype.update = function (valueToUpdate) {
     const me = this;
-    if (!arguments.length) throw new TypeError('A value must be passed to update()');
+    if (!arguments.length) {
+        throw new TypeError('A value must be passed to update()');
+    }
     IDBTransaction.__assertActive(me.__store.transaction);
     /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
         me.__store.transaction
@@ -806,7 +808,7 @@ IDBCursor.prototype.delete = function () {
             /** @type {KeySuccess} */
             function (key, value, primaryKey) {
                 const sql = 'DELETE FROM  ' + util.escapeStoreNameForSQL(me.__store.__currentName) + ' WHERE "key" = ?';
-                CFG.DEBUG && console.log(sql, key, primaryKey);
+                if (CFG.DEBUG) { console.log(sql, key, primaryKey); }
                 // Key.convertValueToKey(primaryKey); // Already checked when entered
                 tx.executeSql(sql, [util.escapeSQLiteStatement(
                     /** @type {string} */ (Key.encode(primaryKey))

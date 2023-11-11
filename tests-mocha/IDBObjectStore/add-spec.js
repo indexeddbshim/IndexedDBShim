@@ -26,18 +26,18 @@ describe('IDBObjectStore.add (only)', function () {
     it('Adding data of various types to Object Store', function (done) {
         var key = sample.integer();
         var data = sample.obj();
-        testHelper.createObjectStores(undefined, function (error, [objectStore, db]) {
+        testHelper.createObjectStores(undefined, function (error, [objectStore]) {
             if (error) {
                 done(error);
                 return;
             }
             var req = objectStore.add(data, key);
-            req.onsuccess = function (e) {
+            req.onsuccess = function () {
                 expect(req.result, 'Data added to Object store').to.equal(key);
                 objectStore.transaction.db.close();
                 done();
             };
-            req.onerror = function (e) {
+            req.onerror = function () {
                 done(new Error(
                     'Could not add Data to ObjectStore1'
                 ));
@@ -57,18 +57,18 @@ describe('IDBObjectStore.add (only)', function () {
     });
 
     it('Adding data of different types with keypath and autoInc, no key', function (done) {
-        testHelper.createObjectStores(DB.OBJECT_STORE_2, function (error, [objectStore, db]) {
+        testHelper.createObjectStores(DB.OBJECT_STORE_2, function (error, [objectStore]) {
             if (error) {
                 done(error);
                 return;
             }
             var req = objectStore.add(sample.obj());
-            req.onsuccess = function (e) {
+            req.onsuccess = function () {
                 expect(req.result, 'Data added to Object store').to.not.equal(null);
                 objectStore.transaction.db.close();
                 done();
             };
-            req.onerror = function (e) {
+            req.onerror = function () {
                 done(new Error(
                     'Could not add Data to ObjectStore1'
                 ));
@@ -85,12 +85,12 @@ describe('IDBObjectStore.add (only)', function () {
             var data = sample.obj();
             delete data.Int;
             var req = objectStore.add(data);
-            req.onsuccess = function (e) {
+            req.onsuccess = function () {
                 expect(req.result, 'Data added to Object store').to.not.equal(null);
                 objectStore.transaction.db.close();
                 done();
             };
-            req.onerror = function (e) {
+            req.onerror = function () {
                 done(new Error(
                     'Could not add Data to ObjectStore1'
                 ));
@@ -106,12 +106,12 @@ describe('IDBObjectStore.add (only)', function () {
                 return;
             }
             var req = objectStore.add(sample.obj(), key);
-            req.onsuccess = function (e) {
+            req.onsuccess = function () {
                 expect(req.result, 'Data added to Object store').to.equal(key);
                 objectStore.transaction.db.close();
                 done();
             };
-            req.onerror = function (e) {
+            req.onerror = function () {
                 done(new Error('Could not add Data to ObjectStore1'));
             };
         });
@@ -124,12 +124,12 @@ describe('IDBObjectStore.add (only)', function () {
                 return;
             }
             var req = objectStore.add(sample.obj());
-            req.onsuccess = function (e) {
+            req.onsuccess = function () {
                 expect(req.result, 'Data added to Object store').to.be.ok;
                 objectStore.transaction.db.close();
                 done();
             };
-            req.onerror = function (e) {
+            req.onerror = function () {
                 done(new Error('Could not add Data to ObjectStore1'));
             };
         });

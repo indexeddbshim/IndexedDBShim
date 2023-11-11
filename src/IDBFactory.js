@@ -1,4 +1,3 @@
-/* globals location */
 import path from 'path';
 import SyncPromise from 'sync-promise-expanded';
 
@@ -296,7 +295,7 @@ function cleanupDatabaseResources (__openDatabase, name, escapedDatabaseName, da
                     });
                 }
             }(0));
-        }, function (e) {
+        }, function () {
             // __sys__ table does not exist, but that does not mean delete did not happen
             databaseDeleted();
             return true;
@@ -325,7 +324,7 @@ function createSysDB (__openDatabase, success, failure) {
      */
     function sysDbCreateError (tx, err) {
         const er = webSQLErrback(/** @type {SQLError} */ (err) || tx);
-        CFG.DEBUG && console.log('Error in sysdb transaction - when creating dbVersions', err);
+        if (CFG.DEBUG) { console.log('Error in sysdb transaction - when creating dbVersions', err); }
         failure(er);
     }
 
@@ -569,7 +568,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                             connection.__upgradeTransaction = req.__transaction = req.__result.__versionTransaction = IDBTransaction.__createInstance(req.__result, req.__result.objectStoreNames, 'versionchange');
                             req.__done = true;
 
-                            req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded (tx, args, finished, error) {
+                            req.transaction.__addNonRequestToTransactionQueue(function onupgradeneeded (tx, args, finished /* , error */) {
                                 req.dispatchEvent(e);
 
                                 if (e.__legacyOutputDidListenersThrowError) {
@@ -579,6 +578,8 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                 }
                                 finished();
                             });
+
+                            // eslint-disable-next-line camelcase -- Clear API
                             req.transaction.on__beforecomplete = function (ev) {
                                 connection.__upgradeTransaction = null;
                                 /** @type {import('./IDBDatabase.js').IDBDatabaseFull} */ (
@@ -592,6 +593,8 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                     return true;
                                 });
                             };
+
+                            // eslint-disable-next-line camelcase -- Clear API
                             req.transaction.on__preabort = function () {
                                 connection.__upgradeTransaction = null;
                                 // We ensure any cache is deleted before any request error events fire and try to reopen
@@ -601,6 +604,8 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                     }
                                 }
                             };
+
+                            // eslint-disable-next-line camelcase -- Clear API
                             req.transaction.on__abort = function () {
                                 req.__transaction = null;
                                 // `readyState` and `result` will be reset anyways by `dbCreateError` but we follow spec.
@@ -627,6 +632,8 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                     });
                                 });
                             };
+
+                            // eslint-disable-next-line camelcase -- Clear API
                             req.transaction.on__complete = function () {
                                 if (/** @type {import('./IDBDatabase.js').IDBDatabaseFull} */ (
                                     req.__result
@@ -746,7 +753,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
         }, dbCreateError);
     }
 
-    addRequestToConnectionQueue(req, name, /* origin */ undefined, function (req) {
+    addRequestToConnectionQueue(req, name, /* origin */ undefined, function () {
         let latestCachedVersion;
         if (useDatabaseCache) {
             if (!(name in websqlDBCache)) {

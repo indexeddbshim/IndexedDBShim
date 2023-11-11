@@ -1,5 +1,5 @@
 /* eslint-env mocha */
-/* globals expect, IDBKeyRange */
+/* globals expect */
 /* eslint-disable no-var */
 describe('IDBKeyRange', function () {
     'use strict';

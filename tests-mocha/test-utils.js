@@ -305,10 +305,18 @@
      * @returns {void}
      */
     function Person (name, age, dob, isMarried) {
-        name && (this.name = name);
-        age && (this.age = age);
-        dob && (this.dob = dob);
-        isMarried && (this.isMarried = isMarried);
+        if (name) {
+            this.name = name;
+        }
+        if (age) {
+            this.age = age;
+        }
+        if (dob) {
+            this.dob = dob;
+        }
+        if (isMarried) {
+            this.isMarried = isMarried;
+        }
     }
 
     Person.prototype.name = '';
@@ -390,4 +398,4 @@
             }
         }
     }
-})();
+}());

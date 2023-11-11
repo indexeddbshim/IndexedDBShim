@@ -266,7 +266,7 @@ IDBIndex.__createIndex = function (store, index) {
             IDBIndex.__updateIndexList(store, tx, function () {
                 // Add index entries for all existing records
                 tx.executeSql('SELECT "key", "value" FROM ' + util.escapeStoreNameForSQL(storeName), [], function (tx, data) {
-                    CFG.DEBUG && console.log('Adding existing ' + storeName + ' records to the ' + indexName + ' index');
+                    if (CFG.DEBUG) { console.log('Adding existing ' + storeName + ' records to the ' + indexName + ' index'); }
                     addIndexEntry(0);
 
                     /**
@@ -303,7 +303,7 @@ IDBIndex.__createIndex = function (store, index) {
                                     'UPDATE ' + util.escapeStoreNameForSQL(storeName) + ' SET ' +
                                         util.escapeIndexNameForSQL(indexName) + ' = ? WHERE "key" = ?',
                                     [util.escapeSQLiteStatement(indexKeyStr), data.rows.item(i).key],
-                                    function (tx, data) {
+                                    function () {
                                         addIndexEntry(i + 1);
                                     },
                                     /** @type {SQLStatementErrorCallback} */ (error)
@@ -362,7 +362,7 @@ IDBIndex.__createIndex = function (store, index) {
         } else {
             // For a new index, add a new column to the object store, then apply the index
             const sql = ['ALTER TABLE', escapedStoreNameSQL, 'ADD', escapedIndexNameSQL, 'BLOB'].join(' ');
-            CFG.DEBUG && console.log(sql);
+            if (CFG.DEBUG) { console.log(sql); }
             tx.executeSql(
                 sql, [], addIndexSQL, /** @type {SQLStatementErrorCallback} */ (error)
             );
@@ -465,7 +465,7 @@ IDBIndex.__updateIndexList = function (store, tx, success, failure) {
         };
     }
 
-    CFG.DEBUG && console.log('Updating the index list for ' + store.__currentName, indexList);
+    if (CFG.DEBUG) { console.log('Updating the index list for ' + store.__currentName, indexList); }
     tx.executeSql('UPDATE __sys__ SET "indexList" = ? WHERE "name" = ?', [JSON.stringify(indexList), util.escapeSQLiteStatement(store.__currentName)], function () {
         success(store);
     }, /** @type {SQLStatementErrorCallback} */ (failure));
@@ -662,19 +662,19 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
         // This approach has the advantage of auto-deleting indexes via the DROP TABLE
         const sql = 'CREATE TABLE ' + escapedTmpStoreNameSQL +
             '(' + listColInfoToPreserve + escapedNewIndexNameSQL + ' ' + newNameType + ')';
-        CFG.DEBUG && console.log(sql);
+        if (CFG.DEBUG) { console.log(sql); }
         tx.executeSql(sql, [], function () {
             const sql = 'INSERT INTO ' + escapedTmpStoreNameSQL + '(' +
                 listColsToPreserve + escapedNewIndexNameSQL +
                 ') SELECT ' + listColsToPreserve + util.escapeIndexNameForSQL(oldName) + ' FROM ' + escapedStoreNameSQL;
-            CFG.DEBUG && console.log(sql);
+            if (CFG.DEBUG) { console.log(sql); }
             tx.executeSql(sql, [], function () {
                 const sql = 'DROP TABLE ' + escapedStoreNameSQL;
-                CFG.DEBUG && console.log(sql);
+                if (CFG.DEBUG) { console.log(sql); }
                 tx.executeSql(sql, [], function () {
                     const sql = 'ALTER TABLE ' + escapedTmpStoreNameSQL + ' RENAME TO ' + escapedStoreNameSQL;
-                    CFG.DEBUG && console.log(sql);
-                    tx.executeSql(sql, [], function (tx, data) {
+                    if (CFG.DEBUG) { console.log(sql); }
+                    tx.executeSql(sql, [], function (tx) {
                         if (!CFG.useSQLiteIndexes) {
                             finish();
                             return;
@@ -686,21 +686,19 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                                     escapedStoreNameSQL.slice(1, -1) + '^5' + escapedIndexNameSQL.slice(1, -1)
                                 );
                                 // const sql = 'DROP INDEX IF EXISTS ' + escapedIndexToRecreate;
-                                // CFG.DEBUG && console.log(sql);
+                                // if (CFG.DEBUG) { console.log(sql); }
                                 // tx.executeSql(sql, [], function () {
                                 const sql = 'CREATE INDEX ' +
                                     escapedIndexToRecreate + ' ON ' + escapedStoreNameSQL + '(' + escapedIndexNameSQL + ')';
-                                CFG.DEBUG && console.log(sql);
+                                if (CFG.DEBUG) { console.log(sql); }
                                 tx.executeSql(
                                     sql,
                                     [],
                                     resolve,
-                                    /* eslint-disable no-extra-parens -- TS */
                                     /** @type {SQLStatementErrorCallback} */
                                     (function (tx, err) {
                                         reject(err);
                                     })
-                                    /* eslint-enable no-extra-parens -- TS */
                                 );
                                 // }, function (tx, err) {
                                 //    reject(err);
@@ -711,26 +709,22 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
                                 const escapedIndexToRecreate = util.sqlQuote('sk_' + escapedStoreNameSQL.slice(1, -1));
                                 // Chrome erring here if not dropped first; Node does not
                                 const sql = 'DROP INDEX IF EXISTS ' + escapedIndexToRecreate;
-                                CFG.DEBUG && console.log(sql);
+                                if (CFG.DEBUG) { console.log(sql); }
                                 tx.executeSql(
                                     sql, [], function () {
                                         const sql = 'CREATE INDEX ' + escapedIndexToRecreate +
                                             ' ON ' + escapedStoreNameSQL + '("key")';
-                                        CFG.DEBUG && console.log(sql);
+                                        if (CFG.DEBUG) { console.log(sql); }
                                         tx.executeSql(
                                             sql, [], resolve,
-                                            /* eslint-disable no-extra-parens -- TS */
                                             /** @type {SQLStatementErrorCallback} */
                                             (function (tx, err) {
-                                                /* eslint-enable no-extra-parens -- TS */
                                                 reject(err);
                                             })
                                         );
                                     },
-                                    /* eslint-disable no-extra-parens -- TS */
                                     /** @type {SQLStatementErrorCallback} */
                                     (function (tx, err) {
-                                        /* eslint-enable no-extra-parens -- TS */
                                         reject(err);
                                     })
                                 );
@@ -803,14 +797,14 @@ function executeFetchIndexData (
         sql.push('LIMIT', String(count));
     }
     const isCount = opType === 'count';
-    CFG.DEBUG && console.log('Trying to fetch data for Index', sql.join(' '), sqlValues);
+    if (CFG.DEBUG) { console.log('Trying to fetch data for Index', sql.join(' '), sqlValues); }
     tx.executeSql(sql.join(' '), sqlValues, function (tx, data) {
         const records = [];
         let recordCount = 0;
         const decode = isCount
             ? () => { /* */ }
             : (opType === 'key'
-                // eslint-disable-next-line operator-linebreak -- JSDoc
+                // eslint-disable-next-line @stylistic/operator-linebreak -- JSDoc
                 ?
                 /**
                  * @param {{
@@ -822,7 +816,7 @@ function executeFetchIndexData (
                     // Key.convertValueToKey(record.key); // Already validated before storage
                     return Key.decode(util.unescapeSQLiteResponse(record.key));
                 }
-                // eslint-disable-next-line operator-linebreak -- JSDoc
+                // eslint-disable-next-line @stylistic/operator-linebreak -- JSDoc
                 :
                 /**
                  * @param {{
@@ -928,7 +922,7 @@ function buildFetchIndexDataSQL (
             /** @type {import('./Key.js').KeyPathArray} */ (
                 range
             ).forEach((innerKey, i) => {
-                if (i > 0) sql.push('OR');
+                if (i > 0) { sql.push('OR'); }
                 sql.push(util.escapeIndexNameForSQL(index.name), "LIKE ? ESCAPE '^' ");
                 sqlValues.push('%' + util.sqlLIKEEscape(
                     /** @type {string} */ (Key.encode(innerKey, index.multiEntry))

@@ -1,4 +1,3 @@
-/* globals DOMException */
 import CFG from './CFG.js';
 
 /**
@@ -267,7 +266,7 @@ function logError (name, message, error) {
 
         const method = typeof (console.error) === 'function' ? 'error' : 'log';
         console[method](name + ': ' + message + '. ' + (msg || ''));
-        console.trace && console.trace();
+        if (console.trace) { console.trace(); }
     }
 }
 
@@ -365,7 +364,7 @@ try {
 } catch (e) {}
 
 const createDOMException = useNativeDOMException
-    // eslint-disable-next-line operator-linebreak -- Need JSDoc
+    // eslint-disable-next-line @stylistic/operator-linebreak -- Need JSDoc
     ? /**
      * @param {string} name
      * @param {string} message
@@ -376,7 +375,7 @@ const createDOMException = useNativeDOMException
         logError(name, message, error);
         return createNativeDOMException(name, message);
     }
-    // eslint-disable-next-line operator-linebreak -- Need JSDoc
+    // eslint-disable-next-line @stylistic/operator-linebreak -- Need JSDoc
     : /**
     * @param {string} name
     * @param {string} message

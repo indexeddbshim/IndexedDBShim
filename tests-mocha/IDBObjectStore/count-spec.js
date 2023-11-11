@@ -16,7 +16,7 @@ describe('IDBObjectStore.count', function () {
                         done(error);
                     }
                     var req = objectStore.count();
-                    req.onsuccess = function (e) {
+                    req.onsuccess = function () {
                         expect(req.result, 'Total number of objects in database').to.equal(15);
                         objectStore.transaction.db.close();
                         done();

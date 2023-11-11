@@ -94,17 +94,15 @@ const signValues = ['negativeInfinity', 'bigNegative', 'smallNegative', 'smallPo
 const types = {
     invalid: {
         /**
-         * @param {AnyValue} _key
          * @returns {string}
          */
-        encode (_key) {
+        encode () {
             return keyTypeToEncodedChar.invalid + '-';
         },
         /**
-         * @param {string} _key
          * @returns {undefined}
          */
-        decode (_key) {
+        decode () {
             return undefined;
         }
     },
@@ -437,9 +435,9 @@ function negate (s) {
  * @returns {KeyType|"invalid"}
  */
 function getKeyType (key) {
-    if (Array.isArray(key)) return 'array';
-    if (util.isDate(key)) return 'date';
-    if (util.isBinary(key)) return 'binary';
+    if (Array.isArray(key)) { return 'array'; }
+    if (util.isDate(key)) { return 'date'; }
+    if (util.isBinary(key)) { return 'binary'; }
     const keyType = typeof key;
     return ['string', 'number'].includes(keyType)
         ? /** @type {"string"|"number"} */ (keyType)
@@ -712,7 +710,7 @@ function evaluateKeyPathOnValueToDecodedValue (value, keyPath, multiEntry, fullK
         return {value};
     }
     const identifiers = keyPath.split('.');
-    return identifiers.some((idntfr, i) => {
+    return identifiers.some((idntfr) => {
         if (idntfr === 'length' && (
             typeof value === 'string' || Array.isArray(value)
         )) {
@@ -925,6 +923,7 @@ function encode (key, inArray) {
         return null;
     }
     // array, date, number, string, binary (should already have detected "invalid")
+    // @ts-expect-error Argument may be ignored
     return types[getKeyType(key)].encode(key, inArray);
 }
 
@@ -1009,8 +1008,8 @@ function getCurrentNumber (tx, store, func, sqlFailCb) {
 function assignCurrentNumber (tx, store, num, successCb, failCb) {
     const sql = 'UPDATE __sys__ SET "currNum" = ? WHERE "name" = ?';
     const sqlValues = [num, util.escapeSQLiteStatement(store.__currentName)];
-    CFG.DEBUG && console.log(sql, sqlValues);
-    tx.executeSql(sql, sqlValues, function (tx, data) {
+    if (CFG.DEBUG) { console.log(sql, sqlValues); }
+    tx.executeSql(sql, sqlValues, function () {
         successCb(num);
     }, function (tx, err) {
         failCb(createDOMException('UnknownError', 'Could not set the auto increment value for key', err));

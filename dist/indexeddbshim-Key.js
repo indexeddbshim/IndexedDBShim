@@ -1,4 +1,4 @@
-/*! indexeddbshim - v12.0.0-pre.0 - 6/7/2023 */
+/*! indexeddbshim - v13.0.0-pre.1 - 11/11/2023 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -6,41 +6,41 @@
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.IDBKeyUtils = {}));
 })(this, (function (exports) { 'use strict';
 
-  function _iterableToArrayLimit(arr, i) {
-    var _i = null == arr ? null : "undefined" != typeof Symbol && arr[Symbol.iterator] || arr["@@iterator"];
-    if (null != _i) {
-      var _s,
-        _e,
-        _x,
-        _r,
-        _arr = [],
-        _n = !0,
-        _d = !1;
+  function _iterableToArrayLimit(r, l) {
+    var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+    if (null != t) {
+      var e,
+        n,
+        i,
+        u,
+        a = [],
+        f = !0,
+        o = !1;
       try {
-        if (_x = (_i = _i.call(arr)).next, 0 === i) {
-          if (Object(_i) !== _i) return;
-          _n = !1;
-        } else for (; !(_n = (_s = _x.call(_i)).done) && (_arr.push(_s.value), _arr.length !== i); _n = !0);
-      } catch (err) {
-        _d = !0, _e = err;
+        if (i = (t = t.call(r)).next, 0 === l) {
+          if (Object(t) !== t) return;
+          f = !1;
+        } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
+      } catch (r) {
+        o = !0, n = r;
       } finally {
         try {
-          if (!_n && null != _i.return && (_r = _i.return(), Object(_r) !== _r)) return;
+          if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return;
         } finally {
-          if (_d) throw _e;
+          if (o) throw n;
         }
       }
-      return _arr;
+      return a;
     }
   }
-  function _typeof(obj) {
+  function _typeof(o) {
     "@babel/helpers - typeof";
 
-    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) {
-      return typeof obj;
-    } : function (obj) {
-      return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-    }, _typeof(obj);
+    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+      return typeof o;
+    } : function (o) {
+      return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
+    }, _typeof(o);
   }
   function _slicedToArray(arr, i) {
     return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
@@ -603,7 +603,9 @@
       var msg = error && _typeof(error) === 'object' && error.message ? error.message : /** @type {string} */error;
       var method = typeof console.error === 'function' ? 'error' : 'log';
       console[method](name + ': ' + message + '. ' + (msg || ''));
-      console.trace && console.trace();
+      if (console.trace) {
+        console.trace();
+      }
     }
   }
 
@@ -632,7 +634,7 @@
     }
   } catch (e) {}
   var createDOMException = useNativeDOMException
-  // eslint-disable-next-line operator-linebreak -- Need JSDoc
+  // eslint-disable-next-line @stylistic/operator-linebreak -- Need JSDoc
   ?
   /**
   * @param {string} name
@@ -644,7 +646,7 @@
     logError(name, message, error);
     return createNativeDOMException(name, message);
   }
-  // eslint-disable-next-line operator-linebreak -- Need JSDoc
+  // eslint-disable-next-line @stylistic/operator-linebreak -- Need JSDoc
   :
   /**
   * @param {string} name
@@ -865,17 +867,15 @@
   var types = {
     invalid: {
       /**
-       * @param {AnyValue} _key
        * @returns {string}
        */
-      encode: function encode(_key) {
+      encode: function encode() {
         return keyTypeToEncodedChar.invalid + '-';
       },
       /**
-       * @param {string} _key
        * @returns {undefined}
        */
-      decode: function decode(_key) {
+      decode: function decode() {
         return undefined;
       }
     },
@@ -1213,9 +1213,15 @@
    * @returns {KeyType|"invalid"}
    */
   function getKeyType(key) {
-    if (Array.isArray(key)) return 'array';
-    if (isDate(key)) return 'date';
-    if (isBinary(key)) return 'binary';
+    if (Array.isArray(key)) {
+      return 'array';
+    }
+    if (isDate(key)) {
+      return 'date';
+    }
+    if (isBinary(key)) {
+      return 'binary';
+    }
     var keyType = _typeof(key);
     return ['string', 'number'].includes(keyType) ? /** @type {"string"|"number"} */keyType : 'invalid';
   }
@@ -1343,48 +1349,49 @@
           /** @type {(KeyValueObject|Value)[]} */
           var keys = [];
           var _loop = function _loop() {
-            // We cannot iterate here with array extras as we must ensure sparse arrays are invalidated
-            if (!multiEntry && !Object.hasOwn(arr, i)) {
-              return {
-                v: {
-                  type: type,
-                  invalid: true,
-                  message: 'Does not have own index property'
-                }
-              };
-            }
-            try {
-              var entry = arr[i];
-              var key = convertValueToKeyValueDecoded(entry, seen, false, fullKeys); // Though steps do not list rethrowing, the next is returnifabrupt when not multiEntry
-              if (key.invalid) {
-                if (multiEntry) {
-                  return "continue";
-                }
+              // We cannot iterate here with array extras as we must ensure sparse arrays are invalidated
+              if (!multiEntry && !Object.hasOwn(arr, i)) {
                 return {
                   v: {
                     type: type,
                     invalid: true,
-                    message: 'Bad array entry value-to-key conversion'
+                    message: 'Does not have own index property'
                   }
                 };
               }
-              if (!multiEntry || !fullKeys && keys.every(function (k) {
-                return cmp(k, key.value) !== 0;
-              }) || fullKeys && keys.every(function (k) {
-                return cmp(k, key) !== 0;
-              })) {
-                keys.push(fullKeys ? key : key.value);
+              try {
+                var entry = arr[i];
+                var key = convertValueToKeyValueDecoded(entry, seen, false, fullKeys); // Though steps do not list rethrowing, the next is returnifabrupt when not multiEntry
+                if (key.invalid) {
+                  if (multiEntry) {
+                    return 0; // continue
+                  }
+                  return {
+                    v: {
+                      type: type,
+                      invalid: true,
+                      message: 'Bad array entry value-to-key conversion'
+                    }
+                  };
+                }
+                if (!multiEntry || !fullKeys && keys.every(function (k) {
+                  return cmp(k, key.value) !== 0;
+                }) || fullKeys && keys.every(function (k) {
+                  return cmp(k, key) !== 0;
+                })) {
+                  keys.push(fullKeys ? key : key.value);
+                }
+              } catch (err) {
+                if (!multiEntry) {
+                  throw err;
+                }
               }
-            } catch (err) {
-              if (!multiEntry) {
-                throw err;
-              }
-            }
-          };
+            },
+            _ret;
           for (var i = 0; i < len; i++) {
-            var _ret = _loop();
-            if (_ret === "continue") continue;
-            if (_typeof(_ret) === "object") return _ret.v;
+            _ret = _loop();
+            if (_ret === 0) continue;
+            if (_ret) return _ret.v;
           }
           return {
             type: type,
@@ -1546,7 +1553,7 @@
       };
     }
     var identifiers = keyPath.split('.');
-    return identifiers.some(function (idntfr, i) {
+    return identifiers.some(function (idntfr) {
       if (idntfr === 'length' && (typeof value === 'string' || Array.isArray(value))) {
         value = value.length;
       } else if (isBlob(value)) {
@@ -1769,6 +1776,7 @@
       return null;
     }
     // array, date, number, string, binary (should already have detected "invalid")
+    // @ts-expect-error Argument may be ignored
     return types[getKeyType(key)].encode(key, inArray);
   }
 
@@ -1846,8 +1854,10 @@
   function assignCurrentNumber(tx, store, num, successCb, failCb) {
     var sql = 'UPDATE __sys__ SET "currNum" = ? WHERE "name" = ?';
     var sqlValues = [num, escapeSQLiteStatement(store.__currentName)];
-    CFG.DEBUG && console.log(sql, sqlValues);
-    tx.executeSql(sql, sqlValues, function (tx, data) {
+    if (CFG.DEBUG) {
+      console.log(sql, sqlValues);
+    }
+    tx.executeSql(sql, sqlValues, function () {
       successCb(num);
     }, function (tx, err) {
       failCb(createDOMException('UnknownError', 'Could not set the auto increment value for key', err));

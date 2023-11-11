@@ -141,6 +141,7 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
 
 // @ts-expect-error It's ok
 IDBTransaction.prototype = EventTargetFactory.createInstance({
+    // eslint-disable-next-line n/no-sync -- API
     defaultSync: true,
     // Ensure EventTarget preserves our properties
     extraProperties: ['complete']
@@ -162,7 +163,7 @@ IDBTransaction.prototype.__transFinishedCb = function (err, cb) {
 IDBTransaction.prototype.__executeRequests = function () {
     const me = this;
     if (me.__running) {
-        CFG.DEBUG && console.log('Looks like the request set is already running', me.mode);
+        if (CFG.DEBUG) { console.log('Looks like the request set is already running', me.mode); }
         return;
     }
 
@@ -349,7 +350,7 @@ IDBTransaction.prototype.__executeRequests = function () {
          */
         function complete () {
             me.__completed = true;
-            CFG.DEBUG && console.log('Transaction completed');
+            if (CFG.DEBUG) { console.log('Transaction completed'); }
             const evt = createEvent('complete');
             try {
                 me.__internal = true;
@@ -583,12 +584,10 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
      */
     function abort (tx, errOrResult) {
         if (!tx) {
-            CFG.DEBUG && console.log('Rollback not possible due to missing transaction', me);
+            if (CFG.DEBUG) { console.log('Rollback not possible due to missing transaction', me); }
         } else if (errOrResult && 'code' in errOrResult && typeof errOrResult.code === 'number') {
-            CFG.DEBUG && console.log('Rollback erred; feature is probably not supported as per WebSQL', me);
-        } else {
-            CFG.DEBUG && console.log('Rollback succeeded', me);
-        }
+            if (CFG.DEBUG) { console.log('Rollback erred; feature is probably not supported as per WebSQL', me); }
+        } else if (CFG.DEBUG) { console.log('Rollback succeeded', me); }
 
         me.dispatchEvent(createEvent('__preabort'));
         me.__requests.filter(function (q, i, arr) { // eslint-disable-line promise/no-promise-in-callback
@@ -675,7 +674,7 @@ IDBTransaction.prototype.abort = function () {
     if (!(me instanceof IDBTransaction)) {
         throw new TypeError('Illegal invocation');
     }
-    CFG.DEBUG && console.log('The transaction was aborted', me);
+    if (CFG.DEBUG) { console.log('The transaction was aborted', me); }
     IDBTransaction.__assertNotFinished(me);
     me.__abortTransaction(null);
 };

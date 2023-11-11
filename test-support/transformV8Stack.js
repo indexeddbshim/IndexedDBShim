@@ -20,7 +20,7 @@ function transformW3CStack (stack) {
         newFileColumnNumber (match) {
             return match[5] || '';
         },
-        originalPositionString (formattingSpaces, originalPosition, untransformedOutput, match /*, prev=false */) {
+        originalPositionString (formattingSpaces, originalPosition, untransformedOutput, match /* , prev=false */) {
             const erringFunc = match[2] || '';
             const endingParenth = match[6] || '';
             if (originalPosition.source) {

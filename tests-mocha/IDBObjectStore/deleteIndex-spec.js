@@ -18,7 +18,7 @@ describe('IDBObjectStore.deleteIndex', function () {
             }
             db.close();
             var dbOpenRequest = indexedDB.open(DB.NAME);
-            dbOpenRequest.onsuccess = function (e) {
+            dbOpenRequest.onsuccess = function () {
                 expect(true, 'Database Opened successfully').to.be.true;
                 dbOpenRequest.result.close();
                 done();
@@ -27,7 +27,7 @@ describe('IDBObjectStore.deleteIndex', function () {
                 console.log('e', e);
                 done(new Error('Database NOT Opened successfully'));
             };
-            dbOpenRequest.onupgradeneeded = function (e) {
+            dbOpenRequest.onupgradeneeded = function () {
                 expect(true, 'Database Upgraded successfully').to.be.true;
                 // var db = dbOpenRequest.result;
                 var objectStore1 = dbOpenRequest.transaction.objectStore(DB.OBJECT_STORE_1);
@@ -42,7 +42,7 @@ describe('IDBObjectStore.deleteIndex', function () {
                 objectStore1.deleteIndex('DeleteTestIndex');
                 expect(objectStore1.indexNames, 'Index with previously deleted name successfully deleted').to.have.lengthOf(count);
             };
-            dbOpenRequest.onblocked = function (e) {
+            dbOpenRequest.onblocked = function () {
                 done(new Error('Opening database blocked'));
             };
         });
@@ -148,7 +148,7 @@ describe('IDBObjectStore.deleteIndex', function () {
                     var open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
 
-                    open.onupgradeneeded = sinon.spy(function (event) {
+                    open.onupgradeneeded = sinon.spy(function () {
                         // var db = event.target.result;
                         var store = open.transaction.objectStore('My Store');
 

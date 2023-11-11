@@ -80,10 +80,10 @@ const htmlFiles = normalIndexedDBFiles.map((htmlFile) => ({
 }));
 
 // Iterate IndexedDB files
-await Promise.all(htmlFiles.map(async ({inputFile, outputFile, web}, i) => {
+await Promise.all(htmlFiles.map(async ({inputFile, outputFile, web}) => {
     let data;
     if (web) {
-        data = await new Promise((resolve, reject) => { // eslint-disable-line promise/avoid-new
+        data = await new Promise((resolve) => { // eslint-disable-line promise/avoid-new
             http.get(inputFile, (res) => {
                 res.setEncoding('utf8');
                 let rawData = '';
@@ -110,7 +110,7 @@ await Promise.all(htmlFiles.map(async ({inputFile, outputFile, web}, i) => {
 
     // Confirm there are no unexpected elements which should be handled in the test
     // <(?!/?(script(>| src| type="text/javascript")|div( id="?log"?)?>|link|meta|!|title>|html|http|DOM|head>|body>| |=))
-    $$('*').forEach(function (elem, i) {
+    $$('*').forEach(function (elem) {
         if (![
             'html', 'head', 'body', 'meta', 'title',
             'link', 'script', 'div', 'h1', 'form', 'input'

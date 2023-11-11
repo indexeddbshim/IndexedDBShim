@@ -4,13 +4,13 @@
 describe('IDBCursor.update', function () {
     it('Updating using a cursor', function (done) {
         this.timeout(20000);
-        testHelper.createObjectStores(undefined, function (error, [objectStore, db]) {
+        testHelper.createObjectStores(undefined, function (error, [objectStore]) {
             if (error) {
                 done(error);
                 return;
             }
             var cursorReq = objectStore.openCursor();
-            cursorReq.onsuccess = function (e) {
+            cursorReq.onsuccess = function () {
                 var cursor = cursorReq.result;
                 if (cursor) {
                     if (cursor.value.Int % 3 === 0) {
@@ -33,14 +33,14 @@ describe('IDBCursor.update', function () {
                     done();
                 }
             };
-            cursorReq.onerror = function (e) {
+            cursorReq.onerror = function () {
                 done(new Error('Could not continue opening cursor'));
             };
         });
     });
 
     it('Index update Cursor', function (done) {
-        testHelper.createIndexesAndData((error, [key, value, objectStore, db]) => {
+        testHelper.createIndexesAndData((error, [, value, objectStore, db]) => {
             if (error) {
                 done(error);
                 return;

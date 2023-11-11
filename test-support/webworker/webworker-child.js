@@ -17,7 +17,7 @@ import vm from 'vm';
 import util from 'util';
 import http from 'http';
 import WebSocket from 'ws';
-import XMLHttpRequest from 'local-xmlhttprequest';
+import xmlHttpRequest from 'local-xmlhttprequest';
 import Blob from 'w3c-blob'; // Needed by Node; uses native if available (browser)
 import fetch from 'isomorphic-fetch';
 import * as wwutil from './webworker-util.js';
@@ -25,7 +25,7 @@ import * as wwutil from './webworker-util.js';
 //   as a separate repository (due to indirect circular dependency?);
 // import indexeddbshim from 'indexeddbshim';
 import indexeddbshim from '../../src/node-UnicodeIdentifiers.js';
-import Worker from './webworker.js';
+import worker from './webworker.js';
 // import isDateObject from 'is-date-object'; // Not needed in worker tests as in main thread tests
 /*
 const permittedProtocols;
@@ -111,7 +111,7 @@ switch (scriptLoc.protocol) {
 case 'file':
     if ([/interfaces\.any\.js$/u, /interfaces\.any\.worker\.js$/u].some((interfaceFileRegex) => interfaceFileRegex.test(workerURL))) {
         workerURL = workerURL.replace(/.*web-platform-tests/u, 'http://web-platform.test:8000');
-        prom = new Promise((resolve, reject) => { // eslint-disable-line promise/avoid-new
+        prom = new Promise((resolve) => { // eslint-disable-line promise/avoid-new
             http.get(workerURL, (res) => {
                 res.setEncoding('utf8');
                 let rawData = '';
@@ -339,11 +339,11 @@ prom.then((scriptSource) => {
     workerCtx.EventTarget = workerCtx.ShimEventTarget;
     workerCtx.DOMException = workerCtx.ShimDOMException;
 
-    workerCtx.XMLHttpRequest = XMLHttpRequest({basePath: workerConfig.basePath});
+    workerCtx.XMLHttpRequest = xmlHttpRequest({basePath: workerConfig.basePath});
     workerCtx.URL = URL;
     workerCtx.URLSearchParams = URLSearchParams;
 
-    workerCtx.Worker = Worker({
+    workerCtx.Worker = worker({
         relativePathType: 'file', // Todo: We need to change this to "url" when implemented
         // Todo: We might auto-detect this by looking at window.location
         basePath: workerConfig.basePath, // Todo: We need to change this to our server's base URL when implemented

@@ -11,7 +11,7 @@ describe('IDBCursor.delete', function () {
             }
             db.close();
             testHelper.addObjectStoreData(function () {
-                testHelper.openObjectStore(undefined, function (error, [objectStore, db]) {
+                testHelper.openObjectStore(undefined, function (error, [objectStore]) {
                     if (error) {
                         done(error);
                         return;
@@ -19,7 +19,7 @@ describe('IDBCursor.delete', function () {
                     var cursorReq = objectStore.openCursor();
                     var totalRows = 15;
                     var cursorIteration = 0;
-                    cursorReq.onsuccess = function (e) {
+                    cursorReq.onsuccess = function () {
                         var cursor = cursorReq.result;
                         if (cursor) {
                             cursorIteration++;

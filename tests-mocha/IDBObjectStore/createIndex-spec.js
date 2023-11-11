@@ -1,5 +1,5 @@
 /* eslint-env mocha */
-/* globals expect, sinon, util, env, IDBIndex, IDBObjectStore */
+/* globals expect, sinon, util, env */
 /* eslint-disable no-var, no-unused-expressions */
 describe('IDBObjectStore.createIndex', function () {
     'use strict';
@@ -181,7 +181,7 @@ describe('IDBObjectStore.createIndex', function () {
                     var open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
 
-                    open.onupgradeneeded = sinon.spy(function (event) {
+                    open.onupgradeneeded = sinon.spy(function () {
                         var store = open.transaction.objectStore('My Store');
 
                         expect(Array.prototype.slice.call(store.indexNames))
@@ -461,7 +461,7 @@ describe('IDBObjectStore.createIndex', function () {
                     var open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
 
-                    open.onupgradeneeded = sinon.spy(function (event) {
+                    open.onupgradeneeded = sinon.spy(function () {
                         var store = open.transaction.objectStore('My Store');
 
                         try {

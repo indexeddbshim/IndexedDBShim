@@ -151,15 +151,15 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
 
                 const sql = 'UPDATE __sys__ SET "name" = ? WHERE "name" = ?';
                 const sqlValues = [util.escapeSQLiteStatement(name), util.escapeSQLiteStatement(oldName)];
-                CFG.DEBUG && console.log(sql, sqlValues);
+                if (CFG.DEBUG) { console.log(sql, sqlValues); }
                 /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
                     me.transaction
                 ).__addNonRequestToTransactionQueue(function objectStoreClear (tx, args, success, error) {
-                    tx.executeSql(sql, sqlValues, function (tx, data) {
+                    tx.executeSql(sql, sqlValues, function (tx) {
                         // This SQL preserves indexes per https://www.sqlite.org/lang_altertable.html
                         const sql = 'ALTER TABLE ' + util.escapeStoreNameForSQL(oldName) + ' RENAME TO ' + util.escapeStoreNameForSQL(name);
-                        CFG.DEBUG && console.log(sql);
-                        tx.executeSql(sql, [], function (tx, data) {
+                        if (CFG.DEBUG) { console.log(sql); }
+                        tx.executeSql(sql, [], function () {
                             delete me.__pendingName;
                             success();
                         });
@@ -254,7 +254,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
          * @returns {boolean}
          */
         function error (tx, err) {
-            CFG.DEBUG && console.log(err);
+            if (CFG.DEBUG) { console.log(err); }
             failure(createDOMException('UnknownError', 'Could not create object store "' + storeName + '"', err));
             return true;
         }
@@ -262,8 +262,8 @@ IDBObjectStore.__createObjectStore = function (db, store) {
         const escapedStoreNameSQL = util.escapeStoreNameForSQL(storeName);
         // key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
         const sql = ['CREATE TABLE', escapedStoreNameSQL, '(key BLOB', store.autoIncrement ? 'UNIQUE, inc INTEGER PRIMARY KEY AUTOINCREMENT' : 'PRIMARY KEY', ', value BLOB)'].join(' ');
-        CFG.DEBUG && console.log(sql);
-        tx.executeSql(sql, [], function (tx, data) {
+        if (CFG.DEBUG) { console.log(sql); }
+        tx.executeSql(sql, [], function (tx) {
             /**
              * @returns {void}
              */
@@ -327,7 +327,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
          * @returns {boolean}
          */
         function error (tx, err) {
-            CFG.DEBUG && console.log(err);
+            if (CFG.DEBUG) { console.log(err); }
             failure(createDOMException('UnknownError', 'Could not delete ObjectStore', err));
             return true;
         }
@@ -597,9 +597,9 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
         insertSqlValues.push(util.escapeSQLiteStatement(encoded));
 
         const insertSql = sqlStart.join(' ') + sqlEnd.join(' ');
-        CFG.DEBUG && console.log('SQL for adding', insertSql, insertSqlValues);
+        if (CFG.DEBUG) { console.log('SQL for adding', insertSql, insertSqlValues); }
 
-        tx.executeSql(insertSql, insertSqlValues, function (tx, data) {
+        tx.executeSql(insertSql, insertSqlValues, function () {
             success(clonedKeyOrCurrentNumber);
         }, function (tx, err) {
             // Should occur for `add` operation
@@ -664,7 +664,7 @@ IDBObjectStore.prototype.add = function (value /* , key */) {
  * @this {IDBObjectStoreFull}
  * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
-IDBObjectStore.prototype.put = function (value /*, key */) {
+IDBObjectStore.prototype.put = function (value /* , key */) {
     const me = this;
     // eslint-disable-next-line prefer-rest-params
     const key = arguments[1];
@@ -704,7 +704,7 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
     const sql = 'DELETE FROM ' + util.escapeStoreNameForSQL(me.__currentName) + ' WHERE "key" = ?';
     const encodedKey = /** @type {string} */ (Key.encode(key));
     tx.executeSql(sql, [util.escapeSQLiteStatement(encodedKey)], function (tx, data) {
-        CFG.DEBUG && console.log('Did the row with the', key, 'exist?', data.rowsAffected);
+        if (CFG.DEBUG) { console.log('Did the row with the', key, 'exist?', data.rowsAffected); }
         cb(tx);
     }, function (tx, err) {
         error(err);
@@ -793,9 +793,9 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
     return /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
         me.transaction
     ).__addToTransactionQueue(function objectStoreGet (tx, args, success, error) {
-        CFG.DEBUG && console.log('Fetching', me.__currentName, sqlValues);
+        if (CFG.DEBUG) { console.log('Fetching', me.__currentName, sqlValues); }
         tx.executeSql(sqlStr, sqlValues, function (tx, data) {
-            CFG.DEBUG && console.log('Fetched data', data);
+            if (CFG.DEBUG) { console.log('Fetched data', data); }
             let ret;
             try {
                 // Opera can't deal with the try-catch here.
@@ -827,7 +827,7 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
                 }
             } catch (e) {
                 // If no result is returned, or error occurs when parsing JSON
-                CFG.DEBUG && console.log(e);
+                if (CFG.DEBUG) { console.log(e); }
             }
             success(ret);
         }, function (tx, err) {
@@ -917,9 +917,9 @@ IDBObjectStore.prototype.delete = function (query) {
     return /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
         me.transaction
     ).__addToTransactionQueue(function objectStoreDelete (tx, args, success, error) {
-        CFG.DEBUG && console.log('Deleting', me.__currentName, sqlValues);
+        if (CFG.DEBUG) { console.log('Deleting', me.__currentName, sqlValues); }
         tx.executeSql(sql, sqlValues, function (tx, data) {
-            CFG.DEBUG && console.log('Deleted from database', data.rowsAffected);
+            if (CFG.DEBUG) { console.log('Deleted from database', data.rowsAffected); }
             me.__cursors.forEach((cursor) => {
                 cursor.__invalidateCache(); // Delete
             });
@@ -950,7 +950,7 @@ IDBObjectStore.prototype.clear = function () {
         me.transaction
     ).__addToTransactionQueue(function objectStoreClear (tx, args, success, error) {
         tx.executeSql('DELETE FROM ' + util.escapeStoreNameForSQL(me.__currentName), [], function (tx, data) {
-            CFG.DEBUG && console.log('Cleared all records from database', data.rowsAffected);
+            if (CFG.DEBUG) { console.log('Cleared all records from database', data.rowsAffected); }
             me.__cursors.forEach((cursor) => {
                 cursor.__invalidateCache(); // Clear
             });

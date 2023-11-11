@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 /* globals expect, env */
-/* globals IDBFactory, IDBDatabase, IDBObjectStore, IDBIndex, IDBTransaction, IDBCursor, IDBKeyRange, IDBRequest, IDBOpenDBRequest, IDBVersionChangeEvent */
 describe('IndexedDB API', function () {
     'use strict';
 

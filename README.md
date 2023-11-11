@@ -593,7 +593,7 @@ example:
 
     // This code will use the native IndexedDB, if it exists, or the shim otherwise
     indexedDB.open('MyDatabase', 1);
-})();
+}());
 ```
 
 ### Windows Phone

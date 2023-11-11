@@ -309,6 +309,7 @@ IDBDatabase.prototype.__forceClose = function (msg) {
     me.close();
     let ct = 0;
     me.__transactions.forEach(function (trans) {
+        // eslint-disable-next-line camelcase -- Clear API
         trans.on__abort = function () {
             ct++;
             if (ct === me.__transactions.length) {

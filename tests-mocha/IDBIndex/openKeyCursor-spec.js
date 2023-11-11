@@ -3,7 +3,7 @@
 /* eslint-disable no-var, no-unused-expressions */
 describe('IDBIndex.openKeyCursor', function () {
     it('Index Key Cursor', function (done) {
-        testHelper.createIndexesAndData((error, [key, value, objectStore, db]) => {
+        testHelper.createIndexesAndData((error, [, , objectStore, db]) => {
             if (error) {
                 done(error);
                 return;

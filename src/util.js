@@ -1,3 +1,4 @@
+/* eslint-disable new-cap -- ToString is how it is defined */
 import CFG from './CFG.js';
 import expandsOnNFD from './unicode-regex.js';
 
