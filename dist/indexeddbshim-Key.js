@@ -1,4 +1,4 @@
-/*! indexeddbshim - v13.0.0-pre.1 - 11/11/2023 */
+/*! indexeddbshim - v13.0.0-pre.1 - 12/7/2023 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -463,7 +463,7 @@
     function DOMException(message, name) {
       // const err = Error.prototype.constructor.call(this, message); // Any use to this? Won't set this.message
       this[Symbol.toStringTag] = 'DOMException';
-      this._code = name in codes ? codes[/** @type {Code} */name] : legacyCodes[/** @type {LegacyCode} */name] || 0;
+      this._code = name in codes ? codes[( /** @type {Code} */name)] : legacyCodes[( /** @type {LegacyCode} */name)] || 0;
       this._name = name || 'Error';
       // We avoid `String()` in this next line as it converts Symbols
       this._message = message === undefined ? '' : '' + message; // eslint-disable-line no-implicit-coercion
@@ -600,7 +600,7 @@
    */
   function logError(name, message, error) {
     if (CFG.DEBUG) {
-      var msg = error && _typeof(error) === 'object' && error.message ? error.message : /** @type {string} */error;
+      var msg = error && _typeof(error) === 'object' && error.message ? error.message : ( /** @type {string} */error);
       var method = typeof console.error === 'function' ? 'error' : 'log';
       console[method](name + ': ' + message + '. ' + (msg || ''));
       if (console.trace) {
@@ -1223,7 +1223,7 @@
       return 'binary';
     }
     var keyType = _typeof(key);
-    return ['string', 'number'].includes(keyType) ? /** @type {"string"|"number"} */keyType : 'invalid';
+    return ['string', 'number'].includes(keyType) ? ( /** @type {"string"|"number"} */keyType) : 'invalid';
   }
 
   /**
@@ -1320,13 +1320,11 @@
               value: 0
             };
           }
-          return (/** @type {{type: KeyType; value: Value}} */ret
-          );
+          return /** @type {{type: KeyType; value: Value}} */ret;
         }
       case 'string':
         {
-          return (/** @type {{type: KeyType; value: Value}} */ret
-          );
+          return /** @type {{type: KeyType; value: Value}} */ret;
         }
       case 'binary':
         {
@@ -1604,7 +1602,7 @@
       }
       value = value[identifier];
     });
-    value[/** @type {string} */last] = key; // key is already a `keyValue` in our processing so no need to convert
+    value[( /** @type {string} */last)] = key; // key is already a `keyValue` in our processing so no need to convert
   }
 
   /**

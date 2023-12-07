@@ -11,4 +11,5 @@ test-support/**/*.js
 !test-support/webworker/*.js
 !test-support/*.js
 test-support/latest-erring-bundled.js
-!.eslintrc.js
+!.eslintrc.cjs
+!.ncurc.cjs

@@ -1,4 +1,4 @@
-/*! indexeddbshim - v13.0.0-pre.1 - 11/11/2023 */
+/*! indexeddbshim - v13.0.0-pre.1 - 12/7/2023 */
 
 'use strict';
 
@@ -161,10 +161,9 @@ var ShimEvent = /** @type {unknown} */function Event(type) {
     pr;
     Object.defineProperty(_this, prop, {
       get: function get() {
-        return (/* prop in _evCfg && */_evCfg[prop] !== undefined ? _evCfg[prop] : prop in _ev ? _ev[prop] :
-          // Defaults
-          prop === 'eventPhase' ? 0 : prop === 'defaultPrevented' ? false : null
-        );
+        return /* prop in _evCfg && */_evCfg[prop] !== undefined ? _evCfg[prop] : prop in _ev ? _ev[prop] :
+        // Defaults
+        prop === 'eventPhase' ? 0 : prop === 'defaultPrevented' ? false : null;
       }
     });
   });
@@ -659,7 +658,6 @@ Object.assign(EventTarget.prototype, {
         }
       });
     }
-
     var _eventCopy = eventCopy,
       type = _eventCopy.type;
 
@@ -1853,7 +1851,7 @@ function createNonNativeDOMExceptionClass() {
   function DOMException(message, name) {
     // const err = Error.prototype.constructor.call(this, message); // Any use to this? Won't set this.message
     this[Symbol.toStringTag] = 'DOMException';
-    this._code = name in codes ? codes[/** @type {Code} */name] : legacyCodes[/** @type {LegacyCode} */name] || 0;
+    this._code = name in codes ? codes[( /** @type {Code} */name)] : legacyCodes[( /** @type {LegacyCode} */name)] || 0;
     this._name = name || 'Error';
     // We avoid `String()` in this next line as it converts Symbols
     this._message = message === undefined ? '' : '' + message; // eslint-disable-line no-implicit-coercion
@@ -1990,7 +1988,7 @@ function createNonNativeDOMException(name, message) {
  */
 function logError(name, message, error) {
   if (CFG.DEBUG) {
-    const msg = error && typeof error === 'object' && error.message ? error.message : /** @type {string} */error;
+    const msg = error && typeof error === 'object' && error.message ? error.message : ( /** @type {string} */error);
     const method = typeof console.error === 'function' ? 'error' : 'log';
     console[method](name + ': ' + message + '. ' + (msg || ''));
     if (console.trace) {
@@ -2165,7 +2163,6 @@ IDBRequest.__super = function IDBRequest() {
   this.__setOptions({
     legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
   });
-
   doneFlagGetters.forEach(prop => {
     Object.defineProperty(this, '__' + prop, {
       enumerable: false,
@@ -3025,7 +3022,7 @@ function getKeyType(key) {
     return 'binary';
   }
   const keyType = typeof key;
-  return ['string', 'number'].includes(keyType) ? /** @type {"string"|"number"} */keyType : 'invalid';
+  return ['string', 'number'].includes(keyType) ? ( /** @type {"string"|"number"} */keyType) : 'invalid';
 }
 
 /**
@@ -3122,13 +3119,11 @@ function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
             value: 0
           };
         }
-        return (/** @type {{type: KeyType; value: Value}} */ret
-        );
+        return /** @type {{type: KeyType; value: Value}} */ret;
       }
     case 'string':
       {
-        return (/** @type {{type: KeyType; value: Value}} */ret
-        );
+        return /** @type {{type: KeyType; value: Value}} */ret;
       }
     case 'binary':
       {
@@ -3392,7 +3387,7 @@ function injectKeyIntoValueUsingKeyPath(value, key, keyPath) {
     }
     value = value[identifier];
   });
-  value[/** @type {string} */last] = key; // key is already a `keyValue` in our processing so no need to convert
+  value[( /** @type {string} */last)] = key; // key is already a `keyValue` in our processing so no need to convert
 }
 
 /**
@@ -3800,7 +3795,7 @@ IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
       convertValueToKeyRethrowingAndIfInvalid(upper);
     }
     if (lower !== undefined && upper !== undefined && lower !== upper) {
-      if ( /** @type {string} */encode$1(lower) > /** @type {string} */encode$1(upper)) {
+      if ( /** @type {string} */encode$1(lower) > ( /** @type {string} */encode$1(upper))) {
         throw createDOMException('DataError', '`lower` must not be greater than `upper` argument in `bound()` call.');
       }
     }
@@ -3978,7 +3973,6 @@ function convertValueToKeyRange(value, nullDisallowed) {
     }
     return undefined; // Represents unbounded
   }
-
   convertValueToKeyRethrowingAndIfInvalid(value);
   return IDBKeyRange.only(value);
 }
@@ -4197,8 +4191,7 @@ Object.defineProperty(DOMStringList, '__createInstance', {
       this._length = 0;
     };
     DOMStringList.prototype = DOMStringListAlias.prototype;
-    return (/** @type {DOMStringListFull} */new DOMStringList()
-    );
+    return /** @type {DOMStringListFull} */new DOMStringList();
   }
 });
 if (cleanInterface) {
@@ -4344,7 +4337,6 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
     me.__setOptions({
       legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
     });
-
     readonlyProperties$3.forEach(readonlyProp => {
       Object.defineProperty(this, readonlyProp, {
         configurable: true
@@ -4419,7 +4411,6 @@ IDBTransaction.prototype.__executeRequests = function () {
       if (req) {
         q.req = req; // Need to do this in case of cursors
       }
-
       if (!q.req) {
         // TS guard
         return;
@@ -5053,24 +5044,24 @@ function _slicedToArray(e, t) {
     var r = null == e ? null : "undefined" != typeof Symbol && e[Symbol.iterator] || e["@@iterator"];
     if (null != r) {
       var n,
-        o,
         a,
+        o,
         i,
         c = [],
         s = !0,
         u = !1;
       try {
-        if (a = (r = r.call(e)).next, 0 === t) {
+        if (o = (r = r.call(e)).next, 0 === t) {
           if (Object(r) !== r) return;
           s = !1;
-        } else for (; !(s = (n = a.call(r)).done) && (c.push(n.value), c.length !== t); s = !0);
+        } else for (; !(s = (n = o.call(r)).done) && (c.push(n.value), c.length !== t); s = !0);
       } catch (e) {
-        u = !0, o = e;
+        u = !0, a = e;
       } finally {
         try {
           if (!s && null != r.return && (i = r.return(), Object(i) !== i)) return;
         } finally {
-          if (u) throw o;
+          if (u) throw a;
         }
       }
       return c;
@@ -5113,12 +5104,12 @@ e.__typeson__type__ = "TypesonPromise", "undefined" != typeof Symbol && Object.d
   }
 }), e.prototype.then = function (t, r) {
   var n = this;
-  return new e(function (e, o) {
+  return new e(function (e, a) {
     n.p.then(function (r) {
       e(t ? t(r) : r);
     }).catch(function (e) {
       return r ? r(e) : Promise.reject(e);
-    }).then(e, o);
+    }).then(e, a);
   });
 }, e.prototype.catch = function (e) {
   return this.then(function () {}, e);
@@ -5159,10 +5150,10 @@ function toStringTag(e) {
 }
 function hasConstructorOf(e, n) {
   if (!e || "object" !== _typeof(e)) return !1;
-  var o = r(e);
-  if (!o) return null === n;
-  var a = t(o, "constructor") && o.constructor;
-  return "function" != typeof a ? null === n : n === a || null !== n && Function.prototype.toString.call(a) === Function.prototype.toString.call(n) || "function" == typeof n && "string" == typeof a.__typeson__type__ && a.__typeson__type__ === n.__typeson__type__;
+  var a = r(e);
+  if (!a) return null === n;
+  var o = t(a, "constructor") && a.constructor;
+  return "function" != typeof o ? null === n : n === o || null !== n && Function.prototype.toString.call(o) === Function.prototype.toString.call(n) || "function" == typeof n && "string" == typeof o.__typeson__type__ && o.__typeson__type__ === n.__typeson__type__;
 }
 function isPlainObject(e) {
   return !(!e || "Object" !== toStringTag(e)) && (!r(e) || hasConstructorOf(e, Object));
@@ -5204,8 +5195,8 @@ function _await(e, t, r) {
   return r ? t ? t(e) : e : (e && e.then || (e = Promise.resolve(e)), t ? e.then(t) : e);
 }
 var n = Object.keys,
-  o = Object.hasOwn,
-  a = Array.isArray,
+  a = Object.hasOwn,
+  o = Array.isArray,
   i$1 = ["type", "replaced", "iterateIn", "iterateUnsetNumeric", "addLength"];
 function _async(e) {
   return function () {
@@ -5220,9 +5211,9 @@ function _async(e) {
 function nestedPathsFirst(e, t) {
   var r, n;
   if ("" === e.keypath) return -1;
-  var o = null !== (r = e.keypath.match(/\./g)) && void 0 !== r ? r : 0,
-    a = null !== (n = t.keypath.match(/\./g)) && void 0 !== n ? n : 0;
-  return o && (o = o.length), a && (a = a.length), o > a ? -1 : o < a ? 1 : e.keypath < t.keypath ? -1 : e.keypath > t.keypath ? 1 : 0;
+  var a = null !== (r = e.keypath.match(/\./g)) && void 0 !== r ? r : 0,
+    o = null !== (n = t.keypath.match(/\./g)) && void 0 !== n ? n : 0;
+  return a && (a = a.length), o && (o = o.length), a > o ? -1 : a < o ? 1 : e.keypath < t.keypath ? -1 : e.keypath > t.keypath ? 1 : 0;
 }
 var c = function () {
     function Typeson(e) {
@@ -5234,8 +5225,8 @@ var c = function () {
         n = _objectSpread2(_objectSpread2(_objectSpread2({}, this.options), n), {}, {
           stringification: !0
         });
-        var o = this.encapsulate(e, null, n);
-        return a(o) ? JSON.stringify(o[0], t, r) : o.then(function (e) {
+        var a = this.encapsulate(e, null, n);
+        return o(a) ? JSON.stringify(a[0], t, r) : a.then(function (e) {
           return JSON.stringify(e, t, r);
         });
       }
@@ -5308,7 +5299,7 @@ var c = function () {
           d = [],
           v = !("cyclic" in u) || u.cyclic,
           b = u.encapsulateObserver,
-          h = function finish(e) {
+          m = function finish(e) {
             var t = Object.values(f);
             if (u.iterateNone) return t.length ? t[0] : getJSONType(e);
             if (t.length) {
@@ -5321,25 +5312,25 @@ var c = function () {
                   throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
                 }();
               }(new Set(t));
-              e && isPlainObject(e) && !o(e, "$types") ? e.$types = f : e = {
+              e && isPlainObject(e) && !a(e, "$types") ? e.$types = f : e = {
                 $: e,
                 $types: {
                   $: f
                 }
               };
-            } else isObject(e) && o(e, "$types") && (e = {
+            } else isObject(e) && a(e, "$types") && (e = {
               $: e,
               $types: !0
             });
             return !u.returnTypeNames && e;
           },
-          g = _async(function (t, r) {
+          h = _async(function (t, r) {
             return _await(Promise.all(r.map(function (e) {
               return e[1].p;
             })), function (n) {
               return _await(Promise.all(n.map(_async(function (n) {
-                var o = !1,
-                  a = [],
+                var a = !1,
+                  o = [],
                   i = _slicedToArray(r.splice(0, 1), 1),
                   c = _slicedToArray(i[0], 7),
                   s = c[0],
@@ -5348,7 +5339,7 @@ var c = function () {
                   f = c[4],
                   y = c[5],
                   p = c[6],
-                  d = _(s, n, u, l, a, !0, p),
+                  d = O(s, n, u, l, o, !0, p),
                   v = hasConstructorOf(d, e);
                 return function _invoke(e, t) {
                   var r = e();
@@ -5356,18 +5347,18 @@ var c = function () {
                 }(function () {
                   if (s && v) return _await(d.p, function (e) {
                     f[y] = e;
-                    var r = g(t, a);
-                    return o = !0, r;
+                    var r = h(t, o);
+                    return a = !0, r;
                   });
                 }, function (e) {
-                  return o ? e : (s ? f[y] = d : t = v ? d.p : d, g(t, a));
+                  return a ? e : (s ? f[y] = d : t = v ? d.p : d, h(t, o));
                 });
               }))), function () {
                 return t;
               });
             });
           }),
-          m = function _adaptBuiltinStateObjectProperties(e, t, r) {
+          g = function _adaptBuiltinStateObjectProperties(e, t, r) {
             Object.assign(e, t);
             var n = i$1.map(function (t) {
               var r = e[t];
@@ -5377,14 +5368,14 @@ var c = function () {
               e[t] = n[r];
             });
           },
-          _ = function _encapsulate(t, r, i, c, l, d, v) {
-            var h,
-              g = {},
-              _ = _typeof(r),
-              A = b ? function (n) {
-                var o,
-                  a = null !== (o = null != v ? v : c.type) && void 0 !== o ? o : getJSONType(r);
-                b(Object.assign(null != n ? n : g, {
+          O = function _encapsulate(t, r, i, c, l, d, v) {
+            var m,
+              h = {},
+              O = _typeof(r),
+              w = b ? function (n) {
+                var a,
+                  o = null !== (a = null != v ? v : c.type) && void 0 !== a ? a : getJSONType(r);
+                b(Object.assign(null != n ? n : h, {
                   keypath: t,
                   value: r,
                   cyclic: i,
@@ -5393,82 +5384,82 @@ var c = function () {
                   resolvingTypesonPromise: d,
                   awaitingTypesonPromise: hasConstructorOf(r, e)
                 }, {
-                  type: a
+                  type: o
                 }));
               } : null;
-            if (["string", "boolean", "number", "undefined"].includes(_)) return void 0 === r || Number.isNaN(r) || r === Number.NEGATIVE_INFINITY || r === Number.POSITIVE_INFINITY || 0 === r ? (h = c.replaced ? r : O(t, r, c, l, !1, d, A)) !== r && (g = {
-              replaced: h
-            }) : h = r, A && A(), h;
-            if (null === r) return A && A(), r;
+            if (["string", "boolean", "number", "undefined"].includes(O)) return void 0 === r || Number.isNaN(r) || r === Number.NEGATIVE_INFINITY || r === Number.POSITIVE_INFINITY || 0 === r ? (m = c.replaced ? r : _(t, r, c, l, !1, d, w)) !== r && (h = {
+              replaced: m
+            }) : m = r, w && w(), m;
+            if (null === r) return w && w(), r;
             if (i && !c.iterateIn && !c.iterateUnsetNumeric && r && "object" === _typeof(r)) {
-              var w = y.indexOf(r);
-              if (!(w < 0)) return f[t] = "#", A && A({
-                cyclicKeypath: p[w]
-              }), "#" + p[w];
+              var A = y.indexOf(r);
+              if (!(A < 0)) return f[t] = "#", w && w({
+                cyclicKeypath: p[A]
+              }), "#" + p[A];
               !0 === i && (y.push(r), p.push(t));
             }
             var S,
               j,
               T = isPlainObject(r),
-              I = a(r),
-              N = (T || I) && (!s.plainObjectReplacers.length || c.replaced) || c.iterateIn ? r : O(t, r, c, l, T || I, null, A);
-            if (N !== r ? (h = N, g = {
-              replaced: N
-            }) : "" === t && hasConstructorOf(r, e) ? (l.push([t, r, i, c, void 0, void 0, c.type]), h = r) : I && "object" !== c.iterateIn || "array" === c.iterateIn ? (S = new Array(r.length), g = {
+              N = o(r),
+              I = (T || N) && (!s.plainObjectReplacers.length || c.replaced) || c.iterateIn ? r : _(t, r, c, l, T || N, null, w);
+            if (I !== r ? (m = I, h = {
+              replaced: I
+            }) : "" === t && hasConstructorOf(r, e) ? (l.push([t, r, i, c, void 0, void 0, c.type]), m = r) : N && "object" !== c.iterateIn || "array" === c.iterateIn ? (S = new Array(r.length), h = {
               clone: S
-            }) : (["function", "symbol"].includes(_typeof(r)) || "toJSON" in r || hasConstructorOf(r, e) || hasConstructorOf(r, Promise) || hasConstructorOf(r, ArrayBuffer)) && !T && "object" !== c.iterateIn ? h = r : (S = {}, c.addLength && (S.length = r.length), g = {
+            }) : (["function", "symbol"].includes(_typeof(r)) || "toJSON" in r || hasConstructorOf(r, e) || hasConstructorOf(r, Promise) || hasConstructorOf(r, ArrayBuffer)) && !T && "object" !== c.iterateIn ? m = r : (S = {}, c.addLength && (S.length = r.length), h = {
               clone: S
-            }), A && A(), u.iterateNone) return null !== (j = S) && void 0 !== j ? j : h;
-            if (!S) return h;
+            }), w && w(), u.iterateNone) return null !== (j = S) && void 0 !== j ? j : m;
+            if (!S) return m;
             if (c.iterateIn) {
               var P = function _loop(n) {
-                var a = {
-                  ownKeys: o(r, n)
+                var o = {
+                  ownKeys: a(r, n)
                 };
-                m(c, a, function () {
-                  var o = t + (t ? "." : "") + escapeKeyPathComponent(n),
-                    a = _encapsulate(o, r[n], Boolean(i), c, l, d);
-                  hasConstructorOf(a, e) ? l.push([o, a, Boolean(i), c, S, n, c.type]) : void 0 !== a && (S[n] = a);
+                g(c, o, function () {
+                  var a = t + (t ? "." : "") + escapeKeyPathComponent(n),
+                    o = _encapsulate(a, r[n], Boolean(i), c, l, d);
+                  hasConstructorOf(o, e) ? l.push([a, o, Boolean(i), c, S, n, c.type]) : void 0 !== o && (S[n] = o);
                 });
               };
               for (var E in r) P(E);
-              A && A({
+              w && w({
                 endIterateIn: !0,
                 end: !0
               });
             } else n(r).forEach(function (n) {
-              var o = t + (t ? "." : "") + escapeKeyPathComponent(n);
-              m(c, {
+              var a = t + (t ? "." : "") + escapeKeyPathComponent(n);
+              g(c, {
                 ownKeys: !0
               }, function () {
-                var t = _encapsulate(o, r[n], Boolean(i), c, l, d);
-                hasConstructorOf(t, e) ? l.push([o, t, Boolean(i), c, S, n, c.type]) : void 0 !== t && (S[n] = t);
+                var t = _encapsulate(a, r[n], Boolean(i), c, l, d);
+                hasConstructorOf(t, e) ? l.push([a, t, Boolean(i), c, S, n, c.type]) : void 0 !== t && (S[n] = t);
               });
-            }), A && A({
+            }), w && w({
               endIterateOwn: !0,
               end: !0
             });
             if (c.iterateUnsetNumeric) {
-              for (var C = r.length, x = function _loop2(n) {
+              for (var x = r.length, C = function _loop2(n) {
                   if (!(n in r)) {
-                    var o = "".concat(t).concat(t ? "." : "").concat(n);
-                    m(c, {
+                    var a = "".concat(t).concat(t ? "." : "").concat(n);
+                    g(c, {
                       ownKeys: !1
                     }, function () {
-                      var t = _encapsulate(o, void 0, Boolean(i), c, l, d);
-                      hasConstructorOf(t, e) ? l.push([o, t, Boolean(i), c, S, n, c.type]) : void 0 !== t && (S[n] = t);
+                      var t = _encapsulate(a, void 0, Boolean(i), c, l, d);
+                      hasConstructorOf(t, e) ? l.push([a, t, Boolean(i), c, S, n, c.type]) : void 0 !== t && (S[n] = t);
                     });
                   }
-                }, k = 0; k < C; k++) x(k);
-              A && A({
+                }, k = 0; k < x; k++) C(k);
+              w && w({
                 endIterateUnsetNumeric: !0,
                 end: !0
               });
             }
             return S;
           },
-          O = function replace(e, t, r, n, o, a, i) {
-            for (var c = o ? s.plainObjectReplacers : s.nonplainObjectReplacers, u = c.length; u--;) {
+          _ = function replace(e, t, r, n, a, o, i) {
+            for (var c = a ? s.plainObjectReplacers : s.nonplainObjectReplacers, u = c.length; u--;) {
               var y = c[u];
               if (y.test(t, r)) {
                 var p = y.type;
@@ -5481,7 +5472,7 @@ var c = function () {
                   replaced: !0
                 }), (l || !y.replaceAsync) && !y.replace) return i && i({
                   typeDetected: !0
-                }), _(e, t, v && "readonly", r, n, a, p);
+                }), O(e, t, v && "readonly", r, n, o, p);
                 i && i({
                   replacing: !0
                 });
@@ -5490,17 +5481,17 @@ var c = function () {
                   if (void 0 === y.replace) throw new TypeError("Missing replacer");
                   b = y.replace(t, r);
                 } else b = y.replaceAsync(t, r);
-                return _(e, b, v && "readonly", r, n, a, p);
+                return O(e, b, v && "readonly", r, n, o, p);
               }
             }
             return t;
           },
-          A = _("", t, v, null != r ? r : {}, d);
+          w = O("", t, v, null != r ? r : {}, d);
         if (d.length) return l && u.throwOnBadSyncType ? function () {
           throw new TypeError("Sync method requested but async result obtained");
-        }() : Promise.resolve(g(A, d)).then(h);
+        }() : Promise.resolve(h(w, d)).then(m);
         if (!l && u.throwOnBadSyncType) throw new TypeError("Async method requested but sync result obtained");
-        return u.stringification && l ? [h(A)] : l ? h(A) : Promise.resolve(h(A));
+        return u.stringification && l ? [m(w)] : l ? m(w) : Promise.resolve(m(w));
       }
     }, {
       key: "encapsulateSync",
@@ -5523,7 +5514,7 @@ var c = function () {
     }, {
       key: "revive",
       value: function revive(t, r) {
-        var o = this,
+        var a = this,
           i = _objectSpread2(_objectSpread2({
             sync: !0
           }, this.options), r),
@@ -5543,7 +5534,7 @@ var c = function () {
         u.$ && isPlainObject(u.$) && (t = t.$, u = u.$, y = !1);
         var p = function executeReviver(e, t) {
             var r,
-              n = _slicedToArray(null !== (r = o.revivers[e]) && void 0 !== r ? r : [], 1)[0];
+              n = _slicedToArray(null !== (r = a.revivers[e]) && void 0 !== r ? r : [], 1)[0];
             if (!n) throw new Error("Unregistered type: " + e);
             if (c && !("revive" in n)) return t;
             if (!c && n.reviveAsync) return n.reviveAsync(t, f);
@@ -5561,63 +5552,63 @@ var c = function () {
             if (Object.entries(u).forEach(function (e) {
               var t = _slicedToArray(e, 2),
                 n = t[0],
-                a = t[1];
-              "#" !== a && [].concat(a).forEach(function (e) {
+                o = t[1];
+              "#" !== o && [].concat(o).forEach(function (e) {
                 var t;
-                _slicedToArray(null !== (t = o.revivers[e]) && void 0 !== t ? t : [null, {}], 2)[1].plain && (r.push({
+                _slicedToArray(null !== (t = a.revivers[e]) && void 0 !== t ? t : [null, {}], 2)[1].plain && (r.push({
                   keypath: n,
                   type: e
                 }), delete u[n]);
               });
             }), r.length) return r.sort(nestedPathsFirst).reduce(function reducer(r, n) {
-              var o = n.keypath,
-                a = n.type;
+              var a = n.keypath,
+                o = n.type;
               if (isThenable(r)) return r.then(function (e) {
                 return reducer(e, {
-                  keypath: o,
-                  type: a
+                  keypath: a,
+                  type: o
                 });
               });
-              var i = getByKeyPath(t, o);
-              if (hasConstructorOf(i = p(a, i), e)) return i.then(function (e) {
-                var r = setAtKeyPath(t, o, e);
+              var i = getByKeyPath(t, a);
+              if (hasConstructorOf(i = p(o, i), e)) return i.then(function (e) {
+                var r = setAtKeyPath(t, a, e);
                 r === e && (t = r);
               });
-              var c = setAtKeyPath(t, o, i);
+              var c = setAtKeyPath(t, a, i);
               c === i && (t = c);
             }, void 0);
           }();
         return hasConstructorOf(b, e) ? v = b.then(function () {
           return t;
-        }) : (v = function _revive(t, r, o, i, c) {
+        }) : (v = function _revive(t, r, a, i, c) {
           if (!y || "$types" !== t) {
             var f = u[t],
-              v = a(r);
+              v = o(r);
             if (v || isPlainObject(r)) {
               var b = v ? new Array(r.length) : {};
               for (n(r).forEach(function (n) {
-                var a = _revive(t + (t ? "." : "") + escapeKeyPathComponent(n), r[n], null != o ? o : b, b, n),
+                var o = _revive(t + (t ? "." : "") + escapeKeyPathComponent(n), r[n], null != a ? a : b, b, n),
                   i = function set(e) {
                     return hasConstructorOf(e, s) ? b[n] = void 0 : void 0 !== e && (b[n] = e), e;
                   };
-                hasConstructorOf(a, e) ? d.push(a.then(function (e) {
+                hasConstructorOf(o, e) ? d.push(o.then(function (e) {
                   return i(e);
-                })) : i(a);
+                })) : i(o);
               }), r = b; l.length;) {
-                var h = _slicedToArray(l[0], 4),
-                  g = h[0],
-                  m = h[1],
-                  _ = h[2],
-                  O = h[3],
-                  A = getByKeyPath(g, m);
-                if (void 0 === A) break;
-                _[O] = A, l.splice(0, 1);
+                var m = _slicedToArray(l[0], 4),
+                  h = m[0],
+                  g = m[1],
+                  O = m[2],
+                  _ = m[3],
+                  w = getByKeyPath(h, g);
+                if (void 0 === w) break;
+                O[_] = w, l.splice(0, 1);
               }
             }
             if (!f) return r;
             if ("#" === f) {
-              var w = getByKeyPath(o, r.slice(1));
-              return void 0 === w && l.push([o, r.slice(1), i, c]), w;
+              var A = getByKeyPath(a, r.slice(1));
+              return void 0 === A && l.push([a, r.slice(1), i, c]), A;
             }
             return [].concat(f).reduce(function reducer(t, r) {
               if (hasConstructorOf(t, e)) return t.then(function (e) {
@@ -5659,9 +5650,9 @@ var c = function () {
       key: "register",
       value: function register(e, t) {
         var r = this,
-          o = null != t ? t : {},
+          a = null != t ? t : {},
           i = function R(e) {
-            a(e) ? e.forEach(function (e) {
+            o(e) ? e.forEach(function (e) {
               return R(e);
             }) : n(e).forEach(function (t) {
               var n;
@@ -5685,7 +5676,7 @@ var c = function () {
                     return Object.assign(Object.create(l.prototype), e);
                   }
                 };
-              } else if (a(i)) {
+              } else if (o(i)) {
                 var f = _slicedToArray(i, 3);
                 i = {
                   test: f[0],
@@ -5699,7 +5690,7 @@ var c = function () {
                   test: i.test.bind(i)
                 };
                 i.replace && (y.replace = i.replace.bind(i)), i.replaceAsync && (y.replaceAsync = i.replaceAsync.bind(i));
-                var p = "number" == typeof o.fallback ? o.fallback : o.fallback ? 0 : Number.POSITIVE_INFINITY;
+                var p = "number" == typeof a.fallback ? a.fallback : a.fallback ? 0 : Number.POSITIVE_INFINITY;
                 if (i.testPlainObjects ? r.plainObjectReplacers.splice(p, 0, y) : r.nonplainObjectReplacers.splice(p, 0, y), i.revive || i.reviveAsync) {
                   var d = {};
                   i.revive && (d.revive = i.revive.bind(i)), i.reviveAsync && (d.reviveAsync = i.reviveAsync.bind(i)), r.revivers[t] = [d, {
@@ -5723,20 +5714,20 @@ s.__typeson__type__ = "TypesonUndefined";
 for (var u = ["null", "boolean", "number", "string", "array", "object"], l = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", f = new Uint8Array(256), y = 0; y < 64; y++) f[l.codePointAt(y)] = y;
 var p = function encode(e, t, r) {
     null == r && (r = e.byteLength);
-    for (var n = new Uint8Array(e, t || 0, r), o = n.length, a = "", i = 0; i < o; i += 3) a += l[n[i] >> 2], a += l[(3 & n[i]) << 4 | n[i + 1] >> 4], a += l[(15 & n[i + 1]) << 2 | n[i + 2] >> 6], a += l[63 & n[i + 2]];
-    return o % 3 == 2 ? a = a.slice(0, -1) + "=" : o % 3 == 1 && (a = a.slice(0, -2) + "=="), a;
+    for (var n = new Uint8Array(e, t || 0, r), a = n.length, o = "", i = 0; i < a; i += 3) o += l[n[i] >> 2], o += l[(3 & n[i]) << 4 | n[i + 1] >> 4], o += l[(15 & n[i + 1]) << 2 | n[i + 2] >> 6], o += l[63 & n[i + 2]];
+    return a % 3 == 2 ? o = o.slice(0, -1) + "=" : a % 3 == 1 && (o = o.slice(0, -2) + "=="), o;
   },
   d = function decode(e) {
     var t = e.length;
     if (t % 4) throw new Error("Bad base64 length: not divisible by four");
     var r,
       n,
-      o,
       a,
+      o,
       i = .75 * e.length,
       c = 0;
     "=" === e[e.length - 1] && (i--, "=" === e[e.length - 2] && i--);
-    for (var s = new ArrayBuffer(i), u = new Uint8Array(s), l = 0; l < t; l += 4) r = f[e.codePointAt(l)], n = f[e.codePointAt(l + 1)], o = f[e.codePointAt(l + 2)], a = f[e.codePointAt(l + 3)], u[c++] = r << 2 | n >> 4, u[c++] = (15 & n) << 4 | o >> 2, u[c++] = (3 & o) << 6 | 63 & a;
+    for (var s = new ArrayBuffer(i), u = new Uint8Array(s), l = 0; l < t; l += 4) r = f[e.codePointAt(l)], n = f[e.codePointAt(l + 1)], a = f[e.codePointAt(l + 2)], o = f[e.codePointAt(l + 3)], u[c++] = r << 2 | n >> 4, u[c++] = (15 & n) << 4 | a >> 2, u[c++] = (3 & a) << 6 | 63 & o;
     return s;
   };
 const v = {
@@ -5763,7 +5754,7 @@ const v = {
       revive: e => new Object(BigInt(e))
     }
   },
-  h = {
+  m = {
     bigint: {
       test: e => "bigint" == typeof e,
       replace: String,
@@ -5775,7 +5766,7 @@ function string2arraybuffer(e) {
   for (let r = 0; r < e.length; r++) t[r] = e.charCodeAt(r);
   return t.buffer;
 }
-const g = {
+const h = {
   blob: {
     test: e => "Blob" === toStringTag(e),
     replace(e) {
@@ -5808,7 +5799,7 @@ const g = {
     })
   }
 };
-const O = {
+const _ = {
     cryptokey: {
       test: e => "CryptoKey" === toStringTag(e) && e.extractable,
       replaceAsync: t => new e(async (e, r) => {
@@ -5834,7 +5825,7 @@ const O = {
       }
     }
   },
-  A = {
+  w = {
     dataview: {
       test: e => "DataView" === toStringTag(e),
       replace({
@@ -5843,9 +5834,9 @@ const O = {
         byteLength: r
       }, n) {
         n.buffers || (n.buffers = []);
-        const o = n.buffers.indexOf(e);
-        return o > -1 ? {
-          index: o,
+        const a = n.buffers.indexOf(e);
+        return a > -1 ? {
+          index: a,
           byteOffset: t,
           byteLength: r
         } : (n.buffers.push(e), {
@@ -5859,15 +5850,15 @@ const O = {
         const {
           byteOffset: r,
           byteLength: n,
-          encoded: o,
-          index: a
+          encoded: a,
+          index: o
         } = e;
         let i;
-        return "index" in e ? i = t.buffers[a] : (i = d(o), t.buffers.push(i)), new DataView(i, r, n);
+        return "index" in e ? i = t.buffers[o] : (i = d(a), t.buffers.push(i)), new DataView(i, r, n);
       }
     }
   },
-  w = {
+  A = {
     date: {
       test: e => "Date" === toStringTag(e),
       replace(e) {
@@ -5878,6 +5869,107 @@ const O = {
     }
   },
   S = {
+    domexception: {
+      test: e => "DOMException" === toStringTag(e),
+      replace: e => ({
+        name: e.name,
+        message: e.message
+      }),
+      revive: ({
+        message: e,
+        name: t
+      }) => new DOMException(e, t)
+    }
+  },
+  j = {};
+function create$5(e) {
+  j[e.name.toLowerCase()] = {
+    test: t => toStringTag(t) === e.name,
+    replace: e => e.is2D ? {
+      a: e.a,
+      b: e.b,
+      c: e.c,
+      d: e.d,
+      e: e.e,
+      f: e.f
+    } : {
+      m11: e.m11,
+      m12: e.m12,
+      m13: e.m13,
+      m14: e.m14,
+      m21: e.m21,
+      m22: e.m22,
+      m23: e.m23,
+      m24: e.m24,
+      m31: e.m31,
+      m32: e.m32,
+      m33: e.m33,
+      m34: e.m34,
+      m41: e.m41,
+      m42: e.m42,
+      m43: e.m43,
+      m44: e.m44
+    },
+    revive: t => Object.hasOwn(t, "a") ? new e([t.a, t.b, t.c, t.d, t.e, t.f]) : new e([t.m11, t.m12, t.m13, t.m14, t.m21, t.m22, t.m23, t.m24, t.m31, t.m32, t.m33, t.m34, t.m41, t.m42, t.m43, t.m44])
+  };
+}
+create$5(DOMMatrix), create$5(DOMMatrixReadOnly);
+const T = {};
+function create$4(e) {
+  T[e.name.toLowerCase()] = {
+    test: t => toStringTag(t) === e.name,
+    replace: e => ({
+      x: e.x,
+      y: e.y,
+      z: e.z,
+      w: e.w
+    }),
+    revive: ({
+      x: t,
+      y: r,
+      z: n,
+      w: a
+    }) => new e(t, r, n, a)
+  };
+}
+create$4(DOMPoint), create$4(DOMPointReadOnly);
+const N = {
+    domquad: {
+      test: e => "DOMQuad" === toStringTag(e),
+      replace: e => ({
+        p1: e.p1,
+        p2: e.p2,
+        p3: e.p3,
+        p4: e.p4
+      }),
+      revive: ({
+        p1: e,
+        p2: t,
+        p3: r,
+        p4: n
+      }) => new DOMQuad(e, t, r, n)
+    }
+  },
+  I = {};
+function create$3(e) {
+  I[e.name.toLowerCase()] = {
+    test: t => toStringTag(t) === e.name,
+    replace: e => ({
+      x: e.x,
+      y: e.y,
+      width: e.width,
+      height: e.height
+    }),
+    revive: ({
+      x: t,
+      y: r,
+      width: n,
+      height: a
+    }) => new e(t, r, n, a)
+  };
+}
+create$3(DOMRect), create$3(DOMRectReadOnly);
+const P = {
     error: {
       test: e => "Error" === toStringTag(e),
       replace: ({
@@ -5885,16 +5977,16 @@ const O = {
         message: t,
         cause: r,
         stack: n,
-        fileName: o,
-        lineNumber: a,
+        fileName: a,
+        lineNumber: o,
         columnNumber: i
       }) => ({
         name: e,
         message: t,
         cause: r,
         stack: n,
-        fileName: o,
-        lineNumber: a,
+        fileName: a,
+        lineNumber: o,
         columnNumber: i
       }),
       revive(e) {
@@ -5903,17 +5995,17 @@ const O = {
       }
     }
   },
-  j = {};
+  E = {};
 function create$2(e) {
-  j[e.name.toLowerCase()] = {
+  E[e.name.toLowerCase()] = {
     test: t => hasConstructorOf(t, e),
     replace: ({
       name: e,
       message: t,
       cause: r,
       stack: n,
-      fileName: o,
-      lineNumber: a,
+      fileName: a,
+      lineNumber: o,
       columnNumber: i,
       errors: c
     }) => ({
@@ -5921,20 +6013,19 @@ function create$2(e) {
       message: t,
       cause: r,
       stack: n,
-      fileName: o,
-      lineNumber: a,
+      fileName: a,
+      lineNumber: o,
       columnNumber: i,
       errors: c
     }),
     revive(t) {
-      const r = "undefined" != typeof AggregateError && e === AggregateError,
-        n = r ? new e(t.errors, t.message) : new e(t.message);
-      return n.name = t.name, n.cause = t.cause, n.stack = t.stack, n.fileName = t.fileName, n.lineNumber = t.lineNumber, n.columnNumber = t.columnNumber, r && (n.errors = t.errors), n;
+      const r = "undefined" != typeof AggregateError && e === AggregateError ? new e(t.errors, t.message) : new e(t.message);
+      return r.name = t.name, r.cause = t.cause, r.stack = t.stack, r.fileName = t.fileName, r.lineNumber = t.lineNumber, r.columnNumber = t.columnNumber, r;
     }
   };
 }
 [TypeError, RangeError, SyntaxError, ReferenceError, EvalError, URIError].forEach(e => create$2(e)), "undefined" != typeof AggregateError && create$2(AggregateError), "function" == typeof InternalError && create$2(InternalError);
-const T = {
+const x = {
     file: {
       test: e => "File" === toStringTag(e),
       replace(e) {
@@ -5971,8 +6062,8 @@ const T = {
       })
     }
   },
-  I = {
-    file: T.file,
+  C = {
+    file: x.file,
     filelist: {
       test: e => "FileList" === toStringTag(e),
       replace(e) {
@@ -5996,7 +6087,7 @@ const T = {
       }
     }
   },
-  N = {
+  k = {
     imagebitmap: {
       test: e => "ImageBitmap" === toStringTag(e) || e && e.dataset && "ImageBitmap" === e.dataset.toStringTag,
       replace(e) {
@@ -6014,10 +6105,10 @@ const T = {
       reviveAsync(t) {
         const r = document.createElement("canvas"),
           n = r.getContext("2d"),
-          o = document.createElement("img");
-        return o.addEventListener("load", function () {
-          n.drawImage(o, 0, 0);
-        }), o.src = t, new e(async (e, t) => {
+          a = document.createElement("img");
+        return a.addEventListener("load", function () {
+          n.drawImage(a, 0, 0);
+        }), a.src = t, new e(async (e, t) => {
           try {
             e(await createImageBitmap(r));
           } catch (e) {
@@ -6027,7 +6118,7 @@ const T = {
       }
     }
   },
-  P = {
+  B = {
     imagedata: {
       test: e => "ImageData" === toStringTag(e),
       replace: e => ({
@@ -6038,60 +6129,42 @@ const T = {
       revive: e => new ImageData(new Uint8ClampedArray(e.array), e.width, e.height)
     }
   },
-  E = {
+  U = {
     infinity: {
       test: e => e === Number.POSITIVE_INFINITY,
-      replace: e => "Infinity",
-      revive: e => Number.POSITIVE_INFINITY
+      replace: () => "Infinity",
+      revive: () => Number.POSITIVE_INFINITY
     }
   },
-  C = {
-    test: e => hasConstructorOf(e, Intl.Collator),
-    replace: e => e.resolvedOptions(),
-    revive: e => new Intl.Collator(e.locale, e)
-  },
-  x = {
-    IntlCollator: C,
-    IntlDateTimeFormat: {
-      test: e => hasConstructorOf(e, Intl.DateTimeFormat),
-      replace: e => e.resolvedOptions(),
-      revive: e => new Intl.DateTimeFormat(e.locale, e)
-    },
-    IntlNumberFormat: {
-      test: e => hasConstructorOf(e, Intl.NumberFormat),
-      replace: e => e.resolvedOptions(),
-      revive: e => new Intl.NumberFormat(e.locale, e)
-    }
-  },
-  k = {
+  K = {
     map: {
       test: e => "Map" === toStringTag(e),
       replace: e => [...e.entries()],
       revive: e => new Map(e)
     }
   },
-  B = {
+  L = {
     nan: {
       test: e => Number.isNaN(e),
-      replace: e => "NaN",
-      revive: e => Number.NaN
-    }
-  },
-  U = {
-    negativeInfinity: {
-      test: e => e === Number.NEGATIVE_INFINITY,
-      replace: e => "-Infinity",
-      revive: e => Number.NEGATIVE_INFINITY
-    }
-  },
-  K = {
-    negativeZero: {
-      test: e => Object.is(e, -0),
-      replace: e => 0,
-      revive: e => -0
+      replace: () => "NaN",
+      revive: () => Number.NaN
     }
   },
   F = {
+    negativeInfinity: {
+      test: e => e === Number.NEGATIVE_INFINITY,
+      replace: () => "-Infinity",
+      revive: () => Number.NEGATIVE_INFINITY
+    }
+  },
+  $ = {
+    negativeZero: {
+      test: e => Object.is(e, -0),
+      replace: () => 0,
+      revive: () => -0
+    }
+  },
+  V = {
     StringObject: {
       test: e => "String" === toStringTag(e) && "object" == typeof e,
       replace: String,
@@ -6108,7 +6181,7 @@ const T = {
       revive: e => new Number(e)
     }
   },
-  M = {
+  q = {
     regexp: {
       test: e => "RegExp" === toStringTag(e),
       replace: e => ({
@@ -6121,26 +6194,26 @@ const T = {
       }) => new RegExp(e, t)
     }
   },
-  J = {
+  G = {
     set: {
       test: e => "Set" === toStringTag(e),
       replace: e => [...e.values()],
       revive: e => new Set(e)
     }
   },
-  V = {};
+  H = {};
 "function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, ...("function" == typeof BigInt64Array ? [BigInt64Array, BigUint64Array] : [])].forEach(e => function create$1(e) {
   const t = e.name;
-  V[t.toLowerCase()] = {
+  H[t.toLowerCase()] = {
     test: e => toStringTag(e) === t,
     replace: e => (0 === e.byteOffset && e.byteLength === e.buffer.byteLength ? e : e.slice(0)).buffer,
     revive: t => "ArrayBuffer" === toStringTag(t) ? new e(t) : t
   };
 }(e));
-const Y = {};
+const z = {};
 "function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, ...("function" == typeof BigInt64Array ? [BigInt64Array, BigUint64Array] : [])].forEach(e => function create(e) {
   const t = e.name;
-  Y[t.toLowerCase()] = {
+  z[t.toLowerCase()] = {
     test: e => toStringTag(e) === t,
     replace({
       buffer: e,
@@ -6148,9 +6221,9 @@ const Y = {};
       length: r
     }, n) {
       n.buffers || (n.buffers = []);
-      const o = n.buffers.indexOf(e);
-      return o > -1 ? {
-        index: o,
+      const a = n.buffers.indexOf(e);
+      return a > -1 ? {
+        index: a,
         byteOffset: t,
         length: r
       } : (n.buffers.push(e), {
@@ -6163,32 +6236,32 @@ const Y = {};
       r.buffers || (r.buffers = []);
       const {
         byteOffset: n,
-        length: o,
-        encoded: a,
+        length: a,
+        encoded: o,
         index: i
       } = t;
       let c;
-      return "index" in t ? c = r.buffers[i] : (c = d(a), r.buffers.push(c)), new e(c, n, o);
+      return "index" in t ? c = r.buffers[i] : (c = d(o), r.buffers.push(c)), new e(c, n, a);
     }
   };
 }(e));
-const q = {
+const Q = {
     undef: {
       test: (e, t) => void 0 === e && (t.ownKeys || !("ownKeys" in t)),
-      replace: e => 0,
-      revive: e => new s()
+      replace: () => 0,
+      revive: () => new s()
     }
   },
-  W = {
+  X = {
     userObject: {
-      test: (e, t) => isUserObject(e),
+      test: e => isUserObject(e),
       replace: e => ({
         ...e
       }),
       revive: e => e
     }
   },
-  G = [{
+  Z = [{
     arrayNonindexKeys: {
       testPlainObjects: !0,
       test: (e, t) => !!Array.isArray(e) && (Object.keys(e).some(e => String(Number.parseInt(e)) !== e) && (t.iterateIn = "object", t.addLength = !0), !0),
@@ -6204,17 +6277,17 @@ const q = {
   }, {
     sparseUndefined: {
       test: (e, t) => void 0 === e && !1 === t.ownKeys,
-      replace: e => 0,
-      revive(e) {}
+      replace: () => 0,
+      revive() {}
     }
   }],
-  H = [B, E, U, K],
-  ee = [W, q, G, F, H, w, M, P, N, T, I, g, S, j].concat("function" == typeof Map ? k : [], "function" == typeof Set ? J : [], "function" == typeof ArrayBuffer ? v : [], "function" == typeof Uint8Array ? Y : [], "function" == typeof DataView ? A : [], "undefined" != typeof Intl ? x : [], "undefined" != typeof crypto ? O : [], "undefined" != typeof BigInt ? [h, b] : []),
-  te = ee.concat({
+  ee = [L, U, F, $],
+  oe = [X, Q, Z, V, ee, A, q, B, k, x, C, h, P, E].concat("function" == typeof Map ? K : [], "function" == typeof Set ? G : [], "function" == typeof ArrayBuffer ? v : [], "function" == typeof Uint8Array ? z : [], "function" == typeof DataView ? w : [], "undefined" != typeof crypto ? _ : [], "undefined" != typeof BigInt ? [m, b] : [], "undefined" != typeof DOMException ? S : [], "undefined" != typeof DOMRect ? I : [], "undefined" != typeof DOMPoint ? T : [], "undefined" != typeof DOMQuad ? N : [], "undefined" != typeof DOMMatrix ? j : []),
+  ie = oe.concat({
     checkDataCloneException: {
       test(e) {
         const t = {}.toString.call(e).slice(8, -1);
-        if (["symbol", "function"].includes(typeof e) || ["Arguments", "Module", "Error", "Promise", "WeakMap", "WeakSet", "Event", "MessageChannel"].includes(t) || e && "object" == typeof e && "number" == typeof e.nodeType && "function" == typeof e.insertBefore) throw new DOMException("The object cannot be cloned.", "DataCloneError");
+        if (["symbol", "function"].includes(typeof e) || ["Arguments", "Module", "Promise", "WeakMap", "WeakSet", "Event", "MessageChannel"].includes(t) || e && "object" == typeof e && "number" == typeof e.nodeType && "function" == typeof e.insertBefore) throw new DOMException("The object cannot be cloned.", "DataCloneError");
         return !1;
       }
     }
@@ -6222,7 +6295,7 @@ const q = {
 
 // See: http://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
 
-let typeson = new c().register(te);
+let typeson = new c().register(ie);
 
 /**
  * @param {(preset: import('typeson-registry').Preset) =>
@@ -6230,7 +6303,7 @@ let typeson = new c().register(te);
  * @returns {void}
  */
 function register(func) {
-  typeson = new c().register(func(te));
+  typeson = new c().register(func(ie));
 }
 
 /**
@@ -6381,7 +6454,7 @@ IDBIndex.__createInstance = function (store, indexProperties) {
        * @returns {string}
        */
       get() {
-        return '__pendingName' in me ? /** @type {string} */me.__pendingName : me.name;
+        return '__pendingName' in me ? ( /** @type {string} */me.__pendingName) : me.name;
       }
     });
     Object.defineProperty(me, 'name', {
@@ -6734,12 +6807,11 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
     throw createDOMException('DataError', 'No key or range was specified');
   }
   const fetchArgs = buildFetchIndexDataSQL(nullDisallowed, me, range, opType, false);
-  return (/** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.objectStore.transaction.__addToTransactionQueue(function (...args) {
-      executeFetchIndexData(count, ...fetchArgs,
-      // @ts-expect-error It's ok
-      ...args);
-    }, undefined, me)
-  );
+  return /** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.objectStore.transaction.__addToTransactionQueue(function (...args) {
+    executeFetchIndexData(count, ...fetchArgs,
+    // @ts-expect-error It's ok
+    ...args);
+  }, undefined, me);
 };
 
 /**
@@ -6937,7 +7009,6 @@ IDBIndex.prototype.__renameIndex = function (store, oldName, newName, colInfoToP
               //    reject(err);
               // });
             }));
-
             indexCreations.push(new SyncPromise(function (resolve, reject) {
               const escapedIndexToRecreate = sqlQuote('sk_' + escapedStoreNameSQL.slice(1, -1));
               // Chrome erring here if not dropped first; Node does not
@@ -7874,52 +7945,51 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
     sql.push('LIMIT', String(count));
   }
   const sqlStr = sql.join(' ');
-  return (/** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction.__addToTransactionQueue(function objectStoreGet(tx, args, success, error) {
+  return /** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction.__addToTransactionQueue(function objectStoreGet(tx, args, success, error) {
+    if (CFG.DEBUG) {
+      console.log('Fetching', me.__currentName, sqlValues);
+    }
+    tx.executeSql(sqlStr, sqlValues, function (tx, data) {
       if (CFG.DEBUG) {
-        console.log('Fetching', me.__currentName, sqlValues);
+        console.log('Fetched data', data);
       }
-      tx.executeSql(sqlStr, sqlValues, function (tx, data) {
-        if (CFG.DEBUG) {
-          console.log('Fetched data', data);
-        }
-        let ret;
-        try {
-          // Opera can't deal with the try-catch here.
-          if (data.rows.length === 0) {
-            if (getAll) {
-              success([]);
-            } else {
-              success();
-            }
-            return;
-          }
-          ret = [];
-          if (getKey) {
-            for (let i = 0; i < data.rows.length; i++) {
-              // Key.convertValueToKey(data.rows.item(i).key); // Already validated before storage
-              ret.push(decode$1(unescapeSQLiteResponse(data.rows.item(i).key), false));
-            }
+      let ret;
+      try {
+        // Opera can't deal with the try-catch here.
+        if (data.rows.length === 0) {
+          if (getAll) {
+            success([]);
           } else {
-            for (let i = 0; i < data.rows.length; i++) {
-              ret.push(decode(unescapeSQLiteResponse(data.rows.item(i).value)));
-            }
+            success();
           }
-          if (!getAll) {
-            ret = ret[0];
+          return;
+        }
+        ret = [];
+        if (getKey) {
+          for (let i = 0; i < data.rows.length; i++) {
+            // Key.convertValueToKey(data.rows.item(i).key); // Already validated before storage
+            ret.push(decode$1(unescapeSQLiteResponse(data.rows.item(i).key), false));
           }
-        } catch (e) {
-          // If no result is returned, or error occurs when parsing JSON
-          if (CFG.DEBUG) {
-            console.log(e);
+        } else {
+          for (let i = 0; i < data.rows.length; i++) {
+            ret.push(decode(unescapeSQLiteResponse(data.rows.item(i).value)));
           }
         }
-        success(ret);
-      }, function (tx, err) {
-        error(err);
-        return true;
-      });
-    }, undefined, me)
-  );
+        if (!getAll) {
+          ret = ret[0];
+        }
+      } catch (e) {
+        // If no result is returned, or error occurs when parsing JSON
+        if (CFG.DEBUG) {
+          console.log(e);
+        }
+      }
+      success(ret);
+    }, function (tx, err) {
+      error(err);
+      return true;
+    });
+  }, undefined, me);
 };
 
 /**
@@ -7996,25 +8066,23 @@ IDBObjectStore.prototype.delete = function (query) {
   const sqlValues = [];
   setSQLForKeyRange(range, sqlQuote('key'), sqlArr, sqlValues);
   const sql = sqlArr.join(' ');
-  return (/** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction.__addToTransactionQueue(function objectStoreDelete(tx, args, success, error) {
+  return /** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction.__addToTransactionQueue(function objectStoreDelete(tx, args, success, error) {
+    if (CFG.DEBUG) {
+      console.log('Deleting', me.__currentName, sqlValues);
+    }
+    tx.executeSql(sql, sqlValues, function (tx, data) {
       if (CFG.DEBUG) {
-        console.log('Deleting', me.__currentName, sqlValues);
+        console.log('Deleted from database', data.rowsAffected);
       }
-      tx.executeSql(sql, sqlValues, function (tx, data) {
-        if (CFG.DEBUG) {
-          console.log('Deleted from database', data.rowsAffected);
-        }
-        me.__cursors.forEach(cursor => {
-          cursor.__invalidateCache(); // Delete
-        });
-
-        success();
-      }, function (tx, err) {
-        error(err);
-        return true;
+      me.__cursors.forEach(cursor => {
+        cursor.__invalidateCache(); // Delete
       });
-    }, undefined, me)
-  );
+      success();
+    }, function (tx, err) {
+      error(err);
+      return true;
+    });
+  }, undefined, me);
 };
 
 /**
@@ -8030,22 +8098,20 @@ IDBObjectStore.prototype.clear = function () {
   IDBTransaction.__assertActive(me.transaction);
   /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
   me.transaction.__assertWritable();
-  return (/** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction.__addToTransactionQueue(function objectStoreClear(tx, args, success, error) {
-      tx.executeSql('DELETE FROM ' + escapeStoreNameForSQL(me.__currentName), [], function (tx, data) {
-        if (CFG.DEBUG) {
-          console.log('Cleared all records from database', data.rowsAffected);
-        }
-        me.__cursors.forEach(cursor => {
-          cursor.__invalidateCache(); // Clear
-        });
-
-        success();
-      }, function (tx, err) {
-        error(err);
-        return true;
+  return /** @type {import('./IDBTransaction.js').IDBTransactionFull} */me.transaction.__addToTransactionQueue(function objectStoreClear(tx, args, success, error) {
+    tx.executeSql('DELETE FROM ' + escapeStoreNameForSQL(me.__currentName), [], function (tx, data) {
+      if (CFG.DEBUG) {
+        console.log('Cleared all records from database', data.rowsAffected);
+      }
+      me.__cursors.forEach(cursor => {
+        cursor.__invalidateCache(); // Clear
       });
-    }, undefined, me)
-  );
+      success();
+    }, function (tx, err) {
+      error(err);
+      return true;
+    });
+  }, undefined, me);
 };
 
 /**
@@ -8293,7 +8359,6 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
     this.__setOptions({
       legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
     });
-
     this.__transactions = [];
 
     /** @type {{[key: string]: IDBObjectStore}} */
@@ -8963,7 +9028,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
     if (calledDbCreateError) {
       return true;
     }
-    const er = err ? webSQLErrback(err) : /** @type {Error} */tx;
+    const er = err ? webSQLErrback(err) : ( /** @type {Error} */tx);
     calledDbCreateError = true;
     // Re: why bubbling here (and how cancelable is only really relevant for `window.onerror`) see: https://github.com/w3c/IndexedDB/issues/86
     const evt = createEvent('error', er, {
@@ -9047,7 +9112,6 @@ IDBFactory.prototype.open = function (name /* , version */) {
             // In browser, should auto-commit
             cb(); // eslint-disable-line promise/no-callback-in-promise
           };
-
           sysdb.transaction(function (systx) {
             /**
              * @returns {void}
@@ -9145,7 +9209,6 @@ IDBFactory.prototype.open = function (name /* , version */) {
                 // });
               };
             }
-
             if (oldVersion === 0) {
               systx.executeSql('INSERT INTO dbVersions VALUES (?,?)', [sqlSafeName, version], versionSet, dbCreateError);
             } else {
@@ -9283,7 +9346,6 @@ IDBFactory.prototype.deleteDatabase = function (name) {
   } catch (err) {
     throw err; // throw new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
   }
-
   const useMemoryDatabase = typeof CFG.memoryDatabase === 'string';
   const useDatabaseCache = CFG.cacheDatabaseInstances !== false || useMemoryDatabase;
   const req = IDBOpenDBRequest.__createInstance();
@@ -9353,7 +9415,6 @@ IDBFactory.prototype.deleteDatabase = function (name) {
           if (useDatabaseCache && name in websqlDBCache) {
             delete websqlDBCache[name]; // New calls will treat as though never existed
           }
-
           delete me.__connections[name];
           completeDatabaseDelete();
         });
@@ -9886,8 +9947,8 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
            * @type {RowItemNonNull}
            */
           const clone = {
-            matchingKey: /** @type {string} */
-            encode$1(matchingKey, true),
+            matchingKey: ( /** @type {string} */
+            encode$1(matchingKey, true)),
             key: rowItem.key
           };
           clone[me.__keyColumnName] = rowItem[me.__keyColumnName];
@@ -10300,30 +10361,29 @@ IDBCursor.prototype.delete = function () {
   if (me.__keyOnly) {
     throw createDOMException('InvalidStateError', 'This cursor method cannot be called when the key only flag has been set.');
   }
-  return (/** @type {import('./IDBTransaction.js').IDBTransactionFull} */this.__store.transaction.__addToTransactionQueue(function cursorDelete(tx, args, success, error) {
-      me.__find(undefined, undefined, tx, /** @type {KeySuccess} */
-      function (key, value, primaryKey) {
-        const sql = 'DELETE FROM  ' + escapeStoreNameForSQL(me.__store.__currentName) + ' WHERE "key" = ?';
-        if (CFG.DEBUG) {
-          console.log(sql, key, primaryKey);
+  return /** @type {import('./IDBTransaction.js').IDBTransactionFull} */this.__store.transaction.__addToTransactionQueue(function cursorDelete(tx, args, success, error) {
+    me.__find(undefined, undefined, tx, /** @type {KeySuccess} */
+    function (key, value, primaryKey) {
+      const sql = 'DELETE FROM  ' + escapeStoreNameForSQL(me.__store.__currentName) + ' WHERE "key" = ?';
+      if (CFG.DEBUG) {
+        console.log(sql, key, primaryKey);
+      }
+      // Key.convertValueToKey(primaryKey); // Already checked when entered
+      tx.executeSql(sql, [escapeSQLiteStatement( /** @type {string} */encode$1(primaryKey))], function (tx, data) {
+        if (data.rowsAffected === 1) {
+          // We don't invalidate the cache (as we don't access it anymore
+          //    and it will set the index off)
+          success(undefined);
+        } else {
+          // @ts-expect-error Apparently ok
+          error('No rows with key found' + key);
         }
-        // Key.convertValueToKey(primaryKey); // Already checked when entered
-        tx.executeSql(sql, [escapeSQLiteStatement( /** @type {string} */encode$1(primaryKey))], function (tx, data) {
-          if (data.rowsAffected === 1) {
-            // We don't invalidate the cache (as we don't access it anymore
-            //    and it will set the index off)
-            success(undefined);
-          } else {
-            // @ts-expect-error Apparently ok
-            error('No rows with key found' + key);
-          }
-        }, function (tx, data) {
-          error(data);
-          return true;
-        });
-      }, error);
-    }, undefined, me)
-  );
+      }, function (tx, data) {
+        error(data);
+        return true;
+      });
+    }, error);
+  }, undefined, me);
 };
 IDBCursor.prototype[Symbol.toStringTag] = 'IDBCursorPrototype';
 defineReadonlyOuterInterface(IDBCursor.prototype, ['source', 'direction', 'key', 'primaryKey', 'request']);
@@ -10513,8 +10573,7 @@ function setGlobalVars(idb, initialConfig) {
              * @returns {AnyValue}
              */
             get [name]() {
-              return (/** @type {AnyFunction} */ /** @type {PropertyDescriptor} */propDesc.get.call(this)
-              );
+              return /** @type {AnyFunction} */( /** @type {PropertyDescriptor} */propDesc.get).call(this);
             }
           };
           desc = /** @type {PropertyDescriptor} */
@@ -10708,8 +10767,7 @@ function setGlobalVars(idb, initialConfig) {
     IDB.IDBCursor = IDB.IDBCursor || 'webkitIDBCursor' in IDB && IDB.webkitIDBCursor;
     IDB.IDBKeyRange = IDB.IDBKeyRange || 'webkitIDBKeyRange' in IDB && IDB.webkitIDBKeyRange;
   }
-  return (/** @type {ShimmedObject} */IDB
-  );
+  return /** @type {ShimmedObject} */IDB;
 }
 
 var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
@@ -13038,7 +13096,6 @@ function requireSignals() {
       // 'SIGPROF'
       );
     }
-
     if (process.platform === 'linux') {
       module.exports.push('SIGIO', 'SIGPOLL', 'SIGPWR', 'SIGSTKFLT', 'SIGUNUSED');
     }
@@ -17283,7 +17340,6 @@ function requireNapi() {
         if (versionArray[0] === 9 && versionArray[1] >= 3) version = 2; // 9.3.0+
         else if (versionArray[0] === 8) version = 1; // 8.0.0+
       }
-
       return version;
     };
     module.exports.get_napi_version_as_string = function (target) {
@@ -18909,7 +18965,6 @@ function requireLruCache() {
       this[LRU_LIST] = new Yallist(); // list of items in order of use recency
       this[LENGTH] = 0; // length of items in the list
     }
-
     dump() {
       return this[LRU_LIST].map(hit => isStale(this, hit) ? false : {
         k: hit.key,
@@ -24236,7 +24291,6 @@ function SQLiteDatabase(name, opts) {
   if (opts.busyTimeout) {
     this._db.configure('busyTimeout', opts.busyTimeout); // Default is 1000
   }
-
   if (opts.trace) {
     this._db.configure('trace', opts.trace);
   }
@@ -24319,7 +24373,6 @@ function wrappedSQLiteDatabase(name) {
   if (CFG.sqlBusyTimeout) {
     db._db.configure('busyTimeout', /** @type {number} */CFG.sqlBusyTimeout); // Default is 1000
   }
-
   if (CFG.sqlTrace) {
     // @ts-expect-error native API?
     db._db.configure('trace', CFG.sqlTrace);
