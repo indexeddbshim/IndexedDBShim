@@ -606,7 +606,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
             error(createDOMException(
                 'ConstraintError', /** @type {string} */ (err.message), err
             ));
-            return true;
+            return false;
         });
         return undefined;
     }).catch(function (err) {
@@ -708,7 +708,7 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
         cb(tx);
     }, function (tx, err) {
         error(err);
-        return true;
+        return false;
     });
 };
 
@@ -832,7 +832,7 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
             success(ret);
         }, function (tx, err) {
             error(err);
-            return true;
+            return false;
         });
     }, undefined, me);
 };
@@ -926,7 +926,7 @@ IDBObjectStore.prototype.delete = function (query) {
             success();
         }, function (tx, err) {
             error(err);
-            return true;
+            return false;
         });
     }, undefined, me);
 };
@@ -957,7 +957,7 @@ IDBObjectStore.prototype.clear = function () {
             success();
         }, function (tx, err) {
             error(err);
-            return true;
+            return false;
         });
     }, undefined, me);
 };

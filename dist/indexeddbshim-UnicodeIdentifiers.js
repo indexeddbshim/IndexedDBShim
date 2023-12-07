@@ -1,4 +1,4 @@
-/*! indexeddbshim - v13.0.0-pre.1 - 12/7/2023 */
+/*! indexeddbshim - v13.0.0 - 12/7/2023 */
 
 (function (factory) {
   typeof define === 'function' && define.amd ? define(factory) :
@@ -6588,7 +6588,7 @@
       }
     };
   }
-  create$5(DOMMatrix), create$5(DOMMatrixReadOnly);
+  "undefined" != typeof DOMMatrix && create$5(DOMMatrix), "undefined" != typeof DOMMatrixReadOnly && create$5(DOMMatrixReadOnly);
   var T = {};
   function create$4(e) {
     T[e.name.toLowerCase()] = {
@@ -6612,7 +6612,7 @@
       }
     };
   }
-  create$4(DOMPoint), create$4(DOMPointReadOnly);
+  "undefined" != typeof DOMPoint && create$4(DOMPoint), "undefined" != typeof DOMPointReadOnly && create$4(DOMPointReadOnly);
   var N = {
       domquad: {
         test: function test(e) {
@@ -6658,7 +6658,7 @@
       }
     };
   }
-  create$3(DOMRect), create$3(DOMRectReadOnly);
+  "undefined" != typeof DOMRect && create$3(DOMRect), "undefined" != typeof DOMRectReadOnly && create$3(DOMRectReadOnly);
   var P = {
       error: {
         test: function test(e) {
@@ -8617,7 +8617,7 @@
       }, function (tx, err) {
         // Should occur for `add` operation
         error(createDOMException('ConstraintError', /** @type {string} */err.message, err));
-        return true;
+        return false;
       });
       return undefined;
     })["catch"](function (err) {
@@ -8719,7 +8719,7 @@
       cb(tx);
     }, function (tx, err) {
       error(err);
-      return true;
+      return false;
     });
   };
 
@@ -8840,7 +8840,7 @@
         success(ret);
       }, function (tx, err) {
         error(err);
-        return true;
+        return false;
       });
     }, undefined, me);
   };
@@ -8937,7 +8937,7 @@
         success();
       }, function (tx, err) {
         error(err);
-        return true;
+        return false;
       });
     }, undefined, me);
   };
@@ -8966,7 +8966,7 @@
         success();
       }, function (tx, err) {
         error(err);
-        return true;
+        return false;
       });
     }, undefined, me);
   };

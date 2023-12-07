@@ -1,4 +1,4 @@
-/*! indexeddbshim - v13.0.0-pre.1 - 12/7/2023 */
+/*! indexeddbshim - v13.0.0 - 12/7/2023 */
 
 'use strict';
 
@@ -5913,7 +5913,7 @@ function create$5(e) {
     revive: t => Object.hasOwn(t, "a") ? new e([t.a, t.b, t.c, t.d, t.e, t.f]) : new e([t.m11, t.m12, t.m13, t.m14, t.m21, t.m22, t.m23, t.m24, t.m31, t.m32, t.m33, t.m34, t.m41, t.m42, t.m43, t.m44])
   };
 }
-create$5(DOMMatrix), create$5(DOMMatrixReadOnly);
+"undefined" != typeof DOMMatrix && create$5(DOMMatrix), "undefined" != typeof DOMMatrixReadOnly && create$5(DOMMatrixReadOnly);
 const T = {};
 function create$4(e) {
   T[e.name.toLowerCase()] = {
@@ -5932,7 +5932,7 @@ function create$4(e) {
     }) => new e(t, r, n, a)
   };
 }
-create$4(DOMPoint), create$4(DOMPointReadOnly);
+"undefined" != typeof DOMPoint && create$4(DOMPoint), "undefined" != typeof DOMPointReadOnly && create$4(DOMPointReadOnly);
 const N = {
     domquad: {
       test: e => "DOMQuad" === toStringTag(e),
@@ -5968,7 +5968,7 @@ function create$3(e) {
     }) => new e(t, r, n, a)
   };
 }
-create$3(DOMRect), create$3(DOMRectReadOnly);
+"undefined" != typeof DOMRect && create$3(DOMRect), "undefined" != typeof DOMRectReadOnly && create$3(DOMRectReadOnly);
 const P = {
     error: {
       test: e => "Error" === toStringTag(e),
@@ -7770,7 +7770,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
     }, function (tx, err) {
       // Should occur for `add` operation
       error(createDOMException('ConstraintError', /** @type {string} */err.message, err));
-      return true;
+      return false;
     });
     return undefined;
   }).catch(function (err) {
@@ -7866,7 +7866,7 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
     cb(tx);
   }, function (tx, err) {
     error(err);
-    return true;
+    return false;
   });
 };
 
@@ -7987,7 +7987,7 @@ IDBObjectStore.prototype.__get = function (query, getKey, getAll, count) {
       success(ret);
     }, function (tx, err) {
       error(err);
-      return true;
+      return false;
     });
   }, undefined, me);
 };
@@ -8080,7 +8080,7 @@ IDBObjectStore.prototype.delete = function (query) {
       success();
     }, function (tx, err) {
       error(err);
-      return true;
+      return false;
     });
   }, undefined, me);
 };
@@ -8109,7 +8109,7 @@ IDBObjectStore.prototype.clear = function () {
       success();
     }, function (tx, err) {
       error(err);
-      return true;
+      return false;
     });
   }, undefined, me);
 };
