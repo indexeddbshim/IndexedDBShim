@@ -447,6 +447,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb
     if (me.autoIncrement) {
         // If auto-increment and no valid primaryKey found on the keyPath, get and set the new value, and use
         if (key === undefined) {
+            // @ts-expect-error Due to re-exporting `Key.d.ts` file (needed for `node_modules` imports)
             Key.generateKeyForStore(tx, me, function (failure, key, oldCn) {
                 if (failure) {
                     failCb(createDOMException('ConstraintError', 'The key generator\'s current number has reached the maximum safe integer limit'));
@@ -462,6 +463,7 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb
                 success(key, oldCn);
             }, failCb);
         } else {
+            // @ts-expect-error Due to re-exporting `Key.d.ts` file (needed for `node_modules` imports)
             Key.possiblyUpdateKeyGenerator(tx, me, key, keyCloneThenSuccess, failCb);
         }
     // Not auto-increment
@@ -619,6 +621,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
             error(err);
         }
         if (typeof oldCn === 'number') {
+            // @ts-expect-error Due to re-exporting `Key.d.ts` file (needed for `node_modules` imports)
             Key.assignCurrentNumber(tx, me, oldCn, fail, fail);
             return null;
         }
