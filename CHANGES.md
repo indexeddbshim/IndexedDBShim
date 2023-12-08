@@ -1,6 +1,6 @@
 # CHANGES for indexeddbshim
 
-## 13.0.0 (unreleased)
+## 13.0.0
 
 BREAKING: typeson-registry drops `Intl` serialization
 
