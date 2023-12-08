@@ -291,14 +291,14 @@ function cleanupDatabaseResources (__openDatabase, name, escapedDatabaseName, da
                         deleteTables(i + 1);
                     }, function () {
                         deleteTables(i + 1);
-                        return true;
+                        return false;
                     });
                 }
             }(0));
         }, function () {
             // __sys__ table does not exist, but that does not mean delete did not happen
             databaseDeleted();
-            return true;
+            return false;
         });
     });
 }
@@ -461,7 +461,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
      */
     function dbCreateError (tx, err) {
         if (calledDbCreateError) {
-            return true;
+            return false;
         }
         const er = err ? webSQLErrback(err) : /** @type {Error} */ (tx);
         calledDbCreateError = true;
@@ -471,7 +471,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
         req.__error = er;
         req.__result = undefined; // Must be undefined if an error per `result` getter
         req.dispatchEvent(evt);
-        return true;
+        return false;
     }
 
     /**
@@ -590,7 +590,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                         ev.complete();
                                         req.__transaction = null;
                                     });
-                                    return true;
+                                    return false;
                                 });
                             };
 
@@ -625,10 +625,10 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                                 // @ts-expect-error It's ok
                                                 reportError || dbCreateError
                                             );
-                                            return true;
+                                            return false;
                                         }
                                         dbCreateError(err);
-                                        return true;
+                                        return false;
                                     });
                                 });
                             };
@@ -841,7 +841,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
      */
     function dbError (tx, err) {
         if (calledDBError || err === true) {
-            return true;
+            return false;
         }
         const er = webSQLErrback(/** @type {SQLError} */ (err || tx));
         sysdbFinishedCbDelete(true, function () {
@@ -853,7 +853,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
             req.dispatchEvent(e);
             calledDBError = true;
         });
-        return true;
+        return false;
     }
 
     addRequestToConnectionQueue(req, name, /* origin */ undefined, function (req) {
@@ -980,12 +980,12 @@ IDBFactory.prototype.databases = function () {
          */
         function dbGetDatabaseNamesError (tx, err) {
             if (calledDbCreateError) {
-                return true;
+                return false;
             }
             const er = err ? webSQLErrback(/** @type {SQLError} */ (err)) : tx;
             calledDbCreateError = true;
             reject(er);
-            return true;
+            return false;
         }
         createSysDB(me.__openDatabase, function () {
             sysdb.readTransaction(function (sysReadTx) {

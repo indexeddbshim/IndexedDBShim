@@ -257,7 +257,7 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
     }, function (tx, err) {
         if (CFG.DEBUG) { console.log('Could not execute Cursor.continue', sqlStr, sqlValues); }
         error(err);
-        return true;
+        return false;
     });
 };
 
@@ -417,7 +417,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
     }, function (tx, err) {
         if (CFG.DEBUG) { console.log('Could not execute Cursor.continue', sqlStr, sqlValues); }
         error(err);
-        return true;
+        return false;
     });
 };
 
@@ -823,7 +823,7 @@ IDBCursor.prototype.delete = function () {
                     }
                 }, function (tx, data) {
                     error(data);
-                    return true;
+                    return false;
                 });
             }, error
         );

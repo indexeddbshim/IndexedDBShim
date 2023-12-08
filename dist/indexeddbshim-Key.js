@@ -1836,7 +1836,7 @@
       }
     }, function (tx, error) {
       sqlFailCb(createDOMException('DataError', 'Could not get the auto increment value for key', error));
-      return true;
+      return false;
     });
   }
 
@@ -1859,7 +1859,7 @@
       successCb(num);
     }, function (tx, err) {
       failCb(createDOMException('UnknownError', 'Could not set the auto increment value for key', err));
-      return true;
+      return false;
     });
   }
 

@@ -4208,7 +4208,7 @@
       }
     }, function (tx, error) {
       sqlFailCb(createDOMException('DataError', 'Could not get the auto increment value for key', error));
-      return true;
+      return false;
     });
   }
 
@@ -4231,7 +4231,7 @@
       successCb(num);
     }, function (tx, err) {
       failCb(createDOMException('UnknownError', 'Could not set the auto increment value for key', err));
-      return true;
+      return false;
     });
   }
 
@@ -8196,7 +8196,7 @@
               });
             }, function (tx, err) {
               error(err);
-              return true;
+              return false;
             });
           });
         }
@@ -8279,7 +8279,7 @@
           console.log(err);
         }
         failure(createDOMException('UnknownError', 'Could not create object store "' + storeName + '"', err));
-        return true;
+        return false;
       }
       var escapedStoreNameSQL = escapeStoreNameForSQL(storeName);
       // key INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE
@@ -8345,7 +8345,7 @@
           console.log(err);
         }
         failure(createDOMException('UnknownError', 'Could not delete ObjectStore', err));
-        return true;
+        return false;
       }
       tx.executeSql('SELECT "name" FROM __sys__ WHERE "name" = ?', [escapeSQLiteStatement(store.__currentName)], function (tx, data) {
         if (data.rows.length > 0) {
@@ -8462,6 +8462,7 @@
     if (me.autoIncrement) {
       // If auto-increment and no valid primaryKey found on the keyPath, get and set the new value, and use
       if (key === undefined) {
+        // @ts-expect-error Due to re-exporting `Key.d.ts` file (needed for `node_modules` imports)
         generateKeyForStore(tx, me, function (failure, key, oldCn) {
           if (failure) {
             failCb(createDOMException('ConstraintError', 'The key generator\'s current number has reached the maximum safe integer limit'));
@@ -8475,6 +8476,7 @@
           success(key, oldCn);
         }, failCb);
       } else {
+        // @ts-expect-error Due to re-exporting `Key.d.ts` file (needed for `node_modules` imports)
         possiblyUpdateKeyGenerator(tx, me, key, keyCloneThenSuccess, failCb);
       }
       // Not auto-increment
@@ -8618,6 +8620,7 @@
         error(err);
       }
       if (typeof oldCn === 'number') {
+        // @ts-expect-error Due to re-exporting `Key.d.ts` file (needed for `node_modules` imports)
         assignCurrentNumber(tx, me, oldCn, fail, fail);
         return null;
       }
@@ -9945,14 +9948,14 @@
               deleteTables(i + 1);
             }, function () {
               deleteTables(i + 1);
-              return true;
+              return false;
             });
           }
         })(0);
       }, function () {
         // __sys__ table does not exist, but that does not mean delete did not happen
         databaseDeleted();
-        return true;
+        return false;
       });
     });
   }
@@ -10095,7 +10098,7 @@
      */
     function dbCreateError(tx, err) {
       if (calledDbCreateError) {
-        return true;
+        return false;
       }
       var er = err ? webSQLErrback(err) : ( /** @type {Error} */tx);
       calledDbCreateError = true;
@@ -10108,7 +10111,7 @@
       req.__error = er;
       req.__result = undefined; // Must be undefined if an error per `result` getter
       req.dispatchEvent(evt);
-      return true;
+      return false;
     }
 
     /**
@@ -10214,7 +10217,7 @@
                       ev.complete();
                       req.__transaction = null;
                     });
-                    return true;
+                    return false;
                   });
                 };
 
@@ -10243,10 +10246,10 @@
                         cleanupDatabaseResources(me.__openDatabase, name, escapedDatabaseName, dbCreateError.bind(null, err),
                         // @ts-expect-error It's ok
                         reportError || dbCreateError);
-                        return true;
+                        return false;
                       }
                       dbCreateError(err);
-                      return true;
+                      return false;
                     });
                   });
                 };
@@ -10442,7 +10445,7 @@
      */
     function dbError(tx, err) {
       if (calledDBError || err === true) {
-        return true;
+        return false;
       }
       var er = webSQLErrback( /** @type {SQLError} */err || tx);
       sysdbFinishedCbDelete(true, function () {
@@ -10457,7 +10460,7 @@
         req.dispatchEvent(e);
         calledDBError = true;
       });
-      return true;
+      return false;
     }
     addRequestToConnectionQueue(req, name, /* origin */undefined, function (req) {
       createSysDB(me.__openDatabase, function () {
@@ -10585,12 +10588,12 @@
        */
       function dbGetDatabaseNamesError(tx, err) {
         if (calledDbCreateError) {
-          return true;
+          return false;
         }
         var er = err ? webSQLErrback( /** @type {SQLError} */err) : tx;
         calledDbCreateError = true;
         reject(er);
-        return true;
+        return false;
       }
       createSysDB(me.__openDatabase, function () {
         sysdb.readTransaction(function (sysReadTx) {
@@ -10931,7 +10934,7 @@
         console.log('Could not execute Cursor.continue', sqlStr, sqlValues);
       }
       error(err);
-      return true;
+      return false;
     });
   };
   var leftBracketRegex = /\[/g;
@@ -11103,7 +11106,7 @@
         console.log('Could not execute Cursor.continue', sqlStr, sqlValues);
       }
       error(err);
-      return true;
+      return false;
     });
   };
 
@@ -11479,7 +11482,7 @@
           }
         }, function (tx, data) {
           error(data);
-          return true;
+          return false;
         });
       }, error);
     }, undefined, me);

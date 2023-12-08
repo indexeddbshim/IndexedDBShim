@@ -992,7 +992,7 @@ function getCurrentNumber (tx, store, func, sqlFailCb) {
             'Could not get the auto increment value for key',
             error
         ));
-        return true;
+        return false;
     });
 }
 
@@ -1013,7 +1013,7 @@ function assignCurrentNumber (tx, store, num, successCb, failCb) {
         successCb(num);
     }, function (tx, err) {
         failCb(createDOMException('UnknownError', 'Could not set the auto increment value for key', err));
-        return true;
+        return false;
     });
 }
 

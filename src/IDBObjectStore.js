@@ -165,7 +165,7 @@ IDBObjectStore.__createInstance = function (storeProperties, transaction) {
                         });
                     }, function (tx, err) {
                         error(err);
-                        return true;
+                        return false;
                     });
                 });
             }
@@ -256,7 +256,7 @@ IDBObjectStore.__createObjectStore = function (db, store) {
         function error (tx, err) {
             if (CFG.DEBUG) { console.log(err); }
             failure(createDOMException('UnknownError', 'Could not create object store "' + storeName + '"', err));
-            return true;
+            return false;
         }
 
         const escapedStoreNameSQL = util.escapeStoreNameForSQL(storeName);
@@ -329,7 +329,7 @@ IDBObjectStore.__deleteObjectStore = function (db, store) {
         function error (tx, err) {
             if (CFG.DEBUG) { console.log(err); }
             failure(createDOMException('UnknownError', 'Could not delete ObjectStore', err));
-            return true;
+            return false;
         }
 
         tx.executeSql('SELECT "name" FROM __sys__ WHERE "name" = ?', [util.escapeSQLiteStatement(store.__currentName)], function (tx, data) {
