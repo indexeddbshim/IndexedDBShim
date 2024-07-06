@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 /* eslint-disable no-unused-expressions, n/no-sync */
 import fs from 'fs';
-import chai from 'chai';
+import * as chai from 'chai';
 
 global.window = global;
 window.chai = chai;

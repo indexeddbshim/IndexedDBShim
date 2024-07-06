@@ -178,7 +178,11 @@ describe('W3C IDBCursor.update Tests', function () {
                     assert(cursor instanceof FDBCursor);
 
                     var record = cursor.value;
-                    record.data = new Error();
+
+                    // Brett: Now cloneable, so changing to Symbol()
+                    // record.data = new Error();
+                    record.data = Symbol();
+
                     support.throws(function() {
                         cursor.update(record);
                     }, 'DataCloneError');

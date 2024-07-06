@@ -1,5 +1,15 @@
 # CHANGES for indexeddbshim
 
+## 14.0.0
+
+BREAKING:
+
+1. New encoding required by typeson-registry to support more info on ArrayBuffer and ImageBitmap; there is no provided upgrade path if you have data currently encoded for these structures
+2. Requires Node 18
+
+- chore: upgrade typeson-registry and devDeps
+- test: update old w3c test to not fail (now Error is cloneable)
+
 ## 13.0.0
 
 BREAKING: typeson-registry drops `Intl` serialization
@@ -102,7 +112,7 @@ Negative zero will now be stored differently and distinctly (though not as a key
 - npm: Remove `remark`
 - npm: Update devDeps. and package-lock
 
-# 7.0.0
+## 7.0.0
 
 - Breaking change: Require Node >= 10
 - Enhancement: By way of `typeson-registry`, support `CryptoKey`

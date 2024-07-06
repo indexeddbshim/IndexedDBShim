@@ -1,3 +1,6 @@
+/* eslint-disable import/no-deprecated, import/namespace,
+    import/default, import/no-named-as-default,
+    import/no-named-as-default-member -- Problems with JSON import */
 import {readFile} from 'node:fs/promises';
 
 import {nodeResolve} from '@rollup/plugin-node-resolve';

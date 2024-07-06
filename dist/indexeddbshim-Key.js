@@ -1,4 +1,4 @@
-/*! indexeddbshim - v13.0.0 - 12/7/2023 */
+/*! indexeddbshim - v13.0.0 - 7/7/2024 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -6,6 +6,68 @@
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.IDBKeyUtils = {}));
 })(this, (function (exports) { 'use strict';
 
+  function _arrayLikeToArray(r, a) {
+    (null == a || a > r.length) && (a = r.length);
+    for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
+    return n;
+  }
+  function _arrayWithHoles(r) {
+    if (Array.isArray(r)) return r;
+  }
+  function _arrayWithoutHoles(r) {
+    if (Array.isArray(r)) return _arrayLikeToArray(r);
+  }
+  function _createForOfIteratorHelper(r, e) {
+    var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+    if (!t) {
+      if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e  ) {
+        t && (r = t);
+        var n = 0,
+          F = function () {};
+        return {
+          s: F,
+          n: function () {
+            return n >= r.length ? {
+              done: !0
+            } : {
+              done: !1,
+              value: r[n++]
+            };
+          },
+          e: function (r) {
+            throw r;
+          },
+          f: F
+        };
+      }
+      throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+    }
+    var o,
+      a = !0,
+      u = !1;
+    return {
+      s: function () {
+        t = t.call(r);
+      },
+      n: function () {
+        var r = t.next();
+        return a = r.done, r;
+      },
+      e: function (r) {
+        u = !0, o = r;
+      },
+      f: function () {
+        try {
+          a || null == t.return || t.return();
+        } finally {
+          if (u) throw o;
+        }
+      }
+    };
+  }
+  function _iterableToArray(r) {
+    if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
+  }
   function _iterableToArrayLimit(r, l) {
     var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
     if (null != t) {
@@ -17,10 +79,7 @@
         f = !0,
         o = !1;
       try {
-        if (i = (t = t.call(r)).next, 0 === l) {
-          if (Object(t) !== t) return;
-          f = !1;
-        } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
+        if (i = (t = t.call(r)).next, 0 === l) ; else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
       } catch (r) {
         o = !0, n = r;
       } finally {
@@ -33,6 +92,18 @@
       return a;
     }
   }
+  function _nonIterableRest() {
+    throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+  }
+  function _nonIterableSpread() {
+    throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+  }
+  function _slicedToArray(r, e) {
+    return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest();
+  }
+  function _toConsumableArray(r) {
+    return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread();
+  }
   function _typeof(o) {
     "@babel/helpers - typeof";
 
@@ -42,90 +113,12 @@
       return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
     }, _typeof(o);
   }
-  function _slicedToArray(arr, i) {
-    return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
-  }
-  function _toConsumableArray(arr) {
-    return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread();
-  }
-  function _arrayWithoutHoles(arr) {
-    if (Array.isArray(arr)) return _arrayLikeToArray(arr);
-  }
-  function _arrayWithHoles(arr) {
-    if (Array.isArray(arr)) return arr;
-  }
-  function _iterableToArray(iter) {
-    if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter);
-  }
-  function _unsupportedIterableToArray(o, minLen) {
-    if (!o) return;
-    if (typeof o === "string") return _arrayLikeToArray(o, minLen);
-    var n = Object.prototype.toString.call(o).slice(8, -1);
-    if (n === "Object" && o.constructor) n = o.constructor.name;
-    if (n === "Map" || n === "Set") return Array.from(o);
-    if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
-  }
-  function _arrayLikeToArray(arr, len) {
-    if (len == null || len > arr.length) len = arr.length;
-    for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
-    return arr2;
-  }
-  function _nonIterableSpread() {
-    throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-  }
-  function _nonIterableRest() {
-    throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-  }
-  function _createForOfIteratorHelper(o, allowArrayLike) {
-    var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"];
-    if (!it) {
-      if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
-        if (it) o = it;
-        var i = 0;
-        var F = function () {};
-        return {
-          s: F,
-          n: function () {
-            if (i >= o.length) return {
-              done: true
-            };
-            return {
-              done: false,
-              value: o[i++]
-            };
-          },
-          e: function (e) {
-            throw e;
-          },
-          f: F
-        };
-      }
-      throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+  function _unsupportedIterableToArray(r, a) {
+    if (r) {
+      if ("string" == typeof r) return _arrayLikeToArray(r, a);
+      var t = {}.toString.call(r).slice(8, -1);
+      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
     }
-    var normalCompletion = true,
-      didErr = false,
-      err;
-    return {
-      s: function () {
-        it = it.call(o);
-      },
-      n: function () {
-        var step = it.next();
-        normalCompletion = step.done;
-        return step;
-      },
-      e: function (e) {
-        didErr = true;
-        err = e;
-      },
-      f: function () {
-        try {
-          if (!normalCompletion && it.return != null) it.return();
-        } finally {
-          if (didErr) throw err;
-        }
-      }
-    };
   }
 
   /* eslint-disable jsdoc/valid-types -- https://github.com/jsdoc-type-pratt-parser/jsdoc-type-pratt-parser/issues/147 */
