@@ -1,6 +1,6 @@
 {
   "name": "indexeddbshim",
-  "version": "14.0.0",
+  "version": "14.1.0",
   "type": "module",
   "author": "Parashuram <code@nparashuram.com>",
   "contributors": [
@@ -162,13 +162,13 @@
     "eventtargeter": "0.9.0",
     "sync-promise-expanded": "^1.0.0",
     "typeson": "9.0.3",
-    "typeson-registry": "10.0.0",
+    "typeson-registry": "11.0.0",
     "websql-configurable": "^3.0.3"
   },
   "devDependencies": {
     "@brettz9/eslint-plugin": "^1.0.4",
-    "@babel/core": "^7.24.7",
-    "@babel/preset-env": "^7.24.7",
+    "@babel/core": "^7.24.9",
+    "@babel/preset-env": "^7.24.8",
     "@brettz9/node-static": "^0.1.1",
     "@es-joy/json-file-reporter": "^1.4.0",
     "@rollup/plugin-babel": "^6.0.4",
@@ -201,7 +201,7 @@
     "eslint-plugin-markdown": "^3.0.1",
     "eslint-plugin-n": "^16.6.2",
     "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-jsdoc": "^48.5.2",
+    "eslint-plugin-jsdoc": "^48.7.0",
     "eslint-plugin-no-unsanitized": "^4.0.2",
     "eslint-plugin-no-use-extend-native": "^0.5.0",
     "eslint-plugin-sonarjs": "^0.23.0",
@@ -220,7 +220,7 @@
     "npm-run-all": "^4.1.5",
     "open-cli": "^8.0.0",
     "rimraf": "^5.0.8",
-    "rollup": "^4.18.0",
+    "rollup": "^4.18.1",
     "rollup-plugin-filesize": "^10.0.0",
     "rollup-plugin-node-globals": "^1.4.0",
     "rollup-plugin-node-polyfills": "^0.2.1",

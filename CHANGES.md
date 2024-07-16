@@ -1,5 +1,9 @@
 # CHANGES for indexeddbshim
 
+## 14.1.0
+
+- chore: update typeson-registry and devDeps.
+
 ## 14.0.0
 
 BREAKING:
