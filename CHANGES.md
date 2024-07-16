@@ -1,6 +1,9 @@
 # CHANGES for indexeddbshim
 
-## 14.1.0
+## 15.0.0
+
+BREAKING:
+1. Requires Node 18.14.0
 
 - chore: update typeson-registry and devDeps.
 

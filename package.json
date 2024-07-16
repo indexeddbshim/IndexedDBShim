@@ -1,6 +1,6 @@
 {
   "name": "indexeddbshim",
-  "version": "14.1.0",
+  "version": "15.0.0",
   "type": "module",
   "author": "Parashuram <code@nparashuram.com>",
   "contributors": [
@@ -155,7 +155,7 @@
     "last 3 Samsung versions"
   ],
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.14.0"
   },
   "dependencies": {
     "canvas": "^2.11.2",
