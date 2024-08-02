@@ -1041,7 +1041,7 @@ IDBFactory.prototype.__forceClose = function (dbName, connIdx, msg) {
     } else if (!Number.isInteger(connIdx) || connIdx < 0 || connIdx > me.__connections[dbName].length - 1) {
         throw new TypeError(
             'If providing an argument, __forceClose must be called with a ' +
-            'numeric index to indicate a specific connection to lose'
+            'numeric index to indicate a specific connection to close'
         );
     } else {
         forceClose(me.__connections[dbName][connIdx]);
