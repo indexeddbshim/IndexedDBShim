@@ -1,4 +1,4 @@
-/*! indexeddbshim - v14.0.0 - 7/16/2024 */
+/*! indexeddbshim - v15.0.0 - 8/3/2024 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -20,7 +20,7 @@
   function _createForOfIteratorHelper(r, e) {
     var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
     if (!t) {
-      if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e  ) {
+      if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e) {
         t && (r = t);
         var n = 0,
           F = function () {};
@@ -857,6 +857,14 @@
    * @typedef {any} AnyValue
    */
 
+  /**
+   * @type {{
+   *   [key: string]: {
+   *     encode: (param: any, inArray?: boolean) => string,
+   *     decode: (param: string, inArray?: boolean) => any
+   *   }
+   * }}
+   */
   var types = {
     invalid: {
       /**
@@ -1767,7 +1775,6 @@
       return null;
     }
     // array, date, number, string, binary (should already have detected "invalid")
-    // @ts-expect-error Argument may be ignored
     return types[getKeyType(key)].encode(key, inArray);
   }
 

@@ -1,4 +1,4 @@
-/*! indexeddbshim - v14.0.0 - 7/16/2024 */
+/*! indexeddbshim - v15.0.0 - 8/3/2024 */
 
 (function (factory) {
   typeof define === 'function' && define.amd ? define(factory) :
@@ -65,7 +65,7 @@
   function _createForOfIteratorHelper(r, e) {
     var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
     if (!t) {
-      if (Array.isArray(r) || (t = _unsupportedIterableToArray$1(r)) || e  ) {
+      if (Array.isArray(r) || (t = _unsupportedIterableToArray$1(r)) || e) {
         t && (r = t);
         var n = 0,
           F = function () {};
@@ -3192,6 +3192,14 @@
    * @typedef {any} AnyValue
    */
 
+  /**
+   * @type {{
+   *   [key: string]: {
+   *     encode: (param: any, inArray?: boolean) => string,
+   *     decode: (param: string, inArray?: boolean) => any
+   *   }
+   * }}
+   */
   var types = {
     invalid: {
       /**
@@ -4102,7 +4110,6 @@
       return null;
     }
     // array, date, number, string, binary (should already have detected "invalid")
-    // @ts-expect-error Argument may be ignored
     return types[getKeyType(key)].encode(key, inArray);
   }
 
@@ -5657,7 +5664,7 @@
       if ("object" != _typeof$2(e) || null === e) return e;
       var r = e[Symbol.toPrimitive];
       if (void 0 !== r) {
-        var n = r.call(e, t );
+        var n = r.call(e, t);
         if ("object" != _typeof$2(n)) return n;
         throw new TypeError("@@toPrimitive must return a primitive value.");
       }
@@ -5713,7 +5720,7 @@
   var t = Object.hasOwn,
     r = Object.getPrototypeOf;
   function isThenable(e, t) {
-    return isObject(e) && "function" == typeof e.then && (!t );
+    return isObject(e) && "function" == typeof e.then && (!t);
   }
   function toStringTag(e) {
     return Object.prototype.toString.call(e).slice(8, -1);
@@ -9335,6 +9342,8 @@
   function IDBDatabase() {
     this.__versionTransaction = null;
     this.__objectStores = null;
+    /** @type {import('./IDBTransaction.js').IDBTransactionFull[]} */
+    this.__transactions = [];
     throw new TypeError('Illegal constructor');
   }
   var IDBDatabaseAlias = IDBDatabase;
@@ -9398,6 +9407,8 @@
       this.__setOptions({
         legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
       });
+
+      /** @type {import('./IDBTransaction.js').IDBTransactionFull[]} */
       this.__transactions = [];
 
       /** @type {{[key: string]: IDBObjectStore}} */
@@ -9527,6 +9538,7 @@
     if (this.__unblocking) {
       this.__unblocking.check();
     }
+    this.__transactions = [];
   };
 
   /**
@@ -9625,6 +9637,7 @@
       };
       trans.__abortTransaction(createDOMException('AbortError', 'The connection was force-closed: ' + (msg || '')));
     });
+    me.__transactions = [];
   };
   defineOuterInterface(IDBDatabase.prototype, listeners);
   defineReadonlyOuterInterface(IDBDatabase.prototype, readonlyProperties);
@@ -10232,6 +10245,10 @@
 
                 // eslint-disable-next-line camelcase -- Clear API
                 req.transaction.on__complete = function () {
+                  var pos = connection.__transactions.indexOf(req.transaction);
+                  if (pos > -1) {
+                    connection.__transactions.splice(pos, 1);
+                  }
                   if ( /** @type {import('./IDBDatabase.js').IDBDatabaseFull} */req.__result.__closePending) {
                     req.__transaction = null;
                     var err = createDOMException('AbortError', 'The connection has been closed.');
@@ -10614,9 +10631,10 @@
       conn.__forceClose(msg);
     }
     if (isNullish(dbName)) {
-      Object.values(me.__connections).forEach(function (conn) {
-        // @ts-expect-error It's ok
-        forceClose(conn);
+      Object.values(me.__connections).forEach(function (connections) {
+        connections.forEach(function (connection) {
+          forceClose(connection);
+        });
       });
     } else if (!me.__connections[dbName]) {
       console.log('No database connections with that name to force close');
@@ -10625,7 +10643,7 @@
         forceClose(conn);
       });
     } else if (!Number.isInteger(connIdx) || connIdx < 0 || connIdx > me.__connections[dbName].length - 1) {
-      throw new TypeError('If providing an argument, __forceClose must be called with a ' + 'numeric index to indicate a specific connection to lose');
+      throw new TypeError('If providing an argument, __forceClose must be called with a ' + 'numeric index to indicate a specific connection to close');
     } else {
       forceClose(me.__connections[dbName][connIdx]);
     }

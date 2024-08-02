@@ -1,5 +1,20 @@
 # CHANGES for indexeddbshim
 
+## 15.0.1
+
+### User-impacting changes
+
+- fix: error in handling `__forceClose` with nullish database name
+- fix: typo in `__forceClose` error message
+- perf: clear out `__transactions` tracking array after db closes (#354)
+- perf: remove transaction from `__transactions` tracking array after
+    transaction completion (#354)
+
+### Dev-impacting changes
+
+- chore: update typescript
+- docs: internal TS issue
+
 ## 15.0.0
 
 BREAKING:

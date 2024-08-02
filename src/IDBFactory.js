@@ -635,6 +635,11 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
                             // eslint-disable-next-line camelcase -- Clear API
                             req.transaction.on__complete = function () {
+                                const pos = connection.__transactions.indexOf(req.transaction);
+                                if (pos > -1) {
+                                    connection.__transactions.splice(pos, 1);
+                                }
+
                                 if (/** @type {import('./IDBDatabase.js').IDBDatabaseFull} */ (
                                     req.__result
                                 ).__closePending) {
