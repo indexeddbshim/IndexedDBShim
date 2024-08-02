@@ -91,6 +91,14 @@ const signValues = ['negativeInfinity', 'bigNegative', 'smallNegative', 'smallPo
  * @typedef {any} AnyValue
  */
 
+/**
+ * @type {{
+ *   [key: string]: {
+ *     encode: (param: any, inArray?: boolean) => string,
+ *     decode: (param: string, inArray?: boolean) => any
+ *   }
+ * }}
+ */
 const types = {
     invalid: {
         /**
@@ -923,7 +931,6 @@ function encode (key, inArray) {
         return null;
     }
     // array, date, number, string, binary (should already have detected "invalid")
-    // @ts-expect-error Argument may be ignored
     return types[getKeyType(key)].encode(key, inArray);
 }
 
