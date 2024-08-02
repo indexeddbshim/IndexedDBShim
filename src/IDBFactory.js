@@ -1028,9 +1028,10 @@ IDBFactory.prototype.__forceClose = function (dbName, connIdx, msg) {
         conn.__forceClose(msg);
     }
     if (util.isNullish(dbName)) {
-        (Object.values(me.__connections)).forEach((conn) => {
-            // @ts-expect-error It's ok
-            forceClose(conn);
+        (Object.values(me.__connections)).forEach((connections) => {
+            connections.forEach((connection) => {
+                forceClose(connection);
+            });
         });
     } else if (!me.__connections[dbName]) {
         console.log('No database connections with that name to force close');
