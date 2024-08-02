@@ -29,6 +29,8 @@ const readonlyProperties = ['name', 'version', 'objectStoreNames'];
 function IDBDatabase () {
     this.__versionTransaction = null;
     this.__objectStores = null;
+    /** @type {import('./IDBTransaction.js').IDBTransactionFull[]} */
+    this.__transactions = [];
     throw new TypeError('Illegal constructor');
 }
 const IDBDatabaseAlias = IDBDatabase;
@@ -92,6 +94,7 @@ IDBDatabase.__createInstance = function (db, name, oldVersion, version, storePro
             legacyOutputDidListenersThrowFlag: true // Event hook for IndexedB
         });
 
+        /** @type {import('./IDBTransaction.js').IDBTransactionFull[]} */
         this.__transactions = [];
 
         /** @type {{[key: string]: IDBObjectStore}} */
@@ -222,6 +225,7 @@ IDBDatabase.prototype.close = function () {
     if (this.__unblocking) {
         this.__unblocking.check();
     }
+    this.__transactions = [];
 };
 
 /**
@@ -325,6 +329,7 @@ IDBDatabase.prototype.__forceClose = function (msg) {
             'The connection was force-closed: ' + (msg || '')
         ));
     });
+    me.__transactions = [];
 };
 
 util.defineOuterInterface(IDBDatabase.prototype, listeners);
