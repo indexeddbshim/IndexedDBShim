@@ -1061,7 +1061,7 @@ function setCurrentNumber (tx, store, num, successCb, failCb) {
 function generateKeyForStore (tx, store, cb, sqlFailCb) {
     getCurrentNumber(tx, store, function (key) {
         if (key > MAX_ALLOWED_CURRENT_NUMBER) { // 2 ^ 53 (See <https://github.com/w3c/IndexedDB/issues/147>)
-            cb('failure'); // eslint-disable-line n/no-callback-literal
+            cb('failure');
             return;
         }
         // Increment current number by 1 (we cannot leverage SQLite's

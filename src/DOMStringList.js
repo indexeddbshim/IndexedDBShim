@@ -28,7 +28,7 @@ if (Object.defineProperty) {
         if (testObject.test) {
             cleanInterface = true;
         }
-    } catch (e) {
+    } catch {
     // Object.defineProperty does not work as intended.
     }
 }
@@ -113,7 +113,7 @@ DOMStringList.prototype = {
      * @returns {void}
      */
     forEach (cb, thisArg) {
-        // eslint-disable-next-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument
+        // eslint-disable-next-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument -- Convenient
         this._items.forEach(cb, thisArg);
     },
     /**
@@ -122,7 +122,7 @@ DOMStringList.prototype = {
      * @returns {any[]}
      */
     map (cb, thisArg) {
-        // eslint-disable-next-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument
+        // eslint-disable-next-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument -- Convenient
         return this._items.map(cb, thisArg);
     },
     /**

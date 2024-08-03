@@ -308,7 +308,7 @@ IDBIndex.__createIndex = function (store, index) {
                                     },
                                     /** @type {SQLStatementErrorCallback} */ (error)
                                 );
-                            } catch (e) {
+                            } catch {
                                 // Not a valid value to insert into index, so just continue
                                 addIndexEntry(i + 1);
                             }
@@ -521,7 +521,7 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
  */
 IDBIndex.prototype.openCursor = function (/* query, direction */) {
     const me = this;
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     const [query, direction] = arguments;
     const cursor = IDBCursorWithValue.__createInstance(query, direction, me.objectStore, me, util.escapeIndexNameForSQLKeyColumn(me.name), 'value');
     me.__objectStore.__cursors.push(cursor);
@@ -535,7 +535,7 @@ IDBIndex.prototype.openCursor = function (/* query, direction */) {
  */
 IDBIndex.prototype.openKeyCursor = function (/* query, direction */) {
     const me = this;
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     const [query, direction] = arguments;
     const cursor = IDBCursor.__createInstance(query, direction, me.objectStore, me, util.escapeIndexNameForSQLKeyColumn(me.name), 'key');
     me.__objectStore.__cursors.push(cursor);
@@ -575,7 +575,7 @@ IDBIndex.prototype.getKey = function (query) {
  * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBIndex.prototype.getAll = function (/* query, count */) {
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     const [query, count] = arguments;
     return this.__fetchIndexData(query, 'value', false, count);
 };
@@ -585,7 +585,7 @@ IDBIndex.prototype.getAll = function (/* query, count */) {
  * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBIndex.prototype.getAllKeys = function (/* query, count */) {
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     const [query, count] = arguments;
     return this.__fetchIndexData(query, 'key', false, count);
 };
@@ -596,7 +596,7 @@ IDBIndex.prototype.getAllKeys = function (/* query, count */) {
  */
 IDBIndex.prototype.count = function (/* query */) {
     const me = this;
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     const query = arguments[0];
     // With the exception of needing to check whether the index has been
     //  deleted, we could, for greater spec parity (if not accuracy),

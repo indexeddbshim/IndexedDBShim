@@ -7,7 +7,7 @@ import * as util from './util.js';
 import IDBTransaction from './IDBTransaction.js';
 import * as Key from './Key.js';
 import * as Sca from './Sca.js';
-import IDBIndex from './IDBIndex.js'; // eslint-disable-line import/no-named-as-default
+import IDBIndex from './IDBIndex.js';
 import CFG from './CFG.js';
 
 /**
@@ -64,7 +64,7 @@ function IDBCursor () {
 }
 const IDBCursorAlias = IDBCursor;
 
-/* eslint-disable func-name-matching */
+/* eslint-disable func-name-matching -- API */
 /**
  * The IndexedDB Cursor Object.
  * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBCursor
@@ -80,7 +80,7 @@ const IDBCursorAlias = IDBCursor;
  * @returns {void}
  */
 IDBCursor.__super = function IDBCursor (query, direction, store, source, keyColumnName, valueColumnName, count) {
-    /* eslint-enable func-name-matching */
+    /* eslint-enable func-name-matching -- API */
     // @ts-expect-error Should be ok
     this[Symbol.toStringTag] = 'IDBCursor';
     util.defineReadonlyProperties(this, ['key', 'primaryKey', 'request']);
@@ -655,7 +655,7 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
  * @returns {void}
  */
 IDBCursor.prototype.continue = function (/* key */) {
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     this.__continue(arguments[0]);
 };
 

@@ -172,7 +172,7 @@ function setGlobalVars (idb, initialConfig) {
                     );
                 }
                 Object.defineProperty(IDB, name, desc);
-            } catch (e) {
+            } catch {
                 // With `indexedDB`, PhantomJS fails here and below but
                 //  not above, while Chrome is reverse (and Firefox doesn't
                 //  get here since no WebSQL to use for shimming)
@@ -357,7 +357,9 @@ function setGlobalVars (idb, initialConfig) {
                 // Detect iOS: http://stackoverflow.com/questions/9038625/detect-if-device-is-ios/9039885#9039885
                 // and detect version 9: http://stackoverflow.com/a/26363560/271577
                 (/(iPad|iPhone|iPod).* os 9_/ui).test(navigator.userAgent) &&
-                !('MSStream' in window) // But avoid IE11
+                (typeof window !== 'undefined' &&
+                // eslint-disable-next-line no-undef -- Extra check
+                !('MSStream' in window)) // But avoid IE11
             )
         )
     ) {

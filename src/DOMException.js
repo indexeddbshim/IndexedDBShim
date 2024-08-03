@@ -122,7 +122,7 @@ function createNonNativeDOMExceptionClass () {
             : (legacyCodes[/** @type {LegacyCode} */ (name)] || 0);
         this._name = name || 'Error';
         // We avoid `String()` in this next line as it converts Symbols
-        this._message = message === undefined ? '' : ('' + message); // eslint-disable-line no-implicit-coercion
+        this._message = message === undefined ? '' : ('' + message); // eslint-disable-line no-implicit-coercion -- Don't convert symbols
         Object.defineProperty(this, 'code', {
             configurable: true,
             enumerable: true,
@@ -150,12 +150,12 @@ function createNonNativeDOMExceptionClass () {
     // Necessary for W3C tests which complains if `DOMException` has properties on its "own" prototype
 
     // class DummyDOMException extends Error {}; // Sometimes causing problems in Node
-    /* eslint-disable func-name-matching */
+    /* eslint-disable func-name-matching -- See above */
     /**
      * @class
      */
     const DummyDOMException = function DOMException () { /* */ };
-    /* eslint-enable func-name-matching */
+    /* eslint-enable func-name-matching -- See above */
     DummyDOMException.prototype = Object.create(Error.prototype); // Intended for subclassing
     /** @type {const} */ (['name', 'message']).forEach((prop) => {
         Object.defineProperty(DummyDOMException.prototype, prop, {
@@ -361,7 +361,7 @@ try {
         // Native DOMException works as expected
         useNativeDOMException = true;
     }
-} catch (e) {}
+} catch {}
 
 const createDOMException = useNativeDOMException
     // eslint-disable-next-line @stylistic/operator-linebreak -- Need JSDoc

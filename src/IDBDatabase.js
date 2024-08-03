@@ -145,7 +145,7 @@ IDBDatabase.prototype[Symbol.toStringTag] = 'IDBDatabasePrototype';
  * @returns {IDBObjectStore}
  */
 IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions */) {
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     let createOptions = arguments[1];
     storeName = String(storeName); // W3C test within IDBObjectStore.js seems to accept string conversion
     if (!(this instanceof IDBDatabase)) {
@@ -238,7 +238,7 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
     if (arguments.length === 0) {
         throw new TypeError('You must supply a valid `storeNames` to `IDBDatabase.transaction`');
     }
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     let mode = arguments[1];
     storeNames = util.isIterable(storeNames)
         // Creating new array also ensures sequence is passed by value: https://heycam.github.io/webidl/#idl-sequence

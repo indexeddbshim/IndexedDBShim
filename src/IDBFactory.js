@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports -- Can be polyfilled
 import path from 'path';
 import SyncPromise from 'sync-promise-expanded';
 
@@ -36,6 +37,7 @@ const setFS = (_fs) => {
  * @returns {string}
  */
 const getOrigin = () => {
+    // eslint-disable-next-line no-undef -- If browser/polyfilled
     return (typeof location !== 'object' || !location) ? 'null' : location.origin;
 };
 const hasNullOrigin = () => CFG.checkOrigin !== false && (getOrigin() === 'null');
@@ -80,7 +82,7 @@ function processNextInConnectionQueue (name, origin = getOrigin()) {
     cb(req);
 }
 
-/* eslint-disable default-param-last */
+/* eslint-disable default-param-last -- Keep cb at end */
 /**
  * @param {import('./IDBRequest.js').IDBOpenDBRequestFull} req
  * @param {string} name
@@ -89,7 +91,7 @@ function processNextInConnectionQueue (name, origin = getOrigin()) {
  * @returns {void}
  */
 function addRequestToConnectionQueue (req, name, origin = getOrigin(), cb) {
-    /* eslint-enable default-param-last */
+    /* eslint-enable default-param-last -- Keep cb at end */
     if (!connectionQueue[origin][name]) {
         connectionQueue[origin][name] = [];
     }
@@ -415,7 +417,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
     if (!(me instanceof IDBFactory)) {
         throw new TypeError('Illegal invocation');
     }
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     let version = arguments[1];
 
     if (arguments.length === 0) {
@@ -445,10 +447,10 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
     /** @type {string} */
     let escapedDatabaseName;
-    // eslint-disable-next-line no-useless-catch
+    // eslint-disable-next-line no-useless-catch -- Possible refactoring
     try {
         escapedDatabaseName = util.escapeDatabaseNameForSQLAndFiles(name);
-    // eslint-disable-next-line sonarjs/no-useless-catch
+    // eslint-disable-next-line sonarjs/no-useless-catch -- Possible refactoring
     } catch (err) {
         throw err; // new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
     }
@@ -511,7 +513,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                         if (err) {
                             try {
                                 systx.executeSql('ROLLBACK', [], cb, cb);
-                            } catch (er) {
+                            } catch {
                                 // Browser may fail with expired transaction above so
                                 //     no choice but to manually revert
                                 sysdb.transaction(function (systx) {
@@ -532,7 +534,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                                             [sqlSafeName],
                                             function () {
                                                 // @ts-expect-error Force to work
-                                                cb(reportError); // eslint-disable-line promise/no-callback-in-promise
+                                                cb(reportError); // eslint-disable-line promise/no-callback-in-promise -- Convenient
                                             },
                                             // @ts-expect-error Force to work
                                             reportError
@@ -553,7 +555,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                             return;
                         }
                         // In browser, should auto-commit
-                        cb(); // eslint-disable-line promise/no-callback-in-promise
+                        cb(); // eslint-disable-line promise/no-callback-in-promise -- Convenient
                     };
 
                     sysdb.transaction(function (systx) {
@@ -810,10 +812,10 @@ IDBFactory.prototype.deleteDatabase = function (name) {
 
     /** @type {string} */
     let escapedDatabaseName;
-    // eslint-disable-next-line no-useless-catch
+    // eslint-disable-next-line no-useless-catch -- Possible refactoring
     try {
         escapedDatabaseName = util.escapeDatabaseNameForSQLAndFiles(name);
-    // eslint-disable-next-line sonarjs/no-useless-catch
+    // eslint-disable-next-line sonarjs/no-useless-catch -- Possible refactoring
     } catch (err) {
         throw err; // throw new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
     }
@@ -898,7 +900,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
                     ({version} = data.rows.item(0));
 
                     const openConnections = me.__connections[name] || [];
-                    triggerAnyVersionChangeAndBlockedEvents(openConnections, req, version, null).then(function () { // eslint-disable-line promise/catch-or-return
+                    triggerAnyVersionChangeAndBlockedEvents(openConnections, req, version, null).then(function () { // eslint-disable-line promise/catch-or-return -- Sync promise
                         // Since we need two databases which can't be in a single transaction, we
                         //  do this deleting from `dbVersions` first since the `__sys__` deleting
                         //  only impacts file memory whereas this one is critical for avoiding it
@@ -970,7 +972,7 @@ IDBFactory.prototype.cmp = function (key1, key2) {
 IDBFactory.prototype.databases = function () {
     const me = this;
     let calledDbCreateError = false;
-    return new Promise(function (resolve, reject) { // eslint-disable-line promise/avoid-new
+    return new Promise(function (resolve, reject) { // eslint-disable-line promise/avoid-new -- Own polyfill
         if (!(me instanceof IDBFactory)) {
             throw new TypeError('Illegal invocation');
         }

@@ -535,7 +535,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
                 ) {
                     throw new Error('Go to catch');
                 }
-            } catch (err) {
+            } catch {
                 resolve(undefined);
                 return;
             }
@@ -638,7 +638,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
  */
 IDBObjectStore.prototype.add = function (value /* , key */) {
     const me = this;
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     const key = arguments[1];
     if (!(me instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
@@ -669,7 +669,7 @@ IDBObjectStore.prototype.add = function (value /* , key */) {
  */
 IDBObjectStore.prototype.put = function (value /* , key */) {
     const me = this;
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     const key = arguments[1];
     if (!(me instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
@@ -725,7 +725,7 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
  * @returns {void}
  */
 IDBObjectStore.__storingRecordObjectStore = function (request, store, invalidateCache, value, noOverwrite /* , key */) {
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     const key = arguments[5];
     /** @type {import('./IDBTransaction.js').IDBTransactionFull} */ (
         store.transaction
@@ -872,7 +872,7 @@ IDBObjectStore.prototype.getKey = function (query) {
  * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBObjectStore.prototype.getAll = function (/* query, count */) {
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     const [query, count] = arguments;
     return this.__get(query, false, true, count);
 };
@@ -882,7 +882,7 @@ IDBObjectStore.prototype.getAll = function (/* query, count */) {
  * @returns {import('./IDBRequest.js').IDBRequestFull}
  */
 IDBObjectStore.prototype.getAllKeys = function (/* query, count */) {
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     const [query, count] = arguments;
     return this.__get(query, true, true, count);
 };
@@ -971,7 +971,7 @@ IDBObjectStore.prototype.clear = function () {
  */
 IDBObjectStore.prototype.count = function (/* query */) {
     const me = this;
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     const query = arguments[0];
     if (!(me instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
@@ -989,7 +989,7 @@ IDBObjectStore.prototype.count = function (/* query */) {
  */
 IDBObjectStore.prototype.openCursor = function (/* query, direction */) {
     const me = this;
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     const [query, direction] = arguments;
     if (!(me instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');
@@ -1010,7 +1010,7 @@ IDBObjectStore.prototype.openKeyCursor = function (/* query, direction */) {
         throw new TypeError('Illegal invocation');
     }
     IDBObjectStore.__invalidStateIfDeleted(me);
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     const [query, direction] = arguments;
     const cursor = IDBCursor.__createInstance(query, direction, me, me, 'key', 'key');
     me.__cursors.push(cursor);
@@ -1056,7 +1056,7 @@ IDBObjectStore.prototype.index = function (indexName) {
  */
 IDBObjectStore.prototype.createIndex = function (indexName, keyPath /* , optionalParameters */) {
     const me = this;
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     let optionalParameters = arguments[2];
     if (!(me instanceof IDBObjectStore)) {
         throw new TypeError('Illegal invocation');

@@ -588,7 +588,7 @@ example:
 ```js
 (function () {
     // This works on all browsers, and only uses IndexedDBShim as a final fallback
-    var indexedDB = window.indexedDB || window.mozIndexedDB || // eslint-disable-line no-var
+    var indexedDB = window.indexedDB || window.mozIndexedDB || // eslint-disable-line no-var -- Older browsers
         window.webkitIndexedDB || window.msIndexedDB || window.shimIndexedDB;
 
     // This code will use the native IndexedDB, if it exists, or the shim otherwise

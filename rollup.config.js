@@ -1,6 +1,6 @@
-/* eslint-disable import/no-deprecated, import/namespace,
-    import/default, import/no-named-as-default,
-    import/no-named-as-default-member -- Problems with JSON import */
+// /* eslint-disable import/no-deprecated, import/namespace,
+//     import/default, import/no-named-as-default,
+//     import/no-named-as-default-member -- Problems with JSON import */
 import {readFile} from 'node:fs/promises';
 
 import {nodeResolve} from '@rollup/plugin-node-resolve';
@@ -139,7 +139,7 @@ const nodeEnvironment = ({input, name, output: file}) => {
 /**
  * @returns {Rollup[]}
  */
-export default () => {
+export default function rollupConfig () {
     // if (commandLineArgs.configBrowserOnly) {
 
     return [
@@ -183,4 +183,4 @@ export default () => {
             output: `dist/${pkgName}-node.cjs`
         })
     ];
-};
+}

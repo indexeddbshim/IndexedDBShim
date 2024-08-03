@@ -106,7 +106,7 @@ IDBKeyRange.lowerBound = function (value /* , open */) {
     if (!arguments.length) {
         throw new TypeError('IDBKeyRange.lowerBound requires a value argument');
     }
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     return IDBKeyRange.__createInstance(value, undefined, arguments[1], true);
 };
 
@@ -118,7 +118,7 @@ IDBKeyRange.upperBound = function (value /* , open */) {
     if (!arguments.length) {
         throw new TypeError('IDBKeyRange.upperBound requires a value argument');
     }
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     return IDBKeyRange.__createInstance(undefined, value, true, arguments[1]);
 };
 
@@ -131,7 +131,7 @@ IDBKeyRange.bound = function (lower, upper /* , lowerOpen, upperOpen */) {
     if (arguments.length <= 1) {
         throw new TypeError('IDBKeyRange.bound requires lower and upper arguments');
     }
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     return IDBKeyRange.__createInstance(lower, upper, arguments[2], arguments[3]);
 };
 IDBKeyRange.prototype[Symbol.toStringTag] = 'IDBKeyRangePrototype';

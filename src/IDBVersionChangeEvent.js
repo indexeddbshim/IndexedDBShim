@@ -16,7 +16,7 @@ function IDBVersionChangeEvent (type /* , eventInitDict */) { // eventInitDict i
     this.toString = function () {
         return '[object IDBVersionChangeEvent]';
     };
-    // eslint-disable-next-line prefer-rest-params
+    // eslint-disable-next-line prefer-rest-params -- API
     this.__eventInitDict = arguments[1] || {};
 }
 

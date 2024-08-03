@@ -141,7 +141,6 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
 
 // @ts-expect-error It's ok
 IDBTransaction.prototype = EventTargetFactory.createInstance({
-    // eslint-disable-next-line n/no-sync -- API
     defaultSync: true,
     // Ensure EventTarget preserves our properties
     extraProperties: ['complete']
@@ -502,7 +501,7 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
         throw new TypeError('No object store name was specified');
     }
     IDBTransaction.__assertNotFinished(me);
-    if (me.__objectStoreNames.indexOf(objectStoreName) === -1) { // eslint-disable-line unicorn/prefer-includes
+    if (me.__objectStoreNames.indexOf(objectStoreName) === -1) { // eslint-disable-line unicorn/prefer-includes -- Not supported
         throw createDOMException('NotFoundError', objectStoreName + ' is not participating in this transaction');
     }
     const store = me.db.__objectStores[objectStoreName];
@@ -544,7 +543,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         ).forEach(function (store) {
             // Store was already created so we restore to name before the rename
             if ('__pendingName' in store &&
-                me.db.__oldObjectStoreNames.indexOf(store.__pendingName) > -1 // eslint-disable-line unicorn/prefer-includes
+                me.db.__oldObjectStoreNames.indexOf(store.__pendingName) > -1 // eslint-disable-line unicorn/prefer-includes -- Not supported
             ) {
                 store.__name = store.__originalName;
             }
@@ -555,7 +554,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
             ).forEach(function (index) {
                 // Index was already created so we restore to name before the rename
                 if ('__pendingName' in index &&
-                    store.__oldIndexNames.indexOf(index.__pendingName) > -1 // eslint-disable-line unicorn/prefer-includes
+                    store.__oldIndexNames.indexOf(index.__pendingName) > -1 // eslint-disable-line unicorn/prefer-includes -- Not supported
                 ) {
                     index.__name = index.__originalName;
                 }
@@ -590,7 +589,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
         } else if (CFG.DEBUG) { console.log('Rollback succeeded', me); }
 
         me.dispatchEvent(createEvent('__preabort'));
-        me.__requests.filter(function (q, i, arr) { // eslint-disable-line promise/no-promise-in-callback
+        me.__requests.filter(function (q, i, arr) { // eslint-disable-line promise/no-promise-in-callback -- Sync promise
             return q.req && !q.req.__done && [i, -1].includes(
                 arr.map((q) => q.req).lastIndexOf(q.req)
             );
@@ -654,7 +653,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
                     abort,
                     /** @type {SQLStatementErrorCallback} */ (abort)
                 ); // Not working in some circumstances, even in Node
-            } catch (err) {
+            } catch {
                 // Browser errs when transaction has ended and since it most likely already erred here,
                 //   we call to abort
                 abort();

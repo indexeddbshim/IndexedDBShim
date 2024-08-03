@@ -113,7 +113,7 @@ function escapeDatabaseNameForSQLAndFiles (db) {
         db = db.replace(
             (CFG.databaseCharacterEscapeList
                 ? new RegExp(CFG.databaseCharacterEscapeList, 'gu')
-                : /[\u0000-\u001F\u007F"*/:<>?\\|]/gu), // eslint-disable-line no-control-regex
+                : /[\u0000-\u001F\u007F"*/:<>?\\|]/gu), // eslint-disable-line no-control-regex -- Controls needed
             function (n0) {
                 // eslint-disable-next-line unicorn/prefer-code-point -- Switch to `codePointAt`?
                 return '^1' + n0.charCodeAt(0).toString(16).padStart(2, '0');
@@ -518,7 +518,7 @@ function convertToDOMString (v, treatNullAs) {
  */
 function ToString (o) { // Todo: See `es-abstract/es7`
     // `String()` will not throw with Symbols
-    return '' + o; // eslint-disable-line no-implicit-coercion
+    return '' + o; // eslint-disable-line no-implicit-coercion -- Need to throw with symbols
 }
 
 /**

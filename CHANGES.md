@@ -1,5 +1,13 @@
 # CHANGES for indexeddbshim
 
+## ?
+
+### User-impacting changes
+
+### Dev-impacting changes
+
+chore: ESLint 9/flat config; update devDeps.
+
 ## 15.0.1
 
 ### User-impacting changes
