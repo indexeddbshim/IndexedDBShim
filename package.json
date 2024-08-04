@@ -191,7 +191,7 @@
     "cyclonejs": "1.1.4",
     "delay-cli": "^2.0.0",
     "eslint": "^9.8.0",
-    "eslint-config-ash-nazg": "^36.10.0",
+    "eslint-config-ash-nazg": "^36.11.0",
     "got": "^13.0.0",
     "is-date-object": "1.0.5",
     "isomorphic-fetch": "^3.0.0",
