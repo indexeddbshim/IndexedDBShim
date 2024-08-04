@@ -308,7 +308,8 @@ IDBIndex.__createIndex = function (store, index) {
                                     },
                                     /** @type {SQLStatementErrorCallback} */ (error)
                                 );
-                            } catch {
+                            // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
+                            } catch (err) {
                                 // Not a valid value to insert into index, so just continue
                                 addIndexEntry(i + 1);
                             }

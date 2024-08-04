@@ -1,4 +1,4 @@
-/*! indexeddbshim - v15.0.0 - 8/3/2024 */
+/*! indexeddbshim - v15.0.1 - 8/4/2024 */
 
 'use strict';
 
@@ -1264,7 +1264,7 @@ function escapeDatabaseNameForSQLAndFiles(db) {
   }
   if (CFG.databaseCharacterEscapeList !== false) {
     db = db.replace(CFG.databaseCharacterEscapeList ? new RegExp(CFG.databaseCharacterEscapeList, 'gu') : /[\u0000-\u001F\u007F"*/:<>?\\|]/gu,
-    // eslint-disable-line no-control-regex
+    // eslint-disable-line no-control-regex -- Controls needed
     function (n0) {
       // eslint-disable-next-line unicorn/prefer-code-point -- Switch to `codePointAt`?
       return '^1' + n0.charCodeAt(0).toString(16).padStart(2, '0');
@@ -1600,7 +1600,7 @@ function convertToDOMString(v, treatNullAs) {
 function ToString(o) {
   // Todo: See `es-abstract/es7`
   // `String()` will not throw with Symbols
-  return '' + o; // eslint-disable-line no-implicit-coercion
+  return '' + o; // eslint-disable-line no-implicit-coercion -- Need to throw with symbols
 }
 
 /**
@@ -1677,7 +1677,7 @@ function IDBVersionChangeEvent(type /* , eventInitDict */) {
   this.toString = function () {
     return '[object IDBVersionChangeEvent]';
   };
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   this.__eventInitDict = arguments[1] || {};
 }
 
@@ -1845,7 +1845,7 @@ function createNonNativeDOMExceptionClass() {
     this._code = name in codes ? codes[( /** @type {Code} */name)] : legacyCodes[( /** @type {LegacyCode} */name)] || 0;
     this._name = name || 'Error';
     // We avoid `String()` in this next line as it converts Symbols
-    this._message = message === undefined ? '' : '' + message; // eslint-disable-line no-implicit-coercion
+    this._message = message === undefined ? '' : '' + message; // eslint-disable-line no-implicit-coercion -- Don't convert symbols
     Object.defineProperty(this, 'code', {
       configurable: true,
       enumerable: true,
@@ -1873,12 +1873,12 @@ function createNonNativeDOMExceptionClass() {
   // Necessary for W3C tests which complains if `DOMException` has properties on its "own" prototype
 
   // class DummyDOMException extends Error {}; // Sometimes causing problems in Node
-  /* eslint-disable func-name-matching */
+  /* eslint-disable func-name-matching -- See above */
   /**
    * @class
    */
   const DummyDOMException = function DOMException() {/* */};
-  /* eslint-enable func-name-matching */
+  /* eslint-enable func-name-matching -- See above */
   DummyDOMException.prototype = Object.create(Error.prototype); // Intended for subclassing
   /** @type {const} */
   ['name', 'message'].forEach(prop => {
@@ -2081,7 +2081,8 @@ try {
     // Native DOMException works as expected
     useNativeDOMException = true;
   }
-} catch (e) {}
+  // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
+} catch (err) {}
 const createDOMException = useNativeDOMException
 // eslint-disable-next-line @stylistic/operator-linebreak -- Need JSDoc
 ?
@@ -3667,7 +3668,7 @@ function generateKeyForStore(tx, store, cb, sqlFailCb) {
   getCurrentNumber(tx, store, function (key) {
     if (key > MAX_ALLOWED_CURRENT_NUMBER) {
       // 2 ^ 53 (See <https://github.com/w3c/IndexedDB/issues/147>)
-      cb('failure'); // eslint-disable-line n/no-callback-literal
+      cb('failure');
       return;
     }
     // Increment current number by 1 (we cannot leverage SQLite's
@@ -3844,7 +3845,7 @@ IDBKeyRange.lowerBound = function (value /* , open */) {
   if (!arguments.length) {
     throw new TypeError('IDBKeyRange.lowerBound requires a value argument');
   }
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   return IDBKeyRange.__createInstance(value, undefined, arguments[1], true);
 };
 
@@ -3856,7 +3857,7 @@ IDBKeyRange.upperBound = function (value /* , open */) {
   if (!arguments.length) {
     throw new TypeError('IDBKeyRange.upperBound requires a value argument');
   }
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   return IDBKeyRange.__createInstance(undefined, value, true, arguments[1]);
 };
 
@@ -3869,7 +3870,7 @@ IDBKeyRange.bound = function (lower, upper /* , lowerOpen, upperOpen */) {
   if (arguments.length <= 1) {
     throw new TypeError('IDBKeyRange.bound requires lower and upper arguments');
   }
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   return IDBKeyRange.__createInstance(lower, upper, arguments[2], arguments[3]);
 };
 IDBKeyRange.prototype[Symbol.toStringTag] = 'IDBKeyRangePrototype';
@@ -4008,7 +4009,8 @@ if (Object.defineProperty) {
     if (testObject.test) {
       cleanInterface = true;
     }
-  } catch (e) {
+    // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
+  } catch (err) {
     // Object.defineProperty does not work as intended.
   }
 }
@@ -4091,7 +4093,7 @@ DOMStringList.prototype = {
    * @returns {void}
    */
   forEach(cb, thisArg) {
-    // eslint-disable-next-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument
+    // eslint-disable-next-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument -- Convenient
     this._items.forEach(cb, thisArg);
   },
   /**
@@ -4100,7 +4102,7 @@ DOMStringList.prototype = {
    * @returns {any[]}
    */
   map(cb, thisArg) {
-    // eslint-disable-next-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument
+    // eslint-disable-next-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument -- Convenient
     return this._items.map(cb, thisArg);
   },
   /**
@@ -4356,7 +4358,6 @@ IDBTransaction.__createInstance = function (db, storeNames, mode) {
 
 // @ts-expect-error It's ok
 IDBTransaction.prototype = EventTargetFactory.createInstance({
-  // eslint-disable-next-line n/no-sync -- API
   defaultSync: true,
   // Ensure EventTarget preserves our properties
   extraProperties: ['complete']
@@ -4723,7 +4724,7 @@ IDBTransaction.prototype.objectStore = function (objectStoreName) {
   }
   IDBTransaction.__assertNotFinished(me);
   if (me.__objectStoreNames.indexOf(objectStoreName) === -1) {
-    // eslint-disable-line unicorn/prefer-includes
+    // eslint-disable-line unicorn/prefer-includes -- Not supported
     throw createDOMException('NotFoundError', objectStoreName + ' is not participating in this transaction');
   }
   const store = me.db.__objectStores[objectStoreName];
@@ -4760,7 +4761,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
     me.__objectStoreNames = me.db.__oldObjectStoreNames;
     Object.values(me.db.__objectStores).concat(Object.values(me.__storeHandles)).forEach(function (store) {
       // Store was already created so we restore to name before the rename
-      if ('__pendingName' in store && me.db.__oldObjectStoreNames.indexOf(store.__pendingName) > -1 // eslint-disable-line unicorn/prefer-includes
+      if ('__pendingName' in store && me.db.__oldObjectStoreNames.indexOf(store.__pendingName) > -1 // eslint-disable-line unicorn/prefer-includes -- Not supported
       ) {
         store.__name = store.__originalName;
       }
@@ -4768,7 +4769,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
       delete store.__pendingDelete;
       Object.values(store.__indexes).concat(Object.values(store.__indexHandles)).forEach(function (index) {
         // Index was already created so we restore to name before the rename
-        if ('__pendingName' in index && store.__oldIndexNames.indexOf(index.__pendingName) > -1 // eslint-disable-line unicorn/prefer-includes
+        if ('__pendingName' in index && store.__oldIndexNames.indexOf(index.__pendingName) > -1 // eslint-disable-line unicorn/prefer-includes -- Not supported
         ) {
           index.__name = index.__originalName;
         }
@@ -4808,7 +4809,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
     }
     me.dispatchEvent(createEvent('__preabort'));
     me.__requests.filter(function (q, i, arr) {
-      // eslint-disable-line promise/no-promise-in-callback
+      // eslint-disable-line promise/no-promise-in-callback -- Sync promise
       return q.req && !q.req.__done && [i, -1].includes(arr.map(q => q.req).lastIndexOf(q.req));
     }).reduce(function (promises, q) {
       // We reduce to a chain of promises to be queued in order, so we cannot
@@ -4872,6 +4873,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
       }
       try {
         me.__tx.executeSql('ROLLBACK', [], abort, /** @type {SQLStatementErrorCallback} */abort); // Not working in some circumstances, even in Node
+        // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
       } catch (err) {
         // Browser errs when transaction has ended and since it most likely already erred here,
         //   we call to abort
@@ -6335,7 +6337,6 @@ function register(func) {
 function encode(obj, func) {
   let ret;
   try {
-    // eslint-disable-next-line n/no-sync
     ret = typeson.stringifySync(obj);
   } catch (err) {
     // SCA in typeson-registry using `DOMException` which is not defined (e.g., in Node)
@@ -6650,7 +6651,8 @@ IDBIndex.__createIndex = function (store, index) {
                 tx.executeSql('UPDATE ' + escapeStoreNameForSQL(storeName) + ' SET ' + escapeIndexNameForSQL(indexName) + ' = ? WHERE "key" = ?', [escapeSQLiteStatement(indexKeyStr), data.rows.item(i).key], function () {
                   addIndexEntry(i + 1);
                 }, /** @type {SQLStatementErrorCallback} */error);
-              } catch (e) {
+                // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
+              } catch (err) {
                 // Not a valid value to insert into index, so just continue
                 addIndexEntry(i + 1);
               }
@@ -6839,7 +6841,7 @@ IDBIndex.prototype.__fetchIndexData = function (range, opType, nullDisallowed, c
 IDBIndex.prototype.openCursor = function /* query, direction */
 () {
   const me = this;
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   const [query, direction] = arguments;
   const cursor = IDBCursorWithValue.__createInstance(query, direction, me.objectStore, me, escapeIndexNameForSQLKeyColumn(me.name), 'value');
   me.__objectStore.__cursors.push(cursor);
@@ -6854,7 +6856,7 @@ IDBIndex.prototype.openCursor = function /* query, direction */
 IDBIndex.prototype.openKeyCursor = function /* query, direction */
 () {
   const me = this;
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   const [query, direction] = arguments;
   const cursor = IDBCursor.__createInstance(query, direction, me.objectStore, me, escapeIndexNameForSQLKeyColumn(me.name), 'key');
   me.__objectStore.__cursors.push(cursor);
@@ -6897,7 +6899,7 @@ IDBIndex.prototype.getKey = function (query) {
  */
 IDBIndex.prototype.getAll = function /* query, count */
 () {
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   const [query, count] = arguments;
   return this.__fetchIndexData(query, 'value', false, count);
 };
@@ -6908,7 +6910,7 @@ IDBIndex.prototype.getAll = function /* query, count */
  */
 IDBIndex.prototype.getAllKeys = function /* query, count */
 () {
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   const [query, count] = arguments;
   return this.__fetchIndexData(query, 'key', false, count);
 };
@@ -6920,7 +6922,7 @@ IDBIndex.prototype.getAllKeys = function /* query, count */
 IDBIndex.prototype.count = function /* query */
 () {
   const me = this;
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   const query = arguments[0];
   // With the exception of needing to check whether the index has been
   //  deleted, we could, for greater spec parity (if not accuracy),
@@ -7728,6 +7730,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
         if ('invalid' in indexKey && indexKey.invalid || 'failure' in indexKey && indexKey.failure) {
           throw new Error('Go to catch');
         }
+        // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
       } catch (err) {
         resolve(undefined);
         return;
@@ -7819,7 +7822,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
  */
 IDBObjectStore.prototype.add = function (value /* , key */) {
   const me = this;
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   const key = arguments[1];
   if (!(me instanceof IDBObjectStore)) {
     throw new TypeError('Illegal invocation');
@@ -7846,7 +7849,7 @@ IDBObjectStore.prototype.add = function (value /* , key */) {
  */
 IDBObjectStore.prototype.put = function (value /* , key */) {
   const me = this;
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   const key = arguments[1];
   if (!(me instanceof IDBObjectStore)) {
     throw new TypeError('Illegal invocation');
@@ -7900,7 +7903,7 @@ IDBObjectStore.prototype.__overwrite = function (tx, key, cb, error) {
  * @returns {void}
  */
 IDBObjectStore.__storingRecordObjectStore = function (request, store, invalidateCache, value, noOverwrite /* , key */) {
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   const key = arguments[5];
   /** @type {import('./IDBTransaction.js').IDBTransactionFull} */
   store.transaction.__pushToQueue(request, function (tx, args, success, error) {
@@ -8045,7 +8048,7 @@ IDBObjectStore.prototype.getKey = function (query) {
  */
 IDBObjectStore.prototype.getAll = function /* query, count */
 () {
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   const [query, count] = arguments;
   return this.__get(query, false, true, count);
 };
@@ -8056,7 +8059,7 @@ IDBObjectStore.prototype.getAll = function /* query, count */
  */
 IDBObjectStore.prototype.getAllKeys = function /* query, count */
 () {
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   const [query, count] = arguments;
   return this.__get(query, true, true, count);
 };
@@ -8141,7 +8144,7 @@ IDBObjectStore.prototype.clear = function () {
 IDBObjectStore.prototype.count = function /* query */
 () {
   const me = this;
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   const query = arguments[0];
   if (!(me instanceof IDBObjectStore)) {
     throw new TypeError('Illegal invocation');
@@ -8160,7 +8163,7 @@ IDBObjectStore.prototype.count = function /* query */
 IDBObjectStore.prototype.openCursor = function /* query, direction */
 () {
   const me = this;
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   const [query, direction] = arguments;
   if (!(me instanceof IDBObjectStore)) {
     throw new TypeError('Illegal invocation');
@@ -8182,7 +8185,7 @@ IDBObjectStore.prototype.openKeyCursor = function /* query, direction */
     throw new TypeError('Illegal invocation');
   }
   IDBObjectStore.__invalidStateIfDeleted(me);
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   const [query, direction] = arguments;
   const cursor = IDBCursor.__createInstance(query, direction, me, me, 'key', 'key');
   me.__cursors.push(cursor);
@@ -8224,7 +8227,7 @@ IDBObjectStore.prototype.index = function (indexName) {
  */
 IDBObjectStore.prototype.createIndex = function (indexName, keyPath /* , optionalParameters */) {
   const me = this;
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   let optionalParameters = arguments[2];
   if (!(me instanceof IDBObjectStore)) {
     throw new TypeError('Illegal invocation');
@@ -8433,7 +8436,7 @@ IDBDatabase.prototype[Symbol.toStringTag] = 'IDBDatabasePrototype';
  * @returns {IDBObjectStore}
  */
 IDBDatabase.prototype.createObjectStore = function (storeName /* , createOptions */) {
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   let createOptions = arguments[1];
   storeName = String(storeName); // W3C test within IDBObjectStore.js seems to accept string conversion
   if (!(this instanceof IDBDatabase)) {
@@ -8525,7 +8528,7 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
   if (arguments.length === 0) {
     throw new TypeError('You must supply a valid `storeNames` to `IDBDatabase.transaction`');
   }
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   let mode = arguments[1];
   storeNames = isIterable(storeNames)
   // Creating new array also ensures sequence is passed by value: https://heycam.github.io/webidl/#idl-sequence
@@ -8624,6 +8627,8 @@ Object.defineProperty(IDBDatabase, 'prototype', {
   writable: false
 });
 
+// eslint-disable-next-line no-restricted-imports -- Can be polyfilled
+
 /**
  * @typedef {number} Integer
  */
@@ -8648,6 +8653,7 @@ const setFS = _fs => {
  * @returns {string}
  */
 const getOrigin = () => {
+  // eslint-disable-next-line no-undef -- If browser/polyfilled
   return typeof location !== 'object' || !location ? 'null' : location.origin;
 };
 const hasNullOrigin = () => CFG.checkOrigin !== false && getOrigin() === 'null';
@@ -8696,7 +8702,7 @@ function processNextInConnectionQueue(name, origin = getOrigin()) {
   cb(req);
 }
 
-/* eslint-disable default-param-last */
+/* eslint-disable default-param-last -- Keep cb at end */
 /**
  * @param {import('./IDBRequest.js').IDBOpenDBRequestFull} req
  * @param {string} name
@@ -8705,7 +8711,7 @@ function processNextInConnectionQueue(name, origin = getOrigin()) {
  * @returns {void}
  */
 function addRequestToConnectionQueue(req, name, origin = getOrigin(), cb) {
-  /* eslint-enable default-param-last */
+  /* eslint-enable default-param-last -- Keep cb at end */
   if (!connectionQueue[origin][name]) {
     connectionQueue[origin][name] = [];
   }
@@ -9010,7 +9016,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
   if (!(me instanceof IDBFactory)) {
     throw new TypeError('Illegal invocation');
   }
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   let version = arguments[1];
   if (arguments.length === 0) {
     throw new TypeError('Database name is required');
@@ -9036,10 +9042,10 @@ IDBFactory.prototype.open = function (name /* , version */) {
 
   /** @type {string} */
   let escapedDatabaseName;
-  // eslint-disable-next-line no-useless-catch
+  // eslint-disable-next-line no-useless-catch -- Possible refactoring
   try {
     escapedDatabaseName = escapeDatabaseNameForSQLAndFiles(name);
-    // eslint-disable-next-line sonarjs/no-useless-catch
+    // eslint-disable-next-line sonarjs/no-useless-catch -- Possible refactoring
   } catch (err) {
     throw err; // new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
   }
@@ -9104,7 +9110,8 @@ IDBFactory.prototype.open = function (name /* , version */) {
             if (err) {
               try {
                 systx.executeSql('ROLLBACK', [], cb, cb);
-              } catch (er) {
+                // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
+              } catch (err) {
                 // Browser may fail with expired transaction above so
                 //     no choice but to manually revert
                 sysdb.transaction(function (systx) {
@@ -9122,7 +9129,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                   if (oldVersion === 0) {
                     systx.executeSql('DELETE FROM dbVersions WHERE "name" = ?', [sqlSafeName], function () {
                       // @ts-expect-error Force to work
-                      cb(reportError); // eslint-disable-line promise/no-callback-in-promise
+                      cb(reportError); // eslint-disable-line promise/no-callback-in-promise -- Convenient
                     },
                     // @ts-expect-error Force to work
                     reportError);
@@ -9136,7 +9143,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
               return;
             }
             // In browser, should auto-commit
-            cb(); // eslint-disable-line promise/no-callback-in-promise
+            cb(); // eslint-disable-line promise/no-callback-in-promise -- Convenient
           };
           sysdb.transaction(function (systx) {
             /**
@@ -9369,10 +9376,10 @@ IDBFactory.prototype.deleteDatabase = function (name) {
 
   /** @type {string} */
   let escapedDatabaseName;
-  // eslint-disable-next-line no-useless-catch
+  // eslint-disable-next-line no-useless-catch -- Possible refactoring
   try {
     escapedDatabaseName = escapeDatabaseNameForSQLAndFiles(name);
-    // eslint-disable-next-line sonarjs/no-useless-catch
+    // eslint-disable-next-line sonarjs/no-useless-catch -- Possible refactoring
   } catch (err) {
     throw err; // throw new TypeError('You have supplied a database name which does not match the currently supported configuration, possibly due to a length limit enforced for Node compatibility.');
   }
@@ -9460,7 +9467,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
           } = data.rows.item(0));
           const openConnections = me.__connections[name] || [];
           triggerAnyVersionChangeAndBlockedEvents(openConnections, req, version, null).then(function () {
-            // eslint-disable-line promise/catch-or-return
+            // eslint-disable-line promise/catch-or-return -- Sync promise
             // Since we need two databases which can't be in a single transaction, we
             //  do this deleting from `dbVersions` first since the `__sys__` deleting
             //  only impacts file memory whereas this one is critical for avoiding it
@@ -9532,7 +9539,7 @@ IDBFactory.prototype.databases = function () {
   const me = this;
   let calledDbCreateError = false;
   return new Promise(function (resolve, reject) {
-    // eslint-disable-line promise/avoid-new
+    // eslint-disable-line promise/avoid-new -- Own polyfill
     if (!(me instanceof IDBFactory)) {
       throw new TypeError('Illegal invocation');
     }
@@ -9684,7 +9691,7 @@ function IDBCursor() {
 }
 const IDBCursorAlias = IDBCursor;
 
-/* eslint-disable func-name-matching */
+/* eslint-disable func-name-matching -- API */
 /**
  * The IndexedDB Cursor Object.
  * @see http://dvcs.w3.org/hg/IndexedDB/raw-file/tip/Overview.html#idl-def-IDBCursor
@@ -9700,7 +9707,7 @@ const IDBCursorAlias = IDBCursor;
  * @returns {void}
  */
 IDBCursor.__super = function IDBCursor(query, direction, store, source, keyColumnName, valueColumnName, count) {
-  /* eslint-enable func-name-matching */
+  /* eslint-enable func-name-matching -- API */
   // @ts-expect-error Should be ok
   this[Symbol.toStringTag] = 'IDBCursor';
   defineReadonlyProperties(this, ['key', 'primaryKey', 'request']);
@@ -10257,7 +10264,7 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
  */
 IDBCursor.prototype.continue = function /* key */
 () {
-  // eslint-disable-next-line prefer-rest-params
+  // eslint-disable-next-line prefer-rest-params -- API
   this.__continue(arguments[0]);
 };
 
@@ -10611,7 +10618,8 @@ function setGlobalVars(idb, initialConfig) {
           Object.getOwnPropertyDescriptor(o, name);
         }
         Object.defineProperty(IDB, name, desc);
-      } catch (e) {
+        // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
+      } catch (err) {
         // With `indexedDB`, PhantomJS fails here and below but
         //  not above, while Chrome is reverse (and Firefox doesn't
         //  get here since no WebSQL to use for shimming)
@@ -10777,7 +10785,9 @@ function setGlobalVars(idb, initialConfig) {
   // Exclude genuine Safari: http://stackoverflow.com/a/7768006/271577
   // Detect iOS: http://stackoverflow.com/questions/9038625/detect-if-device-is-ios/9039885#9039885
   // and detect version 9: http://stackoverflow.com/a/26363560/271577
-  /(iPad|iPhone|iPod).* os 9_/ui.test(navigator.userAgent) && !('MSStream' in window) // But avoid IE11
+  /(iPad|iPhone|iPod).* os 9_/ui.test(navigator.userAgent) && typeof window !== 'undefined' &&
+  // eslint-disable-next-line no-undef -- Extra check
+  !('MSStream' in window) // But avoid IE11
   )) {
     poorIndexedDbSupport = true;
   }

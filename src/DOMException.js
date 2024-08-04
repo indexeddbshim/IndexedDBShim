@@ -361,7 +361,8 @@ try {
         // Native DOMException works as expected
         useNativeDOMException = true;
     }
-} catch {}
+// eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
+} catch (err) {}
 
 const createDOMException = useNativeDOMException
     // eslint-disable-next-line @stylistic/operator-linebreak -- Need JSDoc

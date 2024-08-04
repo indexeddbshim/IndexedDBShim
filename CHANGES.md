@@ -6,7 +6,8 @@
 
 ### Dev-impacting changes
 
-chore: ESLint 9/flat config; update devDeps.
+- chore: ESLint 9/flat config; update devDeps.
+- chore: update devDeps including depending on Unicode to 15.1.0 (but no change)
 
 ## 15.0.1
 

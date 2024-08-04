@@ -172,7 +172,8 @@ function setGlobalVars (idb, initialConfig) {
                     );
                 }
                 Object.defineProperty(IDB, name, desc);
-            } catch {
+            // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
+            } catch (err) {
                 // With `indexedDB`, PhantomJS fails here and below but
                 //  not above, while Chrome is reverse (and Firefox doesn't
                 //  get here since no WebSQL to use for shimming)

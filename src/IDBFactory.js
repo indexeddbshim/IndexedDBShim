@@ -513,7 +513,8 @@ IDBFactory.prototype.open = function (name /* , version */) {
                         if (err) {
                             try {
                                 systx.executeSql('ROLLBACK', [], cb, cb);
-                            } catch {
+                            // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
+                            } catch (err) {
                                 // Browser may fail with expired transaction above so
                                 //     no choice but to manually revert
                                 sysdb.transaction(function (systx) {

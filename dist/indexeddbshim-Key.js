@@ -1,4 +1,4 @@
-/*! indexeddbshim - v15.0.0 - 8/3/2024 */
+/*! indexeddbshim - v15.0.1 - 8/4/2024 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -459,7 +459,7 @@
       this._code = name in codes ? codes[( /** @type {Code} */name)] : legacyCodes[( /** @type {LegacyCode} */name)] || 0;
       this._name = name || 'Error';
       // We avoid `String()` in this next line as it converts Symbols
-      this._message = message === undefined ? '' : '' + message; // eslint-disable-line no-implicit-coercion
+      this._message = message === undefined ? '' : '' + message; // eslint-disable-line no-implicit-coercion -- Don't convert symbols
       Object.defineProperty(this, 'code', {
         configurable: true,
         enumerable: true,
@@ -487,12 +487,12 @@
     // Necessary for W3C tests which complains if `DOMException` has properties on its "own" prototype
 
     // class DummyDOMException extends Error {}; // Sometimes causing problems in Node
-    /* eslint-disable func-name-matching */
+    /* eslint-disable func-name-matching -- See above */
     /**
      * @class
      */
     var DummyDOMException = function DOMException() {/* */};
-    /* eslint-enable func-name-matching */
+    /* eslint-enable func-name-matching -- See above */
     DummyDOMException.prototype = Object.create(Error.prototype); // Intended for subclassing
     /** @type {const} */
     ['name', 'message'].forEach(function (prop) {
@@ -625,7 +625,8 @@
       // Native DOMException works as expected
       useNativeDOMException = true;
     }
-  } catch (e) {}
+    // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
+  } catch (err) {}
   var createDOMException = useNativeDOMException
   // eslint-disable-next-line @stylistic/operator-linebreak -- Need JSDoc
   ?
@@ -1900,7 +1901,7 @@
     getCurrentNumber(tx, store, function (key) {
       if (key > MAX_ALLOWED_CURRENT_NUMBER) {
         // 2 ^ 53 (See <https://github.com/w3c/IndexedDB/issues/147>)
-        cb('failure'); // eslint-disable-line n/no-callback-literal
+        cb('failure');
         return;
       }
       // Increment current number by 1 (we cannot leverage SQLite's

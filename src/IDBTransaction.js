@@ -653,7 +653,8 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
                     abort,
                     /** @type {SQLStatementErrorCallback} */ (abort)
                 ); // Not working in some circumstances, even in Node
-            } catch {
+            // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
+            } catch (err) {
                 // Browser errs when transaction has ended and since it most likely already erred here,
                 //   we call to abort
                 abort();
