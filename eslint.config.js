@@ -73,7 +73,8 @@ export default [
             'test-support/latest-erring-bundled.js'
         ]
     },
-    // We should do polyglot (default) but do `browser` to catch escompat issues
+    // We should do polyglot (default) but do `browser` to catch escompat issues,
+    //  but this also adds more globals
     // ...ashNazg(['sauron', 'browser']),
     ...ashNazg(['sauron']),
     {
@@ -95,6 +96,7 @@ export default [
                 'Error',
                 'IDBKeyRange',
                 'indexedDB',
+                'Intl',
                 'JSON',
                 'location.origin',
                 'location.search',
@@ -116,12 +118,20 @@ export default [
                 'Set',
                 'String.fromCodePoint',
                 'String.padStart',
+                'String.raw',
                 'String.repeat',
                 'Symbol.hasInstance',
                 'Symbol.iterator',
                 'Symbol.toStringTag',
-                'Uint8Array'
+                'Uint8Array',
+                'URL'
             ]
+        },
+        rules: {
+            // Let Babel handle
+            'escompat/no-object-rest-spread': 'off',
+            'escompat/no-exponentiation-operator': 'off',
+            'escompat/no-top-level-await': 'off'
         }
     },
     ...ashNazg(['sauron', 'node']).map((cfg) => {
