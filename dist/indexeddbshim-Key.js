@@ -1,4 +1,4 @@
-/*! indexeddbshim - v15.0.1 - 8/4/2024 */
+/*! indexeddbshim - v15.0.1 - 9/5/2024 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -305,7 +305,7 @@
    * @returns {void}
    */
   function (val) {
-    if (!/^(?::memory:|file::memory:(\?(?:[\0-"\$-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?(#(?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?)?$/.test( /** @type {string} */val)) {
+    if (!/^(?::memory:|file::memory:(\?(?:[\0-"\$-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?(#(?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?)?$/.test(/** @type {string} */val)) {
       throw new TypeError('`memoryDatabase` must be the empty string, ":memory:", or a ' + '"file::memory:[?queryString][#hash] URL".');
     }
   }],
@@ -456,7 +456,7 @@
     function DOMException(message, name) {
       // const err = Error.prototype.constructor.call(this, message); // Any use to this? Won't set this.message
       this[Symbol.toStringTag] = 'DOMException';
-      this._code = name in codes ? codes[( /** @type {Code} */name)] : legacyCodes[( /** @type {LegacyCode} */name)] || 0;
+      this._code = name in codes ? codes[(/** @type {Code} */name)] : legacyCodes[(/** @type {LegacyCode} */name)] || 0;
       this._name = name || 'Error';
       // We avoid `String()` in this next line as it converts Symbols
       this._message = message === undefined ? '' : '' + message; // eslint-disable-line no-implicit-coercion -- Don't convert symbols
@@ -593,7 +593,7 @@
    */
   function logError(name, message, error) {
     if (CFG.DEBUG) {
-      var msg = error && _typeof(error) === 'object' && error.message ? error.message : ( /** @type {string} */error);
+      var msg = error && _typeof(error) === 'object' && error.message ? error.message : (/** @type {string} */error);
       var method = typeof console.error === 'function' ? 'error' : 'log';
       console[method](name + ': ' + message + '. ' + (msg || ''));
       if (console.trace) {
@@ -836,7 +836,7 @@
   };
   var keyTypes = /** @type {(KeyType|"invalid")[]} */Object.keys(keyTypeToEncodedChar);
   keyTypes.forEach(function (k) {
-    keyTypeToEncodedChar[k] = String.fromCodePoint( /** @type {number} */keyTypeToEncodedChar[k]);
+    keyTypeToEncodedChar[k] = String.fromCodePoint(/** @type {number} */keyTypeToEncodedChar[k]);
   });
   var encodedCharToKeyType = keyTypes.reduce(function (o, k) {
     o[keyTypeToEncodedChar[k]] = k;
@@ -1225,7 +1225,7 @@
       return 'binary';
     }
     var keyType = _typeof(key);
-    return ['string', 'number'].includes(keyType) ? ( /** @type {"string"|"number"} */keyType) : 'invalid';
+    return ['string', 'number'].includes(keyType) ? (/** @type {"string"|"number"} */keyType) : 'invalid';
   }
 
   /**
@@ -1333,7 +1333,7 @@
           // May throw (if detached)
           // Get a copy of the bytes held by the buffer source
           // https://heycam.github.io/webidl/#ref-for-dfn-get-buffer-source-copy-2
-          var octets = getCopyBytesHeldByBufferSource( /** @type {BufferSource} */input);
+          var octets = getCopyBytesHeldByBufferSource(/** @type {BufferSource} */input);
           return {
             type: 'binary',
             value: octets
@@ -1570,7 +1570,7 @@
             value = /** @type {File} */value[idntfr];
             break;
           case 'lastModifiedDate':
-            value = new Date( /** @type {File} */value.lastModified);
+            value = new Date(/** @type {File} */value.lastModified);
             break;
         }
       } else if (!isObj(value) || !Object.hasOwn(value, idntfr)) {
@@ -1604,7 +1604,7 @@
       }
       value = value[identifier];
     });
-    value[( /** @type {string} */last)] = key; // key is already a `keyValue` in our processing so no need to convert
+    value[(/** @type {string} */last)] = key; // key is already a `keyValue` in our processing so no need to convert
   }
 
   /**

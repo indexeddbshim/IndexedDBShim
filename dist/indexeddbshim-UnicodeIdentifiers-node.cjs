@@ -1,4 +1,4 @@
-/*! indexeddbshim - v15.0.1 - 8/4/2024 */
+/*! indexeddbshim - v15.0.1 - 9/5/2024 */
 
 'use strict';
 
@@ -529,7 +529,7 @@ function EventTarget() {
  *   "addDefaultEventListener"|"removeDefaultEventListener"|"hasDefaultEventListener"
  * } ListenerName
  */
-Object.assign(EventTarget.prototype, ['Early', '', 'Late', 'Default'].reduce(function ( /** @type {{[key: string]: Function}} */
+Object.assign(EventTarget.prototype, ['Early', '', 'Late', 'Default'].reduce(function (/** @type {{[key: string]: Function}} */
 obj, listenerType) {
   ['add', 'remove', 'has'].forEach(function (method) {
     var mainMethod = /** @type {ListenerName} */method + listenerType + 'EventListener';
@@ -1120,7 +1120,7 @@ const CFG = /** @type {ConfigValues} */{};
  * @returns {void}
  */
 val => {
-  if (!/^(?::memory:|file::memory:(\?[^#]*)?(#.*)?)?$/u.test( /** @type {string} */val)) {
+  if (!/^(?::memory:|file::memory:(\?[^#]*)?(#.*)?)?$/u.test(/** @type {string} */val)) {
     throw new TypeError('`memoryDatabase` must be the empty string, ":memory:", or a ' + '"file::memory:[?queryString][#hash] URL".');
   }
 }],
@@ -1842,7 +1842,7 @@ function createNonNativeDOMExceptionClass() {
   function DOMException(message, name) {
     // const err = Error.prototype.constructor.call(this, message); // Any use to this? Won't set this.message
     this[Symbol.toStringTag] = 'DOMException';
-    this._code = name in codes ? codes[( /** @type {Code} */name)] : legacyCodes[( /** @type {LegacyCode} */name)] || 0;
+    this._code = name in codes ? codes[(/** @type {Code} */name)] : legacyCodes[(/** @type {LegacyCode} */name)] || 0;
     this._name = name || 'Error';
     // We avoid `String()` in this next line as it converts Symbols
     this._message = message === undefined ? '' : '' + message; // eslint-disable-line no-implicit-coercion -- Don't convert symbols
@@ -1979,7 +1979,7 @@ function createNonNativeDOMException(name, message) {
  */
 function logError(name, message, error) {
   if (CFG.DEBUG) {
-    const msg = error && typeof error === 'object' && error.message ? error.message : ( /** @type {string} */error);
+    const msg = error && typeof error === 'object' && error.message ? error.message : (/** @type {string} */error);
     const method = typeof console.error === 'function' ? 'error' : 'log';
     console[method](name + ': ' + message + '. ' + (msg || ''));
     if (console.trace) {
@@ -2390,7 +2390,7 @@ function SyncPromise(fn) {
     //   assume that we will resolve/reject (truly) synchronously
     //   and thus we avoid flagging checks about whether we've
     //   already resolved/rejected.
-    if ( /** @type {Callbacks} */that.c[state].length) {
+    if (/** @type {Callbacks} */that.c[state].length) {
       that.c = null;
     }
   }
@@ -2428,7 +2428,7 @@ function SyncPromise(fn) {
 SyncPromise.prototype.then = function (cb, errBack) {
   /* eslint-enable unicorn/no-thenable -- Promise API */
   const that = this;
-  return new SyncPromise( /** @type {ResolveReject} */
+  return new SyncPromise(/** @type {ResolveReject} */
   function (resolve, reject) {
     const rej = typeof errBack === 'function' ? errBack : reject;
 
@@ -2458,7 +2458,7 @@ SyncPromise.prototype.then = function (cb, errBack) {
  */
 SyncPromise.prototype.catch = function (cb) {
   const that = this;
-  return new SyncPromise( /** @type {ResolveReject} */
+  return new SyncPromise(/** @type {ResolveReject} */
   function (resolve, reject) {
     /**
      * @returns {void}
@@ -2487,7 +2487,7 @@ SyncPromise.prototype.catch = function (cb) {
  * @returns {SyncPromise}
  */
 SyncPromise.all = function (promises) {
-  return new SyncPromise( /** @type {ResolveReject} */
+  return new SyncPromise(/** @type {ResolveReject} */
   (resolve, reject) => {
     let l = promises.length;
     /** @type {ArbitraryValue[]} */
@@ -2497,8 +2497,8 @@ SyncPromise.all = function (promises) {
       return;
     }
     promises.forEach((p, i) => {
-      if (isPromise( /** @type {PromiseLike<any>} */p)) {
-        addReject( /** @type {PromiseLike<any>} */p.then( /** @type {OnFulfilled} */
+      if (isPromise(/** @type {PromiseLike<any>} */p)) {
+        addReject(/** @type {PromiseLike<any>} */p.then(/** @type {OnFulfilled} */
         res => {
           newPromises[i] = res;
           --l || resolve(newPromises);
@@ -2517,11 +2517,11 @@ SyncPromise.all = function (promises) {
  */
 SyncPromise.race = function (promises) {
   let resolved = false;
-  return new SyncPromise( /** @type {ResolveReject} */
+  return new SyncPromise(/** @type {ResolveReject} */
   (resolve, reject) => {
     promises.some((p, i) => {
-      if (isPromise( /** @type {PromiseLike<any>} */p)) {
-        addReject( /** @type {PromiseLike<any>} */p.then( /** @type {OnFulfilled} */
+      if (isPromise(/** @type {PromiseLike<any>} */p)) {
+        addReject(/** @type {PromiseLike<any>} */p.then(/** @type {OnFulfilled} */
         res => {
           if (resolved) {
             return;
@@ -2543,7 +2543,7 @@ SyncPromise.race = function (promises) {
  * @returns {SyncPromise}
  */
 SyncPromise.resolve = function (val) {
-  return new SyncPromise( /** @type {ResolveReject} */
+  return new SyncPromise(/** @type {ResolveReject} */
   (resolve, reject) => {
     resolve(val);
   });
@@ -2554,7 +2554,7 @@ SyncPromise.resolve = function (val) {
  * @returns {SyncPromise}
  */
 SyncPromise.reject = function (val) {
-  return new SyncPromise( /** @type {ResolveReject} */
+  return new SyncPromise(/** @type {ResolveReject} */
   (resolve, reject) => {
     reject(val);
   });
@@ -2658,7 +2658,7 @@ const keyTypeToEncodedChar = {
 };
 const keyTypes = /** @type {(KeyType|"invalid")[]} */Object.keys(keyTypeToEncodedChar);
 keyTypes.forEach(k => {
-  keyTypeToEncodedChar[k] = String.fromCodePoint( /** @type {number} */keyTypeToEncodedChar[k]);
+  keyTypeToEncodedChar[k] = String.fromCodePoint(/** @type {number} */keyTypeToEncodedChar[k]);
 });
 const encodedCharToKeyType = keyTypes.reduce((o, k) => {
   o[keyTypeToEncodedChar[k]] = k;
@@ -3022,7 +3022,7 @@ function getKeyType(key) {
     return 'binary';
   }
   const keyType = typeof key;
-  return ['string', 'number'].includes(keyType) ? ( /** @type {"string"|"number"} */keyType) : 'invalid';
+  return ['string', 'number'].includes(keyType) ? (/** @type {"string"|"number"} */keyType) : 'invalid';
 }
 
 /**
@@ -3130,7 +3130,7 @@ function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
         // May throw (if detached)
         // Get a copy of the bytes held by the buffer source
         // https://heycam.github.io/webidl/#ref-for-dfn-get-buffer-source-copy-2
-        const octets = getCopyBytesHeldByBufferSource( /** @type {BufferSource} */input);
+        const octets = getCopyBytesHeldByBufferSource(/** @type {BufferSource} */input);
         return {
           type: 'binary',
           value: octets
@@ -3353,7 +3353,7 @@ function evaluateKeyPathOnValueToDecodedValue(value, keyPath, multiEntry, fullKe
           value = /** @type {File} */value[idntfr];
           break;
         case 'lastModifiedDate':
-          value = new Date( /** @type {File} */value.lastModified);
+          value = new Date(/** @type {File} */value.lastModified);
           break;
       }
     } else if (!isObj(value) || !Object.hasOwn(value, idntfr)) {
@@ -3387,7 +3387,7 @@ function injectKeyIntoValueUsingKeyPath(value, key, keyPath) {
     }
     value = value[identifier];
   });
-  value[( /** @type {string} */last)] = key; // key is already a `keyValue` in our processing so no need to convert
+  value[(/** @type {string} */last)] = key; // key is already a `keyValue` in our processing so no need to convert
 }
 
 /**
@@ -3794,7 +3794,7 @@ IDBKeyRange.__createInstance = function (lower, upper, lowerOpen, upperOpen) {
       convertValueToKeyRethrowingAndIfInvalid(upper);
     }
     if (lower !== undefined && upper !== undefined && lower !== upper) {
-      if ( /** @type {string} */encode$1(lower) > ( /** @type {string} */encode$1(upper))) {
+      if (/** @type {string} */encode$1(lower) > (/** @type {string} */encode$1(upper))) {
         throw createDOMException('DataError', '`lower` must not be greater than `upper` argument in `bound()` call.');
       }
     }
@@ -3935,7 +3935,7 @@ function setSQLForKeyRange(range, quotedKeyColumnName, sql, sqlValues, addAnd, c
       encodedUpperKey = checkCached ? range.__upperCached : encode$1(range.upper);
     }
     if (hasLower) {
-      sqlValues.push(escapeSQLiteStatement( /** @type {string} */encodedLowerKey));
+      sqlValues.push(escapeSQLiteStatement(/** @type {string} */encodedLowerKey));
       if (hasUpper && encodedLowerKey === encodedUpperKey && !range.lowerOpen && !range.upperOpen) {
         sql.push(quotedKeyColumnName, '=', '?');
         return;
@@ -3947,7 +3947,7 @@ function setSQLForKeyRange(range, quotedKeyColumnName, sql, sqlValues, addAnd, c
     }
     if (hasUpper) {
       sql.push(quotedKeyColumnName, range.upperOpen ? '<' : '<=', '?');
-      sqlValues.push(escapeSQLiteStatement( /** @type {string} */encodedUpperKey));
+      sqlValues.push(escapeSQLiteStatement(/** @type {string} */encodedUpperKey));
     }
   }
 }
@@ -4512,7 +4512,7 @@ IDBTransaction.prototype.__executeRequests = function () {
           }
           q.op(tx, q.args, success, error, executeNextRequest);
         } catch (e) {
-          error( /** @type {Error} */e);
+          error(/** @type {Error} */e);
         }
       }
     }
@@ -4523,7 +4523,7 @@ IDBTransaction.prototype.__executeRequests = function () {
       // Not a genuine SQL error
       return;
     }
-    const err = webSQLErrback( /** @type {SQLError} */webSQLErr);
+    const err = webSQLErrback(/** @type {SQLError} */webSQLErr);
     me.__abortTransaction(err);
   }, function () {
     // For Node, we don't need to try running here as we can keep
@@ -4828,7 +4828,7 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
           bubbles: true,
           cancelable: true
         });
-        return new SyncPromise( /** @type {() => void} */
+        return new SyncPromise(/** @type {() => void} */
         resolve => {
           setTimeout(() => {
             if (!q.req) {
@@ -6187,7 +6187,7 @@ const E = {
     },
     BooleanObject: {
       test: e => "Boolean" === toStringTag(e) && "object" == typeof e,
-      replace: Boolean,
+      replace: e => e.valueOf(),
       revive: e => new Boolean(e)
     },
     NumberObject: {
@@ -6472,7 +6472,7 @@ IDBIndex.__createInstance = function (store, indexProperties) {
        * @returns {string}
        */
       get() {
-        return '__pendingName' in me ? ( /** @type {string} */me.__pendingName) : me.name;
+        return '__pendingName' in me ? (/** @type {string} */me.__pendingName) : me.name;
       }
     });
     Object.defineProperty(me, 'name', {
@@ -7149,7 +7149,7 @@ function executeFetchIndexData(count, unboundedDisallowed, index, hasKey, range,
          */
         check => rowKey.includes(check)) ||
         // More precise than our SQL
-        isMultiEntryMatch( /** @type {string} */
+        isMultiEntryMatch(/** @type {string} */
         encodedKey, row[escapedIndexNameForKeyCol]))) {
           recordCount++;
           record = row;
@@ -7218,12 +7218,12 @@ function buildFetchIndexDataSQL(nullDisallowed, index, range, opType, multiCheck
           sql.push('OR');
         }
         sql.push(escapeIndexNameForSQL(index.name), "LIKE ? ESCAPE '^' ");
-        sqlValues.push('%' + sqlLIKEEscape( /** @type {string} */encode$1(innerKey, index.multiEntry)) + '%');
+        sqlValues.push('%' + sqlLIKEEscape(/** @type {string} */encode$1(innerKey, index.multiEntry)) + '%');
       });
       sql.push(')');
     } else if (index.multiEntry) {
       sql.push('AND', escapeIndexNameForSQL(index.name), "LIKE ? ESCAPE '^'");
-      sqlValues.push('%' + sqlLIKEEscape( /** @type {string} */encode$1(range, index.multiEntry)) + '%');
+      sqlValues.push('%' + sqlLIKEEscape(/** @type {string} */encode$1(range, index.multiEntry)) + '%');
     } else {
       const convertedRange = convertValueToKeyRange(range, nullDisallowed);
       setSQLForKeyRange(convertedRange, escapeIndexNameForSQL(index.name), sql, sqlValues, true, false);
@@ -7772,7 +7772,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
       // Key.convertValueToKey(primaryKey); // Already run
       sqlStart.push(sqlQuote('key'), ',');
       sqlEnd.push('?,');
-      insertSqlValues.push(escapeSQLiteStatement( /** @type {string} */encode$1(clonedKeyOrCurrentNumber)));
+      insertSqlValues.push(escapeSQLiteStatement(/** @type {string} */encode$1(clonedKeyOrCurrentNumber)));
     }
     Object.entries(paramMap).forEach(([key, stmt]) => {
       sqlStart.push(escapeIndexNameForSQL(key) + ',');
@@ -8940,7 +8940,7 @@ function createSysDB(__openDatabase, success, failure) {
    * @returns {void}
    */
   function sysDbCreateError(tx, err) {
-    const er = webSQLErrback( /** @type {SQLError} */err || tx);
+    const er = webSQLErrback(/** @type {SQLError} */err || tx);
     if (CFG.DEBUG) {
       console.log('Error in sysdb transaction - when creating dbVersions', err);
     }
@@ -9060,7 +9060,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
     if (calledDbCreateError) {
       return false;
     }
-    const er = err ? webSQLErrback(err) : ( /** @type {Error} */tx);
+    const er = err ? webSQLErrback(err) : (/** @type {Error} */tx);
     calledDbCreateError = true;
     // Re: why bubbling here (and how cancelable is only really relevant for `window.onerror`) see: https://github.com/w3c/IndexedDB/issues/86
     const evt = createEvent('error', er, {
@@ -9221,7 +9221,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                 if (pos > -1) {
                   connection.__transactions.splice(pos, 1);
                 }
-                if ( /** @type {import('./IDBDatabase.js').IDBDatabaseFull} */req.__result.__closePending) {
+                if (/** @type {import('./IDBDatabase.js').IDBDatabaseFull} */req.__result.__closePending) {
                   req.__transaction = null;
                   const err = createDOMException('AbortError', 'The connection has been closed.');
                   dbCreateError(err);
@@ -9412,7 +9412,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
     if (calledDBError || err === true) {
       return false;
     }
-    const er = webSQLErrback( /** @type {SQLError} */err || tx);
+    const er = webSQLErrback(/** @type {SQLError} */err || tx);
     sysdbFinishedCbDelete(true, function () {
       req.__done = true;
       req.__error = er;
@@ -9556,7 +9556,7 @@ IDBFactory.prototype.databases = function () {
       if (calledDbCreateError) {
         return false;
       }
-      const er = err ? webSQLErrback( /** @type {SQLError} */err) : tx;
+      const er = err ? webSQLErrback(/** @type {SQLError} */err) : tx;
       calledDbCreateError = true;
       reject(er);
       return false;
@@ -9714,7 +9714,7 @@ IDBCursor.__super = function IDBCursor(query, direction, store, source, keyColum
   IDBObjectStore.__invalidStateIfDeleted(store);
   this.__indexSource = instanceOf(source, IDBIndex);
   if (this.__indexSource) {
-    IDBIndex.__invalidStateIfDeleted( /** @type {import('./IDBIndex.js').IDBIndexFull} */source);
+    IDBIndex.__invalidStateIfDeleted(/** @type {import('./IDBIndex.js').IDBIndexFull} */source);
   }
   IDBTransaction.__assertActive(store.transaction);
   const range = convertValueToKeyRange(query);
@@ -9828,16 +9828,16 @@ IDBCursor.prototype.__findBasic = function (key, primaryKey, tx, success, error,
   if (primaryKey !== undefined) {
     sql.push('AND', quotedKey, op + '= ?');
     // Key.convertValueToKey(primaryKey); // Already checked by `continuePrimaryKey`
-    sqlValues.push( /** @type {string} */encode$1(primaryKey));
+    sqlValues.push(/** @type {string} */encode$1(primaryKey));
   }
   if (key !== undefined) {
     sql.push('AND', quotedKeyColumnName, op + '= ?');
     // Key.convertValueToKey(key); // Already checked by `continue` or `continuePrimaryKey`
-    sqlValues.push( /** @type {string} */encode$1(key));
+    sqlValues.push(/** @type {string} */encode$1(key));
   } else if (continueCall && me.__key !== undefined) {
     sql.push('AND', quotedKeyColumnName, op + ' ?');
     // Key.convertValueToKey(me.__key); // Already checked when stored
-    sqlValues.push( /** @type {string} */encode$1(me.__key));
+    sqlValues.push(/** @type {string} */encode$1(me.__key));
   }
   if (!me.__count) {
     // 1. Sort by key
@@ -9918,7 +9918,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
   if (me.__range && me.__range.lower !== undefined && Array.isArray(me.__range.upper)) {
     if (me.__range.upper.indexOf(me.__range.lower) === 0) {
       sql.push('AND', quotedKeyColumnName, "LIKE ? ESCAPE '^'");
-      sqlValues.push('%' + sqlLIKEEscape( /** @type {string} */me.__range.__lowerCached.slice(0, -1)) + '%');
+      sqlValues.push('%' + sqlLIKEEscape(/** @type {string} */me.__range.__lowerCached.slice(0, -1)) + '%');
     }
   }
 
@@ -9929,16 +9929,16 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
   if (primaryKey !== undefined) {
     sql.push('AND', quotedKey, op + '= ?');
     // Key.convertValueToKey(primaryKey); // Already checked by `continuePrimaryKey`
-    sqlValues.push( /** @type {string} */encode$1(primaryKey));
+    sqlValues.push(/** @type {string} */encode$1(primaryKey));
   }
   if (key !== undefined) {
     sql.push('AND', quotedKeyColumnName, op + '= ?');
     // Key.convertValueToKey(key); // Already checked by `continue` or `continuePrimaryKey`
-    sqlValues.push( /** @type {string} */encode$1(key));
+    sqlValues.push(/** @type {string} */encode$1(key));
   } else if (me.__key !== undefined) {
     sql.push('AND', quotedKeyColumnName, op + ' ?');
     // Key.convertValueToKey(me.__key); // Already checked when entered
-    sqlValues.push( /** @type {string} */encode$1(me.__key));
+    sqlValues.push(/** @type {string} */encode$1(me.__key));
   }
   if (!me.__count) {
     // 1. Sort by key
@@ -9985,7 +9985,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
            * @type {RowItemNonNull}
            */
           const clone = {
-            matchingKey: ( /** @type {string} */
+            matchingKey: (/** @type {string} */
             encode$1(matchingKey, true)),
             key: rowItem.key
           };
@@ -10148,7 +10148,7 @@ IDBCursor.prototype.__decode = function (rowItem, callback) {
 IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
   IDBObjectStore.__invalidStateIfDeleted(this.__store, "The cursor's effective object store has been deleted");
   if (this.__indexSource) {
-    IDBIndex.__invalidStateIfDeleted( /** @type {import('./IDBIndex.js').IDBIndexFull} */this.source, "The cursor's index source has been deleted");
+    IDBIndex.__invalidStateIfDeleted(/** @type {import('./IDBIndex.js').IDBIndexFull} */this.source, "The cursor's index source has been deleted");
   }
 };
 
@@ -10407,7 +10407,7 @@ IDBCursor.prototype.delete = function () {
         console.log(sql, key, primaryKey);
       }
       // Key.convertValueToKey(primaryKey); // Already checked when entered
-      tx.executeSql(sql, [escapeSQLiteStatement( /** @type {string} */encode$1(primaryKey))], function (tx, data) {
+      tx.executeSql(sql, [escapeSQLiteStatement(/** @type {string} */encode$1(primaryKey))], function (tx, data) {
         if (data.rowsAffected === 1) {
           // We don't invalidate the cache (as we don't access it anymore
           //    and it will set the index off)
@@ -10490,7 +10490,7 @@ Object.defineProperty(IDBCursorWithValue, 'prototype', {
 function setConfig(prop, val) {
   if (prop && typeof prop === 'object') {
     Object.entries(prop).forEach(([p, val]) => {
-      setConfig( /** @type {import('./CFG.js').KeyofConfigValues} */
+      setConfig(/** @type {import('./CFG.js').KeyofConfigValues} */
       p, val);
     });
     return;
@@ -10611,7 +10611,7 @@ function setGlobalVars(idb, initialConfig) {
              * @returns {AnyValue}
              */
             get [name]() {
-              return /** @type {AnyFunction} */( /** @type {PropertyDescriptor} */propDesc.get).call(this);
+              return /** @type {AnyFunction} */(/** @type {PropertyDescriptor} */propDesc.get).call(this);
             }
           };
           desc = /** @type {PropertyDescriptor} */

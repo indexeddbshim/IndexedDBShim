@@ -1,4 +1,4 @@
-/*! indexeddbshim - v15.0.1 - 8/4/2024 */
+/*! indexeddbshim - v15.0.1 - 9/5/2024 */
 
 (function (factory) {
   typeof define === 'function' && define.amd ? define(factory) :
@@ -1066,7 +1066,7 @@
    *   "addDefaultEventListener"|"removeDefaultEventListener"|"hasDefaultEventListener"
    * } ListenerName
    */
-  Object.assign(EventTarget.prototype, ['Early', '', 'Late', 'Default'].reduce(function ( /** @type {{[key: string]: Function}} */
+  Object.assign(EventTarget.prototype, ['Early', '', 'Late', 'Default'].reduce(function (/** @type {{[key: string]: Function}} */
   obj, listenerType) {
     ['add', 'remove', 'has'].forEach(function (method) {
       var mainMethod = /** @type {ListenerName} */method + listenerType + 'EventListener';
@@ -1657,7 +1657,7 @@
    * @returns {void}
    */
   function (val) {
-    if (!/^(?::memory:|file::memory:(\?(?:[\0-"\$-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?(#(?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?)?$/.test( /** @type {string} */val)) {
+    if (!/^(?::memory:|file::memory:(\?(?:[\0-"\$-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?(#(?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF])*)?)?$/.test(/** @type {string} */val)) {
       throw new TypeError('`memoryDatabase` must be the empty string, ":memory:", or a ' + '"file::memory:[?queryString][#hash] URL".');
     }
   }],
@@ -2365,7 +2365,7 @@
     function DOMException(message, name) {
       // const err = Error.prototype.constructor.call(this, message); // Any use to this? Won't set this.message
       this[Symbol.toStringTag] = 'DOMException';
-      this._code = name in codes ? codes[( /** @type {Code} */name)] : legacyCodes[( /** @type {LegacyCode} */name)] || 0;
+      this._code = name in codes ? codes[(/** @type {Code} */name)] : legacyCodes[(/** @type {LegacyCode} */name)] || 0;
       this._name = name || 'Error';
       // We avoid `String()` in this next line as it converts Symbols
       this._message = message === undefined ? '' : '' + message; // eslint-disable-line no-implicit-coercion -- Don't convert symbols
@@ -2502,7 +2502,7 @@
    */
   function logError(name, message, error) {
     if (CFG.DEBUG) {
-      var msg = error && _typeof$2(error) === 'object' && error.message ? error.message : ( /** @type {string} */error);
+      var msg = error && _typeof$2(error) === 'object' && error.message ? error.message : (/** @type {string} */error);
       var method = typeof console.error === 'function' ? 'error' : 'log';
       console[method](name + ': ' + message + '. ' + (msg || ''));
       if (console.trace) {
@@ -2923,7 +2923,7 @@
       //   assume that we will resolve/reject (truly) synchronously
       //   and thus we avoid flagging checks about whether we've
       //   already resolved/rejected.
-      if ( /** @type {Callbacks} */that.c[state].length) {
+      if (/** @type {Callbacks} */that.c[state].length) {
         that.c = null;
       }
     }
@@ -2961,7 +2961,7 @@
   SyncPromise.prototype.then = function (cb, errBack) {
     /* eslint-enable unicorn/no-thenable -- Promise API */
     var that = this;
-    return new SyncPromise( /** @type {ResolveReject} */
+    return new SyncPromise(/** @type {ResolveReject} */
     function (resolve, reject) {
       var rej = typeof errBack === 'function' ? errBack : reject;
 
@@ -2991,7 +2991,7 @@
    */
   SyncPromise.prototype["catch"] = function (cb) {
     var that = this;
-    return new SyncPromise( /** @type {ResolveReject} */
+    return new SyncPromise(/** @type {ResolveReject} */
     function (resolve, reject) {
       /**
        * @returns {void}
@@ -3020,7 +3020,7 @@
    * @returns {SyncPromise}
    */
   SyncPromise.all = function (promises) {
-    return new SyncPromise( /** @type {ResolveReject} */
+    return new SyncPromise(/** @type {ResolveReject} */
     function (resolve, reject) {
       var l = promises.length;
       /** @type {ArbitraryValue[]} */
@@ -3030,8 +3030,8 @@
         return;
       }
       promises.forEach(function (p, i) {
-        if (isPromise( /** @type {PromiseLike<any>} */p)) {
-          addReject( /** @type {PromiseLike<any>} */p.then( /** @type {OnFulfilled} */
+        if (isPromise(/** @type {PromiseLike<any>} */p)) {
+          addReject(/** @type {PromiseLike<any>} */p.then(/** @type {OnFulfilled} */
           function (res) {
             newPromises[i] = res;
             --l || resolve(newPromises);
@@ -3050,11 +3050,11 @@
    */
   SyncPromise.race = function (promises) {
     var resolved = false;
-    return new SyncPromise( /** @type {ResolveReject} */
+    return new SyncPromise(/** @type {ResolveReject} */
     function (resolve, reject) {
       promises.some(function (p, i) {
-        if (isPromise( /** @type {PromiseLike<any>} */p)) {
-          addReject( /** @type {PromiseLike<any>} */p.then( /** @type {OnFulfilled} */
+        if (isPromise(/** @type {PromiseLike<any>} */p)) {
+          addReject(/** @type {PromiseLike<any>} */p.then(/** @type {OnFulfilled} */
           function (res) {
             if (resolved) {
               return;
@@ -3076,7 +3076,7 @@
    * @returns {SyncPromise}
    */
   SyncPromise.resolve = function (val) {
-    return new SyncPromise( /** @type {ResolveReject} */
+    return new SyncPromise(/** @type {ResolveReject} */
     function (resolve, reject) {
       resolve(val);
     });
@@ -3087,7 +3087,7 @@
    * @returns {SyncPromise}
    */
   SyncPromise.reject = function (val) {
-    return new SyncPromise( /** @type {ResolveReject} */
+    return new SyncPromise(/** @type {ResolveReject} */
     function (resolve, reject) {
       reject(val);
     });
@@ -3191,7 +3191,7 @@
   };
   var keyTypes = /** @type {(KeyType|"invalid")[]} */Object.keys(keyTypeToEncodedChar);
   keyTypes.forEach(function (k) {
-    keyTypeToEncodedChar[k] = String.fromCodePoint( /** @type {number} */keyTypeToEncodedChar[k]);
+    keyTypeToEncodedChar[k] = String.fromCodePoint(/** @type {number} */keyTypeToEncodedChar[k]);
   });
   var encodedCharToKeyType = keyTypes.reduce(function (o, k) {
     o[keyTypeToEncodedChar[k]] = k;
@@ -3580,7 +3580,7 @@
       return 'binary';
     }
     var keyType = _typeof$2(key);
-    return ['string', 'number'].includes(keyType) ? ( /** @type {"string"|"number"} */keyType) : 'invalid';
+    return ['string', 'number'].includes(keyType) ? (/** @type {"string"|"number"} */keyType) : 'invalid';
   }
 
   /**
@@ -3688,7 +3688,7 @@
           // May throw (if detached)
           // Get a copy of the bytes held by the buffer source
           // https://heycam.github.io/webidl/#ref-for-dfn-get-buffer-source-copy-2
-          var octets = getCopyBytesHeldByBufferSource( /** @type {BufferSource} */input);
+          var octets = getCopyBytesHeldByBufferSource(/** @type {BufferSource} */input);
           return {
             type: 'binary',
             value: octets
@@ -3925,7 +3925,7 @@
             value = /** @type {File} */value[idntfr];
             break;
           case 'lastModifiedDate':
-            value = new Date( /** @type {File} */value.lastModified);
+            value = new Date(/** @type {File} */value.lastModified);
             break;
         }
       } else if (!isObj(value) || !Object.hasOwn(value, idntfr)) {
@@ -3959,7 +3959,7 @@
       }
       value = value[identifier];
     });
-    value[( /** @type {string} */last)] = key; // key is already a `keyValue` in our processing so no need to convert
+    value[(/** @type {string} */last)] = key; // key is already a `keyValue` in our processing so no need to convert
   }
 
   /**
@@ -4382,7 +4382,7 @@
         convertValueToKeyRethrowingAndIfInvalid(upper);
       }
       if (lower !== undefined && upper !== undefined && lower !== upper) {
-        if ( /** @type {string} */_encode(lower) > ( /** @type {string} */_encode(upper))) {
+        if (/** @type {string} */_encode(lower) > (/** @type {string} */_encode(upper))) {
           throw createDOMException('DataError', '`lower` must not be greater than `upper` argument in `bound()` call.');
         }
       }
@@ -4520,7 +4520,7 @@
         encodedUpperKey = checkCached ? range.__upperCached : _encode(range.upper);
       }
       if (hasLower) {
-        sqlValues.push(escapeSQLiteStatement( /** @type {string} */encodedLowerKey));
+        sqlValues.push(escapeSQLiteStatement(/** @type {string} */encodedLowerKey));
         if (hasUpper && encodedLowerKey === encodedUpperKey && !range.lowerOpen && !range.upperOpen) {
           sql.push(quotedKeyColumnName, '=', '?');
           return;
@@ -4532,7 +4532,7 @@
       }
       if (hasUpper) {
         sql.push(quotedKeyColumnName, range.upperOpen ? '<' : '<=', '?');
-        sqlValues.push(escapeSQLiteStatement( /** @type {string} */encodedUpperKey));
+        sqlValues.push(escapeSQLiteStatement(/** @type {string} */encodedUpperKey));
       }
     }
   }
@@ -5110,7 +5110,7 @@
             }
             q.op(tx, q.args, success, error, executeNextRequest);
           } catch (e) {
-            error( /** @type {Error} */e);
+            error(/** @type {Error} */e);
           }
         }
       }
@@ -5121,7 +5121,7 @@
         // Not a genuine SQL error
         return;
       }
-      var err = webSQLErrback( /** @type {SQLError} */webSQLErr);
+      var err = webSQLErrback(/** @type {SQLError} */webSQLErr);
       me.__abortTransaction(err);
     }, function () {
       // For Node, we don't need to try running here as we can keep
@@ -5428,7 +5428,7 @@
             bubbles: true,
             cancelable: true
           });
-          return new SyncPromise( /** @type {() => void} */
+          return new SyncPromise(/** @type {() => void} */
           function (resolve) {
             setTimeout(function () {
               if (!q.req) {
@@ -6426,8 +6426,8 @@
           return "CryptoKey" === toStringTag(e) && e.extractable;
         },
         replaceAsync: function replaceAsync(t) {
-          return new e( /*#__PURE__*/function () {
-            var _ref = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee(e, r) {
+          return new e(/*#__PURE__*/function () {
+            var _ref = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(e, r) {
               var n;
               return _regeneratorRuntime().wrap(function _callee$(_context) {
                 while (1) switch (_context.prev = _context.next) {
@@ -6811,8 +6811,8 @@
             a = document.createElement("img");
           return a.addEventListener("load", function () {
             n.drawImage(a, 0, 0);
-          }), a.src = t.dataURL, new e( /*#__PURE__*/function () {
-            var _ref10 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2(e, t) {
+          }), a.src = t.dataURL, new e(/*#__PURE__*/function () {
+            var _ref10 = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee2(e, t) {
               return _regeneratorRuntime().wrap(function _callee2$(_context2) {
                 while (1) switch (_context2.prev = _context2.next) {
                   case 0:
@@ -6938,7 +6938,9 @@
         test: function test(e) {
           return "Boolean" === toStringTag(e) && "object" == _typeof$2(e);
         },
-        replace: Boolean,
+        replace: function replace(e) {
+          return e.valueOf();
+        },
         revive: function revive(e) {
           return new Boolean(e);
         }
@@ -7270,7 +7272,7 @@
          * @returns {string}
          */
         get: function get() {
-          return '__pendingName' in me ? ( /** @type {string} */me.__pendingName) : me.name;
+          return '__pendingName' in me ? (/** @type {string} */me.__pendingName) : me.name;
         }
       });
       Object.defineProperty(me, 'name', {
@@ -7966,7 +7968,7 @@
             return rowKey.includes(check);
           }) ||
           // More precise than our SQL
-          isMultiEntryMatch( /** @type {string} */
+          isMultiEntryMatch(/** @type {string} */
           encodedKey, row[escapedIndexNameForKeyCol]))) {
             recordCount++;
             record = row;
@@ -8038,12 +8040,12 @@
             sql.push('OR');
           }
           sql.push(escapeIndexNameForSQL(index.name), "LIKE ? ESCAPE '^' ");
-          sqlValues.push('%' + sqlLIKEEscape( /** @type {string} */_encode(innerKey, index.multiEntry)) + '%');
+          sqlValues.push('%' + sqlLIKEEscape(/** @type {string} */_encode(innerKey, index.multiEntry)) + '%');
         });
         sql.push(')');
       } else if (index.multiEntry) {
         sql.push('AND', escapeIndexNameForSQL(index.name), "LIKE ? ESCAPE '^'");
-        sqlValues.push('%' + sqlLIKEEscape( /** @type {string} */_encode(range, index.multiEntry)) + '%');
+        sqlValues.push('%' + sqlLIKEEscape(/** @type {string} */_encode(range, index.multiEntry)) + '%');
       } else {
         var convertedRange = convertValueToKeyRange(range, nullDisallowed);
         setSQLForKeyRange(convertedRange, escapeIndexNameForSQL(index.name), sql, sqlValues, true, false);
@@ -8590,7 +8592,7 @@
         // Key.convertValueToKey(primaryKey); // Already run
         sqlStart.push(sqlQuote('key'), ',');
         sqlEnd.push('?,');
-        insertSqlValues.push(escapeSQLiteStatement( /** @type {string} */_encode(clonedKeyOrCurrentNumber)));
+        insertSqlValues.push(escapeSQLiteStatement(/** @type {string} */_encode(clonedKeyOrCurrentNumber)));
       }
       Object.entries(paramMap).forEach(function (_ref) {
         var _ref2 = _slicedToArray$1(_ref, 2),
@@ -9993,7 +9995,7 @@
      * @returns {void}
      */
     function sysDbCreateError(tx, err) {
-      var er = webSQLErrback( /** @type {SQLError} */err || tx);
+      var er = webSQLErrback(/** @type {SQLError} */err || tx);
       if (CFG.DEBUG) {
         console.log('Error in sysdb transaction - when creating dbVersions', err);
       }
@@ -10113,7 +10115,7 @@
       if (calledDbCreateError) {
         return false;
       }
-      var er = err ? webSQLErrback(err) : ( /** @type {Error} */tx);
+      var er = err ? webSQLErrback(err) : (/** @type {Error} */tx);
       calledDbCreateError = true;
       // Re: why bubbling here (and how cancelable is only really relevant for `window.onerror`) see: https://github.com/w3c/IndexedDB/issues/86
       var evt = createEvent('error', er, {
@@ -10274,7 +10276,7 @@
                   if (pos > -1) {
                     connection.__transactions.splice(pos, 1);
                   }
-                  if ( /** @type {import('./IDBDatabase.js').IDBDatabaseFull} */req.__result.__closePending) {
+                  if (/** @type {import('./IDBDatabase.js').IDBDatabaseFull} */req.__result.__closePending) {
                     req.__transaction = null;
                     var err = createDOMException('AbortError', 'The connection has been closed.');
                     dbCreateError(err);
@@ -10465,7 +10467,7 @@
       if (calledDBError || err === true) {
         return false;
       }
-      var er = webSQLErrback( /** @type {SQLError} */err || tx);
+      var er = webSQLErrback(/** @type {SQLError} */err || tx);
       sysdbFinishedCbDelete(true, function () {
         req.__done = true;
         req.__error = er;
@@ -10608,7 +10610,7 @@
         if (calledDbCreateError) {
           return false;
         }
-        var er = err ? webSQLErrback( /** @type {SQLError} */err) : tx;
+        var er = err ? webSQLErrback(/** @type {SQLError} */err) : tx;
         calledDbCreateError = true;
         reject(er);
         return false;
@@ -10766,7 +10768,7 @@
     IDBObjectStore.__invalidStateIfDeleted(store);
     this.__indexSource = instanceOf(source, IDBIndex);
     if (this.__indexSource) {
-      IDBIndex.__invalidStateIfDeleted( /** @type {import('./IDBIndex.js').IDBIndexFull} */source);
+      IDBIndex.__invalidStateIfDeleted(/** @type {import('./IDBIndex.js').IDBIndexFull} */source);
     }
     IDBTransaction.__assertActive(store.transaction);
     var range = convertValueToKeyRange(query);
@@ -10895,16 +10897,16 @@
     if (primaryKey !== undefined) {
       sql.push('AND', quotedKey, op + '= ?');
       // Key.convertValueToKey(primaryKey); // Already checked by `continuePrimaryKey`
-      sqlValues.push( /** @type {string} */_encode(primaryKey));
+      sqlValues.push(/** @type {string} */_encode(primaryKey));
     }
     if (key !== undefined) {
       sql.push('AND', quotedKeyColumnName, op + '= ?');
       // Key.convertValueToKey(key); // Already checked by `continue` or `continuePrimaryKey`
-      sqlValues.push( /** @type {string} */_encode(key));
+      sqlValues.push(/** @type {string} */_encode(key));
     } else if (continueCall && me.__key !== undefined) {
       sql.push('AND', quotedKeyColumnName, op + ' ?');
       // Key.convertValueToKey(me.__key); // Already checked when stored
-      sqlValues.push( /** @type {string} */_encode(me.__key));
+      sqlValues.push(/** @type {string} */_encode(me.__key));
     }
     if (!me.__count) {
       // 1. Sort by key
@@ -10985,7 +10987,7 @@
     if (me.__range && me.__range.lower !== undefined && Array.isArray(me.__range.upper)) {
       if (me.__range.upper.indexOf(me.__range.lower) === 0) {
         sql.push('AND', quotedKeyColumnName, "LIKE ? ESCAPE '^'");
-        sqlValues.push('%' + sqlLIKEEscape( /** @type {string} */me.__range.__lowerCached.slice(0, -1)) + '%');
+        sqlValues.push('%' + sqlLIKEEscape(/** @type {string} */me.__range.__lowerCached.slice(0, -1)) + '%');
       }
     }
 
@@ -10996,16 +10998,16 @@
     if (primaryKey !== undefined) {
       sql.push('AND', quotedKey, op + '= ?');
       // Key.convertValueToKey(primaryKey); // Already checked by `continuePrimaryKey`
-      sqlValues.push( /** @type {string} */_encode(primaryKey));
+      sqlValues.push(/** @type {string} */_encode(primaryKey));
     }
     if (key !== undefined) {
       sql.push('AND', quotedKeyColumnName, op + '= ?');
       // Key.convertValueToKey(key); // Already checked by `continue` or `continuePrimaryKey`
-      sqlValues.push( /** @type {string} */_encode(key));
+      sqlValues.push(/** @type {string} */_encode(key));
     } else if (me.__key !== undefined) {
       sql.push('AND', quotedKeyColumnName, op + ' ?');
       // Key.convertValueToKey(me.__key); // Already checked when entered
-      sqlValues.push( /** @type {string} */_encode(me.__key));
+      sqlValues.push(/** @type {string} */_encode(me.__key));
     }
     if (!me.__count) {
       // 1. Sort by key
@@ -11056,7 +11058,7 @@
                * @type {RowItemNonNull}
                */
               var clone = {
-                matchingKey: ( /** @type {string} */
+                matchingKey: (/** @type {string} */
                 _encode(matchingKey, true)),
                 key: _rowItem.key
               };
@@ -11224,7 +11226,7 @@
   IDBCursor.prototype.__sourceOrEffectiveObjStoreDeleted = function () {
     IDBObjectStore.__invalidStateIfDeleted(this.__store, "The cursor's effective object store has been deleted");
     if (this.__indexSource) {
-      IDBIndex.__invalidStateIfDeleted( /** @type {import('./IDBIndex.js').IDBIndexFull} */this.source, "The cursor's index source has been deleted");
+      IDBIndex.__invalidStateIfDeleted(/** @type {import('./IDBIndex.js').IDBIndexFull} */this.source, "The cursor's index source has been deleted");
     }
   };
 
@@ -11490,7 +11492,7 @@
           console.log(sql, key, primaryKey);
         }
         // Key.convertValueToKey(primaryKey); // Already checked when entered
-        tx.executeSql(sql, [escapeSQLiteStatement( /** @type {string} */_encode(primaryKey))], function (tx, data) {
+        tx.executeSql(sql, [escapeSQLiteStatement(/** @type {string} */_encode(primaryKey))], function (tx, data) {
           if (data.rowsAffected === 1) {
             // We don't invalidate the cache (as we don't access it anymore
             //    and it will set the index off)
@@ -11585,7 +11587,7 @@
         var _ref2 = _slicedToArray$1(_ref, 2),
           p = _ref2[0],
           val = _ref2[1];
-        setConfig( /** @type {import('./CFG.js').KeyofConfigValues} */
+        setConfig(/** @type {import('./CFG.js').KeyofConfigValues} */
         p, val);
       });
       return;
@@ -11699,7 +11701,7 @@
             }
           } else {
             var o = _defineAccessor("get", {}, name, function () {
-              return /** @type {AnyFunction} */( /** @type {PropertyDescriptor} */propDesc.get).call(this);
+              return /** @type {AnyFunction} */(/** @type {PropertyDescriptor} */propDesc.get).call(this);
             });
             desc = /** @type {PropertyDescriptor} */
             Object.getOwnPropertyDescriptor(o, name);

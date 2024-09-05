@@ -1,8 +1,10 @@
 # CHANGES for indexeddbshim
 
-## ?
+## 15.0.2
 
 ### User-impacting changes
+
+- chore: update typeson-registry
 
 ### Dev-impacting changes
 
