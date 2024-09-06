@@ -79,6 +79,7 @@ function processNextInConnectionQueue (name, origin = getOrigin()) {
     }
     req.addEventListener('success', removeFromQueue);
     req.addEventListener('error', removeFromQueue);
+    req.addEventListener('blocked', removeFromQueue);
     cb(req);
 }
 

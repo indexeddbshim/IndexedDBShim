@@ -1,5 +1,10 @@
 # CHANGES for indexeddbshim
 
+## 15.0.3
+
+- fix: ensure blocked requests do not hold up subsequent queue processing
+    on the same database
+
 ## 15.0.2
 
 ### User-impacting changes
