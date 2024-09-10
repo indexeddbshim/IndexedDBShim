@@ -1,5 +1,10 @@
 # CHANGES for indexeddbshim
 
+## 15.0.4
+
+- fix: TS fix for `cmp` (loosen to `number` to be compatible with DOM types)
+- fix: attempt fix for type error in CFG.js
+
 ## 15.0.3
 
 - fix: ensure blocked requests do not hold up subsequent queue processing

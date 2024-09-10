@@ -946,7 +946,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
  * @param {import('./Key.js').Key} key1
  * @param {import('./Key.js').Key} key2
  * @throws {TypeError}
- * @returns {0|1|-1}
+ * @returns {number}
  */
 IDBFactory.prototype.cmp = function (key1, key2) {
     if (!(this instanceof IDBFactory)) {

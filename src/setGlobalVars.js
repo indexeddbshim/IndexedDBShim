@@ -61,7 +61,7 @@ function setConfig (prop, val) {
 /**
  * @typedef {(
  *   prop: import('./CFG.js').KeyofConfigValues
- * ) => import('../src/CFG.js').ConfigValue} GetConfig
+ * ) => import('./CFG.js').ConfigValue} GetConfig
  */
 
 /**
