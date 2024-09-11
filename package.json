@@ -32,7 +32,7 @@
     "tsc": "tsc",
     "tsc-prod": "tsc -p tsconfig-prod.json",
     "build": "rm -R dist && npm run tsc-prod && npm run rollup",
-    "prepublishOnly": "npm run license-badges",
+    "prepublishOnly": "npm run license-badges && npm run build",
     "license-badge": "license-badger --corrections --uncategorizedLicenseTemplate \"\\${license} (\\${name} (\\${version}))\" --filteredTypes=nonempty --textTemplate \"License types\n(project, deps, and bundled devDeps)\" --packageJson --production badges/licenses-badge.svg",
     "license-badge-dev": "license-badger --corrections --filteredTypes=nonempty --textTemplate \"License types\n(all devDeps)\" --allDevelopment badges/licenses-badge-dev.svg",
     "license-badges": "run-p license-badge license-badge-dev",

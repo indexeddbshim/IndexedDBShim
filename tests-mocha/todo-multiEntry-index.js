@@ -1,4 +1,6 @@
 // Todo: Integrate into mocha tests
+// Todo: Also review (note to self: `idb-manager` project) TS compatibility
+//    `setGlobalVars` with `window` (our types differ from IndexedDB)
 
 // import setGlobalVars from 'indexeddbshim/src/node-UnicodeIdentifiers.js';
 // import './src/utils/server-globals.js';
