@@ -1,13 +1,13 @@
 export default IDBDatabase;
 export type IDBObjectStoreProperties = {
     name: string;
-    keyPath: import('./Key.js').KeyPath;
+    keyPath: import("./Key.js").KeyPath;
     autoInc: boolean;
     indexList: {
         [key: string]: import("./IDBIndex.js").IDBIndexProperties;
     };
     idbdb: IDBDatabaseFull;
-    cursors?: (import("./IDBCursor.js").IDBCursorFull | import("./IDBCursor.js").IDBCursorWithValueFull)[] | undefined;
+    cursors?: (import("./IDBCursor.js").IDBCursorFull | import("./IDBCursor.js").IDBCursorWithValueFull)[];
 };
 export type Integer = number;
 export type IDBDatabaseFull = IDBDatabase & EventTarget & {
@@ -16,21 +16,21 @@ export type IDBDatabaseFull = IDBDatabase & EventTarget & {
     close: () => void;
     transaction: (storeNames: string | string[], mode: string) => IDBTransaction;
     throwIfUpgradeTransactionNull: () => void;
-    objectStoreNames: import('./DOMStringList.js').DOMStringListFull;
+    objectStoreNames: import("./DOMStringList.js").DOMStringListFull;
     name: string;
     __forceClose: (msg: string) => void;
-    __db: import('websql-configurable/lib/websql/WebSQLDatabase.js').default;
+    __db: import("websql-configurable/lib/websql/WebSQLDatabase.js").default;
     __oldVersion: Integer;
     __version: Integer;
     __name: string;
-    __upgradeTransaction: null | import('./IDBTransaction.js').IDBTransactionFull;
-    __versionTransaction: import('./IDBTransaction.js').IDBTransactionFull;
-    __transactions: import('./IDBTransaction.js').IDBTransactionFull[];
+    __upgradeTransaction: null | import("./IDBTransaction.js").IDBTransactionFull;
+    __versionTransaction: import("./IDBTransaction.js").IDBTransactionFull;
+    __transactions: import("./IDBTransaction.js").IDBTransactionFull[];
     __objectStores: {
         [key: string]: IDBObjectStore;
     };
-    __objectStoreNames: import('./DOMStringList.js').DOMStringListFull;
-    __oldObjectStoreNames: import('./DOMStringList.js').DOMStringListFull;
+    __objectStoreNames: import("./DOMStringList.js").DOMStringListFull;
+    __oldObjectStoreNames: import("./DOMStringList.js").DOMStringListFull;
     __unblocking: {
         check: () => void;
     };
@@ -55,6 +55,8 @@ declare function IDBDatabase(): void;
 declare class IDBDatabase {
     __versionTransaction: any;
     __objectStores: any;
+    /** @type {import('./IDBTransaction.js').IDBTransactionFull[]} */
+    __transactions: import("./IDBTransaction.js").IDBTransactionFull[];
     /**
      * Creates a new object store.
      * @param {string} storeName
@@ -83,7 +85,7 @@ declare class IDBDatabase {
      * @this {IDBDatabaseFull}
      * @returns {import('./IDBTransaction.js').IDBTransactionFull}
      */
-    transaction(this: IDBDatabaseFull, storeNames: string | string[], ...args: any[]): import('./IDBTransaction.js').IDBTransactionFull;
+    transaction(this: IDBDatabaseFull, storeNames: string | string[], ...args: any[]): import("./IDBTransaction.js").IDBTransactionFull;
     /**
      * @see https://github.com/w3c/IndexedDB/issues/192
      * @throws {DOMException}
@@ -136,7 +138,7 @@ declare namespace IDBDatabase {
      * @param {SQLResultSet} storeProperties
      * @returns {IDBDatabaseFull}
      */
-    function __createInstance(db: any, name: string, oldVersion: number, version: number, storeProperties: SQLResultSet): IDBDatabaseFull;
+    function __createInstance(db: any, name: string, oldVersion: Integer, version: Integer, storeProperties: SQLResultSet): IDBDatabaseFull;
 }
 import IDBObjectStore from './IDBObjectStore.js';
 import IDBTransaction from './IDBTransaction.js';

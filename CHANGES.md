@@ -1,5 +1,10 @@
 # CHANGES for indexeddbshim
 
+## 15.1.0
+
+- fix: actually include TS fixes
+- chore: update typeson-registry, devDeps.
+
 ## 15.0.4
 
 - fix: TS fix for `cmp` (loosen to `number` to be compatible with DOM types)

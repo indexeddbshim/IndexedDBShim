@@ -453,6 +453,7 @@ IDBIndex.__deleteIndex = function (store, index) {
 IDBIndex.__updateIndexList = function (store, tx, success, failure) {
     /** @type {IndexList} **/
     const indexList = {};
+    // eslint-disable-next-line sonarjs/prefer-for-of -- Implement iterability?
     for (let i = 0; i < store.indexNames.length; i++) {
         const idx = store.__indexes[store.indexNames[i]];
         indexList[idx.name] = {

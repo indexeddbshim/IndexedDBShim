@@ -1,21 +1,21 @@
 export type Integer = number;
 export type IDBIndexProperties = {
     columnName: string;
-    keyPath: import('./Key.js').KeyPath;
+    keyPath: import("./Key.js").KeyPath;
     optionalParams: {
         unique: boolean;
         multiEntry: boolean;
     };
     deleted?: boolean;
     __deleted?: boolean;
-    cursors?: import('./IDBCursor.js').IDBCursorWithValueFull[];
+    cursors?: import("./IDBCursor.js").IDBCursorWithValueFull[];
 };
 export type IDBIndexFull = IDBIndex & {
     name: string;
-    keyPath: import('./Key.js').KeyPath;
+    keyPath: import("./Key.js").KeyPath;
     multiEntry: boolean;
     unique: boolean;
-    objectStore: import('./IDBObjectStore.js').IDBObjectStoreFull;
+    objectStore: import("./IDBObjectStore.js").IDBObjectStoreFull;
     __pendingCreate?: boolean;
     __deleted?: boolean;
     __originalName: string;
@@ -25,8 +25,8 @@ export type IDBIndexFull = IDBIndex & {
     __name: string;
     __multiEntry: boolean;
     __unique: boolean;
-    __objectStore: import('./IDBObjectStore.js').IDBObjectStoreFull;
-    __keyPath: import('./Key.js').KeyPath;
+    __objectStore: import("./IDBObjectStore.js").IDBObjectStoreFull;
+    __keyPath: import("./Key.js").KeyPath;
     __recreated?: boolean;
 };
 export type IndexList = {
@@ -51,7 +51,7 @@ export type AnyValue = any;
  *   sqlValues: string[]
  * ]}
  */
-export function buildFetchIndexDataSQL(nullDisallowed: boolean, index: IDBIndexFull, range: import('./Key.js').Value | import('./Key.js').Key, opType: "value" | "key" | "count", multiChecks: boolean): [nullDisallowed: boolean, index: IDBIndexFull, hasRange: boolean, range: any, opType: "key" | "value" | "count", multiChecks: boolean, sql: string[], sqlValues: string[]];
+export function buildFetchIndexDataSQL(nullDisallowed: boolean, index: IDBIndexFull, range: import("./Key.js").Value | import("./Key.js").Key, opType: "value" | "key" | "count", multiChecks: boolean): [nullDisallowed: boolean, index: IDBIndexFull, hasRange: boolean, range: import("./Key.js").Value | import("./Key.js").Key, opType: "value" | "key" | "count", multiChecks: boolean, sql: string[], sqlValues: string[]];
 /**
  * @param {number|null} count
  * @param {boolean} unboundedDisallowed
@@ -68,7 +68,7 @@ export function buildFetchIndexDataSQL(nullDisallowed: boolean, index: IDBIndexF
  * @param {(tx: SQLTransaction, err: SQLError) => void} error
  * @returns {void}
  */
-export function executeFetchIndexData(count: number | null, unboundedDisallowed: boolean, index: IDBIndexFull, hasKey: boolean, range: import('./Key.js').Value | import('./Key.js').Key, opType: "value" | "key" | "count", multiChecks: boolean, sql: string[], sqlValues: string[], tx: SQLTransaction, args: null | undefined, success: (result: number | undefined | [] | AnyValue | AnyValue[]) => void, error: (tx: SQLTransaction, err: SQLError) => void): void;
+export function executeFetchIndexData(count: number | null, unboundedDisallowed: boolean, index: IDBIndexFull, hasKey: boolean, range: import("./Key.js").Value | import("./Key.js").Key, opType: "value" | "key" | "count", multiChecks: boolean, sql: string[], sqlValues: string[], tx: SQLTransaction, args: null | undefined, success: (result: number | undefined | [] | AnyValue | AnyValue[]) => void, error: (tx: SQLTransaction, err: SQLError) => void): void;
 /**
  * @typedef {number} Integer
  */
@@ -104,19 +104,19 @@ export class IDBIndex {
      * @this {IDBIndexFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    __fetchIndexData(this: IDBIndexFull, range: Query, opType: "value" | "key" | "count", nullDisallowed: boolean, count?: number | undefined): import('./IDBRequest.js').IDBRequestFull;
+    __fetchIndexData(this: IDBIndexFull, range: Query, opType: "value" | "key" | "count", nullDisallowed: boolean, count?: number | undefined): import("./IDBRequest.js").IDBRequestFull;
     /**
      * Opens a cursor over the given key range.
      * @this {IDBIndexFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    openCursor(this: IDBIndexFull, ...args: any[]): import('./IDBRequest.js').IDBRequestFull;
+    openCursor(this: IDBIndexFull, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      * Opens a cursor over the given key range.  The cursor only includes key values, not data.
      * @this {IDBIndexFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    openKeyCursor(this: IDBIndexFull, ...args: any[]): import('./IDBRequest.js').IDBRequestFull;
+    openKeyCursor(this: IDBIndexFull, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      *
      * @param {Query} query
@@ -124,7 +124,7 @@ export class IDBIndex {
      * @this {IDBIndexFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    get(this: IDBIndexFull, query: Query, ...args: any[]): import('./IDBRequest.js').IDBRequestFull;
+    get(this: IDBIndexFull, query: Query, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      *
      * @param {Query} query
@@ -132,22 +132,22 @@ export class IDBIndex {
      * @this {IDBIndexFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    getKey(this: IDBIndexFull, query: Query, ...args: any[]): import('./IDBRequest.js').IDBRequestFull;
+    getKey(this: IDBIndexFull, query: Query, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      * @this {IDBIndexFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    getAll(this: IDBIndexFull, ...args: any[]): import('./IDBRequest.js').IDBRequestFull;
+    getAll(this: IDBIndexFull, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      * @this {IDBIndexFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    getAllKeys(this: IDBIndexFull, ...args: any[]): import('./IDBRequest.js').IDBRequestFull;
+    getAllKeys(this: IDBIndexFull, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      * @this {IDBIndexFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    count(this: IDBIndexFull, ...args: any[]): import('./IDBRequest.js').IDBRequestFull;
+    count(this: IDBIndexFull, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      *
      * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
@@ -161,7 +161,7 @@ export class IDBIndex {
      * @this {IDBIndexFull}
      * @returns {void}
      */
-    __renameIndex(this: IDBIndexFull, store: import('./IDBObjectStore.js').IDBObjectStoreFull, oldName: string, newName: string, colInfoToPreserveArr?: string[][], cb?: ((tx: SQLTransaction, success: (store: IDBObjectStore) => void) => void) | null): void;
+    __renameIndex(this: IDBIndexFull, store: import("./IDBObjectStore.js").IDBObjectStoreFull, oldName: string, newName: string, colInfoToPreserveArr?: string[][], cb?: null | ((tx: SQLTransaction, success: ((store: IDBObjectStore) => void)) => void)): void;
 }
 export namespace IDBIndex {
     /**

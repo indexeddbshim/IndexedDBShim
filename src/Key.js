@@ -864,6 +864,7 @@ function findMultiEntryMatches (keyEntry, range) {
                     continue;
                 }
                 if (key.length === 1) {
+                    // eslint-disable-next-line sonarjs/updated-loop-counter -- Convenient
                     key = key[0];
                 } else {
                     const nested = findMultiEntryMatches(key, range);
@@ -1084,7 +1085,7 @@ function generateKeyForStore (tx, store, cb, sqlFailCb) {
  *
  * @param {SQLTransaction} tx
  * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
- * @param {import('./Key.js').Key} key
+ * @param {Key} key
  * @param {(num?: Integer) => void} successCb
  * @param {SQLFailureCallback} sqlFailCb
  * @returns {void}

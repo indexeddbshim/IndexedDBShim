@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-invariant-returns -- Convenient here */
 // eslint-disable-next-line no-restricted-imports -- Can be polyfilled
 import path from 'path';
 import SyncPromise from 'sync-promise-expanded';

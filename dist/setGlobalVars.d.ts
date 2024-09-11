@@ -1,13 +1,13 @@
 export { createDOMException };
 export default setGlobalVars;
 export type AnyValue = any;
-export type SetConfig = (prop: import('./CFG.js').KeyofConfigValues | Partial<import('./CFG.js').ConfigValues>, val?: AnyValue) => any;
-export type GetConfig = (prop: import('./CFG.js').KeyofConfigValues) => import('../src/CFG.js').ConfigValue;
+export type SetConfig = (prop: import("./CFG.js").KeyofConfigValues | Partial<import("./CFG.js").ConfigValues>, val?: AnyValue) => any;
+export type GetConfig = (prop: import("./CFG.js").KeyofConfigValues) => import("./CFG.js").ConfigValue;
 export type SetUnicodeIdentifiers = (cfg: {
     UnicodeIDStart: string;
     UnicodeIDContinue: string;
 }) => void;
-export type ShimIndexedDB = (object | IDBFactory) & {
+export type ShimIndexedDB = (IDBFactory | object) & {
     __useShim: () => void;
     __debug: (val: boolean) => void;
     __setConfig: SetConfig;
@@ -32,7 +32,7 @@ import { createDOMException } from './DOMException.js';
 /**
  * @typedef {(
  *   prop: import('./CFG.js').KeyofConfigValues
- * ) => import('../src/CFG.js').ConfigValue} GetConfig
+ * ) => import('./CFG.js').ConfigValue} GetConfig
  */
 /**
  * @typedef {(cfg: {
@@ -75,5 +75,4 @@ import { createDOMException } from './DOMException.js';
  */
 declare function setGlobalVars(idb?: ShimmedObject | undefined, initialConfig?: import("./CFG.js").ConfigValues | undefined): ShimmedObject;
 import { IDBFactory } from './IDBFactory.js';
-import { shimIndexedDB } from './IDBFactory.js';
 //# sourceMappingURL=setGlobalVars.d.ts.map

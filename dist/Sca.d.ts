@@ -27,5 +27,5 @@ export function clone(val: AnyValue): AnyValue;
  *   import('typeson-registry').Preset} func
  * @returns {void}
  */
-export function register(func: (preset: import('typeson-registry').Preset) => import('typeson-registry').Preset): void;
+export function register(func: (preset: import("typeson-registry").Preset) => import("typeson-registry").Preset): void;
 //# sourceMappingURL=Sca.d.ts.map

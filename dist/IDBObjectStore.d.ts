@@ -2,9 +2,9 @@ export default IDBObjectStore;
 export type Integer = number;
 export type IDBObjectStoreFull = IDBObjectStore & {
     name: string;
-    keyPath: import('./Key.js').KeyPath;
-    transaction?: import("./IDBTransaction.js").IDBTransactionFull | undefined;
-    indexNames: import('./DOMStringList.js').DOMStringListFull;
+    keyPath: import("./Key.js").KeyPath;
+    transaction?: import("./IDBTransaction.js").IDBTransactionFull;
+    indexNames: import("./DOMStringList.js").DOMStringListFull;
     autoIncrement: boolean;
     __autoIncrement: boolean;
     __indexes: {
@@ -13,21 +13,21 @@ export type IDBObjectStoreFull = IDBObjectStore & {
     __indexHandles: {
         [key: string]: import("./IDBIndex.js").IDBIndexFull;
     };
-    __indexNames: import('./DOMStringList.js').DOMStringListFull;
-    __oldIndexNames: import('./DOMStringList.js').DOMStringListFull;
-    __transaction?: import("./IDBTransaction.js").IDBTransactionFull | undefined;
+    __indexNames: import("./DOMStringList.js").DOMStringListFull;
+    __oldIndexNames: import("./DOMStringList.js").DOMStringListFull;
+    __transaction?: import("./IDBTransaction.js").IDBTransactionFull;
     __name: string;
-    __keyPath: import('./Key.js').KeyPath;
+    __keyPath: import("./Key.js").KeyPath;
     __originalName: string;
     __currentName: string;
-    __pendingName?: string | undefined;
-    __pendingDelete?: boolean | undefined;
-    __pendingCreate?: boolean | undefined;
-    __deleted?: boolean | undefined;
-    __cursors: (import('./IDBCursor.js').IDBCursorFull | import('./IDBCursor.js').IDBCursorWithValueFull)[];
-    __idbdb: import('./IDBDatabase.js').IDBDatabaseFull;
+    __pendingName?: string;
+    __pendingDelete?: boolean;
+    __pendingCreate?: boolean;
+    __deleted?: boolean;
+    __cursors: (import("./IDBCursor.js").IDBCursorFull | import("./IDBCursor.js").IDBCursorWithValueFull)[];
+    __idbdb: import("./IDBDatabase.js").IDBDatabaseFull;
 };
-export type KeyValueArray = [import('./Key.js').Key, import('./Key.js').Value];
+export type KeyValueArray = [import("./Key.js").Key, import("./Key.js").Value];
 /**
  * @typedef {number} Integer
  */
@@ -51,7 +51,7 @@ declare class IDBObjectStore {
      * @this {IDBObjectStoreFull}
      * @returns {KeyValueArray}
      */
-    __validateKeyAndValueAndCloneValue(this: IDBObjectStoreFull, value: import('./Key.js').Value, key: import('./Key.js').Key, cursorUpdate: boolean): KeyValueArray;
+    __validateKeyAndValueAndCloneValue(this: IDBObjectStoreFull, value: import("./Key.js").Value, key: import("./Key.js").Key, cursorUpdate: boolean): KeyValueArray;
     /**
      * From the store properties and object, extracts the value for the key in
      *   the object store
@@ -65,7 +65,7 @@ declare class IDBObjectStore {
      * @this {IDBObjectStoreFull}
      * @returns {void}
      */
-    __deriveKey(this: IDBObjectStoreFull, tx: SQLTransaction, value: import('./Key.js').Value, key: import('./Key.js').Key, success: (key: import('./Key.js').Key, cn?: Integer) => void, failCb: import('./Key.js').SQLFailureCallback): void;
+    __deriveKey(this: IDBObjectStoreFull, tx: SQLTransaction, value: import("./Key.js").Value, key: import("./Key.js").Key, success: (key: import("./Key.js").Key, cn?: Integer) => void, failCb: import("./Key.js").SQLFailureCallback): void;
     /**
      *
      * @param {SQLTransaction} tx
@@ -80,14 +80,14 @@ declare class IDBObjectStore {
      * @this {IDBObjectStoreFull}
      * @returns {SyncPromise}
      */
-    __insertData(this: IDBObjectStoreFull, tx: SQLTransaction, encoded: string, value: import('./Key.js').Value, clonedKeyOrCurrentNumber: import('./Key.js').Key | Integer, oldCn: Integer | undefined, success: (clonedKeyOrCurrentNumber: import('./Key.js').Key | Integer) => void, error: (err: Error | DOMException) => void): SyncPromise;
+    __insertData(this: IDBObjectStoreFull, tx: SQLTransaction, encoded: string, value: import("./Key.js").Value, clonedKeyOrCurrentNumber: import("./Key.js").Key | Integer, oldCn: Integer | undefined, success: (clonedKeyOrCurrentNumber: import("./Key.js").Key | Integer) => void, error: (err: Error | DOMException) => void): SyncPromise;
     /**
      *
      * @param {import('./Key.js').Value} value
      * @this {IDBObjectStoreFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    add(this: IDBObjectStoreFull, value: import('./Key.js').Value, ...args: any[]): import('./IDBRequest.js').IDBRequestFull;
+    add(this: IDBObjectStoreFull, value: import("./Key.js").Value, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      *
      * @param {import('./Key.js').Value} value
@@ -95,7 +95,7 @@ declare class IDBObjectStore {
      * @this {IDBObjectStoreFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    put(this: IDBObjectStoreFull, value: import('./Key.js').Value, ...args: any[]): import('./IDBRequest.js').IDBRequestFull;
+    put(this: IDBObjectStoreFull, value: import("./Key.js").Value, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      *
      * @param {SQLTransaction} tx
@@ -105,7 +105,7 @@ declare class IDBObjectStore {
      * @this {IDBObjectStoreFull}
      * @returns {void}
      */
-    __overwrite(this: IDBObjectStoreFull, tx: SQLTransaction, key: import('./Key.js').Key, cb: (tx: SQLTransaction) => void, error: (err: SQLError) => void): void;
+    __overwrite(this: IDBObjectStoreFull, tx: SQLTransaction, key: import("./Key.js").Key, cb: (tx: SQLTransaction) => void, error: (err: SQLError) => void): void;
     /**
      *
      * @param {import('./Key.js').Value} query
@@ -115,7 +115,7 @@ declare class IDBObjectStore {
      * @this {IDBObjectStoreFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    __get(this: IDBObjectStoreFull, query: import('./Key.js').Value, getKey?: boolean | undefined, getAll?: boolean | undefined, count?: number | undefined): import('./IDBRequest.js').IDBRequestFull;
+    __get(this: IDBObjectStoreFull, query: import("./Key.js").Value, getKey?: boolean | undefined, getAll?: boolean | undefined, count?: number | undefined): import("./IDBRequest.js").IDBRequestFull;
     /**
      *
      * @param {import('./Key.js').Value} query
@@ -123,24 +123,24 @@ declare class IDBObjectStore {
      * @this {IDBObjectStoreFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    get(this: IDBObjectStoreFull, query: import('./Key.js').Value, ...args: any[]): import('./IDBRequest.js').IDBRequestFull;
+    get(this: IDBObjectStoreFull, query: import("./Key.js").Value, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      *
      * @param {import('./Key.js').Value} query
      * @this {IDBObjectStoreFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    getKey(this: IDBObjectStoreFull, query: import('./Key.js').Value, ...args: any[]): import('./IDBRequest.js').IDBRequestFull;
+    getKey(this: IDBObjectStoreFull, query: import("./Key.js").Value, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      * @this {IDBObjectStoreFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    getAll(this: IDBObjectStoreFull, ...args: any[]): import('./IDBRequest.js').IDBRequestFull;
+    getAll(this: IDBObjectStoreFull, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      * @this {IDBObjectStoreFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    getAllKeys(this: IDBObjectStoreFull, ...args: any[]): import('./IDBRequest.js').IDBRequestFull;
+    getAllKeys(this: IDBObjectStoreFull, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      *
      * @param {import('./Key.js').Value} query
@@ -148,34 +148,34 @@ declare class IDBObjectStore {
      * @this {IDBObjectStoreFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    delete(this: IDBObjectStoreFull, query: import('./Key.js').Value, ...args: any[]): import('./IDBRequest.js').IDBRequestFull;
+    delete(this: IDBObjectStoreFull, query: import("./Key.js").Value, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      * @this {IDBObjectStoreFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    clear(this: IDBObjectStoreFull): import('./IDBRequest.js').IDBRequestFull;
+    clear(this: IDBObjectStoreFull): import("./IDBRequest.js").IDBRequestFull;
     /**
      * @this {IDBObjectStoreFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    count(this: IDBObjectStoreFull, ...args: any[]): import('./IDBRequest.js').IDBRequestFull;
+    count(this: IDBObjectStoreFull, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      * @this {IDBObjectStoreFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    openCursor(this: IDBObjectStoreFull, ...args: any[]): import('./IDBRequest.js').IDBRequestFull;
+    openCursor(this: IDBObjectStoreFull, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      * @this {IDBObjectStoreFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    openKeyCursor(this: IDBObjectStoreFull, ...args: any[]): import('./IDBRequest.js').IDBRequestFull;
+    openKeyCursor(this: IDBObjectStoreFull, ...args: any[]): import("./IDBRequest.js").IDBRequestFull;
     /**
      *
      * @param {string} indexName
      * @this {IDBObjectStoreFull}
      * @returns {import('./IDBIndex.js').IDBIndexFull}
      */
-    index(this: IDBObjectStoreFull, indexName: string, ...args: any[]): import('./IDBIndex.js').IDBIndexFull;
+    index(this: IDBObjectStoreFull, indexName: string, ...args: any[]): import("./IDBIndex.js").IDBIndexFull;
     /**
      * Creates a new index on the object store.
      * @param {string} indexName
@@ -256,7 +256,7 @@ declare namespace IDBObjectStore {
      * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
      * @returns {void}
      */
-    function __deleteObjectStore(db: import("./IDBDatabase.js").IDBDatabaseFull, store: IDBObjectStoreFull): void;
+    function __deleteObjectStore(db: import("./IDBDatabase.js").IDBDatabaseFull, store: import("./IDBObjectStore.js").IDBObjectStoreFull): void;
     /**
      *
      * @param {import('./IDBRequest.js').IDBRequestFull} request
@@ -266,7 +266,7 @@ declare namespace IDBObjectStore {
      * @param {boolean} noOverwrite
      * @returns {void}
      */
-    function __storingRecordObjectStore(request: import("./IDBRequest.js").IDBRequestFull, store: IDBObjectStoreFull, invalidateCache: boolean, value: any, noOverwrite: boolean, ...args: any[]): void;
+    function __storingRecordObjectStore(request: import("./IDBRequest.js").IDBRequestFull, store: IDBObjectStoreFull, invalidateCache: boolean, value: import("./Key.js").Value, noOverwrite: boolean, ...args: any[]): void;
 }
 import SyncPromise from 'sync-promise-expanded';
 import { IDBIndex } from './IDBIndex.js';

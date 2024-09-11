@@ -8,7 +8,7 @@ export type DatabaseFull = import("websql-configurable/lib/websql/WebSQLDatabase
         };
     };
 };
-export type OpenDatabase = (name: string, version: string, displayName: string, estimatedSize: number) => import('websql-configurable/lib/websql/WebSQLDatabase.js').default;
+export type OpenDatabase = (name: string, version: string, displayName: string, estimatedSize: number) => import("websql-configurable/lib/websql/WebSQLDatabase.js").default;
 export type IDBFactoryFull = globalThis.IDBFactory & {
     __openDatabase: OpenDatabase;
     __connections: {
@@ -42,9 +42,9 @@ export class IDBFactory {
      * @param {import('./Key.js').Key} key1
      * @param {import('./Key.js').Key} key2
      * @throws {TypeError}
-     * @returns {0|1|-1}
+     * @returns {number}
      */
-    cmp(key1: import('./Key.js').Key, key2: import('./Key.js').Key, ...args: any[]): 0 | 1 | -1;
+    cmp(key1: import("./Key.js").Key, key2: import("./Key.js").Key, ...args: any[]): number;
     /**
     * May return outdated information if a database has since been deleted.
     * @see https://github.com/w3c/IndexedDB/pull/240/files
@@ -90,7 +90,7 @@ export const shimIndexedDB: IDBFactoryFull;
  * @param {import('./CFG.js').FSApi} _fs
  * @returns {void}
  */
-export function setFS(_fs: import('./CFG.js').FSApi): void;
+export function setFS(_fs: import("./CFG.js").FSApi): void;
 import { IDBOpenDBRequest } from './IDBRequest.js';
 export { cmp };
 //# sourceMappingURL=IDBFactory.d.ts.map

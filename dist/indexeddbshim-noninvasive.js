@@ -1,4 +1,4 @@
-/*! indexeddbshim - v15.0.1 - 9/5/2024 */
+/*! indexeddbshim - v15.0.4 - 9/11/2024 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -4044,6 +4044,7 @@
               continue;
             }
             if (key.length === 1) {
+              // eslint-disable-next-line sonarjs/updated-loop-counter -- Convenient
               key = key[0];
             } else {
               var nested = findMultiEntryMatches(key, range);
@@ -4270,7 +4271,7 @@
    *
    * @param {SQLTransaction} tx
    * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
-   * @param {import('./Key.js').Key} key
+   * @param {Key} key
    * @param {(num?: Integer) => void} successCb
    * @param {SQLFailureCallback} sqlFailCb
    * @returns {void}
@@ -5892,8 +5893,8 @@
             p = [],
             d = [],
             v = !("cyclic" in u) || u.cyclic,
-            b = u.encapsulateObserver,
-            h = function finish(e) {
+            m = u.encapsulateObserver,
+            b = function finish(e) {
               var t = Object.values(f);
               if (u.iterateNone) return t.length ? t[0] : getJSONType(e);
               if (t.length) {
@@ -5918,7 +5919,7 @@
               });
               return !u.returnTypeNames && e;
             },
-            m = _async(function (t, r) {
+            h = _async(function (t, r) {
               return _await(Promise.all(r.map(function (e) {
                 return e[1].p;
               })), function (n) {
@@ -5941,11 +5942,11 @@
                   }(function () {
                     if (s && v) return _await(d.p, function (e) {
                       f[y] = e;
-                      var r = m(t, o);
+                      var r = h(t, o);
                       return a = !0, r;
                     });
                   }, function (e) {
-                    return a ? e : (s ? f[y] = d : t = v ? d.p : d, m(t, o));
+                    return a ? e : (s ? f[y] = d : t = v ? d.p : d, h(t, o));
                   });
                 }))), function () {
                   return t;
@@ -5963,13 +5964,13 @@
               });
             },
             O = function _encapsulate(t, r, i, c, l, d, v) {
-              var h,
-                m = {},
+              var b,
+                h = {},
                 O = _typeof(r),
-                _ = b ? function (n) {
+                _ = m ? function (n) {
                   var a,
                     o = null !== (a = null != v ? v : c.type) && void 0 !== a ? a : getJSONType(r);
-                  b(Object.assign(null != n ? n : m, {
+                  m(Object.assign(null != n ? n : h, {
                     keypath: t,
                     value: r,
                     cyclic: i,
@@ -5981,9 +5982,9 @@
                     type: o
                   }));
                 } : null;
-              if (["string", "boolean", "number", "undefined"].includes(O)) return void 0 === r || Number.isNaN(r) || r === Number.NEGATIVE_INFINITY || r === Number.POSITIVE_INFINITY || 0 === r ? (h = c.replaced ? r : w(t, r, c, l, !1, d, _)) !== r && (m = {
-                replaced: h
-              }) : h = r, _ && _(), h;
+              if (["string", "boolean", "number", "undefined"].includes(O)) return void 0 === r || Number.isNaN(r) || r === Number.NEGATIVE_INFINITY || r === Number.POSITIVE_INFINITY || 0 === r ? (b = c.replaced ? r : w(t, r, c, l, !1, d, _)) !== r && (h = {
+                replaced: b
+              }) : b = r, _ && _(), b;
               if (null === r) return _ && _(), r;
               if (i && !c.iterateIn && !c.iterateUnsetNumeric && r && "object" === _typeof(r)) {
                 var A = y.indexOf(r);
@@ -5997,14 +5998,14 @@
                 T = isPlainObject(r),
                 I = o(r),
                 N = (T || I) && (!s.plainObjectReplacers.length || c.replaced) || c.iterateIn ? r : w(t, r, c, l, T || I, null, _);
-              if (N !== r ? (h = N, m = {
+              if (N !== r ? (b = N, h = {
                 replaced: N
-              }) : "" === t && hasConstructorOf(r, e) ? (l.push([t, r, i, c, void 0, void 0, c.type]), h = r) : I && "object" !== c.iterateIn || "array" === c.iterateIn ? (S = new Array(r.length), m = {
+              }) : "" === t && hasConstructorOf(r, e) ? (l.push([t, r, i, c, void 0, void 0, c.type]), b = r) : I && "object" !== c.iterateIn || "array" === c.iterateIn ? (S = new Array(r.length), h = {
                 clone: S
-              }) : (["function", "symbol"].includes(_typeof(r)) || "toJSON" in r || hasConstructorOf(r, e) || hasConstructorOf(r, Promise) || hasConstructorOf(r, ArrayBuffer)) && !T && "object" !== c.iterateIn ? h = r : (S = {}, c.addLength && (S.length = r.length), m = {
+              }) : (["function", "symbol"].includes(_typeof(r)) || "toJSON" in r || hasConstructorOf(r, e) || hasConstructorOf(r, Promise) || hasConstructorOf(r, ArrayBuffer)) && !T && "object" !== c.iterateIn ? b = r : (S = {}, c.addLength && (S.length = r.length), h = {
                 clone: S
-              }), _ && _(), u.iterateNone) return null !== (j = S) && void 0 !== j ? j : h;
-              if (!S) return h;
+              }), _ && _(), u.iterateNone) return null !== (j = S) && void 0 !== j ? j : b;
+              if (!S) return b;
               if (c.iterateIn) {
                 var P = function _loop(n) {
                   var o = {
@@ -6070,12 +6071,12 @@
                   i && i({
                     replacing: !0
                   });
-                  var b = void 0;
+                  var m = void 0;
                   if (l || !y.replaceAsync) {
                     if (void 0 === y.replace) throw new TypeError("Missing replacer");
-                    b = y.replace(t, r);
-                  } else b = y.replaceAsync(t, r);
-                  return O(e, b, v && "readonly", r, n, o, p);
+                    m = y.replace(t, r);
+                  } else m = y.replaceAsync(t, r);
+                  return O(e, m, v && "readonly", r, n, o, p);
                 }
               }
               return t;
@@ -6083,9 +6084,9 @@
             _ = O("", t, v, null != r ? r : {}, d);
           if (d.length) return l && u.throwOnBadSyncType ? function () {
             throw new TypeError("Sync method requested but async result obtained");
-          }() : Promise.resolve(m(_, d)).then(h);
+          }() : Promise.resolve(h(_, d)).then(b);
           if (!l && u.throwOnBadSyncType) throw new TypeError("Async method requested but sync result obtained");
-          return u.stringification && l ? [h(_)] : l ? h(_) : Promise.resolve(h(_));
+          return u.stringification && l ? [b(_)] : l ? b(_) : Promise.resolve(b(_));
         }
       }, {
         key: "encapsulateSync",
@@ -6140,7 +6141,7 @@
             return hasConstructorOf(e, s) ? void 0 : e;
           }
           var v,
-            b = function revivePlainObjects() {
+            m = function revivePlainObjects() {
               var r = [];
               if (!u) throw new Error("Found bad `types`");
               if (Object.entries(u).forEach(function (e) {
@@ -6172,29 +6173,29 @@
                 c === i && (t = c);
               }, void 0);
             }();
-          return hasConstructorOf(b, e) ? v = b.then(function () {
+          return hasConstructorOf(m, e) ? v = m.then(function () {
             return t;
           }) : (v = function _revive(t, r, a, i, c) {
             if (!y || "$types" !== t) {
               var f = u[t],
                 v = o(r);
               if (v || isPlainObject(r)) {
-                var b = v ? new Array(r.length) : {};
+                var m = v ? new Array(r.length) : {};
                 for (n(r).forEach(function (n) {
-                  var o = _revive(t + (t ? "." : "") + escapeKeyPathComponent(n), r[n], null != a ? a : b, b, n),
+                  var o = _revive(t + (t ? "." : "") + escapeKeyPathComponent(n), r[n], null != a ? a : m, m, n),
                     i = function set(e) {
-                      return hasConstructorOf(e, s) ? b[n] = void 0 : void 0 !== e && (b[n] = e), e;
+                      return hasConstructorOf(e, s) ? m[n] = void 0 : void 0 !== e && (m[n] = e), e;
                     };
                   hasConstructorOf(o, e) ? d.push(o.then(function (e) {
                     return i(e);
                   })) : i(o);
-                }), r = b; l.length;) {
-                  var h = _slicedToArray(l[0], 4),
-                    m = h[0],
-                    g = h[1],
-                    O = h[2],
-                    w = h[3],
-                    _ = getByKeyPath(m, g);
+                }), r = m; l.length;) {
+                  var b = _slicedToArray(l[0], 4),
+                    h = b[0],
+                    g = b[1],
+                    O = b[2],
+                    w = b[3],
+                    _ = getByKeyPath(h, g);
                   if (void 0 === _) break;
                   O[w] = _, l.splice(0, 1);
                 }
@@ -6348,7 +6349,7 @@
         }
       }
     },
-    b = {
+    m = {
       bigintObject: {
         test: function test(e) {
           return "object" == _typeof$2(e) && hasConstructorOf(e, BigInt);
@@ -6359,7 +6360,7 @@
         }
       }
     },
-    h = {
+    b = {
       bigint: {
         test: function test(e) {
           return "bigint" == typeof e;
@@ -6380,7 +6381,7 @@
     for (var _r = 0; _r < e.length; _r++) t[_r] = e.charCodeAt(_r);
     return t.buffer;
   }
-  var m = {
+  var h = {
     blob: {
       test: function test(e) {
         return "Blob" === toStringTag(e);
@@ -6950,7 +6951,7 @@
         }
       }
     },
-    q = {
+    Y = {
       regexp: {
         test: function test(e) {
           return "RegExp" === toStringTag(e);
@@ -6961,14 +6962,14 @@
             flags: (e.global ? "g" : "") + (e.ignoreCase ? "i" : "") + (e.multiline ? "m" : "") + (e.sticky ? "y" : "") + (e.unicode ? "u" : "")
           };
         },
-        revive: function revive(_ref11) {
-          var e = _ref11.source,
-            t = _ref11.flags;
+        revive: function revive(_ref12) {
+          var e = _ref12.source,
+            t = _ref12.flags;
           return new RegExp(e, t);
         }
       }
     },
-    G = {
+    H = {
       set: {
         test: function test(e) {
           return "Set" === toStringTag(e);
@@ -6981,11 +6982,11 @@
         }
       }
     },
-    H = {};
+    Q = {};
   "function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array].concat(_toConsumableArray("function" == typeof BigInt64Array ? [BigInt64Array, BigUint64Array] : [])).forEach(function (e) {
     return function create$1(e) {
       var t = e.name;
-      H[t.toLowerCase()] = {
+      Q[t.toLowerCase()] = {
         test: function test(e) {
           return toStringTag(e) === t;
         },
@@ -6998,18 +6999,18 @@
       };
     }(e);
   });
-  var z = {};
+  var X = {};
   "function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array].concat(_toConsumableArray("function" == typeof BigInt64Array ? [BigInt64Array, BigUint64Array] : [])).forEach(function (e) {
     return function create(e) {
       var t = e.name;
-      z[t.toLowerCase()] = {
+      X[t.toLowerCase()] = {
         test: function test(e) {
           return toStringTag(e) === t;
         },
-        replace: function replace(_ref12, n) {
-          var e = _ref12.buffer,
-            t = _ref12.byteOffset,
-            r = _ref12.length;
+        replace: function replace(_ref13, n) {
+          var e = _ref13.buffer,
+            t = _ref13.byteOffset,
+            r = _ref13.length;
           n.buffers || (n.buffers = []);
           var a = n.buffers.indexOf(e);
           return a > -1 ? {
@@ -7038,7 +7039,7 @@
       };
     }(e);
   });
-  var Q = {
+  var Z = {
       undef: {
         test: function test(e, t) {
           return void 0 === e && (t.ownKeys || !("ownKeys" in t));
@@ -7051,7 +7052,7 @@
         }
       }
     },
-    X = {
+    ee = {
       userObject: {
         test: function test(e) {
           return isUserObject(e);
@@ -7064,7 +7065,7 @@
         }
       }
     },
-    Z = [{
+    te = [{
       arrayNonindexKeys: {
         testPlainObjects: !0,
         test: function test(e, t) {
@@ -7078,10 +7079,10 @@
         revive: function revive(e) {
           if (Array.isArray(e)) return e;
           var t = [];
-          return Object.entries(e).forEach(function (_ref13) {
-            var _ref14 = _slicedToArray$1(_ref13, 2),
-              e = _ref14[0],
-              r = _ref14[1];
+          return Object.entries(e).forEach(function (_ref14) {
+            var _ref15 = _slicedToArray$1(_ref14, 2),
+              e = _ref15[0],
+              r = _ref15[1];
             t[e] = r;
           }), t;
         }
@@ -7097,9 +7098,9 @@
         revive: function revive() {}
       }
     }],
-    ee = [K, U, F, $],
-    oe = [X, Q, Z, V, ee, A, q, k, B, E, C, m, P, x].concat("function" == typeof Map ? D : [], "function" == typeof Set ? G : [], "function" == typeof ArrayBuffer ? v : [], "function" == typeof Uint8Array ? z : [], "function" == typeof DataView ? _ : [], "undefined" != typeof crypto ? w : [], "undefined" != typeof BigInt ? [h, b] : [], "undefined" != typeof DOMException ? S : [], "undefined" != typeof DOMRect ? N : [], "undefined" != typeof DOMPoint ? T : [], "undefined" != typeof DOMQuad ? I : [], "undefined" != typeof DOMMatrix ? j : []),
-    ie = oe.concat({
+    re = [K, U, F, $],
+    ce = [ee, Z, te, V, re, A, Y, k, B, E, C, h, P, x].concat("function" == typeof Map ? D : [], "function" == typeof Set ? H : [], "function" == typeof ArrayBuffer ? v : [], "function" == typeof Uint8Array ? X : [], "function" == typeof DataView ? _ : [], "undefined" != typeof crypto ? w : [], "undefined" != typeof BigInt ? [b, m] : [], "undefined" != typeof DOMException ? S : [], "undefined" != typeof DOMRect ? N : [], "undefined" != typeof DOMPoint ? T : [], "undefined" != typeof DOMQuad ? I : [], "undefined" != typeof DOMMatrix ? j : []),
+    se = ce.concat({
       checkDataCloneException: {
         test: function test(e) {
           var t = {}.toString.call(e).slice(8, -1);
@@ -7111,7 +7112,7 @@
 
   // See: http://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
 
-  var typeson = new c().register(ie);
+  var typeson = new c().register(se);
 
   /**
    * @param {(preset: import('typeson-registry').Preset) =>
@@ -7119,7 +7120,7 @@
    * @returns {void}
    */
   function register(func) {
-    typeson = new c().register(func(ie));
+    typeson = new c().register(func(se));
   }
 
   /**
@@ -7571,6 +7572,7 @@
   IDBIndex.__updateIndexList = function (store, tx, success, failure) {
     /** @type {IndexList} **/
     var indexList = {};
+    // eslint-disable-next-line sonarjs/prefer-for-of -- Implement iterability?
     for (var i = 0; i < store.indexNames.length; i++) {
       var idx = store.__indexes[store.indexNames[i]];
       indexList[idx.name] = {
@@ -8464,7 +8466,6 @@
     if (me.autoIncrement) {
       // If auto-increment and no valid primaryKey found on the keyPath, get and set the new value, and use
       if (key === undefined) {
-        // @ts-expect-error Due to re-exporting `Key.d.ts` file (needed for `node_modules` imports)
         generateKeyForStore(tx, me, function (failure, key, oldCn) {
           if (failure) {
             failCb(createDOMException('ConstraintError', 'The key generator\'s current number has reached the maximum safe integer limit'));
@@ -8478,7 +8479,6 @@
           success(key, oldCn);
         }, failCb);
       } else {
-        // @ts-expect-error Due to re-exporting `Key.d.ts` file (needed for `node_modules` imports)
         possiblyUpdateKeyGenerator(tx, me, key, keyCloneThenSuccess, failCb);
       }
       // Not auto-increment
@@ -8613,6 +8613,7 @@
         return false;
       });
       return undefined;
+      // eslint-disable-next-line sonarjs/no-invariant-returns -- Convenient
     })["catch"](function (err) {
       /**
        * @returns {void}
@@ -8623,7 +8624,6 @@
         error(err);
       }
       if (typeof oldCn === 'number') {
-        // @ts-expect-error Due to re-exporting `Key.d.ts` file (needed for `node_modules` imports)
         assignCurrentNumber(tx, me, oldCn, fail, fail);
         return null;
       }
@@ -9743,6 +9743,7 @@
     }
     req.addEventListener('success', removeFromQueue);
     req.addEventListener('error', removeFromQueue);
+    req.addEventListener('blocked', removeFromQueue);
     cb(req);
   }
 
@@ -10559,7 +10560,7 @@
    * @param {import('./Key.js').Key} key1
    * @param {import('./Key.js').Key} key2
    * @throws {TypeError}
-   * @returns {0|1|-1}
+   * @returns {number}
    */
   IDBFactory.prototype.cmp = function (key1, key2) {
     if (!(this instanceof IDBFactory)) {
@@ -11606,7 +11607,7 @@
   /**
    * @typedef {(
    *   prop: import('./CFG.js').KeyofConfigValues
-   * ) => import('../src/CFG.js').ConfigValue} GetConfig
+   * ) => import('./CFG.js').ConfigValue} GetConfig
    */
 
   /**

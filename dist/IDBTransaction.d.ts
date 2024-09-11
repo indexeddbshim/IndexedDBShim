@@ -3,11 +3,11 @@ export type Integer = number;
 export type RequestInfo = {
     op: SQLCallback;
     args: ObjectArray;
-    req: import('./IDBRequest.js').IDBRequestFull | null;
+    req: import("./IDBRequest.js").IDBRequestFull | null;
 };
 export type IDBTransactionFull = EventTarget & {
     mode: "readonly" | "readwrite" | "versionchange";
-    db: import('./IDBDatabase.js').IDBDatabaseFull;
+    db: import("./IDBDatabase.js").IDBDatabaseFull;
     on__abort: () => void;
     on__complete: () => void;
     on__beforecomplete: (ev: Event & {
@@ -22,28 +22,28 @@ export type IDBTransactionFull = EventTarget & {
     __running: boolean;
     __errored: boolean;
     __requests: RequestInfo[];
-    __db: import('./IDBDatabase.js').IDBDatabaseFull;
+    __db: import("./IDBDatabase.js").IDBDatabaseFull;
     __mode: string;
     __error: null | DOMException | Error;
-    __objectStoreNames: import('./DOMStringList.js').DOMStringListFull;
+    __objectStoreNames: import("./DOMStringList.js").DOMStringListFull;
     __storeHandles: {
         [key: string]: import("./IDBObjectStore.js").IDBObjectStoreFull;
     };
     __requestsFinished: boolean;
-    __transFinishedCb: (err: boolean, cb: (bool?: boolean) => void) => void;
+    __transFinishedCb: (err: boolean, cb: ((bool?: boolean) => void)) => void;
     __transactionEndCallback: () => void;
     __transactionFinished: boolean;
     __completed: boolean;
     __internal: boolean;
     __abortFinished: boolean;
-    __createRequest: (source: import('./IDBDatabase.js').IDBDatabaseFull | import('./IDBObjectStore.js').IDBObjectStoreFull | import('./IDBIndex.js').IDBIndexFull | import('./IDBCursor.js').IDBCursorFull) => import('./IDBRequest.js').IDBRequestFull;
-    __pushToQueue: (request: import('./IDBRequest.js').IDBRequestFull | null, callback: SQLCallback, args?: ObjectArray) => void;
+    __createRequest: (source: import("./IDBDatabase.js").IDBDatabaseFull | import("./IDBObjectStore.js").IDBObjectStoreFull | import("./IDBIndex.js").IDBIndexFull | import("./IDBCursor.js").IDBCursorFull) => import("./IDBRequest.js").IDBRequestFull;
+    __pushToQueue: (request: import("./IDBRequest.js").IDBRequestFull | null, callback: SQLCallback, args?: ObjectArray) => void;
     __assertActive: () => void;
     __addNonRequestToTransactionQueue: (callback: SQLCallback, args?: ObjectArray) => void;
-    __addToTransactionQueue: (callback: SQLCallback, args: ObjectArray | undefined, source: import('./IDBDatabase.js').IDBDatabaseFull | import('./IDBObjectStore.js').IDBObjectStoreFull | import('./IDBIndex.js').IDBIndexFull | import('./IDBCursor.js').IDBCursorFull) => import('./IDBRequest.js').IDBRequestFull;
+    __addToTransactionQueue: (callback: SQLCallback, args: ObjectArray | undefined, source: import("./IDBDatabase.js").IDBDatabaseFull | import("./IDBObjectStore.js").IDBObjectStoreFull | import("./IDBIndex.js").IDBIndexFull | import("./IDBCursor.js").IDBCursorFull) => import("./IDBRequest.js").IDBRequestFull;
     __assertWritable: () => void;
 };
-export type SQLCallback = (tx: SQLTransaction, args: ObjectArray, success: (result?: any, req?: import('./IDBRequest.js').IDBRequestFull) => void, error: (tx: SQLTransaction | Error | DOMException | SQLError, err?: SQLError) => void, executeNextRequest?: () => void) => void;
+export type SQLCallback = (tx: SQLTransaction, args: ObjectArray, success: (result?: any, req?: import("./IDBRequest.js").IDBRequestFull) => void, error: (tx: SQLTransaction | Error | DOMException | SQLError, err?: SQLError) => void, executeNextRequest?: () => void) => void;
 /**
  * @typedef {number} Integer
  */
@@ -140,7 +140,7 @@ declare class IDBTransaction {
      * @this {IDBTransactionFull}
      * @returns {IDBRequest}
      */
-    __createRequest(this: IDBTransactionFull, source: import('./IDBDatabase.js').IDBDatabaseFull): IDBRequest;
+    __createRequest(this: IDBTransactionFull, source: import("./IDBDatabase.js").IDBDatabaseFull): IDBRequest;
     /**
      * @typedef {(
      *   tx: SQLTransaction,
@@ -160,7 +160,7 @@ declare class IDBTransaction {
      * @this {IDBTransactionFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    __addToTransactionQueue(this: IDBTransactionFull, callback: SQLCallback, args: ObjectArray, source: import('./IDBDatabase.js').IDBDatabaseFull | import('./IDBObjectStore.js').IDBObjectStoreFull | import('./IDBIndex.js').IDBIndexFull): import('./IDBRequest.js').IDBRequestFull;
+    __addToTransactionQueue(this: IDBTransactionFull, callback: SQLCallback, args: ObjectArray, source: import("./IDBDatabase.js").IDBDatabaseFull | import("./IDBObjectStore.js").IDBObjectStoreFull | import("./IDBIndex.js").IDBIndexFull): import("./IDBRequest.js").IDBRequestFull;
     /**
      * Adds a callback function to the transaction queue without generating a
      *   request.
@@ -178,7 +178,7 @@ declare class IDBTransaction {
      * @this {IDBTransactionFull}
      * @returns {void}
      */
-    __pushToQueue(this: IDBTransactionFull, request: import('./IDBRequest.js').IDBRequestFull | null, callback: SQLCallback, args: ObjectArray): void;
+    __pushToQueue(this: IDBTransactionFull, request: import("./IDBRequest.js").IDBRequestFull | null, callback: SQLCallback, args: ObjectArray): void;
     /**
      * @throws {DOMException}
      * @returns {void}
@@ -221,7 +221,7 @@ declare class IDBTransaction {
      * @this {IDBTransactionFull}
     * @returns {import('./IDBDatabase.js').IDBDatabaseFull}
     */
-    __getParent(this: IDBTransactionFull): import('./IDBDatabase.js').IDBDatabaseFull;
+    __getParent(this: IDBTransactionFull): import("./IDBDatabase.js").IDBDatabaseFull;
 }
 declare namespace IDBTransaction {
     /**

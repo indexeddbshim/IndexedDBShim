@@ -1,9 +1,9 @@
 export default DOMStringList;
 export type Integer = number;
 export type DOMStringListFull = {
-    [key: number]: string;
     _items: string[];
     _length: Integer;
+    [key: number]: string;
     addIndexes: () => void;
     sortList: () => string[];
     push: (item: string) => void;

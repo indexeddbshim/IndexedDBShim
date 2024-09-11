@@ -1,4 +1,4 @@
-/*! indexeddbshim - v15.0.1 - 9/5/2024 */
+/*! indexeddbshim - v15.0.4 - 9/11/2024 */
 
 'use strict';
 
@@ -3464,6 +3464,7 @@ function findMultiEntryMatches(keyEntry, range) {
           continue;
         }
         if (key.length === 1) {
+          // eslint-disable-next-line sonarjs/updated-loop-counter -- Convenient
           key = key[0];
         } else {
           const nested = findMultiEntryMatches(key, range);
@@ -3687,7 +3688,7 @@ function generateKeyForStore(tx, store, cb, sqlFailCb) {
  *
  * @param {SQLTransaction} tx
  * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
- * @param {import('./Key.js').Key} key
+ * @param {Key} key
  * @param {(num?: Integer) => void} successCb
  * @param {SQLFailureCallback} sqlFailCb
  * @returns {void}
@@ -5297,8 +5298,8 @@ var c = function () {
           p = [],
           d = [],
           v = !("cyclic" in u) || u.cyclic,
-          b = u.encapsulateObserver,
-          h = function finish(e) {
+          m = u.encapsulateObserver,
+          b = function finish(e) {
             var t = Object.values(f);
             if (u.iterateNone) return t.length ? t[0] : getJSONType(e);
             if (t.length) {
@@ -5323,7 +5324,7 @@ var c = function () {
             });
             return !u.returnTypeNames && e;
           },
-          m = _async(function (t, r) {
+          h = _async(function (t, r) {
             return _await(Promise.all(r.map(function (e) {
               return e[1].p;
             })), function (n) {
@@ -5346,11 +5347,11 @@ var c = function () {
                 }(function () {
                   if (s && v) return _await(d.p, function (e) {
                     f[y] = e;
-                    var r = m(t, o);
+                    var r = h(t, o);
                     return a = !0, r;
                   });
                 }, function (e) {
-                  return a ? e : (s ? f[y] = d : t = v ? d.p : d, m(t, o));
+                  return a ? e : (s ? f[y] = d : t = v ? d.p : d, h(t, o));
                 });
               }))), function () {
                 return t;
@@ -5368,13 +5369,13 @@ var c = function () {
             });
           },
           O = function _encapsulate(t, r, i, c, l, d, v) {
-            var h,
-              m = {},
+            var b,
+              h = {},
               O = _typeof(r),
-              _ = b ? function (n) {
+              _ = m ? function (n) {
                 var a,
                   o = null !== (a = null != v ? v : c.type) && void 0 !== a ? a : getJSONType(r);
-                b(Object.assign(null != n ? n : m, {
+                m(Object.assign(null != n ? n : h, {
                   keypath: t,
                   value: r,
                   cyclic: i,
@@ -5386,9 +5387,9 @@ var c = function () {
                   type: o
                 }));
               } : null;
-            if (["string", "boolean", "number", "undefined"].includes(O)) return void 0 === r || Number.isNaN(r) || r === Number.NEGATIVE_INFINITY || r === Number.POSITIVE_INFINITY || 0 === r ? (h = c.replaced ? r : w(t, r, c, l, !1, d, _)) !== r && (m = {
-              replaced: h
-            }) : h = r, _ && _(), h;
+            if (["string", "boolean", "number", "undefined"].includes(O)) return void 0 === r || Number.isNaN(r) || r === Number.NEGATIVE_INFINITY || r === Number.POSITIVE_INFINITY || 0 === r ? (b = c.replaced ? r : w(t, r, c, l, !1, d, _)) !== r && (h = {
+              replaced: b
+            }) : b = r, _ && _(), b;
             if (null === r) return _ && _(), r;
             if (i && !c.iterateIn && !c.iterateUnsetNumeric && r && "object" === _typeof(r)) {
               var A = y.indexOf(r);
@@ -5402,14 +5403,14 @@ var c = function () {
               T = isPlainObject(r),
               I = o(r),
               N = (T || I) && (!s.plainObjectReplacers.length || c.replaced) || c.iterateIn ? r : w(t, r, c, l, T || I, null, _);
-            if (N !== r ? (h = N, m = {
+            if (N !== r ? (b = N, h = {
               replaced: N
-            }) : "" === t && hasConstructorOf(r, e) ? (l.push([t, r, i, c, void 0, void 0, c.type]), h = r) : I && "object" !== c.iterateIn || "array" === c.iterateIn ? (S = new Array(r.length), m = {
+            }) : "" === t && hasConstructorOf(r, e) ? (l.push([t, r, i, c, void 0, void 0, c.type]), b = r) : I && "object" !== c.iterateIn || "array" === c.iterateIn ? (S = new Array(r.length), h = {
               clone: S
-            }) : (["function", "symbol"].includes(_typeof(r)) || "toJSON" in r || hasConstructorOf(r, e) || hasConstructorOf(r, Promise) || hasConstructorOf(r, ArrayBuffer)) && !T && "object" !== c.iterateIn ? h = r : (S = {}, c.addLength && (S.length = r.length), m = {
+            }) : (["function", "symbol"].includes(_typeof(r)) || "toJSON" in r || hasConstructorOf(r, e) || hasConstructorOf(r, Promise) || hasConstructorOf(r, ArrayBuffer)) && !T && "object" !== c.iterateIn ? b = r : (S = {}, c.addLength && (S.length = r.length), h = {
               clone: S
-            }), _ && _(), u.iterateNone) return null !== (j = S) && void 0 !== j ? j : h;
-            if (!S) return h;
+            }), _ && _(), u.iterateNone) return null !== (j = S) && void 0 !== j ? j : b;
+            if (!S) return b;
             if (c.iterateIn) {
               var P = function _loop(n) {
                 var o = {
@@ -5475,12 +5476,12 @@ var c = function () {
                 i && i({
                   replacing: !0
                 });
-                var b = void 0;
+                var m = void 0;
                 if (l || !y.replaceAsync) {
                   if (void 0 === y.replace) throw new TypeError("Missing replacer");
-                  b = y.replace(t, r);
-                } else b = y.replaceAsync(t, r);
-                return O(e, b, v && "readonly", r, n, o, p);
+                  m = y.replace(t, r);
+                } else m = y.replaceAsync(t, r);
+                return O(e, m, v && "readonly", r, n, o, p);
               }
             }
             return t;
@@ -5488,9 +5489,9 @@ var c = function () {
           _ = O("", t, v, null != r ? r : {}, d);
         if (d.length) return l && u.throwOnBadSyncType ? function () {
           throw new TypeError("Sync method requested but async result obtained");
-        }() : Promise.resolve(m(_, d)).then(h);
+        }() : Promise.resolve(h(_, d)).then(b);
         if (!l && u.throwOnBadSyncType) throw new TypeError("Async method requested but sync result obtained");
-        return u.stringification && l ? [h(_)] : l ? h(_) : Promise.resolve(h(_));
+        return u.stringification && l ? [b(_)] : l ? b(_) : Promise.resolve(b(_));
       }
     }, {
       key: "encapsulateSync",
@@ -5545,7 +5546,7 @@ var c = function () {
           return hasConstructorOf(e, s) ? void 0 : e;
         }
         var v,
-          b = function revivePlainObjects() {
+          m = function revivePlainObjects() {
             var r = [];
             if (!u) throw new Error("Found bad `types`");
             if (Object.entries(u).forEach(function (e) {
@@ -5577,29 +5578,29 @@ var c = function () {
               c === i && (t = c);
             }, void 0);
           }();
-        return hasConstructorOf(b, e) ? v = b.then(function () {
+        return hasConstructorOf(m, e) ? v = m.then(function () {
           return t;
         }) : (v = function _revive(t, r, a, i, c) {
           if (!y || "$types" !== t) {
             var f = u[t],
               v = o(r);
             if (v || isPlainObject(r)) {
-              var b = v ? new Array(r.length) : {};
+              var m = v ? new Array(r.length) : {};
               for (n(r).forEach(function (n) {
-                var o = _revive(t + (t ? "." : "") + escapeKeyPathComponent(n), r[n], null != a ? a : b, b, n),
+                var o = _revive(t + (t ? "." : "") + escapeKeyPathComponent(n), r[n], null != a ? a : m, m, n),
                   i = function set(e) {
-                    return hasConstructorOf(e, s) ? b[n] = void 0 : void 0 !== e && (b[n] = e), e;
+                    return hasConstructorOf(e, s) ? m[n] = void 0 : void 0 !== e && (m[n] = e), e;
                   };
                 hasConstructorOf(o, e) ? d.push(o.then(function (e) {
                   return i(e);
                 })) : i(o);
-              }), r = b; l.length;) {
-                var h = _slicedToArray(l[0], 4),
-                  m = h[0],
-                  g = h[1],
-                  O = h[2],
-                  w = h[3],
-                  _ = getByKeyPath(m, g);
+              }), r = m; l.length;) {
+                var b = _slicedToArray(l[0], 4),
+                  h = b[0],
+                  g = b[1],
+                  O = b[2],
+                  w = b[3],
+                  _ = getByKeyPath(h, g);
                 if (void 0 === _) break;
                 O[w] = _, l.splice(0, 1);
               }
@@ -5751,14 +5752,14 @@ const v = {
       }
     }
   },
-  b = {
+  m = {
     bigintObject: {
       test: e => "object" == typeof e && hasConstructorOf(e, BigInt),
       replace: String,
       revive: e => new Object(BigInt(e))
     }
   },
-  h = {
+  b = {
     bigint: {
       test: e => "bigint" == typeof e,
       replace: String,
@@ -5773,7 +5774,7 @@ function string2arraybuffer(e) {
   for (let r = 0; r < e.length; r++) t[r] = e.charCodeAt(r);
   return t.buffer;
 }
-const m = {
+const h = {
   blob: {
     test: e => "Blob" === toStringTag(e),
     replace(e) {
@@ -6196,7 +6197,7 @@ const E = {
       revive: e => new Number(e)
     }
   },
-  q = {
+  Y = {
     regexp: {
       test: e => "RegExp" === toStringTag(e),
       replace: e => ({
@@ -6209,26 +6210,26 @@ const E = {
       }) => new RegExp(e, t)
     }
   },
-  G = {
+  H = {
     set: {
       test: e => "Set" === toStringTag(e),
       replace: e => [...e.values()],
       revive: e => new Set(e)
     }
   },
-  H = {};
+  Q = {};
 "function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, ...("function" == typeof BigInt64Array ? [BigInt64Array, BigUint64Array] : [])].forEach(e => function create$1(e) {
   const t = e.name;
-  H[t.toLowerCase()] = {
+  Q[t.toLowerCase()] = {
     test: e => toStringTag(e) === t,
     replace: e => (0 === e.byteOffset && e.byteLength === e.buffer.byteLength ? e : e.slice(0)).buffer,
     revive: t => "ArrayBuffer" === toStringTag(t) ? new e(t) : t
   };
 }(e));
-const z = {};
+const X = {};
 "function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, ...("function" == typeof BigInt64Array ? [BigInt64Array, BigUint64Array] : [])].forEach(e => function create(e) {
   const t = e.name;
-  z[t.toLowerCase()] = {
+  X[t.toLowerCase()] = {
     test: e => toStringTag(e) === t,
     replace({
       buffer: e,
@@ -6264,14 +6265,14 @@ const z = {};
     }
   };
 }(e));
-const Q = {
+const Z = {
     undef: {
       test: (e, t) => void 0 === e && (t.ownKeys || !("ownKeys" in t)),
       replace: () => 0,
       revive: () => new s()
     }
   },
-  X = {
+  ee = {
     userObject: {
       test: e => isUserObject(e),
       replace: e => ({
@@ -6280,7 +6281,7 @@ const Q = {
       revive: e => e
     }
   },
-  Z = [{
+  te = [{
     arrayNonindexKeys: {
       testPlainObjects: !0,
       test: (e, t) => !!Array.isArray(e) && (Object.keys(e).some(e => String(Number.parseInt(e)) !== e) && (t.iterateIn = "object", t.addLength = !0), !0),
@@ -6300,9 +6301,9 @@ const Q = {
       revive() {}
     }
   }],
-  ee = [K, U, F, $],
-  oe = [X, Q, Z, V, ee, A, q, k, B, E, C, m, P, x].concat("function" == typeof Map ? D : [], "function" == typeof Set ? G : [], "function" == typeof ArrayBuffer ? v : [], "function" == typeof Uint8Array ? z : [], "function" == typeof DataView ? _ : [], "undefined" != typeof crypto ? w : [], "undefined" != typeof BigInt ? [h, b] : [], "undefined" != typeof DOMException ? S : [], "undefined" != typeof DOMRect ? N : [], "undefined" != typeof DOMPoint ? T : [], "undefined" != typeof DOMQuad ? I : [], "undefined" != typeof DOMMatrix ? j : []),
-  ie = oe.concat({
+  re = [K, U, F, $],
+  ce = [ee, Z, te, V, re, A, Y, k, B, E, C, h, P, x].concat("function" == typeof Map ? D : [], "function" == typeof Set ? H : [], "function" == typeof ArrayBuffer ? v : [], "function" == typeof Uint8Array ? X : [], "function" == typeof DataView ? _ : [], "undefined" != typeof crypto ? w : [], "undefined" != typeof BigInt ? [b, m] : [], "undefined" != typeof DOMException ? S : [], "undefined" != typeof DOMRect ? N : [], "undefined" != typeof DOMPoint ? T : [], "undefined" != typeof DOMQuad ? I : [], "undefined" != typeof DOMMatrix ? j : []),
+  se = ce.concat({
     checkDataCloneException: {
       test(e) {
         const t = {}.toString.call(e).slice(8, -1);
@@ -6314,7 +6315,7 @@ const Q = {
 
 // See: http://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
 
-let typeson = new c().register(ie);
+let typeson = new c().register(se);
 
 /**
  * @param {(preset: import('typeson-registry').Preset) =>
@@ -6322,7 +6323,7 @@ let typeson = new c().register(ie);
  * @returns {void}
  */
 function register(func) {
-  typeson = new c().register(func(ie));
+  typeson = new c().register(func(se));
 }
 
 /**
@@ -6778,6 +6779,7 @@ IDBIndex.__deleteIndex = function (store, index) {
 IDBIndex.__updateIndexList = function (store, tx, success, failure) {
   /** @type {IndexList} **/
   const indexList = {};
+  // eslint-disable-next-line sonarjs/prefer-for-of -- Implement iterability?
   for (let i = 0; i < store.indexNames.length; i++) {
     const idx = store.__indexes[store.indexNames[i]];
     indexList[idx.name] = {
@@ -7649,7 +7651,6 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb
   if (me.autoIncrement) {
     // If auto-increment and no valid primaryKey found on the keyPath, get and set the new value, and use
     if (key === undefined) {
-      // @ts-expect-error Due to re-exporting `Key.d.ts` file (needed for `node_modules` imports)
       generateKeyForStore(tx, me, function (failure, key, oldCn) {
         if (failure) {
           failCb(createDOMException('ConstraintError', 'The key generator\'s current number has reached the maximum safe integer limit'));
@@ -7663,7 +7664,6 @@ IDBObjectStore.prototype.__deriveKey = function (tx, value, key, success, failCb
         success(key, oldCn);
       }, failCb);
     } else {
-      // @ts-expect-error Due to re-exporting `Key.d.ts` file (needed for `node_modules` imports)
       possiblyUpdateKeyGenerator(tx, me, key, keyCloneThenSuccess, failCb);
     }
     // Not auto-increment
@@ -7795,6 +7795,7 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
       return false;
     });
     return undefined;
+    // eslint-disable-next-line sonarjs/no-invariant-returns -- Convenient
   }).catch(function (err) {
     /**
      * @returns {void}
@@ -7805,7 +7806,6 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
       error(err);
     }
     if (typeof oldCn === 'number') {
-      // @ts-expect-error Due to re-exporting `Key.d.ts` file (needed for `node_modules` imports)
       assignCurrentNumber(tx, me, oldCn, fail, fail);
       return null;
     }
@@ -8627,6 +8627,7 @@ Object.defineProperty(IDBDatabase, 'prototype', {
   writable: false
 });
 
+/* eslint-disable sonarjs/no-invariant-returns -- Convenient here */
 // eslint-disable-next-line no-restricted-imports -- Can be polyfilled
 
 /**
@@ -8699,6 +8700,7 @@ function processNextInConnectionQueue(name, origin = getOrigin()) {
   }
   req.addEventListener('success', removeFromQueue);
   req.addEventListener('error', removeFromQueue);
+  req.addEventListener('blocked', removeFromQueue);
   cb(req);
 }
 
@@ -9510,7 +9512,7 @@ IDBFactory.prototype.deleteDatabase = function (name) {
  * @param {import('./Key.js').Key} key1
  * @param {import('./Key.js').Key} key2
  * @throws {TypeError}
- * @returns {0|1|-1}
+ * @returns {number}
  */
 IDBFactory.prototype.cmp = function (key1, key2) {
   if (!(this instanceof IDBFactory)) {
@@ -10514,7 +10516,7 @@ function setConfig(prop, val) {
 /**
  * @typedef {(
  *   prop: import('./CFG.js').KeyofConfigValues
- * ) => import('../src/CFG.js').ConfigValue} GetConfig
+ * ) => import('./CFG.js').ConfigValue} GetConfig
  */
 
 /**

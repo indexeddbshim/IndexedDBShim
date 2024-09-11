@@ -1,6 +1,6 @@
 {
   "name": "indexeddbshim",
-  "version": "15.0.4",
+  "version": "15.1.0",
   "type": "module",
   "author": "Parashuram <code@nparashuram.com>",
   "contributors": [
@@ -31,7 +31,7 @@
   "scripts": {
     "tsc": "tsc",
     "tsc-prod": "tsc -p tsconfig-prod.json",
-    "build": "npm run rollup && npm run tsc-prod",
+    "build": "rm -R dist && npm run tsc-prod && npm run rollup",
     "prepublishOnly": "npm run license-badges",
     "license-badge": "license-badger --corrections --uncategorizedLicenseTemplate \"\\${license} (\\${name} (\\${version}))\" --filteredTypes=nonempty --textTemplate \"License types\n(project, deps, and bundled devDeps)\" --packageJson --production badges/licenses-badge.svg",
     "license-badge-dev": "license-badger --corrections --filteredTypes=nonempty --textTemplate \"License types\n(all devDeps)\" --allDevelopment badges/licenses-badge-dev.svg",
@@ -162,7 +162,7 @@
     "eventtargeter": "0.9.0",
     "sync-promise-expanded": "^1.0.0",
     "typeson": "9.0.3",
-    "typeson-registry": "11.0.1",
+    "typeson-registry": "11.1.0",
     "websql-configurable": "^3.0.3"
   },
   "devDependencies": {
@@ -190,8 +190,8 @@
     "coveradge": "^0.8.2",
     "cyclonejs": "1.1.4",
     "delay-cli": "^2.0.0",
-    "eslint": "^9.9.1",
-    "eslint-config-ash-nazg": "^36.13.0",
+    "eslint": "^9.10.0",
+    "eslint-config-ash-nazg": "^36.16.3",
     "got": "^13.0.0",
     "is-date-object": "1.0.5",
     "isomorphic-fetch": "^3.0.0",
@@ -208,10 +208,10 @@
     "rollup-plugin-filesize": "^10.0.0",
     "rollup-plugin-node-globals": "^1.4.0",
     "rollup-plugin-node-polyfills": "^0.2.1",
-    "sinon": "^18.0.0",
+    "sinon": "^18.0.1",
     "source-map-support": "0.5.21",
     "sourcemap-transformer": "git+https://github.com/brettz9/sourcemap-transformer.git",
-    "typescript": "^5.5.4",
+    "typescript": "^5.6.2",
     "w3c-blob": "0.0.1",
     "ws": "^8.18.0"
   }

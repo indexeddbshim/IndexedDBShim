@@ -135,9 +135,9 @@ export function defineListenerProperties(obj: object & {
  * }} getter
  * @returns {void}
  */
-export function defineReadonlyProperties(obj: object, props: string | string[], getter?: {
+export function defineReadonlyProperties(obj: object, props: string | string[], getter?: null | {
     [key: string]: any;
-} | null): void;
+}): void;
 /**
  *
  * @param {string|string[]} keyPath

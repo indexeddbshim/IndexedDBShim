@@ -1,4 +1,4 @@
-/*! indexeddbshim - v15.0.1 - 9/5/2024 */
+/*! indexeddbshim - v15.0.4 - 9/11/2024 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -1694,6 +1694,7 @@
               continue;
             }
             if (key.length === 1) {
+              // eslint-disable-next-line sonarjs/updated-loop-counter -- Convenient
               key = key[0];
             } else {
               var nested = findMultiEntryMatches(key, range);
@@ -1920,7 +1921,7 @@
    *
    * @param {SQLTransaction} tx
    * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
-   * @param {import('./Key.js').Key} key
+   * @param {Key} key
    * @param {(num?: Integer) => void} successCb
    * @param {SQLFailureCallback} sqlFailCb
    * @returns {void}

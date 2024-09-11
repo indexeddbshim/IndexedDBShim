@@ -35,7 +35,7 @@ export class IDBKeyRange {
      * @this {IDBKeyRangeFull}
      * @returns {boolean}
      */
-    includes(this: IDBKeyRangeFull, key: import('./Key.js').Key, ...args: any[]): boolean;
+    includes(this: IDBKeyRangeFull, key: import("./Key.js").Key, ...args: any[]): boolean;
 }
 export namespace IDBKeyRange {
     /**
@@ -45,28 +45,28 @@ export namespace IDBKeyRange {
      * @param {boolean} upperOpen
      * @returns {import('./IDBKeyRange.js').IDBKeyRangeFull}
      */
-    function __createInstance(lower: any, upper: any, lowerOpen: boolean, upperOpen: boolean): IDBKeyRangeFull;
+    function __createInstance(lower: import("./Key.js").Key | null, upper: import("./Key.js").Key | null, lowerOpen: boolean, upperOpen: boolean): import("./IDBKeyRange.js").IDBKeyRangeFull;
     /**
      * @param {import('./Key.js').Value} value
      * @returns {import('./IDBKeyRange.js').IDBKeyRangeFull}
      */
-    function only(value: any, ...args: any[]): IDBKeyRangeFull;
+    function only(value: import("./Key.js").Value, ...args: any[]): import("./IDBKeyRange.js").IDBKeyRangeFull;
     /**
      * @param {import('./Key.js').Value} value
      * @returns {globalThis.IDBKeyRange}
      */
-    function lowerBound(value: any, ...args: any[]): globalThis.IDBKeyRange;
+    function lowerBound(value: import("./Key.js").Value, ...args: any[]): globalThis.IDBKeyRange;
     /**
      * @param {import('./Key.js').Value} value
      * @returns {globalThis.IDBKeyRange}
      */
-    function upperBound(value: any, ...args: any[]): globalThis.IDBKeyRange;
+    function upperBound(value: import("./Key.js").Value, ...args: any[]): globalThis.IDBKeyRange;
     /**
      * @param {import('./Key.js').Value} lower
      * @param {import('./Key.js').Value} upper
      * @returns {globalThis.IDBKeyRange}
      */
-    function bound(lower: any, upper: any, ...args: any[]): globalThis.IDBKeyRange;
+    function bound(lower: import("./Key.js").Value, upper: import("./Key.js").Value, ...args: any[]): globalThis.IDBKeyRange;
 }
 /**
  * @param {import('./Key.js').Value} value
@@ -74,6 +74,6 @@ export namespace IDBKeyRange {
  * @throws {DOMException}
  * @returns {import('./IDBKeyRange.js').IDBKeyRangeFull|undefined}
  */
-export function convertValueToKeyRange(value: import('./Key.js').Value, nullDisallowed?: boolean | undefined): import('./IDBKeyRange.js').IDBKeyRangeFull | undefined;
+export function convertValueToKeyRange(value: import("./Key.js").Value, nullDisallowed?: boolean | undefined): import("./IDBKeyRange.js").IDBKeyRangeFull | undefined;
 export { IDBKeyRange as default };
 //# sourceMappingURL=IDBKeyRange.d.ts.map

@@ -4,5 +4,5 @@ export default __setGlobalVars;
  * @param {import('./CFG.js').default} initialConfig
  * @returns {{}|Window}
  */
-declare function __setGlobalVars(idb: import('./setGlobalVars.js').ShimmedObject, initialConfig?: any): {} | Window;
+declare function __setGlobalVars(idb: import("./setGlobalVars.js").ShimmedObject, initialConfig?: any): {} | Window;
 //# sourceMappingURL=node-UnicodeIdentifiers.d.ts.map

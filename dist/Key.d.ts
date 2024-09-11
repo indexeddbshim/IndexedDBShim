@@ -6,7 +6,7 @@ export type KeyPathEvaluateFailure = {
     failure: boolean;
 };
 export type KeyPathEvaluateValueValueArray = KeyPathEvaluateValueValue[];
-export type KeyPathEvaluateValueValue = undefined | number | string | Date | object | KeyPathEvaluateValueValue[];
+export type KeyPathEvaluateValueValue = undefined | number | string | Date | object | KeyPathEvaluateValueValueArray;
 export type KeyPathEvaluateValue = {
     value?: KeyPathEvaluateValueValue;
     failure?: boolean | undefined;
@@ -21,7 +21,7 @@ export type KeyType = "number" | "date" | "string" | "binary" | "array";
 export type Value = any;
 export type Key = any;
 export type KeyPathArray = KeyPath[];
-export type KeyPath = string | KeyPath[];
+export type KeyPath = string | KeyPathArray;
 export type KeyValueObject = {
     /**
      * If not `KeyType`, indicates invalid value
@@ -33,7 +33,7 @@ export type KeyValueObject = {
 };
 export type ValueTypePrimitive = number | string | Date | ArrayBuffer;
 export type ValueTypeArray = ValueType[];
-export type ValueType = ValueTypePrimitive | ValueType[];
+export type ValueType = ValueTypePrimitive | ValueTypeArray;
 export type AnyValue = any;
 /**
  *
@@ -143,7 +143,7 @@ export function extractKeyValueDecodedFromValueUsingKeyPath(value: Value, keyPat
  * @returns {void}
  */
 export function injectKeyIntoValueUsingKeyPath(value: {
-    [key: string]: any;
+    [key: string]: AnyValue;
 }, key: Key, keyPath: string): void;
 /**
  *
@@ -167,14 +167,14 @@ export function isMultiEntryMatch(encodedEntry: string, encodedKey: string): boo
  * @param {boolean} [checkCached]
  * @returns {boolean}
  */
-export function isKeyInRange(key: Key, range: import('./IDBKeyRange.js').IDBKeyRangeFull, checkCached?: boolean | undefined): boolean;
+export function isKeyInRange(key: Key, range: import("./IDBKeyRange.js").IDBKeyRangeFull, checkCached?: boolean | undefined): boolean;
 /**
  *
  * @param {Key} keyEntry
  * @param {import('./IDBKeyRange.js').IDBKeyRangeFull|undefined} range
  * @returns {Key[]}
  */
-export function findMultiEntryMatches(keyEntry: Key, range: import('./IDBKeyRange.js').IDBKeyRangeFull | undefined): Key[];
+export function findMultiEntryMatches(keyEntry: Key, range: import("./IDBKeyRange.js").IDBKeyRangeFull | undefined): Key[];
 /**
  *
  * @param {SQLTransaction} tx
@@ -184,7 +184,7 @@ export function findMultiEntryMatches(keyEntry: Key, range: import('./IDBKeyRang
  * @param {SQLFailureCallback} failCb
  * @returns {void}
  */
-export function assignCurrentNumber(tx: SQLTransaction, store: import('./IDBObjectStore.js').IDBObjectStoreFull, num: Integer, successCb: CurrentNumberCallback, failCb: SQLFailureCallback): void;
+export function assignCurrentNumber(tx: SQLTransaction, store: import("./IDBObjectStore.js").IDBObjectStoreFull, num: Integer, successCb: CurrentNumberCallback, failCb: SQLFailureCallback): void;
 /**
  * @callback KeyForStoreCallback
  * @param {"failure"|null} arg1
@@ -200,15 +200,15 @@ export function assignCurrentNumber(tx: SQLTransaction, store: import('./IDBObje
  * @param {SQLFailureCallback} sqlFailCb
  * @returns {void}
  */
-export function generateKeyForStore(tx: SQLTransaction, store: import('./IDBObjectStore.js').IDBObjectStoreFull, cb: KeyForStoreCallback, sqlFailCb: SQLFailureCallback): void;
+export function generateKeyForStore(tx: SQLTransaction, store: import("./IDBObjectStore.js").IDBObjectStoreFull, cb: KeyForStoreCallback, sqlFailCb: SQLFailureCallback): void;
 /**
  *
  * @param {SQLTransaction} tx
  * @param {import('./IDBObjectStore.js').IDBObjectStoreFull} store
- * @param {import('./Key.js').Key} key
+ * @param {Key} key
  * @param {(num?: Integer) => void} successCb
  * @param {SQLFailureCallback} sqlFailCb
  * @returns {void}
  */
-export function possiblyUpdateKeyGenerator(tx: SQLTransaction, store: import('./IDBObjectStore.js').IDBObjectStoreFull, key: import('./Key.js').Key, successCb: (num?: Integer) => void, sqlFailCb: SQLFailureCallback): void;
+export function possiblyUpdateKeyGenerator(tx: SQLTransaction, store: import("./IDBObjectStore.js").IDBObjectStoreFull, key: Key, successCb: (num?: Integer) => void, sqlFailCb: SQLFailureCallback): void;
 //# sourceMappingURL=Key.d.ts.map
