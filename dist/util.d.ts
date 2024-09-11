@@ -40,6 +40,7 @@ export function escapeIndexNameForSQL(index: string): string;
  */
 export function escapeIndexNameForSQLKeyColumn(index: string): string;
 /**
+ * @todo Didn't need to escape `%`. Do we still need this escape?
  * @param {string} str
  * @returns {string}
  */

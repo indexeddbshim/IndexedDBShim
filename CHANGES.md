@@ -1,5 +1,12 @@
 # CHANGES for indexeddbshim
 
+## 15.2.0
+
+- fix: avoid problematic double-escaping of `"` in LIKE clauses (used in
+    multi-entry searches)
+- fix: for at least one-extra-level-nested array keys, ensure proper encoding
+    occurs (to ensure `get` requests work properly with them)
+
 ## 15.1.0
 
 - fix: actually include TS fixes

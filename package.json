@@ -1,6 +1,6 @@
 {
   "name": "indexeddbshim",
-  "version": "15.1.0",
+  "version": "15.2.0",
   "type": "module",
   "author": "Parashuram <code@nparashuram.com>",
   "contributors": [

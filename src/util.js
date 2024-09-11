@@ -211,12 +211,13 @@ function escapeIndexNameForSQLKeyColumn (index) {
 }
 
 /**
+ * @todo Didn't need to escape `%`. Do we still need this escape?
  * @param {string} str
  * @returns {string}
  */
 function sqlLIKEEscape (str) {
     // https://www.sqlite.org/lang_expr.html#like
-    return sqlEscape(str).replaceAll('^', '^^');
+    return str.replaceAll('^', '^^');
 }
 
 /**

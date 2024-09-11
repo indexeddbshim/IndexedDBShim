@@ -1,4 +1,4 @@
-/*! indexeddbshim - v15.0.4 - 9/11/2024 */
+/*! indexeddbshim - v15.2.0 - 9/11/2024 */
 
 (function (factory) {
   typeof define === 'function' && define.amd ? define(factory) :
@@ -1851,12 +1851,13 @@
   }
 
   /**
+   * @todo Didn't need to escape `%`. Do we still need this escape?
    * @param {string} str
    * @returns {string}
    */
   function sqlLIKEEscape(str) {
     // https://www.sqlite.org/lang_expr.html#like
-    return sqlEscape(str).replaceAll('^', '^^');
+    return str.replaceAll('^', '^^');
   }
 
   /**
@@ -7970,8 +7971,11 @@
             return rowKey.includes(check);
           }) ||
           // More precise than our SQL
-          isMultiEntryMatch(/** @type {string} */
-          encodedKey, row[escapedIndexNameForKeyCol]))) {
+          isMultiEntryMatch(
+          // Added `JSON.stringify` as was having problems with
+          //        `JSON.stringify` encoding added to nested
+          //        array keys
+          JSON.stringify(encodedKey).slice(1, -1), row[escapedIndexNameForKeyCol]))) {
             recordCount++;
             record = row;
           } else if (!hasKey && !multiChecks) {
@@ -8047,7 +8051,13 @@
         sql.push(')');
       } else if (index.multiEntry) {
         sql.push('AND', escapeIndexNameForSQL(index.name), "LIKE ? ESCAPE '^'");
-        sqlValues.push('%' + sqlLIKEEscape(/** @type {string} */_encode(range, index.multiEntry)) + '%');
+        if (Array.isArray(range)) {
+          // Todo: For nesting deeper than one level, we probably need to
+          //         run `JSON.stringify` again
+          sqlValues.push('%' + sqlLIKEEscape(JSON.stringify(/** @type {string} */_encode(range, index.multiEntry)).slice(1, -1)) + '%');
+        } else {
+          sqlValues.push('%' + sqlLIKEEscape(/** @type {string} */_encode(range, index.multiEntry)) + '%');
+        }
       } else {
         var convertedRange = convertValueToKeyRange(range, nullDisallowed);
         setSQLForKeyRange(convertedRange, escapeIndexNameForSQL(index.name), sql, sqlValues, true, false);

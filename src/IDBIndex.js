@@ -847,8 +847,10 @@ function executeFetchIndexData (
                         (check) => rowKey.includes(check)
                     )) || // More precise than our SQL
                     Key.isMultiEntryMatch(
-                        /** @type {string} */
-                        (encodedKey),
+                        // Added `JSON.stringify` as was having problems with
+                        //        `JSON.stringify` encoding added to nested
+                        //        array keys
+                        JSON.stringify(encodedKey).slice(1, -1),
                         row[escapedIndexNameForKeyCol]
                     )
                 )) {
@@ -933,9 +935,20 @@ function buildFetchIndexDataSQL (
             sql.push(')');
         } else if (index.multiEntry) {
             sql.push('AND', util.escapeIndexNameForSQL(index.name), "LIKE ? ESCAPE '^'");
-            sqlValues.push('%' + util.sqlLIKEEscape(
+
+            if (Array.isArray(range)) {
+                // Todo: For nesting deeper than one level, we probably need to
+                //         run `JSON.stringify` again
+                sqlValues.push('%' + util.sqlLIKEEscape(
+                    JSON.stringify(
+                    /** @type {string} */ (Key.encode(range, index.multiEntry))
+                    ).slice(1, -1)
+                ) + '%');
+            } else {
+                sqlValues.push('%' + util.sqlLIKEEscape(
                 /** @type {string} */ (Key.encode(range, index.multiEntry))
-            ) + '%');
+                ) + '%');
+            }
         } else {
             const convertedRange = convertValueToKeyRange(range, nullDisallowed);
             setSQLForKeyRange(convertedRange, util.escapeIndexNameForSQL(index.name), sql, sqlValues, true, false);
