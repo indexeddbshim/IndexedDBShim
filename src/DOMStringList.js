@@ -28,7 +28,6 @@ if (Object.defineProperty) {
         if (testObject.test) {
             cleanInterface = true;
         }
-    // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
     } catch (err) {
     // Object.defineProperty does not work as intended.
     }

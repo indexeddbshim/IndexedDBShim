@@ -240,4 +240,5 @@ function convertValueToKeyRange (value, nullDisallowed) {
     return IDBKeyRange.only(value);
 }
 
+// eslint-disable-next-line unicorn/no-named-default -- Had some reason for this
 export {setSQLForKeyRange, IDBKeyRange, convertValueToKeyRange, IDBKeyRange as default};

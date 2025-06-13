@@ -1,4 +1,5 @@
 /* eslint-disable new-cap -- ToString is how it is defined */
+/* eslint-disable sonarjs/no-control-regex -- Needed */
 import CFG from './CFG.js';
 import expandsOnNFD from './unicode-regex.js';
 

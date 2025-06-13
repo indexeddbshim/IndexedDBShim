@@ -73,6 +73,6 @@ import { createDOMException } from './DOMException.js';
  * @param {import('./CFG.js').ConfigValues} [initialConfig]
  * @returns {ShimmedObject}
  */
-declare function setGlobalVars(idb?: ShimmedObject | undefined, initialConfig?: import("./CFG.js").ConfigValues | undefined): ShimmedObject;
+declare function setGlobalVars(idb?: ShimmedObject, initialConfig?: import("./CFG.js").ConfigValues): ShimmedObject;
 import { IDBFactory } from './IDBFactory.js';
 //# sourceMappingURL=setGlobalVars.d.ts.map

@@ -1,4 +1,4 @@
-/*! indexeddbshim - v15.2.0 - 9/11/2024 */
+/*! indexeddbshim - v16.0.0 - 6/14/2025 */
 
 'use strict';
 
@@ -1160,10 +1160,19 @@ val => {
 function getDefaultExportFromCjs$1(x) {
   return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
 }
-var regex = /[\xC0-\xC5\xC7-\xCF\xD1-\xD6\xD9-\xDD\xE0-\xE5\xE7-\xEF\xF1-\xF6\xF9-\xFD\xFF-\u010F\u0112-\u0125\u0128-\u0130\u0134-\u0137\u0139-\u013E\u0143-\u0148\u014C-\u0151\u0154-\u0165\u0168-\u017E\u01A0\u01A1\u01AF\u01B0\u01CD-\u01DC\u01DE-\u01E3\u01E6-\u01F0\u01F4\u01F5\u01F8-\u021B\u021E\u021F\u0226-\u0233\u0344\u0385\u0386\u0388-\u038A\u038C\u038E-\u0390\u03AA-\u03B0\u03CA-\u03CE\u03D3\u03D4\u0400\u0401\u0403\u0407\u040C-\u040E\u0419\u0439\u0450\u0451\u0453\u0457\u045C-\u045E\u0476\u0477\u04C1\u04C2\u04D0-\u04D3\u04D6\u04D7\u04DA-\u04DF\u04E2-\u04E7\u04EA-\u04F5\u04F8\u04F9\u0622-\u0626\u06C0\u06C2\u06D3\u0929\u0931\u0934\u0958-\u095F\u09CB\u09CC\u09DC\u09DD\u09DF\u0A33\u0A36\u0A59-\u0A5B\u0A5E\u0B48\u0B4B\u0B4C\u0B5C\u0B5D\u0B94\u0BCA-\u0BCC\u0C48\u0CC0\u0CC7\u0CC8\u0CCA\u0CCB\u0D4A-\u0D4C\u0DDA\u0DDC-\u0DDE\u0F43\u0F4D\u0F52\u0F57\u0F5C\u0F69\u0F73\u0F75\u0F76\u0F78\u0F81\u0F93\u0F9D\u0FA2\u0FA7\u0FAC\u0FB9\u1026\u1B06\u1B08\u1B0A\u1B0C\u1B0E\u1B12\u1B3B\u1B3D\u1B40\u1B41\u1B43\u1E00-\u1E99\u1E9B\u1EA0-\u1EF9\u1F00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FC1-\u1FC4\u1FC6-\u1FD3\u1FD6-\u1FDB\u1FDD-\u1FEE\u1FF2-\u1FF4\u1FF6-\u1FFC\u212B\u219A\u219B\u21AE\u21CD-\u21CF\u2204\u2209\u220C\u2224\u2226\u2241\u2244\u2247\u2249\u2260\u2262\u226D-\u2271\u2274\u2275\u2278\u2279\u2280\u2281\u2284\u2285\u2288\u2289\u22AC-\u22AF\u22E0-\u22E3\u22EA-\u22ED\u2ADC\u304C\u304E\u3050\u3052\u3054\u3056\u3058\u305A\u305C\u305E\u3060\u3062\u3065\u3067\u3069\u3070\u3071\u3073\u3074\u3076\u3077\u3079\u307A\u307C\u307D\u3094\u309E\u30AC\u30AE\u30B0\u30B2\u30B4\u30B6\u30B8\u30BA\u30BC\u30BE\u30C0\u30C2\u30C5\u30C7\u30C9\u30D0\u30D1\u30D3\u30D4\u30D6\u30D7\u30D9\u30DA\u30DC\u30DD\u30F4\u30F7-\u30FA\u30FE\uAC00-\uD7A3\uFB1D\uFB1F\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFB4E]|\uD804[\uDC9A\uDC9C\uDCAB\uDD2E\uDD2F\uDF4B\uDF4C]|\uD805[\uDCBB\uDCBC\uDCBE\uDDBA\uDDBB]|\uD806\uDD38|\uD834[\uDD5E-\uDD64\uDDBB-\uDDC0]/;
-var regex$1 = /*@__PURE__*/getDefaultExportFromCjs$1(regex);
+var regex$1;
+var hasRequiredRegex;
+function requireRegex() {
+  if (hasRequiredRegex) return regex$1;
+  hasRequiredRegex = 1;
+  regex$1 = /[\xC0-\xC5\xC7-\xCF\xD1-\xD6\xD9-\xDD\xE0-\xE5\xE7-\xEF\xF1-\xF6\xF9-\xFD\xFF-\u010F\u0112-\u0125\u0128-\u0130\u0134-\u0137\u0139-\u013E\u0143-\u0148\u014C-\u0151\u0154-\u0165\u0168-\u017E\u01A0\u01A1\u01AF\u01B0\u01CD-\u01DC\u01DE-\u01E3\u01E6-\u01F0\u01F4\u01F5\u01F8-\u021B\u021E\u021F\u0226-\u0233\u0344\u0385\u0386\u0388-\u038A\u038C\u038E-\u0390\u03AA-\u03B0\u03CA-\u03CE\u03D3\u03D4\u0400\u0401\u0403\u0407\u040C-\u040E\u0419\u0439\u0450\u0451\u0453\u0457\u045C-\u045E\u0476\u0477\u04C1\u04C2\u04D0-\u04D3\u04D6\u04D7\u04DA-\u04DF\u04E2-\u04E7\u04EA-\u04F5\u04F8\u04F9\u0622-\u0626\u06C0\u06C2\u06D3\u0929\u0931\u0934\u0958-\u095F\u09CB\u09CC\u09DC\u09DD\u09DF\u0A33\u0A36\u0A59-\u0A5B\u0A5E\u0B48\u0B4B\u0B4C\u0B5C\u0B5D\u0B94\u0BCA-\u0BCC\u0C48\u0CC0\u0CC7\u0CC8\u0CCA\u0CCB\u0D4A-\u0D4C\u0DDA\u0DDC-\u0DDE\u0F43\u0F4D\u0F52\u0F57\u0F5C\u0F69\u0F73\u0F75\u0F76\u0F78\u0F81\u0F93\u0F9D\u0FA2\u0FA7\u0FAC\u0FB9\u1026\u1B06\u1B08\u1B0A\u1B0C\u1B0E\u1B12\u1B3B\u1B3D\u1B40\u1B41\u1B43\u1E00-\u1E99\u1E9B\u1EA0-\u1EF9\u1F00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FC1-\u1FC4\u1FC6-\u1FD3\u1FD6-\u1FDB\u1FDD-\u1FEE\u1FF2-\u1FF4\u1FF6-\u1FFC\u212B\u219A\u219B\u21AE\u21CD-\u21CF\u2204\u2209\u220C\u2224\u2226\u2241\u2244\u2247\u2249\u2260\u2262\u226D-\u2271\u2274\u2275\u2278\u2279\u2280\u2281\u2284\u2285\u2288\u2289\u22AC-\u22AF\u22E0-\u22E3\u22EA-\u22ED\u2ADC\u304C\u304E\u3050\u3052\u3054\u3056\u3058\u305A\u305C\u305E\u3060\u3062\u3065\u3067\u3069\u3070\u3071\u3073\u3074\u3076\u3077\u3079\u307A\u307C\u307D\u3094\u309E\u30AC\u30AE\u30B0\u30B2\u30B4\u30B6\u30B8\u30BA\u30BC\u30BE\u30C0\u30C2\u30C5\u30C7\u30C9\u30D0\u30D1\u30D3\u30D4\u30D6\u30D7\u30D9\u30DA\u30DC\u30DD\u30F4\u30F7-\u30FA\u30FE\uAC00-\uD7A3\uFB1D\uFB1F\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFB4E]|\uD804[\uDC9A\uDC9C\uDCAB\uDD2E\uDD2F\uDF4B\uDF4C]|\uD805[\uDCBB\uDCBC\uDCBE\uDDBA\uDDBB]|\uD806\uDD38|\uD834[\uDD5E-\uDD64\uDDBB-\uDDC0]/;
+  return regex$1;
+}
+var regexExports = requireRegex();
+var regex = /*@__PURE__*/getDefaultExportFromCjs$1(regexExports);
 
 /* eslint-disable new-cap -- ToString is how it is defined */
+/* eslint-disable sonarjs/no-control-regex -- Needed */
 
 /**
  * @typedef {number} Integer
@@ -1258,7 +1267,7 @@ function escapeDatabaseNameForSQLAndFiles(db) {
   db = 'D' + escapeNameForSQLiteIdentifier(db);
   if (CFG.escapeNFDForDatabaseNames !== false) {
     // ES6 copying of regex with different flags
-    db = db.replaceAll(new RegExp(regex$1, 'gu'), function (expandable) {
+    db = db.replaceAll(new RegExp(regex, 'gu'), function (expandable) {
       return '^4' + /** @type {Integer} */expandable.codePointAt(0).toString(16).padStart(6, '0');
     });
   }
@@ -2082,7 +2091,6 @@ try {
     // Native DOMException works as expected
     useNativeDOMException = true;
   }
-  // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
 } catch (err) {}
 const createDOMException = useNativeDOMException
 // eslint-disable-next-line @stylistic/operator-linebreak -- Need JSDoc
@@ -2689,7 +2697,7 @@ const signValues = ['negativeInfinity', 'bigNegative', 'smallNegative', 'smallPo
  *   }
  * }}
  */
-const types$1 = {
+const types = {
   invalid: {
     /**
      * @returns {string}
@@ -3191,7 +3199,7 @@ function convertValueToKeyValueDecoded(input, seen, multiEntry, fullKeys) {
             value: date.getTime()
           } : {
             type,
-            value: new Date(date.getTime())
+            value: new Date(date)
           };
         }
         return {
@@ -3545,7 +3553,7 @@ function encode$1(key, inArray) {
     return null;
   }
   // array, date, number, string, binary (should already have detected "invalid")
-  return types$1[getKeyType(key)].encode(key, inArray);
+  return types[getKeyType(key)].encode(key, inArray);
 }
 
 /**
@@ -3559,7 +3567,7 @@ function decode$1(key, inArray) {
   if (typeof key !== 'string') {
     return undefined;
   }
-  return types$1[encodedCharToKeyType[key.slice(0, 1)]].decode(key, inArray);
+  return types[encodedCharToKeyType[key.slice(0, 1)]].decode(key, inArray);
 }
 
 /**
@@ -4011,7 +4019,6 @@ if (Object.defineProperty) {
     if (testObject.test) {
       cleanInterface = true;
     }
-    // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
   } catch (err) {
     // Object.defineProperty does not work as intended.
   }
@@ -4875,7 +4882,6 @@ IDBTransaction.prototype.__abortTransaction = function (err) {
       }
       try {
         me.__tx.executeSql('ROLLBACK', [], abort, /** @type {SQLStatementErrorCallback} */abort); // Not working in some circumstances, even in Node
-        // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
       } catch (err) {
         // Browser errs when transaction has ended and since it most likely already erred here,
         //   we call to abort
@@ -5002,7 +5008,7 @@ function ownKeys(e, t) {
 function _objectSpread2(e) {
   for (var t = 1; t < arguments.length; t++) {
     var r = null != arguments[t] ? arguments[t] : {};
-    t % 2 ? ownKeys(Object(r), !0).forEach(function (t) {
+    t % 2 ? ownKeys(Object(r), true).forEach(function (t) {
       _defineProperty(e, t, r[t]);
     }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(r)) : ownKeys(Object(r)).forEach(function (t) {
       Object.defineProperty(e, t, Object.getOwnPropertyDescriptor(r, t));
@@ -5024,18 +5030,18 @@ function _createClass(e, t, r) {
   return t && function _defineProperties(e, t) {
     for (var r = 0; r < t.length; r++) {
       var n = t[r];
-      n.enumerable = n.enumerable || !1, n.configurable = !0, "value" in n && (n.writable = !0), Object.defineProperty(e, _toPropertyKey(n.key), n);
+      n.enumerable = n.enumerable || false, n.configurable = true, "value" in n && (n.writable = true), Object.defineProperty(e, _toPropertyKey(n.key), n);
     }
   }(e.prototype, t), Object.defineProperty(e, "prototype", {
-    writable: !1
+    writable: false
   }), e;
 }
 function _defineProperty(e, t, r) {
   return (t = _toPropertyKey(t)) in e ? Object.defineProperty(e, t, {
     value: r,
-    enumerable: !0,
-    configurable: !0,
-    writable: !0
+    enumerable: true,
+    configurable: true,
+    writable: true
   }) : e[t] = r, e;
 }
 function _slicedToArray(e, t) {
@@ -5049,15 +5055,15 @@ function _slicedToArray(e, t) {
         o,
         i,
         c = [],
-        s = !0,
-        u = !1;
+        s = true,
+        u = false;
       try {
         if (o = (r = r.call(e)).next, 0 === t) {
           if (Object(r) !== r) return;
           s = !1;
         } else for (; !(s = (n = o.call(r)).done) && (c.push(n.value), c.length !== t); s = !0);
       } catch (e) {
-        u = !0, a = e;
+        u = true, a = e;
       } finally {
         try {
           if (!s && null != r.return && (i = r.return(), Object(i) !== i)) return;
@@ -5144,13 +5150,13 @@ e.__typeson__type__ = "TypesonPromise", "undefined" != typeof Symbol && Object.d
 var t = Object.hasOwn,
   r = Object.getPrototypeOf;
 function isThenable(e, t) {
-  return isObject(e) && "function" == typeof e.then && (!t);
+  return isObject(e) && "function" == typeof e.then && (true || "function" == typeof e.catch);
 }
 function toStringTag(e) {
   return Object.prototype.toString.call(e).slice(8, -1);
 }
 function hasConstructorOf(e, n) {
-  if (!e || "object" !== _typeof(e)) return !1;
+  if (!e || "object" !== _typeof(e)) return false;
   var a = r(e);
   if (!a) return null === n;
   var o = t(a, "constructor") && a.constructor;
@@ -5160,7 +5166,7 @@ function isPlainObject(e) {
   return !(!e || "Object" !== toStringTag(e)) && (!r(e) || hasConstructorOf(e, Object));
 }
 function isUserObject(e) {
-  if (!e || "Object" !== toStringTag(e)) return !1;
+  if (!e || "Object" !== toStringTag(e)) return false;
   var t = r(e);
   return !t || hasConstructorOf(e, Object) || isUserObject(t);
 }
@@ -5198,7 +5204,7 @@ function _await(e, t, r) {
 var n = Object.keys,
   a = Object.hasOwn,
   o = Array.isArray,
-  i$1 = ["type", "replaced", "iterateIn", "iterateUnsetNumeric", "addLength"];
+  i = ["type", "replaced", "iterateIn", "iterateUnsetNumeric", "addLength"];
 function _async(e) {
   return function () {
     for (var t = [], r = 0; r < arguments.length; r++) t[r] = arguments[r];
@@ -5224,7 +5230,7 @@ var c = function () {
       key: "stringify",
       value: function stringify(e, t, r, n) {
         n = _objectSpread2(_objectSpread2(_objectSpread2({}, this.options), n), {}, {
-          stringification: !0
+          stringification: true
         });
         var a = this.encapsulate(e, null, n);
         return o(a) ? JSON.stringify(a[0], t, r) : a.then(function (e) {
@@ -5235,63 +5241,63 @@ var c = function () {
       key: "stringifySync",
       value: function stringifySync(e, t, r, n) {
         return this.stringify(e, t, r, _objectSpread2(_objectSpread2({
-          throwOnBadSyncType: !0
+          throwOnBadSyncType: true
         }, n), {}, {
-          sync: !0
+          sync: true
         }));
       }
     }, {
       key: "stringifyAsync",
       value: function stringifyAsync(e, t, r, n) {
         return this.stringify(e, t, r, _objectSpread2(_objectSpread2({
-          throwOnBadSyncType: !0
+          throwOnBadSyncType: true
         }, n), {}, {
-          sync: !1
+          sync: false
         }));
       }
     }, {
       key: "parse",
       value: function parse(e, t, r) {
         return r = _objectSpread2(_objectSpread2(_objectSpread2({}, this.options), r), {}, {
-          parse: !0
+          parse: true
         }), this.revive(JSON.parse(e, t), r);
       }
     }, {
       key: "parseSync",
       value: function parseSync(e, t, r) {
         return this.parse(e, t, _objectSpread2(_objectSpread2({
-          throwOnBadSyncType: !0
+          throwOnBadSyncType: true
         }, r), {}, {
-          sync: !0
+          sync: true
         }));
       }
     }, {
       key: "parseAsync",
       value: function parseAsync(e, t, r) {
         return this.parse(e, t, _objectSpread2(_objectSpread2({
-          throwOnBadSyncType: !0
+          throwOnBadSyncType: true
         }, r), {}, {
-          sync: !1
+          sync: false
         }));
       }
     }, {
       key: "specialTypeNames",
       value: function specialTypeNames(e, t) {
         var r = arguments.length > 2 && void 0 !== arguments[2] ? arguments[2] : {};
-        return r.returnTypeNames = !0, this.encapsulate(e, t, r);
+        return r.returnTypeNames = true, this.encapsulate(e, t, r);
       }
     }, {
       key: "rootTypeName",
       value: function rootTypeName(e, t) {
         var r = arguments.length > 2 && void 0 !== arguments[2] ? arguments[2] : {};
-        return r.iterateNone = !0, this.encapsulate(e, t, r);
+        return r.iterateNone = true, this.encapsulate(e, t, r);
       }
     }, {
       key: "encapsulate",
       value: function encapsulate(t, r, c) {
         var s = this,
           u = _objectSpread2(_objectSpread2({
-            sync: !0
+            sync: true
           }, this.options), c),
           l = u.sync,
           f = {},
@@ -5299,8 +5305,8 @@ var c = function () {
           p = [],
           d = [],
           v = !("cyclic" in u) || u.cyclic,
-          m = u.encapsulateObserver,
-          b = function finish(e) {
+          b = u.encapsulateObserver,
+          m = function finish(e) {
             var t = Object.values(f);
             if (u.iterateNone) return t.length ? t[0] : getJSONType(e);
             if (t.length) {
@@ -5321,7 +5327,7 @@ var c = function () {
               };
             } else isObject(e) && a(e, "$types") && (e = {
               $: e,
-              $types: !0
+              $types: true
             });
             return !u.returnTypeNames && e;
           },
@@ -5330,7 +5336,7 @@ var c = function () {
               return e[1].p;
             })), function (n) {
               return _await(Promise.all(n.map(_async(function (n) {
-                var a = !1,
+                var a = false,
                   o = [],
                   i = _slicedToArray(r.splice(0, 1), 1),
                   c = _slicedToArray(i[0], 7),
@@ -5340,7 +5346,7 @@ var c = function () {
                   f = c[4],
                   y = c[5],
                   p = c[6],
-                  d = O(s, n, u, l, o, !0, p),
+                  d = O(s, n, u, l, o, true, p),
                   v = hasConstructorOf(d, e);
                 return function _invoke(e, t) {
                   var r = e();
@@ -5349,7 +5355,7 @@ var c = function () {
                   if (s && v) return _await(d.p, function (e) {
                     f[y] = e;
                     var r = h(t, o);
-                    return a = !0, r;
+                    return a = true, r;
                   });
                 }, function (e) {
                   return a ? e : (s ? f[y] = d : t = v ? d.p : d, h(t, o));
@@ -5361,22 +5367,22 @@ var c = function () {
           }),
           g = function _adaptBuiltinStateObjectProperties(e, t, r) {
             Object.assign(e, t);
-            var n = i$1.map(function (t) {
+            var n = i.map(function (t) {
               var r = e[t];
               return delete e[t], r;
             });
-            r(), i$1.forEach(function (t, r) {
+            r(), i.forEach(function (t, r) {
               e[t] = n[r];
             });
           },
           O = function _encapsulate(t, r, i, c, l, d, v) {
-            var b,
+            var m,
               h = {},
               O = _typeof(r),
-              _ = m ? function (n) {
+              _ = b ? function (n) {
                 var a,
                   o = null !== (a = null != v ? v : c.type) && void 0 !== a ? a : getJSONType(r);
-                m(Object.assign(null != n ? n : h, {
+                b(Object.assign(null != n ? n : h, {
                   keypath: t,
                   value: r,
                   cyclic: i,
@@ -5388,30 +5394,30 @@ var c = function () {
                   type: o
                 }));
               } : null;
-            if (["string", "boolean", "number", "undefined"].includes(O)) return void 0 === r || Number.isNaN(r) || r === Number.NEGATIVE_INFINITY || r === Number.POSITIVE_INFINITY || 0 === r ? (b = c.replaced ? r : w(t, r, c, l, !1, d, _)) !== r && (h = {
-              replaced: b
-            }) : b = r, _ && _(), b;
+            if (["string", "boolean", "number", "undefined"].includes(O)) return void 0 === r || Number.isNaN(r) || r === Number.NEGATIVE_INFINITY || r === Number.POSITIVE_INFINITY || 0 === r ? (m = c.replaced ? r : w(t, r, c, l, false, d, _)) !== r && (h = {
+              replaced: m
+            }) : m = r, _ && _(), m;
             if (null === r) return _ && _(), r;
             if (i && !c.iterateIn && !c.iterateUnsetNumeric && r && "object" === _typeof(r)) {
               var A = y.indexOf(r);
               if (!(A < 0)) return f[t] = "#", _ && _({
                 cyclicKeypath: p[A]
               }), "#" + p[A];
-              !0 === i && (y.push(r), p.push(t));
+              true === i && (y.push(r), p.push(t));
             }
             var S,
               j,
               T = isPlainObject(r),
               I = o(r),
               N = (T || I) && (!s.plainObjectReplacers.length || c.replaced) || c.iterateIn ? r : w(t, r, c, l, T || I, null, _);
-            if (N !== r ? (b = N, h = {
+            if (N !== r ? (m = N, h = {
               replaced: N
-            }) : "" === t && hasConstructorOf(r, e) ? (l.push([t, r, i, c, void 0, void 0, c.type]), b = r) : I && "object" !== c.iterateIn || "array" === c.iterateIn ? (S = new Array(r.length), h = {
+            }) : "" === t && hasConstructorOf(r, e) ? (l.push([t, r, i, c, void 0, void 0, c.type]), m = r) : I && "object" !== c.iterateIn || "array" === c.iterateIn ? (S = new Array(r.length), h = {
               clone: S
-            }) : (["function", "symbol"].includes(_typeof(r)) || "toJSON" in r || hasConstructorOf(r, e) || hasConstructorOf(r, Promise) || hasConstructorOf(r, ArrayBuffer)) && !T && "object" !== c.iterateIn ? b = r : (S = {}, c.addLength && (S.length = r.length), h = {
+            }) : (["function", "symbol"].includes(_typeof(r)) || "toJSON" in r || hasConstructorOf(r, e) || hasConstructorOf(r, Promise) || hasConstructorOf(r, ArrayBuffer)) && !T && "object" !== c.iterateIn ? m = r : (S = {}, c.addLength && (S.length = r.length), h = {
               clone: S
-            }), _ && _(), u.iterateNone) return null !== (j = S) && void 0 !== j ? j : b;
-            if (!S) return b;
+            }), _ && _(), u.iterateNone) return null !== (j = S) && void 0 !== j ? j : m;
+            if (!S) return m;
             if (c.iterateIn) {
               var P = function _loop(n) {
                 var o = {
@@ -5425,27 +5431,27 @@ var c = function () {
               };
               for (var x in r) P(x);
               _ && _({
-                endIterateIn: !0,
-                end: !0
+                endIterateIn: true,
+                end: true
               });
             } else n(r).forEach(function (n) {
               var a = t + (t ? "." : "") + escapeKeyPathComponent(n);
               g(c, {
-                ownKeys: !0
+                ownKeys: true
               }, function () {
                 var t = _encapsulate(a, r[n], Boolean(i), c, l, d);
                 hasConstructorOf(t, e) ? l.push([a, t, Boolean(i), c, S, n, c.type]) : void 0 !== t && (S[n] = t);
               });
             }), _ && _({
-              endIterateOwn: !0,
-              end: !0
+              endIterateOwn: true,
+              end: true
             });
             if (c.iterateUnsetNumeric) {
               for (var E = r.length, C = function _loop2(n) {
                   if (!(n in r)) {
                     var a = "".concat(t).concat(t ? "." : "").concat(n);
                     g(c, {
-                      ownKeys: !1
+                      ownKeys: false
                     }, function () {
                       var t = _encapsulate(a, void 0, Boolean(i), c, l, d);
                       hasConstructorOf(t, e) ? l.push([a, t, Boolean(i), c, S, n, c.type]) : void 0 !== t && (S[n] = t);
@@ -5453,8 +5459,8 @@ var c = function () {
                   }
                 }, B = 0; B < E; B++) C(B);
               _ && _({
-                endIterateUnsetNumeric: !0,
-                end: !0
+                endIterateUnsetNumeric: true,
+                end: true
               });
             }
             return S;
@@ -5470,19 +5476,19 @@ var c = function () {
                 }
                 if (Object.assign(r, {
                   type: p,
-                  replaced: !0
+                  replaced: true
                 }), (l || !y.replaceAsync) && !y.replace) return i && i({
-                  typeDetected: !0
+                  typeDetected: true
                 }), O(e, t, v && "readonly", r, n, o, p);
                 i && i({
-                  replacing: !0
+                  replacing: true
                 });
-                var m = void 0;
+                var b = void 0;
                 if (l || !y.replaceAsync) {
                   if (void 0 === y.replace) throw new TypeError("Missing replacer");
-                  m = y.replace(t, r);
-                } else m = y.replaceAsync(t, r);
-                return O(e, m, v && "readonly", r, n, o, p);
+                  b = y.replace(t, r);
+                } else b = y.replaceAsync(t, r);
+                return O(e, b, v && "readonly", r, n, o, p);
               }
             }
             return t;
@@ -5490,26 +5496,26 @@ var c = function () {
           _ = O("", t, v, null != r ? r : {}, d);
         if (d.length) return l && u.throwOnBadSyncType ? function () {
           throw new TypeError("Sync method requested but async result obtained");
-        }() : Promise.resolve(h(_, d)).then(b);
+        }() : Promise.resolve(h(_, d)).then(m);
         if (!l && u.throwOnBadSyncType) throw new TypeError("Async method requested but sync result obtained");
-        return u.stringification && l ? [b(_)] : l ? b(_) : Promise.resolve(b(_));
+        return u.stringification && l ? [m(_)] : l ? m(_) : Promise.resolve(m(_));
       }
     }, {
       key: "encapsulateSync",
       value: function encapsulateSync(e, t, r) {
         return this.encapsulate(e, t, _objectSpread2(_objectSpread2({
-          throwOnBadSyncType: !0
+          throwOnBadSyncType: true
         }, r), {}, {
-          sync: !0
+          sync: true
         }));
       }
     }, {
       key: "encapsulateAsync",
       value: function encapsulateAsync(e, t, r) {
         return this.encapsulate(e, t, _objectSpread2(_objectSpread2({
-          throwOnBadSyncType: !0
+          throwOnBadSyncType: true
         }, r), {}, {
-          sync: !1
+          sync: false
         }));
       }
     }, {
@@ -5517,7 +5523,7 @@ var c = function () {
       value: function revive(t, r) {
         var a = this,
           i = _objectSpread2(_objectSpread2({
-            sync: !0
+            sync: true
           }, this.options), r),
           c = i.sync;
         function finishRevival(e) {
@@ -5527,12 +5533,12 @@ var c = function () {
         }
         if (!t || "object" !== _typeof(t) || Array.isArray(t)) return finishRevival(t);
         var u = t.$types;
-        if (!0 === u) return finishRevival(t.$);
+        if (true === u) return finishRevival(t.$);
         if (!u || "object" !== _typeof(u) || Array.isArray(u)) return finishRevival(t);
         var l = [],
           f = {},
-          y = !0;
-        u.$ && isPlainObject(u.$) && (t = t.$, u = u.$, y = !1);
+          y = true;
+        u.$ && isPlainObject(u.$) && (t = t.$, u = u.$, y = false);
         var p = function executeReviver(e, t) {
             var r,
               n = _slicedToArray(null !== (r = a.revivers[e]) && void 0 !== r ? r : [], 1)[0];
@@ -5547,7 +5553,7 @@ var c = function () {
           return hasConstructorOf(e, s) ? void 0 : e;
         }
         var v,
-          m = function revivePlainObjects() {
+          b = function revivePlainObjects() {
             var r = [];
             if (!u) throw new Error("Found bad `types`");
             if (Object.entries(u).forEach(function (e) {
@@ -5579,28 +5585,28 @@ var c = function () {
               c === i && (t = c);
             }, void 0);
           }();
-        return hasConstructorOf(m, e) ? v = m.then(function () {
+        return hasConstructorOf(b, e) ? v = b.then(function () {
           return t;
         }) : (v = function _revive(t, r, a, i, c) {
           if (!y || "$types" !== t) {
             var f = u[t],
               v = o(r);
             if (v || isPlainObject(r)) {
-              var m = v ? new Array(r.length) : {};
+              var b = v ? new Array(r.length) : {};
               for (n(r).forEach(function (n) {
-                var o = _revive(t + (t ? "." : "") + escapeKeyPathComponent(n), r[n], null != a ? a : m, m, n),
+                var o = _revive(t + (t ? "." : "") + escapeKeyPathComponent(n), r[n], null != a ? a : b, b, n),
                   i = function set(e) {
-                    return hasConstructorOf(e, s) ? m[n] = void 0 : void 0 !== e && (m[n] = e), e;
+                    return hasConstructorOf(e, s) ? b[n] = void 0 : void 0 !== e && (b[n] = e), e;
                   };
                 hasConstructorOf(o, e) ? d.push(o.then(function (e) {
                   return i(e);
                 })) : i(o);
-              }), r = m; l.length;) {
-                var b = _slicedToArray(l[0], 4),
-                  h = b[0],
-                  g = b[1],
-                  O = b[2],
-                  w = b[3],
+              }), r = b; l.length;) {
+                var m = _slicedToArray(l[0], 4),
+                  h = m[0],
+                  g = m[1],
+                  O = m[2],
+                  w = m[3],
                   _ = getByKeyPath(h, g);
                 if (void 0 === _) break;
                 O[w] = _, l.splice(0, 1);
@@ -5633,18 +5639,18 @@ var c = function () {
       key: "reviveSync",
       value: function reviveSync(e, t) {
         return this.revive(e, _objectSpread2(_objectSpread2({
-          throwOnBadSyncType: !0
+          throwOnBadSyncType: true
         }, t), {}, {
-          sync: !0
+          sync: true
         }));
       }
     }, {
       key: "reviveAsync",
       value: function reviveAsync(e, t) {
         return this.revive(e, _objectSpread2(_objectSpread2({
-          throwOnBadSyncType: !0
+          throwOnBadSyncType: true
         }, t), {}, {
-          sync: !1
+          sync: false
         }));
       }
     }, {
@@ -5741,26 +5747,27 @@ const v = {
           index: r
         } : (t.buffers.push(e), {
           s: p(e),
-          maxByteLength: e.maxByteLength
+          maxByteLength: e.maxByteLength,
+          resizable: e.resizable
         });
       },
       revive(e, t) {
         if (t.buffers || (t.buffers = []), Object.hasOwn(e, "index")) return t.buffers[e.index];
-        const r = d(e.s, {
+        const r = d(e.s, e.resizable ? {
           maxByteLength: e.maxByteLength
-        });
+        } : void 0);
         return t.buffers.push(r), r;
       }
     }
   },
-  m = {
+  b = {
     bigintObject: {
       test: e => "object" == typeof e && hasConstructorOf(e, BigInt),
       replace: String,
       revive: e => new Object(BigInt(e))
     }
   },
-  b = {
+  m = {
     bigint: {
       test: e => "bigint" == typeof e,
       replace: String,
@@ -5780,7 +5787,7 @@ const h = {
     test: e => "Blob" === toStringTag(e),
     replace(e) {
       const t = new XMLHttpRequest();
-      if (t.overrideMimeType("text/plain; charset=x-user-defined"), t.open("GET", URL.createObjectURL(e), !1), t.send(), 200 !== t.status && 0 !== t.status) throw new Error("Bad Blob access: " + t.status);
+      if (t.overrideMimeType("text/plain; charset=x-user-defined"), t.open("GET", URL.createObjectURL(e), false), t.send(), 200 !== t.status && 0 !== t.status) throw new Error("Bad Blob access: " + t.status);
       return {
         type: e.type,
         stringContents: t.responseText
@@ -5830,7 +5837,7 @@ const w = {
           algorithm: r,
           usages: n
         } = e;
-        return crypto.subtle.importKey("jwk", t, r, !0, n);
+        return crypto.subtle.importKey("jwk", t, r, true, n);
       }
     }
   },
@@ -5851,6 +5858,7 @@ const w = {
         } : (n.buffers.push(e), {
           encoded: p(e),
           maxByteLength: e.maxByteLength,
+          resizable: e.resizable,
           byteOffset: t,
           byteLength: r
         });
@@ -5862,12 +5870,13 @@ const w = {
           byteLength: n,
           encoded: a,
           index: o,
-          maxByteLength: i
+          maxByteLength: i,
+          resizable: c
         } = e;
-        let c;
-        return "index" in e ? c = t.buffers[o] : (c = d(a, void 0 === i ? i : {
+        let s;
+        return "index" in e ? s = t.buffers[o] : (s = d(a, c ? {
           maxByteLength: i
-        }), t.buffers.push(c)), new DataView(c, r, n);
+        } : i), t.buffers.push(s)), new DataView(s, r, n);
       }
     }
   },
@@ -6043,7 +6052,7 @@ const E = {
       test: e => "File" === toStringTag(e),
       replace(e) {
         const t = new XMLHttpRequest();
-        if (t.overrideMimeType("text/plain; charset=x-user-defined"), t.open("GET", URL.createObjectURL(e), !1), t.send(), 200 !== t.status && 0 !== t.status) throw new Error("Bad File access: " + t.status);
+        if (t.overrideMimeType("text/plain; charset=x-user-defined"), t.open("GET", URL.createObjectURL(e), false), t.send(), 200 !== t.status && 0 !== t.status) throw new Error("Bad File access: " + t.status);
         return {
           type: e.type,
           stringContents: t.responseText,
@@ -6181,7 +6190,7 @@ const E = {
       revive: () => -0
     }
   },
-  V = {
+  J = {
     StringObject: {
       test: e => "String" === toStringTag(e) && "object" == typeof e,
       replace: String,
@@ -6198,7 +6207,7 @@ const E = {
       revive: e => new Number(e)
     }
   },
-  Y = {
+  q = {
     regexp: {
       test: e => "RegExp" === toStringTag(e),
       replace: e => ({
@@ -6211,7 +6220,7 @@ const E = {
       }) => new RegExp(e, t)
     }
   },
-  H = {
+  G = {
     set: {
       test: e => "Set" === toStringTag(e),
       replace: e => [...e.values()],
@@ -6245,6 +6254,7 @@ const X = {};
         length: r
       } : (n.buffers.push(e), {
         maxByteLength: e.maxByteLength,
+        resizable: e.resizable,
         encoded: p(e),
         byteOffset: t,
         length: r
@@ -6257,12 +6267,13 @@ const X = {};
         length: a,
         encoded: o,
         index: i,
-        maxByteLength: c
+        maxByteLength: c,
+        resizable: s
       } = t;
-      let s;
-      return "index" in t ? s = r.buffers[i] : (s = d(o, void 0 === c ? void 0 : {
+      let u;
+      return "index" in t ? u = r.buffers[i] : (u = d(o, s ? {
         maxByteLength: c
-      }), r.buffers.push(s)), new e(s, n, a);
+      } : void 0), r.buffers.push(u)), new e(u, n, a);
     }
   };
 }(e));
@@ -6284,9 +6295,9 @@ const Z = {
   },
   te = [{
     arrayNonindexKeys: {
-      testPlainObjects: !0,
-      test: (e, t) => !!Array.isArray(e) && (Object.keys(e).some(e => String(Number.parseInt(e)) !== e) && (t.iterateIn = "object", t.addLength = !0), !0),
-      replace: (e, t) => (t.iterateUnsetNumeric = !0, e),
+      testPlainObjects: true,
+      test: (e, t) => !!Array.isArray(e) && (Object.keys(e).some(e => String(Number.parseInt(e)) !== e) && (t.iterateIn = "object", t.addLength = true), true),
+      replace: (e, t) => (t.iterateUnsetNumeric = true, e),
       revive(e) {
         if (Array.isArray(e)) return e;
         const t = [];
@@ -6297,19 +6308,19 @@ const Z = {
     }
   }, {
     sparseUndefined: {
-      test: (e, t) => void 0 === e && !1 === t.ownKeys,
+      test: (e, t) => void 0 === e && false === t.ownKeys,
       replace: () => 0,
       revive() {}
     }
   }],
   re = [K, U, F, $],
-  ce = [ee, Z, te, V, re, A, Y, k, B, E, C, h, P, x].concat("function" == typeof Map ? D : [], "function" == typeof Set ? H : [], "function" == typeof ArrayBuffer ? v : [], "function" == typeof Uint8Array ? X : [], "function" == typeof DataView ? _ : [], "undefined" != typeof crypto ? w : [], "undefined" != typeof BigInt ? [b, m] : [], "undefined" != typeof DOMException ? S : [], "undefined" != typeof DOMRect ? N : [], "undefined" != typeof DOMPoint ? T : [], "undefined" != typeof DOMQuad ? I : [], "undefined" != typeof DOMMatrix ? j : []),
+  ce = [ee, Z, te, J, re, A, q, k, B, E, C, h, P, x].concat("function" == typeof Map ? D : [], "function" == typeof Set ? G : [], "function" == typeof ArrayBuffer ? v : [], "function" == typeof Uint8Array ? X : [], "function" == typeof DataView ? _ : [], "undefined" != typeof crypto ? w : [], "undefined" != typeof BigInt ? [m, b] : [], "undefined" != typeof DOMException ? S : [], "undefined" != typeof DOMRect ? N : [], "undefined" != typeof DOMPoint ? T : [], "undefined" != typeof DOMQuad ? I : [], "undefined" != typeof DOMMatrix ? j : []),
   se = ce.concat({
     checkDataCloneException: {
       test(e) {
         const t = {}.toString.call(e).slice(8, -1);
         if (["symbol", "function"].includes(typeof e) || ["Arguments", "Module", "Promise", "WeakMap", "WeakSet", "Event", "MessageChannel"].includes(t) || e && "object" == typeof e && "number" == typeof e.nodeType && "function" == typeof e.insertBefore) throw new DOMException("The object cannot be cloned.", "DataCloneError");
-        return !1;
+        return false;
       }
     }
   });
@@ -6653,7 +6664,6 @@ IDBIndex.__createIndex = function (store, index) {
                 tx.executeSql('UPDATE ' + escapeStoreNameForSQL(storeName) + ' SET ' + escapeIndexNameForSQL(indexName) + ' = ? WHERE "key" = ?', [escapeSQLiteStatement(indexKeyStr), data.rows.item(i).key], function () {
                   addIndexEntry(i + 1);
                 }, /** @type {SQLStatementErrorCallback} */error);
-                // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
               } catch (err) {
                 // Not a valid value to insert into index, so just continue
                 addIndexEntry(i + 1);
@@ -6780,7 +6790,6 @@ IDBIndex.__deleteIndex = function (store, index) {
 IDBIndex.__updateIndexList = function (store, tx, success, failure) {
   /** @type {IndexList} **/
   const indexList = {};
-  // eslint-disable-next-line sonarjs/prefer-for-of -- Implement iterability?
   for (let i = 0; i < store.indexNames.length; i++) {
     const idx = store.__indexes[store.indexNames[i]];
     indexList[idx.name] = {
@@ -7740,7 +7749,6 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
         if ('invalid' in indexKey && indexKey.invalid || 'failure' in indexKey && indexKey.failure) {
           throw new Error('Go to catch');
         }
-        // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
       } catch (err) {
         resolve(undefined);
         return;
@@ -8840,7 +8848,7 @@ let nameCounter = 0;
  */
 function getLatestCachedWebSQLVersion(name) {
   return Object.keys(websqlDBCache[name]).map(Number).reduce((prev, curr) => {
-    return curr > prev ? curr : prev;
+    return Math.max(curr, prev);
   }, 0);
 }
 
@@ -9122,7 +9130,6 @@ IDBFactory.prototype.open = function (name /* , version */) {
             if (err) {
               try {
                 systx.executeSql('ROLLBACK', [], cb, cb);
-                // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
               } catch (err) {
                 // Browser may fail with expired transaction above so
                 //     no choice but to manually revert
@@ -9230,7 +9237,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
               // eslint-disable-next-line camelcase -- Clear API
               req.transaction.on__complete = function () {
                 const pos = connection.__transactions.indexOf(req.transaction);
-                if (pos > -1) {
+                if (pos !== -1) {
                   connection.__transactions.splice(pos, 1);
                 }
                 if (/** @type {import('./IDBDatabase.js').IDBDatabaseFull} */req.__result.__closePending) {
@@ -10485,6 +10492,8 @@ Object.defineProperty(IDBCursorWithValue, 'prototype', {
   writable: false
 });
 
+/* eslint-disable unicorn/prefer-global-this -- Older browsers? */
+
 /**
  * @typedef {any} AnyValue
  */
@@ -10630,7 +10639,6 @@ function setGlobalVars(idb, initialConfig) {
           Object.getOwnPropertyDescriptor(o, name);
         }
         Object.defineProperty(IDB, name, desc);
-        // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
       } catch (err) {
         // With `indexedDB`, PhantomJS fails here and below but
         //  not above, while Chrome is reverse (and Firefox doesn't
@@ -10829,237 +10837,301 @@ function getDefaultExportFromCjs (x) {
 	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
 }
 
-var nextTick$1 = {};
+var nextTick = {};
 
-nextTick$1.test = function () {
-  // Don't get fooled by e.g. browserify environments.
-  return typeof process !== 'undefined' && !process.browser;
-};
-nextTick$1.install = function (func) {
-  return function () {
-    process.nextTick(func);
+var hasRequiredNextTick;
+function requireNextTick() {
+  if (hasRequiredNextTick) return nextTick;
+  hasRequiredNextTick = 1;
+  nextTick.test = function () {
+    // Don't get fooled by e.g. browserify environments.
+    return typeof process !== 'undefined' && !process.browser;
   };
-};
+  nextTick.install = function (func) {
+    return function () {
+      process.nextTick(func);
+    };
+  };
+  return nextTick;
+}
 
 var queueMicrotask = {};
 
-queueMicrotask.test = function () {
-  return typeof commonjsGlobal.queueMicrotask === 'function';
-};
-queueMicrotask.install = function (func) {
-  return function () {
-    commonjsGlobal.queueMicrotask(func);
+var hasRequiredQueueMicrotask;
+function requireQueueMicrotask() {
+  if (hasRequiredQueueMicrotask) return queueMicrotask;
+  hasRequiredQueueMicrotask = 1;
+  queueMicrotask.test = function () {
+    return typeof commonjsGlobal.queueMicrotask === 'function';
   };
-};
+  queueMicrotask.install = function (func) {
+    return function () {
+      commonjsGlobal.queueMicrotask(func);
+    };
+  };
+  return queueMicrotask;
+}
 
 var mutation = {};
 
-//based off rsvp https://github.com/tildeio/rsvp.js
-//license https://github.com/tildeio/rsvp.js/blob/master/LICENSE
-//https://github.com/tildeio/rsvp.js/blob/master/lib/rsvp/asap.js
+var hasRequiredMutation;
+function requireMutation() {
+  if (hasRequiredMutation) return mutation;
+  hasRequiredMutation = 1;
+  //based off rsvp https://github.com/tildeio/rsvp.js
+  //license https://github.com/tildeio/rsvp.js/blob/master/LICENSE
+  //https://github.com/tildeio/rsvp.js/blob/master/lib/rsvp/asap.js
 
-var Mutation = commonjsGlobal.MutationObserver || commonjsGlobal.WebKitMutationObserver;
-mutation.test = function () {
-  return Mutation;
-};
-mutation.install = function (handle) {
-  var called = 0;
-  var observer = new Mutation(handle);
-  var element = commonjsGlobal.document.createTextNode('');
-  observer.observe(element, {
-    characterData: true
-  });
-  return function () {
-    element.data = called = ++called % 2;
+  var Mutation = commonjsGlobal.MutationObserver || commonjsGlobal.WebKitMutationObserver;
+  mutation.test = function () {
+    return Mutation;
   };
-};
+  mutation.install = function (handle) {
+    var called = 0;
+    var observer = new Mutation(handle);
+    var element = commonjsGlobal.document.createTextNode('');
+    observer.observe(element, {
+      characterData: true
+    });
+    return function () {
+      element.data = called = ++called % 2;
+    };
+  };
+  return mutation;
+}
 
 var messageChannel = {};
 
-messageChannel.test = function () {
-  if (commonjsGlobal.setImmediate) {
-    // we can only get here in IE10
-    // which doesn't handel postMessage well
-    return false;
-  }
-  return typeof commonjsGlobal.MessageChannel !== 'undefined';
-};
-messageChannel.install = function (func) {
-  var channel = new commonjsGlobal.MessageChannel();
-  channel.port1.onmessage = func;
-  return function () {
-    channel.port2.postMessage(0);
+var hasRequiredMessageChannel;
+function requireMessageChannel() {
+  if (hasRequiredMessageChannel) return messageChannel;
+  hasRequiredMessageChannel = 1;
+  messageChannel.test = function () {
+    if (commonjsGlobal.setImmediate) {
+      // we can only get here in IE10
+      // which doesn't handel postMessage well
+      return false;
+    }
+    return typeof commonjsGlobal.MessageChannel !== 'undefined';
   };
-};
+  messageChannel.install = function (func) {
+    var channel = new commonjsGlobal.MessageChannel();
+    channel.port1.onmessage = func;
+    return function () {
+      channel.port2.postMessage(0);
+    };
+  };
+  return messageChannel;
+}
 
 var stateChange = {};
 
-stateChange.test = function () {
-  return 'document' in commonjsGlobal && 'onreadystatechange' in commonjsGlobal.document.createElement('script');
-};
-stateChange.install = function (handle) {
-  return function () {
-    // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
-    // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called.
-    var scriptEl = commonjsGlobal.document.createElement('script');
-    scriptEl.onreadystatechange = function () {
-      handle();
-      scriptEl.onreadystatechange = null;
-      scriptEl.parentNode.removeChild(scriptEl);
-      scriptEl = null;
-    };
-    commonjsGlobal.document.documentElement.appendChild(scriptEl);
-    return handle;
+var hasRequiredStateChange;
+function requireStateChange() {
+  if (hasRequiredStateChange) return stateChange;
+  hasRequiredStateChange = 1;
+  stateChange.test = function () {
+    return 'document' in commonjsGlobal && 'onreadystatechange' in commonjsGlobal.document.createElement('script');
   };
-};
+  stateChange.install = function (handle) {
+    return function () {
+      // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
+      // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called.
+      var scriptEl = commonjsGlobal.document.createElement('script');
+      scriptEl.onreadystatechange = function () {
+        handle();
+        scriptEl.onreadystatechange = null;
+        scriptEl.parentNode.removeChild(scriptEl);
+        scriptEl = null;
+      };
+      commonjsGlobal.document.documentElement.appendChild(scriptEl);
+      return handle;
+    };
+  };
+  return stateChange;
+}
 
 var timeout = {};
 
-timeout.test = function () {
-  return true;
-};
-timeout.install = function (t) {
-  return function () {
-    setTimeout(t, 0);
+var hasRequiredTimeout;
+function requireTimeout() {
+  if (hasRequiredTimeout) return timeout;
+  hasRequiredTimeout = 1;
+  timeout.test = function () {
+    return true;
   };
-};
-
-var types = [nextTick$1, queueMicrotask, mutation, messageChannel, stateChange, timeout];
-var draining;
-var currentQueue;
-var queueIndex = -1;
-var queue = [];
-var scheduled = false;
-function cleanUpNextTick() {
-  if (!draining || !currentQueue) {
-    return;
-  }
-  draining = false;
-  if (currentQueue.length) {
-    queue = currentQueue.concat(queue);
-  } else {
-    queueIndex = -1;
-  }
-  if (queue.length) {
-    nextTick();
-  }
-}
-
-//named nextTick for less confusing stack traces
-function nextTick() {
-  if (draining) {
-    return;
-  }
-  scheduled = false;
-  draining = true;
-  var len = queue.length;
-  var timeout = setTimeout(cleanUpNextTick);
-  while (len) {
-    currentQueue = queue;
-    queue = [];
-    while (currentQueue && ++queueIndex < len) {
-      currentQueue[queueIndex].run();
-    }
-    queueIndex = -1;
-    len = queue.length;
-  }
-  currentQueue = null;
-  queueIndex = -1;
-  draining = false;
-  clearTimeout(timeout);
-}
-var scheduleDrain;
-var i = -1;
-var len = types.length;
-while (++i < len) {
-  if (types[i] && types[i].test && types[i].test()) {
-    scheduleDrain = types[i].install(nextTick);
-    break;
-  }
-}
-// v8 likes predictible objects
-function Item(fun, array) {
-  this.fun = fun;
-  this.array = array;
-}
-Item.prototype.run = function () {
-  var fun = this.fun;
-  var array = this.array;
-  switch (array.length) {
-    case 0:
-      return fun();
-    case 1:
-      return fun(array[0]);
-    case 2:
-      return fun(array[0], array[1]);
-    case 3:
-      return fun(array[0], array[1], array[2]);
-    default:
-      return fun.apply(null, array);
-  }
-};
-var lib = immediate;
-function immediate(task) {
-  var args = new Array(arguments.length - 1);
-  if (arguments.length > 1) {
-    for (var i = 1; i < arguments.length; i++) {
-      args[i - 1] = arguments[i];
-    }
-  }
-  queue.push(new Item(task, args));
-  if (!scheduled && !draining) {
-    scheduled = true;
-    scheduleDrain();
-  }
-}
-var immediate$1 = /*@__PURE__*/getDefaultExportFromCjs(lib);
-
-// Simple FIFO queue implementation to avoid having to do shift()
-// on an array, which is slow.
-
-function Queue() {
-  this.length = 0;
-}
-Queue.prototype.push = function (item) {
-  var node = {
-    item: item
+  timeout.install = function (t) {
+    return function () {
+      setTimeout(t, 0);
+    };
   };
-  if (this.last) {
-    this.last = this.last.next = node;
-  } else {
-    this.last = this.first = node;
-  }
-  this.length++;
-};
-Queue.prototype.shift = function () {
-  var node = this.first;
-  if (node) {
-    this.first = node.next;
-    if (! --this.length) {
-      this.last = undefined;
+  return timeout;
+}
+
+var lib;
+var hasRequiredLib;
+function requireLib() {
+  if (hasRequiredLib) return lib;
+  hasRequiredLib = 1;
+  var types = [requireNextTick(), requireQueueMicrotask(), requireMutation(), requireMessageChannel(), requireStateChange(), requireTimeout()];
+  var draining;
+  var currentQueue;
+  var queueIndex = -1;
+  var queue = [];
+  var scheduled = false;
+  function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+      return;
     }
-    return node.item;
+    draining = false;
+    if (currentQueue.length) {
+      queue = currentQueue.concat(queue);
+    } else {
+      queueIndex = -1;
+    }
+    if (queue.length) {
+      nextTick();
+    }
   }
-};
-Queue.prototype.slice = function (start, end) {
-  start = typeof start === 'undefined' ? 0 : start;
-  end = typeof end === 'undefined' ? Infinity : end;
-  var output = [];
-  var i = 0;
-  for (var node = this.first; node; node = node.next) {
-    if (--end < 0) {
+
+  //named nextTick for less confusing stack traces
+  function nextTick() {
+    if (draining) {
+      return;
+    }
+    scheduled = false;
+    draining = true;
+    var len = queue.length;
+    var timeout = setTimeout(cleanUpNextTick);
+    while (len) {
+      currentQueue = queue;
+      queue = [];
+      while (currentQueue && ++queueIndex < len) {
+        currentQueue[queueIndex].run();
+      }
+      queueIndex = -1;
+      len = queue.length;
+    }
+    currentQueue = null;
+    queueIndex = -1;
+    draining = false;
+    clearTimeout(timeout);
+  }
+  var scheduleDrain;
+  var i = -1;
+  var len = types.length;
+  while (++i < len) {
+    if (types[i] && types[i].test && types[i].test()) {
+      scheduleDrain = types[i].install(nextTick);
       break;
-    } else if (++i > start) {
-      output.push(node.item);
     }
   }
-  return output;
-};
-var tinyQueue = Queue;
-var Queue$1 = /*@__PURE__*/getDefaultExportFromCjs(tinyQueue);
+  // v8 likes predictible objects
+  function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+  }
+  Item.prototype.run = function () {
+    var fun = this.fun;
+    var array = this.array;
+    switch (array.length) {
+      case 0:
+        return fun();
+      case 1:
+        return fun(array[0]);
+      case 2:
+        return fun(array[0], array[1]);
+      case 3:
+        return fun(array[0], array[1], array[2]);
+      default:
+        return fun.apply(null, array);
+    }
+  };
+  lib = immediate;
+  function immediate(task) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+      for (var i = 1; i < arguments.length; i++) {
+        args[i - 1] = arguments[i];
+      }
+    }
+    queue.push(new Item(task, args));
+    if (!scheduled && !draining) {
+      scheduled = true;
+      scheduleDrain();
+    }
+  }
+  return lib;
+}
 
-var noopFn = function () {};
-var noop = /*@__PURE__*/getDefaultExportFromCjs(noopFn);
+var libExports = requireLib();
+var immediate = /*@__PURE__*/getDefaultExportFromCjs(libExports);
+
+var tinyQueue;
+var hasRequiredTinyQueue;
+function requireTinyQueue() {
+  if (hasRequiredTinyQueue) return tinyQueue;
+  hasRequiredTinyQueue = 1;
+
+  // Simple FIFO queue implementation to avoid having to do shift()
+  // on an array, which is slow.
+
+  function Queue() {
+    this.length = 0;
+  }
+  Queue.prototype.push = function (item) {
+    var node = {
+      item: item
+    };
+    if (this.last) {
+      this.last = this.last.next = node;
+    } else {
+      this.last = this.first = node;
+    }
+    this.length++;
+  };
+  Queue.prototype.shift = function () {
+    var node = this.first;
+    if (node) {
+      this.first = node.next;
+      if (! --this.length) {
+        this.last = undefined;
+      }
+      return node.item;
+    }
+  };
+  Queue.prototype.slice = function (start, end) {
+    start = typeof start === 'undefined' ? 0 : start;
+    end = typeof end === 'undefined' ? Infinity : end;
+    var output = [];
+    var i = 0;
+    for (var node = this.first; node; node = node.next) {
+      if (--end < 0) {
+        break;
+      } else if (++i > start) {
+        output.push(node.item);
+      }
+    }
+    return output;
+  };
+  tinyQueue = Queue;
+  return tinyQueue;
+}
+
+var tinyQueueExports = requireTinyQueue();
+var Queue = /*@__PURE__*/getDefaultExportFromCjs(tinyQueueExports);
+
+var noopFn;
+var hasRequiredNoopFn;
+function requireNoopFn() {
+  if (hasRequiredNoopFn) return noopFn;
+  hasRequiredNoopFn = 1;
+  noopFn = function () {};
+  return noopFn;
+}
+
+var noopFnExports = requireNoopFn();
+var noop = /*@__PURE__*/getDefaultExportFromCjs(noopFnExports);
 
 function WebSQLRows(array) {
   this._array = array;
@@ -11174,8 +11246,8 @@ function WebSQLTransaction(websqlDatabase, executeDelay) {
   this._error = null;
   this._complete = false;
   this._runningTimeout = false;
-  this._executeDelay = executeDelay || immediate$1;
-  this._sqlQueue = new Queue$1();
+  this._executeDelay = executeDelay || immediate;
+  this._sqlQueue = new Queue();
   if (!websqlDatabase._currentTask.readOnly) {
     // Since we serialize all access to the database, there is no need to
     // run read-only tasks in a transaction. This is a perf boost.
@@ -11219,10 +11291,10 @@ function TransactionTask(readOnly, txnCallback, errorCallback, successCallback, 
 function WebSQLDatabase(dbVersion, db, webSQLOverrides) {
   this.version = dbVersion;
   this._db = db;
-  this._txnQueue = new Queue$1();
+  this._txnQueue = new Queue();
   this._running = false;
   this._currentTask = null;
-  this._transactionDelay = webSQLOverrides.transactionDelay || immediate$1;
+  this._transactionDelay = webSQLOverrides.transactionDelay || immediate;
   this._executeDelay = webSQLOverrides.executeDelay;
 }
 WebSQLDatabase.prototype._onTransactionComplete = function (err) {
@@ -11326,7 +11398,7 @@ function customOpenDatabase(SQLiteDatabase, opts) {
   opts = opts || {};
   var sqliteOpts = opts.sqlite;
   var webSQLOverrides = opts.websql || {};
-  var openDelay = webSQLOverrides.openDelay || immediate$1;
+  var openDelay = webSQLOverrides.openDelay || immediate;
   function createDb(dbName, dbVersion) {
     var sqliteDatabase = new SQLiteDatabase(dbName, sqliteOpts);
     return new WebSQLDatabase(dbVersion, sqliteDatabase, webSQLOverrides);
@@ -11358,249 +11430,268 @@ function commonjsRequire(path) {
 
 var bindings = {exports: {}};
 
-/**
- * Module dependencies.
- */
+var fileUriToPath_1;
+var hasRequiredFileUriToPath;
+function requireFileUriToPath() {
+  if (hasRequiredFileUriToPath) return fileUriToPath_1;
+  hasRequiredFileUriToPath = 1;
+  /**
+   * Module dependencies.
+   */
 
-var sep = path.sep || '/';
+  var sep = path.sep || '/';
 
-/**
- * Module exports.
- */
+  /**
+   * Module exports.
+   */
 
-var fileUriToPath_1 = fileUriToPath;
+  fileUriToPath_1 = fileUriToPath;
 
-/**
- * File URI to Path function.
- *
- * @param {String} uri
- * @return {String} path
- * @api public
- */
+  /**
+   * File URI to Path function.
+   *
+   * @param {String} uri
+   * @return {String} path
+   * @api public
+   */
 
-function fileUriToPath(uri) {
-  if ('string' != typeof uri || uri.length <= 7 || 'file://' != uri.substring(0, 7)) {
-    throw new TypeError('must pass in a file:// URI to convert to a file path');
+  function fileUriToPath(uri) {
+    if ('string' != typeof uri || uri.length <= 7 || 'file://' != uri.substring(0, 7)) {
+      throw new TypeError('must pass in a file:// URI to convert to a file path');
+    }
+    var rest = decodeURI(uri.substring(7));
+    var firstSlash = rest.indexOf('/');
+    var host = rest.substring(0, firstSlash);
+    var path = rest.substring(firstSlash + 1);
+
+    // 2.  Scheme Definition
+    // As a special case, <host> can be the string "localhost" or the empty
+    // string; this is interpreted as "the machine from which the URL is
+    // being interpreted".
+    if ('localhost' == host) host = '';
+    if (host) {
+      host = sep + sep + host;
+    }
+
+    // 3.2  Drives, drive letters, mount points, file system root
+    // Drive letters are mapped into the top of a file URI in various ways,
+    // depending on the implementation; some applications substitute
+    // vertical bar ("|") for the colon after the drive letter, yielding
+    // "file:///c|/tmp/test.txt".  In some cases, the colon is left
+    // unchanged, as in "file:///c:/tmp/test.txt".  In other cases, the
+    // colon is simply omitted, as in "file:///c/tmp/test.txt".
+    path = path.replace(/^(.+)\|/, '$1:');
+
+    // for Windows, we need to invert the path separators from what a URI uses
+    if (sep == '\\') {
+      path = path.replace(/\//g, '\\');
+    }
+    if (/^.+\:/.test(path)) ; else {
+      // unix path…
+      path = sep + path;
+    }
+    return host + path;
   }
-  var rest = decodeURI(uri.substring(7));
-  var firstSlash = rest.indexOf('/');
-  var host = rest.substring(0, firstSlash);
-  var path = rest.substring(firstSlash + 1);
-
-  // 2.  Scheme Definition
-  // As a special case, <host> can be the string "localhost" or the empty
-  // string; this is interpreted as "the machine from which the URL is
-  // being interpreted".
-  if ('localhost' == host) host = '';
-  if (host) {
-    host = sep + sep + host;
-  }
-
-  // 3.2  Drives, drive letters, mount points, file system root
-  // Drive letters are mapped into the top of a file URI in various ways,
-  // depending on the implementation; some applications substitute
-  // vertical bar ("|") for the colon after the drive letter, yielding
-  // "file:///c|/tmp/test.txt".  In some cases, the colon is left
-  // unchanged, as in "file:///c:/tmp/test.txt".  In other cases, the
-  // colon is simply omitted, as in "file:///c/tmp/test.txt".
-  path = path.replace(/^(.+)\|/, '$1:');
-
-  // for Windows, we need to invert the path separators from what a URI uses
-  if (sep == '\\') {
-    path = path.replace(/\//g, '\\');
-  }
-  if (/^.+\:/.test(path)) ; else {
-    // unix path…
-    path = sep + path;
-  }
-  return host + path;
+  return fileUriToPath_1;
 }
 
 /**
  * Module dependencies.
  */
-(function (module, exports) {
-  var fs = require$$0,
-    path$1 = path,
-    fileURLToPath = fileUriToPath_1,
-    join = path$1.join,
-    dirname = path$1.dirname,
-    exists = fs.accessSync && function (path) {
-      try {
-        fs.accessSync(path);
-      } catch (e) {
-        return false;
-      }
-      return true;
-    } || fs.existsSync || path$1.existsSync,
-    defaults = {
-      arrow: process.env.NODE_BINDINGS_ARROW || ' → ',
-      compiled: process.env.NODE_BINDINGS_COMPILED_DIR || 'compiled',
-      platform: process.platform,
-      arch: process.arch,
-      nodePreGyp: 'node-v' + process.versions.modules + '-' + process.platform + '-' + process.arch,
-      version: process.versions.node,
-      bindings: 'bindings.node',
-      try: [
-      // node-gyp's linked version in the "build" dir
-      ['module_root', 'build', 'bindings'],
-      // node-waf and gyp_addon (a.k.a node-gyp)
-      ['module_root', 'build', 'Debug', 'bindings'], ['module_root', 'build', 'Release', 'bindings'],
-      // Debug files, for development (legacy behavior, remove for node v0.9)
-      ['module_root', 'out', 'Debug', 'bindings'], ['module_root', 'Debug', 'bindings'],
-      // Release files, but manually compiled (legacy behavior, remove for node v0.9)
-      ['module_root', 'out', 'Release', 'bindings'], ['module_root', 'Release', 'bindings'],
-      // Legacy from node-waf, node <= 0.4.x
-      ['module_root', 'build', 'default', 'bindings'],
-      // Production "Release" buildtype binary (meh...)
-      ['module_root', 'compiled', 'version', 'platform', 'arch', 'bindings'],
-      // node-qbs builds
-      ['module_root', 'addon-build', 'release', 'install-root', 'bindings'], ['module_root', 'addon-build', 'debug', 'install-root', 'bindings'], ['module_root', 'addon-build', 'default', 'install-root', 'bindings'],
-      // node-pre-gyp path ./lib/binding/{node_abi}-{platform}-{arch}
-      ['module_root', 'lib', 'binding', 'nodePreGyp', 'bindings']]
-    };
-
-  /**
-   * The main `bindings()` function loads the compiled bindings for a given module.
-   * It uses V8's Error API to determine the parent filename that this function is
-   * being invoked from, which is then used to find the root directory.
-   */
-
-  function bindings(opts) {
-    // Argument surgery
-    if (typeof opts == 'string') {
-      opts = {
-        bindings: opts
+var hasRequiredBindings;
+function requireBindings() {
+  if (hasRequiredBindings) return bindings.exports;
+  hasRequiredBindings = 1;
+  (function (module, exports) {
+    var fs = require$$0,
+      path$1 = path,
+      fileURLToPath = requireFileUriToPath(),
+      join = path$1.join,
+      dirname = path$1.dirname,
+      exists = fs.accessSync && function (path) {
+        try {
+          fs.accessSync(path);
+        } catch (e) {
+          return false;
+        }
+        return true;
+      } || fs.existsSync || path$1.existsSync,
+      defaults = {
+        arrow: process.env.NODE_BINDINGS_ARROW || ' → ',
+        compiled: process.env.NODE_BINDINGS_COMPILED_DIR || 'compiled',
+        platform: process.platform,
+        arch: process.arch,
+        nodePreGyp: 'node-v' + process.versions.modules + '-' + process.platform + '-' + process.arch,
+        version: process.versions.node,
+        bindings: 'bindings.node',
+        try: [
+        // node-gyp's linked version in the "build" dir
+        ['module_root', 'build', 'bindings'],
+        // node-waf and gyp_addon (a.k.a node-gyp)
+        ['module_root', 'build', 'Debug', 'bindings'], ['module_root', 'build', 'Release', 'bindings'],
+        // Debug files, for development (legacy behavior, remove for node v0.9)
+        ['module_root', 'out', 'Debug', 'bindings'], ['module_root', 'Debug', 'bindings'],
+        // Release files, but manually compiled (legacy behavior, remove for node v0.9)
+        ['module_root', 'out', 'Release', 'bindings'], ['module_root', 'Release', 'bindings'],
+        // Legacy from node-waf, node <= 0.4.x
+        ['module_root', 'build', 'default', 'bindings'],
+        // Production "Release" buildtype binary (meh...)
+        ['module_root', 'compiled', 'version', 'platform', 'arch', 'bindings'],
+        // node-qbs builds
+        ['module_root', 'addon-build', 'release', 'install-root', 'bindings'], ['module_root', 'addon-build', 'debug', 'install-root', 'bindings'], ['module_root', 'addon-build', 'default', 'install-root', 'bindings'],
+        // node-pre-gyp path ./lib/binding/{node_abi}-{platform}-{arch}
+        ['module_root', 'lib', 'binding', 'nodePreGyp', 'bindings']]
       };
-    } else if (!opts) {
-      opts = {};
-    }
 
-    // maps `defaults` onto `opts` object
-    Object.keys(defaults).map(function (i) {
-      if (!(i in opts)) opts[i] = defaults[i];
-    });
+    /**
+     * The main `bindings()` function loads the compiled bindings for a given module.
+     * It uses V8's Error API to determine the parent filename that this function is
+     * being invoked from, which is then used to find the root directory.
+     */
 
-    // Get the module root
-    if (!opts.module_root) {
-      opts.module_root = exports.getRoot(exports.getFileName());
-    }
-
-    // Ensure the given bindings name ends with .node
-    if (path$1.extname(opts.bindings) != '.node') {
-      opts.bindings += '.node';
-    }
-
-    // https://github.com/webpack/webpack/issues/4175#issuecomment-342931035
-    var requireFunc = typeof __webpack_require__ === 'function' ? __non_webpack_require__ : commonjsRequire;
-    var tries = [],
-      i = 0,
-      l = opts.try.length,
-      n,
-      b,
-      err;
-    for (; i < l; i++) {
-      n = join.apply(null, opts.try[i].map(function (p) {
-        return opts[p] || p;
-      }));
-      tries.push(n);
-      try {
-        b = opts.path ? requireFunc.resolve(n) : requireFunc(n);
-        if (!opts.path) {
-          b.path = n;
-        }
-        return b;
-      } catch (e) {
-        if (e.code !== 'MODULE_NOT_FOUND' && e.code !== 'QUALIFIED_PATH_RESOLUTION_FAILED' && !/not find/i.test(e.message)) {
-          throw e;
-        }
+    function bindings(opts) {
+      // Argument surgery
+      if (typeof opts == 'string') {
+        opts = {
+          bindings: opts
+        };
+      } else if (!opts) {
+        opts = {};
       }
-    }
-    err = new Error('Could not locate the bindings file. Tried:\n' + tries.map(function (a) {
-      return opts.arrow + a;
-    }).join('\n'));
-    err.tries = tries;
-    throw err;
-  }
-  module.exports = exports = bindings;
 
-  /**
-   * Gets the filename of the JavaScript file that invokes this function.
-   * Used to help find the root directory of a module.
-   * Optionally accepts an filename argument to skip when searching for the invoking filename
-   */
+      // maps `defaults` onto `opts` object
+      Object.keys(defaults).map(function (i) {
+        if (!(i in opts)) opts[i] = defaults[i];
+      });
 
-  exports.getFileName = function getFileName(calling_file) {
-    var origPST = Error.prepareStackTrace,
-      origSTL = Error.stackTraceLimit,
-      dummy = {},
-      fileName;
-    Error.stackTraceLimit = 10;
-    Error.prepareStackTrace = function (e, st) {
-      for (var i = 0, l = st.length; i < l; i++) {
-        fileName = st[i].getFileName();
-        if (fileName !== __filename) {
-          if (calling_file) {
-            if (fileName !== calling_file) {
-              return;
-            }
-          } else {
-            return;
+      // Get the module root
+      if (!opts.module_root) {
+        opts.module_root = exports.getRoot(exports.getFileName());
+      }
+
+      // Ensure the given bindings name ends with .node
+      if (path$1.extname(opts.bindings) != '.node') {
+        opts.bindings += '.node';
+      }
+
+      // https://github.com/webpack/webpack/issues/4175#issuecomment-342931035
+      var requireFunc = typeof __webpack_require__ === 'function' ? __non_webpack_require__ : commonjsRequire;
+      var tries = [],
+        i = 0,
+        l = opts.try.length,
+        n,
+        b,
+        err;
+      for (; i < l; i++) {
+        n = join.apply(null, opts.try[i].map(function (p) {
+          return opts[p] || p;
+        }));
+        tries.push(n);
+        try {
+          b = opts.path ? requireFunc.resolve(n) : requireFunc(n);
+          if (!opts.path) {
+            b.path = n;
+          }
+          return b;
+        } catch (e) {
+          if (e.code !== 'MODULE_NOT_FOUND' && e.code !== 'QUALIFIED_PATH_RESOLUTION_FAILED' && !/not find/i.test(e.message)) {
+            throw e;
           }
         }
       }
+      err = new Error('Could not locate the bindings file. Tried:\n' + tries.map(function (a) {
+        return opts.arrow + a;
+      }).join('\n'));
+      err.tries = tries;
+      throw err;
+    }
+    module.exports = exports = bindings;
+
+    /**
+     * Gets the filename of the JavaScript file that invokes this function.
+     * Used to help find the root directory of a module.
+     * Optionally accepts an filename argument to skip when searching for the invoking filename
+     */
+
+    exports.getFileName = function getFileName(calling_file) {
+      var origPST = Error.prepareStackTrace,
+        origSTL = Error.stackTraceLimit,
+        dummy = {},
+        fileName;
+      Error.stackTraceLimit = 10;
+      Error.prepareStackTrace = function (e, st) {
+        for (var i = 0, l = st.length; i < l; i++) {
+          fileName = st[i].getFileName();
+          if (fileName !== __filename) {
+            if (calling_file) {
+              if (fileName !== calling_file) {
+                return;
+              }
+            } else {
+              return;
+            }
+          }
+        }
+      };
+
+      // run the 'prepareStackTrace' function above
+      Error.captureStackTrace(dummy);
+      dummy.stack;
+
+      // cleanup
+      Error.prepareStackTrace = origPST;
+      Error.stackTraceLimit = origSTL;
+
+      // handle filename that starts with "file://"
+      var fileSchema = 'file://';
+      if (fileName.indexOf(fileSchema) === 0) {
+        fileName = fileURLToPath(fileName);
+      }
+      return fileName;
     };
 
-    // run the 'prepareStackTrace' function above
-    Error.captureStackTrace(dummy);
-    dummy.stack;
+    /**
+     * Gets the root directory of a module, given an arbitrary filename
+     * somewhere in the module tree. The "root directory" is the directory
+     * containing the `package.json` file.
+     *
+     *   In:  /home/nate/node-native-module/lib/index.js
+     *   Out: /home/nate/node-native-module
+     */
 
-    // cleanup
-    Error.prepareStackTrace = origPST;
-    Error.stackTraceLimit = origSTL;
-
-    // handle filename that starts with "file://"
-    var fileSchema = 'file://';
-    if (fileName.indexOf(fileSchema) === 0) {
-      fileName = fileURLToPath(fileName);
-    }
-    return fileName;
-  };
-
-  /**
-   * Gets the root directory of a module, given an arbitrary filename
-   * somewhere in the module tree. The "root directory" is the directory
-   * containing the `package.json` file.
-   *
-   *   In:  /home/nate/node-native-module/lib/index.js
-   *   Out: /home/nate/node-native-module
-   */
-
-  exports.getRoot = function getRoot(file) {
-    var dir = dirname(file),
-      prev;
-    while (true) {
-      if (dir === '.') {
-        // Avoids an infinite loop in rare cases, like the REPL
-        dir = process.cwd();
+    exports.getRoot = function getRoot(file) {
+      var dir = dirname(file),
+        prev;
+      while (true) {
+        if (dir === '.') {
+          // Avoids an infinite loop in rare cases, like the REPL
+          dir = process.cwd();
+        }
+        if (exists(join(dir, 'package.json')) || exists(join(dir, 'node_modules'))) {
+          // Found the 'package.json' file or 'node_modules' dir; we're done
+          return dir;
+        }
+        if (prev === dir) {
+          // Got to the top
+          throw new Error('Could not find module root given file: "' + file + '". Do you have a `package.json` file? ');
+        }
+        // Try the parent dir next
+        prev = dir;
+        dir = join(dir, '..');
       }
-      if (exists(join(dir, 'package.json')) || exists(join(dir, 'node_modules'))) {
-        // Found the 'package.json' file or 'node_modules' dir; we're done
-        return dir;
-      }
-      if (prev === dir) {
-        // Got to the top
-        throw new Error('Could not find module root given file: "' + file + '". Do you have a `package.json` file? ');
-      }
-      // Try the parent dir next
-      prev = dir;
-      dir = join(dir, '..');
-    }
-  };
-})(bindings, bindings.exports);
-var bindingsExports = bindings.exports;
+    };
+  })(bindings, bindings.exports);
+  return bindings.exports;
+}
 
-var sqlite3Binding = bindingsExports('node_sqlite3.node');
+var sqlite3Binding;
+var hasRequiredSqlite3Binding;
+function requireSqlite3Binding() {
+  if (hasRequiredSqlite3Binding) return sqlite3Binding;
+  hasRequiredSqlite3Binding = 1;
+  sqlite3Binding = requireBindings()('node_sqlite3.node');
+  return sqlite3Binding;
+}
 
 var trace = {};
 
@@ -11644,177 +11735,184 @@ function requireTrace() {
   return trace;
 }
 
-(function (module, exports) {
-  const path$1 = path;
-  const sqlite3 = sqlite3Binding;
-  const EventEmitter = require$$2.EventEmitter;
-  module.exports = sqlite3;
-  function normalizeMethod(fn) {
-    return function (sql) {
-      let errBack;
-      const args = Array.prototype.slice.call(arguments, 1);
-      if (typeof args[args.length - 1] === 'function') {
-        const callback = args[args.length - 1];
-        errBack = function (err) {
-          if (err) {
-            callback(err);
-          }
-        };
-      }
-      const statement = new Statement(this, sql, errBack);
-      return fn.call(this, statement, args);
-    };
-  }
-  function inherits(target, source) {
-    for (const k in source.prototype) target.prototype[k] = source.prototype[k];
-  }
-  sqlite3.cached = {
-    Database: function (file, a, b) {
-      if (file === '' || file === ':memory:') {
-        // Don't cache special databases.
-        return new Database(file, a, b);
-      }
-      let db;
-      file = path$1.resolve(file);
-      if (!sqlite3.cached.objects[file]) {
-        db = sqlite3.cached.objects[file] = new Database(file, a, b);
-      } else {
-        // Make sure the callback is called.
-        db = sqlite3.cached.objects[file];
-        const callback = typeof a === 'number' ? b : a;
-        if (typeof callback === 'function') {
-          function cb() {
-            callback.call(db, null);
-          }
-          if (db.open) process.nextTick(cb);else db.once('open', cb);
+var hasRequiredSqlite3;
+function requireSqlite3() {
+  if (hasRequiredSqlite3) return sqlite3$1.exports;
+  hasRequiredSqlite3 = 1;
+  (function (module, exports) {
+    const path$1 = path;
+    const sqlite3 = requireSqlite3Binding();
+    const EventEmitter = require$$2.EventEmitter;
+    module.exports = sqlite3;
+    function normalizeMethod(fn) {
+      return function (sql) {
+        let errBack;
+        const args = Array.prototype.slice.call(arguments, 1);
+        if (typeof args[args.length - 1] === 'function') {
+          const callback = args[args.length - 1];
+          errBack = function (err) {
+            if (err) {
+              callback(err);
+            }
+          };
         }
-      }
-      return db;
-    },
-    objects: {}
-  };
-  const Database = sqlite3.Database;
-  const Statement = sqlite3.Statement;
-  const Backup = sqlite3.Backup;
-  inherits(Database, EventEmitter);
-  inherits(Statement, EventEmitter);
-  inherits(Backup, EventEmitter);
-
-  // Database#prepare(sql, [bind1, bind2, ...], [callback])
-  Database.prototype.prepare = normalizeMethod(function (statement, params) {
-    return params.length ? statement.bind.apply(statement, params) : statement;
-  });
-
-  // Database#run(sql, [bind1, bind2, ...], [callback])
-  Database.prototype.run = normalizeMethod(function (statement, params) {
-    statement.run.apply(statement, params).finalize();
-    return this;
-  });
-
-  // Database#get(sql, [bind1, bind2, ...], [callback])
-  Database.prototype.get = normalizeMethod(function (statement, params) {
-    statement.get.apply(statement, params).finalize();
-    return this;
-  });
-
-  // Database#all(sql, [bind1, bind2, ...], [callback])
-  Database.prototype.all = normalizeMethod(function (statement, params) {
-    statement.all.apply(statement, params).finalize();
-    return this;
-  });
-
-  // Database#each(sql, [bind1, bind2, ...], [callback], [complete])
-  Database.prototype.each = normalizeMethod(function (statement, params) {
-    statement.each.apply(statement, params).finalize();
-    return this;
-  });
-  Database.prototype.map = normalizeMethod(function (statement, params) {
-    statement.map.apply(statement, params).finalize();
-    return this;
-  });
-
-  // Database#backup(filename, [callback])
-  // Database#backup(filename, destName, sourceName, filenameIsDest, [callback])
-  Database.prototype.backup = function () {
-    let backup;
-    if (arguments.length <= 2) {
-      // By default, we write the main database out to the main database of the named file.
-      // This is the most likely use of the backup api.
-      backup = new Backup(this, arguments[0], 'main', 'main', true, arguments[1]);
-    } else {
-      // Otherwise, give the user full control over the sqlite3_backup_init arguments.
-      backup = new Backup(this, arguments[0], arguments[1], arguments[2], arguments[3], arguments[4]);
+        const statement = new Statement(this, sql, errBack);
+        return fn.call(this, statement, args);
+      };
     }
-    // Per the sqlite docs, exclude the following errors as non-fatal by default.
-    backup.retryErrors = [sqlite3.BUSY, sqlite3.LOCKED];
-    return backup;
-  };
-  Statement.prototype.map = function () {
-    const params = Array.prototype.slice.call(arguments);
-    const callback = params.pop();
-    params.push(function (err, rows) {
-      if (err) return callback(err);
-      const result = {};
-      if (rows.length) {
-        const keys = Object.keys(rows[0]);
-        const key = keys[0];
-        if (keys.length > 2) {
-          // Value is an object
-          for (let i = 0; i < rows.length; i++) {
-            result[rows[i][key]] = rows[i];
-          }
+    function inherits(target, source) {
+      for (const k in source.prototype) target.prototype[k] = source.prototype[k];
+    }
+    sqlite3.cached = {
+      Database: function (file, a, b) {
+        if (file === '' || file === ':memory:') {
+          // Don't cache special databases.
+          return new Database(file, a, b);
+        }
+        let db;
+        file = path$1.resolve(file);
+        if (!sqlite3.cached.objects[file]) {
+          db = sqlite3.cached.objects[file] = new Database(file, a, b);
         } else {
-          const value = keys[1];
-          // Value is a plain value
-          for (let i = 0; i < rows.length; i++) {
-            result[rows[i][key]] = rows[i][value];
+          // Make sure the callback is called.
+          db = sqlite3.cached.objects[file];
+          const callback = typeof a === 'number' ? b : a;
+          if (typeof callback === 'function') {
+            function cb() {
+              callback.call(db, null);
+            }
+            if (db.open) process.nextTick(cb);else db.once('open', cb);
           }
         }
-      }
-      callback(err, result);
-    });
-    return this.all.apply(this, params);
-  };
-  let isVerbose = false;
-  const supportedEvents = ['trace', 'profile', 'change'];
-  Database.prototype.addListener = Database.prototype.on = function (type) {
-    const val = EventEmitter.prototype.addListener.apply(this, arguments);
-    if (supportedEvents.indexOf(type) >= 0) {
-      this.configure(type, true);
-    }
-    return val;
-  };
-  Database.prototype.removeListener = function (type) {
-    const val = EventEmitter.prototype.removeListener.apply(this, arguments);
-    if (supportedEvents.indexOf(type) >= 0 && !this._events[type]) {
-      this.configure(type, false);
-    }
-    return val;
-  };
-  Database.prototype.removeAllListeners = function (type) {
-    const val = EventEmitter.prototype.removeAllListeners.apply(this, arguments);
-    if (supportedEvents.indexOf(type) >= 0) {
-      this.configure(type, false);
-    }
-    return val;
-  };
+        return db;
+      },
+      objects: {}
+    };
+    const Database = sqlite3.Database;
+    const Statement = sqlite3.Statement;
+    const Backup = sqlite3.Backup;
+    inherits(Database, EventEmitter);
+    inherits(Statement, EventEmitter);
+    inherits(Backup, EventEmitter);
 
-  // Save the stack trace over EIO callbacks.
-  sqlite3.verbose = function () {
-    if (!isVerbose) {
-      const trace = requireTrace();
-      ['prepare', 'get', 'run', 'all', 'each', 'map', 'close', 'exec'].forEach(function (name) {
-        trace.extendTrace(Database.prototype, name);
+    // Database#prepare(sql, [bind1, bind2, ...], [callback])
+    Database.prototype.prepare = normalizeMethod(function (statement, params) {
+      return params.length ? statement.bind.apply(statement, params) : statement;
+    });
+
+    // Database#run(sql, [bind1, bind2, ...], [callback])
+    Database.prototype.run = normalizeMethod(function (statement, params) {
+      statement.run.apply(statement, params).finalize();
+      return this;
+    });
+
+    // Database#get(sql, [bind1, bind2, ...], [callback])
+    Database.prototype.get = normalizeMethod(function (statement, params) {
+      statement.get.apply(statement, params).finalize();
+      return this;
+    });
+
+    // Database#all(sql, [bind1, bind2, ...], [callback])
+    Database.prototype.all = normalizeMethod(function (statement, params) {
+      statement.all.apply(statement, params).finalize();
+      return this;
+    });
+
+    // Database#each(sql, [bind1, bind2, ...], [callback], [complete])
+    Database.prototype.each = normalizeMethod(function (statement, params) {
+      statement.each.apply(statement, params).finalize();
+      return this;
+    });
+    Database.prototype.map = normalizeMethod(function (statement, params) {
+      statement.map.apply(statement, params).finalize();
+      return this;
+    });
+
+    // Database#backup(filename, [callback])
+    // Database#backup(filename, destName, sourceName, filenameIsDest, [callback])
+    Database.prototype.backup = function () {
+      let backup;
+      if (arguments.length <= 2) {
+        // By default, we write the main database out to the main database of the named file.
+        // This is the most likely use of the backup api.
+        backup = new Backup(this, arguments[0], 'main', 'main', true, arguments[1]);
+      } else {
+        // Otherwise, give the user full control over the sqlite3_backup_init arguments.
+        backup = new Backup(this, arguments[0], arguments[1], arguments[2], arguments[3], arguments[4]);
+      }
+      // Per the sqlite docs, exclude the following errors as non-fatal by default.
+      backup.retryErrors = [sqlite3.BUSY, sqlite3.LOCKED];
+      return backup;
+    };
+    Statement.prototype.map = function () {
+      const params = Array.prototype.slice.call(arguments);
+      const callback = params.pop();
+      params.push(function (err, rows) {
+        if (err) return callback(err);
+        const result = {};
+        if (rows.length) {
+          const keys = Object.keys(rows[0]);
+          const key = keys[0];
+          if (keys.length > 2) {
+            // Value is an object
+            for (let i = 0; i < rows.length; i++) {
+              result[rows[i][key]] = rows[i];
+            }
+          } else {
+            const value = keys[1];
+            // Value is a plain value
+            for (let i = 0; i < rows.length; i++) {
+              result[rows[i][key]] = rows[i][value];
+            }
+          }
+        }
+        callback(err, result);
       });
-      ['bind', 'get', 'run', 'all', 'each', 'map', 'reset', 'finalize'].forEach(function (name) {
-        trace.extendTrace(Statement.prototype, name);
-      });
-      isVerbose = true;
-    }
-    return sqlite3;
-  };
-})(sqlite3$1);
-var sqlite3Exports = sqlite3$1.exports;
+      return this.all.apply(this, params);
+    };
+    let isVerbose = false;
+    const supportedEvents = ['trace', 'profile', 'change'];
+    Database.prototype.addListener = Database.prototype.on = function (type) {
+      const val = EventEmitter.prototype.addListener.apply(this, arguments);
+      if (supportedEvents.indexOf(type) >= 0) {
+        this.configure(type, true);
+      }
+      return val;
+    };
+    Database.prototype.removeListener = function (type) {
+      const val = EventEmitter.prototype.removeListener.apply(this, arguments);
+      if (supportedEvents.indexOf(type) >= 0 && !this._events[type]) {
+        this.configure(type, false);
+      }
+      return val;
+    };
+    Database.prototype.removeAllListeners = function (type) {
+      const val = EventEmitter.prototype.removeAllListeners.apply(this, arguments);
+      if (supportedEvents.indexOf(type) >= 0) {
+        this.configure(type, false);
+      }
+      return val;
+    };
+
+    // Save the stack trace over EIO callbacks.
+    sqlite3.verbose = function () {
+      if (!isVerbose) {
+        const trace = requireTrace();
+        ['prepare', 'get', 'run', 'all', 'each', 'map', 'close', 'exec'].forEach(function (name) {
+          trace.extendTrace(Database.prototype, name);
+        });
+        ['bind', 'get', 'run', 'all', 'each', 'map', 'reset', 'finalize'].forEach(function (name) {
+          trace.extendTrace(Statement.prototype, name);
+        });
+        isVerbose = true;
+      }
+      return sqlite3;
+    };
+  })(sqlite3$1);
+  return sqlite3$1.exports;
+}
+
+var sqlite3Exports = requireSqlite3();
 var sqlite3 = /*@__PURE__*/getDefaultExportFromCjs(sqlite3Exports);
 
 function SQLiteResult(error, insertId, rowsAffected, rows) {

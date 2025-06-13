@@ -204,7 +204,7 @@ let nameCounter = 0;
 function getLatestCachedWebSQLVersion (name) {
     return Object.keys(websqlDBCache[name]).map(Number).reduce(
         (prev, curr) => {
-            return curr > prev ? curr : prev;
+            return Math.max(curr, prev);
         }, 0
     );
 }
@@ -515,7 +515,6 @@ IDBFactory.prototype.open = function (name /* , version */) {
                         if (err) {
                             try {
                                 systx.executeSql('ROLLBACK', [], cb, cb);
-                            // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
                             } catch (err) {
                                 // Browser may fail with expired transaction above so
                                 //     no choice but to manually revert
@@ -641,7 +640,7 @@ IDBFactory.prototype.open = function (name /* , version */) {
                             // eslint-disable-next-line camelcase -- Clear API
                             req.transaction.on__complete = function () {
                                 const pos = connection.__transactions.indexOf(req.transaction);
-                                if (pos > -1) {
+                                if (pos !== -1) {
                                     connection.__transactions.splice(pos, 1);
                                 }
 

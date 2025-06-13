@@ -308,7 +308,6 @@ IDBIndex.__createIndex = function (store, index) {
                                     },
                                     /** @type {SQLStatementErrorCallback} */ (error)
                                 );
-                            // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
                             } catch (err) {
                                 // Not a valid value to insert into index, so just continue
                                 addIndexEntry(i + 1);
@@ -453,7 +452,6 @@ IDBIndex.__deleteIndex = function (store, index) {
 IDBIndex.__updateIndexList = function (store, tx, success, failure) {
     /** @type {IndexList} **/
     const indexList = {};
-    // eslint-disable-next-line sonarjs/prefer-for-of -- Implement iterability?
     for (let i = 0; i < store.indexNames.length; i++) {
         const idx = store.__indexes[store.indexNames[i]];
         indexList[idx.name] = {
@@ -957,4 +955,5 @@ function buildFetchIndexDataSQL (
     return [nullDisallowed, index, hasRange, range, opType, multiChecks, sql, sqlValues];
 }
 
+// eslint-disable-next-line unicorn/no-named-default -- Had some reason
 export {buildFetchIndexDataSQL, executeFetchIndexData, IDBIndex, IDBIndex as default};

@@ -7,7 +7,7 @@ import * as util from './util.js';
 import IDBTransaction from './IDBTransaction.js';
 import * as Key from './Key.js';
 import * as Sca from './Sca.js';
-import IDBIndex from './IDBIndex.js';
+import {IDBIndex} from './IDBIndex.js';
 import CFG from './CFG.js';
 
 /**

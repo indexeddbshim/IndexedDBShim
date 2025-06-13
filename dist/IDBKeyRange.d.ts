@@ -12,7 +12,7 @@ export type IDBKeyRangeFull = globalThis.IDBKeyRange & {
  * @param {boolean} [checkCached]
  * @returns {void}
  */
-export function setSQLForKeyRange(range: IDBKeyRangeFull | undefined, quotedKeyColumnName: string, sql: string[], sqlValues: string[], addAnd?: boolean | undefined, checkCached?: boolean | undefined): void;
+export function setSQLForKeyRange(range: IDBKeyRangeFull | undefined, quotedKeyColumnName: string, sql: string[], sqlValues: string[], addAnd?: boolean, checkCached?: boolean): void;
 /**
  * @typedef {globalThis.IDBKeyRange & {
 *   __lowerCached: string|null|false,
@@ -74,6 +74,6 @@ export namespace IDBKeyRange {
  * @throws {DOMException}
  * @returns {import('./IDBKeyRange.js').IDBKeyRangeFull|undefined}
  */
-export function convertValueToKeyRange(value: import("./Key.js").Value, nullDisallowed?: boolean | undefined): import("./IDBKeyRange.js").IDBKeyRangeFull | undefined;
+export function convertValueToKeyRange(value: import("./Key.js").Value, nullDisallowed?: boolean): import("./IDBKeyRange.js").IDBKeyRangeFull | undefined;
 export { IDBKeyRange as default };
 //# sourceMappingURL=IDBKeyRange.d.ts.map

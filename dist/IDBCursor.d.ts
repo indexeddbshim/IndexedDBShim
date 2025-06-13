@@ -200,7 +200,7 @@ export class IDBCursor {
      * @this {IDBCursorFull}
      * @returns {void}
      */
-    __continue(this: IDBCursorFull, key?: import("./Key.js").Key, advanceContinue?: boolean | undefined): void;
+    __continue(this: IDBCursorFull, key?: import("./Key.js").Key, advanceContinue?: boolean): void;
     /**
      *
      * @param {import('./Key.js').Key} key

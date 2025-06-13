@@ -16,7 +16,7 @@ export type LegacyCode = "INDEX_SIZE_ERR" | "DOMSTRING_SIZE_ERR" | "HIERARCHY_RE
  * @param {string|ErrorLike|boolean|null} [error]
  * @returns {void}
  */
-export function logError(name: string, message: string, error?: string | boolean | ErrorLike | null | undefined): void;
+export function logError(name: string, message: string, error?: string | ErrorLike | boolean | null): void;
 /**
  * Finds the error argument.  This is useful because some WebSQL callbacks
  * pass the error as the first argument, and some pass it as the second
@@ -57,7 +57,7 @@ export const ShimDOMException: {
     readonly INVALID_NODE_TYPE_ERR: 24;
     readonly DATA_CLONE_ERR: 25;
 };
-export const createDOMException: ((name: string, message: string, error?: ErrorLike | undefined) => DOMException) | ((name: string, message: string, error?: ErrorLike | undefined) => Error);
+export const createDOMException: ((name: string, message: string, error?: ErrorLike) => DOMException) | ((name: string, message: string, error?: ErrorLike) => Error);
 /**
  *
  * @param {SQLError} webSQLErr

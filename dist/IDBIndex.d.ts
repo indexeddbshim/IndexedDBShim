@@ -104,7 +104,7 @@ export class IDBIndex {
      * @this {IDBIndexFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    __fetchIndexData(this: IDBIndexFull, range: Query, opType: "value" | "key" | "count", nullDisallowed: boolean, count?: number | undefined): import("./IDBRequest.js").IDBRequestFull;
+    __fetchIndexData(this: IDBIndexFull, range: Query, opType: "value" | "key" | "count", nullDisallowed: boolean, count?: number): import("./IDBRequest.js").IDBRequestFull;
     /**
      * Opens a cursor over the given key range.
      * @this {IDBIndexFull}
@@ -199,7 +199,7 @@ export namespace IDBIndex {
      * @throws {DOMException}
      * @returns {void}
      */
-    function __invalidStateIfDeleted(index: IDBIndexFull, msg?: string | undefined): void;
+    function __invalidStateIfDeleted(index: IDBIndexFull, msg?: string): void;
     /**
      * Clones an IDBIndex instance for a different IDBObjectStore instance.
      * @param {IDBIndexFull} index
@@ -235,7 +235,7 @@ export namespace IDBIndex {
      * ) => boolean} [failure]
      * @returns {void}
      */
-    function __updateIndexList(store: import("./IDBObjectStore.js").IDBObjectStoreFull, tx: SQLTransaction, success: (store: IDBObjectStore) => void, failure?: ((tx: SQLTransaction, err: SQLError) => boolean) | undefined): void;
+    function __updateIndexList(store: import("./IDBObjectStore.js").IDBObjectStoreFull, tx: SQLTransaction, success: (store: IDBObjectStore) => void, failure?: (tx: SQLTransaction, err: SQLError) => boolean): void;
 }
 import { IDBKeyRange } from './IDBKeyRange.js';
 import IDBObjectStore from './IDBObjectStore.js';

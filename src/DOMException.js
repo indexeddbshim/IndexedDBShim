@@ -361,7 +361,6 @@ try {
         // Native DOMException works as expected
         useNativeDOMException = true;
     }
-// eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
 } catch (err) {}
 
 const createDOMException = useNativeDOMException

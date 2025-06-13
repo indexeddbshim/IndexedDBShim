@@ -41,7 +41,7 @@ export type AnyValue = any;
  * @param {boolean} [inArray]
  * @returns {string|null}
  */
-export function encode(key: Key, inArray?: boolean | undefined): string | null;
+export function encode(key: Key, inArray?: boolean): string | null;
 /**
  *
  * @param {Key} key
@@ -49,14 +49,14 @@ export function encode(key: Key, inArray?: boolean | undefined): string | null;
  * @throws {Error} Invalid number
  * @returns {undefined|ValueType}
  */
-export function decode(key: Key, inArray?: boolean | undefined): undefined | ValueType;
+export function decode(key: Key, inArray?: boolean): undefined | ValueType;
 /**
  *
  * @param {Key} key
  * @param {boolean} [inArray]
  * @returns {undefined|ValueType}
  */
-export function roundTrip(key: Key, inArray?: boolean | undefined): undefined | ValueType;
+export function roundTrip(key: Key, inArray?: boolean): undefined | ValueType;
 /**
 * Not currently in use but keeping for spec parity.
 * @param {Key} key
@@ -76,7 +76,7 @@ export function convertKeyToValue(key: Key): ValueType;
 * @todo Document other allowable `input`
 * @returns {KeyValueObject}
 */
-export function convertValueToKeyValueDecoded(input: Value, seen?: any[] | null | undefined, multiEntry?: boolean | undefined, fullKeys?: boolean | undefined): KeyValueObject;
+export function convertValueToKeyValueDecoded(input: Value, seen?: Value[] | null, multiEntry?: boolean, fullKeys?: boolean): KeyValueObject;
 /**
  *
  * @param {Key} key
@@ -84,7 +84,7 @@ export function convertValueToKeyValueDecoded(input: Value, seen?: any[] | null 
  * @returns {KeyValueObject}
  * @todo Document other allowable `key`?
  */
-export function convertValueToMultiEntryKeyDecoded(key: Key, fullKeys?: boolean | undefined): KeyValueObject;
+export function convertValueToMultiEntryKeyDecoded(key: Key, fullKeys?: boolean): KeyValueObject;
 /**
  * Keys must be strings, numbers (besides `NaN`), Dates (if value is not
  *   `NaN`), binary objects or Arrays.
@@ -134,7 +134,7 @@ export function evaluateKeyPathOnValue(value: Value, keyPath: KeyPath, multiEntr
 * @returns {KeyValueObject|KeyPathEvaluateValue}
 * @todo Document other possible return?
 */
-export function extractKeyValueDecodedFromValueUsingKeyPath(value: Value, keyPath: KeyPath, multiEntry?: boolean | undefined, fullKeys?: boolean | undefined): KeyValueObject | KeyPathEvaluateValue;
+export function extractKeyValueDecodedFromValueUsingKeyPath(value: Value, keyPath: KeyPath, multiEntry?: boolean, fullKeys?: boolean): KeyValueObject | KeyPathEvaluateValue;
 /**
  * Sets the inline key value.
  * @param {{[key: string]: AnyValue}} value
@@ -167,7 +167,7 @@ export function isMultiEntryMatch(encodedEntry: string, encodedKey: string): boo
  * @param {boolean} [checkCached]
  * @returns {boolean}
  */
-export function isKeyInRange(key: Key, range: import("./IDBKeyRange.js").IDBKeyRangeFull, checkCached?: boolean | undefined): boolean;
+export function isKeyInRange(key: Key, range: import("./IDBKeyRange.js").IDBKeyRangeFull, checkCached?: boolean): boolean;
 /**
  *
  * @param {Key} keyEntry

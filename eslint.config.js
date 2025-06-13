@@ -146,6 +146,7 @@ export default [
     {
         files: ['**/*.md/*.js'],
         rules: {
+            'unicorn/prefer-global-this': 'off', // Older browsers
             'import/no-commonjs': 'off',
             'eol-last': ['off'],
             'no-console': ['off'],

@@ -1,3 +1,3 @@
-export { regex$1 as default };
-declare var regex$1: any;
+export { regex as default };
+declare var regex: any;
 //# sourceMappingURL=unicode-regex.d.ts.map

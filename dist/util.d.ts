@@ -160,7 +160,7 @@ export function enforceRange(number: number, type: "unsigned long long" | "unsig
  * @param {boolean} [treatNullAs]
  * @returns {string}
  */
-export function convertToDOMString(v: AnyValue, treatNullAs?: boolean | undefined): string;
+export function convertToDOMString(v: AnyValue, treatNullAs?: boolean): string;
 /**
  *
  * @param {AnyValue} val

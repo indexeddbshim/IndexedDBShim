@@ -76,7 +76,7 @@ export class IDBFactory {
      * @param {string} [origin]
      * @returns {void}
      */
-    __setConnectionQueueOrigin(origin?: string | undefined): void;
+    __setConnectionQueueOrigin(origin?: string): void;
 }
 export namespace IDBFactory {
     /**

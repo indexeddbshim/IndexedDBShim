@@ -1,5 +1,12 @@
 # CHANGES for indexeddbshim
 
+## 16.0.0
+
+BREAKING CHANGES:
+- Requires Node >= 20
+
+- chore: update canvas, typeson-registry, devDeps.
+
 ## 15.2.0
 
 - fix: avoid problematic double-escaping of `"` in LIKE clauses (used in

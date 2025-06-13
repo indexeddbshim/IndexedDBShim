@@ -11,7 +11,7 @@ export type DebuggingError = Error;
  *   __legacyOutputDidListenersThrowError?: boolean
  * }}
  */
-export function createEvent(type: string, debug?: Error | null | undefined, evInit?: EventInit | undefined): Event & {
+export function createEvent(type: string, debug?: DebuggingError | null, evInit?: EventInit): Event & {
     __legacyOutputDidListenersThrowError?: boolean;
 };
 import { ShimEvent } from 'eventtargeter';

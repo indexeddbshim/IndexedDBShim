@@ -8,7 +8,7 @@ export type AnyValue = any;
  * @throws {Error}
  * @returns {string}
  */
-export function encode(obj: AnyValue, func?: ((str: string) => void) | undefined): string;
+export function encode(obj: AnyValue, func?: (str: string) => void): string;
 /**
  * @typedef {any} AnyValue
  */

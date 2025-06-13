@@ -1,4 +1,4 @@
-/*! indexeddbshim - v15.2.0 - 9/11/2024 */
+/*! indexeddbshim - v16.0.0 - 6/14/2025 */
 
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -28,9 +28,9 @@
           s: F,
           n: function () {
             return n >= r.length ? {
-              done: !0
+              done: true
             } : {
-              done: !1,
+              done: false,
               value: r[n++]
             };
           },
@@ -43,8 +43,8 @@
       throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
     }
     var o,
-      a = !0,
-      u = !1;
+      a = true,
+      u = false;
     return {
       s: function () {
         t = t.call(r);
@@ -54,7 +54,7 @@
         return a = r.done, r;
       },
       e: function (r) {
-        u = !0, o = r;
+        u = true, o = r;
       },
       f: function () {
         try {
@@ -76,12 +76,12 @@
         i,
         u,
         a = [],
-        f = !0,
-        o = !1;
+        f = true,
+        o = false;
       try {
         if (i = (t = t.call(r)).next, 0 === l) ; else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
       } catch (r) {
-        o = !0, n = r;
+        o = true, n = r;
       } finally {
         try {
           if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return;
@@ -625,7 +625,6 @@
       // Native DOMException works as expected
       useNativeDOMException = true;
     }
-    // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
   } catch (err) {}
   var createDOMException = useNativeDOMException
   // eslint-disable-next-line @stylistic/operator-linebreak -- Need JSDoc
@@ -1014,7 +1013,7 @@
         key = key.slice(2);
         if (inArray) {
           // remove the space at the end, and the dash before each character
-          key = key.slice(0, -1).replaceAll(/\x2D((?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, '$1');
+          key = key.slice(0, -1).replaceAll(/-((?:[\0-\t\x0B\f\x0E-\u2027\u202A-\uD7FF\uE000-\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]))/g, '$1');
         }
         return key;
       }
@@ -1407,7 +1406,7 @@
               value: date.getTime()
             } : {
               type: type,
-              value: new Date(date.getTime())
+              value: new Date(date)
             };
           }
           return {

@@ -115,7 +115,7 @@ declare class IDBObjectStore {
      * @this {IDBObjectStoreFull}
      * @returns {import('./IDBRequest.js').IDBRequestFull}
      */
-    __get(this: IDBObjectStoreFull, query: import("./Key.js").Value, getKey?: boolean | undefined, getAll?: boolean | undefined, count?: number | undefined): import("./IDBRequest.js").IDBRequestFull;
+    __get(this: IDBObjectStoreFull, query: import("./Key.js").Value, getKey?: boolean, getAll?: boolean, count?: Integer): import("./IDBRequest.js").IDBRequestFull;
     /**
      *
      * @param {import('./Key.js').Value} query
@@ -227,7 +227,7 @@ declare namespace IDBObjectStore {
      * @param {import('./IDBTransaction.js').IDBTransactionFull} [transaction]
      * @returns {IDBObjectStoreFull}
      */
-    function __createInstance(storeProperties: import("./IDBDatabase.js").IDBObjectStoreProperties, transaction?: import("./IDBTransaction.js").IDBTransactionFull | undefined): IDBObjectStoreFull;
+    function __createInstance(storeProperties: import("./IDBDatabase.js").IDBObjectStoreProperties, transaction?: import("./IDBTransaction.js").IDBTransactionFull): IDBObjectStoreFull;
     /**
      * Clones an IDBObjectStore instance for a different IDBTransaction instance.
      * @param {IDBObjectStoreFull} store
@@ -242,7 +242,7 @@ declare namespace IDBObjectStore {
      * @throws {DOMException}
      * @returns {void}
      */
-    function __invalidStateIfDeleted(store: IDBObjectStoreFull | import("./IDBIndex.js").IDBIndexFull, msg?: string | undefined): void;
+    function __invalidStateIfDeleted(store: IDBObjectStoreFull | import("./IDBIndex.js").IDBIndexFull, msg?: string): void;
     /**
      * Creates a new object store in the database.
      * @param {import('./IDBDatabase.js').IDBDatabaseFull} db

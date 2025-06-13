@@ -533,7 +533,6 @@ IDBObjectStore.prototype.__insertData = function (tx, encoded, value, clonedKeyO
                 ) {
                     throw new Error('Go to catch');
                 }
-            // eslint-disable-next-line no-unused-vars -- Problem with commonJS rollup
             } catch (err) {
                 resolve(undefined);
                 return;

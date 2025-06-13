@@ -588,7 +588,7 @@ function convertValueToKeyValueDecoded (input, seen, multiEntry, fullKeys) {
         if (!Number.isNaN(date.getTime())) {
             return fullKeys
                 ? {type, value: date.getTime()}
-                : {type, value: new Date(date.getTime())};
+                : {type, value: new Date(date)};
         }
         return {type, invalid: true, message: 'Not a valid date'};
         // Falls through
