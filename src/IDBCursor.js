@@ -152,8 +152,8 @@ IDBCursor.__createInstance = function (...args) {
  */
 IDBCursor.prototype.__find = function (...args /* key, tx, success, error, recordsToLoad */) {
     if (this.__multiEntryIndex) {
-        const [key, primaryKey, tx, success, error] = args;
-        this.__findMultiEntry(key, primaryKey, tx, success, error);
+        const [key, primaryKey, tx, success, error, recordsToLoad ] = args;
+        this.__findMultiEntry(key, primaryKey, tx, success, error, recordsToLoad);
     } else {
         const [key, primaryKey, tx, success, error, recordsToLoad] = args;
         this.__findBasic(key, primaryKey, tx, success, error, recordsToLoad);
@@ -270,10 +270,11 @@ const leftBracketRegex = /\[/gu;
  * @param {SQLTransaction} tx
  * @param {KeySuccess} success
  * @param {FindError} error
+ * @param {Integer|undefined} recordsToLoad
  * @this {IDBCursorFull}
  * @returns {void}
  */
-IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, error) {
+IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, error, recordsToLoad) {
     const me = this;
 
     if (me.__prefetchedData && me.__prefetchedData.length === me.__prefetchedIndex) {
@@ -333,6 +334,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
             // 4. Sort by object store position (if defined and not unique)
             sql.push(',', util.sqlQuote(me.__valueColumnName), direction);
         }
+        sql.push('LIMIT', String(recordsToLoad));
     }
     const sqlStr = sql.join(' ');
     if (CFG.DEBUG) { console.log(sqlStr, sqlValues); }
