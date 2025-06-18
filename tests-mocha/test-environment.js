@@ -276,7 +276,7 @@
                 };
                 dbOpenRequest.onupgradeneeded = function () {
                     expect(true, 'Database Upgraded successfully').to.be.true;
-                    // var db = dbOpenRequest.result;
+                    // const db = dbOpenRequest.result;
                     const objectStore1 = dbOpenRequest.transaction.objectStore(DB.OBJECT_STORE_1);
                     // eslint-disable-next-line no-unused-vars
                     const index1 = objectStore1.createIndex('Int Index', 'Int', {

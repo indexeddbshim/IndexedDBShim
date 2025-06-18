@@ -29,7 +29,7 @@ describe('IDBObjectStore.deleteIndex', function () {
             };
             dbOpenRequest.onupgradeneeded = function () {
                 expect(true, 'Database Upgraded successfully').to.be.true;
-                // var db = dbOpenRequest.result;
+                // const db = dbOpenRequest.result;
                 const objectStore1 = dbOpenRequest.transaction.objectStore(DB.OBJECT_STORE_1);
                 const count = objectStore1.indexNames.length;
 
