@@ -1,6 +1,6 @@
 /* eslint-env mocha */
 /* globals expect, sinon, util, env, testHelper  */
-/* eslint-disable no-var, no-unused-expressions */
+/* eslint-disable no-unused-expressions */
 describe('IDBIndex.openCursor', function () {
     'use strict';
 
@@ -10,10 +10,10 @@ describe('IDBIndex.openCursor', function () {
                 done(error);
                 return;
             }
-            var index = objectStore.index('Int Index');
-            var indexCursorReq = index.openCursor();
+            const index = objectStore.index('Int Index');
+            const indexCursorReq = index.openCursor();
             indexCursorReq.onsuccess = function () {
-                var cursor = indexCursorReq.result;
+                const cursor = indexCursorReq.result;
                 if (cursor) {
                     expect(true, 'Iterating over cursor ' + cursor.key + ' for value ' + JSON.stringify(cursor.value)).to.be.true;
                     cursor.continue();
@@ -37,15 +37,15 @@ describe('IDBIndex.openCursor', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('inline-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('inline-index');
             tx.onerror = function (event) {
                 done(event.target.error);
             };
 
-            var storeCursor = store.openCursor('foo');
-            var indexCursor = index.openCursor('foo');
+            const storeCursor = store.openCursor('foo');
+            const indexCursor = index.openCursor('foo');
 
             expect(storeCursor).to.be.an.instanceOf(IDBRequest);
             expect(indexCursor).to.be.an.instanceOf(IDBRequest);
@@ -64,13 +64,13 @@ describe('IDBIndex.openCursor', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('inline-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('inline-index');
             tx.onerror = done;
 
-            var storeCursor = store.openCursor('foo');
-            var indexCursor = index.openCursor('foo');
+            const storeCursor = store.openCursor('foo');
+            const indexCursor = index.openCursor('foo');
 
             storeCursor.onerror = sinon.spy();
             indexCursor.onerror = sinon.spy();
@@ -105,15 +105,15 @@ describe('IDBIndex.openCursor', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('inline-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('inline-index');
             tx.onerror = done;
 
             store.add({id: 1, name: 'John Doe'});
 
-            var storeCursor = store.openCursor(1);
-            var indexCursor = index.openCursor(1);
+            const storeCursor = store.openCursor(1);
+            const indexCursor = index.openCursor(1);
 
             storeCursor.onerror = sinon.spy();
             indexCursor.onerror = sinon.spy();
@@ -156,13 +156,13 @@ describe('IDBIndex.openCursor', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('inline-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('inline-index');
             tx.onerror = done;
 
-            var storeCursor = store.openCursor(IDBKeyRange.only('foo'));
-            var indexCursor = index.openCursor(IDBKeyRange.only('foo'));
+            const storeCursor = store.openCursor(IDBKeyRange.only('foo'));
+            const indexCursor = index.openCursor(IDBKeyRange.only('foo'));
 
             storeCursor.onerror = sinon.spy();
             indexCursor.onerror = sinon.spy();
@@ -196,15 +196,15 @@ describe('IDBIndex.openCursor', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('inline-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('inline-index');
             tx.onerror = done;
 
             store.add({id: 1, name: 'John Doe'});
 
-            var storeCursor = store.openCursor(IDBKeyRange.only(1));
-            var indexCursor = index.openCursor(IDBKeyRange.only(1));
+            const storeCursor = store.openCursor(IDBKeyRange.only(1));
+            const indexCursor = index.openCursor(IDBKeyRange.only(1));
 
             storeCursor.onerror = sinon.spy();
             indexCursor.onerror = sinon.spy();
@@ -247,9 +247,9 @@ describe('IDBIndex.openCursor', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('inline-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('inline-index');
             tx.onerror = done;
 
             // Added BEFORE opening the cursor
@@ -257,9 +257,9 @@ describe('IDBIndex.openCursor', function () {
             store.add({id: 2});
             store.add({id: 3});
 
-            var storeCursor = store.openCursor();
-            var indexCursor = index.openCursor();
-            var storeCounter = 0, indexCounter = 0;
+            const storeCursor = store.openCursor();
+            const indexCursor = index.openCursor();
+            let storeCounter = 0, indexCounter = 0;
 
             storeCursor.onsuccess = sinon.spy(function () {
                 if (storeCursor.result) {
@@ -305,8 +305,8 @@ describe('IDBIndex.openCursor', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
             tx.onerror = function (event) {
                 done(event.target.error.message);
             };
@@ -317,10 +317,10 @@ describe('IDBIndex.openCursor', function () {
             store.add({id: 4});
             store.add({id: 5});
 
-            var cursor1 = store.openCursor(IDBKeyRange.lowerBound(0), 'next');
-            var cursor2 = store.openCursor(IDBKeyRange.lowerBound(0), 'prev');
+            const cursor1 = store.openCursor(IDBKeyRange.lowerBound(0), 'next');
+            const cursor2 = store.openCursor(IDBKeyRange.lowerBound(0), 'prev');
 
-            var counter1 = 1, counter2 = 5;
+            let counter1 = 1, counter2 = 5;
 
             cursor1.onsuccess = sinon.spy(function () {
                 if (cursor1.result) {
@@ -355,20 +355,20 @@ describe('IDBIndex.openCursor', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('inline-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('inline-index');
             tx.onerror = function (event) {
                 done(event.target.error.message);
             };
 
-            for (var i = 1; i < 500; i++) {
+            for (let i = 1; i < 500; i++) {
                 store.add({id: i});
             }
 
-            var storeCursor = store.openCursor();
-            var indexCursor = index.openCursor();
-            var storeCounter = 0, indexCounter = 0;
+            const storeCursor = store.openCursor();
+            const indexCursor = index.openCursor();
+            let storeCounter = 0, indexCounter = 0;
 
             storeCursor.onsuccess = sinon.spy(function () {
                 if (storeCursor.result) {
@@ -410,15 +410,15 @@ describe('IDBIndex.openCursor', function () {
                 done();
                 return;
             }
-            var storeCursor, indexCursor, storeCounter = 0, indexCounter = 0;
+            let storeCursor, indexCursor, storeCounter = 0, indexCounter = 0;
             transaction1();
 
             /**
              * @returns {void}
              */
             function transaction1 () {
-                var tx = db.transaction('inline', 'readwrite');
-                var store = tx.objectStore('inline');
+                const tx = db.transaction('inline', 'readwrite');
+                const store = tx.objectStore('inline');
                 tx.onerror = done;
                 tx.oncomplete = transaction2;
 
@@ -431,8 +431,8 @@ describe('IDBIndex.openCursor', function () {
              * @returns {void}
              */
             function transaction2 () {
-                var tx = db.transaction('inline', 'readwrite');
-                var store = tx.objectStore('inline');
+                const tx = db.transaction('inline', 'readwrite');
+                const store = tx.objectStore('inline');
                 tx.onerror = done;
                 tx.oncomplete = transaction3;
 
@@ -444,9 +444,9 @@ describe('IDBIndex.openCursor', function () {
              * @returns {void}
              */
             function transaction3 () {
-                var tx = db.transaction('inline', 'readwrite');
-                var store = tx.objectStore('inline');
-                var index = store.index('inline-index');
+                const tx = db.transaction('inline', 'readwrite');
+                const store = tx.objectStore('inline');
+                const index = store.index('inline-index');
                 tx.onerror = done;
 
                 storeCursor = store.openCursor();
@@ -484,10 +484,10 @@ describe('IDBIndex.openCursor', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line-generated', 'readwrite');
-            var store = tx.objectStore('out-of-line-generated');
-            var index = store.index('inline-index');
-            var gettingCounter = 0, gottenCounter = 0;
+            const tx = db.transaction('out-of-line-generated', 'readwrite');
+            const store = tx.objectStore('out-of-line-generated');
+            const index = store.index('inline-index');
+            let gettingCounter = 0, gottenCounter = 0;
 
             getKey(''); // empty string
             getKey(util.sampleData.veryLongString);// very long string
@@ -516,8 +516,8 @@ describe('IDBIndex.openCursor', function () {
              */
             function getKey (key) {
                 gettingCounter++;
-                var storeCursor = store.openCursor(key);
-                var indexCursor = index.openCursor(key);
+                const storeCursor = store.openCursor(key);
+                const indexCursor = index.openCursor(key);
                 storeCursor.onerror = indexCursor.onerror = done;
                 storeCursor.onsuccess = indexCursor.onsuccess = function () {
                     gottenCounter++;
@@ -542,9 +542,9 @@ describe('IDBIndex.openCursor', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line-generated', 'readwrite');
-            var store = tx.objectStore('out-of-line-generated');
-            var index = store.index('inline-index');
+            const tx = db.transaction('out-of-line-generated', 'readwrite');
+            const store = tx.objectStore('out-of-line-generated');
+            const index = store.index('inline-index');
 
             tryToGet(Number.NaN); // NaN
             tryToGet(true); // boolean
@@ -571,7 +571,7 @@ describe('IDBIndex.openCursor', function () {
                     tryToGet(key, store);
                     tryToGet(key, index);
                 } else {
-                    var err = null;
+                    let err = null;
 
                     try {
                         IDBObj.openCursor(key);
@@ -593,7 +593,7 @@ describe('IDBIndex.openCursor', function () {
     });
 
     describe('queries', function () {
-        var queries, queriesCompleted;
+        let queries, queriesCompleted;
 
         /**
          * @param {IDBObjectStore|IDBIndex} source
@@ -621,7 +621,7 @@ describe('IDBIndex.openCursor', function () {
                 if (err) {
                     throw err;
                 }
-                var expectedLength = typeof expected === 'number' ? expected : expected.length;
+                const expectedLength = typeof expected === 'number' ? expected : expected.length;
                 if (data.length !== expectedLength) {
                     throw new Error('Expected ' + expectedLength + ' results, but got ' + data.length + '\n' + JSON.stringify(data.slice(0, 10), null, 2));
                 }
@@ -651,9 +651,9 @@ describe('IDBIndex.openCursor', function () {
                     done();
                     return;
                 }
-                var tx = db.transaction('out-of-line', 'readwrite');
-                var store = tx.objectStore('out-of-line');
-                var index = store.index('inline-index');
+                const tx = db.transaction('out-of-line', 'readwrite');
+                const store = tx.objectStore('out-of-line');
+                const index = store.index('inline-index');
                 tx.onerror = done;
                 tx.oncomplete = function () {
                     expect(queries).to.equal(queriesCompleted);
@@ -698,9 +698,9 @@ describe('IDBIndex.openCursor', function () {
                     done();
                     return;
                 }
-                var tx = db.transaction('out-of-line-generated', 'readwrite');
-                var store = tx.objectStore('out-of-line-generated');
-                var index = store.index('inline-index');
+                const tx = db.transaction('out-of-line-generated', 'readwrite');
+                const store = tx.objectStore('out-of-line-generated');
+                const index = store.index('inline-index');
                 tx.onerror = done;
                 tx.oncomplete = function () {
                     expect(queries).to.equal(queriesCompleted);
@@ -742,9 +742,9 @@ describe('IDBIndex.openCursor', function () {
                     done();
                     return;
                 }
-                var tx = db.transaction('out-of-line-compound', 'readwrite');
-                var store = tx.objectStore('out-of-line-compound');
-                var index = store.index('inline-index');
+                const tx = db.transaction('out-of-line-compound', 'readwrite');
+                const store = tx.objectStore('out-of-line-compound');
+                const index = store.index('inline-index');
                 tx.onerror = done;
                 tx.oncomplete = function () {
                     expect(queries).to.equal(queriesCompleted);
@@ -790,9 +790,9 @@ describe('IDBIndex.openCursor', function () {
                     done();
                     return;
                 }
-                var tx = db.transaction('dotted', 'readwrite');
-                var store = tx.objectStore('dotted');
-                var index = store.index('dotted-index');
+                const tx = db.transaction('dotted', 'readwrite');
+                const store = tx.objectStore('dotted');
+                const index = store.index('dotted-index');
                 tx.onerror = done;
                 tx.oncomplete = function () {
                     expect(queries).to.equal(queriesCompleted);
@@ -849,9 +849,9 @@ describe('IDBIndex.openCursor', function () {
                     done();
                     return;
                 }
-                var tx = db.transaction('dotted-generated', 'readwrite');
-                var store = tx.objectStore('dotted-generated');
-                var index = store.index('dotted-index');
+                const tx = db.transaction('dotted-generated', 'readwrite');
+                const store = tx.objectStore('dotted-generated');
+                const index = store.index('dotted-index');
                 tx.onerror = done;
                 tx.oncomplete = function () {
                     expect(queries).to.equal(queriesCompleted);
@@ -897,9 +897,9 @@ describe('IDBIndex.openCursor', function () {
                     done();
                     return;
                 }
-                var tx = db.transaction('dotted-compound', 'readwrite');
-                var store = tx.objectStore('dotted-compound');
-                var index = store.index('compound-index');
+                const tx = db.transaction('dotted-compound', 'readwrite');
+                const store = tx.objectStore('dotted-compound');
+                const index = store.index('compound-index');
                 tx.onerror = done;
                 tx.oncomplete = function () {
                     expect(queries).to.equal(queriesCompleted);
@@ -954,9 +954,9 @@ describe('IDBIndex.openCursor', function () {
                     done();
                     return;
                 }
-                var tx = db.transaction('inline', 'readwrite');
-                var store = tx.objectStore('inline');
-                var index = store.index('compound-index');
+                const tx = db.transaction('inline', 'readwrite');
+                const store = tx.objectStore('inline');
+                const index = store.index('compound-index');
                 tx.onerror = function (event) {
                     done(event.target.error);
                 };
@@ -1027,9 +1027,9 @@ describe('IDBIndex.openCursor', function () {
                     done();
                     return;
                 }
-                var tx = db.transaction('inline', 'readwrite');
-                var store = tx.objectStore('inline');
-                var index = store.index('multi-entry-index');
+                const tx = db.transaction('inline', 'readwrite');
+                const store = tx.objectStore('inline');
+                const index = store.index('multi-entry-index');
                 tx.onerror = done;
                 tx.oncomplete = function () {
                     expect(queries).to.equal(queriesCompleted);
@@ -1104,9 +1104,9 @@ describe('IDBIndex.openCursor', function () {
                     done();
                     return;
                 }
-                var tx = db.transaction('inline', 'readwrite');
-                var store = tx.objectStore('inline');
-                var index = store.index('multi-entry-index');
+                const tx = db.transaction('inline', 'readwrite');
+                const store = tx.objectStore('inline');
+                const index = store.index('multi-entry-index');
                 tx.onerror = function (event) {
                     done(event.target.error.message);
                 };
@@ -1116,7 +1116,7 @@ describe('IDBIndex.openCursor', function () {
                     done();
                 };
 
-                for (var i = 0; i < 500; i++) {
+                for (let i = 0; i < 500; i++) {
                     store.add({id: ['a', 'b', i]});
                     store.add({id: ['a', 'c', i]});
                 }
@@ -1149,10 +1149,10 @@ describe('IDBIndex.openCursor', function () {
                     done();
                     return;
                 }
-                var tx = db.transaction('out-of-line-generated', 'readwrite');
-                var store = tx.objectStore('out-of-line-generated');
-                var index = store.index('inline-index');
-                var storeErr, indexErr;
+                const tx = db.transaction('out-of-line-generated', 'readwrite');
+                const store = tx.objectStore('out-of-line-generated');
+                const index = store.index('inline-index');
+                let storeErr, indexErr;
 
                 try {
                     store.openCursor(IDBKeyRange.upperBound({foo: 'bar'}));
@@ -1184,10 +1184,10 @@ describe('IDBIndex.openCursor', function () {
                     done();
                     return;
                 }
-                var tx = db.transaction('out-of-line-generated', 'readwrite');
-                var store = tx.objectStore('out-of-line-generated');
-                var index = store.index('inline-index');
-                var storeErr, indexErr;
+                const tx = db.transaction('out-of-line-generated', 'readwrite');
+                const store = tx.objectStore('out-of-line-generated');
+                const index = store.index('inline-index');
+                let storeErr, indexErr;
 
                 try {
                     store.openCursor(1, 'ascending'); // not a valid direction
@@ -1223,12 +1223,12 @@ describe('IDBIndex.openCursor', function () {
                     done();
                     return;
                 }
-                var tx = db.transaction('out-of-line-generated', 'readwrite');
-                var store = tx.objectStore('out-of-line-generated');
-                var index = store.index('inline-index');
+                const tx = db.transaction('out-of-line-generated', 'readwrite');
+                const store = tx.objectStore('out-of-line-generated');
+                const index = store.index('inline-index');
 
                 setTimeout(function () {
-                    var storeErr, indexErr;
+                    let storeErr, indexErr;
 
                     try {
                         store.openCursor(1);

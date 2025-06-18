@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 /* globals expect, sinon, util, env */
-/* eslint-disable no-var */
 describe('IDBIndex.count', function () {
     'use strict';
 
@@ -11,14 +10,14 @@ describe('IDBIndex.count', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
             tx.onerror = function (event) {
                 done(event.target.error);
             };
 
-            var store = tx.objectStore('inline');
-            var storeCount = store.count();
-            var indexCount = store.index('inline-index').count();
+            const store = tx.objectStore('inline');
+            const storeCount = store.count();
+            const indexCount = store.index('inline-index').count();
 
             expect(storeCount).to.be.an.instanceOf(IDBRequest);
             expect(indexCount).to.be.an.instanceOf(IDBRequest);
@@ -37,12 +36,12 @@ describe('IDBIndex.count', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('inline');
-            var storeCount = store.count();
-            var indexCount = store.index('inline-index').count();
+            const store = tx.objectStore('inline');
+            const storeCount = store.count();
+            const indexCount = store.index('inline-index').count();
 
             expect(storeCount.transaction).to.equal(tx);
             expect(indexCount.transaction).to.equal(tx);
@@ -63,18 +62,18 @@ describe('IDBIndex.count', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('inline');
-            var storeCount = store.count();
+            const store = tx.objectStore('inline');
+            const storeCount = store.count();
             storeCount.onerror = sinon.spy();
             storeCount.onsuccess = sinon.spy(function (event) {
                 expect(event).to.be.an.instanceOf(env.Event);
                 expect(event.target).to.equal(storeCount);
             });
 
-            var indexCount = store.index('inline-index').count();
+            const indexCount = store.index('inline-index').count();
             indexCount.onerror = sinon.spy();
             indexCount.onsuccess = sinon.spy(function (event) {
                 expect(event).to.be.an.instanceOf(env.Event);
@@ -101,12 +100,12 @@ describe('IDBIndex.count', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line', 'readwrite');
+            const tx = db.transaction('out-of-line', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('out-of-line');
-            var storeCount = store.count();
-            var indexCount = store.index('inline-index').count();
+            const store = tx.objectStore('out-of-line');
+            const storeCount = store.count();
+            const indexCount = store.index('inline-index').count();
 
             tx.oncomplete = function () {
                 expect(storeCount.result).to.equal(0);
@@ -125,16 +124,16 @@ describe('IDBIndex.count', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line', 'readwrite');
+            const tx = db.transaction('out-of-line', 'readwrite');
             tx.onerror = function (evt) {
                 done(evt.target.error);
             };
 
-            var store = tx.objectStore('out-of-line');
+            const store = tx.objectStore('out-of-line');
             store.add({id: 'a'}, 12345);
 
-            var storeCount = store.count();
-            var indexCount = store.index('inline-index').count();
+            const storeCount = store.count();
+            const indexCount = store.index('inline-index').count();
 
             tx.oncomplete = function () {
                 expect(storeCount.result).to.equal(1);
@@ -153,16 +152,16 @@ describe('IDBIndex.count', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line', 'readwrite');
+            const tx = db.transaction('out-of-line', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('out-of-line');
+            const store = tx.objectStore('out-of-line');
             store.add({id: 'a'}, 111);
             store.add({id: 'b'}, 2222);
             store.add({id: 'c'}, 33);
 
-            var storeCount = store.count();
-            var indexCount = store.index('inline-index').count();
+            const storeCount = store.count();
+            const indexCount = store.index('inline-index').count();
 
             tx.oncomplete = function () {
                 expect(storeCount.result).to.equal(3);
@@ -182,16 +181,16 @@ describe('IDBIndex.count', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('inline');
+            const store = tx.objectStore('inline');
             store.add({id: 'a'});
             store.add({id: 'b'});
             store.add({id: 'c'});
 
-            var storeCount = store.count(undefined);
-            var indexCount = store.index('inline-index').count(undefined);
+            const storeCount = store.count(undefined);
+            const indexCount = store.index('inline-index').count(undefined);
 
             tx.oncomplete = function () {
                 expect(storeCount.result).to.equal(3);
@@ -210,22 +209,22 @@ describe('IDBIndex.count', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('inline');
-            var index = store.index('inline-index');
+            const store = tx.objectStore('inline');
+            const index = store.index('inline-index');
 
             store.add({id: 'a'});
             store.add({id: 'b'});
             store.add({id: 'c'});
 
-            var storeCount = store.count();
-            var indexCount = index.count();
+            const storeCount = store.count();
+            const indexCount = index.count();
 
-            var range = IDBKeyRange.bound('a', 'b', false, false);
-            var filteredStoreCount = store.count(range);
-            var filteredIndexCount = index.count(range);
+            const range = IDBKeyRange.bound('a', 'b', false, false);
+            const filteredStoreCount = store.count(range);
+            const filteredIndexCount = index.count(range);
 
             tx.oncomplete = function () {
                 expect(storeCount.result).to.equal(3);
@@ -250,35 +249,35 @@ describe('IDBIndex.count', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('multi-entry-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('multi-entry-index');
             tx.onerror = function (event) {
                 done(event.target.error.message);
             };
 
-            for (var i = 0; i < 500; i++) {
+            for (let i = 0; i < 500; i++) {
                 store.add({id: ['a', 'b', i]});
                 store.add({id: ['a', 'c', i]});
             }
 
-            var storeCount1 = store.count();
-            var indexCount1 = index.count();
+            const storeCount1 = store.count();
+            const indexCount1 = index.count();
 
-            var storeCount2 = store.count('a');
-            var indexCount2 = index.count('a');
+            const storeCount2 = store.count('a');
+            const indexCount2 = index.count('a');
 
-            var storeCount3 = store.count('b');
-            var indexCount3 = index.count('b');
+            const storeCount3 = store.count('b');
+            const indexCount3 = index.count('b');
 
-            var storeCount4 = store.count('c');
-            var indexCount4 = index.count('c');
+            const storeCount4 = store.count('c');
+            const indexCount4 = index.count('c');
 
-            var storeCount5 = store.count(['a', 'b', 5]);
-            var indexCount5 = index.count(['a', 'b', 5]);
+            const storeCount5 = store.count(['a', 'b', 5]);
+            const indexCount5 = index.count(['a', 'b', 5]);
 
-            var storeCount6 = store.count(['b']);
-            var indexCount6 = index.count(['b']);
+            const storeCount6 = store.count(['b']);
+            const indexCount6 = index.count(['b']);
 
             tx.oncomplete = function () {
                 expect(storeCount1.result).to.equal(1000);
@@ -312,35 +311,35 @@ describe('IDBIndex.count', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('unique-multi-entry-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('unique-multi-entry-index');
             tx.onerror = function (event) {
                 done(event.target.error.message);
             };
 
-            for (var i = 0; i < 500; i++) {
+            for (let i = 0; i < 500; i++) {
                 store.add({id: ['a' + i, 'b' + i]});
                 store.add({id: ['c' + i]});
             }
 
-            var storeCount1 = store.count();
-            var indexCount1 = index.count();
+            const storeCount1 = store.count();
+            const indexCount1 = index.count();
 
-            var storeCount2 = store.count('a250');
-            var indexCount2 = index.count('a250');
+            const storeCount2 = store.count('a250');
+            const indexCount2 = index.count('a250');
 
-            var storeCount3 = store.count('b499');
-            var indexCount3 = index.count('b499');
+            const storeCount3 = store.count('b499');
+            const indexCount3 = index.count('b499');
 
-            var storeCount4 = store.count('c9');
-            var indexCount4 = index.count('c9');
+            const storeCount4 = store.count('c9');
+            const indexCount4 = index.count('c9');
 
-            var storeCount5 = store.count(['a5', 'b5']);
-            var indexCount5 = index.count(['a5', 'b5']);
+            const storeCount5 = store.count(['a5', 'b5']);
+            const indexCount5 = index.count(['a5', 'b5']);
 
-            var storeCount6 = store.count(['b42']);
-            var indexCount6 = index.count(['b42']);
+            const storeCount6 = store.count(['b42']);
+            const indexCount6 = index.count(['b42']);
 
             tx.oncomplete = function () {
                 expect(storeCount1.result).to.equal(1000);
@@ -371,9 +370,9 @@ describe('IDBIndex.count', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('unique-multi-entry-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('unique-multi-entry-index');
             tx.onerror = function (event) {
                 done(event.target.error.message);
             };
@@ -382,11 +381,11 @@ describe('IDBIndex.count', function () {
             store.add({id: ['b', 'c'], value: 2});
             store.add({id: ['d', 'e'], value: 3});
 
-            var storeCount = store.count();
-            var indexCount = index.count();
+            const storeCount = store.count();
+            const indexCount = index.count();
 
-            var filteredStoreCount = store.count(IDBKeyRange.bound(['a'], ['c']));
-            var filteredIndexCount = index.count(IDBKeyRange.bound('b', 'd'));
+            const filteredStoreCount = store.count(IDBKeyRange.bound(['a'], ['c']));
+            const filteredIndexCount = index.count(IDBKeyRange.bound('b', 'd'));
 
             tx.oncomplete = function () {
                 expect(storeCount.result).to.equal(3);
@@ -407,31 +406,31 @@ describe('IDBIndex.count', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('inline-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('inline-index');
             tx.onerror = done;
 
-            var storeCount1 = store.count();
-            var indexCount1 = index.count();
+            const storeCount1 = store.count();
+            const indexCount1 = index.count();
 
             store.add({id: 'a'});
             store.add({id: 'b'});
 
-            var storeCount2 = store.count();
-            var indexCount2 = index.count();
+            const storeCount2 = store.count();
+            const indexCount2 = index.count();
 
             store.delete('a');
 
-            var storeCount3 = store.count();
-            var indexCount3 = index.count();
+            const storeCount3 = store.count();
+            const indexCount3 = index.count();
 
             store.add({id: 'a'});
             store.add({id: 'c'});
             store.add({id: 'd'});
 
-            var storeCount4 = store.count();
-            var indexCount4 = index.count();
+            const storeCount4 = store.count();
+            const indexCount4 = index.count();
 
             tx.oncomplete = function () {
                 expect(storeCount1.result).to.equal(0);
@@ -460,43 +459,43 @@ describe('IDBIndex.count', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('multi-entry-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('multi-entry-index');
             tx.onerror = done;
 
-            var storeCount1 = store.count();
-            var indexCount1 = index.count();
+            const storeCount1 = store.count();
+            const indexCount1 = index.count();
 
             store.add({id: ['a']});
 
-            var storeCount2 = store.count();
-            var indexCount2 = index.count();
+            const storeCount2 = store.count();
+            const indexCount2 = index.count();
 
             store.add({id: ['a', 'b']});
 
-            var storeCount3 = store.count();
-            var indexCount3 = index.count();
+            const storeCount3 = store.count();
+            const indexCount3 = index.count();
 
             store.delete(['a']);
 
-            var storeCount4 = store.count();
-            var indexCount4 = index.count();
+            const storeCount4 = store.count();
+            const indexCount4 = index.count();
 
             store.add({id: ['a']});
 
-            var storeCount5 = store.count();
-            var indexCount5 = index.count();
+            const storeCount5 = store.count();
+            const indexCount5 = index.count();
 
             store.add({id: ['c', 'a', 'd']});
 
-            var storeCount6 = store.count();
-            var indexCount6 = index.count();
+            const storeCount6 = store.count();
+            const indexCount6 = index.count();
 
             store.add({id: ['d', 'c']});
 
-            var storeCount7 = store.count();
-            var indexCount7 = index.count();
+            const storeCount7 = store.count();
+            const indexCount7 = index.count();
 
             tx.oncomplete = function () {
                 expect(storeCount1.result).to.equal(0);
@@ -529,38 +528,38 @@ describe('IDBIndex.count', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('unique-multi-entry-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('unique-multi-entry-index');
             tx.onerror = done;
 
-            var storeCount1 = store.count();
-            var indexCount1 = index.count();
+            const storeCount1 = store.count();
+            const indexCount1 = index.count();
 
             store.add({id: ['a']});
 
-            var storeCount2 = store.count();
-            var indexCount2 = index.count();
+            const storeCount2 = store.count();
+            const indexCount2 = index.count();
 
             store.add({id: ['b', 'c']});
 
-            var storeCount3 = store.count();
-            var indexCount3 = index.count();
+            const storeCount3 = store.count();
+            const indexCount3 = index.count();
 
             store.delete(['b']);
 
-            var storeCount4 = store.count();
-            var indexCount4 = index.count();
+            const storeCount4 = store.count();
+            const indexCount4 = index.count();
 
             store.add({id: ['d', 'e']});
 
-            var storeCount5 = store.count();
-            var indexCount5 = index.count();
+            const storeCount5 = store.count();
+            const indexCount5 = index.count();
 
             store.delete(['b', 'c']);
 
-            var storeCount6 = store.count();
-            var indexCount6 = index.count();
+            const storeCount6 = store.count();
+            const indexCount6 = index.count();
 
             tx.oncomplete = function () {
                 expect(storeCount1.result).to.equal(0);
@@ -590,9 +589,9 @@ describe('IDBIndex.count', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('inline-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('inline-index');
 
             setTimeout(function () {
                 tryToCount(store);
@@ -603,7 +602,7 @@ describe('IDBIndex.count', function () {
                  * @returns {void}
                  */
                 function tryToCount (obj) {
-                    var err = null;
+                    let err = null;
 
                     try {
                         obj.count();

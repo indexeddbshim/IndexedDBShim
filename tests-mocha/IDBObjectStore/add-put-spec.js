@@ -1,6 +1,6 @@
 /* eslint-env mocha */
 /* globals expect, sinon, util, env */
-/* eslint-disable no-var, no-unused-expressions, unicorn/no-for-loop */
+/* eslint-disable no-unused-expressions, unicorn/no-for-loop */
 /**
  * This file contains tests that are THE SAME for
  *  IDBObjectStore.add and IDBObjectStore.put.
@@ -18,11 +18,11 @@
                     done();
                     return;
                 }
-                var tx = db.transaction('inline', 'readwrite');
+                const tx = db.transaction('inline', 'readwrite');
                 tx.onerror = done;
 
-                var store = tx.objectStore('inline');
-                var save1 = store[save]({id: 12345});
+                const store = tx.objectStore('inline');
+                const save1 = store[save]({id: 12345});
                 expect(save1).to.be.an.instanceOf(IDBRequest);
 
                 tx.oncomplete = function () {
@@ -39,11 +39,11 @@
                     done();
                     return;
                 }
-                var tx = db.transaction('inline', 'readwrite');
+                const tx = db.transaction('inline', 'readwrite');
                 tx.onerror = done;
 
-                var store = tx.objectStore('inline');
-                var save1 = store[save]({id: 12345});
+                const store = tx.objectStore('inline');
+                const save1 = store[save]({id: 12345});
                 save1.onerror = done;
 
                 save1.onsuccess = sinon.spy(function (event) {
@@ -60,24 +60,24 @@
         });
 
         it('should safely ignore unique index checks with bad index keys', function (done) {
-            var stringIndex = {keyField: 'foo', id: 'bar'};
-            var nullIndex = {keyField: 'biz', id: null};
-            var boolIndex = {keyField: 'biz', id: null}; // This one would throw due to unique constraints if the key were valid
+            const stringIndex = {keyField: 'foo', id: 'bar'};
+            const nullIndex = {keyField: 'biz', id: null};
+            const boolIndex = {keyField: 'biz', id: null}; // This one would throw due to unique constraints if the key were valid
             util.createDatabase('out-of-line-generated', 'unique-index', function (err, db) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
                     done();
                     return;
                 }
-                var tx = db.transaction('out-of-line-generated', 'readwrite');
+                const tx = db.transaction('out-of-line-generated', 'readwrite');
                 tx.onerror = done;
 
-                var store = tx.objectStore('out-of-line-generated');
+                const store = tx.objectStore('out-of-line-generated');
                 store[save](stringIndex);
                 store[save](nullIndex);
                 store[save](boolIndex);
 
-                var allData;
+                let allData;
                 util.getAll(store, function (err, data) {
                     if (err) {
                         expect(function () { throw err; }).to.not.throw(Error);
@@ -102,8 +102,8 @@
         });
 
         it('should save a structured clone of the data, not the actual data', function (done) {
-            var john = new util.sampleData.Person('John Doe');
-            var bob = new util.sampleData.Person('Bob Smith', 30, new Date(2000, 5, 20), true);
+            const john = new util.sampleData.Person('John Doe');
+            const bob = new util.sampleData.Person('Bob Smith', 30, new Date(2000, 5, 20), true);
 
             util.createDatabase('out-of-line-generated', function (err, db) {
                 if (err) {
@@ -111,14 +111,14 @@
                     done();
                     return;
                 }
-                var tx = db.transaction('out-of-line-generated', 'readwrite');
+                const tx = db.transaction('out-of-line-generated', 'readwrite');
                 tx.onerror = done;
 
-                var store = tx.objectStore('out-of-line-generated');
+                const store = tx.objectStore('out-of-line-generated');
                 store[save](john);
                 store[save](bob);
 
-                var allData;
+                let allData;
                 util.getAll(store, function (err, data) {
                     if (err) {
                         expect(function () { throw err; }).to.not.throw(Error);
@@ -155,8 +155,8 @@
 
         it('should throw an error if the transaction is read-only', function (done) {
             util.createDatabase('out-of-line-generated', function (err, db) {
-                var tx = db.transaction('out-of-line-generated', 'readonly');
-                var store = tx.objectStore('out-of-line-generated');
+                const tx = db.transaction('out-of-line-generated', 'readonly');
+                const store = tx.objectStore('out-of-line-generated');
 
                 try {
                     store[save]({foo: 'bar'});
@@ -174,8 +174,8 @@
 
         it('should throw an error if the transaction is closed', function (done) {
             util.createDatabase('out-of-line-generated', function (err, db) {
-                var tx = db.transaction('out-of-line-generated', 'readwrite');
-                var store = tx.objectStore('out-of-line-generated');
+                const tx = db.transaction('out-of-line-generated', 'readwrite');
+                const store = tx.objectStore('out-of-line-generated');
 
                 setTimeout(function () {
                     try {
@@ -195,8 +195,8 @@
 
         it('should throw an error if called without params', function (done) {
             util.createDatabase('out-of-line-generated', function (err, db) {
-                var tx = db.transaction('out-of-line-generated', 'readwrite');
-                var store = tx.objectStore('out-of-line-generated');
+                const tx = db.transaction('out-of-line-generated', 'readwrite');
+                const store = tx.objectStore('out-of-line-generated');
 
                 try {
                     store[save]();
@@ -220,14 +220,14 @@
                         done();
                         return;
                     }
-                    var tx = db.transaction('out-of-line', 'readwrite');
+                    const tx = db.transaction('out-of-line', 'readwrite');
                     tx.onerror = done;
 
-                    var store = tx.objectStore('out-of-line');
-                    var save1 = store[save]({foo: 'bar'}, 12345);
-                    var save2 = store[save]({biz: 'baz'}, 45678);
+                    const store = tx.objectStore('out-of-line');
+                    const save1 = store[save]({foo: 'bar'}, 12345);
+                    const save2 = store[save]({biz: 'baz'}, 45678);
 
-                    var allData;
+                    let allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
                             expect(function () { throw err; }).to.not.throw(Error);
@@ -259,14 +259,14 @@
                         done();
                         return;
                     }
-                    var tx = db.transaction('out-of-line-generated', 'readwrite');
+                    const tx = db.transaction('out-of-line-generated', 'readwrite');
                     tx.onerror = done;
 
-                    var store = tx.objectStore('out-of-line-generated');
-                    var save1 = store[save]({foo: 'bar'});
-                    var save2 = store[save]({biz: 'baz'});
+                    const store = tx.objectStore('out-of-line-generated');
+                    const save1 = store[save]({foo: 'bar'});
+                    const save2 = store[save]({biz: 'baz'});
 
-                    var allData;
+                    let allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
                             expect(function () { throw err; }).to.not.throw(Error);
@@ -300,19 +300,19 @@
                         done();
                         return;
                     }
-                    var tx = db.transaction('out-of-line-generated', 'readwrite');
+                    const tx = db.transaction('out-of-line-generated', 'readwrite');
                     tx.onerror = function (event) {
                         done(tx.error || event);
                     };
 
-                    var store = tx.objectStore('out-of-line-generated');
-                    var save1 = store[save]({foo: 'bar'}); // <-- generated key
-                    var save2 = store[save]({biz: 'baz'}, 'abc'); // <-- specified key
-                    var save3 = store[save]({bat: 'bar'}); // <-- generated key
-                    var save4 = store[save]({bar: 'foo'}, 99); // <-- specified key
-                    var save5 = store[save]({baz: 'biz'}); // <-- generated key
+                    const store = tx.objectStore('out-of-line-generated');
+                    const save1 = store[save]({foo: 'bar'}); // <-- generated key
+                    const save2 = store[save]({biz: 'baz'}, 'abc'); // <-- specified key
+                    const save3 = store[save]({bat: 'bar'}); // <-- generated key
+                    const save4 = store[save]({bar: 'foo'}, 99); // <-- specified key
+                    const save5 = store[save]({baz: 'biz'}); // <-- generated key
 
-                    var allData;
+                    let allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
                             expect(function () { throw err; }).to.not.throw(Error);
@@ -352,10 +352,10 @@
                         done();
                         return;
                     }
-                    var tx = db.transaction('out-of-line', 'readwrite');
-                    var store = tx.objectStore('out-of-line');
+                    const tx = db.transaction('out-of-line', 'readwrite');
+                    const store = tx.objectStore('out-of-line');
                     tx.onerror = done;
-                    var savingCounter = 0, savedCounter = 0;
+                    let savingCounter = 0, savedCounter = 0;
 
                     saveKey(''); // empty string
                     saveKey(util.sampleData.veryLongString);// very long string
@@ -379,7 +379,7 @@
                      */
                     function saveKey (key) {
                         savingCounter++;
-                        var saving = store[save]({foo: key}, key);
+                        const saving = store[save]({foo: key}, key);
                         saving.onerror = done;
                         saving.onsuccess = function () {
                             if (typeof key === 'object') {
@@ -389,7 +389,7 @@
                             }
 
                             // Re-fetch the data using the key
-                            var get = store.get(key);
+                            const get = store.get(key);
                             get.onerror = done;
                             get.onsuccess = function () {
                                 expect(get.result).to.deep.equal({foo: key});
@@ -416,8 +416,8 @@
                         done();
                         return;
                     }
-                    var tx = db.transaction('out-of-line', 'readwrite');
-                    var store = tx.objectStore('out-of-line');
+                    const tx = db.transaction('out-of-line', 'readwrite');
+                    const store = tx.objectStore('out-of-line');
                     tx.onerror = done;
 
                     tryToSaveKey(undefined); // undefined
@@ -446,7 +446,7 @@
                      * @returns {void}
                      */
                     function tryToSaveKey (key) {
-                        var err = null;
+                        let err = null;
 
                         try {
                             store[save]({foo: 'bar'}, key);
@@ -474,10 +474,10 @@
                         done();
                         return;
                     }
-                    var tx = db.transaction('out-of-line-generated', 'readwrite');
-                    var store = tx.objectStore('out-of-line-generated');
+                    const tx = db.transaction('out-of-line-generated', 'readwrite');
+                    const store = tx.objectStore('out-of-line-generated');
                     tx.onerror = done;
-                    var savingCounter = 0, savedCounter = 0;
+                    let savingCounter = 0, savedCounter = 0;
 
                     saveData(undefined); // undefined
                     saveData(true); // boolean
@@ -516,11 +516,11 @@
                      */
                     function saveData (data) {
                         savingCounter++;
-                        var saving = store[save](data);
+                        const saving = store[save](data);
                         saving.onerror = done;
                         saving.onsuccess = function () {
                             // Re-fetch the data to make sure it serialized/deserialized correctly
-                            var get = store.get(saving.result);
+                            const get = store.get(saving.result);
                             get.onerror = done;
                             get.onsuccess = function () {
                                 if (typeof data === 'object' && data !== null) {
@@ -530,7 +530,7 @@
 
                                 if (Array.isArray(data)) {
                                     expect(get.result).to.have.lengthOf(data.length);
-                                    for (var i = 0; i < data.length; i++) {
+                                    for (let i = 0; i < data.length; i++) {
                                         expect(get.result[i]).to.deep.equal(data[i]);
                                     }
                                 } else if (data instanceof util.sampleData.Person) {
@@ -557,10 +557,10 @@
 
             it('should throw an error if no key is specified', function (done) {
                 util.createDatabase('out-of-line', function (err, db) {
-                    var tx = db.transaction('out-of-line', 'readwrite');
+                    const tx = db.transaction('out-of-line', 'readwrite');
                     tx.onerror = done;
 
-                    var store = tx.objectStore('out-of-line');
+                    const store = tx.objectStore('out-of-line');
                     try {
                         // Not specifying a key for an out-of-line object store
                         store[save]({foo: 'bar'});
@@ -584,19 +584,19 @@
                         done();
                         return;
                     }
-                    var tx1 = db.transaction('out-of-line', 'readwrite');
-                    var tx2 = db.transaction('out-of-line', 'readwrite');
-                    var tx3 = db.transaction('out-of-line', 'readwrite');
+                    const tx1 = db.transaction('out-of-line', 'readwrite');
+                    const tx2 = db.transaction('out-of-line', 'readwrite');
+                    const tx3 = db.transaction('out-of-line', 'readwrite');
 
-                    var store1 = tx1.objectStore('out-of-line');
-                    var store2 = tx2.objectStore('out-of-line');
-                    var store3 = tx3.objectStore('out-of-line');
+                    const store1 = tx1.objectStore('out-of-line');
+                    const store2 = tx2.objectStore('out-of-line');
+                    const store3 = tx3.objectStore('out-of-line');
 
-                    var save1 = store1[save]({foo: 'one'}, 1);
-                    var save2 = store2[save]({foo: 'two'}, 2);
-                    var save3 = store3[save]({foo: 'three'}, 3);
+                    const save1 = store1[save]({foo: 'one'}, 1);
+                    const save2 = store2[save]({foo: 'two'}, 2);
+                    const save3 = store3[save]({foo: 'three'}, 3);
 
-                    var allData;
+                    let allData;
                     util.getAll(store3, function (err, data) {
                         if (err) {
                             expect(function () { throw err; }).to.not.throw(Error);
@@ -633,19 +633,19 @@
                         done();
                         return;
                     }
-                    var tx1 = db.transaction('out-of-line-generated', 'readwrite');
-                    var tx2 = db.transaction('out-of-line-generated', 'readwrite');
-                    var tx3 = db.transaction('out-of-line-generated', 'readwrite');
+                    const tx1 = db.transaction('out-of-line-generated', 'readwrite');
+                    const tx2 = db.transaction('out-of-line-generated', 'readwrite');
+                    const tx3 = db.transaction('out-of-line-generated', 'readwrite');
 
-                    var store1 = tx1.objectStore('out-of-line-generated');
-                    var store2 = tx2.objectStore('out-of-line-generated');
-                    var store3 = tx3.objectStore('out-of-line-generated');
+                    const store1 = tx1.objectStore('out-of-line-generated');
+                    const store2 = tx2.objectStore('out-of-line-generated');
+                    const store3 = tx3.objectStore('out-of-line-generated');
 
-                    var save1 = store1[save]({foo: 'one'});
-                    var save2 = store2[save]({foo: 'two'});
-                    var save3 = store3[save]({foo: 'three'});
+                    const save1 = store1[save]({foo: 'one'});
+                    const save2 = store2[save]({foo: 'two'});
+                    const save3 = store3[save]({foo: 'three'});
 
-                    var allData;
+                    let allData;
                     util.getAll(store3, function (err, data) {
                         if (err) {
                             expect(function () { throw err; }).to.not.throw(Error);
@@ -688,14 +688,14 @@
                         done();
                         return;
                     }
-                    var tx = db.transaction('inline', 'readwrite');
+                    const tx = db.transaction('inline', 'readwrite');
                     tx.onerror = done;
 
-                    var store = tx.objectStore('inline');
-                    var save1 = store[save]({id: 12345});
-                    var save2 = store[save]({id: 45678});
+                    const store = tx.objectStore('inline');
+                    const save1 = store[save]({id: 12345});
+                    const save2 = store[save]({id: 45678});
 
-                    var allData;
+                    let allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
                             expect(function () { throw err; }).to.not.throw(Error);
@@ -727,14 +727,14 @@
                         done();
                         return;
                     }
-                    var tx = db.transaction('inline-generated', 'readwrite');
+                    const tx = db.transaction('inline-generated', 'readwrite');
                     tx.onerror = done;
 
-                    var store = tx.objectStore('inline-generated');
-                    var save1 = store[save]({foo: 'bar'});
-                    var save2 = store[save]({biz: 'baz'});
+                    const store = tx.objectStore('inline-generated');
+                    const save1 = store[save]({foo: 'bar'});
+                    const save2 = store[save]({biz: 'baz'});
 
-                    var allData;
+                    let allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
                             expect(function () { throw err; }).to.not.throw(Error);
@@ -767,17 +767,17 @@
                         done();
                         return;
                     }
-                    var tx = db.transaction('inline-generated', 'readwrite');
+                    const tx = db.transaction('inline-generated', 'readwrite');
                     tx.onerror = done;
 
-                    var store = tx.objectStore('inline-generated');
-                    var save1 = store[save]({foo: 'bar'}); // <-- generated key
-                    var save2 = store[save]({id: 'abc', biz: 'baz'}); // <-- specified key
-                    var save3 = store[save]({bat: 'bar'}); // <-- generated key
-                    var save4 = store[save]({id: 99, bar: 'foo'}); // <-- specified key
-                    var save5 = store[save]({baz: 'biz'}); // <-- generated key
+                    const store = tx.objectStore('inline-generated');
+                    const save1 = store[save]({foo: 'bar'}); // <-- generated key
+                    const save2 = store[save]({id: 'abc', biz: 'baz'}); // <-- specified key
+                    const save3 = store[save]({bat: 'bar'}); // <-- generated key
+                    const save4 = store[save]({id: 99, bar: 'foo'}); // <-- specified key
+                    const save5 = store[save]({baz: 'biz'}); // <-- generated key
 
-                    var allData;
+                    let allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
                             expect(function () { throw err; }).to.not.throw(Error);
@@ -817,10 +817,10 @@
                         done();
                         return;
                     }
-                    var tx = db.transaction('inline', 'readwrite');
-                    var store = tx.objectStore('inline');
+                    const tx = db.transaction('inline', 'readwrite');
+                    const store = tx.objectStore('inline');
                     tx.onerror = done;
-                    var savingCounter = 0, savedCounter = 0;
+                    let savingCounter = 0, savedCounter = 0;
 
                     saveKey(''); // empty string
                     saveKey(util.sampleData.veryLongString);// very long string
@@ -844,7 +844,7 @@
                      */
                     function saveKey (key) {
                         savingCounter++;
-                        var saving = store[save]({id: key});
+                        const saving = store[save]({id: key});
                         saving.onerror = done;
                         saving.onsuccess = function () {
                             if (typeof key === 'object') {
@@ -854,7 +854,7 @@
                             }
 
                             // Re-fetch the data using the key
-                            var get = store.get(key);
+                            const get = store.get(key);
                             get.onerror = done;
                             get.onsuccess = function () {
                                 expect(get.result).to.deep.equal({id: key});
@@ -881,8 +881,8 @@
                         done();
                         return;
                     }
-                    var tx = db.transaction('inline', 'readwrite');
-                    var store = tx.objectStore('inline');
+                    const tx = db.transaction('inline', 'readwrite');
+                    const store = tx.objectStore('inline');
                     tx.onerror = done;
 
                     tryToSaveKey(undefined); // undefined
@@ -907,7 +907,7 @@
                      * @returns {void}
                      */
                     function tryToSaveKey (key) {
-                        var err = null;
+                        let err = null;
 
                         try {
                             store[save]({id: key});
@@ -934,10 +934,10 @@
                         done();
                         return;
                     }
-                    var tx = db.transaction('inline-generated', 'readwrite');
-                    var store = tx.objectStore('inline-generated');
+                    const tx = db.transaction('inline-generated', 'readwrite');
+                    const store = tx.objectStore('inline-generated');
                     tx.onerror = done;
-                    var savingCounter = 0, savedCounter = 0;
+                    let savingCounter = 0, savedCounter = 0;
 
                     saveData({}); // empty object
                     saveData({foo: 'bar'}); // object
@@ -962,11 +962,11 @@
                      */
                     function saveData (data) {
                         savingCounter++;
-                        var saving = store[save](data);
+                        const saving = store[save](data);
                         saving.onerror = done;
                         saving.onsuccess = function () {
                             // Re-fetch the data to make sure it serialized/deserialized correctly
-                            var get = store.get(saving.result);
+                            const get = store.get(saving.result);
                             get.onerror = done;
                             get.onsuccess = function () {
                                 if (typeof data === 'object' && data !== null) {
@@ -976,7 +976,7 @@
 
                                 if (Array.isArray(data)) {
                                     expect(get.result).to.have.lengthOf(data.length);
-                                    for (var i = 0; i < data.length; i++) {
+                                    for (let i = 0; i < data.length; i++) {
                                         expect(get.result[i]).to.deep.equal(data[i]);
                                     }
                                 } else if (data instanceof util.sampleData.Person) {
@@ -1010,8 +1010,8 @@
                         done();
                         return;
                     }
-                    var tx = db.transaction('inline-generated', 'readwrite');
-                    var store = tx.objectStore('inline-generated');
+                    const tx = db.transaction('inline-generated', 'readwrite');
+                    const store = tx.objectStore('inline-generated');
                     tx.onerror = done;
 
                     tryToSaveData(undefined); // undefined
@@ -1035,7 +1035,7 @@
                      * @returns {void}
                      */
                     function tryToSaveData (value) {
-                        var err;
+                        let err;
 
                         try {
                             store[save](value);
@@ -1054,10 +1054,10 @@
 
             it('should throw an error if a key is specified', function (done) {
                 util.createDatabase('inline', function (err, db) {
-                    var tx = db.transaction('inline', 'readwrite');
+                    const tx = db.transaction('inline', 'readwrite');
                     tx.onerror = done;
 
-                    var store = tx.objectStore('inline');
+                    const store = tx.objectStore('inline');
                     try {
                         // Specifying an out-of-line key for an inline object store
                         store[save]({id: 12345}, 45678);
@@ -1081,19 +1081,19 @@
                         done();
                         return;
                     }
-                    var tx1 = db.transaction('inline', 'readwrite');
-                    var tx2 = db.transaction('inline', 'readwrite');
-                    var tx3 = db.transaction('inline', 'readwrite');
+                    const tx1 = db.transaction('inline', 'readwrite');
+                    const tx2 = db.transaction('inline', 'readwrite');
+                    const tx3 = db.transaction('inline', 'readwrite');
 
-                    var store1 = tx1.objectStore('inline');
-                    var store2 = tx2.objectStore('inline');
-                    var store3 = tx3.objectStore('inline');
+                    const store1 = tx1.objectStore('inline');
+                    const store2 = tx2.objectStore('inline');
+                    const store3 = tx3.objectStore('inline');
 
-                    var save1 = store1[save]({id: 'one'});
-                    var save2 = store2[save]({id: 'two'});
-                    var save3 = store3[save]({id: 'three'});
+                    const save1 = store1[save]({id: 'one'});
+                    const save2 = store2[save]({id: 'two'});
+                    const save3 = store3[save]({id: 'three'});
 
-                    var allData;
+                    let allData;
                     util.getAll(store3, function (err, data) {
                         if (err) {
                             expect(function () { throw err; }).to.not.throw(Error);
@@ -1129,19 +1129,19 @@
                         done();
                         return;
                     }
-                    var tx1 = db.transaction('inline-generated', 'readwrite');
-                    var tx2 = db.transaction('inline-generated', 'readwrite');
-                    var tx3 = db.transaction('inline-generated', 'readwrite');
+                    const tx1 = db.transaction('inline-generated', 'readwrite');
+                    const tx2 = db.transaction('inline-generated', 'readwrite');
+                    const tx3 = db.transaction('inline-generated', 'readwrite');
 
-                    var store1 = tx1.objectStore('inline-generated');
-                    var store2 = tx2.objectStore('inline-generated');
-                    var store3 = tx3.objectStore('inline-generated');
+                    const store1 = tx1.objectStore('inline-generated');
+                    const store2 = tx2.objectStore('inline-generated');
+                    const store3 = tx3.objectStore('inline-generated');
 
-                    var save1 = store1[save]({foo: 'one'});
-                    var save2 = store2[save]({foo: 'two'});
-                    var save3 = store3[save]({foo: 'three'});
+                    const save1 = store1[save]({foo: 'one'});
+                    const save2 = store2[save]({foo: 'two'});
+                    const save3 = store3[save]({foo: 'three'});
 
-                    var allData;
+                    let allData;
                     util.getAll(store3, function (err, data) {
                         if (err) {
                             expect(function () { throw err; }).to.not.throw(Error);
@@ -1184,14 +1184,14 @@
                         done();
                         return;
                     }
-                    var tx = db.transaction('dotted', 'readwrite');
+                    const tx = db.transaction('dotted', 'readwrite');
                     tx.onerror = done;
 
-                    var store = tx.objectStore('dotted');
-                    var save1 = store[save]({name: {first: 'John', last: 'Doe'}});
-                    var save2 = store[save]({name: {first: 'Bob', last: 'Smith'}});
+                    const store = tx.objectStore('dotted');
+                    const save1 = store[save]({name: {first: 'John', last: 'Doe'}});
+                    const save2 = store[save]({name: {first: 'Bob', last: 'Smith'}});
 
-                    var allData;
+                    let allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
                             expect(function () { throw err; }).to.not.throw(Error);
@@ -1223,14 +1223,14 @@
                         done();
                         return;
                     }
-                    var tx = db.transaction('dotted-generated', 'readwrite');
+                    const tx = db.transaction('dotted-generated', 'readwrite');
                     tx.onerror = done;
 
-                    var store = tx.objectStore('dotted-generated');
-                    var save1 = store[save]({lastName: 'Doe'});
-                    var save2 = store[save]({lastName: 'Smith'});
+                    const store = tx.objectStore('dotted-generated');
+                    const save1 = store[save]({lastName: 'Doe'});
+                    const save2 = store[save]({lastName: 'Smith'});
 
-                    var allData;
+                    let allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
                             expect(function () { throw err; }).to.not.throw(Error);
@@ -1262,19 +1262,19 @@
                         done();
                         return;
                     }
-                    var tx1 = db.transaction('dotted', 'readwrite');
-                    var tx2 = db.transaction('dotted', 'readwrite');
-                    var tx3 = db.transaction('dotted', 'readwrite');
+                    const tx1 = db.transaction('dotted', 'readwrite');
+                    const tx2 = db.transaction('dotted', 'readwrite');
+                    const tx3 = db.transaction('dotted', 'readwrite');
 
-                    var store1 = tx1.objectStore('dotted');
-                    var store2 = tx2.objectStore('dotted');
-                    var store3 = tx3.objectStore('dotted');
+                    const store1 = tx1.objectStore('dotted');
+                    const store2 = tx2.objectStore('dotted');
+                    const store3 = tx3.objectStore('dotted');
 
-                    var save1 = store1[save]({name: {first: 'John'}});
-                    var save2 = store2[save]({name: {first: 'Sarah'}});
-                    var save3 = store3[save]({name: {first: 'Bob'}});
+                    const save1 = store1[save]({name: {first: 'John'}});
+                    const save2 = store2[save]({name: {first: 'Sarah'}});
+                    const save3 = store3[save]({name: {first: 'Bob'}});
 
-                    var allData;
+                    let allData;
                     util.getAll(store3, function (err, data) {
                         if (err) {
                             expect(function () { throw err; }).to.not.throw(Error);
@@ -1310,19 +1310,19 @@
                         done();
                         return;
                     }
-                    var tx1 = db.transaction('dotted-generated', 'readwrite');
-                    var tx2 = db.transaction('dotted-generated', 'readwrite');
-                    var tx3 = db.transaction('dotted-generated', 'readwrite');
+                    const tx1 = db.transaction('dotted-generated', 'readwrite');
+                    const tx2 = db.transaction('dotted-generated', 'readwrite');
+                    const tx3 = db.transaction('dotted-generated', 'readwrite');
 
-                    var store1 = tx1.objectStore('dotted-generated');
-                    var store2 = tx2.objectStore('dotted-generated');
-                    var store3 = tx3.objectStore('dotted-generated');
+                    const store1 = tx1.objectStore('dotted-generated');
+                    const store2 = tx2.objectStore('dotted-generated');
+                    const store3 = tx3.objectStore('dotted-generated');
 
-                    var save1 = store1[save]({foo: 'one'});
-                    var save2 = store2[save]({foo: 'two'});
-                    var save3 = store3[save]({foo: 'three'});
+                    const save1 = store1[save]({foo: 'one'});
+                    const save2 = store2[save]({foo: 'two'});
+                    const save3 = store3[save]({foo: 'three'});
 
-                    var allData;
+                    let allData;
                     util.getAll(store3, function (err, data) {
                         if (err) {
                             expect(function () { throw err; }).to.not.throw(Error);
@@ -1366,14 +1366,14 @@
                         done();
                         return;
                     }
-                    var tx = db.transaction('out-of-line-compound', 'readwrite');
+                    const tx = db.transaction('out-of-line-compound', 'readwrite');
                     tx.onerror = done;
 
-                    var store = tx.objectStore('out-of-line-compound');
-                    var save1 = store[save]({foo: 'bar'}, [1, 2, 'c']);
-                    var save2 = store[save]({biz: 'baz'}, ['a', 'b', 3]);
+                    const store = tx.objectStore('out-of-line-compound');
+                    const save1 = store[save]({foo: 'bar'}, [1, 2, 'c']);
+                    const save2 = store[save]({biz: 'baz'}, ['a', 'b', 3]);
 
-                    var allData;
+                    let allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
                             expect(function () { throw err; }).to.not.throw(Error);
@@ -1406,14 +1406,14 @@
                         done();
                         return;
                     }
-                    var tx = db.transaction('inline-compound', 'readwrite');
+                    const tx = db.transaction('inline-compound', 'readwrite');
                     tx.onerror = done;
 
-                    var store = tx.objectStore('inline-compound');
-                    var save1 = store[save]({id: 12345, name: 'John Doe'});
-                    var save2 = store[save]({id: 12345, name: 'Bob Smith'});
+                    const store = tx.objectStore('inline-compound');
+                    const save1 = store[save]({id: 12345, name: 'John Doe'});
+                    const save2 = store[save]({id: 12345, name: 'Bob Smith'});
 
-                    var allData;
+                    let allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
                             expect(function () { throw err; }).to.not.throw(Error);
@@ -1446,14 +1446,14 @@
                         done();
                         return;
                     }
-                    var tx = db.transaction('dotted-compound', 'readwrite');
+                    const tx = db.transaction('dotted-compound', 'readwrite');
                     tx.onerror = done;
 
-                    var store = tx.objectStore('dotted-compound');
-                    var save1 = store[save]({id: 12345, name: {first: 'John', last: 'Doe'}});
-                    var save2 = store[save]({id: 12345, name: {first: 'Bob', last: 'Smith'}});
+                    const store = tx.objectStore('dotted-compound');
+                    const save1 = store[save]({id: 12345, name: {first: 'John', last: 'Doe'}});
+                    const save2 = store[save]({id: 12345, name: {first: 'Bob', last: 'Smith'}});
 
-                    var allData;
+                    let allData;
                     util.getAll(store, function (err, data) {
                         if (err) {
                             expect(function () { throw err; }).to.not.throw(Error);
@@ -1488,10 +1488,10 @@
                         done();
                         return;
                     }
-                    var tx = db.transaction('dotted-compound', 'readwrite');
-                    var store = tx.objectStore('dotted-compound');
+                    const tx = db.transaction('dotted-compound', 'readwrite');
+                    const store = tx.objectStore('dotted-compound');
                     tx.onerror = done;
-                    var savingCounter = 0, savedCounter = 0;
+                    let savingCounter = 0, savedCounter = 0;
 
                     saveKey(''); // empty string
                     saveKey(0); // zero
@@ -1515,7 +1515,7 @@
                      */
                     function saveKey (key) {
                         savingCounter++;
-                        var saving = store[save]({id: 1, name: {first: 'abc', last: key}});
+                        const saving = store[save]({id: 1, name: {first: 'abc', last: key}});
                         saving.onerror = done;
                         saving.onsuccess = function () {
                             if (typeof key === 'object') {
@@ -1525,7 +1525,7 @@
                             }
 
                             // Re-fetch the data using the key
-                            var get = store.get([1, 'abc', key]);
+                            const get = store.get([1, 'abc', key]);
                             get.onerror = done;
                             get.onsuccess = function () {
                                 expect(get.result).to.deep.equal({id: 1, name: {first: 'abc', last: key}});
@@ -1553,8 +1553,8 @@
                         done();
                         return;
                     }
-                    var tx = db.transaction('dotted-compound', 'readwrite');
-                    var store = tx.objectStore('dotted-compound');
+                    const tx = db.transaction('dotted-compound', 'readwrite');
+                    const store = tx.objectStore('dotted-compound');
                     tx.onerror = done;
 
                     tryToSaveKey(undefined); // undefined
@@ -1578,7 +1578,7 @@
                      * @returns {void}
                      */
                     function tryToSaveKey (key) {
-                        var err = null;
+                        let err = null;
 
                         try {
                             store[save]({id: 1, name: {first: 'abc', last: key}});
@@ -1601,10 +1601,10 @@
             util.skipIf(env.isNative && env.browser.isIE, 'should throw an error if the key is incomplete', function (done) {
                 // BUG: IE's native IndexedDB does not support compound keys at all
                 util.createDatabase('inline-compound', function (err, db) {
-                    var tx = db.transaction('inline-compound', 'readwrite');
+                    const tx = db.transaction('inline-compound', 'readwrite');
                     tx.onerror = done;
 
-                    var store = tx.objectStore('inline-compound');
+                    const store = tx.objectStore('inline-compound');
                     try {
                         store[save]({id: 1}); // The "name" property is missing
                     } catch (e) {
@@ -1630,19 +1630,19 @@
                         done();
                         return;
                     }
-                    var tx1 = db.transaction('inline-compound', 'readwrite');
-                    var tx2 = db.transaction('inline-compound', 'readwrite');
-                    var tx3 = db.transaction('inline-compound', 'readwrite');
+                    const tx1 = db.transaction('inline-compound', 'readwrite');
+                    const tx2 = db.transaction('inline-compound', 'readwrite');
+                    const tx3 = db.transaction('inline-compound', 'readwrite');
 
-                    var store1 = tx1.objectStore('inline-compound');
-                    var store2 = tx2.objectStore('inline-compound');
-                    var store3 = tx3.objectStore('inline-compound');
+                    const store1 = tx1.objectStore('inline-compound');
+                    const store2 = tx2.objectStore('inline-compound');
+                    const store3 = tx3.objectStore('inline-compound');
 
-                    var save1 = store1[save]({id: 1, name: 'John'});
-                    var save2 = store2[save]({id: 2, name: 'Sarah'});
-                    var save3 = store3[save]({id: 3, name: 'Bob'});
+                    const save1 = store1[save]({id: 1, name: 'John'});
+                    const save2 = store2[save]({id: 2, name: 'Sarah'});
+                    const save3 = store3[save]({id: 3, name: 'Bob'});
 
-                    var allData;
+                    let allData;
                     util.getAll(store3, function (err, data) {
                         if (err) {
                             expect(function () { throw err; }).to.not.throw(Error);
@@ -1679,19 +1679,19 @@
                         done();
                         return;
                     }
-                    var tx1 = db.transaction('out-of-line', 'readwrite');
-                    var tx2 = db.transaction('out-of-line', 'readwrite');
-                    var tx3 = db.transaction('out-of-line', 'readwrite');
+                    const tx1 = db.transaction('out-of-line', 'readwrite');
+                    const tx2 = db.transaction('out-of-line', 'readwrite');
+                    const tx3 = db.transaction('out-of-line', 'readwrite');
 
-                    var store1 = tx1.objectStore('out-of-line');
-                    var store2 = tx2.objectStore('out-of-line');
-                    var store3 = tx3.objectStore('out-of-line');
+                    const store1 = tx1.objectStore('out-of-line');
+                    const store2 = tx2.objectStore('out-of-line');
+                    const store3 = tx3.objectStore('out-of-line');
 
-                    var save1 = store1[save]({foo: 'one'}, [1, 'b', 3]);
-                    var save2 = store2[save]({foo: 'two'}, [2, 'b', 3]);
-                    var save3 = store3[save]({foo: 'three'}, [3, 'b', 3]);
+                    const save1 = store1[save]({foo: 'one'}, [1, 'b', 3]);
+                    const save2 = store2[save]({foo: 'two'}, [2, 'b', 3]);
+                    const save3 = store3[save]({foo: 'three'}, [3, 'b', 3]);
 
-                    var allData;
+                    let allData;
                     util.getAll(store3, function (err, data) {
                         if (err) {
                             expect(function () { throw err; }).to.not.throw(Error);

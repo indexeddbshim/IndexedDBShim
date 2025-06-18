@@ -1,6 +1,6 @@
 /* eslint-env mocha */
 /* globals expect, sinon, util, env, testHelper */
-/* eslint-disable no-var, no-unused-expressions */
+/* eslint-disable no-unused-expressions */
 describe('IDBIndex.getKey', function () {
     'use strict';
 
@@ -10,8 +10,8 @@ describe('IDBIndex.getKey', function () {
                 done(error);
                 return;
             }
-            var index = objectStore.index('Int Index');
-            var req = index.getKey(value.Int);
+            const index = objectStore.index('Int Index');
+            const req = index.getKey(value.Int);
             req.onsuccess = function () {
                 expect(req.result, 'Got key from Index Get').to.equal(key);
                 console.log('Got', req.result, value);
@@ -32,12 +32,12 @@ describe('IDBIndex.getKey', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('inline-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('inline-index');
             tx.onerror = done;
 
-            var key = index.getKey('foo');
+            const key = index.getKey('foo');
 
             expect(key).to.be.an.instanceOf(IDBRequest);
 
@@ -55,12 +55,12 @@ describe('IDBIndex.getKey', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('inline-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('inline-index');
             tx.onerror = done;
 
-            var key = index.getKey('foo');
+            const key = index.getKey('foo');
             key.onerror = sinon.spy();
 
             key.onsuccess = sinon.spy(function (event) {
@@ -85,12 +85,12 @@ describe('IDBIndex.getKey', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('inline-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('inline-index');
             tx.onerror = done;
 
-            var key;
+            let key;
             store.add({id: 1}).onsuccess = function () {
                 key = index.getKey(1);
             };
@@ -111,12 +111,12 @@ describe('IDBIndex.getKey', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('inline-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('inline-index');
             tx.onerror = done;
 
-            var key;
+            let key;
             store.add({id: 1}).onsuccess = function () {
                 key = index.getKey(2);
             };
@@ -141,18 +141,18 @@ describe('IDBIndex.getKey', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('inline-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('inline-index');
             tx.onerror = done;
 
             store.add({id: 1});
-            var key1 = index.getKey(1);
+            const key1 = index.getKey(1);
 
             store.add({id: 2});
             store.add({id: 3});
-            var key2 = index.getKey(2);
-            var key3 = index.getKey(3);
+            const key2 = index.getKey(2);
+            const key3 = index.getKey(3);
 
             tx.oncomplete = function () {
                 expect(key1.result).to.deep.equal(1);
@@ -178,8 +178,8 @@ describe('IDBIndex.getKey', function () {
              * @returns {void}
              */
             function transaction1 () {
-                var tx = db.transaction('inline', 'readwrite');
-                var store = tx.objectStore('inline');
+                const tx = db.transaction('inline', 'readwrite');
+                const store = tx.objectStore('inline');
                 tx.onerror = done;
                 tx.oncomplete = transaction2;
 
@@ -192,8 +192,8 @@ describe('IDBIndex.getKey', function () {
              * @returns {void}
              */
             function transaction2 () {
-                var tx = db.transaction('inline', 'readwrite');
-                var store = tx.objectStore('inline');
+                const tx = db.transaction('inline', 'readwrite');
+                const store = tx.objectStore('inline');
                 tx.onerror = done;
                 tx.oncomplete = transaction3;
 
@@ -201,14 +201,14 @@ describe('IDBIndex.getKey', function () {
                 store.add({id: 5});
             }
 
-            var key1, key2, key3, key4, key5;
+            let key1, key2, key3, key4, key5;
             /**
              * @returns {void}
              */
             function transaction3 () {
-                var tx = db.transaction('inline', 'readwrite');
-                var store = tx.objectStore('inline');
-                var index = store.index('inline-index');
+                const tx = db.transaction('inline', 'readwrite');
+                const store = tx.objectStore('inline');
+                const index = store.index('inline-index');
                 tx.onerror = done;
                 tx.oncomplete = checkResults;
 
@@ -242,9 +242,9 @@ describe('IDBIndex.getKey', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line', 'readwrite');
-            var store = tx.objectStore('out-of-line');
-            var index = store.index('inline-index');
+            const tx = db.transaction('out-of-line', 'readwrite');
+            const store = tx.objectStore('out-of-line');
+            const index = store.index('inline-index');
             tx.onerror = done;
 
             store.add('one', 101);
@@ -253,9 +253,9 @@ describe('IDBIndex.getKey', function () {
             store.add('four', 44);
             store.add('five', 555555);
 
-            var key1 = index.getKey(555555);
-            var key2 = index.getKey(3);
-            var key3 = index.getKey(101);
+            const key1 = index.getKey(555555);
+            const key2 = index.getKey(3);
+            const key3 = index.getKey(101);
 
             tx.oncomplete = function () {
                 // Out-of-line keys aren't included in indexes
@@ -282,9 +282,9 @@ describe('IDBIndex.getKey', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line-compound', 'readwrite');
-            var store = tx.objectStore('out-of-line-compound');
-            var index = store.index('inline-index');
+            const tx = db.transaction('out-of-line-compound', 'readwrite');
+            const store = tx.objectStore('out-of-line-compound');
+            const index = store.index('inline-index');
             tx.onerror = done;
 
             store.add('one', [1, 'oh', 1]);
@@ -293,9 +293,9 @@ describe('IDBIndex.getKey', function () {
             store.add('four', [4, '4']);
             store.add('five', ['five']);
 
-            var key1 = index.getKey(['five']);
-            var key2 = index.getKey([1, 'oh', 1]);
-            var key3 = index.getKey(['t', 'w', 'o']);
+            const key1 = index.getKey(['five']);
+            const key2 = index.getKey([1, 'oh', 1]);
+            const key3 = index.getKey(['t', 'w', 'o']);
 
             tx.oncomplete = function () {
                 // Out-of-line keys aren't included in indexes
@@ -321,9 +321,9 @@ describe('IDBIndex.getKey', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line-generated', 'readwrite');
-            var store = tx.objectStore('out-of-line-generated');
-            var index = store.index('inline-index');
+            const tx = db.transaction('out-of-line-generated', 'readwrite');
+            const store = tx.objectStore('out-of-line-generated');
+            const index = store.index('inline-index');
             tx.onerror = done;
 
             store.add('one');
@@ -332,9 +332,9 @@ describe('IDBIndex.getKey', function () {
             store.add('four');
             store.add('five');
 
-            var key1 = index.getKey(4);
-            var key2 = index.getKey(2);
-            var key3 = index.getKey(5);
+            const key1 = index.getKey(4);
+            const key2 = index.getKey(2);
+            const key3 = index.getKey(5);
 
             tx.oncomplete = function () {
                 // Out-of-line keys aren't included in indexes
@@ -360,9 +360,9 @@ describe('IDBIndex.getKey', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('inline-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('inline-index');
             tx.onerror = done;
 
             store.add({id: 'one'});
@@ -371,9 +371,9 @@ describe('IDBIndex.getKey', function () {
             store.add({id: 'four'});
             store.add({id: 'five'});
 
-            var key1 = index.getKey('four');
-            var key2 = index.getKey('five');
-            var key3 = index.getKey('two');
+            const key1 = index.getKey('four');
+            const key2 = index.getKey('five');
+            const key3 = index.getKey('two');
 
             tx.oncomplete = function () {
                 expect(key1.result).to.deep.equal('four');
@@ -394,9 +394,9 @@ describe('IDBIndex.getKey', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline-compound', 'readwrite');
-            var store = tx.objectStore('inline-compound');
-            var index = store.index('inline-index');
+            const tx = db.transaction('inline-compound', 'readwrite');
+            const store = tx.objectStore('inline-compound');
+            const index = store.index('inline-index');
             tx.onerror = done;
 
             store.add({id: 1, name: 'one'});
@@ -405,9 +405,9 @@ describe('IDBIndex.getKey', function () {
             store.add({id: 4, name: 'four'});
             store.add({id: 5, name: 'five'});
 
-            var key1 = index.getKey(3);
-            var key2 = index.getKey(1);
-            var key3 = index.getKey(5);
+            const key1 = index.getKey(3);
+            const key2 = index.getKey(1);
+            const key3 = index.getKey(5);
 
             tx.oncomplete = function () {
                 expect(key1.result).to.deep.equal([3, 'three']);
@@ -427,9 +427,9 @@ describe('IDBIndex.getKey', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline-generated', 'readwrite');
-            var store = tx.objectStore('inline-generated');
-            var index = store.index('inline-index');
+            const tx = db.transaction('inline-generated', 'readwrite');
+            const store = tx.objectStore('inline-generated');
+            const index = store.index('inline-index');
             tx.onerror = done;
 
             store.add({name: 'one'});
@@ -438,9 +438,9 @@ describe('IDBIndex.getKey', function () {
             store.add({name: 'four'});
             store.add({name: 'five'});
 
-            var key1 = index.getKey(3);
-            var key2 = index.getKey(1);
-            var key3 = index.getKey(5);
+            const key1 = index.getKey(3);
+            const key2 = index.getKey(1);
+            const key3 = index.getKey(5);
 
             tx.oncomplete = function () {
                 // BUG: Only Chrome supports indexes on generated inline keys
@@ -463,9 +463,9 @@ describe('IDBIndex.getKey', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('dotted', 'readwrite');
-            var store = tx.objectStore('dotted');
-            var index = store.index('dotted-index');
+            const tx = db.transaction('dotted', 'readwrite');
+            const store = tx.objectStore('dotted');
+            const index = store.index('dotted-index');
             tx.onerror = done;
 
             store.add({name: {first: 'one'}});
@@ -474,9 +474,9 @@ describe('IDBIndex.getKey', function () {
             store.add({name: {first: 'four'}});
             store.add({name: {first: 'five'}});
 
-            var key1 = index.getKey('two');
-            var key2 = index.getKey('five');
-            var key3 = index.getKey('three');
+            const key1 = index.getKey('two');
+            const key2 = index.getKey('five');
+            const key3 = index.getKey('three');
 
             tx.oncomplete = function () {
                 expect(key1.result).to.deep.equal('two');
@@ -497,9 +497,9 @@ describe('IDBIndex.getKey', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('dotted-compound', 'readwrite');
-            var store = tx.objectStore('dotted-compound');
-            var index = store.index('compound-index');
+            const tx = db.transaction('dotted-compound', 'readwrite');
+            const store = tx.objectStore('dotted-compound');
+            const index = store.index('compound-index');
             tx.onerror = done;
 
             store.add({id: 1, name: {first: 'one', last: 'abc'}});
@@ -508,9 +508,9 @@ describe('IDBIndex.getKey', function () {
             store.add({id: 1, name: {first: 'four', last: 'abc'}});
             store.add({id: 1, name: {first: 'five', last: 'abc'}});
 
-            var key1 = index.getKey([1, 'two', 'abc']);
-            var key2 = index.getKey([1, 'five', 'abc']);
-            var key3 = index.getKey([1, 'three', 'abc']);
+            const key1 = index.getKey([1, 'two', 'abc']);
+            const key2 = index.getKey([1, 'five', 'abc']);
+            const key3 = index.getKey([1, 'three', 'abc']);
 
             tx.oncomplete = function () {
                 expect(key1.result).to.deep.equal([1, 'two', 'abc']);
@@ -530,9 +530,9 @@ describe('IDBIndex.getKey', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('dotted-generated', 'readwrite');
-            var store = tx.objectStore('dotted-generated');
-            var index = store.index('dotted-index');
+            const tx = db.transaction('dotted-generated', 'readwrite');
+            const store = tx.objectStore('dotted-generated');
+            const index = store.index('dotted-index');
             tx.onerror = done;
 
             store.add({name: {last: 'abc'}});
@@ -541,9 +541,9 @@ describe('IDBIndex.getKey', function () {
             store.add({name: {last: 'abc'}});
             store.add({name: {last: 'abc'}});
 
-            var key1 = index.getKey(4);
-            var key2 = index.getKey(5);
-            var key3 = index.getKey(1);
+            const key1 = index.getKey(4);
+            const key2 = index.getKey(5);
+            const key3 = index.getKey(1);
 
             tx.oncomplete = function () {
                 // BUG: Only Chrome supports indexes on generated inline keys
@@ -567,10 +567,10 @@ describe('IDBIndex.getKey', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line-generated', 'readwrite');
-            var store = tx.objectStore('out-of-line-generated');
-            var index = store.index('inline-index');
-            var gettingCounter = 0, gottenCounter = 0;
+            const tx = db.transaction('out-of-line-generated', 'readwrite');
+            const store = tx.objectStore('out-of-line-generated');
+            const index = store.index('inline-index');
+            let gettingCounter = 0, gottenCounter = 0;
 
             getKey(''); // empty string
             getKey(util.sampleData.veryLongString);// very long string
@@ -594,7 +594,7 @@ describe('IDBIndex.getKey', function () {
              */
             function getKey (theKey) {
                 gettingCounter++;
-                var key = index.getKey(theKey);
+                const key = index.getKey(theKey);
                 key.onerror = done;
                 key.onsuccess = function () {
                     gottenCounter++;
@@ -619,9 +619,9 @@ describe('IDBIndex.getKey', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line-generated', 'readwrite');
-            var store = tx.objectStore('out-of-line-generated');
-            var index = store.index('inline-index');
+            const tx = db.transaction('out-of-line-generated', 'readwrite');
+            const store = tx.objectStore('out-of-line-generated');
+            const index = store.index('inline-index');
 
             tryToGet(undefined); // undefined
             tryToGet(Number.NaN); // NaN
@@ -644,7 +644,7 @@ describe('IDBIndex.getKey', function () {
              * @returns {void}
              */
             function tryToGet (key) {
-                var err = null;
+                let err = null;
 
                 try {
                     index.getKey(key);
@@ -672,9 +672,9 @@ describe('IDBIndex.getKey', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('multi-entry-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('multi-entry-index');
             tx.onerror = done;
 
             store.add({id: 'a'});
@@ -682,11 +682,11 @@ describe('IDBIndex.getKey', function () {
             store.add({id: ['b']});
             store.add({id: ['a', 'b', 'c']});
 
-            var key1 = index.getKey('a');
-            var key2 = index.getKey(['a']);
-            var key3 = index.getKey('b');
-            var key4 = index.getKey('c');
-            var key5 = index.getKey(['a', 'b', 'c']);
+            const key1 = index.getKey('a');
+            const key2 = index.getKey(['a']);
+            const key3 = index.getKey('b');
+            const key4 = index.getKey('c');
+            const key5 = index.getKey(['a', 'b', 'c']);
 
             tx.oncomplete = function () {
                 expect(key1.result).to.deep.equal('a');
@@ -715,20 +715,20 @@ describe('IDBIndex.getKey', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
-            var index = store.index('unique-multi-entry-index');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
+            const index = store.index('unique-multi-entry-index');
             tx.onerror = done;
 
             store.add({id: 'a'});
             store.add({id: ['b']});
             store.add({id: ['c', 'd', 'e']});
 
-            var key1 = index.getKey('a');
-            var key2 = index.getKey(['a']);
-            var key3 = index.getKey('b');
-            var key4 = index.getKey(['c']);
-            var key5 = index.getKey(['c', 'd', 'e']);
+            const key1 = index.getKey('a');
+            const key2 = index.getKey(['a']);
+            const key3 = index.getKey('b');
+            const key4 = index.getKey(['c']);
+            const key5 = index.getKey(['c', 'd', 'e']);
 
             tx.oncomplete = function () {
                 expect(key1.result).to.deep.equal('a');
@@ -758,13 +758,13 @@ describe('IDBIndex.getKey', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline-compound', 'readwrite');
-            var store = tx.objectStore('inline-compound');
-            var index = store.index('compound-index');
+            const tx = db.transaction('inline-compound', 'readwrite');
+            const store = tx.objectStore('inline-compound');
+            const index = store.index('compound-index');
 
             store.add({id: 12345, name: 'John Doe'});
 
-            var key = index.getKey([12345]); // <-- "id" is specified, but "name" is missing
+            const key = index.getKey([12345]); // <-- "id" is specified, but "name" is missing
             key.onerror = sinon.spy();
 
             tx.oncomplete = function () {
@@ -785,9 +785,9 @@ describe('IDBIndex.getKey', function () {
 
     it('should throw an error if the transaction is closed', function (done) {
         util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
-            var tx = db.transaction('out-of-line-generated', 'readwrite');
-            var store = tx.objectStore('out-of-line-generated');
-            var index = store.index('inline-index');
+            const tx = db.transaction('out-of-line-generated', 'readwrite');
+            const store = tx.objectStore('out-of-line-generated');
+            const index = store.index('inline-index');
 
             setTimeout(function () {
                 try {
@@ -807,9 +807,9 @@ describe('IDBIndex.getKey', function () {
 
     it('should throw an error if called without params', function (done) {
         util.createDatabase('out-of-line-generated', 'inline-index', function (err, db) {
-            var tx = db.transaction('out-of-line-generated', 'readwrite');
-            var store = tx.objectStore('out-of-line-generated');
-            var index = store.index('inline-index');
+            const tx = db.transaction('out-of-line-generated', 'readwrite');
+            const store = tx.objectStore('out-of-line-generated');
+            const index = store.index('inline-index');
 
             try {
                 index.getKey();
