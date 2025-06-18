@@ -152,7 +152,7 @@ IDBCursor.__createInstance = function (...args) {
  */
 IDBCursor.prototype.__find = function (...args /* key, tx, success, error, recordsToLoad */) {
     if (this.__multiEntryIndex) {
-        const [key, primaryKey, tx, success, error, recordsToLoad ] = args;
+        const [key, primaryKey, tx, success, error, recordsToLoad] = args;
         this.__findMultiEntry(key, primaryKey, tx, success, error, recordsToLoad);
     } else {
         const [key, primaryKey, tx, success, error, recordsToLoad] = args;
