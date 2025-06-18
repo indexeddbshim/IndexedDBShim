@@ -1,10 +1,9 @@
 /* eslint-env mocha */
 /* globals expect, sinon, util, env */
-/* eslint-disable no-var */
 describe('IDBFactory.open', function () {
     'use strict';
 
-    var indexedDB;
+    let indexedDB;
     beforeEach(function () {
         indexedDB = env.indexedDB;
     });
@@ -17,7 +16,7 @@ describe('IDBFactory.open', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 expect(open).to.be.an.instanceOf(IDBOpenDBRequest);
@@ -36,8 +35,8 @@ describe('IDBFactory.open', function () {
                     done();
                     return;
                 }
-                var tx;
-                var open = indexedDB.open(name, 1);
+                let tx;
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 // The transaction property is null initially
@@ -67,7 +66,7 @@ describe('IDBFactory.open', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
@@ -89,7 +88,7 @@ describe('IDBFactory.open', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onsuccess = function (event) {
@@ -108,7 +107,7 @@ describe('IDBFactory.open', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onsuccess = function () {
@@ -128,10 +127,10 @@ describe('IDBFactory.open', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
 
                 open.onsuccess = function () {
-                    var db = open.result;
+                    const db = open.result;
                     expect(db.name).to.equal(name);
                     expect(db.version).to.equal(1);
                     expect(open.result.version).to.equal(1);
@@ -150,11 +149,11 @@ describe('IDBFactory.open', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
+                    const db = event.target.result;
 
                     expect(db.version).to.equal(1);
                     expect(event.newVersion).to.equal(1);
@@ -178,11 +177,11 @@ describe('IDBFactory.open', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name); // <--- No version number
+                const open = indexedDB.open(name); // <--- No version number
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
+                    const db = event.target.result;
                     expect(db.version).to.equal(1);
                     expect(open.result.version).to.equal(1);
                     if (env.isShimmed || !env.browser.isSafari) {
@@ -212,11 +211,11 @@ describe('IDBFactory.open', function () {
                  * @returns {void}
                  */
                 function createVersion1 () {
-                    var open = indexedDB.open(name, 1);
+                    const open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
 
                     open.onupgradeneeded = sinon.spy(function (event) {
-                        var db = event.target.result;
+                        const db = event.target.result;
                         expect(db.version).to.equal(1);
                         expect(event.newVersion).to.equal(1);
                         if (env.isShimmed || !env.browser.isSafari) {
@@ -236,11 +235,11 @@ describe('IDBFactory.open', function () {
                  * @returns {void}
                  */
                 function createVersion2 () {
-                    var open = indexedDB.open(name, 2);
+                    const open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
 
                     open.onupgradeneeded = sinon.spy(function (event) {
-                        var db = event.target.result;
+                        const db = event.target.result;
                         expect(db.version).to.equal(2);
                         expect(event.oldVersion).to.equal(1);
                         expect(event.newVersion).to.equal(2);
@@ -268,11 +267,11 @@ describe('IDBFactory.open', function () {
                  * @returns {void}
                  */
                 function createVersion1 () {
-                    var open = indexedDB.open(name, 1);
+                    const open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
 
                     open.onupgradeneeded = sinon.spy(function (event) {
-                        var db = event.target.result;
+                        const db = event.target.result;
                         expect(db.version).to.equal(1);
                         expect(event.newVersion).to.equal(1);
                         if (env.isShimmed || !env.browser.isSafari) {
@@ -292,11 +291,11 @@ describe('IDBFactory.open', function () {
                  * @returns {void}
                  */
                 function createVersion2 () {
-                    var open = indexedDB.open(name, 2);
+                    const open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
 
                     open.onupgradeneeded = sinon.spy(function (event) {
-                        var db = event.target.result;
+                        const db = event.target.result;
                         expect(db.version).to.equal(2);
                         expect(event.oldVersion).to.equal(1);
                         expect(event.newVersion).to.equal(2);
@@ -313,11 +312,11 @@ describe('IDBFactory.open', function () {
                  * @returns {void}
                  */
                 function createVersion3 () {
-                    var open = indexedDB.open(name, 3);
+                    const open = indexedDB.open(name, 3);
                     open.onerror = open.onblocked = done;
 
                     open.onupgradeneeded = sinon.spy(function (event) {
-                        var db = event.target.result;
+                        const db = event.target.result;
                         expect(db.version).to.equal(3);
                         expect(event.oldVersion).to.equal(2);
                         expect(event.newVersion).to.equal(3);
@@ -345,11 +344,11 @@ describe('IDBFactory.open', function () {
                  * @returns {void}
                  */
                 function createVersion1 () {
-                    var open = indexedDB.open(name, 1);
+                    const open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
 
                     open.onupgradeneeded = sinon.spy(function (event) {
-                        var db = event.target.result;
+                        const db = event.target.result;
                         expect(db.version).to.equal(1);
                         expect(event.newVersion).to.equal(1);
                         if (env.isShimmed || !env.browser.isSafari) {
@@ -369,11 +368,11 @@ describe('IDBFactory.open', function () {
                  * @returns {void}
                  */
                 function createVersion5 () {
-                    var open = indexedDB.open(name, 5);
+                    const open = indexedDB.open(name, 5);
                     open.onerror = open.onblocked = done;
 
                     open.onupgradeneeded = sinon.spy(function (event) {
-                        var db = event.target.result;
+                        const db = event.target.result;
                         expect(db.version).to.equal(5);
                         expect(event.oldVersion).to.equal(1);
                         expect(event.newVersion).to.equal(5);
@@ -404,7 +403,7 @@ describe('IDBFactory.open', function () {
                  * @returns {void}
                  */
                 function createVersion7 () {
-                    var open = indexedDB.open(name, 7);
+                    const open = indexedDB.open(name, 7);
                     open.onerror = open.onblocked = done;
                     open.onsuccess = function () {
                         expect(open.result.version).to.equal(7);
@@ -417,7 +416,7 @@ describe('IDBFactory.open', function () {
                  * @returns {void}
                  */
                 function createVersion4 () {
-                    var open = indexedDB.open(name, 4);
+                    const open = indexedDB.open(name, 4);
                     open.onupgradeneeded = sinon.spy();
                     open.onsuccess = sinon.spy();
                     open.onblocked = sinon.spy();
@@ -438,7 +437,7 @@ describe('IDBFactory.open', function () {
         });
 
         it('should throw an error if called without params', function () {
-            var err;
+            let err;
             try {
                 indexedDB.open();
             } catch (e) {
@@ -476,7 +475,7 @@ describe('IDBFactory.open', function () {
              * @returns {void}
              */
             function tryToOpen (version) {
-                var err = null;
+                let err = null;
 
                 try {
                     indexedDB.open('test', version);

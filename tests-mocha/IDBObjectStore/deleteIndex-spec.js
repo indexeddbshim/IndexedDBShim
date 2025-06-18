@@ -1,23 +1,23 @@
 /* eslint-env mocha */
 /* globals expect, sinon, util, env, testHelper */
-/* eslint-disable no-var, no-unused-expressions */
+/* eslint-disable no-unused-expressions */
 describe('IDBObjectStore.deleteIndex', function () {
     'use strict';
 
-    var indexedDB;
+    let indexedDB;
     beforeEach(function () {
         indexedDB = env.indexedDB;
     });
 
     it('deletes indexes', function (done) {
-        var {testData: {DB}} = window;
+        const {testData: {DB}} = window;
         testHelper.createObjectStores(undefined, (error, [, db]) => {
             if (error) {
                 done(error);
                 return;
             }
             db.close();
-            var dbOpenRequest = indexedDB.open(DB.NAME);
+            const dbOpenRequest = indexedDB.open(DB.NAME);
             dbOpenRequest.onsuccess = function () {
                 expect(true, 'Database Opened successfully').to.be.true;
                 dbOpenRequest.result.close();
@@ -30,10 +30,10 @@ describe('IDBObjectStore.deleteIndex', function () {
             dbOpenRequest.onupgradeneeded = function () {
                 expect(true, 'Database Upgraded successfully').to.be.true;
                 // var db = dbOpenRequest.result;
-                var objectStore1 = dbOpenRequest.transaction.objectStore(DB.OBJECT_STORE_1);
-                var count = objectStore1.indexNames.length;
+                const objectStore1 = dbOpenRequest.transaction.objectStore(DB.OBJECT_STORE_1);
+                const count = objectStore1.indexNames.length;
 
-                var index3 = objectStore1.createIndex('DeleteTestIndex', 'String'); // eslint-disable-line no-unused-vars
+                const index3 = objectStore1.createIndex('DeleteTestIndex', 'String'); // eslint-disable-line no-unused-vars
                 expect(objectStore1.indexNames, 'Index on object store successfully created').to.have.lengthOf(count + 1);
                 objectStore1.deleteIndex('DeleteTestIndex');
                 expect(objectStore1.indexNames, 'Index on object store successfully deleted').to.have.lengthOf(count);
@@ -56,14 +56,14 @@ describe('IDBObjectStore.deleteIndex', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
-                    var store = db.createObjectStore('My Store');
+                    const db = event.target.result;
+                    const store = db.createObjectStore('My Store');
                     store.createIndex('My Index', 'foo');
-                    var result = store.deleteIndex('My Index');
+                    const result = store.deleteIndex('My Index');
 
                     expect(result).equal(undefined);
                 });
@@ -83,12 +83,12 @@ describe('IDBObjectStore.deleteIndex', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
-                    var store = db.createObjectStore('My Store');
+                    const db = event.target.result;
+                    const store = db.createObjectStore('My Store');
                     store.createIndex('My Index 1', 'foo');
                     store.createIndex('My Index 2', 'foo');
 
@@ -123,12 +123,12 @@ describe('IDBObjectStore.deleteIndex', function () {
                  * @returns {void}
                  */
                 function transaction1 () {
-                    var open = indexedDB.open(name, 1);
+                    const open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
 
                     open.onupgradeneeded = function (event) {
-                        var db = event.target.result;
-                        var store = db.createObjectStore('My Store');
+                        const db = event.target.result;
+                        const store = db.createObjectStore('My Store');
                         store.createIndex('My Index 1', 'foo');
                         store.createIndex('My Index 2', 'foo');
                         store.createIndex('My Index 3', 'foo');
@@ -145,12 +145,12 @@ describe('IDBObjectStore.deleteIndex', function () {
                  * @returns {void}
                  */
                 function transaction2 () {
-                    var open = indexedDB.open(name, 2);
+                    const open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
 
                     open.onupgradeneeded = sinon.spy(function () {
-                        // var db = event.target.result;
-                        var store = open.transaction.objectStore('My Store');
+                        // const db = event.target.result;
+                        const store = open.transaction.objectStore('My Store');
 
                         expect(Array.prototype.slice.call(store.indexNames))
                             .to.have.same.members(['My Index 1', 'My Index 2', 'My Index 3']);
@@ -177,15 +177,15 @@ describe('IDBObjectStore.deleteIndex', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function () {
-                    var db = open.result;
-                    var store = db.createObjectStore('My Store');
+                    const db = open.result;
+                    const store = db.createObjectStore('My Store');
 
                     store.createIndex('My Index', 'foo');
-                    var index1 = store.index('My Index');
+                    const index1 = store.index('My Index');
                     expect(index1.keyPath).to.equal('foo');
                     expect(index1.unique).equal(false);
                     if (env.isShimmed || !env.browser.isIE) {
@@ -194,7 +194,7 @@ describe('IDBObjectStore.deleteIndex', function () {
 
                     store.deleteIndex('My Index');
                     store.createIndex('My Index', 'bar', {unique: true, multiEntry: true});
-                    var index2 = store.index('My Index');
+                    const index2 = store.index('My Index');
                     expect(index2).not.to.equal(index1);
                     expect(index2.keyPath).to.equal('bar');
                     expect(index2.unique).equal(true);
@@ -236,18 +236,18 @@ describe('IDBObjectStore.deleteIndex', function () {
              * @returns {void}
              */
             function deleteObjectStores (name) {
-                var open = indexedDB.open(name, 2);
+                const open = indexedDB.open(name, 2);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = function () {
-                    // var db = open.result;
-                    var store = open.transaction.objectStore('out-of-line');
+                    // const db = open.result;
+                    const store = open.transaction.objectStore('out-of-line');
                     store.deleteIndex('inline-index');
                     store.deleteIndex('dotted-index');
                 };
 
                 open.onsuccess = function () {
-                    var db = open.result;
+                    const db = open.result;
                     db.close();
                     setTimeout(function () {
                         verifyDatabaseSchema(db.name);
@@ -261,17 +261,17 @@ describe('IDBObjectStore.deleteIndex', function () {
              * @returns {void}
              */
             function verifyDatabaseSchema (name) {
-                var open = indexedDB.open(name, 2);
+                const open = indexedDB.open(name, 2);
                 open.onerror = open.onblocked = done;
 
                 open.onsuccess = function () {
-                    var db = open.result;
-                    var tx = db.transaction('out-of-line');
-                    var store = tx.objectStore('out-of-line');
+                    const db = open.result;
+                    const tx = db.transaction('out-of-line');
+                    const store = tx.objectStore('out-of-line');
                     tx.onerror = tx.onabort = done;
 
                     // Verify that the correct indexes exist
-                    var indexNames = Array.prototype.slice.call(store.indexNames);
+                    const indexNames = Array.prototype.slice.call(store.indexNames);
                     expect(indexNames).to.have.same.members([
                         'unique-index', 'multi-entry-index', 'unique-multi-entry-index',
                         'compound-index', 'compound-index-unique'
@@ -308,7 +308,7 @@ describe('IDBObjectStore.deleteIndex', function () {
              */
             function verifySchema (obj, schema) {
                 Object.entries(schema).forEach(([prop, schemaValue]) => {
-                    var objValue = obj[prop];
+                    let objValue = obj[prop];
 
                     if (!env.isShimmed && env.browser.isIE && prop === 'multiEntry') {
                         // IE's native IndexedDB does not have the multiEntry property
@@ -328,12 +328,12 @@ describe('IDBObjectStore.deleteIndex', function () {
     describe('failure tests', function () {
         it('should throw an error if the index does not exist', function (done) {
             util.generateDatabaseName(function (err, name) {
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
-                    var store = db.createObjectStore('My Store');
+                    const db = event.target.result;
+                    const store = db.createObjectStore('My Store');
 
                     try {
                         store.deleteIndex('My Index');
@@ -355,12 +355,12 @@ describe('IDBObjectStore.deleteIndex', function () {
 
         it('should throw an error if called without params', function (done) {
             util.generateDatabaseName(function (err, name) {
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
-                    var store = db.createObjectStore('My Store');
+                    const db = event.target.result;
+                    const store = db.createObjectStore('My Store');
 
                     try {
                         store.deleteIndex();

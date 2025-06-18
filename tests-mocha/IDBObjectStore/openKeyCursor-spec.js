@@ -1,6 +1,6 @@
 /* eslint-env mocha */
 /* globals expect, testHelper */
-/* eslint-disable no-var, no-unused-expressions */
+/* eslint-disable no-unused-expressions */
 describe('IDBObjectStore.openKeyCursor', function () {
     it('Store Key Cursor', function (done) {
         testHelper.createObjectStores(undefined, (error, [, db]) => {
@@ -21,9 +21,9 @@ describe('IDBObjectStore.openKeyCursor', function () {
                         ));
                         return;
                     }
-                    var indexCursorReq = objectStore.openKeyCursor();
+                    const indexCursorReq = objectStore.openKeyCursor();
                     indexCursorReq.onsuccess = function () {
-                        var cursor = indexCursorReq.result;
+                        const cursor = indexCursorReq.result;
                         if (cursor) {
                             // _('Iterating over cursor ' + cursor.key + ' for value ' + JSON.stringify(cursor.value));
                             cursor.continue();

@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 /* globals expect, util, env, testHelper */
-/* eslint-disable no-var */
 describe('IDBObjectStore.index', function () {
     'use strict';
 
@@ -10,7 +9,7 @@ describe('IDBObjectStore.index', function () {
                 done(error);
                 return;
             }
-            var index = objectStore.index('Int Index');
+            const index = objectStore.index('Int Index');
             expect(index.keyPath, 'keyPath on index still exists').to.equal('Int');
             db.close();
             done();
@@ -24,11 +23,11 @@ describe('IDBObjectStore.index', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('inline');
-            var index = store.index('inline-index');
+            const store = tx.objectStore('inline');
+            const index = store.index('inline-index');
             expect(index).to.be.an.instanceOf(IDBIndex);
 
             tx.oncomplete = function () {
@@ -45,19 +44,19 @@ describe('IDBObjectStore.index', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('inline');
-            var index = store.index('inline-index');
-            var index2 = store.index('inline-index');
+            const store = tx.objectStore('inline');
+            const index = store.index('inline-index');
+            const index2 = store.index('inline-index');
             expect(index).to.equal(index2);
 
-            var tx2 = db.transaction('inline', 'readwrite');
+            const tx2 = db.transaction('inline', 'readwrite');
             tx2.onerror = done;
 
-            var store2 = tx2.objectStore('inline');
-            var index3 = store2.index('inline-index');
+            const store2 = tx2.objectStore('inline');
+            const index3 = store2.index('inline-index');
 
             expect(index).to.not.equal(index3);
 
@@ -75,11 +74,11 @@ describe('IDBObjectStore.index', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('inline');
-            var index = store.index('inline-index');
+            const store = tx.objectStore('inline');
+            const index = store.index('inline-index');
             expect(index.objectStore).to.equal(store);
 
             tx.oncomplete = function () {
@@ -92,10 +91,10 @@ describe('IDBObjectStore.index', function () {
     it('should throw an error if called without params', function (done) {
         this.timeout(5000);
         util.createDatabase('inline', 'inline-index', function (err, db) {
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('inline');
+            const store = tx.objectStore('inline');
             try {
                 store.index();
             } catch (e) {
@@ -114,10 +113,10 @@ describe('IDBObjectStore.index', function () {
 
     it('should throw an error if an invalid index name is given', function (done) {
         util.createDatabase('inline', 'inline-index', function (err, db) {
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('inline');
+            const store = tx.objectStore('inline');
             try {
                 store.index('foobar');
             } catch (e) {

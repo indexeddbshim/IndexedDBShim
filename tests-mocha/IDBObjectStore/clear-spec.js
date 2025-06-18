@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 /* globals expect, sinon, util, env */
-/* eslint-disable no-var */
 describe('IDBObjectStore.clear', function () {
     'use strict';
 
@@ -11,11 +10,11 @@ describe('IDBObjectStore.clear', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('inline');
-            var clear = store.clear();
+            const store = tx.objectStore('inline');
+            const clear = store.clear();
             expect(clear).to.be.an.instanceOf(IDBRequest);
 
             tx.oncomplete = function () {
@@ -32,11 +31,11 @@ describe('IDBObjectStore.clear', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('inline');
-            var clear = store.clear();
+            const store = tx.objectStore('inline');
+            const clear = store.clear();
             clear.onerror = done;
 
             clear.onsuccess = sinon.spy(function (event) {
@@ -59,11 +58,11 @@ describe('IDBObjectStore.clear', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('inline');
-            var clear = store.clear();
+            const store = tx.objectStore('inline');
+            const clear = store.clear();
 
             clear.onsuccess = sinon.spy(function () {
                 expect(clear.result).equal(undefined);
@@ -84,9 +83,9 @@ describe('IDBObjectStore.clear', function () {
                 done();
                 return;
             }
-            var allData, clearedData, clear;
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
+            let allData, clearedData, clear;
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
             tx.onerror = done;
 
             store.add({id: 1});
@@ -145,7 +144,8 @@ describe('IDBObjectStore.clear', function () {
                 done();
                 return;
             }
-            var allData, clearedData, cleared = sinon.spy();
+            const cleared = sinon.spy();
+            let allData, clearedData;
 
             transaction1();
 
@@ -153,8 +153,8 @@ describe('IDBObjectStore.clear', function () {
              * @returns {void}
              */
             function transaction1 () {
-                var tx = db.transaction('inline', 'readwrite');
-                var store = tx.objectStore('inline');
+                const tx = db.transaction('inline', 'readwrite');
+                const store = tx.objectStore('inline');
                 tx.onerror = done;
                 tx.oncomplete = transaction2;
 
@@ -167,8 +167,8 @@ describe('IDBObjectStore.clear', function () {
              * @returns {void}
              */
             function transaction2 () {
-                var tx = db.transaction('inline', 'readwrite');
-                var store = tx.objectStore('inline');
+                const tx = db.transaction('inline', 'readwrite');
+                const store = tx.objectStore('inline');
                 tx.onerror = done;
                 tx.oncomplete = transaction3;
 
@@ -189,12 +189,12 @@ describe('IDBObjectStore.clear', function () {
              * @returns {void}
              */
             function transaction3 () {
-                var tx = db.transaction('inline', 'readwrite');
-                var store = tx.objectStore('inline');
+                const tx = db.transaction('inline', 'readwrite');
+                const store = tx.objectStore('inline');
                 tx.onerror = done;
                 tx.oncomplete = checkResults;
 
-                var clear = store.clear();
+                const clear = store.clear();
                 clear.onerror = done;
                 clear.onsuccess = cleared;
 
@@ -233,8 +233,8 @@ describe('IDBObjectStore.clear', function () {
 
     it('should throw an error if the transaction is read-only', function (done) {
         util.createDatabase('out-of-line-generated', function (err, db) {
-            var tx = db.transaction('out-of-line-generated', 'readonly');
-            var store = tx.objectStore('out-of-line-generated');
+            const tx = db.transaction('out-of-line-generated', 'readonly');
+            const store = tx.objectStore('out-of-line-generated');
 
             try {
                 store.clear();
@@ -252,8 +252,8 @@ describe('IDBObjectStore.clear', function () {
 
     it('should throw an error if the transaction is closed', function (done) {
         util.createDatabase('out-of-line-generated', function (err, db) {
-            var tx = db.transaction('out-of-line-generated', 'readwrite');
-            var store = tx.objectStore('out-of-line-generated');
+            const tx = db.transaction('out-of-line-generated', 'readwrite');
+            const store = tx.objectStore('out-of-line-generated');
 
             setTimeout(function () {
                 try {

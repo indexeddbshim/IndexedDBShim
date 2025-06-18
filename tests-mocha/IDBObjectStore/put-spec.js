@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 /* globals expect, util, env, testHelper, testData */
-/* eslint-disable no-var */
 describe('IDBObjectStore.put (only)', function () {
     'use strict';
 
@@ -12,10 +11,10 @@ describe('IDBObjectStore.put (only)', function () {
                 done(error);
                 return;
             }
-            var key = sample.integer();
-            var data = sample.obj();
+            const key = sample.integer();
+            const data = sample.obj();
             data.modified = true;
-            var req = objectStore.put(data, key);
+            const req = objectStore.put(data, key);
             req.onsuccess = function () {
                 expect(req.result, 'Data added to Object store').to.equal(key);
                 objectStore.transaction.db.close();
@@ -33,8 +32,8 @@ describe('IDBObjectStore.put (only)', function () {
                 done(error);
                 return;
             }
-            var key = 'UPDATED';
-            var req = objectStore.put(sample.obj(), key);
+            const key = 'UPDATED';
+            const req = objectStore.put(sample.obj(), key);
             req.onsuccess = function () {
                 expect(req.result, 'Data updated in Object store').to.equal(key);
                 objectStore.transaction.db.close();
@@ -53,14 +52,14 @@ describe('IDBObjectStore.put (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line', 'readwrite');
+            const tx = db.transaction('out-of-line', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('out-of-line');
+            const store = tx.objectStore('out-of-line');
             store.put({foo: 'bar'}, 12345);
             store.put({foo: 'bar'}, 12345);
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -92,14 +91,14 @@ describe('IDBObjectStore.put (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line-generated', 'readwrite');
+            const tx = db.transaction('out-of-line-generated', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('out-of-line-generated');
+            const store = tx.objectStore('out-of-line-generated');
             store.put({foo: 'bar'});
             store.put({foo: 'bar'}, 1);
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -129,14 +128,14 @@ describe('IDBObjectStore.put (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('inline');
+            const store = tx.objectStore('inline');
             store.put({id: 12345, foo: 'bar'});
             store.put({id: 12345, biz: 'baz'});
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -168,14 +167,14 @@ describe('IDBObjectStore.put (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline-generated', 'readwrite');
+            const tx = db.transaction('inline-generated', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('inline-generated');
+            const store = tx.objectStore('inline-generated');
             store.put({foo: 'bar'});
             store.put({id: 1, biz: 'baz'});
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -205,14 +204,14 @@ describe('IDBObjectStore.put (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('dotted', 'readwrite');
+            const tx = db.transaction('dotted', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('dotted');
+            const store = tx.objectStore('dotted');
             store.put({name: {first: 'John', last: 'Doe'}, age: 30});
             store.put({name: {first: 'John', last: 'Smith'}, age: 42});
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -242,14 +241,14 @@ describe('IDBObjectStore.put (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('dotted-generated', 'readwrite');
+            const tx = db.transaction('dotted-generated', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('dotted-generated');
+            const store = tx.objectStore('dotted-generated');
             store.put({age: 30});
             store.put({name: {first: 1, last: 'Smith'}, age: 42});
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -280,14 +279,14 @@ describe('IDBObjectStore.put (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line-compound', 'readwrite');
+            const tx = db.transaction('out-of-line-compound', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('out-of-line-compound');
+            const store = tx.objectStore('out-of-line-compound');
             store.put({foo: 'bar'}, [1, 'two', new Date(2003, 4, 5)]);
             store.put({foo: 'bar'}, [1, 'two', new Date(2003, 4, 5)]);
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -318,14 +317,14 @@ describe('IDBObjectStore.put (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline-compound', 'readwrite');
+            const tx = db.transaction('inline-compound', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('inline-compound');
+            const store = tx.objectStore('inline-compound');
             store.put({id: 12345, name: 'John Doe', age: 30});
             store.put({id: 12345, name: 'John Doe', age: 42});
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -356,14 +355,14 @@ describe('IDBObjectStore.put (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('dotted-compound', 'readwrite');
+            const tx = db.transaction('dotted-compound', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('dotted-compound');
+            const store = tx.objectStore('dotted-compound');
             store.put({id: 12345, name: {first: 'John', last: 'Doe'}, age: 30});
             store.put({id: 12345, name: {first: 'John', last: 'Doe'}, age: 42});
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -395,20 +394,20 @@ describe('IDBObjectStore.put (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line', 'readwrite');
+            const tx = db.transaction('out-of-line', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('out-of-line');
+            const store = tx.objectStore('out-of-line');
 
-            var key1 = util.sampleData.veryLongString + 'a';
+            const key1 = util.sampleData.veryLongString + 'a';
             expect(key1).to.have.lengthOf(10001);
             store.put({foo: 'bar'}, key1);
 
-            var key2 = util.sampleData.veryLongString + 'b';
+            const key2 = util.sampleData.veryLongString + 'b';
             expect(key1).to.have.lengthOf(10001);
             store.put({foo: 'bar'}, key2);
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -440,20 +439,20 @@ describe('IDBObjectStore.put (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line', 'readwrite');
+            const tx = db.transaction('out-of-line', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('out-of-line');
+            const store = tx.objectStore('out-of-line');
 
-            var key1 = util.sampleData.veryLongString.slice(0, 889) + 'a';
+            const key1 = util.sampleData.veryLongString.slice(0, 889) + 'a';
             expect(key1).to.have.lengthOf(890);
             store.put({foo: 'bar'}, key1);
 
-            var key2 = util.sampleData.veryLongString.slice(0, 889) + 'b';
+            const key2 = util.sampleData.veryLongString.slice(0, 889) + 'b';
             expect(key1).to.have.lengthOf(890);
             store.put({foo: 'bar'}, key2);
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -485,20 +484,20 @@ describe('IDBObjectStore.put (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line', 'readwrite');
+            const tx = db.transaction('out-of-line', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('out-of-line');
+            const store = tx.objectStore('out-of-line');
 
-            var key1 = util.sampleData.veryLongString.slice(0, 888) + 'a';
+            const key1 = util.sampleData.veryLongString.slice(0, 888) + 'a';
             expect(key1).to.have.lengthOf(889);
             store.put({foo: 'bar'}, key1);
 
-            var key2 = util.sampleData.veryLongString.slice(0, 888) + 'b';
+            const key2 = util.sampleData.veryLongString.slice(0, 888) + 'b';
             expect(key1).to.have.lengthOf(889);
             store.put({foo: 'bar'}, key2);
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -530,15 +529,15 @@ describe('IDBObjectStore.put (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line', 'readwrite');
+            const tx = db.transaction('out-of-line', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('out-of-line');
-            var veryLongString = util.sampleData.veryLongString.slice(0, 400);
+            const store = tx.objectStore('out-of-line');
+            const veryLongString = util.sampleData.veryLongString.slice(0, 400);
             store.put({foo: 'bar'}, [veryLongString, 1, 2, 3, 4, 5]); // Key encodes this as an 925-character string
             store.put({foo: 'bar'}, [veryLongString, 1, 2, 3, 4, 6]); // Key encodes this as an 925-character string
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -570,14 +569,14 @@ describe('IDBObjectStore.put (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line', 'readwrite');
+            const tx = db.transaction('out-of-line', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('out-of-line');
+            const store = tx.objectStore('out-of-line');
             store.put({foo: 'bar'}, [1, 2, 3, 4]); // Key encodes this as an 844-character string
             store.put({foo: 'bar'}, [1, 2, 3, 5]); // Key encodes this as an 844-character string
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);

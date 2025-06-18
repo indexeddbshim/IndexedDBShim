@@ -1,6 +1,6 @@
 /* eslint-env mocha */
 /* globals expect, sinon, util, env */
-/* eslint-disable no-var, sonarjs/no-code-after-done */
+/* eslint-disable sonarjs/no-code-after-done */
 describe('IDBTransaction events', function () {
     'use strict';
 
@@ -12,10 +12,10 @@ describe('IDBTransaction events', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
 
-            var store = tx.objectStore('inline');
-            var add = store.add({id: 1});
+            const store = tx.objectStore('inline');
+            const add = store.add({id: 1});
             add.onsuccess = sinon.spy();
 
             tx.oncomplete = function () {
@@ -33,7 +33,7 @@ describe('IDBTransaction events', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
 
             tx.oncomplete = function () {
                 db.close();
@@ -49,18 +49,18 @@ describe('IDBTransaction events', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readonly'); // <-- read-only
+            const tx = db.transaction('inline', 'readonly'); // <-- read-only
 
             db.onerror = sinon.spy();
             tx.onerror = sinon.spy();
 
-            var windowOnerrorState = {};
+            const windowOnerrorState = {};
             util.stubWindowOnerror(windowOnerrorState);
 
             // if (!env.browser.isFirefox) sinon.spy(window, 'onerror').returns(true);
 
-            var store = tx.objectStore('inline');
-            var errored = false;
+            const store = tx.objectStore('inline');
+            let errored = false;
             try {
                 store.add({id: 1}); // <-- This causes a synchronous error
             } catch (e) {
@@ -100,14 +100,14 @@ describe('IDBTransaction events', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
 
-            var windowOnerrorState = {};
+            const windowOnerrorState = {};
             util.stubWindowOnerror(windowOnerrorState);
 
-            var store = tx.objectStore('inline');
+            const store = tx.objectStore('inline');
             store.add({id: 1});
-            var add = store.add({id: 1}); // <-- This causes an asynchronous error (duplicate id)
+            const add = store.add({id: 1}); // <-- This causes an asynchronous error (duplicate id)
 
             // IDBRequest events
             add.onsuccess = sinon.spy();
@@ -186,10 +186,10 @@ describe('IDBTransaction events', function () {
                     window.onerror(error);
                 });
             }
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
             tx.onabort = sinon.spy();
 
-            var windowOnerrorState = {};
+            const windowOnerrorState = {};
             util.stubWindowOnerror(windowOnerrorState);
 
             db.onerror = tx.onerror = sinon.spy(function () {
@@ -255,13 +255,13 @@ describe('IDBTransaction events', function () {
                     window.onerror(error);
                 });
             }
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
 
             db.onerror = sinon.spy();
             tx.onerror = sinon.spy();
             tx.oncomplete = sinon.spy();
 
-            var windowOnerrorState = {};
+            const windowOnerrorState = {};
             util.stubWindowOnerror(windowOnerrorState);
 
             tx.onabort = sinon.spy(function () {

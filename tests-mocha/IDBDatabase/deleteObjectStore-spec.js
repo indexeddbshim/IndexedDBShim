@@ -1,10 +1,9 @@
 /* eslint-env mocha */
 /* globals expect, sinon, util, env */
-/* eslint-disable no-var */
 describe('IDBDatabase.deleteObjectStore', function () {
     'use strict';
 
-    var indexedDB;
+    let indexedDB;
     beforeEach(function () {
         indexedDB = env.indexedDB;
     });
@@ -17,13 +16,13 @@ describe('IDBDatabase.deleteObjectStore', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
+                    const db = event.target.result;
                     db.createObjectStore('My Store');
-                    var result = db.deleteObjectStore('My Store');
+                    const result = db.deleteObjectStore('My Store');
 
                     expect(result).equal(undefined);
                 });
@@ -43,11 +42,11 @@ describe('IDBDatabase.deleteObjectStore', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
+                    const db = event.target.result;
                     db.createObjectStore('My Store 1');
                     db.createObjectStore('My Store 2');
 
@@ -82,11 +81,11 @@ describe('IDBDatabase.deleteObjectStore', function () {
                  * @returns {void}
                  */
                 function transaction1 () {
-                    var open = indexedDB.open(name, 1);
+                    const open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
 
                     open.onupgradeneeded = function (event) {
-                        var db = event.target.result;
+                        const db = event.target.result;
                         db.createObjectStore('My Store 1');
                         db.createObjectStore('My Store 2');
                         db.createObjectStore('My Store 3');
@@ -103,11 +102,11 @@ describe('IDBDatabase.deleteObjectStore', function () {
                  * @returns {void}
                  */
                 function transaction2 () {
-                    var open = indexedDB.open(name, 2);
+                    const open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
 
                     open.onupgradeneeded = sinon.spy(function (event) {
-                        var db = event.target.result;
+                        const db = event.target.result;
 
                         expect(Array.prototype.slice.call(db.objectStoreNames))
                             .to.have.same.members(['My Store 1', 'My Store 2', 'My Store 3']);
@@ -134,15 +133,15 @@ describe('IDBDatabase.deleteObjectStore', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function () {
-                    var db = open.result;
-                    var tx = open.transaction;
+                    const db = open.result;
+                    const tx = open.transaction;
 
                     db.createObjectStore('My Store', {keyPath: 'foo'});
-                    var store1 = tx.objectStore('My Store');
+                    const store1 = tx.objectStore('My Store');
                     expect(store1.keyPath).to.equal('foo');
                     if (env.isShimmed || !env.browser.isIE) {
                         expect(store1.autoIncrement).equal(false); // IE doesn't have this property
@@ -150,7 +149,7 @@ describe('IDBDatabase.deleteObjectStore', function () {
 
                     db.deleteObjectStore('My Store');
                     db.createObjectStore('My Store', {keyPath: 'bar', autoIncrement: true});
-                    var store2 = tx.objectStore('My Store');
+                    const store2 = tx.objectStore('My Store');
                     expect(store2).not.to.equal(store1);
                     expect(store2.keyPath).to.equal('bar');
                     if (env.isShimmed || !env.browser.isIE) {
@@ -194,17 +193,17 @@ describe('IDBDatabase.deleteObjectStore', function () {
              * @returns {void}
              */
             function deleteObjectStores (name) {
-                var open = indexedDB.open(name, 2);
+                const open = indexedDB.open(name, 2);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = function (event) {
-                    var db = event.target.result;
+                    const db = event.target.result;
                     db.deleteObjectStore('out-of-line');
                     db.deleteObjectStore('dotted-generated');
                 };
 
                 open.onsuccess = function () {
-                    var db = open.result;
+                    const db = open.result;
                     db.close();
                     setTimeout(function () {
                         verifyDatabaseSchema(db.name);
@@ -219,16 +218,16 @@ describe('IDBDatabase.deleteObjectStore', function () {
              * @returns {void}
              */
             function verifyDatabaseSchema (name) {
-                var open = indexedDB.open(name, 2);
+                const open = indexedDB.open(name, 2);
                 open.onerror = open.onblocked = done;
 
                 open.onsuccess = function () {
-                    var db = open.result;
-                    var tx = db.transaction(db.objectStoreNames);
+                    const db = open.result;
+                    const tx = db.transaction(db.objectStoreNames);
                     tx.onerror = tx.onabort = done;
 
                     // Verify that the correct object stores exist
-                    var storeNames = Array.prototype.slice.call(db.objectStoreNames);
+                    const storeNames = Array.prototype.slice.call(db.objectStoreNames);
                     expect(storeNames).to.have.same.members([
                         'out-of-line-generated', 'inline', 'inline-generated',
                         'inline-compound', 'dotted', 'dotted-compound'
@@ -265,7 +264,7 @@ describe('IDBDatabase.deleteObjectStore', function () {
              */
             function verifySchema (obj, schema) {
                 Object.entries(schema).forEach(([prop, schemaValue]) => {
-                    var objValue = obj[prop];
+                    let objValue = obj[prop];
 
                     if (!env.isShimmed && env.browser.isIE && prop === 'autoIncrement') {
                         // IE's native IndexedDB does not have the autoIncrement property
@@ -285,11 +284,11 @@ describe('IDBDatabase.deleteObjectStore', function () {
     describe('failure tests', function () {
         it('should throw an error if the object store does not exist', function (done) {
             util.generateDatabaseName(function (err, name) {
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
+                    const db = event.target.result;
 
                     try {
                         db.deleteObjectStore('My Store');
@@ -311,11 +310,11 @@ describe('IDBDatabase.deleteObjectStore', function () {
 
         it('should throw an error if called without params', function (done) {
             util.generateDatabaseName(function (err, name) {
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
+                    const db = event.target.result;
 
                     try {
                         db.deleteObjectStore();

@@ -1,13 +1,11 @@
 /* eslint-env mocha */
 /* globals env */
-/* eslint-disable no-var */
 (function () {
     'use strict';
 
-    var databaseNamePrefix = 'indexeddbshim_test_database_';
-    var databaseSuffix = ''; // '.sqlite' now added automatically by default
-    var dbNameCounter = 0;
-    var util;
+    const databaseNamePrefix = 'indexeddbshim_test_database_';
+    const databaseSuffix = ''; // '.sqlite' now added automatically by default
+    let dbNameCounter = 0;
 
     /**
      * @typedef {number} Integer
@@ -41,7 +39,7 @@
         });
     });
 
-    util = window.util = {
+    const util = window.util = {
         sampleData: {
             /**
              * A custom class, used to test the IndexedDB structured
@@ -89,10 +87,10 @@
 
             util.generateDatabaseName(function (err, dbName) {
                 // Open the database
-                var open = env.indexedDB.open(dbName, 1);
+                const open = env.indexedDB.open(dbName, 1);
 
                 open.onerror = open.onblocked = function (event) {
-                    var err;
+                    let err;
                     try {
                         err = event.target.error;
                         console.error(err.message);
@@ -145,19 +143,19 @@
                 done = direction;
                 direction = 'next';
             }
-            var data = [];
-            var safariPrimaryKeyOffset = 0, safariKeyOffset = 0;
+            const data = [];
+            let safariPrimaryKeyOffset = 0, safariKeyOffset = 0;
 
             try {
-                var open = keyRange === undefined ? store.openCursor() : store.openCursor(keyRange, direction);
+                const open = keyRange === undefined ? store.openCursor() : store.openCursor(keyRange, direction);
                 open.onerror = function () {
                     done(open.error, data);
                 };
                 open.onsuccess = function () {
-                    var cursor = open.result;
+                    const cursor = open.result;
                     if (cursor) {
-                        var key = cursor.key;
-                        var primaryKey = cursor.primaryKey;
+                        const key = cursor.key;
+                        const primaryKey = cursor.primaryKey;
                         if (env.isNative && env.browser.isSafari) {
                             // BUG: Safari has a bug with compound-key cursors
                             if (Array.isArray(primaryKey)) {
@@ -196,18 +194,18 @@
          */
         generateDatabaseName (done) {
             dbNameCounter++;
-            var dbName = databaseNamePrefix + dbNameCounter + databaseSuffix;
+            const dbName = databaseNamePrefix + dbNameCounter + databaseSuffix;
 
             // Remember this database name, so it can be deleted when the test is done
             util.currentTest.databases.push(dbName);
 
             // Just in case the database already exists, delete it
-            var request = env.indexedDB.deleteDatabase(dbName);
+            const request = env.indexedDB.deleteDatabase(dbName);
             request.onsuccess = function () {
                 done(null, dbName);
             };
             request.onerror = request.onblocked = function () {
-                var err;
+                let err;
                 try {
                     err = request.error;
                     console.error(err.message);
@@ -232,7 +230,7 @@
          * @returns {void}
          */
         asyncForEach (array, done, iterator) {
-            var i = 0;
+            let i = 0;
             return next();
 
             /**
@@ -245,12 +243,12 @@
                 } else if (i >= array.length) {
                     done();
                 } else if (i < array.length) {
-                    var item = array[i++];
+                    const item = array[i++];
                     setTimeout(function () {
-                        var nextCalled = false;
+                        let nextCalled = false;
 
                         // Call the iterator function
-                        var request = iterator(item, i - 1, function (err) {
+                        const request = iterator(item, i - 1, function (err) {
                             if (!nextCalled) {
                                 nextCalled = true;
                                 return next(err);
@@ -263,7 +261,7 @@
                             request.onsuccess = request.onerror = request.onblocked = request.oncomplete = function () {
                                 if (!nextCalled) {
                                     nextCalled = true;
-                                    var err;
+                                    let err;
                                     try {
                                         err = request.error;
                                     } catch (e) { /* Some browsers throw an error when accessing the error property */ }
@@ -393,8 +391,8 @@
          * @returns {void}
          */
         function createIndex (name, keyPath, options) {
-            for (var i = 0; i < tx.db.objectStoreNames.length; i++) {
-                var store = tx.objectStore(tx.db.objectStoreNames[i]);
+            for (let i = 0; i < tx.db.objectStoreNames.length; i++) {
+                const store = tx.objectStore(tx.db.objectStoreNames[i]);
                 store.createIndex(name, keyPath, options);
             }
         }

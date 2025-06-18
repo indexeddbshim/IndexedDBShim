@@ -1,10 +1,10 @@
 /* eslint-env mocha */
 /* globals expect, sinon, util, env */
-/* eslint-disable no-var, no-unused-expressions */
+/* eslint-disable no-unused-expressions */
 describe('IDBObjectStore.createIndex', function () {
     'use strict';
 
-    var indexedDB;
+    let indexedDB;
     beforeEach(function () {
         indexedDB = env.indexedDB;
     });
@@ -17,13 +17,13 @@ describe('IDBObjectStore.createIndex', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
-                    var store = db.createObjectStore('My Store');
-                    var index = store.createIndex('My Index', 'foo.bar.baz');
+                    const db = event.target.result;
+                    const store = db.createObjectStore('My Store');
+                    const index = store.createIndex('My Index', 'foo.bar.baz');
 
                     expect(index).to.be.an.instanceOf(IDBIndex);
                     expect(index.objectStore).to.be.an.instanceOf(IDBObjectStore).and.equal(store);
@@ -50,13 +50,13 @@ describe('IDBObjectStore.createIndex', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
-                    var store = db.createObjectStore('My Store');
-                    var index = store.createIndex('My Index', 'foo.bar.baz', {unique: true});
+                    const db = event.target.result;
+                    const store = db.createObjectStore('My Store');
+                    const index = store.createIndex('My Index', 'foo.bar.baz', {unique: true});
 
                     expect(index).to.be.an.instanceOf(IDBIndex);
                     expect(index.objectStore).to.be.an.instanceOf(IDBObjectStore).and.equal(store);
@@ -83,13 +83,13 @@ describe('IDBObjectStore.createIndex', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
-                    var store = db.createObjectStore('My Store');
-                    var index = store.createIndex('My Index', 'foo.bar.baz', {multiEntry: true});
+                    const db = event.target.result;
+                    const store = db.createObjectStore('My Store');
+                    const index = store.createIndex('My Index', 'foo.bar.baz', {multiEntry: true});
 
                     expect(index).to.be.an.instanceOf(IDBIndex);
                     expect(index.objectStore).to.be.an.instanceOf(IDBObjectStore).and.equal(store);
@@ -116,13 +116,13 @@ describe('IDBObjectStore.createIndex', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
-                    var store = db.createObjectStore('My Store');
-                    var index = store.createIndex('My Index', 'foo.bar.baz', {unique: true, multiEntry: true});
+                    const db = event.target.result;
+                    const store = db.createObjectStore('My Store');
+                    const index = store.createIndex('My Index', 'foo.bar.baz', {unique: true, multiEntry: true});
 
                     expect(index).to.be.an.instanceOf(IDBIndex);
                     expect(index.objectStore).to.be.an.instanceOf(IDBObjectStore).and.equal(store);
@@ -155,12 +155,12 @@ describe('IDBObjectStore.createIndex', function () {
                  * @returns {void}
                  */
                 function createVersion1 () {
-                    var open = indexedDB.open(name, 1);
+                    const open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
 
                     open.onupgradeneeded = sinon.spy(function (event) {
-                        var db = event.target.result;
-                        var store = db.createObjectStore('My Store');
+                        const db = event.target.result;
+                        const store = db.createObjectStore('My Store');
                         store.createIndex('My Index 1', 'foo');
                         store.createIndex('My Index 2', 'foo');
 
@@ -178,11 +178,11 @@ describe('IDBObjectStore.createIndex', function () {
                  * @returns {void}
                  */
                 function createVersion2 () {
-                    var open = indexedDB.open(name, 2);
+                    const open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
 
                     open.onupgradeneeded = sinon.spy(function () {
-                        var store = open.transaction.objectStore('My Store');
+                        const store = open.transaction.objectStore('My Store');
 
                         expect(Array.prototype.slice.call(store.indexNames))
                             .to.have.same.members(['My Index 1', 'My Index 2']);
@@ -229,19 +229,19 @@ describe('IDBObjectStore.createIndex', function () {
              * @returns {void}
              */
             function verifyDatabaseSchema (name) {
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onsuccess = function () {
-                    var db = open.result;
-                    var tx = db.transaction('out-of-line');
-                    var store = tx.objectStore('out-of-line');
+                    const db = open.result;
+                    const tx = db.transaction('out-of-line');
+                    const store = tx.objectStore('out-of-line');
                     tx.onerror = tx.onabort = function (event) {
                         done(event.target.error);
                     };
 
                     // Verify that all of the indexes exist
-                    var indexes = Array.prototype.slice.call(store.indexNames);
+                    const indexes = Array.prototype.slice.call(store.indexNames);
                     expect(indexes).to.have.same.members([
                         'inline-index', 'unique-index', 'multi-entry-index', 'unique-multi-entry-index',
                         'dotted-index', 'compound-index', 'compound-index-unique'
@@ -280,7 +280,7 @@ describe('IDBObjectStore.createIndex', function () {
              */
             function verifySchema (obj, schema) {
                 Object.entries(schema).forEach(([prop, schemaValue]) => {
-                    var objValue = obj[prop];
+                    let objValue = obj[prop];
 
                     if (!env.isShimmed && env.browser.isIE && prop === 'multiEntry') {
                         // IE's native IndexedDB does not have the multiEntry property
@@ -305,12 +305,12 @@ describe('IDBObjectStore.createIndex', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
-                    var store = db.createObjectStore('My Store');
+                    const db = event.target.result;
+                    const store = db.createObjectStore('My Store');
 
                     try {
                         store.createIndex();
@@ -337,12 +337,12 @@ describe('IDBObjectStore.createIndex', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
-                    var store = db.createObjectStore('My Store');
+                    const db = event.target.result;
+                    const store = db.createObjectStore('My Store');
 
                     try {
                         store.createIndex('My Index');
@@ -370,12 +370,12 @@ describe('IDBObjectStore.createIndex', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
-                    var store = db.createObjectStore('My Store');
+                    const db = event.target.result;
+                    const store = db.createObjectStore('My Store');
 
                     try {
                         store.createIndex('My Index', ['id', 'Name'], {multiEntry: true});
@@ -400,12 +400,12 @@ describe('IDBObjectStore.createIndex', function () {
 
         it('should throw an error if the index was already created in the same transaction', function (done) {
             util.generateDatabaseName(function (err, name) {
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
-                    var store = db.createObjectStore('My Store');
+                    const db = event.target.result;
+                    const store = db.createObjectStore('My Store');
                     store.createIndex('My Index', 'foo');
 
                     try {
@@ -439,12 +439,12 @@ describe('IDBObjectStore.createIndex', function () {
                  * @returns {void}
                  */
                 function createVersion1 () {
-                    var open = indexedDB.open(name, 1);
+                    const open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
 
                     open.onupgradeneeded = sinon.spy(function (event) {
-                        var db = event.target.result;
-                        var store = db.createObjectStore('My Store');
+                        const db = event.target.result;
+                        const store = db.createObjectStore('My Store');
                         store.createIndex('My Index', 'foo');
                     });
 
@@ -458,11 +458,11 @@ describe('IDBObjectStore.createIndex', function () {
                  * @returns {void}
                  */
                 function createVersion2 () {
-                    var open = indexedDB.open(name, 2);
+                    const open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
 
                     open.onupgradeneeded = sinon.spy(function () {
-                        var store = open.transaction.objectStore('My Store');
+                        const store = open.transaction.objectStore('My Store');
 
                         try {
                             store.createIndex('My Index', 'bar');
@@ -490,11 +490,11 @@ describe('IDBObjectStore.createIndex', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
-                    var store = db.createObjectStore('test');
+                    const db = event.target.result;
+                    const store = db.createObjectStore('test');
                     store.createIndex('value', 'id');
                     expect(store.indexNames.contains('value')).equal(true);
                     store.createIndex('key', 'id');

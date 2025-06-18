@@ -1,15 +1,14 @@
 /* eslint-env mocha */
 /* globals expect, util, env */
-/* eslint-disable no-var */
 describe('IDBFactory.cmp', function () {
     'use strict';
 
-    var indexedDB;
+    let indexedDB;
     beforeEach(function () {
         indexedDB = env.indexedDB;
     });
 
-    var results = [];
+    const results = [];
     results[-1] = ', but it was less';
     results[0] = ', but they were equal';
     results[1] = ', but it was greater';
@@ -22,7 +21,7 @@ describe('IDBFactory.cmp', function () {
      * @returns {void}
      */
     function compare (a, b) {
-        var result = indexedDB.cmp(a, b);
+        let result = indexedDB.cmp(a, b);
         if (result !== -1) {
             throw new Error('Expected ' + a + ' to be less than ' + b + results[result]);
         }
@@ -45,7 +44,7 @@ describe('IDBFactory.cmp', function () {
             b = a;
         }
 
-        var result = indexedDB.cmp(a, b);
+        let result = indexedDB.cmp(a, b);
         if (result !== 0) {
             throw new Error('Expected ' + a + ' to equal ' + b + results[result]);
         }
@@ -301,7 +300,7 @@ describe('IDBFactory.cmp', function () {
              * @returns {void}
              */
             function tryToCompare (x) {
-                var err;
+                let err;
                 try {
                     indexedDB.cmp(1, x);
                 } catch (e) {
@@ -317,7 +316,7 @@ describe('IDBFactory.cmp', function () {
         });
 
         it('should throw an error if called without params', function () {
-            var err;
+            let err;
             try {
                 indexedDB.cmp();
             } catch (e) {
@@ -329,7 +328,7 @@ describe('IDBFactory.cmp', function () {
         });
 
         it('should throw an error if called with only one param', function () {
-            var err;
+            let err;
             try {
                 indexedDB.cmp(1);
             } catch (e) {

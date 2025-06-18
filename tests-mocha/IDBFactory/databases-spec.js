@@ -1,6 +1,6 @@
 /* eslint-env mocha */
 /* globals testData, expect */
-/* eslint-disable no-var, no-unused-expressions */
+/* eslint-disable no-unused-expressions */
 
 describe('IDBFactory.databases', function () {
     it('databases', function () {
@@ -20,7 +20,7 @@ describe('IDBFactory.databases', function () {
                 info,
                 'Database list successfully found'
             ).to.have.lengthOf.at.least(1);
-            var found = info.some(function (inf) {
+            const found = info.some(function (inf) {
                 return inf.name === testData.DB.NAME && inf.version === 1;
             });
             expect(
@@ -43,11 +43,11 @@ describe('IDBFactory.databases', function () {
  */
 function openDb () {
     window.indexedDB.deleteDatabase(testData.DB.NAME);
-    var dbOpenRequest = window.indexedDB.open(testData.DB.NAME);
+    const dbOpenRequest = window.indexedDB.open(testData.DB.NAME);
     // eslint-disable-next-line promise/avoid-new
     return new Promise((resolve, reject) => {
         dbOpenRequest.onsuccess = function () {
-            var db = dbOpenRequest.result;
+            const db = dbOpenRequest.result;
             resolve(db);
         };
         dbOpenRequest.onerror = function (e) {

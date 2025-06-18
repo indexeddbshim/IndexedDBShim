@@ -49,7 +49,7 @@ setGlobalVars(window, {addNonIDBGlobals: true});
 await import('./test-environment.js');
 await import('./test-utils.js');
 
-var tests; // eslint-disable-line no-var
+let tests;
 
 if (process.env.npm_config_test) { // eslint-disable-line n/no-process-env
     tests = [process.env.npm_config_test]; // eslint-disable-line n/no-process-env

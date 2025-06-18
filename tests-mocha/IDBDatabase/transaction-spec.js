@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 /* globals expect, sinon, util, env */
-/* eslint-disable no-var */
 describe('IDBDatabase.transaction', function () {
     'use strict';
 
@@ -12,7 +11,7 @@ describe('IDBDatabase.transaction', function () {
                     done();
                     return;
                 }
-                var tx = db.transaction('inline', 'readonly');
+                const tx = db.transaction('inline', 'readonly');
                 expect(tx).to.be.an.instanceOf(IDBTransaction);
 
                 db.close();
@@ -27,7 +26,7 @@ describe('IDBDatabase.transaction', function () {
                     done();
                     return;
                 }
-                var tx = db.transaction(['inline'], 'readonly');
+                const tx = db.transaction(['inline'], 'readonly');
                 expect(tx.db).to.equal(db);
 
                 db.close();
@@ -42,7 +41,7 @@ describe('IDBDatabase.transaction', function () {
                     done();
                     return;
                 }
-                var tx = db.transaction('out-of-line', 'readwrite');
+                const tx = db.transaction('out-of-line', 'readwrite');
                 tx.onerror = done;
 
                 tx.oncomplete = function (event) {
@@ -62,7 +61,7 @@ describe('IDBDatabase.transaction', function () {
                     done();
                     return;
                 }
-                var tx = db.transaction('inline-generated');
+                const tx = db.transaction('inline-generated');
                 expect(tx.objectStore('inline-generated')).to.be.an.instanceOf(IDBObjectStore);
 
                 db.close();
@@ -79,7 +78,7 @@ describe('IDBDatabase.transaction', function () {
                     done();
                     return;
                 }
-                var tx = db.transaction(['inline', 'out-of-line']);
+                const tx = db.transaction(['inline', 'out-of-line']);
                 expect(tx.objectStore('inline')).to.be.an.instanceOf(IDBObjectStore);
                 expect(tx.objectStore('out-of-line')).to.be.an.instanceOf(IDBObjectStore);
 
@@ -90,8 +89,8 @@ describe('IDBDatabase.transaction', function () {
 
         it('should default to "readonly" mode', function (done) {
             util.createDatabase('inline', function (err, db) {
-                var tx = db.transaction('inline');
-                var store = tx.objectStore('inline');
+                const tx = db.transaction('inline');
+                const store = tx.objectStore('inline');
 
                 try {
                     store.put({id: 12345});
@@ -109,8 +108,8 @@ describe('IDBDatabase.transaction', function () {
 
         it('can be explicitly set to "readonly" mode', function (done) {
             util.createDatabase('inline', function (err, db) {
-                var tx = db.transaction('inline', 'readonly');
-                var store = tx.objectStore('inline');
+                const tx = db.transaction('inline', 'readonly');
+                const store = tx.objectStore('inline');
 
                 try {
                     store.put({id: 12345});
@@ -133,10 +132,10 @@ describe('IDBDatabase.transaction', function () {
                     done();
                     return;
                 }
-                var tx = db.transaction('inline', 'readwrite');
-                var store = tx.objectStore('inline');
+                const tx = db.transaction('inline', 'readwrite');
+                const store = tx.objectStore('inline');
 
-                var put = store.put({id: 12345});
+                const put = store.put({id: 12345});
                 expect(put).to.be.an.instanceOf(IDBRequest);
 
                 tx.oncomplete = function () {
@@ -153,13 +152,13 @@ describe('IDBDatabase.transaction', function () {
                     done();
                     return;
                 }
-                var tx1 = db.transaction('out-of-line-generated', 'readwrite');
-                var tx2 = db.transaction('out-of-line-generated', 'readwrite');
-                var tx3 = db.transaction('out-of-line-generated', 'readwrite');
+                const tx1 = db.transaction('out-of-line-generated', 'readwrite');
+                const tx2 = db.transaction('out-of-line-generated', 'readwrite');
+                const tx3 = db.transaction('out-of-line-generated', 'readwrite');
 
-                var store1 = tx1.objectStore('out-of-line-generated');
-                var store2 = tx2.objectStore('out-of-line-generated');
-                var store3 = tx3.objectStore('out-of-line-generated');
+                const store1 = tx1.objectStore('out-of-line-generated');
+                const store2 = tx2.objectStore('out-of-line-generated');
+                const store3 = tx3.objectStore('out-of-line-generated');
 
                 expect(store1.transaction).to.equal(tx1);
                 expect(store2.transaction).to.equal(tx2);

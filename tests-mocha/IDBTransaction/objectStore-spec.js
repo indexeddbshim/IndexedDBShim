@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 /* globals expect, util, env */
-/* eslint-disable no-var */
 describe('IDBTransaction.objectStore', function () {
     'use strict';
 
@@ -11,8 +10,8 @@ describe('IDBTransaction.objectStore', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readonly');
-            var store = tx.objectStore('inline');
+            const tx = db.transaction('inline', 'readonly');
+            const store = tx.objectStore('inline');
 
             expect(store).to.be.an.instanceOf(IDBObjectStore);
 
@@ -28,8 +27,8 @@ describe('IDBTransaction.objectStore', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readonly');
-            var store = tx.objectStore('inline');
+            const tx = db.transaction('inline', 'readonly');
+            const store = tx.objectStore('inline');
 
             expect(store.transaction).to.equal(tx);
 
@@ -40,7 +39,7 @@ describe('IDBTransaction.objectStore', function () {
 
     it('should throw an error if called without params', function (done) {
         util.createDatabase('inline', function (err, db) {
-            var tx = db.transaction('inline', 'readonly');
+            const tx = db.transaction('inline', 'readonly');
 
             try {
                 tx.objectStore();
@@ -58,7 +57,7 @@ describe('IDBTransaction.objectStore', function () {
 
     it('should throw an error if an invalid store name is given', function (done) {
         util.createDatabase('inline', function (err, db) {
-            var tx = db.transaction('inline', 'readonly');
+            const tx = db.transaction('inline', 'readonly');
 
             try {
                 tx.objectStore('foobar');
@@ -82,7 +81,7 @@ describe('IDBTransaction.objectStore', function () {
                 return;
             }
             // Transaction only includes one of the three stores
-            var tx = db.transaction('inline-generated');
+            const tx = db.transaction('inline-generated');
             expect(tx.objectStore('inline-generated')).to.be.an.instanceOf(IDBObjectStore);
 
             // These two stores aren't part of the transaction
@@ -94,7 +93,7 @@ describe('IDBTransaction.objectStore', function () {
              * @returns {void}
              */
             function tryToOpen (store) {
-                var err = null;
+                let err = null;
                 try {
                     tx.objectStore(store);
                 } catch (e) {
@@ -114,7 +113,7 @@ describe('IDBTransaction.objectStore', function () {
         // BUG: Safari's native IndexedDB does not support opening multiple object stores
         util.createDatabase('inline', 'inline-generated', 'out-of-line', function (err, db) {
             // Transaction only includes two of the three stores
-            var tx = db.transaction(['inline', 'out-of-line']);
+            const tx = db.transaction(['inline', 'out-of-line']);
             expect(tx.objectStore('inline')).to.be.an.instanceOf(IDBObjectStore);
             expect(tx.objectStore('out-of-line')).to.be.an.instanceOf(IDBObjectStore);
 
@@ -135,7 +134,7 @@ describe('IDBTransaction.objectStore', function () {
 
     it('should throw an error if the transaction is closed', function (done) {
         util.createDatabase('out-of-line-generated', function (err, db) {
-            var tx = db.transaction('out-of-line-generated', 'readwrite');
+            const tx = db.transaction('out-of-line-generated', 'readwrite');
 
             setTimeout(function () {
                 try {

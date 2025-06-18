@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 /* globals expect, testHelper, testData */
-/* eslint-disable no-var */
 describe('IDBObjectStore.get', function () {
     const {sample} = testData;
     it('Getting data in Object Store', function (done) {
@@ -10,11 +9,11 @@ describe('IDBObjectStore.get', function () {
                 done(error);
                 return;
             }
-            var key = sample.integer();
-            var data = sample.obj();
-            var addReq = objectStore.add(data, key);
+            const key = sample.integer();
+            const data = sample.obj();
+            const addReq = objectStore.add(data, key);
             addReq.onsuccess = () => {
-                var req = objectStore.get(key);
+                const req = objectStore.get(key);
                 req.onsuccess = function () {
                     expect(req.result, 'Data fetched matches the data').to.deep.equal(data);
                     objectStore.transaction.db.close();

@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 /* globals expect, sinon, util */
-/* eslint-disable no-var */
 describe('IDBDatabase.close', function () {
     'use strict';
 
@@ -11,7 +10,7 @@ describe('IDBDatabase.close', function () {
                 done();
                 return;
             }
-            var result = db.close();
+            const result = db.close();
             expect(result).equal(undefined);
             done();
         });
@@ -24,15 +23,15 @@ describe('IDBDatabase.close', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line-generated', 'readwrite');
+            const tx = db.transaction('out-of-line-generated', 'readwrite');
             tx.onerror = function (event) {
                 done(event.target.error);
             };
 
             db.close();
 
-            var store = tx.objectStore('out-of-line-generated');
-            var put = store.put({foo: 'bar'});
+            const store = tx.objectStore('out-of-line-generated');
+            const put = store.put({foo: 'bar'});
             put.onsuccess = sinon.spy();
 
             tx.oncomplete = function () {

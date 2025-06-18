@@ -1,6 +1,6 @@
 /* eslint-env mocha */
 /* globals expect, sinon, util, env */
-/* eslint-disable no-var, no-unused-expressions */
+/* eslint-disable no-unused-expressions */
 describe('IDBObjectStore.delete', function () {
     'use strict';
 
@@ -11,11 +11,11 @@ describe('IDBObjectStore.delete', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('inline');
-            var del = store.delete('foo');
+            const store = tx.objectStore('inline');
+            const del = store.delete('foo');
 
             expect(del).to.be.an.instanceOf(IDBRequest);
 
@@ -33,11 +33,11 @@ describe('IDBObjectStore.delete', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('inline');
-            var del = store.delete('foo');
+            const store = tx.objectStore('inline');
+            const del = store.delete('foo');
             del.onerror = sinon.spy();
 
             del.onsuccess = sinon.spy(function (event) {
@@ -61,12 +61,12 @@ describe('IDBObjectStore.delete', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
             tx.onerror = done;
 
-            var store = tx.objectStore('inline');
+            const store = tx.objectStore('inline');
             store.add({id: 'foo'});
-            var del = store.delete('foo');
+            const del = store.delete('foo');
 
             del.onsuccess = sinon.spy(function () {
                 expect(del.result).equal(undefined);
@@ -87,9 +87,9 @@ describe('IDBObjectStore.delete', function () {
                 done();
                 return;
             }
-            var allData;
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
+            let allData;
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
             tx.onerror = done;
 
             store.add({id: 1}).onsuccess = function () {
@@ -120,9 +120,9 @@ describe('IDBObjectStore.delete', function () {
                 done();
                 return;
             }
-            var allData;
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
+            let allData;
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
             tx.onerror = done;
 
             store.add({id: 1}).onsuccess = function () {
@@ -156,8 +156,8 @@ describe('IDBObjectStore.delete', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
             tx.onerror = done;
 
             store.add({id: 1});
@@ -168,7 +168,7 @@ describe('IDBObjectStore.delete', function () {
             store.delete(2);
             store.delete(3);
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -193,7 +193,7 @@ describe('IDBObjectStore.delete', function () {
                 done();
                 return;
             }
-            var allData, deletedData;
+            let allData, deletedData;
 
             transaction1();
 
@@ -201,8 +201,8 @@ describe('IDBObjectStore.delete', function () {
              * @returns {void}
              */
             function transaction1 () {
-                var tx = db.transaction('inline', 'readwrite');
-                var store = tx.objectStore('inline');
+                const tx = db.transaction('inline', 'readwrite');
+                const store = tx.objectStore('inline');
                 tx.onerror = done;
                 tx.oncomplete = transaction2;
 
@@ -215,8 +215,8 @@ describe('IDBObjectStore.delete', function () {
              * @returns {void}
              */
             function transaction2 () {
-                var tx = db.transaction('inline', 'readwrite');
-                var store = tx.objectStore('inline');
+                const tx = db.transaction('inline', 'readwrite');
+                const store = tx.objectStore('inline');
                 tx.onerror = done;
                 tx.oncomplete = transaction3;
 
@@ -237,8 +237,8 @@ describe('IDBObjectStore.delete', function () {
              * @returns {void}
              */
             function transaction3 () {
-                var tx = db.transaction('inline', 'readwrite');
-                var store = tx.objectStore('inline');
+                const tx = db.transaction('inline', 'readwrite');
+                const store = tx.objectStore('inline');
                 tx.onerror = done;
                 tx.oncomplete = checkResults;
 
@@ -287,8 +287,8 @@ describe('IDBObjectStore.delete', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line', 'readwrite');
-            var store = tx.objectStore('out-of-line');
+            const tx = db.transaction('out-of-line', 'readwrite');
+            const store = tx.objectStore('out-of-line');
             tx.onerror = done;
 
             store.add('one', 101);
@@ -302,7 +302,7 @@ describe('IDBObjectStore.delete', function () {
             store.delete(101);
             store.delete(3);
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -332,8 +332,8 @@ describe('IDBObjectStore.delete', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line-compound', 'readwrite');
-            var store = tx.objectStore('out-of-line-compound');
+            const tx = db.transaction('out-of-line-compound', 'readwrite');
+            const store = tx.objectStore('out-of-line-compound');
             tx.onerror = done;
 
             store.add('one', [1, 'oh', 1]);
@@ -347,7 +347,7 @@ describe('IDBObjectStore.delete', function () {
             store.delete(['t', 'w', 'o']);
             store.delete(['five']);
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -376,8 +376,8 @@ describe('IDBObjectStore.delete', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line-generated', 'readwrite');
-            var store = tx.objectStore('out-of-line-generated');
+            const tx = db.transaction('out-of-line-generated', 'readwrite');
+            const store = tx.objectStore('out-of-line-generated');
             tx.onerror = done;
 
             store.add('one');
@@ -391,7 +391,7 @@ describe('IDBObjectStore.delete', function () {
             store.delete(5);
             store.delete(2);
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -421,8 +421,8 @@ describe('IDBObjectStore.delete', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
-            var store = tx.objectStore('inline');
+            const tx = db.transaction('inline', 'readwrite');
+            const store = tx.objectStore('inline');
             tx.onerror = done;
 
             store.add({id: 'one'});
@@ -436,7 +436,7 @@ describe('IDBObjectStore.delete', function () {
             store.delete('two');
             store.delete('four');
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -466,8 +466,8 @@ describe('IDBObjectStore.delete', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline-compound', 'readwrite');
-            var store = tx.objectStore('inline-compound');
+            const tx = db.transaction('inline-compound', 'readwrite');
+            const store = tx.objectStore('inline-compound');
             tx.onerror = done;
 
             store.add({id: 1, name: 'one'});
@@ -481,7 +481,7 @@ describe('IDBObjectStore.delete', function () {
             store.delete([5, 'five']);
             store.delete([3, 'three']);
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -510,8 +510,8 @@ describe('IDBObjectStore.delete', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline-generated', 'readwrite');
-            var store = tx.objectStore('inline-generated');
+            const tx = db.transaction('inline-generated', 'readwrite');
+            const store = tx.objectStore('inline-generated');
             tx.onerror = done;
 
             store.add({name: 'one'});
@@ -525,7 +525,7 @@ describe('IDBObjectStore.delete', function () {
             store.delete(5);
             store.delete(3);
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -555,8 +555,8 @@ describe('IDBObjectStore.delete', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('dotted', 'readwrite');
-            var store = tx.objectStore('dotted');
+            const tx = db.transaction('dotted', 'readwrite');
+            const store = tx.objectStore('dotted');
             tx.onerror = done;
 
             store.add({name: {first: 'one'}});
@@ -570,7 +570,7 @@ describe('IDBObjectStore.delete', function () {
             store.delete('two');
             store.delete('three');
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -600,8 +600,8 @@ describe('IDBObjectStore.delete', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('dotted-compound', 'readwrite');
-            var store = tx.objectStore('dotted-compound');
+            const tx = db.transaction('dotted-compound', 'readwrite');
+            const store = tx.objectStore('dotted-compound');
             tx.onerror = done;
 
             store.add({id: 1, name: {first: 'one', last: 'abc'}});
@@ -615,7 +615,7 @@ describe('IDBObjectStore.delete', function () {
             store.delete([1, 'two', 'abc']);
             store.delete([1, 'three', 'abc']);
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -645,8 +645,8 @@ describe('IDBObjectStore.delete', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('dotted-generated', 'readwrite');
-            var store = tx.objectStore('dotted-generated');
+            const tx = db.transaction('dotted-generated', 'readwrite');
+            const store = tx.objectStore('dotted-generated');
             tx.onerror = done;
 
             store.add({name: {last: 'abc'}});
@@ -660,7 +660,7 @@ describe('IDBObjectStore.delete', function () {
             store.delete(1);
             store.delete(4);
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -690,9 +690,9 @@ describe('IDBObjectStore.delete', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line-generated', 'readwrite');
-            var store = tx.objectStore('out-of-line-generated');
-            var deletingCounter = 0, deletedCounter = 0;
+            const tx = db.transaction('out-of-line-generated', 'readwrite');
+            const store = tx.objectStore('out-of-line-generated');
+            let deletingCounter = 0, deletedCounter = 0;
 
             deleteKey(''); // empty string
             deleteKey(util.sampleData.veryLongString);// very long string
@@ -716,7 +716,7 @@ describe('IDBObjectStore.delete', function () {
              */
             function deleteKey (key) {
                 deletingCounter++;
-                var del = store.delete(key);
+                const del = store.delete(key);
                 del.onerror = done;
                 del.onsuccess = function () {
                     deletedCounter++;
@@ -741,8 +741,8 @@ describe('IDBObjectStore.delete', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line-generated', 'readwrite');
-            var store = tx.objectStore('out-of-line-generated');
+            const tx = db.transaction('out-of-line-generated', 'readwrite');
+            const store = tx.objectStore('out-of-line-generated');
 
             tryToDelete(undefined); // undefined
             tryToDelete(Number.NaN); // NaN
@@ -765,7 +765,7 @@ describe('IDBObjectStore.delete', function () {
              * @returns {void}
              */
             function tryToDelete (key) {
-                var err = null;
+                let err = null;
 
                 try {
                     store.delete(key);
@@ -793,15 +793,15 @@ describe('IDBObjectStore.delete', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline-compound', 'readwrite');
-            var store = tx.objectStore('inline-compound');
+            const tx = db.transaction('inline-compound', 'readwrite');
+            const store = tx.objectStore('inline-compound');
 
             store.add({id: 12345, name: 'John Doe'});
 
-            var del = store.delete([12345]); // <-- "id" is specified, but "name" is missing
+            const del = store.delete([12345]); // <-- "id" is specified, but "name" is missing
             del.onerror = sinon.spy();
 
-            var allData;
+            let allData;
             util.getAll(store, function (err, data) {
                 if (err) {
                     expect(function () { throw err; }).to.not.throw(Error);
@@ -828,8 +828,8 @@ describe('IDBObjectStore.delete', function () {
 
     it('should throw an error if the transaction is read-only', function (done) {
         util.createDatabase('out-of-line-generated', function (err, db) {
-            var tx = db.transaction('out-of-line-generated', 'readonly');
-            var store = tx.objectStore('out-of-line-generated');
+            const tx = db.transaction('out-of-line-generated', 'readonly');
+            const store = tx.objectStore('out-of-line-generated');
 
             try {
                 store.delete(1);
@@ -847,8 +847,8 @@ describe('IDBObjectStore.delete', function () {
 
     it('should throw an error if the transaction is closed', function (done) {
         util.createDatabase('out-of-line-generated', function (err, db) {
-            var tx = db.transaction('out-of-line-generated', 'readwrite');
-            var store = tx.objectStore('out-of-line-generated');
+            const tx = db.transaction('out-of-line-generated', 'readwrite');
+            const store = tx.objectStore('out-of-line-generated');
 
             setTimeout(function () {
                 try {
@@ -868,8 +868,8 @@ describe('IDBObjectStore.delete', function () {
 
     it('should throw an error if called without params', function (done) {
         util.createDatabase('out-of-line-generated', function (err, db) {
-            var tx = db.transaction('out-of-line-generated', 'readwrite');
-            var store = tx.objectStore('out-of-line-generated');
+            const tx = db.transaction('out-of-line-generated', 'readwrite');
+            const store = tx.objectStore('out-of-line-generated');
 
             try {
                 store.delete();

@@ -1,10 +1,9 @@
 /* eslint-env mocha */
 /* globals expect, sinon, util, env */
-/* eslint-disable no-var */
 describe('IDBDatabase.createObjectStore', function () {
     'use strict';
 
-    var indexedDB;
+    let indexedDB;
     beforeEach(function () {
         indexedDB = env.indexedDB;
     });
@@ -17,12 +16,12 @@ describe('IDBDatabase.createObjectStore', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
-                    var store = db.createObjectStore('My Store');
+                    const db = event.target.result;
+                    const store = db.createObjectStore('My Store');
 
                     expect(store).to.be.an.instanceOf(IDBObjectStore);
                     expect(store.transaction).to.be.an.instanceOf(IDBTransaction).and.equal(open.transaction);
@@ -49,12 +48,12 @@ describe('IDBDatabase.createObjectStore', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
-                    var store = db.createObjectStore('My Store', {autoIncrement: true});
+                    const db = event.target.result;
+                    const store = db.createObjectStore('My Store', {autoIncrement: true});
 
                     expect(store).to.be.an.instanceOf(IDBObjectStore);
                     expect(store.transaction).to.be.an.instanceOf(IDBTransaction).and.equal(open.transaction);
@@ -81,12 +80,12 @@ describe('IDBDatabase.createObjectStore', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
-                    var store = db.createObjectStore('My Store', {keyPath: 'foo.bar.baz'});
+                    const db = event.target.result;
+                    const store = db.createObjectStore('My Store', {keyPath: 'foo.bar.baz'});
 
                     expect(store).to.be.an.instanceOf(IDBObjectStore);
                     expect(store.transaction).to.be.an.instanceOf(IDBTransaction).and.equal(open.transaction);
@@ -113,12 +112,12 @@ describe('IDBDatabase.createObjectStore', function () {
                     done();
                     return;
                 }
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
-                    var store = db.createObjectStore('My Store', {keyPath: 'foo.bar.baz', autoIncrement: true});
+                    const db = event.target.result;
+                    const store = db.createObjectStore('My Store', {keyPath: 'foo.bar.baz', autoIncrement: true});
 
                     expect(store).to.be.an.instanceOf(IDBObjectStore);
                     expect(store.transaction).to.be.an.instanceOf(IDBTransaction).and.equal(open.transaction);
@@ -152,11 +151,11 @@ describe('IDBDatabase.createObjectStore', function () {
                  * @returns {void}
                  */
                 function createVersion1 () {
-                    var open = indexedDB.open(name, 1);
+                    const open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
 
                     open.onupgradeneeded = sinon.spy(function (event) {
-                        var db = event.target.result;
+                        const db = event.target.result;
                         db.createObjectStore('My Store 1');
                         db.createObjectStore('My Store 2', {keyPath: 'foo', autoIncrement: false});
                         expect(
@@ -178,11 +177,11 @@ describe('IDBDatabase.createObjectStore', function () {
                  * @returns {void}
                  */
                 function createVersion2 () {
-                    var open = indexedDB.open(name, 2);
+                    const open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
 
                     open.onupgradeneeded = sinon.spy(function (event) {
-                        var db = event.target.result;
+                        const db = event.target.result;
 
                         expect(Array.prototype.slice.call(db.objectStoreNames))
                             .to.have.same.members(['My Store 1', 'My Store 2']);
@@ -229,19 +228,19 @@ describe('IDBDatabase.createObjectStore', function () {
              * @returns {void}
              */
             function verifyDatabaseSchema (name) {
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onsuccess = function () {
-                    var db = open.result;
-                    var tx = db.transaction(db.objectStoreNames);
+                    const db = open.result;
+                    const tx = db.transaction(db.objectStoreNames);
                     tx.onerror = tx.onabort = function (event) {
                         done(event.target.error);
                     };
 
                     // Verify that all of the object stores exist
-                    var storeNames = Array.prototype.slice.call(db.objectStoreNames);
-                    var indexNames = ['inline-index', 'unique-index'];
+                    const storeNames = Array.prototype.slice.call(db.objectStoreNames);
+                    const indexNames = ['inline-index', 'unique-index'];
                     expect(storeNames).to.have.same.members([
                         'out-of-line', 'out-of-line-generated', 'inline', 'inline-generated',
                         'inline-compound', 'dotted', 'dotted-generated', 'dotted-compound'
@@ -280,7 +279,7 @@ describe('IDBDatabase.createObjectStore', function () {
              */
             function verifySchema (obj, schema) {
                 Object.entries(schema).forEach(([prop, schemaValue]) => {
-                    var objValue = obj[prop];
+                    let objValue = obj[prop];
 
                     if (!env.isShimmed && env.browser.isIE && prop === 'autoIncrement') {
                         // IE's native IndexedDB does not have the autoIncrement property
@@ -300,11 +299,11 @@ describe('IDBDatabase.createObjectStore', function () {
     describe('failure tests', function () {
         it('should throw an error if called without params', function (done) {
             util.generateDatabaseName(function (err, name) {
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
+                    const db = event.target.result;
 
                     try {
                         db.createObjectStore();
@@ -326,11 +325,11 @@ describe('IDBDatabase.createObjectStore', function () {
 
         it('should throw an error if the store was already created in the same transaction', function (done) {
             util.generateDatabaseName(function (err, name) {
-                var open = indexedDB.open(name, 1);
+                const open = indexedDB.open(name, 1);
                 open.onerror = open.onblocked = done;
 
                 open.onupgradeneeded = sinon.spy(function (event) {
-                    var db = event.target.result;
+                    const db = event.target.result;
                     db.createObjectStore('My Store');
 
                     try {
@@ -359,11 +358,11 @@ describe('IDBDatabase.createObjectStore', function () {
                  * @returns {void}
                  */
                 function createVersion1 () {
-                    var open = indexedDB.open(name, 1);
+                    const open = indexedDB.open(name, 1);
                     open.onerror = open.onblocked = done;
 
                     open.onupgradeneeded = sinon.spy(function (event) {
-                        var db = event.target.result;
+                        const db = event.target.result;
                         db.createObjectStore('My Store');
                     });
 
@@ -377,11 +376,11 @@ describe('IDBDatabase.createObjectStore', function () {
                  * @returns {void}
                  */
                 function createVersion2 () {
-                    var open = indexedDB.open(name, 2);
+                    const open = indexedDB.open(name, 2);
                     open.onerror = open.onblocked = done;
 
                     open.onupgradeneeded = sinon.spy(function (event) {
-                        var db = event.target.result;
+                        const db = event.target.result;
 
                         try {
                             db.createObjectStore('My Store');

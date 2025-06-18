@@ -1,11 +1,11 @@
 /* eslint-env mocha */
 /* globals expect, sinon, util, env, testData, testHelper */
-/* eslint-disable no-var, no-unused-expressions */
+/* eslint-disable no-unused-expressions */
 describe('IDBObjectStore.add (only)', function () {
     'use strict';
     const {sample, DB} = testData;
 
-    var onerror;
+    let onerror;
     beforeEach(function () {
         onerror = window.onerror;
 
@@ -24,14 +24,14 @@ describe('IDBObjectStore.add (only)', function () {
     });
 
     it('Adding data of various types to Object Store', function (done) {
-        var key = sample.integer();
-        var data = sample.obj();
+        const key = sample.integer();
+        const data = sample.obj();
         testHelper.createObjectStores(undefined, function (error, [objectStore]) {
             if (error) {
                 done(error);
                 return;
             }
-            var req = objectStore.add(data, key);
+            const req = objectStore.add(data, key);
             req.onsuccess = function () {
                 expect(req.result, 'Data added to Object store').to.equal(key);
                 objectStore.transaction.db.close();
@@ -62,7 +62,7 @@ describe('IDBObjectStore.add (only)', function () {
                 done(error);
                 return;
             }
-            var req = objectStore.add(sample.obj());
+            const req = objectStore.add(sample.obj());
             req.onsuccess = function () {
                 expect(req.result, 'Data added to Object store').to.not.equal(null);
                 objectStore.transaction.db.close();
@@ -82,9 +82,9 @@ describe('IDBObjectStore.add (only)', function () {
                 done(error);
                 return;
             }
-            var data = sample.obj();
+            const data = sample.obj();
             delete data.Int;
-            var req = objectStore.add(data);
+            const req = objectStore.add(data);
             req.onsuccess = function () {
                 expect(req.result, 'Data added to Object store').to.not.equal(null);
                 objectStore.transaction.db.close();
@@ -99,13 +99,13 @@ describe('IDBObjectStore.add (only)', function () {
     });
 
     it('Adding with NO keypath and autoInc', function (done) {
-        var key = sample.integer();
+        const key = sample.integer();
         testHelper.createObjectStores(DB.OBJECT_STORE_3, (error, [objectStore]) => {
             if (error) {
                 done(error);
                 return;
             }
-            var req = objectStore.add(sample.obj(), key);
+            const req = objectStore.add(sample.obj(), key);
             req.onsuccess = function () {
                 expect(req.result, 'Data added to Object store').to.equal(key);
                 objectStore.transaction.db.close();
@@ -123,7 +123,7 @@ describe('IDBObjectStore.add (only)', function () {
                 done(error);
                 return;
             }
-            var req = objectStore.add(sample.obj());
+            const req = objectStore.add(sample.obj());
             req.onsuccess = function () {
                 expect(req.result, 'Data added to Object store').to.be.ok;
                 objectStore.transaction.db.close();
@@ -147,15 +147,15 @@ describe('IDBObjectStore.add (only)', function () {
                 return true;
             };
 
-            var tx = db.transaction('out-of-line', 'readwrite');
+            const tx = db.transaction('out-of-line', 'readwrite');
             tx.onerror = sinon.spy();
 
-            var store = tx.objectStore('out-of-line');
-            var add1 = store.add({foo: 'bar'}, 12345);
+            const store = tx.objectStore('out-of-line');
+            const add1 = store.add({foo: 'bar'}, 12345);
             add1.onsuccess = sinon.spy();
             add1.onerror = sinon.spy();
 
-            var add2 = store.add({biz: 'baz'}, 12345);
+            const add2 = store.add({biz: 'baz'}, 12345);
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
@@ -198,17 +198,17 @@ describe('IDBObjectStore.add (only)', function () {
                 done();
                 return;
             }
-            var tx1 = db.transaction('out-of-line', 'readwrite');
-            var tx2 = db.transaction('out-of-line', 'readwrite');
-            var tx3 = db.transaction('out-of-line', 'readwrite');
+            const tx1 = db.transaction('out-of-line', 'readwrite');
+            const tx2 = db.transaction('out-of-line', 'readwrite');
+            const tx3 = db.transaction('out-of-line', 'readwrite');
 
-            var store1 = tx1.objectStore('out-of-line');
-            var store2 = tx2.objectStore('out-of-line');
-            var store3 = tx3.objectStore('out-of-line');
+            const store1 = tx1.objectStore('out-of-line');
+            const store2 = tx2.objectStore('out-of-line');
+            const store3 = tx3.objectStore('out-of-line');
 
-            var save1 = store1.add({foo: 'one'}, 1);
-            var save2 = store2.add({foo: 'two'}, 1);
-            var save3 = store3.add({foo: 'three'}, 1);
+            const save1 = store1.add({foo: 'one'}, 1);
+            const save2 = store2.add({foo: 'two'}, 1);
+            const save3 = store3.add({foo: 'three'}, 1);
 
             save1.onsuccess = save2.onsuccess = save3.onsuccess = sinon.spy();
             tx1.onerror = tx2.onerror = tx3.onerror = sinon.spy();
@@ -253,15 +253,15 @@ describe('IDBObjectStore.add (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line-generated', 'readwrite');
+            const tx = db.transaction('out-of-line-generated', 'readwrite');
             tx.onerror = sinon.spy();
 
-            var store = tx.objectStore('out-of-line-generated');
-            var add1 = store.add({foo: 'bar'});
+            const store = tx.objectStore('out-of-line-generated');
+            const add1 = store.add({foo: 'bar'});
             add1.onsuccess = sinon.spy();
             add1.onerror = sinon.spy();
 
-            var add2 = store.add({foo: 'bar'}, 1);
+            const add2 = store.add({foo: 'bar'}, 1);
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
@@ -305,15 +305,15 @@ describe('IDBObjectStore.add (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline', 'readwrite');
+            const tx = db.transaction('inline', 'readwrite');
             tx.onerror = sinon.spy();
 
-            var store = tx.objectStore('inline');
-            var add1 = store.add({id: 12345, foo: 'bar'});
+            const store = tx.objectStore('inline');
+            const add1 = store.add({id: 12345, foo: 'bar'});
             add1.onsuccess = sinon.spy();
             add1.onerror = sinon.spy();
 
-            var add2 = store.add({id: 12345, biz: 'baz'});
+            const add2 = store.add({id: 12345, biz: 'baz'});
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
@@ -356,17 +356,17 @@ describe('IDBObjectStore.add (only)', function () {
                 done();
                 return;
             }
-            var tx1 = db.transaction('inline', 'readwrite');
-            var tx2 = db.transaction('inline', 'readwrite');
-            var tx3 = db.transaction('inline', 'readwrite');
+            const tx1 = db.transaction('inline', 'readwrite');
+            const tx2 = db.transaction('inline', 'readwrite');
+            const tx3 = db.transaction('inline', 'readwrite');
 
-            var store1 = tx1.objectStore('inline');
-            var store2 = tx2.objectStore('inline');
-            var store3 = tx3.objectStore('inline');
+            const store1 = tx1.objectStore('inline');
+            const store2 = tx2.objectStore('inline');
+            const store3 = tx3.objectStore('inline');
 
-            var save1 = store1.add({id: 1});
-            var save2 = store2.add({id: 1});
-            var save3 = store3.add({id: 1});
+            const save1 = store1.add({id: 1});
+            const save2 = store2.add({id: 1});
+            const save3 = store3.add({id: 1});
 
             save1.onsuccess = save2.onsuccess = save3.onsuccess = sinon.spy();
             tx1.onerror = tx2.onerror = tx3.onerror = sinon.spy();
@@ -413,15 +413,15 @@ describe('IDBObjectStore.add (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline-generated', 'readwrite');
+            const tx = db.transaction('inline-generated', 'readwrite');
             tx.onerror = sinon.spy();
 
-            var store = tx.objectStore('inline-generated');
-            var add1 = store.add({foo: 'bar'});
+            const store = tx.objectStore('inline-generated');
+            const add1 = store.add({foo: 'bar'});
             add1.onsuccess = sinon.spy();
             add1.onerror = sinon.spy();
 
-            var add2 = store.add({id: 1, biz: 'baz'});
+            const add2 = store.add({id: 1, biz: 'baz'});
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
@@ -464,15 +464,15 @@ describe('IDBObjectStore.add (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('dotted', 'readwrite');
+            const tx = db.transaction('dotted', 'readwrite');
             tx.onerror = sinon.spy();
 
-            var store = tx.objectStore('dotted');
-            var add1 = store.add({name: {first: 'John', last: 'Doe'}, age: 30});
+            const store = tx.objectStore('dotted');
+            const add1 = store.add({name: {first: 'John', last: 'Doe'}, age: 30});
             add1.onsuccess = sinon.spy();
             add1.onerror = sinon.spy();
 
-            var add2 = store.add({name: {first: 'John', last: 'Smith'}, age: 42});
+            const add2 = store.add({name: {first: 'John', last: 'Smith'}, age: 42});
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
@@ -516,15 +516,15 @@ describe('IDBObjectStore.add (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('dotted-generated', 'readwrite');
+            const tx = db.transaction('dotted-generated', 'readwrite');
             tx.onerror = sinon.spy();
 
-            var store = tx.objectStore('dotted-generated');
-            var add1 = store.add({age: 30});
+            const store = tx.objectStore('dotted-generated');
+            const add1 = store.add({age: 30});
             add1.onsuccess = sinon.spy();
             add1.onerror = sinon.spy();
 
-            var add2 = store.add({name: {first: 1, last: 'Smith'}, age: 42});
+            const add2 = store.add({name: {first: 1, last: 'Smith'}, age: 42});
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
@@ -568,15 +568,15 @@ describe('IDBObjectStore.add (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('out-of-line-compound', 'readwrite');
+            const tx = db.transaction('out-of-line-compound', 'readwrite');
             tx.onerror = sinon.spy();
 
-            var store = tx.objectStore('out-of-line-compound');
-            var add1 = store.add({foo: 'bar'}, [1, 'two', new Date(2003, 4, 5)]);
+            const store = tx.objectStore('out-of-line-compound');
+            const add1 = store.add({foo: 'bar'}, [1, 'two', new Date(2003, 4, 5)]);
             add1.onsuccess = sinon.spy();
             add1.onerror = sinon.spy();
 
-            var add2 = store.add({foo: 'bar'}, [1, 'two', new Date(2003, 4, 5)]);
+            const add2 = store.add({foo: 'bar'}, [1, 'two', new Date(2003, 4, 5)]);
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
@@ -620,15 +620,15 @@ describe('IDBObjectStore.add (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('inline-compound', 'readwrite');
+            const tx = db.transaction('inline-compound', 'readwrite');
             tx.onerror = sinon.spy();
 
-            var store = tx.objectStore('inline-compound');
-            var add1 = store.add({id: 12345, name: 'John Doe', age: 30});
+            const store = tx.objectStore('inline-compound');
+            const add1 = store.add({id: 12345, name: 'John Doe', age: 30});
             add1.onsuccess = sinon.spy();
             add1.onerror = sinon.spy();
 
-            var add2 = store.add({id: 12345, name: 'John Doe', age: 42});
+            const add2 = store.add({id: 12345, name: 'John Doe', age: 42});
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 
@@ -672,15 +672,15 @@ describe('IDBObjectStore.add (only)', function () {
                 done();
                 return;
             }
-            var tx = db.transaction('dotted-compound', 'readwrite');
+            const tx = db.transaction('dotted-compound', 'readwrite');
             tx.onerror = sinon.spy();
 
-            var store = tx.objectStore('dotted-compound');
-            var add1 = store.add({id: 12345, name: {first: 'John', last: 'Doe'}, age: 30});
+            const store = tx.objectStore('dotted-compound');
+            const add1 = store.add({id: 12345, name: {first: 'John', last: 'Doe'}, age: 30});
             add1.onsuccess = sinon.spy();
             add1.onerror = sinon.spy();
 
-            var add2 = store.add({id: 12345, name: {first: 'John', last: 'Doe'}, age: 42});
+            const add2 = store.add({id: 12345, name: {first: 'John', last: 'Doe'}, age: 42});
             add2.onsuccess = sinon.spy();
             add2.onerror = sinon.spy();
 

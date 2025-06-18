@@ -1,6 +1,6 @@
 /* eslint-env mocha */
 /* globals expect, testHelper */
-/* eslint-disable no-var, no-unused-expressions */
+/* eslint-disable no-unused-expressions */
 describe('IDBIndex.openKeyCursor', function () {
     it('Index Key Cursor', function (done) {
         testHelper.createIndexesAndData((error, [, , objectStore, db]) => {
@@ -8,10 +8,10 @@ describe('IDBIndex.openKeyCursor', function () {
                 done(error);
                 return;
             }
-            var index = objectStore.index('Int Index');
-            var indexCursorReq = index.openKeyCursor();
+            const index = objectStore.index('Int Index');
+            const indexCursorReq = index.openKeyCursor();
             indexCursorReq.onsuccess = function () {
-                var cursor = indexCursorReq.result;
+                const cursor = indexCursorReq.result;
                 if (cursor) {
                     expect(true, 'Iterating over cursor ' + cursor.key + ' for value ' + JSON.stringify(cursor.value)).to.be.true;
                     cursor.continue();

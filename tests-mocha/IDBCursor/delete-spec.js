@@ -1,6 +1,6 @@
 /* globals testHelper, expect */
 /* eslint-env mocha */
-/* eslint-disable no-var, no-unused-expressions */
+/* eslint-disable no-unused-expressions */
 describe('IDBCursor.delete', function () {
     it('Deleting using a cursor', function (done) {
         this.timeout(10000);
@@ -16,15 +16,15 @@ describe('IDBCursor.delete', function () {
                         done(error);
                         return;
                     }
-                    var cursorReq = objectStore.openCursor();
-                    var totalRows = 15;
-                    var cursorIteration = 0;
+                    const cursorReq = objectStore.openCursor();
+                    const totalRows = 15;
+                    let cursorIteration = 0;
                     cursorReq.onsuccess = function () {
-                        var cursor = cursorReq.result;
+                        const cursor = cursorReq.result;
                         if (cursor) {
                             cursorIteration++;
                             if (cursor.value.Int % 5 === 0) {
-                                var updateReq = cursor.delete();
+                                const updateReq = cursor.delete();
                                 updateReq.onsuccess = function () {
                                     expect(
                                         updateReq.result,

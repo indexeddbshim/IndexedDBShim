@@ -1,6 +1,6 @@
 /* eslint-env mocha */
 /* globals chai, expect, shimIndexedDB */
-/* eslint-disable no-var, no-unused-expressions, sonarjs/pseudo-random */
+/* eslint-disable no-unused-expressions, sonarjs/pseudo-random */
 (function () {
     'use strict';
 
@@ -8,10 +8,10 @@
     mocha.setup({ui: 'bdd', timeout: 5000});
     mocha.globals(['indexedDB', '__stub__onerror']);
     window.expect = chai.expect;
-    var describe = window.describe;
+    const describe = window.describe;
 
     /** Environment info. */
-    var env = window.env = {
+    const env = window.env = {
         /**
          * Browser info.
          * @type {browserInfo}
@@ -101,7 +101,7 @@
         env.webSql = window.openDatabase;
 
         // Should we use the shim instead of the native IndexedDB?
-        var useShim = location.search.includes('useShim=true');
+        const useShim = location.search.includes('useShim=true');
         if (useShim || !window.indexedDB || window.indexedDB === window.shimIndexedDB) {
             // Replace the browser's native IndexedDB with the shim
             shimIndexedDB.__useShim();
@@ -141,11 +141,11 @@
      * @returns {browserInfo}
      */
     function getBrowserInfo () {
-        var userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
-        var offset;
+        const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+        let offset;
 
         /** @name browserInfo */
-        var browserInfo = {
+        const browserInfo = {
             name: '',
             version: '0',
             isMobile: false,
@@ -231,7 +231,7 @@
             INDEX1_ON_OBJECT_STORE_2: 'Index1_ObjectStore2'
         },
         sample: (function () {
-            var generatedNumbers = {};
+            const generatedNumbers = {};
             return {
                 obj () {
                     return {
@@ -243,7 +243,7 @@
                 },
                 integer (arg) {
                     // Ensuring a unique integer everytime, for the sake of index get
-                    var r;
+                    let r;
                     do {
                         r = Number.parseInt(Math.random() * (arg || 100000));
                     }
@@ -254,7 +254,7 @@
             };
         }())
     };
-    var {testData: {DB, sample}} = window;
+    const {testData: {DB, sample}} = window;
     window.testHelper = {
         createIndexes (cb) {
             this.createObjectStores(undefined, (error, [, db]) => {
@@ -263,12 +263,12 @@
                     return;
                 }
                 db.close();
-                var dbOpenRequest = window.indexedDB.open(DB.NAME, 2);
+                const dbOpenRequest = window.indexedDB.open(DB.NAME, 2);
                 dbOpenRequest.onsuccess = function () {
                     expect(true, 'Database Opened successfully').to.be.true;
-                    var newDb = dbOpenRequest.result;
-                    var transaction = newDb.transaction([DB.OBJECT_STORE_1], 'readwrite');
-                    var objectStore = transaction.objectStore(DB.OBJECT_STORE_1);
+                    const newDb = dbOpenRequest.result;
+                    const transaction = newDb.transaction([DB.OBJECT_STORE_1], 'readwrite');
+                    const objectStore = transaction.objectStore(DB.OBJECT_STORE_1);
                     cb(null, [objectStore, newDb]);
                 };
                 dbOpenRequest.onerror = function () {
@@ -277,13 +277,13 @@
                 dbOpenRequest.onupgradeneeded = function () {
                     expect(true, 'Database Upgraded successfully').to.be.true;
                     // var db = dbOpenRequest.result;
-                    var objectStore1 = dbOpenRequest.transaction.objectStore(DB.OBJECT_STORE_1);
+                    const objectStore1 = dbOpenRequest.transaction.objectStore(DB.OBJECT_STORE_1);
                     // eslint-disable-next-line no-unused-vars
-                    var index1 = objectStore1.createIndex('Int Index', 'Int', {
+                    const index1 = objectStore1.createIndex('Int Index', 'Int', {
                         unique: false,
                         multiEntry: false
                     });
-                    var index2 = objectStore1.createIndex('String.Index', 'String'); // eslint-disable-line no-unused-vars
+                    const index2 = objectStore1.createIndex('String.Index', 'String'); // eslint-disable-line no-unused-vars
                     expect(objectStore1.indexNames, '2 Indexes on object store successfully created').to.have.lengthOf(2);
                 };
                 dbOpenRequest.onblocked = function () {
@@ -292,14 +292,14 @@
             });
         },
         createIndexesAndData (cb) {
-            var key = sample.integer();
-            var value = sample.obj();
+            const key = sample.integer();
+            const value = sample.obj();
             this.createIndexes((error, [objectStore, db]) => {
                 if (error) {
                     expect(false, error).to.be.true;
                     return;
                 }
-                var addReq = objectStore.add(value, key);
+                const addReq = objectStore.add(value, key);
                 addReq.onsuccess = function () {
                     expect(addReq.result, 'Data successfully added').to.equal(key);
                     cb(null, [key, value, objectStore, db]);
@@ -320,15 +320,15 @@
                 expect(false, err).to.be.true;
             };
             delReq.onsuccess = () => {
-                var dbOpenRequest = window.indexedDB.open(DB.NAME, 1);
+                const dbOpenRequest = window.indexedDB.open(DB.NAME, 1);
                 dbOpenRequest.onsuccess = function () {
                     expect(true, 'Database opened successfully with version ' + dbOpenRequest.result.version).to.be.true;
-                    var db = dbOpenRequest.result;
-                    var transaction = db.transaction([
+                    const db = dbOpenRequest.result;
+                    const transaction = db.transaction([
                         DB.OBJECT_STORE_1, DB.OBJECT_STORE_2,
                         DB.OBJECT_STORE_3
                     ], 'readwrite');
-                    var objectStore = transaction.objectStore(storeName);
+                    const objectStore = transaction.objectStore(storeName);
                     cb(null, [objectStore, db]);
                 };
                 dbOpenRequest.onerror = function (e) {
@@ -337,7 +337,7 @@
                 };
                 dbOpenRequest.onupgradeneeded = function () {
                     expect(true, 'Database Upgraded successfully').to.be.true;
-                    var db = dbOpenRequest.result;
+                    const db = dbOpenRequest.result;
                     db.createObjectStore(DB.OBJECT_STORE_1);
                     db.createObjectStore(DB.OBJECT_STORE_2, {
                         keyPath: 'Int',
@@ -349,7 +349,7 @@
                     db.createObjectStore(DB.OBJECT_STORE_4, {
                         keyPath: 'Int'
                     });
-                    var objectStore5 = db.createObjectStore(DB.OBJECT_STORE_5); // eslint-disable-line no-unused-vars
+                    const objectStore5 = db.createObjectStore(DB.OBJECT_STORE_5); // eslint-disable-line no-unused-vars
                     expect(
                         db.objectStoreNames,
                         'Count of Object Stores created is correct'
@@ -363,17 +363,18 @@
             };
         },
         addObjectStoreData (cb) {
-            var dbOpenRequest = window.indexedDB.open(DB.NAME);
+            const dbOpenRequest = window.indexedDB.open(DB.NAME);
             dbOpenRequest.onsuccess = function () {
                 expect(true, 'Database Opened successfully').to.be.true;
-                var db = dbOpenRequest.result;
-                var transaction = db.transaction([DB.OBJECT_STORE_1], 'readwrite');
-                var objectStore = transaction.objectStore(DB.OBJECT_STORE_1);
-                var counter = 0, max = 15;
+                const db = dbOpenRequest.result;
+                const transaction = db.transaction([DB.OBJECT_STORE_1], 'readwrite');
+                const objectStore = transaction.objectStore(DB.OBJECT_STORE_1);
+                const max = 15;
+                let counter = 0;
                 /**
                  * @returns {void}
                  */
-                var success = function () {
+                const success = function () {
                     expect(true, 'Data added to store').to.be.true;
                     if (++counter >= max) {
                         db.close();
@@ -385,15 +386,15 @@
                  * @param {Event} e
                  * @returns {void}
                  */
-                var error = function (e) {
+                const error = function (e) {
                     expect(false, 'Could not add data').to.be.true;
                     if (++counter >= 10) {
                         // eslint-disable-next-line n/callback-return
                         cb(e);
                     }
                 };
-                for (var i = 0; i < max; i++) {
-                    var req = objectStore.add(sample.obj(), i);
+                for (let i = 0; i < max; i++) {
+                    const req = objectStore.add(sample.obj(), i);
                     req.onsuccess = success;
                     req.onerror = error;
                 }
@@ -409,14 +410,14 @@
         },
         // eslint-disable-next-line default-param-last
         openObjectStore (storeName = DB.OBJECT_STORE_1, cb) {
-            var dbOpenRequest = window.indexedDB.open(DB.NAME);
+            const dbOpenRequest = window.indexedDB.open(DB.NAME);
             dbOpenRequest.onsuccess = function () {
-                var db = dbOpenRequest.result;
-                var transaction = db.transaction([
+                const db = dbOpenRequest.result;
+                const transaction = db.transaction([
                     DB.OBJECT_STORE_1, DB.OBJECT_STORE_2,
                     DB.OBJECT_STORE_3
                 ], 'readwrite');
-                var objectStore = transaction.objectStore(storeName);
+                const objectStore = transaction.objectStore(storeName);
                 cb(null, [objectStore, db]);
             };
             dbOpenRequest.onerror = function (e) {
