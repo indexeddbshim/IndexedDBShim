@@ -66,6 +66,7 @@
          */
         skipIf (condition, title, test) {
             if (condition) {
+                // This is a conditional skip
                 it.skip(title, test);
             } else {
                 it(title, test);
@@ -159,11 +160,11 @@
                         var primaryKey = cursor.primaryKey;
                         if (env.isNative && env.browser.isSafari) {
                             // BUG: Safari has a bug with compound-key cursors
-                            if (primaryKey instanceof Array) {
+                            if (Array.isArray(primaryKey)) {
                                 primaryKey.splice(0, safariPrimaryKeyOffset);
                                 safariPrimaryKeyOffset += primaryKey.length;
                             }
-                            if (key instanceof Array) {
+                            if (Array.isArray(key)) {
                                 key.splice(0, safariKeyOffset);
                                 safariKeyOffset += key.length;
                             }

@@ -144,7 +144,7 @@ await Promise.all(htmlFiles.map(async ({inputFile, outputFile, web}) => {
         "document.title = '" +
         ($('title')
             ? $('title').textContent
-            : inputFile).replaceAll('\'', "\\'").replaceAll(/\n|\r/gu, ' ') +
+            : inputFile).replaceAll('\'', String.raw`\'`).replaceAll(/[\n\r]/gu, ' ') +
         "';\n" +
         ($('script:not([src])')
             ? $('script:not([src])').textContent

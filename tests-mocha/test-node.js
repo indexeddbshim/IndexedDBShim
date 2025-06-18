@@ -90,6 +90,6 @@ if (process.env.npm_config_test) { // eslint-disable-line n/no-process-env
     ];
 }
 await Promise.all(tests.map(async function (path) {
-    // eslint-disable-next-line no-unsanitized/method -- Safe env.
+    // // eslint-disable-next-line no-unsanitized/method -- Safe env.
     return await import('./' + path);
 }));

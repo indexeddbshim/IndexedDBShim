@@ -399,7 +399,6 @@ function WebWorker (workerConfig) {
             if (Array.isArray(xfers)) { // Todo: Currently only handling detached buffers, not yet exposing the transfer
                 xfers.forEach(function (xfer) {
                     // Assumes this currently non-standard method gets implemented for Node
-                    // eslint-disable-next-line no-use-extend-native/no-use-extend-native
                     if (typeof ArrayBuffer.transfer === 'function') { ArrayBuffer.transfer(xfer, 0); }
                 });
             }
@@ -415,7 +414,7 @@ function WebWorker (workerConfig) {
         self.removeEventListener = function (event, handler) {
             if (event in eventHandlers) {
                 const handlerPos = eventHandlers[event].indexOf(handler);
-                if (handlerPos > -1) {
+                if (handlerPos !== -1) {
                     eventHandlers[event].splice(handlerPos, 1);
                 }
             }

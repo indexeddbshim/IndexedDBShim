@@ -315,7 +315,7 @@ describe('IDBObjectStore.deleteIndex', function () {
                         schemaValue = undefined;
                     }
 
-                    if (schemaValue instanceof Array) {
+                    if (Array.isArray(schemaValue)) {
                         objValue = Array.prototype.slice.call(objValue);
                     }
 

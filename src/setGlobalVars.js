@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/prefer-global-this -- Older browsers? */
 import {setPrototypeOfCustomEvent} from 'eventtargeter';
 import shimIDBVersionChangeEvent from './IDBVersionChangeEvent.js';
 import {IDBCursor as shimIDBCursor, IDBCursorWithValue as shimIDBCursorWithValue} from './IDBCursor.js';

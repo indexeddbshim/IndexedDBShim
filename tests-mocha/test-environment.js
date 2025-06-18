@@ -1,6 +1,6 @@
 /* eslint-env mocha */
 /* globals chai, expect, shimIndexedDB */
-/* eslint-disable no-var, no-unused-expressions */
+/* eslint-disable no-var, no-unused-expressions, sonarjs/pseudo-random */
 (function () {
     'use strict';
 

@@ -1,6 +1,5 @@
 // Utilies and other common gook shared between the WebWorker master and
 // its constituent Workers.
-/* eslint-disable compat/compat */
 
 import events from 'events';
 import path from 'path';
@@ -95,6 +94,7 @@ export const MsgStream = function (s) {
         // If our message has an associated file descriptor that we
         // have not yet received, queue it for later delivery.
         if (fdSeq) {
+            // eslint-disable-next-line sonarjs/no-nested-assignment -- Convenient
             if (!(fd = fdWaitingForMsg[fdSeq])) {
                 msgWaitingForFd[fdSeq] = msg;
                 return;

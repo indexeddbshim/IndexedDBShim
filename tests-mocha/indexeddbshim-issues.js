@@ -9,6 +9,7 @@ window.chai = chai;
 const {expect, assert} = window.chai;
 
 describe('database config', function () {
+    // eslint-disable-next-line sonarjs/assertions-in-tests -- Has them
     it('should not err in cleaning up memory database resources', async function (done) {
         const setGlobalVars = (await import('../dist/indexeddbshim-node.cjs')).default;
 

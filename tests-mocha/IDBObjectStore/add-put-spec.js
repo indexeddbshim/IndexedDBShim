@@ -528,7 +528,7 @@
                                     expect(get.result).not.to.equal(data);
                                 }
 
-                                if (data instanceof Array) {
+                                if (Array.isArray(data)) {
                                     expect(get.result).to.have.lengthOf(data.length);
                                     for (var i = 0; i < data.length; i++) {
                                         expect(get.result[i]).to.deep.equal(data[i]);
@@ -974,7 +974,7 @@
                                     expect(get.result).not.to.equal(data);
                                 }
 
-                                if (data instanceof Array) {
+                                if (Array.isArray(data)) {
                                     expect(get.result).to.have.lengthOf(data.length);
                                     for (var i = 0; i < data.length; i++) {
                                         expect(get.result[i]).to.deep.equal(data[i]);

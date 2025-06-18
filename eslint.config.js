@@ -1,4 +1,5 @@
 import ashNazg from 'eslint-config-ash-nazg';
+import globals from 'globals';
 
 const rules = {
     '@stylistic/indent': ['error', 4, {SwitchCase: 0}],
@@ -12,6 +13,7 @@ const rules = {
     '@brettz9/no-use-ignored-vars': 0,
     '@stylistic/max-len': 0,
     '@stylistic/brace-style': 0,
+    'unicorn/prefer-global-this': 0,
     'unicorn/prefer-top-level-await': 0,
     'default-case': 0,
     'no-console': 0,
@@ -136,8 +138,8 @@ export default [
     },
     ...ashNazg(['sauron', 'node']).map((cfg) => {
         return {
-            ...cfg,
-            files: ['src/node*']
+            files: ['src/node*'],
+            ...cfg
         };
     }),
     // Our Markdown rules (and used for JSDoc examples as well, by way of
@@ -170,22 +172,41 @@ export default [
     },
     ...ashNazg(['sauron', 'browser']).map((cfg) => {
         return {
-            ...cfg,
             files: [
                 'src/browser*'
-            ]
+            ],
+            ...cfg
         };
     }),
     // May need to support a lower browser version for test/development files, but
     //   not a lower Node version
     ...ashNazg(['sauron', 'node']).map((cfg) => {
         return {
-            ...cfg,
-            files: ['test-support/**', 'tests-mocha/**']
+            files: ['test-support/**', 'tests-mocha/**'],
+            ...cfg
         };
     }),
     {
         files: ['test-support/**', 'tests-mocha/**'],
+        languageOptions: {
+            globals: {
+                window: 'readonly',
+                location: 'readonly',
+                document: 'readonly',
+                indexedDB: 'readonly',
+                IDBFactory: 'readonly',
+                IDBDatabase: 'readonly',
+                IDBObjectStore: 'readonly',
+                IDBIndex: 'readonly',
+                IDBTransaction: 'readonly',
+                IDBCursor: 'readonly',
+                IDBKeyRange: 'readonly',
+                IDBRequest: 'readonly',
+                IDBOpenDBRequest: 'readonly',
+                IDBVersionChangeEvent: 'readonly',
+                ...globals.mocha
+            }
+        },
         settings: {
             polyfills: [
                 'ErrorEvent',
@@ -195,6 +216,8 @@ export default [
         rules: {
             // See about reenabling
             'vars-on-top': 0,
+            'sonarjs/no-parameter-reassignment': 0,
+            '@eslint-community/eslint-comments/require-description': 0,
 
             strict: 0, // ['error', 'function'],
             'no-process-exit': 0,

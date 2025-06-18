@@ -625,7 +625,7 @@ describe('IDBIndex.openCursor', function () {
                 if (data.length !== expectedLength) {
                     throw new Error('Expected ' + expectedLength + ' results, but got ' + data.length + '\n' + JSON.stringify(data.slice(0, 10), null, 2));
                 }
-                if (expected instanceof Array) {
+                if (Array.isArray(expected)) {
                     data.forEach((dt, i) => {
                         ['primaryKey', 'key', 'value'].forEach(function (prop) {
                             try {

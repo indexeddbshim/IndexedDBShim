@@ -192,6 +192,7 @@
     "delay-cli": "^2.0.0",
     "eslint": "^9.28.0",
     "eslint-config-ash-nazg": "^38.0.1",
+    "globals": "^16.2.0",
     "got": "^14.4.7",
     "is-date-object": "1.1.0",
     "isomorphic-fetch": "^3.0.0",

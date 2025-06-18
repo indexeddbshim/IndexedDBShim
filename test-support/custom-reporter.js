@@ -49,7 +49,6 @@
     //   our IDB object is injected rather than inline
     // jsdom doesn't make them available as `window` properties
     Object.defineProperty(Array, Symbol.hasInstance, {
-        // eslint-disable-next-line compat/compat
         value: (obj) => Array.isArray(obj)
     });
 

@@ -273,7 +273,7 @@ prom.then((scriptSource) => {
     workerCtx.removeEventListener = function (event, handler) {
         if (event in workerCtx.eventHandlers) {
             const handlerPos = workerCtx.eventHandlers[event].indexOf(handler);
-            if (handlerPos > -1) {
+            if (handlerPos !== -1) {
                 workerCtx.eventHandlers[event].splice(handlerPos, 1);
             }
         }

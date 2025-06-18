@@ -1,4 +1,3 @@
-/* eslint-disable compat/compat */
 // Todo: Reuse any relevant portions in this file or `node-buildjs.js` for adapting tests for browser shimming
 
 import {readFile, readdir, writeFile} from 'node:fs/promises';
