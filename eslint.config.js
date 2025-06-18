@@ -215,7 +215,6 @@ export default [
         },
         rules: {
             // See about reenabling
-            'vars-on-top': 0,
             'sonarjs/no-parameter-reassignment': 0,
             '@eslint-community/eslint-comments/require-description': 0,
 
