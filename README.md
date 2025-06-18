@@ -322,7 +322,7 @@ The available properties relevant to browser or Node are:
     <https://github.com/axemclion/IndexedDBShim/issues/296>, however, for
     a remaining issue this fix does not currently overcome.)
 - __cursorPreloadPackSize__ - Number indicating how many records to preload for
-    caching of (non-multiEntry) `IDBCursor.continue` calls. Defaults to 100.
+    caching of `IDBCursor.continue` calls. Defaults to 100.
 - __DEFAULT_DB_SIZE__ - Used as estimated size argument (in bytes) to
     underlying WebSQL `openDatabase` calls. Defaults to `4 * 1024 * 1024` or
     `25 * 1024 * 1024` in Safari (apparently necessary due to Safari creating
