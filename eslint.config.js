@@ -71,9 +71,6 @@ export default [
             'test-support/latest-erring-bundled.js'
         ]
     },
-    // We should do polyglot (default) but do `browser` to catch escompat issues,
-    //  but this also adds more globals
-    // ...ashNazg(['sauron', 'browser']),
     ...ashNazg(['sauron']),
     {
         settings: {
@@ -109,6 +106,8 @@ export default [
             'n/no-unsupported-features/es-syntax': 'off'
         }
     },
+    // We should do polyglot (default) but do `browser` to catch escompat issues,
+    //  but this also adds more globals
     ...ashNazg(['sauron', 'browser']).map((cfg) => {
         return {
             files: [
