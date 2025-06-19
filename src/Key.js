@@ -728,6 +728,8 @@ function evaluateKeyPathOnValueToDecodedValue (value, keyPath, multiEntry, fullK
             case 'size': case 'type':
                 value = /** @type {Blob} */ (value)[idntfr];
                 break;
+            default:
+                break;
             }
         } else if (util.isFile(value)) {
             switch (idntfr) {
@@ -736,6 +738,8 @@ function evaluateKeyPathOnValueToDecodedValue (value, keyPath, multiEntry, fullK
                 break;
             case 'lastModifiedDate':
                 value = new Date(/** @type {File} */ (value).lastModified);
+                break;
+            default:
                 break;
             }
         } else if (!util.isObj(value) || !Object.hasOwn(value, idntfr)) {

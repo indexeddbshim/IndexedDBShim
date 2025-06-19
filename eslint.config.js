@@ -14,10 +14,8 @@ const rules = {
     '@stylistic/brace-style': 0,
     'unicorn/prefer-global-this': 0,
     'unicorn/prefer-top-level-await': 0,
-    'default-case': 0,
     'no-console': 0,
     'no-shadow': 0,
-    'no-sync': 0,
     'prefer-named-capture-group': 0,
 
     'n/prefer-promises/fs': 0,
