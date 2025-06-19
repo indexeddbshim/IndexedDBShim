@@ -146,15 +146,15 @@ export default [
         rules: {
             'unicorn/prefer-global-this': 'off', // Older browsers
             'import/no-commonjs': 'off',
-            'eol-last': ['off'],
-            'no-console': ['off'],
-            'no-undef': ['off'],
+            'eol-last': 'off',
+            'no-console': 'off',
+            'no-undef': 'off',
             'no-unused-vars': ['warn', {varsIgnorePattern: 'setGlobalVars'}],
-            'padded-blocks': ['off'],
-            'import/unambiguous': ['off'],
-            'import/no-unresolved': ['off'],
-            'n/no-missing-require': ['off'],
-            'n/no-missing-import': ['off'],
+            'padded-blocks': 'off',
+            'import/unambiguous': 'off',
+            'import/no-unresolved': 'off',
+            'n/no-missing-require': 'off',
+            'n/no-missing-import': 'off',
             'n/no-unsupported-features/es-syntax': 'off'
         }
     },
