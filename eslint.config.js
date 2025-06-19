@@ -75,63 +75,6 @@ export default [
     //  but this also adds more globals
     // ...ashNazg(['sauron', 'browser']),
     ...ashNazg(['sauron']),
-    {
-        settings: {
-            polyfills: [
-                'Array.filter',
-                'Array.isArray',
-                'Array.every',
-                'Array.forEach',
-                'Array.includes',
-                'Array.map',
-                'Array.reduce',
-                'ArrayBuffer',
-                'console',
-                'document.body',
-                'document.head',
-                'document.querySelector',
-                'document.querySelectorAll',
-                'Error',
-                'IDBKeyRange',
-                'indexedDB',
-                'Intl',
-                'JSON',
-                'location.origin',
-                'location.search',
-                'Number.isFinite',
-                'Number.isInteger',
-                'Number.isNaN',
-                'Number.parseFloat',
-                'Number.parseInt',
-                'Object.create',
-                'Object.defineProperty',
-                'Object.defineProperties',
-                'Object.getOwnPropertyDescriptor',
-                'Object.entries',
-                'Object.hasOwn',
-                'Object.keys',
-                'Object.setPrototypeOf',
-                'Object.values',
-                'Promise',
-                'Set',
-                'String.fromCodePoint',
-                'String.padStart',
-                'String.raw',
-                'String.repeat',
-                'Symbol.hasInstance',
-                'Symbol.iterator',
-                'Symbol.toStringTag',
-                'Uint8Array',
-                'URL'
-            ]
-        },
-        rules: {
-            // Let Babel handle
-            'escompat/no-object-rest-spread': 'off',
-            'escompat/no-exponentiation-operator': 'off',
-            'escompat/no-top-level-await': 'off'
-        }
-    },
     ...ashNazg(['sauron', 'node']).map((cfg) => {
         return {
             files: ['src/node*'],
