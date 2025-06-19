@@ -10,7 +10,6 @@ const rules = {
     'no-restricted-syntax': 0,
 
     // Disable until find time to address
-    '@brettz9/no-use-ignored-vars': 0,
     '@stylistic/max-len': 0,
     '@stylistic/brace-style': 0,
     'unicorn/prefer-global-this': 0,
@@ -24,7 +23,6 @@ const rules = {
     'n/prefer-promises/fs': 0,
     'promise/prefer-await-to-callbacks': 0,
     'promise/prefer-await-to-then': 0,
-    'unicorn/no-unsafe-regex': 0,
     'unicorn/no-this-assignment': 0,
     'unicorn/prefer-spread': 0,
 
