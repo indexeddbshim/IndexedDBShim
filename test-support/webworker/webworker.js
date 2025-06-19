@@ -124,7 +124,7 @@ function WebWorker (workerConfig) {
             if (!(workerConfig.permittedProtocols || ['http', 'https']).map((p) => p + ':').includes(protocol)) {
                 throw new TypeError('This worker is not configured to support the protocol of the supplied Worker source argument (' + protocol + ').');
             }
-        } else if (urlObj.pathname && (/^[\\/]/u).test(urlObj.pathname)) {
+        } else if (urlObj.pathname && (/^[\\\/]/v).test(urlObj.pathname)) {
             if (workerConfig.rootPath === false) {
                 throw new TypeError('Absolute paths are not allowed when `rootPath` is `false`');
             }
@@ -140,7 +140,7 @@ function WebWorker (workerConfig) {
                 }
             }
         } else {
-            basePath = workerConfig.basePath;
+            ({basePath} = workerConfig);
             if (basePath === false) {
                 throw new TypeError('Relative paths are not allowed when `basePath` is `false`');
             }
@@ -259,7 +259,7 @@ function WebWorker (workerConfig) {
 
                 // Save off the PID of the child process, as this value gets
                 // undefined once the process exits.
-                pid = cp.pid;
+                ({pid} = cp);
 
                 wwutil.debug(
                     1,

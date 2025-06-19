@@ -754,7 +754,7 @@ describe('IDBObjectStore.delete', function () {
             tryToDelete([{foo: 'bar'}]); // array of objects
 
             if (env.isShimmed || !env.browser.isIE) {
-                tryToDelete(/^regex$/); // RegExp
+                tryToDelete(/^regex$/v); // RegExp
             }
 
             /**

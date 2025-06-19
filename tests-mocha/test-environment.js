@@ -6,7 +6,7 @@
     mocha.setup({ui: 'bdd', timeout: 5000});
     mocha.globals(['indexedDB', '__stub__onerror']);
     window.expect = chai.expect;
-    const describe = window.describe;
+    const {describe} = window;
 
     /** Environment info. */
     const env = window.env = {

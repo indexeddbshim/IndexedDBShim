@@ -162,14 +162,6 @@ export default [
             'n/no-unsupported-features/es-syntax': 'off'
         }
     },
-    // @core-js-bundle can provide
-    {
-        files: ['src/**'],
-        rules: {
-            'n/no-unsupported-features/es-builtins': 'off',
-            'n/no-unsupported-features/es-syntax': 'off'
-        }
-    },
     ...ashNazg(['sauron', 'browser']).map((cfg) => {
         return {
             files: [
@@ -228,19 +220,13 @@ export default [
 
             // Should be applied in ash-nazg
             'no-unused-expressions': 0,
-            strict: 0, // ['error', 'function'],
+
             'no-process-exit': 0,
             // We want console in tests!
             'no-console': 'off',
             'import/unambiguous': 'off',
-            'object-shorthand': ['off'],
-            'prefer-destructuring': ['off'],
-            'require-unicode-regexp': ['off'],
-            'n/no-unsupported-features/es-syntax': 'off',
-            'n/no-unsupported-features/es-builtins': ['off'],
-            'n/no-unsupported-features/node-builtins': ['off'],
-            'unicorn/prefer-add-event-listener': ['off'],
-            'unicorn/no-instanceof-array': ['off'],
+            'n/no-unsupported-features/node-builtins': 'off',
+            'unicorn/prefer-add-event-listener': 'off',
             ...rules
         }
     },

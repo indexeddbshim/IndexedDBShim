@@ -431,7 +431,7 @@
 
                     if (env.isShimmed || !env.browser.isIE) {
                         tryToSaveKey(null); // null
-                        tryToSaveKey(/^regex$/); // RegExp
+                        tryToSaveKey(/^regex$/v); // RegExp
                     }
 
                     /**
@@ -492,7 +492,7 @@
                     saveData({foo: 'bar'}); // object
                     saveData(new Date(2000, 1, 2)); // Date
                     saveData(new util.sampleData.Person('John', 30)); // Class
-                    saveData(/^regex$/); // RegExp
+                    saveData(/^regex$/v); // RegExp
                     saveData([]); // empty array
                     saveData(['a', '', 'b']); // array of strings
                     saveData([1, 2.345, -678]); // array of numbers
@@ -890,7 +890,7 @@
                     tryToSaveKey({}); // empty object
                     tryToSaveKey({foo: 'bar'}); // object
                     tryToSaveKey(new util.sampleData.Person('John')); // Class
-                    tryToSaveKey(/^regex$/); // RegExp
+                    tryToSaveKey(/^regex$/v); // RegExp
                     tryToSaveKey([1, undefined, 2]); // array with undefined
                     tryToSaveKey([1, null, 2]); // array with null
                     tryToSaveKey([true, false]); // array of booleans
@@ -951,7 +951,7 @@
 
                     if (env.isShimmed || !env.browser.isFirefox) {
                         saveData(new Date(2000, 1, 2)); // Date
-                        saveData(/^regex$/); // RegExp
+                        saveData(/^regex$/v); // RegExp
                     }
 
                     /**
@@ -1562,7 +1562,7 @@
                     tryToSaveKey(false); // boolean
                     tryToSaveKey({}); // empty object
                     tryToSaveKey({foo: 'bar'}); // object
-                    tryToSaveKey(/^regex$/); // RegExp
+                    tryToSaveKey(/^regex$/v); // RegExp
                     tryToSaveKey([1, undefined, 2]); // array with undefined
                     tryToSaveKey([1, null, 2]); // array with null
                     tryToSaveKey([true, false]); // array of booleans

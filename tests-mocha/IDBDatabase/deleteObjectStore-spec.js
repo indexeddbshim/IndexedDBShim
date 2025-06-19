@@ -3,7 +3,7 @@ describe('IDBDatabase.deleteObjectStore', function () {
 
     let indexedDB;
     beforeEach(function () {
-        indexedDB = env.indexedDB;
+        ({indexedDB} = env);
     });
 
     describe('success tests', function () {

@@ -3,7 +3,7 @@ describe('IDBDatabase.createObjectStore', function () {
 
     let indexedDB;
     beforeEach(function () {
-        indexedDB = env.indexedDB;
+        ({indexedDB} = env);
     });
 
     describe('success tests', function () {
@@ -245,17 +245,17 @@ describe('IDBDatabase.createObjectStore', function () {
                     ]);
 
                     // Verify the properties of each object store
-                    verifySchema(tx.objectStore('out-of-line'), {name: 'out-of-line', keyPath: null, autoIncrement: false, indexNames: indexNames});
-                    verifySchema(tx.objectStore('out-of-line-generated'), {name: 'out-of-line-generated', keyPath: null, autoIncrement: true, indexNames: indexNames});
-                    verifySchema(tx.objectStore('inline'), {name: 'inline', keyPath: 'id', autoIncrement: false, indexNames: indexNames});
-                    verifySchema(tx.objectStore('inline-generated'), {name: 'inline-generated', keyPath: 'id', autoIncrement: true, indexNames: indexNames});
-                    verifySchema(tx.objectStore('dotted'), {name: 'dotted', keyPath: 'name.first', autoIncrement: false, indexNames: indexNames});
-                    verifySchema(tx.objectStore('dotted-generated'), {name: 'dotted-generated', keyPath: 'name.first', autoIncrement: true, indexNames: indexNames});
+                    verifySchema(tx.objectStore('out-of-line'), {name: 'out-of-line', keyPath: null, autoIncrement: false, indexNames});
+                    verifySchema(tx.objectStore('out-of-line-generated'), {name: 'out-of-line-generated', keyPath: null, autoIncrement: true, indexNames});
+                    verifySchema(tx.objectStore('inline'), {name: 'inline', keyPath: 'id', autoIncrement: false, indexNames});
+                    verifySchema(tx.objectStore('inline-generated'), {name: 'inline-generated', keyPath: 'id', autoIncrement: true, indexNames});
+                    verifySchema(tx.objectStore('dotted'), {name: 'dotted', keyPath: 'name.first', autoIncrement: false, indexNames});
+                    verifySchema(tx.objectStore('dotted-generated'), {name: 'dotted-generated', keyPath: 'name.first', autoIncrement: true, indexNames});
 
                     if (env.isShimmed || !env.browser.isIE) {
                         // IE doesn't support compound keys
-                        verifySchema(tx.objectStore('inline-compound'), {name: 'inline-compound', keyPath: ['id', 'name'], autoIncrement: false, indexNames: indexNames});
-                        verifySchema(tx.objectStore('dotted-compound'), {name: 'dotted-compound', keyPath: ['id', 'name.first', 'name.last'], autoIncrement: false, indexNames: indexNames});
+                        verifySchema(tx.objectStore('inline-compound'), {name: 'inline-compound', keyPath: ['id', 'name'], autoIncrement: false, indexNames});
+                        verifySchema(tx.objectStore('dotted-compound'), {name: 'dotted-compound', keyPath: ['id', 'name.first', 'name.last'], autoIncrement: false, indexNames});
                     }
 
                     tx.oncomplete = function () {

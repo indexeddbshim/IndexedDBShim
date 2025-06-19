@@ -41,18 +41,18 @@ const vmTimeout = 90000; // Time until we give up on the vm (increasing to 40000
 
 // SET-UP
 const fileArg = process.argv[2];
-const fileIndex = (/^-?\d+$/u).test(fileArg) ? fileArg : (process.argv[3] || undefined);
-const endFileCount = (/^-?\d+$/u).test(fileArg) && (/^-?\d+$/u).test(process.argv[3]) ? process.argv[3] : (process.argv[4] || undefined);
+const fileIndex = (/^-?\d+$/v).test(fileArg) ? fileArg : (process.argv[3] || undefined);
+const endFileCount = (/^-?\d+$/v).test(fileArg) && (/^-?\d+$/v).test(process.argv[3]) ? process.argv[3] : (process.argv[4] || undefined);
 const dirPath = path.join('test-support', 'js');
 const idbTestPath = 'web-platform-tests';
 
 const {createDOMException} = indexeddbshim;
-const workerFileRegex = /^(_service-worker-indexeddb\.https\.js|(_interface-objects-)?00\d(\.worker)?\.js)$/u;
+const workerFileRegex = /^(_service-worker-indexeddb\.https\.js|(_interface-objects-)?00\d(\.worker)?\.js)$/v;
 // import indexeddbshimNonUnicode from '../dist/indexeddbshim-node';
 
 // String replacements on code due, e.g., for lagging ES support in Node
 const nodeReplacementHacks = {
-    'idb-binary-key-roundtrip.js': [/(`Binary keys can be supplied using the view type \$\{type\}`),/u, '$1'] // https://github.com/w3c/web-platform-tests/issues/4817
+    'idb-binary-key-roundtrip.js': [/(`Binary keys can be supplied using the view type \$\{type\}`),/v, '$1'] // https://github.com/w3c/web-platform-tests/issues/4817
 };
 const jsonResults = true;
 const shimNS = {
@@ -355,7 +355,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         ...indexedDBSupported
     ];
     // Use paths set in node-buildjs.js (when extracting <script> tags and joining contents)
-    content.replaceAll(/beginscript::(.*?)::endscript/gu, (_, src) => {
+    content.replaceAll(/beginscript::(.*?)::endscript/gv, (_, src) => {
         // Fix paths for known support files and report new ones (so we can decide how to handle)
         if (
             // Added this to suppress errors; may get through if wrapping
@@ -366,10 +366,10 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
         ) {
             return;
         }
-        if (supported.includes(src) || supported.includes(src.replace(/^\//u, '')) ||
+        if (supported.includes(src) || supported.includes(src.replace(/^\//v, '')) ||
             (src.startsWith('/IndexedDB') && src.endsWith('.any.js'))
         ) {
-            src = src.replace(/^\//u, '');
+            src = src.replace(/^\//v, '');
             scripts.push(path.join(
                 idbTestPath,
                 // Since our build script is now copying it, we actually don't need this now,
@@ -381,7 +381,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
                 //   testing) we just map it to the source file which appears to be rendered
                 //   unmodified
                 // ? 'resources/webidl2/lib/webidl2.js' : ()
-                ((/^(service-workers|resources|IndexedDB|common\/)/u).test(src) &&
+                ((/^(service-workers|resources|IndexedDB|common\/)/v).test(src) &&
                     !indexedDBSupported.includes(src)
                     ? src
                     : 'IndexedDB/' + src)
@@ -696,7 +696,7 @@ async function readAndEvaluate (jsFiles, initial = '', ending = '', workers = fa
  * @returns {Promise<void>}
  */
 async function readAndEvaluateFiles (jsFiles, workers, recursing) {
-    jsFiles = jsFiles.filter((jsFile) => (/\.js/u).test(jsFile));
+    jsFiles = jsFiles.filter((jsFile) => (/\.js/v).test(jsFile));
     if (!recursing && fileIndex) { // Start at a particular file count
         const start = Number.parseInt(fileIndex);
         const end = (endFileCount ? (start + Number.parseInt(endFileCount)) : jsFiles.length);

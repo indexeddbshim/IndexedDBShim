@@ -43,7 +43,7 @@
              * A custom class, used to test the IndexedDB structured
              * cloning algorithm.
              */
-            Person: Person,
+            Person,
 
             /**
              * A very long string :) .
@@ -152,8 +152,8 @@
                 open.onsuccess = function () {
                     const cursor = open.result;
                     if (cursor) {
-                        const key = cursor.key;
-                        const primaryKey = cursor.primaryKey;
+                        const {key} = cursor;
+                        const {primaryKey} = cursor;
                         if (env.isNative && env.browser.isSafari) {
                             // BUG: Safari has a bug with compound-key cursors
                             if (Array.isArray(primaryKey)) {
@@ -167,8 +167,8 @@
                         }
 
                         data.push({
-                            primaryKey: primaryKey,
-                            key: key,
+                            primaryKey,
+                            key,
                             value: cursor.value
                         });
                         cursor.continue();

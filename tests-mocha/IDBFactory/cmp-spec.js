@@ -3,7 +3,7 @@ describe('IDBFactory.cmp', function () {
 
     let indexedDB;
     beforeEach(function () {
-        indexedDB = env.indexedDB;
+        ({indexedDB} = env);
     });
 
     const results = [];
@@ -289,8 +289,8 @@ describe('IDBFactory.cmp', function () {
                 tryToCompare(new String('hello world')); // eslint-disable-line no-new-wrappers, unicorn/new-for-builtins -- Testing
                 tryToCompare(new Date('')); // invalid date
                 // eslint-disable-next-line prefer-regex-literals -- Testing
-                tryToCompare(new RegExp('asdf')); // RegExp object
-                tryToCompare(/asdf/); // RegExp literal
+                tryToCompare(new RegExp('asdf', 'v')); // RegExp object
+                tryToCompare(/asdf/v); // RegExp literal
             }
 
             /**

@@ -48,7 +48,7 @@ try {
     console.log(`Error reading directory ${dirPath}`);
     throw err;
 }
-const htmlExt = /\.html?$/u;
+const htmlExt = /\.html?$/v;
 const normalIndexedDBFiles = items.filter((item) => {
     return item.match(htmlExt) &&
         !['_indexeddbshim-loader.html'].includes(item);
@@ -73,7 +73,7 @@ const htmlFiles = normalIndexedDBFiles.map((htmlFile) => ({
     outputFile: path.join(builtJSPath, '_service-worker-indexeddb.https.js')
 }, ...anyFiles.map((anyFile) => {
     return {
-        inputFile: `http://web-platform.test:8000/IndexedDB/${anyFile.replace(/\.js$/, '.html')}`,
+        inputFile: `http://web-platform.test:8000/IndexedDB/${anyFile.replace(/\.js$/v, '.html')}`,
         outputFile: path.join(builtJSPath, anyFile),
         web: true
     };
@@ -144,7 +144,7 @@ await Promise.all(htmlFiles.map(async ({inputFile, outputFile, web}) => {
         "document.title = '" +
         ($('title')
             ? $('title').textContent
-            : inputFile).replaceAll('\'', String.raw`\'`).replaceAll(/[\n\r]/gu, ' ') +
+            : inputFile).replaceAll('\'', String.raw`\'`).replaceAll(/[\n\r]/gv, ' ') +
         "';\n" +
         ($('script:not([src])')
             ? $('script:not([src])').textContent

@@ -17,7 +17,7 @@ if (process.argv[2] === 'remove') {
             console.log('err', err);
             return;
         }
-        const anyJSFiles = files.filter((f) => (/\.html?\.any\.js$/u).test(f));
+        const anyJSFiles = files.filter((f) => (/\.html?\.any\.js$/v).test(f));
         anyJSFiles.forEach((anyJS) => {
             const anyJSPath = path.join(indexedDBDir, anyJS);
             fs.unlinkSync(anyJSPath);
@@ -37,7 +37,7 @@ if (process.argv[2] === 'remove') {
             return;
         }
 
-        const htmlFiles = files.filter((f) => (/\.html?$/u).test(f) && !(/indexeddbshim-loader\.html$/u).test(f));
+        const htmlFiles = files.filter((f) => (/\.html?$/v).test(f) && !(/indexeddbshim-loader\.html$/v).test(f));
         htmlFiles.forEach((htmlFile) => {
             const anyJS = /* '_' + */ htmlFile + '.any.js';
             const anyJSPath = path.join(indexedDBDir, anyJS);
@@ -114,7 +114,7 @@ loaderWin.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        const htmlFiles = files.filter((f) => (/\.html?$/u).test(f));
+        const htmlFiles = files.filter((f) => (/\.html?$/v).test(f));
         const polyfillScript = `
 <script src="http://127.0.0.1:9999/dist/indexeddbshim-noninvasive.js"></script>
 <script>
@@ -147,10 +147,10 @@ loaderWin.addEventListener('DOMContentLoaded', function () {
 
         const replace = (htmlPath, fileContents, append) => {
             fs.writeFileSync(
-                append ? htmlPath.replace(/.html?$/, '2$&') : htmlPath,
+                append ? htmlPath.replace(/.html?$/v, '2$&') : htmlPath,
                 String(fileContents)
                     .replace(polyfillScript, '') // Replace any preexisting polyfill tag
-                    .replace(/<script/u, polyfillScript + '$&')
+                    .replace(/<script/v, polyfillScript + '$&')
             );
         };
         htmlFiles.forEach((htmlFile) => {

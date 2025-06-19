@@ -3,7 +3,7 @@ describe('IDBObjectStore.deleteIndex', function () {
 
     let indexedDB;
     beforeEach(function () {
-        indexedDB = env.indexedDB;
+        ({indexedDB} = env);
     });
 
     it('deletes indexes', function (done) {

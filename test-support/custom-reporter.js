@@ -104,7 +104,7 @@
         // Insert our own reporting to be ready once tests evaluate
         const trs = [...document.querySelectorAll('table#results > tbody > tr')];
         const jsonOutput = {
-            test: '/indexeddb/' + fileName.replace(/\.js$/u, '.htm'),
+            test: '/indexeddb/' + fileName.replace(/\.js$/v, '.htm'),
             subtests: [],
             status: 'OK', // When does the status at this level change?
             message: null // When does the message at this level change?

@@ -4,7 +4,7 @@ describe('IDBObjectStore.add (only)', function () {
 
     let onerror;
     beforeEach(function () {
-        onerror = window.onerror;
+        ({onerror} = window);
 
         if (env.browser.isFirefox) {
             // Firefox throws a global error when a transaction fails.

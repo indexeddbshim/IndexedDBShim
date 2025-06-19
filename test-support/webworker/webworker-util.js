@@ -14,7 +14,7 @@ export const debug = (debugLevel & 0x8) // eslint-disable-line no-bitwise -- Con
     : function () { /* */ };
 
 // Extract meaning from stack traces
-const STACK_FRAME_RE = /.* \(?(.+:\d+:\d+)\)?$/;
+const STACK_FRAME_RE = /.* \(?(.+:\d+:\d+)\)?$/v;
 
 // Symbolic names for our messages types
 export const MSGTYPE_NOOP = 0;

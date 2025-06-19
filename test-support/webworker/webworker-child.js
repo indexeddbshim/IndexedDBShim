@@ -109,8 +109,8 @@ const workerConfig = {
 // Construct the Script object to host the worker's code
 switch (scriptLoc.protocol) {
 case 'file':
-    if ([/interfaces\.any\.js$/u, /interfaces\.any\.worker\.js$/u].some((interfaceFileRegex) => interfaceFileRegex.test(workerURL))) {
-        workerURL = workerURL.replace(/.*web-platform-tests/u, 'http://web-platform.test:8000');
+    if ([/interfaces\.any\.js$/v, /interfaces\.any\.worker\.js$/v].some((interfaceFileRegex) => interfaceFileRegex.test(workerURL))) {
+        workerURL = workerURL.replace(/.*web-platform-tests/v, 'http://web-platform.test:8000');
         prom = new Promise((resolve) => { // eslint-disable-line promise/avoid-new -- No API
             http.get(workerURL, (res) => {
                 res.setEncoding('utf8');
@@ -125,7 +125,7 @@ case 'file':
         });
     } else {
         prom = Promise.resolve(
-            fs.readFileSync(scriptLoc.pathname.replace(/\/$/u, ''))
+            fs.readFileSync(scriptLoc.pathname.replace(/\/$/v, ''))
         ); // Latter replace needed on Mac but not Windows
     }
     break;
@@ -286,7 +286,7 @@ prom.then((scriptSource) => {
         // Todo: Support URL/absolute file paths
         for (const arg of args) {
             // Todo: Handle pathType="url" (defaults to `localhost`) and if basePath is `false` with it
-            const currentPath = (/^[\\/]/u).test(arg) // Root
+            const currentPath = (/^[\\\/]/v).test(arg) // Root
                 ? workerConfig.pathType === 'file' && workerConfig.rootPath === false ? process.cwd() : workerConfig.rootPath
                 : workerConfig.pathType === 'file' && workerConfig.basePath === false ? process.cwd() : workerConfig.basePath;
             /*
@@ -327,7 +327,7 @@ prom.then((scriptSource) => {
     const baseCfg = {checkOrigin: false, databaseNameLengthLimit: 1000, addNonIDBGlobals: true};
     // Add indexedDB globals; we also add non-IndexedDB ones that are not normally "exposed" to workers
     // Only the second regex will ever be used, but just listing the files that should get fullIDLSupport
-    if ([/interfaces\.any\.js$/u, /interfaces\.any\.worker\.js$/u].some((interfaceFileRegex) => interfaceFileRegex.test(workerURL))) {
+    if ([/interfaces\.any\.js$/v, /interfaces\.any\.worker\.js$/v].some((interfaceFileRegex) => interfaceFileRegex.test(workerURL))) {
         indexeddbshim(workerCtx, Object.assign(baseCfg, {fullIDLSupport: true}));
     } else {
         indexeddbshim(workerCtx, baseCfg);

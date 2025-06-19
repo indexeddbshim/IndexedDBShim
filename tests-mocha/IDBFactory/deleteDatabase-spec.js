@@ -4,7 +4,7 @@ describe('IDBFactory.deleteDatabase', function () {
 
     let indexedDB;
     beforeEach(function () {
-        indexedDB = env.indexedDB;
+        ({indexedDB} = env);
     });
 
     it('should return an IDBOpenDBRequest', function (done) {
@@ -160,7 +160,7 @@ describe('IDBFactory.deleteDatabase', function () {
         deleteDatabase(['a', 'b', 'c']);
         deleteDatabase(new Date());
         deleteDatabase({foo: 'bar'});
-        deleteDatabase(/^regex$/);
+        deleteDatabase(/^regex$/v);
 
         if (env.isShimmed || !env.browser.isIE) {
             deleteDatabase(null);

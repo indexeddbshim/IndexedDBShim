@@ -633,7 +633,7 @@ describe('IDBIndex.getKey', function () {
             tryToGet([{foo: 'bar'}]); // array of objects
 
             if (env.isShimmed || !env.browser.isIE) {
-                tryToGet(/^regex$/); // RegExp
+                tryToGet(/^regex$/v); // RegExp
             }
 
             /**

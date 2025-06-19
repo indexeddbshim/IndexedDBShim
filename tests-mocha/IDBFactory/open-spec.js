@@ -3,7 +3,7 @@ describe('IDBFactory.open', function () {
 
     let indexedDB;
     beforeEach(function () {
-        indexedDB = env.indexedDB;
+        ({indexedDB} = env);
     });
 
     describe('success tests', function () {
@@ -457,7 +457,7 @@ describe('IDBFactory.open', function () {
             tryToOpen(Number.NaN);
 
             if (env.isShimmed || !env.browser.isFirefox) {
-                tryToOpen(/^regex$/);
+                tryToOpen(/^regex$/v);
                 tryToOpen(null);
                 tryToOpen({foo: 'bar'});
                 tryToOpen([]);
