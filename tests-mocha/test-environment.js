@@ -1,6 +1,4 @@
-/* eslint-env mocha */
-/* globals chai, expect, shimIndexedDB */
-/* eslint-disable no-unused-expressions, sonarjs/pseudo-random */
+/* eslint-disable sonarjs/pseudo-random -- Testing */
 (function () {
     'use strict';
 
@@ -81,7 +79,7 @@
         initTestEnvironment();
         mocha.checkLeaks();
         window.describe = describe;
-        // eslint-disable-next-line prefer-rest-params
+        // eslint-disable-next-line prefer-rest-params -- Convenient
         describe.apply(window, arguments);
     };
 
@@ -278,12 +276,12 @@
                     expect(true, 'Database Upgraded successfully').to.be.true;
                     // const db = dbOpenRequest.result;
                     const objectStore1 = dbOpenRequest.transaction.objectStore(DB.OBJECT_STORE_1);
-                    // eslint-disable-next-line no-unused-vars
+                    // eslint-disable-next-line no-unused-vars -- Clearer
                     const index1 = objectStore1.createIndex('Int Index', 'Int', {
                         unique: false,
                         multiEntry: false
                     });
-                    const index2 = objectStore1.createIndex('String.Index', 'String'); // eslint-disable-line no-unused-vars
+                    const index2 = objectStore1.createIndex('String.Index', 'String'); // eslint-disable-line no-unused-vars -- Clearer
                     expect(objectStore1.indexNames, '2 Indexes on object store successfully created').to.have.lengthOf(2);
                 };
                 dbOpenRequest.onblocked = function () {
@@ -310,7 +308,7 @@
                 };
             });
         },
-        // eslint-disable-next-line default-param-last
+        // eslint-disable-next-line default-param-last -- Convenient
         createObjectStores (storeName = DB.OBJECT_STORE_1, cb) {
             const delReq = window.indexedDB.deleteDatabase(DB.NAME);
             delReq.onblocked = () => {
@@ -349,7 +347,7 @@
                     db.createObjectStore(DB.OBJECT_STORE_4, {
                         keyPath: 'Int'
                     });
-                    const objectStore5 = db.createObjectStore(DB.OBJECT_STORE_5); // eslint-disable-line no-unused-vars
+                    const objectStore5 = db.createObjectStore(DB.OBJECT_STORE_5); // eslint-disable-line no-unused-vars -- Clear
                     expect(
                         db.objectStoreNames,
                         'Count of Object Stores created is correct'
@@ -378,8 +376,9 @@
                     expect(true, 'Data added to store').to.be.true;
                     if (++counter >= max) {
                         db.close();
-                        // eslint-disable-next-line n/callback-return
                         cb();
+                        // eslint-disable-next-line no-useless-return -- Needed by linter
+                        return;
                     }
                 };
                 /**
@@ -389,8 +388,9 @@
                 const error = function (e) {
                     expect(false, 'Could not add data').to.be.true;
                     if (++counter >= 10) {
-                        // eslint-disable-next-line n/callback-return
                         cb(e);
+                        // eslint-disable-next-line no-useless-return -- Needed by linter
+                        return;
                     }
                 };
                 for (let i = 0; i < max; i++) {
@@ -408,7 +408,7 @@
                 cb(e);
             };
         },
-        // eslint-disable-next-line default-param-last
+        // eslint-disable-next-line default-param-last -- Convenient
         openObjectStore (storeName = DB.OBJECT_STORE_1, cb) {
             const dbOpenRequest = window.indexedDB.open(DB.NAME);
             dbOpenRequest.onsuccess = function () {

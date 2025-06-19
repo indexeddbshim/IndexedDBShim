@@ -1,5 +1,3 @@
-/* eslint-env mocha */
-/* globals expect, sinon, util, env */
 describe('IDBIndex.count', function () {
     'use strict';
 

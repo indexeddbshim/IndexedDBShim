@@ -1,4 +1,4 @@
-/* eslint-disable n/no-sync */
+/* eslint-disable n/no-sync -- CLI */
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';

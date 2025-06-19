@@ -1,4 +1,4 @@
-/* eslint-disable n/no-sync */
+/* eslint-disable n/no-sync -- Convenient */
 // Launcher script for WebWorkers.
 //
 // Sets up context and runs a worker script. This is not intended to be
@@ -111,7 +111,7 @@ switch (scriptLoc.protocol) {
 case 'file':
     if ([/interfaces\.any\.js$/u, /interfaces\.any\.worker\.js$/u].some((interfaceFileRegex) => interfaceFileRegex.test(workerURL))) {
         workerURL = workerURL.replace(/.*web-platform-tests/u, 'http://web-platform.test:8000');
-        prom = new Promise((resolve) => { // eslint-disable-line promise/avoid-new
+        prom = new Promise((resolve) => { // eslint-disable-line promise/avoid-new -- No API
             http.get(workerURL, (res) => {
                 res.setEncoding('utf8');
                 let rawData = '';
@@ -261,7 +261,7 @@ prom.then((scriptSource) => {
     workerCtx.location = scriptLoc;
     workerCtx.closing = false;
     workerCtx.close = function () {
-        // eslint-disable-next-line unicorn/no-process-exit
+        // eslint-disable-next-line unicorn/no-process-exit -- Needed
         process.exit(0);
     };
     workerCtx.eventHandlers = {message: []};

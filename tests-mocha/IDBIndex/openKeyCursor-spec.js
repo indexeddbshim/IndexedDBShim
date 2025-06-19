@@ -1,6 +1,3 @@
-/* eslint-env mocha */
-/* globals expect, testHelper */
-/* eslint-disable no-unused-expressions */
 describe('IDBIndex.openKeyCursor', function () {
     it('Index Key Cursor', function (done) {
         testHelper.createIndexesAndData((error, [, , objectStore, db]) => {

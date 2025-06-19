@@ -1,5 +1,3 @@
-/* eslint-env mocha */
-/* globals expect, util, env */
 describe('IDBFactory.cmp', function () {
     'use strict';
 
@@ -95,7 +93,7 @@ describe('IDBFactory.cmp', function () {
             equal(-0, 0);
             equal(+0, -0);
             equal(0.0000000000001);
-            // eslint-disable-next-line no-loss-of-precision
+            // eslint-disable-next-line no-loss-of-precision -- Intentional
             equal(9999999999999.9999999999999);
             equal(Number.POSITIVE_INFINITY);
             equal(Number.NEGATIVE_INFINITY);
@@ -282,15 +280,15 @@ describe('IDBFactory.cmp', function () {
             tryToCompare([1, null, 2]); // array with null
             tryToCompare([true, false]); // array of booleans
             tryToCompare([{foo: 'bar'}]); // array of objects
-            tryToCompare(new Boolean(true)); // eslint-disable-line no-new-wrappers, unicorn/new-for-builtins
-            tryToCompare(new Object()); // eslint-disable-line no-object-constructor
+            tryToCompare(new Boolean(true)); // eslint-disable-line no-new-wrappers, unicorn/new-for-builtins -- Testing
+            tryToCompare(new Object()); // eslint-disable-line no-object-constructor -- Testing
 
             if (env.isShimmed || !env.browser.isIE) {
                 tryToCompare(null); // null
-                tryToCompare(new Number(12345)); // eslint-disable-line no-new-wrappers, unicorn/new-for-builtins
-                tryToCompare(new String('hello world')); // eslint-disable-line no-new-wrappers, unicorn/new-for-builtins
+                tryToCompare(new Number(12345)); // eslint-disable-line no-new-wrappers, unicorn/new-for-builtins -- Testing
+                tryToCompare(new String('hello world')); // eslint-disable-line no-new-wrappers, unicorn/new-for-builtins -- Testing
                 tryToCompare(new Date('')); // invalid date
-                // eslint-disable-next-line prefer-regex-literals
+                // eslint-disable-next-line prefer-regex-literals -- Testing
                 tryToCompare(new RegExp('asdf')); // RegExp object
                 tryToCompare(/asdf/); // RegExp literal
             }
@@ -310,7 +308,7 @@ describe('IDBFactory.cmp', function () {
                 if (env.isShimmed || !env.browser.isIE) {
                     expect(err).to.be.an.instanceOf(env.DOMException);
                 }
-                expect(err).to.be.ok; // eslint-disable-line no-unused-expressions
+                expect(err).to.be.ok;
                 expect(err.name).to.equal('DataError');
             }
         });

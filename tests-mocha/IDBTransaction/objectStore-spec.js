@@ -1,5 +1,3 @@
-/* eslint-env mocha */
-/* globals expect, util, env */
 describe('IDBTransaction.objectStore', function () {
     'use strict';
 

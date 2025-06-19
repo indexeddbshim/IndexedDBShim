@@ -1,5 +1,3 @@
-/* eslint-env mocha */
-/* globals expect, env */
 describe('IndexedDB API', function () {
     'use strict';
 
@@ -14,7 +12,7 @@ describe('IndexedDB API', function () {
      */
     function isAClass (thing) {
         return (typeof thing === 'function' ||
-            (typeof thing === 'object' && (thing.__proto__ || thing.prototype))); // eslint-disable-line no-proto
+            (typeof thing === 'object' && (thing.__proto__ || thing.prototype))); // eslint-disable-line no-proto -- Testing
     }
 
     it('should expose indexedDB', function () {

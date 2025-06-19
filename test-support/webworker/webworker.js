@@ -1,4 +1,4 @@
-/* eslint-disable n/no-sync */
+/* eslint-disable n/no-sync -- Convenient */
 // Todo: SharedWorker/ServiceWorker/MessageChannel polyfills
 // WebWorkers implementation.
 //
@@ -111,14 +111,14 @@ function WebWorker (workerConfig) {
     */
     const Worker = function (src, opts) {
         // See https://html.spec.whatwg.org/multipage/workers.html#dom-worker
-        const self = this; // eslint-disable-line consistent-this
+        const self = this; // eslint-disable-line consistent-this -- Clear
 
         opts = opts || {};
 
         let basePath;
         // We don't use `new URL` as we need `url.parse` relative URL behavior; see
         //   https://github.com/nodejs/node/issues/12682
-        const urlObj = url.parse(src); // eslint-disable-line n/no-deprecated-api
+        const urlObj = url.parse(src); // eslint-disable-line n/no-deprecated-api -- No replacement
         if (urlObj.host !== null) {
             const {protocol} = urlObj;
             if (!(workerConfig.permittedProtocols || ['http', 'https']).map((p) => p + ':').includes(protocol)) {
@@ -198,7 +198,7 @@ function WebWorker (workerConfig) {
 
         const httpServer = http.createServer();
         const wsSrv = new WebSocketServer({server: httpServer});
-        let handleMessage; // eslint-disable-line prefer-const
+        let handleMessage; // eslint-disable-line prefer-const -- Convenient
         wsSrv.addListener('connection', function (s) {
             assert.strictEqual(stream, undefined);
             assert.strictEqual(msgStream, undefined);

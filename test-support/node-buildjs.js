@@ -83,7 +83,7 @@ const htmlFiles = normalIndexedDBFiles.map((htmlFile) => ({
 await Promise.all(htmlFiles.map(async ({inputFile, outputFile, web}) => {
     let data;
     if (web) {
-        data = await new Promise((resolve) => { // eslint-disable-line promise/avoid-new
+        data = await new Promise((resolve) => { // eslint-disable-line promise/avoid-new -- No API
             http.get(inputFile, (res) => {
                 res.setEncoding('utf8');
                 let rawData = '';
@@ -158,7 +158,7 @@ await Promise.all(htmlFiles.map(async ({inputFile, outputFile, web}) => {
     // console.log("The file " + outputFile + " was saved!");
 }));
 const reducer = (s, src) => s + '/' + '*beginscript::' + src + '::endscript*' + '/\n';
-/* eslint-disable unicorn/no-array-callback-reference */
+/* eslint-disable unicorn/no-array-callback-reference -- Convenient */
 const harnessContent = [
     '/resources/testharness.js',
     '/resources/testharnessreport.js'
@@ -169,7 +169,7 @@ const harnessContent0 = [
     '/resources/testharness.js',
     '/resources/testharnessreport.js'
 ].reduce(reducer, '');
-/* eslint-enable unicorn/no-array-callback-reference */
+/* eslint-enable unicorn/no-array-callback-reference -- Convenient */
 const scripts = [
     {
         inputFile: '/workers/semantics/interface-objects/001.worker.js',

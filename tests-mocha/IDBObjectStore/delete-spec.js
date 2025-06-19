@@ -1,6 +1,3 @@
-/* eslint-env mocha */
-/* globals expect, sinon, util, env */
-/* eslint-disable no-unused-expressions */
 describe('IDBObjectStore.delete', function () {
     'use strict';
 

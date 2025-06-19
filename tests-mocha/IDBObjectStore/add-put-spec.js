@@ -1,6 +1,3 @@
-/* eslint-env mocha */
-/* globals expect, sinon, util, env */
-/* eslint-disable no-unused-expressions, unicorn/no-for-loop */
 /**
  * This file contains tests that are THE SAME for
  *  IDBObjectStore.add and IDBObjectStore.put.
@@ -530,6 +527,7 @@
 
                                 if (Array.isArray(data)) {
                                     expect(get.result).to.have.lengthOf(data.length);
+                                    // eslint-disable-next-line unicorn/no-for-loop -- Unicorn bug
                                     for (let i = 0; i < data.length; i++) {
                                         expect(get.result[i]).to.deep.equal(data[i]);
                                     }
@@ -976,6 +974,7 @@
 
                                 if (Array.isArray(data)) {
                                     expect(get.result).to.have.lengthOf(data.length);
+                                    // eslint-disable-next-line unicorn/no-for-loop -- Unicorn bug
                                     for (let i = 0; i < data.length; i++) {
                                         expect(get.result[i]).to.deep.equal(data[i]);
                                     }

@@ -1,6 +1,3 @@
-/* eslint-env mocha */
-/* globals expect, sinon, util, env, testData, testHelper */
-/* eslint-disable no-unused-expressions */
 describe('IDBObjectStore.add (only)', function () {
     'use strict';
     const {sample, DB} = testData;

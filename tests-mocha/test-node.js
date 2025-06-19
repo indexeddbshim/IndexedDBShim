@@ -51,9 +51,9 @@ await import('./test-utils.js');
 
 let tests;
 
-if (process.env.npm_config_test) { // eslint-disable-line n/no-process-env
-    tests = [process.env.npm_config_test]; // eslint-disable-line n/no-process-env
-    console.log('Running test: ' + process.env.npm_config_test); // eslint-disable-line n/no-process-env
+if (process.env.npm_config_test) { // eslint-disable-line n/no-process-env -- Convenient
+    tests = [process.env.npm_config_test]; // eslint-disable-line n/no-process-env -- Convenient
+    console.log('Running test: ' + process.env.npm_config_test); // eslint-disable-line n/no-process-env -- Convenient
 } else {
     tests = [
         'api-spec.js',

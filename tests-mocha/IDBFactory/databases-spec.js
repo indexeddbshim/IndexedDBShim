@@ -1,7 +1,3 @@
-/* eslint-env mocha */
-/* globals testData, expect */
-/* eslint-disable no-unused-expressions */
-
 describe('IDBFactory.databases', function () {
     it('databases', function () {
         if (!window.indexedDB.databases) {
@@ -44,7 +40,7 @@ describe('IDBFactory.databases', function () {
 function openDb () {
     window.indexedDB.deleteDatabase(testData.DB.NAME);
     const dbOpenRequest = window.indexedDB.open(testData.DB.NAME);
-    // eslint-disable-next-line promise/avoid-new
+    // eslint-disable-next-line promise/avoid-new -- No API
     return new Promise((resolve, reject) => {
         dbOpenRequest.onsuccess = function () {
             const db = dbOpenRequest.result;

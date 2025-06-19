@@ -204,7 +204,16 @@ export default [
                 IDBRequest: 'readonly',
                 IDBOpenDBRequest: 'readonly',
                 IDBVersionChangeEvent: 'readonly',
-                ...globals.mocha
+                ...globals.mocha,
+                chai: 'readonly',
+                expect: 'readonly',
+                sinon: 'readonly',
+                // Our environment
+                shimIndexedDB: 'readonly',
+                util: 'readonly',
+                env: 'readonly',
+                testHelper: 'readonly',
+                testData: 'readonly'
             }
         },
         settings: {
@@ -216,8 +225,9 @@ export default [
         rules: {
             // See about reenabling
             'sonarjs/no-parameter-reassignment': 0,
-            '@eslint-community/eslint-comments/require-description': 0,
 
+            // Should be applied in ash-nazg
+            'no-unused-expressions': 0,
             strict: 0, // ['error', 'function'],
             'no-process-exit': 0,
             // We want console in tests!

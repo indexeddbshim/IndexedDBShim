@@ -1,6 +1,4 @@
-/* eslint-env mocha */
-/* globals expect, sinon, util, env */
-/* eslint-disable sonarjs/no-code-after-done */
+/* eslint-disable sonarjs/no-code-after-done -- Finally */
 describe('IDBTransaction events', function () {
     'use strict';
 

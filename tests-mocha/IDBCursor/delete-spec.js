@@ -1,6 +1,3 @@
-/* globals testHelper, expect */
-/* eslint-env mocha */
-/* eslint-disable no-unused-expressions */
 describe('IDBCursor.delete', function () {
     it('Deleting using a cursor', function (done) {
         this.timeout(10000);

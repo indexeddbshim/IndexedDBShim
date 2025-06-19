@@ -1,6 +1,3 @@
-/* eslint-env mocha */
-/* globals expect, testHelper */
-
 describe('IDBObjectStore.count', function () {
     it('Count in Object Store', function (done) {
         testHelper.createObjectStores(undefined, (error, [, db]) => {

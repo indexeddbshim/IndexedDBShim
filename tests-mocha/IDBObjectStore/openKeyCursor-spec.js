@@ -1,6 +1,3 @@
-/* eslint-env mocha */
-/* globals expect, testHelper */
-/* eslint-disable no-unused-expressions */
 describe('IDBObjectStore.openKeyCursor', function () {
     it('Store Key Cursor', function (done) {
         testHelper.createObjectStores(undefined, (error, [, db]) => {

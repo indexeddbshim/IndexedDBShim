@@ -1,6 +1,3 @@
-/* eslint-env mocha */
-/* globals expect, sinon, util, env, testHelper */
-/* eslint-disable no-unused-expressions */
 describe('IDBIndex.getKey', function () {
     'use strict';
 

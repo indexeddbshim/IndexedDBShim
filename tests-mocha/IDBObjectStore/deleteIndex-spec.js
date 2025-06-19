@@ -1,6 +1,3 @@
-/* eslint-env mocha */
-/* globals expect, sinon, util, env, testHelper */
-/* eslint-disable no-unused-expressions */
 describe('IDBObjectStore.deleteIndex', function () {
     'use strict';
 
@@ -33,7 +30,7 @@ describe('IDBObjectStore.deleteIndex', function () {
                 const objectStore1 = dbOpenRequest.transaction.objectStore(DB.OBJECT_STORE_1);
                 const count = objectStore1.indexNames.length;
 
-                const index3 = objectStore1.createIndex('DeleteTestIndex', 'String'); // eslint-disable-line no-unused-vars
+                const index3 = objectStore1.createIndex('DeleteTestIndex', 'String'); // eslint-disable-line no-unused-vars -- Clear
                 expect(objectStore1.indexNames, 'Index on object store successfully created').to.have.lengthOf(count + 1);
                 objectStore1.deleteIndex('DeleteTestIndex');
                 expect(objectStore1.indexNames, 'Index on object store successfully deleted').to.have.lengthOf(count);

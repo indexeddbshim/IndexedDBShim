@@ -1,5 +1,4 @@
-/* eslint-env mocha */
-/* eslint-disable no-unused-expressions, n/no-sync */
+/* eslint-disable n/no-sync -- Ok for testing  */
 import fs from 'fs';
 import * as chai from 'chai';
 

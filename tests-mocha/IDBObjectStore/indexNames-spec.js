@@ -1,5 +1,3 @@
-/* eslint-env mocha */
-/* globals expect, testHelper */
 describe('IDBObjectStore.indexNames', function () {
     it('Check index exists after reopening database', function (done) {
         testHelper.createIndexes((error, [objectStore, db]) => {

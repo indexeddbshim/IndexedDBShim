@@ -1,5 +1,3 @@
-/* eslint-env mocha */
-/* globals expect */
 describe('IDBKeyRange', function () {
     'use strict';
 

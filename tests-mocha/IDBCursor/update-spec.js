@@ -1,6 +1,3 @@
-/* globals testHelper, expect */
-/* eslint-env mocha */
-/* eslint-disable no-unused-expressions */
 describe('IDBCursor.update', function () {
     it('Updating using a cursor', function (done) {
         this.timeout(20000);

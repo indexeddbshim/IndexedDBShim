@@ -8,8 +8,8 @@ import util from 'util';
 import * as BSON from 'bson';
 
 // Some debugging functions
-const debugLevel = Number.parseInt(process.env.NODE_DEBUG, 16); // eslint-disable-line n/no-process-env
-export const debug = (debugLevel & 0x8) // eslint-disable-line no-bitwise
+const debugLevel = Number.parseInt(process.env.NODE_DEBUG, 16); // eslint-disable-line n/no-process-env -- Debugging
+export const debug = (debugLevel & 0x8) // eslint-disable-line no-bitwise -- Convenient
     ? function (...args) { Reflect.apply(console.error, this, args); }
     : function () { /* */ };
 
@@ -45,7 +45,7 @@ export const isValidMessage = function (msg) {
  * @param {WebSocket} s
  */
 export const MsgStream = function (s) {
-    const self = this; // eslint-disable-line consistent-this
+    const self = this; // eslint-disable-line consistent-this -- Clear
 
     events.EventEmitter.call(self);
 
@@ -215,7 +215,7 @@ export const getErrorMessage = function (e) {
 export const getErrorFilename = function (e) {
     try {
         const m = e.stack.split('\n')[1].match(STACK_FRAME_RE);
-        // eslint-disable-next-line unicorn/prefer-string-slice
+        // eslint-disable-next-line unicorn/prefer-string-slice -- Clear
         return m[1].substring(
             0,
             m[1].lastIndexOf(':', m[1].lastIndexOf(':') - 1)

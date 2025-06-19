@@ -1,6 +1,6 @@
-/* globals shimNS */
-var window = this; // eslint-disable-line no-var, no-unused-vars, consistent-this
-var self = this; // eslint-disable-line no-var, consistent-this
+/* globals shimNS -- This environment */
+var window = this; // eslint-disable-line no-var, no-unused-vars, consistent-this -- Needed by framework?
+var self = this; // eslint-disable-line no-var, consistent-this -- Needed by framework?
 self.parent = self;
 
 (function () {

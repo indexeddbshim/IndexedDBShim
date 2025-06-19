@@ -1,5 +1,3 @@
-/* eslint-env mocha */
-/* globals expect, sinon, util */
 describe('IDBDatabase.close', function () {
     'use strict';
 

@@ -1,5 +1,3 @@
-/* eslint-env mocha */
-/* globals expect, util, env, testHelper, testData */
 describe('IDBObjectStore.put (only)', function () {
     'use strict';
 

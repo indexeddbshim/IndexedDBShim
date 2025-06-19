@@ -1,5 +1,3 @@
-/* eslint-env mocha */
-/* globals expect, testHelper, testData */
 describe('IDBObjectStore.get', function () {
     const {sample} = testData;
     it('Getting data in Object Store', function (done) {

@@ -1,5 +1,3 @@
-/* eslint-env mocha */
-/* globals expect, sinon, util, env */
 describe('IDBDatabase.transaction', function () {
     'use strict';
 

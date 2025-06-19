@@ -1,5 +1,3 @@
-/* eslint-env mocha */
-/* globals expect, sinon, util, env */
 describe('IDBFactory.deleteDatabase', function () {
     'use strict';
     this.timeout(5000);

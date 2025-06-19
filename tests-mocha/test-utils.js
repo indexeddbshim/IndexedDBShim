@@ -1,5 +1,3 @@
-/* eslint-env mocha */
-/* globals env */
 (function () {
     'use strict';
 
@@ -79,11 +77,11 @@
          * @returns {void}
          */
         createDatabase (schema, done) {
-            /* eslint-disable prefer-rest-params */
+            /* eslint-disable prefer-rest-params -- Convenient */
             schema = Array.prototype.slice.call(arguments, 0, -1);
             // eslint-disable-next-line unicorn/prefer-at -- Not available here
             done = arguments[arguments.length - 1];
-            /* eslint-enable prefer-rest-params */
+            /* eslint-enable prefer-rest-params -- Convenient */
 
             util.generateDatabaseName(function (err, dbName) {
                 // Open the database
@@ -285,7 +283,7 @@
                     cb();
                     return;
                 }
-                // eslint-disable-next-line prefer-rest-params
+                // eslint-disable-next-line prefer-rest-params -- Convenient
                 util._onerror.apply(window, arguments);
             };
         },

@@ -1,4 +1,4 @@
-/* globals shimNS, add_completion_callback */
+/* globals shimNS, add_completion_callback -- Environment */
 // Now set-up our mechanism to report results back
 (function () {
     // Although we needed a few of these in environment.js, we cannot set there as some are only exposed after including the test framework
