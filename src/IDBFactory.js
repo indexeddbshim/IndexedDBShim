@@ -38,7 +38,6 @@ const setFS = (_fs) => {
  * @returns {string}
  */
 const getOrigin = () => {
-    // eslint-disable-next-line no-undef -- If browser/polyfilled
     return (typeof location !== 'object' || !location) ? 'null' : location.origin;
 };
 const hasNullOrigin = () => CFG.checkOrigin !== false && (getOrigin() === 'null');

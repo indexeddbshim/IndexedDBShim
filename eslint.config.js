@@ -75,6 +75,14 @@ export default [
     //  but this also adds more globals
     // ...ashNazg(['sauron', 'browser']),
     ...ashNazg(['sauron']),
+    {
+        settings: {
+            polyfills: [
+                'Promise',
+                'Uint8Array'
+            ]
+        }
+    },
     ...ashNazg(['sauron', 'node']).map((cfg) => {
         return {
             files: ['src/node*'],
@@ -104,7 +112,7 @@ export default [
     ...ashNazg(['sauron', 'browser']).map((cfg) => {
         return {
             files: [
-                'src/browser*'
+                'src/*.js'
             ],
             ...cfg
         };

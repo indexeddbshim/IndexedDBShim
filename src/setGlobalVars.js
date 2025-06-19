@@ -358,7 +358,6 @@ function setGlobalVars (idb, initialConfig) {
                 // and detect version 9: http://stackoverflow.com/a/26363560/271577
                 (/(iPad|iPhone|iPod).* os 9_/ui).test(navigator.userAgent) &&
                 (typeof window !== 'undefined' &&
-                // eslint-disable-next-line no-undef -- Extra check
                 !('MSStream' in window)) // But avoid IE11
             )
         )
