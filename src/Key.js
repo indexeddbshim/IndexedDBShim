@@ -13,7 +13,7 @@ const keyTypeToEncodedChar = {
     date: 300,
     string: 400,
     binary: 500,
-    array: 600
+    array: "600"
 };
 const keyTypes = Object.keys(keyTypeToEncodedChar);
 keyTypes.forEach((k) => {
@@ -22,6 +22,7 @@ keyTypes.forEach((k) => {
 
 const encodedCharToKeyType = keyTypes.reduce((o, k) => {
     o[keyTypeToEncodedChar[k]] = k;
+    console.log(o);
     return o;
 }, {});
 
