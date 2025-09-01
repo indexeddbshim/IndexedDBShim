@@ -132,10 +132,11 @@ export class IDBCursor {
      * @param {SQLTransaction} tx
      * @param {KeySuccess} success
      * @param {FindError} error
+     * @param {Integer|undefined} recordsToLoad
      * @this {IDBCursorFull}
      * @returns {void}
      */
-    __findMultiEntry(this: IDBCursorFull, key: undefined | import("./Key.js").Key, primaryKey: undefined | import("./Key.js").Key, tx: SQLTransaction, success: KeySuccess, error: FindError): void;
+    __findMultiEntry(this: IDBCursorFull, key: undefined | import("./Key.js").Key, primaryKey: undefined | import("./Key.js").Key, tx: SQLTransaction, success: KeySuccess, error: FindError, recordsToLoad: Integer | undefined): void;
     /**
      * @typedef {any} StructuredCloneValue
      */

@@ -626,10 +626,12 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
                             triggerSuccess(k, val, primKey);
                             return;
                         }
+                        // @ts-expect-error Todo: Our bug to fix
                         cursorContinue(tx, args, success, error);
                     }
                     if (me.__unique && !me.__multiEntryIndex &&
                         encKey === Key.encode(me.key, me.__multiEntryIndex)) {
+                        // @ts-expect-error Todo: Our bug to fix
                         cursorContinue(tx, args, success, error);
                         return;
                     }

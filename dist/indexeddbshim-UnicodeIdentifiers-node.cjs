@@ -1,4 +1,4 @@
-/*! indexeddbshim - v16.0.0 - 6/14/2025 */
+/*! indexeddbshim - v16.1.0 - 9/1/2025 */
 
 'use strict';
 
@@ -1165,7 +1165,7 @@ var hasRequiredRegex;
 function requireRegex() {
   if (hasRequiredRegex) return regex$1;
   hasRequiredRegex = 1;
-  regex$1 = /[\xC0-\xC5\xC7-\xCF\xD1-\xD6\xD9-\xDD\xE0-\xE5\xE7-\xEF\xF1-\xF6\xF9-\xFD\xFF-\u010F\u0112-\u0125\u0128-\u0130\u0134-\u0137\u0139-\u013E\u0143-\u0148\u014C-\u0151\u0154-\u0165\u0168-\u017E\u01A0\u01A1\u01AF\u01B0\u01CD-\u01DC\u01DE-\u01E3\u01E6-\u01F0\u01F4\u01F5\u01F8-\u021B\u021E\u021F\u0226-\u0233\u0344\u0385\u0386\u0388-\u038A\u038C\u038E-\u0390\u03AA-\u03B0\u03CA-\u03CE\u03D3\u03D4\u0400\u0401\u0403\u0407\u040C-\u040E\u0419\u0439\u0450\u0451\u0453\u0457\u045C-\u045E\u0476\u0477\u04C1\u04C2\u04D0-\u04D3\u04D6\u04D7\u04DA-\u04DF\u04E2-\u04E7\u04EA-\u04F5\u04F8\u04F9\u0622-\u0626\u06C0\u06C2\u06D3\u0929\u0931\u0934\u0958-\u095F\u09CB\u09CC\u09DC\u09DD\u09DF\u0A33\u0A36\u0A59-\u0A5B\u0A5E\u0B48\u0B4B\u0B4C\u0B5C\u0B5D\u0B94\u0BCA-\u0BCC\u0C48\u0CC0\u0CC7\u0CC8\u0CCA\u0CCB\u0D4A-\u0D4C\u0DDA\u0DDC-\u0DDE\u0F43\u0F4D\u0F52\u0F57\u0F5C\u0F69\u0F73\u0F75\u0F76\u0F78\u0F81\u0F93\u0F9D\u0FA2\u0FA7\u0FAC\u0FB9\u1026\u1B06\u1B08\u1B0A\u1B0C\u1B0E\u1B12\u1B3B\u1B3D\u1B40\u1B41\u1B43\u1E00-\u1E99\u1E9B\u1EA0-\u1EF9\u1F00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FC1-\u1FC4\u1FC6-\u1FD3\u1FD6-\u1FDB\u1FDD-\u1FEE\u1FF2-\u1FF4\u1FF6-\u1FFC\u212B\u219A\u219B\u21AE\u21CD-\u21CF\u2204\u2209\u220C\u2224\u2226\u2241\u2244\u2247\u2249\u2260\u2262\u226D-\u2271\u2274\u2275\u2278\u2279\u2280\u2281\u2284\u2285\u2288\u2289\u22AC-\u22AF\u22E0-\u22E3\u22EA-\u22ED\u2ADC\u304C\u304E\u3050\u3052\u3054\u3056\u3058\u305A\u305C\u305E\u3060\u3062\u3065\u3067\u3069\u3070\u3071\u3073\u3074\u3076\u3077\u3079\u307A\u307C\u307D\u3094\u309E\u30AC\u30AE\u30B0\u30B2\u30B4\u30B6\u30B8\u30BA\u30BC\u30BE\u30C0\u30C2\u30C5\u30C7\u30C9\u30D0\u30D1\u30D3\u30D4\u30D6\u30D7\u30D9\u30DA\u30DC\u30DD\u30F4\u30F7-\u30FA\u30FE\uAC00-\uD7A3\uFB1D\uFB1F\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFB4E]|\uD804[\uDC9A\uDC9C\uDCAB\uDD2E\uDD2F\uDF4B\uDF4C]|\uD805[\uDCBB\uDCBC\uDCBE\uDDBA\uDDBB]|\uD806\uDD38|\uD834[\uDD5E-\uDD64\uDDBB-\uDDC0]/;
+  regex$1 = /[\xC0-\xC5\xC7-\xCF\xD1-\xD6\xD9-\xDD\xE0-\xE5\xE7-\xEF\xF1-\xF6\xF9-\xFD\xFF-\u010F\u0112-\u0125\u0128-\u0130\u0134-\u0137\u0139-\u013E\u0143-\u0148\u014C-\u0151\u0154-\u0165\u0168-\u017E\u01A0\u01A1\u01AF\u01B0\u01CD-\u01DC\u01DE-\u01E3\u01E6-\u01F0\u01F4\u01F5\u01F8-\u021B\u021E\u021F\u0226-\u0233\u0344\u0385\u0386\u0388-\u038A\u038C\u038E-\u0390\u03AA-\u03B0\u03CA-\u03CE\u03D3\u03D4\u0400\u0401\u0403\u0407\u040C-\u040E\u0419\u0439\u0450\u0451\u0453\u0457\u045C-\u045E\u0476\u0477\u04C1\u04C2\u04D0-\u04D3\u04D6\u04D7\u04DA-\u04DF\u04E2-\u04E7\u04EA-\u04F5\u04F8\u04F9\u0622-\u0626\u06C0\u06C2\u06D3\u0929\u0931\u0934\u0958-\u095F\u09CB\u09CC\u09DC\u09DD\u09DF\u0A33\u0A36\u0A59-\u0A5B\u0A5E\u0B48\u0B4B\u0B4C\u0B5C\u0B5D\u0B94\u0BCA-\u0BCC\u0C48\u0CC0\u0CC7\u0CC8\u0CCA\u0CCB\u0D4A-\u0D4C\u0DDA\u0DDC-\u0DDE\u0F43\u0F4D\u0F52\u0F57\u0F5C\u0F69\u0F73\u0F75\u0F76\u0F78\u0F81\u0F93\u0F9D\u0FA2\u0FA7\u0FAC\u0FB9\u1026\u1B06\u1B08\u1B0A\u1B0C\u1B0E\u1B12\u1B3B\u1B3D\u1B40\u1B41\u1B43\u1E00-\u1E99\u1E9B\u1EA0-\u1EF9\u1F00-\u1F15\u1F18-\u1F1D\u1F20-\u1F45\u1F48-\u1F4D\u1F50-\u1F57\u1F59\u1F5B\u1F5D\u1F5F-\u1F7D\u1F80-\u1FB4\u1FB6-\u1FBC\u1FC1-\u1FC4\u1FC6-\u1FD3\u1FD6-\u1FDB\u1FDD-\u1FEE\u1FF2-\u1FF4\u1FF6-\u1FFC\u212B\u219A\u219B\u21AE\u21CD-\u21CF\u2204\u2209\u220C\u2224\u2226\u2241\u2244\u2247\u2249\u2260\u2262\u226D-\u2271\u2274\u2275\u2278\u2279\u2280\u2281\u2284\u2285\u2288\u2289\u22AC-\u22AF\u22E0-\u22E3\u22EA-\u22ED\u2ADC\u304C\u304E\u3050\u3052\u3054\u3056\u3058\u305A\u305C\u305E\u3060\u3062\u3065\u3067\u3069\u3070\u3071\u3073\u3074\u3076\u3077\u3079\u307A\u307C\u307D\u3094\u309E\u30AC\u30AE\u30B0\u30B2\u30B4\u30B6\u30B8\u30BA\u30BC\u30BE\u30C0\u30C2\u30C5\u30C7\u30C9\u30D0\u30D1\u30D3\u30D4\u30D6\u30D7\u30D9\u30DA\u30DC\u30DD\u30F4\u30F7-\u30FA\u30FE\uAC00-\uD7A3\uFB1D\uFB1F\uFB2A-\uFB36\uFB38-\uFB3C\uFB3E\uFB40\uFB41\uFB43\uFB44\uFB46-\uFB4E]|\uD801[\uDDC9\uDDE4]|\uD804[\uDC9A\uDC9C\uDCAB\uDD2E\uDD2F\uDF4B\uDF4C\uDF83\uDF85\uDF8E\uDF91\uDFC5\uDFC7\uDFC8]|\uD805[\uDCBB\uDCBC\uDCBE\uDDBA\uDDBB]|\uD806\uDD38|\uD818[\uDD21-\uDD28]|\uD81B[\uDD68-\uDD6A]|\uD834[\uDD5E-\uDD64\uDDBB-\uDDC0]/;
   return regex$1;
 }
 var regexExports = requireRegex();
@@ -4995,33 +4995,10 @@ Object.defineProperty(IDBTransaction, 'prototype', {
   writable: false
 });
 
-function ownKeys(e, t) {
-  var r = Object.keys(e);
-  if (Object.getOwnPropertySymbols) {
-    var n = Object.getOwnPropertySymbols(e);
-    t && (n = n.filter(function (t) {
-      return Object.getOwnPropertyDescriptor(e, t).enumerable;
-    })), r.push.apply(r, n);
-  }
-  return r;
-}
-function _objectSpread2(e) {
-  for (var t = 1; t < arguments.length; t++) {
-    var r = null != arguments[t] ? arguments[t] : {};
-    t % 2 ? ownKeys(Object(r), true).forEach(function (t) {
-      _defineProperty(e, t, r[t]);
-    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(r)) : ownKeys(Object(r)).forEach(function (t) {
-      Object.defineProperty(e, t, Object.getOwnPropertyDescriptor(r, t));
-    });
-  }
-  return e;
-}
-function _typeof(e) {
-  return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (e) {
-    return typeof e;
-  } : function (e) {
-    return e && "function" == typeof Symbol && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
-  }, _typeof(e);
+function _arrayLikeToArray(e, t) {
+  (null == t || t > e.length) && (t = e.length);
+  for (var r = 0, n = Array(t); r < t; r++) n[r] = e[r];
+  return n;
 }
 function _classCallCheck(e, t) {
   if (!(e instanceof t)) throw new TypeError("Cannot call a class as a function");
@@ -5043,6 +5020,27 @@ function _defineProperty(e, t, r) {
     configurable: true,
     writable: true
   }) : e[t] = r, e;
+}
+function ownKeys(e, t) {
+  var r = Object.keys(e);
+  if (Object.getOwnPropertySymbols) {
+    var n = Object.getOwnPropertySymbols(e);
+    t && (n = n.filter(function (t) {
+      return Object.getOwnPropertyDescriptor(e, t).enumerable;
+    })), r.push.apply(r, n);
+  }
+  return r;
+}
+function _objectSpread2(e) {
+  for (var t = 1; t < arguments.length; t++) {
+    var r = null != arguments[t] ? arguments[t] : {};
+    t % 2 ? ownKeys(Object(r), true).forEach(function (t) {
+      _defineProperty(e, t, r[t]);
+    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(r)) : ownKeys(Object(r)).forEach(function (t) {
+      Object.defineProperty(e, t, Object.getOwnPropertyDescriptor(r, t));
+    });
+  }
+  return e;
 }
 function _slicedToArray(e, t) {
   return function _arrayWithHoles(e) {
@@ -5077,30 +5075,32 @@ function _slicedToArray(e, t) {
     throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
   }();
 }
-function _unsupportedIterableToArray(e, t) {
-  if (e) {
-    if ("string" == typeof e) return _arrayLikeToArray(e, t);
-    var r = Object.prototype.toString.call(e).slice(8, -1);
-    return "Object" === r && e.constructor && (r = e.constructor.name), "Map" === r || "Set" === r ? Array.from(e) : "Arguments" === r || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(r) ? _arrayLikeToArray(e, t) : void 0;
-  }
-}
-function _arrayLikeToArray(e, t) {
-  (null == t || t > e.length) && (t = e.length);
-  for (var r = 0, n = new Array(t); r < t; r++) n[r] = e[r];
-  return n;
-}
 function _toPropertyKey(e) {
   var t = function _toPrimitive(e, t) {
-    if ("object" != typeof e || null === e) return e;
+    if ("object" != typeof e || !e) return e;
     var r = e[Symbol.toPrimitive];
     if (void 0 !== r) {
       var n = r.call(e, t);
       if ("object" != typeof n) return n;
       throw new TypeError("@@toPrimitive must return a primitive value.");
     }
-    return (String )(e);
+    return String(e);
   }(e, "string");
-  return "symbol" == typeof t ? t : String(t);
+  return "symbol" == typeof t ? t : t + "";
+}
+function _typeof(e) {
+  return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (e) {
+    return typeof e;
+  } : function (e) {
+    return e && "function" == typeof Symbol && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
+  }, _typeof(e);
+}
+function _unsupportedIterableToArray(e, t) {
+  if (e) {
+    if ("string" == typeof e) return _arrayLikeToArray(e, t);
+    var r = {}.toString.call(e).slice(8, -1);
+    return "Object" === r && e.constructor && (r = e.constructor.name), "Map" === r || "Set" === r ? Array.from(e) : "Arguments" === r || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(r) ? _arrayLikeToArray(e, t) : void 0;
+  }
 }
 var e = _createClass(function TypesonPromise(e) {
   _classCallCheck(this, TypesonPromise), this.p = new Promise(e);
@@ -5183,7 +5183,7 @@ function getByKeyPath(e, t) {
   if ("" === t) return e;
   if (null === e || "object" !== _typeof(e)) throw new TypeError("Unexpected non-object type");
   var r = t.indexOf(".");
-  if (r > -1) {
+  if (-1 !== r) {
     var n = e[unescapeKeyPathComponent(t.slice(0, r))];
     return void 0 === n ? void 0 : getByKeyPath(n, t.slice(r + 1));
   }
@@ -5192,8 +5192,9 @@ function getByKeyPath(e, t) {
 function setAtKeyPath(e, t, r) {
   if ("" === t) return r;
   if (!e || "object" !== _typeof(e)) throw new TypeError("Unexpected non-object type");
+  if ("__proto__" === t) throw new TypeError("Invalid property");
   var n = t.indexOf(".");
-  return n > -1 ? setAtKeyPath(e[unescapeKeyPathComponent(t.slice(0, n))], t.slice(n + 1), r) : (e[unescapeKeyPathComponent(t)] = r, e);
+  return -1 !== n ? setAtKeyPath(e[unescapeKeyPathComponent(t.slice(0, n))], t.slice(n + 1), r) : (e[unescapeKeyPathComponent(t)] = r, e);
 }
 function getJSONType(e) {
   return null === e ? "null" : Array.isArray(e) ? "array" : _typeof(e);
@@ -5222,498 +5223,494 @@ function nestedPathsFirst(e, t) {
     o = null !== (n = t.keypath.match(/\./g)) && void 0 !== n ? n : 0;
   return a && (a = a.length), o && (o = o.length), a > o ? -1 : a < o ? 1 : e.keypath < t.keypath ? -1 : e.keypath > t.keypath ? 1 : 0;
 }
-var c = function () {
-    function Typeson(e) {
-      _classCallCheck(this, Typeson), this.options = e, this.plainObjectReplacers = [], this.nonplainObjectReplacers = [], this.revivers = {}, this.types = {};
+var c = _createClass(function Typeson(e) {
+    _classCallCheck(this, Typeson), this.options = e, this.plainObjectReplacers = [], this.nonplainObjectReplacers = [], this.revivers = {}, this.types = {};
+  }, [{
+    key: "stringify",
+    value: function stringify(e, t, r, n) {
+      n = _objectSpread2(_objectSpread2(_objectSpread2({}, this.options), n), {}, {
+        stringification: true
+      });
+      var a = this.encapsulate(e, null, n);
+      return o(a) ? JSON.stringify(a[0], t, r) : a.then(function (e) {
+        return JSON.stringify(e, t, r);
+      });
     }
-    return _createClass(Typeson, [{
-      key: "stringify",
-      value: function stringify(e, t, r, n) {
-        n = _objectSpread2(_objectSpread2(_objectSpread2({}, this.options), n), {}, {
-          stringification: true
-        });
-        var a = this.encapsulate(e, null, n);
-        return o(a) ? JSON.stringify(a[0], t, r) : a.then(function (e) {
-          return JSON.stringify(e, t, r);
-        });
-      }
-    }, {
-      key: "stringifySync",
-      value: function stringifySync(e, t, r, n) {
-        return this.stringify(e, t, r, _objectSpread2(_objectSpread2({
-          throwOnBadSyncType: true
-        }, n), {}, {
+  }, {
+    key: "stringifySync",
+    value: function stringifySync(e, t, r, n) {
+      return this.stringify(e, t, r, _objectSpread2(_objectSpread2({
+        throwOnBadSyncType: true
+      }, n), {}, {
+        sync: true
+      }));
+    }
+  }, {
+    key: "stringifyAsync",
+    value: function stringifyAsync(e, t, r, n) {
+      return this.stringify(e, t, r, _objectSpread2(_objectSpread2({
+        throwOnBadSyncType: true
+      }, n), {}, {
+        sync: false
+      }));
+    }
+  }, {
+    key: "parse",
+    value: function parse(e, t, r) {
+      return r = _objectSpread2(_objectSpread2(_objectSpread2({}, this.options), r), {}, {
+        parse: true
+      }), this.revive(JSON.parse(e, t), r);
+    }
+  }, {
+    key: "parseSync",
+    value: function parseSync(e, t, r) {
+      return this.parse(e, t, _objectSpread2(_objectSpread2({
+        throwOnBadSyncType: true
+      }, r), {}, {
+        sync: true
+      }));
+    }
+  }, {
+    key: "parseAsync",
+    value: function parseAsync(e, t, r) {
+      return this.parse(e, t, _objectSpread2(_objectSpread2({
+        throwOnBadSyncType: true
+      }, r), {}, {
+        sync: false
+      }));
+    }
+  }, {
+    key: "specialTypeNames",
+    value: function specialTypeNames(e, t) {
+      var r = arguments.length > 2 && void 0 !== arguments[2] ? arguments[2] : {};
+      return r.returnTypeNames = true, this.encapsulate(e, t, r);
+    }
+  }, {
+    key: "rootTypeName",
+    value: function rootTypeName(e, t) {
+      var r = arguments.length > 2 && void 0 !== arguments[2] ? arguments[2] : {};
+      return r.iterateNone = true, this.encapsulate(e, t, r);
+    }
+  }, {
+    key: "encapsulate",
+    value: function encapsulate(t, r, c) {
+      var s = this,
+        u = _objectSpread2(_objectSpread2({
           sync: true
-        }));
-      }
-    }, {
-      key: "stringifyAsync",
-      value: function stringifyAsync(e, t, r, n) {
-        return this.stringify(e, t, r, _objectSpread2(_objectSpread2({
-          throwOnBadSyncType: true
-        }, n), {}, {
-          sync: false
-        }));
-      }
-    }, {
-      key: "parse",
-      value: function parse(e, t, r) {
-        return r = _objectSpread2(_objectSpread2(_objectSpread2({}, this.options), r), {}, {
-          parse: true
-        }), this.revive(JSON.parse(e, t), r);
-      }
-    }, {
-      key: "parseSync",
-      value: function parseSync(e, t, r) {
-        return this.parse(e, t, _objectSpread2(_objectSpread2({
-          throwOnBadSyncType: true
-        }, r), {}, {
-          sync: true
-        }));
-      }
-    }, {
-      key: "parseAsync",
-      value: function parseAsync(e, t, r) {
-        return this.parse(e, t, _objectSpread2(_objectSpread2({
-          throwOnBadSyncType: true
-        }, r), {}, {
-          sync: false
-        }));
-      }
-    }, {
-      key: "specialTypeNames",
-      value: function specialTypeNames(e, t) {
-        var r = arguments.length > 2 && void 0 !== arguments[2] ? arguments[2] : {};
-        return r.returnTypeNames = true, this.encapsulate(e, t, r);
-      }
-    }, {
-      key: "rootTypeName",
-      value: function rootTypeName(e, t) {
-        var r = arguments.length > 2 && void 0 !== arguments[2] ? arguments[2] : {};
-        return r.iterateNone = true, this.encapsulate(e, t, r);
-      }
-    }, {
-      key: "encapsulate",
-      value: function encapsulate(t, r, c) {
-        var s = this,
-          u = _objectSpread2(_objectSpread2({
-            sync: true
-          }, this.options), c),
-          l = u.sync,
-          f = {},
-          y = [],
-          p = [],
-          d = [],
-          v = !("cyclic" in u) || u.cyclic,
-          b = u.encapsulateObserver,
-          m = function finish(e) {
-            var t = Object.values(f);
-            if (u.iterateNone) return t.length ? t[0] : getJSONType(e);
-            if (t.length) {
-              if (u.returnTypeNames) return function _toConsumableArray(e) {
-                return function _arrayWithoutHoles(e) {
-                  if (Array.isArray(e)) return _arrayLikeToArray(e);
-                }(e) || function _iterableToArray(e) {
-                  if ("undefined" != typeof Symbol && null != e[Symbol.iterator] || null != e["@@iterator"]) return Array.from(e);
-                }(e) || _unsupportedIterableToArray(e) || function _nonIterableSpread() {
-                  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-                }();
-              }(new Set(t));
-              e && isPlainObject(e) && !a(e, "$types") ? e.$types = f : e = {
-                $: e,
-                $types: {
-                  $: f
-                }
-              };
-            } else isObject(e) && a(e, "$types") && (e = {
+        }, this.options), c),
+        l = u.sync,
+        f = {},
+        y = [],
+        p = [],
+        d = [],
+        v = !("cyclic" in u) || u.cyclic,
+        b = u.encapsulateObserver,
+        m = function finish(e) {
+          var t = Object.values(f);
+          if (u.iterateNone) return t.length ? t[0] : getJSONType(e);
+          if (t.length) {
+            if (u.returnTypeNames) return function _toConsumableArray(e) {
+              return function _arrayWithoutHoles(e) {
+                if (Array.isArray(e)) return _arrayLikeToArray(e);
+              }(e) || function _iterableToArray(e) {
+                if ("undefined" != typeof Symbol && null != e[Symbol.iterator] || null != e["@@iterator"]) return Array.from(e);
+              }(e) || _unsupportedIterableToArray(e) || function _nonIterableSpread() {
+                throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+              }();
+            }(new Set(t));
+            e && isPlainObject(e) && !a(e, "$types") ? e.$types = f : e = {
               $: e,
-              $types: true
-            });
-            return !u.returnTypeNames && e;
-          },
-          h = _async(function (t, r) {
-            return _await(Promise.all(r.map(function (e) {
-              return e[1].p;
-            })), function (n) {
-              return _await(Promise.all(n.map(_async(function (n) {
-                var a = false,
-                  o = [],
-                  i = _slicedToArray(r.splice(0, 1), 1),
-                  c = _slicedToArray(i[0], 7),
-                  s = c[0],
-                  u = c[2],
-                  l = c[3],
-                  f = c[4],
-                  y = c[5],
-                  p = c[6],
-                  d = O(s, n, u, l, o, true, p),
-                  v = hasConstructorOf(d, e);
-                return function _invoke(e, t) {
-                  var r = e();
-                  return r && r.then ? r.then(t) : t(r);
-                }(function () {
-                  if (s && v) return _await(d.p, function (e) {
-                    f[y] = e;
-                    var r = h(t, o);
-                    return a = true, r;
-                  });
-                }, function (e) {
-                  return a ? e : (s ? f[y] = d : t = v ? d.p : d, h(t, o));
+              $types: {
+                $: f
+              }
+            };
+          } else isObject(e) && a(e, "$types") && (e = {
+            $: e,
+            $types: true
+          });
+          return !u.returnTypeNames && e;
+        },
+        h = _async(function (t, r) {
+          return _await(Promise.all(r.map(function (e) {
+            return e[1].p;
+          })), function (n) {
+            return _await(Promise.all(n.map(_async(function (n) {
+              var a = false,
+                o = [],
+                i = _slicedToArray(r.splice(0, 1), 1),
+                c = _slicedToArray(i[0], 7),
+                s = c[0],
+                u = c[2],
+                l = c[3],
+                f = c[4],
+                y = c[5],
+                p = c[6],
+                d = O(s, n, u, l, o, true, p),
+                v = hasConstructorOf(d, e);
+              return function _invoke(e, t) {
+                var r = e();
+                return r && r.then ? r.then(t) : t(r);
+              }(function () {
+                if (s && v) return _await(d.p, function (e) {
+                  f[y] = e;
+                  var r = h(t, o);
+                  return a = true, r;
                 });
-              }))), function () {
-                return t;
+              }, function (e) {
+                return a ? e : (s ? f[y] = d : t = v ? d.p : d, h(t, o));
               });
+            }))), function () {
+              return t;
             });
-          }),
-          g = function _adaptBuiltinStateObjectProperties(e, t, r) {
-            Object.assign(e, t);
-            var n = i.map(function (t) {
-              var r = e[t];
-              return delete e[t], r;
-            });
-            r(), i.forEach(function (t, r) {
-              e[t] = n[r];
-            });
-          },
-          O = function _encapsulate(t, r, i, c, l, d, v) {
-            var m,
-              h = {},
-              O = _typeof(r),
-              _ = b ? function (n) {
-                var a,
-                  o = null !== (a = null != v ? v : c.type) && void 0 !== a ? a : getJSONType(r);
-                b(Object.assign(null != n ? n : h, {
-                  keypath: t,
-                  value: r,
-                  cyclic: i,
-                  stateObj: c,
-                  promisesData: l,
-                  resolvingTypesonPromise: d,
-                  awaitingTypesonPromise: hasConstructorOf(r, e)
-                }, {
-                  type: o
-                }));
-              } : null;
-            if (["string", "boolean", "number", "undefined"].includes(O)) return void 0 === r || Number.isNaN(r) || r === Number.NEGATIVE_INFINITY || r === Number.POSITIVE_INFINITY || 0 === r ? (m = c.replaced ? r : w(t, r, c, l, false, d, _)) !== r && (h = {
-              replaced: m
-            }) : m = r, _ && _(), m;
-            if (null === r) return _ && _(), r;
-            if (i && !c.iterateIn && !c.iterateUnsetNumeric && r && "object" === _typeof(r)) {
-              var A = y.indexOf(r);
-              if (!(A < 0)) return f[t] = "#", _ && _({
-                cyclicKeypath: p[A]
-              }), "#" + p[A];
-              true === i && (y.push(r), p.push(t));
-            }
-            var S,
-              j,
-              T = isPlainObject(r),
-              I = o(r),
-              N = (T || I) && (!s.plainObjectReplacers.length || c.replaced) || c.iterateIn ? r : w(t, r, c, l, T || I, null, _);
-            if (N !== r ? (m = N, h = {
-              replaced: N
-            }) : "" === t && hasConstructorOf(r, e) ? (l.push([t, r, i, c, void 0, void 0, c.type]), m = r) : I && "object" !== c.iterateIn || "array" === c.iterateIn ? (S = new Array(r.length), h = {
-              clone: S
-            }) : (["function", "symbol"].includes(_typeof(r)) || "toJSON" in r || hasConstructorOf(r, e) || hasConstructorOf(r, Promise) || hasConstructorOf(r, ArrayBuffer)) && !T && "object" !== c.iterateIn ? m = r : (S = {}, c.addLength && (S.length = r.length), h = {
-              clone: S
-            }), _ && _(), u.iterateNone) return null !== (j = S) && void 0 !== j ? j : m;
-            if (!S) return m;
-            if (c.iterateIn) {
-              var P = function _loop(n) {
-                var o = {
-                  ownKeys: a(r, n)
-                };
-                g(c, o, function () {
-                  var a = t + (t ? "." : "") + escapeKeyPathComponent(n),
-                    o = _encapsulate(a, r[n], Boolean(i), c, l, d);
-                  hasConstructorOf(o, e) ? l.push([a, o, Boolean(i), c, S, n, c.type]) : void 0 !== o && (S[n] = o);
-                });
+          });
+        }),
+        g = function _adaptBuiltinStateObjectProperties(e, t, r) {
+          Object.assign(e, t);
+          var n = i.map(function (t) {
+            var r = e[t];
+            return delete e[t], r;
+          });
+          r(), i.forEach(function (t, r) {
+            e[t] = n[r];
+          });
+        },
+        O = function _encapsulate(t, r, i, c, l, d, v) {
+          var m,
+            h = {},
+            _ = _typeof(r),
+            A = b ? function (n) {
+              var a,
+                o = null !== (a = null != v ? v : c.type) && void 0 !== a ? a : getJSONType(r);
+              b(Object.assign(null != n ? n : h, {
+                keypath: t,
+                value: r,
+                cyclic: i,
+                stateObj: c,
+                promisesData: l,
+                resolvingTypesonPromise: d,
+                awaitingTypesonPromise: hasConstructorOf(r, e)
+              }, {
+                type: o
+              }));
+            } : null;
+          if (["string", "boolean", "number", "undefined"].includes(_)) return void 0 === r || Number.isNaN(r) || r === Number.NEGATIVE_INFINITY || r === Number.POSITIVE_INFINITY || 0 === r ? (m = c.replaced ? r : w(t, r, c, l, false, d, A)) !== r && (h = {
+            replaced: m
+          }) : m = r, A && A(), m;
+          if (null === r) return A && A(), r;
+          if (i && !c.iterateIn && !c.iterateUnsetNumeric && r && "object" === _typeof(r)) {
+            var S = y.indexOf(r);
+            if (-1 !== S) return f[t] = "#", A && A({
+              cyclicKeypath: p[S]
+            }), "#" + p[S];
+            true === i && (y.push(r), p.push(t));
+          }
+          var j,
+            T = isPlainObject(r),
+            I = o(r),
+            N = (T || I) && (!s.plainObjectReplacers.length || c.replaced) || c.iterateIn ? r : w(t, r, c, l, T || I, null, A);
+          if (N !== r ? (m = N, h = {
+            replaced: N
+          }) : "" === t && hasConstructorOf(r, e) ? (l.push([t, r, i, c, void 0, void 0, c.type]), m = r) : I && "object" !== c.iterateIn || "array" === c.iterateIn ? (j = new Array(r.length), h = {
+            clone: j
+          }) : (["function", "symbol"].includes(_typeof(r)) || "toJSON" in r || hasConstructorOf(r, e) || hasConstructorOf(r, Promise) || hasConstructorOf(r, ArrayBuffer)) && !T && "object" !== c.iterateIn ? m = r : (j = {}, c.addLength && (j.length = r.length), h = {
+            clone: j
+          }), A && A(), u.iterateNone) return null != j ? j : m;
+          if (!j) return m;
+          if (c.iterateIn) {
+            var P = function _loop(n) {
+              var o = {
+                ownKeys: a(r, n)
               };
-              for (var x in r) P(x);
-              _ && _({
-                endIterateIn: true,
-                end: true
+              g(c, o, function () {
+                var a = t + (t ? "." : "") + escapeKeyPathComponent(n),
+                  o = O(a, r[n], Boolean(i), c, l, d);
+                hasConstructorOf(o, e) ? l.push([a, o, Boolean(i), c, j, n, c.type]) : void 0 !== o && (j[n] = o);
               });
-            } else n(r).forEach(function (n) {
-              var a = t + (t ? "." : "") + escapeKeyPathComponent(n);
-              g(c, {
-                ownKeys: true
-              }, function () {
-                var t = _encapsulate(a, r[n], Boolean(i), c, l, d);
-                hasConstructorOf(t, e) ? l.push([a, t, Boolean(i), c, S, n, c.type]) : void 0 !== t && (S[n] = t);
-              });
-            }), _ && _({
-              endIterateOwn: true,
+            };
+            for (var x in r) P(x);
+            A && A({
+              endIterateIn: true,
               end: true
             });
-            if (c.iterateUnsetNumeric) {
-              for (var E = r.length, C = function _loop2(n) {
-                  if (!(n in r)) {
-                    var a = "".concat(t).concat(t ? "." : "").concat(n);
-                    g(c, {
-                      ownKeys: false
-                    }, function () {
-                      var t = _encapsulate(a, void 0, Boolean(i), c, l, d);
-                      hasConstructorOf(t, e) ? l.push([a, t, Boolean(i), c, S, n, c.type]) : void 0 !== t && (S[n] = t);
-                    });
-                  }
-                }, B = 0; B < E; B++) C(B);
-              _ && _({
-                endIterateUnsetNumeric: true,
-                end: true
-              });
-            }
-            return S;
-          },
-          w = function replace(e, t, r, n, a, o, i) {
-            for (var c = a ? s.plainObjectReplacers : s.nonplainObjectReplacers, u = c.length; u--;) {
-              var y = c[u];
-              if (y.test(t, r)) {
-                var p = y.type;
-                if (s.revivers[p]) {
-                  var d = f[e];
-                  f[e] = d ? [p].concat(d) : p;
-                }
-                if (Object.assign(r, {
-                  type: p,
-                  replaced: true
-                }), (l || !y.replaceAsync) && !y.replace) return i && i({
-                  typeDetected: true
-                }), O(e, t, v && "readonly", r, n, o, p);
-                i && i({
-                  replacing: true
-                });
-                var b = void 0;
-                if (l || !y.replaceAsync) {
-                  if (void 0 === y.replace) throw new TypeError("Missing replacer");
-                  b = y.replace(t, r);
-                } else b = y.replaceAsync(t, r);
-                return O(e, b, v && "readonly", r, n, o, p);
-              }
-            }
-            return t;
-          },
-          _ = O("", t, v, null != r ? r : {}, d);
-        if (d.length) return l && u.throwOnBadSyncType ? function () {
-          throw new TypeError("Sync method requested but async result obtained");
-        }() : Promise.resolve(h(_, d)).then(m);
-        if (!l && u.throwOnBadSyncType) throw new TypeError("Async method requested but sync result obtained");
-        return u.stringification && l ? [m(_)] : l ? m(_) : Promise.resolve(m(_));
-      }
-    }, {
-      key: "encapsulateSync",
-      value: function encapsulateSync(e, t, r) {
-        return this.encapsulate(e, t, _objectSpread2(_objectSpread2({
-          throwOnBadSyncType: true
-        }, r), {}, {
-          sync: true
-        }));
-      }
-    }, {
-      key: "encapsulateAsync",
-      value: function encapsulateAsync(e, t, r) {
-        return this.encapsulate(e, t, _objectSpread2(_objectSpread2({
-          throwOnBadSyncType: true
-        }, r), {}, {
-          sync: false
-        }));
-      }
-    }, {
-      key: "revive",
-      value: function revive(t, r) {
-        var a = this,
-          i = _objectSpread2(_objectSpread2({
-            sync: true
-          }, this.options), r),
-          c = i.sync;
-        function finishRevival(e) {
-          if (c) return e;
-          if (i.throwOnBadSyncType) throw new TypeError("Async method requested but sync result obtained");
-          return Promise.resolve(e);
-        }
-        if (!t || "object" !== _typeof(t) || Array.isArray(t)) return finishRevival(t);
-        var u = t.$types;
-        if (true === u) return finishRevival(t.$);
-        if (!u || "object" !== _typeof(u) || Array.isArray(u)) return finishRevival(t);
-        var l = [],
-          f = {},
-          y = true;
-        u.$ && isPlainObject(u.$) && (t = t.$, u = u.$, y = false);
-        var p = function executeReviver(e, t) {
-            var r,
-              n = _slicedToArray(null !== (r = a.revivers[e]) && void 0 !== r ? r : [], 1)[0];
-            if (!n) throw new Error("Unregistered type: " + e);
-            if (c && !("revive" in n)) return t;
-            if (!c && n.reviveAsync) return n.reviveAsync(t, f);
-            if (n.revive) return n.revive(t, f);
-            throw new Error("Missing reviver");
-          },
-          d = [];
-        function checkUndefined(e) {
-          return hasConstructorOf(e, s) ? void 0 : e;
-        }
-        var v,
-          b = function revivePlainObjects() {
-            var r = [];
-            if (!u) throw new Error("Found bad `types`");
-            if (Object.entries(u).forEach(function (e) {
-              var t = _slicedToArray(e, 2),
-                n = t[0],
-                o = t[1];
-              "#" !== o && [].concat(o).forEach(function (e) {
-                var t;
-                _slicedToArray(null !== (t = a.revivers[e]) && void 0 !== t ? t : [null, {}], 2)[1].plain && (r.push({
-                  keypath: n,
-                  type: e
-                }), delete u[n]);
-              });
-            }), r.length) return r.sort(nestedPathsFirst).reduce(function reducer(r, n) {
-              var a = n.keypath,
-                o = n.type;
-              if (isThenable(r)) return r.then(function (e) {
-                return reducer(e, {
-                  keypath: a,
-                  type: o
-                });
-              });
-              var i = getByKeyPath(t, a);
-              if (hasConstructorOf(i = p(o, i), e)) return i.then(function (e) {
-                var r = setAtKeyPath(t, a, e);
-                r === e && (t = r);
-              });
-              var c = setAtKeyPath(t, a, i);
-              c === i && (t = c);
-            }, void 0);
-          }();
-        return hasConstructorOf(b, e) ? v = b.then(function () {
-          return t;
-        }) : (v = function _revive(t, r, a, i, c) {
-          if (!y || "$types" !== t) {
-            var f = u[t],
-              v = o(r);
-            if (v || isPlainObject(r)) {
-              var b = v ? new Array(r.length) : {};
-              for (n(r).forEach(function (n) {
-                var o = _revive(t + (t ? "." : "") + escapeKeyPathComponent(n), r[n], null != a ? a : b, b, n),
-                  i = function set(e) {
-                    return hasConstructorOf(e, s) ? b[n] = void 0 : void 0 !== e && (b[n] = e), e;
-                  };
-                hasConstructorOf(o, e) ? d.push(o.then(function (e) {
-                  return i(e);
-                })) : i(o);
-              }), r = b; l.length;) {
-                var m = _slicedToArray(l[0], 4),
-                  h = m[0],
-                  g = m[1],
-                  O = m[2],
-                  w = m[3],
-                  _ = getByKeyPath(h, g);
-                if (void 0 === _) break;
-                O[w] = _, l.splice(0, 1);
-              }
-            }
-            if (!f) return r;
-            if ("#" === f) {
-              var A = getByKeyPath(a, r.slice(1));
-              return void 0 === A && l.push([a, r.slice(1), i, c]), A;
-            }
-            return [].concat(f).reduce(function reducer(t, r) {
-              if (hasConstructorOf(t, e)) return t.then(function (e) {
-                return reducer(e, r);
-              });
-              if ("string" != typeof r) throw new TypeError("Bad type JSON");
-              return p(r, t);
-            }, r);
-          }
-        }("", t, null), d.length && (v = e.resolve(v).then(function (t) {
-          return e.all([t].concat(d));
-        }).then(function (e) {
-          return _slicedToArray(e, 1)[0];
-        }))), isThenable(v) ? c && i.throwOnBadSyncType ? function () {
-          throw new TypeError("Sync method requested but async result obtained");
-        }() : hasConstructorOf(v, e) ? v.p.then(checkUndefined) : v : !c && i.throwOnBadSyncType ? function () {
-          throw new TypeError("Async method requested but sync result obtained");
-        }() : c ? checkUndefined(v) : Promise.resolve(checkUndefined(v));
-      }
-    }, {
-      key: "reviveSync",
-      value: function reviveSync(e, t) {
-        return this.revive(e, _objectSpread2(_objectSpread2({
-          throwOnBadSyncType: true
-        }, t), {}, {
-          sync: true
-        }));
-      }
-    }, {
-      key: "reviveAsync",
-      value: function reviveAsync(e, t) {
-        return this.revive(e, _objectSpread2(_objectSpread2({
-          throwOnBadSyncType: true
-        }, t), {}, {
-          sync: false
-        }));
-      }
-    }, {
-      key: "register",
-      value: function register(e, t) {
-        var r = this,
-          a = null != t ? t : {},
-          i = function R(e) {
-            o(e) ? e.forEach(function (e) {
-              return R(e);
-            }) : n(e).forEach(function (t) {
-              var n;
-              if ("#" === t) throw new TypeError("# cannot be used as a type name as it is reserved for cyclic objects");
-              if (u.includes(t)) throw new TypeError("Plain JSON object types are reserved as type names");
-              var i = e[t],
-                c = i && "function" != typeof i && !Array.isArray(i) && i.testPlainObjects ? r.plainObjectReplacers : r.nonplainObjectReplacers,
-                s = c.filter(function (e) {
-                  return e.type === t;
-                });
-              if (s.length && (c.splice(c.indexOf(s[0]), 1), delete r.revivers[t], delete r.types[t]), "function" == typeof i) {
-                var l = i;
-                i = {
-                  test: function test(e) {
-                    return e && e.constructor === l;
-                  },
-                  replace: function replace(e) {
-                    return _objectSpread2({}, e);
-                  },
-                  revive: function revive(e) {
-                    return Object.assign(Object.create(l.prototype), e);
-                  }
-                };
-              } else if (o(i)) {
-                var f = _slicedToArray(i, 3);
-                i = {
-                  test: f[0],
-                  replace: f[1],
-                  revive: f[2]
-                };
-              }
-              if (null !== (n = i) && void 0 !== n && n.test) {
-                var y = {
-                  type: t,
-                  test: i.test.bind(i)
-                };
-                i.replace && (y.replace = i.replace.bind(i)), i.replaceAsync && (y.replaceAsync = i.replaceAsync.bind(i));
-                var p = "number" == typeof a.fallback ? a.fallback : a.fallback ? 0 : Number.POSITIVE_INFINITY;
-                if (i.testPlainObjects ? r.plainObjectReplacers.splice(p, 0, y) : r.nonplainObjectReplacers.splice(p, 0, y), i.revive || i.reviveAsync) {
-                  var d = {};
-                  i.revive && (d.revive = i.revive.bind(i)), i.reviveAsync && (d.reviveAsync = i.reviveAsync.bind(i)), r.revivers[t] = [d, {
-                    plain: i.testPlainObjects
-                  }];
-                }
-                r.types[t] = i;
-              }
+          } else n(r).forEach(function (n) {
+            var a = t + (t ? "." : "") + escapeKeyPathComponent(n);
+            g(c, {
+              ownKeys: true
+            }, function () {
+              var t = O(a, r[n], Boolean(i), c, l, d);
+              hasConstructorOf(t, e) ? l.push([a, t, Boolean(i), c, j, n, c.type]) : void 0 !== t && (j[n] = t);
             });
-          };
-        return [].concat(e).forEach(function (e) {
-          return i(e);
-        }), this;
+          }), A && A({
+            endIterateOwn: true,
+            end: true
+          });
+          if (c.iterateUnsetNumeric) {
+            for (var E = r.length, C = function _loop2(n) {
+                if (!(n in r)) {
+                  var a = "".concat(t).concat(t ? "." : "").concat(String(n));
+                  g(c, {
+                    ownKeys: false
+                  }, function () {
+                    var t = O(a, void 0, Boolean(i), c, l, d);
+                    hasConstructorOf(t, e) ? l.push([a, t, Boolean(i), c, j, n, c.type]) : void 0 !== t && (j[n] = t);
+                  });
+                }
+              }, B = 0; B < E; B++) C(B);
+            A && A({
+              endIterateUnsetNumeric: true,
+              end: true
+            });
+          }
+          return j;
+        },
+        w = function replace(e, t, r, n, a, o, i) {
+          for (var c = a ? s.plainObjectReplacers : s.nonplainObjectReplacers, u = c.length; u--;) {
+            var y = c[u];
+            if (y.test(t, r)) {
+              var p = y.type;
+              if (s.revivers[p]) {
+                var d = f[e];
+                f[e] = d ? [p].concat(d) : p;
+              }
+              if (Object.assign(r, {
+                type: p,
+                replaced: true
+              }), (l || !y.replaceAsync) && !y.replace) return i && i({
+                typeDetected: true
+              }), O(e, t, v && "readonly", r, n, o, p);
+              i && i({
+                replacing: true
+              });
+              var b = void 0;
+              if (l || !y.replaceAsync) {
+                if (void 0 === y.replace) throw new TypeError("Missing replacer");
+                b = y.replace(t, r);
+              } else b = y.replaceAsync(t, r);
+              return O(e, b, v && "readonly", r, n, o, p);
+            }
+          }
+          return t;
+        },
+        _ = O("", t, v, null != r ? r : {}, d);
+      if (d.length) return l && u.throwOnBadSyncType ? function () {
+        throw new TypeError("Sync method requested but async result obtained");
+      }() : Promise.resolve(h(_, d)).then(m);
+      if (!l && u.throwOnBadSyncType) throw new TypeError("Async method requested but sync result obtained");
+      return u.stringification && l ? [m(_)] : l ? m(_) : Promise.resolve(m(_));
+    }
+  }, {
+    key: "encapsulateSync",
+    value: function encapsulateSync(e, t, r) {
+      return this.encapsulate(e, t, _objectSpread2(_objectSpread2({
+        throwOnBadSyncType: true
+      }, r), {}, {
+        sync: true
+      }));
+    }
+  }, {
+    key: "encapsulateAsync",
+    value: function encapsulateAsync(e, t, r) {
+      return this.encapsulate(e, t, _objectSpread2(_objectSpread2({
+        throwOnBadSyncType: true
+      }, r), {}, {
+        sync: false
+      }));
+    }
+  }, {
+    key: "revive",
+    value: function revive(t, r) {
+      var a = this,
+        i = _objectSpread2(_objectSpread2({
+          sync: true
+        }, this.options), r),
+        c = i.sync;
+      function finishRevival(e) {
+        if (c) return e;
+        if (i.throwOnBadSyncType) throw new TypeError("Async method requested but sync result obtained");
+        return Promise.resolve(e);
       }
-    }]), Typeson;
-  }(),
+      if (!t || "object" !== _typeof(t) || Array.isArray(t)) return finishRevival(t);
+      var u = t.$types;
+      if (true === u) return finishRevival(t.$);
+      if (!u || "object" !== _typeof(u) || Array.isArray(u)) return finishRevival(t);
+      var l = [],
+        f = {},
+        y = true;
+      u.$ && isPlainObject(u.$) && (t = t.$, u = u.$, y = false);
+      var p = function executeReviver(e, t) {
+          var r,
+            n = _slicedToArray(null !== (r = a.revivers[e]) && void 0 !== r ? r : [], 1)[0];
+          if (!n) throw new Error("Unregistered type: " + e);
+          if (c && !("revive" in n)) return t;
+          if (!c && n.reviveAsync) return n.reviveAsync(t, f);
+          if (n.revive) return n.revive(t, f);
+          throw new Error("Missing reviver");
+        },
+        d = [];
+      function checkUndefined(e) {
+        return hasConstructorOf(e, s) ? void 0 : e;
+      }
+      var v,
+        b = function revivePlainObjects() {
+          var r = [];
+          if (!u) throw new Error("Found bad `types`");
+          if (Object.entries(u).forEach(function (e) {
+            var t = _slicedToArray(e, 2),
+              n = t[0],
+              o = t[1];
+            "#" !== o && [].concat(o).forEach(function (e) {
+              var t;
+              _slicedToArray(null !== (t = a.revivers[e]) && void 0 !== t ? t : [null, {}], 2)[1].plain && (r.push({
+                keypath: n,
+                type: e
+              }), delete u[n]);
+            });
+          }), r.length) return r.sort(nestedPathsFirst), r.reduce(function reducer(r, n) {
+            var a = n.keypath,
+              o = n.type;
+            if (isThenable(r)) return r.then(function (e) {
+              return reducer(e, {
+                keypath: a,
+                type: o
+              });
+            });
+            var i = getByKeyPath(t, a);
+            if (hasConstructorOf(i = p(o, i), e)) return i.then(function (e) {
+              var r = setAtKeyPath(t, a, e);
+              r === e && (t = r);
+            });
+            var c = setAtKeyPath(t, a, i);
+            c === i && (t = c);
+          }, void 0);
+        }();
+      return hasConstructorOf(b, e) ? v = b.then(function () {
+        return t;
+      }) : (v = function _revive(t, r, a, i, c) {
+        if (!y || "$types" !== t) {
+          var f = u[t],
+            v = o(r);
+          if (v || isPlainObject(r)) {
+            var b = v ? new Array(r.length) : {};
+            for (n(r).forEach(function (n) {
+              var o = _revive(t + (t ? "." : "") + escapeKeyPathComponent(n), r[n], null != a ? a : b, b, n),
+                i = function set(e) {
+                  return hasConstructorOf(e, s) ? b[n] = void 0 : void 0 !== e && (b[n] = e), e;
+                };
+              hasConstructorOf(o, e) ? d.push(o.then(function (e) {
+                return i(e);
+              })) : i(o);
+            }), r = b; l.length;) {
+              var m = _slicedToArray(l[0], 4),
+                h = m[0],
+                g = m[1],
+                O = m[2],
+                w = m[3],
+                _ = getByKeyPath(h, g);
+              if (void 0 === _) break;
+              O[w] = _, l.splice(0, 1);
+            }
+          }
+          if (!f) return r;
+          if ("#" === f) {
+            var A = getByKeyPath(a, r.slice(1));
+            return void 0 === A && l.push([a, r.slice(1), i, c]), A;
+          }
+          return [].concat(f).reduce(function reducer(t, r) {
+            if (hasConstructorOf(t, e)) return t.then(function (e) {
+              return reducer(e, r);
+            });
+            if ("string" != typeof r) throw new TypeError("Bad type JSON");
+            return p(r, t);
+          }, r);
+        }
+      }("", t, null), d.length && (v = e.resolve(v).then(function (t) {
+        return e.all([t].concat(d));
+      }).then(function (e) {
+        return _slicedToArray(e, 1)[0];
+      }))), isThenable(v) ? c && i.throwOnBadSyncType ? function () {
+        throw new TypeError("Sync method requested but async result obtained");
+      }() : hasConstructorOf(v, e) ? v.p.then(checkUndefined) : v : !c && i.throwOnBadSyncType ? function () {
+        throw new TypeError("Async method requested but sync result obtained");
+      }() : c ? checkUndefined(v) : Promise.resolve(checkUndefined(v));
+    }
+  }, {
+    key: "reviveSync",
+    value: function reviveSync(e, t) {
+      return this.revive(e, _objectSpread2(_objectSpread2({
+        throwOnBadSyncType: true
+      }, t), {}, {
+        sync: true
+      }));
+    }
+  }, {
+    key: "reviveAsync",
+    value: function reviveAsync(e, t) {
+      return this.revive(e, _objectSpread2(_objectSpread2({
+        throwOnBadSyncType: true
+      }, t), {}, {
+        sync: false
+      }));
+    }
+  }, {
+    key: "register",
+    value: function register(e, t) {
+      var r = this,
+        a = null != t ? t : {},
+        i = function reg(e) {
+          o(e) ? e.forEach(function (e) {
+            i(e);
+          }) : n(e).forEach(function (t) {
+            var n;
+            if ("#" === t) throw new TypeError("# cannot be used as a type name as it is reserved for cyclic objects");
+            if (u.includes(t)) throw new TypeError("Plain JSON object types are reserved as type names");
+            var i = e[t],
+              c = i && "function" != typeof i && !Array.isArray(i) && i.testPlainObjects ? r.plainObjectReplacers : r.nonplainObjectReplacers,
+              s = c.filter(function (e) {
+                return e.type === t;
+              });
+            if (s.length && (c.splice(c.indexOf(s[0]), 1), delete r.revivers[t], delete r.types[t]), "function" == typeof i) {
+              var l = i;
+              i = {
+                test: function test(e) {
+                  return e && e.constructor === l;
+                },
+                replace: function replace(e) {
+                  return _objectSpread2({}, e);
+                },
+                revive: function revive(e) {
+                  return Object.assign(Object.create(l.prototype), e);
+                }
+              };
+            } else if (o(i)) {
+              var f = _slicedToArray(i, 3);
+              i = {
+                test: f[0],
+                replace: f[1],
+                revive: f[2]
+              };
+            }
+            if (null !== (n = i) && void 0 !== n && n.test) {
+              var y = {
+                type: t,
+                test: i.test.bind(i)
+              };
+              i.replace && (y.replace = i.replace.bind(i)), i.replaceAsync && (y.replaceAsync = i.replaceAsync.bind(i));
+              var p = "number" == typeof a.fallback ? a.fallback : a.fallback ? 0 : Number.POSITIVE_INFINITY;
+              if (i.testPlainObjects ? r.plainObjectReplacers.splice(p, 0, y) : r.nonplainObjectReplacers.splice(p, 0, y), i.revive || i.reviveAsync) {
+                var d = {};
+                i.revive && (d.revive = i.revive.bind(i)), i.reviveAsync && (d.reviveAsync = i.reviveAsync.bind(i)), r.revivers[t] = [d, {
+                  plain: i.testPlainObjects
+                }];
+              }
+              r.types[t] = i;
+            }
+          });
+        };
+      return [].concat(e).forEach(function (e) {
+        i(e);
+      }), this;
+    }
+  }]),
   s = _createClass(function Undefined() {
     _classCallCheck(this, Undefined);
   });
@@ -5743,7 +5740,7 @@ const v = {
       replace(e, t) {
         t.buffers || (t.buffers = []);
         const r = t.buffers.indexOf(e);
-        return r > -1 ? {
+        return -1 !== r ? {
           index: r
         } : (t.buffers.push(e), {
           s: p(e),
@@ -5851,7 +5848,7 @@ const w = {
       }, n) {
         n.buffers || (n.buffers = []);
         const a = n.buffers.indexOf(e);
-        return a > -1 ? {
+        return -1 !== a ? {
           index: a,
           byteOffset: t,
           byteLength: r
@@ -6169,28 +6166,28 @@ const E = {
       revive: e => new Map(e)
     }
   },
-  K = {
+  R = {
     nan: {
       test: e => Number.isNaN(e),
       replace: () => "NaN",
       revive: () => Number.NaN
     }
   },
-  F = {
+  K = {
     negativeInfinity: {
       test: e => e === Number.NEGATIVE_INFINITY,
       replace: () => "-Infinity",
       revive: () => Number.NEGATIVE_INFINITY
     }
   },
-  $ = {
+  F = {
     negativeZero: {
       test: e => Object.is(e, -0),
       replace: () => 0,
       revive: () => -0
     }
   },
-  J = {
+  z = {
     StringObject: {
       test: e => "String" === toStringTag(e) && "object" == typeof e,
       replace: String,
@@ -6207,12 +6204,12 @@ const E = {
       revive: e => new Number(e)
     }
   },
-  q = {
+  V = {
     regexp: {
       test: e => "RegExp" === toStringTag(e),
       replace: e => ({
         source: e.source,
-        flags: (e.global ? "g" : "") + (e.ignoreCase ? "i" : "") + (e.multiline ? "m" : "") + (e.sticky ? "y" : "") + (e.unicode ? "u" : "")
+        flags: (e.global ? "g" : "") + (e.ignoreCase ? "i" : "") + (e.multiline ? "m" : "") + (e.sticky ? "y" : "") + (e.unicode ? "u" : "") + (e.unicodeSets ? "v" : "") + (e.hasIndices ? "d" : "") + (e.dotAll ? "s" : "")
       }),
       revive: ({
         source: e,
@@ -6220,26 +6217,26 @@ const E = {
       }) => new RegExp(e, t)
     }
   },
-  G = {
+  W = {
     set: {
       test: e => "Set" === toStringTag(e),
       replace: e => [...e.values()],
       revive: e => new Set(e)
     }
   },
-  Q = {};
+  H = {};
 "function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, ...("function" == typeof BigInt64Array ? [BigInt64Array, BigUint64Array] : [])].forEach(e => function create$1(e) {
   const t = e.name;
-  Q[t.toLowerCase()] = {
+  H[t.toLowerCase()] = {
     test: e => toStringTag(e) === t,
     replace: e => (0 === e.byteOffset && e.byteLength === e.buffer.byteLength ? e : e.slice(0)).buffer,
     revive: t => "ArrayBuffer" === toStringTag(t) ? new e(t) : t
   };
 }(e));
-const X = {};
+const Q = {};
 "function" == typeof Int8Array && [Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, ...("function" == typeof BigInt64Array ? [BigInt64Array, BigUint64Array] : [])].forEach(e => function create(e) {
   const t = e.name;
-  X[t.toLowerCase()] = {
+  Q[t.toLowerCase()] = {
     test: e => toStringTag(e) === t,
     replace({
       buffer: e,
@@ -6248,7 +6245,7 @@ const X = {};
     }, n) {
       n.buffers || (n.buffers = []);
       const a = n.buffers.indexOf(e);
-      return a > -1 ? {
+      return -1 !== a ? {
         index: a,
         byteOffset: t,
         length: r
@@ -6277,14 +6274,14 @@ const X = {};
     }
   };
 }(e));
-const Z = {
+const X = {
     undef: {
       test: (e, t) => void 0 === e && (t.ownKeys || !("ownKeys" in t)),
       replace: () => 0,
       revive: () => new s()
     }
   },
-  ee = {
+  Z = {
     userObject: {
       test: e => isUserObject(e),
       replace: e => ({
@@ -6293,7 +6290,7 @@ const Z = {
       revive: e => e
     }
   },
-  te = [{
+  ee = [{
     arrayNonindexKeys: {
       testPlainObjects: true,
       test: (e, t) => !!Array.isArray(e) && (Object.keys(e).some(e => String(Number.parseInt(e)) !== e) && (t.iterateIn = "object", t.addLength = true), true),
@@ -6313,9 +6310,9 @@ const Z = {
       revive() {}
     }
   }],
-  re = [K, U, F, $],
-  ce = [ee, Z, te, J, re, A, q, k, B, E, C, h, P, x].concat("function" == typeof Map ? D : [], "function" == typeof Set ? G : [], "function" == typeof ArrayBuffer ? v : [], "function" == typeof Uint8Array ? X : [], "function" == typeof DataView ? _ : [], "undefined" != typeof crypto ? w : [], "undefined" != typeof BigInt ? [m, b] : [], "undefined" != typeof DOMException ? S : [], "undefined" != typeof DOMRect ? N : [], "undefined" != typeof DOMPoint ? T : [], "undefined" != typeof DOMQuad ? I : [], "undefined" != typeof DOMMatrix ? j : []),
-  se = ce.concat({
+  te = [R, U, K, F],
+  ie = [Z, X, ee, z, te, A, V, k, B, E, C, h, P, x].concat("function" == typeof Map ? D : [], "function" == typeof Set ? W : [], "function" == typeof ArrayBuffer ? v : [], "function" == typeof Uint8Array ? Q : [], "function" == typeof DataView ? _ : [], "undefined" != typeof crypto ? w : [], "undefined" != typeof BigInt ? [m, b] : [], "undefined" != typeof DOMException ? S : [], "undefined" != typeof DOMRect ? N : [], "undefined" != typeof DOMPoint ? T : [], "undefined" != typeof DOMQuad ? I : [], "undefined" != typeof DOMMatrix ? j : []),
+  ce = ie.concat({
     checkDataCloneException: {
       test(e) {
         const t = {}.toString.call(e).slice(8, -1);
@@ -6327,7 +6324,7 @@ const Z = {
 
 // See: http://stackoverflow.com/questions/42170826/categories-for-rejection-by-the-structured-cloning-algorithm
 
-let typeson = new c().register(se);
+let typeson = new c().register(ce);
 
 /**
  * @param {(preset: import('typeson-registry').Preset) =>
@@ -6335,7 +6332,7 @@ let typeson = new c().register(se);
  * @returns {void}
  */
 function register(func) {
-  typeson = new c().register(func(se));
+  typeson = new c().register(func(ce));
 }
 
 /**
@@ -8672,7 +8669,6 @@ const setFS = _fs => {
  * @returns {string}
  */
 const getOrigin = () => {
-  // eslint-disable-next-line no-undef -- If browser/polyfilled
   return typeof location !== 'object' || !location ? 'null' : location.origin;
 };
 const hasNullOrigin = () => CFG.checkOrigin !== false && getOrigin() === 'null';
@@ -9797,8 +9793,8 @@ IDBCursor.__createInstance = function (...args) {
  */
 IDBCursor.prototype.__find = function (...args /* key, tx, success, error, recordsToLoad */) {
   if (this.__multiEntryIndex) {
-    const [key, primaryKey, tx, success, error] = args;
-    this.__findMultiEntry(key, primaryKey, tx, success, error);
+    const [key, primaryKey, tx, success, error, recordsToLoad] = args;
+    this.__findMultiEntry(key, primaryKey, tx, success, error, recordsToLoad);
   } else {
     const [key, primaryKey, tx, success, error, recordsToLoad] = args;
     this.__findBasic(key, primaryKey, tx, success, error, recordsToLoad);
@@ -9917,10 +9913,11 @@ const leftBracketRegex = /\[/gu;
  * @param {SQLTransaction} tx
  * @param {KeySuccess} success
  * @param {FindError} error
+ * @param {Integer|undefined} recordsToLoad
  * @this {IDBCursorFull}
  * @returns {void}
  */
-IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, error) {
+IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, error, recordsToLoad) {
   const me = this;
   if (me.__prefetchedData && me.__prefetchedData.length === me.__prefetchedIndex) {
     if (CFG.DEBUG) {
@@ -9975,6 +9972,7 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
       // 4. Sort by object store position (if defined and not unique)
       sql.push(',', sqlQuote(me.__valueColumnName), direction);
     }
+    sql.push('LIMIT', String(recordsToLoad));
   }
   const sqlStr = sql.join(' ');
   if (CFG.DEBUG) {
@@ -10255,9 +10253,11 @@ IDBCursor.prototype.__continueFinish = function (key, primaryKey, advanceState) 
               triggerSuccess(k, val, primKey);
               return;
             }
+            // @ts-expect-error Todo: Our bug to fix
             cursorContinue(tx, args, success, error);
           }
           if (me.__unique && !me.__multiEntryIndex && encKey === encode$1(me.key, me.__multiEntryIndex)) {
+            // @ts-expect-error Todo: Our bug to fix
             cursorContinue(tx, args, success, error);
             return;
           }
@@ -10491,8 +10491,6 @@ IDBCursorWithValue.prototype[Symbol.toStringTag] = 'IDBCursorWithValuePrototype'
 Object.defineProperty(IDBCursorWithValue, 'prototype', {
   writable: false
 });
-
-/* eslint-disable unicorn/prefer-global-this -- Older browsers? */
 
 /**
  * @typedef {any} AnyValue
@@ -10805,9 +10803,7 @@ function setGlobalVars(idb, initialConfig) {
   // Exclude genuine Safari: http://stackoverflow.com/a/7768006/271577
   // Detect iOS: http://stackoverflow.com/questions/9038625/detect-if-device-is-ios/9039885#9039885
   // and detect version 9: http://stackoverflow.com/a/26363560/271577
-  /(iPad|iPhone|iPod).* os 9_/ui.test(navigator.userAgent) && typeof window !== 'undefined' &&
-  // eslint-disable-next-line no-undef -- Extra check
-  !('MSStream' in window) // But avoid IE11
+  /(iPad|iPhone|iPod).* os 9_/ui.test(navigator.userAgent) && typeof window !== 'undefined' && !('MSStream' in window) // But avoid IE11
   )) {
     poorIndexedDbSupport = true;
   }

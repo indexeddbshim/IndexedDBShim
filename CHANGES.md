@@ -1,5 +1,11 @@
 # CHANGES for indexeddbshim
 
+## 16.1.0
+
+- fix: multiEntry limit fix
+- chore: Update canvas, typeson, typeson-registry, devDeps. and build files
+- chore: Update `@unicode/unicode-16.1.0` to `@unicode/unicode-17.0.0`
+
 ## 16.0.0
 
 BREAKING CHANGES:

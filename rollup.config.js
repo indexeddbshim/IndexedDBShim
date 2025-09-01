@@ -144,7 +144,7 @@ export default function rollupConfig () {
 
     return [
         {
-            input: 'node_modules/@unicode/unicode-15.1.0/Binary_Property/Expands_On_NFD/regex.js',
+            input: 'node_modules/@unicode/unicode-17.0.0/Binary_Property/Expands_On_NFD/regex.js',
             output: {
                 banner: '// @ts-nocheck\n',
                 file: 'src/unicode-regex.js',
