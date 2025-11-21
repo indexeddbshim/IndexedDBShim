@@ -84,7 +84,7 @@ const browserEnvironment = ({input, name, output: file}) => {
             output: {
                 name,
                 banner,
-                file: min ? file.replace(/\.js$/u, '.min.js') : file,
+                file: min ? file.replace(/\.js$/v, '.min.js') : file,
                 format: 'umd',
                 sourcemap: true
             },
@@ -109,7 +109,7 @@ const nodeEnvironment = ({input, name, output: file}) => {
                 'readable-stream', 'readable-stream/transform'
             ],
             output: {
-                file: min ? file.replace(/\.js$/u, '.min.js') : file,
+                file: min ? file.replace(/\.js$/v, '.min.js') : file,
                 name,
                 banner,
                 exports: 'default',

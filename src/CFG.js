@@ -1,9 +1,7 @@
-/* eslint-disable jsdoc/valid-types -- https://github.com/jsdoc-type-pratt-parser/jsdoc-type-pratt-parser/issues/147 */
 /**
  * @typedef {T[keyof T]} ValueOf<T>
  * @template T
  */
-/* eslint-enable jsdoc/valid-types -- https://github.com/jsdoc-type-pratt-parser/jsdoc-type-pratt-parser/issues/147 */
 
 /**
  * @typedef {{unlink: (path: string, cb: import('fs').NoParamCallback) => void}} FSApi

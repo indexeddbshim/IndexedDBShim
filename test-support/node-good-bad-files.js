@@ -264,6 +264,7 @@ const goodBad = {
 };
 
 // Not currently in use programmatically
+// eslint-disable-next-line unicorn/no-immediate-mutation -- Better indent
 goodBad.browser = {
     // Safari is apparently running too poorly in the runner to be able to get a good
     //    listing; need to run each test, or a smaller regex of tests, individually

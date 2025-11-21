@@ -10,6 +10,9 @@ const rules = {
     'no-restricted-syntax': 0,
 
     // Disable until find time to address
+    'jsdoc/reject-any-type': 0,
+    'jsdoc/reject-function-type': 0,
+
     '@stylistic/max-len': 0,
     '@stylistic/brace-style': 0,
     'unicorn/prefer-global-this': 0,

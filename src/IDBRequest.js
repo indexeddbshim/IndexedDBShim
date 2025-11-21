@@ -127,7 +127,7 @@ Object.defineProperty(IDBRequest, 'prototype', {
 const openListeners = ['onblocked', 'onupgradeneeded'];
 
 /**
- * @typedef {IDBRequestFull & IDBOpenDBRequest & {}} IDBOpenDBRequestFull
+ * @typedef {IDBRequestFull & IDBOpenDBRequest} IDBOpenDBRequestFull
  */
 
 /**

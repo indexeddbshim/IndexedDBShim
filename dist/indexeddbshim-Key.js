@@ -1,4 +1,4 @@
-/*! indexeddbshim - v16.1.0 - 9/1/2025 */
+/*! indexeddbshim - v16.1.0 - 11/21/2025 */
 
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -6,12 +6,10 @@
     (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.IDBKeyUtils = {}));
 })(this, (function (exports) { 'use strict';
 
-    /* eslint-disable jsdoc/valid-types -- https://github.com/jsdoc-type-pratt-parser/jsdoc-type-pratt-parser/issues/147 */
     /**
      * @typedef {T[keyof T]} ValueOf<T>
      * @template T
      */
-    /* eslint-enable jsdoc/valid-types -- https://github.com/jsdoc-type-pratt-parser/jsdoc-type-pratt-parser/issues/147 */
 
     /**
      * @typedef {{unlink: (path: string, cb: import('fs').NoParamCallback) => void}} FSApi

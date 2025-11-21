@@ -366,10 +366,10 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
                         matchingKey: /** @type {string} */ (
                             Key.encode(matchingKey, true)
                         ),
-                        key: rowItem.key
+                        key: rowItem.key,
+                        [me.__keyColumnName]: rowItem[me.__keyColumnName],
+                        [me.__valueColumnName]: rowItem[me.__valueColumnName]
                     };
-                    clone[me.__keyColumnName] = rowItem[me.__keyColumnName];
-                    clone[me.__valueColumnName] = rowItem[me.__valueColumnName];
                     rows.push(clone);
                 }
             }

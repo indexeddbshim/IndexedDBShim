@@ -1,4 +1,4 @@
-/*! indexeddbshim - v16.1.0 - 9/1/2025 */
+/*! indexeddbshim - v16.1.0 - 11/21/2025 */
 
 (function (factory) {
   typeof define === 'function' && define.amd ? define(factory) :
@@ -933,12 +933,10 @@
     Object.setPrototypeOf(ShimCustomEvent.prototype, ShimEvent.prototype);
   }
 
-  /* eslint-disable jsdoc/valid-types -- https://github.com/jsdoc-type-pratt-parser/jsdoc-type-pratt-parser/issues/147 */
   /**
    * @typedef {T[keyof T]} ValueOf<T>
    * @template T
    */
-  /* eslint-enable jsdoc/valid-types -- https://github.com/jsdoc-type-pratt-parser/jsdoc-type-pratt-parser/issues/147 */
 
   /**
    * @typedef {{unlink: (path: string, cb: import('fs').NoParamCallback) => void}} FSApi
@@ -2238,7 +2236,7 @@
   const openListeners = ['onblocked', 'onupgradeneeded'];
 
   /**
-   * @typedef {IDBRequestFull & IDBOpenDBRequest & {}} IDBOpenDBRequestFull
+   * @typedef {IDBRequestFull & IDBOpenDBRequest} IDBOpenDBRequestFull
    */
 
   /**
@@ -8757,7 +8755,7 @@
     ? [...new Set(
     // to be unique
     convertToSequenceDOMString(storeNames) // iterables have `ToString` applied (and we convert to array for convenience)
-    )].sort() // must be sorted
+    )].toSorted() // must be sorted
     : [convertToDOMString(storeNames)];
 
     /* (function () {
@@ -10211,10 +10209,10 @@
             const clone = {
               matchingKey: (/** @type {string} */
               encode$1(matchingKey, true)),
-              key: rowItem.key
+              key: rowItem.key,
+              [me.__keyColumnName]: rowItem[me.__keyColumnName],
+              [me.__valueColumnName]: rowItem[me.__valueColumnName]
             };
-            clone[me.__keyColumnName] = rowItem[me.__keyColumnName];
-            clone[me.__valueColumnName] = rowItem[me.__valueColumnName];
             rows.push(clone);
           }
         }

@@ -244,7 +244,7 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
         // Creating new array also ensures sequence is passed by value: https://heycam.github.io/webidl/#idl-sequence
         ? [...new Set( // to be unique
             util.convertToSequenceDOMString(storeNames) // iterables have `ToString` applied (and we convert to array for convenience)
-        )].sort() // must be sorted
+        )].toSorted() // must be sorted
         : [util.convertToDOMString(storeNames)];
 
     /* (function () {

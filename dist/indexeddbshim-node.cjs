@@ -1,4 +1,4 @@
-/*! indexeddbshim - v16.1.0 - 9/1/2025 */
+/*! indexeddbshim - v16.1.0 - 11/21/2025 */
 
 'use strict';
 
@@ -936,12 +936,10 @@ function setPrototypeOfCustomEvent() {
   Object.setPrototypeOf(ShimCustomEvent.prototype, ShimEvent.prototype);
 }
 
-/* eslint-disable jsdoc/valid-types -- https://github.com/jsdoc-type-pratt-parser/jsdoc-type-pratt-parser/issues/147 */
 /**
  * @typedef {T[keyof T]} ValueOf<T>
  * @template T
  */
-/* eslint-enable jsdoc/valid-types -- https://github.com/jsdoc-type-pratt-parser/jsdoc-type-pratt-parser/issues/147 */
 
 /**
  * @typedef {{unlink: (path: string, cb: import('fs').NoParamCallback) => void}} FSApi
@@ -2241,7 +2239,7 @@ Object.defineProperty(IDBRequest, 'prototype', {
 const openListeners = ['onblocked', 'onupgradeneeded'];
 
 /**
- * @typedef {IDBRequestFull & IDBOpenDBRequest & {}} IDBOpenDBRequestFull
+ * @typedef {IDBRequestFull & IDBOpenDBRequest} IDBOpenDBRequestFull
  */
 
 /**
@@ -8550,7 +8548,7 @@ IDBDatabase.prototype.transaction = function (storeNames /* , mode */) {
   ? [...new Set(
   // to be unique
   convertToSequenceDOMString(storeNames) // iterables have `ToString` applied (and we convert to array for convenience)
-  )].sort() // must be sorted
+  )].toSorted() // must be sorted
   : [convertToDOMString(storeNames)];
 
   /* (function () {
@@ -10004,10 +10002,10 @@ IDBCursor.prototype.__findMultiEntry = function (key, primaryKey, tx, success, e
           const clone = {
             matchingKey: (/** @type {string} */
             encode$1(matchingKey, true)),
-            key: rowItem.key
+            key: rowItem.key,
+            [me.__keyColumnName]: rowItem[me.__keyColumnName],
+            [me.__valueColumnName]: rowItem[me.__valueColumnName]
           };
-          clone[me.__keyColumnName] = rowItem[me.__keyColumnName];
-          clone[me.__valueColumnName] = rowItem[me.__valueColumnName];
           rows.push(clone);
         }
       }
@@ -11498,7 +11496,7 @@ var hasRequiredBindings;
 function requireBindings() {
   if (hasRequiredBindings) return bindings.exports;
   hasRequiredBindings = 1;
-  (function (module, exports) {
+  (function (module, exports$1) {
     var fs = require$$0,
       path$1 = path,
       fileURLToPath = requireFileUriToPath(),
@@ -11562,7 +11560,7 @@ function requireBindings() {
 
       // Get the module root
       if (!opts.module_root) {
-        opts.module_root = exports.getRoot(exports.getFileName());
+        opts.module_root = exports$1.getRoot(exports$1.getFileName());
       }
 
       // Ensure the given bindings name ends with .node
@@ -11601,7 +11599,7 @@ function requireBindings() {
       err.tries = tries;
       throw err;
     }
-    module.exports = exports = bindings;
+    module.exports = exports$1 = bindings;
 
     /**
      * Gets the filename of the JavaScript file that invokes this function.
@@ -11609,7 +11607,7 @@ function requireBindings() {
      * Optionally accepts an filename argument to skip when searching for the invoking filename
      */
 
-    exports.getFileName = function getFileName(calling_file) {
+    exports$1.getFileName = function getFileName(calling_file) {
       var origPST = Error.prepareStackTrace,
         origSTL = Error.stackTraceLimit,
         dummy = {},
@@ -11655,7 +11653,7 @@ function requireBindings() {
      *   Out: /home/nate/node-native-module
      */
 
-    exports.getRoot = function getRoot(file) {
+    exports$1.getRoot = function getRoot(file) {
       var dir = dirname(file),
         prev;
       while (true) {
@@ -11735,7 +11733,7 @@ var hasRequiredSqlite3;
 function requireSqlite3() {
   if (hasRequiredSqlite3) return sqlite3$1.exports;
   hasRequiredSqlite3 = 1;
-  (function (module, exports) {
+  (function (module, exports$1) {
     const path$1 = path;
     const sqlite3 = requireSqlite3Binding();
     const EventEmitter = require$$2.EventEmitter;
@@ -12026,7 +12024,7 @@ CFG.win = {
 /**
  * @param {import('./setGlobalVars.js').ShimmedObject} idb
  * @param {import('./CFG.js').default} initialConfig
- * @returns {{}|Window}
+ * @returns {import('./setGlobalVars.js').ShimmedObject|Window}
  */
 const __setGlobalVars = function (idb, initialConfig = {}) {
   return setGlobalVars(idb, {

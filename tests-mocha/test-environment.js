@@ -201,7 +201,7 @@
 
     /**
     * @typedef {object} SimulatedElement
-    * @property {{}} style
+    * @property {{style: object}} style
     * @property {string} [className]
     */
     /**

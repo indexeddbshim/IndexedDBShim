@@ -1,5 +1,9 @@
 # CHANGES for indexeddbshim
 
+## ?
+
+- chore: update devDeps.
+
 ## 16.1.0
 
 - fix: multiEntry limit fix (@cheng500)
