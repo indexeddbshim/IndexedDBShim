@@ -1,4 +1,3 @@
-/* eslint-env browser, worker -- Environment */
 import setGlobalVars from './setGlobalVars.js';
 import CFG from './CFG.js';
 

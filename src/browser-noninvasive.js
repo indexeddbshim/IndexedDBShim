@@ -1,4 +1,3 @@
-/* eslint-env browser, worker -- Environment */
 import {UnicodeIDStart, UnicodeIDContinue} from './UnicodeIdentifiers.js';
 
 // BEGIN: Same code as in browser.js

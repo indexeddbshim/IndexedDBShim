@@ -1,4 +1,3 @@
-/* eslint-env browser, worker -- Environment */
 /* globals shimIndexedDB -- Environment */
 import * as UnicodeIdentifiers from './UnicodeIdentifiers.js';
 

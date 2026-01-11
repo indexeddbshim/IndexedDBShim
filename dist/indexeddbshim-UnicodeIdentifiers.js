@@ -1,4 +1,4 @@
-/*! indexeddbshim - v16.1.0 - 11/21/2025 */
+/*! indexeddbshim - v16.1.0 - 1/11/2026 */
 
 (function (factory) {
     typeof define === 'function' && define.amd ? define(factory) :
@@ -11041,7 +11041,6 @@
       return /** @type {ShimmedObject} */IDB;
     }
 
-    /* eslint-env browser, worker -- Environment */
     /* globals shimIndexedDB -- Environment */
     CFG.win = typeof window !== 'undefined' ? window : self; // For Web Workers
 

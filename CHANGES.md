@@ -2,7 +2,7 @@
 
 ## ?
 
-- chore: update devDeps.
+- chore: update canvas, devDeps.
 
 ## 16.1.0
 

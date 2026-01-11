@@ -1,4 +1,4 @@
-/*! indexeddbshim - v16.1.0 - 11/21/2025 */
+/*! indexeddbshim - v16.1.0 - 1/11/2026 */
 
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -11039,7 +11039,6 @@
       return /** @type {ShimmedObject} */IDB;
     }
 
-    /* eslint-env browser, worker -- Environment */
     CFG.win = typeof window !== 'undefined' ? window : self; // For Web Workers
     // END: Same code as in browser.js
 
