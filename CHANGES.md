@@ -1,6 +1,9 @@
 # CHANGES for indexeddbshim
 
-## ?
+## 17.0.0 (unreleased)
+
+BREAKING CHANGES:
+- Requires Node ^22.18.0 || >= 24.11.0
 
 - chore: update canvas, devDeps.
 

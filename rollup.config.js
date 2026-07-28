@@ -8,7 +8,7 @@ import commonJS from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 
 import {babel} from '@rollup/plugin-babel';
-import globals from 'rollup-plugin-node-globals';
+import inject from '@rollup/plugin-inject';
 import nodePolyfills from 'rollup-plugin-node-polyfills';
 import filesize from 'rollup-plugin-filesize';
 import terser from '@rollup/plugin-terser';
@@ -27,7 +27,7 @@ const babelBrowserOptions = {
     plugins: ['add-module-exports'],
     presets: [
         ['@babel/env', {
-            targets: pkg.browserslist[0] // cover 100%
+            targets: pkg.browserslist
         }]
     ]
 };
@@ -60,7 +60,14 @@ const getRollupPlugins = (babelOptions, {addBuiltins, mainFields, min} = {}) => 
         })
     ];
     if (addBuiltins) {
-        ret.unshift(globals(), nodePolyfills());
+        ret.unshift(
+            inject({
+                Buffer: ['buffer', 'Buffer'],
+                process: 'process/browser',
+                global: ['rollup-plugin-node-polyfills/polyfills/global', 'global']
+            }),
+            nodePolyfills()
+        );
     } else {
         ret.unshift(json());
     }
